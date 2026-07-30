@@ -78,6 +78,23 @@ export default function StockClient({
   // นับจำนวนต่อหมวด (โชว์บนปุ่มกรอง)
   const catCount = (id: number) => list.filter((c) => c.category_id === id).length;
 
+  // ส่งออก CSV อลูฯ (ใบนับสต๊อก) — สโตร์กรอก "จำนวนนับใหม่" แล้วส่งกลับมาอัปเดต
+  //   อลู = หมวดมี "อลู" / คิดต่อโล (is_weight_based) / รหัสขึ้นต้น B/F · id ไว้แมตช์ตอนอัปเดตกลับ
+  function exportAluCsv() {
+    const isAlu = (c: StockItem) => /อลู/.test(c.category || "") || !!c.is_weight_based || /^[BF]\d/.test(c.sku || "");
+    const rows = list.filter(isAlu).sort((a, b) => (a.name || "").localeCompare(b.name || "", "th"));
+    const esc = (v: unknown) => { const s = String(v ?? ""); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+    const header = ["id", "รหัส", "ชื่อ", "หมวด", "ร้าน", "คงเหลือในระบบ", "หน่วย", "จำนวนนับใหม่"];
+    const lines = [header.join(",")];
+    for (const c of rows) lines.push([c.id, c.sku, c.name, c.category, c.supplier, c.qty_on_hand, c.unit, ""].map(esc).join(","));
+    const csv = "﻿" + lines.join("\r\n"); // BOM ให้ Excel อ่านไทยถูก
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `นับสต๊อกอลู-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  }
+
   async function refreshCats() {
     const r = await fetch("/api/stock/categories");
     const j = await r.json().catch(() => null);
@@ -112,6 +129,12 @@ export default function StockClient({
           <a href="/stock/moves" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark border border-brand/30 bg-white/60">
             <Icon name="calendar" size={16} /> สมุดเคลื่อนไหว
           </a>
+          {canWrite && (
+            <button onClick={exportAluCsv} title="ส่งออกอลูฯ ทั้งหมดเป็น CSV (มีช่องจำนวนนับใหม่ให้สโตร์กรอก)"
+              className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark border border-brand/30 bg-white/60">
+              ⬇️ ส่งออกอลู (นับสต๊อก)
+            </button>
+          )}
           {canPrice && (
             <a href="/stock/alu-rates" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark border border-brand/30 bg-white/60">
               ⚖️ เรตอลูต่อโล
