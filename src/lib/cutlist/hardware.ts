@@ -139,3 +139,28 @@ export const HANDLE_OPTS_L = [
   { key: "handleColor", label: "สีมือจับ", choices: HANDLE_COLORS },
   { key: "handleL", label: "มือจับ", choices: HANDLE_TYPES },
 ] as const;
+
+/**
+ * ระบบมุ้ง SMS เลื่อน (FREE/CENTER/TOW) — พอร์ตจาก JR_SMS_เลื่อนอิสระ_รวม.xlsx (⑤ อุปกรณ์)
+ *   "เฟรมเล็ก" = มุ้งเสริมง่าย (ไม่มีมือจับ/ล้อแยก) · "เฟรมใหญ่" = มุ้งเต็มบาน (มีล้อ+มือจับของตัวเอง)
+ *   panelsFn = จำนวนมุ้ง (FREE/TOW = meshCount กรอกเอง · CENTER = 2 คงที่เสมอ)
+ */
+const meshHandleSku = (o: CutInput, part: "กุญแจ" | "ล็อค" | "ดัมมี่") =>
+  HANDLE_SKU[(o.meshHandleBrand || "เมโทร") + part + (o.handleColor || "อบขาว")] ?? "";
+const meshHandlePicks = (o: CutInput) => [o.meshHandleL, o.meshHandleR].filter(Boolean) as string[];
+
+export function smsMeshHardware(panelsFn: (o: CutInput) => number): HardwareDef[] {
+  const isBig = (o: CutInput) => o.mesh === "เฟรมใหญ่";
+  const P = (o: CutInput) => (isBig(o) ? meshHandlePicks(o) : []);
+  return [
+    { name: "ล้อมุ้ง", sku: (o) => (isBig(o) ? "JR00576" : ""), qty: (o) => ((o.mesh ?? "ไม่มี") === "ไม่มี" ? 0 : 2 * panelsFn(o)), unit: "อัน", note: "1 บาน 2 อัน · เฟรมเล็ก ยังไม่มีรหัส SKU (รอผูก)" },
+    { name: (o) => `มือจับมุ้ง กุญแจ (${o.meshHandleBrand || "เมโทร"})`, sku: (o) => meshHandleSku(o, "กุญแจ"), qty: (o) => keyCount(P(o)), unit: "ชุด" },
+    { name: (o) => `มือจับมุ้ง ล็อค (${o.meshHandleBrand || "เมโทร"})`, sku: (o) => meshHandleSku(o, "ล็อค"), qty: (o) => lockCount(P(o)), unit: "ชุด" },
+    { name: (o) => `มือจับมุ้ง ดัมมี่ (${o.meshHandleBrand || "เมโทร"})`, sku: (o) => meshHandleSku(o, "ดัมมี่"), qty: (o) => dummyCount(P(o)), unit: "ชุด" },
+    { name: "แกนมือจับ A มุ้ง", sku: "JR00478", qty: (o) => 2 * lockCount(P(o)), unit: "อัน" },
+    { name: "แกนมือจับ B มุ้ง", sku: "JR00479", qty: (o) => stemB(o.H) * lockCount(P(o)), unit: "อัน", note: "สูง>140→1 · >280→2" },
+    { name: "ปลายมือจับ ดำ มุ้ง", sku: "JR00476", qty: (o) => 2 * lockCount(P(o)), unit: "อัน" },
+    { name: "ตัวที เงิน มุ้ง", sku: "JR00475", qty: (o) => lockCount(P(o)), unit: "อัน" },
+    { name: "ก้ามปูรับล็อค มุ้ง", sku: "JR00477", qty: (o) => 2 * lockCount(P(o)), unit: "อัน" },
+  ];
+}
