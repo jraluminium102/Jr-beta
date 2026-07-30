@@ -91,8 +91,9 @@ export default function StockClient({
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = `นับสต๊อกอลู-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.href = url; a.download = `stock-alu-count-${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    alert(`ส่งออกอลูฯ ${rows.length} รายการแล้ว\nไฟล์: ${a.download}\nดูในโฟลเดอร์ Downloads`);
   }
 
   async function refreshCats() {
