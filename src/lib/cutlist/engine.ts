@@ -68,8 +68,17 @@ export type CutInput = {
   hipMode?: string;  // กันสาด_L: มุมตะเข้ "ยุบ" | "นูน"
   D?: number;        // จั่ว/กลาสเฮ้าส์: ลึก/ยาวทิศลาด
   ridgeH?: number;   // จั่ว: สูงสัน
-  hiH?: number;      // กลาสเฮ้าส์: สูงฝั่งสูง (ชนบ้าน) · loH = สูงฝั่งต่ำ (หน้า)
+  hiH?: number;      // กลาสเฮ้าส์(เดี่ยว/หลายด้าน): สูงฝั่งสูง (ชนบ้าน) · loH = สูงฝั่งต่ำ (หน้า) — ใช้ร่วมกันทุกด้าน (สูงเท่ากันทั้งหลัง)
   loH?: number;
+  // กลาสเฮ้าส์หลายด้าน (GLASSHOUSE_MULTI): สูงสุด 6 ด้าน — ด้านที่ side{n}W ว่าง/0 = ไม่ใช้งาน
+  //   กว้าง(side{n}W)+ยื่น(side{n}P) ต่อด้าน · รอยต่อ joint{n} (n=1..5) ระหว่างด้าน n กับ n+1: "นูน"|"เว้า"|"ชนผนัง"
+  side1W?: number; side1P?: number;
+  side2W?: number; side2P?: number;
+  side3W?: number; side3P?: number;
+  side4W?: number; side4P?: number;
+  side5W?: number; side5P?: number;
+  side6W?: number; side6P?: number;
+  joint1?: string; joint2?: string; joint3?: string; joint4?: string; joint5?: string;
   sys?: string;      // รางบนเฟรมปกติ: ระบบ "SMS" | "ยูโร"
   // ⑤ อุปกรณ์ — มือจับ (เลื่อน/ประตู): เลือกยี่ห้อ+สี+ชนิดซ้าย/ขวา → ได้ SKU + จำนวนถูก (ตาราง lookup ในไฟล์)
   handleBrand?: string; // "เมโทร" | "Align"
