@@ -79,6 +79,9 @@ export type CutInput = {
   side5W?: number; side5P?: number;
   side6W?: number; side6P?: number;
   joint1?: string; joint2?: string; joint3?: string; joint4?: string; joint5?: string;
+  // จั่วหลายด้าน (GABLE_MULTI): สันต่อเนื่องหักมุม 2 สโลป — สูง/กว้าง(ridgeH/W)คงที่ทั้งหลัง (ต่างจากกลาสเฮ้าส์หลายด้านที่ P ต่อด้าน)
+  //   แต่ละด้าน = ยื่น(ยาวช่วงตามแนวสัน) side{n}D เท่านั้น · ใช้ joint{n} ร่วมกับกลาสเฮ้าส์/กันสาดหลายด้านด้านบน
+  side1D?: number; side2D?: number; side3D?: number; side4D?: number; side5D?: number; side6D?: number;
   sys?: string;      // รางบนเฟรมปกติ: ระบบ "SMS" | "ยูโร"
   // ⑤ อุปกรณ์ — มือจับ (เลื่อน/ประตู): เลือกยี่ห้อ+สี+ชนิดซ้าย/ขวา → ได้ SKU + จำนวนถูก (ตาราง lookup ในไฟล์)
   handleBrand?: string; // "เมโทร" | "Align"

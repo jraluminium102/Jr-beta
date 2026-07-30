@@ -1480,6 +1480,160 @@ export const AWNING_MULTI: CutSpec = {
   ],
 };
 
+/**
+ * ㉒.7 จั่วหลายด้าน (JR_จั่วหลายด้าน.xlsx ชีต "จั่วหลายด้าน") — สันต่อเนื่องหักมุมหลายด้าน · 2 สโลป
+ * ผสม GABLE_STRAIGHT (จันทัน gSlope−cut · สัน/อกไก่ 4×4 · คานตัวT · แป · แผ่นหลังคา 2 สโลป) กับโครง "หลายด้าน" (mh* ของ GLASSHOUSE_MULTI/AWNING_MULTI)
+ * ต่างจาก GLASSHOUSE_MULTI/AWNING_MULTI ตรงที่ "ความลึกต่อด้าน" (C=กว้าง/2) และ "จันทันเต็ม"(E) คงที่เท่ากันทุกด้าน (มาจาก o.W + ridgeH ร่วมทั้งหลัง)
+ *   มีแค่ "ยื่น(ยาวช่วง)" side{n}D ที่ต่างกันต่อด้าน (ความยาวช่วงตามแนวสันที่หักมุมต่อเนื่อง) — reuse mhJoint/mhSMax/mhSW/MH_SIDES/MH_POS/MH_SIDE_NUMS/MH_JOINT_NUMS ตรงๆ (ห้ามแก้ของเดิม — ใช้ร่วมเฉยๆ)
+ *   ตาราง ⑤ ชนิดแผ่น (ไวนิล max=100 กว้าง=25 ฯลฯ) ตรงกับ MH_SHEET เป๊ะ (ไม่ใช่ ROOF_SHEET ที่ GABLE_STRAIGHT ใช้ ไวนิล max=75 — เทียบสูตรแล้วคนละตารางจริง ไม่ใช่พิมพ์ผิด)
+ * สูตรตำแหน่งจันทันรายตัว (BH:BW→M:AB, header เขียนชัด "ยาวตัดจริง (หักปลาย⑤)") ตรงกับ mhPos ของ GLASSHOUSE_MULTI เป๊ะ แล้วหัก ปลายจันทัน (⑤ B52=10.2 ตายตัว) เพิ่มอีกชั้น
+ *   เหมือน AWNING_MULTI (amPosCut) แต่ค่านี้ไม่สลับตาม roofEnd (คงที่ 10.2 เสมอ ต่างจาก AWNING_MULTI ที่ 10.2/10/12.5 ตามตัวเลือก)
+ * เลขตรวจข้ามด้วยมือ (default 4 ด้าน W/D: 400/150→400,300/100→300,350/200→350,200/150→200 ผิด — ใช้ค่าไฟล์จริง 400/300/350/200 · กว้างรวม(o.W)=400 · สูงสัน=60 · รอยต่อ 1-2 นูน,2-3 เว้า,3-4 นูน):
+ *   depth คงที่ C=200 ทุกด้าน · E(จันทันเต็ม)=208.8 ทุกด้าน (=SQRT(200²+60²))
+ *   ด้าน1: J=600 F=7 ตำแหน่งดิบ[208.8×5, 104.4, 0] → ตัดจริง(−10.2)=[198.6×5, 94.2, 0] (6 เส้นใช้จริง)
+ *   ตะเข้ 1-2 = SQRT(200²+200²+60²) = 289.1 (ทุกมุมค่าเดียวกันเพราะ depth คงที่)
+ * ⏳ จุดไม่ชัวร์ (รอเจ้าของเคาะ):
+ *   1) "ปลายหลังคา" (B6 roofEnd, dropdown ปิดปลาย/ยื่นปลาย/รางน้ำ มีจริงในไฟล์) — สแกนสูตรทั้งชีตแล้ว "ไม่ถูกอ้างในสูตรใดๆเลย" (หัก ปลายจันทัน B52=10.2 ตายตัว ไม่สลับตามค่านี้เหมือน AWNING_MULTI)
+ *      → คงอ็อปชั่นไว้เพื่อครบหน้าจอไฟล์ แต่ปัจจุบันไม่มีผลต่อค่าที่คำนวณเลย (พอร์ตตามไฟล์จริง ไม่เดาเงื่อนไขเพิ่มเอง)
+ *   2) "ราง/เชิงชาย" (แถวสรุป 35) สูตรไฟล์ = SUM(J10:J15) เฉยๆ (ไม่ ×2) แต่ป้ายกำกับ A35 เขียนว่า "(ยาวรวมต่อฝั่ง ×2)" — ต่างจาก GABLE_STRAIGHT
+ *      ที่ "รางน้ำอลู" คูณ 2 ชัดเจนในสูตร (2*CEILING(...)) → พอร์ตตามสูตรจริง (ไม่คูณ2) รอเจ้าของยืนยันว่าป้ายพิมพ์ผิดหรือของจริงต้อง ×2 เอง
+ *   3) ไฟล์นี้ไม่มีแถว "รัดรอบ" เลยทั้งชีต (ต่างจาก GLASSHOUSE_MULTI/AWNING_MULTI ที่มี รัดรอบ4×4(ราง)+รัดรอบ1.6×4ฝั่งบ้าน) — พอร์ตตามไฟล์ (ไม่เพิ่มเอง)
+ *   4) ตะเข้ ไม่มีค่าหักเข้ามุม/ตัดต่อ (เหมือน GLASSHOUSE_MULTI/AWNING_MULTI) — ยาวเรขาคณิตล้วน
+ */
+const gmDepth = (o: CutInput) => (o.W ?? 0) / 2;
+const gmD = (o: CutInput, i: number): number => Number(o[(`side${i}D`) as keyof CutInput] ?? 0) || 0;
+const gmActive = (o: CutInput, i: number) => i >= 1 && i <= MH_SIDES && gmD(o, i) > 0;
+const gmE = (o: CutInput) => r1(Math.sqrt(gmDepth(o) ** 2 + (o.ridgeH ?? 0) ** 2));
+const gmAD = (o: CutInput, i: number): number => {
+  if (i <= 1 || !gmActive(o, i) || !gmActive(o, i - 1)) return 0;
+  const j = mhJoint(o, i - 1);
+  return j === "นูน" ? gmDepth(o) : j === "เว้า" ? -gmDepth(o) : 0;
+};
+const gmAE = (o: CutInput, i: number): number => {
+  if (i >= MH_SIDES || !gmActive(o, i) || !gmActive(o, i + 1)) return 0;
+  const j = mhJoint(o, i);
+  return j === "นูน" ? gmDepth(o) : j === "เว้า" ? -gmDepth(o) : 0;
+};
+const gmJ = (o: CutInput, i: number) => (gmActive(o, i) ? gmD(o, i) + gmAD(o, i) + gmAE(o, i) : 0);
+const gmF = (o: CutInput, i: number) => (gmActive(o, i) ? ceil(gmJ(o, i) / mhSMax(o)) + 1 : 0);
+const gmAF = (o: CutInput, i: number) => { const f = gmF(o, i); return f <= 1 ? 0 : gmJ(o, i) / (f - 1); };
+// ยาวจันทันตำแหน่ง k (0-based) ต่อด้าน (ดิบ ยังไม่หักปลาย) — สูตรเดียวกับ mhPos ของ GLASSHOUSE_MULTI (E คงที่ทุกด้านที่นี่)
+const gmPos = (o: CutInput, i: number, k: number): number => {
+  const f = gmF(o, i);
+  if (!gmActive(o, i) || k > f - 1 || k < 0) return 0;
+  const e = gmE(o), ad = gmAD(o, i), ae = gmAE(o, i), af = gmAF(o, i), j = gmJ(o, i);
+  const leftF = ad === 0 ? 1 : (k * af) / Math.abs(ad);
+  const rightF = ae === 0 ? 1 : (j - k * af) / Math.abs(ae);
+  return r1(e * Math.max(0, Math.min(1, leftF, rightF)));
+};
+// หัก ปลายจันทัน (⑤ B52=10.2 ตายตัว — ไม่สลับตาม roofEnd) · raw=0 (ชนตะเข้) คงที่ 0 · ยาวตัดจริง
+const GM_END_CUT = 10.2;
+const gmPosCut = (o: CutInput, i: number, k: number): number => {
+  const raw = gmPos(o, i, k);
+  return raw <= 0 ? 0 : Math.max(r1(raw - GM_END_CUT), 0);
+};
+// ตำแหน่งริม (k=0 หรือ F-1) ที่ "ไม่ชนตะเข้" ฝั่งนั้น → ขอบเปิด/ผนัง = รัดรอบ 4×4 (ไม่ใช่ 1.6×4 ในตัว/jack) — เหมือน mhIsEdge
+const gmIsEdge = (o: CutInput, i: number, k: number) => (k === 0 && gmAD(o, i) === 0) || (k === gmF(o, i) - 1 && gmAE(o, i) === 0);
+const gmAH = (o: CutInput) => ceil(gmDepth(o) / 50) + 1;
+const gmBayRows = (o: CutInput, i: number, k: number): number => {
+  const f = gmF(o, i);
+  if (!gmActive(o, i) || k > f - 2 || k < 0) return 0;
+  const ah = gmAH(o), e = gmE(o);
+  if (e <= 0) return 0;
+  const v1 = gmPos(o, i, k), v2 = gmPos(o, i, k + 1);
+  return Math.max(ah - ceil((ah - 1) * (1 - Math.min(v1, v2) / e)), 0);
+};
+const gmI = (o: CutInput, i: number): number => {
+  if (!gmActive(o, i)) return 0;
+  let s = 0; for (let k = 0; k <= gmF(o, i) - 2; k++) s += gmBayRows(o, i, k);
+  return s * (o.purlin === "แปคู่" ? 2 : 1);
+};
+const gmH = (o: CutInput, i: number) => { const f = gmF(o, i); return f <= 1 ? 0 : r1((gmJ(o, i) - f * 4.5) / (f - 1)); };
+const gmK = (o: CutInput, i: number) => (gmActive(o, i) ? ceil(gmJ(o, i) / mhSW(o)) : 0);
+// ตะเข้ (มุมลอย) ระหว่างด้าน i กับ i+1 — เฉพาะรอยต่อ "นูน"/"เว้า" · depth เท่ากันทุกด้าน → ยาวเท่ากันทุกมุมที่ตั้งฉาก
+const gmHip = (o: CutInput, i: number): number => {
+  if (i >= MH_SIDES) return 0;
+  const jt = mhJoint(o, i);
+  if ((jt !== "นูน" && jt !== "เว้า") || !gmActive(o, i) || !gmActive(o, i + 1)) return 0;
+  return r1(Math.sqrt(gmDepth(o) ** 2 + gmDepth(o) ** 2 + (o.ridgeH ?? 0) ** 2));
+};
+// สัน/อกไก่ 4×4 — สันเดียวต่อเนื่องหักมุมทั้งหลัง (รวมยาวทุกด้าน − หักปลาย 1 ครั้ง หารเส้น 600 เท่าๆกัน) เหมือน GABLE_STRAIGHT (สูตรเดียวกัน แค่ D ตัวเดียว → รวมหลายด้าน)
+const GM_RIDGE_CUT = 10.2, GM_TBEAM_H_CUT = 20.4, GM_TBEAM_V_CUT = 10.2, GM_STOCK = 600;
+const gmRidgeTotal = (o: CutInput) => MH_SIDE_NUMS.reduce((s, i) => s + (gmActive(o, i) ? gmD(o, i) : 0), 0);
+const gmRidgeNet = (o: CutInput) => Math.max(gmRidgeTotal(o) - GM_RIDGE_CUT, 0);
+const gmRidgeBars = (o: CutInput) => (gmRidgeNet(o) > 0 ? ceil(gmRidgeNet(o) / GM_STOCK) : 0);
+const gmRidgeLen = (o: CutInput) => (gmRidgeBars(o) > 0 ? r1(gmRidgeNet(o) / gmRidgeBars(o)) : 0);
+// คานตัวT (คานนอน+เสาตั้ง) — จำนวน = Σ(จำนวนจันทัน−1) ทุกด้านที่ใช้งาน (ตรงสูตร B33/34 = SUM(F)−นับด้านที่ใช้งาน)
+const gmTBeamCount = (o: CutInput) => MH_SIDE_NUMS.reduce((s, i) => s + (gmActive(o, i) ? gmF(o, i) - 1 : 0), 0);
+export const GABLE_MULTI: CutSpec = {
+  id: "gable_multi", name: "จั่วหลายด้าน (สันต่อเนื่องหักมุม · 2 สโลป · สูงสุด 6 ด้าน)", stockLen: 600, rails: [],
+  opts: [
+    { key: "sheet", label: "ชนิดแผ่น", choices: SHEET_TYPES },
+    { key: "ridgeH", label: "สูงสัน (ซม.)", type: "number" },
+    { key: "purlin", label: "แป", choices: ["แปคู่", "แปเดี่ยว"] },
+    { key: "roofEnd", label: "ปลายหลังคา", choices: ["รางน้ำ", "ปิดปลาย", "ยื่นปลาย"] },
+    ...MH_SIDE_NUMS.flatMap((i) => [
+      { key: `side${i}D`, label: `ด้าน ${i} ยื่น(ยาวช่วง) (ซม.)`, type: "number" as const },
+      ...(i < MH_SIDES ? [{ key: `joint${i}`, label: `รอยต่อ ${i}-${i + 1}`, choices: ["นูน", "เว้า", "ติดบ้าน"] }] : []),
+    ]),
+  ],
+  defaults: {
+    W: 400, H: 0, N: 1, rail: "", honk: false, sheet: "ไวนิล", ridgeH: 60, purlin: "แปคู่", roofEnd: "รางน้ำ",
+    side1D: 400, side2D: 300, side3D: 350, side4D: 200, side5D: 0, side6D: 0,
+    joint1: "นูน", joint2: "เว้า", joint3: "นูน", joint4: "ติดบ้าน", joint5: "ติดบ้าน",
+  },
+  profiles: [
+    // จันทันรายตัว ต่อด้าน×ตำแหน่ง (③.5) — ยาวตัดจริง (หักปลาย ⑤) · รหัสขอบ(4×4)/ในตัว-jack(1.6×4) เหมือน GLASSHOUSE_MULTI · ไม่ ×2 (ต่อ 1 สโลป — ดูแถวถัดไป ×2 รวมสโลป)
+    ...MH_SIDE_NUMS.flatMap((i) =>
+      Array.from({ length: MH_POS }, (_, k) => k).map((k) => ({
+        name: `จันทัน ด้าน ${i} #${k + 1} (×2 สโลป)`,
+        code: (o: CutInput) => (gmIsEdge(o, i, k) ? boxCode("4×4") : boxCode("1.6×4")),
+        len: (o: CutInput) => gmPosCut(o, i, k),
+        qty: (o: CutInput) => (gmActive(o, i) && k <= gmF(o, i) - 1 && gmPosCut(o, i, k) > 1e-6 ? 2 : 0),
+      }))
+    ),
+    // สัน/อกไก่ 4×4 — สันเดียวต่อเนื่องทั้งหลัง (ไม่ ×2 · ใช้ร่วม 2 สโลป)
+    {
+      name: "สัน/อกไก่ 4×4 (ต่อเนื่องทั้งหลัง)", code: boxCode("4×4"),
+      len: gmRidgeLen, qty: gmRidgeBars,
+      note: "รวมยาวทุกด้าน (ยื่น) หักปลาย 10.2 ครั้งเดียว หารเส้น 600 เท่าๆกัน — สูตรเดียวกับ GABLE_STRAIGHT",
+    },
+    // คานตัวT คานนอน+เสาตั้ง 4×4 — ไม่ ×2 (คานคร่อมทั้ง 2 สโลป)
+    {
+      name: "คานตัวT คานนอน 4×4", code: boxCode("4×4"),
+      len: (o: CutInput) => r1((o.W ?? 0) - GM_TBEAM_H_CUT), qty: gmTBeamCount,
+      note: "จำนวน = Σ(จำนวนจันทัน−1) ทุกด้านที่ใช้งาน",
+    },
+    {
+      name: "คานตัวT เสาตั้ง 4×4", code: boxCode("4×4"),
+      len: (o: CutInput) => r1((o.ridgeH ?? 0) - GM_TBEAM_V_CUT), qty: gmTBeamCount,
+      note: "จำนวน = Σ(จำนวนจันทัน−1) ทุกด้านที่ใช้งาน",
+    },
+    // แป 1×1½ ต่อด้าน — ×2 สโลป (gmI คูณ แปคู่/เดี่ยวไว้ในตัวแล้ว)
+    ...MH_SIDE_NUMS.map((i) => ({
+      name: `แป 1×1½ ด้าน ${i} (×2 สโลป)`, code: boxCode("1×1.5"),
+      len: (o: CutInput) => gmH(o, i), qty: (o: CutInput) => 2 * gmI(o, i),
+    })),
+    // แผ่นหลังคา ต่อด้าน — ×2 สโลป (ยาว = จันทันเต็ม ไม่หักปลาย เหมือน GABLE_STRAIGHT/GLASSHOUSE_MULTI)
+    ...MH_SIDE_NUMS.map((i) => ({
+      name: `แผ่นหลังคา ด้าน ${i} (×2 สโลป)`, code: "-",
+      len: gmE, qty: (o: CutInput) => 2 * gmK(o, i),
+    })),
+    // ราง/เชิงชาย ต่อด้าน — ⏳ ไม่ ×2 ตามสูตรไฟล์จริง (ดูจุดไม่ชัวร์ข้อ 2 ด้านบน)
+    ...MH_SIDE_NUMS.map((i) => ({
+      name: `ราง/เชิงชาย ด้าน ${i}`, code: "-",
+      len: (o: CutInput) => gmJ(o, i), qty: (o: CutInput) => (gmActive(o, i) ? 1 : 0),
+      note: "⏳ สูตรไฟล์ไม่ ×2 (แม้ป้ายเขียน 'ต่อฝั่ง ×2') — รอเจ้าของยืนยัน · roofEnd (รางน้ำ/ปิดปลาย/ยื่นปลาย) ไม่มีผลต่อค่านี้ในไฟล์",
+    })),
+    // ตะเข้ (มุมลอย) ระหว่างด้าน i กับ i+1 — เฉพาะรอยต่อ นูน/เว้า · ×2 ต่อมุม (หน้า+หลัง 2 สโลป — สูตรไฟล์ 2*SUMPRODUCT(...))
+    ...MH_JOINT_NUMS.map((i) => ({
+      name: `ตะเข้ ด้าน ${i}-${i + 1} (×2 สโลป)`, code: boxCode("1.6×4"),
+      len: (o: CutInput) => gmHip(o, i), qty: (o: CutInput) => (gmHip(o, i) > 0 ? 2 : 0),
+      note: "⏳ ไฟล์ยังไม่ใส่ค่าหักเข้ามุม/ตัดต่อ — ยาวเรขาคณิตล้วน (เหมือน GLASSHOUSE_MULTI/AWNING_MULTI)",
+    })),
+  ],
+};
+
 // ㉓ บานระแนง (JR_บานระแนง) — ระแนง / ระแนงสลับ A-B · เส้น 600 ยืนยันในสูตร
 const LV_SHOW: Record<string, number> = { "1 cm": 1, "5 cm": 5, '1"': 2.54, '1.5"': 3.81, '1.6"': 4.06, '2"': 5.08, '4"': 10.16 };
 const LV_BOX = ["1.6×4", "1×2", "2×4", "1×1.6"];
@@ -1618,6 +1772,6 @@ export const CUT_SPECS: CutSpec[] = [
   VELORA_SWING, SMS240_BIFOLD, EURO_BIFOLD, EURO_BIFOLD_CORNER, EURO_LIFT,
   FUJI_SLIDE, FUJI_SWING, FUJI_DOOR, FUJI_FIX, FUJI_HUNG,
   PC_DOOR, GATE_SLIDE, SOLID_DOOR, WOODJAMB_SWING,
-  AWNING, AWNING_L, AWNING_MULTI, GABLE_STRAIGHT, GLASSHOUSE, GLASSHOUSE_MULTI, LOUVER_PANEL, TOPRAIL_FRAME,
+  AWNING, AWNING_L, AWNING_MULTI, GABLE_STRAIGHT, GABLE_MULTI, GLASSHOUSE, GLASSHOUSE_MULTI, LOUVER_PANEL, TOPRAIL_FRAME,
 ];
 export const CUT_SPEC_BY_ID: Record<string, CutSpec> = Object.fromEntries(CUT_SPECS.map((s) => [s.id, s]));
