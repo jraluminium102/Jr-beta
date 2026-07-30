@@ -12,12 +12,15 @@
 -- idempotent · เจ้าของรัน
 -- ============================================================
 
+-- เดิม param ที่ 5 เป็น p_adopt_price boolean → เปลี่ยนเป็น p_price_mode text (keep/remove) · drop signature เก่าก่อน
+drop function if exists public.merge_stock_items(bigint, bigint[], text, text, boolean);
+
 create or replace function public.merge_stock_items(
   p_keep bigint,
   p_remove bigint[],
   p_new_sku text default null,
   p_new_name text default null,
-  p_adopt_price boolean default false
+  p_price_mode text default 'keep'   -- 'keep' = ราคาตัวที่เก็บชนะ (เติมถ้าว่าง) · 'remove' = เอาราคาตัวที่ลบมาทับ
 ) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare
@@ -107,19 +110,21 @@ begin
         name = coalesce(v_valid_name, name)
     where id = p_keep;
 
-  -- 5) เติมราคา เฉพาะเมื่อ keep ยังไม่มีราคา (fill-missing — ไม่ตีราคาคงคลังใหม่)
+  -- 5) ราคาที่ลงตัวที่เก็บ = ราคาที่คิดราคา 4.0 + ใบตัด ใช้ (อ่านจาก stock ตอนโหลดหน้า)
   --    ตั้งราคาได้เฉพาะแอดมิน/บัญชี (สโตร์รวมได้แต่ไม่ตั้งราคา — กันตั้งราคาผ่านช่องนี้)
-  if p_adopt_price and public.has_role('ADMIN', 'ACCOUNTING') then
+  --    'keep' (default) = ราคาตัวเก็บชนะ · เติมเฉพาะตอนตัวเก็บยังไม่มีราคา (calc/ใบตัดต้องมีราคาใช้)
+  --    'remove'          = เอาราคาตัวที่ลบ (ตัวที่ผูกคิดราคา/ใบตัดไว้) มาทับ → กลไกคิดราคา/ใบตัดใช้ราคานี้แทน
+  if public.has_role('ADMIN', 'ACCOUNTING') then
     if v_keep.is_weight_based then
-      if coalesce(v_keep.price_per_kg, 0) = 0 and v_max_kg > 0 then
+      if v_max_kg > 0 and ((p_price_mode = 'remove' and v_max_kg <> coalesce(v_keep.price_per_kg, 0)) or coalesce(v_keep.price_per_kg, 0) = 0) then
         insert into public.stock_prices (stock_item_id, price_per_kg, unit_cost, note, created_by)
-          values (p_keep, v_max_kg, round(v_max_kg * coalesce(v_keep.weight_per_unit, 0), 2), 'ดึงราคาตอนรวมรายการซ้ำ', auth.uid());
+          values (p_keep, v_max_kg, round(v_max_kg * coalesce(v_keep.weight_per_unit, 0), 2), 'ตั้งราคาตอนรวมรายการซ้ำ', auth.uid());
         v_priced := v_max_kg;
       end if;
     else
-      if coalesce(v_keep.unit_cost, 0) = 0 and v_max_cost > 0 then
+      if v_max_cost > 0 and ((p_price_mode = 'remove' and v_max_cost <> coalesce(v_keep.unit_cost, 0)) or coalesce(v_keep.unit_cost, 0) = 0) then
         insert into public.stock_prices (stock_item_id, unit_cost, price_per_kg, note, created_by)
-          values (p_keep, v_max_cost, null, 'ดึงราคาตอนรวมรายการซ้ำ', auth.uid());
+          values (p_keep, v_max_cost, null, 'ตั้งราคาตอนรวมรายการซ้ำ', auth.uid());
         v_priced := v_max_cost;
       end if;
     end if;

@@ -43,7 +43,7 @@ export default function MergePanel({ keepItem, canViewCost, onClose, onMerged }:
   const [remove, setRemove] = useState<StockItem | null>(null);
   const [moveSku, setMoveSku] = useState(true);
   const [moveName, setMoveName] = useState(true);
-  const [adoptPrice, setAdoptPrice] = useState(true);
+  const [priceMode, setPriceMode] = useState<"keep" | "remove">("keep"); // ราคาที่คิดราคา4.0/ใบตัดจะใช้ (default = ตัวที่เก็บ)
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const reqRef = useRef(0);
@@ -75,13 +75,18 @@ export default function MergePanel({ keepItem, canViewCost, onClose, onMerged }:
   // ย้ายรหัสได้เฉพาะเมื่อ "ตัวหลักยังไม่ได้ผูกด้วยรหัสของตัวเอง" (กันทับรหัสที่ตัวหลักใช้อยู่แล้วเงียบ ๆ)
   const canMoveSku = !!remove && !!(remove.sku || "").trim() && rl!.skuLinked && !kl.skuLinked && String(keepItem.sku || "") !== String(remove.sku || "");
   const canMoveName = !!remove && rl!.nameLinked && !kl.nameLinked && String(keepItem.name) !== String(remove.name);
-  // เติมราคาเฉพาะเมื่อตัวหลัก "ยังไม่มีราคา" (ไม่ตีราคาคงคลังใหม่) · อลูคิดต่อโล = เทียบ ฿/กก. ให้ตรงกับฝั่ง server
+  // ราคาที่ตัวหลักจะใช้ = ราคาที่คิดราคา 4.0 + ใบตัด อ่านไปใช้ · อลูคิดต่อโล = ใช้ ฿/กก.
   const wb = !!(keepItem.is_weight_based || remove?.is_weight_based);
   const removeCost = Number(remove?.unit_cost ?? 0);
   const keepCost = Number(keepItem.unit_cost ?? 0);
   const removeKg = Number(remove?.price_per_kg ?? 0);
   const keepKg = Number(keepItem.price_per_kg ?? 0);
-  const canAdoptPrice = canViewCost && !!remove && (wb ? keepKg === 0 && removeKg > 0 : keepCost === 0 && removeCost > 0);
+  const keepPrice = wb ? keepKg : keepCost;
+  const removePrice = wb ? removeKg : removeCost;
+  const priceUnit = wb ? "/กก." : "";
+  const removeHasPrice = canViewCost && !!remove && removePrice > 0;
+  const bothPriced = removeHasPrice && keepPrice > 0 && removePrice !== keepPrice;   // มีให้เลือก (ราคาต่างกัน)
+  const onlyRemovePriced = removeHasPrice && keepPrice === 0;                          // ตัวเก็บยังไม่มีราคา → เติมของตัวลบ
 
   async function doMerge() {
     if (!remove) return;
@@ -90,7 +95,7 @@ export default function MergePanel({ keepItem, canViewCost, onClose, onMerged }:
       const body: Record<string, unknown> = { keepId: keepItem.id, removeIds: [remove.id] };
       if (canMoveSku && moveSku) body.newSku = remove.sku;
       if (canMoveName && moveName) body.newName = remove.name;
-      if (canAdoptPrice && adoptPrice) body.adoptPrice = true;
+      body.priceMode = bothPriced ? priceMode : "keep"; // เลือกได้เฉพาะตอนราคาต่างกัน · นอกนั้น keep(เติมถ้าว่าง)
       const r = await fetch("/api/stock/merge", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const j = await r.json().catch(() => null);
       if (!r.ok) { setErr(j?.error ?? "รวมไม่สำเร็จ"); return; }
@@ -195,16 +200,28 @@ export default function MergePanel({ keepItem, canViewCost, onClose, onMerged }:
                     </span>
                   </label>
                 )}
-                {canAdoptPrice && (
-                  <label className="flex items-start gap-2 text-sm rounded-lg glass-soft px-3 py-2 cursor-pointer">
-                    <input type="checkbox" className="mt-0.5" checked={adoptPrice} onChange={(e) => setAdoptPrice(e.target.checked)} />
-                    <span>
-                      <b>เติม{wb ? `ราคา ฿${baht(removeKg)}/กก.` : `ต้นทุน ฿${baht(removeCost)}`}</b> ให้ตัวหลัก (ตอนนี้ยังไม่มีราคา)
-                      <div className="text-[11px] text-ink-3">บันทึกเข้าประวัติราคาตัวหลัก · ถ้าตัวหลักมีราคาแล้วจะไม่ทับ</div>
-                    </span>
-                  </label>
+                {onlyRemovePriced && (
+                  <div className="text-sm rounded-lg glass-soft px-3 py-2">
+                    <b>เติมราคา ฿{baht(removePrice)}{priceUnit}</b> ให้ตัวหลัก (ตอนนี้ยังไม่มีราคา)
+                    <div className="text-[11px] text-ink-3">ราคานี้จะเป็นราคาที่คิดราคา 4.0 + ใบตัด ใช้</div>
+                  </div>
                 )}
-                {!canMoveSku && !canMoveName && !canAdoptPrice && (
+                {bothPriced && (
+                  <div className="text-sm rounded-lg glass-soft px-3 py-2">
+                    <div className="mb-1 font-medium">ราคาที่คิดราคา 4.0 / ใบตัด จะใช้:</div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="pmode" checked={priceMode === "keep"} onChange={() => setPriceMode("keep")} />
+                        <span>ราคาตัวที่เก็บ <b>฿{baht(keepPrice)}{priceUnit}</b> <span className="text-[11px] text-ink-3">(ค่าเริ่มต้น)</span></span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="pmode" checked={priceMode === "remove"} onChange={() => setPriceMode("remove")} />
+                        <span>ราคาตัวที่ลบ <b>฿{baht(removePrice)}{priceUnit}</b> <span className="text-[11px] text-ink-3">(เอามาทับ)</span></span>
+                      </label>
+                    </div>
+                  </div>
+                )}
+                {!canMoveSku && !canMoveName && !bothPriced && !onlyRemovePriced && (
                   <p className="text-[11px] text-ink-3">ไม่มีการผูกระบบ/ราคาที่ต้องย้าย — จะแค่ย้ายประวัติแล้วลบตัวซ้ำ</p>
                 )}
               </div>

@@ -13,7 +13,8 @@ const Body = z.object({
   removeIds: z.array(z.number().int().positive()).min(1),
   newSku: z.string().trim().optional(),
   newName: z.string().trim().optional(),
-  adoptPrice: z.boolean().optional(),
+  // ราคาที่ตัวเก็บจะใช้ (= ราคาที่คิดราคา4.0/ใบตัดใช้): keep=ตัวเก็บชนะ(เติมถ้าว่าง) · remove=เอาราคาตัวที่ลบมาทับ
+  priceMode: z.enum(["keep", "remove"]).optional(),
 });
 
 // map รหัส exception จาก RPC → ข้อความ/สถานะที่อ่านง่าย
@@ -54,7 +55,7 @@ export const POST = withRoute(async (req: Request) => {
     p_remove: removeIds,
     p_new_sku: b.newSku ?? null,
     p_new_name: b.newName ?? null,
-    p_adopt_price: !!b.adoptPrice,
+    p_price_mode: b.priceMode ?? "keep",
   });
   if (error) {
     const m = mapRpcError(error.message || "");
