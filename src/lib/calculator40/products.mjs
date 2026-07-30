@@ -644,28 +644,62 @@ export const PRODUCTS = {
   },
 
   louver_slip: {
-    id: 'louver_slip', group: 2, name: 'ระแนงสลับ', brand: 'MTONG', laborKey: 'ระแนง', ranaeDisc: true,
+    id: 'louver_slip', group: 2, name: 'ระแนงสลับ (คละกล่อง 2 แบบ)', brand: 'MTONG', laborKey: 'ระแนง', ranaeDisc: true,
     showColor: true, outdoor: true,   // งานนอก → ตัดสีชุบ (label-only)
     icon: '🪵', defForm: 'นอน', forms: ['นอน'], stockLen: 6.0,
     defaults: { w: 400, h: 200, p: 1 }, defGlass: null, minP: 1, maxP: 1,
     addons: ['mosquito', 'frame_wrap'],   // มุ้งติดระแนง + ครอบวงกบ
+    // ── เลือกได้ครบตามชีต Excel "คิดทุน ระแนงสลับ" — กล่อง A/B + ด้านโชว์ A/B + จำนวนต่อชุด(สลับ) + ระยะห่างเป้า + โครง ──
+    //    def = ค่าเดิม (สลับ 3ท่อน A[1.6"×4" โชว์4"] : 5ท่อน B[1"×1.6" โชว์1.6"] · ระยะ 2.5 · ไม่โครง) → ทุน/ขายคงเดิม (37,800)
+    specOpts: [
+      { key: 'boxA', label: 'กล่อง A', def: '1.6x4',
+        opts: ['1x5', '1x1', '1x1.5', '1x1.6', '1x4', '1.6x1.6', '1.6x4'],
+        labels: { '1x5': '1×5″ · 500', '1x1': '1×1″ · 310', '1x1.5': '1×1.5″ · 395', '1x1.6': '1×1.6″ · 485', '1x4': '1×4″ · 905', '1.6x1.6': '1.6×1.6″ · 770', '1.6x4': '1.6×4″ · 1,220' }, priced: true },
+      { key: 'showA', label: 'ด้านโชว์ A', def: '10.16',
+        opts: ['1', '5', '2.54', '3.81', '4.06', '10.16'],
+        labels: { '1': '1 ซม.', '5': '5 ซม.', '2.54': '1″ (2.54)', '3.81': '1.5″ (3.81)', '4.06': '1.6″ (4.06)', '10.16': '4″ (10.16)' }, priced: true },
+      { key: 'cntA', label: 'A กี่ท่อน/ชุด', type: 'number', def: '3', step: 1, placeholder: '3' },
+      { key: 'boxB', label: 'กล่อง B', def: '1x1.6',
+        opts: ['1x5', '1x1', '1x1.5', '1x1.6', '1x4', '1.6x1.6', '1.6x4'],
+        labels: { '1x5': '1×5″ · 500', '1x1': '1×1″ · 310', '1x1.5': '1×1.5″ · 395', '1x1.6': '1×1.6″ · 485', '1x4': '1×4″ · 905', '1.6x1.6': '1.6×1.6″ · 770', '1.6x4': '1.6×4″ · 1,220' }, priced: true },
+      { key: 'showB', label: 'ด้านโชว์ B', def: '4.06',
+        opts: ['1', '5', '2.54', '3.81', '4.06', '10.16'],
+        labels: { '1': '1 ซม.', '5': '5 ซม.', '2.54': '1″ (2.54)', '3.81': '1.5″ (3.81)', '4.06': '1.6″ (4.06)', '10.16': '4″ (10.16)' }, priced: true },
+      { key: 'cntB', label: 'B กี่ท่อน/ชุด', type: 'number', def: '5', step: 1, placeholder: '5' },
+      { key: 'rnGap', label: 'ระยะห่างเป้า (ซม.)', type: 'number', def: '2.5', step: 0.5, placeholder: '2.5' },
+      { key: 'rnFrame', label: 'โครงดาม', opts: ['ไม่รวมโครง', 'รวมโครง'], def: 'ไม่รวมโครง', priced: true },
+    ],
+    // BOM ตรงชีต: จำลองสลับ A/B เต็มกว้างบาน → นับท่อน A/B ที่ระยะห่างเป้า → เส้น (stock 6ม.) × ราคากล่อง×ปัจจัยสี + โครง + สีพิเศษ
     vars: {
-      SIM: "(function(){var Wcm=W*100,Pp=0,a=0,b=0;for(var m=1;m<=200;m++){var isA=((m-1)%(3+5))<3;var O=isA?10.16:4.06;Pp+=O;var Q=Pp+(m-1)*2.5;if(Q<=Wcm){if(isA)a++;else b++;}}return{a:a,b:b};})()",
+      SHOWA: '(+spec.showA || 10.16)',    // ด้านโชว์ A (ซม.)
+      SHOWB: '(+spec.showB || 4.06)',     // ด้านโชว์ B (ซม.)
+      CNTA: 'Math.max(1, Math.round(+spec.cntA || 3))',
+      CNTB: 'Math.max(1, Math.round(+spec.cntB || 5))',
+      GAP: 'Math.max(0.5, +spec.rnGap || 2.5)',
+      // สลับ A×CNTA แล้ว B×CNTB วนไป · pitch สะสม(หน้าโชว์)+ช่องห่าง จนเต็มกว้าง (ตรงชีต M/N/O/P/Q/R/S/T)
+      SIM: "(function(){var Wcm=W*100,Pp=0,a=0,b=0,per=CNTA+CNTB;for(var m=1;m<=200;m++){var isA=((m-1)%per)<CNTA;var O=isA?SHOWA:SHOWB;Pp+=O;var Q=Pp+(m-1)*GAP;if(Q<=Wcm){if(isA)a++;else b++;}}return{a:a,b:b};})()",
       cntA: 'SIM.a',
       cntB: 'SIM.b',
       Hused: "(function(){var hc=H*100,V=[50,60,75,100,120,150,200,300,600];var lo=V[0];for(var i=0;i<V.length;i++){if(V[i]<=hc)lo=V[i];}var up=99999;for(var i=0;i<V.length;i++){if(V[i]>hc){up=V[i];break;}}if(hc-lo<=20)return lo;if(up-hc<=20)return up;return hc;})()",
       perBar: 'Math.max(Math.trunc(600/Hused),1)',
       barsA: 'Math.ceil(cntA/perBar)',
       barsB: 'Math.ceil(cntB/perBar)',
+      CF: CF_EXPR,   // ปัจจัยสีกล่อง (×mult ราคาอลู) — ตรง base louver
+      BOXPA: "Math.round((({'1x5':500,'1x1':310,'1x1.5':395,'1x1.6':485,'1x4':905,'1.6x1.6':770,'1.6x4':1220})[spec.boxA]||1220)*CF/5)*5",
+      BOXPB: "Math.round((({'1x5':500,'1x1':310,'1x1.5':395,'1x1.6':485,'1x4':905,'1.6x1.6':770,'1.6x4':1220})[spec.boxB]||485)*CF/5)*5",
+      NFRAME: "(spec.rnFrame==='รวมโครง' ? Math.ceil((H*100<=250?2:3)/Math.max(Math.floor(600/(W*100)),1)) : 0)",
+      FRAMEP: 'Math.round(485*CF/5)*5',
     },
     alu: [],
     glass: null,
     hardware: [],
     consum: [
-      { name: 'กล่อง A (โชว์ 4")', price: 1220, unit: 'เส้น', count: 'barsA', mult: true },
-      { name: 'กล่อง B (โชว์ 1.6")', price: 485, unit: 'เส้น', count: 'barsB', mult: true },
+      { name: 'กล่อง A (ใบระแนง)', price: 'BOXPA', unit: 'เส้น', count: 'barsA' },
+      { name: 'กล่อง B (ใบระแนง)', price: 'BOXPB', unit: 'เส้น', count: 'barsB' },
+      { name: 'โครงดาม 1"×1.6" (รวมโครง)', price: 'FRAMEP', unit: 'เส้น', count: 'NFRAME' },
+      { name: 'สีพิเศษ (ค่าเปิดตู้อบ)', price: 2000, unit: 'งาน', count: "(color==='special'||color==='woodSpecial') ? 1 : 0" },
     ],
-    note: 'ระแนงวางสลับ 2 โปรไฟล์ · ใบคิด/เส้น (stock 6ม.) · ระยะห่าง 2.5ซม. · ขายปัด ceil100 (ชีต R3.9 ไม่ปัด ต่าง ~30฿) · ออปชั่นต่อ/โครงดาม/สีพิเศษ ยังไม่ทำ',
+    note: 'ระแนงสลับคละกล่อง 2 แบบ — คิดทุน BOM ตรงชีต Excel "คิดทุน ระแนงสลับ": เลือกกล่อง A/B + ด้านโชว์ A/B + จำนวนท่อนต่อชุด(สลับ) + ระยะห่างเป้า + โครง(รวม/ไม่รวม) · จำลองสลับเต็มกว้าง → นับท่อน → เส้น(สต็อก 6ม.)×ราคากล่อง×ปัจจัยสี · ค่าแรง 300+600/ตร.ม. · ส่วนลดปริมาณ · (ต่อระแนงยังไม่ทำ)',
   },
 
   louver_rotate: {
