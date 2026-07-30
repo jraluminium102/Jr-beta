@@ -48,22 +48,20 @@ function fmtNum(n: number) {
 
 // ── map ชนิดบาน (ห้อง R3.9 เดิม → R4.0 product id) ──────────────────────────
 // ตัวไหนไม่มี R4.0 คู่ตรง ๆ ใช้ตัวใกล้เคียงที่สุดที่มีอยู่จริงในระบบ (คอมเมนต์กำกับ)
-const PANE_TYPES: { key: string; label: string; slideLike?: boolean }[] = [
-  { key: "sms_slide", label: "บานเลื่อน SMS", slideLike: true },      // sliding_sms → sms_slide (ตรง)
-  { key: "euro_slide", label: "บานเลื่อน ยูโร", slideLike: true },    // sliding_euro → euro_slide (ตรง)
-  { key: "open_door", label: "บานเปิด" },                             // casement_euro → open_door (ตรง)
-  { key: "folding", label: "บานเฟี้ยม" },                             // folding_euro/folding → folding (ตรง — มีรุ่นเดียวใน R4.0 ตอนนี้)
-  { key: "awning", label: "บานกระทุ้ง" },                             // awning_euro → awning (ตรง)
-  { key: "fixed", label: "กระจกติดตาย" },                             // fixed_glass → fixed (ตรง)
-  { key: "shower", label: "ฉากกั้นอาบน้ำ" },                          // shower → shower (ตรง)
-  { key: "pivot", label: "บานหมุน (Pivot)" },                         // pivot → pivot (ตรง)
-  { key: "frameless_door", label: "บานเปลือย (สวิง/เลื่อน/ติดตาย)" }, // frameless_* → frameless_door (รวม 3 แบบเดิมเป็นตัวเดียว เลือกผ่าน material)
-  { key: "pcdoor", label: "ประตู PC Door" },                          // pc_door_2/4 → pcdoor (ใกล้เคียงสุด)
-  // ── ผนังทึบ (รวมโครง) — ใส่เป็น "ช่องบาน" ในด้านได้ (mix กับบานเปิด/ฟิกในด้านเดียว) ──
+// ── ชนิดบานในห้องกระจก = ดึง "ทุกรุ่น G1" อัตโนมัติ (เจ้าของสั่ง 30ก.ค.69: ต้องครบเหมือน G1 · เดิม curate มือ → ตกหล่น บานยก/SlimLux/รางบน/E-series/Velora/เฟี้ยมยูโร/บานเกล็ด/ดัดโค้ง/เฟี้ยมยก/โซลิด/YKK)
+//   label = ชื่อรุ่นจริง · เรียงตาม products.mjs · รุ่น G1 ใหม่ในอนาคตจะโผล่เองไม่ต้องมาเติมที่นี่
+//   ราคาต่อบาน = computeCost(prod) จริง (panePrice) · form/สี/กระจก/ของเสริม render อัตโนมัติตาม prod
+const WALL_PANES: { key: string; label: string }[] = [
+  // ผนังทึบ (รวมโครง) — ใส่เป็น "ช่องบาน" ในด้านได้ (mix กับบานเปิด/ฟิกในด้านเดียว) · ไม่ใช่ G1 จึงระบุมือ
   { key: "wall_smartboard", label: "ผนังสมาร์ทบอร์ด (รวมโครง)" },
   { key: "wall_corrugated", label: "ผนังอลูลูกฟูก (รวมโครง)" },
   { key: "wall_composite", label: "ผนังคอมโพสิต (รวมโครง)" },
-  // curved_* (ดัดโค้ง) ยังไม่มี R4.0 product ราคาจริงเทียบตรง — ไม่ใส่ในลิสต์ (ไม่มีแหล่งราคา R4.0/R3.9 ที่คำนวณอัตโนมัติได้ในห้อง — สั่งทำนอกระบบ)
+];
+const PANE_TYPES: { key: string; label: string; slideLike?: boolean }[] = [
+  ...Object.values(PRODUCTS as Record<string, any>)
+    .filter((p) => p && p.group === 1 && !p.pickerHide)
+    .map((p) => ({ key: p.id as string, label: p.name as string })),
+  ...WALL_PANES.filter((w) => (PRODUCTS as Record<string, any>)[w.key]),
 ];
 
 const PANE_BY_KEY: Record<string, any> = Object.fromEntries(
