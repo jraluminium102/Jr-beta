@@ -1345,6 +1345,141 @@ export const GLASSHOUSE_MULTI: CutSpec = {
   ],
 };
 
+/**
+ * ㉒.6 กันสาดหลายด้าน (JR_กันสาดหลายด้าน.xlsx) — โครง input/③รอยต่อ/④สรุป/⑤แผงแก้ค่า "เหมือน GLASSHOUSE_MULTI เป๊ะ"
+ *   (เทียบสูตรทุกเซลล์แถว 1-47 ตรงกัน 100% รวม MH_SHEET ไวนิล max=100 w=25 — ไม่ใช่ 75 แบบ AWNING/GABLE/GLASSHOUSE เดี่ยว)
+ *   → ใช้ mh* helper (mhW/mhP/mhActive/mhJoint/mhDrop/mhE/mhAD/mhAE/mhJ/mhF/mhAF/mhPos/mhIsEdge/mhAH/mhBayRows/mhI/mhH/mhK/mhHip)
+ *     + MH_SIDES/MH_POS/MH_SIDE_NUMS/MH_JOINT_NUMS/MH_SHEET ร่วมกับ GLASSHOUSE_MULTI ตรงๆ (ห้ามแก้ของเดิม — ใช้ร่วมเฉยๆ)
+ *   ส่วนต่าง (เฉพาะกันสาด มีเพลท+เหล็ก — ไม่มีใน GLASSHOUSE_MULTI):
+ *   1) ⑦ ค่าหักปลายจันทัน (แถว 63-66, $D$64) — ③.5 จันทันรายตัวของไฟล์นี้เป็น "ยาวตัดจริง" (หักปลายแล้ว) ต่างจาก
+ *      GLASSHOUSE_MULTI ที่ไม่มีค่าหักนี้เลย (M8 header เขียนชัด "ยาวตัดจริง (หักปลายแล้ว ⑦)"):
+ *        ยื่นปลาย−10 · ปิดปลาย−12.5 · รางน้ำ−10.2 (ค่าเดียวกับ AWNING_L lCut) — หักสม่ำเสมอทุกตำแหน่ง (ไม่ใช่แค่ริม)
+ *        แล้ว floor 0 (MAX(...,0)) — ตำแหน่งชนตะเข้ (raw=0) ยังคง 0 เหมือนเดิม
+ *   2) ⑥ เหล็ก+ฝาครอบ ต่อด้าน (แถว 53-61 · เฉพาะกันสาด): ฉาก6หุน/แซด4"(เหล็ก) ยาว=B(กว้างดิบ ไม่ใช่ J ที่ปรับรอยต่อ — ตามสูตรไฟล์ตรงๆ)
+ *      จำนวน=⌈W/600⌉ · กล่องเหล็ก1×1 ยาว=E(จันทัน)−0(B50) · ครอบเพลท1.6×4 ยาว=E÷3(B49)−0(B51) · ทั้งคู่ จำนวน=จันทันรวม(นับ raw>0)
+ *      ฝาครอบ จำนวน=ไวนิล→K(แผ่น) | โพลีตัน→จันทันรวม | อื่นๆ→0 · เพลทเหล็กรวม=2×Σจันทันรวมทุกด้าน (B61)
+ * ⏳ จุดไม่ชัวร์ (รอเจ้าของเคาะ — เหมือนที่ GLASSHOUSE_MULTI ทิ้งไว้ + เพิ่มของ ⑥):
+ *   - ฝาครอบ ไม่มีคอลัมน์ "ยาว" ในไฟล์ (มีแค่จำนวน) — สมมติยาว=จันทัน(E) ต่อด้าน (เทียบ AWNING_L ที่มีคอลัมน์ยาวชัดเจน=รากเดียวกัน)
+ *   - ฉาก6หุน/แซด4" ใช้ B(กว้างดิบ)ไม่ใช่ J — อาจตั้งใจต่างจาก "ราง" (mhJ) จริงๆ หรือพิมพ์ผิดในไฟล์ (พอร์ตตามสูตรเป๊ะ)
+ *   - ค่าหักกล่องเหล็ก/ครอบเพลท (B50/B51) = 0 ในไฟล์ (เหมือน AWNING เดี่ยว/AWNING_L)
+ *   - รัดรอบ1.6×4ฝั่งบ้าน/เสา4×4/กล่อง1.6×4ตั้ง/ตะเข้ = จุด ⏳ เดียวกับที่ทิ้งไว้ใน GLASSHOUSE_MULTI (ค่าเผื่อคร่าวๆ/ไม่มีค่าหักมุมตัด)
+ */
+const amEndCut = (o: CutInput) => (o.roofEnd === "รางน้ำ" ? 10.2 : o.roofEnd === "ยื่นปลาย" ? 10 : 12.5); // ปิดปลาย = 12.5
+// ยาวตัดจริง (③.5 หลัง ⑦) ต่อตำแหน่ง — raw=0 (ชนตะเข้) คงที่ 0 · ไม่งั้นหัก amEndCut แล้ว floor 0
+const amPosCut = (o: CutInput, i: number, k: number): number => {
+  const raw = mhPos(o, i, k);
+  return raw <= 0 ? 0 : Math.max(r1(raw - amEndCut(o)), 0);
+};
+// จันทันรวมต่อด้าน (นับตำแหน่ง raw>0 · K54 ในไฟล์) — ใช้ขับจำนวนกล่องเหล็ก/ครอบเพลท/ฝาครอบ(โพลีตัน)/เพลทเหล็กรวม
+const amRafterCount = (o: CutInput, i: number): number => {
+  if (!mhActive(o, i)) return 0;
+  let c = 0;
+  for (let k = 0; k <= mhF(o, i) - 1; k++) if (mhPos(o, i, k) > 1e-6) c++;
+  return c;
+};
+export const AWNING_MULTI: CutSpec = {
+  id: "awning_multi", name: "กันสาดหลายด้าน (ตะเข้/รอยต่อ · มีเพลท+เหล็ก · สูงสุด 6 ด้าน)", stockLen: 600, rails: [],
+  opts: [
+    { key: "sheet", label: "ชนิดแผ่น", choices: SHEET_TYPES },
+    { key: "hiH", label: "สูงฝั่งสูง (ซม.)", type: "number" },
+    { key: "loH", label: "สูงฝั่งต่ำ (ซม.)", type: "number" },
+    { key: "roofEnd", label: "ปลายหลังคา", choices: ["รางน้ำ", "ปิดปลาย", "ยื่นปลาย"] },
+    { key: "purlin", label: "แป", choices: ["แปคู่", "แปเดี่ยว"] },
+    ...MH_SIDE_NUMS.flatMap((i) => [
+      { key: `side${i}W`, label: `ด้าน ${i} กว้าง (ซม.)`, type: "number" as const },
+      { key: `side${i}P`, label: `ด้าน ${i} ยื่น (ซม.)`, type: "number" as const },
+      ...(i < MH_SIDES ? [{ key: `joint${i}`, label: `รอยต่อ ${i}-${i + 1}`, choices: ["นูน", "เว้า", "ชนผนัง"] }] : []),
+    ]),
+  ],
+  defaults: {
+    W: 0, H: 0, N: 1, rail: "", honk: false, sheet: "ไวนิล", hiH: 270, loH: 240, roofEnd: "รางน้ำ", purlin: "แปคู่",
+    side1W: 400, side1P: 150, side2W: 300, side2P: 100, side3W: 350, side3P: 200, side4W: 200, side4P: 150, side5W: 0, side5P: 0, side6W: 0, side6P: 0,
+    joint1: "นูน", joint2: "เว้า", joint3: "นูน", joint4: "ชนผนัง", joint5: "ชนผนัง",
+  },
+  profiles: [
+    // ③.5 จันทันรายตัว ต่อด้าน×ตำแหน่ง — ยาวตัดจริง (หัก ⑦ amEndCut แล้ว) · รหัสขอบ(4×4)/ในตัว-jack(1.6×4) เหมือน GLASSHOUSE_MULTI
+    ...MH_SIDE_NUMS.flatMap((i) =>
+      Array.from({ length: MH_POS }, (_, k) => k).map((k) => ({
+        name: `จันทัน ด้าน ${i} #${k + 1}`,
+        code: (o: CutInput) => (mhIsEdge(o, i, k) ? boxCode("4×4") : boxCode("1.6×4")),
+        len: (o: CutInput) => amPosCut(o, i, k),
+        qty: (o: CutInput) => (mhActive(o, i) && k <= mhF(o, i) - 1 && amPosCut(o, i, k) > 1e-6 ? 1 : 0),
+      }))
+    ),
+    // รัดรอบ 4×4 (ราง) ต่อด้าน — เหมือน GLASSHOUSE_MULTI เป๊ะ (แถว 27/45 aggregate ถูกกระจายผ่านโปรไฟล์นี้ + ขอบใน③.5 แล้ว)
+    ...MH_SIDE_NUMS.map((i) => ({
+      name: `รัดรอบ 4×4 (ราง) ด้าน ${i}`, code: boxCode("4×4"),
+      len: (o: CutInput) => mhJ(o, i), qty: (o: CutInput) => (mhActive(o, i) ? 1 : 0),
+    })),
+    ...MH_SIDE_NUMS.map((i) => ({
+      name: `รัดรอบ 1.6×4 ฝั่งบ้าน ด้าน ${i}`, code: boxCode("1.6×4"),
+      len: (o: CutInput) => mhJ(o, i), qty: (o: CutInput) => (mhActive(o, i) ? 1 : 0),
+      note: "⏳ ไฟล์ไม่มีคอลัมน์ยาว (นับรวมอย่างเดียว) — สมมติยาว=ราง(J) เหมือน GLASSHOUSE_MULTI รอเจ้าของยืนยัน",
+    })),
+    ...MH_SIDE_NUMS.map((i) => ({
+      name: `เสา 4×4 (ฝั่งต่ำ) ด้าน ${i}`, code: boxCode("4×4"),
+      len: (o: CutInput) => o.loH ?? 0, qty: (o: CutInput) => (mhActive(o, i) ? 2 : 0),
+      note: "~2/ด้าน (ค่าเผื่อคร่าวๆ ตามไฟล์ · เหมือน GLASSHOUSE_MULTI)",
+    })),
+    ...MH_SIDE_NUMS.map((i) => ({
+      name: `กล่อง 1.6×4 ตั้ง (ฝั่งสูง) ด้าน ${i}`, code: boxCode("1.6×4"),
+      len: (o: CutInput) => o.hiH ?? 0, qty: (o: CutInput) => (mhActive(o, i) ? 2 : 0),
+      note: "~2/ด้าน (ค่าเผื่อคร่าวๆ ตามไฟล์ · เหมือน GLASSHOUSE_MULTI)",
+    })),
+    ...MH_SIDE_NUMS.map((i) => ({
+      name: `แป 1×1½ ด้าน ${i}`, code: boxCode("1×1.5"),
+      len: (o: CutInput) => mhH(o, i), qty: (o: CutInput) => mhI(o, i),
+    })),
+    ...MH_SIDE_NUMS.map((i) => ({
+      name: `แผ่นหลังคา ด้าน ${i}`, code: "-",
+      len: (o: CutInput) => mhE(o, i), qty: (o: CutInput) => mhK(o, i),
+    })),
+    ...MH_SIDE_NUMS.map((i) => ({
+      name: `รางน้ำอลู ด้าน ${i}`, code: "-",
+      len: (o: CutInput) => mhJ(o, i), qty: (o: CutInput) => (o.roofEnd === "รางน้ำ" && mhActive(o, i) ? 1 : 0),
+    })),
+    ...MH_SIDE_NUMS.map((i) => ({
+      name: `กล่อง 1×4 ปิดปลาย ด้าน ${i}`, code: boxCode("1×4"),
+      len: (o: CutInput) => mhJ(o, i), qty: (o: CutInput) => (o.roofEnd === "ปิดปลาย" && mhActive(o, i) ? 1 : 0),
+    })),
+    ...MH_JOINT_NUMS.map((i) => ({
+      name: `ตะเข้ ด้าน ${i}-${i + 1}`, code: boxCode("1.6×4"),
+      len: (o: CutInput) => mhHip(o, i), qty: (o: CutInput) => (mhHip(o, i) > 0 ? 1 : 0),
+      note: "⏳ ไฟล์ยังไม่ใส่ค่าหักเข้ามุม/ตัดต่อ — ยาวเรขาคณิตล้วน",
+    })),
+    // ⑥ เหล็ก + ฝาครอบ ต่อด้าน — เฉพาะกันสาด (ไม่มีใน GLASSHOUSE_MULTI)
+    ...MH_SIDE_NUMS.map((i) => ({
+      name: `ฉาก 6 หุน ด้าน ${i} (เหล็ก)`, code: "-",
+      len: (o: CutInput) => mhW(o, i), qty: (o: CutInput) => (mhActive(o, i) ? ceil(mhW(o, i) / 600) : 0),
+    })),
+    ...MH_SIDE_NUMS.map((i) => ({
+      name: `แซด 4" ด้าน ${i} (เหล็ก)`, code: "-",
+      len: (o: CutInput) => mhW(o, i), qty: (o: CutInput) => (mhActive(o, i) ? ceil(mhW(o, i) / 600) : 0),
+    })),
+    ...MH_SIDE_NUMS.map((i) => ({
+      name: `กล่องเหล็ก 1×1 ด้าน ${i}`, code: "-",
+      len: (o: CutInput) => r1(mhE(o, i) - 0), qty: (o: CutInput) => amRafterCount(o, i),
+      note: "⏳ ค่าหักกล่องเหล็ก (⑤ B50) = 0 ในไฟล์",
+    })),
+    ...MH_SIDE_NUMS.map((i) => ({
+      name: `กล่องครอบเพลท 1.6×4 ด้าน ${i}`, code: boxCode("1.6×4"),
+      len: (o: CutInput) => r1(mhE(o, i) / 3 - 0), qty: (o: CutInput) => amRafterCount(o, i),
+      note: "จันทัน(E) ÷ 3 (⑤ B49) − 0 (⑤ B51) · ⏳ ค่าหักครอบเพลท=0 ในไฟล์",
+    })),
+    ...MH_SIDE_NUMS.map((i) => ({
+      name: `ฝาครอบ ด้าน ${i}`, code: "-",
+      len: (o: CutInput) => mhE(o, i),
+      qty: (o: CutInput) => (o.sheet === "ไวนิล" ? mhK(o, i) : o.sheet === "โพลีตัน" ? amRafterCount(o, i) : 0),
+      note: "⏳ ไฟล์ไม่มีคอลัมน์ยาว (มีแค่จำนวน) — สมมติยาว=จันทัน(E) ต่อด้าน เทียบ AWNING_L",
+    })),
+    {
+      name: "เพลทเหล็ก (รวมทุกด้าน)", code: "-", len: () => 0,
+      qty: (o: CutInput) => 2 * MH_SIDE_NUMS.reduce((s, i) => s + amRafterCount(o, i), 0),
+      note: "2 × จันทันรวมทุกด้าน (⑥ B61)",
+    },
+  ],
+};
+
 // ㉓ บานระแนง (JR_บานระแนง) — ระแนง / ระแนงสลับ A-B · เส้น 600 ยืนยันในสูตร
 const LV_SHOW: Record<string, number> = { "1 cm": 1, "5 cm": 5, '1"': 2.54, '1.5"': 3.81, '1.6"': 4.06, '2"': 5.08, '4"': 10.16 };
 const LV_BOX = ["1.6×4", "1×2", "2×4", "1×1.6"];
@@ -1483,6 +1618,6 @@ export const CUT_SPECS: CutSpec[] = [
   VELORA_SWING, SMS240_BIFOLD, EURO_BIFOLD, EURO_BIFOLD_CORNER, EURO_LIFT,
   FUJI_SLIDE, FUJI_SWING, FUJI_DOOR, FUJI_FIX, FUJI_HUNG,
   PC_DOOR, GATE_SLIDE, SOLID_DOOR, WOODJAMB_SWING,
-  AWNING, AWNING_L, GABLE_STRAIGHT, GLASSHOUSE, GLASSHOUSE_MULTI, LOUVER_PANEL, TOPRAIL_FRAME,
+  AWNING, AWNING_L, AWNING_MULTI, GABLE_STRAIGHT, GLASSHOUSE, GLASSHOUSE_MULTI, LOUVER_PANEL, TOPRAIL_FRAME,
 ];
 export const CUT_SPEC_BY_ID: Record<string, CutSpec> = Object.fromEntries(CUT_SPECS.map((s) => [s.id, s]));

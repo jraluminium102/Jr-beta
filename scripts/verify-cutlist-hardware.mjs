@@ -596,5 +596,73 @@ function check(label, res, want) {
   if (s5any || (sheet5 && sheet5.qty !== 0)) { fails++; console.log("  ✗ ด้าน 5 (ไม่ใช้งาน) ต้อง qty=0 ทุกโปรไฟล์"); } else console.log("  ✓ ด้าน 5/6 (ไม่ใช้งาน) qty=0 ทุกโปรไฟล์ (side5W/6W=0)");
 }
 
+// ── J) กันสาดหลายด้าน (AWNING_MULTI) — เหมือน GLASSHOUSE_MULTI + หัก ⑦ (จันทันรายตัว) + ⑥ เหล็ก/เพลท ──
+//   ใช้ input เดียวกับ GLASSHOUSE_MULTI (ด้าน1-4 W/P = 400/150,300/100,350/200,200/150 · รอยต่อ นูน/เว้า/นูน · สูง270/240)
+//   raw จันทัน (ก่อนหัก ⑦) เหมือน GLASSHOUSE_MULTI เป๊ะ: ด้าน1[153×5,0] ด้าน2[0,58,43.5,0] ด้าน3[0,202.2,202.2,134.8,0] ด้าน4[0,76.5,153,153,153]
+{
+  const spec = CUT_SPEC_BY_ID["awning_multi"];
+  const res = computeCutList(spec, { ...spec.defaults }, 1); // default roofEnd=รางน้ำ → หัก 10.2
+  const rowsOf = (name) => res.rows.filter((r) => r.name.startsWith(name) && r.qty > 0);
+  const rowAt = (name) => res.rows.find((r) => r.name === name);
+  console.log("กันสาดหลายด้าน (AWNING_MULTI):");
+
+  // ③.5 จันทันรายตัว — หัก amEndCut(รางน้ำ=10.2) จาก raw แล้ว floor 0 (raw=0 ที่ชนตะเข้ยังคง 0)
+  const s1 = rowsOf("จันทัน ด้าน 1 #");
+  if (s1.length !== 5 || s1.some((r) => Math.abs(r.len - 142.8) > 0.05)) { fails++; console.log(`  ✗ ด้าน1 (รางน้ำ) ต้องมี 5 เส้น ยาว 142.8 (153-10.2) got ${JSON.stringify(s1.map((r) => r.len))}`); }
+  else console.log("  ✓ ด้าน1 (รางน้ำ) จันทัน 5 เส้น × 142.8 ซม. (153-10.2)");
+  const s1e1 = rowAt("จันทัน ด้าน 1 #1");
+  if (!s1e1 || s1e1.code !== 'กล่อง 4"x4"') { fails++; console.log(`  ✗ ด้าน1 #1 (ริมเปิด) ต้องเป็นกล่อง 4"x4" got ${s1e1?.code}`); } else console.log('  ✓ ด้าน1 #1 (ริมเปิด) = กล่อง 4"x4" (เหมือน GLASSHOUSE_MULTI)');
+  const s1int = rowAt("จันทัน ด้าน 1 #2");
+  if (!s1int || s1int.code !== 'กล่อง 1.6"x4"') { fails++; console.log(`  ✗ ด้าน1 #2 (ในตัว) ต้องเป็นกล่อง 1.6"x4" got ${s1int?.code}`); } else console.log('  ✓ ด้าน1 #2 (ในตัว) = กล่อง 1.6"x4"');
+
+  const s2 = rowsOf("จันทัน ด้าน 2 #");
+  const s2lens = s2.map((r) => r.len).sort((a, b) => a - b);
+  if (s2.length !== 2 || Math.abs(s2lens[0] - 33.3) > 0.05 || Math.abs(s2lens[1] - 47.8) > 0.05) { fails++; console.log(`  ✗ ด้าน2 (ประกบตะเข้ 2 ฝั่ง) ต้องมี 2 เส้น [33.3,47.8] (43.5/58 -10.2) got ${JSON.stringify(s2lens)}`); }
+  else console.log("  ✓ ด้าน2 จันทัน jack สั้น 2 เส้น [33.3, 47.8] (หัก 10.2 จาก raw 43.5/58)");
+
+  const s4last = rowAt("จันทัน ด้าน 4 #5");
+  if (!s4last || Math.abs(s4last.len - 142.8) > 0.05 || s4last.code !== 'กล่อง 4"x4"') { fails++; console.log(`  ✗ ด้าน4 #5 (ริมเปิด) ต้อง 142.8 กล่อง 4"x4" got ${JSON.stringify(s4last)}`); } else console.log('  ✓ ด้าน4 #5 (ริมเปิด) = 142.8 ซม. กล่อง 4"x4"');
+
+  // roofEnd → amEndCut ต่างกัน (ยื่นปลาย=10 · ปิดปลาย=12.5 · รางน้ำ=10.2)
+  const outEnd = computeCutList(spec, { ...spec.defaults, roofEnd: "ยื่นปลาย" }, 1);
+  const closedEnd = computeCutList(spec, { ...spec.defaults, roofEnd: "ปิดปลาย" }, 1);
+  const s1out = outEnd.rows.find((r) => r.name === "จันทัน ด้าน 1 #1")?.len;
+  const s1closed = closedEnd.rows.find((r) => r.name === "จันทัน ด้าน 1 #1")?.len;
+  if (Math.abs(s1out - 143.0) > 0.05) { fails++; console.log(`  ✗ ยื่นปลาย (หัก10) ด้าน1#1 ต้อง 143.0 got ${s1out}`); } else console.log("  ✓ roofEnd=ยื่นปลาย → หัก 10 · ด้าน1#1 = 143.0");
+  if (Math.abs(s1closed - 140.5) > 0.05) { fails++; console.log(`  ✗ ปิดปลาย (หัก12.5) ด้าน1#1 ต้อง 140.5 got ${s1closed}`); } else console.log("  ✓ roofEnd=ปิดปลาย → หัก 12.5 · ด้าน1#1 = 140.5");
+
+  // ตะเข้ (ไม่กระทบจาก ⑦ — geometric ล้วน เหมือน GLASSHOUSE_MULTI)
+  const hip12 = rowAt("ตะเข้ ด้าน 1-2"), hip23 = rowAt("ตะเข้ ด้าน 2-3"), hip34 = rowAt("ตะเข้ ด้าน 3-4");
+  const wantHip = [[hip12, 182.8, "1-2"], [hip23, 225.6, "2-3"], [hip34, 251.8, "3-4"]];
+  for (const [row, want, label] of wantHip) {
+    if (!row || Math.abs(row.len - want) > 0.05 || row.qty !== 1) { fails++; console.log(`  ✗ ตะเข้ ${label} ต้อง ${want} ซม. got ${JSON.stringify(row)}`); } else console.log(`  ✓ ตะเข้ ${label} = ${want} ซม. (ไม่หัก ⑦)`);
+  }
+
+  // ⑥ เหล็ก + ฝาครอบ ด้าน 1 — ฉาก/แซด ยาว=B(กว้างดิบ 400) จำนวน=⌈400/600⌉=1 · กล่องเหล็ก/ครอบเพลท ยาว=E(153.0)/÷3 จำนวน=จันทันรวม(5)
+  const angle1 = rowAt("ฉาก 6 หุน ด้าน 1 (เหล็ก)");
+  if (!angle1 || angle1.qty !== 1 || Math.abs(angle1.len - 400) > 0.05) { fails++; console.log(`  ✗ ฉาก6หุน ด้าน1 ต้อง len=400 qty=1 got ${JSON.stringify(angle1)}`); } else console.log("  ✓ ฉาก 6 หุน ด้าน1 len=400(กว้างดิบ) qty=1");
+  const zed1 = rowAt('แซด 4" ด้าน 1 (เหล็ก)');
+  if (!zed1 || zed1.qty !== 1 || Math.abs(zed1.len - 400) > 0.05) { fails++; console.log(`  ✗ แซด4" ด้าน1 ต้อง len=400 qty=1 got ${JSON.stringify(zed1)}`); } else console.log('  ✓ แซด 4" ด้าน1 len=400 qty=1');
+  const steelBox1 = rowAt("กล่องเหล็ก 1×1 ด้าน 1");
+  if (!steelBox1 || steelBox1.qty !== 5 || Math.abs(steelBox1.len - 153.0) > 0.05) { fails++; console.log(`  ✗ กล่องเหล็ก1×1 ด้าน1 ต้อง len=153.0 qty=5 got ${JSON.stringify(steelBox1)}`); } else console.log("  ✓ กล่องเหล็ก 1×1 ด้าน1 len=153.0(=E) qty=5(จันทันรวม)");
+  const plateCap1 = rowAt("กล่องครอบเพลท 1.6×4 ด้าน 1");
+  if (!plateCap1 || plateCap1.qty !== 5 || Math.abs(plateCap1.len - 51.0) > 0.05) { fails++; console.log(`  ✗ กล่องครอบเพลท ด้าน1 ต้อง len=51.0(153÷3) qty=5 got ${JSON.stringify(plateCap1)}`); } else console.log("  ✓ กล่องครอบเพลท ด้าน1 len=51.0(E÷3) qty=5");
+  const cover1 = rowAt("ฝาครอบ ด้าน 1");
+  if (!cover1 || cover1.qty !== 20 || Math.abs(cover1.len - 153.0) > 0.05) { fails++; console.log(`  ✗ ฝาครอบ ด้าน1 (ไวนิล) ต้อง qty=20(=K,แผ่น) len=153.0 got ${JSON.stringify(cover1)}`); } else console.log("  ✓ ฝาครอบ ด้าน1 (ไวนิล) qty=20(=มหK แผ่น) len=153.0");
+  // โพลีตัน → ฝาครอบ จำนวน = จันทันรวม (ไม่ใช่ K)
+  const polyRes = computeCutList(spec, { ...spec.defaults, sheet: "โพลีตัน" }, 1);
+  const cover1Poly = polyRes.rows.find((r) => r.name === "ฝาครอบ ด้าน 1");
+  if (!cover1Poly || cover1Poly.qty !== 5) { fails++; console.log(`  ✗ ฝาครอบ ด้าน1 (โพลีตัน) ต้อง qty=5(จันทันรวม) got ${cover1Poly?.qty}`); } else console.log("  ✓ ฝาครอบ ด้าน1 (โพลีตัน) qty=5(จันทันรวม แทน K)");
+
+  // เพลทเหล็ก (รวมทุกด้าน) = 2×Σจันทันรวม (ด้าน1=5,ด้าน2=2,ด้าน3=3,ด้าน4=4 → รวม14 ×2=28)
+  const plateAll = rowAt("เพลทเหล็ก (รวมทุกด้าน)");
+  if (!plateAll || plateAll.qty !== 28) { fails++; console.log(`  ✗ เพลทเหล็ก(รวมทุกด้าน) ต้อง qty=28 (2×(5+2+3+4)) got ${plateAll?.qty}`); } else console.log("  ✓ เพลทเหล็ก (รวมทุกด้าน) qty=28 (2×Σจันทันรวม 5+2+3+4)");
+
+  // ด้าน 5/6 ไม่ใช้งาน — ⑥ เหล็ก/เพลท ต้อง qty=0 เช่นกัน
+  const angle5 = rowAt("ฉาก 6 หุน ด้าน 5 (เหล็ก)");
+  const steelBox5 = rowAt("กล่องเหล็ก 1×1 ด้าน 5");
+  if ((angle5 && angle5.qty !== 0) || (steelBox5 && steelBox5.qty !== 0)) { fails++; console.log("  ✗ ด้าน 5 (ไม่ใช้งาน) ⑥ เหล็ก/กล่องเหล็ก ต้อง qty=0"); } else console.log("  ✓ ด้าน 5/6 (ไม่ใช้งาน) ⑥ เหล็ก/กล่องเหล็ก qty=0 ทุกโปรไฟล์");
+}
+
 console.log(fails === 0 ? "\n✅ verify-cutlist-hardware ผ่านหมด" : `\n❌ ล้มเหลว ${fails} จุด`);
 process.exit(fails === 0 ? 0 : 1);
