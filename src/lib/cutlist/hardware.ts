@@ -17,8 +17,8 @@ export const HANDLE_SKU: Record<string, string> = {
 };
 export const HANDLE_BRANDS = ["เมโทร", "Align"];
 export const HANDLE_COLORS = ["อบขาว", "ดำ"];
-// ชนิดมือจับต่อบาน (ซ้าย/ขวา) — ใช้ใน dropdown
-export const HANDLE_TYPES = ["กุญแจ+ล็อค", "ล็อค+ดัมมี่", "ล็อค", "ดัมมี่+ดัมมี่", "ดัมมี่", "Digital lock", "-"];
+// ชนิดมือจับต่อบาน (ซ้าย/ขวา) — ใช้ใน dropdown · "อื่นๆ" = พิมพ์ชื่อเอง (ดู otherHandleRow)
+export const HANDLE_TYPES = ["กุญแจ+ล็อค", "ล็อค+ดัมมี่", "ล็อค", "ดัมมี่+ดัมมี่", "ดัมมี่", "Digital lock", "-", "อื่นๆ"];
 
 const brandOf = (o: CutInput) => o.handleBrand || "เมโทร";
 const colorOf = (o: CutInput) => o.handleColor || "อบขาว";
@@ -53,6 +53,8 @@ export function handleHardware(handles: "LR" | "L" = "LR"): HardwareDef[] {
     { name: "ปลายมือจับ ดำ", sku: "JR00476", qty: (o) => 2 * lockCount(P(o)), unit: "อัน" },
     { name: "ตัวที เงิน", sku: "JR00475", qty: (o) => lockCount(P(o)), unit: "อัน" },
     { name: "ก้ามปูรับล็อค", sku: "JR00477", qty: (o) => 2 * lockCount(P(o)), unit: "อัน" },
+    otherHandleRow("handleL", { label: "มือจับ ซ้าย (อื่นๆ)" }),
+    ...(handles === "LR" ? [otherHandleRow("handleR", { label: "มือจับ ขวา (อื่นๆ)" })] : []),
   ];
 }
 
@@ -64,6 +66,25 @@ export type HardwareDef = {
   note?: string;
   noStock?: boolean;
 };
+
+/**
+ * แถวอุปกรณ์ "อื่นๆ พิมพ์เอง" — ใช้ร่วมกับทุก opt ที่มีตัวเลือก "อื่นๆ" (มือจับ/มือจับใบแม่-ใบลูก ฯลฯ)
+ *   key = ชื่อฟิลด์ตัวเลือก (เช่น "handleL","motherHandle") · ค่าข้อความที่พิมพ์เก็บคู่กันที่ `${key}_other`
+ *   เมื่อค่า option = "อื่นๆ" → ออกแถว noStock 1 รายการ ชื่อ = ข้อความที่พิมพ์ (ว่าง = label เริ่มต้น)
+ *   gate = เงื่อนไขเพิ่มเติม (เช่น มือจับใบลูก ต้องมีบานลองก่อน) — ไม่ใส่ = ใช้ได้เสมอ
+ */
+export function otherHandleRow(key: string, opts?: { label?: string; gate?: (o: CutInput) => boolean }): HardwareDef {
+  const otherKey = `${key}_other`;
+  const gate = opts?.gate ?? (() => true);
+  const label = opts?.label ?? "มือจับ (อื่นๆ)";
+  return {
+    name: (o) => String((o as unknown as Record<string, unknown>)[otherKey] ?? "").trim() || label,
+    qty: (o) => (gate(o) && (o as unknown as Record<string, unknown>)[key] === "อื่นๆ" ? 1 : 0),
+    unit: "ชุด",
+    noStock: true,
+    note: "พิมพ์เอง — ไม่ตัดสต็อก",
+  };
+}
 
 /**
  * สักหลาด 5×3 (เมตร) — รอบกรอบบาน (ขวางบน+เสากุญแจ) × 4 ต่อบาน + เฟรมบน/ล่าง (รางเสียบ) + เฟรมข้าง

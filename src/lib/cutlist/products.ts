@@ -8,17 +8,23 @@
  */
 import type { CutSpec, CutInput } from "./engine";
 // นามสกุล .ts จำเป็นให้ verify script (node --experimental-strip-types) resolve value import ได้ · bundler/webpack รับปกติ
-import { smsSlideHardware, handleHardware, HANDLE_OPTS_LR, HANDLE_OPTS_L, type HardwareDef } from "./hardware.ts";
+import { smsSlideHardware, handleHardware, otherHandleRow, HANDLE_OPTS_LR, HANDLE_OPTS_L, type HardwareDef } from "./hardware.ts";
 
 // ── อุปกรณ์บานเปิดเดี่ยว (casement/ประตูเดี่ยว) — SKU ชุดเดียวกับบานโซลิด (N=1 ไม่มีบานลอง) · ใช้ร่วม FUJI บานเปิด/ประตู ──
 const SWING_DOOR_OPTS = [
   { key: "hwColor", label: "สีอุปกรณ์", choices: ["ขาว", "ดำ"] },
   { key: "lockType", label: "ตลับกุญแจ", choices: ["ล็อคปกติ", "มัลติพ้อยล็อค"] },
   { key: "openDir", label: "ทิศเปิด", choices: ["เปิดออก", "เปิดเข้า"] },
-  { key: "motherHandle", label: "มือจับ", choices: ["คิงโบ ล็อค+กุญแจ", "คิงโบ ดัมมี่+ดัมมี่", "Cmech"] },
+  // Cmech แตก 3 sub-choice ตรงไฟล์ v2 (FUJI ประตูเดี่ยว มีธรณี B67 · COUNTIF 5 แบบ) — ห้ามใช้ "Cmech" เดี่ยว (ออก SKU เกินจริง)
+  { key: "motherHandle", label: "มือจับ", choices: ["คิงโบ ล็อค+กุญแจ", "คิงโบ ดัมมี่+ดัมมี่", "Cmech กุญแจ+ล็อค", "Cmech ล็อค+ดัมมี่", "Cmech ดัมมี่+ดัมมี่", "อื่นๆ"] },
 ];
 const SWING_DOOR_DEF = { hwColor: "ขาว", lockType: "ล็อคปกติ", openDir: "เปิดออก", motherHandle: "คิงโบ ล็อค+กุญแจ" };
 // hasSill = มีธรณี (น็อตเฟรม 8 · ยางวงกบวนรอบ) · sashN = จำนวนบาน (บานพับ/สปิง/ฉาก คูณ)
+// ⚠ Cmech แตก 3 SKU ตามไฟล์ v2 (FUJI ประตูเดี่ยว มีธรณี R71-86 · AP/AY/AZ column):
+//   "Cmech กุญแจ+ล็อค" → กุญแจ JR00293(noStock)=1 + ล็อค JR00291=1 (ดัมมี่=0)
+//   "Cmech ล็อค+ดัมมี่" → ล็อค JR00291=1 + ดัมมี่ JR00289=1 (กุญแจ=0)
+//   "Cmech ดัมมี่+ดัมมี่" → ดัมมี่ JR00289=2 (กุญแจ/ล็อค=0)
+//   + เพิ่ม CDQ/ปลายกลอน (บานลอง) ให้ครบชุดกับ SOLID_DOOR — ประตูเดี่ยว/บานเปิดตระกูลนี้ไม่มีบานลอง (N คงที่ 1) → เป็น 0 เสมอ (พอร์ตตามไฟล์)
 function casementDoorHardware(hasSill: (o: CutInput) => boolean, sashN: (o: CutInput) => number = () => 1): HardwareDef[] {
   return [
     { name: "บานพับ hyda", sku: (o) => (o.hwColor === "ดำ" ? "JR00488" : "JR00489"), qty: (o) => (o.H > 300 || o.W / sashN(o) > 120 ? 5 : 4) * sashN(o), unit: "ตัว" },
@@ -26,10 +32,15 @@ function casementDoorHardware(hasSill: (o: CutInput) => boolean, sashN: (o: CutI
     { name: "ฉากประคองมุม", sku: "JR00557", qty: (o) => 8 * sashN(o), unit: "ตัว" },
     { name: "มือจับ ล็อค+กุญแจ (คิงโบ)", sku: (o) => (o.hwColor === "ดำ" ? "JR00314" : "JR00315"), qty: (o) => (o.motherHandle === "คิงโบ ล็อค+กุญแจ" ? 1 : 0), unit: "ชุด" },
     { name: "มือจับ ดัมมี่+ดัมมี่ (คิงโบ)", sku: (o) => (o.hwColor === "ดำ" ? "JR00312" : "JR00313"), qty: (o) => (o.motherHandle === "คิงโบ ดัมมี่+ดัมมี่" ? 1 : 0), unit: "ชุด" },
-    { name: "มือจับ Cmech", qty: (o) => (o.motherHandle === "Cmech" ? 1 : 0), unit: "ชุด", noStock: true, note: "ไม่ตัดสต็อก" },
+    { name: "มือจับ Cmech กุญแจ", sku: "JR00293", qty: (o) => (o.motherHandle === "Cmech กุญแจ+ล็อค" ? 1 : 0), unit: "ชุด", noStock: true, note: "ไม่ตัดสต็อก" },
+    { name: "มือจับ Cmech ล็อค", sku: "JR00291", qty: (o) => (o.motherHandle === "Cmech กุญแจ+ล็อค" || o.motherHandle === "Cmech ล็อค+ดัมมี่" ? 1 : 0), unit: "ชุด" },
+    { name: "มือจับ Cmech ดัมมี่", sku: "JR00289", qty: (o) => (o.motherHandle === "Cmech ล็อค+ดัมมี่" ? 1 : 0) + (o.motherHandle === "Cmech ดัมมี่+ดัมมี่" ? 2 : 0), unit: "ชุด" },
+    otherHandleRow("motherHandle"),
     { name: "ตลับกุญแจไฮด้า", sku: (o) => (o.lockType === "มัลติพ้อยล็อค" ? "JR00553" : "JR00551"), qty: () => 1, unit: "ตัว" },
     { name: "ไส้กุญแจ", sku: (o) => (o.openDir === "เปิดเข้า" ? "JR00498" : "JR00499"), qty: () => 1, unit: "ตัว", note: "auto เข้า/ออก" },
     { name: "แผ่นรับล็อค", sku: "JR00562", qty: () => 1, unit: "ชุด" },
+    { name: "CDQ บานเปิด (บานลอง)", sku: "JR00596", qty: () => 0, unit: "ตัว", note: "บานเดี่ยว (N คงที่ 1) → ไม่มีบานลอง เป็น 0 เสมอ" },
+    { name: "ปลายกลอน (บานลอง)", sku: "JR00598", qty: () => 0, unit: "ตัว", note: "บานเดี่ยว (N คงที่ 1) → ไม่มีบานลอง เป็น 0 เสมอ" },
     { name: "น็อตเฟรม 1\"", sku: "JR00864", qty: (o) => (hasSill(o) ? 8 : 6), unit: "ตัว" },
     { name: "ยางกรอบบาน", sku: "JR00771", qty: (o) => Math.round(2 * (o.W + o.H) / 100 * 10) / 10, unit: "เมตร" },
     { name: "ยางวงกบ", sku: "JR00771", qty: (o) => Math.round((hasSill(o) ? 2 * (o.W + o.H) : o.W + 2 * o.H) / 100 * 10) / 10, unit: "เมตร" },
@@ -96,7 +107,13 @@ export const SMS_SLIDE_CENTER: CutSpec = {
   hardware: smsSlideHardware(() => 2, "LR", "เสากุญแจมัลติพ้อย"),
 };
 
-/** ③ SMS ลากจูง (sheet "ลากจูง" · กองข้างเดียว) — N=3 ลากจูง · N=2 เลื่อนเดี่ยว · รหัสเสากุญแจไฟล์พิมพ์ "20051" (ตกตัว B → ใช้ B20051) */
+/**
+ * ③ SMS ลากจูง (sheet "ลากจูง" v2 · กองข้างเดียว) — N=3 ลากจูง · N=2 เลื่อนเดี่ยว · รหัสเสากุญแจไฟล์พิมพ์ "20051" (ตกตัว B → ใช้ B20051)
+ * v2 แก้ 2 เส้น (ยืนยัน N=3 = ค่าปัจจุบัน) — อ่านจาก JR_SMS_เลื่อนอิสระ_รวมv2.xlsx sheet "ลากจูง" D20/D21:
+ *   ตบร่องบานเลื่อน: N≤2 = ขวางบน+4.7−0.4 · N≥3 = ขวางบน+4.7 (เดิม N≥3 เท่านั้น ไม่มีกิ่ง N≤2)
+ *   ตบร่องบานตาย: N≤2 = W−7 · N≥3 = (W−4.4)−1.3−ขวางบน−9.7×(N−2) (เดิม −11 คงที่ ไม่ผูก N)
+ */
+const towCross = (o: CutInput) => (o.W - 4.2 * o.N - 11.2) / o.N; // ขวางบน (ใช้ร่วมตบร่องบานเลื่อน/บานตาย)
 export const SMS_SLIDE_TOW: CutSpec = {
   id: "sms_slide_tow",
   name: "SMS บานเลื่อนลากจูง (กองข้างเดียว)",
@@ -114,8 +131,8 @@ export const SMS_SLIDE_TOW: CutSpec = {
     { name: "ขวางบน", code: "B20054", len: (o) => (o.W - 4.2 * o.N - 11.2) / o.N, qty: (o) => o.N },
     { name: "ขวางล่าง", code: "B20054", len: (o) => (o.W - 4.2 * o.N - 11.2) / o.N, qty: (o) => o.N },
     { name: "ฝาปิดเฟรมข้าง", code: "B20019", len: (o) => o.H - (isPlug(o.rail) ? 5 : 2.3), qty: () => 4 },
-    { name: "ตบร่องบานเลื่อน", code: "-", len: (o) => (o.W - 4.2 * o.N - 11.2) / o.N + 4.7, qty: () => 2, note: "ขวางบน + 4.7" },
-    { name: "ตบร่องบานตาย", code: "-", len: (o) => (o.W - 4.4) - (o.W - 4.2 * o.N - 11.2) / o.N - 11, qty: () => 2, note: "เฟรมบน − ขวางบน − 11" },
+    { name: "ตบร่องบานเลื่อน", code: "-", len: (o) => towCross(o) + (o.N <= 2 ? 4.3 : 4.7), qty: () => 2, note: "N≤2: ขวางบน+4.7−0.4 · N≥3: ขวางบน+4.7" },
+    { name: "ตบร่องบานตาย", code: "-", len: (o) => (o.N <= 2 ? o.W - 7 : (o.W - 4.4) - 1.3 - towCross(o) - 9.7 * (o.N - 2)), qty: () => 2, note: "N≤2: W−7 · N≥3: (W−4.4)−1.3−ขวางบน−9.7×(N−2)" },
     { name: "เบรคบาน (ธรณี)", code: "B20050", len: (o) => o.W - 4.4, qty: (o) => (o.rail === "รางเตี้ย7มม" ? 2 : 0) },
   ],
   // ลากจูง: บานที่ขยับ = N−1 (กองข้างเดียว) · มือจับชุดเดียว
@@ -123,14 +140,22 @@ export const SMS_SLIDE_TOW: CutSpec = {
 };
 
 /**
- * ④ SlimLux บานเลื่อนรางบน (JR_SlimLux_บานเลื่อน.xlsx)
+ * ④ SlimLux บานเลื่อนรางบน (JR_SlimLux_บานเลื่อน v2.xlsx)
  * ⚠ ชีตไม่มีคอลัมน์เส้นสต็อก → ใส่ 640 ไว้ก่อน (TODO เจ้าของยืนยัน)
  * ⚠ ตบเรียบบานตาย: Excel จำนวน = 0 คงที่ (F57) ไม่ผูกจำนวนบานตาย — พอร์ตตาม (แก้มือเมื่อมีบานตาย)
  * รหัสรุ่นเป็น OPK/XSW/WM (ไม่ใช่ B####) — ถ้าจะผูกสต็อกต้องมี sku พวกนี้ในหน้าสต๊อก
+ * v2: "เสารับบาน" เปลี่ยนจากเลือกกล่องอัตโนมัติ(ตาม N) → ผู้ใช้เลือกกล่องเอง (dropdown C16 ในไฟล์)
+ *   รองรับกล่องผสมคั่นด้วย "+" (เช่น "1×4+1×4+1×1.6") · จำนวนกล่องรวม = (จำนวน "+" + 1) × ฝั่ง(แปะนอก=1/ยัดใน=2)
+ *   แตกหักสต็อกเป็นกล่องย่อยตามรหัส (Excel R85-89: 1×1.6/1×4/1×3 เท่านั้นที่มีในตัวเลือก v2)
  */
 const slimBeamCut = (beam?: string) =>
   ({ "1×2": 2.5, "2×2": 5, "1×4": 2.5, "2×4": 5, "1×4+1×1.6": 2.5, "2×4+4×4": 10.2, "4×4": 10.2 } as Record<string, number>)[beam ?? "1×4"] ?? 2.5;
 const slimDead = (m?: string) => (m === "ลากจูง" ? 1 : m === "เปิดคู่กลาง" ? 2 : 0);
+// เสารับบาน v2 — เลือกกล่องเอง (คั่น "+" = กล่องผสม) · choices ตรงดรอปดาว C16 ในไฟล์ (default "1×4+1×4")
+const RECEIVER_BOX_CHOICES = ["1×1.6", "1×4", "1×3+1×3", "1×4+1×4", "1×4+1×4+1×1.6", "1×4+1×4+1×4"];
+const receiverSegs = (text?: string) => String(text ?? "1×4+1×4").split("+").map((s) => s.trim()).filter(Boolean);
+// จำนวนกล่องขนาด size ในตัวเลือกที่พิมพ์/เลือก × ฝั่ง (แปะนอก=1 · ยัดในช่อง=2) — ตรง Excel R87-89 (÷ความยาวรหัส × ฝั่ง)
+const receiverCount = (o: CutInput, size: string) => receiverSegs(o.receiverBox).filter((s) => s === size).length * (o.fit === "แปะนอก" ? 1 : 2);
 
 export const SLIMLUX_SLIDE: CutSpec = {
   id: "slimlux_slide",
@@ -141,17 +166,21 @@ export const SLIMLUX_SLIDE: CutSpec = {
     { key: "fit", label: "รูปแบบช่องปูน", choices: ["ยัดในช่อง", "แปะนอก"] },
     { key: "sashMode", label: "รูปแบบบาน", choices: ["อิสระ", "ลากจูง", "เปิดคู่กลาง"] },
     { key: "beam", label: "คาน (กล่อง)", choices: ["1×2", "2×2", "1×4", "2×4", "1×4+1×1.6", "2×4+4×4", "4×4"] },
-    { key: "handle", label: "มือจับ", choices: ["X-J", "ไม่มี"] },
+    { key: "handle", label: "มือจับ", choices: ["X-J", "ไม่มี", "อื่นๆ"] },
     { key: "boxSide", label: "กล่องสั้น (บานกลาง) ด้าน", choices: ["ซ้าย", "ขวา"] },
+    { key: "receiverBox", label: "กล่องเสารับบาน", choices: RECEIVER_BOX_CHOICES },
   ],
-  defaults: { W: 300, H: 240, N: 3, rail: "", honk: false, fit: "ยัดในช่อง", sashMode: "อิสระ", beam: "1×4", handle: "X-J", boxSide: "ซ้าย" },
+  defaults: { W: 300, H: 240, N: 3, rail: "", honk: false, fit: "ยัดในช่อง", sashMode: "อิสระ", beam: "1×4", handle: "X-J", boxSide: "ซ้าย", receiverBox: "1×4+1×4" },
   profiles: [
     // คาน: รหัสต้องเป็นรูปแบบสต็อกจริง กล่อง 1"x4" (เดิมออก "กล่อง 1×4" → จับสต็อกไม่ติด โชว์ไม่มีในสต็อก)
     // คานผสม (1×4+1×1.6 / 2×4+4×4) = 2 กล่องตัดยาวเท่ากัน → แตกเป็น 2 โปรไฟล์ (ตัวเสริมอยู่บรรทัดถัดไป)
     { name: "คาน", code: (o) => beamBoxCodes(o.beam ?? "1×4")[0] ?? "-", len: (o) => (o.fit === "แปะนอก" ? o.W * 2 : o.W), qty: () => 1, note: "ยัดในช่อง=W · แปะนอก=W×2" },
     { name: "คาน (กล่องตัวที่ 2 — คานผสม)", code: (o) => beamBoxCodes(o.beam ?? "1×4")[1] ?? "-", len: (o) => (o.fit === "แปะนอก" ? o.W * 2 : o.W), qty: (o) => (beamBoxCodes(o.beam ?? "1×4").length > 1 ? 1 : 0) },
     { name: "รางบน (รางแขวน)", code: "XSW40008", len: (o) => (o.fit === "แปะนอก" ? o.W * 2 : o.W - 5), qty: (o) => o.N - slimDead(o.sashMode), note: "จำนวน = บานเลื่อน" },
-    { name: "เสารับบาน", code: (o) => boxCode(o.N === 1 ? "1×2" : o.N === 2 ? "1×4" : "1×3"), len: (o) => o.H - slimBeamCut(o.beam), qty: (o) => (o.fit === "แปะนอก" ? 1 : 2) },
+    // เสารับบาน v2: แตกตามกล่องที่เลือก (receiverBox) — ยาวเท่ากันทุกท่อน ต่างแค่รหัส/จำนวนต่อขนาดกล่อง
+    { name: "เสารับบาน (กล่อง 1×1.6)", code: () => boxCode("1×1.6"), len: (o) => o.H - slimBeamCut(o.beam), qty: (o) => receiverCount(o, "1×1.6") },
+    { name: "เสารับบาน (กล่อง 1×4)", code: () => boxCode("1×4"), len: (o) => o.H - slimBeamCut(o.beam), qty: (o) => receiverCount(o, "1×4") },
+    { name: "เสารับบาน (กล่อง 1×3)", code: () => boxCode("1×3"), len: (o) => o.H - slimBeamCut(o.beam), qty: (o) => receiverCount(o, "1×3") },
     { name: "บังใบ 4 หุน", code: "-", len: (o) => o.H - slimBeamCut(o.beam) - 3.6, qty: () => 2 },
     { name: "ขวางบน-ล่าง", code: "OPK-A201", len: (o) => (o.fit === "แปะนอก" ? (o.W - 0.8) / o.N + 0.2 * o.N : (o.W - 5) / o.N + 0.2 * o.N), qty: (o) => 2 * o.N },
     { name: "เสากุญแจ", code: "OPK-A202", len: (o) => o.H - slimBeamCut(o.beam) - 12.1, qty: (o) => 2 * o.N, stockLens: [480, 600], note: "เส้นมี 2 ขนาด 4.8/6 ม. — เลือกอันคุ้มสุด" },
@@ -169,6 +198,7 @@ export const SLIMLUX_SLIDE: CutSpec = {
     { name: "กล่องสั้น ซ้าย (บานกลาง)", sku: "JR00575", qty: (o) => (o.boxSide === "ซ้าย" ? Math.max(o.N - 2, 0) : 0), unit: "กล่อง" },
     { name: "กล่องสั้น ขวา (บานกลาง)", sku: "JR00574", qty: (o) => (o.boxSide === "ขวา" ? Math.max(o.N - 2, 0) : 0), unit: "กล่อง" },
     { name: "ล้อล่าง", sku: "JR00572", qty: (o) => 2 * (o.N - slimDead(o.sashMode)), unit: "ตัว", note: "บานเลื่อนละ 2 ตัว" },
+    otherHandleRow("handle"),
   ],
 };
 
@@ -521,21 +551,40 @@ export const FUJI_SLIDE: CutSpec = {
   ],
 };
 
-// ⑩ FUJI บานเปิด/กระทุ้ง (casement · JR_FUJI_บานเปิด-บานกระทุ้ง.xlsx)
+/**
+ * ⑩ FUJI บานเปิด/กระทุ้ง (casement · JR_FUJI_บานเปิด-บานกระทุ้ง v2.xlsx — เทียบทุกเส้นกับชีทจริง "FUJI บานเปิด")
+ * v2 เปลี่ยน 3 อย่าง (เจ้าของยืนยัน มุ้ง/กันสาด = ตัวเลือก ใส่/ไม่ใส่):
+ *   1) รหัสเฟรมข้าง/เฟรมบน ผูกกับมุ้ง (2 sheet แยกกันจริงในไฟล์): ไม่ใส่มุ้ง = F7859 (sheet "FUJI บานเปิด") · ใส่มุ้ง = F7938 (sheet "FUJI บานเปิด+มุ้ง")
+ *   2) เพิ่ม opt "มุ้ง" → ใส่ = เสามุ้ง F7944 + ขวางมุ้ง(อลูเดียวกัน) + คิ้วมุ้ง ตั้ง/ขวาง F7949 (ยาวเท่า เสา/ขวาง/คิ้วตั้ง/คิ้วขวาง เดิมทุกเส้น)
+ *   3) เพิ่ม opt "กันสาด" → ใส่ = กันสาด F7948 ยาว=W (มม.) qty 1
+ * เส้นเดิม 7 เส้น (เฟรมข้าง/บน/ล่าง/เสา/ขวาง/คิ้วตั้ง/คิ้วขวาง) สูตรความยาวตรงกับไฟล์ v2 เป๊ะ (ไม่เปลี่ยน) — เทียบละเอียดในรายงาน PR
+ */
 export const FUJI_SWING: CutSpec = {
   id: "fuji_swing", name: "FUJI บานเปิด (เปิด/กระทุ้ง)", stockLen: 640, rails: [],
-  opts: [...SWING_DOOR_OPTS],
-  defaults: { W: 80, H: 140, N: 1, rail: "", honk: false, ...SWING_DOOR_DEF },
+  opts: [
+    ...SWING_DOOR_OPTS,
+    { key: "mesh", label: "มุ้ง", choices: ["ไม่ใส่", "ใส่"] },
+    { key: "awning", label: "กันสาด", choices: ["ไม่ใส่", "ใส่"] },
+  ],
+  defaults: { W: 80, H: 140, N: 1, rail: "", honk: false, ...SWING_DOOR_DEF, mesh: "ไม่ใส่", awning: "ไม่ใส่" },
   profiles: [
-    { name: "เฟรมข้าง", code: "F7859", len: (o) => o.H, qty: () => 2 },
-    { name: "เฟรม บน", code: "F7859", len: (o) => o.W - 5.0, qty: () => 1, note: "อลูเดียวกับเฟรมข้าง" },
+    // รหัสผูกกับมุ้ง: ไม่ใส่=F7859 (sheet เดิม) · ใส่=F7938 (sheet +มุ้ง) — ยาวเท่าเดิมทั้ง 2 กรณี
+    { name: "เฟรมข้าง", code: (o) => (o.mesh === "ใส่" ? "F7938" : "F7859"), len: (o) => o.H, qty: () => 2 },
+    { name: "เฟรม บน", code: (o) => (o.mesh === "ใส่" ? "F7938" : "F7859"), len: (o) => o.W - 5.0, qty: () => 1, note: "อลูเดียวกับเฟรมข้าง" },
     { name: "เฟรม ล่าง", code: "F7939", len: (o) => o.W - 5.0, qty: () => 1 },
     { name: "เสา", code: "F7943", len: (o) => o.H - 3.7, qty: () => 2 },
     { name: "ขวาง", code: "F7943", len: (o) => o.W - 3.7, qty: () => 2, note: "อลูเดียวกับเสา" },
     { name: "คิ้ว ตั้ง", code: "F7935", len: (o) => o.H - 3.7 - 16.0, qty: () => 2 },
     { name: "คิ้ว ขวาง", code: "F7935", len: (o) => o.W - 3.7 - 12.0, qty: () => 2, note: "อลูเดียวกับคิ้วตั้ง" },
+    // ตัวเลือก "มุ้ง" — ยาวเท่า เสา/ขวาง/คิ้วตั้ง/คิ้วขวาง ทุกเส้น (Excel v2 FUJI บานเปิด+มุ้ง R60-63)
+    { name: "เสามุ้ง", code: "F7944", len: (o) => o.H - 3.7, qty: (o) => (o.mesh === "ใส่" ? 2 : 0), note: "ยาวเท่าเสา" },
+    { name: "ขวางมุ้ง", code: "F7944", len: (o) => o.W - 3.7, qty: (o) => (o.mesh === "ใส่" ? 2 : 0), note: "อลูเดียวกับเสามุ้ง · ยาวเท่าขวาง" },
+    { name: "คิ้วมุ้ง ตั้ง", code: "F7949", len: (o) => o.H - 3.7 - 16.0, qty: (o) => (o.mesh === "ใส่" ? 2 : 0), note: "ยาวเท่าคิ้วตั้ง" },
+    { name: "คิ้วมุ้ง ขวาง", code: "F7949", len: (o) => o.W - 3.7 - 12.0, qty: (o) => (o.mesh === "ใส่" ? 2 : 0), note: "อลูเดียวกับคิ้วมุ้งตั้ง · ยาวเท่าคิ้วขวาง" },
+    // ตัวเลือก "กันสาด"
+    { name: "กันสาด", code: "F7948", len: (o) => o.W, qty: (o) => (o.awning === "ใส่" ? 1 : 0) },
   ],
-  // ⑤ อุปกรณ์ FUJI บานเปิด (SKU ชุดเดียวกับบานโซลิด · บานเดี่ยว ไม่มีธรณี)
+  // ⑤ อุปกรณ์ FUJI บานเปิด (SKU ชุดเดียวกับบานโซลิด · บานเดี่ยว ไม่มีธรณี) — มุ้ง/กันสาด ไม่มีฮาร์ดแวร์เพิ่ม (ไฟล์ v2 ไม่มีรายการ)
   hardware: casementDoorHardware(() => false),
 };
 
@@ -696,7 +745,8 @@ export const GATE_SLIDE: CutSpec = {
     { name: "ราง (ฉากเหล็ก+เพลา)", code: "-", len: (o) => o.W * 2 - 50, qty: () => 1, note: "W×2−50" },
   ],
   hardware: [
-    { name: 'ล้อวิ่ง 3"', qty: () => 2, unit: "ลูก" },
+    // v2 (Excel R39): เดิม qty คงที่ 2 → กว้าง>400 เพิ่มล้อทุก 100 ซม.
+    { name: 'ล้อวิ่ง 3"', qty: (o) => 2 + (o.W > 400 ? Math.ceil((o.W - 400) / 100) : 0), unit: "ลูก", note: "2 + กว้าง>400 เพิ่มทุก 100ซม." },
     { name: "ล้อไกด์ประคองหลัง", qty: () => 4, unit: "ชิ้น" },
   ],
 };
@@ -721,8 +771,8 @@ export const SOLID_DOOR: CutSpec = {
     { key: "hwColor", label: "สีอุปกรณ์", choices: ["ขาว", "ดำ"] },
     { key: "lockType", label: "ตลับกุญแจ", choices: ["ล็อคปกติ", "มัลติพ้อยล็อค"] },
     { key: "openDir", label: "ทิศเปิด", choices: ["เปิดออก", "เปิดเข้า"] },
-    { key: "motherHandle", label: "มือจับใบแม่", choices: ["คิงโบ ล็อค+กุญแจ", "คิงโบ ดัมมี่+ดัมมี่", "Cmech"] },
-    { key: "childHandle", label: "มือจับใบลูก", choices: ["ไม่ใส่", "คิงโบ ล็อค+กุญแจ", "คิงโบ ดัมมี่+ดัมมี่", "Cmech"] },
+    { key: "motherHandle", label: "มือจับใบแม่", choices: ["คิงโบ ล็อค+กุญแจ", "คิงโบ ดัมมี่+ดัมมี่", "Cmech", "อื่นๆ"] },
+    { key: "childHandle", label: "มือจับใบลูก", choices: ["ไม่ใส่", "คิงโบ ล็อค+กุญแจ", "คิงโบ ดัมมี่+ดัมมี่", "Cmech", "อื่นๆ"] },
   ],
   defaults: { W: 120, H: 279, N: 2, rail: "", honk: false, sill: "มี", doorSplit: "แม่-ลูก", motherW: 80, hwColor: "ขาว", lockType: "ล็อคปกติ", openDir: "เปิดออก", motherHandle: "คิงโบ ล็อค+กุญแจ", childHandle: "ไม่ใส่" },
   profiles: [
@@ -755,6 +805,8 @@ export const SOLID_DOOR: CutSpec = {
       qty: (o) => (o.motherHandle === "คิงโบ ดัมมี่+ดัมมี่" ? 1 : 0) + (sChildN(o) > 0 && o.childHandle === "คิงโบ ดัมมี่+ดัมมี่" ? 1 : 0) },
     { name: "มือจับ Cmech", unit: "ชุด", noStock: true, note: "ไม่ตัดสต็อก",
       qty: (o) => (o.motherHandle === "Cmech" ? 1 : 0) + (sChildN(o) > 0 && o.childHandle === "Cmech" ? 1 : 0) },
+    otherHandleRow("motherHandle", { label: "มือจับใบแม่ (อื่นๆ)" }),
+    otherHandleRow("childHandle", { label: "มือจับใบลูก (อื่นๆ)", gate: (o) => sChildN(o) > 0 }),
     { name: "ตลับกุญแจไฮด้า", sku: (o) => (o.lockType === "มัลติพ้อยล็อค" ? "JR00553" : "JR00551"), qty: () => 1, unit: "ตัว" },
     { name: "ไส้กุญแจ", sku: (o) => (o.openDir === "เปิดเข้า" ? "JR00498" : "JR00499"), qty: () => 1, unit: "ตัว", note: "auto เข้า/ออก" },
     { name: "แผ่นรับล็อค", sku: "JR00562", qty: () => 1, unit: "ชุด" },

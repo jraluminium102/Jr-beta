@@ -426,19 +426,28 @@ export default function CutlistEditorClient({
                       onChange={(e) => patchInput(it.key, { honk: e.target.checked })} /> มีโหนก
                   </label>
                 )}
-                {/* ตัวเลือกเฉพาะรุ่น (spec.opts) — SlimLux: ช่องปูน/คาน ฯลฯ · เฟี้ยม: พับซ้าย/กระจก · ติดตาย: ชนิดกล่อง */}
-                {(spec?.opts ?? []).map((op) => op.type === "number" ? (
+                {/* ตัวเลือกเฉพาะรุ่น (spec.opts) — SlimLux: ช่องปูน/คาน ฯลฯ · เฟี้ยม: พับซ้าย/กระจก · ติดตาย: ชนิดกล่อง
+                    · choice "อื่นๆ" (มือจับ) → โชว์ช่องพิมพ์เองคู่กัน (เก็บที่ `${key}_other`) */}
+                {(spec?.opts ?? []).flatMap((op) => op.type === "number" ? [
                   <NumField key={op.key} label={op.label} value={it.input[op.key]} disabled={readOnly}
-                    onChange={(v) => patchInput(it.key, { [op.key]: v })} />
-                ) : (
+                    onChange={(v) => patchInput(it.key, { [op.key]: v })} />,
+                ] : [
                   <label key={op.key} className="block"><span className="text-[11px] font-medium text-ink-3">{op.label}</span>
                     <select value={String(it.input[op.key] ?? op.choices?.[0] ?? "")} disabled={readOnly}
                       onChange={(e) => patchInput(it.key, { [op.key]: e.target.value })}
                       className="glass-soft rounded-lg px-2 py-1.5 mt-0.5 outline-none text-sm block disabled:opacity-60">
                       {(op.choices ?? []).map((c) => <option key={c} value={c}>{c}</option>)}
                     </select>
-                  </label>
-                ))}
+                  </label>,
+                  ...(String(it.input[op.key] ?? "") === "อื่นๆ" ? [
+                    <label key={op.key + "_other"} className="block"><span className="text-[11px] font-medium text-ink-3">{op.label} (พิมพ์เอง)</span>
+                      <input type="text" value={String(it.input[`${op.key}_other`] ?? "")} disabled={readOnly}
+                        placeholder="ระบุชื่อ/รุ่น"
+                        onChange={(e) => patchInput(it.key, { [`${op.key}_other`]: e.target.value })}
+                        className="w-32 glass-soft rounded-lg px-2 py-1.5 mt-0.5 outline-none text-sm block disabled:opacity-60" />
+                    </label>,
+                  ] : []),
+                ])}
                 <NumField label="ชุด" value={it.sets} onChange={(v) => patchItem(it.key, { sets: Math.max(1, Math.round(v)) })} disabled={readOnly} narrow />
               </div>
               {/* บรรทัดสรุปอินพุต (สำหรับพิมพ์) */}

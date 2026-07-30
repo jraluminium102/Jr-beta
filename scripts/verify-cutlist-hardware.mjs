@@ -245,6 +245,96 @@ function check(label, res, want) {
     { nameHas: "น็อตเฟรม", sku: "JR00864", qty: 8 },  // มีธรณี → 8
     { nameHas: "แผ่นรับล็อค", sku: "JR00562", qty: 1 },
   ]);
+  // CDQ/ปลายกลอน (บานลอง) — ประตูเดี่ยว N คงที่ 1 (ไม่มีบานลอง) → ต้องเป็น 0 เสมอ (ไม่โผล่ในผลลัพธ์)
+  if (dr.hardware.some((h) => h.name.includes("บานลอง"))) { fails++; console.log("  ✗ FUJIประตู: แถว (บานลอง) ไม่ควรโผล่ (qty ต้อง 0)"); }
+  else console.log("  ✓ FUJIประตู · CDQ/ปลายกลอน (บานลอง) qty=0 ไม่โผล่ (ถูกต้อง — บานเดี่ยว)");
+}
+
+// ── v2: มือจับ Cmech แตก 3 sub-choice ตรงไฟล์ (FUJI ประตูเดี่ยว มีธรณี R71-86 · B67 COUNTIF 5 แบบ) ──
+//   "Cmech กุญแจ+ล็อค" → กุญแจ(noStock)+ล็อค · "Cmech ล็อค+ดัมมี่" → ล็อค+ดัมมี่ · "Cmech ดัมมี่+ดัมมี่" → ดัมมี่×2 (ห้ามออกครบ 3 พร้อมกัน)
+{
+  const spec = CUT_SPEC_BY_ID["fuji_door"];
+  console.log("FUJI ประตูเดี่ยว · Cmech 3 sub-choice (แยกตามไฟล์ v2):");
+
+  const rKL = computeCutList(spec, { ...spec.defaults, motherHandle: "Cmech กุญแจ+ล็อค" }, 1);
+  check("Cmech กุญแจ+ล็อค", rKL, [
+    { nameHas: "Cmech กุญแจ", sku: "JR00293", qty: 1 },
+    { nameHas: "Cmech ล็อค", sku: "JR00291", qty: 1 },
+  ]);
+  if (rKL.hardware.some((h) => h.name.includes("Cmech ดัมมี่"))) { fails++; console.log("  ✗ Cmech กุญแจ+ล็อค: Cmech ดัมมี่ ไม่ควรโผล่ (qty ต้อง 0)"); }
+  else console.log("  ✓ Cmech กุญแจ+ล็อค · Cmech ดัมมี่ ไม่โผล่ (qty=0)");
+  const cmech = rKL.hardware.find((h) => h.name.includes("Cmech กุญแจ"));
+  if (!cmech || !cmech.noStock) { fails++; console.log("  ✗ Cmech กุญแจ ต้อง noStock=true"); } else console.log("  ✓ Cmech กุญแจ noStock=true");
+
+  const rLD = computeCutList(spec, { ...spec.defaults, motherHandle: "Cmech ล็อค+ดัมมี่" }, 1);
+  check("Cmech ล็อค+ดัมมี่", rLD, [
+    { nameHas: "Cmech ล็อค", sku: "JR00291", qty: 1 },
+    { nameHas: "Cmech ดัมมี่", sku: "JR00289", qty: 1 },
+  ]);
+  if (rLD.hardware.some((h) => h.name.includes("Cmech กุญแจ"))) { fails++; console.log("  ✗ Cmech ล็อค+ดัมมี่: Cmech กุญแจ ไม่ควรโผล่ (qty ต้อง 0)"); }
+  else console.log("  ✓ Cmech ล็อค+ดัมมี่ · Cmech กุญแจ ไม่โผล่ (qty=0)");
+
+  const rDD = computeCutList(spec, { ...spec.defaults, motherHandle: "Cmech ดัมมี่+ดัมมี่" }, 1);
+  check("Cmech ดัมมี่+ดัมมี่", rDD, [{ nameHas: "Cmech ดัมมี่", sku: "JR00289", qty: 2 }]);
+  if (rDD.hardware.some((h) => h.name.includes("Cmech กุญแจ") || h.name.includes("Cmech ล็อค"))) { fails++; console.log("  ✗ Cmech ดัมมี่+ดัมมี่: กุญแจ/ล็อค ไม่ควรโผล่ (qty ต้อง 0)"); }
+  else console.log("  ✓ Cmech ดัมมี่+ดัมมี่ · กุญแจ/ล็อค ไม่โผล่ (qty=0)");
+
+  // ยังเลือกคิงโบได้ปกติ (Cmech ไม่ควรโผล่เลย)
+  const rKingbo = computeCutList(spec, { ...spec.defaults }, 1);
+  if (rKingbo.hardware.some((h) => h.name.includes("Cmech"))) { fails++; console.log("  ✗ เลือกคิงโบ (default) ไม่ควรมีแถว Cmech ใดๆ"); }
+  else console.log("  ✓ default คิงโบ · ไม่มีแถว Cmech");
+}
+
+// ── v2: FUJI_SWING รหัสเฟรมข้าง/เฟรมบน ผูกกับมุ้ง (ไม่ใช่ F7938 ตายตัว) — 2 sheet แยกกันจริงในไฟล์ ──
+{
+  const spec = CUT_SPEC_BY_ID["fuji_swing"];
+  const noMesh = computeCutList(spec, { ...spec.defaults, mesh: "ไม่ใส่" }, 1);
+  const withMesh = computeCutList(spec, { ...spec.defaults, mesh: "ใส่" }, 1);
+  const codeOf = (res, name) => res.rows.find((r) => r.name === name)?.code;
+  console.log("FUJI บานเปิด · รหัสเฟรมผูกมุ้ง:");
+  if (codeOf(noMesh, "เฟรมข้าง") !== "F7859" || codeOf(noMesh, "เฟรม บน") !== "F7859") {
+    fails++; console.log(`  ✗ ไม่ใส่มุ้ง ต้องเป็น F7859 (เฟรมข้าง=${codeOf(noMesh, "เฟรมข้าง")} เฟรมบน=${codeOf(noMesh, "เฟรม บน")})`);
+  } else console.log("  ✓ ไม่ใส่มุ้ง · เฟรมข้าง/เฟรมบน = F7859");
+  if (codeOf(withMesh, "เฟรมข้าง") !== "F7938" || codeOf(withMesh, "เฟรม บน") !== "F7938") {
+    fails++; console.log(`  ✗ ใส่มุ้ง ต้องเป็น F7938 (เฟรมข้าง=${codeOf(withMesh, "เฟรมข้าง")} เฟรมบน=${codeOf(withMesh, "เฟรม บน")})`);
+  } else console.log("  ✓ ใส่มุ้ง · เฟรมข้าง/เฟรมบน = F7938");
+  // ความยาวต้องเท่าเดิมไม่ว่ามุ้งจะใส่หรือไม่
+  const lenOf = (res, name) => res.rows.find((r) => r.name === name)?.len;
+  if (lenOf(noMesh, "เฟรมข้าง") !== lenOf(withMesh, "เฟรมข้าง") || lenOf(noMesh, "เฟรม บน") !== lenOf(withMesh, "เฟรม บน")) {
+    fails++; console.log("  ✗ ความยาวเฟรมข้าง/เฟรมบน ต้องเท่ากันไม่ว่ามุ้งใส่หรือไม่");
+  } else console.log("  ✓ ความยาวเฟรมข้าง/เฟรมบน เท่าเดิมทั้ง 2 กรณี");
+}
+
+// ── v2: มือจับ "อื่นๆ พิมพ์เอง" — ข้ามแถว SKU ปกติ + ออกแถว noStock ชื่อที่พิมพ์ ──
+{
+  const spec = CUT_SPEC_BY_ID["sms_slide_free"];
+  const res = computeCutList(spec, { ...spec.defaults, handleL: "อื่นๆ", handleL_other: "มือจับพิเศษ ABC" }, 1);
+  console.log("SMS อิสระ · handleL=อื่นๆ (พิมพ์เอง):");
+  const other = res.hardware.find((h) => h.name === "มือจับพิเศษ ABC");
+  if (!other || other.qty !== 1 || !other.noStock) { fails++; console.log(`  ✗ ต้องมีแถวชื่อ 'มือจับพิเศษ ABC' qty=1 noStock=true (got ${JSON.stringify(other)})`); }
+  else console.log("  ✓ แถว 'มือจับพิเศษ ABC' qty=1 noStock=true");
+  // handleL=อื่นๆ → มือจับกุญแจ/ล็อค/ดัมมี่ ปกติ (ฝั่งซ้าย) ต้องไม่นับรวม (ขวายังเป็นล็อค+ดัมมี่ตามค่าเริ่มต้น)
+  const lock = res.hardware.find((h) => h.name.includes("มือจับ ล็อค ("));
+  if (!lock || lock.qty !== 1) { fails++; console.log(`  ✗ มือจับ ล็อค ต้องเหลือ 1 (จากขวาอย่างเดียว) got ${lock?.qty}`); } else console.log("  ✓ มือจับ ล็อค (ปกติ) qty=1 — นับเฉพาะฝั่งขวา");
+
+  const spec2 = CUT_SPEC_BY_ID["fuji_door"];
+  const res2 = computeCutList(spec2, { ...spec2.defaults, motherHandle: "อื่นๆ", motherHandle_other: "" }, 1);
+  const other2 = res2.hardware.find((h) => h.qty === 1 && h.noStock && h.name === "มือจับ (อื่นๆ)");
+  if (!other2) { fails++; console.log("  ✗ FUJIประตู motherHandle=อื่นๆ (ไม่พิมพ์ชื่อ) ต้องมีแถว 'มือจับ (อื่นๆ)' qty=1"); }
+  else console.log("  ✓ FUJIประตู motherHandle=อื่นๆ ไม่พิมพ์ชื่อ → ป้ายกลาง 'มือจับ (อื่นๆ)'");
+  if (res2.hardware.some((h) => h.name.includes("คิงโบ") || h.name.includes("Cmech"))) { fails++; console.log("  ✗ motherHandle=อื่นๆ ไม่ควรมีแถวคิงโบ/Cmech"); }
+}
+
+// ── v2: ประตูรั้ว ล้อวิ่ง 3" — เดิม qty คงที่ 2 → กว้าง>400 เพิ่มทุก 100 ซม. (Excel R39) ──
+{
+  const spec = CUT_SPEC_BY_ID["gate_slide"];
+  const r1 = computeCutList(spec, { ...spec.defaults, W: 350 }, 1);
+  const r2 = computeCutList(spec, { ...spec.defaults, W: 620 }, 1); // >400 → 2+ceil(220/100)=5
+  const roller1 = r1.hardware.find((h) => h.name.includes("ล้อวิ่ง"));
+  const roller2 = r2.hardware.find((h) => h.name.includes("ล้อวิ่ง"));
+  console.log("ประตูรั้ว ล้อวิ่ง 3\" (W>400 เพิ่มล้อ):");
+  if (!roller1 || roller1.qty !== 2) { fails++; console.log(`  ✗ W350 ล้อวิ่ง ต้อง 2 got ${roller1?.qty}`); } else console.log("  ✓ W350 (≤400) · ล้อวิ่ง qty=2");
+  if (!roller2 || roller2.qty !== 5) { fails++; console.log(`  ✗ W620 ล้อวิ่ง ต้อง 5 got ${roller2?.qty}`); } else console.log("  ✓ W620 (>400) · ล้อวิ่ง qty=5 (2+⌈220/100⌉)");
 }
 
 console.log(fails === 0 ? "\n✅ verify-cutlist-hardware ผ่านหมด" : `\n❌ ล้มเหลว ${fails} จุด`);
