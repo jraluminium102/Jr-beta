@@ -12,6 +12,7 @@ import { colorFromName } from "@/lib/cutlist/stock-match";
 import ImageZoom from "@/components/ImageZoom";
 import JobPicker, { type StockJob } from "@/components/stock/JobPicker";
 import MergePanel from "@/components/stock/MergePanel";
+import MergeHistory from "@/components/stock/MergeHistory";
 
 const MOVE_LABEL: Record<StockMoveType, string> = { in: "รับเข้า", out: "จ่ายออก", adjust: "ปรับยอด" };
 const MOVE_TONE: Record<StockMoveType, "emerald" | "red" | "amber"> = { in: "emerald", out: "red", adjust: "amber" };
@@ -50,6 +51,7 @@ export default function StockClient({
   const [adding, setAdding] = useState(false);
   const [manageCat, setManageCat] = useState(false);
   const [merging, setMerging] = useState(false);
+  const [mergeHist, setMergeHist] = useState(false);
   const reqRef = useRef(0); // กัน stale response ทับ state เมื่อคลิกสลับเร็วๆ
 
   // "น่าจะซ้ำ" = สต็อก 0 แต่ผูกใบตัด/คิดราคาอยู่ (มักเป็นตัวที่สร้างมาเพื่อคิดราคา/ใบตัด ทั้งที่มีของจริงอีกแถว)
@@ -164,6 +166,12 @@ export default function StockClient({
                 🔀 น่าจะซ้ำ {dupCount > 0 ? `(${dupCount})` : ""}
               </button>
             )}
+            {isAdmin && (
+              <button onClick={() => setMergeHist(true)} title="ดูประวัติการรวมรายการซ้ำย้อนหลัง (ใคร/รวมอะไร/เมื่อไหร่)"
+                className="press text-xs font-semibold rounded-full px-3 py-1.5 glass-soft text-ink-2">
+                🕘 ประวัติการรวม
+              </button>
+            )}
             {(lowOnly || calcOnly || boqOnly || dupOnly || catFilter !== null) && <button onClick={() => { setLowOnly(false); setCalcOnly(false); setBoqOnly(false); setDupOnly(false); setCatFilter(null); }} className="text-xs text-ink-3">ล้างตัวกรอง</button>}
           </div>
           <div className="space-y-2 max-h-[62vh] overflow-y-auto">
@@ -225,6 +233,7 @@ export default function StockClient({
       {merging && sel && (
         <MergePanel keepItem={sel} canViewCost={canViewCost} onClose={() => setMerging(false)} onMerged={afterMerge} />
       )}
+      {mergeHist && <MergeHistory onClose={() => setMergeHist(false)} />}
     </div>
   );
 }
