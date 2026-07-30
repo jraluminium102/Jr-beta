@@ -140,4 +140,4 @@ begin
   );
 end $$;
 
-grant execute on function public.merge_stock_items(bigint, bigint[], text, text, boolean) to authenticated;
+grant execute on function public.merge_stock_items(bigint, bigint[], text, text, text) to authenticated;
