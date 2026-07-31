@@ -46,7 +46,7 @@ export const SCHEDULE_STATUSES = ["QUEUED", "MANUFACTURING", "QC", "READY", "ISS
 export const SET_COLS =
   "id, job_id, set_label, seq, design_received, frame_done, glass_installed, qc_before_glass, qc_after_glass, " +
   "glass_spec, screen_type, screen_installed, glass_order, mat_equipment, mat_alu_normal, mat_alu_painted, " +
-  "frame_status, factories, measurer_name, measure_actual, must_finish_date, glass_done_date, actual_done_date, install_date, note";
+  "frame_status, factories, factory_start, measurer_name, measure_actual, must_finish_date, glass_done_date, actual_done_date, install_date, note";
 
 /**
  * แถวตารางผลิตทั้งหมด (งานในระบบ + งานจดเอง) เรียงงานด่วนก่อน

@@ -774,47 +774,39 @@ export function ProductionStepModal({
               </div>
             )}
 
-            {/* วันติดตั้งที่กำหนด — กรอก/แก้ได้ทุกขั้น */}
+            {/* วันติดตั้งที่กำหนด — บันทึกอัตโนมัติเมื่อเลือกวัน (ไม่ต้องกดปุ่มซ้ำ · แก้ได้ตลอด) */}
             {prod.status !== "READY" && (
               <div className="mt-3 glass-card rounded-2xl p-4 border border-emerald-300/20">
-                <label className="block text-[13px] mb-1.5 font-medium text-emerald-100">วันติดตั้งที่กำหนด (นัดลูกค้า)</label>
-                <div className="flex gap-2">
-                  <DateField value={installDate} onChange={(iso) => setInstallDate(iso)} aria-label="วันติดตั้งที่กำหนด"
-                    className="focusable flex-1 glass-card rounded-xl px-4 py-3 text-base text-white outline-none min-h-[52px]" />
-                  <button
-                    onClick={() => patch({ planned_install_date: installDate || null }, { close: false, feedbackKey: "install" })}
-                    disabled={saving}
-                    className={`focusable pressable px-4 rounded-xl text-white text-sm font-semibold min-h-[52px] disabled:opacity-60 transition-colors ${
-                      savedField === "install"
-                        ? "bg-emerald-400"
-                        : "bg-emerald-500 hover:bg-emerald-400"
-                    }`}
-                  >
-                    {savedField === "install" ? <Check size={16} /> : "บันทึกวัน"}
-                  </button>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <label className="block text-[13px] font-medium text-emerald-100">วันติดตั้งที่กำหนด (นัดลูกค้า)</label>
+                  <span className={`text-[11px] font-semibold text-emerald-300 inline-flex items-center gap-1 transition-opacity duration-300 ${savedField === "install" ? "opacity-100" : "opacity-0"}`}><Check size={13} /> บันทึกแล้ว</span>
                 </div>
-                <p className="text-[11px] mt-1.5" style={{ color: "var(--t-low)" }}>ลูกค้ารู้วันติดตั้งตั้งแต่ก่อนมัดจำ — กรอกไว้เลยเพื่อกำหนดเดดไลน์ผลิต/วัด</p>
+                <DateField value={installDate}
+                  onChange={(iso) => {
+                    setInstallDate(iso);
+                    if ((iso || "") !== (row.planned_install_date ?? "")) patch({ planned_install_date: iso || null }, { close: false, feedbackKey: "install" });
+                  }}
+                  aria-label="วันติดตั้งที่กำหนด"
+                  className="focusable w-full glass-card rounded-xl px-4 py-3 text-base text-white outline-none min-h-[52px]" />
+                <p className="text-[11px] mt-1.5" style={{ color: "var(--t-low)" }}>💾 บันทึกอัตโนมัติเมื่อเลือกวัน · แก้ไขได้ตลอด — ลูกค้ารู้วันติดตั้งตั้งแต่ก่อนมัดจำ กรอกไว้เพื่อกำหนดเดดไลน์ผลิต/วัด</p>
               </div>
             )}
 
-            {/* วันกำหนดผลิตเสร็จ (เดดไลน์ช่าง) — บังคับก่อนเริ่มผลิต · ใช้เป็นหัววันในตารางผลิตช่าง */}
+            {/* วันกำหนดผลิตเสร็จ (เดดไลน์ช่าง) — บันทึกอัตโนมัติเมื่อเลือกวัน · บังคับก่อนเริ่มผลิต · ใช้เป็นหัววันในตารางผลิตช่าง */}
             {prod.status !== "READY" && (
               <div className="mt-3 glass-card rounded-2xl p-4 border border-orange-300/25">
-                <label className="block text-[13px] mb-1.5 font-medium text-orange-100">วันกำหนดผลิตเสร็จ (เดดไลน์ช่าง)</label>
-                <div className="flex gap-2">
-                  <DateField value={dueDate} onChange={(iso) => setDueDate(iso)} aria-label="วันกำหนดผลิตเสร็จ"
-                    className="focusable flex-1 glass-card rounded-xl px-4 py-3 text-base text-white outline-none min-h-[52px]" />
-                  <button
-                    onClick={() => patch({ production_due_date: dueDate || null }, { close: false, feedbackKey: "due" })}
-                    disabled={saving}
-                    className={`focusable pressable px-4 rounded-xl text-white text-sm font-semibold min-h-[52px] disabled:opacity-60 transition-colors ${
-                      savedField === "due" ? "bg-orange-400" : "bg-orange-500 hover:bg-orange-400"
-                    }`}
-                  >
-                    {savedField === "due" ? <Check size={16} /> : "บันทึกวัน"}
-                  </button>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <label className="block text-[13px] font-medium text-orange-100">วันกำหนดผลิตเสร็จ (เดดไลน์ช่าง)</label>
+                  <span className={`text-[11px] font-semibold text-orange-200 inline-flex items-center gap-1 transition-opacity duration-300 ${savedField === "due" ? "opacity-100" : "opacity-0"}`}><Check size={13} /> บันทึกแล้ว</span>
                 </div>
-                <p className="text-[11px] mt-1.5" style={{ color: "var(--t-low)" }}>ช่างเห็นเป็นเดดไลน์ในตารางผลิต แล้วจัดวันเริ่มผลิตเอง · บังคับกรอกก่อน "เริ่มผลิต"</p>
+                <DateField value={dueDate}
+                  onChange={(iso) => {
+                    setDueDate(iso);
+                    if ((iso || "") !== (row.production_due_date ?? "")) patch({ production_due_date: iso || null }, { close: false, feedbackKey: "due" });
+                  }}
+                  aria-label="วันกำหนดผลิตเสร็จ"
+                  className="focusable w-full glass-card rounded-xl px-4 py-3 text-base text-white outline-none min-h-[52px]" />
+                <p className="text-[11px] mt-1.5" style={{ color: "var(--t-low)" }}>💾 บันทึกอัตโนมัติเมื่อเลือกวัน · แก้ไขได้ตลอด — ช่างเห็นเป็นเดดไลน์ในตารางผลิต แล้วจัดวันเริ่มผลิตเอง</p>
               </div>
             )}
 

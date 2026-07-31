@@ -31,9 +31,11 @@ function LinkBadges({ it }: { it: StockItem }) {
   );
 }
 
-export default function MergePanel({ keepItem, canViewCost, onClose, onMerged }: {
+type QtyMode = "sum" | "removed" | "keep";
+export default function MergePanel({ keepItem, canViewCost, canSetQty = false, onClose, onMerged }: {
   keepItem: StockItem;
   canViewCost: boolean;
+  canSetQty?: boolean;   // ADMIN/ACCOUNTING — รวมทั้งที่ตัวซ้ำมีของ (เลือกจำนวน) ได้
   onClose: () => void;
   onMerged: (removedIds: number[], keepId: number) => void;
 }) {
@@ -44,6 +46,8 @@ export default function MergePanel({ keepItem, canViewCost, onClose, onMerged }:
   const [moveSku, setMoveSku] = useState(true);
   const [moveName, setMoveName] = useState(true);
   const [priceMode, setPriceMode] = useState<"keep" | "remove">("keep"); // ราคาที่คิดราคา4.0/ใบตัดจะใช้ (default = ตัวที่เก็บ)
+  const [qtyMode, setQtyMode] = useState<QtyMode>("sum"); // จำนวนสุดท้ายตัวหลัก (default = รวมกัน)
+  const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const reqRef = useRef(0);
@@ -69,7 +73,15 @@ export default function MergePanel({ keepItem, canViewCost, onClose, onMerged }:
   const rl = remove ? linkOf(remove) : null;
   const kl = linkOf(keepItem);
   const removeQty = Number(remove?.qty_on_hand ?? 0);
-  const qtyBlocked = !!remove && removeQty !== 0;
+  const keepQty = Number(keepItem.qty_on_hand ?? 0);
+  const hasRemoveQty = !!remove && removeQty !== 0;
+  // ตัวซ้ำมีของ + ไม่ใช่แอดมิน/บัญชี → บล็อกเหมือนเดิม (ต้องปรับ 0 ก่อน) · แอดมิน/บัญชี → เลือกจำนวนได้
+  const qtyBlocked = hasRemoveQty && !canSetQty;
+  const unit = keepItem.unit ?? "";
+  // จำนวนสุดท้ายของตัวหลักตามโหมด + ของที่ถูกทิ้ง (write-off) เมื่อเลือกโหมดที่ตัดของ
+  const finalQty = qtyMode === "sum" ? keepQty + removeQty : qtyMode === "removed" ? removeQty : keepQty;
+  const discardQty = qtyMode === "removed" ? keepQty : qtyMode === "keep" ? removeQty : 0;
+  const needReason = hasRemoveQty && canSetQty && discardQty > 0;
 
   // ตัวเลือกย้าย "ตัวตน" — โชว์เฉพาะเมื่อจำเป็น (ตัวที่ลบผูกอยู่ แต่ตัวที่เก็บยังไม่ได้ผูกด้วยตัวตนนั้น)
   // ย้ายรหัสได้เฉพาะเมื่อ "ตัวหลักยังไม่ได้ผูกด้วยรหัสของตัวเอง" (กันทับรหัสที่ตัวหลักใช้อยู่แล้วเงียบ ๆ)
@@ -90,12 +102,20 @@ export default function MergePanel({ keepItem, canViewCost, onClose, onMerged }:
 
   async function doMerge() {
     if (!remove) return;
+    if (needReason && !reason.trim()) { setErr("โหมดนี้ทิ้งของบางส่วน (ตัดจำหน่ายสต็อก) — ต้องระบุเหตุผล"); return; }
     setBusy(true); setErr("");
     try {
       const body: Record<string, unknown> = { keepId: keepItem.id, removeIds: [remove.id] };
       if (canMoveSku && moveSku) body.newSku = remove.sku;
       if (canMoveName && moveName) body.newName = remove.name;
-      body.priceMode = bothPriced ? priceMode : "keep"; // เลือกได้เฉพาะตอนราคาต่างกัน · นอกนั้น keep(เติมถ้าว่าง)
+      if (hasRemoveQty && canSetQty) {
+        // ตัวซ้ำมีของ → เลือกจำนวนคงเหลือตัวหลัก (ต้นทุนถัวเฉลี่ยคิดฝั่ง RPC ตามหลักบัญชี)
+        body.qtyMode = qtyMode;
+        if (needReason) body.reason = reason.trim();
+      } else {
+        // ตัวซ้ำสต็อก 0 → โหมด block เดิม · เลือกราคาอ้างอิงได้เฉพาะตอนราคาต่างกัน
+        body.priceMode = bothPriced ? priceMode : "keep";
+      }
       const r = await fetch("/api/stock/merge", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const j = await r.json().catch(() => null);
       if (!r.ok) { setErr(j?.error ?? "รวมไม่สำเร็จ"); return; }
@@ -173,10 +193,38 @@ export default function MergePanel({ keepItem, canViewCost, onClose, onMerged }:
             {qtyBlocked ? (
               <div className="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5 text-sm text-amber-800">
                 ⚠️ ตัวนี้ยังมีของคงเหลือ <b>{baht(remove.qty_on_hand)} {remove.unit}</b> — รวมไม่ได้ (กันของหาย)<br />
-                ให้ &quot;ปรับยอด → 0&quot; หรือเบิกออกให้หมดก่อน แล้วค่อยรวม
+                ให้ &quot;ปรับยอด → 0&quot; หรือเบิกออกให้หมดก่อน แล้วค่อยรวม (การรวมทั้งที่มีของ ทำได้เฉพาะแอดมิน/บัญชี)
               </div>
             ) : (
               <div className="space-y-2">
+                {/* ตัวซ้ำมีของ + แอดมิน/บัญชี → เลือกจำนวนคงเหลือตัวหลัก */}
+                {hasRemoveQty && canSetQty && (
+                  <div className="text-sm rounded-lg border border-sky-200 bg-sky-50/70 px-3 py-2.5">
+                    <div className="mb-1.5 font-semibold text-brand-dark">จำนวนคงเหลือของตัวหลัก (หลังรวม):</div>
+                    <div className="text-[11px] text-ink-3 mb-2">ตัวหลักมี {baht(keepQty)} · ตัวที่ลบมี {baht(removeQty)} {unit}</div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="qmode" checked={qtyMode === "sum"} onChange={() => setQtyMode("sum")} />
+                        <span>รวมกัน (บวก) → <b>{baht(keepQty + removeQty)} {unit}</b> <span className="text-[11px] text-ink-3">(ค่าเริ่มต้น · ต้นทุนถัวเฉลี่ย)</span></span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="qmode" checked={qtyMode === "removed"} onChange={() => setQtyMode("removed")} />
+                        <span>ใช้จำนวนตัวที่ลบ → <b>{baht(removeQty)} {unit}</b>{keepQty > 0 && <span className="text-[11px] text-amber-700"> (ทิ้งของตัวหลัก {baht(keepQty)})</span>}</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="qmode" checked={qtyMode === "keep"} onChange={() => setQtyMode("keep")} />
+                        <span>คงจำนวนตัวหลัก → <b>{baht(keepQty)} {unit}</b> <span className="text-[11px] text-amber-700">(ทิ้งของตัวที่ลบ {baht(removeQty)})</span></span>
+                      </label>
+                    </div>
+                    {needReason && (
+                      <label className="block mt-2">
+                        <span className="text-[11px] font-semibold text-amber-700">เหตุผลที่ตัดของทิ้ง (บังคับ) *</span>
+                        <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="เช่น นับผิด / ของเสีย / ยกยอดผิดตัว"
+                          className="w-full mt-0.5 rounded-lg border border-amber-300 px-2.5 py-1.5 text-sm outline-none" />
+                      </label>
+                    )}
+                  </div>
+                )}
                 <div className="text-xs font-semibold text-ink-2">จะย้ายมาที่ตัวหลัก:</div>
                 {canMoveSku && (
                   <label className="flex items-start gap-2 text-sm rounded-lg glass-soft px-3 py-2 cursor-pointer">
@@ -200,13 +248,13 @@ export default function MergePanel({ keepItem, canViewCost, onClose, onMerged }:
                     </span>
                   </label>
                 )}
-                {onlyRemovePriced && (
+                {!hasRemoveQty && onlyRemovePriced && (
                   <div className="text-sm rounded-lg glass-soft px-3 py-2">
                     <b>เติมราคา ฿{baht(removePrice)}{priceUnit}</b> ให้ตัวหลัก (ตอนนี้ยังไม่มีราคา)
                     <div className="text-[11px] text-ink-3">ราคานี้จะเป็นราคาที่คิดราคา 4.0 + ใบตัด ใช้</div>
                   </div>
                 )}
-                {bothPriced && (
+                {!hasRemoveQty && bothPriced && (
                   <div className="text-sm rounded-lg glass-soft px-3 py-2">
                     <div className="mb-1 font-medium">ราคาที่คิดราคา 4.0 / ใบตัด จะใช้:</div>
                     <div className="flex flex-col gap-1.5">
@@ -221,7 +269,7 @@ export default function MergePanel({ keepItem, canViewCost, onClose, onMerged }:
                     </div>
                   </div>
                 )}
-                {!canMoveSku && !canMoveName && !bothPriced && !onlyRemovePriced && (
+                {!canMoveSku && !canMoveName && !hasRemoveQty && !bothPriced && !onlyRemovePriced && (
                   <p className="text-[11px] text-ink-3">ไม่มีการผูกระบบ/ราคาที่ต้องย้าย — จะแค่ย้ายประวัติแล้วลบตัวซ้ำ</p>
                 )}
               </div>

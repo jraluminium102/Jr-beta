@@ -53,6 +53,7 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     finance: ["read", "write", "void"], dashboard: ["read"],
     production: ["read"],   // เข้าหน้าผลิตดู/ถอยมัดจำได้ (finance:void) — ไม่ให้ write ผลิต
     boq: ["read", "write"],
+    stock: ["read", "write"],  // บัญชี = ผู้ดูแลต้นทุน/มูลค่าคงคลัง (ตั้งราคา + รวมรายการซ้ำแบบปรับจำนวน) — canPrice ผูก ACCOUNTING อยู่แล้ว
   },
   VIEWER: { jobs: ["read"], dashboard: ["read"] },
   // ช่างผลิต — เห็นแค่ตารางผลิต กดเช็คลิสต์ (production write ไว้มาร์ค production_sets)

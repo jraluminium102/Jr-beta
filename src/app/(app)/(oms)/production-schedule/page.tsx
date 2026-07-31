@@ -22,6 +22,7 @@ export type ProdSet = {
   must_finish_date: string | null; glass_done_date: string | null;
   actual_done_date: string | null; install_date: string | null; note: string;
   factories?: string[];   // โรงงานผลิต (0114) — ใช้กรองตารางแยกโรง
+  factory_start?: Record<string, string> | null;   // วันเริ่มผลิตแยกโรง (0115)
 };
 type SchedRow = {
   kind: "job" | "adhoc";
@@ -39,6 +40,7 @@ type SchedRow = {
   status: string;
   sets?: ProdSet[];
   allSets?: ProdSet[];   // ชุดเต็มของงาน (ก่อนกรองโรง) — ใช้ตัดสิน "ส่งติดตั้ง" ให้ครบทั้งงานเสมอ
+  factoryStart?: string | null;   // วันเริ่มผลิตของโรงที่กำลังกรอง (0115) — โชว์บนการ์ดตอนสลับโรง
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -171,8 +173,13 @@ export default function ProductionSchedulePage() {
       if (r.kind !== "job") continue;
       const matched = (r.sets ?? []).filter((s) => Array.isArray(s.factories) && s.factories.includes(factoryFilter));
       if (matched.length === 0) continue;
+      // วันเริ่มผลิตของโรงที่เลือก — เอาวันแรกสุดในบรรดาชุดของโรงนั้น (โรง3 กับ โรง1 ตั้งคนละวันได้)
+      const starts = matched
+        .map((s) => (s.factory_start && typeof s.factory_start === "object") ? s.factory_start[factoryFilter] : "")
+        .filter((x): x is string => !!x)
+        .sort();
       // sets = เฉพาะโรงที่เลือก (โชว์/เช็คลิสต์/เฟส) · allSets = ชุดเต็ม (ใช้ gate "ส่งติดตั้ง" กันส่งทั้งงานทั้งที่อีกโรงยังไม่เสร็จ)
-      out.push({ ...r, sets: matched, allSets: r.sets });
+      out.push({ ...r, sets: matched, allSets: r.sets, factoryStart: starts[0] ?? null });
     }
     return out;
   }, [rows, factoryFilter]);
@@ -487,6 +494,7 @@ export default function ProductionSchedulePage() {
                             return <span className="text-[12px] tnum font-semibold" style={{ color: late ? IOS.red : IOS.ink2 }}>⏰ {thShort(r.due_date)}{late ? " เลยกำหนด" : ""}</span>;
                           })()}
                           {r.install_date && <span className="text-[12px] tnum" style={{ color: IOS.ink3 }}>🔧 {thShort(r.install_date)}</span>}
+                          {factoryFilter && r.factoryStart && <span className="text-[12px] tnum font-semibold rounded-md px-1.5 py-0.5" style={{ background: "#eaf3ff", color: IOS.blue }}>▶ เริ่ม {thShort(r.factoryStart)}</span>}
                         </div>
                         {(() => {
                           const pi = PHASE_ORDER.indexOf(derivePhase(r));

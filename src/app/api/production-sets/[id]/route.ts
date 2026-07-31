@@ -21,6 +21,7 @@ const patchSchema = z.object({
   frame_status: t, screen_type: t, screen_installed: t, qc_after_glass: t,
   install_date: d, note: t,
   factories: z.array(z.string()).optional(),   // โรงงานผลิต (หลายโรงต่อชุด · 0114)
+  factory_start: z.record(z.string(), z.string().nullable()).optional(),  // วันเริ่มผลิตแยกโรง (0115)
 });
 
 // PATCH /api/production-sets/:id — แก้ช่องใน worksheet (ออฟฟิศ/ผลิต)

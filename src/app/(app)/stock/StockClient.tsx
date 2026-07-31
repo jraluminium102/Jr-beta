@@ -255,7 +255,7 @@ export default function StockClient({
         <CategoryManager cats={cats} onClose={() => setManageCat(false)} onChanged={refreshCats} />
       )}
       {merging && sel && (
-        <MergePanel keepItem={sel} canViewCost={canViewCost} onClose={() => setMerging(false)} onMerged={afterMerge} />
+        <MergePanel keepItem={sel} canViewCost={canViewCost} canSetQty={canPrice} onClose={() => setMerging(false)} onMerged={afterMerge} />
       )}
       {mergeHist && <MergeHistory onClose={() => setMergeHist(false)} />}
     </div>

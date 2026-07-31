@@ -134,22 +134,55 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
 
   // helper สร้าง field
   const txt = (s: SetRow, f: string) => <input defaultValue={s[f] ?? ""} disabled={!canWrite} onBlur={(e) => e.target.value !== String(s[f] ?? "") && save(s.id, f, e.target.value)} className={fieldCls} />;
+  // ช่องหมายเหตุ — textarea เต็มแถว (เจ้าของแจ้ง: ช่องเดิมแคบ พิมพ์ยาวไม่พอ)
+  const area = (s: SetRow, f: string) => <textarea defaultValue={s[f] ?? ""} disabled={!canWrite} rows={3} placeholder="พิมพ์หมายเหตุ / สิ่งที่ต้องระวัง…" onBlur={(e) => e.target.value !== String(s[f] ?? "") && save(s.id, f, e.target.value)} className={fieldCls + " resize-y min-h-[72px] leading-relaxed placeholder-white/30"} />;
   const date = (s: SetRow, f: string) => <input type="date" defaultValue={s[f] ?? ""} disabled={!canWrite} onBlur={(e) => save(s.id, f, e.target.value)} className={fieldCls} />;
-  // โรงงานผลิต — เลือกได้หลายโรง (toggle chips) · เก็บเป็น array
+  // บันทึกวันเริ่มผลิตของโรงหนึ่ง (merge เข้า map factory_start · เว้นว่าง = ลบ key นั้น)
+  async function saveFactoryStart(s: SetRow, factory: string, iso: string) {
+    const cur: Record<string, string> = (s.factory_start && typeof s.factory_start === "object") ? { ...s.factory_start } : {};
+    if (iso) cur[factory] = iso; else delete cur[factory];
+    await save(s.id, "factory_start", cur);
+  }
+  // โรงงานผลิต — เลือกได้หลายโรง (toggle chips) · โรงที่เลือก → มีช่อง "เริ่มผลิต" แยกวันได้ (0115)
   const factoryPick = (s: SetRow) => {
     const cur: string[] = Array.isArray(s.factories) ? s.factories : [];
+    const starts: Record<string, string> = (s.factory_start && typeof s.factory_start === "object") ? s.factory_start : {};
     return (
-      <div className="flex flex-wrap gap-1.5">
-        {FACTORIES.map((f) => {
-          const on = cur.includes(f);
-          return (
-            <button key={f} type="button" disabled={!canWrite}
-              onClick={() => save(s.id, "factories", on ? cur.filter((x) => x !== f) : [...cur, f])}
-              className={`text-[14px] px-2.5 py-2 rounded-lg border transition-colors ${on ? "bg-sky-500/80 border-sky-400 text-white" : "bg-white/8 border-white/12 text-white/60 hover:text-white"} disabled:opacity-60`}>
-              {on ? "✓ " : ""}{f}
-            </button>
-          );
-        })}
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-1.5">
+          {FACTORIES.map((f) => {
+            const on = cur.includes(f);
+            return (
+              <button key={f} type="button" disabled={!canWrite}
+                onClick={async () => {
+                  if (on) {
+                    // ปลดโรง → ลบวันเริ่มผลิตของโรงนั้นด้วย (กันวันเก่าค้าง โผล่กลับมาเมื่อติ๊กใหม่)
+                    await save(s.id, "factories", cur.filter((x) => x !== f));
+                    if (starts[f]) await saveFactoryStart(s, f, "");
+                  } else {
+                    await save(s.id, "factories", [...cur, f]);
+                  }
+                }}
+                className={`text-[14px] px-2.5 py-2 rounded-lg border transition-colors ${on ? "bg-sky-500/80 border-sky-400 text-white" : "bg-white/8 border-white/12 text-white/60 hover:text-white"} disabled:opacity-60`}>
+                {on ? "✓ " : ""}{f}
+              </button>
+            );
+          })}
+        </div>
+        {/* วันเริ่มผลิตแยกโรง — โชว์เฉพาะโรงที่ติ๊กไว้ (เช่น โรง3 เริ่ม 12, โรง1 เริ่ม 18) */}
+        {cur.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {cur.map((f) => (
+              <label key={f} className="flex items-center gap-2 rounded-lg bg-white/5 border border-white/10 px-2.5 py-1.5">
+                <span className="text-[13px] text-sky-200/90 shrink-0 whitespace-nowrap">▶ เริ่มผลิต {f}</span>
+                <input type="date" defaultValue={starts[f] ?? ""} disabled={!canWrite}
+                  onBlur={(e) => e.target.value !== (starts[f] ?? "") && saveFactoryStart(s, f, e.target.value)}
+                  onChange={(e) => e.target.value !== (starts[f] ?? "") && saveFactoryStart(s, f, e.target.value)}
+                  className="flex-1 min-w-0 bg-white/8 text-white text-[15px] px-2 py-1.5 rounded-md border border-white/12 focus:border-sky-300/60 outline-none disabled:opacity-60" />
+              </label>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
@@ -300,7 +333,7 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
                 <F label="ใส่กระจกเสร็จ">{date(s, "glass_done_date")}</F>
                 <F label="เสร็จจริง">{date(s, "actual_done_date")}</F>
                 <F label="วันติดตั้ง">{date(s, "install_date")}</F>
-                <div className="col-span-2 sm:col-span-1"><F label="หมายเหตุ">{txt(s, "note")}</F></div>
+                <div className="col-span-2 sm:col-span-4"><F label="หมายเหตุ">{area(s, "note")}</F></div>
               </div>
             </div>
           ))}
