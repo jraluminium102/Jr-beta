@@ -218,14 +218,12 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
                   className="text-[13px] text-gray-900 placeholder-gray-400 rounded-full px-3 py-2 border border-gray-300 bg-white w-52 focus:outline-none focus:ring-2 focus:ring-sky-300" />
               </div>
             </div>
-            {showFloorNote && (
-              <div className="flex-1 min-w-[220px] max-w-[420px]">
-                <label className="text-[11px] block mb-1 text-gray-500">พื้นช่าง (มุมขวาบนใบพิมพ์ · เฉพาะงานมี ผรม.)</label>
-                <input value={content.floorNote ?? ""} onChange={(e) => setContent((c) => ({ ...c, floorNote: e.target.value }))}
-                  placeholder="เช่น พื้นช่างเพยาว์"
-                  className="w-full rounded-lg border border-gray-300 bg-white px-2.5 py-2 text-[13px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-sky-300" />
-              </div>
-            )}
+            <div className="flex-1 min-w-[220px] max-w-[420px]">
+              <label className="text-[11px] block mb-1 text-gray-500">🧱 งานพื้น (มุมขวาบนใบพิมพ์) — กรอกได้เลย</label>
+              <input value={content.floorNote ?? ""} onChange={(e) => setContent((c) => ({ ...c, floorNote: e.target.value }))}
+                placeholder="เช่น พื้นช่าง / งานพื้น ผรม. / ปูกระเบื้องก่อน"
+                className="w-full rounded-lg border border-gray-300 bg-white px-2.5 py-2 text-[14px] text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-300" />
+            </div>
           </div>
 
           <div className="space-y-4">

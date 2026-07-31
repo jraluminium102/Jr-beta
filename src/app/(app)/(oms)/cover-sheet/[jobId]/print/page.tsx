@@ -92,9 +92,9 @@ export default async function CoverSheetPrintPage({ params }: { params: { jobId:
               <span style={{ fontWeight: 700 }}>ชื่อลูกค้า</span>{" "}
               <span style={{ fontWeight: 700 }}>{job.customer_name || "—"}</span>
             </div>
-            {/* ขวา: พื้นช่าง */}
-            <div style={{ color: RED, fontWeight: 700, fontSize: 15, textAlign: "right", justifySelf: "end", paddingTop: 4 }}>
-              {showFloor ? `พื้นช่าง ${content.floorNote?.trim() || "............"}` : ""}
+            {/* ขวา: งานพื้น (โชว์เมื่อกรอกไว้) */}
+            <div style={{ color: RED, fontWeight: 700, fontSize: 15, textAlign: "right", justifySelf: "end", paddingTop: 4, whiteSpace: "pre-wrap", maxWidth: 240 }}>
+              {content.floorNote?.trim() ? `งานพื้น ${content.floorNote.trim()}` : ""}
             </div>
           </div>
 
