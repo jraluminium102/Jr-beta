@@ -76,25 +76,25 @@ export default async function CoverSheetPrintPage({ params }: { params: { jobId:
           const firstCell = { ...cellBase, borderLeft: RULE };
           return (
         <div className="mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0" style={{ width: "210mm", minHeight: "277mm", padding: "10mm" }}>
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8, gap: 10 }}>
+          <div style={{ position: "relative", minHeight: 42, marginBottom: 8 }}>
             {/* มุมซ้ายบน: คำเตือน (โชว์เฉพาะเมื่อมีที่เลือก/พิมพ์ไว้) */}
-            <div style={{ color: RED, fontWeight: 700, lineHeight: 1.3, minWidth: 200, maxWidth: 300 }}>
-              {warns.length > 0 && (
-                <>
-                  <div style={{ fontSize: 14 }}>*ระวัง อลูฯ / กระจก / มุ้ง ผิด*</div>
-                  {warns.map((w, i) => <div key={i} style={{ fontSize: 13 }}>⚠ {w}</div>)}
-                </>
-              )}
-            </div>
-            {/* กลาง: ชื่อลูกค้า */}
-            <div style={{ fontSize: 20, textAlign: "center", flex: 1, paddingTop: 2 }}>
+            {warns.length > 0 && (
+              <div style={{ position: "absolute", left: 0, top: 0, color: RED, fontWeight: 700, lineHeight: 1.3, maxWidth: 280 }}>
+                <div style={{ fontSize: 14 }}>*ระวัง อลูฯ / กระจก / มุ้ง ผิด*</div>
+                {warns.map((w, i) => <div key={i} style={{ fontSize: 13 }}>⚠ {w}</div>)}
+              </div>
+            )}
+            {/* กลาง: ชื่อลูกค้า — center จริงกลางหน้า */}
+            <div style={{ fontSize: 20, textAlign: "center", paddingTop: 4 }}>
               <span style={{ fontWeight: 700 }}>ชื่อลูกค้า</span>{" "}
               <span style={{ fontWeight: 700 }}>{job.customer_name || "—"}</span>
             </div>
             {/* ขวา: พื้นช่าง */}
-            <div style={{ color: RED, fontWeight: 700, fontSize: 15, whiteSpace: "nowrap", minWidth: 110, textAlign: "right", paddingTop: 2 }}>
-              {showFloor ? `พื้นช่าง ${content.floorNote?.trim() || "............"}` : ""}
-            </div>
+            {showFloor && (
+              <div style={{ position: "absolute", right: 0, top: 0, color: RED, fontWeight: 700, fontSize: 15, whiteSpace: "nowrap", textAlign: "right" }}>
+                {`พื้นช่าง ${content.floorNote?.trim() || "............"}`}
+              </div>
+            )}
           </div>
 
           <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", borderTop: RULE }}>

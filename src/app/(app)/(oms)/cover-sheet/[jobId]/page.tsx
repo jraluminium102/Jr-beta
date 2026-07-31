@@ -15,13 +15,6 @@ const COLOR_HEX: Record<CoverColor, string> = { "": "#111827", red: "#c00000", b
 const COLOR_LABEL: Record<CoverColor, string> = { "": "ดำ", red: "แดง", blue: "น้ำเงิน", green: "เขียว" };
 const nextN = (left: CoverLine[]) => left.reduce((m, l) => Math.max(m, l.kind === "group" ? (l.n ?? 0) : 0), 0) + 1;
 
-// textarea ที่ยืดสูงตามเนื้อหา
-function autoGrow(el: HTMLTextAreaElement | null) {
-  if (!el) return;
-  el.style.height = "0px";
-  el.style.height = el.scrollHeight + "px";
-}
-
 // ── บรรทัด spec (บุลเลท) ในคอลัมน์ซ้าย — พื้นขาว อ่านออกชัด ──
 function SpecRow({ line, onChange, onRemove }: {
   line: CoverLine; onChange: (p: Partial<CoverLine>) => void; onRemove: () => void;
@@ -34,12 +27,12 @@ function SpecRow({ line, onChange, onRemove }: {
         onChange={(e) => onChange({ text: e.target.value })}
         placeholder="พิมพ์รายการ…"
         style={{ color: COLOR_HEX[line.color ?? ""], background: line.hl ? "#fff35b" : "#fff" }}
-        className="flex-1 min-w-0 rounded-md border border-gray-300 px-2 py-1.5 text-[13.5px] focus:outline-none focus:ring-2 focus:ring-sky-300"
+        className="flex-1 min-w-0 rounded-md border border-gray-300 px-2.5 py-2 text-[15px] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-300"
       />
       <select
         value={line.color ?? ""} onChange={(e) => onChange({ color: e.target.value as CoverColor })}
         aria-label="สี" title="สีตัวอักษร"
-        className="rounded-md border border-gray-300 bg-white px-1 py-1.5 text-[12px] text-gray-800 focus:outline-none"
+        className="rounded-md border border-gray-300 bg-white px-1.5 py-2 text-[13px] text-gray-800 focus:outline-none"
         style={{ color: COLOR_HEX[line.color ?? ""] }}
       >
         {(Object.keys(COLOR_LABEL) as CoverColor[]).map((c) => <option key={c} value={c}>{COLOR_LABEL[c]}</option>)}
@@ -193,12 +186,15 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
         <EmptyState title="โหลดข้อมูลไม่สำเร็จ" sub={error instanceof ApiError ? error.message : "ลองรีเฟรช"} />
       ) : (
         <>
+          {/* ชื่อลูกค้า — ตัวใหญ่ กลางจอ (ให้เห็นชัดในหน้าแก้ไข ไม่ต้องกดพิมพ์) */}
+          <div className="text-center mb-4">
+            <span className="text-white/70 text-[15px]">ชื่อลูกค้า</span>{" "}
+            <span className="text-white text-2xl font-bold">{job?.customer_name || "—"}</span>
+            {job?.job_code && <span className="text-white/50 text-[13px] ml-2 tnum">({job.job_code})</span>}
+          </div>
+
           {/* แถบข้อมูลงาน (การ์ดขาว อ่านง่าย) */}
           <div className="rounded-2xl bg-white border border-black/10 shadow-sm p-4 mb-4 flex items-start gap-4 flex-wrap">
-            <div>
-              <div className="text-gray-900 font-bold tnum">{job?.job_code}</div>
-              <div className="text-[13px] text-gray-500">{job?.customer_name}</div>
-            </div>
             {/* ⚠️ คำเตือนมุมซ้ายบนใบพิมพ์ — เลือกจากดรอปดาวน์/พิมพ์เพิ่ม */}
             <div className="flex-1 min-w-[280px]">
               <label className="text-[11px] block mb-1 text-gray-500">⚠️ คำเตือน (มุมซ้ายบนใบพิมพ์) — เลือก / พิมพ์เพิ่ม</label>
@@ -219,7 +215,7 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
                 ))}
                 <input placeholder="พิมพ์เตือนเอง + Enter"
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomWarn(e.currentTarget.value); e.currentTarget.value = ""; } }}
-                  className="text-[12px] rounded-full px-2.5 py-1.5 border border-gray-300 bg-white w-44 focus:outline-none focus:ring-2 focus:ring-sky-300" />
+                  className="text-[13px] text-gray-900 placeholder-gray-400 rounded-full px-3 py-2 border border-gray-300 bg-white w-52 focus:outline-none focus:ring-2 focus:ring-sky-300" />
               </div>
             </div>
             {showFloorNote && (
@@ -302,37 +298,37 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
               <div className="rounded-2xl bg-white border border-black/10 shadow-sm p-4">
                 <div className="font-bold text-[#c00000] text-[13.5px] mb-1 underline underline-offset-2">รายละเอียด แจ้งช่างตอนติดตั้ง</div>
                 <div className="text-[11px] text-gray-400 mb-2">กรอกเอง — 1 บรรทัด/โน้ต (เช่น พี่เนียน วัดงาน)</div>
-                {/* ตัวช่วย "วัดงาน" — กรอกคนวัด+วันที่ → เขียน "พี่..วัดงาน วว/ดด/ปปปป" ให้ */}
-                <div className="flex flex-wrap items-center gap-1.5 mb-2 rounded-lg bg-rose-50 border border-rose-100 p-2">
-                  <span className="text-[11px] font-medium text-rose-700 shrink-0">📏 วัดงาน:</span>
-                  <input value={measurer} onChange={(e) => setMeasurer(e.target.value)} placeholder="ชื่อคนวัด (เช่น เป)"
-                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addMeasureNote(); } }}
-                    className="min-w-0 flex-1 rounded-md border border-gray-300 bg-white px-2 py-1.5 text-[12.5px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-rose-200" />
-                  <input type="date" value={measureDate} onChange={(e) => setMeasureDate(e.target.value)}
-                    className="rounded-md border border-gray-300 bg-white px-1.5 py-1.5 text-[12px] text-gray-800 focus:outline-none" />
-                  <button type="button" onClick={addMeasureNote} disabled={!measurer.trim()}
-                    className="shrink-0 rounded-md bg-rose-600 text-white text-[12px] font-medium px-2.5 py-1.5 disabled:opacity-40">+ เพิ่ม</button>
+                {/* ตัวช่วย "วัดงาน" — กรอกคนวัด+วันที่(จิ้มปฏิทิน) กด+เพิ่ม → แทรก "พี่..วัดงาน วว/ดด/ปปปป" บนสุด */}
+                <div className="mb-2 rounded-lg bg-rose-50 border border-rose-200 p-2.5">
+                  <div className="text-[12px] font-semibold text-rose-700 mb-1.5">📏 ใส่วันวัดงาน (เขียนให้อัตโนมัติ)</div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input value={measurer} onChange={(e) => setMeasurer(e.target.value)} placeholder="ชื่อคนวัด เช่น เป"
+                      onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addMeasureNote(); } }}
+                      className="min-w-[110px] flex-1 rounded-md border border-gray-300 bg-white px-2.5 py-2 text-[14px] text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-rose-200" />
+                    <input type="date" value={measureDate} onChange={(e) => setMeasureDate(e.target.value)} title="เลือกวันวัดงาน"
+                      className="rounded-md border border-gray-300 bg-white px-2.5 py-2 text-[14px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-rose-200" />
+                    <button type="button" onClick={addMeasureNote} disabled={!measurer.trim()}
+                      className="shrink-0 rounded-md bg-rose-600 text-white text-[13px] font-semibold px-3.5 py-2 min-h-[38px] disabled:opacity-40">+ เพิ่มลงช่องล่าง</button>
+                  </div>
                 </div>
                 <textarea
-                  ref={autoGrow}
                   value={sideText("mid")}
-                  onChange={(e) => { setSideText("mid", e.target.value); autoGrow(e.target); }}
+                  onChange={(e) => setSideText("mid", e.target.value)}
                   placeholder="พี่…… วัดงาน&#10;รื้อของเดิม พร้อมเก็บสี"
-                  rows={4}
-                  className="w-full resize-none rounded-lg border border-gray-300 bg-white px-2.5 py-2 text-[13.5px] text-[#c00000] leading-relaxed focus:outline-none focus:ring-2 focus:ring-sky-300" />
+                  rows={10}
+                  className="w-full min-h-[220px] resize-y rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-[15px] text-[#c00000] leading-relaxed focus:outline-none focus:ring-2 focus:ring-sky-300" />
               </div>
 
               {/* คอลัมน์ 3: แจ้งลูกค้า (textarea) */}
               <div className="rounded-2xl bg-white border border-black/10 shadow-sm p-4">
                 <div className="font-bold text-[#c00000] text-[13.5px] mb-1 underline underline-offset-2">แจ้งลูกค้า + เตรียมของติดตั้ง</div>
-                <div className="text-[11px] text-gray-400 mb-3">กรอกเอง — 1 บรรทัด/โน้ต (เช่น สีเก็บงาน)</div>
+                <div className="text-[11px] text-gray-400 mb-2">กรอกเอง — 1 บรรทัด/โน้ต (เช่น สีเก็บงาน)</div>
                 <textarea
-                  ref={autoGrow}
                   value={sideText("right")}
-                  onChange={(e) => { setSideText("right", e.target.value); autoGrow(e.target); }}
+                  onChange={(e) => setSideText("right", e.target.value)}
                   placeholder="สีเก็บงาน"
-                  rows={4}
-                  className="w-full resize-none rounded-lg border border-gray-300 bg-white px-2.5 py-2 text-[13.5px] text-gray-900 leading-relaxed focus:outline-none focus:ring-2 focus:ring-sky-300" />
+                  rows={10}
+                  className="w-full min-h-[220px] resize-y rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-[15px] text-gray-900 leading-relaxed focus:outline-none focus:ring-2 focus:ring-sky-300" />
               </div>
             </div>
           </div>
