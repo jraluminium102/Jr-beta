@@ -232,7 +232,7 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
             )}
           </div>
 
-          <div className="grid gap-4 grid-cols-1 xl:grid-cols-[320px_1fr]">
+          <div className="grid gap-4 grid-cols-1 xl:grid-cols-[300px_minmax(0,1fr)]">
             {/* ─── ใบเสนอราคาอ้างอิง (การ์ดขาว) ─── */}
             <div className="rounded-2xl bg-white border border-black/10 shadow-sm p-4 h-max">
               <div className="text-[13px] font-bold text-gray-800 mb-2 flex items-center justify-between">
@@ -254,8 +254,8 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
               )}
             </div>
 
-            {/* ─── ใบปะหน้า (3 คอลัมน์ · การ์ดขาว) ─── */}
-            <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr_1fr]">
+            {/* ─── ใบปะหน้า (3 คอลัมน์ · การ์ดขาว) — minmax(0,..) ให้ทุกคอลัมน์หดได้เท่ากัน (กันคอลัมน์กลางดันช่องขวาแคบ) ─── */}
+            <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_minmax(0,1fr)]">
               {/* คอลัมน์ 1: สั่งของเตรียมผลิต */}
               <div className="rounded-2xl bg-white border border-black/10 shadow-sm p-4">
                 <div className="font-bold text-gray-900 text-[13.5px] mb-1 underline underline-offset-2">รายละเอียด สั่งของเตรียมผลิต</div>
