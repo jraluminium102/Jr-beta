@@ -71,6 +71,8 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
   const [generating, setGenerating] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
   const [loadedOnce, setLoadedOnce] = useState(false);
+  const [measurer, setMeasurer] = useState("");     // ตัวช่วย "วัดงาน" — ชื่อคนวัด
+  const [measureDate, setMeasureDate] = useState(""); // วันวัด (YYYY-MM-DD)
 
   useEffect(() => {
     const d = data?.data;
@@ -116,6 +118,16 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
     const t = raw.trim();
     if (!t) return;
     setContent((c) => ({ ...c, warnings: (c.warnings ?? []).includes(t) ? (c.warnings ?? []) : [...(c.warnings ?? []), t] }));
+  };
+
+  // ตัวช่วย "วัดงาน" → แทรก "พี่{คนวัด}วัดงาน {วันที่}" ไว้บนสุดของช่องแจ้งช่าง
+  const addMeasureNote = () => {
+    const name = measurer.trim();
+    if (!name) return;
+    const d = measureDate ? measureDate.split("-").reverse().join("/") : ""; // YYYY-MM-DD → DD/MM/YYYY
+    const note = `พี่${name}วัดงาน${d ? " " + d : ""}`;
+    setContent((c) => ({ ...c, mid: [{ text: note, color: "" as CoverColor, hl: false }, ...c.mid] }));
+    setMeasurer(""); setMeasureDate("");
   };
 
   const doGenerate = async () => {
@@ -287,7 +299,18 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
               {/* คอลัมน์ 2: แจ้งช่าง (textarea แดง) */}
               <div className="rounded-2xl bg-white border border-black/10 shadow-sm p-4">
                 <div className="font-bold text-[#c00000] text-[13.5px] mb-1 underline underline-offset-2">รายละเอียด แจ้งช่างตอนติดตั้ง</div>
-                <div className="text-[11px] text-gray-400 mb-3">กรอกเอง — 1 บรรทัด/โน้ต (เช่น พี่เนียน วัดงาน)</div>
+                <div className="text-[11px] text-gray-400 mb-2">กรอกเอง — 1 บรรทัด/โน้ต (เช่น พี่เนียน วัดงาน)</div>
+                {/* ตัวช่วย "วัดงาน" — กรอกคนวัด+วันที่ → เขียน "พี่..วัดงาน วว/ดด/ปปปป" ให้ */}
+                <div className="flex flex-wrap items-center gap-1.5 mb-2 rounded-lg bg-rose-50 border border-rose-100 p-2">
+                  <span className="text-[11px] font-medium text-rose-700 shrink-0">📏 วัดงาน:</span>
+                  <input value={measurer} onChange={(e) => setMeasurer(e.target.value)} placeholder="ชื่อคนวัด (เช่น เป)"
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addMeasureNote(); } }}
+                    className="min-w-0 flex-1 rounded-md border border-gray-300 bg-white px-2 py-1.5 text-[12.5px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-rose-200" />
+                  <input type="date" value={measureDate} onChange={(e) => setMeasureDate(e.target.value)}
+                    className="rounded-md border border-gray-300 bg-white px-1.5 py-1.5 text-[12px] text-gray-800 focus:outline-none" />
+                  <button type="button" onClick={addMeasureNote} disabled={!measurer.trim()}
+                    className="shrink-0 rounded-md bg-rose-600 text-white text-[12px] font-medium px-2.5 py-1.5 disabled:opacity-40">+ เพิ่ม</button>
+                </div>
                 <textarea
                   ref={autoGrow}
                   value={sideText("mid")}

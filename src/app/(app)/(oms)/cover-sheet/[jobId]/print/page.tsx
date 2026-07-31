@@ -77,10 +77,14 @@ export default async function CoverSheetPrintPage({ params }: { params: { jobId:
           return (
         <div className="mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0" style={{ width: "210mm", minHeight: "277mm", padding: "10mm" }}>
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8, gap: 10 }}>
-            {/* มุมซ้ายบน: คำเตือน (เลือกจากดรอปดาวน์/พิมพ์เอง) */}
+            {/* มุมซ้ายบน: คำเตือน (โชว์เฉพาะเมื่อมีที่เลือก/พิมพ์ไว้) */}
             <div style={{ color: RED, fontWeight: 700, lineHeight: 1.3, minWidth: 200, maxWidth: 300 }}>
-              <div style={{ fontSize: 14 }}>*ระวัง อลูฯ / กระจก / มุ้ง ผิด*</div>
-              {warns.map((w, i) => <div key={i} style={{ fontSize: 13 }}>⚠ {w}</div>)}
+              {warns.length > 0 && (
+                <>
+                  <div style={{ fontSize: 14 }}>*ระวัง อลูฯ / กระจก / มุ้ง ผิด*</div>
+                  {warns.map((w, i) => <div key={i} style={{ fontSize: 13 }}>⚠ {w}</div>)}
+                </>
+              )}
             </div>
             {/* กลาง: ชื่อลูกค้า */}
             <div style={{ fontSize: 20, textAlign: "center", flex: 1, paddingTop: 2 }}>
