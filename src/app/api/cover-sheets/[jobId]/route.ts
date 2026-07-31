@@ -22,6 +22,7 @@ const lineSchema = z.object({
 // โมเดลแบน (flat): left/mid/right เป็น list บรรทัดตรง ๆ — สิ่งที่เห็น=สิ่งที่พิมพ์
 const contentSchema = z.object({
   floorNote: z.string().max(500).optional().default(""),
+  warnings: z.array(z.string().max(200)).max(20).optional().default([]),
   left: z.array(lineSchema).default([]),
   mid: z.array(lineSchema).default([]),
   right: z.array(lineSchema).default([]),

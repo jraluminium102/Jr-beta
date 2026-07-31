@@ -15,36 +15,26 @@ type AnySb = { from: (t: string) => any };
 const COLOR_HEX: Record<CoverColor, string> = { "": "#000", red: "#c00000", blue: "#1a56db", green: "#15803d" };
 const RED = "#c00000";
 
-const thBase: React.CSSProperties = {
-  border: "1px solid #000", verticalAlign: "top", padding: "7px 6px",
+// ฟอร์มเส้นบรรทัด (แบบใบจริง): เส้นสีเทาบาง ต่อเนื่องเต็มหน้า · ไม่ตีกรอบทึบ · เผื่อเขียนมือด้วยดินสอ
+const RULE = "0.7px solid #9a9a9a";
+const ROW_H = "7.2mm";       // ความสูงบรรทัด (ให้เต็ม A4)
+const MIN_ROWS = 34;         // จำนวนบรรทัดขั้นต่ำ (เติมเส้นว่างจนเต็มหน้า)
+const thRuled: React.CSSProperties = {
+  borderBottom: "1.4px solid #000", borderRight: RULE, verticalAlign: "bottom", padding: "4px 6px 6px",
   textAlign: "center", fontWeight: 700, textDecoration: "underline", fontSize: 14,
 };
-const tdBase: React.CSSProperties = { border: "1px solid #000", verticalAlign: "top", padding: "6px 8px", fontSize: 14, lineHeight: 1.55 };
+const cellBase: React.CSSProperties = { borderBottom: RULE, borderRight: RULE, verticalAlign: "top", padding: "2px 7px", height: ROW_H, fontSize: 14, lineHeight: 1.3, overflow: "hidden" };
 const numBadge: React.CSSProperties = {
-  display: "inline-grid", placeItems: "center", width: 20, height: 20,
+  display: "inline-grid", placeItems: "center", width: 19, height: 19,
   border: "1.6px solid " + RED, color: RED, borderRadius: "50%", fontSize: 12, fontWeight: 700,
-  marginRight: 7, verticalAlign: "middle",
+  marginRight: 6, verticalAlign: "middle",
 };
 
-// เรนเดอร์ 1 คอลัมน์แบบแบน — group=หัวข้อตัวหนา+เลข · spec=บุลเลท (สี/ไฮไลต์ต่อบรรทัด)
-function ColumnCell({ lines, defaultColor = "#000" }: { lines: CoverLine[]; defaultColor?: string }) {
-  const rows = (lines ?? []).filter((l) => (l.text ?? "").trim() || l.kind === "group");
-  if (rows.length === 0) return null;
-  return (
-    <div>
-      {rows.map((l, i) =>
-        l.kind === "group" ? (
-          <div key={i} style={{ fontWeight: 700, marginTop: i === 0 ? 0 : 6, marginBottom: 2 }}>
-            <span style={numBadge}>{l.n}</span>{l.text}
-          </div>
-        ) : (
-          <div key={i} style={{ padding: "1px 0", color: l.color ? COLOR_HEX[l.color] : defaultColor, background: l.hl ? "#fff35b" : undefined }}>
-            - {l.text}
-          </div>
-        )
-      )}
-    </div>
-  );
+// เรนเดอร์ 1 บรรทัดในเซลล์ — group=หัวข้อตัวหนา+เลข · spec=บุลเลท (สี/ไฮไลต์) · ว่าง=เส้นเปล่า
+function LineCell({ line, defaultColor = "#000" }: { line?: CoverLine; defaultColor?: string }) {
+  if (!line) return <>&nbsp;</>;
+  if (line.kind === "group") return <span style={{ fontWeight: 700 }}><span style={numBadge}>{line.n}</span>{line.text}</span>;
+  return <span style={{ color: line.color ? COLOR_HEX[line.color] : defaultColor, background: line.hl ? "#fff35b" : undefined }}>- {line.text}</span>;
 }
 
 export default async function CoverSheetPrintPage({ params }: { params: { jobId: string } }) {
@@ -78,19 +68,32 @@ export default async function CoverSheetPrintPage({ params }: { params: { jobId:
       ) : !cover ? (
         <div className="no-print mx-auto mt-8 max-w-[210mm] text-center text-sm text-gray-500 px-4">งานนี้ยังไม่มีใบปะหน้า — กลับไปสร้าง/บันทึกก่อนพิมพ์</div>
       ) : (
-        <div className="mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0" style={{ width: "210mm", minHeight: "120mm", padding: "12mm" }}>
-          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 10 }}>
-            <div style={{ width: 110 }} />
-            <div style={{ fontSize: 20 }}>
-              <span style={{ fontWeight: 700 }}>ชื่อลูกค้า</span>{" "}
-              <span style={{ fontWeight: 700, margin: "0 6px" }}>{job.customer_name || "—"}</span>
+        (() => {
+          const flat = (arr?: CoverLine[]) => (arr ?? []).filter((l) => (l.text ?? "").trim() || l.kind === "group");
+          const lf = flat(content.left), mf = flat(content.mid), rf = flat(content.right);
+          const rows = Math.max(lf.length, mf.length, rf.length, MIN_ROWS);
+          const warns = (content.warnings ?? []).filter((w) => w.trim());
+          const firstCell = { ...cellBase, borderLeft: RULE };
+          return (
+        <div className="mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0" style={{ width: "210mm", minHeight: "277mm", padding: "10mm" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8, gap: 10 }}>
+            {/* มุมซ้ายบน: คำเตือน (เลือกจากดรอปดาวน์/พิมพ์เอง) */}
+            <div style={{ color: RED, fontWeight: 700, lineHeight: 1.3, minWidth: 200, maxWidth: 300 }}>
+              <div style={{ fontSize: 14 }}>*ระวัง อลูฯ / กระจก / มุ้ง ผิด*</div>
+              {warns.map((w, i) => <div key={i} style={{ fontSize: 13 }}>⚠ {w}</div>)}
             </div>
-            <div style={{ color: RED, fontWeight: 700, fontSize: 16, whiteSpace: "nowrap" }}>
-              {showFloor ? `พื้นช่าง ${content.floorNote?.trim() || "................"}` : ""}
+            {/* กลาง: ชื่อลูกค้า */}
+            <div style={{ fontSize: 20, textAlign: "center", flex: 1, paddingTop: 2 }}>
+              <span style={{ fontWeight: 700 }}>ชื่อลูกค้า</span>{" "}
+              <span style={{ fontWeight: 700 }}>{job.customer_name || "—"}</span>
+            </div>
+            {/* ขวา: พื้นช่าง */}
+            <div style={{ color: RED, fontWeight: 700, fontSize: 15, whiteSpace: "nowrap", minWidth: 110, textAlign: "right", paddingTop: 2 }}>
+              {showFloor ? `พื้นช่าง ${content.floorNote?.trim() || "............"}` : ""}
             </div>
           </div>
 
-          <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", borderTop: RULE }}>
             <colgroup>
               <col style={{ width: "44%" }} />
               <col style={{ width: "28%" }} />
@@ -98,20 +101,24 @@ export default async function CoverSheetPrintPage({ params }: { params: { jobId:
             </colgroup>
             <thead>
               <tr>
-                <th style={{ ...thBase, color: "#000" }}>รายละเอียด สั่งของเตรียมผลิต</th>
-                <th style={{ ...thBase, color: RED }}>รายละเอียด แจ้งช่างตอนติดตั้ง</th>
-                <th style={{ ...thBase, color: RED }}>รายละเอียดแจ้งลูกค้า + เตรียมของติดตั้ง</th>
+                <th style={{ ...thRuled, borderLeft: RULE, color: "#000" }}>รายละเอียด สั่งของเตรียมผลิต</th>
+                <th style={{ ...thRuled, color: RED }}>รายละเอียด แจ้งช่างตอนติดตั้ง</th>
+                <th style={{ ...thRuled, color: RED }}>รายละเอียดแจ้งลูกค้า + เตรียมของติดตั้ง</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td style={tdBase}><ColumnCell lines={content.left} /></td>
-                <td style={tdBase}><ColumnCell lines={content.mid} defaultColor={RED} /></td>
-                <td style={tdBase}><ColumnCell lines={content.right} /></td>
-              </tr>
+              {Array.from({ length: rows }).map((_, i) => (
+                <tr key={i}>
+                  <td style={firstCell}><LineCell line={lf[i]} /></td>
+                  <td style={cellBase}><LineCell line={mf[i]} defaultColor={RED} /></td>
+                  <td style={cellBase}><LineCell line={rf[i]} /></td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
+          );
+        })()
       )}
     </div>
   );

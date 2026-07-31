@@ -9,7 +9,7 @@ import type {
   CoverColor, CoverContent, CoverLine, CoverMode,
   CoverSheetGetResponse, GenerateResponse,
 } from "@/lib/cover-sheet/types";
-import { EMPTY_CONTENT } from "@/lib/cover-sheet/types";
+import { EMPTY_CONTENT, WARN_PRESETS } from "@/lib/cover-sheet/types";
 
 const COLOR_HEX: Record<CoverColor, string> = { "": "#111827", red: "#c00000", blue: "#1a56db", green: "#15803d" };
 const COLOR_LABEL: Record<CoverColor, string> = { "": "ดำ", red: "แดง", blue: "น้ำเงิน", green: "เขียว" };
@@ -79,6 +79,7 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
     setMode(d.cover?.mode ?? "short");
     setContent({
       floorNote: c?.floorNote ?? d.job?.floor_note ?? "",
+      warnings: c?.warnings ?? [],
       left: c?.left ?? [],
       mid: c?.mid ?? [],
       right: c?.right ?? [],
@@ -105,6 +106,17 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
   const sideText = (key: "mid" | "right") => content[key].map((l) => l.text).join("\n");
   const setSideText = (key: "mid" | "right", v: string) =>
     setContent((c) => ({ ...c, [key]: v.split("\n").map((t) => ({ text: t, color: "" as CoverColor, hl: false })) }));
+
+  // ── คำเตือนมุมซ้ายบน ──
+  const toggleWarn = (w: string) => setContent((c) => {
+    const cur = c.warnings ?? [];
+    return { ...c, warnings: cur.includes(w) ? cur.filter((x) => x !== w) : [...cur, w] };
+  });
+  const addCustomWarn = (raw: string) => {
+    const t = raw.trim();
+    if (!t) return;
+    setContent((c) => ({ ...c, warnings: (c.warnings ?? []).includes(t) ? (c.warnings ?? []) : [...(c.warnings ?? []), t] }));
+  };
 
   const doGenerate = async () => {
     if (content.left.length > 0 && !window.confirm("จะสร้างใหม่ตามโหมดนี้ — รายการ 'สั่งของเตรียมผลิต' เดิมจะถูกแทนที่ (คอลัมน์แจ้งช่าง/ลูกค้าไม่หาย) ต่อไหม?")) return;
@@ -170,10 +182,33 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
       ) : (
         <>
           {/* แถบข้อมูลงาน (การ์ดขาว อ่านง่าย) */}
-          <div className="rounded-2xl bg-white border border-black/10 shadow-sm p-4 mb-4 flex items-center gap-4 flex-wrap">
+          <div className="rounded-2xl bg-white border border-black/10 shadow-sm p-4 mb-4 flex items-start gap-4 flex-wrap">
             <div>
               <div className="text-gray-900 font-bold tnum">{job?.job_code}</div>
               <div className="text-[13px] text-gray-500">{job?.customer_name}</div>
+            </div>
+            {/* ⚠️ คำเตือนมุมซ้ายบนใบพิมพ์ — เลือกจากดรอปดาวน์/พิมพ์เพิ่ม */}
+            <div className="flex-1 min-w-[280px]">
+              <label className="text-[11px] block mb-1 text-gray-500">⚠️ คำเตือน (มุมซ้ายบนใบพิมพ์) — เลือก / พิมพ์เพิ่ม</label>
+              <div className="flex flex-wrap gap-1.5 items-center">
+                {WARN_PRESETS.map((w) => {
+                  const on = (content.warnings ?? []).includes(w);
+                  return (
+                    <button key={w} type="button" onClick={() => toggleWarn(w)}
+                      className={`text-[12px] rounded-full px-2.5 py-1.5 border ${on ? "bg-rose-600 text-white border-rose-600" : "bg-white text-gray-700 border-gray-300 hover:border-rose-300"}`}>
+                      {on ? "✓ " : ""}{w}
+                    </button>
+                  );
+                })}
+                {(content.warnings ?? []).filter((w) => !WARN_PRESETS.includes(w)).map((w) => (
+                  <span key={w} className="inline-flex items-center gap-1 text-[12px] rounded-full px-2.5 py-1.5 bg-rose-600 text-white">
+                    {w}<button type="button" onClick={() => toggleWarn(w)} title="ลบ" className="ml-0.5 leading-none">✕</button>
+                  </span>
+                ))}
+                <input placeholder="พิมพ์เตือนเอง + Enter"
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomWarn(e.currentTarget.value); e.currentTarget.value = ""; } }}
+                  className="text-[12px] rounded-full px-2.5 py-1.5 border border-gray-300 bg-white w-44 focus:outline-none focus:ring-2 focus:ring-sky-300" />
+              </div>
             </div>
             {showFloorNote && (
               <div className="flex-1 min-w-[220px] max-w-[420px]">

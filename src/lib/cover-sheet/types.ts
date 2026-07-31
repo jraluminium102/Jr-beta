@@ -12,12 +12,16 @@ export type CoverGroup = { n: number; title: string; lines: CoverLine[] };
 
 export type CoverContent = {
   floorNote?: string;
+  warnings?: string[]; // คำเตือนมุมซ้ายบน (เลือกจากดรอปดาวน์/พิมพ์เอง) เช่น "ระวังอลูมิเนียมคนละสี"
   left: CoverLine[];   // คอลัมน์ "สั่งของเตรียมผลิต" (แบน)
   mid: CoverLine[];    // "แจ้งช่างตอนติดตั้ง"
   right: CoverLine[];  // "แจ้งลูกค้า + เตรียมของ"
 };
 
-export const EMPTY_CONTENT: CoverContent = { floorNote: "", left: [], mid: [], right: [] };
+// ตัวเลือกคำเตือนสำเร็จรูป (ดรอปดาวน์) — เพิ่มเองได้
+export const WARN_PRESETS = ["ระวังอลูมิเนียมคนละสี", "ระวังกระจกคนละสี", "ระวังมุ้งคนละสี"];
+
+export const EMPTY_CONTENT: CoverContent = { floorNote: "", warnings: [], left: [], mid: [], right: [] };
 
 export type QuotationRefItem = { name: string; detail: string; group_label?: string | null; sort_order?: number };
 
