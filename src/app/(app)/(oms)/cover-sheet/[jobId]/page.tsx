@@ -232,30 +232,32 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
             )}
           </div>
 
-          <div className="grid gap-4 grid-cols-1 xl:grid-cols-[300px_minmax(0,1fr)]">
-            {/* ─── ใบเสนอราคาอ้างอิง (การ์ดขาว) ─── */}
-            <div className="rounded-2xl bg-white border border-black/10 shadow-sm p-4 h-max">
-              <div className="text-[13px] font-bold text-gray-800 mb-2 flex items-center justify-between">
-                <span>📄 ใบเสนอราคาอ้างอิง</span>
+          <div className="space-y-4">
+            {/* ─── ใบเสนอราคาอ้างอิง (ด้านบน · เต็มกว้าง · รายการเรียงหลายคอลัมน์ พับเลื่อนได้) ─── */}
+            <details open className="rounded-2xl bg-white border border-black/10 shadow-sm">
+              <summary className="cursor-pointer select-none text-[13px] font-bold text-gray-800 p-4 flex items-center justify-between">
+                <span>📄 ใบเสนอราคาอ้างอิง <span className="text-gray-400 font-normal">(กดเพื่อย่อ/ขยาย)</span></span>
                 {quotation && <span className="text-[12px] tnum text-gray-400">{quotation.code}</span>}
+              </summary>
+              <div className="px-4 pb-4">
+                {!quotation ? (
+                  <div className="text-[13px] text-gray-400">งานนี้ยังไม่มีใบเสนอราคา</div>
+                ) : (
+                  <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 max-h-[40vh] overflow-y-auto pr-1">
+                    {quotation.items.map((it, i) => (
+                      <div key={i} className="rounded-lg border border-gray-200 bg-gray-50 p-2.5">
+                        {it.group_label && <div className="text-[11px] font-medium text-sky-700 mb-0.5">{it.group_label}</div>}
+                        <div className="text-[13px] font-semibold text-gray-900 mb-1">{it.name}</div>
+                        <div className="text-[12px] whitespace-pre-wrap text-gray-600 leading-relaxed">{it.detail}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              {!quotation ? (
-                <div className="text-[13px] text-gray-400">งานนี้ยังไม่มีใบเสนอราคา</div>
-              ) : (
-                <div className="space-y-2.5 max-h-[70vh] overflow-y-auto pr-1">
-                  {quotation.items.map((it, i) => (
-                    <div key={i} className="rounded-lg border border-gray-200 bg-gray-50 p-2.5">
-                      {it.group_label && <div className="text-[11px] font-medium text-sky-700 mb-0.5">{it.group_label}</div>}
-                      <div className="text-[13px] font-semibold text-gray-900 mb-1">{it.name}</div>
-                      <div className="text-[12px] whitespace-pre-wrap text-gray-600 leading-relaxed">{it.detail}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            </details>
 
-            {/* ─── ใบปะหน้า (3 คอลัมน์ · การ์ดขาว) — minmax(0,..) ให้ทุกคอลัมน์หดได้เท่ากัน (กันคอลัมน์กลางดันช่องขวาแคบ) ─── */}
-            <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_minmax(0,1fr)]">
+            {/* ─── ใบปะหน้า (3 คอลัมน์ · เต็มกว้าง) — minmax(0,..) ให้ทุกคอลัมน์หดได้เท่ากัน ─── */}
+            <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)]">
               {/* คอลัมน์ 1: สั่งของเตรียมผลิต */}
               <div className="rounded-2xl bg-white border border-black/10 shadow-sm p-4">
                 <div className="font-bold text-gray-900 text-[13.5px] mb-1 underline underline-offset-2">รายละเอียด สั่งของเตรียมผลิต</div>
