@@ -36,11 +36,14 @@ export async function GET(req: Request) {
   return ok(data);
 }
 
+// เพิ่มสินค้าใหม่ = ทุก write role "ยกเว้น STORE" (มิ้ง เบิก/รับ/ปรับ/แก้ได้ แต่ห้ามเพิ่ม/ลบสินค้า — เจ้าของสั่ง)
+const ITEM_CREATE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING"];
+
 // POST /api/stock  → เพิ่มวัสดุ
 export async function POST(req: Request) {
   const profile = await getProfile();
   if (!profile) return UNAUTHORIZED();
-  if (!STORE_WRITE.includes(profile.role)) return FORBIDDEN();
+  if (!ITEM_CREATE.includes(profile.role)) return FORBIDDEN();
 
   const body = await req.json().catch(() => null);
   if (!body?.name?.trim()) return fail("ต้องระบุชื่อวัสดุ");

@@ -33,9 +33,9 @@ async function uploadImage(file: File): Promise<string> {
 type JobHit = StockJob;
 
 export default function StockClient({
-  initial, categories: catsInit, canWrite, canPrice, canViewCost, isAdmin, canMerge = false,
+  initial, categories: catsInit, canWrite, canAddItem = false, canPrice, canViewCost, isAdmin, canMerge = false,
 }: {
-  initial: StockItem[]; categories: StockCategory[]; canWrite: boolean; canPrice: boolean; canViewCost: boolean; isAdmin: boolean; canMerge?: boolean;
+  initial: StockItem[]; categories: StockCategory[]; canWrite: boolean; canAddItem?: boolean; canPrice: boolean; canViewCost: boolean; isAdmin: boolean; canMerge?: boolean;
 }) {
   const [list, setList] = useState<StockItem[]>(initial);
   const [cats, setCats] = useState<StockCategory[]>(catsInit);
@@ -146,7 +146,7 @@ export default function StockClient({
               <Icon name="file" size={16} /> นำเข้าจากไฟล์
             </a>
           )}
-          {canWrite && (
+          {canAddItem && (
             <button onClick={() => { setAdding(true); setSel(null); }} className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">
               <Icon name="plus" size={16} /> เพิ่มวัสดุใหม่
             </button>
@@ -383,10 +383,13 @@ function ItemDetail({
                   🔀 รวมรายการซ้ำเข้าตัวนี้
                 </button>
               )}
-              <button onClick={delItem} disabled={deleting}
-                className="press text-sm text-red-600 hover:text-red-700 font-semibold inline-flex items-center gap-1.5 disabled:opacity-60">
-                <Icon name="trash" size={14} /> {deleting ? "กำลังลบ…" : "ลบวัสดุนี้"}
-              </button>
+              {/* ลบวัสดุ = แอดมินเท่านั้น (API ADMIN-only อยู่แล้ว · ซ่อนปุ่มให้ตรง — มิ้ง/สโตร์ลบไม่ได้) */}
+              {isAdmin && (
+                <button onClick={delItem} disabled={deleting}
+                  className="press text-sm text-red-600 hover:text-red-700 font-semibold inline-flex items-center gap-1.5 disabled:opacity-60">
+                  <Icon name="trash" size={14} /> {deleting ? "กำลังลบ…" : "ลบวัสดุนี้"}
+                </button>
+              )}
             </div>
           </div>
           {editOpen && (

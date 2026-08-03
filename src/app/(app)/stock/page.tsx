@@ -37,6 +37,7 @@ export default async function StockPage() {
       initial={safeItems}
       categories={(cats ?? []) as StockCategory[]}
       canWrite={STORE_WRITE.includes(role)}
+      canAddItem={["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING"].includes(role)}
       canPrice={PRICE_WRITE.includes(role)}
       canViewCost={canViewCost}
       isAdmin={role === "ADMIN"}
