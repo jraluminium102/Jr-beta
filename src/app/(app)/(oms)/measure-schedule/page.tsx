@@ -88,6 +88,44 @@ function buildContactCopy(e: MeasureEntry): string {
   return lines.join("\n");
 }
 
+// ฟอร์มคัดลอกทั้งวัน/ทั้งช่าง (เลียนแบบก๊อปคิวเซลล์หน้าคิวประเมิน — buildSalesDayCopy)
+function buildMeasureDayCopy(date: string, measurerName: string, entries: MeasureEntry[]): string {
+  const head = `คิววัดงาน ${thaiDateFull(date)} (${measurerName})`;
+  const blocks = entries
+    .slice()
+    .sort((a, b) => (a.measure_time ?? "99").localeCompare(b.measure_time ?? "99"))
+    .map((e) => [
+      `${e.measure_time ? fmtTime(e.measure_time) : "-"} น. วัดงาน ${e.customer_name ?? "-"}`,
+      "",
+      `${e.customer_name ?? "-"} ${e.customer_tel?.trim() || "-"}`,
+      e.customer_area?.trim() || "-",
+      "",
+      e.location_url?.trim() || "-",
+    ].join("\n"));
+  return head + "\n\n" + blocks.join("\n\n\n");
+}
+
+/** ปุ่มคัดลอกทั้งช่าง/ทั้งวัน (grouped) — ใช้ที่หัววัน (list) + เซลล์ปฏิทิน (compact) */
+function CopyGroupButton({ date, measurerName, entries, compact = false }: { date: string; measurerName: string; entries: MeasureEntry[]; compact?: boolean }) {
+  const [copied, setCopied] = useState(false);
+  const onCopy = async (ev: React.MouseEvent) => {
+    ev.preventDefault(); ev.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(buildMeasureDayCopy(date, measurerName, entries));
+      setCopied(true); setTimeout(() => setCopied(false), 1500);
+    } catch { alert("คัดลอกไม่สำเร็จ ลองใหม่"); }
+  };
+  return (
+    <button onClick={onCopy} title={`คัดลอกคิววัดงาน ${measurerName} (${entries.length} นัด) ไว้ส่ง Line`}
+      className={compact
+        ? "focusable pressable inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold bg-white/15 hover:bg-white/30 border border-white/20 text-white"
+        : "focusable pressable inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[12px] font-semibold bg-white/15 hover:bg-white/25 border border-white/20 text-white"}>
+      <Icon name={copied ? "check" : "clipboard"} size={compact ? 10 : 12} />
+      {copied ? "คัดลอกแล้ว" : (compact ? "คัดลอก" : `คัดลอก ${measurerName}`)}
+    </button>
+  );
+}
+
 /** ปุ่มคัดลอกข้อมูลลูกค้า — compact=ไอคอนล้วน (ใช้ในปฏิทิน) */
 function CopyContactButton({ entry, compact = false }: { entry: MeasureEntry; compact?: boolean }) {
   const [copied, setCopied] = useState(false);
@@ -299,6 +337,10 @@ function CalendarMatrixDesktop({
                         <div className="text-center text-white/20 text-[13px] py-2">—</div>
                       ) : (
                         <div className="space-y-1.5">
+                          {/* คัดลอกทั้งช่างของวันนี้ (ทั้งเซลล์) */}
+                          <div className="flex justify-end">
+                            <CopyGroupButton date={d} measurerName={col || "ยังไม่ระบุช่าง"} entries={cellEntries} compact />
+                          </div>
                           {cellEntries.map((e) => (
                             <CalendarBlock key={e.production_id} entry={e} today={today} />
                           ))}
@@ -731,7 +773,21 @@ export default function MeasureSchedulePage() {
                           {extra}
                         </span>
                       )}
-                      <span className="ml-auto text-[11px] tabular-nums opacity-70">{entries.length} นัด</span>
+                      {/* ปุ่มคัดลอกทั้งช่างของวันนี้ (แบบก๊อปคิวเซลล์) */}
+                      <div className="ml-auto flex items-center gap-1.5 flex-wrap justify-end">
+                        {(() => {
+                          const groups = new Map<string, MeasureEntry[]>();
+                          for (const e of entries) {
+                            const k = (e.measurer_name ?? "").trim() || "ยังไม่ระบุช่าง";
+                            if (!groups.has(k)) groups.set(k, []);
+                            groups.get(k)!.push(e);
+                          }
+                          return [...groups.entries()].map(([name, es]) => (
+                            <CopyGroupButton key={name} date={d} measurerName={name} entries={es} />
+                          ));
+                        })()}
+                        <span className="text-[11px] tabular-nums opacity-70">{entries.length} นัด</span>
+                      </div>
                     </div>
                     {/* Entries */}
                     <div className="space-y-2">
