@@ -970,41 +970,38 @@ export function QueueModal({
       bill_address: f.bill_address || null,
       bill_postal: f.bill_postal || null,
     };
+    // แจ้งผลตอนปิดงาน (ใช้ทั้ง edit และ "สร้างเป็นเสร็จเลย") — jobId = งานที่ promote สร้าง/ผูก
+    const announceDone = (jobId: unknown) => {
+      if (jobCat === "เคลียร์แบบ") {
+        alert(jobId
+          ? `ปิดคิวเคลียร์แบบแล้ว${f.clear_revise ? " — ตั้งสถานะแบบ: กำลังแก้ไข" : ""}\nงาน: ${selectedJob?.job_code ?? "(ไม่ทราบ code)"}`
+          : "ปิดคิวแล้วแต่ผูกงานไม่สำเร็จ — แจ้งแอดมิน");
+      } else if (isAssessJobType(payload.job_type)) {
+        if (!jobId) { alert("เข้าประเมินเสร็จแล้วแต่ผูกงานไม่สำเร็จ — แจ้งแอดมิน"); return; }
+        if (f.custMode === "old" && f.oldCustomerMode === "existing_site") {
+          alert(`ประเมินเสร็จ — ผูกงานเดิม${selectedJob ? ` "${selectedJob.job_code ?? selectedJob.customer_name}"` : ""} + อัปเดต assess_date แล้ว`);
+        } else if (f.custMode === "old" && f.oldCustomerMode === "new_site") {
+          alert(`ประเมินเสร็จ — สร้างงานใหม่ใต้ลูกค้า "${selectedCust?.name ?? f.customer_name}" (ลูกค้าเดิม ไม่เพิ่มซ้ำ)\nดูต่อได้ที่หน้า "ติดตามงาน"`);
+        } else {
+          alert("เข้าประเมินเสร็จ — บันทึกลูกค้าเข้าทะเบียน + สร้างงานในระบบให้แล้ว\nดูต่อได้ที่หน้า \"ติดตามงาน\" (ไม่ต้องกรอกซ้ำ)");
+        }
+      }
+    };
     try {
+      let doneJobId: unknown;
       if (editing) {
         const r = await api.patch<{ id: string }>(`/queue/${entry!.id}`, payload);
-        if (payload.status === "DONE") {
-          if (jobCat === "เคลียร์แบบ") {
-            if (r.meta?.job_id) {
-              alert(
-                `ปิดคิวเคลียร์แบบแล้ว${f.clear_revise ? " — ตั้งสถานะแบบ: กำลังแก้ไข" : ""}\nงาน: ${selectedJob?.job_code ?? "(ไม่ทราบ code)"}`
-              );
-            } else {
-              alert("ปิดคิวแล้วแต่ผูกงานไม่สำเร็จ — แจ้งแอดมิน");
-            }
-          } else if (isAssessJobType(payload.job_type)) {
-            if (r.meta?.job_id) {
-              if (f.custMode === "old" && f.oldCustomerMode === "existing_site") {
-                alert(
-                  `ประเมินเสร็จ — ผูกงานเดิม${selectedJob ? ` "${selectedJob.job_code ?? selectedJob.customer_name}"` : ""} + อัปเดต assess_date แล้ว`
-                );
-              } else if (f.custMode === "old" && f.oldCustomerMode === "new_site") {
-                alert(
-                  `ประเมินเสร็จ — สร้างงานใหม่ใต้ลูกค้า "${selectedCust?.name ?? f.customer_name}" (ลูกค้าเดิม ไม่เพิ่มซ้ำ)\nดูต่อได้ที่หน้า "ติดตามงาน"`
-                );
-              } else {
-                alert(
-                  "เข้าประเมินเสร็จ — บันทึกลูกค้าเข้าทะเบียน + สร้างงานในระบบให้แล้ว\nดูต่อได้ที่หน้า \"ติดตามงาน\" (ไม่ต้องกรอกซ้ำ)"
-                );
-              }
-            } else {
-              alert("เข้าประเมินเสร็จแล้วแต่ผูกงานไม่สำเร็จ — แจ้งแอดมิน");
-            }
-          }
-        }
+        doneJobId = r.meta?.job_id;
       } else {
-        await api.post("/queue", payload);
+        const c = await api.post<{ id: string }>("/queue", payload);
+        // ⚠ POST /api/queue "ไม่" รัน DONE→promote (มีเฉพาะ PATCH) → ถ้าสร้างเป็น "เสร็จ" เลย
+        //    งานจะไม่ถูกสร้าง/ไม่ผูกลูกค้าเดิม/ไม่เข้าเขียนแบบ → ต้อง PATCH ซ้ำเพื่อ promote (บั๊กเจ้าของแจ้ง 4 ส.ค.)
+        if (payload.status === "DONE" && c.data?.id) {
+          const r = await api.patch<{ id: string }>(`/queue/${c.data.id}`, payload);
+          doneJobId = r.meta?.job_id;
+        }
       }
+      if (payload.status === "DONE") announceDone(doneJobId);
       onSaved((payload as { queue_date?: string | null }).queue_date ?? null);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ");
