@@ -43,25 +43,55 @@ export default async function ReceiptSummaryPage({
   const prevM0 = m0 === 0 ? 11 : m0 - 1;
 
   const supabase = createClient();
-  const { data } = await supabase
+  // ⚠ ภาษีขาย: ต้องดึงใบเสร็จ "ทุกใบ" ในเดือน (รวม doc_kind='assess' ค่าประเมินหน้างานที่ job_id/quotation_id = null)
+  //   ห้าม join jobs/quotations แบบ inner — ใบ assess ไม่มี job/quotation จะหลุด = ยื่นภาษีขายขาด (ผิดกฎหมาย)
+  //   query นี้ดึงจาก receipts ตรง ๆ กรองแค่ช่วงวันของเดือน → ครบทุกประเภทโดยธรรมชาติ
+  // base_amt/wht_amt (migration 0095) = ฐานก่อน VAT / หัก ณ ที่จ่าย ที่ server ถอดไว้ตอนออกใบ — ห้ามคิดเองหน้าจอ
+  //   ⚠ net = เงินรับจริง = base + VAT − WHT → ห้ามใช้ (net − vat) เป็นฐาน เพราะจะต่ำกว่าจริงเท่ายอด WHT
+  const cols = "id, code, customer_snapshot, issue_date, amount, base_amt, vat_amt, wht_amt, net, payment_method, is_voided, doc_kind";
+  const colsNoKind = "id, code, customer_snapshot, issue_date, amount, base_amt, vat_amt, wht_amt, net, payment_method, is_voided";
+  let { data, error } = await supabase
     .from("receipts")
-    .select("id, code, customer_snapshot, issue_date, amount, vat_amt, net, payment_method, is_voided")
+    .select(cols)
     .gte("issue_date", start)
     .lt("issue_date", nextStart)
     .order("issue_date", { ascending: true })
     .order("code", { ascending: true });
+  // migration 0115 (doc_kind) ยังไม่รัน → ดึงใหม่โดยไม่เอา doc_kind (ถือว่าทุกใบเป็นงานปกติ · ยอดภาษียังครบ)
+  if (error && /doc_kind/i.test(error.message ?? "")) {
+    ({ data } = await supabase
+      .from("receipts")
+      .select(colsNoKind)
+      .gte("issue_date", start)
+      .lt("issue_date", nextStart)
+      .order("issue_date", { ascending: true })
+      .order("code", { ascending: true }));
+  }
 
   const rows = (data ?? []) as {
     id: number; code: string; customer_snapshot: { name: string; job: string };
-    issue_date: string; amount: number; vat_amt: number; net: number;
-    payment_method: string; is_voided: boolean;
+    issue_date: string; amount: number; base_amt: number | null; vat_amt: number;
+    wht_amt: number | null; net: number;
+    payment_method: string; is_voided: boolean; doc_kind?: string;
   }[];
 
+  // ฐานก่อน VAT ต่อใบ — ใช้ base_amt ที่ถอดไว้ (ถูกเมื่อมี WHT) · ใบ import เก่าที่ base_amt=null (ไม่มี WHT) → net−vat เท่ากันพอดี
+  const baseOf = (r: { base_amt: number | null; net: number; vat_amt: number }) =>
+    r.base_amt != null ? Number(r.base_amt) : Number(r.net || 0) - Number(r.vat_amt || 0);
+
   // ยอดรวม — นับเฉพาะใบที่ไม่ถูกยกเลิก (ใบยกเลิกโชว์ขีดฆ่า ไม่รวมยอด)
+  //   ยอดรวมนี้ = ภาษีขายทั้งเดือน "รวมทุกประเภท" (งานปกติ + ค่าประเมิน) เสมอ — ตัวที่ใช้ยื่น ภ.พ.30
   const live = rows.filter((r) => !r.is_voided);
   const sumNet = live.reduce((s, r) => s + Number(r.net || 0), 0);
   const sumVat = live.reduce((s, r) => s + Number(r.vat_amt || 0), 0);
-  const sumBase = sumNet - sumVat;
+  const sumWht = live.reduce((s, r) => s + Number(r.wht_amt || 0), 0);
+  const sumBase = live.reduce((s, r) => s + baseOf(r), 0); // ฐาน (มูลค่า) สำหรับ ภ.พ.30 — ไม่ใช่ net−vat
+  // แยกยอด "ค่าประเมินหน้างาน" (doc_kind='assess') ไว้ให้บัญชี reconcile — ยอดนี้ "รวมอยู่ใน" ยอดรวมด้านบนแล้ว
+  const assess = live.filter((r) => r.doc_kind === "assess");
+  const assessNet = assess.reduce((s, r) => s + Number(r.net || 0), 0);
+  const assessVat = assess.reduce((s, r) => s + Number(r.vat_amt || 0), 0);
+  const assessWht = assess.reduce((s, r) => s + Number(r.wht_amt || 0), 0);
+  const assessBase = assess.reduce((s, r) => s + baseOf(r), 0);
   const monthLabel = `${THAI_MONTH[m0]} ${y + 543}`;
 
   return (
@@ -107,14 +137,15 @@ export default async function ReceiptSummaryPage({
               <th className="p-2 text-center border border-gray-200">วิธีชำระ</th>
               <th className="p-2 text-right border border-gray-200">ก่อน VAT</th>
               <th className="p-2 text-right border border-gray-200">VAT</th>
+              <th className="p-2 text-right border border-gray-200">หัก ณ ที่จ่าย</th>
               <th className="p-2 text-right border border-gray-200">สุทธิ</th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
-              <tr><td colSpan={8} className="p-6 text-center text-gray-400 border border-gray-200">— ไม่มีใบเสร็จในเดือนนี้ —</td></tr>
+              <tr><td colSpan={9} className="p-6 text-center text-gray-400 border border-gray-200">— ไม่มีใบเสร็จในเดือนนี้ —</td></tr>
             ) : rows.map((r, i) => {
-              const base = Number(r.net || 0) - Number(r.vat_amt || 0);
+              const base = baseOf(r);
               const vd = r.is_voided;
               return (
                 <tr key={r.id} style={vd ? { color: "#9ca3af", textDecoration: "line-through" } : undefined}>
@@ -124,10 +155,14 @@ export default async function ReceiptSummaryPage({
                   <td className="p-2 border border-gray-200">
                     {r.customer_snapshot?.name}
                     {r.customer_snapshot?.job ? <span style={{ color: "#9ca3af" }}> · {r.customer_snapshot.job}</span> : null}
+                    {r.doc_kind === "assess" ? (
+                      <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, color: "#92400e", background: "#fef3c7", borderRadius: 4, padding: "1px 5px", whiteSpace: "nowrap" }}>ค่าประเมิน</span>
+                    ) : null}
                   </td>
                   <td className="p-2 text-center border border-gray-200">{PAYMENT_LABEL[r.payment_method] ?? r.payment_method}</td>
                   <td className="p-2 text-right border border-gray-200 tabular-nums">{baht(base)}</td>
                   <td className="p-2 text-right border border-gray-200 tabular-nums">{baht(r.vat_amt)}</td>
+                  <td className="p-2 text-right border border-gray-200 tabular-nums">{Number(r.wht_amt || 0) > 0 ? baht(Number(r.wht_amt)) : "—"}</td>
                   <td className="p-2 text-right border border-gray-200 tabular-nums">{baht(r.net)}</td>
                 </tr>
               );
@@ -139,14 +174,24 @@ export default async function ReceiptSummaryPage({
                 <td className="p-2 border border-gray-200 text-right" colSpan={5}>รวม (เฉพาะใบที่ใช้ได้ {live.length} ใบ)</td>
                 <td className="p-2 text-right border border-gray-200 tabular-nums">{baht(sumBase)}</td>
                 <td className="p-2 text-right border border-gray-200 tabular-nums">{baht(sumVat)}</td>
+                <td className="p-2 text-right border border-gray-200 tabular-nums">{sumWht > 0 ? baht(sumWht) : "—"}</td>
                 <td className="p-2 text-right border border-gray-200 tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(sumNet)}</td>
               </tr>
             </tfoot>
           )}
         </table>
 
-        <div style={{ marginTop: 24, fontSize: 11, color: "#9ca3af" }}>
-          พิมพ์เพื่อใช้ประกอบการยื่นภาษี/ปิดยอดรายเดือน · ยอดรวมไม่นับใบที่ยกเลิก
+        {/* reconcile ค่าประเมิน — ยอดนี้ "รวมอยู่ใน" ยอดรวมด้านบนแล้ว (แยกโชว์ให้บัญชีกระทบยอด/แยกรายงานภายในเท่านั้น) */}
+        {assess.length > 0 && (
+          <div style={{ marginTop: 16, fontSize: 11, color: "#374151", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, padding: "8px 12px" }}>
+            <span style={{ fontWeight: 700, color: "#92400e" }}>ในจำนวนนี้เป็น “ค่าประเมินหน้างาน” {assess.length} ใบ</span>
+            {" — "}ก่อน VAT {baht(assessBase)} · VAT {baht(assessVat)}{assessWht > 0 ? ` · หัก ณ ที่จ่าย ${baht(assessWht)}` : ""} · สุทธิ ฿{baht(assessNet)}
+            <span style={{ color: "#9ca3af" }}> (นับรวมในยอดภาษีขายด้านบนแล้ว — แยกโชว์ไว้กระทบยอดเท่านั้น)</span>
+          </div>
+        )}
+
+        <div style={{ marginTop: 16, fontSize: 11, color: "#9ca3af" }}>
+          พิมพ์เพื่อใช้ประกอบการยื่นภาษี/ปิดยอดรายเดือน · ยอดรวมนับใบเสร็จ/ใบกำกับภาษี “ทุกประเภท” (งานปกติ + ค่าประเมิน) · ไม่นับใบที่ยกเลิก
         </div>
       </div>
     </div>
