@@ -1,6 +1,7 @@
 import { requirePermission } from "@/lib/bff/context";
 import { withRoute } from "@/lib/bff/handler";
 import { ok } from "@/lib/bff/response";
+import { can } from "@/lib/rbac";
 
 // GET /api/measure-schedule
 // คืนรายการนัดวัดหน้างาน (PENDING_MEASURE ที่มี measure_scheduled + ที่ไม่มี)
@@ -93,5 +94,5 @@ export const GET = withRoute(async () => {
     unscheduled,
     measured,
     today,
-  });
+  }, { can_write: can(ctx.role, "production", "write") });
 });

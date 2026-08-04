@@ -3,9 +3,10 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { Spinner, EmptyState } from "@/components/ui/primitives";
 import Icon from "@/components/Icon";
+import DateField from "@/components/ui/DateField";
 import { thDate } from "@/lib/format";
 
 // ── types ────────────────────────────────────────────────────────────────────
@@ -152,9 +153,91 @@ function CopyContactButton({ entry, compact = false }: { entry: MeasureEntry; co
   );
 }
 
+// ── ตั้ง/แก้นัดวัด ในหน้านี้เลย (ไม่ต้องไปหน้าผลิต · ลิงก์กัน = production เดียวกัน) ──
+function MeasureBookModal({ entry, measurers, onClose, onSaved }: {
+  entry: MeasureEntry;
+  measurers: string[];
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [date, setDate] = useState(entry.measure_scheduled ?? "");
+  const [time, setTime] = useState(entry.measure_time ? fmtTime(entry.measure_time) : "");
+  const [measurer, setMeasurer] = useState(entry.measurer_name ?? "");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  const save = async () => {
+    setBusy(true); setErr("");
+    try {
+      // PATCH production เดิม (ไม่เปลี่ยน status) → หน้าผลิตเห็นเหมือนกัน
+      await api.patch(`/production/${entry.production_id}`, {
+        measure_scheduled: date || null,
+        measure_time: time || null,
+        measurer_name: measurer.trim() || null,
+      });
+      onSaved();
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "บันทึกไม่สำเร็จ");
+      setBusy(false);
+    }
+  };
+
+  const inputCls = "focusable w-full glass-card rounded-xl px-3 py-2.5 text-sm text-white outline-none min-h-[48px]";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+      <div className="absolute inset-0 bg-black/55" onClick={onClose} />
+      <div className="relative w-full max-w-md glass rounded-2xl p-5 fade-in">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-bold text-white flex items-center gap-2"><Icon name="ruler" size={16} /> ตั้งนัดวัด</h3>
+          <button onClick={onClose} aria-label="ปิด" className="text-white/60 hover:text-white"><Icon name="close" size={18} /></button>
+        </div>
+        <div className="text-sm text-white/85 mb-3">
+          {entry.customer_name ?? "—"}
+          {entry.customer_area && <span className="block text-[12px] mt-0.5" style={{ color: "var(--t-low)" }}>{entry.customer_area}</span>}
+          {entry.job_code && <span className="text-[11px]" style={{ color: "var(--t-low)" }}>{entry.job_code}</span>}
+        </div>
+
+        <div className="flex gap-2 mb-3">
+          <label className="flex-1 min-w-0">
+            <span className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>วันที่นัด</span>
+            <DateField value={date} onChange={setDate} aria-label="วันที่นัดวัด" className={inputCls} />
+          </label>
+          <label className="w-28 shrink-0">
+            <span className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>เวลา</span>
+            <input type="time" step={60} value={time} onChange={(e) => setTime(e.target.value.slice(0, 5))} aria-label="เวลานัดวัด"
+              className={`${inputCls} tnum [&::-webkit-calendar-picker-indicator]:invert`} />
+          </label>
+        </div>
+        <label className="block mb-4">
+          <span className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>ช่างที่วัด</span>
+          <input list="measure-book-measurers" value={measurer} onChange={(e) => setMeasurer(e.target.value)}
+            placeholder="เช่น เป, เนียน" aria-label="ช่างที่วัด" className={`${inputCls} placeholder-white/35`} />
+          <datalist id="measure-book-measurers">
+            {measurers.map((m) => <option key={m} value={m} />)}
+            <option value="เป" /><option value="เนียน" />
+          </datalist>
+        </label>
+
+        {err && <p role="alert" className="mb-3 text-sm text-rose-200 bg-rose-500/15 rounded-lg px-3 py-2">{err}</p>}
+
+        <div className="flex gap-2">
+          <button onClick={save} disabled={busy}
+            className="focusable pressable flex-1 rounded-xl py-2.5 text-sm font-semibold text-[#1F4E78] bg-white hover:bg-white/90 disabled:opacity-60 min-h-[48px]">
+            {busy ? "กำลังบันทึก…" : "บันทึกนัด"}
+          </button>
+          <button onClick={onClose} disabled={busy}
+            className="focusable pressable glass-card border border-white/15 rounded-xl px-5 py-2.5 text-sm text-white/80 min-h-[48px]">ยกเลิก</button>
+        </div>
+        <p className="text-[11px] mt-2.5" style={{ color: "var(--t-low)" }}>บันทึกที่นี่ = ลิงก์กับหน้าผลิตอัตโนมัติ (งานเดียวกัน) · เว้นวันที่ว่าง = กลับไปรอนัด</p>
+      </div>
+    </div>
+  );
+}
+
 // ── sub-components ────────────────────────────────────────────────────────────
 
-function EntryRow({ entry }: { entry: MeasureEntry }) {
+function EntryRow({ entry, canWrite, onBook }: { entry: MeasureEntry; canWrite?: boolean; onBook?: (e: MeasureEntry) => void }) {
   const overdue = entry.is_overdue;
   return (
     <div className={`rounded-xl px-4 py-3 border flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 transition-colors
@@ -207,9 +290,15 @@ function EntryRow({ entry }: { entry: MeasureEntry }) {
         </div>
       </div>
 
-      {/* ปุ่มคัดลอก + เปิดงาน */}
+      {/* ปุ่มคัดลอก + แก้นัด + เปิดงาน */}
       <div className="shrink-0 flex items-center gap-1.5">
         <CopyContactButton entry={entry} />
+        {canWrite && onBook && (
+          <button onClick={() => onBook(entry)} title="แก้วัน/เวลา/ช่างที่นัดวัด"
+            className="focusable pressable inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sky-500/25 hover:bg-sky-500/40 border border-sky-300/30 text-sky-50 text-[12px] font-medium min-h-[36px]">
+            <Icon name="calendar" size={13} /> แก้นัด
+          </button>
+        )}
         <Link
           href={`/production?open=${entry.production_id}`}
           className="focusable pressable inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/18 border border-white/15 text-white text-[12px] font-medium min-h-[36px]"
@@ -475,7 +564,12 @@ export default function MeasureSchedulePage() {
   });
 
   const apiData = res?.data;
+  const canWrite = (res?.meta?.can_write as boolean) ?? false;
   const today = apiData?.today ?? new Date().toISOString().slice(0, 10);
+
+  // ตั้ง/แก้นัดในหน้านี้ (modal) — entry ที่กำลังตั้งนัด
+  const [booking, setBooking] = useState<MeasureEntry | null>(null);
+  const onBook = useCallback((e: MeasureEntry) => setBooking(e), []);
 
   // distinct ช่างจาก scheduled + unscheduled
   const allMeasurers = useMemo(() => {
@@ -690,6 +784,12 @@ export default function MeasureSchedulePage() {
                 </div>
                 <div className="shrink-0 flex items-center gap-1.5">
                   <CopyContactButton entry={e} />
+                  {canWrite && (
+                    <button onClick={() => onBook(e)} title="ตั้งวัน/เวลา/ช่างที่นัดวัด"
+                      className="focusable pressable inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500/30 hover:bg-sky-500/45 border border-sky-300/35 text-sky-50 text-[12px] font-semibold min-h-[36px]">
+                      <Icon name="calendar" size={12} /> ตั้งนัด
+                    </button>
+                  )}
                   <Link
                     href={`/production?open=${e.production_id}`}
                     className="focusable pressable inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/18 border border-white/15 text-white text-[12px] font-medium min-h-[36px]"
@@ -792,7 +892,7 @@ export default function MeasureSchedulePage() {
                     {/* Entries */}
                     <div className="space-y-2">
                       {entries.map((e) => (
-                        <EntryRow key={e.production_id} entry={e} />
+                        <EntryRow key={e.production_id} entry={e} canWrite={canWrite} onBook={onBook} />
                       ))}
                     </div>
                   </div>
@@ -847,6 +947,16 @@ export default function MeasureSchedulePage() {
             </div>
           )}
         </div>
+      )}
+
+      {/* ตั้ง/แก้นัดในหน้านี้ (ลิงก์กับหน้าผลิต) */}
+      {booking && (
+        <MeasureBookModal
+          entry={booking}
+          measurers={allMeasurers}
+          onClose={() => setBooking(null)}
+          onSaved={() => { setBooking(null); refetch(); }}
+        />
       )}
     </div>
   );
