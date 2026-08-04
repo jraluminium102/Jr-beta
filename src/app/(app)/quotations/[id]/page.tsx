@@ -10,6 +10,7 @@ import QuotationActions from "./QuotationActions";
 import QuotationEditButton from "./QuotationEditButton";
 import CustomerHeaderEditButton from "./CustomerHeaderEditButton";
 import IssueDateEditButton from "./IssueDateEditButton";
+import RevisionHistory from "./RevisionHistory";
 import type { Quotation } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +39,26 @@ export default async function QuotationDetail({ params }: { params: { id: string
     .limit(1);
   const hasActiveBilling = (activeBnRows ?? []).length > 0;
   const activeBillingCode = hasActiveBilling ? (activeBnRows as { id: number; code: string }[])[0].code : null;
+
+  // ประวัติฉบับก่อนแก้ (0093) — เก็บตอนเลือก "Rev ใหม่ + เก็บของเดิม" หรือแก้ใบที่ส่งลูกค้าแล้ว (sent/approved)
+  // เดิมเก็บ snapshot ไว้แต่ไม่เคยมีหน้าให้ดู → ผู้ใช้ "หาฉบับเก่าไม่เจอ" · ดึงมาโชว์เป็นรายการ (degrade เป็น [] ถ้า 0093 ยังไม่รัน)
+  const { data: revRows } = await supabase
+    .from("quotation_revisions")
+    .select("id, revision_no, label, created_at, snapshot")
+    .eq("quotation_id", q.id)
+    .order("created_at", { ascending: false });
+  const revisions = (revRows ?? []).map((r) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const snap = ((r as any).snapshot ?? {}) as any;
+    const total = Number(snap.wht_amt > 0 ? snap.net : snap.total) || 0;
+    return {
+      id: (r as { id: number }).id,
+      label: String((r as { label?: string }).label ?? "").trim() || `Rev${String((r as { revision_no?: number }).revision_no ?? 0).padStart(2, "0")}`,
+      created_at: (r as { created_at: string }).created_at,
+      total,
+      itemCount: (snap.quotation_items ?? []).length,
+    };
+  });
 
   return (
     <div className="space-y-5">
@@ -180,6 +201,8 @@ export default async function QuotationDetail({ params }: { params: { id: string
           </table>
         </div>
       </Card>
+
+      {revisions.length > 0 && <RevisionHistory quotationId={q.id} revisions={revisions} />}
     </div>
   );
 }
