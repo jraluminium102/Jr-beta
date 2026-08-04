@@ -207,24 +207,29 @@ export default function CalculatorClient({
                           e.preventDefault();
                           pickCustomer(c);
                         }}
-                        className={`flex items-baseline justify-between gap-3 px-4 py-2.5 cursor-pointer text-sm select-none
+                        className={`px-4 py-2.5 cursor-pointer text-sm select-none
                           ${c.id === customerId
                             ? "bg-brand/10 font-semibold text-brand-dark"
                             : "text-ink hover:bg-black/5"
                           }`}
                       >
-                        <span className="flex-1 min-w-0 truncate">
-                          {c.name}
-                          {c.job && (
-                            <span className="ml-1 text-ink-3 font-normal">
-                              · {c.job}
-                            </span>
-                          )}
-                        </span>
-                        <span className="shrink-0 tabular-nums text-xs text-ink-3">
-                          {tail4 ? `…${tail4}` : "—"}
-                          {area && ` / ${area}`}
-                        </span>
+                        <div className="flex items-baseline justify-between gap-3">
+                          <span className="flex-1 min-w-0 truncate">
+                            {c.name}
+                            {c.job && (
+                              <span className="ml-1 text-ink-3 font-normal">
+                                · {c.job}
+                              </span>
+                            )}
+                          </span>
+                          <span className="shrink-0 tabular-nums text-xs text-ink-3">
+                            {tail4 ? `…${tail4}` : "—"}
+                            {area && ` / ${area}`}
+                          </span>
+                        </div>
+                        {c.address && (
+                          <div className="text-[11px] text-ink-3 truncate mt-0.5">📍 {c.address}</div>
+                        )}
                       </li>
                     );
                   })

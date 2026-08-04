@@ -18,7 +18,7 @@ export default async function CutlistPage() {
       .limit(200),
     // งานให้เลือกผูก — งานที่ยังไม่ปิด/ยกเลิก ล่าสุดก่อน
     sb.from("jobs")
-      .select("id, job_code, customer_name")
+      .select("id, job_code, customer_name, customer_area")
       .not("status", "in", "(COMPLETED,CANCELLED)")
       .order("created_at", { ascending: false })
       .limit(500),

@@ -165,6 +165,9 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
                 className={`press w-full text-left rounded-xl px-3 py-2.5 ${sel?.id === c.id ? "text-white bg-brand shadow-brand" : "glass-soft hover:bg-white/70"}`}>
                 <div className="font-semibold text-sm">{c.name}</div>
                 <div className={`text-xs ${sel?.id === c.id ? "text-red-50" : "text-ink-3"}`}>{c.job || "—"}</div>
+                {c.address && (
+                  <div className={`text-[11px] truncate ${sel?.id === c.id ? "text-red-50/80" : "text-ink-3"}`}>📍 {c.address}</div>
+                )}
               </button>
             ))}
             {filtered.length === 0 && <p className="text-sm text-ink-3 text-center py-4">ไม่พบลูกค้า</p>}

@@ -852,6 +852,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                 className="px-3 py-2 text-sm cursor-pointer hover:bg-brand/5 border-b border-black/5 last:border-0">
                 {c.name}{c.job ? <span className="text-ink-3"> · {c.job}</span> : ""}
                 <span className="float-right text-xs text-ink-3">{(c.phone ?? "").replace(/\D/g, "").slice(-4) || ""}</span>
+                {c.address && <div className="text-[11px] text-ink-3 truncate">📍 {c.address}</div>}
               </li>
             ))}
           </ul>

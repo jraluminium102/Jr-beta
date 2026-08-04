@@ -18,6 +18,7 @@ type SearchResult = {
   design_state: DesignState;
   designer_name: string | null;
   designer_ref: number | null;
+  area?: string | null;       // ที่อยู่ (job: customer_area · customer: address) — กันเลือกผิดคนตอนชื่อซ้ำ
 };
 
 const DESIGN_STATE_TH: Record<DesignState, string> = {
@@ -292,6 +293,7 @@ function SearchMode({
             ? designers.find((d) => d.id === (j.designer_ref as number))?.name ?? null
             : null),
           designer_ref: j.designer_ref as number | null,
+          area: (j.customer_area as string | null) ?? null,
         }));
 
         // ลูกค้าในทะเบียนที่ "ยังไม่มีงาน" ในผลลัพธ์ (กันซ้ำกับงานที่เจอแล้ว)
@@ -311,6 +313,7 @@ function SearchMode({
               design_state: "NOT_STARTED" as DesignState,
               designer_name: null,
               designer_ref: null,
+              area: (c.address as string | null) ?? null,
             }));
         }
         setResults([...jobs, ...customers]);
@@ -452,6 +455,9 @@ function SearchMode({
                       <span className="text-[11px] text-white/40">· {job.designer_name}</span>
                     )}
                   </div>
+                  {job.area && (
+                    <div className="text-[11px] text-white/40 truncate mt-0.5">📍 {job.area}</div>
+                  )}
                 </div>
                 {job.kind === "customer" ? (
                   <span className="shrink-0 text-[10px] text-emerald-300 bg-emerald-400/20 border border-emerald-300/30 rounded-full px-2 py-0.5 font-medium whitespace-nowrap">

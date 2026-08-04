@@ -13,9 +13,9 @@ export default async function NewQuotationPage() {
   const supabase = createClient();
   const { data } = await supabase
     .from("customers")
-    .select("id, name, job")
+    .select("id, name, job, address")
     .eq("is_active", true)
     .order("name");
 
-  return <QuotationForm customers={(data ?? []) as Pick<Customer, "id" | "name" | "job">[]} />;
+  return <QuotationForm customers={(data ?? []) as Pick<Customer, "id" | "name" | "job" | "address">[]} />;
 }

@@ -15,7 +15,7 @@ type Row = {
   created_at: string; stock_cut_at: string | null;
   jobs?: { job_code: string | null; customer_name: string | null } | null;
 };
-type JobOpt = { id: string; job_code: string | null; customer_name: string };
+type JobOpt = { id: string; job_code: string | null; customer_name: string; customer_area?: string | null };
 
 export default function CutlistListClient({ rows, jobs, canWrite }: { rows: Row[]; jobs: JobOpt[]; canWrite: boolean }) {
   const router = useRouter();
@@ -90,7 +90,9 @@ export default function CutlistListClient({ rows, jobs, canWrite }: { rows: Row[
               <select value={jobId} onChange={(e) => setJobId(e.target.value)} className="w-full glass-soft rounded-lg px-3 py-2 mt-1 outline-none">
                 <option value="">— ไม่ผูกงาน (ใบเปล่า) —</option>
                 {jobFiltered.map((j) => (
-                  <option key={j.id} value={j.id}>{j.customer_name}{j.job_code ? ` · ${j.job_code}` : ""}</option>
+                  <option key={j.id} value={j.id}>
+                    {j.customer_name}{j.job_code ? ` · ${j.job_code}` : ""}{j.customer_area ? ` — 📍${j.customer_area.slice(0, 40)}` : ""}
+                  </option>
                 ))}
               </select>
             </label>

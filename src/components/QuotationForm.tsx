@@ -17,7 +17,7 @@ type ActiveJob = { id: string; job_code: string | null; current_stage: number; s
 type Item = { name: string; detail: string; qty: number; unit_price: number; category: string; product_id: string; group_label: string; calc_recipe?: unknown };
 const blank = (): Item => ({ name: "", detail: "", qty: 1, unit_price: 0, category: "", product_id: "", group_label: "", calc_recipe: null });
 
-export default function QuotationForm({ customers }: { customers: Pick<Customer, "id" | "name" | "job">[] }) {
+export default function QuotationForm({ customers }: { customers: Pick<Customer, "id" | "name" | "job" | "address">[] }) {
   const router = useRouter();
   // ไม่ default เป็นลูกค้าคนแรก — กันผูกผิดคนเงียบ ๆ (ต้องเลือก/ดึงจากเครื่องคิดราคาเสมอ)
   const [customerId, setCustomerId] = useState<number | "">("");
@@ -308,7 +308,11 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
                 <select value={customerId} onChange={(e) => setCustomerId(e.target.value ? Number(e.target.value) : "")}
                   className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none">
                   <option value="">— เลือกลูกค้า —</option>
-                  {customers.map((c) => <option key={c.id} value={c.id}>{c.name} · {c.job}</option>)}
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} · {c.job}{c.address ? ` — 📍${c.address.slice(0, 40)}` : ""}
+                    </option>
+                  ))}
                 </select>
               </label>
               <label className="block">
