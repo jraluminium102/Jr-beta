@@ -43,6 +43,11 @@ export default async function BillingNotesPage({ searchParams }: { searchParams?
         <div className="flex items-center gap-2 flex-wrap">
           <TestDocsToggle cutoff={cutoff} includeTest={includeTest} basePath="/billing-notes" />
           {canWrite(profile?.role) && (
+            <Link href="/billing-notes/new-fee" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark glass-soft">
+              <Icon name="clipboard" size={16} /> ออกใบค่าประเมิน
+            </Link>
+          )}
+          {canWrite(profile?.role) && (
             <Link href="/billing-notes/new" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">
               <Icon name="plus" size={16} /> สร้างใบวางบิล
             </Link>

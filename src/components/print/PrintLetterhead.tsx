@@ -31,6 +31,8 @@ export function taxInvoiceMissing(c: CustomerSnapshot): string[] {
   const miss: string[] = [];
   if (!c.tax_id || c.tax_id.replace(/\D/g, "").length < 13) miss.push("เลขประจำตัวผู้เสียภาษี/บัตรประชาชน (13 หลัก) ของผู้ซื้อ");
   if (!c.address) miss.push("ที่อยู่ผู้ซื้อ");
+  // นิติบุคคล (ม.86/4) ต้องระบุ "สำนักงานใหญ่/สาขาที่ ###" ของผู้ซื้อด้วย — ไม่งั้นผู้ซื้อเครดิตภาษีซื้ออาจถูกทัก
+  if (c.kind === "COMPANY" && !c.branch) miss.push("สำนักงานใหญ่/สาขา ของผู้ซื้อ (นิติบุคคล)");
   return miss;
 }
 
