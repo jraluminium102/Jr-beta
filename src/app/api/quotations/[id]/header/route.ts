@@ -3,13 +3,13 @@ import { getProfile, canWrite } from "@/lib/auth";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 import { audit } from "@/lib/bff/handler";
 
-// PATCH /api/quotations/[id]/header — แก้หัวบิลใบเสนอ
-//   body: { name?, address?, issue_date?, save_to_registry? }
-//   - name/address → อัปเดต customer_snapshot ของใบนี้เสมอ (บิลที่ดูอยู่เปลี่ยนทันที)
-//       + save_to_registry(default) & มี customer_id → อัปเดต customers ในทะเบียน
-//         · name → DB trigger 0051/0071 กระจายไปทุกเอกสารของลูกค้า (แตะเฉพาะ key name)
-//         · address → อัปเดตทะเบียนอย่างเดียว (ไม่ propagate ไปเอกสารเก่า = ปลอดภัยเรื่องภาษี)
-//   - issue_date → วันที่ออกใบเสนอ (ต่อใบ · ISO YYYY-MM-DD · บล็อกปี พ.ศ.)
+// PATCH /api/quotations/[id]/header — แก้หัวเอกสารใบเสนอ (เหมือนใบวางบิล)
+//   body: { name?, address?, tax_id?, branch?, kind?, postal_code?, contact_person?, phone?, issue_date?, save_to_registry? }
+//   - ฟิลด์ลูกค้าทั้งหมด → customer_snapshot ของใบนี้ (ใส่ชื่อบริษัท/นิติบุคคล/สาขา/เลขภาษีได้ ครบใบกำกับเต็มรูป)
+//   - save_to_registry(default) & มี customer_id → อัปเดต customers ในทะเบียน (เฉพาะคอลัมน์ที่ทะเบียนมี)
+//     · name → trigger 0051/0071 กระจายไปทุกเอกสาร · อื่น ๆ อัปเดตทะเบียนอย่างเดียว (ไม่ propagate = ปลอดภัยภาษี)
+//     · kind/branch/postal_code = snapshot เท่านั้น (ทะเบียนไม่มีคอลัมน์ · เก็บใน billing_profiles)
+//   - issue_date → วันที่ออก (ISO · บล็อกปี พ.ศ.)
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   const profile = await getProfile();
   if (!profile) return UNAUTHORIZED();
@@ -18,18 +18,33 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const body = await req.json().catch(() => ({}));
   const saveToRegistry = body?.save_to_registry !== false; // default = true
 
-  // ── validate + เก็บเฉพาะ field ที่ส่งมา ──
+  // ── field ลูกค้า → snapshot (ใส่คีย์ไหนก็อัปเดตคีย์นั้น) ──
   const snapPatch: Record<string, string> = {};
+  const setStr = (key: string, max: number, label: string): string | null => {
+    if (body?.[key] === undefined) return null;
+    const v = String(body[key]).trim();
+    if (v.length > max) return `${label}ยาวเกินไป`;
+    snapPatch[key] = v;
+    return null;
+  };
   if (body?.name !== undefined) {
     const name = String(body.name).trim();
     if (!name) return fail("กรุณากรอกชื่อลูกค้า");
     if (name.length > 200) return fail("ชื่อลูกค้ายาวเกินไป");
     snapPatch.name = name;
   }
-  if (body?.address !== undefined) {
-    const address = String(body.address).trim();
-    if (address.length > 500) return fail("ที่อยู่ยาวเกินไป");
-    snapPatch.address = address;
+  for (const [key, max, label] of [
+    ["address", 500, "ที่อยู่"], ["tax_id", 40, "เลขผู้เสียภาษี"], ["branch", 80, "สาขา"],
+    ["postal_code", 10, "รหัสไปรษณีย์"], ["contact_person", 120, "ผู้ติดต่อ"], ["phone", 40, "เบอร์โทร"],
+  ] as [string, number, string][]) {
+    const errMsg = setStr(key, max, label);
+    if (errMsg) return fail(errMsg);
+  }
+  // kind = บุคคล/นิติบุคคล (จำกัดค่า)
+  if (body?.kind !== undefined) {
+    const k = String(body.kind).trim().toUpperCase();
+    if (k && k !== "INDIVIDUAL" && k !== "COMPANY") return fail("ประเภทลูกค้าไม่ถูกต้อง");
+    snapPatch.kind = k;
   }
 
   let issueDate: string | undefined;
@@ -51,7 +66,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const supabase = createClient();
   const { data: q, error: qErr } = await supabase
     .from("quotations")
-    .select("id, customer_id, customer_snapshot, issue_date")
+    .select("id, customer_id, customer_snapshot")
     .eq("id", params.id)
     .single();
   if (qErr || !q) return fail("ไม่พบใบเสนอราคา", 404);
@@ -59,28 +74,37 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const anyQ = q as any;
   const snap = (anyQ.customer_snapshot ?? {}) as Record<string, unknown>;
-  const customerId = anyQ.customer_id as number | null;
   const oldName = String(snap.name ?? "").trim();
+  const customerId = anyQ.customer_id as number | null;
 
-  // 1) อัปเดตทะเบียน (ถ้าเลือก + มีลิงก์) — name เปลี่ยน → trigger กระจายไปเอกสารอื่น
+  // 1) อัปเดตทะเบียน (ถ้าเลือก + มีลิงก์) — เฉพาะคอลัมน์ที่ customers มี (name/address/tax_id/phone/contact_person)
+  //    kind/branch/postal_code เป็น snapshot-only (customers ไม่มีคอลัมน์ · billing_profiles ต่างหาก)
   let propagated = false;
-  if (saveToRegistry && customerId && Object.keys(snapPatch).length > 0) {
-    const { error: cErr } = await supabase.from("customers").update(snapPatch).eq("id", customerId);
-    if (cErr) return fail("บันทึกทะเบียนไม่สำเร็จ: " + cErr.message, 500);
-    propagated = true;
-    if (snapPatch.name && snapPatch.name !== oldName) {
-      await audit({
-        userId: profile.id,
-        action: "CUSTOMER_RENAME",
-        table: "customers",
-        recordId: String(customerId),
-        oldValue: { name: oldName },
-        newValue: { name: snapPatch.name },
-      });
+  if (saveToRegistry && customerId) {
+    const REGISTRY_KEYS = ["name", "address", "tax_id", "phone", "contact_person"];
+    const regPatch: Record<string, string> = {};
+    for (const k of REGISTRY_KEYS) if (snapPatch[k] !== undefined) regPatch[k] = snapPatch[k];
+    if (Object.keys(regPatch).length > 0) {
+      let { error: cErr } = await supabase.from("customers").update(regPatch).eq("id", customerId);
+      // กันพัง: ถ้าทะเบียนไม่มีบางคอลัมน์ → ลองใหม่เฉพาะ name/address (ชุดพื้นฐานที่มีแน่)
+      if (cErr && /column|does not exist|schema cache/i.test(cErr.message ?? "")) {
+        const basic: Record<string, string> = {};
+        for (const k of ["name", "address"]) if (regPatch[k] !== undefined) basic[k] = regPatch[k];
+        if (Object.keys(basic).length > 0) ({ error: cErr } = await supabase.from("customers").update(basic).eq("id", customerId));
+        else cErr = null;
+      }
+      if (cErr) return fail("บันทึกทะเบียนไม่สำเร็จ: " + cErr.message, 500);
+      propagated = true;
+      if (snapPatch.name && snapPatch.name !== oldName) {
+        await audit({
+          userId: profile.id, action: "CUSTOMER_RENAME", table: "customers",
+          recordId: String(customerId), oldValue: { name: oldName }, newValue: { name: snapPatch.name },
+        });
+      }
     }
   }
 
-  // 2) อัปเดตใบนี้ — snapshot (การันตีบิลนี้เปลี่ยน แม้ trigger ไม่แตะ) + issue_date
+  // 2) อัปเดตใบนี้ — snapshot (การันตีบิลนี้เปลี่ยน) + issue_date
   const qUpdate: Record<string, unknown> = {};
   if (Object.keys(snapPatch).length > 0) qUpdate.customer_snapshot = { ...snap, ...snapPatch };
   if (issueDate !== undefined) qUpdate.issue_date = issueDate;
@@ -89,15 +113,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (uErr) return fail("บันทึกใบเสนอไม่สำเร็จ: " + uErr.message, 500);
 
   await audit({
-    userId: profile.id,
-    action: "EDIT_QUOTATION_HEADER",
-    table: "quotations",
-    recordId: String(params.id),
-    oldValue: {
-      ...(snapPatch.name !== undefined ? { name: oldName } : {}),
-      ...(snapPatch.address !== undefined ? { address: String(snap.address ?? "") } : {}),
-      ...(issueDate !== undefined ? { issue_date: anyQ.issue_date } : {}),
-    },
+    userId: profile.id, action: "EDIT_QUOTATION_HEADER", table: "quotations", recordId: String(params.id),
+    oldValue: { name: oldName },
     newValue: { ...snapPatch, ...(issueDate !== undefined ? { issue_date: issueDate } : {}), save_to_registry: propagated },
   });
 

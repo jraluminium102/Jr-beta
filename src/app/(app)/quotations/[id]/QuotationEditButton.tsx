@@ -69,9 +69,10 @@ export default function QuotationEditButton({
   const discountAmt = sumDiscountLines(subtotal, discounts);
   const discPct = subtotal > 0 ? Math.round((discountAmt / subtotal) * 10000) / 100 : 0;
   const afterDiscount = round2(subtotal - discountAmt);
-  const vatAmt = Math.round((afterDiscount * vat) / 100 + Number.EPSILON);
+  // เก็บสตางค์ (2 ตำแหน่ง) ให้ตรง computeTotals ฝั่ง server — ห้ามปัดบาทเต็ม (เจ้าของสั่ง 15ก.ค.: VAT โชว์เศษ)
+  const vatAmt = round2((afterDiscount * vat) / 100);
   const total = round2(afterDiscount + vatAmt);
-  const whtAmt = Math.round((afterDiscount * wht) / 100 + Number.EPSILON);
+  const whtAmt = round2((afterDiscount * wht) / 100);
   const net = round2(total - whtAmt);
 
   function addRow() {
@@ -216,6 +217,7 @@ export default function QuotationEditButton({
         <div className="bg-gray-50 rounded-xl p-4 text-sm space-y-1">
           <div className="flex justify-between"><span className="text-gray-500">ยอดรวมก่อนภาษี</span><span className="tabular-nums">{baht(subtotal)}</span></div>
           {discountAmt > 0 && <div className="flex justify-between"><span className="text-gray-500">ส่วนลด{discounts.length === 1 && (discounts[0].label ?? "").trim() ? ` (${(discounts[0].label ?? "").trim()})` : discounts.length > 1 ? ` (${discounts.length} รายการ)` : ` ${Number(discPct.toFixed(2))}%`}</span><span className="tabular-nums text-brand">-{baht(discountAmt)}</span></div>}
+          {discountAmt > 0 && <div className="flex justify-between"><span className="text-gray-500">จำนวนเงินหลังหักส่วนลด</span><span className="tabular-nums">{baht(afterDiscount)}</span></div>}
           <div className="flex justify-between"><span className="text-gray-500">VAT {vat}%</span><span className="tabular-nums">{baht(vatAmt)}</span></div>
           <div className="flex justify-between font-bold text-brand-dark border-t pt-1"><span>ยอดรวมสุทธิ</span><span className="tabular-nums">฿{baht(total)}</span></div>
           {whtAmt > 0 && <>

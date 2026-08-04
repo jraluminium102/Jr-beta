@@ -124,8 +124,7 @@ export default async function QuotationDetail({ params }: { params: { id: string
               {writable && (
                 <CustomerHeaderEditButton
                   quotationId={q.id}
-                  currentName={c.name}
-                  currentAddress={c.address ?? ""}
+                  current={c as unknown as import("./CustomerHeaderEditButton").HeaderSnapshot}
                   hasCustomerLink={q.customer_id != null}
                 />
               )}
@@ -191,6 +190,7 @@ export default async function QuotationDetail({ params }: { params: { id: string
                     <tr key={i}><td className="pr-8 py-0.5 text-ink-3">ส่วนลด{(d.label ?? "").trim() ? ` (${(d.label ?? "").trim()})` : ` ${q.subtotal > 0 ? Number((((Number(d.amt) || 0) / q.subtotal) * 100).toFixed(2)) : 0}%`}</td><td className="text-right tabular-nums text-brand">-{baht(Number(d.amt) || 0)}</td></tr>
                   ))
                 : <tr><td className="pr-8 py-0.5 text-ink-3">ส่วนลด{(q as { discount_label?: string }).discount_label ? ` (${(q as { discount_label?: string }).discount_label})` : (q.discount_pct > 0 ? ` ${q.discount_pct}%` : "")}</td><td className="text-right tabular-nums text-brand">-{baht(q.discount_amt)}</td></tr>)}
+              {q.discount_amt > 0 && <tr><td className="pr-8 py-0.5 text-ink-3">จำนวนเงินหลังหักส่วนลด</td><td className="text-right tabular-nums">{baht(q.subtotal - q.discount_amt)}</td></tr>}
               <tr><td className="pr-8 py-0.5 text-ink-3">VAT {q.vat_rate}%</td><td className="text-right tabular-nums">{baht(q.vat_amt)}</td></tr>
               <tr className="font-bold text-brand-dark"><td className="pr-8 py-1 border-t">ยอดรวมสุทธิ</td><td className="text-right border-t tabular-nums">฿{baht(q.total)}</td></tr>
               {q.wht_amt > 0 && (<>
