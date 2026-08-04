@@ -4,6 +4,8 @@ import { getProfile } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 import { computeTotals, baht } from "@/lib/money";
+import { nextDocumentCode } from "@/lib/doc-code";
+import { businessDateIssue } from "@/lib/date-guard";
 
 // POST /api/billing-notes/standalone
 // ใบวางบิล "ค่าประเมินหน้างาน" — เอกสารอิสระ (แนว A เจ้าของ+accountant เคาะ 4 ส.ค.69)
@@ -56,9 +58,14 @@ export async function POST(req: Request) {
 
   const supabase = createClient();
 
-  // ออกรหัสอัตโนมัติผ่าน RPC เดิม (ชุดเดียวกับใบวางบิลปกติ)
-  const { data: code, error: codeErr } = await supabase.rpc("next_document_code", { p_doc_type: "BL" });
-  if (codeErr || !code) return fail("ออกรหัสไม่สำเร็จ: " + (codeErr?.message ?? ""), 500);
+  // issue_date คุมทั้งเลขเอกสารและ header — BL ไม่ใช่เอกสารภาษี ให้อนาคตได้ (นัดออกล่วงหน้า)
+  const issueDate = b.issue_date || new Date().toISOString().slice(0, 10);
+  const dateIssue = businessDateIssue(issueDate, { allowFuture: true, label: "วันที่ออก" });
+  if (dateIssue) return fail(dateIssue, 400);
+
+  // ออกรหัสอัตโนมัติผ่าน RPC เดิม (ชุดเดียวกับใบวางบิลปกติ) — เลขต้องตรงเดือนของ issue_date
+  const { code, error: codeErrMsg } = await nextDocumentCode(supabase, "BL", issueDate);
+  if (!code) return fail("ออกรหัสไม่สำเร็จ: " + (codeErrMsg ?? ""), 500);
 
   const customerSnapshot = {
     name: b.customer_snapshot.name,
@@ -78,7 +85,7 @@ export async function POST(req: Request) {
     quotation_id: null,
     job_id: null,
     customer_snapshot: customerSnapshot,
-    issue_date: b.issue_date || new Date().toISOString().slice(0, 10),
+    issue_date: issueDate,
     total: money.net,
     status: "unpaid",
     note: b.note ?? "",

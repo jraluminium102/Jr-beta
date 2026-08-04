@@ -6,6 +6,7 @@ import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
 import VoidReceiptButton from "./VoidReceiptButton";
+import EditReceiptDateButton from "./EditReceiptDateButton";
 import { EditDocHeaderModal } from "@/components/finance/EditDocHeaderModal";
 import type { Receipt } from "@/lib/types";
 
@@ -93,7 +94,12 @@ export default async function ReceiptDetail({ params }: { params: { id: string }
             {c.tax_id && <div className="text-xs text-ink-3">เลขผู้เสียภาษี: {c.tax_id}</div>}
           </div>
           <div className="sm:text-right">
-            <div className="text-xs text-ink-3">วันที่ออก: <b className="text-ink">{rc.issue_date}</b></div>
+            <div className="text-xs text-ink-3 inline-flex items-center gap-1 sm:justify-end">
+              วันที่ออก: <b className="text-ink">{rc.issue_date}</b>
+              {writable && !rc.is_voided && (
+                <EditReceiptDateButton receiptId={rc.id} currentDate={rc.issue_date} currentCode={rc.code} />
+              )}
+            </div>
             <div className="text-xs text-ink-3">อ้างอิงใบวางบิล: {refCode ? <b className="text-ink font-mono">{refCode}</b> : "—"}</div>
             <div className="text-xs text-ink-3">วิธีชำระ: {PAYMENT_LABEL[rc.payment_method] ?? rc.payment_method}</div>
             <div className="text-xs text-ink-3">ผู้ติดต่อ: {c.contact_person || "—"} · โทร {c.phone || "—"}</div>

@@ -5,6 +5,8 @@ import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 import { applyInstallmentPayment } from "@/lib/billing";
 import { effectiveBillVat, splitCashReceived } from "@/lib/money";
 import { getDocCutoff } from "@/lib/doc-cutoff";
+import { nextDocumentCode } from "@/lib/doc-code";
+import { businessDateIssue } from "@/lib/date-guard";
 import type { BillingNote } from "@/lib/types";
 
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
@@ -129,9 +131,14 @@ export async function POST(req: Request) {
   }
   const net = amount; // net = เงินสดที่รับจริงเสมอ (ต้องกระทบยอดกับ finance_entries/statement ได้)
 
-  // 3) ออกรหัสอัตโนมัติผ่าน RPC
-  const { data: code, error: codeErr } = await supabase.rpc("next_document_code", { p_doc_type: "INV" });
-  if (codeErr || !code) return fail("ออกรหัสไม่สำเร็จ: " + (codeErr?.message ?? ""), 500);
+  // issue_date = tax point ของใบเสร็จ/ใบกำกับภาษี — คุมทั้งเลขเอกสารและ header (คำนวณครั้งเดียวใช้ร่วมกัน)
+  const issueDate = body.issue_date || new Date().toISOString().slice(0, 10);
+  const dateIssue = businessDateIssue(issueDate, { label: "วันที่ออก" }); // เอกสารภาษี — ห้ามอนาคต (default allowFuture=false)
+  if (dateIssue) return fail(dateIssue, 400);
+
+  // 3) ออกรหัสอัตโนมัติผ่าน RPC — เลขต้องตรงเดือนของ issue_date (tax point)
+  const { code, error: codeErrMsg } = await nextDocumentCode(supabase, "INV", issueDate);
+  if (!code) return fail("ออกรหัสไม่สำเร็จ: " + (codeErrMsg ?? ""), 500);
 
   // 4) insert ใบเสร็จ
   const rcBase = {
@@ -139,7 +146,7 @@ export async function POST(req: Request) {
     billing_note_id: bn.id,
     installment_id: body.installment_id ? Number(body.installment_id) : null,
     customer_snapshot: bn.customer_snapshot,
-    issue_date: body.issue_date || new Date().toISOString().slice(0, 10),
+    issue_date: issueDate,
     amount,
     vat_rate: vatRateUsed,
     vat_amt,
@@ -169,7 +176,7 @@ export async function POST(req: Request) {
       billingNoteId: String(bn.id),
       // งวดนี้รับชำระแล้ว (guard ด้านบนบังคับ) → ไม่ส่ง paidAmount = ไม่บวกเงินซ้ำ
       // applyInstallmentPayment จะ set paid=amount (idempotent) + ผูก receiptId เข้า finance_entry เดิม
-      paidDate: body.issue_date,
+      paidDate: issueDate,
       receiptId,
     });
     // ถ้า sync งวด/finance พลาด → rollback ลบใบเสร็จที่เพิ่งสร้าง (กันเอกสารภาษีลอย ไม่ผูกเงิน)
@@ -191,8 +198,7 @@ export async function POST(req: Request) {
       return fail("ใบวางบิลนี้มีงวด กรุณาเลือกงวดที่จะออกใบเสร็จ", 400);
     }
 
-    // บิลไม่มีงวดเลย → สร้าง finance_entry ตรงได้ตามปกติ
-    const issueDate = body.issue_date || new Date().toISOString().slice(0, 10);
+    // บิลไม่มีงวดเลย → สร้าง finance_entry ตรงได้ตามปกติ (issueDate คำนวณไว้แล้วด้านบน)
     await supabase.from("finance_entries").insert({
       job_id: bn.job_id,
       amount,

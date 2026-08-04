@@ -4,7 +4,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui";
 import Icon from "@/components/Icon";
+import DateField from "@/components/ui/DateField";
 import { baht, suggestInstallments, computeTotals, planInstallments } from "@/lib/money";
+import { todayISO } from "@/lib/date-guard";
 import type { AvailableQuotation } from "./page";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -24,6 +26,8 @@ export default function NewBillingClient({
   const [quotationId, setQuotationId] = useState<number | "">(
     preselectId ?? quotations[0]?.id ?? ""
   );
+  // วันที่ออกบิล — เลขเอกสารจะออกตามเดือนของวันนี้ (ไม่ใช่เอกสารภาษี แก้ทีหลังได้จากหน้ารายละเอียด)
+  const [issueDate, setIssueDate] = useState(todayISO());
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
   const [err, setErr] = useState("");
@@ -107,7 +111,7 @@ export default function NewBillingClient({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          quotation_id: quotationId, vat_rate: vat, wht_rate: wht,
+          quotation_id: quotationId, issue_date: issueDate, vat_rate: vat, wht_rate: wht,
           ...(discMode === "baht" ? { discount_amt: Number(discAmt) || 0 } : { discount_pct: disc }),
           ...(laborActive && laborMode === "baht" && laborBaht !== "" ? { labor_amount: Number(laborBaht) } : {}),
           ...(laborActive && laborMode === "pct" && laborPct !== "" ? { labor_pct: Number(laborPct) } : {}),
@@ -170,6 +174,17 @@ export default function NewBillingClient({
                   ⚠ ใบเสนอนี้ยังไม่ผูกงาน — เงินที่รับจะไม่ขึ้นในระบบบัญชี/ค้างรับ (ตามงานไม่เจอ) แนะนำให้ผูกงานที่ใบเสนอก่อนวางบิล
                 </p>
               )}
+
+              <label className="block text-sm mt-3">
+                <span className="text-xs font-medium text-ink-3">วันที่ออกบิล</span>
+                <DateField
+                  value={issueDate}
+                  onChange={setIssueDate}
+                  aria-label="วันที่ออกบิล"
+                  className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none"
+                />
+                <span className="block text-[11px] text-ink-3 mt-1">เลขที่เอกสารจะออกตามเดือนของวันที่นี้ · แก้วันที่ภายหลังได้ที่หน้ารายละเอียด</span>
+              </label>
             </Card>
 
             <Card className="p-5">

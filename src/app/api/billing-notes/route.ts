@@ -4,6 +4,8 @@ import { can } from "@/lib/rbac";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 import { suggestInstallments, computeTotals, planInstallments } from "@/lib/money";
 import { getDocCutoff } from "@/lib/doc-cutoff";
+import { nextDocumentCode } from "@/lib/doc-code";
+import { businessDateIssue } from "@/lib/date-guard";
 import type { Quotation } from "@/lib/types";
 
 // GET /api/billing-notes  → รายการใบวางบิล (ซ่อนเอกสารทดสอบก่อนวันตัด · ?includeTest=1 โชว์ทั้งหมด)
@@ -107,9 +109,14 @@ export async function POST(req: Request) {
     : suggestInstallments(net, bVat);   // ส่ง VAT → label ขึ้นบรรทัด "ค่าวัสดุ (รวมVat)" (22 ก.ค.69)
   const billTotal = plan.reduce((s, p) => s + p.amount, 0);
 
-  // 3) ออกรหัสอัตโนมัติผ่าน RPC
-  const { data: code, error: codeErr } = await supabase.rpc("next_document_code", { p_doc_type: "BL" });
-  if (codeErr || !code) return fail("ออกรหัสไม่สำเร็จ: " + (codeErr?.message ?? ""), 500);
+  // issue_date คุมทั้งเลขเอกสาร (next_document_code p_date) และ header — คำนวณครั้งเดียวใช้ร่วมกัน
+  const issueDate = body.issue_date || new Date().toISOString().slice(0, 10);
+  const dateIssue = businessDateIssue(issueDate, { allowFuture: true, label: "วันที่ออก" }); // BL ไม่ใช่เอกสารภาษี — วันในอนาคตได้ (นัดออกล่วงหน้า)
+  if (dateIssue) return fail(dateIssue, 400);
+
+  // 3) ออกรหัสอัตโนมัติผ่าน RPC — เลขต้องตรงเดือนของ issue_date (ไม่ใช่วันนี้)
+  const { code, error: codeErrMsg } = await nextDocumentCode(supabase, "BL", issueDate);
+  if (!code) return fail("ออกรหัสไม่สำเร็จ: " + (codeErrMsg ?? ""), 500);
 
   // 4) insert หัวเอกสาร
   const bnBase: Record<string, unknown> = {
@@ -117,7 +124,7 @@ export async function POST(req: Request) {
     quotation_id: q.id,
     job_id: q.job_id ?? null,          // เชื่อม job เพื่อ sync finance_entries
     customer_snapshot: q.customer_snapshot,
-    issue_date: body.issue_date || new Date().toISOString().slice(0, 10),
+    issue_date: issueDate,
     total: billTotal,
     status: "unpaid",
     note: body.note ?? "",

@@ -4,6 +4,8 @@ import { getProfile } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 import { computeTotals, baht } from "@/lib/money";
+import { nextDocumentCode } from "@/lib/doc-code";
+import { businessDateIssue } from "@/lib/date-guard";
 
 // POST /api/receipts/standalone
 // ใบเสร็จรับเงิน/ใบกำกับภาษี "ค่าประเมินหน้างาน" — เอกสารภาษีหลัก (แนว A เจ้าของ+accountant เคาะ 4 ส.ค.69)
@@ -69,8 +71,13 @@ export async function POST(req: Request) {
     if (bn.status === "cancelled") return fail("ใบวางบิลที่อ้างอิงถูกยกเลิกแล้ว", 409);
   }
 
-  const { data: code, error: codeErr } = await supabase.rpc("next_document_code", { p_doc_type: "INV" });
-  if (codeErr || !code) return fail("ออกรหัสไม่สำเร็จ: " + (codeErr?.message ?? ""), 500);
+  // issue_date = tax point — คุมทั้งเลขเอกสารและ header (คำนวณครั้งเดียวใช้ร่วมกัน)
+  const issueDate = b.issue_date || new Date().toISOString().slice(0, 10);
+  const dateIssue = businessDateIssue(issueDate, { label: "วันที่ออก" }); // เอกสารภาษี — ห้ามอนาคต
+  if (dateIssue) return fail(dateIssue, 400);
+
+  const { code, error: codeErrMsg } = await nextDocumentCode(supabase, "INV", issueDate);
+  if (!code) return fail("ออกรหัสไม่สำเร็จ: " + (codeErrMsg ?? ""), 500);
 
   const customerSnapshot = {
     name: b.customer_snapshot.name,
@@ -92,7 +99,7 @@ export async function POST(req: Request) {
     billing_note_id: b.billing_note_id ?? null,
     installment_id: null,
     customer_snapshot: customerSnapshot,
-    issue_date: b.issue_date || new Date().toISOString().slice(0, 10),
+    issue_date: issueDate,
     amount: money.net,     // เงินสดที่รับจริง (= net เสมอ)
     vat_rate: vatRate,
     vat_amt: money.vat_amt,
@@ -138,7 +145,7 @@ export async function POST(req: Request) {
         .maybeSingle<{ id: number; amount: number }>();
       if (inst) {
         await supabase.from("billing_installments").update({
-          status: "paid", paid_amount: inst.amount, paid_date: b.issue_date || new Date().toISOString().slice(0, 10),
+          status: "paid", paid_amount: inst.amount, paid_date: issueDate,
         }).eq("id", inst.id);
         await supabase.from("billing_notes").update({ status: "paid" }).eq("id", b.billing_note_id);
       }

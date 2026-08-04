@@ -6,7 +6,7 @@ import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { baht, isNoVatBill, type BillVatSource } from "@/lib/money";
 import BillingActions from "./BillingActions";
-import { VoidBillingNoteButton, InstallmentEditor, EditBillingTotalButton, EditBillingBreakdownButton, IssueReceiptButton, EditBillingStatusButton } from "./BillingFinanceActions";
+import { VoidBillingNoteButton, InstallmentEditor, EditBillingTotalButton, EditBillingBreakdownButton, IssueReceiptButton, EditBillingStatusButton, EditBillingDateButton } from "./BillingFinanceActions";
 import { EditDocHeaderModal } from "@/components/finance/EditDocHeaderModal";
 import { BILLING_STATUS_LABEL, type BillingNote, type BillingStatus } from "@/lib/types";
 import { can } from "@/lib/rbac";
@@ -162,7 +162,12 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
             {c.tax_id && <div className="text-xs text-ink-3">เลขผู้เสียภาษี: {c.tax_id}</div>}
           </div>
           <div className="sm:text-right">
-            <div className="text-xs text-ink-3">วันที่ออก: <b className="text-ink">{bn.issue_date}</b></div>
+            <div className="text-xs text-ink-3 inline-flex items-center gap-1 sm:justify-end">
+              วันที่ออก: <b className="text-ink">{bn.issue_date}</b>
+              {writable && !isCancelled && bn.status !== "paid" && (
+                <EditBillingDateButton billingNoteId={bn.id} currentDate={bn.issue_date} currentCode={bn.code} />
+              )}
+            </div>
             <div className="text-xs text-ink-3">อ้างอิงใบเสนอ: {refCode ? <b className="text-ink font-mono">{refCode}</b> : "—"}</div>
             <div className="text-xs text-ink-3">ผู้ติดต่อ: {c.contact_person || "—"} · โทร {c.phone || "—"}</div>
             <div className="text-base font-bold text-brand-dark mt-1">ยอดรวม ฿{baht(bn.total)}</div>
