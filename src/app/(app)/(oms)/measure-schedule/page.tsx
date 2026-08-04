@@ -17,6 +17,7 @@ type MeasureEntry = {
   customer_name: string | null;
   customer_area: string | null;
   customer_tel: string | null;
+  location_url: string | null;   // ลิงก์แผนที่ (จากคิวประเมิน) — ไว้ก๊อปส่งช่างวัด
   measure_scheduled: string | null;
   measure_time: string | null;
   measure_actual: string | null;
@@ -69,6 +70,48 @@ function fmtTime(t: string | null): string {
   const [h, m] = s.split(":");
   if (!h) return "—";
   return `${h.padStart(2, "0")}:${(m ?? "00").padStart(2, "0")}`;
+}
+
+// ── คัดลอกข้อมูลลูกค้าเป็นฟอร์ม (ส่งช่างวัดทาง Line) ──────────────────────────
+// ดึง ชื่อ/เบอร์/ที่อยู่หน้างาน/ลิงก์แผนที่ ที่ระบบเก็บไว้ → จัดฟอร์มก๊อปได้ทันที
+function buildContactCopy(e: MeasureEntry): string {
+  const lines: string[] = [];
+  if (e.measure_scheduled) {
+    const t = e.measure_time ? ` ${fmtTime(e.measure_time)} น.` : "";
+    lines.push(`📅 นัดวัด ${thaiDateFull(e.measure_scheduled)}${t}`);
+  }
+  lines.push(`👤 ${e.customer_name ?? "—"}`);
+  if (e.customer_tel) lines.push(`📞 ${e.customer_tel}`);
+  if (e.customer_area) lines.push(`📍 ${e.customer_area}`);
+  if (e.location_url) lines.push(`🗺️ ${e.location_url}`);
+  if (e.job_code) lines.push(`(${e.job_code})`);
+  return lines.join("\n");
+}
+
+/** ปุ่มคัดลอกข้อมูลลูกค้า — compact=ไอคอนล้วน (ใช้ในปฏิทิน) */
+function CopyContactButton({ entry, compact = false }: { entry: MeasureEntry; compact?: boolean }) {
+  const [copied, setCopied] = useState(false);
+  const onCopy = async (ev: React.MouseEvent) => {
+    ev.preventDefault(); ev.stopPropagation();   // กันไปกดลิงก์เปิดงาน
+    try {
+      await navigator.clipboard.writeText(buildContactCopy(entry));
+      setCopied(true); setTimeout(() => setCopied(false), 1500);
+    } catch { alert("คัดลอกไม่สำเร็จ ลองใหม่"); }
+  };
+  if (compact) {
+    return (
+      <button onClick={onCopy} title="คัดลอกข้อมูลลูกค้า (ชื่อ/เบอร์/ที่อยู่/แผนที่)" aria-label="คัดลอกข้อมูลลูกค้า"
+        className="focusable pressable inline-flex items-center justify-center w-6 h-6 rounded-md bg-white/15 hover:bg-white/30 border border-white/20">
+        <Icon name={copied ? "check" : "clipboard"} size={11} />
+      </button>
+    );
+  }
+  return (
+    <button onClick={onCopy} title="คัดลอกข้อมูลลูกค้า (ชื่อ/เบอร์/ที่อยู่/แผนที่) ไว้ส่งช่างวัดทาง Line"
+      className="focusable pressable inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/18 border border-white/15 text-white text-[12px] font-medium min-h-[36px]">
+      <Icon name={copied ? "check" : "clipboard"} size={13} /> {copied ? "คัดลอกแล้ว" : "คัดลอก"}
+    </button>
+  );
 }
 
 // ── sub-components ────────────────────────────────────────────────────────────
@@ -126,8 +169,9 @@ function EntryRow({ entry }: { entry: MeasureEntry }) {
         </div>
       </div>
 
-      {/* ปุ่มเปิดงาน */}
-      <div className="shrink-0">
+      {/* ปุ่มคัดลอก + เปิดงาน */}
+      <div className="shrink-0 flex items-center gap-1.5">
+        <CopyContactButton entry={entry} />
         <Link
           href={`/production?open=${entry.production_id}`}
           className="focusable pressable inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/18 border border-white/15 text-white text-[12px] font-medium min-h-[36px]"
@@ -153,18 +197,24 @@ function CalendarBlock({ entry, today }: { entry: MeasureEntry; today: string })
     : "glass-card border-white/15 text-white";
 
   return (
-    <Link
-      href={`/production?open=${entry.production_id}`}
-      className={`focusable pressable block rounded-xl px-2.5 py-2 border text-left transition-colors hover:opacity-80 ${bgCls}`}
-    >
-      {entry.measure_time && (
-        <div className="text-[11px] font-bold tabular-nums mb-0.5">{fmtTime(entry.measure_time)}</div>
-      )}
-      <div className="text-[12px] font-semibold leading-tight truncate">{entry.customer_name ?? "—"}</div>
-      {entry.customer_area && (
-        <div className="text-[11px] opacity-70 truncate">{entry.customer_area}</div>
-      )}
-    </Link>
+    <div className="relative">
+      <Link
+        href={`/production?open=${entry.production_id}`}
+        className={`focusable pressable block rounded-xl pl-2.5 pr-8 py-2 border text-left transition-colors hover:opacity-80 ${bgCls}`}
+      >
+        {entry.measure_time && (
+          <div className="text-[11px] font-bold tabular-nums mb-0.5">{fmtTime(entry.measure_time)}</div>
+        )}
+        <div className="text-[12px] font-semibold leading-tight truncate">{entry.customer_name ?? "—"}</div>
+        {entry.customer_area && (
+          <div className="text-[11px] opacity-70 truncate">{entry.customer_area}</div>
+        )}
+      </Link>
+      {/* คัดลอกข้อมูลลูกค้า (มุมขวาบน · ไม่ไปกดเปิดงาน) */}
+      <div className="absolute top-1.5 right-1.5">
+        <CopyContactButton entry={entry} compact />
+      </div>
+    </div>
   );
 }
 
@@ -596,12 +646,15 @@ export default function MeasureSchedulePage() {
                   {e.job_code && <span className="ml-2 text-[11px]" style={{ color: "var(--t-low)" }}>{e.job_code}</span>}
                   {e.measurer_name && <span className="ml-2 text-[11px]" style={{ color: "var(--t-low)" }}>ช่าง: {e.measurer_name}</span>}
                 </div>
-                <Link
-                  href={`/production?open=${e.production_id}`}
-                  className="focusable pressable shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/18 border border-white/15 text-white text-[12px] font-medium min-h-[36px]"
-                >
-                  <Icon name="external" size={12} /> เปิดงาน
-                </Link>
+                <div className="shrink-0 flex items-center gap-1.5">
+                  <CopyContactButton entry={e} />
+                  <Link
+                    href={`/production?open=${e.production_id}`}
+                    className="focusable pressable inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/18 border border-white/15 text-white text-[12px] font-medium min-h-[36px]"
+                  >
+                    <Icon name="external" size={12} /> เปิดงาน
+                  </Link>
+                </div>
               </div>
             )) : (
               <div className="text-[13px] text-center py-3" style={{ color: "var(--t-low)" }}>ไม่มีงานในเงื่อนไขนี้</div>

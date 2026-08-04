@@ -22,7 +22,7 @@ export const GET = withRoute(async () => {
       measured_by_name,
       measurer_id,
       measurer_name,
-      job:job_id(job_code, customer_name, customer_area, customer_tel, status),
+      job:job_id(job_code, customer_name, customer_area, customer_tel, status, queue_entry:queue_entry_id(location_url)),
       measurer:measurer_id(full_name)
     `)
     .in("status", ["PENDING_MEASURE", "MEASURED"])
@@ -45,7 +45,7 @@ export const GET = withRoute(async () => {
       return true; // PENDING_MEASURE ทั้งหมด
     })
     .map((p) => {
-      const job = p.job as { job_code?: string; customer_name?: string; customer_area?: string | null; customer_tel?: string | null } | null;
+      const job = p.job as { job_code?: string; customer_name?: string; customer_area?: string | null; customer_tel?: string | null; queue_entry?: { location_url?: string | null } | null } | null;
       const measurer = p.measurer as { full_name?: string | null } | null;
       // ใช้ measurer_name (free-text 0040) เป็นหลัก — fallback ชื่อจาก profile
       const displayMeasurerName = (p.measurer_name as string | null) ?? measurer?.full_name ?? null;
@@ -56,6 +56,7 @@ export const GET = withRoute(async () => {
         customer_name: job?.customer_name ?? null,
         customer_area: job?.customer_area ?? null,
         customer_tel: job?.customer_tel ?? null,
+        location_url: job?.queue_entry?.location_url ?? null,   // ลิงก์แผนที่จากคิวประเมิน (ไว้ก๊อปส่งช่างวัด)
         measure_scheduled: p.measure_scheduled,
         measure_time: p.measure_time ?? null,
         measure_actual: p.measure_actual ?? null,
