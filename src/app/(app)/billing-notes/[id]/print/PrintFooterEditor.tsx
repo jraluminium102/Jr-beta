@@ -45,8 +45,10 @@ export default function PrintFooterEditor({
   async function save(payload: { subtotal: number; discount_pct: number; vat_rate: number; wht_rate: number } | null) {
     setBusy(true); setErr(null);
     try {
-      // real = แก้ยอดจริง (billing-notes รับ subtotal+% → คิด total+แตกงวดใหม่) · ไม่งั้น footer_override (display-only)
-      const body = real ? payload : { footer_override: payload };
+      // real = แก้ยอดจริง (billing-notes รับ subtotal+% → คิด total+แตกงวดใหม่)
+      // งวดแยก (real=false): บันทึก = book ภาษีจริงลงงวด (0117 · ไม่ใช่ display-only อีกต่อไป)
+      //   ปุ่ม "ค่าตั้งต้น" (payload=null) = ล้าง footer_override เดิม (legacy) ไม่ book
+      const body = real ? payload : (payload ? { book: payload } : { footer_override: null });
       const res = await fetch(apiUrl, {
         method: "PATCH", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -108,6 +110,7 @@ export default function PrintFooterEditor({
             </span>
           </div>
           {real && <div className="mt-1.5 text-[11px] text-gray-500">แก้แล้วยอดรวมทั้งใบ + งวดชำระจะคิดใหม่ทันที · บิลที่จ่ายแล้ว/มีใบเสร็จจะแก้ไม่ได้ (ต้องยกเลิกออกใหม่)</div>}
+          {!real && <div className="mt-1.5 text-[11px] text-gray-500">บันทึก = ภาษีของ &quot;งวดนี้&quot; จะถูกใช้จริงตอนออกใบเสร็จ (ยอดงวดเปลี่ยนตาม) · แก้หัก ณ ที่จ่ายเป็น &quot;ไม่หัก&quot; แล้วบันทึก = เอา WHT ออกจากงวดนี้ · งวดที่รับชำระแล้ว/มีใบเสร็จจะแก้ไม่ได้</div>}
         </td></tr>
       </>
     );
