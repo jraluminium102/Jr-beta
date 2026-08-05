@@ -19,32 +19,42 @@ const HALO = "0 0 3px #fff, 0 0 3px #fff, 0 0 4px #fff, 0 0 5px #fff";
 
 const MARGIN_MM = 6;
 
-function PagePrint({ page, pageIndex, annotations, isLast, pageWmm }: { page: DrawingPage; pageIndex: number; annotations: DrawingAnnotation[]; isLast: boolean; pageWmm: number }) {
-  const CONTENT_W_MM = pageWmm - MARGIN_MM * 2;
-  const heightMm = page.w > 0 ? CONTENT_W_MM * (page.h / page.w) : CONTENT_W_MM * 1.414;
+function PagePrint({ page, pageIndex, annotations, isLast, pageWmm, pageHmm }: { page: DrawingPage; pageIndex: number; annotations: DrawingAnnotation[]; isLast: boolean; pageWmm: number; pageHmm: number }) {
+  // ย่อรูปให้พอดี "ทั้งกว้างและสูง" ของกระดาษ (กันสูงเกินหน้าแล้วล้นขึ้นแผ่นใหม่ → ตัวหนังสือเด้งแยกแผ่น)
+  const availW = pageWmm - MARGIN_MM * 2;
+  const availH = pageHmm - MARGIN_MM * 2;
+  const aspect = page.w > 0 && page.h > 0 ? page.h / page.w : 1.414; // สูง/กว้าง
+  let imgW = availW;
+  let imgH = imgW * aspect;
+  if (imgH > availH) { imgH = availH; imgW = imgH / aspect; }
   const url = page.path.startsWith("http") ? page.path : drawingPublicUrl(page.path);
   return (
     <div
-      style={{ width: `${pageWmm}mm`, padding: `${MARGIN_MM}mm`, position: "relative", background: "#fff", pageBreakAfter: isLast ? "auto" : "always", breakAfter: isLast ? "auto" : "page" }}
+      style={{
+        width: `${pageWmm}mm`, height: `${pageHmm}mm`, padding: `${MARGIN_MM}mm`, boxSizing: "border-box",
+        background: "#fff", overflow: "hidden", display: "flex", justifyContent: "center", alignItems: "flex-start",
+        breakInside: "avoid", pageBreakInside: "avoid",
+        pageBreakAfter: isLast ? "auto" : "always", breakAfter: isLast ? "auto" : "page",
+      }}
     >
-      <div style={{ position: "relative", width: `${CONTENT_W_MM}mm`, height: `${heightMm}mm` }}>
+      <div style={{ position: "relative", width: `${imgW}mm`, height: `${imgH}mm` }}>
         {/* eslint-disable-next-line @next/next/no-img-element -- รูปจาก Supabase Storage public URL */}
-        <img src={url} alt={`หน้า ${pageIndex + 1}`} style={{ width: `${CONTENT_W_MM}mm`, height: `${heightMm}mm`, display: "block" }} />
+        <img src={url} alt={`หน้า ${pageIndex + 1}`} style={{ width: `${imgW}mm`, height: `${imgH}mm`, display: "block" }} />
         {annotations.filter((a) => a.page === pageIndex).map((a) => (
           <div
             key={a.id}
             style={{
               position: "absolute",
-              left: `${a.xf * CONTENT_W_MM}mm`,
-              top: `${a.yf * heightMm}mm`,
-              fontSize: `${Math.max(2, a.size * heightMm)}mm`,
+              left: `${a.xf * imgW}mm`,
+              top: `${a.yf * imgH}mm`,
+              fontSize: `${Math.max(2, a.size * imgH)}mm`,
               lineHeight: 1.25,
               color: COLOR_HEX[a.color ?? ""],
               textAlign: a.align ?? "left",
               textShadow: HALO,
               fontWeight: 600,
               whiteSpace: "pre-wrap",
-              maxWidth: `${CONTENT_W_MM * 0.85}mm`,
+              maxWidth: `${imgW * 0.9}mm`,
             }}
           >
             {a.text}
@@ -79,6 +89,7 @@ export default async function DrawingPrintPage({
   const firstPage = drawing?.pages?.[0];
   const landscape = !!firstPage && firstPage.w >= firstPage.h;
   const pageWmm = landscape ? 297 : 210;   // ด้านกว้างของ A4 ตามแนว
+  const pageHmm = landscape ? 210 : 297;   // ด้านสูงของ A4 ตามแนว
 
   return (
     <div className="min-h-dvh bg-gray-100 print:bg-white">
@@ -98,7 +109,7 @@ export default async function DrawingPrintPage({
       ) : (
         <div className="mx-auto my-6 shadow-lg print:shadow-none print:my-0" style={{ width: `${pageWmm}mm` }}>
           {drawing.pages.map((p, i) => (
-            <PagePrint key={i} page={p} pageIndex={i} annotations={drawing.annotations ?? []} isLast={i === drawing.pages.length - 1} pageWmm={pageWmm} />
+            <PagePrint key={i} page={p} pageIndex={i} annotations={drawing.annotations ?? []} isLast={i === drawing.pages.length - 1} pageWmm={pageWmm} pageHmm={pageHmm} />
           ))}
         </div>
       )}
