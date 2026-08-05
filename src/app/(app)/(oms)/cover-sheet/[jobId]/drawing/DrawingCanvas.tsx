@@ -141,6 +141,20 @@ function PageBlock({
     return () => ro.disconnect();
   }, [page.path]);
 
+  // หน้าที่ "กำลังใช้งาน" เลื่อนตามที่ผู้ใช้เลื่อนดู → ปุ่ม + สเปคลงหน้าที่มองอยู่จริง (แก้ปัญหาหลายแผ่นแล้ว +ลงผิดหน้า)
+  const activateRef = useRef(onActivate);
+  activateRef.current = onActivate;
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => { for (const e of entries) if (e.isIntersecting) activateRef.current(); },
+      { rootMargin: "-45% 0px -45% 0px" },   // ยิงเมื่อหน้าตัดกลางจอ = หน้าที่กำลังดู
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   return (
     <div className={`rounded-2xl overflow-hidden border-2 ${active ? "border-sky-400" : "border-transparent"}`}>
       <div className="bg-gray-800/60 text-white/70 text-[12px] px-3 py-1.5 flex items-center justify-between">

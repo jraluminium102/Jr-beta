@@ -4,11 +4,12 @@ import type { PrefillGroup } from "@/lib/job-drawings/types";
 
 // แผงข้าง "สเปคจากใบเสนอ" — กด + เพื่อเพิ่มลงหน้าที่ "กำลังใช้งาน" หรือลากไปวางตำแหน่งที่ต้องการบนแบบ
 export default function PrefillPanel({
-  groups, onAddText, disabled,
+  groups, onAddText, disabled, activePageLabel,
 }: {
   groups: PrefillGroup[];
   onAddText: (text: string) => void;
   disabled: boolean;
+  activePageLabel?: number;   // เลขหน้าที่ + จะลง (เลื่อนตามที่มองอยู่)
 }) {
   if (groups.length === 0) {
     return (
@@ -19,10 +20,15 @@ export default function PrefillPanel({
   }
 
   return (
-    <div className="glass-card rounded-2xl p-4 space-y-4 max-h-[75vh] overflow-y-auto">
+    <div className="glass-card rounded-2xl p-4 space-y-4">
       <div className="text-[12px]" style={{ color: "var(--t-low)" }}>
-        กด <b>+</b> เพื่อเพิ่มลงหน้าที่กำลังใช้งาน หรือ <b>ลาก</b> ไปวางตำแหน่งที่ต้องการบนแบบได้เลย
+        กด <b>+</b> เพื่อเพิ่มลงหน้าที่กำลังดูอยู่ หรือ <b>ลาก</b> ไปวางตำแหน่งที่ต้องการบนแบบได้เลย
       </div>
+      {activePageLabel != null && (
+        <div className="text-[12px] font-semibold text-sky-100 bg-sky-500/20 border border-sky-300/30 rounded-lg px-2.5 py-1.5">
+          ➕ กด + จะลง <b>หน้า {activePageLabel}</b> (เลื่อนดูหน้าไหน = ลงหน้านั้น)
+        </div>
+      )}
       {groups.map((g) => {
         const groupText = [g.title, ...g.lines.map((l) => l.text)].filter(Boolean).join("\n");
         return (

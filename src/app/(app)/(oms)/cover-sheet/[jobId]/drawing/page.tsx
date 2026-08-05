@@ -229,7 +229,7 @@ export default function DrawingEditorPage({ params }: { params: { jobId: string 
           )}
 
           {selected && (
-            <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
+            <div className="grid gap-4 lg:grid-cols-[1fr_300px] lg:items-start">
               <div>
                 {/* ชื่อชุดแบบ + ลบ */}
                 <div className="glass-card rounded-2xl px-4 py-2.5 mb-3 flex items-center gap-2">
@@ -268,8 +268,8 @@ export default function DrawingEditorPage({ params }: { params: { jobId: string 
                   canWrite={canWrite}
                 />
               </div>
-              <div>
-                <PrefillPanel groups={prefill} onAddText={addAtActivePage} disabled={!canWrite} />
+              <div className="lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100dvh-2rem)] lg:overflow-auto">
+                <PrefillPanel groups={prefill} onAddText={addAtActivePage} disabled={!canWrite} activePageLabel={activePage + 1} />
               </div>
             </div>
           )}

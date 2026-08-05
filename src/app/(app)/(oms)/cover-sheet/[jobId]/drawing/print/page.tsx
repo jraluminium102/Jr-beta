@@ -17,16 +17,15 @@ const COLOR_HEX: Record<AnnotColor, string> = { "": "#000", red: "#c00000", blue
 // ฮาโลขาวรอบตัวอักษร (เหมือนหน้าแก้ไข) — อ่านออกแม้ทับเส้นแบบสีเข้ม
 const HALO = "0 0 3px #fff, 0 0 3px #fff, 0 0 4px #fff, 0 0 5px #fff";
 
-const PAGE_W_MM = 210;
 const MARGIN_MM = 6;
-const CONTENT_W_MM = PAGE_W_MM - MARGIN_MM * 2;
 
-function PagePrint({ page, pageIndex, annotations, isLast }: { page: DrawingPage; pageIndex: number; annotations: DrawingAnnotation[]; isLast: boolean }) {
+function PagePrint({ page, pageIndex, annotations, isLast, pageWmm }: { page: DrawingPage; pageIndex: number; annotations: DrawingAnnotation[]; isLast: boolean; pageWmm: number }) {
+  const CONTENT_W_MM = pageWmm - MARGIN_MM * 2;
   const heightMm = page.w > 0 ? CONTENT_W_MM * (page.h / page.w) : CONTENT_W_MM * 1.414;
   const url = page.path.startsWith("http") ? page.path : drawingPublicUrl(page.path);
   return (
     <div
-      style={{ width: `${PAGE_W_MM}mm`, padding: `${MARGIN_MM}mm`, position: "relative", background: "#fff", pageBreakAfter: isLast ? "auto" : "always", breakAfter: isLast ? "auto" : "page" }}
+      style={{ width: `${pageWmm}mm`, padding: `${MARGIN_MM}mm`, position: "relative", background: "#fff", pageBreakAfter: isLast ? "auto" : "always", breakAfter: isLast ? "auto" : "page" }}
     >
       <div style={{ position: "relative", width: `${CONTENT_W_MM}mm`, height: `${heightMm}mm` }}>
         {/* eslint-disable-next-line @next/next/no-img-element -- รูปจาก Supabase Storage public URL */}
@@ -76,8 +75,15 @@ export default async function DrawingPrintPage({
   const job = jobR.data as { job_code: string | null; customer_name: string } | null;
   const drawing = drawingR.data as JobDrawing | null;
 
+  // แนวกระดาษตามอัตราส่วนแบบ (แบบส่วนใหญ่ = A4 แนวนอน · ให้พอดีหน้าต่อหน้า ไม่แหก)
+  const firstPage = drawing?.pages?.[0];
+  const landscape = !!firstPage && firstPage.w >= firstPage.h;
+  const pageWmm = landscape ? 297 : 210;   // ด้านกว้างของ A4 ตามแนว
+
   return (
     <div className="min-h-dvh bg-gray-100 print:bg-white">
+      {/* บังคับแนวกระดาษให้ตรงกับแบบ (ไม่งั้น browser default = แนวตั้ง แล้วแบบแนวนอนแหก) */}
+      <style dangerouslySetInnerHTML={{ __html: `@page { size: A4 ${landscape ? "landscape" : "portrait"}; margin: 0; }` }} />
       <div className="no-print sticky top-0 z-10 bg-white border-b px-4 py-3 flex items-center justify-between">
         <Link href={`/cover-sheet/${jobId}/drawing`} className="press inline-flex items-center gap-1.5 text-sm text-ink-2">
           <Icon name="arrowLeft" size={16} /> กลับ
@@ -90,9 +96,9 @@ export default async function DrawingPrintPage({
       ) : !drawing ? (
         <div className="no-print mx-auto mt-8 max-w-[210mm] text-center text-sm text-gray-500 px-4">งานนี้ยังไม่มีแบบที่อัปโหลด — กลับไปอัปโหลดก่อนพิมพ์</div>
       ) : (
-        <div className="mx-auto my-6 shadow-lg print:shadow-none print:my-0" style={{ width: `${PAGE_W_MM}mm` }}>
+        <div className="mx-auto my-6 shadow-lg print:shadow-none print:my-0" style={{ width: `${pageWmm}mm` }}>
           {drawing.pages.map((p, i) => (
-            <PagePrint key={i} page={p} pageIndex={i} annotations={drawing.annotations ?? []} isLast={i === drawing.pages.length - 1} />
+            <PagePrint key={i} page={p} pageIndex={i} annotations={drawing.annotations ?? []} isLast={i === drawing.pages.length - 1} pageWmm={pageWmm} />
           ))}
         </div>
       )}
