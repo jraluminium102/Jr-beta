@@ -4,7 +4,7 @@ import { bahtText } from "@/lib/baht-text";
 import type { Quotation } from "@/lib/types";
 import { PrintLetterhead, PrintCustomerBlock, DOC_COLORS } from "@/components/print/PrintLetterhead";
 import { PrintSignature } from "@/components/print/PrintSignature";
-import { DetailLines } from "@/components/print/DetailLines";
+import { detailLines, renderDetailLine } from "@/components/print/DetailLines";
 import { COMPANY } from "./quote-constants";
 
 /**
@@ -135,19 +135,41 @@ export function QuotationDoc({
                     <td colSpan={5} className="p-2 border border-gray-200 font-bold" style={{ background: "#fbf3f3", color: "#7d0f15" }}>{gl}</td>
                   </tr>
                 )}
-                {/* รายการยาว ๆ ตัดขึ้นหน้าใหม่กลางข้อได้ (เจ้าของสั่ง 17 ก.ค.2569 — ข้อรายละเอียดเยอะ
-                    ไม่ต้องดันทั้งข้อไปหน้าใหม่ ไม่งั้นเกิดที่ว่างโบ๋ท้ายหน้า) · avoid เก็บไว้แค่กล่องยอดเงิน+ลายเซ็น */}
-                <tr>
-                  <td className="p-2 border border-gray-200 text-center align-top tabular-nums">{i + 1}</td>
-                  <td className="p-2 border border-gray-200 align-top">
-                    <div className="font-medium">{it.name}</div>
-                    {/* บรรทัดว่าง = เว้นวรรค · #หัวข้อ = หนา+แดง (กติกากลาง DetailLines) */}
-                    {it.detail && <DetailLines text={it.detail} />}
-                  </td>
-                  <td className="p-2 border border-gray-200 text-right align-top tabular-nums">{baht(it.qty)}</td>
-                  <td className="p-2 border border-gray-200 text-right align-top tabular-nums">{baht(it.unit_price)}</td>
-                  <td className="p-2 border border-gray-200 text-right align-top tabular-nums">{baht(it.line_total)}</td>
-                </tr>
+                {/* รายการ = "แถวละบรรทัด" (หัวรายการ + รายละเอียดบรรทัดละ 1 แถว) — กัน Chrome ทิ้งหน้าโล่ง/ตกขอบ
+                    ตัดหน้าได้ทุกบรรทัด (แถวเตี้ย browser วางต่อได้เสมอ) · border-collapse: เส้นคั่นข้อ(บน/ล่างข้อ)
+                    + เส้นแบ่งคอลัมน์(ซ้าย/ขวาทุกแถว)ต่อเนื่อง → หน้าตาเหมือนตารางเดิม (เจ้าของสั่ง 5ส.ค.69 "ทำฟอร์มดี ๆ ตลอด") */}
+                {(() => {
+                  const lines = it.detail ? detailLines(it.detail) : [];
+                  const hasDetail = lines.length > 0;
+                  const cv = "border-l border-r border-gray-200 px-2"; // เส้นคอลัมน์ซ้าย/ขวา + ระยะข้าง
+                  const headPad = hasDetail ? "pt-2 pb-0" : "py-2";
+                  return (
+                    <>
+                      {/* หัวรายการ: # + ชื่อ + จำนวน/ราคา (border-t = เส้นคั่นบนข้อ) */}
+                      <tr>
+                        <td className={`${cv} border-t border-gray-200 text-center align-top tabular-nums ${headPad}`}>{i + 1}</td>
+                        <td className={`${cv} border-t border-gray-200 align-top ${headPad}`}><div className="font-medium">{it.name}</div></td>
+                        <td className={`${cv} border-t border-gray-200 text-right align-top tabular-nums ${headPad}`}>{baht(it.qty)}</td>
+                        <td className={`${cv} border-t border-gray-200 text-right align-top tabular-nums ${headPad}`}>{baht(it.unit_price)}</td>
+                        <td className={`${cv} border-t border-gray-200 text-right align-top tabular-nums ${headPad}`}>{baht(it.line_total)}</td>
+                      </tr>
+                      {/* รายละเอียด: บรรทัดละ 1 แถว (ตัดหน้าได้ทุกบรรทัด) · แถวสุดท้าย = border-b ปิดข้อ */}
+                      {lines.map((ln, li) => {
+                        const last = li === lines.length - 1;
+                        const bb = last ? "border-b border-gray-200" : "";
+                        return (
+                          <tr key={li}>
+                            <td className={`${cv} ${bb} align-top ${last ? "pb-2" : ""}`} />
+                            <td className={`${cv} ${bb} align-top ${last ? "pb-2" : ""}`} style={{ fontSize: 12, lineHeight: 1.5 }}>{renderDetailLine(ln, li)}</td>
+                            <td className={`${cv} ${bb} ${last ? "pb-2" : ""}`} />
+                            <td className={`${cv} ${bb} ${last ? "pb-2" : ""}`} />
+                            <td className={`${cv} ${bb} ${last ? "pb-2" : ""}`} />
+                          </tr>
+                        );
+                      })}
+                    </>
+                  );
+                })()}
               </Fragment>
             );
           })}
