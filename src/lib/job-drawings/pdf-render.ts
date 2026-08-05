@@ -3,14 +3,21 @@
 //   ทำไมต้อง render เป็นรูป: ให้ overlay ข้อความวางทับได้ตรงตำแหน่งเป๊ะ (สัดส่วน xf/yf) โดยไม่ต้องพึ่ง PDF text-layer/ฟอนต์ไทยฝัง
 //   worker: ใช้ path static /pdfjs/pdf.worker.min.mjs (คัดลอกไว้ตอน npm install — ดู scripts/copy-pdfjs-worker.mjs)
 //   แทนที่จะใช้ new URL(..., import.meta.url) ซึ่งบาง setup ของ Next.js/webpack bundle asset พลาดเงียบ ๆ
-import * as pdfjsLib from "pdfjs-dist";
 import { createClient } from "@/lib/supabase/client";
 
-let workerConfigured = false;
-function ensureWorker() {
-  if (workerConfigured) return;
-  pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdfjs/pdf.worker.min.mjs";
-  workerConfigured = true;
+// ⚠ ห้าม import pdfjs-dist ที่ top-level: pdfjs v6 แตะ browser globals ตอนโหลดโมดูล →
+//   Next SSR หน้า editor (แม้เป็น "use client") จะ eval โมดูลนี้บน server แล้วพัง 500 (เจอจริงบน Vercel)
+//   → โหลดแบบ dynamic เฉพาะตอนเรียกใช้ (ฝั่งเบราว์เซอร์เท่านั้น) + cache promise
+type PdfjsModule = typeof import("pdfjs-dist");
+let pdfjsPromise: Promise<PdfjsModule> | null = null;
+function loadPdfjs(): Promise<PdfjsModule> {
+  if (!pdfjsPromise) {
+    pdfjsPromise = import("pdfjs-dist").then((mod) => {
+      mod.GlobalWorkerOptions.workerSrc = "/pdfjs/pdf.worker.min.mjs";
+      return mod;
+    });
+  }
+  return pdfjsPromise;
 }
 
 export type RenderedPage = { blob: Blob; w: number; h: number };
@@ -22,7 +29,7 @@ export async function renderPdfPages(
   file: File,
   onPage?: (i: number, total: number) => void
 ): Promise<RenderedPage[]> {
-  ensureWorker();
+  const pdfjsLib = await loadPdfjs();
   const buf = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
   const pages: RenderedPage[] = [];
