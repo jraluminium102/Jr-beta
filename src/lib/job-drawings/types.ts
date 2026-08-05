@@ -44,6 +44,7 @@ export type JobDrawingsGetResponse = {
     deposit_date: string | null;
     deposited: boolean; // = deposit_date != null (เกณฑ์ "มัดจำแล้ว" ที่ระบบใช้จริง — ดู mark-deposited/deposit-amount route)
   };
+  can_write: boolean;   // สิทธิ์แก้ (drawings:write = ADMIN/PRODUCTION/DESIGNER) — role อ่านอย่างเดียวเห็นแต่ดู/พิมพ์
 };
 
 export const DEFAULT_ANNOT_SIZE = 0.02;

@@ -61,7 +61,7 @@ export default async function DrawingPrintPage({
 }: { params: { jobId: string }; searchParams: { d?: string } }) {
   // ⚠ Server Component ไม่ผ่านชั้น BFF → ต้องเช็คสิทธิ์เอง (บทเรียน crew-teams/cover-sheet print)
   const profile = await getProfile();
-  if (!profile || !can(profile.role, "production", "read")) redirect("/");
+  if (!profile || !can(profile.role, "drawings", "read")) redirect("/");
 
   const jobId = params.jobId;
   const sb = createClient() as unknown as AnySb;

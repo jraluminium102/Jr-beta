@@ -34,6 +34,7 @@ export default function DrawingEditorPage({ params }: { params: { jobId: string 
 
   const job = data?.data?.job ?? null;
   const prefill = data?.data?.prefill ?? [];
+  const canWrite = data?.data?.can_write ?? false;   // สิทธิ์แก้จริง (ADMIN/PRODUCTION/DESIGNER) — role อ่านอย่างเดียวเห็นแต่ดู/พิมพ์
   const drawings = useMemo(() => (data?.data?.drawings ?? []).map(hydrateDrawing), [data]);
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -176,16 +177,22 @@ export default function DrawingEditorPage({ params }: { params: { jobId: string 
           <ArrowLeft size={16} /> กลับใบปะหน้า
         </Link>
         <div className="flex items-center gap-2 flex-wrap">
-          <input ref={fileRef} type="file" accept="application/pdf" className="hidden"
-            onChange={(e) => { const f = e.target.files?.[0]; if (f) doUpload(f); }} />
-          <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} className={`${btn} text-white bg-sky-500`}>
-            <Upload size={15} /> {uploading ? "กำลังอัปโหลด…" : "อัปโหลดแบบ (PDF)"}
-          </button>
+          {canWrite && (
+            <>
+              <input ref={fileRef} type="file" accept="application/pdf" className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) doUpload(f); }} />
+              <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} className={`${btn} text-white bg-sky-500`}>
+                <Upload size={15} /> {uploading ? "กำลังอัปโหลด…" : "อัปโหลดแบบ (PDF)"}
+              </button>
+            </>
+          )}
           {selected && (
             <>
-              <button type="button" onClick={doSave} disabled={saving || !dirty} className={`${btn} text-white bg-emerald-600`}>
-                <Save size={15} /> {saving ? "กำลังบันทึก…" : dirty ? "บันทึก" : "บันทึกแล้ว"}
-              </button>
+              {canWrite && (
+                <button type="button" onClick={doSave} disabled={saving || !dirty} className={`${btn} text-white bg-emerald-600`}>
+                  <Save size={15} /> {saving ? "กำลังบันทึก…" : dirty ? "บันทึก" : "บันทึกแล้ว"}
+                </button>
+              )}
               <Link href={`/cover-sheet/${jobId}/drawing/print?d=${selected.id}`} className={`${btn} text-gray-900 bg-white`}>
                 <Printer size={15} /> พิมพ์
               </Link>
@@ -239,10 +246,14 @@ export default function DrawingEditorPage({ params }: { params: { jobId: string 
                     <>
                       <FileText size={15} className="text-white/70 shrink-0" />
                       <span className="flex-1 min-w-0 truncate text-white font-medium text-[14px]">{selected.title || selected.original_name || `แบบ #${selected.id}`}</span>
-                      <button type="button" title="แก้ชื่อ" onClick={() => { setTitleDraft(selected.title); setEditingTitle(true); }}
-                        className="w-8 h-8 grid place-items-center rounded-md hover:bg-white/15 text-white/70"><Pencil size={14} /></button>
-                      <button type="button" title="ลบแบบนี้" onClick={() => doDelete(selected)}
-                        className="w-8 h-8 grid place-items-center rounded-md hover:bg-rose-500/30 text-rose-200"><Trash2 size={14} /></button>
+                      {canWrite && (
+                        <>
+                          <button type="button" title="แก้ชื่อ" onClick={() => { setTitleDraft(selected.title); setEditingTitle(true); }}
+                            className="w-8 h-8 grid place-items-center rounded-md hover:bg-white/15 text-white/70"><Pencil size={14} /></button>
+                          <button type="button" title="ลบแบบนี้" onClick={() => doDelete(selected)}
+                            className="w-8 h-8 grid place-items-center rounded-md hover:bg-rose-500/30 text-rose-200"><Trash2 size={14} /></button>
+                        </>
+                      )}
                     </>
                   )}
                 </div>
@@ -254,11 +265,11 @@ export default function DrawingEditorPage({ params }: { params: { jobId: string 
                   onPatch={patchAnnotation}
                   onRemove={removeAnnotation}
                   onDropText={addAnnotation}
-                  canWrite
+                  canWrite={canWrite}
                 />
               </div>
               <div>
-                <PrefillPanel groups={prefill} onAddText={addAtActivePage} disabled={false} />
+                <PrefillPanel groups={prefill} onAddText={addAtActivePage} disabled={!canWrite} />
               </div>
             </div>
           )}

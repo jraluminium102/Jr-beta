@@ -29,7 +29,7 @@ const patchSchema = z.object({
 
 // PATCH /api/job-drawings/:id — บันทึกชื่อชุดแบบ และ/หรือ ตำแหน่งกล่องข้อความ (annotations)
 export const PATCH = withRoute(async (req: Request, { params }: Params) => {
-  const ctx = await requirePermission("production", "write");
+  const ctx = await requirePermission("drawings", "write");
   const sb = ctx.supabase as unknown as AnySb;
   const id = Number(params.id);
   if (!Number.isFinite(id)) return err("id ไม่ถูกต้อง", 422);
@@ -50,7 +50,7 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
 
 // DELETE /api/job-drawings/:id — ลบแถว + ลบไฟล์ใน storage (ต้นฉบับ PDF + รูปทุกหน้า)
 export const DELETE = withRoute(async (_req: Request, { params }: Params) => {
-  const ctx = await requirePermission("production", "write");
+  const ctx = await requirePermission("drawings", "write");
   const sb = ctx.supabase as unknown as AnySb;
   const id = Number(params.id);
   if (!Number.isFinite(id)) return err("id ไม่ถูกต้อง", 422);

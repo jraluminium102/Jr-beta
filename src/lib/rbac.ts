@@ -3,7 +3,7 @@ import type { Role } from "@/lib/database.types";
 export type Resource =
   | "jobs" | "jobs:finance_fields" | "production" | "installation"
   | "issues" | "finance" | "dashboard" | "settings" | "users" | "queue"
-  | "designer" | "boq" | "sales_closure" | "warranties" | "stock";
+  | "designer" | "boq" | "sales_closure" | "warranties" | "stock" | "drawings";
 export type Action = "read" | "write" | "void";
 
 // ตรงกับ PRD REQ-06 + RLS policies ใน 0003_rls.sql
@@ -18,6 +18,7 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     sales_closure: ["read", "write"],
     warranties: ["read", "write"],
     stock: ["read", "write"],
+    drawings: ["read", "write"],   // สแตมป์สเปคลงแบบ (0117)
   },
   SALES: {
     jobs: ["read", "write"], "jobs:finance_fields": ["read"],
@@ -27,6 +28,7 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     sales_closure: ["read", "write"],
     warranties: ["read", "write"],
     stock: ["read", "write"],
+    drawings: ["read"],   // เซลล์เปิดดูแบบ+สเปคได้ (ไม่แก้)
   },
   DESIGNER: {
     jobs: ["read", "write"], production: ["read"],
@@ -35,18 +37,21 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     designer: ["read", "write"],
     warranties: ["read"],
     stock: ["read"],
+    drawings: ["read", "write"],   // ดีไซเนอร์ = คนเตรียมแบบ สแตมป์สเปคลงแบบได้ (0117)
   },
   PRODUCTION: {
     jobs: ["read"], production: ["read", "write"], issues: ["read", "write"], dashboard: ["read"],
     designer: ["read"], boq: ["read", "write"],
     warranties: ["read", "write"],  // [0035] ช่างผลิตออกใบรับประกันได้
     stock: ["read", "write"],
+    drawings: ["read", "write"],   // ผลิตเตรียมแบบให้ช่างได้ (0117)
   },
   INSTALLER: {
     jobs: ["read"], production: ["read"], installation: ["read", "write"],
     issues: ["read", "write"], dashboard: ["read"],
     warranties: ["read", "write"],  // [0035] ช่างติดตั้งออกใบรับประกันหลังจบงานได้
     stock: ["read"],
+    drawings: ["read"],   // ช่างติดตั้งเปิดดูแบบ+สเปคได้ (ไม่แก้)
   },
   ACCOUNTING: {
     jobs: ["read"], "jobs:finance_fields": ["read"],
@@ -54,6 +59,7 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     production: ["read"],   // เข้าหน้าผลิตดู/ถอยมัดจำได้ (finance:void) — ไม่ให้ write ผลิต
     boq: ["read", "write"],
     stock: ["read", "write"],  // บัญชี = ผู้ดูแลต้นทุน/มูลค่าคงคลัง (ตั้งราคา + รวมรายการซ้ำแบบปรับจำนวน) — canPrice ผูก ACCOUNTING อยู่แล้ว
+    drawings: ["read"],   // บัญชีเปิดดูแบบ+สเปคได้ (ไม่แก้)
   },
   VIEWER: { jobs: ["read"], dashboard: ["read"] },
   // ช่างผลิต — เห็นแค่ตารางผลิต กดเช็คลิสต์ (production write ไว้มาร์ค production_sets)

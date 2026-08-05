@@ -3,6 +3,7 @@ import { requirePermission } from "@/lib/bff/context";
 import { withRoute } from "@/lib/bff/handler";
 import { ok, created, err } from "@/lib/bff/response";
 import { dbError } from "@/lib/bff/db-error";
+import { can } from "@/lib/rbac";
 // generator ตัวจริง (pure JS ไม่มี type · เหมือน cover-sheets/generate) — ห้ามแก้ logic
 import { buildGroups } from "@/lib/cover-sheet/generate.mjs";
 import type { PrefillGroup } from "@/lib/job-drawings/types";
@@ -27,7 +28,7 @@ const postSchema = z.object({
 
 // GET /api/job-drawings?job_id=... — รายการแบบที่อัปโหลดไว้ + prefill สเปคจากใบเสนอล่าสุด + สถานะงาน (มัดจำแล้วไหม)
 export const GET = withRoute(async (req: Request) => {
-  const ctx = await requirePermission("production", "read");
+  const ctx = await requirePermission("drawings", "read");
   const sb = ctx.supabase as unknown as AnySb;
 
   const url = new URL(req.url);
@@ -64,13 +65,14 @@ export const GET = withRoute(async (req: Request) => {
     drawings: drawingsR.data ?? [],
     prefill,
     job: { ...job, deposited: !!job.deposit_date },
+    can_write: can(ctx.role, "drawings", "write"),
   });
 });
 
 // POST /api/job-drawings — สร้างแถวแบบใหม่ (client อัปไฟล์ขึ้น storage bucket 'drawings' เสร็จแล้ว ส่ง path มาบันทึก)
 //   เฉพาะงานมัดจำแล้ว (deposit_date ไม่ว่าง) — เกณฑ์เดียวกับที่ระบบใช้ทั้งระบบ (mark-deposited/deposit-amount)
 export const POST = withRoute(async (req: Request) => {
-  const ctx = await requirePermission("production", "write");
+  const ctx = await requirePermission("drawings", "write");
   const sb = ctx.supabase as unknown as AnySb;
   const body = postSchema.parse(await req.json());
 
