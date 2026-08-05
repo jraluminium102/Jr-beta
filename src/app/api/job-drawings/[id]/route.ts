@@ -20,6 +20,7 @@ const annotationSchema = z.object({
   text: z.string().max(2000),
   color: z.enum(["", "red", "blue", "green"]).optional().default(""),
   align: z.enum(["left", "center", "right"]).optional().default("left"),
+  hl: z.enum(["", "yellow", "green", "pink", "blue", "orange"]).optional().default(""),
 });
 
 const patchSchema = z.object({

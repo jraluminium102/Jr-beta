@@ -1,14 +1,18 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { GripVertical, Minus, Plus, Palette, AlignLeft, AlignCenter, AlignRight, Trash2 } from "lucide-react";
+import { GripVertical, Minus, Plus, Palette, AlignLeft, AlignCenter, AlignRight, Trash2, Highlighter } from "lucide-react";
 import type { AnnotAlign, AnnotColor, DrawingAnnotation, DrawingPage } from "@/lib/job-drawings/types";
+import { HIGHLIGHT_HEX, nextHighlight } from "@/lib/highlight-colors";
 
 const COLOR_HEX: Record<AnnotColor, string> = { "": "#111827", red: "#c00000", blue: "#1a56db", green: "#15803d" };
 const COLOR_ORDER: AnnotColor[] = ["", "red", "blue", "green"];
 const ALIGN_ORDER: AnnotAlign[] = ["left", "center", "right"];
 const ALIGN_ICON: Record<AnnotAlign, typeof AlignLeft> = { left: AlignLeft, center: AlignCenter, right: AlignRight };
 // ฮาโลขาวรอบตัวอักษร — อ่านออกแม้ทับเส้นแบบสีเข้ม (ไม่เก็บใน DB คำนวณจากสีตัวอักษรอย่างเดียว ใช้ทั้งตอนแก้และตอนพิมพ์)
+// มีไฮไลต์อยู่แล้ว (พื้นหลังทึบ) → ตัดฮาโลออก กันดูเลอะ/กวนตากับพื้นสี
 const HALO = "0 0 3px #fff, 0 0 3px #fff, 0 0 4px #fff, 0 0 5px #fff";
+// กรอบฟ้าตอนเลือกกล่อง (แทนพื้นเหลืองเดิม กันชนกับสีไฮไลต์จริง)
+const SELECTED_RING = "0 0 0 2px #2563eb, 0 0 0 4px rgba(37,99,235,0.25)";
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
 
 // ── กล่องข้อความ 1 กล่อง — ลากย้ายด้วย pointer events (มือถือ/เมาส์ใช้ร่วมได้), พิมพ์แก้ในตัว ──
@@ -78,6 +82,12 @@ function AnnotationBox({
             className="w-7 h-7 grid place-items-center rounded hover:bg-white/15">
             <Palette size={13} style={{ color: COLOR_HEX[a.color ?? ""] }} />
           </button>
+          <button type="button" title={`ไฮไลต์: ${a.hl ? a.hl : "ไม่มี"} (กดเปลี่ยน)`}
+            onClick={() => onPatch({ hl: nextHighlight(a.hl) })}
+            style={a.hl ? { background: HIGHLIGHT_HEX[a.hl] } : undefined}
+            className="w-7 h-7 grid place-items-center rounded hover:bg-white/15">
+            <Highlighter size={13} style={{ color: a.hl ? "#111827" : "#fff" }} />
+          </button>
           {(() => { const AlignIcon = ALIGN_ICON[a.align ?? "left"]; return (
             <button type="button" title="จัดแนวข้อความ (กดเปลี่ยน)"
               onClick={() => onPatch({ align: ALIGN_ORDER[(ALIGN_ORDER.indexOf(a.align ?? "left") + 1) % ALIGN_ORDER.length] })}
@@ -100,8 +110,10 @@ function AnnotationBox({
           lineHeight: 1.25,
           color: COLOR_HEX[a.color ?? ""],
           textAlign: a.align ?? "left",
-          textShadow: HALO,
-          background: selected ? "rgba(255,255,80,0.28)" : "transparent",
+          textShadow: a.hl ? "none" : HALO,   // มีไฮไลต์พื้นทึบแล้ว → ตัดฮาโลกันเลอะ
+          background: a.hl ? HIGHLIGHT_HEX[a.hl] : "transparent",
+          borderRadius: a.hl ? 3 : 0,
+          boxShadow: selected ? SELECTED_RING : "none",
           border: selected ? "1px dashed rgba(0,0,0,0.5)" : "1px dashed transparent",
           resize: "none",
           padding: "1px 3px",

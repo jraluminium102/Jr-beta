@@ -5,7 +5,8 @@ import { getProfile } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
-import { EMPTY_CONTENT, type CoverColor, type CoverContent, type CoverLine } from "@/lib/cover-sheet/types";
+import { EMPTY_CONTENT, effectiveHl, type CoverColor, type CoverContent, type CoverLine } from "@/lib/cover-sheet/types";
+import { HIGHLIGHT_HEX } from "@/lib/highlight-colors";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +35,8 @@ const numBadge: React.CSSProperties = {
 function LineCell({ line, defaultColor = "#000" }: { line?: CoverLine; defaultColor?: string }) {
   if (!line) return <>&nbsp;</>;
   if (line.kind === "group") return <span style={{ fontWeight: 700 }}><span style={numBadge}>{line.n}</span>{line.text}</span>;
-  return <span style={{ color: line.color ? COLOR_HEX[line.color] : defaultColor, background: line.hl ? "#fff35b" : undefined }}>- {line.text}</span>;
+  const hl = effectiveHl(line);
+  return <span style={{ color: line.color ? COLOR_HEX[line.color] : defaultColor, background: hl ? HIGHLIGHT_HEX[hl] : undefined }}>- {line.text}</span>;
 }
 
 export default async function CoverSheetPrintPage({ params }: { params: { jobId: string } }) {

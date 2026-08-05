@@ -7,6 +7,7 @@ import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
 import { drawingPublicUrl } from "@/lib/job-drawings/storage";
 import type { AnnotColor, DrawingAnnotation, DrawingPage, JobDrawing } from "@/lib/job-drawings/types";
+import { HIGHLIGHT_HEX } from "@/lib/highlight-colors";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ export const dynamic = "force-dynamic";
 type AnySb = { from: (t: string) => any };
 
 const COLOR_HEX: Record<AnnotColor, string> = { "": "#000", red: "#c00000", blue: "#1a56db", green: "#15803d" };
-// ฮาโลขาวรอบตัวอักษร (เหมือนหน้าแก้ไข) — อ่านออกแม้ทับเส้นแบบสีเข้ม
+// ฮาโลขาวรอบตัวอักษร (เหมือนหน้าแก้ไข) — อ่านออกแม้ทับเส้นแบบสีเข้ม (มีไฮไลต์พื้นทึบแล้วตัดออก กันเลอะ)
 const HALO = "0 0 3px #fff, 0 0 3px #fff, 0 0 4px #fff, 0 0 5px #fff";
 
 // เผื่อความสูง 3มม กัน "บล็อกเต็มหน้าเป๊ะ" แล้ว browser แถมหน้าเปล่า
@@ -50,7 +51,10 @@ function PagePrint({ page, pageIndex, annotations, isLast, pageWmm, pageHmm }: {
             lineHeight: 1.25,
             color: COLOR_HEX[a.color ?? ""],
             textAlign: a.align ?? "left",
-            textShadow: HALO,
+            textShadow: a.hl ? "none" : HALO,
+            background: a.hl ? HIGHLIGHT_HEX[a.hl] : undefined,
+            borderRadius: a.hl ? "0.6mm" : undefined,
+            padding: a.hl ? "0.3mm 0.8mm" : undefined,
             fontWeight: 600,
             whiteSpace: "pre-wrap",
             maxWidth: `${imgW * 0.9}mm`,

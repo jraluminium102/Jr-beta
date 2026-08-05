@@ -9,7 +9,8 @@ import type {
   CoverColor, CoverContent, CoverLine, CoverMode,
   CoverSheetGetResponse, GenerateResponse,
 } from "@/lib/cover-sheet/types";
-import { EMPTY_CONTENT, WARN_PRESETS } from "@/lib/cover-sheet/types";
+import { EMPTY_CONTENT, WARN_PRESETS, effectiveHl } from "@/lib/cover-sheet/types";
+import { HIGHLIGHT_HEX, nextHighlight } from "@/lib/highlight-colors";
 
 const COLOR_HEX: Record<CoverColor, string> = { "": "#111827", red: "#c00000", blue: "#1a56db", green: "#15803d" };
 const COLOR_LABEL: Record<CoverColor, string> = { "": "ดำ", red: "แดง", blue: "น้ำเงิน", green: "เขียว" };
@@ -19,6 +20,7 @@ const nextN = (left: CoverLine[]) => left.reduce((m, l) => Math.max(m, l.kind ==
 function SpecRow({ line, onChange, onRemove }: {
   line: CoverLine; onChange: (p: Partial<CoverLine>) => void; onRemove: () => void;
 }) {
+  const hl = effectiveHl(line);
   return (
     <div className="flex items-center gap-1.5">
       <span className="text-gray-400 select-none">–</span>
@@ -26,7 +28,7 @@ function SpecRow({ line, onChange, onRemove }: {
         value={line.text}
         onChange={(e) => onChange({ text: e.target.value })}
         placeholder="พิมพ์รายการ…"
-        style={{ color: COLOR_HEX[line.color ?? ""], background: line.hl ? "#fff35b" : "#fff" }}
+        style={{ color: COLOR_HEX[line.color ?? ""], background: hl ? HIGHLIGHT_HEX[hl] : "#fff" }}
         className="flex-1 min-w-0 rounded-md border border-gray-300 px-2.5 py-2 text-[15px] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-300"
       />
       <select
@@ -37,8 +39,11 @@ function SpecRow({ line, onChange, onRemove }: {
       >
         {(Object.keys(COLOR_LABEL) as CoverColor[]).map((c) => <option key={c} value={c}>{COLOR_LABEL[c]}</option>)}
       </select>
-      <button type="button" onClick={() => onChange({ hl: !line.hl })} title="ไฮไลต์"
-        className={`shrink-0 rounded-md border w-8 h-8 grid place-items-center ${line.hl ? "bg-yellow-300 border-yellow-400 text-black" : "bg-white border-gray-300 text-gray-400 hover:text-gray-700"}`}>
+      {/* กดวนสีไฮไลต์: ไม่มี→เหลือง→เขียว→ชมพู→ฟ้า→ส้ม→ไม่มี — เขียนทั้ง hlc(ใหม่)+hl(เก่า sync ไว้กันหน้าจอ/รายงานเก่าอ่าน boolean) */}
+      <button type="button" onClick={() => { const n = nextHighlight(hl); onChange({ hlc: n, hl: n !== "" }); }}
+        title={`ไฮไลต์: ${hl ? hl : "ไม่มี"} (กดเปลี่ยน)`}
+        style={hl ? { background: HIGHLIGHT_HEX[hl] } : undefined}
+        className={`shrink-0 rounded-md border w-8 h-8 grid place-items-center ${hl ? "border-gray-400 text-black" : "bg-white border-gray-300 text-gray-400 hover:text-gray-700"}`}>
         <Highlighter size={14} />
       </button>
       <button type="button" onClick={onRemove} title="ลบ"
@@ -247,12 +252,18 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
                 {!quotation ? (
                   <div className="text-[13px] text-gray-400">งานนี้ยังไม่มีใบเสนอราคา</div>
                 ) : (
-                  <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 max-h-[40vh] overflow-y-auto pr-1">
+                  // การ์ดต่อข้อ เต็มความกว้าง — ไม่ครอบ max-height/scroll ซ้อน (หน้าเลื่อนเดียวพอ ไม่ต้องสกรอลสองชั้น)
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                     {quotation.items.map((it, i) => (
-                      <div key={i} className="rounded-lg border border-gray-200 bg-gray-50 p-2.5">
-                        {it.group_label && <div className="text-[11px] font-medium text-sky-700 mb-0.5">{it.group_label}</div>}
-                        <div className="text-[13px] font-semibold text-gray-900 mb-1">{it.name}</div>
-                        <div className="text-[12px] whitespace-pre-wrap text-gray-600 leading-relaxed">{it.detail}</div>
+                      <div key={i} className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                        <div className="flex items-start gap-2 mb-1.5">
+                          <span className="shrink-0 mt-0.5 inline-grid place-items-center w-5 h-5 rounded-full bg-gray-200 text-gray-600 text-[10.5px] font-bold tnum">{i + 1}</span>
+                          <div className="min-w-0">
+                            {it.group_label && <div className="text-[11px] font-medium text-sky-700 leading-tight">{it.group_label}</div>}
+                            <div className="text-[14px] font-semibold text-gray-900 leading-snug">{it.name}</div>
+                          </div>
+                        </div>
+                        <div className="text-[12.5px] whitespace-pre-wrap text-gray-600 leading-relaxed pl-7">{it.detail}</div>
                       </div>
                     ))}
                   </div>

@@ -2,13 +2,22 @@
 //   ตรงกับ content jsonb ใน cover_sheets (migration 0111) — ดู src/lib/cover-sheet/generate.mjs (generator จริง, ห้ามแก้ logic)
 //   โมเดลแบน (flat) WYSIWYG: คอลัมน์ซ้าย = list เดียว (group=หัวข้อชุด, spec=บุลเลท) · สิ่งที่เห็น = สิ่งที่พิมพ์
 
+import type { HighlightColor } from "@/lib/highlight-colors";
+
 export type CoverMode = "short" | "grouped";
 export type CoverColor = "" | "red" | "blue" | "green";
 export type CoverLineKind = "spec" | "group";
 
 // 1 บรรทัดในใบปะหน้า · kind:'group' = หัวข้อชุด (ตัวหนา + เลข n) · 'spec' = บุลเลทของ
-export type CoverLine = { text: string; color?: CoverColor; hl?: boolean; kind?: CoverLineKind; n?: number };
+//   hl (boolean, เดิม) = ไฮไลต์เหลือง — เก็บไว้เพื่อ backward-compat กับข้อมูลเก่า
+//   hlc (ใหม่) = สีไฮไลต์ที่เลือกจริง (ดู src/lib/highlight-colors.ts) — ถ้ามีค่าจะชนะ hl เดิมเสมอ
+export type CoverLine = { text: string; color?: CoverColor; hl?: boolean; hlc?: HighlightColor; kind?: CoverLineKind; n?: number };
 export type CoverGroup = { n: number; title: string; lines: CoverLine[] };
+
+// สีไฮไลต์ที่ใช้จริงของบรรทัด — รองรับข้อมูลเก่า (hl:true = เหลือง) + ข้อมูลใหม่ (hlc)
+export function effectiveHl(line: Pick<CoverLine, "hl" | "hlc">): HighlightColor {
+  return line.hlc || (line.hl ? "yellow" : "");
+}
 
 export type CoverContent = {
   floorNote?: string;

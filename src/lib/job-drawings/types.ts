@@ -2,6 +2,8 @@
 //   ตรงกับ job_drawings (migration 0117) — ตำแหน่งเก็บเป็นสัดส่วน 0..1 ของขนาดหน้า (ไม่เพี้ยนตามจอ/ขนาดพิมพ์)
 //   size ก็เป็นสัดส่วนเดียวกัน (ของ "ความสูงหน้า") ไม่ใช่ px ตรง ๆ — คูณด้วยความสูงที่แสดงจริง (จอ/กระดาษ) แล้วได้ฟอนต์ที่ WYSIWYG ทั้งตอนแก้และตอนพิมพ์
 
+import type { HighlightColor } from "@/lib/highlight-colors";
+
 export type DrawingPage = { path: string; w: number; h: number }; // path = public URL รูป PNG ต่อหน้า (bucket 'drawings')
 
 export type AnnotColor = "" | "red" | "blue" | "green";
@@ -16,6 +18,7 @@ export type DrawingAnnotation = {
   text: string;
   color?: AnnotColor;
   align?: AnnotAlign;
+  hl?: HighlightColor; // สีไฮไลต์ (พื้นหลังกล่องข้อความ) — "" / ไม่มีค่า = ไม่มีไฮไลต์ (ดู src/lib/highlight-colors.ts)
 };
 
 export type JobDrawing = {

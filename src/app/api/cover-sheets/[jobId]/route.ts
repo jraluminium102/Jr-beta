@@ -15,7 +15,8 @@ type AnySb = { from: (t: string) => any };
 const lineSchema = z.object({
   text: z.string().max(500),
   color: z.enum(["", "red", "blue", "green"]).optional().default(""),
-  hl: z.boolean().optional().default(false),
+  hl: z.boolean().optional().default(false),   // เดิม (boolean เหลืองอย่างเดียว) — เก็บไว้ backward-compat กับข้อมูลเก่า
+  hlc: z.enum(["", "yellow", "green", "pink", "blue", "orange"]).optional(), // ใหม่ — สีไฮไลต์จริง (ชนะ hl เดิมถ้ามีค่า)
   kind: z.enum(["spec", "group"]).optional(),
   n: z.number().optional(),
 });
