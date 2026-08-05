@@ -17,12 +17,13 @@ const COLOR_HEX: Record<AnnotColor, string> = { "": "#000", red: "#c00000", blue
 // ฮาโลขาวรอบตัวอักษร (เหมือนหน้าแก้ไข) — อ่านออกแม้ทับเส้นแบบสีเข้ม
 const HALO = "0 0 3px #fff, 0 0 3px #fff, 0 0 4px #fff, 0 0 5px #fff";
 
-const MARGIN_MM = 6;
+// เผื่อความสูง 3มม กัน "บล็อกเต็มหน้าเป๊ะ" แล้ว browser แถมหน้าเปล่า
+const SAFETY_MM = 3;
 
 function PagePrint({ page, pageIndex, annotations, isLast, pageWmm, pageHmm }: { page: DrawingPage; pageIndex: number; annotations: DrawingAnnotation[]; isLast: boolean; pageWmm: number; pageHmm: number }) {
-  // ย่อรูปให้พอดี "ทั้งกว้างและสูง" ของกระดาษ (กันสูงเกินหน้าแล้วล้นขึ้นแผ่นใหม่ → ตัวหนังสือเด้งแยกแผ่น)
-  const availW = pageWmm - MARGIN_MM * 2;
-  const availH = pageHmm - MARGIN_MM * 2;
+  // พิมพ์แบบ "เต็มหน้าเหมือนต้นฉบับ" — ไม่ใส่ขอบขาว ไม่ย่อ · แค่ให้พอดีกรอบกระดาษ (กว้าง + สูงเผื่อกันหน้าเปล่า)
+  const availW = pageWmm;
+  const availH = pageHmm - SAFETY_MM;
   const aspect = page.w > 0 && page.h > 0 ? page.h / page.w : 1.414; // สูง/กว้าง
   let imgW = availW;
   let imgH = imgW * aspect;
@@ -31,36 +32,33 @@ function PagePrint({ page, pageIndex, annotations, isLast, pageWmm, pageHmm }: {
   return (
     <div
       style={{
-        width: `${pageWmm}mm`, height: `${pageHmm}mm`, padding: `${MARGIN_MM}mm`, boxSizing: "border-box",
-        background: "#fff", overflow: "hidden", display: "flex", justifyContent: "center", alignItems: "flex-start",
+        width: `${imgW}mm`, height: `${imgH}mm`, margin: "0 auto", position: "relative", background: "#fff", overflow: "hidden",
         breakInside: "avoid", pageBreakInside: "avoid",
         pageBreakAfter: isLast ? "auto" : "always", breakAfter: isLast ? "auto" : "page",
       }}
     >
-      <div style={{ position: "relative", width: `${imgW}mm`, height: `${imgH}mm` }}>
-        {/* eslint-disable-next-line @next/next/no-img-element -- รูปจาก Supabase Storage public URL */}
-        <img src={url} alt={`หน้า ${pageIndex + 1}`} style={{ width: `${imgW}mm`, height: `${imgH}mm`, display: "block" }} />
-        {annotations.filter((a) => a.page === pageIndex).map((a) => (
-          <div
-            key={a.id}
-            style={{
-              position: "absolute",
-              left: `${a.xf * imgW}mm`,
-              top: `${a.yf * imgH}mm`,
-              fontSize: `${Math.max(2, a.size * imgH)}mm`,
-              lineHeight: 1.25,
-              color: COLOR_HEX[a.color ?? ""],
-              textAlign: a.align ?? "left",
-              textShadow: HALO,
-              fontWeight: 600,
-              whiteSpace: "pre-wrap",
-              maxWidth: `${imgW * 0.9}mm`,
-            }}
-          >
-            {a.text}
-          </div>
-        ))}
-      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element -- รูปจาก Supabase Storage public URL */}
+      <img src={url} alt={`หน้า ${pageIndex + 1}`} style={{ width: `${imgW}mm`, height: `${imgH}mm`, display: "block" }} />
+      {annotations.filter((a) => a.page === pageIndex).map((a) => (
+        <div
+          key={a.id}
+          style={{
+            position: "absolute",
+            left: `${a.xf * imgW}mm`,
+            top: `${a.yf * imgH}mm`,
+            fontSize: `${Math.max(2, a.size * imgH)}mm`,
+            lineHeight: 1.25,
+            color: COLOR_HEX[a.color ?? ""],
+            textAlign: a.align ?? "left",
+            textShadow: HALO,
+            fontWeight: 600,
+            whiteSpace: "pre-wrap",
+            maxWidth: `${imgW * 0.9}mm`,
+          }}
+        >
+          {a.text}
+        </div>
+      ))}
     </div>
   );
 }
