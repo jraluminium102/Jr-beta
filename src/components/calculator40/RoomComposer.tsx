@@ -81,10 +81,13 @@ type Pane = {
 
 // ช่อง (column) = ตำแหน่งซ้าย→ขวา · pcs = บานซ้อนบน→ล่างในช่องนั้น (2 มิติ เหมือน R3.9 G6R)
 type Col = { key: number; pcs: Pane[] };
+// stash = จำข้อมูลของชนิดอื่นไว้ตอนสลับชนิดด้าน (กระจก/ผนัง/เปิดโล่ง) → สลับกลับมาไม่หาย (เจ้าของสั่ง 4ส.ค.69)
+type WallData = { wallType: "light" | "smartboard" | "isowall"; aw: number; ah: number; addons: Record<string, any> };
+type SideStash = { glass?: Col[]; wall?: WallData };
 type Side =
-  | { kind: "glass"; cols: Col[] }
-  | { kind: "wall"; wallType: "light" | "smartboard" | "isowall"; aw: number; ah: number; addons: Record<string, any> }
-  | { kind: "open" };
+  | { kind: "glass"; cols: Col[]; stash?: SideStash }
+  | { kind: "wall"; wallType: "light" | "smartboard" | "isowall"; aw: number; ah: number; addons: Record<string, any>; stash?: SideStash }
+  | { kind: "open"; stash?: SideStash };
 
 const WALL_RATE = 1350; // ผนังเบา ฿/ตร.ม. (R3.9 flat — ไม่มี R4.0 product คู่ตรง ๆ ของ "ผนังเบา" ชนิดบาง — ยังใช้ราคานี้ ติดป้าย (R3.9))
 
@@ -471,10 +474,15 @@ export default function RoomComposer({
   }
   function setSideKind(i: number, kind: Side["kind"]) {
     setSides((s) => s.map((x, xi) => {
-      if (xi !== i) return x;
-      if (kind === "glass") return freshGlassSide();
-      if (kind === "wall") return freshWallSide();
-      return { kind: "open" };
+      if (xi !== i || x.kind === kind) return x;
+      // เก็บข้อมูลชนิดปัจจุบันลง stash ก่อนสลับ → สลับกลับมาได้เหมือนเดิม (ไม่หาย)
+      const stash: SideStash = { ...(x.stash || {}) };
+      if (x.kind === "glass") stash.glass = x.cols;
+      else if (x.kind === "wall") stash.wall = { wallType: x.wallType, aw: x.aw, ah: x.ah, addons: x.addons };
+      // สลับไปชนิดใหม่ → คืนค่าจาก stash ถ้าเคยตั้งไว้ · ไม่เคย = ค่าตั้งต้น
+      if (kind === "glass") return { kind: "glass", cols: stash.glass ?? [freshCol()], stash };
+      if (kind === "wall") return stash.wall ? { kind: "wall", ...stash.wall, stash } : { ...(freshWallSide() as Extract<Side, { kind: "wall" }>), stash };
+      return { kind: "open", stash };
     }));
   }
   function patchWall(i: number, p: Partial<Extract<Side, { kind: "wall" }>>) {
