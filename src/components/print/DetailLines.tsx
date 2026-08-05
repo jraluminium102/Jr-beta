@@ -39,7 +39,7 @@ export function renderDetailLine(ln: string, key: Key): ReactNode {
   const forced = s.startsWith("#");
   const label = forced ? s.slice(1).trim() : s;
   if (label && (forced || isAutoHeading(s))) {
-    return <div key={key} style={{ fontWeight: 600, color: "#b3151d", marginTop: 5, whiteSpace: "pre-wrap" }}>{label}</div>;
+    return <div key={key} style={{ fontWeight: 600, color: "#a8425a", marginTop: 5, whiteSpace: "pre-wrap" }}>{label}</div>;
   }
   if (forced && !label) return <div key={key} aria-hidden style={{ height: "0.6em" }} />;
   return <div key={key} style={{ color: "#4b5563", marginLeft: s.startsWith("-") ? 8 : 0, whiteSpace: "pre-wrap" }}>{s}</div>;

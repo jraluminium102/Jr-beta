@@ -103,25 +103,25 @@ export default async function BillingPrintPage({
 
         <table className="w-full text-sm mt-5 border-collapse">
           <thead>
-            <tr style={{ background: "#fdecec", color: "#7d0f15" }}>
-              <th className="p-2 text-left border border-gray-200" style={{ width: 48 }}>งวด</th>
-              <th className="p-2 text-left border border-gray-200">รายละเอียด</th>
-              <th className="p-2 text-center border border-gray-200" style={{ width: 96 }}>กำหนดชำระ</th>
-              <th className="p-2 text-right border border-gray-200" style={{ width: 130 }}>จำนวนเงิน</th>
+            <tr style={{ background: "#faedf0", color: "#a8425a" }}>
+              <th className="p-2 text-left border border-[#f0dde3]" style={{ width: 48 }}>งวด</th>
+              <th className="p-2 text-left border border-[#f0dde3]">รายละเอียด</th>
+              <th className="p-2 text-center border border-[#f0dde3]" style={{ width: 96 }}>กำหนดชำระ</th>
+              <th className="p-2 text-right border border-[#f0dde3]" style={{ width: 130 }}>จำนวนเงิน</th>
             </tr>
           </thead>
           <tbody>
             {installments.map((it) => (
               <tr key={it.id}>
-                <td className="p-2 border border-gray-200 align-top text-center">{it.seq}</td>
-                <td className="p-2 border border-gray-200">
+                <td className="p-2 border border-[#f0dde3] align-top text-center">{it.seq}</td>
+                <td className="p-2 border border-[#f0dde3]">
                   <div><PrintLabelEditor installmentId={it.id!} label={it.label} /></div>
                   {it.status === "paid" && (
                     <div className="text-xs text-gray-500">รับชำระแล้ว ฿{baht(it.paid_amount)}{it.paid_date ? ` · ${it.paid_date}` : ""}</div>
                   )}
                 </td>
-                <td className="p-2 border border-gray-200 text-center align-top">{it.due_date || "—"}</td>
-                <td className="p-2 border border-gray-200 text-right align-top tabular-nums">{baht(it.amount)}</td>
+                <td className="p-2 border border-[#f0dde3] text-center align-top">{it.due_date || "—"}</td>
+                <td className="p-2 border border-[#f0dde3] text-right align-top tabular-nums">{baht(it.amount)}</td>
               </tr>
             ))}
           </tbody>
@@ -163,7 +163,7 @@ export default async function BillingPrintPage({
               {/* ยอดรวมที่โชว์: ใบเต็มถ้าแก้ footer แล้ว → ยอดสุทธิที่คิดใหม่ · คงเหลือติดลบ = แดง (เตือนรับเกิน) */}
               <tr><td className="pr-10 py-0.5 text-gray-500 text-left">รับชำระแล้ว</td><td className="text-right tabular-nums">{baht(totalPaid)}</td></tr>
               <tr><td className="pr-10 py-0.5 text-gray-500 text-left">คงเหลือ</td><td className={`text-right tabular-nums${overpaid ? " text-red-700 font-semibold" : ""}`}>{baht(effRemaining)}</td></tr>
-              <tr className="font-bold text-lg" style={{ color: "#7d0f15" }}><td className="pr-10 py-1 border-t text-left">{isSingle ? "ยอดชำระ" : "ยอดรวมทั้งสิ้น"}</td><td className="text-right border-t tabular-nums">฿{baht(effTotal)}</td></tr>
+              <tr className="font-bold text-lg" style={{ color: "#a8425a" }}><td className="pr-10 py-1 border-t text-left">{isSingle ? "ยอดชำระ" : "ยอดรวมทั้งสิ้น"}</td><td className="text-right border-t tabular-nums">฿{baht(effTotal)}</td></tr>
             </tbody>
           </table>
         </div>

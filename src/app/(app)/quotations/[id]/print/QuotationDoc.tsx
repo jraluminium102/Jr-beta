@@ -112,12 +112,12 @@ export function QuotationDoc({
           </tr>
 
           {/* แถบหัวคอลัมน์ — อยู่ใต้บล็อกลูกค้า · จัด center ทุกช่อง · ข้อมูลในแถวคงชิดเดิม (ชื่อซ้าย/ตัวเลขขวา) */}
-          <tr style={{ background: "#fdecec", color: "#7d0f15" }}>
-            <th className="p-2 text-center border border-gray-200" style={{ width: "5%" }}>#</th>
-            <th className="p-2 text-center border border-gray-200" style={{ width: "55%" }}>รายละเอียด</th>
-            <th className="p-2 text-center border border-gray-200" style={{ width: "10%" }}>จำนวน</th>
-            <th className="p-2 text-center border border-gray-200" style={{ width: "15%" }}>ราคาต่อหน่วย</th>
-            <th className="p-2 text-center border border-gray-200" style={{ width: "15%" }}>ยอดรวม</th>
+          <tr style={{ background: "#faedf0", color: "#a8425a" }}>
+            <th className="p-2 text-center border border-[#f0dde3]" style={{ width: "5%" }}>#</th>
+            <th className="p-2 text-center border border-[#f0dde3]" style={{ width: "55%" }}>รายละเอียด</th>
+            <th className="p-2 text-center border border-[#f0dde3]" style={{ width: "10%" }}>จำนวน</th>
+            <th className="p-2 text-center border border-[#f0dde3]" style={{ width: "15%" }}>ราคาต่อหน่วย</th>
+            <th className="p-2 text-center border border-[#f0dde3]" style={{ width: "15%" }}>ยอดรวม</th>
           </tr>
 
           {items.map((it, i) => {
@@ -132,7 +132,7 @@ export function QuotationDoc({
                 {showHeading && (
                   // หัวข้อชุดห้ามค้างท้ายหน้าโดยไม่มีรายการตาม
                   <tr style={{ breakAfter: "avoid", pageBreakAfter: "avoid" }}>
-                    <td colSpan={5} className="p-2 border border-gray-200 font-bold" style={{ background: "#fbf3f3", color: "#7d0f15" }}>{gl}</td>
+                    <td colSpan={5} className="p-2 border border-[#f0dde3] font-bold" style={{ background: "#fdf3f5", color: "#a8425a" }}>{gl}</td>
                   </tr>
                 )}
                 {/* รายการ = "แถวละบรรทัด" (หัวรายการ + รายละเอียดบรรทัดละ 1 แถว) — กัน Chrome ทิ้งหน้าโล่ง/ตกขอบ
@@ -141,22 +141,22 @@ export function QuotationDoc({
                 {(() => {
                   const lines = it.detail ? detailLines(it.detail) : [];
                   const hasDetail = lines.length > 0;
-                  const cv = "border-l border-r border-gray-200 px-2"; // เส้นคอลัมน์ซ้าย/ขวา + ระยะข้าง
+                  const cv = "border-l border-r border-[#f0dde3] px-2"; // เส้นคอลัมน์ซ้าย/ขวา + ระยะข้าง
                   const headPad = hasDetail ? "pt-2 pb-0" : "py-2";
                   return (
                     <>
                       {/* หัวรายการ: # + ชื่อ + จำนวน/ราคา (border-t = เส้นคั่นบนข้อ) */}
                       <tr>
-                        <td className={`${cv} border-t border-gray-200 text-center align-top tabular-nums ${headPad}`}>{i + 1}</td>
-                        <td className={`${cv} border-t border-gray-200 align-top ${headPad}`}><div className="font-medium">{it.name}</div></td>
-                        <td className={`${cv} border-t border-gray-200 text-right align-top tabular-nums ${headPad}`}>{baht(it.qty)}</td>
-                        <td className={`${cv} border-t border-gray-200 text-right align-top tabular-nums ${headPad}`}>{baht(it.unit_price)}</td>
-                        <td className={`${cv} border-t border-gray-200 text-right align-top tabular-nums ${headPad}`}>{baht(it.line_total)}</td>
+                        <td className={`${cv} border-t border-[#f0dde3] text-center align-top tabular-nums ${headPad}`}>{i + 1}</td>
+                        <td className={`${cv} border-t border-[#f0dde3] align-top ${headPad}`}><div className="font-medium">{it.name}</div></td>
+                        <td className={`${cv} border-t border-[#f0dde3] text-right align-top tabular-nums ${headPad}`}>{baht(it.qty)}</td>
+                        <td className={`${cv} border-t border-[#f0dde3] text-right align-top tabular-nums ${headPad}`}>{baht(it.unit_price)}</td>
+                        <td className={`${cv} border-t border-[#f0dde3] text-right align-top tabular-nums ${headPad}`}>{baht(it.line_total)}</td>
                       </tr>
                       {/* รายละเอียด: บรรทัดละ 1 แถว (ตัดหน้าได้ทุกบรรทัด) · แถวสุดท้าย = border-b ปิดข้อ */}
                       {lines.map((ln, li) => {
                         const last = li === lines.length - 1;
-                        const bb = last ? "border-b border-gray-200" : "";
+                        const bb = last ? "border-b border-[#f0dde3]" : "";
                         return (
                           <tr key={li}>
                             <td className={`${cv} ${bb} align-top ${last ? "pb-2" : ""}`} />
@@ -181,7 +181,7 @@ export function QuotationDoc({
                   (เดิมตัวหนังสือจำนวนเงินกับตารางสรุปเป็นคนละ div → โดนตัดคาบเกี่ยวหน้า) */}
               <div style={{ breakInside: "avoid", pageBreakInside: "avoid" }}>
                 {/* ===== Total amount in words ===== */}
-                <div className="mt-2 tabular-nums" style={{ fontSize: 13, color: "#b3151d" }}>
+                <div className="mt-2 tabular-nums" style={{ fontSize: 13, color: "#a8425a" }}>
                   ({bahtText(total)})
                 </div>
 
@@ -233,7 +233,7 @@ export function QuotationDoc({
                         </tr>
                       )}
 
-                      <tr className="font-bold border-t" style={{ color: "#7d0f15" }}>
+                      <tr className="font-bold border-t" style={{ color: "#a8425a" }}>
                         <td className="pr-10 py-1 text-right border-t">{totalLabel}</td>
                         <td className="text-right tabular-nums border-t">{baht(total)} บาท</td>
                       </tr>
@@ -276,7 +276,7 @@ export function QuotationDoc({
             <td className="qdoc-tail">
               {/* หน้าเงื่อนไขสัญญา — ไม่ใส่บล็อกลูกค้า เอาแค่หัวบิลบริษัทมุมซ้าย (เจ้าของสั่ง 17 ก.ค.2569 "ดูเกะกะ")
                   ชื่อลูกค้ายังอยู่ในช่องลงนามท้ายเงื่อนไข + หน้าแรกใบเสนออยู่แล้ว */}
-              <h4 className="font-bold mb-2" style={{ color: "#b3151d", breakAfter: "avoid", pageBreakAfter: "avoid" }}>
+              <h4 className="font-bold mb-2" style={{ color: "#a8425a", breakAfter: "avoid", pageBreakAfter: "avoid" }}>
                 เงื่อนไขการเข้าทำงาน
               </h4>
               <ol className="list-decimal ml-5 mb-3 space-y-1">
@@ -295,7 +295,7 @@ export function QuotationDoc({
           </tr>
           <tr>
             <td className="qdoc-tail">
-              <h4 className="font-bold mt-2 mb-2" style={{ color: "#b3151d", breakAfter: "avoid", pageBreakAfter: "avoid" }}>
+              <h4 className="font-bold mt-2 mb-2" style={{ color: "#a8425a", breakAfter: "avoid", pageBreakAfter: "avoid" }}>
                 เงื่อนไขแบบและใบเสนอราคา
               </h4>
               <ol className="list-none ml-0 mb-3 space-y-1">
@@ -321,10 +321,10 @@ export function QuotationDoc({
             <td className="qdoc-tail">
               {/* Confirm + signature at bottom of conditions — ไปทั้งก้อน */}
               <div style={{ breakInside: "avoid", pageBreakInside: "avoid" }}>
-                <div className="mt-4 text-center font-semibold" style={{ color: "#b3151d" }}>
+                <div className="mt-4 text-center font-semibold" style={{ color: "#a8425a" }}>
                   ขอยืนยันการสั่งซื้อภายใต้เงื่อนไข&nbsp;&nbsp;ขอแสดงความนับถือ
                 </div>
-                <div className="mt-3 flex justify-between" style={{ color: "#b3151d", fontSize: 12 }}>
+                <div className="mt-3 flex justify-between" style={{ color: "#a8425a", fontSize: 12 }}>
                   <div>
                     ลงนาม ............................................... ผู้สั่งซื้อ
                     <br />

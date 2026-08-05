@@ -70,18 +70,18 @@ export default function QuoteFormPreview({
       {/* ตารางรายการ — โครงเดียวกับใบพิมพ์จริง · แก้ชื่อ/รายละเอียด/จำนวน/ราคา ได้ inline */}
       <table className="w-full border-collapse" style={{ fontSize: 13 }}>
         <thead>
-          <tr style={{ background: "#fdecec", color: "#7d0f15" }}>
-            <th className="p-2 text-center border border-gray-200" style={{ width: "5%" }}>#</th>
-            <th className="p-2 text-left border border-gray-200" style={{ width: "53%" }}>รายละเอียด</th>
-            <th className="p-2 text-right border border-gray-200" style={{ width: "9%" }}>จำนวน</th>
-            <th className="p-2 text-right border border-gray-200" style={{ width: "14%" }}>ราคาต่อหน่วย</th>
-            <th className="p-2 text-right border border-gray-200" style={{ width: "14%" }}>ยอดรวม</th>
+          <tr style={{ background: "#faedf0", color: "#a8425a" }}>
+            <th className="p-2 text-center border border-[#f0dde3]" style={{ width: "5%" }}>#</th>
+            <th className="p-2 text-left border border-[#f0dde3]" style={{ width: "53%" }}>รายละเอียด</th>
+            <th className="p-2 text-right border border-[#f0dde3]" style={{ width: "9%" }}>จำนวน</th>
+            <th className="p-2 text-right border border-[#f0dde3]" style={{ width: "14%" }}>ราคาต่อหน่วย</th>
+            <th className="p-2 text-right border border-[#f0dde3]" style={{ width: "14%" }}>ยอดรวม</th>
             {editable && <th className="p-1 border-0 no-print" style={{ width: "5%" }}></th>}
           </tr>
         </thead>
         <tbody>
           {items.length === 0 && (
-            <tr><td colSpan={editable ? 6 : 5} className="p-4 text-center border border-gray-200 text-gray-400" style={{ fontSize: 12 }}>
+            <tr><td colSpan={editable ? 6 : 5} className="p-4 text-center border border-[#f0dde3] text-gray-400" style={{ fontSize: 12 }}>
               ยังไม่มีรายการ — เพิ่มจากเครื่องคิดราคาทางซ้าย
             </td></tr>
           )}
@@ -93,12 +93,12 @@ export default function QuoteFormPreview({
               <Fragment key={it.key}>
                 {showHeading && (
                   <tr>
-                    <td colSpan={editable ? 6 : 5} className="p-2 border border-gray-200 font-bold" style={{ background: "#fbf3f3", color: "#7d0f15" }}>{gl}</td>
+                    <td colSpan={editable ? 6 : 5} className="p-2 border border-[#f0dde3] font-bold" style={{ background: "#fdf3f5", color: "#a8425a" }}>{gl}</td>
                   </tr>
                 )}
                 <tr>
-                  <td className="p-2 border border-gray-200 text-center align-top tabular-nums">{i + 1}</td>
-                  <td className="p-2 border border-gray-200 align-top">
+                  <td className="p-2 border border-[#f0dde3] text-center align-top tabular-nums">{i + 1}</td>
+                  <td className="p-2 border border-[#f0dde3] align-top">
                     {editable && !it.locked ? (
                       <input value={it.name} onChange={(e) => onEdit(it.key, { name: e.target.value })}
                         placeholder="ชื่อรายการ" className={`font-medium ${cellInput}`} />
@@ -110,19 +110,19 @@ export default function QuoteFormPreview({
                         className={`${cellInput} resize-y mt-0.5`} style={{ fontSize: 12, lineHeight: 1.5, color: "#4b5563" }} />
                     ) : (it.detail && <DetailLines text={it.detail} />)}
                   </td>
-                  <td className="p-2 border border-gray-200 text-right align-top tabular-nums">
+                  <td className="p-2 border border-[#f0dde3] text-right align-top tabular-nums">
                     {editable && !it.locked ? (
                       <input type="number" min={0} value={it.qty} onChange={(e) => onEdit(it.key, { qty: Number(e.target.value) })}
                         className={`text-right ${cellInput}`} />
                     ) : baht(it.qty)}
                   </td>
-                  <td className="p-2 border border-gray-200 text-right align-top tabular-nums">
+                  <td className="p-2 border border-[#f0dde3] text-right align-top tabular-nums">
                     {editable && !it.locked ? (
                       <input type="number" min={0} value={it.unitPrice} onChange={(e) => onEdit(it.key, { unitPrice: Number(e.target.value) })}
                         className={`text-right ${cellInput}`} />
                     ) : baht(it.unitPrice)}
                   </td>
-                  <td className="p-2 border border-gray-200 text-right align-top tabular-nums font-medium">{baht(it.qty * it.unitPrice)}</td>
+                  <td className="p-2 border border-[#f0dde3] text-right align-top tabular-nums font-medium">{baht(it.qty * it.unitPrice)}</td>
                   {editable && (
                     <td className="p-1 text-center align-top no-print border-0">
                       {!it.locked && <button onClick={() => onRemove(it.key)} title="ลบรายการ" className="text-gray-300 hover:text-red-600"><Icon name="trash" size={14} /></button>}
@@ -136,7 +136,7 @@ export default function QuoteFormPreview({
       </table>
 
       {/* ยอดเป็นตัวหนังสือ */}
-      <div className="mt-2 tabular-nums" style={{ fontSize: 13, color: "#b3151d" }}>({bahtText(total)})</div>
+      <div className="mt-2 tabular-nums" style={{ fontSize: 13, color: "#a8425a" }}>({bahtText(total)})</div>
 
       {/* สรุปยอด */}
       <div className="flex justify-end mt-2">
@@ -177,7 +177,7 @@ export default function QuoteFormPreview({
                 <td className="text-right tabular-nums">-{baht(t.wht_amt)} บาท</td>
               </tr>
             )}
-            <tr className="font-bold border-t" style={{ color: "#7d0f15" }}>
+            <tr className="font-bold border-t" style={{ color: "#a8425a" }}>
               <td className="pr-10 py-1 text-right border-t">{totalLabel}</td>
               <td className="text-right tabular-nums border-t">{baht(total)} บาท</td>
             </tr>
@@ -190,7 +190,7 @@ export default function QuoteFormPreview({
 
       {/* เงื่อนไข */}
       <div className="mt-5" style={{ fontSize: 11.5, lineHeight: 1.65, pageBreakBefore: "always" }}>
-        <h4 className="font-bold mb-2" style={{ color: "#b3151d" }}>เงื่อนไขการเข้าทำงาน</h4>
+        <h4 className="font-bold mb-2" style={{ color: "#a8425a" }}>เงื่อนไขการเข้าทำงาน</h4>
         <ol className="list-decimal ml-5 mb-3 space-y-1">
           {CONDITIONS_WORK.map((cond, idx) => (
             <li key={idx} style={{ color: "#1f2937" }}>
@@ -198,7 +198,7 @@ export default function QuoteFormPreview({
             </li>
           ))}
         </ol>
-        <h4 className="font-bold mt-2 mb-2" style={{ color: "#b3151d" }}>เงื่อนไขแบบและใบเสนอราคา</h4>
+        <h4 className="font-bold mt-2 mb-2" style={{ color: "#a8425a" }}>เงื่อนไขแบบและใบเสนอราคา</h4>
         <ol className="list-none ml-0 mb-3 space-y-1">
           {CONDITIONS_QUOTE.map((cond, idx) => (
             <li key={idx} style={{ color: "#1f2937" }}>
@@ -208,7 +208,7 @@ export default function QuoteFormPreview({
             </li>
           ))}
         </ol>
-        <div className="mt-4 text-center font-semibold" style={{ color: "#b3151d" }}>ขอยืนยันการสั่งซื้อภายใต้เงื่อนไข&nbsp;&nbsp;ขอแสดงความนับถือ</div>
+        <div className="mt-4 text-center font-semibold" style={{ color: "#a8425a" }}>ขอยืนยันการสั่งซื้อภายใต้เงื่อนไข&nbsp;&nbsp;ขอแสดงความนับถือ</div>
       </div>
 
       {/* footer */}

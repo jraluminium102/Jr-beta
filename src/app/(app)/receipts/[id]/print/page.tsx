@@ -63,15 +63,15 @@ export default async function ReceiptPrintPage({ params }: { params: { id: strin
 
       <table className="w-full text-sm mt-5 border-collapse">
         <thead>
-          <tr style={{ background: "#fdecec", color: "#7d0f15" }}>
-            <th className="p-2 text-left border border-gray-200">รายการ</th>
-            <th className="p-2 text-right border border-gray-200" style={{ width: 160 }}>จำนวนเงิน</th>
+          <tr style={{ background: "#faedf0", color: "#a8425a" }}>
+            <th className="p-2 text-left border border-[#f0dde3]">รายการ</th>
+            <th className="p-2 text-right border border-[#f0dde3]" style={{ width: 160 }}>จำนวนเงิน</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td className="p-2 border border-gray-200">{itemCell}</td>
-            <td className="p-2 border border-gray-200 text-right tabular-nums">{baht(rcBase)}</td>
+            <td className="p-2 border border-[#f0dde3]">{itemCell}</td>
+            <td className="p-2 border border-[#f0dde3] text-right tabular-nums">{baht(rcBase)}</td>
           </tr>
         </tbody>
       </table>
@@ -84,7 +84,7 @@ export default async function ReceiptPrintPage({ params }: { params: { id: strin
           <tbody>
             <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ยอดก่อนภาษี</td><td className="text-right tabular-nums">{baht(rcBase)}</td></tr>
             <tr><td className="pr-10 py-0.5 text-gray-500 text-left">ภาษีมูลค่าเพิ่ม {rc.vat_rate}%</td><td className="text-right tabular-nums">{baht(rc.vat_amt)}</td></tr>
-            <tr className="font-bold text-lg" style={{ color: "#7d0f15" }}><td className="pr-10 py-1 border-t text-left">จำนวนเงินรวมทั้งสิ้น</td><td className="text-right border-t tabular-nums">฿{baht(rcGross)}</td></tr>
+            <tr className="font-bold text-lg" style={{ color: "#a8425a" }}><td className="pr-10 py-1 border-t text-left">จำนวนเงินรวมทั้งสิ้น</td><td className="text-right border-t tabular-nums">฿{baht(rcGross)}</td></tr>
             {rcWht > 0 && (
               <>
                 <tr><td className="pr-10 py-0.5 text-gray-500 text-left">หักภาษี ณ ที่จ่าย {rcWhtRate}%</td><td className="text-right tabular-nums">-{baht(rcWht)}</td></tr>
