@@ -298,6 +298,68 @@ function svcDemoTotal(demo: { roof: number; floor: number; rail: number; railLen
 // state = สแนป state ทั้งห้อง (0093) — เก็บเป็น "สูตร" ในใบเสนอ แล้วโหลดกลับมาแก้ได้ (ผ่าน prop initial)
 export type RoomTotals = { total: number; sides: number[]; sideDescs?: string[]; roofDesc?: string; ceilDesc?: string; specLines?: string[]; roof: number; ceil: number; floor: number; fan: number; services: number; svc: number; state?: any };
 
+// ── รูปด้านผนัง (elevation) — วาดผนังลายทแยง + ประตู/หน้าต่างเจาะในผนัง + ป้ายชนิดผนัง/พื้นที่สุทธิ (เจ้าของสั่ง 5ส.ค.69 · แบบรูปด้านจริง)
+//   คลิกบานในรูป = เลือกบานนั้น (ไฮไลต์แดง · เชื่อม selKey เดียวกับ ColsEditor) · บานวางชิดพื้นเรียงซ้าย→ขวา ที่เหลือเป็นเนื้อผนัง (ลายทแยง)
+function WallElevation({
+  aw, ah, wallLabel, cols, netArea, fullArea, paneArea, selKey, onSelect,
+}: {
+  aw: number; ah: number; wallLabel: string; cols: Col[];
+  netArea: number; fullArea: number; paneArea: number; selKey: number | null; onSelect: (key: number) => void;
+}) {
+  const W = Math.max(0.5, aw), H = Math.max(0.5, ah);
+  const scale = Math.min(360 / W, 200 / H);              // px/ม. — พอดีกล่อง ~360×200
+  const drawW = W * scale, drawH = H * scale;
+  const padL = 26, padT = 10, padR = 8, padB = 24;
+  const svgW = drawW + padL + padR, svgH = drawH + padT + padB;
+  const x0 = padL, y0 = padT, yBottom = padT + drawH;
+  // วางบานซ้าย→ขวา · ในช่องซ้อนจากพื้นขึ้น (ประตูวางชิดพื้น เหมือนรูปด้าน)
+  let cursor = x0 + Math.min(10, drawW * 0.05);
+  const rects: { x: number; y: number; w: number; h: number; key: number; label: string; sel: boolean }[] = [];
+  for (const col of cols) {
+    const colW = Math.max(0.3, ...col.pcs.map((p) => p.w || 0)) * scale;
+    let yb = yBottom;
+    for (const pc of col.pcs) {
+      const pw = Math.min(colW, (pc.w || 0.3) * scale);
+      const ph = Math.min(drawH, (pc.h || 0.3) * scale);
+      const y = yb - ph;
+      rects.push({ x: cursor, y, w: pw, h: ph, key: pc.key, label: PANE_TYPES.find((t) => t.key === pc.typeKey)?.label || "บาน", sel: pc.key === selKey });
+      yb = y;
+    }
+    cursor += colW + 6;
+  }
+  return (
+    <div className="rounded-lg border border-black/5 bg-white/50 p-2">
+      <svg viewBox={`0 0 ${svgW} ${svgH}`} width="100%" style={{ maxWidth: svgW, height: "auto" }} role="img" aria-label="รูปด้านผนัง">
+        <defs>
+          <pattern id="wallhatch" width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+            <line x1="0" y1="0" x2="0" y2="7" stroke="#c9ccd1" strokeWidth="1" />
+          </pattern>
+        </defs>
+        {/* ตัวผนัง (ลายทแยง) */}
+        <rect x={x0} y={y0} width={drawW} height={drawH} fill="url(#wallhatch)" stroke="#9aa0a6" strokeWidth="1.2" />
+        {/* ช่องบาน (ประตู/หน้าต่าง) เจาะในผนัง = พื้นขาว */}
+        {rects.map((r) => (
+          <g key={r.key} onClick={() => onSelect(r.key)} style={{ cursor: "pointer" }}>
+            <rect x={r.x} y={r.y} width={r.w} height={r.h} fill="#ffffff" stroke={r.sel ? "#b3151d" : "#5f6368"} strokeWidth={r.sel ? 2 : 1.2} />
+            {r.w > 30 && r.h > 20 && (
+              <text x={r.x + r.w / 2} y={r.y + r.h / 2} textAnchor="middle" dominantBaseline="middle" fontSize="8.5" fill="#5f6368">{r.label}</text>
+            )}
+          </g>
+        ))}
+        {/* มิติ กว้าง/สูง */}
+        <text x={x0 + drawW / 2} y={svgH - 7} textAnchor="middle" fontSize="9" fill="#80868b">{fmtNum(aw)} ม.</text>
+        <text x={9} y={y0 + drawH / 2} textAnchor="middle" fontSize="9" fill="#80868b" transform={`rotate(-90 9 ${y0 + drawH / 2})`}>{fmtNum(ah)} ม.</text>
+      </svg>
+      <p className="text-[11px] text-ink-2 mt-1 leading-snug">
+        <b>{wallLabel}</b>
+        {paneArea > 0
+          ? <> · พื้นที่สุทธิ <b className="tabular-nums">{fmtNum(netArea)}</b> ตร.ม. <span className="text-ink-3">(เต็ม {fmtNum(fullArea)} − หักช่องบาน {fmtNum(paneArea)})</span></>
+          : <> · {fmtNum(fullArea)} ตร.ม.</>}
+      </p>
+    </div>
+  );
+}
+
 // ── ตัวแก้ไข "ช่องบาน" ของด้าน — reuse ได้ทั้ง glass (บานเต็มด้าน) และ wall/open (ประตู/หน้าต่างในด้านนั้น)
 //   แยกเป็น top-level component (ไม่ nested ใน RoomComposer) กัน remount ทุกครั้งที่ parent re-render (จะเสีย focus inputs)
 //   รูปด้าน 2 มิติ (ช่องซ้าย→ขวา · ในช่องซ้อนบน→ล่าง) + แถบจัดเรียง ◀▶▲▼＋บน/ล่าง/ช่อง + การ์ดตั้งค่าบานที่เลือกเต็ม (พาริตี้ R3.9 G6R)
@@ -873,13 +935,18 @@ export default function RoomComposer({
                     <span className="text-ink-3">ม.</span>
                     <span className="ml-2 font-semibold text-brand-dark tabular-nums">{fmtBaht(wallPrice(s, pb, profitPct))}</span>
                   </div>
-                  {/* พื้นที่ผนังสุทธิ (หักช่องบาน) — โชว์ให้เห็นว่าคิดสมาร์ทบอร์ด/ไอโซวอลบนพื้นที่หักประตูแล้ว ไม่ใช่พื้นที่เต็ม */}
-                  {wallPaneArea > 0 && (
-                    <p className="text-[11px] text-ink-3">
-                      พื้นที่ผนังสุทธิ <b className="tabular-nums text-ink-2">{fmtNum(netArea)}</b> ตร.ม.
-                      {" "}(เต็ม {fmtNum(fullArea)} − หักช่องบาน <span className="tabular-nums">{fmtNum(wallPaneArea)}</span> ตร.ม.)
-                    </p>
-                  )}
+                  {/* รูปด้านผนัง — วาดประตู/หน้าต่างเจาะในผนัง (ลายทแยง) + ป้ายชนิดผนัง + พื้นที่สุทธิ (หักช่องบาน) */}
+                  <WallElevation
+                    aw={s.aw || 3}
+                    ah={s.ah || 2.6}
+                    wallLabel={`ผนัง ${WALL_TYPES.find((t) => t.key === s.wallType)?.label || ""}`.trim()}
+                    cols={sideCols(s)}
+                    netArea={netArea}
+                    fullArea={fullArea}
+                    paneArea={wallPaneArea}
+                    selKey={selKey}
+                    onSelect={selectPane}
+                  />
                   {s.wallType === "light" && (
                     <p className="text-[11px] text-ink-3">ผนังเบา flat 1,350/ตร.ม. (R3.9 — ยังไม่มี R4.0 cost ของผนังเบาชนิดบางนี้)</p>
                   )}
