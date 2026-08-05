@@ -23,6 +23,7 @@
  *   roomTotal = ceil100(Σ sideTotal + roofTotal + ceilTotal + floorTotal + fanTotal + servicesTotal + svcTotal + roomColorPremium)
  */
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { MutableRefObject } from "react";
 import Icon from "@/components/Icon";
 import { fmt } from "@/lib/calculator40/fmt";
 import AddonsSection from "@/components/calculator40/AddonsSection";
@@ -36,6 +37,8 @@ import { PRODUCTS } from "@/lib/calculator40/products.mjs";
 import { computeMosquitoR4, mosquitoTypeLabel } from "@/lib/calculator40/mosquito.mjs";
 // @ts-expect-error — roof-zip helper เป็น ESM JS ล้วน
 import { computeRoofZipR4, isRoofZipProd } from "@/lib/calculator40/roof-zip.mjs";
+// @ts-expect-error — door-zip helper เป็น ESM JS ล้วน
+import { computeDoorZipR4 } from "@/lib/calculator40/door-zip.mjs";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -64,8 +67,15 @@ const PANE_TYPES: { key: string; label: string; slideLike?: boolean }[] = [
   ...WALL_PANES.filter((w) => (PRODUCTS as Record<string, any>)[w.key]),
 ];
 
+// ม่านซิปประตู (door_zip) เป็นออปชั่น "universal" ของทุกชนิดบานในห้อง (เหมือน elec/solid_panel ที่ Calculator40Client บวก
+// ให้ทุกรุ่น) — augment addons list ที่ชั้น app เท่านั้น (shallow copy ไม่แตะ PRODUCTS ต้นฉบับ/products.mjs/verify-r40)
 const PANE_BY_KEY: Record<string, any> = Object.fromEntries(
-  PANE_TYPES.map((t) => [t.key, (PRODUCTS as any)[t.key]])
+  PANE_TYPES.map((t) => {
+    const base = (PRODUCTS as any)[t.key];
+    if (!base) return [t.key, base];
+    const addons: string[] = base.addons || [];
+    return [t.key, addons.includes("door_zip") ? base : { ...base, addons: [...addons, "door_zip"] }];
+  })
 );
 
 type Pane = {
@@ -82,12 +92,13 @@ type Pane = {
 // ช่อง (column) = ตำแหน่งซ้าย→ขวา · pcs = บานซ้อนบน→ล่างในช่องนั้น (2 มิติ เหมือน R3.9 G6R)
 type Col = { key: number; pcs: Pane[] };
 // stash = จำข้อมูลของชนิดอื่นไว้ตอนสลับชนิดด้าน (กระจก/ผนัง/เปิดโล่ง) → สลับกลับมาไม่หาย (เจ้าของสั่ง 4ส.ค.69)
-type WallData = { wallType: "light" | "smartboard" | "isowall"; aw: number; ah: number; addons: Record<string, any> };
-type SideStash = { glass?: Col[]; wall?: WallData };
+// cols ของ wall/open (ประตู/หน้าต่างในด้านนี้ — เจ้าของสั่ง 5ส.ค.69) ก็ stash แยกตามชนิดด้วย (กันหายตอนสลับ)
+type WallData = { wallType: "light" | "smartboard" | "isowall"; aw: number; ah: number; addons: Record<string, any>; cols?: Col[] };
+type SideStash = { glass?: Col[]; wall?: WallData; open?: Col[] };
 type Side =
   | { kind: "glass"; cols: Col[]; stash?: SideStash }
-  | { kind: "wall"; wallType: "light" | "smartboard" | "isowall"; aw: number; ah: number; addons: Record<string, any>; stash?: SideStash }
-  | { kind: "open"; stash?: SideStash };
+  | { kind: "wall"; wallType: "light" | "smartboard" | "isowall"; aw: number; ah: number; addons: Record<string, any>; cols?: Col[]; stash?: SideStash }
+  | { kind: "open"; cols?: Col[]; stash?: SideStash };
 
 const WALL_RATE = 1350; // ผนังเบา ฿/ตร.ม. (R3.9 flat — ไม่มี R4.0 product คู่ตรง ๆ ของ "ผนังเบา" ชนิดบาง — ยังใช้ราคานี้ ติดป้าย (R3.9))
 
@@ -144,6 +155,9 @@ function addonSummary(addons: Record<string, any> | undefined): string {
     // ม่านซิปบนหลังคา — โชว์รุ่น Skylight · ข้าม "none" + คีย์ช่วย (rzFab/rzNoRemote ไม่ขึ้นชื่อเดี่ยว)
     if (k === "roof_zip") return v === "none" ? "" : `ม่านซิปหลังคา Skylight ${v === "sky120" ? "120" : "100"}`;
     if (k === "rzFab" || k === "rzNoRemote") return "";
+    // ม่านซิปประตู — โชว์รุ่น Z100/Z120 · ข้าม "none" + คีย์ช่วย (dzFab/dzNoRemote ไม่ขึ้นชื่อเดี่ยว)
+    if (k === "door_zip") return v === "none" ? "" : `ม่านซิปประตู ${v === "z120" ? "Z120" : "Z100"}`;
+    if (k === "dzFab" || k === "dzNoRemote") return "";
     return ADDON_LABELS[k] || k;
   }).filter(Boolean);
   return on.length ? ` + ${on.join(", ")}` : "";
@@ -170,7 +184,21 @@ function freshGlassSide(): Side {
   return { kind: "glass", cols: [freshCol()] };
 }
 function freshWallSide(): Side {
-  return { kind: "wall", wallType: "light", aw: 3, ah: 2.6, addons: {} };
+  return { kind: "wall", wallType: "light", aw: 3, ah: 2.6, addons: {}, cols: [] };
+}
+
+// cols ของด้าน — glass ใช้ cols เดิม · wall/open ก็ถือ cols ได้เหมือนกัน (ใส่ประตู/หน้าต่างในด้านผนัง/เปิดโล่ง)
+function sideCols(s: Side): Col[] {
+  if (s.kind === "glass") return s.cols;
+  return s.cols || [];
+}
+// pane ทั้งหมดของด้าน (ทุกช่อง ทุกชนิดด้าน)
+function sidePanes(s: Side): Pane[] {
+  return sideCols(s).flatMap((c) => c.pcs);
+}
+// พื้นที่รวมของบาน (ประตู/หน้าต่าง) ในด้านนี้ — ใช้หักพื้นที่ผนังสุทธิ (wall net-area)
+function paneAreaSum(s: Side): number {
+  return sidePanes(s).reduce((a, p) => a + (p.w || 0) * (p.h || 0) * (p.n || 1), 0);
 }
 
 // ราคาต่อ pane — computeCost + addons (มือจับ/ล็อค/ธรณี/มุ้ง/ครอบวงกบ ฯลฯ) ตรง prod.addons จริงของแต่ละชนิดบาน
@@ -196,24 +224,37 @@ function panePrice(
   const mq = computeMosquitoR4(PRODUCTS, pane.addons || {}, { wCm, hCm, movePanes, form: formVal }, pb, profitPct, profitPct);
   if (mq) opt.mosquitoR4 = mq;
   if (pane.addons?.dgNc) opt.digiNc = true;
+  // ม่านซิปประตู (Z100/Z120) — universal add-on ของทุกชนิดบาน (คิดจริงจากรุ่น G7 ม่านซิป)
+  const dz = computeDoorZipR4(pane.addons || {}, { wCm, hCm }, pb, profitPct);
+  if (dz) opt.doorZipR4 = dz;
   const r: any = computeCost(pb, prod, opt);
   return { amount: r.sell.withInstall, mosqLabel: mq?.label };
 }
 
+// ราคาผนัง (ไม่รวมบานที่เจาะในผนัง) — คิดจาก "พื้นที่สุทธิ" (พื้นที่ผนังเต็ม − Σพื้นที่ช่องบาน) กันคิดสมาร์ทบอร์ด/
+// ไอโซวอลทับพื้นที่ที่เป็นประตู/หน้าต่างไปแล้ว (เจ้าของย้ำ "คิดเต็มไม่ได้" 5ส.ค.69)
+// วิธี: คิดต้นทุนผนังเต็ม (BOM จริงรวมโครง/PERIM) แล้วสเกลลงตามสัดส่วนพื้นที่สุทธิ/พื้นที่เต็ม — เป็น app-layer
+// approximation (ไม่แตะ engine) ที่สเกล "รวมโครง" ไปด้วย ไม่ใช่แค่แผ่นบอร์ด แต่เจ้าของรับได้ (ระบุชัดในคอมเมนต์)
 function wallPrice(s: Extract<Side, { kind: "wall" }>, pb: any, profitPct: number): number {
-  if (s.wallType === "light") return Math.round((s.aw || 3) * (s.ah || 2.6) * WALL_RATE);
+  const fullArea = (s.aw || 3) * (s.ah || 2.6);
+  const paneArea = paneAreaSum(s);
+  const netArea = Math.max(0, fullArea - paneArea); // clamp ≥0 กันบานใหญ่กว่าผนัง
+  if (s.wallType === "light") return Math.round(netArea * WALL_RATE); // เรต/ตร.ม. ตรงตัว → net-area ตรง ๆ
   const prod = (PRODUCTS as any)[s.wallType === "smartboard" ? "wall_smartboard" : "wall_isowall"];
   if (!prod) return 0;
   const r: any = computeCost(pb, prod, {
     w: (s.aw || 3) * 100, h: (s.ah || 2.6) * 100, p: 1, form: prod.defForm, profitPct, installProfitPct: profitPct, addons: s.addons || {},
   });
-  return r.sell.withInstall;
+  const fullCost = r.sell.withInstall;
+  if (fullArea <= 0) return 0;
+  return Math.round(fullCost * netArea / fullArea);
 }
 
 function sideTotal(s: Side, pb: any, color: string, glassType: string, profitPct: number): number {
-  if (s.kind === "glass") return s.cols.reduce((sum, c) => sum + c.pcs.reduce((a, p) => a + panePrice(p, pb, color, glassType, profitPct).amount, 0), 0);
-  if (s.kind === "wall") return wallPrice(s, pb, profitPct);
-  return 0;
+  // ราคาบาน (ประตู/หน้าต่าง) ในด้านนี้ — glass ใช้ cols เดิม · wall/open ก็คิดจาก cols เหมือนกัน (0 ถ้าไม่มีบาน)
+  const paneCost = sidePanes(s).reduce((a, p) => a + panePrice(p, pb, color, glassType, profitPct).amount, 0);
+  if (s.kind === "wall") return wallPrice(s, pb, profitPct) + paneCost; // ผนัง(สุทธิหักช่องบาน) + บานที่เจาะ
+  return paneCost; // glass = Σบาน · open = Σบาน (ไม่มีบาน = 0, เปิดโล่งจริง)
 }
 
 // ฝ้า — ใช้ ceil_* product จริง (w/h = กว้าง/ยาวห้องจริง ซม. ตรง PERIM_VARS ของ products.mjs) หรือ flat CEIL_RATE ถ้าไม่มี product ตรง
@@ -256,6 +297,183 @@ function svcDemoTotal(demo: { roof: number; floor: number; rail: number; railLen
 
 // state = สแนป state ทั้งห้อง (0093) — เก็บเป็น "สูตร" ในใบเสนอ แล้วโหลดกลับมาแก้ได้ (ผ่าน prop initial)
 export type RoomTotals = { total: number; sides: number[]; sideDescs?: string[]; roofDesc?: string; ceilDesc?: string; specLines?: string[]; roof: number; ceil: number; floor: number; fan: number; services: number; svc: number; state?: any };
+
+// ── ตัวแก้ไข "ช่องบาน" ของด้าน — reuse ได้ทั้ง glass (บานเต็มด้าน) และ wall/open (ประตู/หน้าต่างในด้านนั้น)
+//   แยกเป็น top-level component (ไม่ nested ใน RoomComposer) กัน remount ทุกครั้งที่ parent re-render (จะเสีย focus inputs)
+//   รูปด้าน 2 มิติ (ช่องซ้าย→ขวา · ในช่องซ้อนบน→ล่าง) + แถบจัดเรียง ◀▶▲▼＋บน/ล่าง/ช่อง + การ์ดตั้งค่าบานที่เลือกเต็ม (พาริตี้ R3.9 G6R)
+//   cols=[] ใช้ได้ (เช่น เปิดโล่งที่ยังไม่ใส่บาน) — ปุ่ม ＋ช่อง ยังโชว์ให้เริ่มใส่บานแรกได้เสมอ
+function ColsEditor({
+  cols, selKey, onSelect, cardRefs, pb, color, glassFallback, profitPct,
+  onPatchPane, onRemovePane, onAddColumn, onAddPiece, onMoveCol, onMovePc,
+}: {
+  cols: Col[];
+  selKey: number | null;
+  onSelect: (key: number) => void;
+  cardRefs: MutableRefObject<Record<number, HTMLDivElement | null>>;
+  pb: any;
+  color: string;
+  glassFallback: string;
+  profitPct: number;
+  onPatchPane: (key: number, p: Partial<Pane>) => void;
+  onRemovePane: (key: number) => void;
+  onAddColumn: () => void;
+  onAddPiece: (key: number, dir: -1 | 1) => void;
+  onMoveCol: (key: number, dir: -1 | 1) => void;
+  onMovePc: (key: number, dir: -1 | 1) => void;
+}) {
+  const allPcs = cols.flatMap((c) => c.pcs);
+  const sel = allPcs.find((p) => p.key === selKey) || allPcs[0];
+  const colH = cols.map((c) => c.pcs.reduce((a, p) => a + (p.h || 0), 0));
+  const maxColH = Math.max(1, ...colH);
+  const scale = 150 / maxColH; // px/เมตร แนวตั้ง (สแต็คสูงสุด ≈ 150px)
+  const totalW = cols.reduce((a, c) => a + Math.max(0.3, ...c.pcs.map((p) => p.w || 0)), 0);
+  const arrCls = "press min-h-[32px] min-w-[34px] px-2 rounded-lg text-xs font-bold glass-soft text-ink-2 hover:bg-white/80";
+  const prod = sel ? PANE_BY_KEY[sel.typeKey] : null;
+  const { amount: price, mosqLabel } = sel ? panePrice(sel, pb, color, glassFallback, profitPct) : { amount: 0, mosqLabel: undefined as string | undefined };
+  const movePanes = sel ? Math.max(1, (sel.n || 1) - (sel.fixedPanes || 0)) : 1;
+  const glassKeys = Object.keys((pb.GLASS ?? {}) as Record<string, number>);
+
+  return (
+    <div className="space-y-2">
+      <div className="rounded-lg border border-black/5 bg-white/40 p-2 overflow-x-auto">
+        <div className="flex items-start gap-2" style={{ minHeight: 170 }}>
+          {cols.map((col, ci) => {
+            const colW = Math.max(0.3, ...col.pcs.map((p) => p.w || 0));
+            const wPx = Math.max(54, colW * scale);
+            return (
+              <div key={col.key} className="shrink-0 flex flex-col gap-1" style={{ width: wPx }}>
+                {col.pcs.map((pc) => {
+                  const hPx = Math.max(32, (pc.h || 0.4) * scale);
+                  const isSel = sel?.key === pc.key;
+                  const lbl = PANE_TYPES.find((t) => t.key === pc.typeKey)?.label || "บาน";
+                  return (
+                    <div key={pc.key} role="button" tabIndex={0} onClick={() => onSelect(pc.key)}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(pc.key); } }}
+                      title="คลิกเพื่อเลือก/ตั้งค่าบานนี้"
+                      className={`cursor-pointer rounded-md border-2 flex flex-col items-center justify-center text-center px-1 transition-colors ${isSel ? "border-brand bg-brand/10" : "border-black/25 bg-white/70 hover:border-brand/50"}`}
+                      style={{ height: hPx }}>
+                      <span className="text-[10px] font-semibold text-ink-2 leading-tight line-clamp-2">{lbl}{(pc.n || 1) > 1 ? ` ×${pc.n}` : ""}</span>
+                      <span className="text-[10px] text-ink-3 tabular-nums">{fmtNum(pc.w)}×{fmtNum(pc.h)}</span>
+                    </div>
+                  );
+                })}
+                <div className="text-center text-[10px] text-ink-3">ช่อง {ci + 1}</div>
+              </div>
+            );
+          })}
+          <button type="button" onClick={onAddColumn} title="เพิ่มช่องใหม่"
+            className="press shrink-0 rounded-md border-2 border-dashed border-black/25 text-ink-3 hover:border-brand/50 hover:text-brand flex flex-col items-center justify-center font-bold"
+            style={{ width: 54, minHeight: 110 }}><span className="text-lg leading-none">＋</span><span className="text-[10px]">ช่อง</span></button>
+        </div>
+        <p className="text-[11px] text-ink-3 mt-1.5">รวมกว้าง ≈ {fmtNum(totalW)} ม. · {cols.length} ช่อง · {allPcs.length} บาน</p>
+      </div>
+
+      {sel && (
+        <div className="flex items-center gap-1 flex-wrap rounded-lg bg-white/50 border border-black/5 px-2 py-1.5">
+          <span className="text-[11px] font-semibold text-ink-3 mr-0.5">จัดเรียงบานที่เลือก:</span>
+          <button type="button" className={arrCls} title="เลื่อนช่องไปซ้าย" onClick={() => onMoveCol(sel.key, -1)}>◀</button>
+          <button type="button" className={arrCls} title="เลื่อนช่องไปขวา" onClick={() => onMoveCol(sel.key, 1)}>▶</button>
+          <button type="button" className={arrCls} title="เลื่อนบานขึ้น (ในช่อง)" onClick={() => onMovePc(sel.key, -1)}>▲</button>
+          <button type="button" className={arrCls} title="เลื่อนบานลง (ในช่อง)" onClick={() => onMovePc(sel.key, 1)}>▼</button>
+          <button type="button" className={arrCls} title="เพิ่มบานด้านบน (ช่องเดียวกัน)" onClick={() => onAddPiece(sel.key, -1)}>＋บน</button>
+          <button type="button" className={arrCls} title="เพิ่มบานด้านล่าง (ช่องเดียวกัน)" onClick={() => onAddPiece(sel.key, 1)}>＋ล่าง</button>
+          {allPcs.length > 1 && (
+            <button type="button" onClick={() => onRemovePane(sel.key)}
+              className="press min-h-[32px] px-2.5 rounded-lg text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 ml-auto">ลบบานนี้</button>
+          )}
+        </div>
+      )}
+
+      {sel && (
+        <div key={sel.key} ref={(el) => { cardRefs.current[sel.key] = el; }}
+          className="rounded-lg border border-brand ring-2 ring-brand/30 bg-white/70 p-2.5 space-y-2 scroll-mt-2">
+          <div className="text-[11px] font-semibold text-brand-dark">⚙️ ตั้งค่าบานที่เลือก</div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <select value={sel.typeKey} onChange={(e) => onPatchPane(sel.key, { typeKey: e.target.value, addons: {}, form: undefined })}
+              className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 text-xs font-semibold outline-none">
+              {PANE_TYPES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
+            </select>
+            {(prod?.forms?.length ?? 0) > 0 && (
+              <select value={sel.form || prod.defForm} onChange={(e) => onPatchPane(sel.key, { form: e.target.value })}
+                className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 text-xs font-semibold outline-none" title="รูปแบบการเปิด (เหมือน G1)">
+                {prod.forms.map((f: string) => <option key={f} value={f}>{f}</option>)}
+              </select>
+            )}
+            <input type="number" step={0.1} value={sel.w || ""} placeholder="กว้าง(ม.)"
+              onChange={(e) => onPatchPane(sel.key, { w: +e.target.value || 0 })}
+              className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-20 outline-none tabular-nums text-sm" />
+            <input type="number" step={0.1} value={sel.h || ""} placeholder="สูง(ม.)"
+              onChange={(e) => onPatchPane(sel.key, { h: +e.target.value || 0 })}
+              className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-20 outline-none tabular-nums text-sm" />
+            <input type="number" value={sel.n || 1} placeholder="บาน"
+              onChange={(e) => onPatchPane(sel.key, { n: Math.max(1, Math.round(+e.target.value) || 1) })}
+              className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-16 outline-none tabular-nums text-sm" />
+            <span className="text-sm font-semibold text-brand-dark tabular-nums">{fmtBaht(price)}</span>
+            <button type="button" onClick={() => onRemovePane(sel.key)} className="press text-ink-3 hover:text-red-600 ml-auto min-h-[36px] min-w-[36px]">
+              <Icon name="trash" size={14} />
+            </button>
+          </div>
+
+          {sel.typeKey === "sms_slide" || sel.typeKey === "euro_slide" ? (
+            <label className="flex items-center gap-2 text-xs text-ink-3">
+              บานติดตาย (ไม่เลื่อน)
+              <input type="number" min={0} max={Math.max(0, (sel.n || 1) - 1)} value={sel.fixedPanes || 0}
+                onChange={(e) => onPatchPane(sel.key, { fixedPanes: Math.max(0, Math.min((sel.n || 1) - 1, Math.round(+e.target.value) || 0)) })}
+                className="min-h-[32px] w-16 glass-soft rounded-lg px-2 py-1 outline-none tabular-nums" />
+              <span>· ที่เหลือ {movePanes} บานเลื่อน (ใช้คำนวณขนาดมุ้ง)</span>
+            </label>
+          ) : null}
+
+          {/* สี/กระจกต่อบาน override (ค่าว่าง = ตามด้าน/ห้อง) */}
+          <div className="flex items-center gap-2 flex-wrap text-[11px]">
+            <span className="text-ink-3">สีเฟรมบานนี้</span>
+            <select value={sel.colorIdx || ""} onChange={(e) => onPatchPane(sel.key, { colorIdx: e.target.value })}
+              className="min-h-[32px] glass-soft rounded-lg px-2 py-1 outline-none text-xs">
+              <option value="">ตามด้าน ({ALU_COLOR_LABEL[color] ?? COLOR_LABEL[color] ?? color})</option>
+              {ALU_COLOR_KEYS.map((c) => <option key={c} value={c}>{ALU_COLOR_LABEL[c]}</option>)}
+            </select>
+            {prod?.defGlass && (
+              <>
+                <span className="text-ink-3">กระจก</span>
+                <select value={sel.glassOvr || ""} onChange={(e) => onPatchPane(sel.key, { glassOvr: e.target.value })}
+                  className="min-h-[32px] glass-soft rounded-lg px-2 py-1 outline-none text-xs">
+                  <option value="">ตามด้าน ({glassFallback || prod.defGlass})</option>
+                  {groupGlass(glassKeys).map((gp) => (
+                    <optgroup key={gp.cat} label={gp.cat}>
+                      {gp.items.map((g) => <option key={g} value={g}>{g}</option>)}
+                    </optgroup>
+                  ))}
+                </select>
+              </>
+            )}
+          </div>
+          {/* ผนังแผ่นอลู (ลูกฟูก/คอมโพ) — สีพิเศษบวกอัตโนมัติตาม "สีเฟรม" ที่เลือก (เรตจาก R3.9) */}
+          {prod?.showColor && (() => {
+            const fin = SHEET_FIN[resolveAluColor(sel.colorIdx || color).bake] || 0;
+            return <p className="text-[11px] text-ink-3">สีแผ่น: {fin > 0
+              ? `สีพิเศษ +${fin.toLocaleString("th-TH")}/ตร.ม. (คิดอัตโนมัติตามสีที่เลือกด้านบน)`
+              : "สีมาตรฐาน (อบขาว/ดำ) — ไม่บวกเพิ่ม"}</p>;
+          })()}
+          {mosqLabel && <p className="text-[11px] text-ink-3">มุ้ง: {mosqLabel}</p>}
+
+          {/* per-pane option เต็ม — reuse AddonsSection ตรงกับ prod.addons จริงของชนิดบานนี้ (มือจับ/ล็อค/ธรณี/มุ้ง/ครอบวงกบ/ดรอปพื้น/รื้อของเดิม/ม่านซิปประตู ฯลฯ) */}
+          {prod && (prod.addons || []).length > 0 && (
+            <AddonsSection
+              prod={prod}
+              addons={sel.addons || {}}
+              setAddons={(fn) => onPatchPane(sel.key, { addons: fn(sel.addons || {}) })}
+              area={(sel.w || 1) * (sel.h || 1)}
+              W={sel.w || 1}
+              movePanes={movePanes}
+              color={resolveAluColor(sel.colorIdx || color).bake}
+              form={sel.form || prod.defForm}
+            />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function RoomComposer({
   pb, mainColor, mainGlass, profitPct, onTotal, initial,
@@ -422,9 +640,13 @@ export default function RoomComposer({
 
   // รายละเอียดรายด้าน (ชนิดบาน+รูปแบบ+ขนาด+กระจก) — ไปขึ้นใบเสนอราคาให้ครบ (แก้ปัญหา G6 ปริ้นไม่มีรายละเอียด)
   const sideDescs = useMemo(() => sides.map((s, i) => {
-    if (s.kind === "glass") return s.cols.flatMap((c) => c.pcs).map((p) => paneDesc(p, sideGlass(i))).join(" + ");
-    if (s.kind === "wall") return `${WALL_TYPES.find((w) => w.key === s.wallType)?.label || "ผนัง"} ${s.aw || 0}×${s.ah || 0}ม.${addonSummary(s.addons)}`;
-    return "เปิดโล่ง";
+    const paneDescs = sidePanes(s).map((p) => paneDesc(p, sideGlass(i)));
+    if (s.kind === "glass") return paneDescs.join(" + ");
+    if (s.kind === "wall") {
+      const wallLabel = `${WALL_TYPES.find((w) => w.key === s.wallType)?.label || "ผนัง"} ${s.aw || 0}×${s.ah || 0}ม.${addonSummary(s.addons)}`;
+      return [wallLabel, ...paneDescs].join(" + ");
+    }
+    return paneDescs.length ? paneDescs.join(" + ") : "เปิดโล่ง";
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [sides, mainGlass, mainColor]);
 
@@ -435,7 +657,7 @@ export default function RoomComposer({
   // สเปคสรุป (หมวด "รายละเอียดงาน") — มุ้ง(ด้านไหน) / หลังคา(วัสดุ+รางน้ำ ฯลฯ) · สีอลู+กระจก เติมฝั่ง client
   const specLines = useMemo(() => {
     const out: string[] = [];
-    const mosqSides = sides.map((s, i) => (s.kind === "glass" && s.cols.some((c) => c.pcs.some((p) => p.addons?.mosquito)) ? L(i) : "")).filter(Boolean);
+    const mosqSides = sides.map((s, i) => (sidePanes(s).some((p) => p.addons?.mosquito) ? L(i) : "")).filter(Boolean);
     if (mosqSides.length) out.push(`มุ้ง: ด้าน ${mosqSides.join(", ")}`);
     if (roofOn) {
       const extras = addonSummary(roofAddons).replace(/^ \+ /, "");
@@ -475,38 +697,46 @@ export default function RoomComposer({
   function setSideKind(i: number, kind: Side["kind"]) {
     setSides((s) => s.map((x, xi) => {
       if (xi !== i || x.kind === kind) return x;
-      // เก็บข้อมูลชนิดปัจจุบันลง stash ก่อนสลับ → สลับกลับมาได้เหมือนเดิม (ไม่หาย)
+      // เก็บข้อมูลชนิดปัจจุบันลง stash ก่อนสลับ → สลับกลับมาได้เหมือนเดิม (ไม่หาย) — cols (ประตู/หน้าต่าง) ของ
+      // wall/open ก็ stash ไปด้วย (wall: ผูกกับ WallData เดียวกัน · open: เก็บแยก stash.open)
       const stash: SideStash = { ...(x.stash || {}) };
       if (x.kind === "glass") stash.glass = x.cols;
-      else if (x.kind === "wall") stash.wall = { wallType: x.wallType, aw: x.aw, ah: x.ah, addons: x.addons };
+      else if (x.kind === "wall") stash.wall = { wallType: x.wallType, aw: x.aw, ah: x.ah, addons: x.addons, cols: x.cols };
+      else if (x.kind === "open") stash.open = x.cols;
       // สลับไปชนิดใหม่ → คืนค่าจาก stash ถ้าเคยตั้งไว้ · ไม่เคย = ค่าตั้งต้น
       if (kind === "glass") return { kind: "glass", cols: stash.glass ?? [freshCol()], stash };
       if (kind === "wall") return stash.wall ? { kind: "wall", ...stash.wall, stash } : { ...(freshWallSide() as Extract<Side, { kind: "wall" }>), stash };
-      return { kind: "open", stash };
+      return { kind: "open", cols: stash.open ?? [], stash };
     }));
   }
   function patchWall(i: number, p: Partial<Extract<Side, { kind: "wall" }>>) {
     setSides((s) => s.map((x, xi) => (xi === i && x.kind === "wall" ? { ...x, ...p } : x)));
   }
-  function updateGlass(i: number, fn: (cols: Col[]) => Col[]) {
-    setSides((s) => s.map((x, xi) => (xi === i && x.kind === "glass") ? { ...x, cols: fn(x.cols) } : x));
+  // แก้ cols ของด้าน — ใช้ร่วมกันทั้ง glass/wall/open (ประตู/หน้าต่างในด้านผนัง/เปิดโล่ง ก็แก้ผ่านฟังก์ชันเดียวกัน)
+  function updateCols(i: number, fn: (cols: Col[]) => Col[]) {
+    setSides((s) => s.map((x, xi) => {
+      if (xi !== i) return x;
+      if (x.kind === "glass") return { ...x, cols: fn(x.cols) };
+      if (x.kind === "wall" || x.kind === "open") return { ...x, cols: fn(x.cols || []) };
+      return x;
+    }));
   }
   function patchPane(i: number, key: number, p: Partial<Pane>) {
-    updateGlass(i, (cols) => cols.map((c) => ({ ...c, pcs: c.pcs.map((pc) => (pc.key === key ? { ...pc, ...p } : pc)) })));
+    updateCols(i, (cols) => cols.map((c) => ({ ...c, pcs: c.pcs.map((pc) => (pc.key === key ? { ...pc, ...p } : pc)) })));
   }
   function removePane(i: number, key: number) {
-    updateGlass(i, (cols) => cols.map((c) => ({ ...c, pcs: c.pcs.filter((pc) => pc.key !== key) })).filter((c) => c.pcs.length > 0));
+    updateCols(i, (cols) => cols.map((c) => ({ ...c, pcs: c.pcs.filter((pc) => pc.key !== key) })).filter((c) => c.pcs.length > 0));
   }
   // ＋ช่อง — เพิ่มช่องใหม่ (คอลัมน์) ทางขวา
   function addColumn(i: number) {
     const col = freshCol();
-    updateGlass(i, (cols) => [...cols, col]);
+    updateCols(i, (cols) => [...cols, col]);
     setSelKey(col.pcs[0].key);
   }
   // ＋บน(-1)/＋ล่าง(1) — เพิ่มบานซ้อนในช่องเดียวกับบานที่เลือก
   function addPiece(i: number, key: number, dir: -1 | 1) {
     const np = freshPane();
-    updateGlass(i, (cols) => cols.map((c) => {
+    updateCols(i, (cols) => cols.map((c) => {
       const idx = c.pcs.findIndex((x) => x.key === key);
       if (idx < 0) return c;
       const pcs = [...c.pcs];
@@ -517,7 +747,7 @@ export default function RoomComposer({
   }
   // ◀▶ — เลื่อนทั้งช่องซ้าย/ขวา
   function moveCol(i: number, key: number, dir: -1 | 1) {
-    updateGlass(i, (cols) => {
+    updateCols(i, (cols) => {
       const ci = cols.findIndex((c) => c.pcs.some((x) => x.key === key));
       const j = ci + dir;
       if (ci < 0 || j < 0 || j >= cols.length) return cols;
@@ -528,7 +758,7 @@ export default function RoomComposer({
   }
   // ▲▼ — เลื่อนบานขึ้น/ลงในช่องเดียวกัน
   function movePc(i: number, key: number, dir: -1 | 1) {
-    updateGlass(i, (cols) => cols.map((c) => {
+    updateCols(i, (cols) => cols.map((c) => {
       const idx = c.pcs.findIndex((x) => x.key === key);
       if (idx < 0) return c;
       const j = idx + dir;
@@ -600,207 +830,123 @@ export default function RoomComposer({
             {s.kind === "glass" && (
               <div className="space-y-2">
                 {/* 🖼️ รูปด้าน (2 มิติ) — ช่องซ้าย→ขวา · ในช่องซ้อนบน→ล่าง · คลิกเลือกบาน แล้วใช้แถบจัดเรียง ◀▶▲▼ ＋บน/ล่าง/ช่อง (พาริตี้ R3.9 G6R) */}
-                {(() => {
-                  const cols = s.cols;
-                  const allPcs = cols.flatMap((c) => c.pcs);
-                  const sel = allPcs.find((p) => p.key === selKey) || allPcs[0];
-                  const colH = cols.map((c) => c.pcs.reduce((a, p) => a + (p.h || 0), 0));
-                  const maxColH = Math.max(1, ...colH);
-                  const scale = 150 / maxColH; // px/เมตร แนวตั้ง (สแต็คสูงสุด ≈ 150px)
-                  const totalW = cols.reduce((a, c) => a + Math.max(0.3, ...c.pcs.map((p) => p.w || 0)), 0);
-                  const arrCls = "press min-h-[32px] min-w-[34px] px-2 rounded-lg text-xs font-bold glass-soft text-ink-2 hover:bg-white/80";
-                  return (
-                    <>
-                      <div className="rounded-lg border border-black/5 bg-white/40 p-2 overflow-x-auto">
-                        <div className="flex items-start gap-2" style={{ minHeight: 170 }}>
-                          {cols.map((col, ci) => {
-                            const colW = Math.max(0.3, ...col.pcs.map((p) => p.w || 0));
-                            const wPx = Math.max(54, colW * scale);
-                            return (
-                              <div key={col.key} className="shrink-0 flex flex-col gap-1" style={{ width: wPx }}>
-                                {col.pcs.map((pc) => {
-                                  const hPx = Math.max(32, (pc.h || 0.4) * scale);
-                                  const isSel = sel?.key === pc.key;
-                                  const lbl = PANE_TYPES.find((t) => t.key === pc.typeKey)?.label || "บาน";
-                                  return (
-                                    <div key={pc.key} role="button" tabIndex={0} onClick={() => selectPane(pc.key)}
-                                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectPane(pc.key); } }}
-                                      title="คลิกเพื่อเลือก/ตั้งค่าบานนี้"
-                                      className={`cursor-pointer rounded-md border-2 flex flex-col items-center justify-center text-center px-1 transition-colors ${isSel ? "border-brand bg-brand/10" : "border-black/25 bg-white/70 hover:border-brand/50"}`}
-                                      style={{ height: hPx }}>
-                                      <span className="text-[10px] font-semibold text-ink-2 leading-tight line-clamp-2">{lbl}{(pc.n || 1) > 1 ? ` ×${pc.n}` : ""}</span>
-                                      <span className="text-[10px] text-ink-3 tabular-nums">{fmtNum(pc.w)}×{fmtNum(pc.h)}</span>
-                                    </div>
-                                  );
-                                })}
-                                <div className="text-center text-[10px] text-ink-3">ช่อง {ci + 1}</div>
-                              </div>
-                            );
-                          })}
-                          <button type="button" onClick={() => addColumn(i)} title="เพิ่มช่องใหม่"
-                            className="press shrink-0 rounded-md border-2 border-dashed border-black/25 text-ink-3 hover:border-brand/50 hover:text-brand flex flex-col items-center justify-center font-bold"
-                            style={{ width: 54, minHeight: 110 }}><span className="text-lg leading-none">＋</span><span className="text-[10px]">ช่อง</span></button>
-                        </div>
-                        <p className="text-[11px] text-ink-3 mt-1.5">รวมกว้าง ≈ {fmtNum(totalW)} ม. · {cols.length} ช่อง · {allPcs.length} บาน</p>
-                      </div>
+                <ColsEditor
+                  cols={s.cols}
+                  selKey={selKey}
+                  onSelect={selectPane}
+                  cardRefs={cardRefs}
+                  pb={pb}
+                  color={sideColor(i)}
+                  glassFallback={sideGlass(i)}
+                  profitPct={profitPct}
+                  onPatchPane={(key, p) => patchPane(i, key, p)}
+                  onRemovePane={(key) => removePane(i, key)}
+                  onAddColumn={() => addColumn(i)}
+                  onAddPiece={(key, dir) => addPiece(i, key, dir)}
+                  onMoveCol={(key, dir) => moveCol(i, key, dir)}
+                  onMovePc={(key, dir) => movePc(i, key, dir)}
+                />
+              </div>
+            )}
 
-                      {sel && (
-                        <div className="flex items-center gap-1 flex-wrap rounded-lg bg-white/50 border border-black/5 px-2 py-1.5">
-                          <span className="text-[11px] font-semibold text-ink-3 mr-0.5">จัดเรียงบานที่เลือก:</span>
-                          <button type="button" className={arrCls} title="เลื่อนช่องไปซ้าย" onClick={() => moveCol(i, sel.key, -1)}>◀</button>
-                          <button type="button" className={arrCls} title="เลื่อนช่องไปขวา" onClick={() => moveCol(i, sel.key, 1)}>▶</button>
-                          <button type="button" className={arrCls} title="เลื่อนบานขึ้น (ในช่อง)" onClick={() => movePc(i, sel.key, -1)}>▲</button>
-                          <button type="button" className={arrCls} title="เลื่อนบานลง (ในช่อง)" onClick={() => movePc(i, sel.key, 1)}>▼</button>
-                          <button type="button" className={arrCls} title="เพิ่มบานด้านบน (ช่องเดียวกัน)" onClick={() => addPiece(i, sel.key, -1)}>＋บน</button>
-                          <button type="button" className={arrCls} title="เพิ่มบานด้านล่าง (ช่องเดียวกัน)" onClick={() => addPiece(i, sel.key, 1)}>＋ล่าง</button>
-                          {allPcs.length > 1 && (
-                            <button type="button" onClick={() => removePane(i, sel.key)}
-                              className="press min-h-[32px] px-2.5 rounded-lg text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 ml-auto">ลบบานนี้</button>
-                          )}
-                        </div>
-                      )}
-                    </>
-                  );
-                })()}
-                {(() => {
-                  const allPcs = s.cols.flatMap((c) => c.pcs);
-                  const pc = allPcs.find((p) => p.key === selKey) || allPcs[0];
-                  if (!pc) return null;
-                  const prod = PANE_BY_KEY[pc.typeKey];
-                  const { amount: price, mosqLabel } = panePrice(pc, pb, sideColor(i), sideGlass(i), profitPct);
-                  const movePanes = Math.max(1, (pc.n || 1) - (pc.fixedPanes || 0));
-                  const glassKeys = Object.keys((pb.GLASS ?? {}) as Record<string, number>);
-                  return (
-                    <div key={pc.key} ref={(el) => { cardRefs.current[pc.key] = el; }}
-                      className="rounded-lg border border-brand ring-2 ring-brand/30 bg-white/70 p-2.5 space-y-2 scroll-mt-2">
-                      <div className="text-[11px] font-semibold text-brand-dark">⚙️ ตั้งค่าบานที่เลือก</div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <select value={pc.typeKey} onChange={(e) => patchPane(i, pc.key, { typeKey: e.target.value, addons: {}, form: undefined })}
-                          className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 text-xs font-semibold outline-none">
-                          {PANE_TYPES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
-                        </select>
-                        {(prod?.forms?.length ?? 0) > 0 && (
-                          <select value={pc.form || prod.defForm} onChange={(e) => patchPane(i, pc.key, { form: e.target.value })}
-                            className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 text-xs font-semibold outline-none" title="รูปแบบการเปิด (เหมือน G1)">
-                            {prod.forms.map((f: string) => <option key={f} value={f}>{f}</option>)}
-                          </select>
-                        )}
-                        <input type="number" step={0.1} value={pc.w || ""} placeholder="กว้าง(ม.)"
-                          onChange={(e) => patchPane(i, pc.key, { w: +e.target.value || 0 })}
-                          className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-20 outline-none tabular-nums text-sm" />
-                        <input type="number" step={0.1} value={pc.h || ""} placeholder="สูง(ม.)"
-                          onChange={(e) => patchPane(i, pc.key, { h: +e.target.value || 0 })}
-                          className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-20 outline-none tabular-nums text-sm" />
-                        <input type="number" value={pc.n || 1} placeholder="บาน"
-                          onChange={(e) => patchPane(i, pc.key, { n: Math.max(1, Math.round(+e.target.value) || 1) })}
-                          className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-16 outline-none tabular-nums text-sm" />
-                        <span className="text-sm font-semibold text-brand-dark tabular-nums">{fmtBaht(price)}</span>
-                        <button type="button" onClick={() => removePane(i, pc.key)} className="press text-ink-3 hover:text-red-600 ml-auto min-h-[36px] min-w-[36px]">
-                          <Icon name="trash" size={14} />
-                        </button>
-                      </div>
+            {s.kind === "wall" && (() => {
+              const wallPaneArea = paneAreaSum(s);
+              const fullArea = (s.aw || 3) * (s.ah || 2.6);
+              const netArea = Math.max(0, fullArea - wallPaneArea);
+              return (
+                <div className="space-y-2.5">
+                  <div className="flex flex-wrap gap-1.5">
+                    {WALL_TYPES.map((t) => (
+                      <button key={t.key} type="button" onClick={() => patchWall(i, { wallType: t.key })}
+                        className={`press text-xs font-semibold rounded-full px-3 py-1.5 min-h-[36px] ${s.wallType === t.key ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap text-sm">
+                    <span className="text-xs text-ink-3">ขนาด</span>
+                    <input type="number" step={0.1} value={s.aw || ""} onChange={(e) => patchWall(i, { aw: +e.target.value || 0 })}
+                      className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-20 outline-none tabular-nums" />
+                    <span className="text-ink-3">×</span>
+                    <input type="number" step={0.1} value={s.ah || ""} onChange={(e) => patchWall(i, { ah: +e.target.value || 0 })}
+                      className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-20 outline-none tabular-nums" />
+                    <span className="text-ink-3">ม.</span>
+                    <span className="ml-2 font-semibold text-brand-dark tabular-nums">{fmtBaht(wallPrice(s, pb, profitPct))}</span>
+                  </div>
+                  {/* พื้นที่ผนังสุทธิ (หักช่องบาน) — โชว์ให้เห็นว่าคิดสมาร์ทบอร์ด/ไอโซวอลบนพื้นที่หักประตูแล้ว ไม่ใช่พื้นที่เต็ม */}
+                  {wallPaneArea > 0 && (
+                    <p className="text-[11px] text-ink-3">
+                      พื้นที่ผนังสุทธิ <b className="tabular-nums text-ink-2">{fmtNum(netArea)}</b> ตร.ม.
+                      {" "}(เต็ม {fmtNum(fullArea)} − หักช่องบาน <span className="tabular-nums">{fmtNum(wallPaneArea)}</span> ตร.ม.)
+                    </p>
+                  )}
+                  {s.wallType === "light" && (
+                    <p className="text-[11px] text-ink-3">ผนังเบา flat 1,350/ตร.ม. (R3.9 — ยังไม่มี R4.0 cost ของผนังเบาชนิดบางนี้)</p>
+                  )}
+                  {s.wallType !== "light" && (prod => prod?.addons?.length ? (
+                    <AddonsSection
+                      prod={prod}
+                      addons={s.addons || {}}
+                      setAddons={(fn) => patchWall(i, { addons: fn(s.addons || {}) })}
+                      area={(s.aw || 3) * (s.ah || 2.6)}
+                      W={s.aw || 3}
+                      movePanes={1}
+                      color={resolveAluColor(mainColor).bake}
+                      form={prod.defForm}
+                    />
+                  ) : null)((PRODUCTS as any)[s.wallType === "smartboard" ? "wall_smartboard" : "wall_isowall"])}
 
-                      {pc.typeKey === "sms_slide" || pc.typeKey === "euro_slide" ? (
-                        <label className="flex items-center gap-2 text-xs text-ink-3">
-                          บานติดตาย (ไม่เลื่อน)
-                          <input type="number" min={0} max={Math.max(0, (pc.n || 1) - 1)} value={pc.fixedPanes || 0}
-                            onChange={(e) => patchPane(i, pc.key, { fixedPanes: Math.max(0, Math.min((pc.n || 1) - 1, Math.round(+e.target.value) || 0)) })}
-                            className="min-h-[32px] w-16 glass-soft rounded-lg px-2 py-1 outline-none tabular-nums" />
-                          <span>· ที่เหลือ {movePanes} บานเลื่อน (ใช้คำนวณขนาดมุ้ง)</span>
-                        </label>
-                      ) : null}
-
-                      {/* สี/กระจกต่อบาน override (ค่าว่าง = ตามด้าน/ห้อง) */}
-                      <div className="flex items-center gap-2 flex-wrap text-[11px]">
-                        <span className="text-ink-3">สีเฟรมบานนี้</span>
-                        <select value={pc.colorIdx || ""} onChange={(e) => patchPane(i, pc.key, { colorIdx: e.target.value })}
-                          className="min-h-[32px] glass-soft rounded-lg px-2 py-1 outline-none text-xs">
-                          <option value="">ตามด้าน ({ALU_COLOR_LABEL[sideColor(i)] ?? COLOR_LABEL[sideColor(i)] ?? sideColor(i)})</option>
-                          {ALU_COLOR_KEYS.map((c) => <option key={c} value={c}>{ALU_COLOR_LABEL[c]}</option>)}
-                        </select>
-                        {prod?.defGlass && (
-                          <>
-                            <span className="text-ink-3">กระจก</span>
-                            <select value={pc.glassOvr || ""} onChange={(e) => patchPane(i, pc.key, { glassOvr: e.target.value })}
-                              className="min-h-[32px] glass-soft rounded-lg px-2 py-1 outline-none text-xs">
-                              <option value="">ตามด้าน ({sideGlass(i) || prod.defGlass})</option>
-                              {groupGlass(glassKeys).map((gp) => (
-                                <optgroup key={gp.cat} label={gp.cat}>
-                                  {gp.items.map((g) => <option key={g} value={g}>{g}</option>)}
-                                </optgroup>
-                              ))}
-                            </select>
-                          </>
-                        )}
-                      </div>
-                      {/* ผนังแผ่นอลู (ลูกฟูก/คอมโพ) — สีพิเศษบวกอัตโนมัติตาม "สีเฟรม" ที่เลือก (เรตจาก R3.9) */}
-                      {prod?.showColor && (() => {
-                        const fin = SHEET_FIN[resolveAluColor(pc.colorIdx || sideColor(i)).bake] || 0;
-                        return <p className="text-[11px] text-ink-3">สีแผ่น: {fin > 0
-                          ? `สีพิเศษ +${fin.toLocaleString("th-TH")}/ตร.ม. (คิดอัตโนมัติตามสีที่เลือกด้านบน)`
-                          : "สีมาตรฐาน (อบขาว/ดำ) — ไม่บวกเพิ่ม"}</p>;
-                      })()}
-                      {mosqLabel && <p className="text-[11px] text-ink-3">มุ้ง: {mosqLabel}</p>}
-
-                      {/* per-pane option เต็ม — reuse AddonsSection ตรงกับ prod.addons จริงของชนิดบานนี้ (มือจับ/ล็อค/ธรณี/มุ้ง/ครอบวงกบ/ดรอปพื้น/รื้อของเดิม ฯลฯ) */}
-                      {prod && (prod.addons || []).length > 0 && (
-                        <AddonsSection
-                          prod={prod}
-                          addons={pc.addons || {}}
-                          setAddons={(fn) => patchPane(i, pc.key, { addons: fn(pc.addons || {}) })}
-                          area={(pc.w || 1) * (pc.h || 1)}
-                          W={pc.w || 1}
-                          movePanes={movePanes}
-                          color={resolveAluColor(pc.colorIdx || sideColor(i)).bake}
-                          form={pc.form || prod.defForm}
-                        />
-                      )}
+                  {/* ประตู/หน้าต่างในด้านผนังนี้ — reuse ตัวแก้ไขบานเดียวกับด้านกระจก (หักพื้นที่ผนังสุทธิด้านบนอัตโนมัติ) */}
+                  <div className="pt-2.5 border-t border-black/5">
+                    <div className="text-xs font-semibold text-ink-2 mb-1.5 flex items-center gap-1">
+                      <Icon name="door-open" size={13} /> ประตู/หน้าต่างในด้านนี้
                     </div>
-                  );
-                })()}
-              </div>
-            )}
-
-            {s.kind === "wall" && (
-              <div className="space-y-2.5">
-                <div className="flex flex-wrap gap-1.5">
-                  {WALL_TYPES.map((t) => (
-                    <button key={t.key} type="button" onClick={() => patchWall(i, { wallType: t.key })}
-                      className={`press text-xs font-semibold rounded-full px-3 py-1.5 min-h-[36px] ${s.wallType === t.key ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
-                      {t.label}
-                    </button>
-                  ))}
+                    <ColsEditor
+                      cols={sideCols(s)}
+                      selKey={selKey}
+                      onSelect={selectPane}
+                      cardRefs={cardRefs}
+                      pb={pb}
+                      color={sideColor(i)}
+                      glassFallback={sideGlass(i)}
+                      profitPct={profitPct}
+                      onPatchPane={(key, p) => patchPane(i, key, p)}
+                      onRemovePane={(key) => removePane(i, key)}
+                      onAddColumn={() => addColumn(i)}
+                      onAddPiece={(key, dir) => addPiece(i, key, dir)}
+                      onMoveCol={(key, dir) => moveCol(i, key, dir)}
+                      onMovePc={(key, dir) => movePc(i, key, dir)}
+                    />
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap text-sm">
-                  <span className="text-xs text-ink-3">ขนาด</span>
-                  <input type="number" step={0.1} value={s.aw || ""} onChange={(e) => patchWall(i, { aw: +e.target.value || 0 })}
-                    className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-20 outline-none tabular-nums" />
-                  <span className="text-ink-3">×</span>
-                  <input type="number" step={0.1} value={s.ah || ""} onChange={(e) => patchWall(i, { ah: +e.target.value || 0 })}
-                    className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-20 outline-none tabular-nums" />
-                  <span className="text-ink-3">ม.</span>
-                  <span className="ml-2 font-semibold text-brand-dark tabular-nums">{fmtBaht(wallPrice(s, pb, profitPct))}</span>
-                </div>
-                {s.wallType === "light" && (
-                  <p className="text-[11px] text-ink-3">ผนังเบา flat 1,350/ตร.ม. (R3.9 — ยังไม่มี R4.0 cost ของผนังเบาชนิดบางนี้)</p>
-                )}
-                {s.wallType !== "light" && (prod => prod?.addons?.length ? (
-                  <AddonsSection
-                    prod={prod}
-                    addons={s.addons || {}}
-                    setAddons={(fn) => patchWall(i, { addons: fn(s.addons || {}) })}
-                    area={(s.aw || 3) * (s.ah || 2.6)}
-                    W={s.aw || 3}
-                    movePanes={1}
-                    color={resolveAluColor(mainColor).bake}
-                    form={prod.defForm}
-                  />
-                ) : null)((PRODUCTS as any)[s.wallType === "smartboard" ? "wall_smartboard" : "wall_isowall"])}
-              </div>
-            )}
+              );
+            })()}
 
             {s.kind === "open" && (
-              <p className="text-sm text-ink-3">เปิดโล่ง / ติดอาคารเดิม — ไม่มีงานกั้นด้านนี้ (0 บาท)</p>
+              <div className="space-y-2.5">
+                <p className="text-sm text-ink-3">เปิดโล่ง / ติดอาคารเดิม — ไม่มีงานกั้นด้านนี้ (0 บาท) · ใส่ประตู/หน้าต่างเพิ่มได้ด้านล่าง</p>
+                <div className="pt-2.5 border-t border-black/5">
+                  <div className="text-xs font-semibold text-ink-2 mb-1.5 flex items-center gap-1">
+                    <Icon name="door-open" size={13} /> ประตู/หน้าต่างในด้านนี้
+                  </div>
+                  <ColsEditor
+                    cols={sideCols(s)}
+                    selKey={selKey}
+                    onSelect={selectPane}
+                    cardRefs={cardRefs}
+                    pb={pb}
+                    color={sideColor(i)}
+                    glassFallback={sideGlass(i)}
+                    profitPct={profitPct}
+                    onPatchPane={(key, p) => patchPane(i, key, p)}
+                    onRemovePane={(key) => removePane(i, key)}
+                    onAddColumn={() => addColumn(i)}
+                    onAddPiece={(key, dir) => addPiece(i, key, dir)}
+                    onMoveCol={(key, dir) => moveCol(i, key, dir)}
+                    onMovePc={(key, dir) => movePc(i, key, dir)}
+                  />
+                </div>
+              </div>
             )}
           </div>
         );
@@ -1124,14 +1270,21 @@ export default function RoomComposer({
       {/* หน้าสรุป */}
       {tab === TAB_SUMMARY && (
         <div className="rounded-xl border border-black/5 bg-white/60 p-3 space-y-1.5 text-sm">
-          {sides.map((s, i) => (
-            <div key={i} className="flex items-center justify-between">
-              <span className="text-ink-2">
-                ด้าน {L(i)} ({s.kind === "glass" ? `กระจก ${s.cols.length} ช่อง · ${s.cols.reduce((a, c) => a + c.pcs.length, 0)} บาน` : s.kind === "wall" ? `ผนัง${s.wallType === "light" ? "เบา" : s.wallType === "smartboard" ? "สมาร์ทบอร์ด" : "ไอโซวอล"}` : "เปิดโล่ง"})
-              </span>
-              <span className="tabular-nums font-medium">{fmtBaht(sideTotals[i] || 0)}</span>
-            </div>
-          ))}
+          {sides.map((s, i) => {
+            const doorCount = sidePanes(s).length;
+            const doorNote = (s.kind === "wall" || s.kind === "open") && doorCount ? ` + ${doorCount} บาน` : "";
+            const kindLabel = s.kind === "glass"
+              ? `กระจก ${s.cols.length} ช่อง · ${s.cols.reduce((a, c) => a + c.pcs.length, 0)} บาน`
+              : s.kind === "wall"
+                ? `ผนัง${s.wallType === "light" ? "เบา" : s.wallType === "smartboard" ? "สมาร์ทบอร์ด" : "ไอโซวอล"}${doorNote}`
+                : `เปิดโล่ง${doorNote}`;
+            return (
+              <div key={i} className="flex items-center justify-between">
+                <span className="text-ink-2">ด้าน {L(i)} ({kindLabel})</span>
+                <span className="tabular-nums font-medium">{fmtBaht(sideTotals[i] || 0)}</span>
+              </div>
+            );
+          })}
           {roofOn && (
             <div className="flex items-center justify-between">
               <span className="text-ink-2">หลังคา ({roofMaterial} · {fmtNum(roofArea)} ตร.ม.)</span>

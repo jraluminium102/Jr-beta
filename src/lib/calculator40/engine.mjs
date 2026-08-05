@@ -504,6 +504,11 @@ export function computeAddon(id, sel, ctx) {
     if (!r4 || !(r4.amount > 0)) return null;
     return { label: r4.label, qty: 1, unit: 'ชุด', unitPrice: r4.amount, amount: r4.amount, cost: r4.cost };
   }
+  if (id === 'door_zip') {              // ม่านซิปประตู (Z100/Z120) — app คิดผ่าน computeCost(zipscreen) จริง ส่งเข้า opt.doorZipR4 (แบบ roof_zip)
+    const r4 = ctx.opt && ctx.opt.doorZipR4;
+    if (!r4 || !(r4.amount > 0)) return null;
+    return { label: r4.label, qty: 1, unit: 'ชุด', unitPrice: r4.amount, amount: r4.amount, cost: r4.cost };
+  }
   // ── ออปชั่นเฟส 2 ② (ราคา R3.9 จาก audit · ติดป้าย R3.9) ──
   if (id === 'cmech') {                 // มือจับ Cmech (ตาราง CMECH_TIERS — แหล่งเดียวกับ UI)
     const t = CMECH_TIERS[sel]; if (!t) return null;
