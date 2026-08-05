@@ -23,6 +23,7 @@ export type ProdRow = {
   qc_result: "PASSED" | "FAILED" | null; qc_date: string | null; qc_note: string | null;
   producer_note?: string | null;
   cover_sheet_exists?: boolean;                                          // มีใบปะหน้าแล้วหรือยัง (0111) — ป้าย CoverSheetChip
+  drawing_exists?: boolean;                                              // สแตมป์สเปคลงแบบแล้วหรือยัง (0117) — ป้าย DrawingChip
   job: {
     job_code: string; customer_name: string; customer_area: string | null; deposit_date: string | null;
     floor_work?: string | null; floor_note?: string | null;             // งานพื้น ผรม. (0090) — read-only marker

@@ -14,6 +14,7 @@ import { FloorWorkBadge } from "@/components/ui/FloorWorkBadge";
 import { BlockerNotesInline } from "@/components/production/BlockerNotesInline";
 import CutlistChip, { type CutBrief } from "@/components/production/CutlistChip";
 import CoverSheetChip from "@/components/cover-sheet/CoverSheetChip";
+import DrawingChip from "@/components/cover-sheet/DrawingChip";
 import AddProductionJobModal from "@/components/production/AddProductionJobModal";
 
 type Row = ProdRow & {
@@ -318,6 +319,8 @@ export default function ProductionPage() {
                     <CutlistChip jobId={r.job_id} customerName={r.job?.customer_name ?? ""} cutlists={(r as unknown as { cutlists?: CutBrief[] }).cutlists} canWrite={canWrite} />
                     {/* ป้ายใบปะหน้า (0111) — เขียว=มีแล้ว · ส้ม=เตือนทำ (stage<=13 คอนเฟิร์มลูกค้า) · จาง=พ้นช่วงเตือนแล้ว */}
                     <CoverSheetChip jobId={r.job_id} exists={!!r.cover_sheet_exists} currentStage={r.job?.current_stage} canWrite={canWrite} />
+                    {/* ป้ายแบบลูกค้าสแตมป์สเปค (0117) — เปิดหน้าอัปโหลด/แก้ตำแหน่งข้อความบนแบบ */}
+                    <DrawingChip jobId={r.job_id} exists={!!r.drawing_exists} />
                     {stale && <span className="text-[11px] text-rose-200 flex items-center gap-0.5"><Clock size={11} /> ค้าง {daysSince(r.status_updated_at, r.created_at)} วัน</span>}
                   </div>
                   <div className="flex items-center gap-2 mt-2 flex-wrap">

@@ -46,6 +46,16 @@ export const GET = withRoute(async () => {
     }
   }
 
+  // แบบลูกค้าที่สแตมป์สเปคแล้วต่องาน (0117) — แยก query กัน migration ยังไม่รันไม่พังทั้งหน้า (เดินตามลาย cover_sheets ด้านบน)
+  const drawingByJob: Record<string, boolean> = {};
+  if (jobIds.length) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: drawings } = await (ctx.supabase as any).from("job_drawings").select("job_id").in("job_id", jobIds);
+    for (const d of (drawings ?? []) as Record<string, unknown>[]) {
+      drawingByJob[d.job_id as string] = true;
+    }
+  }
+
   // ตัดงานที่ถูกยกเลิกออก + เรียง blocker_notes เก่า→ใหม่ (PostgREST ไม่การันตี order ของ embed)
   const rows = (data ?? [])
     .filter((p: Record<string, unknown>) => {
@@ -65,6 +75,7 @@ export const GET = withRoute(async () => {
         job: jobRest,
         cutlists: p.job_id ? (cutsByJob[p.job_id as string] ?? []) : [],
         cover_sheet_exists: p.job_id ? !!coverByJob[p.job_id as string] : false,
+        drawing_exists: p.job_id ? !!drawingByJob[p.job_id as string] : false,
       };
     });
 

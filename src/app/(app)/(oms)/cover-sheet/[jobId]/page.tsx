@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { ArrowLeft, Zap, Save, Printer, Plus, Trash2, Highlighter, Layers } from "lucide-react";
+import { ArrowLeft, Zap, Save, Printer, Plus, Trash2, Highlighter, Layers, PenSquare } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { Spinner, EmptyState } from "@/components/ui/primitives";
 import type {
@@ -177,6 +177,16 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
           <Link href={`/cover-sheet/${jobId}/print`} className={`${btn} text-gray-900 bg-white`}>
             <Printer size={15} /> พิมพ์
           </Link>
+          {/* สแตมป์สเปคลงแบบ (PDF) — เฉพาะงานมัดจำแล้ว (เกณฑ์เดียวกับที่ระบบใช้ทั้งระบบ: deposit_date ไม่ว่าง) */}
+          {job?.deposit_date ? (
+            <Link href={`/cover-sheet/${jobId}/drawing`} className={`${btn} text-white bg-violet-600`}>
+              <PenSquare size={15} /> สแตมป์สเปคลงแบบ
+            </Link>
+          ) : (
+            <span title="ต้องมัดจำก่อนถึงจะสแตมป์สเปคลงแบบได้" className={`${btn} text-white/50 bg-white/10 cursor-not-allowed`}>
+              <PenSquare size={15} /> สแตมป์สเปคลงแบบ
+            </span>
+          )}
         </div>
       </div>
 

@@ -33,6 +33,7 @@ export type CoverSheetGetResponse = {
     floor_work: string | null;
     floor_note: string | null;
     current_stage: number | null;
+    deposit_date?: string | null; // (job-drawings feature) เกณฑ์ "มัดจำแล้ว" — โชว์ปุ่ม "สแตมป์สเปคลงแบบ" เมื่อมีค่า
   };
   quotation: { id: number; code: string; items: QuotationRefItem[] } | null;
 };

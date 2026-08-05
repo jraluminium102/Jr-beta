@@ -47,7 +47,7 @@ export const GET = withRoute(async (_req: Request, { params }: Params) => {
   const jobId = params.jobId;
 
   const [jobR, coverR, quoR] = await Promise.all([
-    sb.from("jobs").select("job_code, customer_name, floor_work, floor_note, current_stage").eq("id", jobId).maybeSingle(),
+    sb.from("jobs").select("job_code, customer_name, floor_work, floor_note, current_stage, deposit_date").eq("id", jobId).maybeSingle(),
     sb.from("cover_sheets").select("mode, content").eq("job_id", jobId).maybeSingle(),
     // ใบล่าสุดของงาน — ตัดใบ cancelled + เรียง created_at ล่าสุด (ตรง pattern quotation-checklist)
     //   ห้ามใช้ revision_no เป็นคีย์หลัก: แต่ละใบนับ revision ของตัวเอง (ใบเก่าที่ revise เยอะอาจชนะใบใหม่)
