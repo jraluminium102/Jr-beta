@@ -7,7 +7,7 @@ import { sumItems, DEFAULT_CONTRACTOR } from "@/lib/floor-calc/engine.mjs";
 
 export const dynamic = "force-dynamic";
 
-const NO_TABLE = "ยังไม่ได้รัน migration 0119_floor_works.sql — รันก่อนใช้งานหน้านี้";
+const NO_TABLE = "ยังไม่ได้รัน migration 0120_floor_works.sql — รันก่อนใช้งานหน้านี้";
 const isMissingTable = (msg?: string | null) =>
   /floor_quotation|relation .* does not exist|schema cache/i.test(msg ?? "");
 

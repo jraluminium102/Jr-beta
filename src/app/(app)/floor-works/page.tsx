@@ -44,7 +44,7 @@ export default async function FloorWorksPage() {
 
       {missingTable && (
         <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          <b>ยังไม่ได้รัน migration</b> — เปิดไฟล์ <code>supabase/migrations/0119_floor_works.sql</code> แล้วรันใน Supabase SQL Editor ก่อนใช้งานหน้านี้
+          <b>ยังไม่ได้รัน migration</b> — เปิดไฟล์ <code>supabase/migrations/0120_floor_works.sql</code> แล้วรันใน Supabase SQL Editor ก่อนใช้งานหน้านี้
         </div>
       )}
       {error && !missingTable && (
