@@ -8,9 +8,10 @@ import { baht } from "@/lib/money";
 import { api } from "@/lib/api";
 import { FloorPlanSvg } from "./FloorPlanSvg";
 import ImportQuoteButton from "./ImportQuoteButton";
+import { FloorQuoteSheet } from "./FloorQuoteSheet";
 import { fixThai } from "@/lib/floor-calc/thai-fix";
 import {
-  planFloor, draftItems, quickAdds, sumItems, groupItems,
+  planFloor, draftItems, quickAdds,
   PILE_TYPES, DEFAULT_CONTRACTOR,
 } from "@/lib/floor-calc/engine.mjs";
 
@@ -22,7 +23,6 @@ const todayISO = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
-const r2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 const num = (v: unknown) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
 
 /**
@@ -64,33 +64,9 @@ export default function FloorEditor({
   );
 
   const plan = useMemo(() => planFloor(num(width) || 0.1, num(length) || 0.1), [width, length]);
-  const total = useMemo(() => sumItems(items), [items]);
-  const groups = useMemo(() => groupItems(items.map((it, i) => ({ ...it, sort_order: i }))), [items]);
 
-  // ── รายการ ──
-  const setItem = (i: number, patch: Partial<Item>) => {
-    setItems((prev) => prev.map((it, idx) => {
-      if (idx !== i) return it;
-      const next = { ...it, ...patch };
-      // ค่าวัสดุ/ค่าแรง กรอกแล้ว → ราคางาน = ผลบวก (ตามฟอร์มช่าง) · ไม่กรอกก็แก้ราคางานตรง ๆ ได้
-      if ("material_price" in patch || "labor_price" in patch) {
-        const mat = next.material_price === "" || next.material_price == null ? null : num(next.material_price);
-        const lab = next.labor_price === "" || next.labor_price == null ? null : num(next.labor_price);
-        if (mat != null || lab != null) next.unit_price = r2((mat ?? 0) + (lab ?? 0));
-      }
-      next.line_total = r2(num(next.qty) * num(next.unit_price));
-      return next;
-    }));
-  };
+  // แก้รายการทั้งหมดทำใน <FloorQuoteSheet> (บนกระดาษ A4 โดยตรง) — ที่นี่เหลือแค่ปุ่มเพิ่มลัด
   const addItem = (item: Item) => setItems((p) => [...p, { ...item, group_label: p.at(-1)?.group_label ?? "" }]);
-  const delItem = (i: number) => setItems((p) => p.filter((_, idx) => idx !== i));
-  const moveItem = (i: number, dir: -1 | 1) => setItems((p) => {
-    const j = i + dir;
-    if (j < 0 || j >= p.length) return p;
-    const c = p.slice();
-    [c[i], c[j]] = [c[j], c[i]];
-    return c;
-  });
 
   /**
    * นำเข้าจากไฟล์ผู้รับเหมา — ราคาใช้ตามไฟล์ทั้งหมด (เจ้าของสั่ง "ไม่เกี่ยวกับราคาในเว็บ แค่จัดฟอร์ม")
@@ -162,9 +138,6 @@ export default function FloorEditor({
     const j = jobs.find((x) => x.id === id);
     if (j && !cName.trim()) setCName(j.customer_name ?? "");
   };
-
-  const cell = "border border-gray-200 px-2 py-1.5 align-top";
-  const inp = "w-full bg-transparent outline-none focus:bg-amber-50/60 rounded px-1";
 
   return (
     <div className="space-y-5">
@@ -299,12 +272,14 @@ export default function FloorEditor({
         </div>
       </section>
 
-      {/* ═══ 3. รายการ ═══ */}
+      {/* ═══ 3. ใบเสนอ — แก้ตรงบนกระดาษได้เลย ═══ */}
       <section className="card p-4">
         <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
           <h2 className="font-bold text-ink flex items-center gap-2">
-            <Icon name="clipboard" size={18} /> รายการ
-            <span className="text-xs font-normal text-ink-3">{items.length} รายการ · แก้ทับได้ทุกช่อง</span>
+            <Icon name="clipboard" size={18} /> ใบเสนอราคา
+            <span className="text-xs font-normal text-ink-3">
+              {items.length} รายการ · คลิกที่ช่องไหนก็แก้ได้เลย — หน้านี้คือหน้าที่จะพิมพ์ออกมา
+            </span>
           </h2>
           <div className="flex gap-1.5 flex-wrap">
             {quickAdds(plan.area).map((qa: { label: string; item: Item }) => (
@@ -316,121 +291,26 @@ export default function FloorEditor({
           </div>
         </div>
 
-        {items.length === 0 ? (
-          <p className="text-sm text-ink-3 py-8 text-center">
-            ยังไม่มีรายการ — กด “สร้างรายการตั้งต้น” ด้านบน หรือกดปุ่ม + เพิ่มเอง
-          </p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse" style={{ minWidth: 900 }}>
-              <thead>
-                <tr style={{ background: "#faedf0", color: "#a8425a" }}>
-                  <th className={`${cell} text-center`} style={{ width: 34 }}>#</th>
-                  <th className={`${cell} text-center`}>รายการ</th>
-                  <th className={`${cell} text-center`} style={{ width: 130 }}>หมวด</th>
-                  <th className={`${cell} text-center`} style={{ width: 62 }}>ปริมาณ</th>
-                  <th className={`${cell} text-center`} style={{ width: 66 }}>หน่วย</th>
-                  <th className={`${cell} text-center`} style={{ width: 82 }}>ค่าวัสดุ</th>
-                  <th className={`${cell} text-center`} style={{ width: 82 }}>ค่าแรง</th>
-                  <th className={`${cell} text-center`} style={{ width: 90 }}>ราคางาน</th>
-                  <th className={`${cell} text-center`} style={{ width: 96 }}>รวม</th>
-                  <th className={`${cell} text-center`} style={{ width: 84 }}>หมายเหตุ</th>
-                  <th className={`${cell} text-center`} style={{ width: 72 }} />
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((it, i) => (
-                  <tr key={i} className={it.source === "auto" ? "bg-sky-50/40" : ""}>
-                    <td className={`${cell} text-center tabular-nums text-ink-3`}>{i + 1}</td>
-                    <td className={cell}>
-                      <textarea value={it.name ?? ""} rows={Math.min(4, Math.ceil((it.name?.length ?? 0) / 60) || 1)}
-                        onChange={(e) => setItem(i, { name: e.target.value })}
-                        className={`${inp} resize-y`} placeholder="ชื่องาน" />
-                      {it.source === "auto" && (
-                        <span className="text-[10px] text-sky-700">ระบบคิดจากผัง — แก้ขนาดด้านบนแล้วกดสร้างใหม่จะทับค่านี้</span>
-                      )}
-                    </td>
-                    <td className={cell}>
-                      <input value={it.group_label ?? ""} list="floor-groups"
-                        onChange={(e) => setItem(i, { group_label: e.target.value })}
-                        className={inp} placeholder="(ไม่มีหมวด)" />
-                    </td>
-                    <td className={cell}>
-                      <input type="number" step="0.01" value={it.qty ?? 1}
-                        onChange={(e) => setItem(i, { qty: e.target.value })}
-                        className={`${inp} text-right tabular-nums`} />
-                    </td>
-                    <td className={cell}>
-                      <input value={it.unit ?? "งาน"} onChange={(e) => setItem(i, { unit: e.target.value })}
-                        className={`${inp} text-center`} />
-                    </td>
-                    <td className={cell}>
-                      <input type="number" step="0.01" value={it.material_price ?? ""}
-                        onChange={(e) => setItem(i, { material_price: e.target.value })}
-                        className={`${inp} text-right tabular-nums`} placeholder="—" />
-                    </td>
-                    <td className={cell}>
-                      <input type="number" step="0.01" value={it.labor_price ?? ""}
-                        onChange={(e) => setItem(i, { labor_price: e.target.value })}
-                        className={`${inp} text-right tabular-nums`} placeholder="—" />
-                    </td>
-                    <td className={cell}>
-                      <input type="number" step="0.01" value={it.unit_price ?? 0}
-                        onChange={(e) => setItem(i, { unit_price: e.target.value })}
-                        className={`${inp} text-right tabular-nums font-medium`} />
-                    </td>
-                    <td className={`${cell} text-right tabular-nums font-semibold`}>{baht(num(it.line_total))}</td>
-                    <td className={cell}>
-                      <input value={it.remark ?? ""} list="floor-remarks"
-                        onChange={(e) => setItem(i, { remark: e.target.value })}
-                        className={`${inp} text-center`} placeholder="—" />
-                    </td>
-                    <td className={`${cell} text-center whitespace-nowrap`}>
-                      <button type="button" onClick={() => moveItem(i, -1)} disabled={i === 0}
-                        className="press px-1 text-ink-3 disabled:opacity-25" aria-label="เลื่อนขึ้น">↑</button>
-                      <button type="button" onClick={() => moveItem(i, 1)} disabled={i === items.length - 1}
-                        className="press px-1 text-ink-3 disabled:opacity-25" aria-label="เลื่อนลง">↓</button>
-                      <button type="button" onClick={() => delItem(i)}
-                        className="press px-1 text-red-600" aria-label="ลบรายการ">✕</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <datalist id="floor-groups">
-              {[...new Set(items.map((it) => String(it.group_label ?? "").trim()).filter(Boolean))].map((g) => (
-                <option key={g} value={g} />
-              ))}
-              <option value="งานทำพื้นโครงสร้าง" />
-              <option value="งานส่วนหน้าบ้าน" />
-              <option value="งานส่วนห้องเก็บของ" />
-            </datalist>
-            <datalist id="floor-remarks"><option value="งานเพิ่ม" /></datalist>
+        {/* กระดาษ A4 จริง — ย่อให้พอดีจอเล็ก แต่สัดส่วนเท่าของจริง */}
+        <div className="overflow-x-auto bg-gray-100 rounded-xl p-3 -mx-1">
+          <div className="origin-top-left" style={{ minWidth: "210mm" }}>
+            <FloorQuoteSheet
+              editable
+              customer={{ name: cName, address: cAddr, phone: cPhone }}
+              issueDate={issueDate}
+              revLabel={initial?.rev > 0 ? ` (Rev${String(initial.rev).padStart(2, "0")})` : ""}
+              contractor={initial?.contractor ?? DEFAULT_CONTRACTOR}
+              note={note}
+              items={items}
+              onItems={setItems}
+              onCustomer={(p) => { if (p.name !== undefined) setCName(p.name); if (p.address !== undefined) setCAddr(p.address); }}
+              onNote={setNote}
+            />
           </div>
-        )}
-
-        {/* ยอดรวม (แยกหมวดถ้ามีมากกว่า 1) */}
-        {items.length > 0 && (
-          <div className="flex justify-end mt-3">
-            <table className="text-sm">
-              <tbody>
-                {groups.length > 1 && groups.map((g: { label: string; subtotal: number }) => (
-                  <tr key={g.label}>
-                    <td className="pr-10 py-0.5 text-right text-ink-3">
-                      ยอดรวม {g.label || "(ไม่มีหมวด)"}
-                    </td>
-                    <td className="text-right tabular-nums">{baht(g.subtotal)} บาท</td>
-                  </tr>
-                ))}
-                <tr className="font-bold text-lg border-t" style={{ color: "#a8425a" }}>
-                  <td className="pr-10 py-1 text-right border-t">ยอดโดยรวมสุทธิ</td>
-                  <td className="text-right tabular-nums border-t">{baht(total)} บาท</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        )}
+        </div>
+        <datalist id="floor-remarks"><option value="งานเพิ่ม" /></datalist>
       </section>
+
 
       {/* ═══ 4. หมายเหตุ + บันทึก ═══ */}
       <section className="card p-4 space-y-3">
