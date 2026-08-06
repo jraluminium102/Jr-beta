@@ -3,7 +3,7 @@ import { withRoute } from "@/lib/bff/handler";
 import { ok, err } from "@/lib/bff/response";
 import { dbError } from "@/lib/bff/db-error";
 // generator ตัวจริง (pure JS ไม่มี type · เหมือน calculator40/engine.mjs) — ห้ามแก้ logic
-import { buildGroups, toLeftLines } from "@/lib/cover-sheet/generate.mjs";
+import { buildGroups, toLeftLines, buildSideColumns } from "@/lib/cover-sheet/generate.mjs";
 
 export const dynamic = "force-dynamic";
 
@@ -41,5 +41,7 @@ export const POST = withRoute(async (req: Request, { params }: Params) => {
   if (iErr) throw dbError(iErr);
 
   const left = toLeftLines(buildGroups(items ?? []), mode);
-  return ok({ left, quotation_id: latest.id, quotation_code: latest.code });
+  // คอลัมน์ 2 (แจ้งช่าง = ขอบเขตงานจากหมายเหตุ) + 3 (แจ้งลูกค้า = บรรทัด "ลูกค้าเตรียม…")
+  const { mid, right } = buildSideColumns(items ?? []);
+  return ok({ left, mid, right, quotation_id: latest.id, quotation_code: latest.code });
 });

@@ -34,6 +34,61 @@ export function specBulletsFromDetail(detail) {
   return out;
 }
 
+// ── ดึงบุลเลท "หมายเหตุ" จาก item.detail (บล็อกใต้ "หมายเหตุ") — สำหรับคอลัมน์ 2/3 ──────
+export function noteBulletsFromDetail(detail) {
+  const lines = String(detail || "").split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+  let inNote = false;
+  const out = [];
+  for (const ln of lines) {
+    const head = ln.replace(/^[#\-\s]+/, "").trim();
+    if (/^หมายเหตุ/.test(head)) { inNote = true; continue; }
+    // เจอหัวข้ออื่น (สเปค/รายละเอียด/เงื่อนไข/#) = จบบล็อกหมายเหตุ
+    if (/^(รายละเอียดงาน|สเปก|รายละเอียด|เงื่อนไข)/.test(head)) { inNote = false; continue; }
+    if (!inNote) continue;
+    if (/^#/.test(ln)) { inNote = false; continue; }
+    if (/^-/.test(ln)) out.push(ln.replace(/^-\s*/, "").trim());
+  }
+  return out;
+}
+
+// ── คอลัมน์ 2 (แจ้งช่างตอนติดตั้ง): ตัดหมายเหตุเหลือ "ขอบเขตงาน" ────────────────────
+//   "ราคาที่เสนอรวมงาน{X} หากพบ.../ในกรณี..." → {X} เช่น "รื้อประตูเดิม" · "ดรอปพื้น"
+//   เอาเฉพาะบรรทัดที่บอกขอบเขตงาน (ขึ้นต้นราคา…รวมงาน) — บรรทัดอื่น (ยืนราคา/ชำระเงิน) คืน ""
+export function installerScopeFromNote(note) {
+  const s = String(note || "").replace(/\s+/g, " ").trim();
+  const m = s.match(/^ราคา\S*?รวมงาน(.+)$/) || s.match(/^รวมงาน(.+)$/);
+  if (!m) return "";
+  let scope = m[1].trim();
+  scope = scope.replace(/\s*\(\s*ลูกค้า[^)]*\)\s*/g, " ");        // ตัดวงเล็บ "(ลูกค้า…เตรียม…)" (ไปคอลัมน์ 3)
+  scope = scope.split(/\s+(?:หากพบ|ในกรณี|กรณี|เช่น|โดย|ทั้งนี้|ซึ่ง)/)[0]; // ตัดท้ายที่เงื่อนไข/ตัวอย่าง
+  return scope.replace(/\s{2,}/g, " ").trim();
+}
+
+// ── คอลัมน์ 3 (แจ้งลูกค้า + เตรียมของ): ดึงบรรทัด "ลูกค้า…เตรียม…" ───────────────────
+//   เช่น "(ลูกค้าดำเนินการเตรียมวัสดุและสีให้)" → "ลูกค้าดำเนินการเตรียมวัสดุและสีให้"
+export function customerPrepFromNote(note) {
+  const s = String(note || "").replace(/\s+/g, " ").trim();
+  const m = s.match(/ลูกค้า[^()]*?เตรียม[^()]*/);
+  if (!m) return "";
+  return m[0].replace(/\s+/g, " ").replace(/[\s.]+$/, "").trim();
+}
+
+// ── สร้างคอลัมน์ 2/3 จากหมายเหตุทุกข้อในใบเสนอ (dedup รักษาลำดับ) ────────────────────
+export function buildSideColumns(items) {
+  const midSeen = new Set(), rightSeen = new Set();
+  const mid = [], right = [];
+  for (const it of items || []) {
+    if (!isWorkItem(it)) continue;
+    for (const note of noteBulletsFromDetail(it.detail)) {
+      const scope = installerScopeFromNote(note);
+      if (scope && !midSeen.has(scope)) { midSeen.add(scope); mid.push({ text: scope, color: "", kind: "spec" }); }
+      const prep = customerPrepFromNote(note);
+      if (prep && !rightSeen.has(prep)) { rightSeen.add(prep); right.push({ text: prep, color: "", kind: "spec" }); }
+    }
+  }
+  return { mid, right };
+}
+
 // ── ข้อไหน "ไม่ใช่งาน" (ส่วนลด/หมายเหตุล้วน) → ข้าม ──────────────────────────────
 function isWorkItem(item) {
   const name = String(item.name || "");

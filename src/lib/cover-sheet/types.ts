@@ -47,4 +47,4 @@ export type CoverSheetGetResponse = {
   quotation: { id: number; code: string; items: QuotationRefItem[] } | null;
 };
 
-export type GenerateResponse = { left: CoverLine[]; quotation_id: number; quotation_code: string };
+export type GenerateResponse = { left: CoverLine[]; mid: CoverLine[]; right: CoverLine[]; quotation_id: number; quotation_code: string };

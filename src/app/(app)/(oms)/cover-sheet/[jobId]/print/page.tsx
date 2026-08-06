@@ -7,6 +7,7 @@ import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
 import { EMPTY_CONTENT, effectiveHl, type CoverColor, type CoverContent, type CoverLine } from "@/lib/cover-sheet/types";
 import { HIGHLIGHT_HEX } from "@/lib/highlight-colors";
+import { buildSalesResolver } from "@/lib/sales-resolve";
 
 export const dynamic = "force-dynamic";
 
@@ -47,14 +48,21 @@ export default async function CoverSheetPrintPage({ params }: { params: { jobId:
   const jobId = params.jobId;
   const sb = createClient() as unknown as AnySb;
   const [jobR, coverR] = await Promise.all([
-    sb.from("jobs").select("job_code, customer_name, floor_work, floor_note").eq("id", jobId).maybeSingle(),
+    sb.from("jobs").select("id, job_code, customer_name, floor_work, floor_note, queue_entry_id, estimator:estimator_id(full_name)").eq("id", jobId).maybeSingle(),
     sb.from("cover_sheets").select("content").eq("job_id", jobId).maybeSingle(),
   ]);
 
-  const job = jobR.data as { job_code: string; customer_name: string; floor_work: string | null } | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const job = jobR.data as any as { id: string; job_code: string; customer_name: string; floor_work: string | null; queue_entry_id: string | null; estimator: { full_name: string } | null } | null;
   const cover = coverR.data as { content: CoverContent } | null;
   const content: CoverContent = cover?.content ?? EMPTY_CONTENT;
-  const showFloor = !!job?.floor_work && job.floor_work !== "none";
+
+  // เซลล์ที่ดูแลงาน — โชว์ในวงเล็บหลังชื่อลูกค้า (estimator → คิว · ตัวเดียวกับหน้าเช็คลิสต์/เขียนแบบ)
+  let salesName: string | null = null;
+  if (job) {
+    const salesOf = await buildSalesResolver(sb);
+    salesName = salesOf({ id: job.id, queue_entry_id: job.queue_entry_id, customer_name: job.customer_name, estimator_name: job.estimator?.full_name ?? null });
+  }
 
   return (
     <div className="min-h-dvh bg-gray-100 print:bg-white">
@@ -77,7 +85,7 @@ export default async function CoverSheetPrintPage({ params }: { params: { jobId:
           const warns = (content.warnings ?? []).filter((w) => w.trim());
           const firstCell = { ...cellBase, borderLeft: RULE };
           return (
-        <div className="mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0" style={{ width: "210mm", minHeight: "277mm", padding: "10mm" }}>
+        <div className="mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0" style={{ width: "210mm", minHeight: "277mm", padding: "10mm", boxSizing: "border-box" }}>
           {/* หัว: grid 3 ช่อง (ซ้าย/ขวา 1fr เท่ากัน → ชื่อลูกค้า auto อยู่กลางหน้าจริง · หัวสูงขยายตามคำเตือน ไม่ล้นทับตาราง) */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "start", columnGap: 12, marginBottom: 8 }}>
             {/* ซ้าย: คำเตือน */}
@@ -89,10 +97,11 @@ export default async function CoverSheetPrintPage({ params }: { params: { jobId:
                 </>
               )}
             </div>
-            {/* กลาง: ชื่อลูกค้า */}
+            {/* กลาง: ชื่อลูกค้า (ตามด้วยชื่อเซลล์ในวงเล็บ ถ้ามี) */}
             <div style={{ fontSize: 20, textAlign: "center", whiteSpace: "nowrap", paddingTop: 4 }}>
               <span style={{ fontWeight: 700 }}>ชื่อลูกค้า</span>{" "}
               <span style={{ fontWeight: 700 }}>{job.customer_name || "—"}</span>
+              {salesName && <span style={{ fontWeight: 400, fontSize: 16 }}>{" "}({salesName})</span>}
             </div>
             {/* ขวา: งานพื้น (โชว์เมื่อกรอกไว้) */}
             <div style={{ color: RED, fontWeight: 700, fontSize: 15, textAlign: "right", justifySelf: "end", paddingTop: 4, whiteSpace: "pre-wrap", maxWidth: 240 }}>

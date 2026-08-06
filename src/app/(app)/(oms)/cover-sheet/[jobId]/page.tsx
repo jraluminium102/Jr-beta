@@ -129,11 +129,22 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
   };
 
   const doGenerate = async () => {
-    if (content.left.length > 0 && !window.confirm("จะสร้างใหม่ตามโหมดนี้ — รายการ 'สั่งของเตรียมผลิต' เดิมจะถูกแทนที่ (คอลัมน์แจ้งช่าง/ลูกค้าไม่หาย) ต่อไหม?")) return;
+    if (content.left.length > 0 && !window.confirm("จะสร้างใหม่ตามโหมดนี้ — รายการ 'สั่งของเตรียมผลิต' เดิมจะถูกแทนที่ · ช่องแจ้งช่าง/ลูกค้าจะเติมจากหมายเหตุใบเสนอ (ที่พิมพ์เองไว้ไม่หาย) ต่อไหม?")) return;
     setGenerating(true);
     try {
       const r = await api.post<GenerateResponse>(`/cover-sheets/${jobId}/generate`, { mode });
-      setContent((c) => ({ ...c, left: r.data.left }));
+      // แจ้งช่าง(mid)/แจ้งลูกค้า(right): เติมบรรทัดใหม่จากหมายเหตุ ต่อท้ายของที่พิมพ์เอง (dedup ตามข้อความ · ของเดิมไม่หาย)
+      const mergeSide = (existing: CoverLine[], incoming?: CoverLine[]) => {
+        const seen = new Set(existing.map((l) => l.text.trim()).filter(Boolean));
+        const add = (incoming ?? []).filter((l) => l.text.trim() && !seen.has(l.text.trim()));
+        return [...existing, ...add];
+      };
+      setContent((c) => ({
+        ...c,
+        left: r.data.left,
+        mid: mergeSide(c.mid, r.data.mid),
+        right: mergeSide(c.right, r.data.right),
+      }));
       setQuotationId(r.data.quotation_id);
     } catch (e) {
       alert(e instanceof ApiError ? e.message : "สร้างอัตโนมัติไม่สำเร็จ");
