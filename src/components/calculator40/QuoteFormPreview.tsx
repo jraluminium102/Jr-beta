@@ -55,7 +55,7 @@ export default function QuoteFormPreview({
   return (
     <div
       className="qfp-a4 mx-auto bg-white shadow-lg print:shadow-none"
-      style={{ width: "210mm", minHeight: "297mm", padding: "16mm" }}
+      style={{ width: "210mm", minHeight: "297mm", padding: "16mm", boxSizing: "border-box" }}
     >
       <PrintLetterhead
         docTitle="ใบเสนอราคา"

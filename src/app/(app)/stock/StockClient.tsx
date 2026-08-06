@@ -681,7 +681,6 @@ function PriceSection({ item, prices, canPrice, isAdmin, onDone }: { item: Stock
                   <th className="px-3 py-2 font-medium">วันที่</th>
                   {item.is_weight_based && <th className="px-3 py-2 font-medium text-right">฿/กก.</th>}
                   <th className="px-3 py-2 font-medium text-right">ต้นทุน/{item.unit}</th>
-                  <th className="px-3 py-2 font-medium">ร้าน</th>
                   {isAdmin && <th className="px-3 py-2"></th>}
                 </tr>
               </thead>
@@ -691,7 +690,6 @@ function PriceSection({ item, prices, canPrice, isAdmin, onDone }: { item: Stock
                     <td className="px-3 py-2 text-ink-2 whitespace-nowrap">{new Date(p.effective_date).toLocaleDateString("th-TH")}</td>
                     {item.is_weight_based && <td className="px-3 py-2 text-right tabular-nums">{p.price_per_kg != null ? baht(p.price_per_kg) : "—"}</td>}
                     <td className="px-3 py-2 text-right font-semibold tabular-nums">฿{baht(p.unit_cost)}</td>
-                    <td className="px-3 py-2 text-ink-2 truncate max-w-[120px]">{p.supplier || p.note || "—"}</td>
                     {isAdmin && (
                       <td className="px-3 py-2 text-right">
                         <button onClick={() => delPrice(p.id)} title="ลบราคานี้" className="text-ink-3 hover:text-red-600"><Icon name="trash" size={13} /></button>

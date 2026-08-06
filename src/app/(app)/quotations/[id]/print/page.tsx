@@ -41,7 +41,7 @@ export default async function PrintPage({ params }: { params: { id: string } }) 
       {/* A4 paper — qdoc-a4: ตอนพิมพ์ปิด padding บน-ล่าง (thead/tfoot ของ .qdoc จัดขอบทุกหน้าแทน) */}
       <div
         className="qdoc-a4 mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0"
-        style={{ width: "210mm", minHeight: "297mm", padding: "16mm" }}
+        style={{ width: "210mm", minHeight: "297mm", padding: "16mm", boxSizing: "border-box" }}
       >
         <QuotationDoc q={q} condWork={condWork} condQuote={condQuote} />
       </div>

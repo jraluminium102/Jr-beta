@@ -48,7 +48,7 @@ export default async function ReceiptPrintPage({ params }: { params: { id: strin
 
   // เอกสาร A4 1 ชุด — copyLabel = "ต้นฉบับ"/"สำเนา" (มุมขวา) · cls คุมการพิมพ์ · itemCell = ช่องรายการ (ต้นฉบับแก้ได้ · สำเนาอ่านอย่างเดียว)
   const Doc = (copyLabel: string, cls: string, itemCell: React.ReactNode) => (
-    <div className={`rc-doc ${cls} mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0`} style={{ width: "210mm", minHeight: "297mm", padding: "16mm" }}>
+    <div className={`rc-doc ${cls} mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0`} style={{ width: "210mm", minHeight: "297mm", padding: "16mm", boxSizing: "border-box" }}>
       <PrintLetterhead
         docTitle="ใบเสร็จรับเงิน/ใบกำกับภาษี"
         docColor={DOC_COLORS.receipt}

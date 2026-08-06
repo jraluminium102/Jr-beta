@@ -19,6 +19,7 @@ const patchSchema = z.object({
   mat_equipment: t, mat_alu_normal: t, mat_alu_painted: t,
   glass_spec: t, glass_order: t, frame_done: t, glass_installed: t, qc_before_glass: t,
   frame_status: t, screen_type: t, screen_installed: t, qc_after_glass: t,
+  screen_type_2: t, screen_installed_2: t,  // มุ้งอันที่ 2 (0119) — เช่น มุ้งจีบ + มุ้ง JR
   install_date: d, note: t,
   factories: z.array(z.string()).optional(),   // โรงงานผลิต (หลายโรงต่อชุด · 0114)
   factory_start: z.record(z.string(), z.string().nullable()).optional(),  // วันเริ่มผลิตแยกโรง (0115)

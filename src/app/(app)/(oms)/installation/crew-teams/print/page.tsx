@@ -94,7 +94,7 @@ export default async function CrewTeamsPrintPage({ searchParams }: { searchParam
       ) : (
         /* ฟอร์มการ์ดต่อทีม (แบบ SetTeam) — ปริ้นแล้วตัดแยกแจกช่างได้ทีละใบ · แต่ละการ์ดมีวันที่+เวลาในตัว
            A4 2 คอลัมน์ · เนื้อหายืดเกิน 297mm ได้ browser แบ่งหน้าเอง */
-        <div className="mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0" style={{ width: "210mm", minHeight: "297mm", padding: "10mm" }}>
+        <div className="mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0" style={{ width: "210mm", minHeight: "297mm", padding: "10mm", boxSizing: "border-box" }}>
           <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", columnGap: 10, rowGap: 10 }}>
             {teams.map((t) => (
               <div key={t.id} style={{ breakInside: "avoid", border: "1.5px solid #4b5563", borderRadius: 6, padding: "10px 12px", minHeight: 120 }}>
