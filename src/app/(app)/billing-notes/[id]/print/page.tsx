@@ -117,6 +117,10 @@ export default async function BillingPrintPage({
 
   // WHT ที่มีผลจริงบนใบ (งวดเดียว = ของงวด · ทั้งใบ = รวม) → คุมป้ายบรรทัดล่าง + หมายเหตุ
   const effWht = footer ? Number((footer.current ?? footer.def).wht_amt) || 0 : 0;
+  // guard บัญชี: footer ทั้งใบต้อง imply net (sub−disc+vat−wht) = ยอดล่าง (bn.total) — ไม่งั้นยอด book เพี้ยน
+  //   เดิม WHT ต่องวด "ซ่อน" เงียบ ๆ (gross−WHT ≠ ยอดล่าง) กว่าจะเจอต้องบวกเอง → โชว์แถบเตือน (ไม่พิมพ์ลงเอกสาร)
+  const fdef = footer && !isSingle ? (footer.current ?? footer.def) : null;
+  const footerTieOff = !!fdef && Math.abs(round2(fdef.subtotal - fdef.discount_amt + fdef.vat_amt - fdef.wht_amt) - effTotal) > 0.01;
   const paymentText = ((bn as { payment_note?: string | null }).payment_note ?? "").trim();
   const cellL = "pr-10 py-0.5 text-gray-500 text-left";
   const cellR = "text-right tabular-nums";
@@ -244,11 +248,12 @@ export default async function BillingPrintPage({
       </div>
 
       {/* เตือนเจ้าหน้าที่ (ไม่พิมพ์ลงเอกสาร) — footer แก้มือทำให้ยอดไม่สอดคล้อง (บัญชีสั่งให้เตือน) */}
-      {(instMismatch || overpaid) && (
+      {(instMismatch || overpaid || footerTieOff) && (
         <div className="no-print mx-auto mt-3 max-w-[210mm] rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm text-amber-900">
           <b>⚠ ตรวจ footer ก่อนส่งลูกค้า</b>
           {instMismatch && <div className="text-xs mt-0.5">ยอดสุทธิที่แก้ footer งวดนี้ (฿{baht(effTotal)}) ไม่ตรงยอดงวดจริง (฿{baht(Number(selected!.amount) || 0)}) — ตารางงวดกับยอดท้ายใบไม่ตรงกัน กด &quot;✎ แก้ footer → ค่าตั้งต้น&quot; เพื่อกลับยอดจริง</div>}
           {overpaid && <div className="text-xs mt-0.5">ยอดสุทธิต่ำกว่ายอดรับชำระแล้ว → คงเหลือติดลบ (เหมือนรับเงินเกิน) โปรดตรวจสอบ</div>}
+          {footerTieOff && fdef && <div className="text-xs mt-0.5">ยอดท้ายใบไม่ผูกกัน: (รวมเป็นเงิน − ส่วนลด + VAT − หัก ณ ที่จ่าย) = ฿{baht(round2(fdef.subtotal - fdef.discount_amt + fdef.vat_amt - fdef.wht_amt))} แต่ยอดชำระสุทธิ = ฿{baht(effTotal)} — ยอด book ในระบบอาจเพี้ยน โปรดตรวจก่อนส่งลูกค้า</div>}
         </div>
       )}
 
