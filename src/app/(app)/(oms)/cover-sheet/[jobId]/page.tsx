@@ -263,8 +263,8 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
                 {!quotation ? (
                   <div className="text-[13px] text-gray-400">งานนี้ยังไม่มีใบเสนอราคา</div>
                 ) : (
-                  // การ์ดต่อข้อ เต็มความกว้าง — ไม่ครอบ max-height/scroll ซ้อน (หน้าเลื่อนเดียวพอ ไม่ต้องสกรอลสองชั้น)
-                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                  // การ์ดต่อข้อ — auto-fit: ข้อน้อยขยายเต็มความกว้าง (อ่านง่าย ไม่บีบเป็นแถบแคบสูง) · ข้อเยอะค่อยแตกหลายคอลัมน์ (≥420px/คอลัมน์)
+                  <div className="grid gap-3 grid-cols-[repeat(auto-fit,minmax(min(420px,100%),1fr))]">
                     {quotation.items.map((it, i) => (
                       <div key={i} className="rounded-xl border border-gray-200 bg-gray-50 p-3">
                         <div className="flex items-start gap-2 mb-1.5">
@@ -274,7 +274,7 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
                             <div className="text-[14px] font-semibold text-gray-900 leading-snug">{it.name}</div>
                           </div>
                         </div>
-                        <div className="text-[12.5px] whitespace-pre-wrap text-gray-600 leading-relaxed pl-7">{it.detail}</div>
+                        <div className="text-[13.5px] whitespace-pre-wrap text-gray-700 leading-relaxed pl-7">{it.detail}</div>
                       </div>
                     ))}
                   </div>
