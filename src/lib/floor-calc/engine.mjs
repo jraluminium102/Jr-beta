@@ -198,6 +198,19 @@ export const DEFAULT_CONTRACTOR = {
   bank_acc: "426-197442-8",
 };
 
+/**
+ * ชื่อเอกสาร/ชื่อไฟล์ — "ใบเสนอราคางานพื้น คุณสมชาย" · แก้แล้วต่อท้าย " rev1" ตามจำนวนครั้งที่แก้
+ * ใช้ที่เดียวทั้ง ชื่อไฟล์ Excel · ชื่อไฟล์ PDF (document.title) · หัวเรื่องหน้าพิมพ์ — จะได้ไม่เพี้ยนกัน
+ */
+export function quoteFileName(customerName, rev) {
+  const who = String(customerName ?? "").trim();
+  const r = Number(rev) || 0;
+  // กันอักขระที่ตั้งชื่อไฟล์ไม่ได้ (\ / : * ? " < > |) — ที่เหลือคงไว้ ภาษาไทยใช้ได้ปกติ
+  const safe = who.replace(/[\\/:*?"<>|]/g, " ").replace(/\s+/g, " ").trim();
+  // ยุบช่องไฟซ้ำอีกรอบ — กันเคสไม่มีชื่อลูกค้าแล้วได้ "ใบเสนอราคางานพื้น  rev1" (เว้นวรรคซ้อน)
+  return `ใบเสนอราคางานพื้น ${safe}${r > 0 ? ` rev${r}` : ""}`.replace(/\s+/g, " ").trim();
+}
+
 /** ผลรวมใบ = ผลบวก line_total ทุกรายการ (ไม่มี VAT — ตามฟอร์มช่าง) */
 export const sumItems = (items) =>
   round2((items ?? []).reduce((a, it) => a + (Number(it.line_total) || 0), 0));

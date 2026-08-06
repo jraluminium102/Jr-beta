@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { fail, UNAUTHORIZED } from "@/lib/bff";
 import { buildQuoteXlsx } from "@/lib/floor-calc/quote-xlsx";
+import { quoteFileName } from "@/lib/floor-calc/engine.mjs";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +40,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   });
 
   // ⚠ ชื่อไฟล์เป็นไทย → ต้องใช้ filename* (RFC 5987) · ใส่ไทยดิบใน header ไม่ได้
-  const name = `ใบเสนอราคางานพื้น ${q.customer_snapshot?.name ?? ""} ${q.code}.xlsx`.trim();
+  const name = `${quoteFileName(q.customer_snapshot?.name, q.rev)}.xlsx`;
   return new Response(new Uint8Array(buf), {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

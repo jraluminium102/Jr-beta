@@ -93,7 +93,7 @@ export default async function FloorWorksPage() {
                       <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${st.cls}`}>{st.label}</span>
                     </td>
                     <td className="p-2.5 text-right whitespace-nowrap">
-                      <Link href={`/floor-works/${r.id}/print`} target="_blank"
+                      <Link href={`/floor-works/${r.id}/print?auto=1`} target="_blank"
                         className="press text-xs text-ink-2 hover:text-brand px-1.5">พิมพ์</Link>
                       <Link href={`/floor-works/${r.id}/installments`}
                         className="press text-xs text-ink-2 hover:text-brand px-1.5">งวด</Link>

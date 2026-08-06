@@ -11,13 +11,16 @@ import ImportQuoteButton from "./ImportQuoteButton";
 import { FloorQuoteSheet } from "./FloorQuoteSheet";
 import { fixThai } from "@/lib/floor-calc/thai-fix";
 import {
-  planFloor, draftItems, quickAdds,
+  planFloor, draftItems, quickAdds, quoteFileName,
   PILE_TYPES, DEFAULT_CONTRACTOR,
 } from "@/lib/floor-calc/engine.mjs";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Item = any;
-type JobOpt = { id: string; job_code: string; customer_name: string; floor_note?: string | null };
+type JobOpt = {
+  id: string; job_code: string; customer_name: string;
+  address?: string; phone?: string; floor_note?: string | null;
+};
 
 const todayISO = () => {
   const d = new Date();
@@ -44,6 +47,8 @@ export default function FloorEditor({
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  /** ข้อความ "บันทึกแล้ว" หลังกดเซฟ — เดิมโหมดแก้ไขไม่มีอะไรตอบกลับเลย กดแล้วเหมือนไม่ทำงาน */
+  const [savedMsg, setSavedMsg] = useState<string | null>(null);
 
   const initCalc = initial?.calc ?? {};
   const [width, setWidth] = useState<string>(String(initCalc.width ?? "3"));
@@ -99,6 +104,7 @@ export default function FloorEditor({
   // ── บันทึก ──
   const save = async () => {
     setErr(null);
+    setSavedMsg(null);
     if (!cName.trim()) return setErr("กรุณากรอกชื่อลูกค้า");
     if (items.length === 0) return setErr("ยังไม่มีรายการ — กด “สร้างรายการตั้งต้น” หรือเพิ่มเอง");
     if (items.some((it) => !String(it.name ?? "").trim())) return setErr("มีรายการที่ยังไม่ได้ใส่ชื่องาน");
@@ -123,7 +129,8 @@ export default function FloorEditor({
         const { data } = await api.post<{ id: number }>("/floor-quotations", payload);
         router.push(`/floor-works/${data.id}`);
       } else {
-        await api.patch(`/floor-quotations/${initial.id}`, payload);
+        const { data } = await api.patch<{ rev: number }>(`/floor-quotations/${initial.id}`, payload);
+        setSavedMsg(`บันทึกแล้ว — ใบนี้เป็น rev${data?.rev ?? ""} · ชื่อไฟล์เวลาพิมพ์/โหลด = “${quoteFileName(cName, data?.rev)}”`);
         router.refresh();
       }
     } catch (e) {
@@ -133,16 +140,26 @@ export default function FloorEditor({
     }
   };
 
+  /** เลือกงาน = เติมชื่อ/ที่อยู่/เบอร์ทับของเดิมทันที (เจ้าของสั่ง "ไม่ต้องเอาอันเดิมไว้") */
   const pickJob = (id: string) => {
     setJobId(id);
+    if (!id) return;                       // เลือก "ไม่ผูก" = ไม่ไปยุ่งกับที่พิมพ์ไว้
     const j = jobs.find((x) => x.id === id);
-    if (j && !cName.trim()) setCName(j.customer_name ?? "");
+    if (!j) return;
+    setCName(j.customer_name ?? "");
+    setCAddr(j.address ?? "");
+    setCPhone(j.phone ?? "");
   };
 
   return (
     <div className="space-y-5">
       {err && (
         <div className="rounded-xl border border-red-300 bg-red-50 px-4 py-2.5 text-sm text-red-800">{err}</div>
+      )}
+      {savedMsg && (
+        <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-900">
+          ✓ {savedMsg}
+        </div>
       )}
 
       {/* ═══ 0. นำเข้าจากไฟล์ผู้รับเหมา ═══ */}
@@ -319,30 +336,51 @@ export default function FloorEditor({
           <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2}
             className="w-full rounded-lg border border-gray-300 px-3 py-2" />
         </label>
-        <div className="flex gap-2 flex-wrap justify-end">
-          <Link href="/floor-works" className="press rounded-xl border border-gray-300 px-4 py-2.5 text-sm">ยกเลิก</Link>
-          {mode === "edit" && (
-            <>
-              <Link href={`/floor-works/${initial.id}/print`} target="_blank"
-                className="press rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-medium">
-                พิมพ์ใบเสนอ / PDF
-              </Link>
-              <a href={`/api/floor-quotations/${initial.id}/xlsx`}
-                className="press rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-medium">
-                ดาวน์โหลด Excel
-              </a>
-              <Link href={`/floor-works/${initial.id}/installments`}
-                className="press rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-medium">
-                ใบเบิกงวด
-              </Link>
-            </>
-          )}
+        <div className="flex gap-3 flex-wrap justify-between items-center">
+          {/* ซ้าย = ออกไฟล์/เอกสารอื่น · ขวา = บันทึก (แยกกันชัด กันกดผิดปุ่ม) */}
+          <div className="flex gap-2 flex-wrap">
+            <Link href="/floor-works" className="press rounded-xl border border-gray-300 px-4 py-2.5 text-sm">ยกเลิก</Link>
+            {mode === "edit" && (
+              <>
+                <a href={`/api/floor-quotations/${initial.id}/xlsx`}
+                  className="press rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-medium">
+                  โหลด Excel
+                </a>
+                <Link href={`/floor-works/${initial.id}/print?auto=1`} target="_blank"
+                  className="press rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-medium">
+                  พิมพ์ / PDF
+                </Link>
+                <Link href={`/floor-works/${initial.id}/installments`}
+                  className="press rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-medium">
+                  ใบเบิกงวด
+                </Link>
+              </>
+            )}
+          </div>
           <button type="button" onClick={save} disabled={saving}
-            className="press rounded-xl bg-brand text-white font-semibold px-6 py-2.5 disabled:opacity-50">
+            className="press rounded-xl bg-brand text-white font-semibold px-8 py-2.5 disabled:opacity-50">
             {saving ? "กำลังบันทึก…" : mode === "create" ? "บันทึกใบเสนอ" : "บันทึกการแก้ไข"}
           </button>
         </div>
+        {mode === "edit" && (
+          <p className="text-xs text-ink-3 text-right">
+            บันทึกทุกครั้ง = นับ rev เพิ่ม 1 · ชื่อไฟล์จะเป็น “{quoteFileName(cName, (Number(initial?.rev) || 0) + 1)}”
+          </p>
+        )}
       </section>
+
+      {/* แถบบันทึกลอยล่างจอ — ใบ A4 ยาว ถ้าไม่มีอันนี้ต้องเลื่อนสุดหน้าทุกครั้งกว่าจะเจอปุ่มเซฟ */}
+      <div className="sticky bottom-3 z-20 flex justify-end pointer-events-none">
+        <div className="pointer-events-auto flex items-center gap-3 rounded-2xl border border-gray-200 bg-white/95 backdrop-blur px-4 py-2.5 shadow-lg">
+          <span className="text-xs text-ink-3 hidden sm:block">
+            {items.length} รายการ · {baht(items.reduce((a, it) => a + num(it.line_total), 0))} บาท
+          </span>
+          <button type="button" onClick={save} disabled={saving}
+            className="press rounded-xl bg-brand text-white font-semibold px-6 py-2 disabled:opacity-50 whitespace-nowrap">
+            {saving ? "กำลังบันทึก…" : mode === "create" ? "บันทึกใบเสนอ" : "บันทึกการแก้ไข"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

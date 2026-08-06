@@ -70,11 +70,13 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (body?.note !== undefined) patch.note = String(body.note).trim();
   if (body?.job_id !== undefined) patch.job_id = body.job_id || null;
   if (body?.customer_id !== undefined) patch.customer_id = body.customer_id || null;
-  if (body?.bump_rev) patch.rev = (Number(cu.rev) || 0) + 1;
 
-  // ── รายการ: ส่งมา = แทนที่ทั้งชุด ──
+  // ── รายการ: ส่งมา = แทนที่ทั้งชุด + นับ Rev ขึ้น 1 ──
+  //    เจ้าของสั่ง 6 ส.ค.69: rev = "จำนวนครั้งที่แก้" → ชื่อไฟล์ต่อท้าย rev1, rev2, ...
+  //    (สร้างใหม่ = rev 0 ไม่มีท้าย · ส่ง skip_rev=true เมื่อไม่อยากให้นับ เช่นแก้คำผิดเล็กน้อย)
   let newTotal: number | null = null;
   if (Array.isArray(body?.items)) {
+    if (!body?.skip_rev) patch.rev = (Number(cu.rev) || 0) + 1;
     if (body.items.length === 0) return fail("ต้องมีอย่างน้อย 1 รายการ");
     if (body.items.length > 200) return fail("รายการมากเกินไป (สูงสุด 200)");
     const clean = normalizeItems(body.items);

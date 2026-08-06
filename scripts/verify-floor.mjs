@@ -11,7 +11,7 @@
  */
 import {
   planFloor, layoutAxis, RATE, pileType, suggest, draftItems, sumItems, groupItems,
-  MIN_SPAN, MAX_SPAN,
+  quoteFileName, MIN_SPAN, MAX_SPAN,
 } from "../src/lib/floor-calc/engine.mjs";
 
 let failed = 0;
@@ -182,6 +182,27 @@ console.log("\n═══ ⑦ ใบเบิกงวด vs ใบเสนอ �
     console.log(`  ✅ รวมงวด ${sum.toLocaleString()} · ใบเสนอ ${quote.toLocaleString()} · ต่าง ${diff.toLocaleString()}`);
     console.log("     (= กระเบื้องนอก 6,000 + ทาสี 12,000 · ทั้งคู่ติดป้าย \"งานเพิ่ม\" → หน้าจอต้องเตือนเคสนี้)");
   } else bad(`คำนวณส่วนต่างเพี้ยน: รวม ${sum} ต่าง ${diff}`);
+}
+
+// ═══ ⑧ ชื่อไฟล์เอกสาร (เจ้าของสั่ง 6 ส.ค.69: "ใบเสนอราคางานพื้น คุณ… rev<n>") ═══
+console.log("\n═══ ⑧ ชื่อไฟล์ Excel/PDF ═══");
+{
+  const cases = [
+    ["คุณกาญจนา", 0, "ใบเสนอราคางานพื้น คุณกาญจนา"],
+    ["คุณกาญจนา", 1, "ใบเสนอราคางานพื้น คุณกาญจนา rev1"],
+    ["คุณนฤมิตร", 12, "ใบเสนอราคางานพื้น คุณนฤมิตร rev12"],
+    ["บจก. เอ/บี : ซี", 2, "ใบเสนอราคางานพื้น บจก. เอ บี ซี rev2"], // อักขระตั้งชื่อไฟล์ไม่ได้ → เว้นวรรค
+    ["  คุณ ก  ", 0, "ใบเสนอราคางานพื้น คุณ ก"],                     // ช่องไฟหัวท้าย/ซ้ำ → ยุบ
+    ["", 1, "ใบเสนอราคางานพื้น rev1"],                               // ไม่มีชื่อ → ห้ามมีเว้นวรรคซ้อน
+    [null, 0, "ใบเสนอราคางานพื้น"],
+  ];
+  for (const [name, rev, want] of cases) {
+    const got = quoteFileName(name, rev);
+    if (got === want) console.log(`  ✅ ${JSON.stringify(name)} rev=${rev} → “${got}”`);
+    else bad(`ชื่อไฟล์ ${JSON.stringify(name)} rev=${rev} → “${got}” (ต้องได้ “${want}”)`);
+  }
+  if (/[\\/:*?"<>|]/.test(quoteFileName('a/b\\c:d*e?f"g<h>i|j', 1))) bad("ยังมีอักขระที่ตั้งชื่อไฟล์ไม่ได้หลุดออกมา");
+  else console.log("  ✅ ไม่มีอักขระต้องห้ามในชื่อไฟล์ (\\ / : * ? \" < > |)");
 }
 
 console.log(`\n═══ สรุป: ${failed === 0 ? "✅ ผ่านทั้งหมด" : `❌ ไม่ผ่าน ${failed} ข้อ`} ═══`);
