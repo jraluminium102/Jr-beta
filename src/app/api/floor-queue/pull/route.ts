@@ -1,6 +1,6 @@
 import { requirePermission } from "@/lib/bff/context";
 import { withRoute } from "@/lib/bff/handler";
-import { ok } from "@/lib/bff/response";
+import { ok, err } from "@/lib/bff/response";
 import { dbError } from "@/lib/bff/db-error";
 
 export const dynamic = "force-dynamic";
@@ -43,12 +43,13 @@ export const POST = withRoute(async () => {
 
   if (toInsert.length === 0) return ok({ added: 0, skipped_no_name: skippedNoName });
 
-  // upsert + ignoreDuplicates: กัน race (กด pull พร้อมกัน 2 แท็บ) ชน unique job_id แบบ atomic ไม่พังทั้งก้อน
-  const { data: inserted, error: insErr } = await sb
-    .from("floor_queue_entries")
-    .upsert(toInsert, { onConflict: "job_id", ignoreDuplicates: true })
-    .select("id");
-  if (insErr) throw dbError(insErr);
+  // insert ธรรมดา (กรอง existingIds มาแล้ว) — unique job_id เป็น partial index จึงใช้ upsert onConflict ไม่ได้
+  //   race หายาก (แอดมินกดดึงซ้อนกันพอดี) → ชน unique 23505 → คืนข้อความชวนกดใหม่ (รอบหน้า pre-filter จับเอง)
+  const { data: inserted, error: insErr } = await sb.from("floor_queue_entries").insert(toInsert).select("id");
+  if (insErr) {
+    if (insErr.code === "23505") return err("มีการดึงลูกค้าซ้อนกันพอดี ลองกดอีกครั้ง (ระบบกันซ้ำให้แล้ว)", 409);
+    throw dbError(insErr);
+  }
 
   return ok({ added: inserted?.length ?? 0, skipped_no_name: skippedNoName });
 });
