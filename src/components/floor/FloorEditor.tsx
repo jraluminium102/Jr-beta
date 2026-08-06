@@ -7,6 +7,8 @@ import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
 import { api } from "@/lib/api";
 import { FloorPlanSvg } from "./FloorPlanSvg";
+import ImportQuoteButton from "./ImportQuoteButton";
+import { fixThai } from "@/lib/floor-calc/thai-fix";
 import {
   planFloor, draftItems, quickAdds, sumItems, groupItems,
   PILE_TYPES, DEFAULT_CONTRACTOR,
@@ -90,6 +92,25 @@ export default function FloorEditor({
     return c;
   });
 
+  /**
+   * นำเข้าจากไฟล์ผู้รับเหมา — ราคาใช้ตามไฟล์ทั้งหมด (เจ้าของสั่ง "ไม่เกี่ยวกับราคาในเว็บ แค่จัดฟอร์ม")
+   * suggestWords = คำกลุ่ม "ไม่แน่ใจ" ที่ผู้ใช้ติ๊กเลือกให้แก้ (กลุ่มมั่นใจแก้มาแล้วจากฝั่ง API)
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const applyImport = (p: any, suggestWords: string[]) => {
+    const applyPicked = (s: string) => {
+      if (!suggestWords.length) return s;
+      // ใช้เฉพาะกฎกลุ่ม "เสนอ" ที่ผู้ใช้ติ๊ก — เทียบจากคำต้นทางที่โชว์ในจอตรวจ
+      const full = fixThai(s, true);
+      return suggestWords.some((w) => s.includes(w)) ? full.text : s;
+    };
+    setItems(p.items.map((it: Item) => ({ ...it, name: applyPicked(it.name), source: "manual" })));
+    if (p.customer?.name) setCName(applyPicked(p.customer.name));
+    if (p.customer?.address) setCAddr(applyPicked(p.customer.address));
+    if (p.customer?.phone) setCPhone(p.customer.phone);
+    setErr(null);
+  };
+
   const buildDraft = () => {
     const next = draftItems(plan, pileKey);
     setItems((prev) => {
@@ -150,6 +171,20 @@ export default function FloorEditor({
       {err && (
         <div className="rounded-xl border border-red-300 bg-red-50 px-4 py-2.5 text-sm text-red-800">{err}</div>
       )}
+
+      {/* ═══ 0. นำเข้าจากไฟล์ผู้รับเหมา ═══ */}
+      <section className="card p-4">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="font-bold text-ink flex items-center gap-2"><Icon name="file" size={18} /> มีใบของผู้รับเหมาอยู่แล้ว?</h2>
+            <p className="text-sm text-ink-3 mt-0.5">
+              อัปโหลดไฟล์ Excel ที่ช่างทำมา — ระบบจัดเข้าฟอร์ม แก้คำผิด ตัดชีท/แถวขยะให้
+              <b> ราคาใช้ตามไฟล์เดิมทั้งหมด</b>
+            </p>
+          </div>
+          <ImportQuoteButton onImport={applyImport} />
+        </div>
+      </section>
 
       {/* ═══ 1. ขนาดพื้นที่ + ผัง ═══ */}
       <section className="card p-4">
@@ -410,8 +445,12 @@ export default function FloorEditor({
             <>
               <Link href={`/floor-works/${initial.id}/print`} target="_blank"
                 className="press rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-medium">
-                พิมพ์ใบเสนอ
+                พิมพ์ใบเสนอ / PDF
               </Link>
+              <a href={`/api/floor-quotations/${initial.id}/xlsx`}
+                className="press rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-medium">
+                ดาวน์โหลด Excel
+              </a>
               <Link href={`/floor-works/${initial.id}/installments`}
                 className="press rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-medium">
                 ใบเบิกงวด

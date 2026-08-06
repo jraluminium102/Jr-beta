@@ -39,7 +39,9 @@ export default async function FloorWorkPage({ params }: { params: { id: string }
         </div>
         <div className="flex gap-2">
           <Link href={`/floor-works/${q.id}/print`} target="_blank"
-            className="press rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium">พิมพ์ใบเสนอ</Link>
+            className="press rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium">พิมพ์ใบเสนอ / PDF</Link>
+          <a href={`/api/floor-quotations/${q.id}/xlsx`}
+            className="press rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium">Excel</a>
           <Link href={`/floor-works/${q.id}/installments`}
             className="press rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium">ใบเบิกงวด</Link>
         </div>
