@@ -20,7 +20,7 @@ const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const validFooter = (o: any) => (o && typeof o.net === "number") ? o : null;
 
-type FooterProps = { apiUrl: string; suffix: string; def: InstallmentFooter; current: InstallmentFooter | null; real: boolean } | null;
+type FooterProps = { apiUrl: string; suffix: string; def: InstallmentFooter; current: InstallmentFooter | null; real: boolean; editable: boolean } | null;
 
 export default async function BillingPrintPage({
   params,
@@ -79,24 +79,44 @@ export default async function BillingPrintPage({
       // งวด booked (โมเดลค่าแรง 17 ก.ค.) → โชว์ base/vat/wht ของงวดตรง ๆ (WHT อยู่งวดค่าแรงเท่านั้น ไม่เฉลี่ย)
       if (sel.base_amt != null) {
         const def = footerSnapshot(Number(sel.base_amt) || 0, 0, Number(sel.vat_rate) || 0, Number(sel.wht_rate) || 0);
-        return { apiUrl: `/api/billing-installments/${selected!.id!}`, suffix: " (งวดนี้)", def, current: ov, real: false };
+        return { apiUrl: `/api/billing-installments/${selected!.id!}`, suffix: " (งวดนี้)", def, current: ov, real: false, editable: true };
       }
       if (Number(b.subtotal) <= 0 && !ov) return null;
       // งวดเก่า (ไม่ booked) — ส่วนลด/ภาษีต่องวด = ทั้งใบ × สัดส่วนงวด (บัญชีสั่ง) → ผลรวมทุกงวด = เต็มใบ
       const def = footerSnapshot((Number(b.subtotal) || 0) * ratio, dp, vr, wr, dAmt != null ? round2(dAmt * ratio) : undefined);
-      return { apiUrl: `/api/billing-installments/${selected!.id!}`, suffix: " (งวดนี้)", def, current: ov, real: false };
+      return { apiUrl: `/api/billing-installments/${selected!.id!}`, suffix: " (งวดนี้)", def, current: ov, real: false, editable: true };
     }
     // ทั้งใบ = แก้ยอดจริง (real): กรอก รวมเป็นเงิน/ส่วนลด/VAT/หัก → คิด total ใหม่ + แตกงวดใหม่ (บิลที่ยังไม่จ่าย)
     const subW = Number(b.subtotal) || Number(bn.total) || 0;
     if (subW <= 0) return null;
-    // บิลค่าแรง (booked) → WHT คิดเฉพาะค่าแรงก่อน VAT (ไม่ใช่ฐานเต็ม) — ส่ง labor_amt ให้ footerSnapshot
-    //   (บัญชีจับได้: ไม่ส่ง = WHT คิดฐานเต็ม → ยอดหัก ณ ที่จ่ายบนกระดาษผิด + gross−WHT ≠ ยอดล่าง)
-    const laborAmt = b.labor_amt != null ? Number(b.labor_amt) || 0 : undefined;
-    const def = footerSnapshot(subW, dp, vr, wr, dAmt, laborAmt);
-    return { apiUrl: `/api/billing-notes/${bn.id}`, suffix: "", def, current: null, real: true };
+    // WHT ที่ book ต่องวด (บิลค่าแรง): bn.wht_amt=0 แต่มี "งวดค่าแรง" ถือ WHT ไว้ (base_amt+wht_rate)
+    //   → รวมขึ้นมาโชว์ท้ายใบ ไม่งั้น footer ทั้งใบ "ซ่อน" WHT ทำให้ gross−WHT ≠ ยอดล่าง (บัญชี must-fix)
+    const instWht = allInstallments.reduce((a, i) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ii = i as any;
+      return a + (ii.base_amt != null ? round2((Number(ii.base_amt) || 0) * (Number(ii.wht_rate) || 0) / 100) : 0);
+    }, 0);
+    const billWht = Number(b.wht_amt) || 0;
+    if (billWht === 0 && instWht > 0) {
+      // บิลค่าแรง booked → สร้าง footer จากยอด booked จริง (bn.vat_amt / รวม WHT ต่องวด / bn.total)
+      //   static (แก้ไม่ได้) กัน "แก้ยอดจริง" ทั้งใบไปรื้อ WHT ต่องวด (เดิม real mode ตั้ง WHT=0 = ลบ WHT พังยอด)
+      const discAmt = dAmt != null ? dAmt : round2(subW * dp / 100);
+      // อัตราหัก ณ ที่จ่ายที่โชว์ = อัตราของงวดค่าแรง (ปกติ 3%) — ฐานคือค่าแรงก่อน VAT
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const laborInst = allInstallments.find((i) => (i as any).base_amt != null && (Number((i as any).wht_rate) || 0) > 0) as any;
+      const def: InstallmentFooter = {
+        subtotal: subW, discount_pct: dp, discount_amt: discAmt,
+        vat_rate: vr, vat_amt: Number(b.vat_amt) || 0,
+        wht_rate: laborInst ? Number(laborInst.wht_rate) || 0 : 0, wht_amt: round2(instWht), net: Number(bn.total) || 0,
+      };
+      return { apiUrl: `/api/billing-notes/${bn.id}`, suffix: "", def, current: null, real: false, editable: false };
+    }
+    const def = footerSnapshot(subW, dp, vr, wr, dAmt);
+    return { apiUrl: `/api/billing-notes/${bn.id}`, suffix: "", def, current: null, real: true, editable: true };
   })();
 
-  const whtAmt = Number((bn as { wht_amt?: number }).wht_amt) || 0;
+  // WHT ที่มีผลจริงบนใบ (งวดเดียว = ของงวด · ทั้งใบ = รวม) → คุมป้ายบรรทัดล่าง + หมายเหตุ
+  const effWht = footer ? Number((footer.current ?? footer.def).wht_amt) || 0 : 0;
   const paymentText = ((bn as { payment_note?: string | null }).payment_note ?? "").trim();
   const cellL = "pr-10 py-0.5 text-gray-500 text-left";
   const cellR = "text-right tabular-nums";
@@ -135,9 +155,11 @@ export default async function BillingPrintPage({
         </thead>
         <tbody>
           {installments.map((it) => {
-            // ช่อง "จำนวนเงิน" = ยอดก่อน VAT (ฐาน) — งวด booked ใช้ base_amt · งวดเก่า (ไม่ booked) คง amount เดิม
+            // ช่อง "จำนวนเงิน":
+            //  · งวดเดียว (พิมพ์แยกงวด) + booked → ยอดก่อน VAT (base_amt) ตามที่เจ้าของเลือก — footer งวดนั้นต่อยอด VAT/หัก ให้ครบ
+            //  · ทั้งใบ → ยอดงวด (amount) ตามเดิม — ผลรวมทุกงวด = ยอดสุทธิท้ายใบ (งวดค่าของ=รวม VAT · งวดค่าแรง=สุทธิ ปนกันถ้าถอดจะไม่ tie)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const base = (it as any).base_amt != null ? Number((it as any).base_amt) || 0 : (Number(it.amount) || 0);
+            const base = (isSingle && (it as any).base_amt != null) ? Number((it as any).base_amt) || 0 : (Number(it.amount) || 0);
             return (
               <tr key={it.id}>
                 <td className="p-2 border border-[#f0dde3] align-top text-center">{it.seq}</td>
@@ -164,7 +186,7 @@ export default async function BillingPrintPage({
           <tbody>
             {/* ยอดแยก (0078) — ส่วนลด/VAT/รวมทั้งสิ้น/หัก ณ ที่จ่าย
                 · ต้นฉบับ = PrintFooterEditor (แก้ inline ได้) · สำเนา = FooterDisplayRows (อ่านอย่างเดียว) */}
-            {footer && (editable
+            {footer && (editable && footer.editable
               ? <PrintFooterEditor apiUrl={footer.apiUrl} suffix={footer.suffix} def={footer.def} current={footer.current} real={footer.real} />
               : <FooterDisplayRows v={footer.current ?? footer.def} suffix={footer.suffix} />)}
             {/* รับชำระแล้ว/คงเหลือ — โชว์เฉพาะเมื่อมีรับชำระบางส่วนแล้ว (ใบใหม่ยอด 0 ไม่โชว์) · คงเหลือติดลบ = แดง */}
@@ -174,14 +196,14 @@ export default async function BillingPrintPage({
                 <tr><td className={cellL}>คงเหลือ</td><td className={`${cellR}${overpaid ? " text-red-700 font-semibold" : ""}`}>{baht(effRemaining)}</td></tr>
               </>
             )}
-            {/* whtAmt>0 ทั้งใบ → "ยอดชำระสุทธิ" (กันชนกับบรรทัด "จำนวนเงินรวมทั้งสิ้น" ก่อนหัก ณ ที่จ่าย) */}
-            <tr className="font-bold text-lg" style={{ color: "#a8425a" }}><td className="pr-10 py-1 border-t text-left">{isSingle ? "ยอดชำระ" : (whtAmt > 0 ? "ยอดชำระสุทธิ" : "ยอดรวมทั้งสิ้น")}</td><td className="text-right border-t tabular-nums">฿{baht(effTotal)}</td></tr>
+            {/* effWht>0 ทั้งใบ → "ยอดชำระสุทธิ" (กันชนกับบรรทัด "จำนวนเงินรวมทั้งสิ้น" ก่อนหัก ณ ที่จ่าย) */}
+            <tr className="font-bold text-lg" style={{ color: "#a8425a" }}><td className="pr-10 py-1 border-t text-left">{isSingle ? "ยอดชำระ" : (effWht > 0 ? "ยอดชำระสุทธิ" : "ยอดรวมทั้งสิ้น")}</td><td className="text-right border-t tabular-nums">฿{baht(effTotal)}</td></tr>
           </tbody>
         </table>
       </div>
 
       {/* พิมพ์แยกงวด + มีหัก ณ ที่จ่าย → อธิบายวิธีคิดต่องวด (booked = อยู่งวดค่าแรง · legacy = เฉลี่ย) */}
-      {isSingle && whtAmt > 0 && (
+      {isSingle && effWht > 0 && (
         <div className="mt-4 text-xs text-gray-600">
           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {(selected as any).base_amt != null
