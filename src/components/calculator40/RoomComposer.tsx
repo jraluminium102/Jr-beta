@@ -28,7 +28,7 @@ import Icon from "@/components/Icon";
 import { fmt } from "@/lib/calculator40/fmt";
 import AddonsSection from "@/components/calculator40/AddonsSection";
 import { ALU_COLOR_KEYS, ALU_COLOR_LABEL, resolveAluColor } from "@/lib/calculator40/alu-colors";
-import { groupGlass } from "@/lib/calculator40/glass-cats";
+import { groupGlass, allGlassKeys } from "@/lib/calculator40/glass-cats";
 // @ts-expect-error — engine เป็น ESM JS ล้วน
 import { computeCost, ceil100, CEIL_RATE } from "@/lib/calculator40/engine.mjs";
 // @ts-expect-error — products เป็น ESM JS ล้วน
@@ -37,6 +37,7 @@ import { PRODUCTS } from "@/lib/calculator40/products.mjs";
 import { computeMosquitoR4, mosquitoTypeLabel } from "@/lib/calculator40/mosquito.mjs";
 // @ts-expect-error — roof-zip helper เป็น ESM JS ล้วน
 import { computeRoofZipR4, isRoofZipProd } from "@/lib/calculator40/roof-zip.mjs";
+import { withUniversalAddons } from "@/lib/calculator40/universal-addons";
 // @ts-expect-error — door-zip helper เป็น ESM JS ล้วน
 import { computeDoorZipR4 } from "@/lib/calculator40/door-zip.mjs";
 
@@ -67,14 +68,13 @@ const PANE_TYPES: { key: string; label: string; slideLike?: boolean }[] = [
   ...WALL_PANES.filter((w) => (PRODUCTS as Record<string, any>)[w.key]),
 ];
 
-// ม่านซิปประตู (door_zip) เป็นออปชั่น "universal" ของทุกชนิดบานในห้อง (เหมือน elec/solid_panel ที่ Calculator40Client บวก
-// ให้ทุกรุ่น) — augment addons list ที่ชั้น app เท่านั้น (shallow copy ไม่แตะ PRODUCTS ต้นฉบับ/products.mjs/verify-r40)
+// ออปชั่น universal ของบานในห้องกระจก — ใช้ตัวกลางตัวเดียวกับหน้าหลัก (elec/solid_panel/roof_zip)
+// + door_zip (ม่านซิปประตู) ที่มีเฉพาะใน G6
+//   เดิมที่นี่เติมแค่ door_zip → บานใน G6 ไม่มี "งานไฟ/บานล่างทึบ" ให้เลือก ต่างจากหน้าหลัก (แก้ 6 ส.ค.69)
 const PANE_BY_KEY: Record<string, any> = Object.fromEntries(
   PANE_TYPES.map((t) => {
     const base = (PRODUCTS as any)[t.key];
-    if (!base) return [t.key, base];
-    const addons: string[] = base.addons || [];
-    return [t.key, addons.includes("door_zip") ? base : { ...base, addons: [...addons, "door_zip"] }];
+    return [t.key, base ? withUniversalAddons(base, { doorZip: true }) : base];
   })
 );
 
@@ -393,7 +393,7 @@ function ColsEditor({
   const prod = sel ? PANE_BY_KEY[sel.typeKey] : null;
   const { amount: price, mosqLabel } = sel ? panePrice(sel, pb, color, glassFallback, profitPct) : { amount: 0, mosqLabel: undefined as string | undefined };
   const movePanes = sel ? Math.max(1, (sel.n || 1) - (sel.fixedPanes || 0)) : 1;
-  const glassKeys = Object.keys((pb.GLASS ?? {}) as Record<string, number>);
+  const glassKeys = allGlassKeys(pb);
 
   return (
     <div className="space-y-2">
@@ -570,15 +570,9 @@ export default function RoomComposer({
   const [roofSegs, setRoofSegs] = useState<{ w: string; l: string }[]>(() => (Array.isArray(ini.roofSegs) ? ini.roofSegs : []));
   const [roofAddons, setRoofAddons] = useState<Record<string, any>>(() => ini.roofAddons || {});
   // product ของทรงที่เลือก (roof/roof_gable/roof_slide มีอยู่ครบใน products.mjs)
-  //   + ม่านซิปบนหลังคา (roof_zip) — augment ที่ชั้น app เหมือน G3 (ไม่แตะ products.mjs/verify)
+  //   ออปชั่น universal (roof_zip/elec/solid_panel) ใช้ตัวกลางตัวเดียวกับหน้าหลัก — ไม่แตะ products.mjs/verify
   const roofProdBase = (PRODUCTS as any)[roofShapeId] || (PRODUCTS as any).roof;
-  const roofProd = useMemo(
-    () =>
-      roofProdBase && isRoofZipProd(roofProdBase) && !(roofProdBase.addons || []).includes("roof_zip")
-        ? { ...roofProdBase, addons: [...(roofProdBase.addons || []), "roof_zip"] }
-        : roofProdBase,
-    [roofProdBase]
-  );
+  const roofProd = useMemo(() => withUniversalAddons(roofProdBase), [roofProdBase]);
   const roofIsAwning = roofShapeId === "roof"; // มีเฉพาะกันสาดที่ทำ "หลายช่วง (ขยัก)"
   const roofShapeLabel = ROOF_SHAPE_LABEL[roofShapeId] || "";
   // สลับทรง → รีเซ็ตวัสดุถ้าทรงใหม่ไม่มีวัสดุนั้น (จั่ว/เลื่อน materials ≠ กันสาด)
@@ -1034,7 +1028,7 @@ export default function RoomComposer({
               <select value={sideColorOvr[i]?.glass || ""} onChange={(e) => setSideColorOvr((m) => ({ ...m, [i]: { color: m[i]?.color || "", glass: e.target.value } }))}
                 className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 outline-none text-xs">
                 <option value="">กระจกตามห้อง ({mainGlass || "—"})</option>
-                {groupGlass(Object.keys((pb.GLASS ?? {}) as Record<string, number>)).map((gp) => (
+                {groupGlass(allGlassKeys(pb)).map((gp) => (
                   <optgroup key={gp.cat} label={gp.cat}>
                     {gp.items.map((g) => <option key={g} value={g}>{g}</option>)}
                   </optgroup>

@@ -26,10 +26,11 @@ import { applyBootstrap } from "@/lib/calculator40/bootstrap.mjs";
 import R39DATA from "@/lib/calculator40/r39-data.json";
 // @ts-expect-error — mosquito helper เป็น ESM JS ล้วน
 import { computeMosquitoR4, mosquitoTypeLabel } from "@/lib/calculator40/mosquito.mjs";
-import { computeRoofZipR4, isRoofZipProd } from "@/lib/calculator40/roof-zip.mjs";
+import { computeRoofZipR4 } from "@/lib/calculator40/roof-zip.mjs";
+import { withUniversalAddons } from "@/lib/calculator40/universal-addons";
 import AddonsSection from "@/components/calculator40/AddonsSection";
 import { ALU_COLOR_KEYS, ALU_COLOR_LABEL, resolveAluColor } from "@/lib/calculator40/alu-colors";
-import { groupGlass } from "@/lib/calculator40/glass-cats";
+import { groupGlass, allGlassKeys } from "@/lib/calculator40/glass-cats";
 import { computeServices, EMPTY_SERVICES, type ServiceInput } from "@/lib/calculator40/services";
 import SubPanesSection, { subDesc, subPrice, type SubPane } from "@/components/calculator40/SubPanesSection";
 import RoomComposer, { type RoomTotals } from "@/components/calculator40/RoomComposer";
@@ -245,15 +246,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   //     ยกเว้นม่านซิป (sellZip) — ไม่เกี่ยวกับตัวม่าน (เจ้าของสั่ง 29ก.ค.69 · เอา "ออปชั่นใช้บ่อย" ออกจากม่านซิป)
   //   - "ม่านซิปบนหลังคา"(roof_zip) เฉพาะรุ่นหลังคา (roof/roof_gable/roof_slide)
   const prodRaw: any = (PRODUCTS as any)[prodId];
-  const prod: any = (() => {
-    if (!prodRaw) return prodRaw;
-    const base: string[] = prodRaw.addons || [];
-    const extra = [
-      ...(prodRaw.sellZip ? [] : ["elec", "solid_panel"]),
-      ...(isRoofZipProd(prodRaw) ? ["roof_zip"] : []),
-    ].filter((u) => !base.includes(u));
-    return { ...prodRaw, addons: [...base, ...extra] };
-  })();
+  const prod: any = withUniversalAddons(prodRaw);
   // pickerHide: true = รุ่นที่ไม่โผล่การ์ดแยกในลิสต์ (เข้าถึงผ่านกลไกอื่น เช่น roofShape switcher ของ "หลังคา"
   // หรือ screen_ready ที่ใช้เฉพาะภายใน computeMosquitoR4) — ตรง mockup app.js markActive()/renderList (กรอง p.pickerHide)
   const prodList = useMemo(
@@ -436,7 +429,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
 
   const ok = result && !("error" in result);
   // #1 (17ก.ค.69): เพิ่มตัวเลือก "แผ่นคอมโพสิต/ลูกฟูก แทนกระจก" ทุกที่ที่เลือกกระจก · engine special-case (ไม่คิดกระจก)
-  const glassKeys = useMemo(() => [...Object.keys((pb.GLASS ?? {}) as Record<string, number>), "แผ่นคอมโพสิต", "แผ่นลูกฟูก", "เกล็ด Z 1\"", "เกล็ด Z 1.6\""], [pb]);
+  const glassKeys = useMemo(() => allGlassKeys(pb), [pb]);
 
   // "สูตร" ของข้อปัจจุบัน (0093) — เก็บทุก input เพื่อโหลดกลับมาแก้ทีหลัง (คลิก ✏️ ในรายการ)
   function buildRecipe(): any {
@@ -895,7 +888,10 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
               <input value={glassSearch} onChange={(e) => setGlassSearch(e.target.value)} placeholder="ค้นชื่อกระจก เช่น เทมเปอร์ 6"
                 className="w-full glass-soft rounded-lg px-3 py-2 mb-2 outline-none" />
               <div className="max-h-64 overflow-y-auto space-y-1.5 pr-1">
-                {glassKeys.filter((k) => k.toLowerCase().includes(glassSearch.toLowerCase())).slice(0, 25).map((k) => (
+                {/* ⚠ แผงนี้ใช้ "เฉพาะกระจกที่มีราคาในตาราง" — ตัวเลือกแทนกระจก (คอมโพสิต/ลูกฟูก/เกล็ด Z)
+                    ไม่มีใน pb.GLASS (engine คิดแยกเป็นแผ่น) ถ้าเอามาโชว์ช่องจะว่างและแก้แล้วสร้างรายการผี */}
+                {Object.keys((pb.GLASS ?? {}) as Record<string, number>)
+                  .filter((k) => k.toLowerCase().includes(glassSearch.toLowerCase())).slice(0, 25).map((k) => (
                   <label key={k} className="flex items-center gap-2">
                     <span className="flex-1 text-ink-2 text-xs truncate">{k}</span>
                     <input type="number" value={pb.GLASS[k]} onChange={(e) => setGlassPrice(k, e.target.value)}
