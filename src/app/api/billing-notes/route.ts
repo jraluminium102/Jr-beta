@@ -95,7 +95,10 @@ export async function POST(req: Request) {
     ...(bLaborAmount != null ? { labor_amount: bLaborAmount } : {}),
     ...(bLaborPct != null ? { labor_pct: bLaborPct } : {}),
   });
-  const bStoredPct = bDiscAmt != null ? (bt.subtotal > 0 ? Math.round((bt.discount_amt / bt.subtotal) * 10000) / 100 : 0) : bDisc;
+  // โหมดบาท (กรอกส่วนลดเป็นจำนวน) → เก็บ discount_pct = 0 (ไม่ back-calc %ปลอม) · discount_amt เป็นตัวตั้งจริง
+  //   เดิม back-calc เป็น % แล้วเก็บ → พอเปิด/พิมพ์ใบที่บันทึก %ปลอมโผล่ทุกที่ (เจ้าของ 6 ส.ค.: ใส่จำนวนไม่อยากเห็น %)
+  //   หน้ารายละเอียด/พิมพ์/footer guard discount_pct>0 อยู่แล้ว → pct=0 = โชว์แค่ "ส่วนลด -฿X" ไม่มี %
+  const bStoredPct = bDiscAmt != null ? 0 : bDisc;
   const net = bt.net;
   if (net <= 0) return fail("ยอดสุทธิต้องมากกว่า 0 จึงวางบิลได้", 400);
 

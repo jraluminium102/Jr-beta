@@ -228,8 +228,9 @@ export default function NewBillingClient({
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-ink-3 flex items-center gap-1">ส่วนลด
                     {/* กรอกได้ทั้ง % และบาท · พิมพ์ช่องไหน = ใช้ช่องนั้น (โหมดบาทเก็บยอดตรง ไม่แปลงกลับเป็น % กัน drift) */}
+                    {/* กรอกเป็นบาท → ช่อง % ว่าง (ไม่ derive %จากจำนวน · เจ้าของ 6 ส.ค.: ใส่จำนวนแล้วไม่อยากเห็น %) */}
                     <input type="number" min={0} step="any" disabled={locked}
-                      value={discMode === "pct" ? (disc || "") : (t.subtotal > 0 && t.discount_amt > 0 ? Math.round((t.discount_amt / t.subtotal) * 10000) / 100 : "")}
+                      value={discMode === "pct" ? (disc || "") : ""}
                       onChange={(e) => { setDiscMode("pct"); setDisc(Math.max(0, Number(e.target.value) || 0)); }}
                       className="w-14 glass-soft rounded px-1 py-1 text-right outline-none tabular-nums disabled:opacity-50" aria-label="ส่วนลด %" />%
                   </span>
