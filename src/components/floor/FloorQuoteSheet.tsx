@@ -100,7 +100,13 @@ export function FloorQuoteSheet({
   onCustomer?: (patch: { name?: string; address?: string }) => void;
   onNote?: (v: string) => void;
 }) {
-  const groups = groupItems(items.map((it, i) => ({ ...it, sort_order: i })));
+  /**
+   * ⚠ ต้องพก __idx (ตำแหน่งจริงใน items) ติดไปกับทุกแถว
+   *
+   * groupItems รับ "สำเนา" ของแถว (…, {...it}) → ใช้ items.indexOf(it) หาตำแหน่งไม่เจอ ได้ -1 เสมอ
+   * ทำให้ปุ่มลบ/แก้ทุกช่องกลายเป็น no-op เงียบ ๆ (บั๊กจริงที่เจอ 6 ส.ค.69 — แก้ไม่เข้าเลยสักช่อง)
+   */
+  const groups = groupItems(items.map((it, i) => ({ ...it, __idx: i, sort_order: i })));
   const multi = groups.length > 1;
   const total = items.reduce((a, it) => a + num(it.line_total), 0);
 
@@ -108,8 +114,8 @@ export function FloorQuoteSheet({
   const td = "border border-gray-400 px-1.5 py-1 align-top";
   const txtIn = "w-full bg-transparent outline-none rounded px-0.5 hover:bg-amber-50/50 focus:bg-amber-50";
 
-  // ── แก้ไขรายการ (อ้างจากตำแหน่งจริงใน items) ──
-  const idxOf = (it: Item) => items.indexOf(it);
+  // ── แก้ไขรายการ (อ้างจากตำแหน่งจริงใน items ที่พกมากับแถว) ──
+  const idxOf = (it: Item) => (typeof it?.__idx === "number" ? it.__idx : -1);
   const patch = (i: number, p: Partial<Item>) => {
     if (!onItems) return;
     onItems(items.map((it, k) => {
@@ -145,9 +151,13 @@ export function FloorQuoteSheet({
     c.splice(afterIdx + 1, 0, blank);
     onItems(c);
   };
-  /** เปลี่ยนชื่อหมวด = เปลี่ยนทุกบรรทัดในหมวดนั้น */
-  const renameGroup = (from: string, to: string) =>
-    onItems?.(items.map((it) => (String(it.group_label ?? "") === from ? { ...it, group_label: to } : it)));
+  /**
+   * เปลี่ยนชื่อหมวด = เปลี่ยนเฉพาะบรรทัดของหมวดนั้น (อ้างด้วย "ตำแหน่งแถว" ไม่ใช่ชื่อ)
+   * เดิมจับคู่ด้วยชื่อ → พอมี 2 หมวดชื่อซ้ำ (เช่นเพิ่มหมวดใหม่แล้วลบชื่อทิ้ง ชนกับหมวดที่ไม่มีชื่อ)
+   * พิมพ์แก้หมวดหนึ่ง อีกหมวดเปลี่ยนตามไปด้วย = หมวดยุบรวมกันถาวร
+   */
+  const renameGroup = (idxs: number[], to: string) =>
+    onItems?.(items.map((it, k) => (idxs.includes(k) ? { ...it, group_label: to } : it)));
 
   const Ctl = ({ i }: { i: number }) => (
     <td className="p-0 border-0 no-print whitespace-nowrap align-top" style={{ width: 1 }}>
@@ -216,12 +226,14 @@ export function FloorQuoteSheet({
             </tr>
           )}
           {groups.map((g: { label: string; items: Item[]; subtotal: number }, gi: number) => {
-            const lastIdx = g.items.length ? idxOf(g.items[g.items.length - 1]) : -1;
+            const idxs = g.items.map((it: Item) => idxOf(it)).filter((n: number) => n >= 0);
+            const lastIdx = idxs.length ? idxs[idxs.length - 1] : items.length - 1;
             return (
               <FloorGroupRows
                 key={gi} g={g} gi={gi} multi={multi} editable={editable}
                 td={td} txtIn={txtIn} idxOf={idxOf} patch={patch} Ctl={Ctl}
-                onRename={renameGroup} onAddRow={() => addRow(g.label, lastIdx)}
+                onRename={(to: string) => renameGroup(idxs, to)}
+                onAddRow={() => addRow(g.label, lastIdx)}
               />
             );
           })}
@@ -304,7 +316,7 @@ function FloorGroupRows({
   idxOf: (it: Item) => number;
   patch: (i: number, p: Partial<Item>) => void;
   Ctl: (p: { i: number }) => JSX.Element;
-  onRename: (from: string, to: string) => void;
+  onRename: (to: string) => void;
   onAddRow: () => void;
 }) {
   const span = editable ? 10 : 9;
@@ -315,7 +327,7 @@ function FloorGroupRows({
           <td colSpan={span} className="border border-gray-400 px-1.5 py-1 font-bold"
             style={{ background: "#fdf3f5", color: "#a8425a" }}>
             {editable ? (
-              <input value={g.label} onChange={(e) => onRename(g.label, e.target.value)}
+              <input value={g.label} onChange={(e) => onRename(e.target.value)}
                 placeholder={`(ชื่อหมวด — เว้นว่างได้)`}
                 className={`${txtIn} font-bold`} style={{ color: "#a8425a" }} />
             ) : g.label}

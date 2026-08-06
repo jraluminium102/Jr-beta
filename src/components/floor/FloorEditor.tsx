@@ -11,7 +11,7 @@ import ImportQuoteButton from "./ImportQuoteButton";
 import { FloorQuoteSheet } from "./FloorQuoteSheet";
 import { fixThai } from "@/lib/floor-calc/thai-fix";
 import {
-  planFloor, draftItems, quickAdds, quoteFileName,
+  planFloor, draftItems, quickAdds, quoteFileName, groupNames, addItemToGroup,
   PILE_TYPES, DEFAULT_CONTRACTOR,
 } from "@/lib/floor-calc/engine.mjs";
 
@@ -71,7 +71,16 @@ export default function FloorEditor({
   const plan = useMemo(() => planFloor(num(width) || 0.1, num(length) || 0.1), [width, length]);
 
   // แก้รายการทั้งหมดทำใน <FloorQuoteSheet> (บนกระดาษ A4 โดยตรง) — ที่นี่เหลือแค่ปุ่มเพิ่มลัด
-  const addItem = (item: Item) => setItems((p) => [...p, { ...item, group_label: p.at(-1)?.group_label ?? "" }]);
+
+  /** ชื่อหมวดที่มีอยู่ (เรียงตามที่ปรากฏบนใบ) */
+  const groups = useMemo(() => groupNames(items) as string[], [items]);
+
+  /** หมวดปลายทางของปุ่มลัด — ถ้ายังไม่เลือก/หมวดที่เลือกหายไป = หมวดสุดท้าย */
+  const [addTo, setAddTo] = useState<string>("");
+  const targetGroup = groups.includes(addTo) ? addTo : groups[groups.length - 1];
+
+  /** เพิ่มรายการลงท้ายหมวดที่เลือก (logic อยู่ใน engine — มี verify คุม) */
+  const addItem = (item: Item) => setItems((p) => addItemToGroup(p, item, targetGroup));
 
   /**
    * นำเข้าจากไฟล์ผู้รับเหมา — ราคาใช้ตามไฟล์ทั้งหมด (เจ้าของสั่ง "ไม่เกี่ยวกับราคาในเว็บ แค่จัดฟอร์ม")
@@ -298,7 +307,19 @@ export default function FloorEditor({
               {items.length} รายการ · คลิกที่ช่องไหนก็แก้ได้เลย — หน้านี้คือหน้าที่จะพิมพ์ออกมา
             </span>
           </h2>
-          <div className="flex gap-1.5 flex-wrap">
+          {/* ปุ่มลัด — ต้องเลือกก่อนว่าจะลงหมวดไหน (เดิมต่อท้ายสุดเสมอ เลยไปโผล่ผิดหมวด) */}
+          <div className="flex gap-1.5 flex-wrap items-center">
+            {groups.length > 1 && (
+              <label className="flex items-center gap-1 text-xs text-ink-3">
+                ลงหมวด
+                <select value={targetGroup} onChange={(e) => setAddTo(e.target.value)}
+                  className="rounded-lg border border-gray-300 px-2 py-1 text-xs max-w-[190px]">
+                  {groups.map((g) => (
+                    <option key={g} value={g}>{g || "(ไม่มีหมวด)"}</option>
+                  ))}
+                </select>
+              </label>
+            )}
             {quickAdds(plan.area).map((qa: { label: string; item: Item }) => (
               <button key={qa.label} type="button" onClick={() => addItem(qa.item)}
                 className="press rounded-full border border-gray-300 px-3 py-1 text-xs font-medium hover:border-brand hover:text-brand">

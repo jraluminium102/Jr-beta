@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { FloorQuoteSheet } from "@/components/floor/FloorQuoteSheet";
+import Harness from "./Harness";
 
 /**
  * หน้าทดสอบหน้าตาใบเสนอราคางานพื้น (dev เท่านั้น — production คืน 404)
@@ -27,16 +27,7 @@ export default function DevFloorTest({ searchParams }: { searchParams: { edit?: 
   if (process.env.NODE_ENV === "production") notFound();
   return (
     <div className="min-h-dvh bg-gray-100 p-4">
-      <FloorQuoteSheet
-        editable={searchParams.edit === "1"}
-        customer={{
-          name: "คุณกาญจนา",
-          address: "212/160 หมู่บ้านชัยพฤกษ์ พุทธมณฑลสาย 5 ต.บางเตย อ.สามพราน จ.นครปฐม 73210",
-        }}
-        issueDate="2026-08-06"
-        contractor={{ name: "นายเพยาว์ สุขอุทัย", phone: "089-035-8526" }}
-        items={ITEMS}
-      />
+      <Harness initial={ITEMS} editable={searchParams.edit === "1"} />
     </div>
   );
 }

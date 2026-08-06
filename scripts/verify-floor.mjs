@@ -11,7 +11,7 @@
  */
 import {
   planFloor, layoutAxis, RATE, pileType, suggest, draftItems, sumItems, groupItems,
-  quoteFileName, MIN_SPAN, MAX_SPAN,
+  quoteFileName, groupNames, addItemToGroup, MIN_SPAN, MAX_SPAN,
 } from "../src/lib/floor-calc/engine.mjs";
 
 let failed = 0;
@@ -203,6 +203,37 @@ console.log("\n═══ ⑧ ชื่อไฟล์ Excel/PDF ═══");
   }
   if (/[\\/:*?"<>|]/.test(quoteFileName('a/b\\c:d*e?f"g<h>i|j', 1))) bad("ยังมีอักขระที่ตั้งชื่อไฟล์ไม่ได้หลุดออกมา");
   else console.log("  ✅ ไม่มีอักขระต้องห้ามในชื่อไฟล์ (\\ / : * ? \" < > |)");
+}
+
+// ═══ ⑨ เพิ่มรายการต้องลง "หมวดที่เลือก" (บั๊กจริง 6 ส.ค.69: กดปุ่มลัดแล้วไปโผล่ผิดหมวด) ═══
+console.log("\n═══ ⑨ เพิ่มรายการลงหมวดที่เลือก ═══");
+{
+  const mk = (g, n) => ({ group_label: g, name: n, qty: 1, unit: "งาน", unit_price: 0, line_total: 0 });
+  const base = [mk("หมวด A", "a1"), mk("หมวด A", "a2"), mk("หมวด B", "b1")];
+
+  const gs = groupNames(base);
+  if (gs.length === 2 && gs[0] === "หมวด A" && gs[1] === "หมวด B") console.log(`  ✅ อ่านชื่อหมวดได้ ${gs.length} หมวด ตามลำดับบนใบ`);
+  else bad(`groupNames ได้ ${JSON.stringify(gs)}`);
+
+  // แทรกกลางใบ (ท้ายหมวด A) ไม่ใช่ท้ายใบ
+  const r1 = addItemToGroup(base, mk("", "ใหม่"), "หมวด A");
+  if (r1.length === 4 && r1[2].name === "ใหม่" && r1[2].group_label === "หมวด A" && r1[3].name === "b1") {
+    console.log("  ✅ เพิ่มลงหมวด A → แทรกท้ายหมวด A (ตำแหน่ง 2) ไม่ไปต่อท้ายใบ");
+  } else bad(`แทรกผิดตำแหน่ง: ${r1.map((x) => `${x.group_label}/${x.name}`).join(" · ")}`);
+
+  // หมวดท้ายสุด → ต่อท้ายใบตามปกติ
+  const r2 = addItemToGroup(base, mk("", "ใหม่"), "หมวด B");
+  if (r2.length === 4 && r2[3].name === "ใหม่" && r2[3].group_label === "หมวด B") console.log("  ✅ เพิ่มลงหมวด B → ต่อท้ายใบ");
+  else bad("แทรกหมวดท้ายผิด");
+
+  // หมวดใหม่ที่ยังไม่มีรายการ → ต่อท้ายใบ พร้อมติดชื่อหมวดให้
+  const r3 = addItemToGroup(base, mk("", "ใหม่"), "หมวด C");
+  if (r3.length === 4 && r3[3].group_label === "หมวด C") console.log("  ✅ หมวดที่ยังไม่มีรายการ → ต่อท้ายใบ + ติดชื่อหมวดให้");
+  else bad("หมวดใหม่ที่ยังว่างแทรกผิด");
+
+  // ห้ามแก้ array เดิม (React state ต้องเป็นชุดใหม่เสมอ)
+  if (base.length === 3) console.log("  ✅ ไม่แก้ array เดิม (คืนชุดใหม่)");
+  else bad("addItemToGroup ไปแก้ array เดิม");
 }
 
 console.log(`\n═══ สรุป: ${failed === 0 ? "✅ ผ่านทั้งหมด" : `❌ ไม่ผ่าน ${failed} ข้อ`} ═══`);

@@ -215,6 +215,33 @@ export function quoteFileName(customerName, rev) {
 export const sumItems = (items) =>
   round2((items ?? []).reduce((a, it) => a + (Number(it.line_total) || 0), 0));
 
+/** ชื่อหมวดที่มีอยู่ เรียงตามที่ปรากฏบนใบ (ไม่ซ้ำ · ไม่มีเลย = [""]) */
+export function groupNames(items) {
+  const seen = [];
+  for (const it of items ?? []) {
+    const g = String(it?.group_label ?? "").trim();
+    if (!seen.includes(g)) seen.push(g);
+  }
+  return seen.length ? seen : [""];
+}
+
+/**
+ * แทรกรายการใหม่ "ท้ายหมวดที่เลือก" (ไม่ใช่ท้ายใบ)
+ *
+ * เดิมปุ่มลัดต่อท้ายสุดเสมอ → พอเพิ่มหมวดใหม่แล้วกด "+ งานลงเข็ม" รายการไปโผล่ผิดหมวด
+ * (บั๊กที่เจ้าของเจอ 6 ส.ค.69) · หมวดที่ยังไม่มีรายการเลย → ต่อท้ายใบ
+ */
+export function addItemToGroup(items, item, group) {
+  const g = String(group ?? "").trim();
+  const row = { ...item, group_label: g };
+  const list = (items ?? []).slice();
+  let last = -1;
+  list.forEach((it, i) => { if (String(it?.group_label ?? "").trim() === g) last = i; });
+  if (last < 0) return [...list, row];
+  list.splice(last + 1, 0, row);
+  return list;
+}
+
 /** จัดรายการเป็นหมวด เรียงตาม sort_order (หมวดว่าง = "" มาก่อน) */
 export function groupItems(items) {
   const order = [];
