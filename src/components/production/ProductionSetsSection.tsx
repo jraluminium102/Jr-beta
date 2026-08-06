@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { Plus, X } from "@/components/ui/icons";
+import { Plus, X, ChevronDown } from "@/components/ui/icons";
 import OptionsEditor from "./OptionsEditor";
 import type { SetOption } from "@/app/api/production-set-options/route";
 
@@ -37,25 +37,57 @@ type SetRow = { id: number; job_id: string } & Record<string, any>;
 // โรงงานผลิต (เลือกได้หลายโรงต่อชุด · 0114) — หลัก ๆ 2 โรง แก้ลิสต์ที่นี่ได้
 const FACTORIES = ["โรงงาน 1", "โรงงาน 3"];
 
-// ขนาดตัวหนังสือ: เจ้าของแจ้ง 16 ก.ค.2569 ว่า "ฟ้อนเล็ก อ่านยาก" → ช่อง 12→14px, ป้าย 10→11.5px
-// (คู่กับโมดัลที่ขยายเป็น max-w-3xl แล้ว — ที่กว้างพอให้ตัวใหญ่ขึ้นได้โดยตารางไม่แตก)
+// ── สไตล์ช่องกรอก ──────────────────────────────────────────────────────────
+// เจ้าของแจ้ง 6 ส.ค.2569: "สีอ่านยาก พื้นที่ใหญ่ขึ้น" → พื้นช่องเข้มทึบ (ตัดกับพื้นแดงเข้มของโซน OMS
+// ชัดกว่า bg-white/8 เดิมที่จางเกินไป) + ตัวอักษร/ช่องใหญ่ขึ้น (16→17px, py 2.5→3)
 const fieldCls =
-  "w-full bg-white/8 text-white text-[16px] px-2.5 py-2.5 rounded-lg border border-white/12 focus:border-sky-300/60 outline-none disabled:opacity-60";
+  "w-full bg-slate-900/70 text-white text-[17px] px-3 py-3 rounded-lg border border-white/25 " +
+  "focus:border-sky-300/70 focus:bg-slate-900/90 outline-none transition-colors " +
+  "disabled:opacity-50 disabled:cursor-not-allowed";
+const selectCls = fieldCls + " appearance-none pr-9 cursor-pointer disabled:cursor-not-allowed";
+// สีตัวเลือกใน dropdown — ใส่ตรง (ไม่พึ่ง Tailwind class) กันบางเบราว์เซอร์ไม่รับสีพื้น <option>
+const optStyle = { background: "#0f172a", color: "#fff" } as const;
 
 // ป้าย + ช่อง · ถ้าส่ง onEditOpts มา = ช่องนี้เป็นดรอปดาวน์ที่แก้ตัวเลือกได้ → โชว์ปุ่ม ⚙ ข้างป้าย
 function F({ label, children, onEditOpts }: { label: string; children: React.ReactNode; onEditOpts?: () => void }) {
   return (
     <label className="block">
-      <span className="flex items-center gap-1 text-[13px] mb-1" style={{ color: "var(--t-low)" }}>
+      <span className="flex items-center gap-1 text-[13px] font-medium mb-1.5" style={{ color: "var(--t-mid)" }}>
         <span className="truncate">{label}</span>
         {onEditOpts && (
           <button type="button" onClick={(e) => { e.preventDefault(); onEditOpts(); }}
             title={`เพิ่ม/ลบตัวเลือกของ "${label}"`} aria-label={`เพิ่ม/ลบตัวเลือกของ ${label}`}
-            className="shrink-0 text-white/35 hover:text-sky-300 leading-none">⚙</button>
+            className="shrink-0 text-white/45 hover:text-sky-300 leading-none p-1 -m-1 rounded focus-visible:ring-2 focus-visible:ring-sky-300/60">⚙</button>
         )}
       </span>
       {children}
     </label>
+  );
+}
+
+// เส้นแบ่งกลุ่มย่อย + กริดฟิลด์ในกลุ่ม — จัดหมวดให้อ่านง่าย (แบบ→วัด→โครง/โรง→วัสดุ→กระจก→มุ้ง→วันที่→หมายเหตุ)
+// มือถือคอลัมน์เดียว (อ่านง่าย/ช่องเต็มความกว้าง) · จอกว้างขึ้นค่อยขยับเป็น 2-4 คอลัมน์
+function Group({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-sky-300/80 shrink-0">{title}</span>
+        <span className="flex-1 h-px bg-white/10" />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">{children}</div>
+    </div>
+  );
+}
+
+// ดรอปดาวน์ที่อ่านง่าย — พื้นเข้มทึบ + ลูกศรชัดเจน (ปุ่มลูกศรของเบราว์เซอร์เดิมจางมากบนพื้นมืด)
+function SelectField({ value, disabled, onChange, options }: { value: unknown; disabled?: boolean; onChange: (v: string) => void; options: string[] }) {
+  return (
+    <div className="relative">
+      <select defaultValue={(value as string) ?? ""} disabled={disabled} onChange={(e) => onChange(e.target.value)} className={selectCls}>
+        {options.map((o) => <option key={o} value={o} style={optStyle}>{o || "—"}</option>)}
+      </select>
+      <ChevronDown size={18} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-white/50" />
+    </div>
   );
 }
 
@@ -135,7 +167,7 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
   // helper สร้าง field
   const txt = (s: SetRow, f: string) => <input defaultValue={s[f] ?? ""} disabled={!canWrite} onBlur={(e) => e.target.value !== String(s[f] ?? "") && save(s.id, f, e.target.value)} className={fieldCls} />;
   // ช่องหมายเหตุ — textarea เต็มแถว (เจ้าของแจ้ง: ช่องเดิมแคบ พิมพ์ยาวไม่พอ)
-  const area = (s: SetRow, f: string) => <textarea defaultValue={s[f] ?? ""} disabled={!canWrite} rows={3} placeholder="พิมพ์หมายเหตุ / สิ่งที่ต้องระวัง…" onBlur={(e) => e.target.value !== String(s[f] ?? "") && save(s.id, f, e.target.value)} className={fieldCls + " resize-y min-h-[72px] leading-relaxed placeholder-white/30"} />;
+  const area = (s: SetRow, f: string) => <textarea defaultValue={s[f] ?? ""} disabled={!canWrite} rows={3} placeholder="พิมพ์หมายเหตุ / สิ่งที่ต้องระวัง…" onBlur={(e) => e.target.value !== String(s[f] ?? "") && save(s.id, f, e.target.value)} className={fieldCls + " resize-y min-h-[80px] leading-relaxed placeholder-white/35"} />;
   const date = (s: SetRow, f: string) => <input type="date" defaultValue={s[f] ?? ""} disabled={!canWrite} onBlur={(e) => save(s.id, f, e.target.value)} className={fieldCls} />;
   // บันทึกวันเริ่มผลิตของโรงหนึ่ง (merge เข้า map factory_start · เว้นว่าง = ลบ key นั้น)
   async function saveFactoryStart(s: SetRow, factory: string, iso: string) {
@@ -149,7 +181,7 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
     const starts: Record<string, string> = (s.factory_start && typeof s.factory_start === "object") ? s.factory_start : {};
     return (
       <div className="space-y-2">
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2">
           {FACTORIES.map((f) => {
             const on = cur.includes(f);
             return (
@@ -163,7 +195,7 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
                     await save(s.id, "factories", [...cur, f]);
                   }
                 }}
-                className={`text-[14px] px-2.5 py-2 rounded-lg border transition-colors ${on ? "bg-sky-500/80 border-sky-400 text-white" : "bg-white/8 border-white/12 text-white/60 hover:text-white"} disabled:opacity-60`}>
+                className={`text-[15px] px-3 py-2.5 rounded-lg border transition-colors ${on ? "bg-sky-500/80 border-sky-400 text-white" : "bg-slate-900/60 border-white/20 text-white/70 hover:text-white hover:border-white/35"} disabled:opacity-50`}>
                 {on ? "✓ " : ""}{f}
               </button>
             );
@@ -173,12 +205,12 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
         {cur.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {cur.map((f) => (
-              <label key={f} className="flex items-center gap-2 rounded-lg bg-white/5 border border-white/10 px-2.5 py-1.5">
+              <label key={f} className="flex items-center gap-2 rounded-lg bg-white/5 border border-white/15 px-2.5 py-2">
                 <span className="text-[13px] text-sky-200/90 shrink-0 whitespace-nowrap">▶ เริ่มผลิต {f}</span>
                 <input type="date" defaultValue={starts[f] ?? ""} disabled={!canWrite}
                   onBlur={(e) => e.target.value !== (starts[f] ?? "") && saveFactoryStart(s, f, e.target.value)}
                   onChange={(e) => e.target.value !== (starts[f] ?? "") && saveFactoryStart(s, f, e.target.value)}
-                  className="flex-1 min-w-0 bg-white/8 text-white text-[15px] px-2 py-1.5 rounded-md border border-white/12 focus:border-sky-300/60 outline-none disabled:opacity-60" />
+                  className="flex-1 min-w-0 bg-slate-900/70 text-white text-[15px] px-2.5 py-2 rounded-md border border-white/20 focus:border-sky-300/70 outline-none disabled:opacity-50" />
               </label>
             ))}
           </div>
@@ -193,15 +225,13 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
     return v && !opts.includes(v) ? [...opts, v] : opts;
   };
   const sel = (s: SetRow, f: string, opts: string[]) => (
-    <select defaultValue={s[f] ?? ""} disabled={!canWrite} onChange={(e) => save(s.id, f, e.target.value)} className={fieldCls}>
-      {withCurrent(opts, s[f]).map((o) => <option key={o} value={o}>{o || "—"}</option>)}
-    </select>
+    <SelectField value={s[f] ?? ""} disabled={!canWrite} onChange={(v) => save(s.id, f, v)} options={withCurrent(opts, s[f])} />
   );
   // สเปคกระจก — พิมพ์เอง หรือเลือกจากประวัติ (datalist)
   const glassSpec = (s: SetRow) => (
     <input list="glass-spec-history" defaultValue={s.glass_spec ?? ""} disabled={!canWrite} placeholder="พิมพ์ / เลือกจากประวัติ"
       onBlur={(e) => e.target.value !== String(s.glass_spec ?? "") && save(s.id, "glass_spec", e.target.value)}
-      className={fieldCls + " placeholder-white/30"} />
+      className={fieldCls + " placeholder-white/35"} />
   );
 
   // ช่องที่ "ช่างกดเอง" — โชว์ read-only + ใครกด/เมื่อไหร่ · กด "แก้" เพื่อ override (กันเขียนทับช่างโดยไม่ตั้งใจ)
@@ -210,11 +240,9 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
     const key = `${s.id}.${f}`;
     if (canWrite && editKeys[key]) {
       return (
-        <div className="flex items-center gap-1">
-          <select defaultValue={s[f] ?? ""} onChange={(e) => save(s.id, f, e.target.value)} className={fieldCls}>
-            {withCurrent(opts, s[f]).map((o) => <option key={o} value={o}>{o || "—"}</option>)}
-          </select>
-          <button type="button" onClick={() => setEditKeys((k) => ({ ...k, [key]: false }))} className="text-[12px] text-emerald-300 shrink-0 px-1">เสร็จ</button>
+        <div className="flex items-center gap-2">
+          <div className="flex-1"><SelectField value={s[f] ?? ""} onChange={(v) => save(s.id, f, v)} options={withCurrent(opts, s[f])} /></div>
+          <button type="button" onClick={() => setEditKeys((k) => ({ ...k, [key]: false }))} className="text-[13px] text-emerald-300 shrink-0 px-2 py-1.5 rounded hover:bg-emerald-500/10">เสร็จ</button>
         </div>
       );
     }
@@ -223,12 +251,12 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
     const by = s[byF] as string | null;
     const at = s[atF] as string | null;
     return (
-      <div className="w-full bg-white/5 rounded-lg border border-white/10 px-2 py-1.5">
+      <div className="w-full bg-slate-900/50 rounded-lg border border-white/20 px-3 py-2.5">
         <div className="flex items-center justify-between gap-1">
-          <span className={`text-[16px] ${done ? "text-emerald-200 font-medium" : "text-white/55"}`}>{val || "— ยังไม่กด —"}</span>
-          {canWrite && <button type="button" onClick={() => setEditKeys((k) => ({ ...k, [key]: true }))} className="text-[12px] text-sky-300/80 underline shrink-0">แก้</button>}
+          <span className={`text-[17px] ${done ? "text-emerald-300 font-medium" : "text-white/60"}`}>{val || "— ยังไม่กด —"}</span>
+          {canWrite && <button type="button" onClick={() => setEditKeys((k) => ({ ...k, [key]: true }))} className="text-[12px] text-sky-300/90 underline shrink-0 px-1 py-1">แก้</button>}
         </div>
-        {by && <div className="text-[11px] mt-0.5" style={{ color: "var(--t-low)" }}>โดย {by}{at ? ` · ${fmtWhen(at)}` : ""}</div>}
+        {by && <div className="text-[12px] mt-0.5 text-white/55">โดย {by}{at ? ` · ${fmtWhen(at)}` : ""}</div>}
       </div>
     );
   };
@@ -243,8 +271,8 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
         {canWrite && (
           <div className="flex items-center gap-2">
             <button onClick={pullFromQuote} disabled={busy} title="สร้างชุดจากข้อในใบเสนอราคา + เติมสเปคอัตโนมัติ"
-              className="focusable pressable inline-flex items-center gap-1 text-[14px] bg-white/10 hover:bg-white/20 text-sky-100 border border-sky-300/30 rounded-lg px-3 py-2 min-h-[38px] disabled:opacity-50">📄 ดึงจากใบเสนอ</button>
-            <button onClick={add} disabled={busy} className="focusable pressable inline-flex items-center gap-1 text-[14px] bg-sky-500/80 hover:bg-sky-400 text-white rounded-lg px-3 py-2 min-h-[38px] disabled:opacity-50"><Plus size={14} /> เพิ่มชุด</button>
+              className="focusable pressable inline-flex items-center gap-1 text-[14px] bg-white/10 hover:bg-white/20 text-sky-100 border border-sky-300/30 rounded-lg px-3 py-2 min-h-[44px] disabled:opacity-50">📄 ดึงจากใบเสนอ</button>
+            <button onClick={add} disabled={busy} className="focusable pressable inline-flex items-center gap-1 text-[14px] bg-sky-500/80 hover:bg-sky-400 text-white rounded-lg px-3 py-2 min-h-[44px] disabled:opacity-50"><Plus size={14} /> เพิ่มชุด</button>
           </div>
         )}
       </div>
@@ -268,16 +296,16 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
       )}
 
       {isLoading ? (
-        <div className="text-[13px] py-2" style={{ color: "var(--t-low)" }}>กำลังโหลด…</div>
+        <div className="text-[14px] py-2" style={{ color: "var(--t-mid)" }}>กำลังโหลด…</div>
       ) : sets.length === 0 ? (
-        <div className="text-[13px] py-2" style={{ color: "var(--t-low)" }}>ยังไม่มีชุดงาน — กด "เพิ่มชุด" เพื่อเริ่มกรอกแผนผลิต</div>
+        <div className="text-[14px] py-2" style={{ color: "var(--t-mid)" }}>ยังไม่มีชุดงาน — กด "เพิ่มชุด" เพื่อเริ่มกรอกแผนผลิต</div>
       ) : (
         <>
           {/* 📅 ใส่วันที่ทีเดียว → เติมทุกชุด (แก้รายชุดด้านล่างได้) */}
           {canWrite && (
-            <div className="mb-3 rounded-xl border border-sky-300/25 bg-sky-500/10 p-3">
-              <div className="text-[13px] text-sky-100 mb-2 font-medium">📅 ใส่วันที่ทีเดียว — เติมให้ทุกชุด <span className="text-sky-200/60 font-normal">(แก้รายชุดด้านล่างได้)</span></div>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            <div className="mb-4 rounded-xl border border-sky-300/30 bg-sky-500/[0.12] p-3.5">
+              <div className="text-[13px] text-sky-100 mb-2 font-medium">📅 ใส่วันที่ทีเดียว — เติมให้ทุกชุด <span className="text-sky-200/70 font-normal">(แก้รายชุดด้านล่างได้)</span></div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                 {([
                   ["measure_actual", "วัดจริง", "date"],
                   ["measurer_name", "คนวัด", "text"],
@@ -289,7 +317,7 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
                   const mixed = !cv && sets.some((s) => s[f]);
                   return (
                     <label key={f} className="block">
-                      <span className="block text-[13px] mb-1" style={{ color: "var(--t-low)" }}>{label}</span>
+                      <span className="block text-[13px] font-medium mb-1.5" style={{ color: "var(--t-mid)" }}>{label}</span>
                       <input key={f + cv} type={type} defaultValue={cv} placeholder={mixed ? "หลายค่า" : ""}
                         onBlur={(e) => e.target.value !== cv && fillAll(f, e.target.value)}
                         onChange={type === "date" ? (e) => e.target.value !== cv && fillAll(f, e.target.value) : undefined}
@@ -300,40 +328,60 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
               </div>
             </div>
           )}
-          <div className="space-y-3">
+          <div className="space-y-4">
           {sets.map((s) => (
-            <div key={s.id} className="rounded-xl border border-white/10 bg-white/5 p-3">
-              <div className="flex items-center gap-2 mb-2.5">
+            <div key={s.id} className="rounded-2xl border border-white/15 bg-white/[0.06] p-4 sm:p-5 shadow-lg shadow-black/10">
+              <div className="flex items-center gap-2 mb-3.5">
                 <input defaultValue={s.set_label ?? ""} disabled={!canWrite} placeholder="ชื่อชุด เช่น ชุด 1,4,5"
                   onBlur={(e) => e.target.value !== String(s.set_label ?? "") && save(s.id, "set_label", e.target.value)}
-                  className="flex-1 bg-transparent text-white text-[17px] font-semibold border-b border-white/15 focus:border-sky-300/60 outline-none px-1 py-1" />
-                {canWrite && <button onClick={() => del(s.id)} aria-label="ลบชุด" className="text-white/40 hover:text-rose-300 p-1"><X size={15} /></button>}
+                  className="flex-1 bg-transparent text-white text-[18px] font-semibold border-b border-white/20 focus:border-sky-300/70 outline-none px-1 py-1.5" />
+                {canWrite && <button onClick={() => del(s.id)} aria-label="ลบชุด" className="text-white/45 hover:text-rose-300 p-2.5 rounded-lg hover:bg-rose-500/10"><X size={16} /></button>}
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <F label="แบบถึงผลิต 👷 (ช่างกด)" onEditOpts={openOpts("design_received", "แบบถึงผลิต")}>{markRO(s, "design_received", "design_received_by", "design_received_at", valuesOf("design_received"))}</F>
-                <F label="วันวัดจริง">{date(s, "measure_actual")}</F>
-                <F label="คนวัด">{txt(s, "measurer_name")}</F>
-                <F label="โครง/โรงงาน" onEditOpts={openOpts("frame_status", "โครง/โรงงาน")}>{sel(s, "frame_status", valuesOf("frame_status"))}</F>
-                <div className="col-span-2"><F label="โรงงานผลิต (เลือกได้หลายโรง)">{factoryPick(s)}</F></div>
 
-                <F label="อุปกรณ์" onEditOpts={openOpts("mat_equipment", "อุปกรณ์")}>{sel(s, "mat_equipment", valuesOf("mat_equipment"))}</F>
-                <F label="อลู ปกติ" onEditOpts={openOpts("mat_alu_normal", "อลู ปกติ")}>{sel(s, "mat_alu_normal", valuesOf("mat_alu_normal"))}</F>
-                <F label="อลู อบสี" onEditOpts={openOpts("mat_alu_painted", "อลู อบสี")}>{sel(s, "mat_alu_painted", valuesOf("mat_alu_painted"))}</F>
-                <F label="QC ก่อนใส่กระจก 👷 (ช่างกด)" onEditOpts={openOpts("qc_before_glass", "QC ก่อนใส่กระจก")}>{markRO(s, "qc_before_glass", "qc_before_by", "qc_before_at", valuesOf("qc_before_glass"))}</F>
+              <div className="space-y-4">
+                <Group title="แบบ & วัด">
+                  <F label="แบบถึงผลิต 👷 (ช่างกด)" onEditOpts={openOpts("design_received", "แบบถึงผลิต")}>{markRO(s, "design_received", "design_received_by", "design_received_at", valuesOf("design_received"))}</F>
+                  <F label="วันวัดจริง">{date(s, "measure_actual")}</F>
+                  <F label="คนวัด">{txt(s, "measurer_name")}</F>
+                </Group>
 
-                <div className="col-span-2"><F label="สเปคกระจก">{glassSpec(s)}</F></div>
-                <F label="สั่งกระจก" onEditOpts={openOpts("glass_order", "สั่งกระจก")}>{sel(s, "glass_order", valuesOf("glass_order"))}</F>
-                <F label="ใส่กระจก 👷 (ช่างกด)" onEditOpts={openOpts("glass_installed", "ใส่กระจก")}>{markRO(s, "glass_installed", "glass_installed_by", "glass_installed_at", valuesOf("glass_installed"))}</F>
+                <Group title="โครง & โรงงาน">
+                  <F label="โครง/โรงงาน" onEditOpts={openOpts("frame_status", "โครง/โรงงาน")}>{sel(s, "frame_status", valuesOf("frame_status"))}</F>
+                  <div className="sm:col-span-1 lg:col-span-3"><F label="โรงงานผลิต (เลือกได้หลายโรง)">{factoryPick(s)}</F></div>
+                </Group>
 
-                <F label="มุ้ง" onEditOpts={openOpts("screen_type", "มุ้ง")}>{sel(s, "screen_type", valuesOf("screen_type"))}</F>
-                <F label="ใส่มุ้ง" onEditOpts={openOpts("screen_installed", "ใส่มุ้ง")}>{sel(s, "screen_installed", valuesOf("screen_installed"))}</F>
-                <F label="QC หลังใส่กระจก 👷 (ช่างกด)" onEditOpts={openOpts("qc_after_glass", "QC หลังใส่กระจก")}>{markRO(s, "qc_after_glass", "qc_after_by", "qc_after_at", valuesOf("qc_after_glass"))}</F>
-                <F label="ต้องผลิตเสร็จ">{date(s, "must_finish_date")}</F>
+                <Group title="วัสดุ & QC ก่อนใส่กระจก">
+                  <F label="อุปกรณ์" onEditOpts={openOpts("mat_equipment", "อุปกรณ์")}>{sel(s, "mat_equipment", valuesOf("mat_equipment"))}</F>
+                  <F label="อลู ปกติ" onEditOpts={openOpts("mat_alu_normal", "อลู ปกติ")}>{sel(s, "mat_alu_normal", valuesOf("mat_alu_normal"))}</F>
+                  <F label="อลู อบสี" onEditOpts={openOpts("mat_alu_painted", "อลู อบสี")}>{sel(s, "mat_alu_painted", valuesOf("mat_alu_painted"))}</F>
+                  <F label="QC ก่อนใส่กระจก 👷 (ช่างกด)" onEditOpts={openOpts("qc_before_glass", "QC ก่อนใส่กระจก")}>{markRO(s, "qc_before_glass", "qc_before_by", "qc_before_at", valuesOf("qc_before_glass"))}</F>
+                </Group>
 
-                <F label="ใส่กระจกเสร็จ">{date(s, "glass_done_date")}</F>
-                <F label="เสร็จจริง">{date(s, "actual_done_date")}</F>
-                <F label="วันติดตั้ง">{date(s, "install_date")}</F>
-                <div className="col-span-2 sm:col-span-4"><F label="หมายเหตุ">{area(s, "note")}</F></div>
+                <Group title="กระจก">
+                  <div className="sm:col-span-2"><F label="สเปคกระจก">{glassSpec(s)}</F></div>
+                  <F label="สั่งกระจก" onEditOpts={openOpts("glass_order", "สั่งกระจก")}>{sel(s, "glass_order", valuesOf("glass_order"))}</F>
+                  <F label="ใส่กระจก 👷 (ช่างกด)" onEditOpts={openOpts("glass_installed", "ใส่กระจก")}>{markRO(s, "glass_installed", "glass_installed_by", "glass_installed_at", valuesOf("glass_installed"))}</F>
+                </Group>
+
+                <Group title="มุ้ง & QC หลังใส่กระจก">
+                  <F label="มุ้ง" onEditOpts={openOpts("screen_type", "มุ้ง")}>{sel(s, "screen_type", valuesOf("screen_type"))}</F>
+                  <F label="ใส่มุ้ง" onEditOpts={openOpts("screen_installed", "ใส่มุ้ง")}>{sel(s, "screen_installed", valuesOf("screen_installed"))}</F>
+                  {/* มุ้งอันที่ 2 (0119) — 1 ชุดใส่มุ้งได้ 2 แบบ เช่น มุ้งจีบ + มุ้ง JR · เสริมเท่านั้น ไม่ผูก gate ส่งติดตั้ง */}
+                  <F label="มุ้ง (2)">{sel(s, "screen_type_2", valuesOf("screen_type"))}</F>
+                  <F label="ใส่มุ้ง (2)">{sel(s, "screen_installed_2", valuesOf("screen_installed"))}</F>
+                  <F label="QC หลังใส่กระจก 👷 (ช่างกด)" onEditOpts={openOpts("qc_after_glass", "QC หลังใส่กระจก")}>{markRO(s, "qc_after_glass", "qc_after_by", "qc_after_at", valuesOf("qc_after_glass"))}</F>
+                </Group>
+
+                <Group title="วันที่">
+                  <F label="ต้องผลิตเสร็จ">{date(s, "must_finish_date")}</F>
+                  <F label="ใส่กระจกเสร็จ">{date(s, "glass_done_date")}</F>
+                  <F label="เสร็จจริง">{date(s, "actual_done_date")}</F>
+                  <F label="วันติดตั้ง">{date(s, "install_date")}</F>
+                </Group>
+
+                <Group title="หมายเหตุ">
+                  <div className="col-span-full"><F label="หมายเหตุ">{area(s, "note")}</F></div>
+                </Group>
               </div>
             </div>
           ))}

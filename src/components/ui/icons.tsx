@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Briefcase, Factory, Wrench, TriangleAlert,
   Wallet, Users, Settings, Search, Plus, X, LogOut, Bell, Menu,
-  Lock, Download, ChevronRight, Clock, Check, ShieldCheck,
+  Lock, Download, ChevronRight, ChevronDown, Clock, Check, ShieldCheck,
   PencilRuler, ClipboardList, CalendarDays, Trash2,
   Package, ExternalLink, PackageCheck, FileText,
   FileCheck, FilePlus, Banknote, Phone, Pencil,
@@ -18,7 +18,7 @@ export const NavIcons: Record<string, LucideIcon> = {
 
 export {
   Search, Plus, X, LogOut, Bell, Menu, Lock, Download,
-  ChevronRight, Clock, Check, ShieldCheck, TriangleAlert,
+  ChevronRight, ChevronDown, Clock, Check, ShieldCheck, TriangleAlert,
   CalendarDays, Trash2, Package, ExternalLink, PackageCheck,
   ClipboardList, FileText, FileCheck, FilePlus, Banknote, Phone, Pencil,
   Factory, Wrench,
