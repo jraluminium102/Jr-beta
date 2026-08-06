@@ -20,6 +20,7 @@ const DOC_NAV: NavItem[] = [
   { href: "/quotation-checklist", icon: "clipboard", label: "ใบเสนอ · เช็คลิสต์" },
   { href: "/calculator", icon: "calculator", label: "เครื่องคิดราคา" },
   { href: "/calculator40", icon: "calculator", label: "คิดราคา 4.0" },
+  { href: "/floor-works", icon: "ruler", label: "คิดราคางานพื้น" },
   { href: "/billing-notes", icon: "banknote", label: "ใบวางบิล" },
   { href: "/receipts", icon: "receipt", label: "ใบเสร็จ/กำกับภาษี" },
   { href: "/warranties", icon: "shield", label: "ใบรับประกัน" },
@@ -93,6 +94,7 @@ export default function Shell({ profile, children }: { profile: Profile; childre
     if (isStore)                              return STORE_MENU.has(n.href);
     if (n.href === "/queue")                  return can(role, "queue",      "read");
     if (n.href === "/quotation-checklist")    return can(role, "jobs",       "write");
+    if (n.href === "/floor-works")            return can(role, "jobs",       "read");
     if (n.href === "/cutlist")                return can(role, "stock",      "read");
     if (n.href === "/stock/moves")            return can(role, "stock",      "read");
     if (n.href === "/stats")                  return can(role, "finance",    "read");
