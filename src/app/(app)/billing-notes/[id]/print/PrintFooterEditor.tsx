@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { baht, footerSnapshot } from "@/lib/money";
 import type { InstallmentFooter } from "@/lib/types";
+import { FooterDisplayRows } from "./FooterDisplayRows";
 
 // footer ใบวางบิล แก้ inline บน PDF — เครื่องคิดจริง: กรอก subtotal + %ส่วนลด + VAT + %หัก ณ ที่จ่าย
 // → คิดยอด/สุทธิ ให้ (computeTotals) · display-only (ไม่ re-split งวด แก้ได้แม้จ่ายแล้ว)
@@ -120,10 +121,7 @@ export default function PrintFooterEditor({
   const v = current ?? def;
   return (
     <>
-      <tr><td className={cellL}>รวมเป็นเงิน{suffix}</td><td className={cellR}>{baht(v.subtotal)}</td></tr>
-      {v.discount_amt > 0 && <tr><td className={cellL}>ส่วนลด {v.discount_pct > 0 ? `${v.discount_pct}%` : ""}</td><td className={`${cellR} text-red-700`}>-{baht(v.discount_amt)}</td></tr>}
-      {v.vat_amt > 0 && <tr><td className={cellL}>ภาษีมูลค่าเพิ่ม {v.vat_rate}%</td><td className={cellR}>{baht(v.vat_amt)}</td></tr>}
-      {v.wht_amt > 0 && <tr><td className={cellL}>หักภาษี ณ ที่จ่าย {v.wht_rate}%</td><td className={`${cellR} text-red-700`}>-{baht(v.wht_amt)}</td></tr>}
+      <FooterDisplayRows v={v} suffix={suffix} />
       <tr className="no-print"><td colSpan={2} className="text-right pt-1">
         <button type="button" onClick={() => setEditing(true)} className="text-xs text-brand-dark/70 hover:text-brand-dark inline-flex items-center gap-1">
           ✎ แก้ footer{current ? " (แก้แล้ว)" : ""}
