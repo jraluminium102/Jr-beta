@@ -47,7 +47,7 @@ export default async function RevisionPrintPage({ params }: { params: { id: stri
 
       <div
         className="qdoc-a4 mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0"
-        style={{ width: "210mm", minHeight: "297mm", padding: "16mm" }}
+        style={{ width: "210mm", minHeight: "297mm", padding: "16mm", boxSizing: "border-box" }}
       >
         <QuotationDoc q={q} condWork={condWork} condQuote={condQuote} />
       </div>

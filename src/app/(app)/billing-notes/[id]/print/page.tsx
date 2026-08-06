@@ -81,7 +81,7 @@ export default async function BillingPrintPage({
       )}
 
       {/* กระดาษ A4 */}
-      <div className="mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0" style={{ width: "210mm", minHeight: "297mm", padding: "16mm" }}>
+      <div className="mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0" style={{ width: "210mm", minHeight: "297mm", padding: "16mm", boxSizing: "border-box" }}>
         <PrintLetterhead
           docTitle={isSingle
             ? `ใบวางบิล/ใบแจ้งหนี้ (งวดที่ ${selSeq})`

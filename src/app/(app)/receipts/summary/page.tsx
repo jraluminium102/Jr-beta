@@ -80,7 +80,7 @@ export default async function ReceiptSummaryPage({
       </div>
 
       {/* กระดาษ A4 */}
-      <div className="mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0" style={{ width: "210mm", minHeight: "297mm", padding: "16mm" }}>
+      <div className="mx-auto my-6 bg-white shadow-lg print:shadow-none print:my-0" style={{ width: "210mm", minHeight: "297mm", padding: "16mm", boxSizing: "border-box" }}>
         <div className="flex justify-between items-start" style={{ gap: 24, marginBottom: 16 }}>
           <div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
