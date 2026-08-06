@@ -38,6 +38,7 @@ const OMS_NAV: Record<string, NavItem> = {
   production:      { href: "/production", icon: "factory", label: "ผลิต" },
   prodqueue:       { href: "/production-schedule", icon: "calendar", label: "ตารางผลิต (ช่าง)" },
   measure_schedule:{ href: "/measure-schedule", icon: "ruler", label: "นัดวัดจริง" },
+  floor_queue:     { href: "/floor-queue", icon: "calendar", label: "จัดคิวงานพื้น" },
   designer:        { href: "/designer", icon: "ruler", label: "งานเขียนแบบ" },
   installation:    { href: "/installation", icon: "wrench", label: "ติดตั้ง" },
   finance:         { href: "/finance", icon: "banknote", label: "การเงิน" },
