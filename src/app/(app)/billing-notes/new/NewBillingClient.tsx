@@ -8,6 +8,7 @@ import DateField from "@/components/ui/DateField";
 import { baht, suggestInstallments, computeTotals, planInstallments } from "@/lib/money";
 import { todayISO } from "@/lib/date-guard";
 import type { AvailableQuotation } from "./page";
+import ExternalBillingForm from "./ExternalBillingForm";
 
 const STATUS_LABEL: Record<string, string> = {
   draft: "ฉบับร่าง",
@@ -23,6 +24,8 @@ export default function NewBillingClient({
   preselectId?: number | null;
 }) {
   const router = useRouter();
+  // quote = ออกจากใบเสนอ (ปกติ) · external = ลูกค้านอกระบบ พิมพ์เอง ผูกใบเสนอทีหลัง (0124)
+  const [mode, setMode] = useState<"quote" | "external">("quote");
   const [quotationId, setQuotationId] = useState<number | "">(
     preselectId ?? quotations[0]?.id ?? ""
   );
@@ -139,9 +142,25 @@ export default function NewBillingClient({
         <span className="text-xs font-normal text-ink-3">(รหัสจะออกอัตโนมัติเมื่อบันทึก)</span>
       </h1>
 
-      {quotations.length === 0 ? (
+      {/* เลือกที่มาของบิล — ปกติออกจากใบเสนอ · บางเคสต้องวางบิลก่อนมีใบเสนอ (พิมพ์ลูกค้าเอง ผูกทีหลัง) */}
+      <div className="flex flex-wrap gap-2">
+        {([["quote", "จากใบเสนอราคา"], ["external", "ลูกค้านอกระบบ (ยังไม่มีใบเสนอ)"]] as const).map(([k, label]) => (
+          <button
+            key={k} type="button" onClick={() => setMode(k)} aria-pressed={mode === k}
+            className={"press rounded-xl px-4 py-2 text-sm font-semibold transition " +
+              (mode === k ? "bg-brand text-white shadow-brand" : "glass-soft text-ink-2")}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {mode === "external" ? (
+        <ExternalBillingForm />
+      ) : quotations.length === 0 ? (
         <Card className="p-6 text-center text-ink-3">
           ยังไม่มีใบเสนอราคาที่พร้อมวางบิล — ต้องสร้างใบเสนอราคาและยังไม่มีบิลที่ active
+          <span className="block mt-2 text-sm">หรือกด <b>“ลูกค้านอกระบบ”</b> ด้านบนเพื่อวางบิลก่อน แล้วผูกใบเสนอทีหลัง</span>
         </Card>
       ) : (
         <div className="grid lg:grid-cols-3 gap-4">

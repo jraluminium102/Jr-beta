@@ -161,8 +161,13 @@ export async function applyInstallmentPayment(
   return {};
 }
 
-/** sync หรือ upsert finance_entry เส้น B */
-async function syncFinanceEntry(
+/**
+ * sync หรือ upsert finance_entry เส้น B
+ * export ไว้ให้ "ผูกใบวางบิลนอกระบบเข้าระบบ" (0124) เติมเงินย้อนหลังได้ —
+ * งวดที่รับเงินไปแล้วตอนยังไม่มี job_id จะถูกข้าม sync (บรรทัด `if (bn.job_id …)` ด้านบน)
+ * พอผูกงานทีหลังต้องเรียกตัวนี้ย้อนทุกงวดที่จ่ายแล้ว ไม่งั้นเงินไม่เข้าบัญชี/ค้างรับ
+ */
+export async function syncFinanceEntry(
   supabase: SupabaseClient,
   opts: {
     jobId: string;

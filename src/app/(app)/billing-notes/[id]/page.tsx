@@ -8,6 +8,7 @@ import { baht, isNoVatBill, type BillVatSource } from "@/lib/money";
 import BillingActions from "./BillingActions";
 import { VoidBillingNoteButton, InstallmentEditor, EditBillingTotalButton, EditBillingBreakdownButton, IssueReceiptButton, EditBillingStatusButton, EditBillingDateButton } from "./BillingFinanceActions";
 import { EditDocHeaderModal } from "@/components/finance/EditDocHeaderModal";
+import LinkToSystemPanel, { type LinkableQuotation } from "./LinkToSystemPanel";
 import { BILLING_STATUS_LABEL, type BillingNote, type BillingStatus } from "@/lib/types";
 import { can } from "@/lib/rbac";
 import type { Role } from "@/lib/database.types";
@@ -63,6 +64,27 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
       };
     }
   }
+  // ── ใบวางบิล "นอกระบบ" (0124): ออกก่อนมีใบเสนอ → ยังไม่มี quotation_id
+  //    โชว์แผงผูกเข้าระบบ + ลิสต์ใบเสนอที่ผูกได้ (ไม่ cancelled · ยังไม่มีบิล active ใบอื่น)
+  //    ⚠ ใบเก่าก่อนมีฟีเจอร์นี้ก็ quotation_id = null ได้ (ใบ import) — เกณฑ์เดียวกันคือ "ยังไม่ผูก" จึงเสนอให้ผูกได้เหมือนกัน
+  //    ยกเว้นใบค่าประเมิน (doc_kind='assess') ที่ตั้งใจไม่ผูกงาน
+  const isAssess = String((bn as unknown as { doc_kind?: string }).doc_kind ?? "work") === "assess";
+  const unlinked = !bn.quotation_id && !isAssess && !isCancelled;
+  let linkable: LinkableQuotation[] = [];
+  if (unlinked && writable) {
+    const [{ data: qs }, { data: usedRows }] = await Promise.all([
+      supabase.from("quotations")
+        .select("id, code, net, job_id, customer_snapshot")
+        .neq("status", "cancelled")
+        .order("created_at", { ascending: false })
+        .limit(300),
+      supabase.from("billing_notes")
+        .select("quotation_id").neq("status", "cancelled").not("quotation_id", "is", null),
+    ]);
+    const used = new Set(((usedRows ?? []) as { quotation_id: number | null }[]).map((r) => r.quotation_id));
+    linkable = ((qs ?? []) as LinkableQuotation[]).filter((q) => !used.has(q.id));
+  }
+
   // ค่าเริ่มต้นในฟอร์มแก้: ถ้าบิลเคยแก้ footer แล้ว (มี breakdown จริง) ใช้ค่าบิล · ไม่งั้นใช้ค่าจากใบเสนอ
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const bnAny = bn as any;
@@ -150,6 +172,10 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
         <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-3 text-sm text-red-800">
           <b>ใบวางบิลนี้ถูกยกเลิกแล้ว</b> — ออกใบวางบิลใหม่จากใบเสนอราคาได้หากต้องการ
         </div>
+      )}
+
+      {unlinked && writable && (
+        <LinkToSystemPanel billingNoteId={bn.id} billTotal={Number(bn.total) || 0} quotations={linkable} />
       )}
 
       <Card className="p-6">

@@ -21,7 +21,7 @@ export default async function BillingNotesPage({ searchParams }: { searchParams?
   const supabase = createClient();
   let bq = supabase
     .from("billing_notes")
-    .select("id, code, customer_snapshot, issue_date, total, status, created_at")
+    .select("id, code, customer_snapshot, issue_date, total, status, created_at, quotation_id, doc_kind")
     .order("created_at", { ascending: false });
   if (cutoff) bq = bq.gte("issue_date", cutoff);
   const { data } = await bq;
@@ -29,7 +29,12 @@ export default async function BillingNotesPage({ searchParams }: { searchParams?
   const rows = (data ?? []) as {
     id: number; code: string; customer_snapshot: { name: string; job: string };
     issue_date: string; total: number; status: BillingStatus;
+    quotation_id: number | null; doc_kind?: string | null;
   }[];
+
+  // ป้าย "นอกระบบ" = ยังไม่ผูกใบเสนอ · ไม่ใช่ใบค่าประเมิน (assess ตั้งใจไม่ผูกงาน) · ไม่ใช่ใบยกเลิก
+  const isExternal = (r: { quotation_id: number | null; doc_kind?: string | null; status: BillingStatus }) =>
+    !r.quotation_id && String(r.doc_kind ?? "work") !== "assess" && r.status !== "cancelled";
 
   return (
     <div className="space-y-5">
@@ -71,7 +76,10 @@ export default async function BillingNotesPage({ searchParams }: { searchParams?
                 <Link key={r.id} href={`/billing-notes/${r.id}`} className="block glass-soft rounded-xl p-3.5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-mono font-semibold text-brand-dark">{r.code}</span>
-                    <Badge tone={STATUS_TONE[r.status]} dot>{BILLING_STATUS_LABEL[r.status]}</Badge>
+                    <span className="flex items-center gap-1.5">
+                      {isExternal(r) && <Badge tone="amber">นอกระบบ</Badge>}
+                      <Badge tone={STATUS_TONE[r.status]} dot>{BILLING_STATUS_LABEL[r.status]}</Badge>
+                    </span>
                   </div>
                   <div className="font-medium mt-1">{r.customer_snapshot?.name}</div>
                   {r.customer_snapshot?.job && <div className="text-xs text-ink-3">{r.customer_snapshot.job}</div>}
@@ -99,6 +107,7 @@ export default async function BillingNotesPage({ searchParams }: { searchParams?
                     <tr key={r.id} className="border-t border-gray-200/70 hover:bg-white/50">
                       <td className="py-3">
                         <Link href={`/billing-notes/${r.id}`} className="font-mono font-semibold text-brand-dark hover:underline">{r.code}</Link>
+                        {isExternal(r) && <div className="mt-0.5"><Badge tone="amber">นอกระบบ</Badge></div>}
                       </td>
                       <td>
                         <div className="font-medium">{r.customer_snapshot?.name}</div>
