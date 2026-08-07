@@ -159,6 +159,21 @@ eq("เคส 5: entries ว่าง → \"\"", buildLineExport([]), "");
   eq("เคส 8: หลายคนวันเดียว หัวเดียว เรียง sort_order", buildLineExport(entries), want);
 }
 
+// ── เคส 10: scheduled มี extra_note → โชว์ในวงเล็บ ตามด้วยสถานะ ──
+{
+  const entries = [
+    { customer_name: "ศุภธัช", work_desc: "ต่องานเฟส2ก่อนJRเข้า", extra_note: "มี3เฟส", duration_note: "",
+      scheduled_date: "2026-09-01", start_time: "09:00", status: "wait_cf_jr", bucket: "scheduled", kind: "work", sort_order: 0 },
+  ];
+  const want = [
+    "☀️🌤️ อัพเดทคิวเดือนกันยายน 🌤️✨",
+    "",
+    "🔴 วันที่ 1 กันยายน 2569 , 9.00 น.",
+    "- คุณศุภธัช : ต่องานเฟส2ก่อนJRเข้า (มี3เฟส) (รอCFJR)",
+  ].join("\n");
+  eq("เคส 10: scheduled extra_note + สถานะ", buildLineExport(entries), want);
+}
+
 // ── เคส 9: วันเดียวกัน สถานะต่างกัน (confirmed + รอCF) → หัวเดียว สถานะต่อท้ายรายคน ──
 {
   const entries = [

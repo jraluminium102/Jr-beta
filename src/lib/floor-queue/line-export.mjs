@@ -50,12 +50,13 @@ function nameWithPrefix(name) {
   return n.startsWith("คุณ") ? n : `คุณ${n}`;
 }
 
-/** บรรทัดคนในบล็อกวันที่ (bucket=scheduled) — สถานะ (รอCF)/(รอCFJR) ต่อท้ายรายคน · ไม่มีงาน = ไม่ขึ้น " : " ลอย */
+/** บรรทัดคนในบล็อกวันที่ (bucket=scheduled) — งาน (ระยะเวลา) (โน้ต) สถานะ · ไม่มีงาน = ไม่ขึ้น " : " ลอย */
 function scheduledPersonLine(e) {
   const work = e.work_desc ? ` : ${e.work_desc}` : "";
   const dur = e.duration_note ? ` (${e.duration_note})` : "";
+  const extra = e.extra_note ? ` (${e.extra_note})` : "";
   const st = STATUS_SUFFIX[e.status] ?? "";
-  return `- ${nameWithPrefix(e.customer_name)}${work}${dur}${st}`;
+  return `- ${nameWithPrefix(e.customer_name)}${work}${dur}${extra}${st}`;
 }
 
 /** บรรทัดคนในถังท้าย (after_jr / deposit_wait) */
