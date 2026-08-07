@@ -11,11 +11,13 @@
  */
 import {
   planFloor, layoutAxis, RATE, pileType, suggest, draftItems, sumItems, groupItems,
-  quoteFileName, groupNames, addItemToGroup, MIN_SPAN, MAX_SPAN,
+  quoteFileName, groupNames, addItemToGroup, isExistingPile, PILE_TYPES,
+  MIN_SPAN, MAX_SPAN,
 } from "../src/lib/floor-calc/engine.mjs";
 
 let failed = 0;
 const bad = (msg) => { failed++; console.log("  ❌ " + msg); };
+const ok  = (msg) => console.log("  ✅ " + msg);
 
 // ═══ ① ใบตรวจขนาดทดสอบ 10 เคส ═══
 console.log("═══ ① ใบตรวจขนาดทดสอบ 10 เคส (ตรวจขนาดทดสอบ_เสาเข็ม_JR.pdf) ═══");
@@ -234,6 +236,51 @@ console.log("\n═══ ⑨ เพิ่มรายการลงหมวด
   // ห้ามแก้ array เดิม (React state ต้องเป็นชุดใหม่เสมอ)
   if (base.length === 3) console.log("  ✅ ไม่แก้ array เดิม (คืนชุดใหม่)");
   else bad("addItemToGroup ไปแก้ array เดิม");
+}
+
+// ═══ ⑩ เคส "ลูกค้าลงเข็มไว้แล้ว" (เจ้าของสั่ง 6 ส.ค.69) ═══
+//    ไม่คิดค่าตอกเข็ม · เหลือค่าตัดหัวเข็ม 2,000/ต้น · ที่เหลือ (ฟุตติ้ง/คาน/พื้น) เหมือนเดิมเป๊ะ
+console.log("\n═══ ⑩ ใช้เข็มเดิมของลูกค้า — ไม่ตอกเพิ่ม มีแต่ค่าตัดหัวเข็ม ═══");
+{
+  const plan = planFloor(3, 6);           // 3×6 ม. → เข็ม 4 ต้น
+  const normal = draftItems(plan, "i18");
+  const reuse = draftItems(plan, "existing");
+
+  if (isExistingPile("existing") && !isExistingPile("i18")) ok("แยกเคสเข็มเดิมออกจากเข็มปกติได้");
+  else bad("isExistingPile ไม่ถูก");
+
+  // ต้องไม่มีบรรทัดค่าตอกเข็ม
+  const hasDrive = reuse.some((it) => /งานตอกเข็ม/.test(it.name));
+  if (!hasDrive) ok("ไม่มีบรรทัด “งานตอกเข็ม” บนใบ");
+  else bad("ยังมีบรรทัดตอกเข็มอยู่");
+  if (normal.some((it) => /งานตอกเข็ม/.test(it.name))) ok("เคสปกติยังมีบรรทัดตอกเข็มเหมือนเดิม");
+  else bad("เคสปกติบรรทัดตอกเข็มหาย");
+
+  // ค่าตัดหัวเข็ม = 2,000 × จำนวนเข็ม
+  const cut = reuse.find((it) => /ตัดหัวเข็ม/.test(it.name));
+  const wantCut = plan.piles * RATE.dig;
+  if (cut && cut.line_total === wantCut && RATE.dig === 2000) {
+    ok(`ค่าตัดหัวเข็ม ${plan.piles} ต้น × 2,000 = ${wantCut.toLocaleString()}`);
+  } else bad(`ค่าตัดหัวเข็มเพี้ยน: ${cut?.line_total} (ต้อง ${wantCut})`);
+  if (/ลูกค้าลงเข็มไว้แล้ว/.test(cut?.name ?? "")) ok("ชื่อรายการบอกชัดว่าเป็นเข็มเดิม");
+  else bad("ชื่อรายการไม่ได้ระบุว่าเป็นเข็มเดิม");
+
+  // ที่เหลือต้องเท่าเคสปกติทุกบาท
+  const rest = (list) => list.filter((it) => !/งานตอกเข็ม|ตัดหัวเข็ม/.test(it.name));
+  const sameCount = rest(normal).length === rest(reuse).length;
+  const sameSum = sumItems(rest(normal)) === sumItems(rest(reuse));
+  if (sameCount && sameSum) ok(`ฟุตติ้ง/คาน/ทราย/พื้น/กระเบื้อง เท่าเดิมทุกบาท (${sumItems(rest(reuse)).toLocaleString()})`);
+  else bad(`ส่วนที่เหลือไม่ตรง: ${rest(normal).length}/${rest(reuse).length} รายการ · ${sumItems(rest(normal))} vs ${sumItems(rest(reuse))}`);
+
+  // ส่วนต่างทั้งใบ = ค่าตอกเข็มที่หายไปพอดี
+  const diff = sumItems(normal) - sumItems(reuse);
+  const wantDiff = plan.piles * pileType("i18").price;
+  if (diff === wantDiff) ok(`ถูกกว่าเคสตอกใหม่ ${diff.toLocaleString()} = ค่าตอกเข็ม ${plan.piles} × 11,000 พอดี`);
+  else bad(`ส่วนต่างเพี้ยน: ${diff} (ต้อง ${wantDiff})`);
+
+  // ต้องมีในลิสต์ให้เลือก
+  if (PILE_TYPES.some((p) => p.key === "existing")) ok("โผล่ในตัวเลือกชนิดเข็ม");
+  else bad("ไม่มีในตัวเลือกชนิดเข็ม");
 }
 
 console.log(`\n═══ สรุป: ${failed === 0 ? "✅ ผ่านทั้งหมด" : `❌ ไม่ผ่าน ${failed} ข้อ`} ═══`);

@@ -37,9 +37,15 @@ export const PILE_TYPES = [
   { key: "i22", label: "ไมโครไพล์ I22", price: 12000, note: "บ้าน 2 ชั้น" },
   { key: "hex", label: "เข็มหกเหลี่ยม", price: 1200, note: "งานเบา · รับถังน้ำ/ทางเดิน" },
   { key: "steel", label: "เข็มเหล็ก", price: 30000, note: "" },
+  // ลูกค้าลงเข็มไว้เองแล้ว (เจ้าของสั่ง 6 ส.ค.69) — ไม่ตอกเพิ่ม เหลือแค่ค่าตัดหัวเข็ม 2,000/ต้น
+  // (= RATE.dig เท่าเดิม) · ฟุตติ้ง/คาน/พื้น คิดเหมือนทุกเคส
+  { key: "existing", label: "ใช้เข็มเดิมของลูกค้า", price: 0, note: "ไม่ตอกเพิ่ม · คิดค่าตัดหัวเข็ม 2,000/ต้น", existing: true },
 ];
 
 export const pileType = (key) => PILE_TYPES.find((p) => p.key === key) ?? PILE_TYPES[0];
+
+/** เคส "ลูกค้ามีเข็มอยู่แล้ว" — ไม่มีบรรทัดค่าตอกเข็มบนใบ */
+export const isExistingPile = (key) => !!pileType(key).existing;
 
 export const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
 
@@ -146,9 +152,16 @@ const mk = (name, qty, unit, unitPrice, source, material = null, labor = null) =
 export function draftItems(plan, pileKey, opts) {
   const pile = pileType(pileKey);
   const o = { sand: true, floor: true, tile: true, ...(opts ?? {}) };
+  const existing = !!pile.existing;
   const out = [
-    mk(`งานตอกเข็ม${pile.label}`, plan.piles, "ต้น", pile.price, "auto", pile.price, null),
-    mk(`งานขุดหลุมตัดหัวเข็ม ${plan.piles} หลุม`, 1, "งาน", plan.piles * RATE.dig, "auto", null, plan.piles * RATE.dig),
+    // ลูกค้าลงเข็มไว้เองแล้ว → ไม่มีบรรทัด "ค่าตอกเข็ม" (ใส่บรรทัด 0 บาทบนใบดูแปลก)
+    ...(existing ? [] : [mk(`งานตอกเข็ม${pile.label}`, plan.piles, "ต้น", pile.price, "auto", pile.price, null)]),
+    mk(
+      existing
+        ? `งานขุดหลุมตัดหัวเข็มเดิม ${plan.piles} ต้น (ลูกค้าลงเข็มไว้แล้ว)`
+        : `งานขุดหลุมตัดหัวเข็ม ${plan.piles} หลุม`,
+      1, "งาน", plan.piles * RATE.dig, "auto", null, plan.piles * RATE.dig,
+    ),
     mk(
       `งานผูกเหล็กเข้าแบบเทฟุตติ้ง ขนาด 50×50×50 ซม. ใช้เหล็ก DB12 mm. ${plan.piles} หลุม ใช้ปูนคอนกรีตกำลังอัด 280 ksc`,
       1, "งาน", plan.piles * RATE.footing, "auto", null, plan.piles * RATE.footing,

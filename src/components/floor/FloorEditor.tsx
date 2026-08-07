@@ -11,7 +11,7 @@ import ImportQuoteButton from "./ImportQuoteButton";
 import { FloorQuoteSheet } from "./FloorQuoteSheet";
 import { fixThai } from "@/lib/floor-calc/thai-fix";
 import {
-  planFloor, draftItems, quickAdds, quoteFileName, groupNames, addItemToGroup,
+  planFloor, draftItems, quickAdds, quoteFileName, groupNames, addItemToGroup, isExistingPile,
   PILE_TYPES, DEFAULT_CONTRACTOR,
 } from "@/lib/floor-calc/engine.mjs";
 
@@ -220,9 +220,9 @@ export default function FloorEditor({
               <span className="text-xs text-ink-3">ชนิดเข็ม</span>
               <select value={pileKey} onChange={(e) => setPileKey(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2">
-                {PILE_TYPES.map((p: { key: string; label: string; price: number; note?: string }) => (
+                {PILE_TYPES.map((p: { key: string; label: string; price: number; note?: string; existing?: boolean }) => (
                   <option key={p.key} value={p.key}>
-                    {p.label} · {baht(p.price)}{p.note ? ` (${p.note})` : ""}
+                    {p.label}{p.existing ? "" : ` · ${baht(p.price)}`}{p.note ? ` (${p.note})` : ""}
                   </option>
                 ))}
               </select>
@@ -245,6 +245,16 @@ export default function FloorEditor({
             {plan.tooTight && (
               <div className="rounded-lg bg-amber-50 border border-amber-300 px-3 py-2 text-xs text-amber-900">
                 ด้านแคบกว่า 1 ม. — วางเข็มให้ห่างขั้นต่ำ 1 ม. ไม่ได้ ตรวจหน้างานก่อนใช้ราคานี้
+              </div>
+            )}
+
+            {/* เข็มเดิม: จำนวนที่ระบบคิดคือ "ถ้าลงใหม่จะต้องใช้กี่ต้น" ไม่ใช่ของที่มีจริงหน้างาน */}
+            {isExistingPile(pileKey) && (
+              <div className="rounded-lg bg-sky-50 border border-sky-300 px-3 py-2 text-xs text-sky-900">
+                ไม่คิดค่าตอกเข็ม — มีแต่ <b>ค่าตัดหัวเข็ม 2,000/ต้น</b> · ฟุตติ้ง/คาน/พื้น คิดเหมือนเดิม
+                <span className="block mt-0.5 text-sky-800">
+                  ระบบเดาจำนวนเข็มจากพื้นที่ให้ ({plan.piles} ต้น) — <b>นับของจริงหน้างานแล้วแก้จำนวนบนใบ</b>ได้เลย
+                </span>
               </div>
             )}
 
