@@ -35,6 +35,8 @@ import { computeCost, ceil100, CEIL_RATE } from "@/lib/calculator40/engine.mjs";
 import { PRODUCTS } from "@/lib/calculator40/products.mjs";
 // @ts-expect-error — mosquito helper เป็น ESM JS ล้วน
 import { computeMosquitoR4, mosquitoTypeLabel } from "@/lib/calculator40/mosquito.mjs";
+// ข้อความรายด้านที่ไปขึ้นใบเสนอ + ตัวช่วยประตู/หน้าต่าง — แหล่งเดียว เทสได้ที่ scripts/verify-room-desc.mjs
+import { addonSummary, paneUse, paneSill, sideDescQuote, SILL_OPTS, type PaneUse } from "@/lib/calculator40/room-desc";
 // @ts-expect-error — roof-zip helper เป็น ESM JS ล้วน
 import { computeRoofZipR4, isRoofZipProd } from "@/lib/calculator40/roof-zip.mjs";
 import { withUniversalAddons } from "@/lib/calculator40/universal-addons";
@@ -87,6 +89,8 @@ type Pane = {
   addons: Record<string, any>; // per-pane option เต็ม (มือจับ/ล็อค/ธรณี/มุ้ง/ครอบวงกบ ฯลฯ) — ตรง shape ที่ AddonsSection ใช้
   colorIdx?: string; // สีอลูเฟรมต่อบาน override ("" = ตามห้อง) — ใช้ colorKey ของ pb.BAKE
   glassOvr?: string; // กระจกต่อบาน override ("" = ตามห้อง)
+  use?: PaneUse;     // ประตู/หน้าต่าง — คุมคำขึ้นต้นในใบเสนอ (ไม่ตั้ง = เดาจากรุ่น/ความสูง ดู paneUse)
+  sill?: string;     // พื้นล่างของประตู (รางล่าง/มีธรณี/ไม่มีธรณี) — label เท่านั้น ไม่กระทบราคา
 };
 
 // ช่อง (column) = ตำแหน่งซ้าย→ขวา · pcs = บานซ้อนบน→ล่างในช่องนั้น (2 มิติ เหมือน R3.9 G6R)
@@ -134,44 +138,6 @@ const COLOR_LABEL: Record<string, string> = { white: "อบขาว/ดำ", s
 
 function L(i: number) {
   return String.fromCharCode(65 + i);
-}
-
-// ป้ายชื่อ addon (id → ไทย) สำหรับสรุปลงใบเสนอราคา
-const ADDON_LABELS: Record<string, string> = {
-  mosquito: "มุ้ง", grid: "คาดตาราง", cmech: "มือจับ CMECH", stainless: "สแตนเลส",
-  digihandle: "มือจับดิจิตอล", digiNc: "ดิจิตอล", frame_wrap: "ครอบวงกบ", drop_floor: "ดรอปพื้น",
-  demolish: "รื้อของเดิม", closer: "โช้คอัพ", thresh: "ธรณี", lock: "ชุดล็อค", handle: "มือจับ",
-  solid_panel: "แผ่นทึบ", slide_auto: "ระบบออโต้", louver: "เกล็ด",
-  // ของเสริมหลังคา
-  roof_pole: "เสา", truss_beam: "คานรับ", roof_eave: "ครอบชายคา", gutter: "รางน้ำ",
-  chain_drain: "โซ่ระบายน้ำ", pipe_cover: "ท่อน้ำทิ้ง", gutter_cover: "ตะแกรงกันใบไม้",
-  beam_cover: "ครอบคาน", hide_slope: "ซ่อนสโลป", roof_sealer: "ซีลเลอร์", roof_film: "ฟิล์มหลังคา",
-  roof_2nd: "หลังคาชั้น 2", ceil_under: "ฝ้าใต้หลังคา",
-};
-function addonSummary(addons: Record<string, any> | undefined): string {
-  const on = Object.entries(addons || {}).filter(([, v]) => v && (typeof v !== "object" || Object.keys(v).length > 0)).map(([k, v]) => {
-    // มุ้ง — โชว์ชนิด (จีบ/เฟรมเล็ก ฯลฯ) เหมือน G1 · แหล่งชื่อเดียวกัน (mosquitoTypeLabel) แก้ที่เดียวมีผลทั้งคู่
-    if (k === "mosquito") { const t = mosquitoTypeLabel(v); return t ? `มุ้ง${t}` : "มุ้ง"; }
-    // ม่านซิปบนหลังคา — โชว์รุ่น Skylight · ข้าม "none" + คีย์ช่วย (rzFab/rzNoRemote ไม่ขึ้นชื่อเดี่ยว)
-    if (k === "roof_zip") return v === "none" ? "" : `ม่านซิปหลังคา Skylight ${v === "sky120" ? "120" : "100"}`;
-    if (k === "rzFab" || k === "rzNoRemote") return "";
-    // ม่านซิปประตู — โชว์รุ่น Z100/Z120 · ข้าม "none" + คีย์ช่วย (dzFab/dzNoRemote ไม่ขึ้นชื่อเดี่ยว)
-    if (k === "door_zip") return v === "none" ? "" : `ม่านซิปประตู ${v === "z120" ? "Z120" : "Z100"}`;
-    if (k === "dzFab" || k === "dzNoRemote") return "";
-    return ADDON_LABELS[k] || k;
-  }).filter(Boolean);
-  return on.length ? ` + ${on.join(", ")}` : "";
-}
-
-// สร้างข้อความรายละเอียดต่อบาน (ชนิด + รูปแบบ + จำนวน + ขนาด + กระจก + ออปชั่น) — ใช้ขึ้นใบเสนอราคารายด้าน
-function paneDesc(p: Pane, glassFallback: string): string {
-  const prod = PANE_BY_KEY[p.typeKey];
-  const label = PANE_TYPES.find((t) => t.key === p.typeKey)?.label || p.typeKey;
-  const form = prod?.forms?.length ? (p.form || prod.defForm) : "";
-  const glass = prod?.defGlass ? (p.glassOvr || glassFallback || prod.defGlass) : "";
-  const size = `${(p.w || 0).toLocaleString("th-TH", { maximumFractionDigits: 2 })}×${(p.h || 0).toLocaleString("th-TH", { maximumFractionDigits: 2 })}ม.`;
-  const special = prod?.showColor && p.colorIdx && (SHEET_FIN[resolveAluColor(p.colorIdx).bake] || 0) > 0 ? ` สี${ALU_COLOR_LABEL[p.colorIdx] || p.colorIdx}` : "";
-  return `${label}${form ? ` ${form}` : ""}${(p.n || 1) > 1 ? ` ${p.n} บาน` : ""} ${size}${glass ? ` กระจก${glass}` : ""}${special}${addonSummary(p.addons)}`;
 }
 
 function freshPane(): Pane {
@@ -461,6 +427,21 @@ function ColsEditor({
                 {prod.forms.map((f: string) => <option key={f} value={f}>{f}</option>)}
               </select>
             )}
+            {/* ประตู/หน้าต่าง — คุมคำขึ้นต้นในใบเสนอ · บานติดตายไม่ต้องเลือก (เป็นกระจกติดตายเสมอ) */}
+            {paneUse(sel) !== "fixed" && (
+              <select value={paneUse(sel)} onChange={(e) => onPatchPane(sel.key, { use: e.target.value as "door" | "window" })}
+                className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 text-xs font-semibold outline-none" title="ขึ้นใบเสนอเป็นประตูหรือหน้าต่าง">
+                <option value="door">ประตู</option>
+                <option value="window">หน้าต่าง</option>
+              </select>
+            )}
+            {/* พื้นล่างของประตู — label เท่านั้น ไม่กระทบราคา (ค่าธรณีหลังเต่าอยู่ในของเสริม) */}
+            {paneUse(sel) === "door" && (
+              <select value={paneSill(sel)} onChange={(e) => onPatchPane(sel.key, { sill: e.target.value })}
+                className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 text-xs font-semibold outline-none" title="พื้นล่างประตู (ขึ้นในใบเสนอ)">
+                {SILL_OPTS.map((o) => <option key={o} value={o}>{o}</option>)}
+              </select>
+            )}
             <input type="number" step={0.1} value={sel.w || ""} placeholder="กว้าง(ม.)"
               onChange={(e) => onPatchPane(sel.key, { w: +e.target.value || 0 })}
               className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-20 outline-none tabular-nums text-sm" />
@@ -695,16 +676,14 @@ export default function RoomComposer({
   }, [sideTotals, roofTotal, ceilTotal, floorTotal, fanTotal, servicesTotal, svcTotal]);
 
   // รายละเอียดรายด้าน (ชนิดบาน+รูปแบบ+ขนาด+กระจก) — ไปขึ้นใบเสนอราคาให้ครบ (แก้ปัญหา G6 ปริ้นไม่มีรายละเอียด)
-  const sideDescs = useMemo(() => sides.map((s, i) => {
-    const paneDescs = sidePanes(s).map((p) => paneDesc(p, sideGlass(i)));
-    if (s.kind === "glass") return paneDescs.join(" + ");
-    if (s.kind === "wall") {
-      const wallLabel = `${WALL_TYPES.find((w) => w.key === s.wallType)?.label || "ผนัง"} ${s.aw || 0}×${s.ah || 0}ม.${addonSummary(s.addons)}`;
-      return [wallLabel, ...paneDescs].join(" + ");
-    }
-    return paneDescs.length ? paneDescs.join(" + ") : "เปิดโล่ง";
+  const sideDescs = useMemo(() => sides.map((s) => {
+    // ผนัง: บอกชนิดผนัง + ของเสริมผนัง ไว้หน้าสุด (ขนาดไปรวมท้ายบรรทัดแล้ว ไม่ซ้ำตรงนี้)
+    const wallLabel = s.kind === "wall"
+      ? `${WALL_TYPES.find((w) => w.key === s.wallType)?.label || "ผนัง"}${addonSummary(s.addons).replace(/^ \+ /, " ")}`
+      : "";
+    return sideDescQuote(s, wallLabel);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [sides, mainGlass, mainColor]);
+  }), [sides]);
 
   // รายละเอียดหลังคา/ฝ้า (ชนิด+ขนาด) → ขึ้นใบเสนอราคา (เดิมมีแค่ยอด ฿)
   const roofDesc = roofOn ? `หลังคา${roofShapeLabel} ${roofMaterial} ${roofW}×${roofL} ม.` : "";
