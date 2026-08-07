@@ -69,7 +69,11 @@ export function computeCost(PB, prod, opt) {
 
   const brand = prod.brand;
   const mult = (PB.ALU[brand] ?? 1) / (PB.ALU_BASE[brand] ?? PB.ALU[brand] ?? 1);
-  const bakeRate = PB.BAKE[color] ?? 0;
+  // rawAlu = รุ่นที่ซื้อ "อลูดิบ" มาอบสีเอง (Velora — ชีตคิดทุนขึ้นหัวว่า "อลูดิบ+อบสีแยก")
+  //   ต่างจากรุ่นทั่วไปที่ราคาเส้นรวมอบขาว/ดำมาแล้ว → ขาว/ดำ ต้องจ่ายค่าอบด้วย เรตเดียวกับเทา
+  //   ตรงสูตรชีต: IF(สี="อบขาว/ดำ/เทา", rate_grey, ...) — ไม่มีเคสค่าอบ 0
+  let bakeRate = PB.BAKE[color] ?? 0;
+  if (prod.rawAlu && bakeRate <= 0) bakeRate = PB.BAKE.sahara ?? 0;
 
   // เตรียม scope + evaluator
   const varDefs = prod.vars || {};
