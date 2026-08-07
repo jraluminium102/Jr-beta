@@ -19,7 +19,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (!canWrite(profile.role)) return FORBIDDEN();
 
   const body = await req.json().catch(() => ({}));
-  const allowed = ["name", "job", "address", "tax_id", "line_id", "phone", "contact_person", "is_active"];
+  const allowed = ["name", "job", "address", "tax_id", "line_id", "contact_channel", "phone", "contact_person", "is_active"];
   const patch: Record<string, unknown> = {};
   for (const k of allowed) if (k in body) patch[k] = body[k];
   if (Object.keys(patch).length === 0) return fail("ไม่มีข้อมูลให้แก้ไข");

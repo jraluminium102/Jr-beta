@@ -10,7 +10,7 @@ export type StockMoveType = "in" | "out" | "adjust";
 
 type CustomerSnapshot = Pick<
   Customer, "name" | "job" | "address" | "tax_id" | "line_id" | "phone" | "contact_person"
-> & { branch?: string; kind?: string };  // (0069) นามออกบิล: kind=INDIVIDUAL/COMPANY, branch=สนญ./สาขา (optional เผื่อใบเก่า)
+> & { branch?: string; kind?: string; contact_channel?: string };  // (0069) นามออกบิล: kind=INDIVIDUAL/COMPANY, branch=สนญ./สาขา (optional เผื่อใบเก่า)
 
 // footer ใบวางบิล (display-only) — snapshot ที่คิดแล้วด้วย computeTotals: เก็บทั้ง % และยอด + สุทธิ
 // คิดจาก subtotal + discount_pct + vat_rate + wht_rate (server recompute เสมอ กันเลขเพี้ยน)
@@ -247,7 +247,8 @@ export interface Customer {
   job: string;
   address: string;
   tax_id: string;
-  line_id: string;
+  line_id: string;            // ชื่อ/handle ที่ใช้ติดต่อ (ชื่อคอลัมน์เก่า — ไม่ได้แปลว่าเป็น LINE เสมอ)
+  contact_channel?: string;   // (0121) LINE | FB | IG | OTHER — หัวเอกสารพิมพ์ป้ายตามช่องนี้
   phone: string;
   contact_person: string;
   is_active: boolean;

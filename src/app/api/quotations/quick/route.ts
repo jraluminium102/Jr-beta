@@ -94,10 +94,12 @@ export const POST = withRoute(async (req: Request) => {
   const snapshot = p ? {
     name: p.bill_name, job: custTyped.job, address: p.address, tax_id: p.tax_id,
     branch: p.branch, kind: p.kind, line_id: custTyped.line_id,
+    contact_channel: custTyped.contact_channel,
     phone: p.phone || custTyped.phone, contact_person: p.contact_person || custTyped.contact_person,
   } : {
     name: custTyped.name, job: custTyped.job, address: custTyped.address, tax_id: custTyped.tax_id,
     kind: "INDIVIDUAL", line_id: custTyped.line_id, phone: custTyped.phone, contact_person: custTyped.contact_person,
+    contact_channel: custTyped.contact_channel,
   };
 
   // 3) สร้าง note มี marker เพื่อระบุว่าใบนี้มาจากเช็คลิสต์

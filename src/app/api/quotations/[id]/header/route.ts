@@ -36,10 +36,18 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   for (const [key, max, label] of [
     ["address", 500, "ที่อยู่"], ["tax_id", 40, "เลขผู้เสียภาษี"], ["branch", 80, "สาขา"],
     ["postal_code", 10, "รหัสไปรษณีย์"], ["contact_person", 120, "ผู้ติดต่อ"], ["phone", 40, "เบอร์โทร"],
+    ["line_id", 120, "ชื่อ/ไอดีที่ใช้ติดต่อ"],
   ] as [string, number, string][]) {
     const errMsg = setStr(key, max, label);
     if (errMsg) return fail(errMsg);
   }
+  // ช่องทางติดต่อ (0121) — จำกัดค่าให้ตรง constraint ที่ DB
+  if (body?.contact_channel !== undefined) {
+    const ch = String(body.contact_channel).trim().toUpperCase();
+    if (ch && !["LINE", "FB", "IG", "OTHER"].includes(ch)) return fail("ช่องทางติดต่อไม่ถูกต้อง");
+    snapPatch.contact_channel = ch || "LINE";
+  }
+
   // kind = บุคคล/นิติบุคคล (จำกัดค่า)
   if (body?.kind !== undefined) {
     const k = String(body.kind).trim().toUpperCase();
@@ -81,7 +89,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   //    kind/branch/postal_code เป็น snapshot-only (customers ไม่มีคอลัมน์ · billing_profiles ต่างหาก)
   let propagated = false;
   if (saveToRegistry && customerId) {
-    const REGISTRY_KEYS = ["name", "address", "tax_id", "phone", "contact_person"];
+    const REGISTRY_KEYS = ["name", "address", "tax_id", "phone", "contact_person", "line_id", "contact_channel"];
     const regPatch: Record<string, string> = {};
     for (const k of REGISTRY_KEYS) if (snapPatch[k] !== undefined) regPatch[k] = snapPatch[k];
     if (Object.keys(regPatch).length > 0) {
