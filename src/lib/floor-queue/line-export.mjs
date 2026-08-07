@@ -36,13 +36,12 @@ export function fmtQueueTime(t) {
   return `${hour}.${min}`;
 }
 
-/** วันที่หัวบล็อก: "วันที่ 4 สิงหาคม 2569 , 9.00 น." */
+/** วันที่หัวบล็อก: "วันที่ 4 สิงหาคม 2569 , 9.00 น." (สถานะไปท้ายบรรทัดคน — วันเดียวมีหลายสถานะได้) */
 function dateHeaderLine(entry) {
   const { y, m, d } = splitIso(entry.scheduled_date);
   const beYear = y + 543;
   const emoji = KIND_EMOJI[entry.kind] || KIND_EMOJI.work;
-  const suffix = STATUS_SUFFIX[entry.status] ?? "";
-  return `${emoji} วันที่ ${d} ${TH_MONTHS[m]} ${beYear} , ${fmtQueueTime(entry.start_time)} น.${suffix}`;
+  return `${emoji} วันที่ ${d} ${TH_MONTHS[m]} ${beYear} , ${fmtQueueTime(entry.start_time)} น.`;
 }
 
 /** ชื่อ + คำนำหน้า "คุณ" — กันซ้ำ (ชื่อจากงาน JR มักมี "คุณ" มาแล้ว · พิมพ์เองอาจไม่มี) */
@@ -51,11 +50,12 @@ function nameWithPrefix(name) {
   return n.startsWith("คุณ") ? n : `คุณ${n}`;
 }
 
-/** บรรทัดคนในบล็อกวันที่ (bucket=scheduled) — ไม่มีงาน = ไม่ขึ้น " : " ลอย */
+/** บรรทัดคนในบล็อกวันที่ (bucket=scheduled) — สถานะ (รอCF)/(รอCFJR) ต่อท้ายรายคน · ไม่มีงาน = ไม่ขึ้น " : " ลอย */
 function scheduledPersonLine(e) {
   const work = e.work_desc ? ` : ${e.work_desc}` : "";
   const dur = e.duration_note ? ` (${e.duration_note})` : "";
-  return `- ${nameWithPrefix(e.customer_name)}${work}${dur}`;
+  const st = STATUS_SUFFIX[e.status] ?? "";
+  return `- ${nameWithPrefix(e.customer_name)}${work}${dur}${st}`;
 }
 
 /** บรรทัดคนในถังท้าย (after_jr / deposit_wait) */
@@ -65,9 +65,9 @@ function bucketPersonLine(e) {
   return `- ${nameWithPrefix(e.customer_name)}${work}${note}`;
 }
 
-/** key จัดกลุ่มบล็อกวันที่ (วัน+เวลา+สถานะ+ประเภท เหมือนกัน = หัวเดียวกัน) */
+/** key จัดกลุ่มบล็อกวันที่ (วัน+เวลา+ประเภท เหมือนกัน = หัวเดียวกัน · สถานะไม่คิด ต่างสถานะวันเดียวรวมหัวได้) */
 function groupKey(e) {
-  return `${e.scheduled_date}|${e.start_time || "09:00"}|${e.status || "confirmed"}|${e.kind || "work"}`;
+  return `${e.scheduled_date}|${e.start_time || "09:00"}|${e.kind || "work"}`;
 }
 
 /** จัดกลุ่ม scheduled entries → บล็อกวันที่ (เรียงวันจากน้อยไปมาก) ภายใน 1 เดือน */

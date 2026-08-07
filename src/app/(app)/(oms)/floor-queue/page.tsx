@@ -11,7 +11,7 @@ import { buildLineExport } from "@/lib/floor-queue/line-export.mjs";
 import type {
   FloorQueueEntry, FloorQueueStatus, FloorQueueBucket, FloorQueueKind,
 } from "@/lib/floor-queue/types";
-import { FLOOR_QUEUE_STATUS_LABEL } from "@/lib/floor-queue/types";
+import { FLOOR_QUEUE_STATUS_LABEL, COMMON_WORK_TYPES } from "@/lib/floor-queue/types";
 
 // ── types ────────────────────────────────────────────────────────────────────
 
@@ -37,6 +37,8 @@ function thaiDateFull(iso: string): string {
   if (!y || !m || !d) return iso;
   return `วันที่ ${d} ${TH_MONTHS[m]} ${y + 543}`;
 }
+
+const kindEmoji = (k: FloorQueueKind) => (k === "assess" ? "🟣" : "🔴");
 
 // ── page ──────────────────────────────────────────────────────────────────────
 
@@ -133,6 +135,11 @@ export default function FloorQueuePage() {
 
   return (
     <div className="space-y-5">
+      {/* combobox ตัวเลือกรายละเอียดงานที่ใช้บ่อย — ใช้ร่วมกันทุกช่อง work_desc ในหน้านี้ (list="work-types") */}
+      <datalist id="work-types">
+        {COMMON_WORK_TYPES.map((t) => <option key={t} value={t} />)}
+      </datalist>
+
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-xl font-bold text-white flex items-center gap-2.5">
@@ -178,19 +185,23 @@ export default function FloorQueuePage() {
                   ☀️🌤️ อัพเดทคิวเดือน{TH_MONTHS[Number(ym.slice(5, 7))]} 🌤️✨
                 </div>
                 <div className="space-y-4">
-                  {dayGroupsOf(monthEntries).map(([d, dayEntries]) => (
-                    <div key={d}>
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/8 border border-white/10 mb-2">
-                        <Icon name="calendar" size={13} className="text-white/60 shrink-0" />
-                        <span className="text-[13px] font-semibold text-white">{thaiDateFull(d)}</span>
+                  {dayGroupsOf(monthEntries).map(([d, dayEntries]) => {
+                    const dayKinds = [...new Set(dayEntries.map((e) => e.kind))];
+                    const dayEmoji = dayKinds.length === 1 ? kindEmoji(dayKinds[0]) : "🔴🟣";
+                    return (
+                      <div key={d}>
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/8 border border-white/10 mb-2">
+                          <span className="text-[14px] shrink-0" aria-hidden="true">{dayEmoji}</span>
+                          <span className="text-[13px] font-semibold text-white">{thaiDateFull(d)}</span>
+                        </div>
+                        <div className="space-y-1.5">
+                          {dayEntries.map((e) => (
+                            <ScheduledRow key={e.id} entry={e} canWrite={canWrite} onPatch={patch} onDelete={remove} />
+                          ))}
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        {dayEntries.map((e) => (
-                          <ScheduledRow key={e.id} entry={e} canWrite={canWrite} onPatch={patch} onDelete={remove} />
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ))
@@ -211,7 +222,7 @@ export default function FloorQueuePage() {
   );
 }
 
-// ── แถวคิวที่ลงวันแล้ว ──────────────────────────────────────────────────────
+// ── แถวคิวที่ลงวันแล้ว — บรรทัดเดียวอ่านง่าย กดขยายเพื่อแก้ ──────────────────
 
 function ScheduledRow({ entry, canWrite, onPatch, onDelete }: {
   entry: QueueEntry;
@@ -220,57 +231,88 @@ function ScheduledRow({ entry, canWrite, onPatch, onDelete }: {
   onDelete: (id: string) => void;
 }) {
   const e = entry;
+  const [expanded, setExpanded] = useState(false);
+  const statusLabel = e.status !== "confirmed" ? FLOOR_QUEUE_STATUS_LABEL[e.status] : null;
+
   return (
-    <div className="rounded-xl px-3 py-3 glass-card border border-white/10">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
-        <input defaultValue={e.customer_name} disabled={!canWrite} placeholder="ชื่อลูกค้า"
-          onBlur={(ev) => ev.target.value.trim() && ev.target.value !== e.customer_name && onPatch(e.id, { customer_name: ev.target.value.trim() })}
-          className={fieldCls} aria-label="ชื่อลูกค้า" />
-        <input defaultValue={e.work_desc} disabled={!canWrite} placeholder="รายละเอียดงาน เช่น เริ่มงาน, ต่องานฝ้า"
-          onBlur={(ev) => ev.target.value !== e.work_desc && onPatch(e.id, { work_desc: ev.target.value })}
-          className={fieldCls} aria-label="รายละเอียดงาน" />
-      </div>
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 items-center">
-        <DateField value={e.scheduled_date ?? ""} disabled={!canWrite} onChange={(iso) => iso && onPatch(e.id, { scheduled_date: iso })}
-          className={fieldCls} aria-label="วันที่" />
-        <input type="time" step={60} defaultValue={e.start_time} disabled={!canWrite}
-          onBlur={(ev) => ev.target.value && ev.target.value !== e.start_time && onPatch(e.id, { start_time: ev.target.value })}
-          className={`${fieldCls} tnum [&::-webkit-calendar-picker-indicator]:invert`} aria-label="เวลา" />
-        <div className="relative">
-          <select defaultValue={e.status} disabled={!canWrite} onChange={(ev) => onPatch(e.id, { status: ev.target.value as FloorQueueStatus })}
-            className={selectCls} aria-label="สถานะ">
-            {(Object.keys(FLOOR_QUEUE_STATUS_LABEL) as FloorQueueStatus[]).map((s) => (
-              <option key={s} value={s} style={optStyle}>{FLOOR_QUEUE_STATUS_LABEL[s]}</option>
-            ))}
-          </select>
-        </div>
-        <div className="flex gap-1">
-          <button type="button" disabled={!canWrite} onClick={() => onPatch(e.id, { kind: "work" as FloorQueueKind })}
-            title="งาน" aria-pressed={e.kind === "work"}
-            className={`flex-1 rounded-lg py-2 text-[13px] border min-h-[40px] ${e.kind === "work" ? "bg-rose-500/30 border-rose-300/40 text-white" : "border-white/15 text-white/50"}`}>
-            🔴 งาน
-          </button>
-          <button type="button" disabled={!canWrite} onClick={() => onPatch(e.id, { kind: "assess" as FloorQueueKind })}
-            title="ประเมิน/คุยงาน" aria-pressed={e.kind === "assess"}
-            className={`flex-1 rounded-lg py-2 text-[13px] border min-h-[40px] ${e.kind === "assess" ? "bg-purple-500/30 border-purple-300/40 text-white" : "border-white/15 text-white/50"}`}>
-            🟣 คุย
-          </button>
-        </div>
-        <input defaultValue={e.duration_note} disabled={!canWrite} placeholder="เช่น ทำ3วัน"
-          onBlur={(ev) => ev.target.value !== e.duration_note && onPatch(e.id, { duration_note: ev.target.value })}
-          className={`${fieldCls} col-span-2 sm:col-span-1`} aria-label="ระยะเวลาทำงาน" />
-      </div>
-      {canWrite && (
-        <div className="flex justify-end gap-2 mt-2">
-          <button onClick={() => onPatch(e.id, { bucket: "after_jr" as FloorQueueBucket, scheduled_date: null })}
-            className="focusable pressable text-[11px] px-2 py-1 rounded-md bg-white/8 hover:bg-white/15 text-white/60 min-h-[28px]">ถอดกลับถัง</button>
-          <button onClick={() => onDelete(e.id)} aria-label="ลบคิว"
-            className="focusable pressable inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-md bg-rose-500/15 hover:bg-rose-500/25 text-rose-200 min-h-[28px]">
-            <Icon name="trash" size={12} /> ลบ
-          </button>
+    <div className="rounded-xl glass-card border border-white/10 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        className="focusable w-full flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] text-left hover:bg-white/5 transition-colors"
+      >
+        <span className="text-[15px] shrink-0" aria-hidden="true">{kindEmoji(e.kind)}</span>
+        <span className="tabular-nums text-[12.5px] text-white/55 shrink-0 w-11">{(e.start_time || "").slice(0, 5) || "--:--"}</span>
+        <span className="flex-1 min-w-0 truncate">
+          <span className="text-white font-medium text-[14px]">{e.customer_name || "(ไม่มีชื่อ)"}</span>
+          {e.work_desc && <span className="text-white/60 text-[13px]"> · {e.work_desc}</span>}
+          {e.duration_note && <span className="text-white/40 text-[12px]"> ({e.duration_note})</span>}
+        </span>
+        {statusLabel && (
+          <span className="shrink-0 text-[11px] px-1.5 py-0.5 rounded-md bg-amber-500/20 border border-amber-300/30 text-amber-100">{statusLabel}</span>
+        )}
+        <Icon name={expanded ? "chevron-up" : "chevron-down"} size={15} className="text-white/40 shrink-0" />
+      </button>
+
+      {expanded && (
+        <div className="px-3 pb-3 pt-1 border-t border-white/10 space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <input defaultValue={e.customer_name} disabled={!canWrite} placeholder="ชื่อลูกค้า"
+              onBlur={(ev) => ev.target.value.trim() && ev.target.value !== e.customer_name && onPatch(e.id, { customer_name: ev.target.value.trim() })}
+              className={fieldCls} aria-label="ชื่อลูกค้า" />
+            <input list="work-types" defaultValue={e.work_desc} disabled={!canWrite} placeholder="รายละเอียดงาน เช่น เริ่มงาน, ต่องานฝ้า"
+              onBlur={(ev) => ev.target.value !== e.work_desc && onPatch(e.id, { work_desc: ev.target.value })}
+              className={fieldCls} aria-label="รายละเอียดงาน" />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 items-center">
+            <DateField value={e.scheduled_date ?? ""} disabled={!canWrite} onChange={(iso) => iso && onPatch(e.id, { scheduled_date: iso })}
+              className={fieldCls} aria-label="วันที่" />
+            <input type="time" step={60} defaultValue={e.start_time} disabled={!canWrite}
+              onBlur={(ev) => ev.target.value && ev.target.value !== e.start_time && onPatch(e.id, { start_time: ev.target.value })}
+              className={`${fieldCls} tnum [&::-webkit-calendar-picker-indicator]:invert`} aria-label="เวลา" />
+            <div className="relative">
+              <select defaultValue={e.status} disabled={!canWrite} onChange={(ev) => onPatch(e.id, { status: ev.target.value as FloorQueueStatus })}
+                className={selectCls} aria-label="สถานะ">
+                {(Object.keys(FLOOR_QUEUE_STATUS_LABEL) as FloorQueueStatus[]).map((s) => (
+                  <option key={s} value={s} style={optStyle}>{FLOOR_QUEUE_STATUS_LABEL[s]}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex gap-1">
+              <button type="button" disabled={!canWrite} onClick={() => onPatch(e.id, { kind: "work" as FloorQueueKind })}
+                title="งาน" aria-pressed={e.kind === "work"}
+                className={`flex-1 rounded-lg py-2 text-[13px] border min-h-[40px] ${e.kind === "work" ? "bg-rose-500/30 border-rose-300/40 text-white" : "border-white/15 text-white/50"}`}>
+                🔴 งาน
+              </button>
+              <button type="button" disabled={!canWrite} onClick={() => onPatch(e.id, { kind: "assess" as FloorQueueKind })}
+                title="ประเมิน/คุยงาน" aria-pressed={e.kind === "assess"}
+                className={`flex-1 rounded-lg py-2 text-[13px] border min-h-[40px] ${e.kind === "assess" ? "bg-purple-500/30 border-purple-300/40 text-white" : "border-white/15 text-white/50"}`}>
+                🟣 คุย
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <input defaultValue={e.duration_note} disabled={!canWrite} placeholder="ระยะเวลาทำงาน เช่น ทำ3วัน"
+              onBlur={(ev) => ev.target.value !== e.duration_note && onPatch(e.id, { duration_note: ev.target.value })}
+              className={fieldCls} aria-label="ระยะเวลาทำงาน" />
+            <input defaultValue={e.extra_note} disabled={!canWrite} placeholder="โน้ตภายใน (ไม่ขึ้นข้อความไลน์)"
+              onBlur={(ev) => ev.target.value !== e.extra_note && onPatch(e.id, { extra_note: ev.target.value })}
+              className={fieldCls} aria-label="โน้ตภายใน" />
+          </div>
+          {e.job?.job_code && <div className="text-[11px]" style={{ color: "var(--t-low)" }}>ผูกงาน: {e.job.job_code}</div>}
+          {canWrite && (
+            <div className="flex justify-end gap-2 pt-1">
+              <button onClick={() => onPatch(e.id, { bucket: "after_jr" as FloorQueueBucket, scheduled_date: null })}
+                className="focusable pressable text-[12px] px-2.5 py-1.5 rounded-md bg-white/8 hover:bg-white/15 text-white/70 min-h-[36px]">ถอดกลับถัง</button>
+              <button onClick={() => onDelete(e.id)} aria-label="ลบคิว"
+                className="focusable pressable inline-flex items-center gap-1 text-[12px] px-2.5 py-1.5 rounded-md bg-rose-500/15 hover:bg-rose-500/25 text-rose-200 min-h-[36px]">
+                <Icon name="trash" size={12} /> ลบ
+              </button>
+            </div>
+          )}
         </div>
       )}
-      {e.job?.job_code && <div className="text-[11px] mt-1.5" style={{ color: "var(--t-low)" }}>ผูกงาน: {e.job.job_code}</div>}
     </div>
   );
 }
@@ -287,6 +329,7 @@ function BucketPanel({ title, entries, canWrite, onPatch, onDelete, otherBucket 
 }) {
   const [setDateFor, setSetDateFor] = useState<string | null>(null);
   const [pendingDate, setPendingDate] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   return (
     <div className="glass-card rounded-2xl p-4 border border-white/10">
@@ -295,47 +338,72 @@ function BucketPanel({ title, entries, canWrite, onPatch, onDelete, otherBucket 
         <div className="text-[12px] text-center py-4" style={{ color: "var(--t-low)" }}>ไม่มีรายการ</div>
       ) : (
         <div className="space-y-2">
-          {entries.map((e) => (
-            <div key={e.id} className="rounded-xl px-3 py-2.5 bg-white/6 border border-white/10">
-              <input defaultValue={e.customer_name} disabled={!canWrite} placeholder="ชื่อลูกค้า"
-                onBlur={(ev) => ev.target.value.trim() && ev.target.value !== e.customer_name && onPatch(e.id, { customer_name: ev.target.value.trim() })}
-                className={`${fieldCls} mb-1.5`} aria-label="ชื่อลูกค้า" />
-              <input defaultValue={e.work_desc} disabled={!canWrite} placeholder="งาน (ถ้ามี) เช่น ต่องานเฟส2"
-                onBlur={(ev) => ev.target.value !== e.work_desc && onPatch(e.id, { work_desc: ev.target.value })}
-                className={`${fieldCls} mb-1.5`} aria-label="งาน" />
-              <input defaultValue={e.extra_note} disabled={!canWrite} placeholder="โน้ตเสริม เช่น รอลูกค้าคอนเฟิร์ม"
-                onBlur={(ev) => ev.target.value !== e.extra_note && onPatch(e.id, { extra_note: ev.target.value })}
-                className={fieldCls} aria-label="โน้ตเสริม" />
-              {e.job?.job_code && <div className="text-[11px] mt-1" style={{ color: "var(--t-low)" }}>ผูกงาน: {e.job.job_code}</div>}
-              {canWrite && (
-                <div className="flex flex-wrap justify-end gap-1.5 mt-2">
-                  <button onClick={() => onPatch(e.id, { bucket: otherBucket })}
-                    className="focusable pressable text-[11px] px-2 py-1 rounded-md bg-white/8 hover:bg-white/15 text-white/60 min-h-[28px]">
-                    ย้ายไป{otherBucket === "after_jr" ? "รอต่อหลัง JR" : "มัดจำ รอลงคิว"}
+          {entries.map((e) => {
+            const expanded = expandedId === e.id;
+            return (
+              <div key={e.id} className="rounded-xl bg-white/6 border border-white/10 overflow-hidden">
+                <div className="flex items-center gap-1.5 pl-3 pr-1.5 py-1.5">
+                  <button type="button" onClick={() => setExpandedId(expanded ? null : e.id)} aria-expanded={expanded}
+                    className="focusable flex-1 min-w-0 text-left min-h-[40px] flex items-center py-1">
+                    <span className="min-w-0 truncate">
+                      <span className="text-white text-[13.5px] font-medium">{e.customer_name || "(ไม่มีชื่อ)"}</span>
+                      {e.work_desc && <span className="text-white/60 text-[12.5px]"> · {e.work_desc}</span>}
+                      {e.extra_note && <span className="text-white/40 text-[12px]"> ({e.extra_note})</span>}
+                    </span>
                   </button>
-                  <button onClick={() => { setSetDateFor(setDateFor === e.id ? null : e.id); setPendingDate(""); }}
-                    className="focusable pressable text-[11px] px-2 py-1 rounded-md bg-sky-500/20 hover:bg-sky-500/30 text-sky-100 min-h-[28px]">
-                    ลงวันที่
-                  </button>
-                  <button onClick={() => onDelete(e.id)} aria-label="ลบคิว"
-                    className="focusable pressable inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-md bg-rose-500/15 hover:bg-rose-500/25 text-rose-200 min-h-[28px]">
-                    <Icon name="trash" size={12} /> ลบ
+                  {canWrite && (
+                    <button onClick={() => { setSetDateFor(setDateFor === e.id ? null : e.id); setPendingDate(""); }}
+                      className="focusable pressable shrink-0 text-[12px] px-2.5 py-1.5 rounded-md bg-sky-500/20 hover:bg-sky-500/30 text-sky-100 min-h-[40px]">
+                      ลงวันที่
+                    </button>
+                  )}
+                  <button type="button" onClick={() => setExpandedId(expanded ? null : e.id)} aria-label="แก้ไขเพิ่มเติม"
+                    className="focusable shrink-0 text-white/40 hover:text-white min-h-[40px] min-w-[36px] flex items-center justify-center">
+                    <Icon name={expanded ? "chevron-up" : "chevron-down"} size={15} />
                   </button>
                 </div>
-              )}
-              {setDateFor === e.id && (
-                <div className="flex gap-2 mt-2">
-                  <DateField value={pendingDate} onChange={setPendingDate} className={fieldCls} aria-label="เลือกวันที่ลงคิว" />
-                  <button
-                    onClick={() => { if (pendingDate) { onPatch(e.id, { scheduled_date: pendingDate }); setSetDateFor(null); } }}
-                    disabled={!pendingDate}
-                    className="focusable pressable shrink-0 px-3 rounded-lg bg-white text-[#1F4E78] text-[12px] font-semibold disabled:opacity-50 min-h-[40px]">
-                    ยืนยัน
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
+
+                {expanded && (
+                  <div className="px-3 pb-3 pt-0.5 border-t border-white/10 space-y-1.5">
+                    <input defaultValue={e.customer_name} disabled={!canWrite} placeholder="ชื่อลูกค้า"
+                      onBlur={(ev) => ev.target.value.trim() && ev.target.value !== e.customer_name && onPatch(e.id, { customer_name: ev.target.value.trim() })}
+                      className={fieldCls} aria-label="ชื่อลูกค้า" />
+                    <input list="work-types" defaultValue={e.work_desc} disabled={!canWrite} placeholder="งาน (ถ้ามี) เช่น ต่องานเฟส2"
+                      onBlur={(ev) => ev.target.value !== e.work_desc && onPatch(e.id, { work_desc: ev.target.value })}
+                      className={fieldCls} aria-label="งาน" />
+                    <input defaultValue={e.extra_note} disabled={!canWrite} placeholder="โน้ตเสริม เช่น รอลูกค้าคอนเฟิร์ม"
+                      onBlur={(ev) => ev.target.value !== e.extra_note && onPatch(e.id, { extra_note: ev.target.value })}
+                      className={fieldCls} aria-label="โน้ตเสริม" />
+                    {e.job?.job_code && <div className="text-[11px]" style={{ color: "var(--t-low)" }}>ผูกงาน: {e.job.job_code}</div>}
+                    {canWrite && (
+                      <div className="flex flex-wrap justify-end gap-1.5 pt-1">
+                        <button onClick={() => onPatch(e.id, { bucket: otherBucket })}
+                          className="focusable pressable text-[12px] px-2.5 py-1.5 rounded-md bg-white/8 hover:bg-white/15 text-white/70 min-h-[36px]">
+                          ย้ายไป{otherBucket === "after_jr" ? "รอต่อหลัง JR" : "มัดจำ รอลงคิว"}
+                        </button>
+                        <button onClick={() => onDelete(e.id)} aria-label="ลบคิว"
+                          className="focusable pressable inline-flex items-center gap-1 text-[12px] px-2.5 py-1.5 rounded-md bg-rose-500/15 hover:bg-rose-500/25 text-rose-200 min-h-[36px]">
+                          <Icon name="trash" size={12} /> ลบ
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {setDateFor === e.id && (
+                  <div className="flex gap-2 px-3 pb-3">
+                    <DateField value={pendingDate} onChange={setPendingDate} className={fieldCls} aria-label="เลือกวันที่ลงคิว" />
+                    <button
+                      onClick={() => { if (pendingDate) { onPatch(e.id, { scheduled_date: pendingDate }); setSetDateFor(null); } }}
+                      disabled={!pendingDate}
+                      className="focusable pressable shrink-0 px-3 rounded-lg bg-white text-[#1F4E78] text-[12px] font-semibold disabled:opacity-50 min-h-[40px]">
+                      ยืนยัน
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -357,6 +425,7 @@ function AddQueueModal({ onClose, onSaved }: { onClose: () => void; onSaved: () 
   const [extraNote, setExtraNote] = useState("");
   const [durationNote, setDurationNote] = useState("");
   const [bucket, setBucket] = useState<FloorQueueBucket>("scheduled");
+  const [kind, setKind] = useState<FloorQueueKind>("work");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("09:00");
   const [busy, setBusy] = useState(false);
@@ -390,7 +459,7 @@ function AddQueueModal({ onClose, onSaved }: { onClose: () => void; onSaved: () 
         bucket,
         scheduled_date: bucket === "scheduled" ? date : null,
         start_time: time,
-        kind: "work",
+        kind,
       });
       onSaved();
     } catch (e) {
@@ -456,7 +525,7 @@ function AddQueueModal({ onClose, onSaved }: { onClose: () => void; onSaved: () 
 
         <label className="block mb-3">
           <span className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>รายละเอียดงาน (ถ้ามี)</span>
-          <input value={workDesc} onChange={(e) => setWorkDesc(e.target.value)} placeholder="เช่น เริ่มงาน, ต่องานฝ้า,ไฟ"
+          <input list="work-types" value={workDesc} onChange={(e) => setWorkDesc(e.target.value)} placeholder="เลือกจากรายการ หรือพิมพ์เอง เช่น เริ่มงาน, ต่องานฝ้า,ไฟ"
             className={fieldCls} aria-label="รายละเอียดงาน" />
         </label>
 
@@ -479,6 +548,19 @@ function AddQueueModal({ onClose, onSaved }: { onClose: () => void; onSaved: () 
               <span className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>เวลา</span>
               <input type="time" step={60} value={time} onChange={(e) => setTime(e.target.value.slice(0, 5))}
                 className={`${fieldCls} tnum [&::-webkit-calendar-picker-indicator]:invert`} aria-label="เวลา" />
+            </label>
+            <label className="block col-span-2">
+              <span className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>ชนิด</span>
+              <div className="flex gap-1">
+                <button type="button" onClick={() => setKind("work")}
+                  className={`flex-1 rounded-lg py-2.5 text-[13px] border min-h-[40px] ${kind === "work" ? "bg-rose-500/30 border-rose-300/40 text-white" : "border-white/15 text-white/50"}`}>
+                  🔴 งาน
+                </button>
+                <button type="button" onClick={() => setKind("assess")}
+                  className={`flex-1 rounded-lg py-2.5 text-[13px] border min-h-[40px] ${kind === "assess" ? "bg-purple-500/30 border-purple-300/40 text-white" : "border-white/15 text-white/50"}`}>
+                  🟣 ประเมิน/คุย
+                </button>
+              </div>
             </label>
             <label className="block col-span-2">
               <span className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>ระยะเวลาทำงาน (ถ้ามี)</span>
