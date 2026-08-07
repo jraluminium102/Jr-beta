@@ -9,6 +9,7 @@ import Icon from "@/components/Icon";
 export type HeaderSnapshot = {
   name?: string; address?: string; tax_id?: string; branch?: string;
   kind?: string; postal_code?: string; contact_person?: string; phone?: string;
+  line_id?: string; contact_channel?: string;   // (0121) ชื่อ/handle + ช่องทาง (LINE/FB/IG)
 };
 
 const F = (v: unknown) => String(v ?? "");
@@ -33,6 +34,8 @@ export default function CustomerHeaderEditButton({
   const [branch, setBranch] = useState(F(current.branch) || "สำนักงานใหญ่");
   const [contact, setContact] = useState(F(current.contact_person));
   const [phone, setPhone] = useState(F(current.phone));
+  const [lineId, setLineId] = useState(F(current.line_id));
+  const [channel, setChannel] = useState(F(current.contact_channel) || "LINE");
   const [saveToRegistry, setSaveToRegistry] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -42,6 +45,7 @@ export default function CustomerHeaderEditButton({
     setName(F(current.name)); setAddress(F(current.address)); setPostal(F(current.postal_code));
     setTaxId(F(current.tax_id)); setBranch(F(current.branch) || "สำนักงานใหญ่");
     setContact(F(current.contact_person)); setPhone(F(current.phone));
+    setLineId(F(current.line_id)); setChannel(F(current.contact_channel) || "LINE");
     setSaveToRegistry(true); setError(""); setOpen(true);
   }
 
@@ -62,6 +66,8 @@ export default function CustomerHeaderEditButton({
         postal_code: postal.trim(),
         contact_person: contact.trim(),
         phone: phone.trim(),
+        line_id: lineId.trim(),
+        contact_channel: channel,
         save_to_registry: hasCustomerLink && saveToRegistry,
       }),
     });
@@ -143,6 +149,16 @@ export default function CustomerHeaderEditButton({
             <input type="text" value={contact} onChange={(e) => setContact(e.target.value)} maxLength={120} className={inp} /></label>
           <label className={lbl}><span className={cap}>โทรศัพท์</span>
             <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={40} className={inp} /></label>
+          {/* ช่องทางติดต่อ (0121) — หัวเอกสารพิมพ์ป้ายตามช่องนี้ เดิม hardcode LINE ตายตัว */}
+          <label className={lbl}><span className={cap}>ช่องทางติดต่อ</span>
+            <select value={channel} onChange={(e) => setChannel(e.target.value)} className={inp}>
+              <option value="LINE">LINE</option>
+              <option value="FB">Facebook</option>
+              <option value="IG">Instagram</option>
+              <option value="OTHER">อื่น ๆ</option>
+            </select></label>
+          <label className={lbl}><span className={cap}>ชื่อ/ไอดีที่ใช้ติดต่อ</span>
+            <input type="text" value={lineId} onChange={(e) => setLineId(e.target.value)} maxLength={120} className={inp} /></label>
         </div>
 
         {hasCustomerLink ? (

@@ -12,10 +12,23 @@ export type CustomerSnapshot = {
   tax_id?: string;
   branch?: string;   // (0069) สำนักงานใหญ่/สาขาที่ NNNNN — โชว์เฉพาะนิติบุคคล
   kind?: string;     // INDIVIDUAL | COMPANY
-  line_id?: string;
+  line_id?: string;          // ชื่อ/handle ที่ใช้ติดต่อ (ชื่อคอลัมน์เก่า — ไม่ได้แปลว่าเป็น LINE เสมอ)
+  contact_channel?: string;  // (0121) LINE | FB | IG | OTHER — หัวเอกสารพิมพ์ป้ายตามช่องนี้
   contact_person?: string;
   phone?: string;
 };
+
+/**
+ * ป้ายช่องทางติดต่อที่พิมพ์ลงเอกสาร
+ *
+ * ⚠ เดิม hardcode "LINE:" ตายตัว → หน้าจัดคิวเลือก FB แต่เอกสารยังขึ้น LINE
+ *   (บั๊กที่เจ้าของแจ้ง 6 ส.ค.2569) · ไม่มีค่า = ถือว่า LINE เหมือนเดิม (ใบเก่าไม่เปลี่ยนหน้าตา)
+ */
+export const CONTACT_CHANNEL_LABEL: Record<string, string> = {
+  LINE: "LINE", FB: "Facebook", FACEBOOK: "Facebook", IG: "Instagram", INSTAGRAM: "Instagram", OTHER: "ติดต่อ",
+};
+export const channelLabel = (ch?: string | null) =>
+  CONTACT_CHANNEL_LABEL[String(ch ?? "").trim().toUpperCase()] ?? "LINE";
 
 // สกินพิมพ์ "ละมุน" (เจ้าของเลือก 5 ส.ค.2569) — โทนโรสมนนุ่ม อ่านชัด
 // ⭐ ตำแหน่ง/เลย์เอาท์ตัวหนังสือคงเดิมทุกจุด เปลี่ยนเฉพาะสี/เส้น/พื้นหลัง (ห้ามย้ายตำแหน่ง)
@@ -99,7 +112,7 @@ export function PrintLetterhead({
   const who = c.contact_person || "";
   const contacts: InfoRow[] = contactRows ?? [
     ...(c.line_id
-      ? [{ label: "ผู้ติดต่อ", value: (who ? who + " · " : "") + "LINE: " + c.line_id }]
+      ? [{ label: "ผู้ติดต่อ", value: (who ? who + " · " : "") + channelLabel(c.contact_channel) + ": " + c.line_id }]
       : who ? [{ label: "ผู้ติดต่อ", value: who }] : []),
     ...(c.phone ? [{ label: "เบอร์โทร", value: c.phone }] : []),
   ];

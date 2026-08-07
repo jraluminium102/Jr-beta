@@ -77,10 +77,12 @@ export async function POST(req: Request) {
     name: billProfile.bill_name, job: cust.job,
     address: billProfile.address, postal_code: billProfile.postal_code, tax_id: billProfile.tax_id,
     branch: billProfile.branch, kind: billProfile.kind, line_id: cust.line_id,
+    contact_channel: (cust as { contact_channel?: string }).contact_channel,
     phone: billProfile.phone || cust.phone, contact_person: billProfile.contact_person || cust.contact_person,
   } : {
     name: cust.name, job: cust.job, address: cust.address, tax_id: cust.tax_id,
     kind: "INDIVIDUAL", line_id: cust.line_id, phone: cust.phone, contact_person: cust.contact_person,
+    contact_channel: (cust as { contact_channel?: string }).contact_channel,
   };
 
   // หัวบิลแก้ในหน้าสร้างใบเสนอ (ออกในนามนิติบุคคล) — ทับเฉพาะฟิลด์ identity (ไม่แตะยอด/งาน)

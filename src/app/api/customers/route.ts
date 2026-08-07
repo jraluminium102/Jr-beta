@@ -40,6 +40,7 @@ export async function POST(req: Request) {
       address: body.address ?? "",
       tax_id: body.tax_id ?? "",
       line_id: body.line_id ?? "",
+      contact_channel: body.contact_channel ?? "LINE",
       phone: body.phone ?? "",
       contact_person: body.contact_person ?? "",
       created_by: profile.id,
