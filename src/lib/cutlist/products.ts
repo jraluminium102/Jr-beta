@@ -303,7 +303,10 @@ export const FIXED_PANEL: CutSpec = {
 
 /**
  * ⑥ Velora บานเปิด (JR_Velora_บานเปิด.xlsx · 1 บาน/ชุด — หลายบานใช้ "ชุด")
- * rail = รูปแบบใส่ช่อง (ยัดในช่อง/ครอบวงกบ) · ⚠ ไฟล์ไม่มีรหัสอลู + ไม่ระบุเส้นสต็อก (ใส่ 640 รอเจ้าของ)
+ * rail = รูปแบบใส่ช่อง (ยัดในช่อง/ครอบวงกบ) · ⚠ ไฟล์ไม่ระบุเส้นสต็อก (ใส่ 640 รอเจ้าของ)
+ * รหัสอลู: ไฟล์ถอดทุนไม่มีรหัส → ใช้รหัสตามที่ใช้จริงในสโตร์ (เจ้าของแจ้ง ส.ค.69)
+ *   วงกบ = "Velora 01" · บาน = "Velora 02"  (จับคู่ผ่าน resolveStock: sku ตรง หรือ ชื่อมีรหัส)
+ *   ⚠ ลูกฟูก 2 ทาง ยังไม่มีรหัส — ไฟล์ถอดทุนก็ไม่มีบรรทัดนี้ (คิดทุน Velora มีแค่ วงกบ/บาน) รอเจ้าของบอกรหัส
  */
 const vFit = (rail: string) => rail === "ยัดในช่อง";
 export const VELORA_SWING: CutSpec = {
@@ -313,10 +316,10 @@ export const VELORA_SWING: CutSpec = {
   rails: ["ยัดในช่อง", "ครอบวงกบ"],
   defaults: { W: 220, H: 200, N: 1, rail: "ยัดในช่อง", honk: false },
   profiles: [
-    { name: "วงกบบน", code: "-", len: (o) => o.W + (vFit(o.rail) ? 0 : 2), qty: () => 1, note: "ตัด 45° 2 ฝั่ง" },
-    { name: "วงกบข้าง", code: "-", len: (o) => o.H + (vFit(o.rail) ? 0 : 1), qty: () => 2, note: "ตัด 45° 1 ฝั่ง" },
-    { name: "กรอบบาน แนวนอน", code: "-", len: (o) => o.W - (vFit(o.rail) ? 5.7 : 3.5), qty: () => 2, note: "เข้ามุม 45°" },
-    { name: "กรอบบาน แนวตั้ง", code: "-", len: (o) => o.H - (vFit(o.rail) ? 3.3 : 2.2), qty: () => 2, note: "เข้ามุม 45°" },
+    { name: "วงกบบน", code: "Velora 01", len: (o) => o.W + (vFit(o.rail) ? 0 : 2), qty: () => 1, note: "ตัด 45° 2 ฝั่ง" },
+    { name: "วงกบข้าง", code: "Velora 01", len: (o) => o.H + (vFit(o.rail) ? 0 : 1), qty: () => 2, note: "ตัด 45° 1 ฝั่ง" },
+    { name: "กรอบบาน แนวนอน", code: "Velora 02", len: (o) => o.W - (vFit(o.rail) ? 5.7 : 3.5), qty: () => 2, note: "เข้ามุม 45°" },
+    { name: "กรอบบาน แนวตั้ง", code: "Velora 02", len: (o) => o.H - (vFit(o.rail) ? 3.3 : 2.2), qty: () => 2, note: "เข้ามุม 45°" },
     { name: "ลูกฟูก 2 ทาง แนวตั้ง", code: "-", len: (o) => o.H + (vFit(o.rail) ? 0 : 1), qty: (o) => (vFit(o.rail) ? 2 : 0) },
     { name: "ลูกฟูก 2 ทาง แนวนอน", code: "-", len: (o) => o.W + (vFit(o.rail) ? 0 : 2), qty: (o) => (vFit(o.rail) ? 1 : 0) },
   ],

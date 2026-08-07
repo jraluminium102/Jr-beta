@@ -174,8 +174,13 @@ export function computeCost(PB, prod, opt) {
     laborInstall = Math.max(0, L.iBase * leaves + L.iRate * area);
   } else {
     const lp = prod.laborPerPanel ? P : 1;  // บางรุ่นคิดต่อบาน → ×จำนวนบาน
-    laborProd = Math.max(0, L.pBase + L.pRate * area) * lp;
-    laborInstall = Math.max(0, L.iBase + L.iRate * area) * lp;
+    // laborNoRate = ชีตคิดทุนของรุ่นนั้นใช้ "ฐานอย่างเดียว" ไม่บวกเรตต่อ ตร.ม.
+    //   บานเฟี้ยม sms : D64 = ฐานผลิต × จำนวนบาน            (ไม่มีเทอม /ตร.ม.)
+    //   บานเฟี้ยมยูโร : E46 = ฐานผลิต เฉย ๆ                   (ไม่ ×บาน ไม่มี /ตร.ม.)
+    const rp = prod.laborNoRate ? 0 : L.pRate;
+    const ri = prod.laborNoRate ? 0 : L.iRate;
+    laborProd = Math.max(0, L.pBase + rp * area) * lp;
+    laborInstall = Math.max(0, L.iBase + ri * area) * lp;
   }
 
   // (5) ราคาขาย
