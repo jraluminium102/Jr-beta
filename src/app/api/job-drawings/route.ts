@@ -6,6 +6,7 @@ import { dbError } from "@/lib/bff/db-error";
 import { can } from "@/lib/rbac";
 // generator ตัวจริง (pure JS ไม่มี type · เหมือน cover-sheets/generate) — ห้ามแก้ logic
 import { buildGroups } from "@/lib/cover-sheet/generate.mjs";
+import { pickJobQuotation } from "@/lib/cover-sheet/pick-quotation";
 import type { PrefillGroup } from "@/lib/job-drawings/types";
 
 export const dynamic = "force-dynamic";
@@ -35,26 +36,23 @@ export const GET = withRoute(async (req: Request) => {
   const jobId = url.searchParams.get("job_id") ?? "";
   if (!z.string().uuid().safeParse(jobId).success) return err("ระบุ job_id ให้ถูกต้อง", 422);
 
-  const [jobR, drawingsR, quoR] = await Promise.all([
+  const [jobR, drawingsR] = await Promise.all([
     sb.from("jobs").select("job_code, customer_name, status, deposit_date").eq("id", jobId).maybeSingle(),
     sb.from("job_drawings").select("*").eq("job_id", jobId).order("created_at", { ascending: true }),
-    // ใบเสนอล่าสุดของงาน — ตัดใบ cancelled (ตรง pattern cover-sheets/[jobId])
-    sb.from("quotations").select("id, code, created_at").eq("job_id", jobId).neq("status", "cancelled").order("created_at", { ascending: false }),
   ]);
 
   if (jobR.error) throw dbError(jobR.error);
   if (!jobR.data) return err("ไม่พบงานนี้", 404);
   if (drawingsR.error) throw dbError(drawingsR.error);
-  if (quoR.error) throw dbError(quoR.error);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const latestQ = ((quoR.data ?? []) as any[])[0] ?? null;
+  // เลือก "ใบเสนอที่ลูกค้ามัดจำจริง" (ไม่ใช่ใบล่าสุด) — กันสแตมป์สเปคผิดใบเมื่องานมีหลายใบเสนอ (แก้เดียวกับใบปะหน้า)
+  const picked = await pickJobQuotation(sb, jobId);
   let prefill: PrefillGroup[] = [];
-  if (latestQ) {
+  if (picked) {
     const { data: items, error: itemsErr } = await sb
       .from("quotation_items")
       .select("name, detail, group_label, sort_order")
-      .eq("quotation_id", latestQ.id)
+      .eq("quotation_id", picked.id)
       .order("sort_order", { ascending: true });
     if (itemsErr) throw dbError(itemsErr);
     prefill = buildGroups(items ?? []) as PrefillGroup[];
