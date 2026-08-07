@@ -147,6 +147,8 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   const [addons, setAddons] = useState<Record<string, any>>({});
   const [fixedPanes, setFixedPanes] = useState(0); // บานติดตาย (ไม่เลื่อน/ไม่เปิด) — ลด movePanes ของมุ้ง + ขึ้นใบ
   const [profit, setProfit] = useState("100");
+  // ค่าแรงที่คิดลงใบเสนอ: "all" = ผลิต+ติดตั้ง (ค่ามาตรฐาน) · "mfg" = ค่าแรงผลิตอย่างเดียว (ขายส่ง JR ไม่ไปติดตั้ง)
+  const [laborMode, setLaborMode] = useState<"all" | "mfg">("all");
   const [sets, setSets] = useState("1");
   // G4 ตู้: kindOpts (ประเภทตู้/ชนิดชั้น/กระจกหน้าบาน/สีหน้าบาน/เกรดกระจกชั้น ฯลฯ) — ตรง app.js calc() บรรทัด 217
   const [kind, setKind] = useState<Record<string, string>>({});
@@ -411,8 +413,9 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
           const sr: any = computeCost(pb, prod, {
             w: sw, h: sh, p: 1, form: formVal, material, color: rc.bake, addons: {}, profitPct, installProfitPct: profitPct,
           });
-          sl.push({ desc: `หลังคาช่วง ${i + 2} (${sg.w || 0}×${sg.h || 0}ม. · ${material})`, amt: sr.sell.withInstall });
-          sSell += sr.sell.withInstall;
+          const sAmt = laborMode === "mfg" ? sr.sell.mfgOnly : sr.sell.withInstall;
+          sl.push({ desc: `หลังคาช่วง ${i + 2} (${sg.w || 0}×${sg.h || 0}ม. · ${material})`, amt: sAmt });
+          sSell += sAmt;
           sCost += sr.cost.total;
         });
       }
@@ -425,7 +428,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     } catch (e) {
       return { error: e instanceof Error ? e.message : String(e) } as any;
     }
-  }, [pb, prod, w, h, p, form, color, glassType, material, spec, profit, addons, fixedPanes, kind, faceColorCode, depth, shelves, cabSides, sheetColor, roofSegs, subs, roomTotals]);
+  }, [pb, prod, w, h, p, form, color, glassType, material, spec, profit, addons, fixedPanes, kind, faceColorCode, depth, shelves, cabSides, sheetColor, roofSegs, subs, roomTotals, laborMode]);
 
   const ok = result && !("error" in result);
   // #1 (17ก.ค.69): เพิ่มตัวเลือก "แผ่นคอมโพสิต/ลูกฟูก แทนกระจก" ทุกที่ที่เลือกกระจก · engine special-case (ไม่คิดกระจก)
@@ -444,7 +447,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     return {
       v: 1, kind: "std", prodId: prod.id, group: prod.group,
       w, h, p, form, color, glassType, material,
-      spec, addons, fixedPanes, profit,
+      spec, addons, fixedPanes, profit, laborMode,
       kindOpts: kind, faceColorCode, depth, shelves, cabSides, sheetColor, roofSegs, subs,
     };
   }
@@ -561,10 +564,12 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     if (sheetColor) jobLines.push(`- วัสดุมุง: ${sheetColor}`);
     if (mqDetail) jobLines.push(`- ${mqDetail}`); // มุ้ง + ผ้ามุ้ง (ตามที่เลือก)
     specDetailLines.forEach((l) => jobLines.push(l));
+    // ขายส่ง (ไม่ไปติดตั้ง) — ต้องเขียนลงใบให้ชัด ไม่งั้นลูกค้าเข้าใจว่ารวมติดตั้ง
+    if (laborMode === "mfg") jobLines.push("- ราคานี้ไม่รวมค่าติดตั้ง (ส่งของอย่างเดียว)");
     const desc = [...workLines, "รายละเอียดงาน", ...jobLines].join("\n");
     pushQuoteItem({
       name: itemName, desc, qty: n,
-      perUnit: result.sell.withInstall + subSell, cost: result.cost.total + subCost,
+      perUnit: (laborMode === "mfg" ? result.sell.mfgOnly : result.sell.withInstall) + subSell, cost: result.cost.total + subCost,
       prodId: prod.id, groupLabel: GROUPS.find((g) => g.g === prod.group)?.label ?? "",
       recipe: buildRecipe(),
     });
@@ -582,6 +587,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     setColor(r.color ?? "white");
     setGlassType(r.glassType ?? (px.defGlass ?? ""));
     setProfit(String(r.profit ?? "100"));
+    setLaborMode(r.laborMode === "mfg" ? "mfg" : "all");   // ใบเก่าไม่มีฟิลด์นี้ = คิดค่าแรงรวม (ค่าเดิมของระบบ)
     if (r.kind === "room") {
       setG6HideSidePrice(!!r.g6HideSidePrice);
       setRoomInitial(r.room ?? null);
@@ -1207,14 +1213,42 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
               {/* ราคา (ห้องกระจก G6 มีการ์ดราคารวมของตัวเองใน RoomComposer แล้ว — ไม่ต้องซ้ำ) */}
               {!prod.composite && (ok ? (
                 <div className="mt-5 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl px-5 py-4 glass-soft">
-                    <div className="text-xs font-medium text-ink-3">ขายผลิตอย่างเดียว</div>
-                    <div className="text-2xl font-bold text-brand-dark">฿{baht(result.sell.mfgOnly)}</div>
-                  </div>
-                  <div className="rounded-2xl px-5 py-4 bg-brand text-white shadow-brand">
-                    <div className="text-xs font-medium text-red-100">ขาย + ติดตั้ง</div>
-                    <div className="text-3xl font-bold leading-tight">฿{baht(result.sell.withInstall)}</div>
-                    <div className="text-[11px] text-red-100 mt-0.5">พื้นที่ {result.input.area} ตร.ม. · อลู {result.aluKg} กก.</div>
+                  {/* เลือกว่าจะคิดค่าแรงแบบไหนลงใบเสนอ — กดที่การ์ดได้เลย · การ์ดที่เลือกอยู่ = ราคาที่จะขึ้นใบ */}
+                  <button
+                    type="button" onClick={() => setLaborMode("mfg")}
+                    className={"press text-left rounded-2xl px-5 py-4 transition " + (laborMode === "mfg" ? "bg-brand text-white shadow-brand" : "glass-soft")}
+                    aria-pressed={laborMode === "mfg"}
+                  >
+                    <div className={"text-xs font-medium " + (laborMode === "mfg" ? "text-red-100" : "text-ink-3")}>
+                      {laborMode === "mfg" ? "✓ " : ""}ขายผลิตอย่างเดียว
+                    </div>
+                    <div className={"font-bold leading-tight " + (laborMode === "mfg" ? "text-3xl" : "text-2xl text-brand-dark")}>฿{baht(result.sell.mfgOnly)}</div>
+                    <div className={"text-[11px] mt-0.5 " + (laborMode === "mfg" ? "text-red-100" : "text-ink-3")}>ขายส่ง · ไม่ไปติดตั้ง</div>
+                  </button>
+                  <button
+                    type="button" onClick={() => setLaborMode("all")}
+                    className={"press text-left rounded-2xl px-5 py-4 transition " + (laborMode === "all" ? "bg-brand text-white shadow-brand" : "glass-soft")}
+                    aria-pressed={laborMode === "all"}
+                  >
+                    <div className={"text-xs font-medium " + (laborMode === "all" ? "text-red-100" : "text-ink-3")}>
+                      {laborMode === "all" ? "✓ " : ""}ขาย + ติดตั้ง
+                    </div>
+                    <div className={"font-bold leading-tight " + (laborMode === "all" ? "text-3xl" : "text-2xl text-brand-dark")}>฿{baht(result.sell.withInstall)}</div>
+                    <div className={"text-[11px] mt-0.5 " + (laborMode === "all" ? "text-red-100" : "text-ink-3")}>พื้นที่ {result.input.area} ตร.ม. · อลู {result.aluKg} กก.</div>
+                  </button>
+                  {/* ค่าแรงแยก — โชว์ทุกคน (ไม่ใช่ข้อมูลทุน) เพราะเจ้าของต้องเห็นว่าแต่ละรุ่นค่าแรงไม่เท่ากัน */}
+                  <div className="col-span-2 rounded-2xl px-5 py-3 bg-slate-50 border border-slate-200">
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-slate-700">
+                      <span className="font-semibold text-slate-800">ค่าแรง (ทุน)</span>
+                      <span>ผลิต <b className="tabular-nums">฿{baht(result.labor.prod)}</b></span>
+                      <span>ติดตั้ง <b className="tabular-nums">฿{baht(result.labor.install)}</b></span>
+                      <span>รวม <b className="tabular-nums">฿{baht(result.labor.prod + result.labor.install)}</b></span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      {laborMode === "mfg"
+                        ? "ใบเสนอจะคิดเฉพาะค่าแรงผลิต — และเขียนกำกับในข้อว่า “ไม่รวมค่าติดตั้ง”"
+                        : "ใบเสนอจะคิดค่าแรงผลิต + ติดตั้ง (ค่ามาตรฐาน)"}
+                    </p>
                   </div>
                   {showCost && (
                     <div className="col-span-2 rounded-2xl px-5 py-4 bg-amber-50 border border-amber-200">
@@ -1266,7 +1300,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                   </ul>
                   <div className="mt-1.5 pt-1.5 border-t border-sky-200 flex items-center justify-between font-bold">
                     <span>รวมทั้งหมด (หลัก + เสริม)</span>
-                    <span className="tabular-nums">฿{baht(result.sell.withInstall + ((result as any).subSell || 0))}</span>
+                    <span className="tabular-nums">฿{baht((laborMode === "mfg" ? result.sell.mfgOnly : result.sell.withInstall) + ((result as any).subSell || 0))}</span>
                   </div>
                 </div>
               )}

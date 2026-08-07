@@ -17,58 +17,130 @@ function check(label, got, want, tol = 1) {
   return ok;
 }
 
-// ── ANCHORS: ค่าจริงจากชีต "คิดทุน ___" (subagent self-verify diff≈0) ─────────
+// ── ตารางค่าแรงต้นทาง: ชีต "ค่าแรง" ของ ถอดทุน_รวมทั้งหมด.xlsx (ส.ค.69) ──────
+//   ชีตกรอกเป็น "ชั่วโมง × ค่าแรง/ชม. × จำนวนคน" แล้วให้คอลัมน์ B–E เป็นบาท:
+//     B(ผลิตฐาน)=G×I×L · C(ผลิต/ตร.ม.)=J×I×L · D(ติดตั้งฐาน)=H×I×M · E(ติดตั้ง/ตร.ม.)=K×I×M
+//   ⚠ ห้ามแก้ตัวเลขตรงนี้ด้วยมือ — ต้องมาจากไฟล์เท่านั้น (นี่คือด่านกัน pricebook หลุดจากไฟล์)
+//   hp=ชม.ฐานผลิต jp=ชม.เพิ่มผลิต/ตร.ม. np=คนผลิต · hi/ki/ni=ฝั่งติดตั้ง · rate=ค่าแรง/ชม.
+//   baht = ชีตกรอกเป็นบาทตรง ๆ [ผลิตฐาน, ผลิต/ตร.ม., ติดตั้งฐาน, ติดตั้ง/ตร.ม.]
+const LABOR_SRC = {
+  'บานเลื่อน SMS': { hp: 5, jp: 0.3333, np: 1, hi: 6.5, ki: 0.3333, ni: 1, rate: 87.5 },
+  'บานเลื่อน ยูโร': { hp: 7, jp: 0.5, np: 1, hi: 8, ki: 0.573, ni: 1, rate: 87.5 },
+  'SlimLux': { hp: 11.9, jp: 0.667, np: 1, hi: 8, ki: 0.667, ni: 1, rate: 87.5 },
+  'Velora': { hp: 4.24, jp: 0.3333, np: 1, hi: 6, ki: 0.3333, ni: 1, rate: 87.5 },
+  'บานเปิด (ยูโร)': { hp: 6, jp: 0.281, np: 1, hi: 7.84, ki: 0.542, ni: 1, rate: 87.5 },
+  'บานกระทุ้ง (ยูโร)': { hp: 6, jp: 0.667, np: 1, hi: 4.25, ki: 0.667, ni: 1, rate: 87.5 },
+  'บานเฟี้ยม (sms)': { hp: 12, jp: 1, np: 1, hi: 14, ki: 1, ni: 1, rate: 87.5 },
+  'บานยก (เซมิ)': { hp: 16, jp: 0.3333, np: 1, hi: 7, ki: 0.3333, ni: 1, rate: 87.5 },
+  'หลังคา': { baht: [0, 597, 0, 852] },
+  'บานติดตาย': { hp: 4, jp: 0.25, np: 1, hi: 4, ki: 0.25, ni: 2, rate: 87.5 },
+  'ตายดัดโค้ง': { hp: 8, jp: 0.25, np: 1, hi: 8, ki: 0.25, ni: 2, rate: 87.5 },
+  'PC Door': { hp: 14, jp: 0.3333, np: 1, hi: 8, ki: 0.25, ni: 3, rate: 87.5 },
+  'บานเฟี้ยมยูโร': { hp: 18, jp: 0.5833, np: 1, hi: 14, ki: 0.5, ni: 4, rate: 87.5 },
+  'มุ้งเฟรมเล็ก': { hp: 3, jp: 0.1667, np: 1, hi: 2, ki: 0.0833, ni: 1, rate: 87.5 },
+  'หลังคาจั่ว': { baht: [0, 707, 0, 982] },
+  'หลังคาเลื่อน': { baht: [0, 804, 0, 1530] },
+  'บานเลื่อนรางบน': { hp: 8, jp: 0.3333, np: 1, hi: 8, ki: 0.3333, ni: 2, rate: 87.5 },
+  'บานหมุน': { hp: 8, jp: 0.4167, np: 1, hi: 8, ki: 0.4167, ni: 2, rate: 87.5 },
+  'บานโซลิด': { hp: 17, jp: 0.5833, np: 1, hi: 8, ki: 0.25, ni: 3, rate: 87.5 },
+  'บานระแนงเลื่อน': { hp: 12, jp: 0.3333, np: 2, hi: 8, ki: 0.3333, ni: 2, rate: 87.5 },
+  'บานเฟี้ยมยก': { hp: 14, jp: 0.4167, np: 2, hi: 8, ki: 0.25, ni: 2, rate: 87.5 },
+  'บานเปลือย': { baht: [0, 0, 0, 280] },
+  'ประตูรั้ว': { baht: [0, 560, 0, 1120] },
+  'บานเกล็ด': { baht: [0, 196, 0, 196] },
+  'เปิดดัดโค้ง': { baht: [0, 90, 690, 47] },
+};
+/** แปลงแถวในชีต "ค่าแรง" → บาท {pBase,pRate,iBase,iRate} (สูตรเดียวกับ B–E ในชีต) */
+function laborFromSheet(s) {
+  if (s.baht) return { pBase: s.baht[0], pRate: s.baht[1], iBase: s.baht[2], iRate: s.baht[3] };
+  const r2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
+  return {
+    pBase: r2(s.hp * s.rate * s.np), pRate: r2(s.jp * s.rate * s.np),
+    iBase: r2(s.hi * s.rate * s.ni), iRate: r2(s.ki * s.rate * s.ni),
+  };
+}
+
+// ── ANCHORS: ทุนวัสดุจากชีต "คิดทุน ___" (subagent self-verify diff≈0) ────────
+//   ⚠ cost = ค่าจากชีต (ห้ามแก้ตามผล engine) · mfg/inst ไม่ฝังเลข — คิดสดจาก cost + ตารางค่าแรง
+//     ตามสูตรในชีตคิดทุนแต่ละใบ: ขายผลิต = ROUNDUP((ทุน+ค่าแรงผลิต)×(1+กำไร%)/100)×100
+//                                 ขาย+ติดตั้ง = ขายผลิต + ROUNDUP(ค่าแรงติดตั้ง×(1+กำไร%)/100)×100
+//   labor: รูปแบบค่าแรงตามสูตรจริงในชีตคิดทุนของรุ่นนั้น
+//     'rate'      = ฐาน + เรต×ตร.ม.        (ค่า default — ชีตส่วนใหญ่)
+//     'baseXpanel'= ฐาน × จำนวนบาน          (ชีต "คิดทุน เฟี้ยม" D64/D65)
+//     'baseOnly'  = ฐานเฉย ๆ                (ชีต "คิดทุน เฟี้ยมยูโร" E46/E47)
 const ANCHORS = [
-  { id: 'sms_slide', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 16733.4, mfg: 34800, inst: 36100 },
-  { id: 'euro_slide', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 28434.4, mfg: 58500, inst: 60000 },
-  { id: 'slimlux', in: { w: 200, h: 200, p: 2, form: 'อิสระ' }, cost: 13635, mfg: 28900, inst: 30500 },
-  { id: 'open_door', in: { w: 150, h: 200, p: 1, form: 'มีธรณี' }, cost: 10472, mfg: 22100, inst: 23100 },
-  { id: 'awning', in: { w: 40, h: 40, p: 1, form: 'อิสระ' }, cost: 5619.84, mfg: 12400, inst: 13000 },
-  { id: 'folding', in: { w: 180, h: 280, p: 2, form: '2บาน: รวบเปิดซ้าย (2-0)' }, cost: 17373.36, mfg: 36600, inst: 37400 },   // calibrate HW ตรง matrix มด (180×280 2บาน = 37,400 เป๊ะ)
-  { id: 'fixed', in: { w: 150, h: 200, p: 1, form: 'กระจกล้วน' }, cost: 4302, mfg: 9100, inst: 9400 },
-  { id: 'topslide', in: { w: 360, h: 240, p: 2, form: 'เลื่อนซ้อน' }, cost: 21034.96, mfg: 43400, inst: 45100 },
+  { id: 'sms_slide', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 16733.4 },
+  { id: 'euro_slide', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 28434.4 },
+  { id: 'slimlux', in: { w: 200, h: 200, p: 2, form: 'อิสระ' }, cost: 13635 },
+  { id: 'open_door', in: { w: 150, h: 200, p: 1, form: 'มีธรณี' }, cost: 10472 },
+  { id: 'awning', in: { w: 40, h: 40, p: 1, form: 'อิสระ' }, cost: 5619.84 },
+  { id: 'folding', in: { w: 180, h: 280, p: 2, form: '2บาน: รวบเปิดซ้าย (2-0)' }, cost: 17373.36, labor: 'baseXpanel' },   // calibrate HW ตรง matrix มด
+  { id: 'fixed', in: { w: 150, h: 200, p: 1, form: 'กระจกล้วน' }, cost: 4302 },
+  { id: 'topslide', in: { w: 360, h: 240, p: 2, form: 'เลื่อนซ้อน' }, cost: 21034.96 },
   // ระแนง/รั้ว: ชีตขายแบบตาราง R3.9 (ไม่ใช่ทุน×2) → ตรวจเฉพาะ "ทุนวัสดุ"
   // louver = BOM cost (ชีต "คิดทุน ระแนง") · default 1.6×4 โชว์1.6 ช่องห่าง5 ไม่โครง ขาว/ดำ → pitch9.06 · ใบ27 · เส้นใบ9 × กล่อง1220 = ทุนใบ 10,980
   { id: 'louver', in: { w: 200, h: 240, p: 1, form: 'นอน' }, cost: 10980, costOnly: true },
   { id: 'gate', in: { w: 350, h: 180, p: 1, form: 'นอน' }, cost: 49448, costOnly: true },
-  // หลังคา: ชีตปัด ceil100 ก้อนเดียว → engine แยก ผลิต/ติดตั้ง อาจต่าง +100 (ยอมรับได้)
-  { id: 'roof', in: { w: 400, h: 200, p: 1, form: 'หลังคาเพิง' }, cost: 38286, instApprox: 79200, tol: 100 },
+  { id: 'roof', in: { w: 400, h: 200, p: 1, form: 'หลังคาเพิง' }, cost: 38286 },
 
   // ── รุ่นใหม่ (Wave 1+2) — subagent self-verify diff≈0 ──
-  { id: 'eseries', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 19026.4, mfg: 39400, inst: 40700 },
-  { id: 'velora', in: { w: 220, h: 200, p: 1, form: 'เดี่ยว', color: 'sahara', glassType: 'เทมเปอร์ใส 6มม.' }, cost: 7111.6, mfg: 16300, inst: 17400 },
-  { id: 'pcdoor', in: { w: 150, h: 200, p: 2, form: 'แบ่ง 2' }, cost: 11403, mfg: 24400, inst: 25600 },
-  { id: 'banyok', in: { w: 100, h: 50, p: 1, form: 'เดี่ยว' }, cost: 7962, mfg: 16700, inst: 17500 },
-  { id: 'fold_euro', in: { w: 180, h: 280, p: 2, form: '2บาน: 2-0 พับข้างเดียว' }, cost: 17413.46, mfg: 36300, inst: 37100 },
-  { id: 'banklet', in: { w: 300, h: 150, p: 2, form: 'นอน' }, cost: 9842.8, mfg: 21500, inst: 23300 },
-  { id: 'curve_fixed', in: { w: 100, h: 50, p: 1, form: 'กระจกล้วน' }, cost: 4200, mfg: 9700, inst: 10300 },
+  { id: 'eseries', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 19026.4 },
+  { id: 'velora', in: { w: 220, h: 200, p: 1, form: 'เดี่ยว', color: 'sahara', glassType: 'เทมเปอร์ใส 6มม.' }, cost: 7111.6 },
+  { id: 'pcdoor', in: { w: 150, h: 200, p: 2, form: 'แบ่ง 2' }, cost: 11403 },
+  { id: 'banyok', in: { w: 100, h: 50, p: 1, form: 'เดี่ยว' }, cost: 7962 },
+  { id: 'fold_euro', in: { w: 180, h: 280, p: 2, form: '2บาน: 2-0 พับข้างเดียว' }, cost: 17413.46, labor: 'baseOnly' },
+  { id: 'banklet', in: { w: 300, h: 150, p: 2, form: 'นอน' }, cost: 9842.8 },
+  { id: 'curve_fixed', in: { w: 100, h: 50, p: 1, form: 'กระจกล้วน' }, cost: 4200 },
   // เปิดดัดโค้ง: ชีตตัวอย่างใช้กำไร 30% (บานสั่งร้านอื่น) → ตรวจที่กำไร 30 ให้ตรงชีต
-  { id: 'curve_open', in: { w: 90, h: 240, p: 1, form: 'ดัดโค้ง', glassType: 'เทมเปอร์ 6มม.', profitPct: 30 }, cost: 17050.48, inst: 23600 },
+  { id: 'curve_open', in: { w: 90, h: 240, p: 1, form: 'ดัดโค้ง', glassType: 'เทมเปอร์ 6มม.', profitPct: 30 }, cost: 17050.48 },
   // ระแนงสลับ/หมุน: ชีตขาย R3.9/รวมค่าแรง → ตรวจเฉพาะทุนวัสดุ
   { id: 'louver_slip', in: { w: 400, h: 200, p: 1, form: 'นอน' }, cost: 11685, costOnly: true },
   { id: 'louver_rotate', in: { w: 200, h: 240, p: 1, form: 'นอน' }, cost: 36708, costOnly: true },
-  // หลังคาจั่ว: ตรวจทุนวัสดุ (ค่าแรงเรตล้วนตามชีตคิดทุน — เช็คซ้ำกับตารางค่าแรง)
-  { id: 'roof_gable', in: { w: 400, h: 200, p: 1, form: 'หลังคาจั่ว' }, cost: 50936, costOnly: true },
-  // หลังคาเลื่อน: ค่าแรงฝังในวัสดุ → ทุน+ขายตรงเป๊ะ · มอเตอร์ย้ายเป็น addon (ส่ง slide_motor 80กก. = ตรงชีต) · ขายมอเตอร์ ×2.5/6,000
-  { id: 'roof_slide', in: { w: 400, h: 200, p: 2, form: 'เลื่อนยื่น', addons: { slide_motor: { kw: '80' } } }, cost: 88836, instApprox: 180000, tol: 100 },
+  { id: 'roof_gable', in: { w: 400, h: 200, p: 1, form: 'หลังคาจั่ว' }, cost: 50936 },
+  // หลังคาเลื่อน: ค่าแรงฝังในวัสดุ (laborKey ศูนย์) → ตรวจเฉพาะทุน · มอเตอร์เป็น addon บวกยอดขายทีหลัง สูตรกลางไม่ครอบ
+  { id: 'roof_slide', in: { w: 400, h: 200, p: 2, form: 'เลื่อนยื่น', addons: { slide_motor: { kw: '80' } } }, cost: 88836, costOnly: true },
   // มุ้ง: ทุนวัสดุตรง (ค่าแรงต่างชีตที่คิดต่อใบ)
   { id: 'screen', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 3689, costOnly: true },
 ];
 
-console.log('═══ ด่านตรวจราคา R4.0 (engine ↔ xlsx) — ' + ANCHORS.length + ' รุ่น ═══\n');
+// ── ① ค่าแรงใน pricebook ต้องตรงชีต "ค่าแรง" เป๊ะ ────────────────────────────
+//   ถ้าใครแก้ pricebook.LABOR ด้วยมือโดยไม่แก้ไฟล์ → ตรงนี้แดงทันที
+console.log('═══ ① ค่าแรงใน pricebook ↔ ชีต "ค่าแรง" (ถอดทุน_รวมทั้งหมด.xlsx) ═══');
+for (const [key, src] of Object.entries(LABOR_SRC)) {
+  const want = laborFromSheet(src);
+  const got = PB.LABOR[key];
+  if (!got) { console.log(`  ❌ ${key}: ไม่มีคีย์นี้ใน pricebook.LABOR`); fail++; continue; }
+  const bad = ['pBase', 'pRate', 'iBase', 'iRate'].filter((k) => Math.abs((got[k] ?? 0) - want[k]) > 0.5);
+  const fmt = (o) => `ผลิต ${o.pBase}+${o.pRate}/ตร.ม. · ติดตั้ง ${o.iBase}+${o.iRate}/ตร.ม.`;
+  if (bad.length) { console.log(`  ❌ ${key}: got ${fmt(got)}  want ${fmt(want)}  <-- ${bad.join(',')} ไม่ตรงไฟล์`); fail++; }
+  else { console.log(`  ✅ ${key}: ${fmt(want)}`); pass++; }
+}
+
+console.log('\n═══ ② ด่านตรวจราคา R4.0 (engine ↔ xlsx) — ' + ANCHORS.length + ' รุ่น ═══\n');
+const ceil100 = (n) => Math.ceil(n / 100) * 100;
 for (const a of ANCHORS) {
   const prod = PRODUCTS[a.id];
   if (!prod) { console.log('❌ ไม่พบรุ่น', a.id); fail++; continue; }
   const r = computeCost(PB, prod, a.in);
   console.log(`▶ ${prod.name} (${a.in.w}×${a.in.h} ${a.in.p}บาน):`);
   check('ทุนรวม', r.cost.total, a.cost, 1);
-  if (!a.costOnly) {
-    if (a.mfg) check('ขายผลิตอย่างเดียว', r.sell.mfgOnly, a.mfg, a.tol || 1);
-    if (a.inst) check('ขายผลิต+ติดตั้ง', r.sell.withInstall, a.inst, a.tol || 1);
-    if (a.instApprox) check('ขาย+ติดตั้ง (≈ชีต ±100)', r.sell.withInstall, a.instApprox, a.tol || 100);
-  } else {
-    console.log(`     (ขายใช้ตาราง R3.9 — ข้าม · ทุนวัสดุตรวจแล้ว)`);
-  }
+  if (a.costOnly) { console.log('     (ขายใช้ตาราง R3.9 / มี add-on — ข้าม · ทุนวัสดุตรวจแล้ว)'); continue; }
+
+  // คาดคะเนราคาขาย "จากไฟล์" ล้วน ๆ: ทุนชีต + ค่าแรงชีต + สูตรในชีตคิดทุน — ไม่แตะผลลัพธ์ engine
+  const L = laborFromSheet(LABOR_SRC[prod.laborKey] ?? {});
+  const area = (a.in.w * a.in.h) / 10000;
+  const shape = a.labor || 'rate';
+  const lp = shape === 'baseXpanel' ? a.in.p : 1;
+  const rateOn = shape === 'rate' ? 1 : 0;
+  const wProd = Math.max(0, L.pBase + L.pRate * area * rateOn) * lp;
+  const wInst = Math.max(0, L.iBase + L.iRate * area * rateOn) * lp;
+  const pf = a.in.profitPct ?? 100;
+  const wantMfg = ceil100((a.cost + wProd) * (1 + pf / 100));
+  const wantInst = wantMfg + ceil100(wInst * (1 + pf / 100));
+  check(`ค่าแรงผลิต (${shape})`, r.labor.prod, Math.round(wProd * 100) / 100, 1);
+  check('ค่าแรงติดตั้ง', r.labor.install, Math.round(wInst * 100) / 100, 1);
+  check('ขายผลิตอย่างเดียว', r.sell.mfgOnly, wantMfg, 1);
+  check('ขายผลิต+ติดตั้ง', r.sell.withInstall, wantInst, 1);
 }
 
 // ── เทสพฤติกรรมกลาง ─────────────────────────────────────────────────────────
@@ -128,7 +200,22 @@ console.log('▶ ระแนงสลับ — คละกล่อง/ระ
 
 // ── ② ตาข่ายกันพังทุกรุ่น: ทุก product ต้องคิดออกราคาสมเหตุผล (ไม่ crash/NaN/ติดลบ/ขาย<ทุน) ──
 // เสริม anchor (แม่นเฉพาะ 24 รุ่น) → sweep นี้คลุม "ทุกรุ่น" กันราคาพังเงียบ (รุ่นที่ไม่มี anchor)
-console.log('\n═══ ② ตาข่ายทุกรุ่น: sanity sweep (คิดออกราคาได้ · ไม่ติดลบ · ขาย≥ทุน) ═══');
+// ── ③ สวิตช์ "คิดค่าแรงแบบไหน" ในหน้าคิดราคา — ราคาที่ขึ้นใบต้องเปลี่ยนตามจริง ──
+//   เคยพลาดมาแล้ว: ทำปุ่มสวย ๆ แต่ลืมต่อสาย → กดแล้วราคาไม่ขยับ · ตรงนี้อ่านซอร์สจริง
+console.log('\n═══ ③ สวิตช์ค่าแรงในหน้าคิดราคา 4.0 (ต่อสายครบไหม) ═══');
+{
+  const src = fs.readFileSync(path.join(__dirname, '../src/components/Calculator40Client.tsx'), 'utf8');
+  const has = (label, re) => { const ok = re.test(src); console.log(`  ${ok ? '✅' : '❌'} ${label}`); ok ? pass++ : fail++; };
+  has('ค่าตั้งต้น = ค่าแรงรวม (useState "all")', /useState<"all" \| "mfg">\("all"\)/);
+  has('ราคาต่อหน่วยที่ขึ้นใบเปลี่ยนตามสวิตช์', /perUnit:\s*\(laborMode === "mfg" \? result\.sell\.mfgOnly : result\.sell\.withInstall\)/);
+  has('หลังคาช่วงเพิ่ม (subLines) เปลี่ยนตามสวิตช์ด้วย', /laborMode === "mfg" \? sr\.sell\.mfgOnly : sr\.sell\.withInstall/);
+  has('เลือก "ผลิตอย่างเดียว" แล้วเขียนกำกับลงใบว่าไม่รวมติดตั้ง', /laborMode === "mfg"\)\s*jobLines\.push\("- ราคานี้ไม่รวมค่าติดตั้ง/);
+  has('บันทึกลงสูตร (recipe) เพื่อกลับมาแก้ข้อได้', /profit,\s*laborMode,/);
+  has('โหลดสูตรเก่ากลับมาแล้วตั้งค่าสวิตช์คืน', /setLaborMode\(r\.laborMode === "mfg"/);
+  has('โชว์ค่าแรงแยก ผลิต/ติดตั้ง/รวม', /result\.labor\.prod \+ result\.labor\.install/);
+}
+
+console.log('\n═══ ④ ตาข่ายทุกรุ่น: sanity sweep (คิดออกราคาได้ · ไม่ติดลบ · ขาย≥ทุน) ═══');
 let sweepPass = 0, sweepFail = 0;
 for (const [id, prod] of Object.entries(PRODUCTS)) {
   if (!prod || typeof prod !== 'object' || !prod.name) continue;

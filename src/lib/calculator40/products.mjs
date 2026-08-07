@@ -230,7 +230,7 @@ export const PRODUCTS = {
 
   folding: {
     id: 'folding', group: 1, name: 'บานเฟี้ยม', brand: 'EURO', laborKey: 'บานเฟี้ยม (sms)',
-    icon: '🪟', laborPerPanel: true, pFromForm: true,
+    icon: '🪟', laborPerPanel: true, laborNoRate: true, pFromForm: true,   // ชีต "คิดทุน เฟี้ยม" D64/D65 = ฐาน × จำนวนบาน (ไม่มีเทอม /ตร.ม.)
     specOpts: [ // สเปก label เท่านั้น (R3.9 folddir/threshf — ไม่กระทบราคา · พิมพ์ลงใบ) · threshf ตรง มด (ธรณี/หลังเต่า/รางยู)
       { key: 'folddir', label: 'ทิศเปิด', opts: ['เปิดขวา', 'เปิดซ้าย', 'แยกกลาง'], def: 'เปิดซ้าย' },
       { key: 'threshf', label: 'ธรณีเฟี้ยม', opts: ['ธรณีกันน้ำ', 'ธรณีหลังเต่า', 'รางยู'], def: 'ธรณีกันน้ำ' }, // มด dropdown B6 (label · รางยู/หลังเต่า เช็คซ้ำราคา)
@@ -440,7 +440,7 @@ export const PRODUCTS = {
 
   fold_euro: {
     id: 'fold_euro', group: 1, name: 'บานเฟี้ยม ยูโร', brand: 'EURO', laborKey: 'บานเฟี้ยมยูโร',
-    icon: '🪟', laborPerPanel: true, pFromForm: true,
+    icon: '🪟', laborNoRate: true, pFromForm: true,   // ชีต "คิดทุน เฟี้ยมยูโร" E46/E47 = ฐานเฉย ๆ (ไม่ ×บาน ไม่มี /ตร.ม.)
     specOpts: [ // สเปก label เท่านั้น (R3.9 folddir/threshf — ไม่กระทบราคา · พิมพ์ลงใบ) · threshf ตรง มด (ปกติ/รางยู)
       { key: 'folddir', label: 'ทิศเปิด', opts: ['เปิดขวา', 'เปิดซ้าย', 'แยกกลาง'], def: 'เปิดซ้าย' },
       { key: 'threshf', label: 'ธรณีเฟี้ยม', opts: ['ธรณีกันน้ำ (ปกติ)', 'รางยู'], def: 'ธรณีกันน้ำ (ปกติ)' }, // มด dropdown B6 (label · รางยู เช็คซ้ำราคา)
@@ -942,7 +942,8 @@ export const PRODUCTS = {
   },
 
   roof_gable: {
-    id: 'roof_gable', group: 3, name: 'หลังคาจั่ว', brand: 'MTONG', laborKey: 'หลังคาจั่ว (เรตล้วน)', roofShape: true, pickerHide: true,
+    // ค่าแรง: ชีต "คิดทุน หลังคาจั่ว" D19/D20 = เรต/ตร.ม. × พื้นที่ (คอลัมน์ 3,5 · ไม่มีฐาน) → ใช้คีย์ "หลังคาจั่ว" ตรงตารางค่าแรง
+    id: 'roof_gable', group: 3, name: 'หลังคาจั่ว', brand: 'MTONG', laborKey: 'หลังคาจั่ว', roofShape: true, pickerHide: true,
     icon: '🏠', defForm: 'หลังคาจั่ว', forms: ['หลังคาจั่ว'],
     addons: ['roof_pole', 'truss_beam', 'roof_eave', 'gutter', 'chain_drain', 'pipe_cover', 'gutter_cover', 'beam_cover', 'hide_slope', 'roof_sealer', 'roof_film', 'roof_2nd', 'ceil_under', 'demolish'],  // ของเสริมหลังคา (ชุดเดียวกับ roof)
     // วัสดุมุง 8 ชนิด (ตรงชีต "คิดทุน หลังคาจั่ว" E6 · เมทัลชีท=1 ชนิด 2200 ตามชีต · ไวนิล=anchor 50936)
