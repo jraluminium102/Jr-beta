@@ -170,7 +170,7 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
     }
   }
 
-  // ช่องทางติดต่อ + ชื่อ/handle จากหน้าคิว → ซิงก์ลงทะเบียนลูกค้า (0121)
+  // ช่องทางติดต่อ + ชื่อ/handle จากหน้าคิว → ซิงก์ลงทะเบียนลูกค้า (0122)
   //   เดิมค่าพวกนี้ค้างอยู่ที่ queue_entries อย่างเดียว → ใบเสนอ/ใบวางบิล/ใบเสร็จ
   //   ไม่รู้ว่าเป็น FB เลยพิมพ์ "LINE:" ตายตัว (เจ้าของแจ้ง 6 ส.ค.69)
   if (body.contact_channel !== undefined || body.line_contact !== undefined) {
@@ -180,7 +180,7 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
       if (body.contact_channel !== undefined) patch.contact_channel = String(body.contact_channel);
       if (body.line_contact !== undefined) patch.line_id = String(body.line_contact ?? "").trim();
       if (Object.keys(patch).length) {
-        // non-fatal: ยังไม่รัน 0121 ก็ให้บันทึกคิวผ่านตามปกติ (แค่เอกสารยังไม่รู้ช่องทาง)
+        // non-fatal: ยังไม่รัน 0122 ก็ให้บันทึกคิวผ่านตามปกติ (แค่เอกสารยังไม่รู้ช่องทาง)
         const { error: cErr } = await sb.from("customers").update(patch).eq("id", cid);
         if (cErr && !/column|does not exist|schema cache/i.test(cErr.message ?? "")) throw dbError(cErr);
       }

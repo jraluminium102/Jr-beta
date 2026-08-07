@@ -41,7 +41,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     const errMsg = setStr(key, max, label);
     if (errMsg) return fail(errMsg);
   }
-  // ช่องทางติดต่อ (0121) — จำกัดค่าให้ตรง constraint ที่ DB
+  // ช่องทางติดต่อ (0122) — จำกัดค่าให้ตรง constraint ที่ DB
   if (body?.contact_channel !== undefined) {
     const ch = String(body.contact_channel).trim().toUpperCase();
     if (ch && !["LINE", "FB", "IG", "OTHER"].includes(ch)) return fail("ช่องทางติดต่อไม่ถูกต้อง");

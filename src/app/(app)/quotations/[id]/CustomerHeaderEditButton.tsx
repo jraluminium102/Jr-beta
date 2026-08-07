@@ -9,7 +9,7 @@ import Icon from "@/components/Icon";
 export type HeaderSnapshot = {
   name?: string; address?: string; tax_id?: string; branch?: string;
   kind?: string; postal_code?: string; contact_person?: string; phone?: string;
-  line_id?: string; contact_channel?: string;   // (0121) ชื่อ/handle + ช่องทาง (LINE/FB/IG)
+  line_id?: string; contact_channel?: string;   // (0122) ชื่อ/handle + ช่องทาง (LINE/FB/IG)
 };
 
 const F = (v: unknown) => String(v ?? "");
@@ -149,7 +149,7 @@ export default function CustomerHeaderEditButton({
             <input type="text" value={contact} onChange={(e) => setContact(e.target.value)} maxLength={120} className={inp} /></label>
           <label className={lbl}><span className={cap}>โทรศัพท์</span>
             <input type="text" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={40} className={inp} /></label>
-          {/* ช่องทางติดต่อ (0121) — หัวเอกสารพิมพ์ป้ายตามช่องนี้ เดิม hardcode LINE ตายตัว */}
+          {/* ช่องทางติดต่อ (0122) — หัวเอกสารพิมพ์ป้ายตามช่องนี้ เดิม hardcode LINE ตายตัว */}
           <label className={lbl}><span className={cap}>ช่องทางติดต่อ</span>
             <select value={channel} onChange={(e) => setChannel(e.target.value)} className={inp}>
               <option value="LINE">LINE</option>

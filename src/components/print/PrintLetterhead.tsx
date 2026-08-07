@@ -13,7 +13,7 @@ export type CustomerSnapshot = {
   branch?: string;   // (0069) สำนักงานใหญ่/สาขาที่ NNNNN — โชว์เฉพาะนิติบุคคล
   kind?: string;     // INDIVIDUAL | COMPANY
   line_id?: string;          // ชื่อ/handle ที่ใช้ติดต่อ (ชื่อคอลัมน์เก่า — ไม่ได้แปลว่าเป็น LINE เสมอ)
-  contact_channel?: string;  // (0121) LINE | FB | IG | OTHER — หัวเอกสารพิมพ์ป้ายตามช่องนี้
+  contact_channel?: string;  // (0122) LINE | FB | IG | OTHER — หัวเอกสารพิมพ์ป้ายตามช่องนี้
   contact_person?: string;
   phone?: string;
 };
