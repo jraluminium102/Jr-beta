@@ -141,7 +141,7 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
             <EditBillingStatusButton billingNoteId={bn.id} current={bn.display_status ?? null} />
           )}
           {canVoid && !isCancelled && (
-            <VoidBillingNoteButton billingNoteId={bn.id} />
+            <VoidBillingNoteButton billingNoteId={bn.id} billingNoteCode={bn.code} />
           )}
         </div>
       </div>

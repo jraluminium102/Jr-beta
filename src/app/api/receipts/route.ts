@@ -49,10 +49,12 @@ export async function POST(req: Request) {
   // 1) ดึงใบวางบิล → copy customer_snapshot + job_id (ใช้กรณีไม่มี installment [HIGH-3])
   const { data: bn, error: bnErr } = await supabase
     .from("billing_notes")
-    .select("id, customer_snapshot, job_id, vat_rate, vat_rate_set, wht_rate")
+    .select("id, customer_snapshot, job_id, vat_rate, vat_rate_set, wht_rate, status")
     .eq("id", body.billing_note_id)
-    .single<Pick<BillingNote, "id" | "customer_snapshot"> & { job_id: string | null; vat_rate: number | null; vat_rate_set: boolean | null; wht_rate: number | null }>();
+    .single<Pick<BillingNote, "id" | "customer_snapshot"> & { job_id: string | null; vat_rate: number | null; vat_rate_set: boolean | null; wht_rate: number | null; status: string }>();
   if (bnErr || !bn) return fail("ไม่พบใบวางบิล", 404);
+  // กันออกใบเสร็จให้บิลที่ถูกยกเลิกแล้ว (กัน race กับ cascade void — บิล cancelled ห้ามรับชำระ/ออกใบเสร็จ)
+  if (bn.status === "cancelled") return fail("ใบวางบิลนี้ถูกยกเลิกแล้ว — ออกใบเสร็จไม่ได้", 409);
 
   // ── vat_rate ของใบเสร็จ = ของ "ใบวางบิลใบนี้" (แหล่งความจริงเดียว · effectiveBillVat ใน money.ts) ──
   // เดิมอ่านจาก jobs.vat_rate → บั๊ก: jobs.vat_rate ถูกเขียนครั้งเดียวตอนสร้างใบเสนอ และ "ไม่เคยอัปเดต"

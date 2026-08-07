@@ -6,16 +6,30 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 const VoidSchema = z.object({
   reason: z.string().min(1, "ต้องระบุเหตุผล"),
+  cascade: z.boolean().optional().default(false),
 });
 
+// error code จาก RPC void_billing_note_cascade → ข้อความไทย
+const CASCADE_BLOCK_MSG: Record<string, { msg: string; status: number }> = {
+  forbidden: { msg: "ไม่มีสิทธิ์ยกเลิกใบวางบิล (เฉพาะแอดมิน/บัญชี)", status: 403 },
+  NOT_FOUND: { msg: "ไม่พบใบวางบิล", status: 404 },
+  ALREADY_CANCELLED: { msg: "ใบวางบิลถูกยกเลิกแล้ว", status: 409 },
+};
+
 // POST /api/billing-notes/[id]/void — ยกเลิกใบวางบิล
+//   cascade=false (ค่าเริ่มต้น) — พฤติกรรมเดิม: บล็อกถ้ามีใบเสร็จ active ผูกอยู่
+//   cascade=true — ยกเลิกใบเสร็จที่ผูกอยู่ให้ในตัว ผ่าน RPC atomic (void_billing_note_cascade, 0123)
 export const POST = withRoute(async (req: Request, { params }: { params: { id: string } }) => {
   const ctx = await requirePermission("finance", "void");
 
   const body = await req.json().catch(() => ({}));
   const parsed = VoidSchema.safeParse(body);
   if (!parsed.success) return err(parsed.error.errors[0].message, 400);
-  const { reason } = parsed.data;
+  const { reason, cascade } = parsed.data;
+  // cascade = ยกเลิกใบเสร็จ/ใบกำกับภาษีตามไปด้วย (กระทบรายงานภาษีขาย) — บังคับเหตุผลยาวกว่าปกติ กัน "." ลอย
+  if (cascade && reason.trim().length < 5) {
+    return err("ต้องระบุเหตุผล (อย่างน้อย 5 ตัวอักษร) — กระทบใบเสร็จ/ใบกำกับภาษีด้วย", 400);
+  }
 
   const bnId = params.id;
 
@@ -28,8 +42,51 @@ export const POST = withRoute(async (req: Request, { params }: { params: { id: s
   if (bnErr || !bn) return notFound("ไม่พบใบวางบิล");
   if (bn.status === "cancelled") return err("ใบวางบิลถูกยกเลิกแล้ว", 409);
 
-  // 2) บล็อกถ้ามี receipt active ผูกอยู่กับงวดใดงวดหนึ่ง
   const instIds = (bn.billing_installments ?? []).map((i) => i.id);
+
+  // ─── cascade=true: void ใบเสร็จที่ผูกอยู่ให้ในตัว ผ่าน RPC atomic ───
+  if (cascade) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = ctx.supabase as any;
+    const { data, error } = await sb.rpc("void_billing_note_cascade", {
+      p_bn_id: Number(bnId),
+      p_reason: reason,
+      p_user_id: ctx.user.id,
+    });
+    if (error) {
+      const code = (error.message ?? "").match(/forbidden|NOT_FOUND|ALREADY_CANCELLED/)?.[0];
+      if (code && CASCADE_BLOCK_MSG[code]) {
+        const { msg, status } = CASCADE_BLOCK_MSG[code];
+        return err(msg, status);
+      }
+      if (/void_billing_note_cascade|does not exist|42883|schema cache/i.test(error.message ?? ""))
+        return err("ยังไม่ได้รัน migration 0123 (ยกเลิกใบวางบิลแบบ cascade) — ติดต่อผู้ดูแลระบบ", 400);
+      return err(error.message ?? "ยกเลิกใบวางบิลไม่สำเร็จ", 400);
+    }
+
+    const voidedReceipts = (data?.voided_receipts ?? []) as { id: number; code: string }[];
+
+    await audit({
+      userId: ctx.user.id,
+      action: "VOID_BILLING_NOTE",
+      table: "billing_notes",
+      recordId: bnId,
+      newValue: { status: "cancelled", void_reason: reason, cascade: true, voided_receipts: voidedReceipts },
+    });
+    for (const rc of voidedReceipts) {
+      await audit({
+        userId: ctx.user.id,
+        action: "VOID_RECEIPT",
+        table: "receipts",
+        recordId: String(rc.id),
+        newValue: { is_voided: true, void_reason: reason, cascade_from_billing_note: bnId },
+      });
+    }
+
+    return ok({ ok: true, voided_receipts: voidedReceipts });
+  }
+
+  // ─── cascade=false (เดิม): บล็อกถ้ามี receipt active ผูกอยู่กับงวดใดงวดหนึ่ง ───
   if (instIds.length > 0) {
     const { data: activeRc } = await ctx.supabase
       .from("receipts")

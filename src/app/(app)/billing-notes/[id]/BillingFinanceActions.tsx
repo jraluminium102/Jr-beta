@@ -346,22 +346,45 @@ export function EditBillingDateButton({
 // ─────────────────────────────────────────────
 // Void billing note dialog
 // ─────────────────────────────────────────────
-export function VoidBillingNoteButton({ billingNoteId }: { billingNoteId: number }) {
+type LinkedReceipt = { id: number; code: string; issue_date?: string; amount?: number; net?: number };
+
+export function VoidBillingNoteButton({ billingNoteId, billingNoteCode }: { billingNoteId: number; billingNoteCode?: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [loadingLinks, setLoadingLinks] = useState(false);
+  const [linkedReceipts, setLinkedReceipts] = useState<LinkedReceipt[] | null>(null);
+
+  async function openDialog() {
+    setOpen(true);
+    setError("");
+    setLoadingLinks(true);
+    try {
+      const res = await fetch(`/api/billing-notes/${billingNoteId}/linked-receipts`);
+      const json = await res.json().catch(() => null);
+      setLinkedReceipts(res.ok ? (json?.data?.receipts ?? []) : []);
+    } catch {
+      setLinkedReceipts([]);
+    } finally {
+      setLoadingLinks(false);
+    }
+  }
+
+  const hasReceipts = (linkedReceipts?.length ?? 0) > 0;
+  // มีใบเสร็จ (cascade) → บังคับเหตุผล ≥5 ตัว (ตรง server) · ไม่มีใบเสร็จ (void ปกติ) → แค่ไม่ว่าง (เหมือนเดิม)
+  const reasonOk = hasReceipts ? reason.trim().length >= 5 : reason.trim().length > 0;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!reason.trim()) { setError("ต้องระบุเหตุผล"); return; }
+    if (!reasonOk) { setError(hasReceipts ? "ต้องระบุเหตุผล (อย่างน้อย 5 ตัวอักษร)" : "ต้องระบุเหตุผล"); return; }
     setBusy(true);
     setError("");
     const res = await fetch(`/api/billing-notes/${billingNoteId}/void`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reason }),
+      body: JSON.stringify(hasReceipts ? { reason, cascade: true } : { reason }),
     });
     const json = await res.json();
     setBusy(false);
@@ -372,7 +395,7 @@ export function VoidBillingNoteButton({ billingNoteId }: { billingNoteId: number
   if (!open) {
     return (
       <button
-        onClick={() => setOpen(true)}
+        onClick={openDialog}
         className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold bg-red-50 text-red-700 min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
         aria-label="ยกเลิกใบวางบิล"
       >
@@ -406,9 +429,32 @@ export function VoidBillingNoteButton({ billingNoteId }: { billingNoteId: number
           </button>
         </div>
 
-        <div className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
-          ใบวางบิลจะถูกยกเลิก — งวดทั้งหมดกลับเป็น "รอชำระ" และรายการรับเงินที่ผูกอยู่จะถูก void ด้วย
-        </div>
+        {loadingLinks && (
+          <div className="text-sm text-gray-500 flex items-center gap-2 px-3 py-2.5">
+            <span className="w-4 h-4 rounded-full border-2 border-gray-300 border-t-gray-500 animate-spin" />
+            กำลังตรวจใบเสร็จที่ผูกอยู่...
+          </div>
+        )}
+
+        {!loadingLinks && !hasReceipts && (
+          <div className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
+            ใบวางบิล{billingNoteCode ? ` ${billingNoteCode}` : ""}จะถูกยกเลิก — งวดทั้งหมดกลับเป็น &quot;รอชำระ&quot;
+          </div>
+        )}
+
+        {!loadingLinks && hasReceipts && (
+          <div className="text-sm text-red-800 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5 space-y-2">
+            <p className="font-semibold flex items-center gap-1.5">
+              <Icon name="warn" size={15} />
+              มีใบเสร็จ/ใบกำกับภาษี {linkedReceipts!.length} ใบ ผูกอยู่กับบิลนี้
+            </p>
+            <p>เลขที่จะถูกยกเลิกถาวรทั้งหมด (กระทบรายงานภาษีขาย โปรดตรวจก่อนยืนยัน):</p>
+            <ul className="list-disc list-inside space-y-0.5 font-mono text-xs">
+              {billingNoteCode && <li>{billingNoteCode} (ใบวางบิล)</li>}
+              {linkedReceipts!.map((r) => <li key={r.id}>{r.code}</li>)}
+            </ul>
+          </div>
+        )}
 
         <label className="block text-sm">
           <span className="text-xs font-medium text-gray-500">
@@ -434,10 +480,10 @@ export function VoidBillingNoteButton({ billingNoteId }: { billingNoteId: number
             className="press flex-1 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-700 hover:bg-gray-50 min-h-[44px] focus:outline-none focus-visible:ring-2">
             ยกเลิก
           </button>
-          <button type="submit" disabled={busy || !reason.trim()}
+          <button type="submit" disabled={busy || loadingLinks || !reasonOk}
             className="press flex-1 bg-red-600 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-red-700 disabled:opacity-50 min-h-[44px] flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2">
             {busy && <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />}
-            ยืนยันยกเลิก
+            {hasReceipts ? "ยืนยันยกเลิกทั้งหมด" : "ยืนยันยกเลิก"}
           </button>
         </div>
       </form>

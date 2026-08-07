@@ -46,6 +46,15 @@ export async function applyInstallmentPayment(
     .single<{ amount: number; seq: number; paid_amount: number | null }>();
   if (iErr || !inst) return { error: "ไม่พบงวดในใบวางบิลนี้" };
 
+  // กันรับชำระ/ออกใบเสร็จให้บิลที่ถูกยกเลิกแล้ว (กัน race กับ cascade void — การชำระที่ commit หลัง cancel
+  //   จะเขียนทับ status ปลุกบิล cancelled กลับมา paid/partial เงียบ ๆ · QA HIGH)
+  const { data: bnStatus } = await supabase
+    .from("billing_notes")
+    .select("status")
+    .eq("id", opts.billingNoteId)
+    .single<{ status: string }>();
+  if (bnStatus?.status === "cancelled") return { error: "ใบวางบิลนี้ถูกยกเลิกแล้ว — บันทึกรับชำระ/ออกใบเสร็จไม่ได้" };
+
   const amount = Number(inst.amount) || 0;
 
   // ── guard มัดจำ: งวด 1 ที่มีมัดจำ auto รออยู่ ยอดต้องตรงกัน (บัญชี P0 · เช็คก่อนแตะงวด) ──
@@ -129,7 +138,8 @@ export async function applyInstallmentPayment(
   const { error: sErr } = await supabase
     .from("billing_notes")
     .update({ status: blStatus })
-    .eq("id", opts.billingNoteId);
+    .eq("id", opts.billingNoteId)
+    .neq("status", "cancelled");   // กันปลุกบิลที่ยกเลิกแล้วกลับมา (defensive · คู่กับ guard ต้นฟังก์ชัน)
   if (sErr) return { error: sErr.message };
 
   // 4) sync finance_entries เส้น B — ถ้าไม่มี job_id ข้ามได้ (ไม่ error)
