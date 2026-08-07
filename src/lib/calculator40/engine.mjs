@@ -102,11 +102,19 @@ export function computeCost(PB, prod, opt) {
     const count = val(it.count);
     const bars = barsNeeded(seg, count, stockLen);
     if (bars <= 0) continue;
-    const price = (it.code && PB.ALUCODE && PB.ALUCODE[it.code] > 0) ? PB.ALUCODE[it.code] : pPrice(it.name, it.price);
+    // ราคาเส้น "ตามสี" (PB.ALUCOLOR) มาก่อน — ชีต "ราคาสี" มีคอลัมน์ เทาซาฮาร่า/ลายไม้สต็อค เป็นราคาเส้นสำเร็จ
+    //   สูตรในชีตคิดทุนใช้คอลัมน์นั้นตรง ๆ (ไม่ใช่ ขาว + ค่าอบ×กก.) → เส้นที่คิดราคาสีแล้ว ห้ามบวกค่าอบซ้ำ
+    //   เหลือแค่ สีอบพิเศษ/ลายไม้อบพิเศษ ที่ยังเป็น ขาว + เรต×กก. (+ค่าเปิดตู้อบ) ตามสูตรชีต
+    // ALUCODE_ALIAS = รหัสในสูตรสินค้าเขียนไว้ผิด → ชี้ไปรหัสที่ชีตคิดทุนใช้จริง (ยืนยันด้วย น้ำหนัก/เส้น ตรงกัน)
+    const code = (it.code && PB.ALUCODE_ALIAS && PB.ALUCODE_ALIAS[it.code]) || it.code;
+    const colorPrice = (code && PB.ALUCOLOR && PB.ALUCOLOR[color]) ? PB.ALUCOLOR[color][code] : null;
+    const price = colorPrice > 0 ? colorPrice
+      : (code && PB.ALUCODE && PB.ALUCODE[code] > 0) ? PB.ALUCODE[code]
+      : pPrice(it.name, it.price);
     const amount = bars * price * mult;
     aluCost += amount;
-    aluKg += bars * (it.kg || 0);
-    lines.push({ cat: 'alu', name: it.name, qty: bars, unit: 'เส้น', unitPrice: round2(price * mult), amount: round2(amount) });
+    if (!(colorPrice > 0)) aluKg += bars * (it.kg || 0);   // เส้นที่ราคารวมสีแล้ว ไม่เข้ากองคิดค่าอบ
+    lines.push({ cat: 'alu', name: it.name + (colorPrice > 0 ? ' (' + colorDisp + ')' : ''), qty: bars, unit: 'เส้น', unitPrice: round2(price * mult), amount: round2(amount) });
   }
   // ค่าอบสี (อลูเท่านั้น)
   let bakeCost = 0, openOven = 0;

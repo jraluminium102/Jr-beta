@@ -69,12 +69,12 @@ function laborFromSheet(s) {
 //     'baseXpanel'= ฐาน × จำนวนบาน          (ชีต "คิดทุน เฟี้ยม" D64/D65)
 //     'baseOnly'  = ฐานเฉย ๆ                (ชีต "คิดทุน เฟี้ยมยูโร" E46/E47)
 const ANCHORS = [
-  { id: 'sms_slide', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 16733.4 },
-  { id: 'euro_slide', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 28434.4 },
+  { id: 'sms_slide', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 16648.4 },
+  { id: 'euro_slide', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 29499.4 },
   { id: 'slimlux', in: { w: 200, h: 200, p: 2, form: 'อิสระ' }, cost: 13635 },
-  { id: 'open_door', in: { w: 150, h: 200, p: 1, form: 'มีธรณี' }, cost: 10472 },
-  { id: 'awning', in: { w: 40, h: 40, p: 1, form: 'อิสระ' }, cost: 5619.84 },
-  { id: 'folding', in: { w: 180, h: 280, p: 2, form: '2บาน: รวบเปิดซ้าย (2-0)' }, cost: 17373.36, labor: 'baseXpanel' },   // calibrate HW ตรง matrix มด
+  { id: 'open_door', in: { w: 150, h: 200, p: 1, form: 'มีธรณี' }, cost: 10637 },
+  { id: 'awning', in: { w: 40, h: 40, p: 1, form: 'อิสระ' }, cost: 5299.84 },
+  { id: 'folding', in: { w: 180, h: 280, p: 2, form: '2บาน: รวบเปิดซ้าย (2-0)' }, cost: 17328.36, labor: 'baseXpanel' },   // calibrate HW ตรง matrix มด
   { id: 'fixed', in: { w: 150, h: 200, p: 1, form: 'กระจกล้วน' }, cost: 4302 },
   { id: 'topslide', in: { w: 360, h: 240, p: 2, form: 'เลื่อนซ้อน' }, cost: 21034.96 },
   // ระแนง/รั้ว: ชีตขายแบบตาราง R3.9 (ไม่ใช่ทุน×2) → ตรวจเฉพาะ "ทุนวัสดุ"
@@ -88,7 +88,7 @@ const ANCHORS = [
   { id: 'velora', in: { w: 220, h: 200, p: 1, form: 'เดี่ยว', color: 'sahara', glassType: 'เทมเปอร์ใส 6มม.' }, cost: 7111.6 },
   { id: 'pcdoor', in: { w: 150, h: 200, p: 2, form: 'แบ่ง 2' }, cost: 11403 },
   { id: 'banyok', in: { w: 100, h: 50, p: 1, form: 'เดี่ยว' }, cost: 7962 },
-  { id: 'fold_euro', in: { w: 180, h: 280, p: 2, form: '2บาน: 2-0 พับข้างเดียว' }, cost: 17413.46, labor: 'baseOnly' },
+  { id: 'fold_euro', in: { w: 180, h: 280, p: 2, form: '2บาน: 2-0 พับข้างเดียว' }, cost: 18863.46, labor: 'baseOnly' },
   { id: 'banklet', in: { w: 300, h: 150, p: 2, form: 'นอน' }, cost: 9842.8 },
   { id: 'curve_fixed', in: { w: 100, h: 50, p: 1, form: 'กระจกล้วน' }, cost: 4200 },
   // เปิดดัดโค้ง: ชีตตัวอย่างใช้กำไร 30% (บานสั่งร้านอื่น) → ตรวจที่กำไร 30 ให้ตรงชีต
@@ -109,14 +109,14 @@ const ANCHORS = [
 //   ชีตนี้ล็อกทุนวัสดุจริงไว้ที่ 150×150 ทุกรุ่น = จุดยึดที่ 2 ฟรี ๆ จากไฟล์
 //   ⚠ ไม่ใส่ เฟี้ยม/เฟี้ยมยูโร — ชีตเขียนกำกับเองว่า "สูตร live ประมาณ" (ไม่ใช่เลขเป๊ะ)
 const ANCHORS150 = [
-  { id: 'sms_slide', in: { p: 2, form: 'อิสระ' }, cost: 9246 },
-  { id: 'euro_slide', in: { p: 2, form: 'อิสระ' }, cost: 13365 },
+  { id: 'sms_slide', in: { p: 2, form: 'อิสระ' }, cost: 9170.85 },
+  { id: 'euro_slide', in: { p: 2, form: 'อิสระ' }, cost: 13789.85 },
   { id: 'eseries', in: { p: 2, form: 'อิสระ' }, cost: 12685 },
   { id: 'velora', in: { p: 2, form: 'เดี่ยว', color: 'white' }, cost: 5470 },      // สีขาว = ต้องมีค่าอบเรตเทา (rawAlu)
   { id: 'velora', in: { p: 2, form: 'เดี่ยว', color: 'sahara' }, cost: 5470 },     // เทา = เท่ากันเป๊ะตามสูตรชีต
-  { id: 'open_door', in: { p: 2, form: 'มีธรณี' }, cost: 11815 },
+  { id: 'open_door', in: { p: 2, form: 'มีธรณี' }, cost: 11980 },
   { id: 'pcdoor', in: { p: 1, form: 'แบ่ง 2', spec: { pcsill: 'มีธรณี', pcsoft: 'ใส่' } }, cost: 8474 },
-  { id: 'awning', in: { p: 1, form: 'อิสระ' }, cost: 6264 },
+  { id: 'awning', in: { p: 1, form: 'อิสระ' }, cost: 5944 },
   { id: 'banyok', in: { p: 1, form: 'เดี่ยว' }, cost: 8424 },
   { id: 'fixed', in: { p: 1, form: 'กระจกล้วน' }, cost: 4004 },
   { id: 'topslide', in: { p: 2, form: 'เลื่อนซ้อน' }, cost: 12573 },
@@ -170,7 +170,7 @@ console.log('▶ แก้อลู SMS 187→200 (กระจก/อุปก�
   const base = computeCost(PB, PRODUCTS.sms_slide, { w: 600, h: 300, p: 3, form: 'อิสระ' });
   const PB2 = JSON.parse(JSON.stringify(PB)); PB2.ALU.SMS = 200;
   const r = computeCost(PB2, PRODUCTS.sms_slide, { w: 600, h: 300, p: 3, form: 'อิสระ' });
-  check('ทุนอลู = 10135×200/187', r.cost.alu, 10135 * 200 / 187, 1);
+  check('ทุนอลู = 10050×200/187', r.cost.alu, 10050 * 200 / 187, 1);
   check('กระจกนิ่ง', r.cost.glass, base.cost.glass, 0.01);
   check('อุปกรณ์นิ่ง', r.cost.hardware + r.cost.consum, base.cost.hardware + base.cost.consum, 0.01);
   check('ราคาแพงขึ้น (36100→' + r.sell.withInstall + ')', r.sell.withInstall > base.sell.withInstall ? 1 : 0, 1, 0);
@@ -236,15 +236,41 @@ for (const [id, form] of [['sms_slide', 'อิสระ'], ['euro_slide', 'อ�
   const prod = PRODUCTS[id];
   const sizes = [[140, 150, 2], [200, 200, 2], [240, 200, 2], [270, 300, 3], [390, 300, 3], [600, 300, 3]]
     .filter((s) => s[2] <= (prod.maxP ?? 9) && s[2] >= (prod.minP ?? 1));
-  let prevSell = -1, prevPerSqm = Infinity, ok = true, detail = [];
+  // เกณฑ์: ① ใหญ่ขึ้นราคารวมต้องเพิ่มเสมอ (เข้ม)
+  //        ② ทุน/ตร.ม. ตัวใหญ่สุดต้องถูกกว่าตัวเล็กสุด (ดูแนวโน้มรวม ไม่ไล่ทีละขั้น)
+  //           — ไล่ทีละขั้นใช้ไม่ได้ เพราะบางรุ่นมีเส้นที่โผล่เฉพาะขนาดใหญ่ (ยูโร: โหนกเกี่ยว ≥3ม.)
+  let prevSell = -1, firstPer = null, lastPer = null, ok = true, detail = [];
   for (const [w, h, p] of sizes) {
     const r = computeCost(PB, prod, { w, h, p, form });
     const per = r.cost.total / r.input.area;
     if (r.sell.withInstall <= prevSell) { ok = false; detail.push(`${w}×${h} ราคารวมไม่เพิ่ม`); }
-    if (per > prevPerSqm + 0.01) { ok = false; detail.push(`${w}×${h} ทุน/ตร.ม. เพิ่มขึ้น (${Math.round(per)})`); }
-    prevSell = r.sell.withInstall; prevPerSqm = per;
+    prevSell = r.sell.withInstall;
+    if (firstPer == null) firstPer = per;
+    lastPer = per;
   }
+  if (!(lastPer < firstPer)) { ok = false; detail.push(`ทุน/ตร.ม. ไม่ถูกลงเมื่อบานใหญ่ขึ้น (${Math.round(firstPer)}→${Math.round(lastPer)})`); }
   check(`${prod.name} — ${sizes.length} ขนาด${detail.length ? ' · ' + detail.join(' · ') : ''}`, ok ? 1 : 0, 1, 0);
+}
+
+// ── ②d ราคาตามสี: เส้นที่มีราคาสีในตาราง ใช้ราคานั้น · เส้นที่ไม่มี ใช้ ขาว+ค่าอบ×กก. ─
+//   ชีตคิดทุนผสม 2 แบบจริง (SMS/ยูโร VLOOKUP คอลัมน์สี · บานเปิด F7863/F7864 ใช้ +rate_grey×กก.)
+//   คิดคาดหวังเองจาก BOM สีขาว + ตาราง PB.ALUCOLOR/PB.BAKE → ไม่พึ่งสาขาสีของ engine
+//   ⚠ ค่าคาดหวังตรึงไว้ (ห้ามคิดสดจาก PB.ALUCOLOR — จะกลายเป็นด่านหลอก ลบตารางสีแล้วยังเขียว)
+//   ที่มาของเลข: ทุนสีขาว + Σ บาร์×(ราคาสี−ราคาขาว) จากชีต "ราคาสี" คอลัมน์ E/H
+//                + Σ บาร์×กก.×ค่าอบ สำหรับเส้นที่ชีตไม่ได้ VLOOKUP (เช่น F7863/F7864 ของบานเปิด)
+console.log('\n═══ ②d ราคาตามสี (เทาซาฮาร่า / ลายไม้สต็อค) ═══');
+const ANCHORS_COLOR = [
+  ['sms_slide', { w: 150, h: 150, p: 2, form: 'อิสระ' }, { white: 9170.85, sahara: 9815.85, woodStock: 14010.88 }],
+  ['euro_slide', { w: 150, h: 150, p: 2, form: 'อิสระ' }, { white: 13789.85, sahara: 14718.18, woodStock: 20409.7 }],
+  ['open_door', { w: 150, h: 150, p: 2, form: 'มีธรณี' }, { white: 11980, sahara: 14897.22, woodStock: 17203.78 }],
+];
+for (const [id, inp, want] of ANCHORS_COLOR) {
+  const prod = PRODUCTS[id];
+  for (const col of ['white', 'sahara', 'woodStock']) {
+    const r = computeCost(PB, prod, { ...inp, color: col });
+    const up = Math.round((r.cost.total / want.white - 1) * 1000) / 10;
+    check(`${prod.name} ${col}${col === 'white' ? '' : ' (+' + up + '% จากขาว)'}`, r.cost.total, want[col], 1);
+  }
 }
 
 // ── ③ สวิตช์ "คิดค่าแรงแบบไหน" ในหน้าคิดราคา — ราคาที่ขึ้นใบต้องเปลี่ยนตามจริง ──
