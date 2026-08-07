@@ -345,7 +345,9 @@ export const PRODUCTS = {
 
   velora: {
     id: 'velora', group: 1, name: 'Velora บานเปิด', brand: 'VELORA', laborKey: 'Velora',
-    icon: '🚪', defForm: 'เดี่ยว', forms: ['เดี่ยว', 'คู่'], stockLen: 6.0,
+    // rawAlu: ชีต "คิดทุน Velora" = "อลูดิบ+อบสีแยก" → ราคาเส้น 768/720 ยังไม่รวมอบ
+    //   สีขาว/ดำ ต้องบวกค่าอบเรตเทา 100/กก. ด้วย (ตรงสูตร C15/C16 ในชีต) — เดิมเว็บคิด 0 = ทุนขาด 935/ชุด @150×150
+    icon: '🚪', rawAlu: true, defForm: 'เดี่ยว', forms: ['เดี่ยว', 'คู่'], stockLen: 6.0,
     defaults: { w: 220, h: 200, p: 1 }, defGlass: 'เทมเปอร์ใส 6มม.', defColor: 'sahara', minP: 1, maxP: 2,
     vars: {
       HANDLE: '450',

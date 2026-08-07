@@ -103,6 +103,26 @@ const ANCHORS = [
   { id: 'screen', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 3689, costOnly: true },
 ];
 
+// ── ANCHOR ชุดที่ 2: ทุนวัสดุ @150×150 ซม. จากชีต "บันทึกราคาขึ้น" ───────────
+//   ทำไมต้องมี: anchor ชุดแรกตรวจรุ่นละ 1 ขนาด — ทุนต่อ ตร.ม. ไม่คงที่ (มีของตายตัวอย่างราง/มือจับ)
+//   ขนาดเดียวจึงจับบั๊กที่โผล่เฉพาะบางขนาด/บางสีไม่ได้ (เจอจริง: Velora สีขาวไม่คิดค่าอบ — anchor เดิมใช้สีเทาเลยรอด)
+//   ชีตนี้ล็อกทุนวัสดุจริงไว้ที่ 150×150 ทุกรุ่น = จุดยึดที่ 2 ฟรี ๆ จากไฟล์
+//   ⚠ ไม่ใส่ เฟี้ยม/เฟี้ยมยูโร — ชีตเขียนกำกับเองว่า "สูตร live ประมาณ" (ไม่ใช่เลขเป๊ะ)
+const ANCHORS150 = [
+  { id: 'sms_slide', in: { p: 2, form: 'อิสระ' }, cost: 9246 },
+  { id: 'euro_slide', in: { p: 2, form: 'อิสระ' }, cost: 13365 },
+  { id: 'eseries', in: { p: 2, form: 'อิสระ' }, cost: 12685 },
+  { id: 'velora', in: { p: 2, form: 'เดี่ยว', color: 'white' }, cost: 5470 },      // สีขาว = ต้องมีค่าอบเรตเทา (rawAlu)
+  { id: 'velora', in: { p: 2, form: 'เดี่ยว', color: 'sahara' }, cost: 5470 },     // เทา = เท่ากันเป๊ะตามสูตรชีต
+  { id: 'open_door', in: { p: 2, form: 'มีธรณี' }, cost: 11815 },
+  { id: 'pcdoor', in: { p: 1, form: 'แบ่ง 2', spec: { pcsill: 'มีธรณี', pcsoft: 'ใส่' } }, cost: 8474 },
+  { id: 'awning', in: { p: 1, form: 'อิสระ' }, cost: 6264 },
+  { id: 'banyok', in: { p: 1, form: 'เดี่ยว' }, cost: 8424 },
+  { id: 'fixed', in: { p: 1, form: 'กระจกล้วน' }, cost: 4004 },
+  { id: 'topslide', in: { p: 2, form: 'เลื่อนซ้อน' }, cost: 12573 },
+  { id: 'curve_fixed', in: { p: 1, form: 'กระจกล้วน' }, cost: 5100 },
+];
+
 // ── ① ค่าแรงใน pricebook ต้องตรงชีต "ค่าแรง" เป๊ะ ────────────────────────────
 //   ถ้าใครแก้ pricebook.LABOR ด้วยมือโดยไม่แก้ไฟล์ → ตรงนี้แดงทันที
 console.log('═══ ① ค่าแรงใน pricebook ↔ ชีต "ค่าแรง" (ถอดทุน_รวมทั้งหมด.xlsx) ═══');
@@ -200,6 +220,33 @@ console.log('▶ ระแนงสลับ — คละกล่อง/ระ
 
 // ── ② ตาข่ายกันพังทุกรุ่น: ทุก product ต้องคิดออกราคาสมเหตุผล (ไม่ crash/NaN/ติดลบ/ขาย<ทุน) ──
 // เสริม anchor (แม่นเฉพาะ 24 รุ่น) → sweep นี้คลุม "ทุกรุ่น" กันราคาพังเงียบ (รุ่นที่ไม่มี anchor)
+// ── ②b ทุนวัสดุที่ขนาดที่ 2 (150×150) + ตัวคูณต่อขนาด ─────────────────────────
+console.log('\n═══ ②b ทุนวัสดุ @150×150 ↔ ชีต "บันทึกราคาขึ้น" (จุดยึดขนาดที่ 2) ═══');
+for (const a of ANCHORS150) {
+  const prod = PRODUCTS[a.id];
+  if (!prod) { console.log('❌ ไม่พบรุ่น', a.id); fail++; continue; }
+  const r = computeCost(PB, prod, { w: 150, h: 150, ...a.in });
+  check(`${prod.name}${a.in.color ? ' (' + a.in.color + ')' : ''} ${a.in.p}บาน`, r.cost.total, a.cost, 1);
+}
+
+// ── ②c ราคาต้องขึ้นตามขนาด (ตัวคูณต่อ ตร.ม. ไม่เท่ากันทุกขนาด — เจ้าของสั่งให้เช็ค) ──
+//   ทุนต่อ ตร.ม. ต้องลดเมื่อบานใหญ่ขึ้น (ของตายตัวเฉลี่ยได้มากขึ้น) · ราคารวมต้องเพิ่มเสมอ
+console.log('\n═══ ②c ไล่ราคาหลายขนาดต่อรุ่น (ใหญ่ขึ้น→แพงขึ้น · ทุน/ตร.ม. ถูกลง) ═══');
+for (const [id, form] of [['sms_slide', 'อิสระ'], ['euro_slide', 'อิสระ'], ['open_door', 'มีธรณี'], ['fixed', 'กระจกล้วน']]) {
+  const prod = PRODUCTS[id];
+  const sizes = [[140, 150, 2], [200, 200, 2], [240, 200, 2], [270, 300, 3], [390, 300, 3], [600, 300, 3]]
+    .filter((s) => s[2] <= (prod.maxP ?? 9) && s[2] >= (prod.minP ?? 1));
+  let prevSell = -1, prevPerSqm = Infinity, ok = true, detail = [];
+  for (const [w, h, p] of sizes) {
+    const r = computeCost(PB, prod, { w, h, p, form });
+    const per = r.cost.total / r.input.area;
+    if (r.sell.withInstall <= prevSell) { ok = false; detail.push(`${w}×${h} ราคารวมไม่เพิ่ม`); }
+    if (per > prevPerSqm + 0.01) { ok = false; detail.push(`${w}×${h} ทุน/ตร.ม. เพิ่มขึ้น (${Math.round(per)})`); }
+    prevSell = r.sell.withInstall; prevPerSqm = per;
+  }
+  check(`${prod.name} — ${sizes.length} ขนาด${detail.length ? ' · ' + detail.join(' · ') : ''}`, ok ? 1 : 0, 1, 0);
+}
+
 // ── ③ สวิตช์ "คิดค่าแรงแบบไหน" ในหน้าคิดราคา — ราคาที่ขึ้นใบต้องเปลี่ยนตามจริง ──
 //   เคยพลาดมาแล้ว: ทำปุ่มสวย ๆ แต่ลืมต่อสาย → กดแล้วราคาไม่ขยับ · ตรงนี้อ่านซอร์สจริง
 console.log('\n═══ ③ สวิตช์ค่าแรงในหน้าคิดราคา 4.0 (ต่อสายครบไหม) ═══');
