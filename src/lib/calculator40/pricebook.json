@@ -2426,5 +2426,6 @@
   "ALUCODE_ALIAS": {
     "B20001": "B22001",
     "B20003": "B22002"
-  }
+  },
+  "WHOLESALE_DISCOUNT_PCT": 10
 }
