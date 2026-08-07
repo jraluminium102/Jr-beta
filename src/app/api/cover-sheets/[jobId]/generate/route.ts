@@ -4,6 +4,7 @@ import { ok, err } from "@/lib/bff/response";
 import { dbError } from "@/lib/bff/db-error";
 // generator ตัวจริง (pure JS ไม่มี type · เหมือน calculator40/engine.mjs) — ห้ามแก้ logic
 import { buildGroups, toLeftLines, buildSideColumns } from "@/lib/cover-sheet/generate.mjs";
+import { pickJobQuotation } from "@/lib/cover-sheet/pick-quotation";
 
 export const dynamic = "force-dynamic";
 
@@ -21,27 +22,19 @@ export const POST = withRoute(async (req: Request, { params }: Params) => {
   const body = await req.json().catch(() => ({}));
   const mode = body?.mode === "grouped" ? "grouped" : "short";
 
-  const { data: quos, error: qErr } = await sb
-    .from("quotations")
-    .select("id, code, created_at")
-    .eq("job_id", jobId)
-    .neq("status", "cancelled")   // ตัดใบยกเลิก — กันดึงสเปคผิดใบ
-    .order("created_at", { ascending: false });
-  if (qErr) throw dbError(qErr);
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const latest = ((quos ?? []) as any[])[0];
-  if (!latest) return err("งานนี้ยังไม่มีใบเสนอราคา — สร้างอัตโนมัติไม่ได้ (กรอกเองในช่องซ้ายแทน)", 404);
+  // เลือก "ใบเสนอที่ลูกค้าตกลงจริง" = ใบที่มีใบวางบิล/มัดจำ (ไม่ใช่ใบล่าสุด) — กันดึงสเปคผิดใบเมื่อมีหลายใบเสนอ
+  const picked = await pickJobQuotation(sb, jobId);
+  if (!picked) return err("งานนี้ยังไม่มีใบเสนอราคา — สร้างอัตโนมัติไม่ได้ (กรอกเองในช่องซ้ายแทน)", 404);
 
   const { data: items, error: iErr } = await sb
     .from("quotation_items")
     .select("name, detail, group_label, sort_order")
-    .eq("quotation_id", latest.id)
+    .eq("quotation_id", picked.id)
     .order("sort_order", { ascending: true });
   if (iErr) throw dbError(iErr);
 
   const left = toLeftLines(buildGroups(items ?? []), mode);
   // คอลัมน์ 2 (แจ้งช่าง = ขอบเขตงานจากหมายเหตุ) + 3 (แจ้งลูกค้า = บรรทัด "ลูกค้าเตรียม…")
   const { mid, right } = buildSideColumns(items ?? []);
-  return ok({ left, mid, right, quotation_id: latest.id, quotation_code: latest.code });
+  return ok({ left, mid, right, quotation_id: picked.id, quotation_code: picked.code });
 });

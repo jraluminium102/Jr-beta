@@ -3,6 +3,7 @@ import { requirePermission } from "@/lib/bff/context";
 import { withRoute } from "@/lib/bff/handler";
 import { ok, err } from "@/lib/bff/response";
 import { dbError } from "@/lib/bff/db-error";
+import { pickJobQuotation } from "@/lib/cover-sheet/pick-quotation";
 
 export const dynamic = "force-dynamic";
 
@@ -47,34 +48,28 @@ export const GET = withRoute(async (_req: Request, { params }: Params) => {
   const sb = ctx.supabase as unknown as AnySb;
   const jobId = params.jobId;
 
-  const [jobR, coverR, quoR] = await Promise.all([
+  const [jobR, coverR] = await Promise.all([
     sb.from("jobs").select("job_code, customer_name, floor_work, floor_note, current_stage, deposit_date").eq("id", jobId).maybeSingle(),
     sb.from("cover_sheets").select("mode, content").eq("job_id", jobId).maybeSingle(),
-    // ใบล่าสุดของงาน — ตัดใบ cancelled + เรียง created_at ล่าสุด (ตรง pattern quotation-checklist)
-    //   ห้ามใช้ revision_no เป็นคีย์หลัก: แต่ละใบนับ revision ของตัวเอง (ใบเก่าที่ revise เยอะอาจชนะใบใหม่)
-    sb.from("quotations").select("id, code, created_at").eq("job_id", jobId)
-      .neq("status", "cancelled")
-      .order("created_at", { ascending: false }),
   ]);
 
   if (jobR.error) throw dbError(jobR.error);
   if (!jobR.data) return err("ไม่พบงานนี้", 404);
   if (coverR.error && isMissingTable(coverR.error.message)) return err(MIGRATION_HINT, 400);
   if (coverR.error) throw dbError(coverR.error);
-  if (quoR.error) throw dbError(quoR.error);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const latestQ = ((quoR.data ?? []) as any[])[0] ?? null;
+  // เลือก "ใบเสนอที่ลูกค้าตกลงจริง" = ใบที่มีใบวางบิล/มัดจำ (ไม่ใช่ใบล่าสุด) — กันดึงผิดใบเมื่องานมีหลายใบเสนอ
+  const picked = await pickJobQuotation(sb, jobId);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let quotation: { id: number; code: string; items: any[] } | null = null;
-  if (latestQ) {
+  if (picked) {
     const { data: items, error: itemsErr } = await sb
       .from("quotation_items")
       .select("name, detail, group_label, sort_order")
-      .eq("quotation_id", latestQ.id)
+      .eq("quotation_id", picked.id)
       .order("sort_order", { ascending: true });
     if (itemsErr) throw dbError(itemsErr);
-    quotation = { id: latestQ.id, code: latestQ.code, items: items ?? [] };
+    quotation = { id: picked.id, code: picked.code, items: items ?? [] };
   }
 
   return ok({
