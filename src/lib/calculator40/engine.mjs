@@ -401,6 +401,11 @@ export function computeCost(PB, prod, opt) {
   // #1 แผ่นคอมโพสิต/ลูกฟูก แทนกระจก (sell-based) — บวกเข้ายอดขาย + ถอดทุนที่ markup กลาง (เหมือน add-on R3.9)
   if (panelSell > 0) { addonTotal += panelSell; addonSellImplicit += panelSell; }
   if (addonTotal > 0) { sellBeforeLabor += addonTotal; sellMfgOnly += addonTotal; sellWithInstall += addonTotal; }
+  // ราคาขายส่ง (ผลิตอย่างเดียว ไม่ไปติดตั้ง) — ลดจากยอดรวมอีก % ตามนโยบายขายส่ง (เจ้าของสั่ง 7 ส.ค.69)
+  //   คิดจากยอด "ขายผลิตอย่างเดียว" ที่รวมของเสริมแล้ว → ราคาที่ลูกค้าเห็น = ราคาผลิต − 10%
+  //   ⚠ sellMfgOnly ตัวเดิมต้องคงไว้เป็นค่าตามชีตคิดทุน (ด่าน verify-r40 เทียบตัวนี้) — ส่วนลดเป็นชั้นนโยบาย แยกกัน
+  const wsPct = PB.WHOLESALE_DISCOUNT_PCT != null ? Number(PB.WHOLESALE_DISCOUNT_PCT) : 0;
+  const sellMfgOnlyNet = wsPct > 0 ? ceil100(sellMfgOnly * (1 - wsPct / 100)) : sellMfgOnly;
   // ทุนออปชั่น = ทุนจริง(มอเตอร์) + ถอดทุนจากราคาขาย R3.9 ตาม markup กลาง (÷(1+กำไร%) · เดิม ÷2 ตายตัว=ผูก 100% · แก้ 1ก.ค. ให้ขยับ markup ไม่เพี้ยน) · ที่ 100% = เท่าเดิม
   const addonCost = round2(addonCostExplicit + addonSellImplicit / (1 + (profitPct || 100) / 100));
   const costBase = sellCostOverride != null ? sellCostOverride : costTotal;
@@ -415,7 +420,8 @@ export function computeCost(PB, prod, opt) {
     glassArea: round2(glassArea), aluKg: round2(aluKg),
     costPerSqm: area > 0 ? round2(costTotal / area) : 0,
     labor: { prod: round2(laborProd), install: round2(laborInstall) },
-    sell: { beforeLabor: sellBeforeLabor, mfgOnly: sellMfgOnly, withInstall: sellWithInstall },
+    // mfgOnly = ตามสูตรชีตคิดทุน (อย่าเอาไปโชว์/ขึ้นใบตรง ๆ) · mfgOnlyNet = ราคาขายส่งจริงหลังลด wholesalePct
+    sell: { beforeLabor: sellBeforeLabor, mfgOnly: sellMfgOnly, mfgOnlyNet: sellMfgOnlyNet, withInstall: sellWithInstall, wholesalePct: wsPct },
     lines,
   };
 }

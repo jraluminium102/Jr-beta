@@ -339,7 +339,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       if (!roomTotals || roomTotals.total <= 0) return { error: "กำลังตั้งค่าห้อง — ใส่ขนาด/เลือกชนิดบานอย่างน้อย 1 ด้านก่อน" } as any;
       return {
         input: { area: 0 }, aluKg: 0,
-        sell: { beforeLabor: roomTotals.total, mfgOnly: roomTotals.total, withInstall: roomTotals.total },
+        sell: { beforeLabor: roomTotals.total, mfgOnly: roomTotals.total, mfgOnlyNet: roomTotals.total, withInstall: roomTotals.total },
         cost: { total: 0, alu: 0, bake: 0, openOven: 0, glass: 0, hardware: 0, consum: 0 },
         profit: 0, labor: { prod: 0, install: 0 }, lines: [],
         isRoom: true,
@@ -413,7 +413,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
           const sr: any = computeCost(pb, prod, {
             w: sw, h: sh, p: 1, form: formVal, material, color: rc.bake, addons: {}, profitPct, installProfitPct: profitPct,
           });
-          const sAmt = laborMode === "mfg" ? sr.sell.mfgOnly : sr.sell.withInstall;
+          const sAmt = laborMode === "mfg" ? sr.sell.mfgOnlyNet : sr.sell.withInstall;   // ขายส่ง = ราคาหลังลด
           sl.push({ desc: `หลังคาช่วง ${i + 2} (${sg.w || 0}×${sg.h || 0}ม. · ${material})`, amt: sAmt });
           sSell += sAmt;
           sCost += sr.cost.total;
@@ -569,7 +569,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     const desc = [...workLines, "รายละเอียดงาน", ...jobLines].join("\n");
     pushQuoteItem({
       name: itemName, desc, qty: n,
-      perUnit: (laborMode === "mfg" ? result.sell.mfgOnly : result.sell.withInstall) + subSell, cost: result.cost.total + subCost,
+      perUnit: (laborMode === "mfg" ? result.sell.mfgOnlyNet : result.sell.withInstall) + subSell, cost: result.cost.total + subCost,
       prodId: prod.id, groupLabel: GROUPS.find((g) => g.g === prod.group)?.label ?? "",
       recipe: buildRecipe(),
     });
@@ -1222,8 +1222,13 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                     <div className={"text-xs font-medium " + (laborMode === "mfg" ? "text-red-100" : "text-ink-3")}>
                       {laborMode === "mfg" ? "✓ " : ""}ขายผลิตอย่างเดียว
                     </div>
-                    <div className={"font-bold leading-tight " + (laborMode === "mfg" ? "text-3xl" : "text-2xl text-brand-dark")}>฿{baht(result.sell.mfgOnly)}</div>
-                    <div className={"text-[11px] mt-0.5 " + (laborMode === "mfg" ? "text-red-100" : "text-ink-3")}>ขายส่ง · ไม่ไปติดตั้ง</div>
+                    <div className={"font-bold leading-tight " + (laborMode === "mfg" ? "text-3xl" : "text-2xl text-brand-dark")}>฿{baht(result.sell.mfgOnlyNet)}</div>
+                    <div className={"text-[11px] mt-0.5 " + (laborMode === "mfg" ? "text-red-100" : "text-ink-3")}>
+                      ขายส่ง · ไม่ไปติดตั้ง
+                      {result.sell.wholesalePct > 0 && (
+                        <> · <span className="line-through opacity-70">฿{baht(result.sell.mfgOnly)}</span> ลด {result.sell.wholesalePct}%</>
+                      )}
+                    </div>
                   </button>
                   <button
                     type="button" onClick={() => setLaborMode("all")}
@@ -1246,7 +1251,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                     </div>
                     <p className="text-[11px] text-slate-500 mt-1">
                       {laborMode === "mfg"
-                        ? "ใบเสนอจะคิดเฉพาะค่าแรงผลิต — และเขียนกำกับในข้อว่า “ไม่รวมค่าติดตั้ง”"
+                        ? `ใบเสนอจะคิดเฉพาะค่าแรงผลิต แล้วลดจากยอดรวมอีก ${result.sell.wholesalePct}% (ราคาขายส่ง) — และเขียนกำกับในข้อว่า “ไม่รวมค่าติดตั้ง”`
                         : "ใบเสนอจะคิดค่าแรงผลิต + ติดตั้ง (ค่ามาตรฐาน)"}
                     </p>
                   </div>
@@ -1300,7 +1305,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                   </ul>
                   <div className="mt-1.5 pt-1.5 border-t border-sky-200 flex items-center justify-between font-bold">
                     <span>รวมทั้งหมด (หลัก + เสริม)</span>
-                    <span className="tabular-nums">฿{baht((laborMode === "mfg" ? result.sell.mfgOnly : result.sell.withInstall) + ((result as any).subSell || 0))}</span>
+                    <span className="tabular-nums">฿{baht((laborMode === "mfg" ? result.sell.mfgOnlyNet : result.sell.withInstall) + ((result as any).subSell || 0))}</span>
                   </div>
                 </div>
               )}

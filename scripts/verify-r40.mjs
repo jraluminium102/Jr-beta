@@ -159,8 +159,10 @@ for (const a of ANCHORS) {
   const wantInst = wantMfg + ceil100(wInst * (1 + pf / 100));
   check(`ค่าแรงผลิต (${shape})`, r.labor.prod, Math.round(wProd * 100) / 100, 1);
   check('ค่าแรงติดตั้ง', r.labor.install, Math.round(wInst * 100) / 100, 1);
-  check('ขายผลิตอย่างเดียว', r.sell.mfgOnly, wantMfg, 1);
+  check('ขายผลิตอย่างเดียว (ตามชีต)', r.sell.mfgOnly, wantMfg, 1);
   check('ขายผลิต+ติดตั้ง', r.sell.withInstall, wantInst, 1);
+  // ราคาขายส่ง = ยอดผลิตอย่างเดียว ลดอีก WHOLESALE_DISCOUNT_PCT (นโยบายขาย ไม่ใช่สูตรทุน)
+  check(`ขายส่ง (ลด ${PB.WHOLESALE_DISCOUNT_PCT}%)`, r.sell.mfgOnlyNet, ceil100(wantMfg * (1 - (PB.WHOLESALE_DISCOUNT_PCT || 0) / 100)), 1);
 }
 
 // ── เทสพฤติกรรมกลาง ─────────────────────────────────────────────────────────
@@ -280,8 +282,11 @@ console.log('\n═══ ③ สวิตช์ค่าแรงในหน้
   const src = fs.readFileSync(path.join(__dirname, '../src/components/Calculator40Client.tsx'), 'utf8');
   const has = (label, re) => { const ok = re.test(src); console.log(`  ${ok ? '✅' : '❌'} ${label}`); ok ? pass++ : fail++; };
   has('ค่าตั้งต้น = ค่าแรงรวม (useState "all")', /useState<"all" \| "mfg">\("all"\)/);
-  has('ราคาต่อหน่วยที่ขึ้นใบเปลี่ยนตามสวิตช์', /perUnit:\s*\(laborMode === "mfg" \? result\.sell\.mfgOnly : result\.sell\.withInstall\)/);
-  has('หลังคาช่วงเพิ่ม (subLines) เปลี่ยนตามสวิตช์ด้วย', /laborMode === "mfg" \? sr\.sell\.mfgOnly : sr\.sell\.withInstall/);
+  // ⚠ ต้องใช้ mfgOnlyNet (ราคาหลังลดขายส่ง) ไม่ใช่ mfgOnly (ค่าดิบตามชีต) — ใช้ผิด = ลืมลด 10%
+  has('ราคาต่อหน่วยที่ขึ้นใบ = ราคาขายส่งหลังลด', /perUnit:\s*\(laborMode === "mfg" \? result\.sell\.mfgOnlyNet : result\.sell\.withInstall\)/);
+  has('หลังคาช่วงเพิ่ม (subLines) ใช้ราคาหลังลดด้วย', /laborMode === "mfg" \? sr\.sell\.mfgOnlyNet : sr\.sell\.withInstall/);
+  has('การ์ดราคาโชว์ราคาขายส่งหลังลด', /baht\(result\.sell\.mfgOnlyNet\)/);
+  has('ยอดรวม (มีรายการเสริม) ใช้ราคาหลังลด', /laborMode === "mfg" \? result\.sell\.mfgOnlyNet : result\.sell\.withInstall\) \+ \(\(result as any\)\.subSell/);
   has('เลือก "ผลิตอย่างเดียว" แล้วเขียนกำกับลงใบว่าไม่รวมติดตั้ง', /laborMode === "mfg"\)\s*jobLines\.push\("- ราคานี้ไม่รวมค่าติดตั้ง/);
   has('บันทึกลงสูตร (recipe) เพื่อกลับมาแก้ข้อได้', /profit,\s*laborMode,/);
   has('โหลดสูตรเก่ากลับมาแล้วตั้งค่าสวิตช์คืน', /setLaborMode\(r\.laborMode === "mfg"/);
