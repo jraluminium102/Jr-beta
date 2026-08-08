@@ -136,6 +136,12 @@ export default function StockClient({
               ⬇️ ส่งออกอลู (นับสต๊อก)
             </button>
           )}
+          {canWrite && (
+            <a href="/stock/count-import" title="อัปโหลด CSV นับสต็อก → พรีวิว → ตั้งจำนวนตามที่นับ"
+              className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-emerald-600 shadow-sm">
+              ⬆️ นำเข้านับสต็อก
+            </a>
+          )}
           {canPrice && (
             <a href="/stock/alu-rates" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark border border-brand/30 bg-white/60">
               ⚖️ เรตอลูต่อโล
