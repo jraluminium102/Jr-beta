@@ -90,12 +90,16 @@ const tapered = [
   ["กระเบื้อง", suggest.tile, 800, 500],
   ["ฝ้า", suggest.ceiling, 2500, 1500],
 ];
+// เจ้าของเคาะ 7 ส.ค.69: "30 ตร.ม. คือใหญ่" → ≤10 ตร.ม. = เพดานเรนจ์ · ≥30 = พื้นเรนจ์ (ล็อกหัวท้ายเป๊ะ)
 for (const [label, fn, hi, lo] of tapered) {
-  const small = fn(5), mid = fn(25), big = fn(60);
-  if (small === hi && big === lo && mid < small && mid > big) {
-    console.log(`  ✅ ${label.padEnd(10)} 5 ตร.ม.=${small.toLocaleString().padStart(5)} · 25=${mid.toLocaleString().padStart(5)} · 60=${big.toLocaleString().padStart(5)} /ตร.ม.`);
-  } else bad(`${label} ไล่ระดับผิด: 5=${small} 25=${mid} 60=${big} (ต้อง ${hi}→${lo})`);
+  const small = fn(10), mid = fn(20), big = fn(30), huge = fn(200);
+  if (small === hi && big === lo && huge === lo && mid < small && mid > big) {
+    console.log(`  ✅ ${label.padEnd(10)} ≤10 ตร.ม.=${small.toLocaleString().padStart(5)} · 20=${mid.toLocaleString().padStart(5)} · ≥30=${big.toLocaleString().padStart(5)} /ตร.ม.`);
+  } else bad(`${label} ไล่ระดับผิด: 10=${small} 20=${mid} 30=${big} 200=${huge} (ต้อง ${hi} ที่ ≤10 → ${lo} ที่ ≥30)`);
 }
+// เคสตัวอย่างในไฟล์ (6.3 ตร.ม.) ต้องได้เพดานเรนจ์ — กระเบื้อง 800 ตรงชีต
+if (suggest.tile(6.3) === 800) console.log("  ✅ เคสตัวอย่าง 6.3 ตร.ม. → กระเบื้อง 800 (ตรงชีต)");
+else bad(`เคสตัวอย่าง 6.3 ตร.ม. → กระเบื้อง ${suggest.tile(6.3)} (ชีตใช้ 800)`);
 // ทราย: ฟิตจากของจริง 2 จุด — ต้อง "ตรงเป๊ะ" ทั้งคู่ (เดิม tol 100 ทำให้เคสตัวอย่างเพี้ยน 100 บาทโดยไม่มีใครรู้)
 for (const [area, want, from] of [[6.3, 7000, "ชีตตัวอย่างในไฟล์"], [23, 12000, "ใบเสนอจริง"]]) {
   const got = suggest.sand(area);
