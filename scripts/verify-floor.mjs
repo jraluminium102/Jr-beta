@@ -96,15 +96,30 @@ for (const [label, fn, hi, lo] of tapered) {
     console.log(`  ✅ ${label.padEnd(10)} 5 ตร.ม.=${small.toLocaleString().padStart(5)} · 25=${mid.toLocaleString().padStart(5)} · 60=${big.toLocaleString().padStart(5)} /ตร.ม.`);
   } else bad(`${label} ไล่ระดับผิด: 5=${small} 25=${mid} 60=${big} (ต้อง ${hi}→${lo})`);
 }
-// ทราย: ฟิตจากของจริง 2 จุด
-for (const [area, want, from] of [[6.3, 6900, "ไฟล์ใช้ 7,000"], [23, 11900, "ใบจริงใช้ 12,000"]]) {
+// ทราย: ฟิตจากของจริง 2 จุด — ต้อง "ตรงเป๊ะ" ทั้งคู่ (เดิม tol 100 ทำให้เคสตัวอย่างเพี้ยน 100 บาทโดยไม่มีใครรู้)
+for (const [area, want, from] of [[6.3, 7000, "ชีตตัวอย่างในไฟล์"], [23, 12000, "ใบเสนอจริง"]]) {
   const got = suggest.sand(area);
-  if (Math.abs(got - want) <= 100) console.log(`  ✅ ทราย ${String(area).padStart(4)} ตร.ม. = ${got.toLocaleString().padStart(6)}   (${from})`);
-  else bad(`ทราย ${area} ตร.ม. → ${got.toLocaleString()} (คาด ~${want.toLocaleString()})`);
+  if (got === want) console.log(`  ✅ ทราย ${String(area).padStart(4)} ตร.ม. = ${got.toLocaleString().padStart(6)}   (${from})`);
+  else bad(`ทราย ${area} ตร.ม. → ${got.toLocaleString()} (ต้องตรง ${want.toLocaleString()} · ${from})`);
 }
 // ต่อ ตร.ม. ของทรายต้องลดลงเมื่อพื้นที่โต
 if (suggest.sand(50) / 50 < suggest.sand(10) / 10) console.log("  ✅ ทราย ต่อ ตร.ม. ลดลงเมื่อพื้นที่ใหญ่ขึ้น");
 else bad("ทราย ต่อ ตร.ม. ไม่ลดลงตามพื้นที่");
+
+// ═══ ④b เคสตัวอย่างในไฟล์ต้องได้ยอดเท่ากันเป๊ะ (จุดยึดเดียวที่มีตัวเลขจริงจากเจ้าของ) ═══
+//   ชีต "ตัวอย่างการคิดราคา" ใน ประเมินราคาเบื้องต้นงานพื้นอัพเดท.xlsx
+//   1.8×3.5 ม. (6.3 ตร.ม.) · เข็ม I18 4 ต้น · ขุด/ฐานราก 4 · คาน 10.6 ม. · ทราย 7,000 · พื้น+กระเบื้อง
+//   รวม 108,930 · ถ้ามีผนังปูน (+1,000/ตร.ม.) = 115,230
+console.log("\n═══ ④b เคสตัวอย่างในไฟล์ (1.8×3.5 = 108,930) ═══");
+{
+  const items = draftItems(planFloor(1.8, 3.5), "i18", { tile: true, sand: true, floor: true });
+  const got = Math.round(sumItems(items));
+  if (got === 108930) console.log(`  ✅ ยอดรวมตรงชีตตัวอย่างเป๊ะ = ${got.toLocaleString()}`);
+  else bad(`ยอดเคสตัวอย่าง = ${got.toLocaleString()} (ชีตว่า 108,930 — ต่าง ${(got - 108930).toLocaleString()})`);
+  const wall = got + Math.round(1000 * 6.3);
+  if (wall === 115230) console.log(`  ✅ กรณีมีผนังปูน (+1,000/ตร.ม.) = ${wall.toLocaleString()}`);
+  else bad(`กรณีมีผนังปูน = ${wall.toLocaleString()} (ชีตว่า 115,230)`);
+}
 
 // ═══ ⑤ รายการตั้งต้น + ผลรวม + หมวด ═══
 console.log("\n═══ ⑤ รายการตั้งต้นบนใบเสนอ ═══");
