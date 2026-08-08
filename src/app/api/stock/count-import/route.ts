@@ -73,7 +73,7 @@ export async function POST(req: Request) {
     const { item, ambiguous } = matchRow(row, items);
     if (!item) { unmatched.push(row); continue; }
     const oldQty = Number(item.qty_on_hand) || 0;
-    matched.push({ id: item.id, sku: item.sku, name: item.name, color: String(item.color ?? ""), oldQty, newQty: row.qty, changed: oldQty !== row.qty, ambiguous });
+    matched.push({ id: item.id, sku: item.sku, name: item.name, color: String(item.color ?? ""), oldQty, newQty: row.qty, changed: oldQty !== row.qty, ambiguous, unitCost: Number(item.unit_cost) || 0 });
   }
 
   const changedList = matched.filter((m) => m.changed);
@@ -91,6 +91,7 @@ export async function POST(req: Request) {
   if (toApply.length === 0) return ok({ summary, applied: 0, note: "ไม่มีจำนวนที่เปลี่ยน — ไม่ต้องปรับ" });
 
   const now = new Date().toISOString();
+  const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
   const moves = toApply.map((c) => ({
     stock_item_id: c.id,
     type: "adjust",
@@ -98,7 +99,8 @@ export async function POST(req: Request) {
     ref: "นับสต็อก",
     note: `นับสต็อก (CSV) — เดิม ${c.oldQty} → ${c.newQty}`,
     requester: "",
-    unit_cost: Number(c.oldQty) >= 0 ? null : null,   // ต้นทุนคงเดิม (adjust ไม่แตะราคา)
+    unit_cost: c.unitCost,                 // ต้นทุนเดิมของวัสดุ (column NOT NULL · adjust ไม่ได้เปลี่ยนราคา)
+    total_price: round2(c.newQty * c.unitCost),
     created_by: profile.id,
     created_at: now,
   }));
