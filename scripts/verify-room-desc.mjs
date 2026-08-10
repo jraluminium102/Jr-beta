@@ -11,7 +11,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { sideDescQuote, paneUse, paneSill, sideSize } from "../src/lib/calculator40/room-desc.ts";
+import { sideDescQuote, paneUse, paneSill, sideSize, quoteProductName, isFixedPane, sillIsForm } from "../src/lib/calculator40/room-desc.ts";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 let pass = 0, fail = 0;
@@ -133,6 +133,34 @@ console.log("\n═══ ⑥ สายไฟ — ต้องไม่มี ':'
   ok("ไม่เหลือ paneDesc ตัวเก่าในคอมโพเนนต์ (กันสองแหล่ง)", !/function paneDesc\(/.test(r), "");
   ok("มีตัวเลือก ประตู/หน้าต่าง ในหน้าจอ", /onPatchPane\(sel\.key, \{ use: e\.target\.value/.test(r), "");
   ok("มีตัวเลือกพื้นล่าง (เฉพาะประตู)", /paneUse\(sel\) === "door"[\s\S]{0,200}sill: e\.target\.value/.test(r), "");
+}
+
+console.log("\n═══ ⑦ ประตู/หน้าต่าง ในหน้าคิดราคาปกติ (ทุกชุดที่เป็นบาน ไม่ใช่แค่ห้องกระจก) ═══");
+{
+  const q = (id, use, base) => quoteProductName(id, use, base);
+  // ⚠ sms_slide มี saleName ฝัง "ประตู" ไว้ตายตัว — เลือกหน้าต่างต้องเปลี่ยนคำได้จริง
+  eq("saleName ฝัง 'ประตู' → เลือกหน้าต่างต้องเปลี่ยนตาม",
+    q("sms_slide", "window", "ประตูบานเลื่อนอิสระ รางล่าง (รุ่นกันน้ำ)"), "หน้าต่างบานเลื่อนอิสระ รางล่าง (รุ่นกันน้ำ)");
+  eq("เลือกประตู → คงคำเดิม ไม่ซ้อน 'ประตูประตู'",
+    q("sms_slide", "door", "ประตูบานเลื่อนอิสระ รางล่าง (รุ่นกันน้ำ)"), "ประตูบานเลื่อนอิสระ รางล่าง (รุ่นกันน้ำ)");
+  eq("pcdoor ใช้ชื่อเต็มบนใบ", q("pcdoor", "door", "ประตูบานเปิด PC Door"), "ประตูบานเลื่อน + บานเปิด (Parallel Casement Door)");
+  eq("velora เปลี่ยนคำให้อ่านออก (ไม่ใช่ 'ประตูVelora บานเปิด')", q("velora", "door", "Velora บานเปิด"), "ประตูบานเปิด Velora");
+  eq("บานกระทุ้งเลือกหน้าต่าง", q("awning", "window", "บานกระทุ้ง"), "หน้าต่างบานกระทุ้ง");
+  eq("ชุดพิเศษไม่เติมคำนำหน้า (Shower)", q("shower", "door", "ห้องอาบน้ำ Shower"), "ห้องอาบน้ำ Shower");
+  ok("บานติดตายไม่ต้องมีตัวเลือก", isFixedPane("fixed") && isFixedPane("curve_fixed"), "");
+  ok("รุ่นที่รูปแบบ = ธรณี ไม่ต้องมีช่องพื้นล่างซ้ำ", ["open_door", "pivot", "bansolid"].every(sillIsForm), "");
+  ok("บานเลื่อนไม่เข้าข่ายนั้น (ต้องมีช่องพื้นล่าง)", !sillIsForm("sms_slide") && !sillIsForm("topslide"), "");
+
+  const c = fs.readFileSync(path.join(ROOT, "src/components/Calculator40Client.tsx"), "utf8");
+  ok("หน้าคิดราคามีตัวเลือก ประตู/หน้าต่าง", /label=\{`ประตู\/หน้าต่าง/.test(c), "");
+  ok("หน้าคิดราคามีตัวเลือกพื้นล่าง (เฉพาะประตู · เว้นรุ่นที่รูปแบบเป็นธรณี)",
+    /paneKind === "door" && !sillIsForm\(prod\.id\) && \(/.test(c), "");
+  ok("ชื่อรายการใช้ quoteProductName (ไม่เขียนคำเอง)", /quoteProductName\(prod\.id, paneKind, baseName\)/.test(c), "");
+  ok("โชว์เฉพาะกลุ่มบาน G1 ที่ไม่ใช่ติดตาย/ชุดพิเศษ",
+    /prod\.group === 1 && !prod\.composite && !isFixedPane\(prod\.id\) && !noKindPrefix\(prod\.id\)/.test(c), "");
+  ok("เก็บลงสูตรข้อ (กลับมาแก้ได้)", /profit, laborMode, useSel, sillSel,/.test(c), "");
+  ok("โหลดสูตรเก่าคืนค่า (ใบเก่า = ให้ระบบเดา)", /setUseSel\(r\.useSel === "door"/.test(c), "");
+  ok("เปลี่ยนรุ่นแล้วรีเซ็ตกลับเป็นอัตโนมัติ", /setUseSel\("auto"\); setSillSel\(""\);/.test(c), "");
 }
 
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);

@@ -26,6 +26,8 @@ import { applyBootstrap } from "@/lib/calculator40/bootstrap.mjs";
 import R39DATA from "@/lib/calculator40/r39-data.json";
 // @ts-expect-error — mosquito helper เป็น ESM JS ล้วน
 import { computeMosquitoR4, mosquitoTypeLabel } from "@/lib/calculator40/mosquito.mjs";
+// ประตู/หน้าต่าง + พื้นล่าง — ใช้ตัวช่วยชุดเดียวกับห้องกระจก G6 (คำบนใบเสนอมีแหล่งเดียว)
+import { isFixedPane, paneUseCm, quoteProductName, paneSill, SILL_OPTS, sillIsForm, noKindPrefix } from "@/lib/calculator40/room-desc";
 import { computeRoofZipR4 } from "@/lib/calculator40/roof-zip.mjs";
 import { withUniversalAddons } from "@/lib/calculator40/universal-addons";
 import AddonsSection from "@/components/calculator40/AddonsSection";
@@ -149,6 +151,10 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   const [profit, setProfit] = useState("100");
   // ค่าแรงที่คิดลงใบเสนอ: "all" = ผลิต+ติดตั้ง (ค่ามาตรฐาน) · "mfg" = ค่าแรงผลิตอย่างเดียว (ขายส่ง JR ไม่ไปติดตั้ง)
   const [laborMode, setLaborMode] = useState<"all" | "mfg">("all");
+  // ประตู/หน้าต่าง ที่จะเขียนลงใบเสนอ (เจ้าของสั่ง 7 ส.ค.69 ให้มีทุกชุดที่เป็นบาน ไม่ใช่แค่ห้องกระจก)
+  //   "auto" = ให้ระบบเดาจากรุ่น/ความสูง · เลือกเองแล้วชนะการเดาเสมอ
+  const [useSel, setUseSel] = useState<"auto" | "door" | "window">("auto");
+  const [sillSel, setSillSel] = useState("");   // พื้นล่างประตู · "" = ใช้ค่าตั้งต้นตามรุ่น
   const [sets, setSets] = useState("1");
   // G4 ตู้: kindOpts (ประเภทตู้/ชนิดชั้น/กระจกหน้าบาน/สีหน้าบาน/เกรดกระจกชั้น ฯลฯ) — ตรง app.js calc() บรรทัด 217
   const [kind, setKind] = useState<Record<string, string>>({});
@@ -272,6 +278,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     const s: Record<string, string> = {};
     (x.specOpts ?? []).forEach((o: any) => { s[o.key] = o.def ?? o.opts?.[0] ?? ""; });
     setSpec(s);
+    setUseSel("auto"); setSillSel("");   // เปลี่ยนรุ่น → กลับไปให้ระบบเดา ประตู/หน้าต่าง + พื้นล่าง
     setAddons({}); // เปลี่ยนรุ่น → เคลียร์ของเสริม (ของเสริมผูกกับ addon id เฉพาะรุ่น)
     setFixedPanes(0);
     // G4 kindOpts default ต่อ key (ตรง defCfg ของ mockup)
@@ -431,6 +438,13 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   }, [pb, prod, w, h, p, form, color, glassType, material, spec, profit, addons, fixedPanes, kind, faceColorCode, depth, shelves, cabSides, sheetColor, roofSegs, subs, roomTotals, laborMode]);
 
   const ok = result && !("error" in result);
+  // ── ประตู/หน้าต่าง (เจ้าของสั่ง 7 ส.ค.69 ให้มีทุกชุดที่เป็นบาน) ─────────────
+  //   โชว์เฉพาะกลุ่มบาน (G1) ที่ไม่ใช่กระจกติดตายเสมอ · ห้องกระจกมีตัวเลือกของตัวเองต่อบานอยู่แล้ว
+  const paneKindOn = !!prod && prod.group === 1 && !prod.composite && !isFixedPane(prod.id) && !noKindPrefix(prod.id);
+  //   ไม่เลือก = เดาจากรุ่น/ความสูง (ซม.) · เลือกเองชนะการเดาเสมอ
+  const paneKind = paneKindOn
+    ? paneUseCm(prod.id, Number(h) || prod.defaults?.h || 0, useSel === "auto" ? undefined : useSel)
+    : "fixed";
   // #1 (17ก.ค.69): เพิ่มตัวเลือก "แผ่นคอมโพสิต/ลูกฟูก แทนกระจก" ทุกที่ที่เลือกกระจก · engine special-case (ไม่คิดกระจก)
   const glassKeys = useMemo(() => allGlassKeys(pb), [pb]);
 
@@ -447,7 +461,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     return {
       v: 1, kind: "std", prodId: prod.id, group: prod.group,
       w, h, p, form, color, glassType, material,
-      spec, addons, fixedPanes, profit, laborMode,
+      spec, addons, fixedPanes, profit, laborMode, useSel, sillSel,
       kindOpts: kind, faceColorCode, depth, shelves, cabSides, sheetColor, roofSegs, subs,
     };
   }
@@ -513,8 +527,14 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     const baseName: string = prod.saleName
       ? String(prod.saleName).replace(/\{form\}/g, form || "")
       : `${prod.name}` + (prod.forms?.length && form && !/^(อิสระ|มาตรฐาน|std)$/.test(form) ? ` (${form})` : "");
-    const itemName = baseName
+    // ประตู/หน้าต่าง — คำนำหน้าชื่อ + พื้นล่าง (เฉพาะประตู) · แหล่งคำเดียวกับห้องกระจก
+    //   รุ่นที่มี saleName เขียนชื่อขายไว้เองแล้ว (ตู้/ม่านซิป/ของสำเร็จ) ไม่ต้องเติมคำนำหน้า
+    // ใช้กับทุกรุ่น (รวมที่มี saleName) — quoteProductName ตัดคำนำหน้าเดิมทิ้งให้แล้ว
+    const nameWithKind = paneKindOn ? quoteProductName(prod.id, paneKind, baseName) : baseName;
+    const itemName = nameWithKind
       + (nBan > 1 ? ` แบ่ง ${nBan} บาน` : "")
+      // รุ่นที่ "รูปแบบ" คือธรณีอยู่แล้ว (บานเปิด/หมุน/โซลิด) ไม่ต้องขึ้นพื้นล่างซ้ำอีกวงเล็บ
+      + (paneKindOn && paneKind === "door" && !sillIsForm(prod.id) ? ` (${paneSill({ typeKey: prod.id, w: 0, h: 0, n: 1, sill: sillSel || undefined })})` : "")
       + (mqType ? ` (มีมุ้ง${mqType})` : "")
       + ` (${fmtM(Number(w) || prod.defaults?.w || 0)} × ${fmtM(Number(h) || prod.defaults?.h || 0)} ม.)`;
     // ── "รายการ" (บน · บุลเล็ตงานที่ทำ) ──────────────────────────────────────
@@ -589,6 +609,8 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     setGlassType(r.glassType ?? (px.defGlass ?? ""));
     setProfit(String(r.profit ?? "100"));
     setLaborMode(r.laborMode === "mfg" ? "mfg" : "all");   // ใบเก่าไม่มีฟิลด์นี้ = คิดค่าแรงรวม (ค่าเดิมของระบบ)
+    setUseSel(r.useSel === "door" || r.useSel === "window" ? r.useSel : "auto");  // ใบเก่า = ให้ระบบเดาเหมือนเดิม
+    setSillSel(typeof r.sillSel === "string" ? r.sillSel : "");
     if (r.kind === "room") {
       setG6HideSidePrice(!!r.g6HideSidePrice);
       setRoomInitial(r.room ?? null);
@@ -1007,6 +1029,23 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm mt-3">
                 {prod.forms?.length > 0 && !prod.composite && (
                   <Select label="รูปแบบ" value={form} onChange={setForm} opts={prod.forms} />
+                )}
+                {/* ประตู/หน้าต่าง — คุมคำขึ้นต้นชื่อรายการในใบเสนอ · "อัตโนมัติ" = เดาจากความสูง (≥1.9ม.=ประตู) */}
+                {paneKindOn && (
+                  <Select
+                    label={`ประตู/หน้าต่าง${useSel === "auto" ? ` · เดาให้ = ${paneKind === "door" ? "ประตู" : "หน้าต่าง"}` : ""}`}
+                    value={useSel} onChange={(v) => setUseSel(v as "auto" | "door" | "window")}
+                    opts={["auto", "door", "window"]}
+                    labels={{ auto: "อัตโนมัติ", door: "ประตู", window: "หน้าต่าง" }}
+                  />
+                )}
+                {/* พื้นล่างของประตู — ข้อความบนใบเท่านั้น ไม่กระทบราคา (ค่าธรณีหลังเต่าอยู่ในของเสริม) */}
+                {paneKindOn && paneKind === "door" && !sillIsForm(prod.id) && (
+                  <Select
+                    label="พื้นล่าง (ขึ้นในใบ)"
+                    value={sillSel || paneSill({ typeKey: prod.id, w: 0, h: 0, n: 1 })}
+                    onChange={setSillSel} opts={SILL_OPTS}
+                  />
                 )}
                 <Select label="สีอลูมิเนียม" value={color} onChange={setColor}
                   opts={ALU_COLOR_KEYS} labels={ALU_COLOR_LABEL} />
