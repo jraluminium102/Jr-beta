@@ -92,11 +92,11 @@ export const GET = withRoute(async (req: Request) => {
       .select("name, qty, category, line_total, quotation_id, quotation:quotation_id(issue_date, status, job:job_id(status))")
       .order("id", { ascending: true }).range(f, t)),
     fetchAllPaged<any>((f, t) => sb.from("queue_entries")
-      .select("id, job_id, customer_name, sales_id, address, job_type, queue_date, status")
+      .select("id, job_id, customer_name, sales_id, address, contact_channel, job_type, queue_date, status")
       .order("id", { ascending: true }).range(f, t)),
     sb.from("queue_sales").select("id, name"),
     fetchAllPaged<any>((f, t) => sb.from("customers")
-      .select("id, address")
+      .select("id, address, contact_channel")
       .order("id", { ascending: true }).range(f, t)),
   ]);
 
@@ -108,14 +108,35 @@ export const GET = withRoute(async (req: Request) => {
   const salesIdToName = new Map<string, string>(((salesRows as any)?.data ?? salesRows ?? []).map?.((s: any) => [s.id, s.name]) ?? []);
   const nameByJob = new Map<string, string>(), nameByQe = new Map<string, string>(), nameByCust = new Map<string, string>();
   const addrByJob = new Map<string, string>(), addrByQe = new Map<string, string>(), addrByCust = new Map<string, string>();
+  const chByJob = new Map<string, string>(), chByQe = new Map<string, string>(), chByCust = new Map<string, string>();
+  const normCh = (v: unknown): string | null => {
+    const s = String(v ?? "").trim().toUpperCase();
+    if (s === "FB" || s === "FACEBOOK") return "FACEBOOK";
+    if (s === "IG" || s === "INSTAGRAM") return "INSTAGRAM";
+    if (s === "LINE") return "LINE";
+    if (s === "OTHER") return "OTHER";
+    return null;
+  };
   (queueRows ?? []).forEach((q: any) => {
     const nm = q.sales_id ? salesIdToName.get(q.sales_id) : undefined;
     if (nm) { nameByQe.set(q.id, nm); if (q.job_id) nameByJob.set(q.job_id, nm); if (q.customer_name) nameByCust.set(String(q.customer_name).trim(), nm); }
     const a = String(q.address ?? "").trim();
     if (a) { addrByQe.set(q.id, a); if (q.job_id) addrByJob.set(q.job_id, a); if (q.customer_name) addrByCust.set(String(q.customer_name).trim(), a); }
+    const ch = normCh(q.contact_channel);
+    if (ch) { chByQe.set(q.id, ch); if (q.job_id) chByJob.set(q.job_id, ch); if (q.customer_name) chByCust.set(String(q.customer_name).trim(), ch); }
   });
-  const custAddrById = new Map<string, string>();
-  (custRows ?? []).forEach((c: any) => { const a = String(c.address ?? "").trim(); if (a) custAddrById.set(String(c.id), a); });
+  const custAddrById = new Map<string, string>(), custChById = new Map<string, string>();
+  (custRows ?? []).forEach((c: any) => {
+    const a = String(c.address ?? "").trim(); if (a) custAddrById.set(String(c.id), a);
+    const ch = normCh(c.contact_channel); if (ch) custChById.set(String(c.id), ch);
+  });
+  // ช่องทางจริงอยู่ที่คิว (contact_channel LINE/FB) / ทะเบียนลูกค้า — jobs.channel มักว่าง (default OTHER)
+  const channelOf = (j: any): string =>
+    (j.queue_entry_id ? chByQe.get(j.queue_entry_id) : undefined)
+    ?? chByJob.get(j.id)
+    ?? (j.customer_name ? chByCust.get(String(j.customer_name).trim()) : undefined)
+    ?? (j.customer_id != null ? custChById.get(String(j.customer_id)) : undefined)
+    ?? normCh(j.channel) ?? "OTHER";
   // เซลล์ของงาน — ยึดคิวก่อน (ให้ตรงกับจำนวนเข้าประเมิน) แล้ว fallback estimator
   const jobSalesName = (j: any): string =>
     nameByJob.get(j.id)
@@ -133,10 +154,13 @@ export const GET = withRoute(async (req: Request) => {
 
   const inJobs = J.filter((j: any) => inRange(j.assess_date) && j.status !== "CANCELLED");
   const wonJobs = inJobs.filter(isWon);
+  // งานที่ "มัดจำในช่วงนี้" (อิงวันมัดจำจริง — ไม่สนว่าเข้าประเมินเดือนไหน)
+  const depositedInRange = J.filter((j: any) => inRange(j.deposit_date) && j.status !== "CANCELLED");
 
   // ── summary ──
   const collected = F.filter((f: any) => inRange(f.payment_date)).reduce((s: number, f: any) => s + num(f.amount), 0);
   const revenue_closed = wonJobs.reduce((s: number, j: any) => s + num(j.net_amount), 0);
+  const revenue_deposited = depositedInRange.reduce((s: number, j: any) => s + num(j.net_amount), 0);
 
   // ใบเสนอในช่วง (มีรายการ ≥1) + สัดส่วนนอกระบบ (ทุกรายการ category ว่าง = พิมพ์เอง/นำเข้า)
   const catByQuote = new Map<string, boolean>(), quoteHasItems = new Set<string>();
@@ -149,15 +173,26 @@ export const GET = withRoute(async (req: Request) => {
   const ext_pct = inQuotes.length ? Math.round((extQuotes.length / inQuotes.length) * 1000) / 10 : 0;
 
   const summary = {
-    jobs: inJobs.length,
-    won: wonJobs.length,
+    jobs: inJobs.length,                                 // เข้าประเมินในช่วง (cohort)
+    won: wonJobs.length,                                 // มัดจำ "จากที่ประเมินในช่วง" (cohort)
     close_rate: inJobs.length ? Math.round((wonJobs.length / inJobs.length) * 100) : 0,
-    revenue_closed: mask(revenue_closed),
+    deposited_period: depositedInRange.length,           // มัดจำ "ที่เกิดในช่วง" (อิงวันมัดจำ)
+    revenue_closed: mask(revenue_closed),                // ยอดขายจาก cohort
+    revenue_deposited: mask(revenue_deposited),          // ยอดขายที่ปิดในช่วง (อิงวันมัดจำ)
     collected: mask(collected),
     quotations: inQuotes.length,
     ext_quotes: extQuotes.length,
     ext_pct,
   };
+
+  // ── รายชื่อลูกค้าที่มัดจำในช่วง (สำหรับกดดูรายชื่อ · อิงวันมัดจำ) ──
+  const deposits = depositedInRange
+    .map((j: any) => ({
+      id: j.id, job_code: j.job_code ?? null, customer_name: j.customer_name ?? "",
+      deposit_date: j.deposit_date ?? null, net: mask(num(j.net_amount)),
+      sales: jobSalesName(j), area: areaLabel(addressOf(j)) || "-",
+    }))
+    .sort((a, b) => String(b.deposit_date ?? "").localeCompare(String(a.deposit_date ?? "")));
 
   // ── รายเดือน (เสนอ=net ตามเดือนประเมิน · ปิด=net ตามเดือนมัดจำ) ──
   const monthKeys: string[] = [];
@@ -183,17 +218,18 @@ export const GET = withRoute(async (req: Request) => {
   const byArea = Object.values(areaMap).sort((a, b) => b.jobs - a.jobs || b.revenue - a.revenue).slice(0, 20)
     .map((a) => ({ area: a.area, jobs: a.jobs, won: a.won, revenue: mask(a.revenue) }));
 
-  // ── ช่องทางลูกค้า (โชว์ครบทุกช่องแม้ 0) ──
+  // ── ช่องทางลูกค้า (ดึงจากคิว/ทะเบียน — jobs.channel มักว่าง · โชว์ครบ 4 ช่อง) ──
   const CH_ALL = ["LINE", "FACEBOOK", "INSTAGRAM", "OTHER"];
   const chMap: Record<string, number> = { LINE: 0, FACEBOOK: 0, INSTAGRAM: 0, OTHER: 0 };
-  inJobs.forEach((j: any) => { const c = CH_ALL.includes(j.channel) ? j.channel : "OTHER"; chMap[c]++; });
+  inJobs.forEach((j: any) => { chMap[channelOf(j)]++; });
   const byChannel = CH_ALL.map((channel) => ({ channel, count: chMap[channel] }));
 
-  // ── ประเภทงานนิยม (เฉพาะรายการในระบบ = มี category · ตัดใบนอกระบบออก) top 10 ──
+  // ── ประเภทงานนิยม (รวมชื่อฐานเดียวกัน — ตัดวงเล็บหมายเหตุ เช่น "ประตูบานเปิด (หน้าชงกาแฟ)" = "ประตูบานเปิด") ──
+  const baseName = (n: string) => n.replace(/\s*[（(].*$/s, "").trim() || n.trim();
   const itemMap: Record<string, number> = {};
   QI.filter((it: any) => inRange(it.quotation?.issue_date) && it.quotation?.status !== "cancelled" && !!(it.category ?? "").trim())
-    .forEach((it: any) => { const name = (it.name ?? "").trim(); if (name) itemMap[name] = (itemMap[name] ?? 0) + num(it.qty); });
-  const topItems = Object.entries(itemMap).map(([name, qty]) => ({ name, qty })).sort((a, b) => b.qty - a.qty).slice(0, 10);
+    .forEach((it: any) => { const name = baseName((it.name ?? "").trim()); if (name) itemMap[name] = (itemMap[name] ?? 0) + num(it.qty); });
+  const topItems = Object.entries(itemMap).map(([name, qty]) => ({ name, qty })).sort((a, b) => b.qty - a.qty).slice(0, 12);
 
   // ── สินค้าขายดีตามหมวด (ละเอียด: ใบ/ชิ้น/ยอด/ราคาเฉลี่ย/%ปิด · เสนอ vs ขายได้) ──
   type CatAgg = { category: string; q_rev: number; s_rev: number; q_qty: number; s_qty: number; _q: Set<unknown>; _s: Set<unknown> };
@@ -232,34 +268,39 @@ export const GET = withRoute(async (req: Request) => {
     otherVisitByName[nm] = (otherVisitByName[nm] ?? 0) + 1;
   });
 
-  // ── เซลล์รายคน: เข้าประเมิน / เข้าหน้างานอื่น / มัดจำ / อัตราปิด / ยอดเสนอ / ยอดขาย ──
-  const salesMap: Record<string, { name: string; assess: number; deposited: number; quoted_amt: number; sold_amt: number }> = {};
+  // ── เซลล์รายคน: เข้าประเมิน / เข้าหน้างานอื่น / มัดจำ(จากประเมิน) / มัดจำ(ในช่วง) / ยอดขาย / ยอดเสนอ ──
+  type SM = { name: string; assess: number; won_cohort: number; dep_period: number; quoted_amt: number; sold_amt: number };
+  const salesMap: Record<string, SM> = {};
+  const get = (nm: string): SM => (salesMap[nm] ??= { name: nm, assess: 0, won_cohort: 0, dep_period: 0, quoted_amt: 0, sold_amt: 0 });
   inJobs.forEach((j: any) => {
-    const name = jobSalesName(j);
-    const m = (salesMap[name] ??= { name, assess: 0, deposited: 0, quoted_amt: 0, sold_amt: 0 });
+    const m = get(jobSalesName(j));
     m.assess++;
     if (j.quote_sent_date) m.quoted_amt += num(j.net_amount);
-    if (isWon(j)) { m.deposited++; m.sold_amt += num(j.net_amount); }
+    if (isWon(j)) m.won_cohort++;
   });
-  // เติมเซลล์ที่มีแต่เข้าหน้างานอื่น (ไม่มีงานประเมินในช่วง)
-  Object.keys(otherVisitByName).forEach((nm) => { salesMap[nm] ??= { name: nm, assess: 0, deposited: 0, quoted_amt: 0, sold_amt: 0 }; });
+  // มัดจำในช่วง (อิงวันมัดจำ) + ยอดขายในช่วง — อาจเป็นงานที่ประเมินเดือนอื่น
+  depositedInRange.forEach((j: any) => { const m = get(jobSalesName(j)); m.dep_period++; m.sold_amt += num(j.net_amount); });
+  Object.keys(otherVisitByName).forEach((nm) => get(nm));
   const bySales = Object.values(salesMap)
     .map((s) => ({
       name: s.name, assess: s.assess, other_visits: otherVisitByName[s.name] ?? 0,
-      deposited: s.deposited, close_rate: s.assess ? Math.round((s.deposited / s.assess) * 100) : 0,
+      won_cohort: s.won_cohort, close_rate: s.assess ? Math.round((s.won_cohort / s.assess) * 100) : 0,
+      deposited_period: s.dep_period,
       quoted_amount: mask(s.quoted_amt), sold_amount: mask(s.sold_amt), _sold: s.sold_amt,
     }))
-    .sort((a, b) => (showFinance ? b._sold - a._sold || b.deposited - a.deposited : b.deposited - a.deposited || b.assess - a.assess))
+    .sort((a, b) => (showFinance ? b._sold - a._sold || b.deposited_period - a.deposited_period : b.deposited_period - a.deposited_period || b.assess - a.assess))
     .map(({ _sold, ...s }) => s);
 
   // ── เขียนแบบ: จำนวนที่เขียนเสร็จ / เวลาเฉลี่ย(เริ่ม→เสร็จ) / ช้ากว่ากำหนด ──
   const drawnInRange = J.filter((j: any) => j.status !== "CANCELLED" && inRange(j.design_end) && j.design_state === "DONE");
   const drawDurations = drawnInRange.map((j: any) => dayDiff(j.design_start, j.design_end)).filter((d: number | null): d is number => d != null && d >= 0);
   const drawLate = drawnInRange.filter((j: any) => j.design_due_date && j.design_end && j.design_end > j.design_due_date).length;
-  const drawByDesignerMap: Record<string, { name: string; done: number; _dur: number[]; late: number }> = {};
+  const drawByDesignerMap: Record<string, { name: string; ref: number | null; done: number; _dur: number[]; late: number }> = {};
   drawnInRange.forEach((j: any) => {
+    const ref = j.designer_ref ?? null;
+    const key = ref != null ? `r:${ref}` : "none";
     const name = j.designer_lookup?.name ?? "ไม่ระบุผู้เขียน";
-    const m = (drawByDesignerMap[name] ??= { name, done: 0, _dur: [], late: 0 });
+    const m = (drawByDesignerMap[key] ??= { name, ref, done: 0, _dur: [], late: 0 });
     m.done++;
     const d = dayDiff(j.design_start, j.design_end); if (d != null && d >= 0) m._dur.push(d);
     if (j.design_due_date && j.design_end && j.design_end > j.design_due_date) m.late++;
@@ -268,7 +309,7 @@ export const GET = withRoute(async (req: Request) => {
     done: drawnInRange.length,
     avg_days: avg(drawDurations),
     late: drawLate,
-    byDesigner: Object.values(drawByDesignerMap).map((m) => ({ name: m.name, done: m.done, avg_days: avg(m._dur), late: m.late })).sort((a, b) => b.done - a.done),
+    byDesigner: Object.values(drawByDesignerMap).map((m) => ({ name: m.name, ref: m.ref, done: m.done, avg_days: avg(m._dur), late: m.late })).sort((a, b) => b.done - a.done),
   };
 
   // ── ใบเสนอราคา: จำนวนที่ส่ง / เวลาเฉลี่ย(ประเมิน→ส่ง) / กระจายตัว ──
@@ -286,7 +327,7 @@ export const GET = withRoute(async (req: Request) => {
   return ok({
     range: { from, to },
     can_finance: showFinance,
-    summary, byMonth, byArea, areaUnknown, areaOther, byChannel, topItems,
+    summary, deposits, byMonth, byArea, areaUnknown, areaOther, byChannel, topItems,
     byCategory, uncategorizedItems: uncategorized,
     bySales, drawing, quotation,
     issues: { total: inIssues.length, open: inIssues.filter((i: any) => i.status !== "CLOSED").length, bySeverity: issuesBySeverity },

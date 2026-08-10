@@ -104,6 +104,12 @@ export default function DesignerBoard({
   const [holdModal, setHoldModal] = useState<Job | null>(null);
   const [unholdBusy, setUnholdBusy] = useState<string | null>(null);
 
+  // เปิดมาจากหน้าสถิติ/KPI (?designer=<ref>) → กรองผู้เขียนคนนั้นให้เลย
+  useEffect(() => {
+    const d = new URLSearchParams(window.location.search).get("designer");
+    if (d) setDesignerFilter(d);
+  }, []);
+
   const load = useCallback(async () => {
     setLoading(true);
     setErr("");
