@@ -2,16 +2,13 @@ import { requirePermission } from "@/lib/bff/context";
 import { withRoute } from "@/lib/bff/handler";
 import { ok } from "@/lib/bff/response";
 import { can } from "@/lib/rbac";
-import { derivePhase, PHASE_ORDER, overdueDays } from "@/lib/followup";
 import { fetchAllPaged } from "@/lib/supabase/fetch-all";
-import { buildSalesResolver } from "@/lib/sales-resolve";
 
 export const dynamic = "force-dynamic";
 
 type Sb = { from: (t: string) => any };
 const num = (v: unknown) => Number(v ?? 0) || 0;
 
-// นับวันแบบ inclusive-diff (a→b) จาก date string — ใช้กับระยะเวลาเขียนแบบ/ทำใบเสนอ
 function dayDiff(a?: string | null, b?: string | null): number | null {
   if (!a || !b) return null;
   const ta = new Date(a + "T00:00:00").getTime();
@@ -21,28 +18,49 @@ function dayDiff(a?: string | null, b?: string | null): number | null {
 }
 const avg = (xs: number[]) => (xs.length ? Math.round((xs.reduce((s, n) => s + n, 0) / xs.length) * 10) / 10 : 0);
 
-// ดึง "พื้นที่" (เขต/อำเภอ/จังหวัด) จากที่อยู่เต็ม — ที่อยู่ไทยหลายอันไม่มีเว้นวรรค เลยตัดที่คำหลัก/ตัวเลข
-function extractArea(raw?: string | null): string {
+// ── พื้นที่: กรุงเทพจัดกลุ่มเป็น "โซน/ทิศ" (ไม่โชว์เขตดิบ) · ต่างจังหวัดเอาแค่จังหวัด · ภูเก็ตเจาะอำเภอ ──
+// map เขตกรุงเทพ 50 เขต → โซน (แก้ย้ายเขตได้ถ้าจัดโซนไม่ตรงใจ)
+const BKK_ZONE: Record<string, string> = {
+  // กลาง
+  พระนคร: "กลาง", ดุสิต: "กลาง", ป้อมปราบศัตรูพ่าย: "กลาง", สัมพันธวงศ์: "กลาง", ปทุมวัน: "กลาง",
+  บางรัก: "กลาง", สาทร: "กลาง", บางคอแหลม: "กลาง", ยานนาวา: "กลาง", ราชเทวี: "กลาง",
+  พญาไท: "กลาง", ดินแดง: "กลาง", ห้วยขวาง: "กลาง", วัฒนา: "กลาง", คลองเตย: "กลาง",
+  // เหนือ
+  จตุจักร: "เหนือ", บางซื่อ: "เหนือ", หลักสี่: "เหนือ", ดอนเมือง: "เหนือ", สายไหม: "เหนือ",
+  บางเขน: "เหนือ", ลาดพร้าว: "เหนือ",
+  // ตะวันออก
+  บางกะปิ: "ตะวันออก", วังทองหลาง: "ตะวันออก", บึงกุ่ม: "ตะวันออก", คันนายาว: "ตะวันออก", สะพานสูง: "ตะวันออก",
+  มีนบุรี: "ตะวันออก", คลองสามวา: "ตะวันออก", หนองจอก: "ตะวันออก", ลาดกระบัง: "ตะวันออก", ประเวศ: "ตะวันออก",
+  สวนหลวง: "ตะวันออก", บางนา: "ตะวันออก", พระโขนง: "ตะวันออก",
+  // ใต้
+  จอมทอง: "ใต้", ราษฎร์บูรณะ: "ใต้", ทุ่งครุ: "ใต้", บางขุนเทียน: "ใต้", บางบอน: "ใต้", หนองแขม: "ใต้",
+  // ตะวันตก (ฝั่งธน)
+  ธนบุรี: "ตะวันตก", คลองสาน: "ตะวันตก", บางกอกใหญ่: "ตะวันตก", บางกอกน้อย: "ตะวันตก", บางพลัด: "ตะวันตก",
+  ตลิ่งชัน: "ตะวันตก", ทวีวัฒนา: "ตะวันตก", ภาษีเจริญ: "ตะวันตก", บางแค: "ตะวันตก",
+};
+const BKK_DISTRICTS = Object.keys(BKK_ZONE);
+const PHUKET_AMPHOE = ["เมืองภูเก็ต", "เมือง", "กะทู้", "ถลาง"];
+
+// address เต็ม → ป้ายพื้นที่ · "" = ไม่มีที่อยู่ · "?" = มีที่อยู่แต่แยกไม่ได้
+function areaLabel(raw?: string | null): string {
   const s = String(raw ?? "").replace(/\s+/g, " ").trim();
   if (!s) return "";
-  // ตัดหางตั้งแต่คำจังหวัด/รหัสไปรษณีย์/ตัวเลข (กันเก็บชื่อยาวเกิน)
-  const cut = (t: string) => {
-    const i = t.search(/กรุงเทพ|กทม|จังหวัด|จ\.|แขวง|ตำบล|ต\.|รหัส|\d/);
-    return (i > 0 ? t.slice(0, i) : t).trim();
-  };
-  let m: RegExpMatchArray | null;
-  if ((m = s.match(/เขต\s*([ก-๙].*)/))) { const v = cut(m[1]); if (v) return "เขต" + v; }
-  if ((m = s.match(/จังหวัด\s*([ก-๙]+)/))) return m[1];
-  if ((m = s.match(/(?:^|[^ก-๙])จ\.\s*([ก-๙]+)/))) return m[1];
-  if ((m = s.match(/อำเภอ\s*([ก-๙].*)/))) { const v = cut(m[1]); if (v) return "อ." + v; }
-  if ((m = s.match(/(?:^|[^ก-๙])อ\.\s*([ก-๙]+)/))) return "อ." + m[1];
-  if (/กรุงเทพ|กทม/.test(s)) return "กรุงเทพฯ";
-  // ค่าที่พิมพ์เองสั้น ๆ (เช่น "บางนา") ใช้ตรง ๆ · ยาวเกินตัดให้สั้น
-  return s.length > 16 ? s.slice(0, 16) + "…" : s;
+  // 1) กรุงเทพ — จับชื่อเขตที่รู้จัก (รองรับ "เขตบางนา" / "แขวง...เขต..." / พิมพ์เขตเปล่า)
+  for (const d of BKK_DISTRICTS) { if (s.includes(d)) return "กรุงเทพฯ · " + BKK_ZONE[d]; }
+  // 2) ภูเก็ต — เจาะอำเภอ
+  if (s.includes("ภูเก็ต")) {
+    for (const a of PHUKET_AMPHOE) { if (s.includes(a)) return "ภูเก็ต · " + (a === "เมือง" ? "เมืองภูเก็ต" : a); }
+    return "ภูเก็ต";
+  }
+  // 3) ต่างจังหวัด — เอาแค่จังหวัด
+  const pm = s.match(/จังหวัด\s*([ก-๙]+)/) || s.match(/(?:^|[^ก-๙])จ\.\s*([ก-๙]+)/);
+  if (pm) return pm[1];
+  // 4) มีคำว่ากรุงเทพแต่ไม่เจอเขต
+  if (/กรุงเทพ|กทม/.test(s)) return "กรุงเทพฯ · ไม่ระบุโซน";
+  return "?"; // มีที่อยู่แต่แยกพื้นที่ไม่ได้
 }
 
-// GET /api/stats?from=YYYY-MM-DD&to=YYYY-MM-DD — สถิติ + KPI ช่วงเวลา (default = ปีนี้)
-//   money จะถูกซ่อน (null) ถ้า role ไม่มีสิทธิ์ดูฟิลด์การเงิน (jobs:finance_fields)
+// GET /api/stats?from=YYYY-MM-DD&to=YYYY-MM-DD — สถิติ + KPI (money ถูกซ่อนถ้าไม่มีสิทธิ์ jobs:finance_fields)
 export const GET = withRoute(async (req: Request) => {
   const ctx = await requirePermission("dashboard", "read");
   const sb = ctx.supabase as unknown as Sb;
@@ -56,12 +74,10 @@ export const GET = withRoute(async (req: Request) => {
   const fromT = new Date(from + "T00:00:00").getTime();
   const toT = new Date(to + "T23:59:59").getTime();
   const inRange = (s?: string | null) => { if (!s) return false; const t = new Date(s).getTime(); return t >= fromT && t <= toT; };
-  const today = now.toISOString().slice(0, 10);
 
-  // ── ดึงข้อมูล (แบ่งหน้า กัน cap 1,000 แถว — ตารางพวกนี้โตเกิน 1,000 ได้) ──
-  const [jobs, fin, issues, quotations, qitems, salesOf, queueRows, custRows] = await Promise.all([
+  const [jobs, fin, issues, quotations, qitems, queueRows, salesRows, custRows] = await Promise.all([
     fetchAllPaged<any>((f, t) => sb.from("jobs")
-      .select("id, job_code, status, current_stage, net_amount, deposit_date, deposit_amount, assess_date, quote_sent_date, design_state, design_start, design_end, design_due_date, on_hold, customer_area, customer_id, customer_name, channel, estimator_id, estimator:estimator_id(full_name), designer_ref, designer_lookup:designer_ref(name), queue_entry_id, productions(status), installations(status)")
+      .select("id, job_code, status, current_stage, net_amount, deposit_date, assess_date, quote_sent_date, design_state, design_start, design_end, design_due_date, on_hold, customer_area, customer_id, customer_name, channel, estimator_id, estimator:estimator_id(full_name), designer_ref, designer_lookup:designer_ref(name), queue_entry_id")
       .order("id", { ascending: true }).range(f, t)),
     fetchAllPaged<any>((f, t) => sb.from("finance_entries")
       .select("amount, payment_date").eq("is_voided", false)
@@ -75,11 +91,10 @@ export const GET = withRoute(async (req: Request) => {
     fetchAllPaged<any>((f, t) => sb.from("quotation_items")
       .select("name, qty, category, line_total, quotation_id, quotation:quotation_id(issue_date, status, job:job_id(status))")
       .order("id", { ascending: true }).range(f, t)),
-    buildSalesResolver(sb),
-    // ที่อยู่หน้างานจริง (สำหรับ "พื้นที่") — customer_area มักว่าง ต้องดึงจากคิว/ทะเบียนลูกค้า
     fetchAllPaged<any>((f, t) => sb.from("queue_entries")
-      .select("id, job_id, customer_name, address")
+      .select("id, job_id, customer_name, sales_id, address, job_type, queue_date, status")
       .order("id", { ascending: true }).range(f, t)),
+    sb.from("queue_sales").select("id, name"),
     fetchAllPaged<any>((f, t) => sb.from("customers")
       .select("id, address")
       .order("id", { ascending: true }).range(f, t)),
@@ -88,33 +103,34 @@ export const GET = withRoute(async (req: Request) => {
   const J = jobs ?? [], F = fin ?? [], I = issues ?? [], QI = qitems ?? [], QT = quotations ?? [];
   const WON = ["DEPOSITED", "COMPLETED", "IN_PRODUCTION", "INSTALLING"];
   const isWon = (j: any) => WON.includes(j.status);
-  const salesNameOf = (j: any): string =>
-    salesOf({ id: j.id, queue_entry_id: j.queue_entry_id, customer_name: j.customer_name, estimator_name: j.estimator?.full_name ?? null }) ?? "ไม่ระบุ";
 
-  // ── resolver ที่อยู่หน้างาน (fallback: customer_area พิมพ์เอง → คิว(job_id/queue_entry_id/ชื่อ) → ทะเบียนลูกค้า) ──
-  const qAddrByJob = new Map<string, string>();
-  const qAddrByQe = new Map<string, string>();
-  const qAddrByName = new Map<string, string>();
+  // ── เซลล์ + ที่อยู่จากคิว (linkage 3 ชั้น: job_id / queue_entry_id / ชื่อลูกค้า) ──
+  const salesIdToName = new Map<string, string>(((salesRows as any)?.data ?? salesRows ?? []).map?.((s: any) => [s.id, s.name]) ?? []);
+  const nameByJob = new Map<string, string>(), nameByQe = new Map<string, string>(), nameByCust = new Map<string, string>();
+  const addrByJob = new Map<string, string>(), addrByQe = new Map<string, string>(), addrByCust = new Map<string, string>();
   (queueRows ?? []).forEach((q: any) => {
-    const addr = String(q.address ?? "").trim();
-    if (!addr) return;
-    if (q.job_id) qAddrByJob.set(q.job_id, addr);
-    qAddrByQe.set(q.id, addr);
-    if (q.customer_name) qAddrByName.set(String(q.customer_name).trim(), addr);
+    const nm = q.sales_id ? salesIdToName.get(q.sales_id) : undefined;
+    if (nm) { nameByQe.set(q.id, nm); if (q.job_id) nameByJob.set(q.job_id, nm); if (q.customer_name) nameByCust.set(String(q.customer_name).trim(), nm); }
+    const a = String(q.address ?? "").trim();
+    if (a) { addrByQe.set(q.id, a); if (q.job_id) addrByJob.set(q.job_id, a); if (q.customer_name) addrByCust.set(String(q.customer_name).trim(), a); }
   });
   const custAddrById = new Map<string, string>();
   (custRows ?? []).forEach((c: any) => { const a = String(c.address ?? "").trim(); if (a) custAddrById.set(String(c.id), a); });
+  // เซลล์ของงาน — ยึดคิวก่อน (ให้ตรงกับจำนวนเข้าประเมิน) แล้ว fallback estimator
+  const jobSalesName = (j: any): string =>
+    nameByJob.get(j.id)
+    ?? (j.queue_entry_id ? nameByQe.get(j.queue_entry_id) : undefined)
+    ?? (j.customer_name ? nameByCust.get(String(j.customer_name).trim()) : undefined)
+    ?? j.estimator?.full_name ?? "ไม่ระบุ";
   const addressOf = (j: any): string => {
-    const manual = String(j.customer_area ?? "").trim();
-    if (manual) return manual;
-    return qAddrByJob.get(j.id)
-      ?? (j.queue_entry_id ? qAddrByQe.get(j.queue_entry_id) : undefined)
-      ?? (j.customer_name ? qAddrByName.get(String(j.customer_name).trim()) : undefined)
+    const manual = String(j.customer_area ?? "").trim(); if (manual) return manual;
+    return addrByJob.get(j.id)
+      ?? (j.queue_entry_id ? addrByQe.get(j.queue_entry_id) : undefined)
+      ?? (j.customer_name ? addrByCust.get(String(j.customer_name).trim()) : undefined)
       ?? (j.customer_id != null ? custAddrById.get(String(j.customer_id)) : undefined)
       ?? "";
   };
 
-  // งานในช่วง (อิงวันเข้าประเมิน) ที่ไม่ยกเลิก · won อิงฐานเดียวกันเพื่อให้ close_rate ไม่เกิน 100%
   const inJobs = J.filter((j: any) => inRange(j.assess_date) && j.status !== "CANCELLED");
   const wonJobs = inJobs.filter(isWon);
 
@@ -122,18 +138,14 @@ export const GET = withRoute(async (req: Request) => {
   const collected = F.filter((f: any) => inRange(f.payment_date)).reduce((s: number, f: any) => s + num(f.amount), 0);
   const revenue_closed = wonJobs.reduce((s: number, j: any) => s + num(j.net_amount), 0);
 
-  // ใบเสนอราคาในช่วง (ไม่ยกเลิก · มีรายการอย่างน้อย 1) + สัดส่วน "นอกระบบ"
-  //   นอกระบบ = ไม่มีรายการที่ผ่านเครื่องคิดราคาเลย (category ว่างทั้งใบ = พิมพ์เอง/นำเข้า)
-  const catByQuote = new Map<string, boolean>();      // quotation_id → มีรายการที่มี category (คิดจากระบบ)
-  const quoteHasItems = new Set<string>();            // ใบที่มีรายการจริง (กันใบร่างเปล่านับเป็นนอกระบบ)
+  // ใบเสนอในช่วง (มีรายการ ≥1) + สัดส่วนนอกระบบ (ทุกรายการ category ว่าง = พิมพ์เอง/นำเข้า)
+  const catByQuote = new Map<string, boolean>(), quoteHasItems = new Set<string>();
   QI.forEach((it: any) => {
-    const qid = String(it.quotation_id);
-    quoteHasItems.add(qid);
-    const hasCat = !!(it.category ?? "").trim();
-    catByQuote.set(qid, (catByQuote.get(qid) ?? false) || hasCat);
+    const qid = String(it.quotation_id); quoteHasItems.add(qid);
+    catByQuote.set(qid, (catByQuote.get(qid) ?? false) || !!(it.category ?? "").trim());
   });
   const inQuotes = QT.filter((q: any) => inRange(q.issue_date) && q.status !== "cancelled" && quoteHasItems.has(String(q.id)));
-  const extQuotes = inQuotes.filter((q: any) => !catByQuote.get(String(q.id)));   // นอกระบบ = ไม่มีรายการคิดจากระบบเลย
+  const extQuotes = inQuotes.filter((q: any) => !catByQuote.get(String(q.id)));
   const ext_pct = inQuotes.length ? Math.round((extQuotes.length / inQuotes.length) * 1000) / 10 : 0;
 
   const summary = {
@@ -147,7 +159,7 @@ export const GET = withRoute(async (req: Request) => {
     ext_pct,
   };
 
-  // ── รายเดือน (เสนอ vs ปิด vs เก็บ) ──
+  // ── รายเดือน (เสนอ=net ตามเดือนประเมิน · ปิด=net ตามเดือนมัดจำ) ──
   const monthKeys: string[] = [];
   { const d = new Date(fromT); d.setDate(1); while (d.getTime() <= toT && monthKeys.length < 36) { monthKeys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`); d.setMonth(d.getMonth() + 1); } }
   const mk = (s?: string | null) => (s ? s.slice(0, 7) : "");
@@ -155,44 +167,36 @@ export const GET = withRoute(async (req: Request) => {
     month: m,
     quoted: mask(J.filter((j: any) => mk(j.assess_date) === m && j.status !== "CANCELLED").reduce((s: number, j: any) => s + num(j.net_amount), 0)),
     closed: mask(J.filter((j: any) => mk(j.deposit_date) === m && j.status !== "CANCELLED").reduce((s: number, j: any) => s + num(j.net_amount), 0)),
-    collected: mask(F.filter((f: any) => mk(f.payment_date) === m).reduce((s: number, f: any) => s + num(f.amount), 0)),
   }));
 
-  // ── สถานที่ (ดึงเขต/อำเภอ/จังหวัด จากที่อยู่หน้างานจริง) — งานในช่วง ──
+  // ── พื้นที่ (โซนกรุงเทพ / จังหวัด / ภูเก็ตรายอำเภอ) ──
   const areaMap: Record<string, { area: string; jobs: number; won: number; revenue: number }> = {};
-  let areaUnknown = 0;
+  let areaUnknown = 0, areaOther = 0;
   inJobs.forEach((j: any) => {
-    const area = extractArea(addressOf(j));
-    if (!area) { areaUnknown++; return; }
-    const m = (areaMap[area] ??= { area, jobs: 0, won: 0, revenue: 0 });
+    const label = areaLabel(addressOf(j));
+    if (label === "") { areaUnknown++; return; }
+    if (label === "?") { areaOther++; return; }
+    const m = (areaMap[label] ??= { area: label, jobs: 0, won: 0, revenue: 0 });
     m.jobs++;
     if (isWon(j)) { m.won++; m.revenue += num(j.net_amount); }
   });
-  const byArea = Object.values(areaMap)
-    .sort((a, b) => b.jobs - a.jobs || b.revenue - a.revenue)
-    .slice(0, 15)
+  const byArea = Object.values(areaMap).sort((a, b) => b.jobs - a.jobs || b.revenue - a.revenue).slice(0, 20)
     .map((a) => ({ area: a.area, jobs: a.jobs, won: a.won, revenue: mask(a.revenue) }));
 
-  // ── funnel (ภาพรวมปัจจุบัน ไม่ยกเลิก) ──
-  const phaseCount: Record<string, number> = {};
-  J.filter((j: any) => j.status !== "CANCELLED").forEach((j: any) => { const p = derivePhase(j); phaseCount[p] = (phaseCount[p] ?? 0) + 1; });
-  const funnel = PHASE_ORDER.map((p) => ({ phase: p, count: phaseCount[p] ?? 0 }));
+  // ── ช่องทางลูกค้า (โชว์ครบทุกช่องแม้ 0) ──
+  const CH_ALL = ["LINE", "FACEBOOK", "INSTAGRAM", "OTHER"];
+  const chMap: Record<string, number> = { LINE: 0, FACEBOOK: 0, INSTAGRAM: 0, OTHER: 0 };
+  inJobs.forEach((j: any) => { const c = CH_ALL.includes(j.channel) ? j.channel : "OTHER"; chMap[c]++; });
+  const byChannel = CH_ALL.map((channel) => ({ channel, count: chMap[channel] }));
 
-  // ── ช่องทางลูกค้า ──
-  const chMap: Record<string, number> = {};
-  inJobs.forEach((j: any) => { chMap[j.channel ?? "OTHER"] = (chMap[j.channel ?? "OTHER"] ?? 0) + 1; });
-  const byChannel = Object.entries(chMap).map(([channel, count]) => ({ channel, count })).sort((a, b) => b.count - a.count);
-
-  // ── ประเภทงานนิยม (จากรายการใบเสนอราคาในช่วง) top 10 ──
+  // ── ประเภทงานนิยม (เฉพาะรายการในระบบ = มี category · ตัดใบนอกระบบออก) top 10 ──
   const itemMap: Record<string, number> = {};
-  QI.filter((it: any) => inRange(it.quotation?.issue_date) && it.quotation?.status !== "cancelled").forEach((it: any) => {
-    const name = (it.name ?? "").trim(); if (!name) return;
-    itemMap[name] = (itemMap[name] ?? 0) + num(it.qty);
-  });
+  QI.filter((it: any) => inRange(it.quotation?.issue_date) && it.quotation?.status !== "cancelled" && !!(it.category ?? "").trim())
+    .forEach((it: any) => { const name = (it.name ?? "").trim(); if (name) itemMap[name] = (itemMap[name] ?? 0) + num(it.qty); });
   const topItems = Object.entries(itemMap).map(([name, qty]) => ({ name, qty })).sort((a, b) => b.qty - a.qty).slice(0, 10);
 
-  // ── สินค้าขายดีตามหมวด — เสนอ (ทุกใบ) vs ขายได้ (งาน WON) ──
-  type CatAgg = { category: string; quoted_revenue: number; sold_revenue: number; _q: Set<unknown>; _s: Set<unknown> };
+  // ── สินค้าขายดีตามหมวด (ละเอียด: ใบ/ชิ้น/ยอด/ราคาเฉลี่ย/%ปิด · เสนอ vs ขายได้) ──
+  type CatAgg = { category: string; q_rev: number; s_rev: number; q_qty: number; s_qty: number; _q: Set<unknown>; _s: Set<unknown> };
   const catMap: Record<string, CatAgg> = {};
   let uncategorized = 0;
   QI.forEach((it: any) => {
@@ -200,102 +204,91 @@ export const GET = withRoute(async (req: Request) => {
     if (!q || q.status === "cancelled" || !inRange(q.issue_date)) return;
     const cat = (it.category ?? "").trim();
     if (!cat) { uncategorized++; return; }
-    const lt = num(it.line_total);
-    const m = (catMap[cat] ??= { category: cat, quoted_revenue: 0, sold_revenue: 0, _q: new Set(), _s: new Set() });
-    m.quoted_revenue += lt; m._q.add(it.quotation_id);
-    if (q.job && WON.includes(q.job.status)) { m.sold_revenue += lt; m._s.add(it.quotation_id); }
+    const lt = num(it.line_total), qty = num(it.qty);
+    const m = (catMap[cat] ??= { category: cat, q_rev: 0, s_rev: 0, q_qty: 0, s_qty: 0, _q: new Set(), _s: new Set() });
+    m.q_rev += lt; m.q_qty += qty; m._q.add(it.quotation_id);
+    if (q.job && WON.includes(q.job.status)) { m.s_rev += lt; m.s_qty += qty; m._s.add(it.quotation_id); }
   });
   const byCategory = Object.values(catMap)
-    .map((m) => ({ category: m.category, quoted_revenue: mask(m.quoted_revenue), quoted_jobs: m._q.size, sold_revenue: mask(m.sold_revenue), sold_jobs: m._s.size }))
-    .sort((a, b) => (b.sold_revenue ?? 0) - (a.sold_revenue ?? 0) || (b.quoted_revenue ?? 0) - (a.quoted_revenue ?? 0));
+    .map((m) => ({
+      category: m.category,
+      quoted_jobs: m._q.size, quoted_qty: m.q_qty, quoted_revenue: mask(m.q_rev),
+      sold_jobs: m._s.size, sold_qty: m.s_qty, sold_revenue: mask(m.s_rev),
+      avg_price: mask(m.s_qty ? Math.round(m.s_rev / m.s_qty) : 0),
+      win_rate: m._q.size ? Math.round((m._s.size / m._q.size) * 100) : 0,
+      _s: m.s_rev,
+    }))
+    .sort((a, b) => b._s - a._s || (b.sold_jobs - a.sold_jobs))
+    .map(({ _s, ...c }) => c);
 
   // ════════ KPI ════════
 
-  // ── เซลล์รายคน: เข้างาน / ส่งใบเสนอ / มัดจำ / ยอดขาย / อัตราปิด ──
-  //   key ด้วยชื่อที่ resolve แล้วเสมอ (กันเซลล์คนเดียวแตกเป็น 2 แถว เมื่อบางงานมี estimator_id บางงานมาจาก fallback คิว)
-  const salesMap: Record<string, { name: string; jobs: number; quoted: number; deposited: number; revenue: number }> = {};
-  inJobs.forEach((j: any) => {
-    const name = salesNameOf(j);
-    const m = (salesMap[name] ??= { name, jobs: 0, quoted: 0, deposited: 0, revenue: 0 });
-    m.jobs++;
-    if (j.quote_sent_date) m.quoted++;
-    if (isWon(j)) { m.deposited++; m.revenue += num(j.net_amount); }
+  // ── เข้าหน้างานอื่น (ไม่ใช่ประเมิน) ต่อเซลล์ — จากคิว (queue_date ในช่วง · job_type ไม่ใช่ประเมิน) ──
+  const isAssessType = (jt: unknown) => { const s = String(jt ?? "").trim(); return !s || /ประเมิน/.test(s); };
+  const otherVisitByName: Record<string, number> = {};
+  (queueRows ?? []).forEach((q: any) => {
+    if (q.status === "CANCELLED" || !inRange(q.queue_date) || isAssessType(q.job_type)) return;
+    const nm = q.sales_id ? salesIdToName.get(q.sales_id) : undefined; if (!nm) return;
+    otherVisitByName[nm] = (otherVisitByName[nm] ?? 0) + 1;
   });
-  const bySales = Object.values(salesMap)
-    .map((s) => ({ name: s.name, jobs: s.jobs, quoted: s.quoted, deposited: s.deposited, revenue: mask(s.revenue), close_rate: s.jobs ? Math.round((s.deposited / s.jobs) * 100) : 0, _rev: s.revenue }))
-    // ไม่มีสิทธิ์ดูเงิน → เรียงด้วยจำนวนมัดจำ/งาน (กันเดาอันดับยอดขายจากลำดับแถว)
-    .sort((a, b) => (showFinance ? b._rev - a._rev || b.deposited - a.deposited : b.deposited - a.deposited || b.jobs - a.jobs))
-    .map(({ _rev, ...s }) => s);
 
-  // ── เขียนแบบ: จำนวนที่เขียนเสร็จ / ระยะเวลาเฉลี่ย / ช้ากว่ากำหนด / ค้างเกินกำหนด ──
+  // ── เซลล์รายคน: เข้าประเมิน / เข้าหน้างานอื่น / มัดจำ / อัตราปิด / ยอดเสนอ / ยอดขาย ──
+  const salesMap: Record<string, { name: string; assess: number; deposited: number; quoted_amt: number; sold_amt: number }> = {};
+  inJobs.forEach((j: any) => {
+    const name = jobSalesName(j);
+    const m = (salesMap[name] ??= { name, assess: 0, deposited: 0, quoted_amt: 0, sold_amt: 0 });
+    m.assess++;
+    if (j.quote_sent_date) m.quoted_amt += num(j.net_amount);
+    if (isWon(j)) { m.deposited++; m.sold_amt += num(j.net_amount); }
+  });
+  // เติมเซลล์ที่มีแต่เข้าหน้างานอื่น (ไม่มีงานประเมินในช่วง)
+  Object.keys(otherVisitByName).forEach((nm) => { salesMap[nm] ??= { name: nm, assess: 0, deposited: 0, quoted_amt: 0, sold_amt: 0 }; });
+  const bySales = Object.values(salesMap)
+    .map((s) => ({
+      name: s.name, assess: s.assess, other_visits: otherVisitByName[s.name] ?? 0,
+      deposited: s.deposited, close_rate: s.assess ? Math.round((s.deposited / s.assess) * 100) : 0,
+      quoted_amount: mask(s.quoted_amt), sold_amount: mask(s.sold_amt), _sold: s.sold_amt,
+    }))
+    .sort((a, b) => (showFinance ? b._sold - a._sold || b.deposited - a.deposited : b.deposited - a.deposited || b.assess - a.assess))
+    .map(({ _sold, ...s }) => s);
+
+  // ── เขียนแบบ: จำนวนที่เขียนเสร็จ / เวลาเฉลี่ย(เริ่ม→เสร็จ) / ช้ากว่ากำหนด ──
   const drawnInRange = J.filter((j: any) => j.status !== "CANCELLED" && inRange(j.design_end) && j.design_state === "DONE");
   const drawDurations = drawnInRange.map((j: any) => dayDiff(j.design_start, j.design_end)).filter((d: number | null): d is number => d != null && d >= 0);
   const drawLate = drawnInRange.filter((j: any) => j.design_due_date && j.design_end && j.design_end > j.design_due_date).length;
-  // งานเขียนแบบที่ยัง active (ยังไม่ถึงมัดจำ ไม่พัก) แต่เลยกำหนด — ภาระค้างปัจจุบัน (ไม่อิงช่วง · parity กับ /designer)
-  const drawBacklog = J.filter((j: any) =>
-    j.status !== "CANCELLED" && !j.on_hold && j.design_state && j.design_state !== "DONE" && j.design_state !== "NOT_STARTED" &&
-    (j.current_stage ?? 0) < 8 && j.design_due_date && j.design_due_date < today).length;
-
   const drawByDesignerMap: Record<string, { name: string; done: number; _dur: number[]; late: number }> = {};
   drawnInRange.forEach((j: any) => {
     const name = j.designer_lookup?.name ?? "ไม่ระบุผู้เขียน";
     const m = (drawByDesignerMap[name] ??= { name, done: 0, _dur: [], late: 0 });
     m.done++;
-    const d = dayDiff(j.design_start, j.design_end);
-    if (d != null && d >= 0) m._dur.push(d);
+    const d = dayDiff(j.design_start, j.design_end); if (d != null && d >= 0) m._dur.push(d);
     if (j.design_due_date && j.design_end && j.design_end > j.design_due_date) m.late++;
   });
-  const drawByDesigner = Object.values(drawByDesignerMap)
-    .map((m) => ({ name: m.name, done: m.done, avg_days: avg(m._dur), late: m.late }))
-    .sort((a, b) => b.done - a.done);
-
   const drawing = {
     done: drawnInRange.length,
     avg_days: avg(drawDurations),
     late: drawLate,
-    backlog: drawBacklog,
-    byDesigner: drawByDesigner,
+    byDesigner: Object.values(drawByDesignerMap).map((m) => ({ name: m.name, done: m.done, avg_days: avg(m._dur), late: m.late })).sort((a, b) => b.done - a.done),
   };
 
-  // ── ใบเสนอราคา: จำนวนที่ส่ง / ระยะเวลาเฉลี่ย (ประเมิน→ส่งใบเสนอ) / กระจายตัว / ค้างเกินกำหนด ──
+  // ── ใบเสนอราคา: จำนวนที่ส่ง / เวลาเฉลี่ย(ประเมิน→ส่ง) / กระจายตัว ──
   const sentInRange = J.filter((j: any) => inRange(j.quote_sent_date) && j.status !== "CANCELLED");
   const turnarounds = sentInRange.map((j: any) => dayDiff(j.assess_date, j.quote_sent_date)).filter((d: number | null): d is number => d != null && d >= 0);
   const buckets = { d0: 0, d1_2: 0, d3_5: 0, d6: 0 };
   turnarounds.forEach((d) => { if (d === 0) buckets.d0++; else if (d <= 2) buckets.d1_2++; else if (d <= 5) buckets.d3_5++; else buckets.d6++; });
-  // งานที่อยู่เฟส "ทำใบเสนอราคา" แต่ยังไม่ส่ง และค้างเกินกำหนด (overdueDays QUOTE = 5 วัน)
-  const quoteBacklog = J.filter((j: any) => {
-    if (j.status === "CANCELLED" || j.quote_sent_date) return false;
-    if (derivePhase(j) !== "QUOTE") return false;
-    const d = dayDiff(j.assess_date, today);
-    return d != null && d > overdueDays("QUOTE");
-  }).length;
-
-  const quotation = {
-    done: sentInRange.length,
-    avg_days: avg(turnarounds),
-    buckets,
-    backlog: quoteBacklog,
-  };
+  const quotation = { done: sentInRange.length, avg_days: avg(turnarounds), no_time: sentInRange.length - turnarounds.length, buckets };
 
   // ── ปัญหา (ในช่วง) ──
   const inIssues = I.filter((i: any) => inRange(i.created_at));
-  const issuesByPhase: Record<string, number> = {};
   const issuesBySeverity: Record<string, number> = { LOW: 0, MEDIUM: 0, HIGH: 0 };
-  inIssues.forEach((i: any) => {
-    issuesByPhase[i.phase] = (issuesByPhase[i.phase] ?? 0) + 1;
-    if (i.severity in issuesBySeverity) issuesBySeverity[i.severity]++;
-  });
+  inIssues.forEach((i: any) => { if (i.severity in issuesBySeverity) issuesBySeverity[i.severity]++; });
 
   return ok({
     range: { from, to },
     can_finance: showFinance,
-    summary, byMonth, byArea, areaUnknown, funnel, byChannel, topItems,
+    summary, byMonth, byArea, areaUnknown, areaOther, byChannel, topItems,
     byCategory, uncategorizedItems: uncategorized,
     bySales, drawing, quotation,
-    issues: {
-      total: inIssues.length,
-      open: inIssues.filter((i: any) => i.status !== "CLOSED").length,
-      byPhase: issuesByPhase, bySeverity: issuesBySeverity,
-    },
+    issues: { total: inIssues.length, open: inIssues.filter((i: any) => i.status !== "CLOSED").length, bySeverity: issuesBySeverity },
   });
 });

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
-import { PHASE_META, PHASE_ORDER, type PhaseKey } from "@/lib/followup";
 import { CHANNEL } from "@/lib/constants";
 
 type Money = number | null;
@@ -12,44 +11,52 @@ type Stats = {
   range: { from: string; to: string };
   can_finance: boolean;
   summary: { jobs: number; won: number; close_rate: number; revenue_closed: Money; collected: Money; quotations: number; ext_quotes: number; ext_pct: number };
-  byMonth: { month: string; quoted: Money; closed: Money; collected: Money }[];
+  byMonth: { month: string; quoted: Money; closed: Money }[];
   byArea: { area: string; jobs: number; won: number; revenue: Money }[];
   areaUnknown: number;
-  funnel: { phase: PhaseKey; count: number }[];
+  areaOther: number;
   byChannel: { channel: string; count: number }[];
   topItems: { name: string; qty: number }[];
-  byCategory: { category: string; quoted_revenue: Money; quoted_jobs: number; sold_revenue: Money; sold_jobs: number }[];
+  byCategory: { category: string; quoted_jobs: number; quoted_qty: number; quoted_revenue: Money; sold_jobs: number; sold_qty: number; sold_revenue: Money; avg_price: Money; win_rate: number }[];
   uncategorizedItems: number;
-  bySales: { name: string; jobs: number; quoted: number; deposited: number; revenue: Money; close_rate: number }[];
-  drawing: { done: number; avg_days: number; late: number; backlog: number; byDesigner: { name: string; done: number; avg_days: number; late: number }[] };
-  quotation: { done: number; avg_days: number; buckets: { d0: number; d1_2: number; d3_5: number; d6: number }; backlog: number };
-  issues: { total: number; open: number; byPhase: Record<string, number>; bySeverity: Record<string, number> };
+  bySales: { name: string; assess: number; other_visits: number; deposited: number; close_rate: number; quoted_amount: Money; sold_amount: Money }[];
+  drawing: { done: number; avg_days: number; late: number; byDesigner: { name: string; done: number; avg_days: number; late: number }[] };
+  quotation: { done: number; avg_days: number; no_time: number; buckets: { d0: number; d1_2: number; d3_5: number; d6: number } };
+  issues: { total: number; open: number; bySeverity: Record<string, number> };
 };
 
-function ym(d: Date) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }
+function ymd(d: Date) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }
+const TH_MON = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+function monthLabel(ym: string) { const [y, m] = ym.split("-").map(Number); return `${TH_MON[m - 1]} ${(y + 543) % 100}`; }
 
-const RANGES = [
-  { key: "month", label: "เดือนนี้" },
+const PRESETS = [
   { key: "ytd", label: "ปีนี้" },
   { key: "last_year", label: "ปีก่อน" },
   { key: "12m", label: "12 เดือน" },
 ];
 function rangeFor(key: string): { from: string; to: string } {
   const now = new Date();
-  if (key === "month") return { from: ym(new Date(now.getFullYear(), now.getMonth(), 1)), to: ym(now) };
+  if (key.startsWith("m:")) { const [y, m] = key.slice(2).split("-").map(Number); return { from: `${key.slice(2)}-01`, to: ymd(new Date(y, m, 0)) }; }
   if (key === "last_year") return { from: `${now.getFullYear() - 1}-01-01`, to: `${now.getFullYear() - 1}-12-31` };
-  if (key === "12m") return { from: ym(new Date(now.getFullYear(), now.getMonth() - 11, 1)), to: ym(now) };
-  return { from: `${now.getFullYear()}-01-01`, to: ym(now) }; // ytd
+  if (key === "12m") return { from: ymd(new Date(now.getFullYear(), now.getMonth() - 11, 1)), to: ymd(now) };
+  return { from: `${now.getFullYear()}-01-01`, to: ymd(now) }; // ytd
+}
+// รายการเดือนย้อนหลัง 18 เดือน (ให้เลือกดูรายเดือน)
+function monthOptions(): string[] {
+  const now = new Date(); const out: string[] = [];
+  for (let i = 0; i < 18; i++) { const d = new Date(now.getFullYear(), now.getMonth() - i, 1); out.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`); }
+  return out;
 }
 
 type TabKey = "stats" | "kpi";
 
 export default function StatsPage() {
-  const [range, setRange] = useState("ytd");
+  const [sel, setSel] = useState("ytd");
   const [tab, setTab] = useState<TabKey>("stats");
   const [data, setData] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
+  const months = useMemo(() => monthOptions(), []);
 
   const load = useCallback(async (key: string) => {
     setLoading(true); setErr("");
@@ -62,7 +69,7 @@ export default function StatsPage() {
     } catch (e) { setErr(e instanceof Error ? e.message : "เกิดข้อผิดพลาด"); }
     finally { setLoading(false); }
   }, []);
-  useEffect(() => { load(range); }, [range, load]);
+  useEffect(() => { load(sel); }, [sel, load]);
 
   return (
     <div className="space-y-5">
@@ -71,11 +78,18 @@ export default function StatsPage() {
           <span className="text-white rounded-xl w-9 h-9 inline-flex items-center justify-center bg-brand shadow-brand"><Icon name="chart" size={18} /></span>
           สถิติ &amp; KPI
         </h1>
-        <div className="flex gap-1.5 glass rounded-xl p-1">
-          {RANGES.map((r) => (
-            <button key={r.key} onClick={() => setRange(r.key)}
-              className={`press rounded-lg px-3 py-1.5 text-sm font-medium ${range === r.key ? "bg-brand text-white shadow-brand" : "text-ink-2 hover:bg-white/60"}`}>{r.label}</button>
-          ))}
+        <div className="flex items-center gap-2 flex-wrap">
+          <select value={sel.startsWith("m:") ? sel : ""} onChange={(e) => e.target.value && setSel(e.target.value)}
+            className="rounded-xl border border-black/10 bg-white px-3 py-1.5 text-sm text-ink-2 shadow-sm">
+            <option value="">เลือกเดือน…</option>
+            {months.map((m) => <option key={m} value={`m:${m}`}>{monthLabel(m)}</option>)}
+          </select>
+          <div className="flex gap-1.5 glass rounded-xl p-1">
+            {PRESETS.map((r) => (
+              <button key={r.key} onClick={() => setSel(r.key)}
+                className={`press rounded-lg px-3 py-1.5 text-sm font-medium ${sel === r.key ? "bg-brand text-white shadow-brand" : "text-ink-2 hover:bg-white/60"}`}>{r.label}</button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -103,7 +117,6 @@ export default function StatsPage() {
 /* ─────────────────────── TAB: สถิติ ─────────────────────── */
 function StatsTab({ data }: { data: Stats }) {
   const monthMax = useMemo(() => Math.max(1, ...data.byMonth.flatMap((m) => [m.quoted ?? 0, m.closed ?? 0])), [data]);
-  const funnelMax = useMemo(() => Math.max(1, ...data.funnel.map((f) => f.count)), [data]);
   const chMax = useMemo(() => Math.max(1, ...data.byChannel.map((c) => c.count)), [data]);
   const itemMax = useMemo(() => Math.max(1, ...data.topItems.map((i) => i.qty)), [data]);
   const areaMax = useMemo(() => Math.max(1, ...data.byArea.map((a) => a.jobs)), [data]);
@@ -113,60 +126,55 @@ function StatsTab({ data }: { data: Stats }) {
     <div className="space-y-4">
       {/* Summary */}
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
-        <Kpi label="งานในช่วง" value={data.summary.jobs} />
-        <Kpi label="ปิดการขายได้" value={data.summary.won} color="#0f7a38" />
-        <Kpi label="อัตราปิด" value={`${data.summary.close_rate}%`} color="#b3151d" />
-        <Kpi label="ใบเสนอราคา" value={data.summary.quotations} color="#1F4E78" />
-        {canFin && <Kpi label="มูลค่าที่ปิด (฿)" value={baht(data.summary.revenue_closed ?? 0)} color="#1F4E78" />}
-        {canFin && <Kpi label="เก็บเงินแล้ว (฿)" value={baht(data.summary.collected ?? 0)} color="#7d0f15" />}
+        <Kpi label="เข้าประเมิน (งาน)" value={data.summary.jobs} />
+        <Kpi label="ลูกค้ามัดจำ (งาน)" value={data.summary.won} color="#0f7a38" />
+        <Kpi label="อัตราปิดการขาย" value={`${data.summary.close_rate}%`} color="#b3151d" />
+        <Kpi label="ออกใบเสนอราคา" value={data.summary.quotations} color="#1F4E78" />
+        {canFin && <Kpi label="ยอดขายที่ปิดได้ (฿)" value={baht(data.summary.revenue_closed ?? 0)} color="#1F4E78" />}
+        {canFin && <Kpi label="เก็บเงินเข้าจริง (฿)" value={baht(data.summary.collected ?? 0)} color="#7d0f15" />}
       </div>
-
-      {/* Out-of-system quotations */}
-      <Card className="p-5">
-        <div className="flex items-baseline justify-between mb-2 flex-wrap gap-1">
-          <h3 className="font-bold text-brand-dark">สัดส่วนใบเสนอราคานอกระบบ</h3>
-          <span className="text-xs text-ink-3">นอกระบบ = พิมพ์เอง/นำเข้า (ไม่ผ่านเครื่องคิดราคา)</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="text-3xl font-extrabold tabular-nums text-amber-600">{data.summary.ext_pct}%</div>
-          <div className="flex-1">
-            <div className="relative h-4 rounded-full bg-gray-100 overflow-hidden">
-              <div className="absolute inset-y-0 left-0 bg-emerald-400" style={{ width: `${100 - data.summary.ext_pct}%` }} />
-              <div className="absolute inset-y-0 right-0 bg-amber-400" style={{ width: `${data.summary.ext_pct}%` }} />
-            </div>
-            <div className="flex justify-between text-[11px] text-ink-3 mt-1">
-              <span>ในระบบ {data.summary.quotations - data.summary.ext_quotes} ใบ</span>
-              <span>นอกระบบ {data.summary.ext_quotes} ใบ · จากทั้งหมด {data.summary.quotations} ใบ</span>
-            </div>
-          </div>
-        </div>
-      </Card>
+      {canFin && (
+        <p className="text-[11px] text-ink-3 -mt-1">
+          <b>ยอดขายที่ปิดได้</b> = มูลค่างานที่ลูกค้ามัดจำแล้ว (เต็มมูลค่า ไม่สนว่าเก็บครบงวดยัง) · <b>เก็บเงินเข้าจริง</b> = เงินสดที่รับเข้ามาแล้วในช่วงนี้
+        </p>
+      )}
 
       <div className="grid lg:grid-cols-2 gap-4">
-        {/* สถานที่ */}
+        {/* พื้นที่ */}
         <Card className="p-5">
           <h3 className="font-bold text-brand-dark mb-3">พื้นที่ลูกค้า (ตามจำนวนงาน)</h3>
           <div className="space-y-1.5">
             {data.byArea.map((a) => (
               <div key={a.area} className="flex items-center gap-2 text-xs">
-                <span className="w-28 truncate text-ink-3" title={a.area}>{a.area}</span>
+                <span className="w-32 truncate text-ink-3" title={a.area}>{a.area}</span>
                 <div className="flex-1 h-3 rounded bg-gray-100 overflow-hidden"><div className="h-full" style={{ width: `${(a.jobs / areaMax) * 100}%`, background: "#1F4E78" }} /></div>
                 <span className="w-24 text-right tabular-nums text-ink-2">{a.jobs} งาน{canFin ? ` · ฿${baht(a.revenue ?? 0)}` : ""}</span>
               </div>
             ))}
             {data.byArea.length === 0 && <p className="text-ink-3 text-sm">ไม่มีข้อมูล</p>}
           </div>
-          {data.areaUnknown > 0 && <p className="text-[11px] text-ink-3 mt-2">* อีก {data.areaUnknown} งานไม่มีที่อยู่ให้ดึงพื้นที่</p>}
+          {(data.areaOther > 0 || data.areaUnknown > 0) && (
+            <p className="text-[11px] text-ink-3 mt-2">
+              {data.areaOther > 0 && <>* อีก {data.areaOther} งานมีที่อยู่แต่ระบุพื้นที่ไม่ได้ </>}
+              {data.areaUnknown > 0 && <>· {data.areaUnknown} งานไม่มีที่อยู่</>}
+            </p>
+          )}
         </Card>
 
-        {/* รายได้รายเดือน */}
+        {/* รายได้รายเดือน + legend */}
         <Card className="p-5">
-          <h3 className="font-bold text-brand-dark mb-3">รายได้รายเดือน (เสนอ vs ปิด)</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-brand-dark">รายได้รายเดือน</h3>
+            <div className="flex items-center gap-3 text-[11px] text-ink-3">
+              <span className="inline-flex items-center gap-1"><span className="w-3 h-2 rounded-sm inline-block bg-sky-300" /> เสนอราคา</span>
+              <span className="inline-flex items-center gap-1"><span className="w-3 h-2 rounded-sm inline-block bg-brand" /> ปิดได้ (มัดจำ)</span>
+            </div>
+          </div>
           {canFin ? (
             <div className="space-y-2">
               {data.byMonth.map((m) => (
                 <div key={m.month} className="text-xs">
-                  <div className="flex justify-between text-ink-3 mb-0.5"><span>{m.month}</span><span className="tabular-nums">ปิด ฿{baht(m.closed ?? 0)}</span></div>
+                  <div className="flex justify-between text-ink-3 mb-0.5"><span>{monthLabel(m.month)}</span><span className="tabular-nums">ปิด ฿{baht(m.closed ?? 0)}</span></div>
                   <div className="relative h-3 rounded-full bg-gray-100 overflow-hidden">
                     <div className="absolute inset-y-0 left-0 bg-sky-300" style={{ width: `${((m.quoted ?? 0) / monthMax) * 100}%` }} />
                     <div className="absolute inset-y-0 left-0 bg-brand rounded-full" style={{ width: `${((m.closed ?? 0) / monthMax) * 100}%` }} />
@@ -180,50 +188,50 @@ function StatsTab({ data }: { data: Stats }) {
 
         {/* ประเภทงานนิยม */}
         <Card className="p-5">
-          <h3 className="font-bold text-brand-dark mb-3">ประเภทงานนิยม (จากใบเสนอราคา)</h3>
+          <h3 className="font-bold text-brand-dark mb-1">ประเภทงานนิยม</h3>
+          <p className="text-[11px] text-ink-3 mb-2.5">เฉพาะใบเสนอที่คิดผ่านระบบ (ไม่รวมใบนอกระบบ)</p>
           <div className="space-y-1.5">
             {data.topItems.map((it) => (
               <div key={it.name} className="flex items-center gap-2 text-xs">
                 <span className="w-32 truncate text-ink-3" title={it.name}>{it.name}</span>
                 <div className="flex-1 h-3 rounded bg-gray-100 overflow-hidden"><div className="h-full bg-emerald-400" style={{ width: `${(it.qty / itemMax) * 100}%` }} /></div>
-                <span className="w-20 text-right tabular-nums text-ink-2">{it.qty.toLocaleString()} ชุด/ชิ้น</span>
+                <span className="w-20 text-right tabular-nums text-ink-2">{it.qty.toLocaleString()} ชุด</span>
               </div>
             ))}
             {data.topItems.length === 0 && <p className="text-ink-3 text-sm">ไม่มีข้อมูล</p>}
           </div>
         </Card>
 
-        {/* Funnel */}
+        {/* ช่องทางลูกค้า */}
         <Card className="p-5">
-          <h3 className="font-bold text-brand-dark mb-3">Funnel ตามเฟส (งานปัจจุบัน)</h3>
+          <h3 className="font-bold text-brand-dark mb-3">ช่องทางลูกค้า</h3>
           <div className="space-y-1.5">
-            {data.funnel.map((f) => (
-              <div key={f.phase} className="flex items-center gap-2 text-xs">
-                <span className="w-24 shrink-0 text-ink-2">{PHASE_META[f.phase].th}</span>
-                <div className="flex-1 h-4 rounded bg-gray-100 overflow-hidden">
-                  <div className="h-full rounded" style={{ width: `${(f.count / funnelMax) * 100}%`, background: PHASE_META[f.phase].dot }} />
-                </div>
-                <span className="w-8 text-right tabular-nums text-ink-2">{f.count}</span>
+            {data.byChannel.map((c) => (
+              <div key={c.channel} className="flex items-center gap-2 text-xs">
+                <span className="w-20 text-ink-3">{CHANNEL[c.channel as keyof typeof CHANNEL] ?? c.channel}</span>
+                <div className="flex-1 h-3 rounded bg-gray-100 overflow-hidden"><div className="h-full" style={{ width: `${(c.count / chMax) * 100}%`, background: "#1F4E78" }} /></div>
+                <span className="w-8 text-right tabular-nums text-ink-2">{c.count}</span>
               </div>
             ))}
           </div>
         </Card>
 
-        {/* สินค้าขายดีตามหมวด */}
+        {/* สินค้าขายดี (ละเอียด) */}
         <Card className="p-5 lg:col-span-2">
-          <div className="flex items-baseline justify-between mb-3">
+          <div className="flex items-baseline justify-between mb-3 flex-wrap gap-1">
             <h3 className="font-bold text-brand-dark">สินค้าขายดี (ตามหมวด)</h3>
-            {data.uncategorizedItems > 0 && (
-              <span className="text-[11px] text-amber-600">ยังไม่จัดหมวด {data.uncategorizedItems.toLocaleString()} รายการ (ใบเบา/นำเข้า)</span>
-            )}
+            {data.uncategorizedItems > 0 && <span className="text-[11px] text-amber-600">ยังไม่จัดหมวด {data.uncategorizedItems.toLocaleString()} รายการ (ใบเบา/นำเข้า)</span>}
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm min-w-[640px]">
               <thead><tr className="text-left text-ink-3 text-xs border-b border-gray-200/70">
                 <th className="py-2 font-semibold">หมวดสินค้า</th>
-                <th className="font-semibold text-center">เสนอ (งาน)</th>
-                {canFin && <th className="font-semibold text-right">ยอดเสนอ (฿)</th>}
-                <th className="font-semibold text-center text-emerald-700">ขาย (งาน)</th>
+                <th className="font-semibold text-center">เสนอ (ใบ)</th>
+                <th className="font-semibold text-center">เสนอ (ชุด)</th>
+                <th className="font-semibold text-center text-emerald-700">ขาย (ใบ)</th>
+                <th className="font-semibold text-center text-emerald-700">ขาย (ชุด)</th>
+                <th className="font-semibold text-center">% ปิด</th>
+                {canFin && <th className="font-semibold text-right">ราคาเฉลี่ย/ชุด</th>}
                 {canFin && <th className="font-semibold text-right text-emerald-700">ยอดขาย (฿)</th>}
               </tr></thead>
               <tbody>
@@ -231,38 +239,38 @@ function StatsTab({ data }: { data: Stats }) {
                   <tr key={c.category} className="border-b border-gray-100">
                     <td className="py-2 font-medium text-ink-2">{c.category}</td>
                     <td className="text-center tabular-nums text-ink-3">{c.quoted_jobs.toLocaleString()}</td>
-                    {canFin && <td className="text-right tabular-nums text-ink-3">{baht(c.quoted_revenue ?? 0)}</td>}
+                    <td className="text-center tabular-nums text-ink-3">{c.quoted_qty.toLocaleString()}</td>
                     <td className="text-center tabular-nums font-semibold text-emerald-700">{c.sold_jobs.toLocaleString()}</td>
+                    <td className="text-center tabular-nums font-semibold text-emerald-700">{c.sold_qty.toLocaleString()}</td>
+                    <td className="text-center tabular-nums"><span className={c.win_rate >= 50 ? "text-emerald-700 font-semibold" : "text-ink-3"}>{c.win_rate}%</span></td>
+                    {canFin && <td className="text-right tabular-nums text-ink-3">{baht(c.avg_price ?? 0)}</td>}
                     {canFin && <td className="text-right tabular-nums font-semibold text-emerald-700">{baht(c.sold_revenue ?? 0)}</td>}
                   </tr>
                 ))}
+                {data.byCategory.length === 0 && <tr><td colSpan={canFin ? 8 : 6} className="py-3 text-center text-ink-3">ยังไม่มีข้อมูลหมวด — ใบที่คิดผ่านเครื่องคิดราคาจะเริ่มสะสมหมวดให้เอง</td></tr>}
               </tbody>
             </table>
-            {data.byCategory.length === 0 && <p className="text-ink-3 text-sm py-2">ยังไม่มีข้อมูลหมวด — ใบที่คิดผ่านเครื่องคิดราคาจะเริ่มสะสมหมวดให้เอง</p>}
           </div>
         </Card>
 
-        {/* Issues + channel */}
-        <Card className="p-5 space-y-4 lg:col-span-2">
-          <div className="grid sm:grid-cols-2 gap-5">
-            <div>
-              <h3 className="font-bold text-brand-dark mb-2">ปัญหาที่บันทึก ({data.issues.total} · ค้าง {data.issues.open})</h3>
-              <div className="flex gap-2 text-xs">
-                <SevPill label="สูง" n={data.issues.bySeverity.HIGH ?? 0} cls="bg-red-100 text-red-800" />
-                <SevPill label="กลาง" n={data.issues.bySeverity.MEDIUM ?? 0} cls="bg-amber-100 text-amber-900" />
-                <SevPill label="ต่ำ" n={data.issues.bySeverity.LOW ?? 0} cls="bg-gray-200 text-gray-700" />
+        {/* นอกระบบ (เล็ก · ล่างสุด) + issues */}
+        <Card className="p-4 lg:col-span-2">
+          <div className="grid sm:grid-cols-2 gap-4 items-center">
+            <div className="flex items-center gap-3">
+              <div className="text-xs text-ink-3 shrink-0">ใบเสนอนอกระบบ<br /><span className="text-[10px]">(พิมพ์เอง/นำเข้า)</span></div>
+              <div className="flex-1">
+                <div className="flex items-baseline gap-2"><span className="text-lg font-bold tabular-nums text-amber-600">{data.summary.ext_pct}%</span><span className="text-[11px] text-ink-3">{data.summary.ext_quotes}/{data.summary.quotations} ใบ</span></div>
+                <div className="relative h-2 rounded-full bg-gray-100 overflow-hidden mt-1">
+                  <div className="absolute inset-y-0 left-0 bg-emerald-400" style={{ width: `${100 - data.summary.ext_pct}%` }} />
+                  <div className="absolute inset-y-0 right-0 bg-amber-400" style={{ width: `${data.summary.ext_pct}%` }} />
+                </div>
               </div>
             </div>
-            <div>
-              <h4 className="text-sm font-semibold text-ink-2 mb-1.5">ช่องทางลูกค้า</h4>
-              {data.byChannel.map((c) => (
-                <div key={c.channel} className="flex items-center gap-2 text-xs mb-1">
-                  <span className="w-16 text-ink-3">{CHANNEL[c.channel as keyof typeof CHANNEL] ?? c.channel}</span>
-                  <div className="flex-1 h-3 rounded bg-gray-100 overflow-hidden"><div className="h-full" style={{ width: `${(c.count / chMax) * 100}%`, background: "#1F4E78" }} /></div>
-                  <span className="w-6 text-right tabular-nums text-ink-2">{c.count}</span>
-                </div>
-              ))}
-              {data.byChannel.length === 0 && <p className="text-ink-3 text-sm">ไม่มีข้อมูล</p>}
+            <div className="flex items-center gap-2 text-xs sm:justify-end">
+              <span className="text-ink-3">ปัญหาที่บันทึก ({data.issues.total} · ค้าง {data.issues.open}):</span>
+              <SevPill label="สูง" n={data.issues.bySeverity.HIGH ?? 0} cls="bg-red-100 text-red-800" />
+              <SevPill label="กลาง" n={data.issues.bySeverity.MEDIUM ?? 0} cls="bg-amber-100 text-amber-900" />
+              <SevPill label="ต่ำ" n={data.issues.bySeverity.LOW ?? 0} cls="bg-gray-200 text-gray-700" />
             </div>
           </div>
         </Card>
@@ -281,30 +289,32 @@ function KpiTab({ data }: { data: Stats }) {
     <div className="space-y-4">
       {/* เซลล์รายคน */}
       <Card className="p-5">
-        <h3 className="font-bold text-brand-dark mb-3 flex items-center gap-2"><Icon name="users" size={17} /> เซลล์รายคน</h3>
-        {/* desktop */}
+        <h3 className="font-bold text-brand-dark mb-1 flex items-center gap-2"><Icon name="users" size={17} /> เซลล์รายคน</h3>
+        <p className="text-[11px] text-ink-3 mb-3">เข้าประเมิน = งานที่ไปประเมินหน้างาน · เข้าหน้างานอื่น = ไปหน้างานที่ไม่ใช่ประเมิน (เช่น วัดจริง/ดูงาน)</p>
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead><tr className="text-left text-ink-3 text-xs border-b border-gray-200/70">
               <th className="py-2 font-semibold">เซลล์</th>
-              <th className="font-semibold text-center">เข้างาน</th>
-              <th className="font-semibold text-center">ส่งใบเสนอ</th>
+              <th className="font-semibold text-center">เข้าประเมิน</th>
+              <th className="font-semibold text-center">เข้าหน้างานอื่น</th>
               <th className="font-semibold text-center text-emerald-700">ลูกค้ามัดจำ</th>
               <th className="font-semibold text-center">อัตราปิด</th>
-              {canFin && <th className="font-semibold text-right">ยอดขาย (฿)</th>}
+              {canFin && <th className="font-semibold text-right">ยอดเสนอ (฿)</th>}
+              {canFin && <th className="font-semibold text-right text-emerald-700">ยอดขาย (฿)</th>}
             </tr></thead>
             <tbody>
               {data.bySales.map((s, i) => (
                 <tr key={i} className="border-b border-gray-100 last:border-0">
                   <td className="py-2 font-medium text-ink-2">{s.name}</td>
-                  <td className="text-center tabular-nums text-ink-2">{s.jobs}</td>
-                  <td className="text-center tabular-nums text-ink-3">{s.quoted}</td>
+                  <td className="text-center tabular-nums text-ink-2">{s.assess}</td>
+                  <td className="text-center tabular-nums text-ink-3">{s.other_visits}</td>
                   <td className="text-center tabular-nums font-semibold text-emerald-700">{s.deposited}</td>
                   <td className="text-center tabular-nums font-semibold">{s.close_rate}%</td>
-                  {canFin && <td className="text-right tabular-nums">{baht(s.revenue ?? 0)}</td>}
+                  {canFin && <td className="text-right tabular-nums text-ink-3">{baht(s.quoted_amount ?? 0)}</td>}
+                  {canFin && <td className="text-right tabular-nums font-semibold text-emerald-700">{baht(s.sold_amount ?? 0)}</td>}
                 </tr>
               ))}
-              {data.bySales.length === 0 && <tr><td colSpan={canFin ? 6 : 5} className="py-4 text-center text-ink-3">ไม่มีข้อมูล</td></tr>}
+              {data.bySales.length === 0 && <tr><td colSpan={canFin ? 7 : 5} className="py-4 text-center text-ink-3">ไม่มีข้อมูล</td></tr>}
             </tbody>
           </table>
         </div>
@@ -314,13 +324,13 @@ function KpiTab({ data }: { data: Stats }) {
             <div key={i} className="rounded-xl border border-gray-200/70 bg-white/50 p-3">
               <div className="flex items-center justify-between mb-1.5">
                 <span className="font-semibold text-sm text-ink-2">{s.name}</span>
-                <span className="text-xs font-bold text-brand tabular-nums">{s.close_rate}%</span>
+                <span className="text-xs font-bold text-brand tabular-nums">ปิด {s.close_rate}%</span>
               </div>
               <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-3">
-                <span>เข้างาน <b className="tabular-nums text-ink-2">{s.jobs}</b></span>
-                <span>ส่งใบเสนอ <b className="tabular-nums text-ink-2">{s.quoted}</b></span>
+                <span>ประเมิน <b className="tabular-nums text-ink-2">{s.assess}</b></span>
+                <span>หน้างานอื่น <b className="tabular-nums text-ink-2">{s.other_visits}</b></span>
                 <span>มัดจำ <b className="tabular-nums text-emerald-700">{s.deposited}</b></span>
-                {canFin && <span className="ml-auto tabular-nums text-ink-2">฿{baht(s.revenue ?? 0)}</span>}
+                {canFin && <span className="ml-auto tabular-nums text-emerald-700">ขาย ฿{baht(s.sold_amount ?? 0)}</span>}
               </div>
             </div>
           ))}
@@ -332,18 +342,17 @@ function KpiTab({ data }: { data: Stats }) {
         {/* เขียนแบบ */}
         <Card className="p-5">
           <h3 className="font-bold text-brand-dark mb-3 flex items-center gap-2"><Icon name="pencil" size={16} /> เขียนแบบ</h3>
-          <div className="grid grid-cols-2 gap-2 mb-4">
-            <Mini label="เขียนเสร็จ (ในช่วง)" value={drawing.done} />
-            <Mini label="เวลาเฉลี่ย/งาน" value={`${drawing.avg_days} วัน`} color="#1F4E78" />
-            <Mini label="ช้ากว่ากำหนด" value={drawing.late} color={drawing.late ? "#b3151d" : "#0f7a38"} />
-            <Mini label="ค้างเกินกำหนด (ตอนนี้)" value={drawing.backlog} color={drawing.backlog ? "#b3151d" : "#0f7a38"} />
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            <Mini label="จำนวนงานที่เขียนเสร็จ" value={drawing.done} />
+            <Mini label="ใช้เวลาเฉลี่ย/งาน" value={`${drawing.avg_days} วัน`} color="#1F4E78" />
+            <Mini label="เสร็จช้ากว่ากำหนด" value={drawing.late} color={drawing.late ? "#b3151d" : "#0f7a38"} />
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead><tr className="text-left text-ink-3 text-xs border-b border-gray-200/70">
                 <th className="py-1.5 font-semibold">ผู้เขียนแบบ</th>
-                <th className="font-semibold text-center">เสร็จ</th>
-                <th className="font-semibold text-center">เฉลี่ย(วัน)</th>
+                <th className="font-semibold text-center">จำนวนงาน</th>
+                <th className="font-semibold text-center">เฉลี่ย (วัน)</th>
                 <th className="font-semibold text-center">ช้า</th>
               </tr></thead>
               <tbody>
@@ -359,18 +368,17 @@ function KpiTab({ data }: { data: Stats }) {
               </tbody>
             </table>
           </div>
-          <p className="text-[11px] text-ink-3 mt-2">ระยะเวลา = วันเริ่ม→วันเสร็จ · ช้า = เสร็จเลย “กำหนดส่งแบบ”</p>
+          <p className="text-[11px] text-ink-3 mt-2">เวลาเฉลี่ย = นับจากวันเริ่มเขียน ถึง วันเขียนเสร็จ · “ช้า” = เขียนเสร็จเลยวันกำหนดส่งแบบ</p>
         </Card>
 
         {/* ใบเสนอราคา */}
         <Card className="p-5">
           <h3 className="font-bold text-brand-dark mb-3 flex items-center gap-2"><Icon name="file" size={16} /> ใบเสนอราคา</h3>
-          <div className="grid grid-cols-3 gap-2 mb-4">
-            <Mini label="ส่งใบเสนอ (ในช่วง)" value={quotation.done} />
-            <Mini label="เวลาเฉลี่ย" value={`${quotation.avg_days} วัน`} color="#1F4E78" />
-            <Mini label="ค้างเกินกำหนด" value={quotation.backlog} color={quotation.backlog ? "#b3151d" : "#0f7a38"} />
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            <Mini label="จำนวนใบเสนอที่ส่ง" value={quotation.done} />
+            <Mini label="ใช้เวลาเฉลี่ย" value={`${quotation.avg_days} วัน`} color="#1F4E78" />
           </div>
-          <h4 className="text-xs font-semibold text-ink-2 mb-2">กระจายเวลาทำใบเสนอ (ประเมิน→ส่ง)</h4>
+          <h4 className="text-xs font-semibold text-ink-2 mb-2">กระจายเวลาทำใบเสนอ</h4>
           <div className="space-y-1.5">
             {[
               { label: "ภายในวันเดียว", v: quotation.buckets.d0, c: "#0f7a38" },
@@ -385,7 +393,7 @@ function KpiTab({ data }: { data: Stats }) {
               </div>
             ))}
           </div>
-          <p className="text-[11px] text-ink-3 mt-3">ค้างเกินกำหนด = อยู่เฟสทำใบเสนอ ยังไม่ส่ง และเกิน 5 วันจากวันประเมิน</p>
+          <p className="text-[11px] text-ink-3 mt-3">เวลาเฉลี่ย = นับจาก <b>วันเข้าประเมินหน้างาน</b> ถึง <b>วันส่งใบเสนอ</b>{quotation.no_time > 0 ? ` · อีก ${quotation.no_time} ใบไม่มีข้อมูลวันที่` : ""}</p>
         </Card>
       </div>
     </div>
@@ -409,5 +417,5 @@ function Mini({ label, value, color }: { label: string; value: React.ReactNode; 
   );
 }
 function SevPill({ label, n, cls }: { label: string; n: number; cls: string }) {
-  return <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-semibold ${cls}`}>{label} {n}</span>;
+  return <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-semibold ${cls}`}>{label} {n}</span>;
 }
