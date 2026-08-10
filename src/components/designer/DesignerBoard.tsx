@@ -103,6 +103,7 @@ export default function DesignerBoard({
   const [assigning, setAssigning] = useState<string | null>(null);
   const [holdModal, setHoldModal] = useState<Job | null>(null);
   const [unholdBusy, setUnholdBusy] = useState<string | null>(null);
+  const [manageOpen, setManageOpen] = useState(false);
 
   // เปิดมาจากหน้าสถิติ/KPI (?designer=<ref>) → กรองผู้เขียนคนนั้นให้เลย
   useEffect(() => {
@@ -142,6 +143,10 @@ export default function DesignerBoard({
 
   // เปลี่ยนช่าง → reset toggle "ดูทั้งหมด" (กันค้างเห็นงานเสร็จทั้งหมดของช่างใหม่โดยไม่ตั้งใจ)
   useEffect(() => { setShowAllDone(false); }, [designerFilter]);
+  // ถ้าผู้ออกแบบที่กรองอยู่ถูกลบออกจากรายชื่อ → กลับไป "ทุกคน"
+  useEffect(() => {
+    if (designerFilter && !designers.some((d) => String(d.id) === designerFilter)) setDesignerFilter("");
+  }, [designers, designerFilter]);
 
   // Assign designer_ref — also triggers auto-deadline on first assignment
   async function assignDesigner(job: Job, designerRef: number | null) {
@@ -412,6 +417,12 @@ export default function DesignerBoard({
             </option>
           ))}
         </select>
+        {canWrite && (
+          <button onClick={() => setManageOpen(true)}
+            className="press glass-soft rounded-lg px-3 py-2 text-sm text-ink-2 hover:text-brand inline-flex items-center gap-1.5 shrink-0">
+            <Icon name="gear" size={14} /> จัดการช่าง
+          </button>
+        )}
 
         {/* Client-side card search — filters visible cards by customer name / job code */}
         <div className="relative flex-1 min-w-[180px] max-w-xs">
@@ -495,6 +506,91 @@ export default function DesignerBoard({
           onClose={() => setHoldModal(null)}
         />
       )}
+
+      {/* ── จัดการช่างเขียนแบบ (เพิ่ม/ลบ) ── */}
+      {manageOpen && (
+        <ManageDesignersModal
+          designers={designers}
+          onClose={() => setManageOpen(false)}
+          onChanged={async () => { await reloadDesigners(); await load(); }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── Modal จัดการช่างเขียนแบบ: เพิ่มชื่อใหม่ / ลบ (ปิดใช้งาน) ──
+function ManageDesignersModal({
+  designers, onClose, onChanged,
+}: {
+  designers: DesignerOption[];
+  onClose: () => void;
+  onChanged: () => Promise<void>;
+}) {
+  const [busy, setBusy] = useState<number | "add" | null>(null);
+  const [err, setErr] = useState("");
+  const [newName, setNewName] = useState("");
+
+  async function remove(id: number, name: string) {
+    if (!window.confirm(`ลบผู้ออกแบบ "${name}" ออกจากรายชื่อ?\n(งานที่เขียนเสร็จแล้วยังเก็บประวัติไว้ · ลบได้เฉพาะตอนไม่มีงานค้าง)`)) return;
+    setBusy(id); setErr("");
+    try {
+      const res = await fetch(`/api/designers/${id}`, { method: "DELETE" });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? "ลบไม่สำเร็จ");
+      await onChanged();
+    } catch (e) { setErr(e instanceof Error ? e.message : "ลบไม่สำเร็จ"); }
+    finally { setBusy(null); }
+  }
+
+  async function add(e: React.FormEvent) {
+    e.preventDefault();
+    const name = newName.trim();
+    if (!name) return;
+    setBusy("add"); setErr("");
+    try {
+      const res = await fetch("/api/designers", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? "เพิ่มชื่อไม่สำเร็จ");
+      setNewName("");
+      await onChanged();
+    } catch (e) { setErr(e instanceof Error ? e.message : "เพิ่มชื่อไม่สำเร็จ"); }
+    finally { setBusy(null); }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-0 sm:p-4" onClick={onClose}>
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-black/10">
+          <h3 className="font-bold text-ink">จัดการช่างเขียนแบบ</h3>
+          <button onClick={onClose} className="press text-ink-3 hover:text-ink"><Icon name="close" size={20} /></button>
+        </div>
+
+        {err && <p className="mx-4 mt-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{err}</p>}
+
+        <div className="overflow-y-auto p-3 space-y-1.5">
+          {designers.length === 0 && <p className="text-center text-ink-3 py-6 text-sm">ยังไม่มีช่างเขียนแบบ</p>}
+          {designers.map((d) => (
+            <div key={d.id} className="flex items-center justify-between gap-2 rounded-xl border border-gray-200/70 bg-white/50 px-3 py-2">
+              <span className="text-sm font-medium text-ink-2">{d.name}</span>
+              <button onClick={() => remove(d.id, d.name)} disabled={busy === d.id}
+                className="press inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-700 disabled:opacity-40 rounded-lg px-2 py-1">
+                {busy === d.id ? <span className="w-3.5 h-3.5 rounded-full border-2 border-red-300 border-t-red-600 animate-spin" /> : <Icon name="trash" size={14} />} ลบ
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <form onSubmit={add} className="px-4 py-3 border-t border-black/10 flex items-center gap-2">
+          <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="เพิ่มช่างเขียนแบบใหม่…"
+            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-ink outline-none focus:ring-2 focus:ring-brand/40" />
+          <button type="submit" disabled={busy === "add" || !newName.trim()}
+            className="press rounded-lg bg-brand text-white px-4 py-2 text-sm font-semibold disabled:opacity-40 shrink-0">
+            {busy === "add" ? "กำลังเพิ่ม…" : "เพิ่ม"}
+          </button>
+        </form>
+        <p className="px-4 pb-3 text-[11px] text-ink-3">* “ลบ” = เอาออกจากรายชื่อ (งานเก่ายังเก็บประวัติ) · ลบไม่ได้ถ้ายังมีงานค้างอยู่ ให้ย้ายผู้เขียนก่อน</p>
+      </div>
     </div>
   );
 }
