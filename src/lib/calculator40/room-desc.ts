@@ -21,8 +21,16 @@ export type DescPane = { typeKey: string; form?: string; w: number; h: number; n
 export type DescCol = { pcs: DescPane[] };
 export type DescSide = { kind: "glass" | "wall" | "open"; cols?: DescCol[]; aw?: number; ah?: number };
 
-const FIXED_IDS = new Set(["fixed", "curve_fixed"]);                                                                // ติดตายเสมอ
-const DOOR_IDS = new Set(["pcdoor", "frameless_door", "pivot", "bansolid", "fold_euro", "folding", "fold_lift"]);    // เป็นประตูเสมอ
+const FIXED_IDS = new Set(["fixed", "curve_fixed"]);   // ติดตายเสมอ
+// ค่าตั้งต้น ประตู/หน้าต่าง = "ตามชนิดรุ่น" เท่านั้น
+// ⚠ ห้ามเดาจากขนาด — เจ้าของสั่ง 7 ส.ค.69: "ไม่เดาประตูหน้าต่างผ่านขนาด หน้าต่างบางอันสูง"
+//   (ของเดิมใช้กฎ สูง ≥1.9ม. = ประตู → หน้าต่างบานสูงกลายเป็นประตูผิด ๆ)
+//   ผู้ใช้เลือกเองได้ทุกตัว และเลือกแล้วชนะค่าตั้งต้นเสมอ
+const WINDOW_IDS = new Set(["awning", "banklet", "banyok", "fold_lift"]);   // กระทุ้ง/เกล็ด/ยก/เฟี้ยมยก = หน้าต่าง
+const DOOR_IDS = new Set([                                                 // ที่เหลือในกลุ่มบาน = ประตู
+  "pcdoor", "open_door", "frameless_door", "pivot", "bansolid", "fold_euro", "folding",
+  "sms_slide", "euro_slide", "eseries", "slimlux", "topslide", "velora", "curve_open",
+]);
 const SLIDE_IDS = new Set(["sms_slide", "euro_slide", "eseries", "slimlux", "topslide", "bar_slide"]);               // พื้นล่างเป็นราง
 export const SILL_OPTS = ["มีธรณีกันน้ำ", "มีรางล่าง", "ไม่มีธรณี"];
 
@@ -44,18 +52,20 @@ export const sillIsForm = (typeKey: string) => ["open_door", "pivot", "bansolid"
 /** ชุดพิเศษที่ไม่ใช่ "บาน" เดี่ยว ๆ — ไม่ต้องมีคำนำหน้า ประตู/หน้าต่าง */
 export const noKindPrefix = (typeKey: string) => ["shower", "ykk"].includes(typeKey);
 
-/** ประตู/หน้าต่าง/ติดตาย — ผู้ใช้เลือกเองได้ · ไม่เลือก = เดา (บานสูง ≥1.9ม. = ประตู) */
-export function paneUse(p: DescPane): PaneUse {
-  if (FIXED_IDS.has(p.typeKey)) return "fixed";
-  if (p.use) return p.use;
-  if (DOOR_IDS.has(p.typeKey)) return "door";
-  return (p.h || 0) >= 1.9 ? "door" : "window";
+/**
+ * ประตู/หน้าต่าง/ติดตาย ของรุ่นนั้น — **ไม่ดูขนาดเลย**
+ * ผู้ใช้เลือกเอง (use) ชนะเสมอ · ไม่เลือก = ค่าตั้งต้นตามชนิดรุ่น
+ */
+export function paneUseOf(typeKey: string, use?: PaneUse): PaneUse {
+  if (FIXED_IDS.has(typeKey)) return "fixed";
+  if (use) return use;
+  if (WINDOW_IDS.has(typeKey)) return "window";
+  return DOOR_IDS.has(typeKey) ? "door" : "window";   // รุ่นนอกลิสต์ = หน้าต่าง (ปลอดภัยกว่าเรียกประตูผิด)
 }
+/** เวอร์ชันรับ pane object (ห้องกระจก) — ขนาดใน pane ไม่ถูกใช้ตัดสินใจแล้ว */
+export const paneUse = (p: DescPane): PaneUse => paneUseOf(p.typeKey, p.use);
 /** รุ่นที่เป็นกระจกติดตายเสมอ (ไม่ต้องมีตัวเลือก ประตู/หน้าต่าง) */
 export const isFixedPane = (typeKey: string) => FIXED_IDS.has(typeKey);
-/** เดาประตู/หน้าต่างจาก "ซม." — ใช้ที่หน้าคิดราคาปกติ (G1) ที่เก็บขนาดเป็น ซม. ไม่ใช่เมตร */
-export const paneUseCm = (typeKey: string, hCm: number, use?: PaneUse): PaneUse =>
-  paneUse({ typeKey, w: 0, h: (Number(hCm) || 0) / 100, n: 1, use });
 /**
  * ชื่อรุ่นที่ใช้บนใบเสนอ + คำนำหน้า ประตู/หน้าต่าง
  * ใช้ทั้งห้องกระจก (G6) และหน้าคิดราคาปกติ (G1) — แหล่งเดียว แก้คำที่นี่ที่เดียว
