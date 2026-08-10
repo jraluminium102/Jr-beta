@@ -64,6 +64,13 @@ export async function applyInstallmentPayment(
   //   = บัญชีแตกสองทางเงียบ ๆ · ใบเสร็จออกตามเงินจริง 30,000 (≠ บิล) · แล้ว 29,500 ที่เหลือ
   //     ออกใบเสร็จไม่ได้อีกเลย เพราะงวดปิดไปแล้ว (guard กันออกซ้ำต่องวด)
   // → ปฏิเสธไปเลย บอกยอดมัดจำจริง ให้ผู้ใช้ตัดสินใจ ดีกว่าบันทึกเลขที่ไม่ตรงเงิน
+  //
+  // ⚠ แก้ 7 ส.ค.69 — เดิมบล็อก "ทั้งสองทาง" (ต่างกันสตางค์เดียวก็ไม่ให้ผ่าน)
+  //   ทำให้เคส **มัดจำมากกว่ายอดงวด 1** โดนบล็อกไปด้วย ทั้งที่ทางนั้นไม่อันตราย
+  //   (เคสจริง BL2569080013: มัดจำเข้าจริง 141,240 · งวด 1 = 123,000 → ปิดงวดไม่ได้เป็นวัน ๆ)
+  //   เงินอยู่ในมือ 141,240 การบันทึกปิดงวดที่ 123,000 ไม่ได้ทำให้บัญชีเกินความจริงเลย
+  //   ส่วนเกิน 18,240 ยังอยู่ครบใน finance_entry ของมัดจำ (โค้ดด้านล่างไม่ทับ amount)
+  //   → บล็อกเฉพาะทางที่อันตรายจริง = "บันทึกมากกว่าเงินที่เข้าจริง" เท่านั้น
   if (inst.seq === 1) {
     const { data: bnJob } = await supabase
       .from("billing_notes")
@@ -87,10 +94,10 @@ export async function applyInstallmentPayment(
       const willBe = opts.paidAmount != null
         ? round2((Number(inst.paid_amount) || 0) + (Number(opts.paidAmount) || 0))
         : amount;
-      if (Math.abs(depositAmt - willBe) >= 0.01) {
+      if (willBe - depositAmt >= 0.01) {
         return {
-          error: `งานนี้มีมัดจำที่รับจริง ฿${depositAmt.toLocaleString("th-TH", { minimumFractionDigits: 2 })} แต่กำลังบันทึกชำระ ฿${willBe.toLocaleString("th-TH", { minimumFractionDigits: 2 })} — ยอดไม่ตรงเงินที่เข้าจริง`
-            + ` · ถ้ารับเพิ่มจริงให้บันทึกเป็นเงินเข้าที่หน้าการเงินก่อน หรือแก้ยอดงวด 1 ให้ตรงมัดจำ (หรือ void มัดจำเดิมถ้าลงผิด)`,
+          error: `บันทึกชำระ ฿${willBe.toLocaleString("th-TH", { minimumFractionDigits: 2 })} มากกว่าเงินที่เข้าจริง — งานนี้มีมัดจำที่รับจริงแค่ ฿${depositAmt.toLocaleString("th-TH", { minimumFractionDigits: 2 })}`
+            + ` · ถ้ารับเพิ่มจริงให้บันทึกเงินเข้าที่หน้าการเงินก่อน แล้วค่อยกลับมาปิดงวดนี้ (หรือ void มัดจำเดิมถ้าลงผิด)`,
         };
       }
     }
