@@ -53,7 +53,7 @@ const DAY_WIDTH = 44;       // px per day column
 const LANE_NAME_WIDTH = 140; // px for sticky designer name column
 const BAR_HEIGHT = 28;      // px per bar
 const ROW_PAD = 6;          // px padding top+bottom per sub-row
-const TOTAL_DAYS = 21;      // days shown
+const WEEKS_DAYS = 21;      // มุมมอง "3 สัปดาห์" (default)
 
 // ─── State colours (LIGHT theme: tinted bg + dark text, NO white text) ────────
 const STATE_COLOR: Record<DesignState, {
@@ -99,14 +99,23 @@ function dayDiff(a: string, b: string): number {
   const db = new Date(b + "T00:00:00");
   return Math.round((db.getTime() - da.getTime()) / 86400000);
 }
+function firstOfMonth(iso: string): string { const [y, m] = iso.split("-"); return `${y}-${m}-01`; }
+function daysInMonth(iso: string): number { const [y, m] = iso.split("-").map(Number); return new Date(y, m, 0).getDate(); }
+function addMonths(iso: string, n: number): string {
+  const [y, m] = iso.split("-").map(Number);
+  const d = new Date(y, m - 1 + n, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+}
+const MONTH_FULL = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+function monthLabelFull(iso: string): string { const [y, m] = iso.split("-").map(Number); return `${MONTH_FULL[m - 1]} ${(y + 543) % 100}`; }
 
 const MONTH_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
 function thShortDate(iso: string): string {
   const [, m, d] = iso.split("-");
   return `${Number(d)} ${MONTH_SHORT[Number(m) - 1]}`;
 }
-function weekRangeLabel(startIso: string): string {
-  const end = addDays(startIso, TOTAL_DAYS - 1);
+function weekRangeLabel(startIso: string, spanDays: number): string {
+  const end = addDays(startIso, spanDays - 1);
   const [, sm, sd] = startIso.split("-");
   const [, em, ed] = end.split("-");
   const startLabel = sm === em ? `${Number(sd)}` : `${Number(sd)} ${MONTH_SHORT[Number(sm) - 1]}`;
@@ -183,16 +192,14 @@ function WorkloadBar({
 
 // ─── WeekNavigator (reused from v3) ───────────────────────────────────────────
 function WeekNavigator({
-  weekStart, today, onPrev, onNext, onToday,
+  label, isCurrentRange, onPrev, onNext, onToday,
 }: {
-  weekStart: string;
-  today: string;
+  label: string;
+  isCurrentRange: boolean;
   onPrev: () => void;
   onNext: () => void;
   onToday: () => void;
 }) {
-  const isCurrentRange = weekStart === mondayOf(today);
-  const label = weekRangeLabel(weekStart);
   return (
     <div className="glass-soft rounded-xl px-3 py-2 flex items-center justify-between gap-2">
       <button
@@ -238,7 +245,7 @@ type PlacedBar = {
   subRow: number;
 };
 
-function placeJobs(jobs: Job[], rangeStart: string, today: string): PlacedBar[] {
+function placeJobs(jobs: Job[], rangeStart: string, today: string, totalDays: number): PlacedBar[] {
   const placed: PlacedBar[] = [];
   // Track end-offset per sub-row to detect overlap
   const subRowEnd: number[] = [];
@@ -255,8 +262,8 @@ function placeJobs(jobs: Job[], rangeStart: string, today: string): PlacedBar[] 
     const startOffset = dayDiff(rangeStart, startIso);
     const endOffset = dayDiff(rangeStart, endIso);
 
-    // Only show if bar overlaps with [0, TOTAL_DAYS-1]
-    if (endOffset < 0 || startOffset >= TOTAL_DAYS) continue;
+    // Only show if bar overlaps with [0, totalDays-1]
+    if (endOffset < 0 || startOffset >= totalDays) continue;
 
     // Greedy sub-row assignment
     let subRow = 0;
@@ -278,11 +285,12 @@ interface DragBarProps {
   rangeStart: string;
   today: string;
   canWrite: boolean;
+  totalDays: number;
   onSave: (jobId: string, newStart: string, newEnd: string) => Promise<void>;
   onClickBar: (bar: PlacedBar) => void;
 }
 
-function DragBar({ bar, rangeStart, today, canWrite, onSave, onClickBar }: DragBarProps) {
+function DragBar({ bar, rangeStart, today, canWrite, totalDays, onSave, onClickBar }: DragBarProps) {
   const { job, startOffset, endOffset, subRow } = bar;
   const c = STATE_COLOR[job.design_state];
   // งานเสร็จ (DONE) = ประวัติ: แสดงบนไทม์ไลน์แต่ลาก/ขยายไม่ได้
@@ -298,7 +306,7 @@ function DragBar({ bar, rangeStart, today, canWrite, onSave, onClickBar }: DragB
 
   // Clamp offsets to visible range for display
   const visStart = Math.max(startOffset, 0);
-  const visEnd = Math.min(endOffset, TOTAL_DAYS - 1);
+  const visEnd = Math.min(endOffset, totalDays - 1);
   const barDays = endOffset - startOffset + 1;
 
   // Preview during drag
@@ -310,17 +318,17 @@ function DragBar({ bar, rangeStart, today, canWrite, onSave, onClickBar }: DragB
       const newStart = startOffset + dragDelta;
       const newEnd = endOffset + dragDelta;
       previewLeft = Math.max(newStart, 0);
-      previewWidth = Math.min(newEnd, TOTAL_DAYS - 1) - previewLeft + 1;
+      previewWidth = Math.min(newEnd, totalDays - 1) - previewLeft + 1;
     } else if (dragMode.current === "resize-end") {
       const newEnd = endOffset + resizeDelta;
-      const clampedEnd = Math.min(Math.max(newEnd, startOffset), TOTAL_DAYS - 1);
+      const clampedEnd = Math.min(Math.max(newEnd, startOffset), totalDays - 1);
       previewLeft = visStart;
       previewWidth = clampedEnd - previewLeft + 1;
     } else if (dragMode.current === "resize-start") {
       const newStart = startOffset + resizeDelta;
       const clampedStart = Math.max(Math.min(newStart, endOffset), 0);
       previewLeft = clampedStart;
-      previewWidth = Math.min(visEnd, TOTAL_DAYS - 1) - previewLeft + 1;
+      previewWidth = Math.min(visEnd, totalDays - 1) - previewLeft + 1;
     }
   }
 
@@ -656,18 +664,19 @@ interface GanttLaneProps {
   rangeStart: string;
   today: string;
   days: string[];
+  totalDays: number;
   canWrite: boolean;
   onSave: (jobId: string, newStart: string, newEnd: string) => Promise<void>;
 }
 
 function GanttLane({
-  designer, jobs, rangeStart, today, days, canWrite, onSave,
+  designer, jobs, rangeStart, today, days, totalDays, canWrite, onSave,
 }: GanttLaneProps) {
   const [popoverBar, setPopoverBar] = useState<PlacedBar | null>(null);
 
   const placed = useMemo(
-    () => placeJobs(jobs, rangeStart, today),
-    [jobs, rangeStart, today]
+    () => placeJobs(jobs, rangeStart, today, totalDays),
+    [jobs, rangeStart, today, totalDays]
   );
 
   const numSubRows = placed.length === 0
@@ -729,6 +738,7 @@ function GanttLane({
               rangeStart={rangeStart}
               today={today}
               canWrite={canWrite}
+              totalDays={totalDays}
               onSave={onSave}
               onClickBar={setPopoverBar}
             />
@@ -833,14 +843,28 @@ export default function DesignerSchedule({
   jobs, designers, canWrite, designerFilter, onRefresh,
 }: Props) {
   const today = isoToday();
+  const [view, setView] = useState<"weeks" | "month">("weeks");
   const [rangeStart, setRangeStart] = useState<string>(() => mondayOf(today));
 
-  // 21 days from rangeStart
+  // จำนวนวันตามมุมมอง: 3 สัปดาห์ (21) หรือ 1 เดือน (วันในเดือนนั้น)
   const days = useMemo<string[]>(() => {
+    const n = view === "month" ? daysInMonth(rangeStart) : WEEKS_DAYS;
     const arr: string[] = [];
-    for (let i = 0; i < TOTAL_DAYS; i++) arr.push(addDays(rangeStart, i));
+    for (let i = 0; i < n; i++) arr.push(addDays(rangeStart, i));
     return arr;
-  }, [rangeStart]);
+  }, [rangeStart, view]);
+  const totalDays = days.length;
+
+  // สลับมุมมอง — ตั้งจุดเริ่มให้ครอบ "วันนี้" เสมอ
+  const switchView = useCallback((v: "weeks" | "month") => {
+    setView(v);
+    setRangeStart(v === "month" ? firstOfMonth(today) : mondayOf(today));
+  }, [today]);
+  const goPrev = useCallback(() => setRangeStart((s) => (view === "month" ? addMonths(s, -1) : addDays(s, -7))), [view]);
+  const goNext = useCallback(() => setRangeStart((s) => (view === "month" ? addMonths(s, 1) : addDays(s, 7))), [view]);
+  const goToday = useCallback(() => setRangeStart(view === "month" ? firstOfMonth(today) : mondayOf(today)), [view, today]);
+  const navLabel = view === "month" ? monthLabelFull(rangeStart) : weekRangeLabel(rangeStart, WEEKS_DAYS);
+  const isCurrentRange = view === "month" ? rangeStart === firstOfMonth(today) : rangeStart === mondayOf(today);
 
   // Active jobs only (exclude DONE)
   const activeJobs = useMemo(
@@ -953,14 +977,26 @@ export default function DesignerSchedule({
         today={today}
       />
 
-      {/* 2. Range navigator */}
-      <WeekNavigator
-        weekStart={rangeStart}
-        today={today}
-        onPrev={() => setRangeStart((s) => addDays(s, -7))}
-        onNext={() => setRangeStart((s) => addDays(s, 7))}
-        onToday={() => setRangeStart(mondayOf(today))}
-      />
+      {/* 2. View toggle + range navigator */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex gap-1 glass-soft rounded-xl p-1 shrink-0">
+          {([["weeks", "3 สัปดาห์"], ["month", "1 เดือน"]] as const).map(([v, label]) => (
+            <button key={v} onClick={() => switchView(v)}
+              className={`press rounded-lg px-3 py-1.5 text-[13px] font-medium min-h-[36px] ${view === v ? "bg-brand text-white shadow-sm" : "text-ink-2 hover:text-brand"}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="flex-1 min-w-[220px]">
+          <WeekNavigator
+            label={navLabel}
+            isCurrentRange={isCurrentRange}
+            onPrev={goPrev}
+            onNext={goNext}
+            onToday={goToday}
+          />
+        </div>
+      </div>
 
       {/* 3. Gantt timeline */}
       {/* Badge งานค้างมอบหมาย (#33) — แสดงเมื่อไม่ได้กรองเฉพาะช่าง */}
@@ -975,7 +1011,7 @@ export default function DesignerSchedule({
 
       <div className="rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <div style={{ minWidth: LANE_NAME_WIDTH + TOTAL_DAYS * DAY_WIDTH }}>
+          <div style={{ minWidth: LANE_NAME_WIDTH + totalDays * DAY_WIDTH }}>
             {/* Header */}
             <GanttHeader days={days} today={today} />
 
@@ -994,6 +1030,7 @@ export default function DesignerSchedule({
                     rangeStart={rangeStart}
                     today={today}
                     days={days}
+                    totalDays={totalDays}
                     canWrite={canWrite}
                     onSave={handleSave}
                   />
@@ -1007,6 +1044,7 @@ export default function DesignerSchedule({
                     rangeStart={rangeStart}
                     today={today}
                     days={days}
+                    totalDays={totalDays}
                     canWrite={canWrite}
                     onSave={handleSave}
                   />
