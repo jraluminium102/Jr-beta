@@ -33,7 +33,16 @@ export const SILL_OPTS = ["มีธรณีกันน้ำ", "มีรา�
  */
 const QUOTE_NAME: Record<string, string> = {
   pcdoor: "ประตูบานเลื่อน + บานเปิด (Parallel Casement Door)",
+  velora: "บานเปิด Velora",          // ชื่อระบบ "Velora บานเปิด" เติมคำนำหน้าแล้วอ่านไม่ออก ("ประตูVelora บานเปิด")
 };
+
+/**
+ * รุ่นที่ "รูปแบบ" ของมันคือพื้นล่างอยู่แล้ว (forms = มีธรณี / ไม่มีธรณี)
+ * → ไม่ต้องมีช่องพื้นล่างซ้ำ ใช้รูปแบบที่เลือกเป็นข้อความพื้นล่างเลย (กันขึ้นใบซ้ำ 2 วงเล็บ)
+ */
+export const sillIsForm = (typeKey: string) => ["open_door", "pivot", "bansolid"].includes(typeKey);
+/** ชุดพิเศษที่ไม่ใช่ "บาน" เดี่ยว ๆ — ไม่ต้องมีคำนำหน้า ประตู/หน้าต่าง */
+export const noKindPrefix = (typeKey: string) => ["shower", "ykk"].includes(typeKey);
 
 /** ประตู/หน้าต่าง/ติดตาย — ผู้ใช้เลือกเองได้ · ไม่เลือก = เดา (บานสูง ≥1.9ม. = ประตู) */
 export function paneUse(p: DescPane): PaneUse {
@@ -41,6 +50,23 @@ export function paneUse(p: DescPane): PaneUse {
   if (p.use) return p.use;
   if (DOOR_IDS.has(p.typeKey)) return "door";
   return (p.h || 0) >= 1.9 ? "door" : "window";
+}
+/** รุ่นที่เป็นกระจกติดตายเสมอ (ไม่ต้องมีตัวเลือก ประตู/หน้าต่าง) */
+export const isFixedPane = (typeKey: string) => FIXED_IDS.has(typeKey);
+/** เดาประตู/หน้าต่างจาก "ซม." — ใช้ที่หน้าคิดราคาปกติ (G1) ที่เก็บขนาดเป็น ซม. ไม่ใช่เมตร */
+export const paneUseCm = (typeKey: string, hCm: number, use?: PaneUse): PaneUse =>
+  paneUse({ typeKey, w: 0, h: (Number(hCm) || 0) / 100, n: 1, use });
+/**
+ * ชื่อรุ่นที่ใช้บนใบเสนอ + คำนำหน้า ประตู/หน้าต่าง
+ * ใช้ทั้งห้องกระจก (G6) และหน้าคิดราคาปกติ (G1) — แหล่งเดียว แก้คำที่นี่ที่เดียว
+ */
+export function quoteProductName(typeKey: string, use: PaneUse, fallback: string): string {
+  const raw = QUOTE_NAME[typeKey] || fallback;
+  // ตัดคำนำหน้าเดิมออกก่อนเสมอ — ชื่อขายบางรุ่นฝัง "ประตู" ไว้ตายตัว (sms_slide saleName)
+  // ถ้าไม่ตัด เลือก "หน้าต่าง" แล้วจะยังขึ้นว่าประตูอยู่ดี
+  const label = raw.replace(/^(ประตู|หน้าต่าง)/, "");
+  if (use === "fixed" || noKindPrefix(typeKey)) return raw;
+  return (use === "door" ? "ประตู" : "หน้าต่าง") + label;
 }
 export const defaultSill = (typeKey: string) => (SLIDE_IDS.has(typeKey) ? "มีรางล่าง" : "มีธรณีกันน้ำ");
 export const paneSill = (p: DescPane) => p.sill || defaultSill(p.typeKey);
@@ -89,9 +115,7 @@ export function paneDescQuote(p: DescPane): string {
   const use = paneUse(p);
   if (use === "fixed") return "";
   const prod = prodOf(p.typeKey);
-  const label: string = QUOTE_NAME[p.typeKey] || prod?.name || p.typeKey;
-  const kind = use === "door" ? "ประตู" : "หน้าต่าง";
-  const nm = label.startsWith(kind) ? label : kind + label;   // ชื่อบางตัวขึ้นต้นด้วย "ประตู" อยู่แล้ว
+  const nm = quoteProductName(p.typeKey, use, prod?.name || p.typeKey);
   const form = prod?.forms?.length ? (p.form || prod.defForm) : "";
   const showForm = form && form !== prod?.defForm;            // ค่ามาตรฐานไม่ต้องขึ้นใบ
   const mq = mosquitoTypeLabel(p.addons?.mosquito);
