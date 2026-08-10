@@ -480,7 +480,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       const dd = rt.sideDescs ?? [];
       const showP = !g6HideSidePrice; // ปุ่มซ่อนราคารายด้าน
       // ไม่ใส่ ":" หลังชื่อด้าน — เจ้าของสั่ง 7 ส.ค.69 ให้เว้นวรรคแทน
-      const lines: string[] = rt.sides.map((s, i) => `- ด้าน ${String.fromCharCode(65 + i)} ${dd[i] || "—"}${showP && s > 0 ? ` (${baht(s)}฿)` : ""}`);
+      const lines: string[] = rt.sides.map((s, i) => `- ด้าน ${String.fromCharCode(65 + i)} ${dd[i] || "—"}${showP && s > 0 ? ` (ราคา ${baht(s)}฿)` : ""}`);
       if (rt.roof > 0) lines.push(`- ${rt.roofDesc || "หลังคา"}${showP ? ` (${baht(rt.roof)}฿)` : ""}`);
       if (rt.ceil > 0) lines.push(`- ${rt.ceilDesc || "ฝ้า"}${showP ? ` (${baht(rt.ceil)}฿)` : ""}`);
       if (rt.floor > 0) lines.push(`- พื้น${showP ? ` (${baht(rt.floor)}฿)` : ""}`);

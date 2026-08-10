@@ -24,7 +24,16 @@ export type DescSide = { kind: "glass" | "wall" | "open"; cols?: DescCol[]; aw?:
 const FIXED_IDS = new Set(["fixed", "curve_fixed"]);                                                                // ติดตายเสมอ
 const DOOR_IDS = new Set(["pcdoor", "frameless_door", "pivot", "bansolid", "fold_euro", "folding", "fold_lift"]);    // เป็นประตูเสมอ
 const SLIDE_IDS = new Set(["sms_slide", "euro_slide", "eseries", "slimlux", "topslide", "bar_slide"]);               // พื้นล่างเป็นราง
-export const SILL_OPTS = ["รางล่าง", "มีธรณี", "ไม่มีธรณี"];
+export const SILL_OPTS = ["มีธรณีกันน้ำ", "มีรางล่าง", "ไม่มีธรณี"];
+
+/**
+ * ชื่อที่ใช้ "บนใบเสนอ" — บางรุ่นชื่อในระบบสั้นไป ลูกค้าอ่านไม่ออกว่าคืออะไร
+ * (เจ้าของสั่ง 7 ส.ค.69 · ใบต้องเขียน "ประตูบานเลื่อน + บานเปิด (Parallel Casement Door)")
+ * ไม่แตะ prod.name เพราะเป็นชื่อในปุ่มเลือกรุ่น/ทั้งระบบ — แยกชื่อสำหรับเอกสารไว้ที่นี่ที่เดียว
+ */
+const QUOTE_NAME: Record<string, string> = {
+  pcdoor: "ประตูบานเลื่อน + บานเปิด (Parallel Casement Door)",
+};
 
 /** ประตู/หน้าต่าง/ติดตาย — ผู้ใช้เลือกเองได้ · ไม่เลือก = เดา (บานสูง ≥1.9ม. = ประตู) */
 export function paneUse(p: DescPane): PaneUse {
@@ -33,7 +42,7 @@ export function paneUse(p: DescPane): PaneUse {
   if (DOOR_IDS.has(p.typeKey)) return "door";
   return (p.h || 0) >= 1.9 ? "door" : "window";
 }
-export const defaultSill = (typeKey: string) => (SLIDE_IDS.has(typeKey) ? "รางล่าง" : "มีธรณี");
+export const defaultSill = (typeKey: string) => (SLIDE_IDS.has(typeKey) ? "มีรางล่าง" : "มีธรณีกันน้ำ");
 export const paneSill = (p: DescPane) => p.sill || defaultSill(p.typeKey);
 
 export const ADDON_LABELS: Record<string, string> = {
@@ -65,28 +74,35 @@ export function addonSummary(addons: Record<string, any> | undefined): string {
   return on.length ? ` + ${on.join(", ")}` : "";
 }
 
-const fmtM = (n: number) => (Math.round((n + Number.EPSILON) * 100) / 100).toLocaleString("th-TH", { maximumFractionDigits: 2 });
+/** ขนาดบนใบเสนอ — ทศนิยม 2 ตำแหน่งเสมอ (3.2 ต้องขึ้น 3.20 ตามที่เจ้าของสั่ง) */
+const fmtM = (n: number) => (Math.round((n + Number.EPSILON) * 100) / 100).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const prodOf = (k: string): any => (PRODUCTS as any)[k];
 
-/** ข้อความของบานเดียว (ประตู/หน้าต่าง) — บานติดตายคืน "" เพราะรวบไปท้ายด้านทีเดียว */
+/**
+ * ข้อความของบานเดียว (ประตู/หน้าต่าง) — บานติดตายคืน "" เพราะรวบไปท้ายด้านทีเดียว
+ * รูปแบบที่เจ้าของเคาะ 7 ส.ค.69 — คุณสมบัติแยกวงเล็บทีละอย่าง:
+ *   ประตูบานเลื่อน + บานเปิด (Parallel Casement Door) (มีธรณีกันน้ำ) (มีมุ้งจีบ)
+ * รูปแบบการเปิดขึ้นเฉพาะเมื่อ "ไม่ใช่ค่ามาตรฐาน" (ค่า default ไม่ต้องพิมพ์ลงใบ — กฎเดียวกับ SKIP_SPEC_DETAIL ของ G1)
+ */
 export function paneDescQuote(p: DescPane): string {
   const use = paneUse(p);
   if (use === "fixed") return "";
   const prod = prodOf(p.typeKey);
-  const label: string = prod?.name || p.typeKey;
+  const label: string = QUOTE_NAME[p.typeKey] || prod?.name || p.typeKey;
   const kind = use === "door" ? "ประตู" : "หน้าต่าง";
-  const nm = label.startsWith(kind) ? label : kind + label;   // ชื่อรุ่นบางตัวขึ้นต้นด้วย "ประตู" อยู่แล้ว (PC Door)
+  const nm = label.startsWith(kind) ? label : kind + label;   // ชื่อบางตัวขึ้นต้นด้วย "ประตู" อยู่แล้ว
   const form = prod?.forms?.length ? (p.form || prod.defForm) : "";
+  const showForm = form && form !== prod?.defForm;            // ค่ามาตรฐานไม่ต้องขึ้นใบ
   const mq = mosquitoTypeLabel(p.addons?.mosquito);
-  // ของเสริมอื่น (ครอบวงกบ/โช้ค/มือจับ ฯลฯ) ยังต้องขึ้นใบ — ตัดมุ้งออกเพราะพูดตามลำดับที่เจ้าของสั่งแล้ว
+  // ของเสริมอื่น (ครอบวงกบ/โช้ค/มือจับ ฯลฯ) ยังต้องขึ้นใบ — ตัดมุ้งออกเพราะมีวงเล็บของตัวเองแล้ว
   const extras = addonSummary({ ...(p.addons || {}), mosquito: undefined }).replace(/^ \+ /, "");
   return [
     nm,
-    form || "",
-    (p.n || 1) > 1 ? `${p.n} บาน` : "",
-    use === "door" ? paneSill(p) : "",
-    mq ? `พร้อมมุ้ง${mq}` : "",
+    showForm ? `(${form})` : "",
+    (p.n || 1) > 1 ? `(${p.n} บาน)` : "",
+    use === "door" ? `(${paneSill(p)})` : "",
+    mq ? `(มีมุ้ง${mq})` : "",
     extras ? `(${extras})` : "",
   ].filter(Boolean).join(" ");
 }
@@ -104,7 +120,28 @@ export function sideSize(s: DescSide): { w: number; h: number } {
   return { w: pw, h: ph };
 }
 
-/** บรรทัดเดียวของด้าน — เรียง ประตู → หน้าต่าง → กระจกติดตาย แล้วปิดท้ายด้วยขนาดรวม */
+/**
+ * ตำแหน่งกระจกติดตายเทียบกับบานประตู/หน้าต่างในด้านเดียวกัน — "ด้านบน/ด้านล่าง/ด้านข้าง"
+ * (แบบจริงมักเป็นช่องแสงเหนือประตู → ต้องเขียนว่า "กระจกติดตายด้านบน" ไม่ใช่ลอย ๆ)
+ * pcs เรียงบน→ล่างในช่อง · คนละช่อง = อยู่ข้าง ๆ
+ */
+function fixedPosition(s: DescSide): string {
+  const cols = sideCols(s);
+  const tags = new Set<string>();
+  cols.forEach((c) => {
+    const iOpen = c.pcs.findIndex((p) => paneUse(p) !== "fixed");
+    c.pcs.forEach((p, i) => {
+      if (paneUse(p) !== "fixed") return;
+      if (iOpen < 0) tags.add("ด้านข้าง");        // ช่องนี้มีแต่ติดตาย → อยู่ข้างบานช่องอื่น
+      else tags.add(i < iOpen ? "ด้านบน" : "ด้านล่าง");
+    });
+  });
+  // ไม่มีบานเปิดในด้านนี้เลย = ด้านติดตายล้วน ไม่ต้องบอกตำแหน่ง
+  if (!sidePanes(s).some((p) => paneUse(p) !== "fixed")) return "";
+  return tags.size === 1 ? [...tags][0] : "";
+}
+
+/** บรรทัดเดียวของด้าน — เรียง ประตู → หน้าต่าง → กระจกติดตาย แล้วปิดท้ายด้วยขนาดรวม + ราคา */
 export function sideDescQuote(s: DescSide, wallLabel = ""): string {
   const panes = sidePanes(s);
   const doors = panes.filter((p) => paneUse(p) === "door");
@@ -113,8 +150,11 @@ export function sideDescQuote(s: DescSide, wallLabel = ""): string {
   const parts = [...doors, ...wins].map(paneDescQuote).filter(Boolean);
   if (wallLabel) parts.unshift(wallLabel);              // ด้านผนัง — บอกว่าเป็นผนังอะไรก่อน
   let txt = parts.join(" + ");
-  if (nFixed > 0) txt += `${txt ? " และ" : ""}กระจกติดตาย${nFixed > 1 ? ` ${nFixed} ช่อง` : ""}`;
+  if (nFixed > 0) {
+    const pos = fixedPosition(s);
+    txt += `${txt ? " พร้อม" : ""}กระจกติดตาย${pos}${nFixed > 1 ? ` ${nFixed} ช่อง` : ""}`;
+  }
   const sz = sideSize(s);
-  if (sz.w > 0 && sz.h > 0) txt += `${txt ? " " : ""}${fmtM(sz.w)}×${fmtM(sz.h)} ม.`;
+  if (sz.w > 0 && sz.h > 0) txt += `${txt ? " " : ""}(ขนาด ${fmtM(sz.w)}×${fmtM(sz.h)} ม.)`;
   return txt || "เปิดโล่ง";
 }
