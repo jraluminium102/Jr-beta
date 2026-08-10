@@ -2,9 +2,11 @@
  * verify-room-desc — ข้อความรายด้านของห้องกระจก (G6) ที่ไปขึ้นใบเสนอราคา
  * รัน:  node --experimental-strip-types scripts/verify-room-desc.mjs
  *
- * รูปแบบที่เจ้าของเคาะ 7 ส.ค.69:
- *   ประตู/หน้าต่างก่อน → พื้นล่าง (ถ้าเป็นประตู) → มุ้ง → กระจกติดตายท้ายสุด → ขนาดรวมของด้าน
- *   ห้ามมี ":" หลังชื่อด้าน · ห้ามมีชนิดกระจก · ห้ามมีขนาดรายบาน
+ * รูปแบบที่เจ้าของเคาะ (7 ส.ค.69 · ส่งแบบ + ตัวอย่างบรรทัดมาให้):
+ *   ด้าน A ประตูบานเลื่อน + บานเปิด (Parallel Casement Door) (มีธรณีกันน้ำ) (มีมุ้งจีบ)
+ *          พร้อมกระจกติดตายด้านบน (ขนาด 1.29×3.20 ม.) (ราคา 39,800฿)
+ * กติกา: ไม่มี ":" หลังชื่อด้าน · คุณสมบัติแยกวงเล็บทีละอย่าง · ไม่มีชนิดกระจก ·
+ *        ไม่มีขนาดรายบาน (ใช้ขนาดรวมของด้าน ทศนิยม 2 ตำแหน่ง) · กระจกติดตายท้ายสุด + บอกตำแหน่ง
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -23,25 +25,38 @@ const ok = (name, cond, extra = "") => { cond ? pass++ : fail++; console.log(`${
 const pane = (o) => ({ typeKey: "open_door", w: 1, h: 2.2, n: 1, addons: {}, ...o });
 const glassSide = (...cols) => ({ kind: "glass", cols: cols.map((pcs) => ({ pcs })) });
 
-console.log("\n═══ ① ลำดับ: ประตู → มุ้ง → กระจกติดตาย → ขนาดรวม ═══");
+console.log("\n═══ ① บรรทัดตัวอย่างที่เจ้าของเขียนมาเอง — ต้องออกมาเหมือนเป๊ะ ═══");
 {
-  // เคสจริงจากหน้าจอเจ้าของ (ด้าน A): ช่องเดียว ซ้อน 2 บาน — ติดตาย 1.29×0.6 บน + PC Door 1.29×2.6 ล่าง
-  //   ขนาดรวมของด้านจึงเป็น 1.29 × (0.6+2.6) = 1.29×3.2 ม.
+  // ตรงตามแบบที่ส่งมา: ช่องเดียว ซ้อน 2 บาน — ติดตาย 1.29×0.60 ด้านบน + PC Door 1.29×2.60 + มุ้งจีบ
+  //   ขนาดรวมของด้าน = 1.29 × (0.60+2.60) = 1.29×3.20 ม.
   const s = glassSide([
     pane({ typeKey: "fixed", w: 1.29, h: 0.6 }),
     pane({ typeKey: "pcdoor", form: "แบ่ง 2", w: 1.29, h: 2.6, addons: { mosquito: "pleat" } }),
   ]);
+  eq(
+    "บรรทัดเต็ม (ด้าน A)",
+    `- ด้าน A ${sideDescQuote(s)} (ราคา 39,800฿)`,
+    "- ด้าน A ประตูบานเลื่อน + บานเปิด (Parallel Casement Door) (มีธรณีกันน้ำ) (มีมุ้งจีบ) พร้อมกระจกติดตายด้านบน (ขนาด 1.29×3.20 ม.) (ราคา 39,800฿)",
+  );
   const t = sideDescQuote(s);
-  ok("ขึ้นต้นด้วยประตู (ไม่ใช่บานติดตาย)", t.startsWith("ประตู"), t);
-  ok("มีพื้นล่างของประตู", /มีธรณี|ไม่มีธรณี|รางล่าง/.test(t), t);
-  ok("มุ้งอยู่หลังพื้นล่าง", t.indexOf("มีธรณี") < t.indexOf("มุ้ง"), t);
-  ok("กระจกติดตายอยู่ท้าย (ก่อนขนาด)", /และกระจกติดตาย \d/.test(t), t);
   ok("ไม่มีชนิดกระจกในบรรทัด", !/กระจกเขียว|กระจกใส|เทมเปอร์/.test(t), t);
-  ok("ขนาดรวมของด้าน (กว้างรวม × สูงรวม)", t.endsWith("1.29×3.2 ม."), t);
-  console.log(`     → ${t}`);
+  ok("ไม่มีขนาดรายบาน (มีแค่ขนาดรวมท้ายเดียว)", (t.match(/ขนาด /g) || []).length === 1, t);
+  ok("รูปแบบที่เป็นค่ามาตรฐาน (แบ่ง 2) ไม่ต้องขึ้นใบ", !t.includes("แบ่ง 2"), t);
 }
 
-console.log("\n═══ ①b ด้านเดียวมีทั้งประตู หน้าต่าง และติดตาย — ประตูต้องมาก่อนเสมอ ═══");
+console.log("\n═══ ①b ตำแหน่งกระจกติดตาย (บน / ล่าง / ข้าง) ═══");
+{
+  const above = glassSide([pane({ typeKey: "fixed", w: 1, h: 0.6 }), pane({ typeKey: "pcdoor", w: 1, h: 2.6 })]);
+  ok("ติดตายอยู่เหนือประตู → ด้านบน", sideDescQuote(above).includes("กระจกติดตายด้านบน"), sideDescQuote(above));
+  const below = glassSide([pane({ typeKey: "pcdoor", w: 1, h: 2.6 }), pane({ typeKey: "fixed", w: 1, h: 0.6 })]);
+  ok("ติดตายอยู่ใต้ประตู → ด้านล่าง", sideDescQuote(below).includes("กระจกติดตายด้านล่าง"), sideDescQuote(below));
+  const beside = glassSide([pane({ typeKey: "pcdoor", w: 1, h: 2.6 })], [pane({ typeKey: "fixed", w: 0.8, h: 2.6 })]);
+  ok("ติดตายอยู่คนละช่อง → ด้านข้าง", sideDescQuote(beside).includes("กระจกติดตายด้านข้าง"), sideDescQuote(beside));
+  const only = glassSide([pane({ typeKey: "fixed", w: 1, h: 2.6 })]);
+  ok("ด้านติดตายล้วน → ไม่บอกตำแหน่ง", /^กระจกติดตาย \(ขนาด/.test(sideDescQuote(only)), sideDescQuote(only));
+}
+
+console.log("\n═══ ①c ด้านเดียวมีทั้งประตู หน้าต่าง และติดตาย — ประตูต้องมาก่อนเสมอ ═══");
 {
   // จงใจใส่เรียง ติดตาย → หน้าต่าง → ประตู เพื่อพิสูจน์ว่าโค้ดจัดลำดับใหม่ให้จริง (ไม่ใช่บังเอิญตามที่กรอก)
   const s = glassSide(
@@ -62,7 +77,7 @@ console.log("\n═══ ② หน้าต่าง (ไม่มีพื้�
   const t = sideDescQuote(s);
   ok("ขึ้นต้นด้วย หน้าต่าง", t.startsWith("หน้าต่าง"), t);
   ok("หน้าต่างไม่มีคำว่าธรณี/รางล่าง", !/ธรณี|รางล่าง/.test(t), t);
-  ok("มีมุ้ง", /มุ้งจีบ/.test(t), t);
+  ok("มุ้งอยู่ในวงเล็บ", t.includes("(มีมุ้งจีบ)"), t);
   console.log(`     → ${t}`);
 }
 
@@ -74,8 +89,8 @@ console.log("\n═══ ③ เดาประตู/หน้าต่าง�
   eq("บานติดตาย = ติดตายเสมอ", paneUse(pane({ typeKey: "fixed", h: 2.4 })), "fixed");
   eq("ผู้ใช้เลือก 'หน้าต่าง' ต้องชนะการเดา", paneUse(pane({ typeKey: "sms_slide", h: 2.4, use: "window" })), "window");
   eq("บานติดตาย: เลือก use ไม่มีผล (ยังติดตาย)", paneUse(pane({ typeKey: "fixed", h: 2.4, use: "door" })), "fixed");
-  eq("บานเลื่อน → พื้นล่างตั้งต้น = รางล่าง", paneSill(pane({ typeKey: "sms_slide" })), "รางล่าง");
-  eq("บานเปิด → พื้นล่างตั้งต้น = มีธรณี", paneSill(pane({ typeKey: "open_door" })), "มีธรณี");
+  eq("บานเลื่อน → พื้นล่างตั้งต้น", paneSill(pane({ typeKey: "sms_slide" })), "มีรางล่าง");
+  eq("บานเปิด → พื้นล่างตั้งต้น", paneSill(pane({ typeKey: "open_door" })), "มีธรณีกันน้ำ");
   eq("ผู้ใช้เลือกพื้นล่างเองต้องชนะ", paneSill(pane({ typeKey: "sms_slide", sill: "ไม่มีธรณี" })), "ไม่มีธรณี");
 }
 
@@ -91,16 +106,14 @@ console.log("\n═══ ④ ขนาดรวมของด้าน ══�
   eq("สูงรวม = สูงสุดของช่อง (0.6+2.0)", sz.h, 2.6);
   ok("ด้านผนังใช้ขนาดผนัง", sideSize({ kind: "wall", aw: 4.61, ah: 3 }).w === 4.61, "");
   // เคสจริง ด้าน C: ผนังกรอกไว้ 1.19×0.6 แต่ประตูที่เจาะสูง 2.6 → ขนาดด้านต้องครอบประตู
-  {
-    const sz = sideSize({ kind: "wall", aw: 1.19, ah: 0.6, cols: [{ pcs: [pane({ typeKey: "pcdoor", w: 1.19, h: 2.6 })] }] });
-    eq("ผนังเล็กกว่าบานที่เจาะ → ครอบบาน (สูง)", sz.h, 2.6);
-  }
+  eq("ผนังเล็กกว่าบานที่เจาะ → ครอบบาน (สูง)",
+    sideSize({ kind: "wall", aw: 1.19, ah: 0.6, cols: [{ pcs: [pane({ typeKey: "pcdoor", w: 1.19, h: 2.6 })] }] }).h, 2.6);
 }
 
 console.log("\n═══ ⑤ ด้านผนัง / เปิดโล่ง ═══");
 {
   const w = sideDescQuote({ kind: "wall", wallType: "smartboard", aw: 4.61, ah: 3, cols: [] }, "สมาร์ทบอร์ด 12มม. (R4.0)");
-  ok("ผนังขึ้นชื่อผนังก่อน + ขนาดรวมท้าย", w === "สมาร์ทบอร์ด 12มม. (R4.0) 4.61×3 ม.", w);
+  eq("ผนังล้วน", w, "สมาร์ทบอร์ด 12มม. (R4.0) (ขนาด 4.61×3.00 ม.)");
   const wd = sideDescQuote(
     { kind: "wall", wallType: "smartboard", aw: 1.19, ah: 2.6, cols: [{ pcs: [pane({ typeKey: "pcdoor", form: "แบ่ง 2", w: 1.19, h: 2.6, addons: { mosquito: "pleat" } })] }] },
     "ผนังสมาร์ทบอร์ด",
@@ -114,6 +127,7 @@ console.log("\n═══ ⑥ สายไฟ — ต้องไม่มี ':'
 {
   const c = fs.readFileSync(path.join(ROOT, "src/components/Calculator40Client.tsx"), "utf8");
   ok("ไม่มี ':' หลังชื่อด้าน", /`- ด้าน \$\{String\.fromCharCode\(65 \+ i\)\} \$\{dd\[i\]/.test(c), "");
+  ok("ราคาขึ้นว่า (ราคา …฿)", /\(ราคา \$\{baht\(s\)\}฿\)/.test(c), "");
   const r = fs.readFileSync(path.join(ROOT, "src/components/calculator40/RoomComposer.tsx"), "utf8");
   ok("RoomComposer ใช้ sideDescQuote จากโมดูลกลาง", /from "@\/lib\/calculator40\/room-desc"/.test(r) && /sideDescQuote\(s, wallLabel\)/.test(r), "");
   ok("ไม่เหลือ paneDesc ตัวเก่าในคอมโพเนนต์ (กันสองแหล่ง)", !/function paneDesc\(/.test(r), "");
