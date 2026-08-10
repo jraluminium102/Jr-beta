@@ -14,6 +14,7 @@ type Stats = {
   summary: { jobs: number; won: number; close_rate: number; revenue_closed: Money; collected: Money; quotations: number; ext_quotes: number; ext_pct: number };
   byMonth: { month: string; quoted: Money; closed: Money; collected: Money }[];
   byArea: { area: string; jobs: number; won: number; revenue: Money }[];
+  areaUnknown: number;
   funnel: { phase: PhaseKey; count: number }[];
   byChannel: { channel: string; count: number }[];
   topItems: { name: string; qty: number }[];
@@ -149,12 +150,13 @@ function StatsTab({ data }: { data: Stats }) {
             {data.byArea.map((a) => (
               <div key={a.area} className="flex items-center gap-2 text-xs">
                 <span className="w-28 truncate text-ink-3" title={a.area}>{a.area}</span>
-                <div className="flex-1 h-3 rounded bg-gray-100 overflow-hidden"><div className="h-full bg-brand-navy" style={{ width: `${(a.jobs / areaMax) * 100}%`, background: "#1F4E78" }} /></div>
+                <div className="flex-1 h-3 rounded bg-gray-100 overflow-hidden"><div className="h-full" style={{ width: `${(a.jobs / areaMax) * 100}%`, background: "#1F4E78" }} /></div>
                 <span className="w-24 text-right tabular-nums text-ink-2">{a.jobs} งาน{canFin ? ` · ฿${baht(a.revenue ?? 0)}` : ""}</span>
               </div>
             ))}
             {data.byArea.length === 0 && <p className="text-ink-3 text-sm">ไม่มีข้อมูล</p>}
           </div>
+          {data.areaUnknown > 0 && <p className="text-[11px] text-ink-3 mt-2">* อีก {data.areaUnknown} งานไม่มีที่อยู่ให้ดึงพื้นที่</p>}
         </Card>
 
         {/* รายได้รายเดือน */}

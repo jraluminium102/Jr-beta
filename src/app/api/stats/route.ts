@@ -21,6 +21,26 @@ function dayDiff(a?: string | null, b?: string | null): number | null {
 }
 const avg = (xs: number[]) => (xs.length ? Math.round((xs.reduce((s, n) => s + n, 0) / xs.length) * 10) / 10 : 0);
 
+// ดึง "พื้นที่" (เขต/อำเภอ/จังหวัด) จากที่อยู่เต็ม — ที่อยู่ไทยหลายอันไม่มีเว้นวรรค เลยตัดที่คำหลัก/ตัวเลข
+function extractArea(raw?: string | null): string {
+  const s = String(raw ?? "").replace(/\s+/g, " ").trim();
+  if (!s) return "";
+  // ตัดหางตั้งแต่คำจังหวัด/รหัสไปรษณีย์/ตัวเลข (กันเก็บชื่อยาวเกิน)
+  const cut = (t: string) => {
+    const i = t.search(/กรุงเทพ|กทม|จังหวัด|จ\.|แขวง|ตำบล|ต\.|รหัส|\d/);
+    return (i > 0 ? t.slice(0, i) : t).trim();
+  };
+  let m: RegExpMatchArray | null;
+  if ((m = s.match(/เขต\s*([ก-๙].*)/))) { const v = cut(m[1]); if (v) return "เขต" + v; }
+  if ((m = s.match(/จังหวัด\s*([ก-๙]+)/))) return m[1];
+  if ((m = s.match(/(?:^|[^ก-๙])จ\.\s*([ก-๙]+)/))) return m[1];
+  if ((m = s.match(/อำเภอ\s*([ก-๙].*)/))) { const v = cut(m[1]); if (v) return "อ." + v; }
+  if ((m = s.match(/(?:^|[^ก-๙])อ\.\s*([ก-๙]+)/))) return "อ." + m[1];
+  if (/กรุงเทพ|กทม/.test(s)) return "กรุงเทพฯ";
+  // ค่าที่พิมพ์เองสั้น ๆ (เช่น "บางนา") ใช้ตรง ๆ · ยาวเกินตัดให้สั้น
+  return s.length > 16 ? s.slice(0, 16) + "…" : s;
+}
+
 // GET /api/stats?from=YYYY-MM-DD&to=YYYY-MM-DD — สถิติ + KPI ช่วงเวลา (default = ปีนี้)
 //   money จะถูกซ่อน (null) ถ้า role ไม่มีสิทธิ์ดูฟิลด์การเงิน (jobs:finance_fields)
 export const GET = withRoute(async (req: Request) => {
@@ -39,9 +59,9 @@ export const GET = withRoute(async (req: Request) => {
   const today = now.toISOString().slice(0, 10);
 
   // ── ดึงข้อมูล (แบ่งหน้า กัน cap 1,000 แถว — ตารางพวกนี้โตเกิน 1,000 ได้) ──
-  const [jobs, fin, issues, quotations, qitems, salesOf] = await Promise.all([
+  const [jobs, fin, issues, quotations, qitems, salesOf, queueRows, custRows] = await Promise.all([
     fetchAllPaged<any>((f, t) => sb.from("jobs")
-      .select("id, job_code, status, current_stage, net_amount, deposit_date, deposit_amount, assess_date, quote_sent_date, design_state, design_start, design_end, design_due_date, on_hold, customer_area, customer_name, channel, estimator_id, estimator:estimator_id(full_name), designer_ref, designer_lookup:designer_ref(name), queue_entry_id, productions(status), installations(status)")
+      .select("id, job_code, status, current_stage, net_amount, deposit_date, deposit_amount, assess_date, quote_sent_date, design_state, design_start, design_end, design_due_date, on_hold, customer_area, customer_id, customer_name, channel, estimator_id, estimator:estimator_id(full_name), designer_ref, designer_lookup:designer_ref(name), queue_entry_id, productions(status), installations(status)")
       .order("id", { ascending: true }).range(f, t)),
     fetchAllPaged<any>((f, t) => sb.from("finance_entries")
       .select("amount, payment_date").eq("is_voided", false)
@@ -56,6 +76,13 @@ export const GET = withRoute(async (req: Request) => {
       .select("name, qty, category, line_total, quotation_id, quotation:quotation_id(issue_date, status, job:job_id(status))")
       .order("id", { ascending: true }).range(f, t)),
     buildSalesResolver(sb),
+    // ที่อยู่หน้างานจริง (สำหรับ "พื้นที่") — customer_area มักว่าง ต้องดึงจากคิว/ทะเบียนลูกค้า
+    fetchAllPaged<any>((f, t) => sb.from("queue_entries")
+      .select("id, job_id, customer_name, address")
+      .order("id", { ascending: true }).range(f, t)),
+    fetchAllPaged<any>((f, t) => sb.from("customers")
+      .select("id, address")
+      .order("id", { ascending: true }).range(f, t)),
   ]);
 
   const J = jobs ?? [], F = fin ?? [], I = issues ?? [], QI = qitems ?? [], QT = quotations ?? [];
@@ -63,6 +90,29 @@ export const GET = withRoute(async (req: Request) => {
   const isWon = (j: any) => WON.includes(j.status);
   const salesNameOf = (j: any): string =>
     salesOf({ id: j.id, queue_entry_id: j.queue_entry_id, customer_name: j.customer_name, estimator_name: j.estimator?.full_name ?? null }) ?? "ไม่ระบุ";
+
+  // ── resolver ที่อยู่หน้างาน (fallback: customer_area พิมพ์เอง → คิว(job_id/queue_entry_id/ชื่อ) → ทะเบียนลูกค้า) ──
+  const qAddrByJob = new Map<string, string>();
+  const qAddrByQe = new Map<string, string>();
+  const qAddrByName = new Map<string, string>();
+  (queueRows ?? []).forEach((q: any) => {
+    const addr = String(q.address ?? "").trim();
+    if (!addr) return;
+    if (q.job_id) qAddrByJob.set(q.job_id, addr);
+    qAddrByQe.set(q.id, addr);
+    if (q.customer_name) qAddrByName.set(String(q.customer_name).trim(), addr);
+  });
+  const custAddrById = new Map<string, string>();
+  (custRows ?? []).forEach((c: any) => { const a = String(c.address ?? "").trim(); if (a) custAddrById.set(String(c.id), a); });
+  const addressOf = (j: any): string => {
+    const manual = String(j.customer_area ?? "").trim();
+    if (manual) return manual;
+    return qAddrByJob.get(j.id)
+      ?? (j.queue_entry_id ? qAddrByQe.get(j.queue_entry_id) : undefined)
+      ?? (j.customer_name ? qAddrByName.get(String(j.customer_name).trim()) : undefined)
+      ?? (j.customer_id != null ? custAddrById.get(String(j.customer_id)) : undefined)
+      ?? "";
+  };
 
   // งานในช่วง (อิงวันเข้าประเมิน) ที่ไม่ยกเลิก · won อิงฐานเดียวกันเพื่อให้ close_rate ไม่เกิน 100%
   const inJobs = J.filter((j: any) => inRange(j.assess_date) && j.status !== "CANCELLED");
@@ -108,10 +158,12 @@ export const GET = withRoute(async (req: Request) => {
     collected: mask(F.filter((f: any) => mk(f.payment_date) === m).reduce((s: number, f: any) => s + num(f.amount), 0)),
   }));
 
-  // ── สถานที่ (จาก customer_area) — งานในช่วง ──
+  // ── สถานที่ (ดึงเขต/อำเภอ/จังหวัด จากที่อยู่หน้างานจริง) — งานในช่วง ──
   const areaMap: Record<string, { area: string; jobs: number; won: number; revenue: number }> = {};
+  let areaUnknown = 0;
   inJobs.forEach((j: any) => {
-    const area = String(j.customer_area ?? "").trim() || "ไม่ระบุพื้นที่";
+    const area = extractArea(addressOf(j));
+    if (!area) { areaUnknown++; return; }
     const m = (areaMap[area] ??= { area, jobs: 0, won: 0, revenue: 0 });
     m.jobs++;
     if (isWon(j)) { m.won++; m.revenue += num(j.net_amount); }
@@ -237,7 +289,7 @@ export const GET = withRoute(async (req: Request) => {
   return ok({
     range: { from, to },
     can_finance: showFinance,
-    summary, byMonth, byArea, funnel, byChannel, topItems,
+    summary, byMonth, byArea, areaUnknown, funnel, byChannel, topItems,
     byCategory, uncategorizedItems: uncategorized,
     bySales, drawing, quotation,
     issues: {
