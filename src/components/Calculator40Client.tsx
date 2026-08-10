@@ -27,7 +27,7 @@ import R39DATA from "@/lib/calculator40/r39-data.json";
 // @ts-expect-error — mosquito helper เป็น ESM JS ล้วน
 import { computeMosquitoR4, mosquitoTypeLabel } from "@/lib/calculator40/mosquito.mjs";
 // ประตู/หน้าต่าง + พื้นล่าง — ใช้ตัวช่วยชุดเดียวกับห้องกระจก G6 (คำบนใบเสนอมีแหล่งเดียว)
-import { isFixedPane, paneUseCm, quoteProductName, paneSill, SILL_OPTS, sillIsForm, noKindPrefix } from "@/lib/calculator40/room-desc";
+import { isFixedPane, paneUseOf, quoteProductName, paneSill, SILL_OPTS, sillIsForm, noKindPrefix } from "@/lib/calculator40/room-desc";
 import { computeRoofZipR4 } from "@/lib/calculator40/roof-zip.mjs";
 import { withUniversalAddons } from "@/lib/calculator40/universal-addons";
 import AddonsSection from "@/components/calculator40/AddonsSection";
@@ -442,9 +442,8 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   //   โชว์เฉพาะกลุ่มบาน (G1) ที่ไม่ใช่กระจกติดตายเสมอ · ห้องกระจกมีตัวเลือกของตัวเองต่อบานอยู่แล้ว
   const paneKindOn = !!prod && prod.group === 1 && !prod.composite && !isFixedPane(prod.id) && !noKindPrefix(prod.id);
   //   ไม่เลือก = เดาจากรุ่น/ความสูง (ซม.) · เลือกเองชนะการเดาเสมอ
-  const paneKind = paneKindOn
-    ? paneUseCm(prod.id, Number(h) || prod.defaults?.h || 0, useSel === "auto" ? undefined : useSel)
-    : "fixed";
+  //   ไม่เลือก = ค่าตั้งต้นตามชนิดรุ่น · ⚠ ไม่ดูขนาดเลย (เจ้าของสั่ง — หน้าต่างบางอันก็สูง)
+  const paneKind = paneKindOn ? paneUseOf(prod.id, useSel === "auto" ? undefined : useSel) : "fixed";
   // #1 (17ก.ค.69): เพิ่มตัวเลือก "แผ่นคอมโพสิต/ลูกฟูก แทนกระจก" ทุกที่ที่เลือกกระจก · engine special-case (ไม่คิดกระจก)
   const glassKeys = useMemo(() => allGlassKeys(pb), [pb]);
 

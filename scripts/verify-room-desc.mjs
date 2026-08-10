@@ -11,7 +11,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { sideDescQuote, paneUse, paneSill, sideSize, quoteProductName, isFixedPane, sillIsForm } from "../src/lib/calculator40/room-desc.ts";
+import { sideDescQuote, paneUse, paneUseOf, paneSill, sideSize, quoteProductName, isFixedPane, sillIsForm } from "../src/lib/calculator40/room-desc.ts";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 let pass = 0, fail = 0;
@@ -81,13 +81,19 @@ console.log("\n═══ ② หน้าต่าง (ไม่มีพื้�
   console.log(`     → ${t}`);
 }
 
-console.log("\n═══ ③ เดาประตู/หน้าต่างเมื่อผู้ใช้ยังไม่เลือก + เลือกเองแล้วต้องชนะ ═══");
+console.log("\n═══ ③ ค่าตั้งต้น ประตู/หน้าต่าง — ตามชนิดรุ่นเท่านั้น ห้ามดูขนาด ═══");
 {
-  eq("บานเลื่อนสูง 2.2ม. = ประตู", paneUse(pane({ typeKey: "sms_slide", h: 2.2 })), "door");
-  eq("บานเลื่อนสูง 1.2ม. = หน้าต่าง", paneUse(pane({ typeKey: "sms_slide", h: 1.2 })), "window");
-  eq("PC Door = ประตูเสมอ (แม้เตี้ย)", paneUse(pane({ typeKey: "pcdoor", h: 1.0 })), "door");
+  // ⚠ กฎเหล็ก (เจ้าของสั่ง 7 ส.ค.69): "ไม่เดาประตูหน้าต่างผ่านขนาด หน้าต่างบางอันสูง"
+  //    เปลี่ยนความสูงยังไงผลต้องเท่าเดิมเป๊ะ
+  for (const [id, want] of [["sms_slide", "door"], ["euro_slide", "door"], ["open_door", "door"], ["pcdoor", "door"],
+    ["awning", "window"], ["banklet", "window"], ["banyok", "window"], ["fold_lift", "window"]]) {
+    const hs = [0.4, 1.2, 2.2, 3.5].map((h) => paneUse(pane({ typeKey: id, h })));
+    ok(`${id}: สูง 0.4/1.2/2.2/3.5 ม. ได้ผลเดียวกันหมด = ${want}`, hs.every((x) => x === want), hs.join(","));
+  }
+  ok("ฟังก์ชันไม่รับขนาดเลย (paneUseOf มี 2 อาร์กิวเมนต์)", paneUseOf.length === 2, String(paneUseOf.length));
   eq("บานติดตาย = ติดตายเสมอ", paneUse(pane({ typeKey: "fixed", h: 2.4 })), "fixed");
-  eq("ผู้ใช้เลือก 'หน้าต่าง' ต้องชนะการเดา", paneUse(pane({ typeKey: "sms_slide", h: 2.4, use: "window" })), "window");
+  eq("ผู้ใช้เลือก 'หน้าต่าง' ต้องชนะค่าตั้งต้น", paneUse(pane({ typeKey: "sms_slide", h: 2.4, use: "window" })), "window");
+  eq("ผู้ใช้เลือก 'ประตู' ต้องชนะค่าตั้งต้น", paneUse(pane({ typeKey: "awning", h: 0.5, use: "door" })), "door");
   eq("บานติดตาย: เลือก use ไม่มีผล (ยังติดตาย)", paneUse(pane({ typeKey: "fixed", h: 2.4, use: "door" })), "fixed");
   eq("บานเลื่อน → พื้นล่างตั้งต้น", paneSill(pane({ typeKey: "sms_slide" })), "มีรางล่าง");
   eq("บานเปิด → พื้นล่างตั้งต้น", paneSill(pane({ typeKey: "open_door" })), "มีธรณีกันน้ำ");
