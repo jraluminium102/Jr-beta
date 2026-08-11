@@ -14,11 +14,9 @@ import { api } from "@/lib/api";
 import { cn, baht, thDate } from "@/lib/format";
 import { PHASE_META, type PhaseKey } from "@/lib/followup";
 import { Spinner, StatCard, EmptyState } from "@/components/ui/primitives";
-import { Search, Clock, TriangleAlert, ChevronRight, Phone, Plus } from "@/components/ui/icons";
+import { Search, Clock, TriangleAlert, ChevronRight, Phone } from "@/components/ui/icons";
 import { JobDrawer } from "@/components/jobs/JobDrawer";
 import { ClosureActions } from "@/components/sales-closure/ClosureActions";
-import { IssueTrackTable, type IssueTrackRow } from "@/components/issues/IssueTrackTable";
-import { CreateIssueModal } from "@/components/issues/CreateIssueModal";
 import { HoldModal } from "@/components/jobs/HoldModal";
 import type { ClosureRow } from "@/app/api/sales-closure/route";
 
@@ -34,7 +32,7 @@ type TrackRow = {
   net: number | null; has_billed: boolean;
 };
 
-type Tab = "closure" | "production" | "install" | "issues";
+type Tab = "closure" | "production" | "install";
 type ClosureStage = "await" | "sent" | "revising" | "hold";
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -117,7 +115,6 @@ type TabMeta = {
   key: Tab;
   label: string;
   count?: number;
-  highIssue?: boolean;
 };
 
 function TabBar({ active, tabs, onChange }: { active: Tab; tabs: TabMeta[]; onChange: (t: Tab) => void }) {
@@ -140,15 +137,10 @@ function TabBar({ active, tabs, onChange }: { active: Tab; tabs: TabMeta[]; onCh
           {t.count != null && t.count > 0 && (
             <span className={cn(
               "inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-semibold tnum",
-              t.key === "issues"
-                ? t.highIssue ? "bg-rose-500 text-white" : "bg-amber-500/90 text-white"
-                : active === t.key ? "bg-brand-dark/15 text-brand-dark" : "bg-white/20 text-white"
+              active === t.key ? "bg-brand-dark/15 text-brand-dark" : "bg-white/20 text-white"
             )}>
               {t.count}
             </span>
-          )}
-          {t.key === "issues" && t.highIssue && (
-            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" aria-label="มีปัญหา HIGH" />
           )}
         </button>
       ))}
@@ -1110,73 +1102,12 @@ function TrackTab({ group, filters, isSales }: {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// แท็บ "ปัญหา" — reuse IssueTrackTable + CreateIssueModal
-// ────────────────────────────────────────────────────────────────────────────
-function IssuesTab({ filters, canWrite }: { filters: FilterState; canWrite: boolean }) {
-  const [creating, setCreating] = useState(false);
-
-  const params = new URLSearchParams();
-  if (filters.q) params.set("q", filters.q);
-  if (filters.onlyOverdue) params.set("overdue", "1");
-
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ["issues-hub", filters.q, filters.onlyOverdue],
-    queryFn: () => api.get<IssueTrackRow[]>(`/issues${params.toString() ? `?${params}` : ""}`),
-  });
-
-  const rows = data?.data ?? [];
-  const agg = data?.meta?.aggregate as { total: number; open: number; overdue: number; urgent: number; oldest_days: number } | undefined;
-
-  // client-side filter: ซ่อน CLOSED
-  const openRows = rows.filter((r) => r.status !== "CLOSED");
-
-  return (
-    <>
-      {/* stats strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-        <StatCard label="เปิดอยู่" value={agg?.open ?? openRows.length} sub={`ทั้งหมด ${agg?.total ?? rows.length}`} />
-        <StatCard label="เลยกำหนด" value={agg?.overdue ?? 0} accent="text-rose-300" />
-        <StatCard label="ด่วน (HIGH)" value={agg ? rows.filter((r) => r.severity === "HIGH" && r.status !== "CLOSED").length : 0} accent="text-rose-300" />
-        <StatCard label="ค้างนานสุด" value={agg ? `${agg.oldest_days} วัน` : "—"} />
-      </div>
-
-      {/* ปุ่ม "แจ้งปัญหาใหม่" มุมขวาบน — เฉพาะแท็บปัญหา */}
-      {canWrite && (
-        <div className="flex justify-end mb-3">
-          <button
-            onClick={() => setCreating(true)}
-            className="focusable pressable flex items-center gap-2 bg-white text-[#B3151D] rounded-xl px-3.5 py-2.5 text-sm font-semibold hover:bg-white/90 shadow-lg min-h-[44px]"
-          >
-            <Plus size={18} /> แจ้งปัญหาใหม่
-          </button>
-        </div>
-      )}
-
-      {isLoading ? <Spinner /> : openRows.length === 0 ? (
-        <EmptyState title="ไม่มีปัญหาค้าง" sub="งานทุกชิ้นเรียบร้อยดี" />
-      ) : (
-        <IssueTrackTable rows={openRows} />
-      )}
-
-      {creating && (
-        <CreateIssueModal
-          onClose={() => setCreating(false)}
-          onSaved={() => { setCreating(false); refetch(); }}
-        />
-      )}
-    </>
-  );
-}
-
-// ────────────────────────────────────────────────────────────────────────────
 // Orchestrator: FollowUpHubClient
 // ────────────────────────────────────────────────────────────────────────────
 export default function FollowUpHubClient({
   isSales,
-  canIssueWrite,
 }: {
   isSales: boolean;
-  canIssueWrite: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("closure");
   const [filters, setFilters] = useState<FilterState>({
@@ -1194,7 +1125,6 @@ export default function FollowUpHubClient({
     { key: "closure", label: "ปิดการขาย" },
     { key: "production", label: "ผลิต" },
     { key: "install", label: "ติดตั้ง" },
-    { key: "issues", label: "ปัญหา" },
   ];
 
   return (
@@ -1204,8 +1134,8 @@ export default function FollowUpHubClient({
         <h1 className="text-xl sm:text-2xl font-bold text-white">ติดตามงาน</h1>
         <p className="text-sm" style={{ color: "var(--t-low)" }}>
           {isSales
-            ? "งานของคุณ — ปิดการขาย, สายผลิต, ติดตั้ง, ปัญหา"
-            : "ภาพรวมงานทุกขั้น — ปิดการขาย, สายผลิต, ติดตั้ง, ปัญหา"}
+            ? "งานของคุณ — ปิดการขาย, สายผลิต, ติดตั้ง"
+            : "ภาพรวมงานทุกขั้น — ปิดการขาย, สายผลิต, ติดตั้ง"}
         </p>
       </div>
 
@@ -1240,9 +1170,6 @@ export default function FollowUpHubClient({
           filters={filters}
           isSales={isSales}
         />
-      )}
-      {activeTab === "issues" && (
-        <IssuesTab filters={filters} canWrite={canIssueWrite} />
       )}
     </div>
   );
