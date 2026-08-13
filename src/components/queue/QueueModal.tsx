@@ -14,7 +14,7 @@ import { api } from "@/lib/api";
 import DateField from "@/components/ui/DateField";
 import { formatThaiPhone } from "@/lib/phone";
 import {
-  FEE_OPTIONS, JOB_SIZE_META, STATUS_META, STATUS_ORDER, parseLatLng,
+  FEE_OPTIONS, JOB_SIZE_META, STATUS_META, STATUS_ORDER, parseLatLng, estimateMinutes,
   type QueueEntry, type QueueSales, type JobSize, type QueueStatus, type QueueTeam,
 } from "@/lib/queue";
 import type { JobSearchResult } from "@/app/api/jobs/search/route";
@@ -78,6 +78,8 @@ type ExistingSlot = {
   queue_time: string | null;
   status: string;
   customer_name: string;
+  lat?: number | null;
+  lng?: number | null;
 };
 
 // ประเภทงาน: หมวด
@@ -403,6 +405,20 @@ export function QueueModal({
           found.push({ kind: "warn", msg: "เซลล์มีคิวครบ 2 ช่องในวันนี้แล้ว" });
         }
 
+        // R-45min (แจ้งเตือนตอนลงคิวเอง): คิวที่ 2 ในวันเดียว ห่างกันเกิน 45 นาที
+        //   ประมาณจากเส้นตรงแบบระมัดระวัง (24 km/h · detour 1.45) — เตือนอย่างเดียว ไม่บล็อก
+        if (coords) {
+          let worst: { name: string; mins: number } | null = null;
+          for (const o of (entryRes.data ?? [])) {
+            if (o.sales_id !== f.sales_id || o.queue_date !== date || o.status === "CANCELLED") continue;
+            if (editing && o.id === entry!.id) continue;
+            if (o.lat == null || o.lng == null) continue;
+            const mins = estimateMinutes({ lat: o.lat, lng: o.lng }, coords, { avgSpeedKmh: 24, detourFactor: 1.45 });
+            if (mins > 45 && (!worst || mins > worst.mins)) worst = { name: o.customer_name, mins };
+          }
+          if (worst) found.push({ kind: "warn", msg: `โลเคชั่นไกลจากคิว "${worst.name}" ในวันนี้ ~${worst.mins} นาที (เกิน 45) — ควรจับคู่งานที่ใกล้กัน` });
+        }
+
         setConflicts(found);
       } catch {
         if (!controller.signal.aborted) setConflicts([]);
@@ -414,7 +430,7 @@ export function QueueModal({
     checkConflict();
     return () => { controller.abort(); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [f.queue_date, f.queue_time, f.sales_id, f.job_size]);
+  }, [f.queue_date, f.queue_time, f.sales_id, f.job_size, coords?.lat, coords?.lng]);
 
   // ---- local mirror ของเซลล์หลัก + ผู้ช่วย เพื่อเพิ่มใหม่แล้วเห็นใน dropdown ทันที ----
   const [localMain, setLocalMain] = useState<QueueSales[]>(() =>

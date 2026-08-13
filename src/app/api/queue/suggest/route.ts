@@ -229,11 +229,14 @@ export const POST = withRoute(async (req: Request) => {
           driveCache.set(ck, travelMin);
         }
         if (travelMin == null) {
+          // ORS ใช้ไม่ได้ → ประมาณการแบบ "ระมัดระวัง" (เมืองรถติดช้ากว่า 40 km/h มาก)
+          // ใช้ speed ต่ำ/detour สูง กันจับคู่ไกลหลุดเพราะเส้นตรงประเมินต่ำเกินจริง
           travelMin = estimateMinutes(
             { lat: existing.lat!, lng: existing.lng! },
             { lat: newLat!, lng: newLng! },
-            { avgSpeedKmh, detourFactor }
+            { avgSpeedKmh: Math.min(avgSpeedKmh, 24), detourFactor: Math.max(detourFactor, 1.45) }
           );
+          console.warn("[queue/suggest] ORS ใช้ไม่ได้ — ใช้ประมาณการระยะแบบระมัดระวัง (กันจับคู่ไกล)");
         }
         if (travelMin > maxPairMin) continue; // ไกลเกิน → ข้าม slot นี้
       }

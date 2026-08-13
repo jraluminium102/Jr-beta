@@ -219,6 +219,7 @@ export function QueueCalendarView({ week, entries, sales, avail, onEntryClick, o
                 const [y, mo, dd] = d.split("-").map(Number);
                 const dow = new Date(y, mo - 1, dd).getDay();
                 const isSun = dow === 0;
+                const dc = dayColor(d); // สีประจำวัน (แบ่งสีตามวัน)
                 const av = availIndex[s.id]?.[d];
                 const isFullLeave = av && (av.kind === "LEAVE_FULL" || av.kind === "HOLIDAY" || av.kind === "WFH");
                 const isAMLeave = av && ((av.kind === "LEAVE_HALF" && av.half === "AM") || av.kind === "OFFICE_HALF");
@@ -235,16 +236,16 @@ export function QueueCalendarView({ week, entries, sales, avail, onEntryClick, o
 
                 return (
                   <>
-                    {/* Slot เช้า 10:00 */}
+                    {/* Slot เช้า 10:00 — พื้นหลังสีประจำวัน */}
                     <td key={`${s.id}-${d}-am`}
-                      className={`px-1 py-1 align-top border-r border-gray-100/70 ${isSun || isFullLeave || isAMLeave ? "opacity-40 bg-gray-100/60" : "bg-sky-50/30"}`}>
+                      className={`px-1 py-1 align-top border-r border-gray-100/70 ${isSun || isFullLeave || isAMLeave ? "opacity-40 bg-gray-100/60" : (dc?.row ?? "bg-sky-50/30")}`}>
                       {!isSun && !isFullLeave && !isAMLeave
                         ? <SlotCell entries={grid[s.id]?.[d]?.["10:00"] ?? []} office={isOfficeAM} onClick={onEntryClick} onAdd={openMenu("AM", "10:00", isOfficeAM)} />
                         : <LeaveTag av={av} isSun={isSun} />}
                     </td>
-                    {/* Slot บ่าย 14:00 */}
+                    {/* Slot บ่าย 14:00 — สีประจำวันเดียวกัน (เข้มกว่านิดเพื่อแยกเช้า/บ่าย) */}
                     <td key={`${s.id}-${d}-pm`}
-                      className={`px-1 py-1 align-top border-r border-gray-100/30 ${isSun || isFullLeave || isPMLeave ? "opacity-40 bg-gray-100/60" : "bg-amber-50/30"}`}>
+                      className={`px-1 py-1 align-top border-r-2 border-gray-200/70 ${isSun || isFullLeave || isPMLeave ? "opacity-40 bg-gray-100/60" : (dc?.row ?? "bg-amber-50/30")}`}>
                       {!isSun && !isFullLeave && !isPMLeave
                         ? <SlotCell entries={grid[s.id]?.[d]?.["14:00"] ?? []} office={isOfficePM} onClick={onEntryClick} onAdd={openMenu("PM", "14:00", isOfficePM)} />
                         : <LeaveTag av={av} isSun={isSun} />}
