@@ -183,6 +183,52 @@ function initForm(e?: QueueEntry | null): FormState {
   };
 }
 
+// แยกข้อมูลจาก "ข้อความที่วางมา" → ชื่อ/เบอร์/ที่อยู่/ลิงก์แมพ/ช่องทาง (heuristic · เว้นวันนัดให้กรอกเอง)
+type ParsedContact = { customer_name?: string; tel?: string; address?: string; location_url?: string; contact_channel?: string; line_contact?: string };
+export function parseContactBlob(text: string): ParsedContact {
+  const out: ParsedContact = {};
+  const urlRe = /(https?:\/\/[^\s]+)/i;
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  if (!lines.length) return out;
+
+  // ลิงก์แมพ (เอาลิงก์แรก · ถ้าเป็นลิงก์แมพยิ่งชัวร์)
+  let mapUrl = "";
+  for (const l of lines) { const m = l.match(urlRe); if (m) { mapUrl = m[1]; if (/goo\.gl|maps|map/i.test(m[1])) break; } }
+  if (mapUrl) out.location_url = mapUrl;
+
+  // เบอร์โทร (0xx-xxx-xxxx / 0xxxxxxxxx) — ข้ามบรรทัดที่เป็นลิงก์
+  const phoneRe = /0\d[\d\s\-]{7,11}\d/;
+  let phone = "";
+  for (const l of lines) { if (urlRe.test(l)) continue; const m = l.match(phoneRe); if (m) { phone = m[0].trim(); break; } }
+  if (phone) out.tel = phone;
+
+  // ช่องทาง + ชื่อ/handle (FB / Line / IG) — คิวรองรับ LINE/FB (IG เก็บชื่อไว้ ไม่เปลี่ยนช่อง)
+  const chanRe = /^(fb|facebook|เฟส\S*|เฟซ\S*|line|ไลน์|ig|instagram|อินสตา\S*)\b[\s:：]*(.*)$/i;
+  for (const l of lines) {
+    const m = l.match(chanRe); if (!m) continue;
+    const key = m[1].toLowerCase();
+    if (/fb|face|เฟส|เฟซ/.test(key)) out.contact_channel = "FB";
+    else if (/line|ไลน์/.test(key)) out.contact_channel = "LINE";
+    const handle = (m[2] ?? "").trim();
+    if (handle) out.line_contact = handle;
+    break;
+  }
+
+  // ที่อยู่ — บรรทัดที่มีคำบอกที่อยู่ (ไม่ใช่ลิงก์/ช่องทาง/บรรทัดเบอร์)
+  const addrRe = /(เลขที่|หมู่ ?\d|หมู่บ้าน|ซอย|ถ\.|ถนน|ตำบล|ต\.|อำเภอ|อ\.|จังหวัด|จ\.|แขวง|เขต|กรุงเทพ|\d{5})/;
+  const addrLines = lines.filter((l) => !urlRe.test(l) && !chanRe.test(l) && !(phone && l.includes(phone)) && addrRe.test(l));
+  if (addrLines.length) out.address = addrLines.join(" ");
+
+  // ชื่อลูกค้า — บรรทัดที่มีเบอร์ (ตัดเบอร์ออก) หรือบรรทัดแรกที่ไม่ใช่ที่อยู่/ลิงก์/ช่องทาง
+  let name = "";
+  if (phone) { const pl = lines.find((l) => l.includes(phone)); if (pl) name = pl.replace(phone, "").replace(/[·|,]/g, " ").trim(); }
+  if (!name) name = lines.find((l) => !urlRe.test(l) && !chanRe.test(l) && !addrRe.test(l)) ?? "";
+  name = name.replace(/^[·|,\-–\s]+|[·|,\-–\s]+$/g, "").trim();
+  if (name) out.customer_name = name;
+
+  return out;
+}
+
 export function QueueModal({
   entry, preset, salesList, onClose, onSaved, readOnly = false, contextMonth,
 }: {
@@ -211,6 +257,29 @@ export function QueueModal({
   const [err, setErr] = useState("");
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setF((s) => ({ ...s, [k]: v }));
+
+  // ---- วางข้อความแล้วเติมข้อมูลอัตโนมัติ ----
+  const [pasteText, setPasteText] = useState("");
+  const [pasteMsg, setPasteMsg] = useState("");
+  function applyPaste() {
+    const p = parseContactBlob(pasteText);
+    const got: string[] = [];
+    setF((s) => ({
+      ...s,
+      customer_name: p.customer_name ?? s.customer_name,
+      tel: p.tel ? (formatThaiPhone(p.tel) || p.tel) : s.tel,
+      address: p.address ?? s.address,
+      location_url: p.location_url ?? s.location_url,
+      contact_channel: p.contact_channel ?? s.contact_channel,
+      line_contact: p.line_contact ?? s.line_contact,
+    }));
+    if (p.customer_name) got.push("ชื่อ");
+    if (p.tel) got.push("เบอร์");
+    if (p.address) got.push("ที่อยู่");
+    if (p.location_url) got.push("ลิงก์แมพ");
+    if (p.contact_channel || p.line_contact) got.push("ช่องทาง");
+    setPasteMsg(got.length ? `เติมให้แล้ว: ${got.join(" · ")} — ตรวจ/แก้ได้ก่อนบันทึก (วันนัดกรอกเอง)` : "อ่านไม่ออก — ลองวางใหม่ หรือกรอกเอง");
+  }
 
   const [resolved, setResolved] = useState<{ lat: number; lng: number } | null>(null);
   const [resolving, setResolving] = useState(false);
@@ -1041,6 +1110,34 @@ export function QueueModal({
         </div>
 
         <fieldset disabled={readOnly} className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm border-0 p-0 m-0 min-w-0">
+
+          {/* ---- วางข้อความ → เติมข้อมูลอัตโนมัติ ---- */}
+          {!readOnly && (
+            <div className="sm:col-span-2">
+              <details open={!editing} className="rounded-xl border border-brand/20 bg-brand/5">
+                <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-brand-dark flex items-center gap-1.5">
+                  <Icon name="clipboard" size={15} /> วางข้อความลูกค้า → เติมข้อมูลให้อัตโนมัติ
+                </summary>
+                <div className="px-3 pb-3 space-y-2">
+                  <textarea
+                    value={pasteText}
+                    onChange={(e) => setPasteText(e.target.value)}
+                    rows={4}
+                    placeholder={"วางทั้งก้อนได้เลย เช่น\nK.Avinash 082-271-4312\nเลขที่ 144/160 ... ตำบลกะทู้ อำเภอกะทู้ ภูเก็ต 83120\nhttps://maps.app.goo.gl/...\nFB Avinash Pednekar"}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-ink outline-none focus:ring-2 focus:ring-brand/40"
+                  />
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button type="button" onClick={applyPaste} disabled={!pasteText.trim()}
+                      className="press inline-flex items-center gap-1.5 rounded-lg bg-brand text-white px-3.5 py-2 text-sm font-semibold disabled:opacity-40">
+                      <Icon name="check" size={15} /> เติมข้อมูลให้อัตโนมัติ
+                    </button>
+                    {pasteText && <button type="button" onClick={() => { setPasteText(""); setPasteMsg(""); }} className="press text-xs text-ink-3 hover:text-ink">ล้าง</button>}
+                    {pasteMsg && <span className="text-[11px] text-emerald-700">{pasteMsg}</span>}
+                  </div>
+                </div>
+              </details>
+            </div>
+          )}
 
           {/* ---- ประเภทงาน (ย้ายขึ้นก่อน เพื่อ jobCat เคลียร์แบบ เปลี่ยน UI ลูกค้า) ---- */}
           <Field label="ประเภทงาน">
