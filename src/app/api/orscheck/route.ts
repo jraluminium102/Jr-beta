@@ -11,9 +11,8 @@ export async function GET(req: Request) {
   if (url.searchParams.get("t") !== TOKEN) return new Response("not found", { status: 404 });
 
   const keyPresent = !!process.env.ORS_API_KEY;
-  // สองจุดในกรุงเทพ ~ระยะกลาง (ออฟฟิศ JR พุทธบูชา → เซ็นทรัลเวิลด์)
-  const a = { lat: 13.6466, lng: 100.4936 };
-  const b = { lat: 13.7466, lng: 100.5396 };
+  const a = { lat: 13.6466, lng: 100.4936 };  // ออฟฟิศ JR พุทธบูชา
+  const b = { lat: 13.7466, lng: 100.5396 };  // เซ็นทรัลเวิลด์
 
   const t0 = Date.now();
   const orsMin = await drivingMinutes(a, b);
@@ -22,9 +21,9 @@ export async function GET(req: Request) {
 
   return Response.json({
     key_present: keyPresent,
-    ors_minutes: orsMin,                                   // null = ORS ใช้ไม่ได้ (fallback)
+    ors_minutes: orsMin,
     ors_working: orsMin != null,
-    haversine_minutes_40kmh: haversineMin,                 // เทียบให้เห็นว่าเส้นตรงประเมินต่ำแค่ไหน
+    haversine_minutes_40kmh: haversineMin,
     call_ms: ms,
   });
 }
