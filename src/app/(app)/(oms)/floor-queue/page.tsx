@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "@/lib/api";
 import { Spinner, EmptyState } from "@/components/ui/primitives";
@@ -40,6 +40,23 @@ function thaiDateFull(iso: string): string {
 
 const kindEmoji = (k: FloorQueueKind) => (k === "assess" ? "🟣" : "🔴");
 
+// textarea โตอัตโนมัติตามข้อความ — แก้ปัญหา "พิมพ์ยาวเกินช่องแล้วมองไม่เห็น" (ข้อความห่อบรรทัด เห็นครบ)
+function GrowText(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  const grow = () => { const el = ref.current; if (el) { el.style.height = "auto"; el.style.height = `${Math.min(el.scrollHeight, 240)}px`; } };
+  useEffect(() => { grow(); }, []);
+  useEffect(() => { grow(); }, [props.value]);
+  return (
+    <textarea
+      ref={ref}
+      rows={1}
+      {...props}
+      onInput={(e) => { grow(); props.onInput?.(e); }}
+      className={`${props.className ?? ""} resize-none overflow-hidden leading-snug`}
+    />
+  );
+}
+
 // ── page ──────────────────────────────────────────────────────────────────────
 
 export default function FloorQueuePage() {
@@ -57,8 +74,29 @@ export default function FloorQueuePage() {
   const [copied, setCopied] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [search, setSearch] = useState("");
+  const [justAddedId, setJustAddedId] = useState<string | null>(null);
+  const [showTop, setShowTop] = useState(false);
 
   const invalidate = () => qc.invalidateQueries({ queryKey: key });
+
+  // ปุ่มเลื่อนขึ้นบนสุด — โผล่เมื่อเลื่อนลงเยอะ
+  useEffect(() => {
+    const onScroll = () => setShowTop(window.scrollY > 400);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // บันทึกคิวใหม่แล้ว → เลื่อนไปหา + ไฮไลต์คิวนั้น
+  useEffect(() => {
+    if (!justAddedId) return;
+    const t = setTimeout(() => {
+      document.getElementById(`fq-${justAddedId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 150);
+    const clr = setTimeout(() => setJustAddedId(null), 2800);
+    return () => { clearTimeout(t); clearTimeout(clr); };
+  }, [justAddedId, entries]);
 
   async function patch(id: string, partial: Record<string, unknown>) {
     try {
@@ -96,14 +134,19 @@ export default function FloorQueuePage() {
     } catch { alert("คัดลอกไม่สำเร็จ ลองใหม่"); }
   }
 
+  // กรองด้วยคำค้น (ชื่อลูกค้า / รายละเอียดงาน)
+  const q = search.trim().toLowerCase();
+  const matchQ = (e: QueueEntry) =>
+    !q || (e.customer_name ?? "").toLowerCase().includes(q) || (e.work_desc ?? "").toLowerCase().includes(q);
+
   // จัดกลุ่ม scheduled → เดือน → วันที่ (เรียงน้อยไปมาก)
   const scheduled = useMemo(
-    () => entries.filter((e) => e.bucket === "scheduled" && e.scheduled_date)
+    () => entries.filter((e) => e.bucket === "scheduled" && e.scheduled_date && matchQ(e))
       .slice().sort((a, b) => (a.scheduled_date! < b.scheduled_date! ? -1 : a.scheduled_date! > b.scheduled_date! ? 1 : (a.sort_order ?? 0) - (b.sort_order ?? 0))),
-    [entries],
+    [entries, q],
   );
-  const afterJr = useMemo(() => entries.filter((e) => e.bucket === "after_jr"), [entries]);
-  const depositWait = useMemo(() => entries.filter((e) => e.bucket === "deposit_wait"), [entries]);
+  const afterJr = useMemo(() => entries.filter((e) => e.bucket === "after_jr" && matchQ(e)), [entries, q]);
+  const depositWait = useMemo(() => entries.filter((e) => e.bucket === "deposit_wait" && matchQ(e)), [entries, q]);
 
   const monthGroups = useMemo(() => {
     const byMonth = new Map<string, QueueEntry[]>();
@@ -146,7 +189,7 @@ export default function FloorQueuePage() {
           <span className="w-9 h-9 rounded-xl inline-flex items-center justify-center bg-amber-500/25 border border-amber-300/30 text-amber-100">
             <Icon name="ruler" size={18} />
           </span>
-          จัดคิวงานพื้น
+          <span className="text-[22px] leading-none" aria-hidden="true">🧱👷</span> จัดคิวงานพื้น
           {savedFlash && <span className="text-[12px] font-normal text-emerald-200 flex items-center gap-1"><Icon name="check" size={12} /> บันทึกแล้ว</span>}
         </h1>
         <div className="flex items-center gap-2 flex-wrap">
@@ -173,6 +216,17 @@ export default function FloorQueuePage() {
         </div>
       </div>
 
+      {/* ค้นหาชื่อลูกค้า */}
+      <div className="relative max-w-sm">
+        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/45 pointer-events-none"><Icon name="search" size={15} /></span>
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ค้นหาชื่อลูกค้า / งาน…"
+          className={`${fieldCls} pl-8 pr-8`} aria-label="ค้นหาชื่อลูกค้า" />
+        {search && (
+          <button onClick={() => setSearch("")} aria-label="ล้างคำค้น"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-white/45 hover:text-white"><Icon name="close" size={14} /></button>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* คิวที่ลงวันแล้ว */}
         <div className="lg:col-span-2 space-y-4">
@@ -196,7 +250,7 @@ export default function FloorQueuePage() {
                         </div>
                         <div className="space-y-1.5">
                           {dayEntries.map((e) => (
-                            <ScheduledRow key={e.id} entry={e} canWrite={canWrite} onPatch={patch} onDelete={remove} />
+                            <ScheduledRow key={e.id} entry={e} canWrite={canWrite} onPatch={patch} onDelete={remove} highlight={e.id === justAddedId} />
                           ))}
                         </div>
                       </div>
@@ -210,13 +264,21 @@ export default function FloorQueuePage() {
 
         {/* 2 ถังท้าย */}
         <div className="space-y-4">
-          <BucketPanel title="รอต่อหลัง JR เสร็จ" entries={afterJr} canWrite={canWrite} onPatch={patch} onDelete={remove} otherBucket="deposit_wait" />
-          <BucketPanel title="มัดจำแล้ว รอลงคิว" entries={depositWait} canWrite={canWrite} onPatch={patch} onDelete={remove} otherBucket="after_jr" />
+          <BucketPanel title="รอต่อหลัง JR เสร็จ" entries={afterJr} canWrite={canWrite} onPatch={patch} onDelete={remove} otherBucket="deposit_wait" highlightId={justAddedId} />
+          <BucketPanel title="มัดจำแล้ว รอลงคิว" entries={depositWait} canWrite={canWrite} onPatch={patch} onDelete={remove} otherBucket="after_jr" highlightId={justAddedId} />
         </div>
       </div>
 
       {showAdd && (
-        <AddQueueModal onClose={() => setShowAdd(false)} onSaved={() => { setShowAdd(false); invalidate(); }} />
+        <AddQueueModal onClose={() => setShowAdd(false)} onSaved={(newId) => { setShowAdd(false); setJustAddedId(newId ?? null); invalidate(); }} />
+      )}
+
+      {/* ปุ่มเลื่อนขึ้นบนสุด */}
+      {showTop && (
+        <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} aria-label="เลื่อนขึ้นบนสุด"
+          className="fixed bottom-5 right-5 z-40 w-12 h-12 rounded-full bg-white text-[#1F4E78] shadow-lg flex items-center justify-center hover:bg-white/90 focusable pressable">
+          <Icon name="chevron-up" size={22} />
+        </button>
       )}
     </div>
   );
@@ -224,18 +286,19 @@ export default function FloorQueuePage() {
 
 // ── แถวคิวที่ลงวันแล้ว — บรรทัดเดียวอ่านง่าย กดขยายเพื่อแก้ ──────────────────
 
-function ScheduledRow({ entry, canWrite, onPatch, onDelete }: {
+function ScheduledRow({ entry, canWrite, onPatch, onDelete, highlight }: {
   entry: QueueEntry;
   canWrite: boolean;
   onPatch: (id: string, p: Record<string, unknown>) => void;
   onDelete: (id: string) => void;
+  highlight?: boolean;
 }) {
   const e = entry;
   const [expanded, setExpanded] = useState(false);
   const statusLabel = e.status !== "confirmed" ? FLOOR_QUEUE_STATUS_LABEL[e.status] : null;
 
   return (
-    <div className="rounded-xl glass-card border border-white/10 overflow-hidden">
+    <div id={`fq-${e.id}`} className={`rounded-xl glass-card border overflow-hidden transition-shadow ${highlight ? "border-emerald-300/70 ring-2 ring-emerald-300/60" : "border-white/10"}`}>
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
@@ -258,10 +321,10 @@ function ScheduledRow({ entry, canWrite, onPatch, onDelete }: {
       {expanded && (
         <div className="px-3 pb-3 pt-1 border-t border-white/10 space-y-2">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <input defaultValue={e.customer_name} disabled={!canWrite} placeholder="ชื่อลูกค้า"
+            <GrowText defaultValue={e.customer_name} disabled={!canWrite} placeholder="ชื่อลูกค้า"
               onBlur={(ev) => ev.target.value.trim() && ev.target.value !== e.customer_name && onPatch(e.id, { customer_name: ev.target.value.trim() })}
               className={fieldCls} aria-label="ชื่อลูกค้า" />
-            <input list="work-types" defaultValue={e.work_desc} disabled={!canWrite} placeholder="รายละเอียดงาน เช่น เริ่มงาน, ต่องานฝ้า"
+            <GrowText defaultValue={e.work_desc} disabled={!canWrite} placeholder="รายละเอียดงาน เช่น เริ่มงาน, ต่องานฝ้า"
               onBlur={(ev) => ev.target.value !== e.work_desc && onPatch(e.id, { work_desc: ev.target.value })}
               className={fieldCls} aria-label="รายละเอียดงาน" />
           </div>
@@ -293,10 +356,10 @@ function ScheduledRow({ entry, canWrite, onPatch, onDelete }: {
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <input defaultValue={e.duration_note} disabled={!canWrite} placeholder="ระยะเวลาทำงาน เช่น ทำ3วัน"
+            <GrowText defaultValue={e.duration_note} disabled={!canWrite} placeholder="ระยะเวลาทำงาน เช่น ทำ3วัน"
               onBlur={(ev) => ev.target.value !== e.duration_note && onPatch(e.id, { duration_note: ev.target.value })}
               className={fieldCls} aria-label="ระยะเวลาทำงาน" />
-            <input defaultValue={e.extra_note} disabled={!canWrite} placeholder="โน้ตภายใน (ไม่ขึ้นข้อความไลน์)"
+            <GrowText defaultValue={e.extra_note} disabled={!canWrite} placeholder="โน้ตภายใน (ไม่ขึ้นข้อความไลน์)"
               onBlur={(ev) => ev.target.value !== e.extra_note && onPatch(e.id, { extra_note: ev.target.value })}
               className={fieldCls} aria-label="โน้ตภายใน" />
           </div>
@@ -319,13 +382,14 @@ function ScheduledRow({ entry, canWrite, onPatch, onDelete }: {
 
 // ── ถังท้าย (ไม่มีวัน) ────────────────────────────────────────────────────────
 
-function BucketPanel({ title, entries, canWrite, onPatch, onDelete, otherBucket }: {
+function BucketPanel({ title, entries, canWrite, onPatch, onDelete, otherBucket, highlightId }: {
   title: string;
   entries: QueueEntry[];
   canWrite: boolean;
   onPatch: (id: string, p: Record<string, unknown>) => void;
   onDelete: (id: string) => void;
   otherBucket: FloorQueueBucket;
+  highlightId?: string | null;
 }) {
   const [setDateFor, setSetDateFor] = useState<string | null>(null);
   const [pendingDate, setPendingDate] = useState("");
@@ -341,7 +405,7 @@ function BucketPanel({ title, entries, canWrite, onPatch, onDelete, otherBucket 
           {entries.map((e) => {
             const expanded = expandedId === e.id;
             return (
-              <div key={e.id} className="rounded-xl bg-white/6 border border-white/10 overflow-hidden">
+              <div key={e.id} id={`fq-${e.id}`} className={`rounded-xl bg-white/6 border overflow-hidden transition-shadow ${highlightId === e.id ? "border-emerald-300/70 ring-2 ring-emerald-300/60" : "border-white/10"}`}>
                 <div className="flex items-center gap-1.5 pl-3 pr-1.5 py-1.5">
                   <button type="button" onClick={() => setExpandedId(expanded ? null : e.id)} aria-expanded={expanded}
                     className="focusable flex-1 min-w-0 text-left min-h-[40px] flex items-center py-1">
@@ -365,13 +429,13 @@ function BucketPanel({ title, entries, canWrite, onPatch, onDelete, otherBucket 
 
                 {expanded && (
                   <div className="px-3 pb-3 pt-0.5 border-t border-white/10 space-y-1.5">
-                    <input defaultValue={e.customer_name} disabled={!canWrite} placeholder="ชื่อลูกค้า"
+                    <GrowText defaultValue={e.customer_name} disabled={!canWrite} placeholder="ชื่อลูกค้า"
                       onBlur={(ev) => ev.target.value.trim() && ev.target.value !== e.customer_name && onPatch(e.id, { customer_name: ev.target.value.trim() })}
                       className={fieldCls} aria-label="ชื่อลูกค้า" />
-                    <input list="work-types" defaultValue={e.work_desc} disabled={!canWrite} placeholder="งาน (ถ้ามี) เช่น ต่องานเฟส2"
+                    <GrowText defaultValue={e.work_desc} disabled={!canWrite} placeholder="งาน (ถ้ามี) เช่น ต่องานเฟส2"
                       onBlur={(ev) => ev.target.value !== e.work_desc && onPatch(e.id, { work_desc: ev.target.value })}
                       className={fieldCls} aria-label="งาน" />
-                    <input defaultValue={e.extra_note} disabled={!canWrite} placeholder="โน้ตเสริม เช่น รอลูกค้าคอนเฟิร์ม"
+                    <GrowText defaultValue={e.extra_note} disabled={!canWrite} placeholder="โน้ตเสริม เช่น รอลูกค้าคอนเฟิร์ม"
                       onBlur={(ev) => ev.target.value !== e.extra_note && onPatch(e.id, { extra_note: ev.target.value })}
                       className={fieldCls} aria-label="โน้ตเสริม" />
                     {e.job?.job_code && <div className="text-[11px]" style={{ color: "var(--t-low)" }}>ผูกงาน: {e.job.job_code}</div>}
@@ -414,7 +478,7 @@ function BucketPanel({ title, entries, canWrite, onPatch, onDelete, otherBucket 
 
 type JobHit = { id: string; job_code: string | null; customer_name: string | null };
 
-function AddQueueModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+function AddQueueModal({ onClose, onSaved }: { onClose: () => void; onSaved: (newId?: string) => void }) {
   const [mode, setMode] = useState<"job" | "manual">("manual");
   const [q, setQ] = useState("");
   const [hits, setHits] = useState<JobHit[]>([]);
@@ -450,7 +514,7 @@ function AddQueueModal({ onClose, onSaved }: { onClose: () => void; onSaved: () 
     if (bucket === "scheduled" && !date) { setErr("กรุณาเลือกวันที่ (หรือเปลี่ยนไปลงถังแทน)"); return; }
     setBusy(true);
     try {
-      await api.post("/floor-queue", {
+      const r = await api.post<{ id: string }>("/floor-queue", {
         job_id: mode === "job" ? pickedJob?.id ?? null : null,
         customer_name: nameForSave,
         work_desc: workDesc.trim(),
@@ -461,7 +525,7 @@ function AddQueueModal({ onClose, onSaved }: { onClose: () => void; onSaved: () 
         start_time: time,
         kind,
       });
-      onSaved();
+      onSaved(r.data?.id);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "บันทึกไม่สำเร็จ");
       setBusy(false);
@@ -492,7 +556,7 @@ function AddQueueModal({ onClose, onSaved }: { onClose: () => void; onSaved: () 
         {mode === "manual" ? (
           <label className="block mb-3">
             <span className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>ชื่อลูกค้า</span>
-            <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="เช่น กนกวรรณ(ลพบุรี)"
+            <GrowText value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="เช่น กนกวรรณ(ลพบุรี)"
               className={fieldCls} aria-label="ชื่อลูกค้า" />
           </label>
         ) : (
@@ -564,14 +628,14 @@ function AddQueueModal({ onClose, onSaved }: { onClose: () => void; onSaved: () 
             </label>
             <label className="block col-span-2">
               <span className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>ระยะเวลาทำงาน (ถ้ามี)</span>
-              <input value={durationNote} onChange={(e) => setDurationNote(e.target.value)} placeholder="เช่น ทำ3วัน"
+              <GrowText value={durationNote} onChange={(e) => setDurationNote(e.target.value)} placeholder="เช่น ทำ3วัน"
                 className={fieldCls} aria-label="ระยะเวลาทำงาน" />
             </label>
           </div>
         ) : (
           <label className="block mb-3">
             <span className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>โน้ตเสริม (ถ้ามี)</span>
-            <input value={extraNote} onChange={(e) => setExtraNote(e.target.value)} placeholder="เช่น รอลูกค้าคอนเฟิร์มทำงาน"
+            <GrowText value={extraNote} onChange={(e) => setExtraNote(e.target.value)} placeholder="เช่น รอลูกค้าคอนเฟิร์มทำงาน"
               className={fieldCls} aria-label="โน้ตเสริม" />
           </label>
         )}
