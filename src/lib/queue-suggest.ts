@@ -8,6 +8,13 @@ import { drivingMinutes } from "@/lib/ors";
 
 type Sb = { from: (t: string) => any };
 
+// เซลล์ที่ให้ "เสนออัตโนมัติ" ได้เท่านั้น = ไล้ / แม็ก / บาส(ใต้) — เจ้าของกำหนด 13 ส.ค.69
+//   (เลือกเองใน dropdown ยังเลือกได้ทุกคน · จำกัดเฉพาะตอนระบบเลือกเซลล์ให้อัตโนมัติ)
+const AUTO_CODES = new Set(["lai", "mac", "bas"]);
+const AUTO_NAMES = new Set(["ไล้", "แม็ก", "บาส"]);
+const isAutoSales = (s: { code?: unknown; name?: unknown }) =>
+  AUTO_CODES.has(String(s.code)) || AUTO_NAMES.has(String(s.name).trim());
+
 const DOW_TH = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัส", "ศุกร์", "เสาร์"];
 const iso = (d: Date) =>
   `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
@@ -67,10 +74,12 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
 
   // R-Zone: filter by address province, or explicit sales_id
   if (body.sales_id) {
+    // เลือกเซลล์เองมา → ใช้คนนั้น (ไม่จำกัด allowlist — ถือว่าตั้งใจเลือก)
     sales = sales.filter((s) => s.id === body.sales_id);
   } else {
+    // เสนออัตโนมัติ → เฉพาะโซน + เฉพาะ ไล้/แม็ก/บาส
     const team = detectTeam(body.address, body.lat, body.lng);
-    sales = sales.filter((s) => s.team === team);
+    sales = sales.filter((s) => s.team === team && isAutoSales(s));
   }
   if (!sales.length) throw new HttpError(422, "ไม่มีเซลล์ที่ตรงเงื่อนไข/โซน");
 
