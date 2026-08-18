@@ -140,8 +140,11 @@ function L(i: number) {
   return String.fromCharCode(65 + i);
 }
 
+// key ใหม่ (React key + ใช้แยก pane ตอนแก้) — ไม่ซ้ำแม้ก๊อปหลายด้านรัว ๆ (มี Math.random)
+const newKey = () => Date.now() + Math.random();
+
 function freshPane(): Pane {
-  return { key: Date.now() + Math.random(), typeKey: "open_door", w: 0.9, h: 2.2, n: 1, addons: {} };
+  return { key: newKey(), typeKey: "open_door", w: 0.9, h: 2.2, n: 1, addons: {} };
 }
 function freshCol(): Col {
   return { key: Date.now() + Math.random(), pcs: [freshPane()] };
@@ -725,8 +728,47 @@ export default function RoomComposer({
     setSides((s) => [...s, freshGlassSide()]);
     setTab(sides.length);
   }
+  // ก๊อปด้าน (เจ้าของสั่ง 18 ส.ค.69) — ด้าน A/C มักเหมือนกัน (กลับซ้าย-ขวา) ก๊อปแล้วแก้ต่อเร็วกว่าทำใหม่
+  //   แทรกด้านใหม่ต่อท้ายด้านที่ก๊อป · re-key ทุก col/pane (กันชน React key + แก้ด้านนึงไปโดนอีกด้าน)
+  //   + เลื่อน sideColorOvr (map ผูกด้วย index) ให้ตรงตำแหน่งใหม่ + ก๊อป override ของด้านต้นทางไปด้านสำเนา
+  function copySide(i: number) {
+    const reKey = (cols?: Col[]) =>
+      cols?.map((c) => ({ ...c, key: newKey(), pcs: c.pcs.map((p) => ({ ...p, key: newKey() })) }));
+    setSides((s) => {
+      const cloned = JSON.parse(JSON.stringify(s[i])) as Side;
+      const c = cloned as { cols?: Col[]; stash?: SideStash };
+      if (Array.isArray(c.cols)) c.cols = reKey(c.cols);
+      if (c.stash) {
+        if (c.stash.glass) c.stash.glass = reKey(c.stash.glass);
+        if (c.stash.open) c.stash.open = reKey(c.stash.open);
+        if (c.stash.wall?.cols) c.stash.wall.cols = reKey(c.stash.wall.cols);
+      }
+      return [...s.slice(0, i + 1), cloned, ...s.slice(i + 1)];
+    });
+    // map ผูกด้วย index → sides หลังจุดแทรกขยับ +1 · ด้านสำเนา (i+1) รับ override ของด้านต้นทาง
+    setSideColorOvr((m) => {
+      const next: Record<number, { color: string; glass: string }> = {};
+      for (const [k, v] of Object.entries(m)) {
+        const idx = Number(k);
+        next[idx <= i ? idx : idx + 1] = v;
+      }
+      if (m[i]) next[i + 1] = { ...m[i] };
+      return next;
+    });
+    setTab(i + 1);
+  }
   function removeSide(i: number) {
     setSides((s) => s.filter((_, xi) => xi !== i));
+    // sideColorOvr ผูกด้วย index → ลบคีย์ของด้านที่ลบ + เลื่อนคีย์ด้านหลังลง 1 (เดิมไม่เลื่อน = สีไปโผล่ผิดด้าน)
+    setSideColorOvr((m) => {
+      const next: Record<number, { color: string; glass: string }> = {};
+      for (const [k, v] of Object.entries(m)) {
+        const idx = Number(k);
+        if (idx === i) continue;
+        next[idx < i ? idx : idx - 1] = v;
+      }
+      return next;
+    });
     setTab((t) => Math.max(0, Math.min(t, sides.length - 2)));
   }
   function setSideKind(i: number, kind: Side["kind"]) {
@@ -847,11 +889,16 @@ export default function RoomComposer({
           <div className="rounded-xl border border-black/5 bg-white/60 p-3 space-y-2.5">
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-ink-2">ด้าน {L(i)}</span>
-              {sides.length > 1 && (
-                <button type="button" onClick={() => removeSide(i)} className="press text-xs text-red-600 flex items-center gap-1 min-h-[36px]">
-                  <Icon name="trash" size={13} /> ลบด้าน
+              <div className="flex items-center gap-3">
+                <button type="button" onClick={() => copySide(i)} className="press text-xs text-brand flex items-center gap-1 min-h-[36px]" title="ก๊อปด้านนี้เป็นด้านใหม่ (แล้วแก้ต่อได้)">
+                  <Icon name="copy" size={13} /> ก๊อปด้านนี้
                 </button>
-              )}
+                {sides.length > 1 && (
+                  <button type="button" onClick={() => removeSide(i)} className="press text-xs text-red-600 flex items-center gap-1 min-h-[36px]">
+                    <Icon name="trash" size={13} /> ลบด้าน
+                  </button>
+                )}
+              </div>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {([["glass", "กระจก/บาน"], ["wall", "ผนัง"], ["open", "เปิดโล่ง"]] as [Side["kind"], string][]).map(([k, l]) => (
