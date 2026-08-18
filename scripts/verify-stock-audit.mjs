@@ -9,7 +9,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { auditStockLink, bumpTest, STATUS_LABEL } from "../src/lib/calculator40/stock-audit.ts";
+import { auditStockLink, auditByProduct, bumpTest, STATUS_LABEL } from "../src/lib/calculator40/stock-audit.ts";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PB = JSON.parse(fs.readFileSync(path.join(ROOT, "src/lib/calculator40/pricebook.json"), "utf8"));
@@ -86,6 +86,22 @@ console.log("\n═══ ⑤ ทดสอบเด้ง — ขึ้นเร�
   ok("ขึ้น 0% แล้วต้องไม่มีรุ่นไหนขยับเลย", bumpTest(PB, 0).every((x) => !x.moved), "");
 }
 
+console.log("\n═══ ⑤b สรุปรายรุ่น — มุมหลักที่เจ้าของใช้ (ไม่ใช่มุมหมวดวัสดุ) ═══");
+{
+  const prods = auditByProduct(auditStockLink([], PB), bumpTest(PB, 10));
+  ok("ออกครบทุกรุ่นในเครื่องคิดราคา", prods.length > 40, String(prods.length));
+  ok("เรียงรุ่นที่ต้องแก้ก่อนขึ้นบนสุด", prods[0]?.status === "ไม่ผูกเลย", prods[0]?.status ?? "");
+  const pc = prods.find((p) => p.id === "pcdoor");
+  ok("PC Door: อลูไม่มีรหัสทั้ง 7 บรรทัด → รายงาน 0/7", pc?.aluLinked === 0 && pc?.aluTotal === 7, JSON.stringify(pc));
+  ok("PC Door: บอกชื่อบรรทัดที่ไม่มีรหัสมาด้วย", (pc?.aluNoCode?.length ?? 0) === 7, String(pc?.aluNoCode?.length));
+  const solid = prods.find((p) => p.id === "bansolid");
+  ok("บานโซลิด: อลูมีรหัสครบ (ไม่มีบรรทัดตกหล่น)", solid?.aluTotal === 7 && solid?.aluNoCode.length === 0, JSON.stringify(solid));
+  ok("รุ่นที่ไม่มีรายการวัสดุเลย แยกสถานะไว้ต่างหาก", prods.some((p) => p.status === "ไม่มีรายการวัสดุ"), "");
+  ok("ติดผลทดสอบเด้งมาให้ทุกรุ่นที่คิดราคาออก", prods.filter((p) => p.moved !== null).length > 30, "");
+  ok("นับเฉพาะบรรทัดของรุ่นนั้น ไม่ปนรุ่นอื่น",
+    prods.every((p) => p.aluLinked <= p.aluTotal && p.hwLinked <= p.hwTotal), "");
+}
+
 console.log("\n═══ ⑥ หน้าจอต่อสายครบไหม ═══");
 {
   const p = fs.readFileSync(path.join(ROOT, "src/app/(app)/calculator40/stock-audit/page.tsx"), "utf8");
@@ -99,6 +115,10 @@ console.log("\n═══ ⑥ หน้าจอต่อสายครบไห
   const cc = fs.readFileSync(path.join(ROOT, "src/components/Calculator40Client.tsx"), "utf8");
   ok("มีทางเข้าจากหน้าคิดราคา", /calculator40\/stock-audit/.test(cc), "");
   ok("ป้ายสถานะครบทุกแบบ", Object.keys(STATUS_LABEL).length === 6, "");
+  ok("ค่าตั้งต้นของหน้าคือมุม 'รายรุ่น'", c.includes('useState<"product" | "item">("product")'), "");
+  ok("มีตารางรายรุ่นจริง", c.includes("รายรุ่น — รุ่นไหนผูกสโตร์ครบ"), "");
+  ok("โชว์บรรทัดอลูที่ไม่มีรหัสในตารางรายรุ่น", c.includes("p.aluNoCode.join"), "");
+  ok("สลับไปดูรายวัสดุทีละบรรทัดได้", c.includes("ดูรายวัสดุทีละบรรทัด"), "");
 }
 
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
