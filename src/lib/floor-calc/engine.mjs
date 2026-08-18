@@ -27,9 +27,13 @@ export const MIN_SPAN = 1;     // เข็มห่างกันต่ำก�
 
 /** ราคาต่อหน่วยส่วนโครงสร้าง — ตรงกับ "ประเมินราคาเบื้องต้นงานพื้นอัพเดท.xlsx" ชีต "ราคาอ้างอิง" */
 export const RATE = {
-  dig: 2000,      // งานขุด /หลุม
+  dig: 2000,      // งานขุด/ตัดหัวเข็ม /ต้น (=หลุม)
   footing: 2500,  // งานฟุตติ้ง /หลุม
-  beam: 2400,     // งานคาน /เมตร
+  // งานคาน — เจ้าของแยกเป็น "ค่าวัสดุ + ค่าแรง" (18 ส.ค.69) · เดิมเหมารวม 2,400/ม.
+  //   ตอนนี้ = 1,200 + 1,000 = 2,200/ม. (ตรงกับใบเสนอจริงคุณพิทยารัตน์ที่ใช้ 2,200)
+  beam_material: 1200, // ค่าวัสดุคาน /เมตร
+  beam_labor: 1000,    // ค่าแรงคาน /เมตร
+  get beam() { return this.beam_material + this.beam_labor; }, // รวม /เมตร (2,200)
 };
 
 export const PILE_TYPES = [
@@ -176,22 +180,28 @@ export function draftItems(plan, pileKey, opts) {
   const pile = pileType(pileKey);
   const o = { sand: true, floor: true, tile: true, ...(opts ?? {}) };
   const existing = !!pile.existing;
+  // จำนวนเข็ม — ยึด opts.piles ถ้าเจ้าของกรอกแก้เอง (นับของจริงหน้างาน) ไม่งั้นใช้ที่ระบบคิดจากผัง
+  const nOverride = Number(o.piles);
+  const piles = Number.isFinite(nOverride) && nOverride > 0 ? Math.round(nOverride) : plan.piles;
   const out = [
     // ลูกค้าลงเข็มไว้เองแล้ว → ไม่มีบรรทัด "ค่าตอกเข็ม" (ใส่บรรทัด 0 บาทบนใบดูแปลก)
-    ...(existing ? [] : [mk(`งานตอกเข็ม${pile.label}`, plan.piles, "ต้น", pile.price, "auto", pile.price, null)]),
+    ...(existing ? [] : [mk(`งานตอกเข็ม${pile.label}`, piles, "ต้น", pile.price, "auto", pile.price, null)]),
+    // ข้อ 1 — ปริมาณ = จำนวนต้น/หลุม · ค่าแรง 2,000/ต้น (เจ้าของสั่ง 18 ส.ค.69 · เดิมเหมา 1 งาน)
     mk(
       existing
-        ? `งานขุดหลุมตัดหัวเข็มเดิม ${plan.piles} ต้น (ลูกค้าลงเข็มไว้แล้ว)`
-        : `งานขุดหลุมตัดหัวเข็ม ${plan.piles} หลุม`,
-      1, "งาน", plan.piles * RATE.dig, "auto", null, plan.piles * RATE.dig,
+        ? "งานขุดหลุมตัดหัวเข็มเดิม (ลูกค้าลงเข็มไว้แล้ว)"
+        : "งานขุดหลุมตัดหัวเข็ม",
+      piles, existing ? "ต้น" : "หลุม", RATE.dig, "auto", null, RATE.dig,
     ),
+    // ข้อ 2 — ปริมาณ = จำนวนหลุม · ค่าแรง 2,500/หลุม (เดิมเหมา 1 งาน)
     mk(
-      `งานผูกเหล็กเข้าแบบเทฟุตติ้ง ขนาด 50×50×50 ซม. ใช้เหล็ก DB12 mm. ${plan.piles} หลุม ใช้ปูนคอนกรีตกำลังอัด 280 ksc`,
-      1, "งาน", plan.piles * RATE.footing, "auto", null, plan.piles * RATE.footing,
+      "งานผูกเหล็กเข้าแบบเทฟุตติ้ง ขนาด 50×50×50 ซม. ใช้เหล็ก DB12 mm. ใช้ปูนคอนกรีตกำลังอัด 280 ksc",
+      piles, "หลุม", RATE.footing, "auto", null, RATE.footing,
     ),
+    // ข้อ 3 — คาน แยกค่าวัสดุ 1,200 + ค่าแรง 1,000 /เมตร (เดิมเหมารวม 2,400)
     mk(
       "งานผูกเหล็กเข้าแบบเทคาน ขนาด 20×40 ซม. ใช้เหล็ก DB12 mm. ใช้ปูนคอนกรีตกำลังอัด 280 ksc",
-      plan.beamLen, "เมตร", RATE.beam, "auto",
+      plan.beamLen, "เมตร", RATE.beam, "auto", RATE.beam_material, RATE.beam_labor,
     ),
   ];
   if (o.sand) out.push(mk("งานปรับพื้นอัดทราย", 1, "งาน", suggest.sand(plan.area), "suggest", null, suggest.sand(plan.area)));

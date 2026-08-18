@@ -82,7 +82,7 @@ for (const [label, got, want] of checks) {
   if (got === want) console.log(`  ✅ ${label.padEnd(16)} ${got.toLocaleString().padStart(8)}`);
   else bad(`${label} → ${got.toLocaleString()} (ใบจริง ${want.toLocaleString()})`);
 }
-console.log(`  ℹ️  คาน: ระบบใช้ ${RATE.beam.toLocaleString()}/ม. ตาม Excel (ใบจริงใช้ 2,200 — เจ้าของสั่ง "2400 ตามเอกเซล")`);
+console.log(`  ℹ️  คาน: ระบบใช้ ${RATE.beam.toLocaleString()}/ม. = วัสดุ ${RATE.beam_material.toLocaleString()} + แรง ${RATE.beam_labor.toLocaleString()} (เจ้าของแยกวัสดุ/แรง 18 ส.ค.69 · ตรงใบจริงคุณพิทยารัตน์ที่ใช้ 2,200)`);
 
 // ═══ ④ ค่าเริ่มต้นงานเหมา ไล่ระดับถูกทาง ═══
 console.log("\n═══ ④ ค่าเริ่มต้นงานเหมา — พื้นที่เล็กต้องแพงกว่า (ต่อ ตร.ม.) ═══");
@@ -128,19 +128,20 @@ else bad("ทราย ต่อ ตร.ม. ไม่ลดลงตามพ�
   else bad(`รื้อสกัดไม่ตรงเรนจ์: ${wrong.map(([a, w]) => `${a} ตร.ม. ได้ ${suggest.demolish(a).toLocaleString()} (ต้อง ${w.toLocaleString()})`).join(" · ")}`);
 }
 
-// ═══ ④b เคสตัวอย่างในไฟล์ต้องได้ยอดเท่ากันเป๊ะ (จุดยึดเดียวที่มีตัวเลขจริงจากเจ้าของ) ═══
-//   ชีต "ตัวอย่างการคิดราคา" ใน ประเมินราคาเบื้องต้นงานพื้นอัพเดท.xlsx
-//   1.8×3.5 ม. (6.3 ตร.ม.) · เข็ม I18 4 ต้น · ขุด/ฐานราก 4 · คาน 10.6 ม. · ทราย 7,000 · พื้น+กระเบื้อง
-//   รวม 108,930 · ถ้ามีผนังปูน (+1,000/ตร.ม.) = 115,230
-console.log("\n═══ ④b เคสตัวอย่างในไฟล์ (1.8×3.5 = 108,930) ═══");
+// ═══ ④b เคสตัวอย่างในไฟล์ 1.8×3.5 — ยอดต้องนิ่ง (คุม regression) ═══
+//   ชีต "ตัวอย่างการคิดราคา" ใน ประเมินราคาเบื้องต้นงานพื้นอัพเดท.xlsx: เดิม 108,930 (คาน 2,400/ม.)
+//   ⚠ 18 ส.ค.69 เจ้าของแยกคานเป็น วัสดุ 1,200 + แรง 1,000 = 2,200/ม. → คาน 10.6 ม. ลดลง 200×10.6 = 2,120
+//   ยอดใหม่ = 108,930 − 2,120 = 106,810 (ถ้ากลับไปคาน 2,400 ต้องได้ 108,930 เท่าเดิม)
+console.log("\n═══ ④b เคสตัวอย่างในไฟล์ (1.8×3.5 = 106,810 · คานใหม่ 2,200/ม.) ═══");
 {
   const items = draftItems(planFloor(1.8, 3.5), "i18", { tile: true, sand: true, floor: true });
   const got = Math.round(sumItems(items));
-  if (got === 108930) console.log(`  ✅ ยอดรวมตรงชีตตัวอย่างเป๊ะ = ${got.toLocaleString()}`);
-  else bad(`ยอดเคสตัวอย่าง = ${got.toLocaleString()} (ชีตว่า 108,930 — ต่าง ${(got - 108930).toLocaleString()})`);
+  const WANT = 106810; // = 108,930 − (2,400−2,200)×10.6 ม.
+  if (got === WANT) console.log(`  ✅ ยอดรวมนิ่งตามคานใหม่ = ${got.toLocaleString()} (เดิม 108,930 ที่คาน 2,400)`);
+  else bad(`ยอดเคสตัวอย่าง = ${got.toLocaleString()} (ต้อง ${WANT.toLocaleString()} — ต่าง ${(got - WANT).toLocaleString()})`);
   const wall = got + Math.round(1000 * 6.3);
-  if (wall === 115230) console.log(`  ✅ กรณีมีผนังปูน (+1,000/ตร.ม.) = ${wall.toLocaleString()}`);
-  else bad(`กรณีมีผนังปูน = ${wall.toLocaleString()} (ชีตว่า 115,230)`);
+  if (wall === WANT + 6300) console.log(`  ✅ กรณีมีผนังปูน (+1,000/ตร.ม.) = ${wall.toLocaleString()}`);
+  else bad(`กรณีมีผนังปูน = ${wall.toLocaleString()} (ต้อง ${(WANT + 6300).toLocaleString()})`);
 }
 
 // ═══ ⑤ รายการตั้งต้น + ผลรวม + หมวด ═══

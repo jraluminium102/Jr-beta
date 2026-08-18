@@ -54,6 +54,14 @@ export default function FloorEditor({
   const [width, setWidth] = useState<string>(String(initCalc.width ?? "3"));
   const [length, setLength] = useState<string>(String(initCalc.length ?? "6"));
   const [pileKey, setPileKey] = useState<string>(String(initCalc.pile_key ?? "i18"));
+  // จำนวนเสาเข็มที่แก้เอง — "" = ใช้ที่ระบบคิดจากผัง · มีค่า = ยึดตามกรอก (นับของจริงหน้างาน)
+  //   ตอนเปิดใบเก่า: ถ้าจำนวนที่บันทึกไว้ต่างจากที่ผังคิด แปลว่าเคยแก้เอง → คงค่าไว้
+  const [pilesOverride, setPilesOverride] = useState<string>(() => {
+    const savedN = Number(initCalc.piles);
+    if (!Number.isFinite(savedN) || savedN <= 0) return "";
+    const auto = planFloor(num(initCalc.width ?? 3) || 0.1, num(initCalc.length ?? 6) || 0.1).piles;
+    return savedN !== auto ? String(savedN) : "";
+  });
 
   const [jobId, setJobId] = useState<string>(initial?.job_id ?? "");
   const [cName, setCName] = useState(initial?.customer_snapshot?.name ?? "");
@@ -69,6 +77,9 @@ export default function FloorEditor({
   );
 
   const plan = useMemo(() => planFloor(num(width) || 0.1, num(length) || 0.1), [width, length]);
+  // จำนวนเข็มที่ใช้จริง = ที่แก้เอง (ถ้ามี) ไม่งั้นที่ผังคิด · ไหลเข้ารายการข้อ 1/ข้อ 2 ตอนสร้าง
+  const effectivePiles = pilesOverride.trim() !== "" && num(pilesOverride) > 0 ? Math.round(num(pilesOverride)) : plan.piles;
+  const pilesEdited = effectivePiles !== plan.piles;
 
   // แก้รายการทั้งหมดทำใน <FloorQuoteSheet> (บนกระดาษ A4 โดยตรง) — ที่นี่เหลือแค่ปุ่มเพิ่มลัด
 
@@ -102,7 +113,7 @@ export default function FloorEditor({
   };
 
   const buildDraft = () => {
-    const next = draftItems(plan, pileKey);
+    const next = draftItems(plan, pileKey, { piles: effectivePiles });
     setItems((prev) => {
       // เก็บรายการที่พิมพ์เองไว้ (source=manual) แทนที่เฉพาะส่วนที่ระบบคิด
       const keep = prev.filter((it) => it.source === "manual");
@@ -126,7 +137,7 @@ export default function FloorEditor({
       note,
       calc: {
         width: num(width), length: num(length), pile_key: pileKey,
-        rows_w: plan.rowsW, rows_l: plan.rowsL, piles: plan.piles,
+        rows_w: plan.rowsW, rows_l: plan.rowsL, piles: effectivePiles,
         beam_len: plan.beamLen, area: plan.area,
       },
       items: items.map((it, i) => ({ ...it, sort_order: i })),
@@ -229,17 +240,33 @@ export default function FloorEditor({
             </label>
 
             <div className="grid grid-cols-3 gap-2 text-center">
-              {[
-                ["พื้นที่", `${plan.area.toFixed(1)}`, "ตร.ม."],
-                ["เสาเข็ม", `${plan.piles}`, "ต้น"],
-                ["คานรวม", `${plan.beamLen.toFixed(1)}`, "ม."],
-              ].map(([k, v, u]) => (
-                <div key={k} className="rounded-lg bg-gray-50 border border-gray-200 py-2">
-                  <div className="text-[10px] text-ink-3">{k}</div>
-                  <div className="font-bold tabular-nums text-lg leading-tight">{v}</div>
-                  <div className="text-[10px] text-ink-3">{u}</div>
+              <div className="rounded-lg bg-gray-50 border border-gray-200 py-2">
+                <div className="text-[10px] text-ink-3">พื้นที่</div>
+                <div className="font-bold tabular-nums text-lg leading-tight">{plan.area.toFixed(1)}</div>
+                <div className="text-[10px] text-ink-3">ตร.ม.</div>
+              </div>
+              {/* เสาเข็ม — แก้จำนวนเองได้ (นับของจริงหน้างาน) · ไหลเข้าข้อ 1/ข้อ 2 ตอนกด "สร้างรายการตั้งต้น" */}
+              <div className={`rounded-lg border py-2 ${pilesEdited ? "bg-amber-50 border-amber-300" : "bg-gray-50 border-gray-200"}`}>
+                <div className="text-[10px] text-ink-3">เสาเข็ม {pilesEdited ? <span className="text-amber-700">✎ แก้เอง</span> : "✎"}</div>
+                <input
+                  type="number" min="1" step="1" inputMode="numeric"
+                  value={pilesOverride === "" ? String(plan.piles) : pilesOverride}
+                  onChange={(e) => setPilesOverride(e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  aria-label="จำนวนเสาเข็ม (แก้เองได้)"
+                  className="w-full bg-transparent text-center font-bold tabular-nums text-lg leading-tight outline-none"
+                />
+                <div className="text-[10px] text-ink-3 leading-tight">
+                  {pilesEdited
+                    ? <button type="button" onClick={() => setPilesOverride("")} className="press text-amber-700 underline">↺ คืนที่ระบบคิด ({plan.piles})</button>
+                    : "ต้น"}
                 </div>
-              ))}
+              </div>
+              <div className="rounded-lg bg-gray-50 border border-gray-200 py-2">
+                <div className="text-[10px] text-ink-3">คานรวม</div>
+                <div className="font-bold tabular-nums text-lg leading-tight">{plan.beamLen.toFixed(1)}</div>
+                <div className="text-[10px] text-ink-3">ม.</div>
+              </div>
             </div>
 
             {plan.tooTight && (
@@ -253,7 +280,7 @@ export default function FloorEditor({
               <div className="rounded-lg bg-sky-50 border border-sky-300 px-3 py-2 text-xs text-sky-900">
                 ไม่คิดค่าตอกเข็ม — มีแต่ <b>ค่าตัดหัวเข็ม 2,000/ต้น</b> · ฟุตติ้ง/คาน/พื้น คิดเหมือนเดิม
                 <span className="block mt-0.5 text-sky-800">
-                  ระบบเดาจำนวนเข็มจากพื้นที่ให้ ({plan.piles} ต้น) — <b>นับของจริงหน้างานแล้วแก้จำนวนบนใบ</b>ได้เลย
+                  ระบบเดาจำนวนเข็มจากพื้นที่ให้ ({effectivePiles} ต้น) — <b>นับของจริงหน้างานแล้วแก้ช่อง “เสาเข็ม” ด้านบน</b>ได้เลย
                 </span>
               </div>
             )}
