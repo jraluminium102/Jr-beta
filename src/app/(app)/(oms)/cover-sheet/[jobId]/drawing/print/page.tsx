@@ -34,15 +34,19 @@ function PagePrint({ page, pageIndex, annotations, pageWmm, pageHmm, customerNam
   const pageAnns = annotations.filter((a) => a.page === pageIndex);
   const hasAddr = !!address && pageAnns.some((a) => a.id === `hdr-addr-${pageIndex}` || (a.text ?? "").trim() === address.trim());
   const hasName = !!customerName && pageAnns.some((a) => a.id === `hdr-name-${pageIndex}` || (a.text ?? "").trim() === customerName.trim());
+  // จัดกึ่งกลางแนวตั้ง: ดันลงครึ่งนึงของช่องว่างด้วย "padding" (ไม่ใช่ margin — margin โดนตัดตอนขึ้นหน้าใหม่ · padding ไม่โดน)
+  //   ความสูงบล็อกรวม = topPad + imgH = (pageHmm+imgH)/2 < pageHmm → ไม่เต็มหน้าเป๊ะ = ไม่มีหน้าเปล่า
+  const topPad = Math.max(0, (pageHmm - imgH) / 2);
   return (
     <div
       style={{
-        width: `${imgW}mm`, height: `${imgH}mm`, margin: "0 auto", position: "relative", background: "#fff", overflow: "hidden",
+        width: "100%", paddingTop: `${topPad}mm`, background: "#fff", overflow: "hidden",
         breakInside: "avoid", pageBreakInside: "avoid",
         // แบ่งหน้าแบบ break-before (ยกเว้นหน้าแรก) — ไม่มี break หลังหน้าสุดท้าย = ไม่มีหน้าเปล่าตามท้ายเด็ดขาด
         pageBreakBefore: pageIndex === 0 ? "auto" : "always", breakBefore: pageIndex === 0 ? "auto" : "page",
       }}
     >
+    <div style={{ width: `${imgW}mm`, height: `${imgH}mm`, margin: "0 auto", position: "relative", background: "#fff", overflow: "hidden" }}>
       {/* eslint-disable-next-line @next/next/no-img-element -- รูปจาก Supabase Storage public URL */}
       <img src={url} alt={`หน้า ${pageIndex + 1}`} style={{ width: `${imgW}mm`, height: `${imgH}mm`, display: "block" }} />
 
@@ -89,6 +93,7 @@ function PagePrint({ page, pageIndex, annotations, pageWmm, pageHmm, customerNam
           {a.text}
         </div>
       ))}
+    </div>
     </div>
   );
 }
