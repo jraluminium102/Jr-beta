@@ -84,31 +84,22 @@ for (const [label, got, want] of checks) {
 }
 console.log(`  ℹ️  คาน: ระบบใช้ ${RATE.beam.toLocaleString()}/ม. = วัสดุ ${RATE.beam_material.toLocaleString()} + แรง ${RATE.beam_labor.toLocaleString()} (เจ้าของแยกวัสดุ/แรง 18 ส.ค.69 · ตรงใบจริงคุณพิทยารัตน์ที่ใช้ 2,200)`);
 
-// ═══ ④ ค่าเริ่มต้นงานเหมา ไล่ระดับถูกทาง ═══
-console.log("\n═══ ④ ค่าเริ่มต้นงานเหมา — พื้นที่เล็กต้องแพงกว่า (ต่อ ตร.ม.) ═══");
-const tapered = [
-  ["กระเบื้อง", suggest.tile, 800, 500],
-  ["ฝ้า", suggest.ceiling, 2500, 1500],
+// ═══ ④ ค่าแนะนำงานเหมา — "ราคาตัวเดียว" ตรงชีตเปรียบเทียบ 5 งาน (18 ส.ค.69) ═══
+console.log("\n═══ ④ ค่าแนะนำ (ราคาผู้รับเหมา ค่าแรง · ราคาตัวเดียว) ตรงชีตเปรียบเทียบ ═══");
+// รายการต่อ ตร.ม./จุด — ต้องนิ่ง ไม่ขึ้นกับพื้นที่ (เจ้าของเคาะเลิกไล่ระดับ 18 ส.ค.69)
+const flatRates = [
+  ["กระเบื้อง (ค่าแรง)", (a) => suggest.tile(a), 850, "/ตร.ม."],
+  ["ฝ้าเพดาน", (a) => suggest.ceiling(a), 1100, "/ตร.ม."],
+  ["ก่ออิฐฉาบ", () => suggest.wall(), 1100, "/ตร.ม."],
+  ["เทพื้น 10 ซม.", () => suggest.floor(), 1500, "/ตร.ม."],
+  ["ทรายถม (เหมา)", (a) => suggest.sand(a), 10000, "/งาน"],
+  ["ไฟฟ้า", () => suggest.electric(), 1200, "/จุด"],
 ];
-// เจ้าของเคาะ 7 ส.ค.69: "30 ตร.ม. คือใหญ่" → ≤10 ตร.ม. = เพดานเรนจ์ · ≥30 = พื้นเรนจ์ (ล็อกหัวท้ายเป๊ะ)
-for (const [label, fn, hi, lo] of tapered) {
-  const small = fn(10), mid = fn(20), big = fn(30), huge = fn(200);
-  if (small === hi && big === lo && huge === lo && mid < small && mid > big) {
-    console.log(`  ✅ ${label.padEnd(10)} ≤10 ตร.ม.=${small.toLocaleString().padStart(5)} · 20=${mid.toLocaleString().padStart(5)} · ≥30=${big.toLocaleString().padStart(5)} /ตร.ม.`);
-  } else bad(`${label} ไล่ระดับผิด: 10=${small} 20=${mid} 30=${big} 200=${huge} (ต้อง ${hi} ที่ ≤10 → ${lo} ที่ ≥30)`);
+for (const [label, fn, want, unit] of flatRates) {
+  const vals = [fn(6.3), fn(20), fn(50)]; // กวาด 3 พื้นที่ — ต้องได้ค่าเดียวกันทุกครั้ง
+  if (vals.every((v) => v === want)) console.log(`  ✅ ${label.padEnd(18)} ${want.toLocaleString().padStart(6)} ${unit} (นิ่งทุกพื้นที่)`);
+  else bad(`${label} = ${vals.join("/")} (ต้อง ${want.toLocaleString()} คงที่ทุกพื้นที่)`);
 }
-// เคสตัวอย่างในไฟล์ (6.3 ตร.ม.) ต้องได้เพดานเรนจ์ — กระเบื้อง 800 ตรงชีต
-if (suggest.tile(6.3) === 800) console.log("  ✅ เคสตัวอย่าง 6.3 ตร.ม. → กระเบื้อง 800 (ตรงชีต)");
-else bad(`เคสตัวอย่าง 6.3 ตร.ม. → กระเบื้อง ${suggest.tile(6.3)} (ชีตใช้ 800)`);
-// ทราย: ฟิตจากของจริง 2 จุด — ต้อง "ตรงเป๊ะ" ทั้งคู่ (เดิม tol 100 ทำให้เคสตัวอย่างเพี้ยน 100 บาทโดยไม่มีใครรู้)
-for (const [area, want, from] of [[6.3, 7000, "ชีตตัวอย่างในไฟล์"], [23, 12000, "ใบเสนอจริง"]]) {
-  const got = suggest.sand(area);
-  if (got === want) console.log(`  ✅ ทราย ${String(area).padStart(4)} ตร.ม. = ${got.toLocaleString().padStart(6)}   (${from})`);
-  else bad(`ทราย ${area} ตร.ม. → ${got.toLocaleString()} (ต้องตรง ${want.toLocaleString()} · ${from})`);
-}
-// ต่อ ตร.ม. ของทรายต้องลดลงเมื่อพื้นที่โต
-if (suggest.sand(50) / 50 < suggest.sand(10) / 10) console.log("  ✅ ทราย ต่อ ตร.ม. ลดลงเมื่อพื้นที่ใหญ่ขึ้น");
-else bad("ทราย ต่อ ตร.ม. ไม่ลดลงตามพื้นที่");
 
 // รื้อสกัดพื้น = ราคาเหมาทั้งงาน → ใหญ่ขึ้นต้องแพงขึ้นเรื่อย ๆ ห้ามเด้งลงแม้แต่จุดเดียว
 // (เจ้าของเคาะ 7 ส.ค.69 · เดิมรื้อ 15 ตร.ม. แพงกว่ารื้อ 30 ตร.ม.)
@@ -128,20 +119,21 @@ else bad("ทราย ต่อ ตร.ม. ไม่ลดลงตามพ�
   else bad(`รื้อสกัดไม่ตรงเรนจ์: ${wrong.map(([a, w]) => `${a} ตร.ม. ได้ ${suggest.demolish(a).toLocaleString()} (ต้อง ${w.toLocaleString()})`).join(" · ")}`);
 }
 
-// ═══ ④b เคสตัวอย่างในไฟล์ 1.8×3.5 — ยอดต้องนิ่ง (คุม regression) ═══
-//   ชีต "ตัวอย่างการคิดราคา" ใน ประเมินราคาเบื้องต้นงานพื้นอัพเดท.xlsx: เดิม 108,930 (คาน 2,400/ม.)
-//   ⚠ 18 ส.ค.69 เจ้าของแยกคานเป็น วัสดุ 1,200 + แรง 1,000 = 2,200/ม. → คาน 10.6 ม. ลดลง 200×10.6 = 2,120
-//   ยอดใหม่ = 108,930 − 2,120 = 106,810 (ถ้ากลับไปคาน 2,400 ต้องได้ 108,930 เท่าเดิม)
-console.log("\n═══ ④b เคสตัวอย่างในไฟล์ (1.8×3.5 = 106,810 · คานใหม่ 2,200/ม.) ═══");
+// ═══ ④b เคสตัวอย่าง 1.8×3.5 — ยอดต้องนิ่ง (คุม regression · ราคาใหม่ 18 ส.ค.69) ═══
+//   ประวัติราคา: เดิม 108,930 (คาน 2,400 · กระเบื้อง 800 · ทราย 7,000)
+//   18 ส.ค.69 อัพราคาตามชีตเปรียบเทียบ 5 งาน: คาน 2,200 · กระเบื้อง 850 · ทราย 10,000 (เหมา)
+//   คำนวณใหม่: เข็ม 44,000 + ขุด 8,000 + ฟุตติ้ง 10,000 + คาน 10.6×2,200=23,320
+//              + ทราย 10,000 + พื้น 6.3×1,500=9,450 + กระเบื้อง 6.3×850=5,355 = 110,125
+console.log("\n═══ ④b เคสตัวอย่าง 1.8×3.5 = 110,125 (ราคาใหม่ 18 ส.ค.69) ═══");
 {
   const items = draftItems(planFloor(1.8, 3.5), "i18", { tile: true, sand: true, floor: true });
   const got = Math.round(sumItems(items));
-  const WANT = 106810; // = 108,930 − (2,400−2,200)×10.6 ม.
-  if (got === WANT) console.log(`  ✅ ยอดรวมนิ่งตามคานใหม่ = ${got.toLocaleString()} (เดิม 108,930 ที่คาน 2,400)`);
+  const WANT = 110125;
+  if (got === WANT) console.log(`  ✅ ยอดรวมนิ่งตามราคาใหม่ = ${got.toLocaleString()} (เดิม 108,930 ก่อนอัพราคา)`);
   else bad(`ยอดเคสตัวอย่าง = ${got.toLocaleString()} (ต้อง ${WANT.toLocaleString()} — ต่าง ${(got - WANT).toLocaleString()})`);
-  const wall = got + Math.round(1000 * 6.3);
-  if (wall === WANT + 6300) console.log(`  ✅ กรณีมีผนังปูน (+1,000/ตร.ม.) = ${wall.toLocaleString()}`);
-  else bad(`กรณีมีผนังปูน = ${wall.toLocaleString()} (ต้อง ${(WANT + 6300).toLocaleString()})`);
+  const wall = got + Math.round(1100 * 6.3); // ก่ออิฐฉาบใหม่ 1,100/ตร.ม.
+  if (wall === WANT + 6930) console.log(`  ✅ กรณีมีผนังปูน (+1,100/ตร.ม.) = ${wall.toLocaleString()}`);
+  else bad(`กรณีมีผนังปูน = ${wall.toLocaleString()} (ต้อง ${(WANT + 6930).toLocaleString()})`);
 }
 
 // ═══ ⑤ รายการตั้งต้น + ผลรวม + หมวด ═══
