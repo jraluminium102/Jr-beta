@@ -4,7 +4,7 @@ import { getProfile, canWrite } from "@/lib/auth";
 import { fetchAllPaged } from "@/lib/supabase/fetch-all";
 import PRICEBOOK from "@/lib/calculator40/pricebook.json";
 import { buildPriceOverride, applyPriceOverride, type StockRow } from "@/lib/calculator40/stock-link";
-import { auditStockLink, bumpTest, type AuditStockRow } from "@/lib/calculator40/stock-audit";
+import { auditStockLink, auditByProduct, bumpTest, type AuditStockRow } from "@/lib/calculator40/stock-audit";
 import AuditClient from "./AuditClient";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +35,7 @@ export default async function StockAuditPage() {
   );
   const rows = auditStockLink(stock, pb);
   const bump = bumpTest(pb, 10);
+  const products = auditByProduct(rows, bump);   // มุมหลัก: ดูรายรุ่นในเครื่องคิดราคา
 
-  return <AuditClient rows={rows} bump={bump} stockCount={stock.length} />;
+  return <AuditClient rows={rows} products={products} bump={bump} stockCount={stock.length} />;
 }

@@ -185,3 +185,42 @@ export function bumpTest(PB: any, pct = 10): BumpRow[] {
   }
   return out.sort((a, b) => Number(a.moved) - Number(b.moved) || a.name.localeCompare(b.name, "th"));
 }
+
+export type ProductAudit = {
+  id: string; name: string; group: number; groupLabel: string;
+  aluTotal: number; aluLinked: number; aluNoCode: string[];   // ชื่อบรรทัดอลูที่ไม่มีรหัส
+  hwTotal: number; hwLinked: number;
+  moved: boolean | null; price: number;                      // ผลทดสอบเด้ง
+  status: "ครบ" | "บางส่วน" | "ไม่ผูกเลย" | "ไม่มีรายการวัสดุ";
+};
+
+const GROUP_LABEL: Record<number, string> = {
+  1: "บาน", 2: "ระแนง/รั้ว", 3: "หลังคา/ผนัง/ฝ้า", 4: "ตู้", 5: "มุ้ง", 6: "ห้องกระจก", 7: "ม่านซิป",
+};
+
+/**
+ * สรุป "รายรุ่นในเครื่องคิดราคา" — เจ้าของดูมุมนี้เป็นหลัก (เลือกรุ่นไหนก็อยากรู้ว่ารุ่นนั้นผูกครบไหม)
+ * ไม่ใช่มุมหมวดวัสดุ ซึ่งไล่ตามงานจริงไม่ได้
+ */
+export function auditByProduct(rows: AuditRow[], bump: BumpRow[]): ProductAudit[] {
+  const byId = new Map<string, BumpRow>(bump.map((b) => [b.id, b]));
+  const out: ProductAudit[] = [];
+  for (const p of Object.values(PRODUCTS as Record<string, any>)) {
+    const mine = rows.filter((r) => r.usedBy === (p.name || p.id));
+    const alu = mine.filter((r) => r.section === "อลูรายเส้น");
+    const hw = mine.filter((r) => r.section === "อุปกรณ์/สิ้นเปลือง");
+    const linked = (r: AuditRow) => r.status !== "no_key" && r.status !== "missing";
+    const aluLinked = alu.filter(linked).length, hwLinked = hw.filter(linked).length;
+    const total = alu.length + hw.length, ok = aluLinked + hwLinked;
+    const b = byId.get(p.id);
+    out.push({
+      id: p.id, name: p.name || p.id, group: p.group ?? 0, groupLabel: GROUP_LABEL[p.group] ?? "อื่น ๆ",
+      aluTotal: alu.length, aluLinked, aluNoCode: alu.filter((r) => r.status === "no_key").map((r) => r.item),
+      hwTotal: hw.length, hwLinked,
+      moved: b ? b.moved : null, price: b?.before ?? 0,
+      status: total === 0 ? "ไม่มีรายการวัสดุ" : ok === 0 ? "ไม่ผูกเลย" : ok === total ? "ครบ" : "บางส่วน",
+    });
+  }
+  const rank = { "ไม่ผูกเลย": 0, "บางส่วน": 1, "ไม่มีรายการวัสดุ": 2, "ครบ": 3 } as const;
+  return out.sort((a, b) => rank[a.status] - rank[b.status] || a.group - b.group || a.name.localeCompare(b.name, "th"));
+}

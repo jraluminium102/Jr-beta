@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
-import { STATUS_LABEL, type AuditRow, type AuditStatus, type BumpRow } from "@/lib/calculator40/stock-audit";
+import { STATUS_LABEL, type AuditRow, type AuditStatus, type BumpRow, type ProductAudit } from "@/lib/calculator40/stock-audit";
 
 const TONE: Record<AuditStatus, "emerald" | "amber" | "red" | "gray"> = {
   linked: "emerald", price_diff: "amber", multi: "amber", zero: "amber", missing: "red", no_key: "red",
@@ -12,7 +12,13 @@ const TONE: Record<AuditStatus, "emerald" | "amber" | "red" | "gray"> = {
 // เรียงตามความเร่งด่วนที่ต้องแก้ (ผูกไม่ได้เลย = หนักสุด)
 const ORDER: AuditStatus[] = ["no_key", "missing", "price_diff", "multi", "zero", "linked"];
 
-export default function AuditClient({ rows, bump, stockCount }: { rows: AuditRow[]; bump: BumpRow[]; stockCount: number }) {
+const P_TONE: Record<ProductAudit["status"], "emerald" | "amber" | "red" | "gray"> = {
+  "ครบ": "emerald", "บางส่วน": "amber", "ไม่ผูกเลย": "red", "ไม่มีรายการวัสดุ": "gray",
+};
+
+export default function AuditClient({ rows, products, bump, stockCount }:
+  { rows: AuditRow[]; products: ProductAudit[]; bump: BumpRow[]; stockCount: number }) {
+  const [view, setView] = useState<"product" | "item">("product");
   const [sec, setSec] = useState("ทั้งหมด");
   const [st, setSt] = useState<"ทั้งหมด" | AuditStatus>("ทั้งหมด");
   const [q, setQ] = useState("");
@@ -101,6 +107,55 @@ export default function AuditClient({ rows, bump, stockCount }: { rows: AuditRow
         </details>
       </Card>
 
+      {/* สลับมุมมอง — ค่าตั้งต้นคือ "รายรุ่น" เพราะเจ้าของเลือกงานจากรุ่น ไม่ใช่จากหมวดวัสดุ */}
+      <div className="flex gap-2">
+        {([["product", "ดูรายรุ่นในเครื่องคิดราคา"], ["item", "ดูรายวัสดุทีละบรรทัด"]] as const).map(([k, label]) => (
+          <button key={k} onClick={() => setView(k)} className={chip(view === k)}>{label}</button>
+        ))}
+      </div>
+
+      {view === "product" ? (
+        <Card className="p-5">
+          <div className="flex items-center gap-2 flex-wrap mb-3">
+            <h2 className="font-bold text-brand-dark">รายรุ่น — รุ่นไหนผูกสโตร์ครบ ไหนยังไม่ครบ</h2>
+            <span className="text-xs text-ink-3">เรียงรุ่นที่ต้องแก้ก่อนขึ้นบน</span>
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นหารุ่น"
+              className="ml-auto glass-soft rounded-lg px-3 py-2 text-sm outline-none min-w-[180px]" />
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left bg-brand-soft text-brand-dark">
+                  <th className="p-2 rounded-l-lg">กลุ่ม</th><th>รุ่น</th>
+                  <th className="text-center">อลูรายเส้น</th><th className="text-center">อุปกรณ์/สิ้นเปลือง</th>
+                  <th className="text-center">ขึ้นราคากิโลแล้วเด้ง</th>
+                  <th>สถานะ</th><th className="p-2 rounded-r-lg">บรรทัดอลูที่ไม่มีรหัส (แก้ราคาในสโตร์ไม่มีผล)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {products
+                  .filter((p) => !q.trim() || p.name.toLowerCase().includes(q.trim().toLowerCase()))
+                  .map((p) => (
+                    <tr key={p.id} className="border-t border-gray-100 align-top">
+                      <td className="p-2 whitespace-nowrap text-ink-3">{p.groupLabel}</td>
+                      <td className="font-medium">{p.name}</td>
+                      <td className="text-center tabular-nums">
+                        {p.aluTotal === 0 ? "—" : <span className={p.aluLinked < p.aluTotal ? "text-red-700 font-semibold" : ""}>{p.aluLinked}/{p.aluTotal}</span>}
+                      </td>
+                      <td className="text-center tabular-nums">
+                        {p.hwTotal === 0 ? "—" : <span className={p.hwLinked < p.hwTotal ? "text-red-700 font-semibold" : ""}>{p.hwLinked}/{p.hwTotal}</span>}
+                      </td>
+                      <td className="text-center">{p.moved == null ? "—" : p.moved ? "✅" : <span className="text-red-700 font-semibold">❌ ไม่เด้ง</span>}</td>
+                      <td><Badge tone={P_TONE[p.status]}>{p.status}</Badge></td>
+                      <td className="p-2 text-xs text-ink-3">{p.aluNoCode.join(" · ")}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      ) : (
+      <>
       {/* สรุปสถานะ */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
         {ORDER.map((s) => (
@@ -150,6 +205,8 @@ export default function AuditClient({ rows, bump, stockCount }: { rows: AuditRow
           )}
         </div>
       </Card>
+      </>
+      )}
     </div>
   );
 }
