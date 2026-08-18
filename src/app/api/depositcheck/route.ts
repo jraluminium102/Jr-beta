@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 // ⚠ TEMP DIAG — ดูสถานะงานก่อนรับมัดจำ (อ่านอย่างเดียว · จะลบหลังตรวจ) · gate ด้วย token
 const TOKEN = "depchk-5c8e2a";
 
-const NAMES = ["ทศรินทร์", "มงคลชัย", "อดิศร", "นวพร", "รัมภา", "กนกพิชญ์"];
+const NAMES = ["ทศริน", "ทัศริน", "มงคลชัย", "อดิศร", "นวพร", "รัมภา", "กนกพิชญ์"];
 const WON = ["DEPOSITED", "COMPLETED", "IN_PRODUCTION", "INSTALLING"];
 
 export async function GET(req: Request) {
