@@ -21,7 +21,7 @@ const HALO = "0 0 3px #fff, 0 0 3px #fff, 0 0 4px #fff, 0 0 5px #fff";
 // เผื่อความสูง 3มม กัน "บล็อกเต็มหน้าเป๊ะ" แล้ว browser แถมหน้าเปล่า
 const SAFETY_MM = 3;
 
-function PagePrint({ page, pageIndex, annotations, isLast, pageWmm, pageHmm, customerName, address }: { page: DrawingPage; pageIndex: number; annotations: DrawingAnnotation[]; isLast: boolean; pageWmm: number; pageHmm: number; customerName: string; address: string }) {
+function PagePrint({ page, pageIndex, annotations, pageWmm, pageHmm, customerName, address }: { page: DrawingPage; pageIndex: number; annotations: DrawingAnnotation[]; pageWmm: number; pageHmm: number; customerName: string; address: string }) {
   // พิมพ์แบบ "เต็มหน้าเหมือนต้นฉบับ" — ไม่ใส่ขอบขาว ไม่ย่อ · แค่ให้พอดีกรอบกระดาษ (กว้าง + สูงเผื่อกันหน้าเปล่า)
   const availW = pageWmm;
   const availH = pageHmm - SAFETY_MM;
@@ -35,7 +35,8 @@ function PagePrint({ page, pageIndex, annotations, isLast, pageWmm, pageHmm, cus
       style={{
         width: `${imgW}mm`, height: `${imgH}mm`, margin: "0 auto", position: "relative", background: "#fff", overflow: "hidden",
         breakInside: "avoid", pageBreakInside: "avoid",
-        pageBreakAfter: isLast ? "auto" : "always", breakAfter: isLast ? "auto" : "page",
+        // แบ่งหน้าแบบ break-before (ยกเว้นหน้าแรก) — ไม่มี break หลังหน้าสุดท้าย = ไม่มีหน้าเปล่าตามท้ายเด็ดขาด
+        pageBreakBefore: pageIndex === 0 ? "auto" : "always", breakBefore: pageIndex === 0 ? "auto" : "page",
       }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element -- รูปจาก Supabase Storage public URL */}
@@ -140,7 +141,7 @@ export default async function DrawingPrintPage({
       ) : (
         <div className="mx-auto my-6 shadow-lg print:shadow-none print:my-0" style={{ width: `${pageWmm}mm` }}>
           {drawing.pages.map((p, i) => (
-            <PagePrint key={i} page={p} pageIndex={i} annotations={drawing.annotations ?? []} isLast={i === drawing.pages.length - 1} pageWmm={pageWmm} pageHmm={pageHmm} customerName={job.customer_name ?? ""} address={address} />
+            <PagePrint key={i} page={p} pageIndex={i} annotations={drawing.annotations ?? []} pageWmm={pageWmm} pageHmm={pageHmm} customerName={job.customer_name ?? ""} address={address} />
           ))}
         </div>
       )}
