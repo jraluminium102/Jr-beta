@@ -21,7 +21,7 @@ const HALO = "0 0 3px #fff, 0 0 3px #fff, 0 0 4px #fff, 0 0 5px #fff";
 // เผื่อความสูง 3มม กัน "บล็อกเต็มหน้าเป๊ะ" แล้ว browser แถมหน้าเปล่า
 const SAFETY_MM = 3;
 
-function PagePrint({ page, pageIndex, annotations, isLast, pageWmm, pageHmm }: { page: DrawingPage; pageIndex: number; annotations: DrawingAnnotation[]; isLast: boolean; pageWmm: number; pageHmm: number }) {
+function PagePrint({ page, pageIndex, annotations, isLast, pageWmm, pageHmm, customerName, address }: { page: DrawingPage; pageIndex: number; annotations: DrawingAnnotation[]; isLast: boolean; pageWmm: number; pageHmm: number; customerName: string; address: string }) {
   // พิมพ์แบบ "เต็มหน้าเหมือนต้นฉบับ" — ไม่ใส่ขอบขาว ไม่ย่อ · แค่ให้พอดีกรอบกระดาษ (กว้าง + สูงเผื่อกันหน้าเปล่า)
   const availW = pageWmm;
   const availH = pageHmm - SAFETY_MM;
@@ -40,6 +40,27 @@ function PagePrint({ page, pageIndex, annotations, isLast, pageWmm, pageHmm }: {
     >
       {/* eslint-disable-next-line @next/next/no-img-element -- รูปจาก Supabase Storage public URL */}
       <img src={url} alt={`หน้า ${pageIndex + 1}`} style={{ width: `${imgW}mm`, height: `${imgH}mm`, display: "block" }} />
+
+      {/* ── หัวแบบ "นอกกรอบ" (overlay ตำแหน่งสัมบูรณ์ — ไม่กระทบเลย์เอาท์/ขนาดรูปเด็ดขาด) ──
+          มุมซ้ายบน = ที่อยู่บ้านลูกค้า · กลางบน = ชื่อลูกค้า */}
+      {address && (
+        <div style={{
+          position: "absolute", top: "1mm", left: "1.5mm", maxWidth: `${imgW * 0.42}mm`,
+          fontSize: "2.5mm", lineHeight: 1.2, color: "#000", fontWeight: 600,
+          textShadow: HALO, whiteSpace: "pre-wrap", pointerEvents: "none",
+        }}>
+          {address}
+        </div>
+      )}
+      {customerName && (
+        <div style={{
+          position: "absolute", top: "1mm", left: 0, right: 0, textAlign: "center",
+          fontSize: "3.6mm", lineHeight: 1.2, color: "#000", fontWeight: 700,
+          textShadow: HALO, pointerEvents: "none",
+        }}>
+          {customerName}
+        </div>
+      )}
       {annotations.filter((a) => a.page === pageIndex).map((a) => (
         <div
           key={a.id}
@@ -78,14 +99,22 @@ export default async function DrawingPrintPage({
   const sb = createClient() as unknown as AnySb;
 
   const [jobR, drawingR] = await Promise.all([
-    sb.from("jobs").select("job_code, customer_name").eq("id", jobId).maybeSingle(),
+    sb.from("jobs").select("job_code, customer_name, customer_area, customer_id").eq("id", jobId).maybeSingle(),
     searchParams.d
       ? sb.from("job_drawings").select("*").eq("id", Number(searchParams.d)).eq("job_id", jobId).maybeSingle()
       : sb.from("job_drawings").select("*").eq("job_id", jobId).order("created_at", { ascending: true }).limit(1).maybeSingle(),
   ]);
 
-  const job = jobR.data as { job_code: string | null; customer_name: string } | null;
+  const job = jobR.data as { job_code: string | null; customer_name: string; customer_area: string | null; customer_id: number | null } | null;
   const drawing = drawingR.data as JobDrawing | null;
+
+  // ที่อยู่บ้านลูกค้า — เอาจากทะเบียนลูกค้าก่อน (ที่อยู่เต็ม) ไม่งั้น fallback customer_area ของงาน
+  let address = "";
+  if (job?.customer_id != null) {
+    const { data: cust } = await sb.from("customers").select("address").eq("id", job.customer_id).maybeSingle();
+    address = String((cust as { address: string | null } | null)?.address ?? "").trim();
+  }
+  if (!address) address = String(job?.customer_area ?? "").trim();
 
   // แนวกระดาษตามอัตราส่วนแบบ (แบบส่วนใหญ่ = A4 แนวนอน · ให้พอดีหน้าต่อหน้า ไม่แหก)
   const firstPage = drawing?.pages?.[0];
@@ -94,7 +123,7 @@ export default async function DrawingPrintPage({
   const pageHmm = landscape ? 210 : 297;   // ด้านสูงของ A4 ตามแนว
 
   return (
-    <div className="min-h-dvh bg-gray-100 print:bg-white">
+    <div className="min-h-dvh print:min-h-0 bg-gray-100 print:bg-white">
       {/* บังคับแนวกระดาษให้ตรงกับแบบ (ไม่งั้น browser default = แนวตั้ง แล้วแบบแนวนอนแหก) */}
       <style dangerouslySetInnerHTML={{ __html: `@page { size: A4 ${landscape ? "landscape" : "portrait"}; margin: 0; }` }} />
       <div className="no-print sticky top-0 z-10 bg-white border-b px-4 py-3 flex items-center justify-between">
@@ -111,7 +140,7 @@ export default async function DrawingPrintPage({
       ) : (
         <div className="mx-auto my-6 shadow-lg print:shadow-none print:my-0" style={{ width: `${pageWmm}mm` }}>
           {drawing.pages.map((p, i) => (
-            <PagePrint key={i} page={p} pageIndex={i} annotations={drawing.annotations ?? []} isLast={i === drawing.pages.length - 1} pageWmm={pageWmm} pageHmm={pageHmm} />
+            <PagePrint key={i} page={p} pageIndex={i} annotations={drawing.annotations ?? []} isLast={i === drawing.pages.length - 1} pageWmm={pageWmm} pageHmm={pageHmm} customerName={job.customer_name ?? ""} address={address} />
           ))}
         </div>
       )}
