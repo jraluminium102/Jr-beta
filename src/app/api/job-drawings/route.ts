@@ -37,13 +37,22 @@ export const GET = withRoute(async (req: Request) => {
   if (!z.string().uuid().safeParse(jobId).success) return err("ระบุ job_id ให้ถูกต้อง", 422);
 
   const [jobR, drawingsR] = await Promise.all([
-    sb.from("jobs").select("job_code, customer_name, status, deposit_date").eq("id", jobId).maybeSingle(),
+    sb.from("jobs").select("job_code, customer_name, status, deposit_date, customer_area, customer_id").eq("id", jobId).maybeSingle(),
     sb.from("job_drawings").select("*").eq("job_id", jobId).order("created_at", { ascending: true }),
   ]);
 
   if (jobR.error) throw dbError(jobR.error);
   if (!jobR.data) return err("ไม่พบงานนี้", 404);
   if (drawingsR.error) throw dbError(drawingsR.error);
+
+  // ที่อยู่บ้านลูกค้า — ทะเบียนลูกค้าก่อน (เต็ม) ไม่งั้น customer_area ของงาน
+  const jobRow = jobR.data as { customer_area: string | null; customer_id: number | null };
+  let address = "";
+  if (jobRow.customer_id != null) {
+    const { data: cust } = await sb.from("customers").select("address").eq("id", jobRow.customer_id).maybeSingle();
+    address = String((cust as { address: string | null } | null)?.address ?? "").trim();
+  }
+  if (!address) address = String(jobRow.customer_area ?? "").trim();
 
   // เลือก "ใบเสนอที่ลูกค้ามัดจำจริง" (ไม่ใช่ใบล่าสุด) — กันสแตมป์สเปคผิดใบเมื่องานมีหลายใบเสนอ (แก้เดียวกับใบปะหน้า)
   const picked = await pickJobQuotation(sb, jobId);
@@ -62,7 +71,7 @@ export const GET = withRoute(async (req: Request) => {
   return ok({
     drawings: drawingsR.data ?? [],
     prefill,
-    job: { ...job, deposited: !!job.deposit_date },
+    job: { ...job, deposited: !!job.deposit_date, address },
     can_write: can(ctx.role, "drawings", "write"),
   });
 });

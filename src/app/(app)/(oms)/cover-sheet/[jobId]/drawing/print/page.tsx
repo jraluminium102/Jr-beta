@@ -30,6 +30,10 @@ function PagePrint({ page, pageIndex, annotations, pageWmm, pageHmm, customerNam
   let imgH = imgW * aspect;
   if (imgH > availH) { imgH = availH; imgW = imgH / aspect; }
   const url = page.path.startsWith("http") ? page.path : drawingPublicUrl(page.path);
+  // fallback หัวแบบ: โชว์ก็ต่อเมื่อหน้านี้ยังไม่มี annotation หัวแบบ (hdr-*) หรือข้อความตรงกันอยู่แล้ว (กันซ้ำ)
+  const pageAnns = annotations.filter((a) => a.page === pageIndex);
+  const hasAddr = !!address && pageAnns.some((a) => a.id === `hdr-addr-${pageIndex}` || (a.text ?? "").trim() === address.trim());
+  const hasName = !!customerName && pageAnns.some((a) => a.id === `hdr-name-${pageIndex}` || (a.text ?? "").trim() === customerName.trim());
   return (
     <div
       style={{
@@ -44,7 +48,7 @@ function PagePrint({ page, pageIndex, annotations, pageWmm, pageHmm, customerNam
 
       {/* ── หัวแบบ "นอกกรอบ" (overlay ตำแหน่งสัมบูรณ์ — ไม่กระทบเลย์เอาท์/ขนาดรูปเด็ดขาด) ──
           มุมซ้ายบน = ที่อยู่บ้านลูกค้า · กลางบน = ชื่อลูกค้า */}
-      {address && (
+      {address && !hasAddr && (
         <div style={{
           position: "absolute", top: "1mm", left: "1.5mm", maxWidth: `${imgW * 0.42}mm`,
           fontSize: "2.5mm", lineHeight: 1.2, color: "#000", fontWeight: 600,
@@ -53,7 +57,7 @@ function PagePrint({ page, pageIndex, annotations, pageWmm, pageHmm, customerNam
           {address}
         </div>
       )}
-      {customerName && (
+      {customerName && !hasName && (
         <div style={{
           position: "absolute", top: "1mm", left: 0, right: 0, textAlign: "center",
           fontSize: "3.6mm", lineHeight: 1.2, color: "#000", fontWeight: 700,

@@ -13,6 +13,27 @@ import PrefillPanel from "./PrefillPanel";
 
 const btn = "focusable pressable inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold min-h-[44px] disabled:opacity-40";
 
+// เติม "หัวแบบ" อัตโนมัติ = ที่อยู่บ้านลูกค้า(มุมซ้ายบน) + ชื่อลูกค้า(กลางบน) เป็น annotation แก้/ลากได้
+//   ทำต่อหน้า · id คงที่ hdr-*-{page} กันซ้ำ · ข้ามถ้ามี annotation ข้อความตรงกับชื่อ/ที่อยู่อยู่แล้ว (กันซ้ำของที่แสตมป์เอง)
+function seedHeaderAnnotations(anns: DrawingAnnotation[], pageCount: number, name: string, address: string): { annotations: DrawingAnnotation[]; added: boolean } {
+  const out = [...anns];
+  let added = false;
+  const nm = (name ?? "").trim();
+  const ad = (address ?? "").trim();
+  for (let p = 0; p < pageCount; p++) {
+    const onPage = out.filter((a) => a.page === p);
+    if (ad && !onPage.some((a) => a.id === `hdr-addr-${p}`) && !onPage.some((a) => (a.text ?? "").trim() === ad)) {
+      out.push({ id: `hdr-addr-${p}`, page: p, xf: 0.006, yf: 0.006, size: 0.013, text: ad, color: "", align: "left" });
+      added = true;
+    }
+    if (nm && !onPage.some((a) => a.id === `hdr-name-${p}`) && !onPage.some((a) => (a.text ?? "").trim() === nm)) {
+      out.push({ id: `hdr-name-${p}`, page: p, xf: 0.05, yf: 0.006, size: 0.018, text: nm, color: "", align: "center" });
+      added = true;
+    }
+  }
+  return { annotations: out, added };
+}
+
 // เติม path (สัมพัทธ์) → public URL ก่อนใช้แสดงรูป + เติม id ให้ annotation เก่าที่ไม่มี (กันชนตอนแก้)
 function hydrateDrawing(d: JobDrawing): JobDrawing {
   return {
@@ -57,10 +78,13 @@ export default function DrawingEditorPage({ params }: { params: { jobId: string 
   const selected = drawings.find((d) => d.id === selectedId) ?? null;
 
   // โหลด annotations ของแบบที่เลือกเข้า state แก้ไข (ทุกครั้งที่สลับแบบ / โหลดใหม่แล้วยังไม่มีการแก้ค้าง)
+  //   + เติม "หัวแบบ" (ที่อยู่+ชื่อ) อัตโนมัติเป็น annotation แก้/ลากได้ (ยังไม่ dirty — กด "แก้/ลาก/บันทึก" ค่อยเก็บถาวร)
   useEffect(() => {
     if (!selected || dirty) return;
-    setAnnotations(selected.annotations);
+    const { annotations: seeded } = seedHeaderAnnotations(selected.annotations, selected.pages.length, job?.customer_name ?? "", job?.address ?? "");
+    setAnnotations(seeded);
     setActivePage(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, dirty]);
 
   if (isLoading) return <div className="max-w-[1500px] mx-auto pb-10"><Spinner /></div>;

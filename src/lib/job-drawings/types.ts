@@ -46,6 +46,7 @@ export type JobDrawingsGetResponse = {
     status: string;
     deposit_date: string | null;
     deposited: boolean; // = deposit_date != null (เกณฑ์ "มัดจำแล้ว" ที่ระบบใช้จริง — ดู mark-deposited/deposit-amount route)
+    address?: string;   // ที่อยู่บ้านลูกค้า (ทะเบียนลูกค้า/customer_area) — seed หัวแบบ
   };
   can_write: boolean;   // สิทธิ์แก้ (drawings:write = ADMIN/PRODUCTION/DESIGNER) — role อ่านอย่างเดียวเห็นแต่ดู/พิมพ์
 };
