@@ -842,6 +842,11 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
             className={`press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold ${adminOpen ? "text-white bg-brand shadow-brand" : "glass-soft text-ink-2"}`}>
             ⚙️ แก้ราคา
           </button>
+          {/* ตรวจว่าราคาทุกตัวผูกสโตร์ครบไหม + ขึ้นราคากิโลแล้วเด้งไหม (เจ้าของสั่ง 8 ส.ค.69) */}
+          <a href="/calculator40/stock-audit"
+            className="press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold glass-soft text-ink-2">
+            🔗 ตรวจผูกสโตร์
+          </a>
         </div>
       </div>
       <p className="text-sm text-ink-3 -mt-3">
