@@ -6,7 +6,7 @@
  * ⑦ ค่าหัก (แก้ที่เดียว): เฟรม 4.4 · เสากุญแจ เสียบ6.1/เตี้ย3 · ฝาปิด เสียบ5/เตี้ย2.3
  *   · ขวางบน สปส.4.2 + คงที่11.2 · ตบร่องใน 7
  */
-import type { CutSpec, CutInput } from "./engine";
+import type { CutSpec, CutInput } from "./engine.ts";
 // นามสกุล .ts จำเป็นให้ verify script (node --experimental-strip-types) resolve value import ได้ · bundler/webpack รับปกติ
 import { smsSlideHardware, smsMeshHardware, handleHardware, otherHandleRow, HANDLE_OPTS_LR, HANDLE_OPTS_L, HANDLE_BRANDS, HANDLE_TYPES, type HardwareDef } from "./hardware.ts";
 
@@ -326,7 +326,7 @@ export const VELORA_SWING: CutSpec = {
   hardware: [
     { name: "บานพับ", qty: () => 4, unit: "ตัว" },
     { name: "มือจับ (ล็อค)", qty: () => 1, unit: "ชุด" },
-    { name: "ซิลิโคน ใน+นอก", qty: (o) => Math.ceil(((2 * (o.W + o.H)) / 100) * 2 / 12.5), unit: "หลอด" },
+    { name: "ซิลิโคน ใน+นอก", sku: "JR00504", qty: (o) => Math.ceil(((2 * (o.W + o.H)) / 100) * 2 / 12.5), unit: "หลอด" },
   ],
 };
 
@@ -974,7 +974,7 @@ export const WOODJAMB_SWING: CutSpec = {
     { name: "ชุดกลอน (ใบลอง)", qty: (o) => Math.max(o.N - 1, 0), unit: "ชุด" },
     { name: "น็อตเฟรม", qty: (o) => (wSill(o) ? 8 : 6), unit: "ตัว" },
     { name: "ยาง", qty: (o) => Math.round((2 * (o.W + o.H)) / 100 * o.N), unit: "ม." },
-    { name: "ซิลิโคน ใน+นอก", qty: (o) => Math.ceil((2 * (o.W + o.H)) / 100 * 2 / 12.5), unit: "หลอด" },
+    { name: "ซิลิโคน ใน+นอก", sku: "JR00504", qty: (o) => Math.ceil((2 * (o.W + o.H)) / 100 * 2 / 12.5), unit: "หลอด" },
   ],
 };
 

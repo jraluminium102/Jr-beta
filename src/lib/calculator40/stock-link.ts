@@ -66,6 +66,9 @@ export type PriceOverride = {
   // ราคาเส้นแยก "สีจริงในสโตร์" → ALUCOLOR_STOCK["เทาซาฮาร่า"]["B20001"] = 1225
   //   แยก อบขาว/ดำ ออกจากกันด้วย (ตอนนี้ราคาเท่ากัน แต่วันหน้าไม่เท่า แก้ในสโตร์ได้เลย)
   ALUCOLOR_STOCK: Record<string, Record<string, number>>;
+  // ราคาต่อรหัสสโตร์ (JR#####) — ใช้คิด "ค่าของ" อุปกรณ์ที่ดึงรายการมาจากใบตัด
+  //   ใบตัดผูก sku ไว้ครบแล้ว → คิดราคาอ่านราคาจากรหัสเดียวกัน = ของชิ้นเดียวกัน ราคาเดียวกัน
+  SKUPRICE: Record<string, number>;
 };
 
 // ── สีจริงจากสโตร์ (เจ้าของยืนยัน 8 ส.ค.69: ยึดราคาสีตามสโตร์) ─────────────────
@@ -90,7 +93,7 @@ function rowColor(r: StockRow): string {
 
 // สร้าง "ผังราคาทับ" จากแถว stock (เทียบกับ pricebook pb) — เฉพาะราคา > 0 (กันวัสดุยังไม่ตั้งราคา = 0 ไปล้างราคาสูตร)
 export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverride {
-  const ov: PriceOverride = { GLASS: {}, ROOFMAT: {}, MOTOR: {}, STEEL: {}, EXTRA: {}, ALU: {}, PARTS: {}, ALUCODE: {}, ALUCOLOR_STOCK: {} };
+  const ov: PriceOverride = { GLASS: {}, ROOFMAT: {}, MOTOR: {}, STEEL: {}, EXTRA: {}, ALU: {}, PARTS: {}, ALUCODE: {}, ALUCOLOR_STOCK: {}, SKUPRICE: {} };
   const aluByBrand: Record<string, number> = {};
   // อลูรายเส้น: รหัสเดียวมีหลายแถว (แยกสี) → ราคาตัวตั้ง = แถว "อบขาว" ก่อน (ราคาฐานดิบ — ค่าสีคิดแยกใน engine เป็นค่าอบ/กก.)
   // ไม่มีอบขาว = ค่าต่ำสุด (ผลตรวจบัญชี: ถ้าใช้ max จะหยิบแถวสีพิเศษที่รวมค่าเคลือบแล้ว → engine บวกค่าอบซ้ำ = คิดเกิน)
@@ -100,6 +103,8 @@ export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverrid
     const sku = (r.sku || "").trim();
     const cost = Number(r.unit_cost) || 0;
     if (cost > 0) {
+      // ราคาต่อรหัสสโตร์ — เก็บทุกแถวที่มีรหัส (ซ้ำรหัส = เอาถูกสุด กันแถวสีพิเศษดันราคาขึ้น)
+      if (sku) { const k = normCode(sku); ov.SKUPRICE[k] = ov.SKUPRICE[k] > 0 ? Math.min(ov.SKUPRICE[k], cost) : cost; }
       if (name && pb.GLASS && name in pb.GLASS) ov.GLASS[name] = cost;
       else if (name && pb.ROOFMAT && name in pb.ROOFMAT) ov.ROOFMAT[name] = cost;
       else if (name && pb.MOTOR && name in pb.MOTOR) ov.MOTOR[name] = cost;
@@ -139,6 +144,7 @@ export function applyPriceOverride(pb: any, ov?: PriceOverride | null): any {
     pb.ALUCOLOR_STOCK = pb.ALUCOLOR_STOCK || {};
     for (const c in ov.ALUCOLOR_STOCK) pb.ALUCOLOR_STOCK[c] = { ...(pb.ALUCOLOR_STOCK[c] || {}), ...ov.ALUCOLOR_STOCK[c] };
   }
+  if (ov.SKUPRICE && Object.keys(ov.SKUPRICE).length) pb.SKUPRICE = { ...(pb.SKUPRICE || {}), ...ov.SKUPRICE };
   // ธง "ราคาเส้นนี้มาจากสโตร์" — engine ใช้กัน mult คูณซ้ำ (สโตร์คิด น้ำหนัก×เรตต่อโล ให้แล้ว)
   pb.ALUCODE_FROM_STOCK = pb.ALUCODE_FROM_STOCK || {};
   for (const c in ov.ALUCODE || {}) pb.ALUCODE_FROM_STOCK[c] = true;

@@ -5,9 +5,9 @@
  *
  * ขยายรุ่น: เพิ่ม case ใน switch ให้ตรง spec_id ใน products.ts (พอร์ตจาก Excel "ตัดประกอบ")
  */
-import { CUT_SPEC_BY_ID } from "./products";
-import type { CutInput } from "./engine";
-import { calcColorToStock } from "./stock-match";
+import { CUT_SPEC_BY_ID } from "./products.ts";
+import type { CutInput } from "./engine.ts";
+import { calcColorToStock } from "./stock-match.ts";
 
 // multiplier = ตัวคูณจำนวนชุด (เช่น Velora: ใบตัด 1 บาน/ชุด แต่ใบเสนอสั่ง N บาน → sets ×N) — ผู้เรียกต้องคูณเข้า sets
 export type RecipeCutMap = { spec_id: string; input: Partial<CutInput> & Record<string, unknown>; multiplier?: number };

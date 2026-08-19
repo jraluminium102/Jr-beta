@@ -34,6 +34,8 @@ import AddonsSection from "@/components/calculator40/AddonsSection";
 import { ALU_COLOR_KEYS, ALU_COLOR_LABEL, resolveAluColor } from "@/lib/calculator40/alu-colors";
 // ชื่อสีในสโตร์ของสีที่เลือก — ส่งเข้า engine เพื่อหยิบ "ราคาเส้นตามสีจริงในสโตร์"
 import { stockColorOfCalc } from "@/lib/calculator40/stock-link";
+// อุปกรณ์ "ค่าของ" ดึงรายการจากใบตัดชุดเดียวกัน (รหัสสโตร์ตรงกับที่ช่างเบิกจริง)
+import { cutHardwareLines, HANDLE_FIELDS, HW_FROM_CUTLIST } from "@/lib/calculator40/hardware-from-cutlist";
 import { groupGlass, allGlassKeys } from "@/lib/calculator40/glass-cats";
 import { computeServices, EMPTY_SERVICES, type ServiceInput } from "@/lib/calculator40/services";
 import SubPanesSection, { subDesc, subPrice, type SubPane } from "@/components/calculator40/SubPanesSection";
@@ -135,6 +137,9 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   const [pb, setPb] = useState<any>(() => applyPriceOverride(JSON.parse(JSON.stringify(PRICEBOOK)), priceOverride));
   const [group, setGroup] = useState(1);
   const [prodId, setProdId] = useState<string>("sms_slide");
+  // ตัวเลือกที่ส่งต่อเข้าใบตัด (มือจับ ยี่ห้อ/สี/ชนิด) — ชุดเดียวกับหน้าใบตัด ไม่แยกรายการกัน
+  const [cutSel, setCutSel] = useState<Record<string, string>>(
+    Object.fromEntries(HANDLE_FIELDS.map((f) => [f.key, f.def])));
   const [showCost, setShowCost] = useState(false);   // โหมดดูทุน/กำไร
   const [adminOpen, setAdminOpen] = useState(false); // แผงแก้ราคา
   const [linesOpen, setLinesOpen] = useState(false);
@@ -374,6 +379,9 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
         spec,
         addons,
       };
+      // อุปกรณ์จากใบตัด (รุ่นที่เปิดแล้ว) → engine ใช้แทนรายการเดิม + คิดราคาจากรหัสสโตร์
+      const hwl = cutHardwareLines({ prodId: prod.id, w: wCm, h: hCm, p: pCount, form: formVal, spec, cut: cutSel });
+      if (hwl?.length) opt.hardwareLines = hwl;
       if (glassType) opt.glassType = glassType;
       if (material) opt.material = material;
       // G4 kindOpts (ประเภทตู้/ชนิดชั้น/กระจกหน้าบาน/สีหน้าบาน/เกรดกระจกชั้น ฯลฯ) → engine อ่าน opt[key] ตรง ๆ ตรง app.js calc() บรรทัด 217
@@ -438,7 +446,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     } catch (e) {
       return { error: e instanceof Error ? e.message : String(e) } as any;
     }
-  }, [pb, prod, w, h, p, form, color, glassType, material, spec, profit, addons, fixedPanes, kind, faceColorCode, depth, shelves, cabSides, sheetColor, roofSegs, subs, roomTotals, laborMode]);
+  }, [pb, prod, w, h, p, form, color, glassType, material, spec, profit, addons, fixedPanes, kind, faceColorCode, depth, shelves, cabSides, sheetColor, roofSegs, subs, roomTotals, laborMode, cutSel]);
 
   const ok = result && !("error" in result);
   // ── ประตู/หน้าต่าง (เจ้าของสั่ง 7 ส.ค.69 ให้มีทุกชุดที่เป็นบาน) ─────────────
@@ -463,7 +471,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     return {
       v: 1, kind: "std", prodId: prod.id, group: prod.group,
       w, h, p, form, color, glassType, material,
-      spec, addons, fixedPanes, profit, laborMode, useSel, sillSel,
+      spec, addons, fixedPanes, profit, laborMode, useSel, sillSel, cutSel,
       kindOpts: kind, faceColorCode, depth, shelves, cabSides, sheetColor, roofSegs, subs,
     };
   }
@@ -613,6 +621,8 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     setLaborMode(r.laborMode === "mfg" ? "mfg" : "all");   // ใบเก่าไม่มีฟิลด์นี้ = คิดค่าแรงรวม (ค่าเดิมของระบบ)
     setUseSel(r.useSel === "door" || r.useSel === "window" ? r.useSel : "auto");  // ใบเก่า = ให้ระบบเดาเหมือนเดิม
     setSillSel(typeof r.sillSel === "string" ? r.sillSel : "");
+    // ตัวเลือกมือจับ (ยี่ห้อ/สี/ชนิด) — ใบเก่าไม่มี = ใช้ค่าตั้งต้น (ผลเท่าเดิม)
+    setCutSel({ ...Object.fromEntries(HANDLE_FIELDS.map((f) => [f.key, f.def])), ...(r.cutSel ?? {}) });
     if (r.kind === "room") {
       setG6HideSidePrice(!!r.g6HideSidePrice);
       setRoomInitial(r.room ?? null);
@@ -1081,7 +1091,30 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                     <Select key={o.key} label={o.label} value={val ?? ""} onChange={(v) => setSpec((s) => ({ ...s, [o.key]: v }))} opts={opts} labels={o.labels} />
                   );
                 })}
+                {/* มือจับ — ยี่ห้อ/สี/ชนิดต่อบาน · แต่ละคู่ = คนละรหัสสโตร์ ราคาจึงต่างกันได้จริง
+                    ตัวเลือกชุดเดียวกับหน้าใบตัด (เจ้าของสั่ง 19 ส.ค.69) */}
+                {HW_FROM_CUTLIST.has(prod.id) && HANDLE_FIELDS.map((o) => (
+                  <Select key={o.key} label={o.label} value={cutSel[o.key] ?? o.def} opts={[...o.choices]}
+                    onChange={(v) => setCutSel((c) => ({ ...c, [o.key]: v }))} />
+                ))}
               </div>
+
+              {/* อุปกรณ์จากใบตัด — รหัสไหนยังไม่ตั้งราคาในสโตร์ ต้องเห็นทันที
+                  (ไม่งั้นค่าของหายเงียบ = เสนอราคาต่ำกว่าจริง) ระบบยังใช้ราคาเดิมไปก่อน */}
+              {(result as any)?.hwMissing?.length > 0 && (
+                <div className="mt-2 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  ⚠ อุปกรณ์ {(result as any).hwMissing.length} รายการยังไม่มีราคาในสโตร์ — ตอนนี้คิด &quot;ค่าของ&quot; ด้วยราคาเดิมในสูตรไปก่อน
+                  <div className="mt-1 font-mono text-[10px] leading-relaxed">
+                    {(result as any).hwMissing.map((m: any) => `${m.sku || "ไม่มีรหัส"} ${m.name}`).join(" · ")}
+                  </div>
+                  <div className="mt-1">ตั้งราคาที่หน้าสโตร์แล้วรีเฟรชหน้านี้ ระบบจะสลับไปคิดจากรายการใบตัดให้เอง</div>
+                </div>
+              )}
+              {(result as any)?.hwFromCutlist && (
+                <p className="mt-2 text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                  ✓ ค่าของ คิดจากรายการอุปกรณ์ในใบตัด (รหัสสโตร์ชุดเดียวกับที่ช่างเบิกจริง)
+                </p>
+              )}
 
               {/* รีมาร์คสี (สีชุบ/Aztec ฯลฯ ที่ยังใช้ราคา R3.9 อ้างอิง — รอถอดทุน 4.0) */}
               {resolveAluColor(color).note && (

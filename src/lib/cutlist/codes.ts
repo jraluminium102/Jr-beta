@@ -2,7 +2,7 @@
  * cutlist/codes — รวม "รหัสทั้งหมดที่ใบตัด/BOQ อ้างถึง" (อลู B####/F#### + อุปกรณ์ JR#####)
  * ใช้มาร์คในหน้าสต็อกว่าวัสดุตัวไหนถูกใช้ในใบตัด · ครอบทุก variant (ราง/สี/ยี่ห้อ/ตัวเลือกรุ่น)
  */
-import type { CutInput, CutSpec } from "./engine";
+import type { CutInput, CutSpec } from "./engine.ts";
 import { CUT_SPECS } from "./products.ts";
 
 const norm = (s: string) => s.trim().toUpperCase();
