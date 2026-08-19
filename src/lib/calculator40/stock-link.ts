@@ -116,7 +116,11 @@ export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverrid
       if (code && aluCodes.has(code)) {
         const e = aluByCode[code] || (aluByCode[code] = { white: 0, min: 0 });
         e.min = e.min > 0 ? Math.min(e.min, cost) : cost;
-        if (name.includes("อบขาว")) e.white = Math.max(e.white, cost);
+        // ⚠ สีต้องอ่านจาก "ช่องสี" ก่อน แล้วค่อยดูในชื่อ — ใช้ rowColor() ตัวเดียวกับที่อื่น
+        //   บั๊กเดิม: เช็คแค่ชื่อ (name.includes("อบขาว")) แต่สโตร์เก็บสีไว้ในช่อง color
+        //   → หาแถวอบขาวไม่เจอ เลยตกไปใช้ "ราคาต่ำสุด" ของรหัสนั้น (คนละแถวกับที่หน้าตรวจโชว์)
+        //   = หน้าตรวจขึ้น "ผูกแล้ว แต่ราคาไม่ตรง" ทั้งที่ผูกอยู่ (เจ้าของเจอเอง 19 ส.ค.69)
+        if (rowColor(r) === "อบขาว" || name.includes("อบขาว")) e.white = Math.max(e.white, cost);
         // เก็บราคา "ทุกสี" ไว้ด้วย (รหัสเดียวกันหลายแถว = คนละสี) — สีเดียวกันซ้ำหลายแถว เอาถูกสุด
         const rc = rowColor(r);
         if (rc) {

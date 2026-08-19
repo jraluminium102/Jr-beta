@@ -184,6 +184,41 @@ console.log("\n═══ ⑤e ขึ้นเรตต่อโล ต้อง�
   ok("เส้นที่ยังไม่ผูกสโตร์ ยังขยับตามเรตแบรนด์เหมือนเดิม", un(pbOf(200)).unitPrice > un(pbOf(187)).unitPrice, "");
 }
 
+console.log("\n═══ ⑤f ผูกแล้วต้องได้ราคาเดียวกับสโตร์จริง ๆ (เจ้าของเจอ 19 ส.ค.69) ═══");
+{
+  // สโตร์ของจริง: ชื่อไม่มีคำว่าสี · สีอยู่ในช่อง color (รหัสเดียวกันทุกสี)
+  //   บั๊กเดิม: buildPriceOverride หาแถวอบขาวจาก "ชื่อ" อย่างเดียว → หาไม่เจอ ตกไปใช้ราคาต่ำสุด
+   //  แต่หน้าตรวจอ่านช่องสีด้วย → คนละแถวกัน = ขึ้น "ผูกแล้ว แต่ราคาไม่ตรง" ทั้งที่ผูกอยู่
+  const mk = (color, cost) => ({ name: "เฟรมบนบานเลื่อน", sku: "B20001", color, unit_cost: cost });
+  const stock = [mk("อบขาว", 1200), mk("ดำ", 950), mk("เทาซาฮาร่า", 1300), mk("ลายไม้สักทอง", 1900)];
+  const ov = buildPriceOverride(stock, PB);
+  ok("ราคาตัวตั้ง = แถวอบขาว (ไม่ใช่แถวที่ถูกที่สุด)", ov.ALUCODE.B20001 === 1200, String(ov.ALUCODE.B20001));
+  const pb2 = applyPriceOverride(JSON.parse(JSON.stringify(PB)), ov);
+  const row = auditStockLink(stock, pb2).find((r) => r.section === "อลูรายเส้น" && r.key === "B20001");
+  ok("หน้าตรวจต้องขึ้น 'ผูกแล้ว' ไม่ใช่ 'ราคาไม่ตรง'", row?.status === "linked", `${row?.status}`);
+  ok("ราคาในสูตร = ราคาในสโตร์ เป๊ะ", row?.formulaPrice === row?.stockPrice, `${row?.formulaPrice} vs ${row?.stockPrice}`);
+
+  // อ่านสีจากท้ายชื่อได้ด้วย (แถวเก่าที่ยังไม่มีช่องสี)
+  const byName = buildPriceOverride([
+    { name: "เฟรมบนบานเลื่อน-อบขาว", sku: "B20001", unit_cost: 1200 },
+    { name: "เฟรมบนบานเลื่อน-ดำ", sku: "B20001", unit_cost: 950 },
+  ], PB);
+  ok("แถวเก่าที่สีอยู่ท้ายชื่อ ก็ยังหาแถวอบขาวเจอ", byName.ALUCODE.B20001 === 1200, String(byName.ALUCODE.B20001));
+
+  // ไม่มีแถวอบขาวเลย → ยังต้องถอยไปใช้ราคาต่ำสุดเหมือนเดิม (กันบวกค่าอบซ้ำ)
+  const noWhite = buildPriceOverride([mk("ดำ", 950), mk("เทาซาฮาร่า", 1300)], PB);
+  ok("ไม่มีแถวอบขาว → ใช้ราคาต่ำสุดเหมือนเดิม", noWhite.ALUCODE.B20001 === 950, String(noWhite.ALUCODE.B20001));
+
+  // ทุกรหัสในสโตร์จำลอง ต้องไม่มีตัวไหนขึ้น "ราคาไม่ตรง"
+  const many = ["B20001", "B20003", "B20041", "B20051", "B20054"].flatMap((c) => [
+    { name: "เส้น " + c, sku: c, color: "อบขาว", unit_cost: PB.ALUCODE[c] },
+    { name: "เส้น " + c, sku: c, color: "ดำ", unit_cost: PB.ALUCODE[c] - 50 },
+  ]);
+  const pb3 = applyPriceOverride(JSON.parse(JSON.stringify(PB)), buildPriceOverride(many, PB));
+  const bad = auditStockLink(many, pb3).filter((r) => r.section === "อลูรายเส้น" && r.status === "price_diff");
+  ok("ตั้งราคาตรงสูตร → ไม่มีรหัสไหนขึ้น 'ราคาไม่ตรง'", bad.length === 0, bad.map((r) => r.key).join(","));
+}
+
 console.log("\n═══ ⑥ หน้าจอต่อสายครบไหม ═══");
 {
   const p = fs.readFileSync(path.join(ROOT, "src/app/(app)/calculator40/stock-audit/page.tsx"), "utf8");
