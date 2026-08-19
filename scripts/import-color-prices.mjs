@@ -36,6 +36,15 @@ const num = (v) => Number(String(v ?? "").replace(/,/g, "")) || 0;
 const SYSTEM_OK = /(sms|fuji)\s*$/i;
 const SYSTEM_SKIP_NOTE = "ราคาประเมิน (นน×เรต) — ชีตคิดทุนของรุ่นนั้นใช้ราคาจริงคนละตัว";
 
+/**
+ * น้ำหนักที่ "ถอดจากราคาลายไม้สักทองจริง" ที่เจ้าของแจ้งมา (19 ส.ค.69)
+ *   ใช้กับรหัสที่น้ำหนักในชีตดูไม่ใช่ของชั่งจริง (เลขกลม ๆ เช่น 0.285 / 1.5 / 0.667)
+ *   วิธีถอด: ลายไม้แพงกว่าขาวกี่เท่า (ของรหัสนั้นเอง จากไฟล์) × 187 = เรตลายไม้ ฿/กก.
+ *            น้ำหนัก = ราคาลายไม้จริง ÷ เรตลายไม้
+ *   ฐานที่ตรวจแล้ว: ราคาขาวในไฟล์ = น้ำหนักจริง × 180 เป๊ะทุกรหัสที่เชื่อถือได้
+ */
+const TEAK_PRICE_REAL = { F7988: 120, F7986: 360, F7935: 630 };
+
 export function readColorPrices(file) {
   const X = openXlsx(file);
   const sheet = X.sheets.find((s) => s.name === "ราคาสี");
@@ -70,9 +79,25 @@ export function readColorPrices(file) {
     const code = String(c.A).trim();
     NAMES[code] = String(c.B ?? "").trim();
     const white = num(c.L);
-    const realKg = ALUWEIGHT[code] || 0;
+    let realKg = ALUWEIGHT[code] || 0;
     const sheetKg = white > 0 ? white / 187 : 0;              // น้ำหนักที่ชีตใช้คิดราคา (ย้อนจากราคา)
+
+    // รหัสที่เจ้าของให้ราคาลายไม้จริงมา → ถอดน้ำหนักจากราคานั้น (ทับน้ำหนักในชีต)
+    const teakReal = TEAK_PRICE_REAL[code];
+    if (teakReal > 0 && white > 0 && num(c.P) > 0) {
+      const teakRate = 187 * (num(c.P) / white);              // เรตลายไม้ ฿/กก. ของรหัสนี้
+      realKg = Math.round((teakReal / teakRate) * 1000) / 1000;
+      ALUWEIGHT[code] = realKg;
+    }
+
     let fix = (realKg > 0 && sheetKg > 0) ? realKg / sheetKg : 1;   // ตัวคูณแก้น้ำหนัก (ปกติ ≈1.039)
+    if (teakReal > 0) {
+      // ถอดจากราคาจริงแล้ว = เชื่อได้ ไม่ต้องผ่านกรอบ ±15%
+      if (white > 0) ALUCODE[code] = round1(white * fix);
+      for (const [key, col] of Object.entries(COLOR_COL))
+        if (num(c[col]) > 0) ALUCOLOR_KEY[key][code] = round1(num(c[col]) * fix);
+      continue;
+    }
     if (Math.abs(fix - 1) > MAX_FIX) {
       outliers.push({ code, name: NAMES[code], sheetKg: round1(sheetKg * 100) / 100, realKg, white, would: round1(white * fix) });
       fix = 1;   // ไม่แตะราคา รอเจ้าของยืนยันน้ำหนัก

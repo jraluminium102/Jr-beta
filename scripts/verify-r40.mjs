@@ -74,10 +74,10 @@ const ANCHORS = [
   //    ชีต "คิดทุน ___" ยังเขียนราคาเก่าอยู่ (ยังไม่ซิงก์) → anchor ชุดนี้จึงต่างจากชีตคิดทุน
   //    ตัวยึดที่ตรวจเลขได้เองอยู่ที่ ②g (ราคาขาว = กก. × 187)
   { id: 'sms_slide', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 16711.8 },
-  { id: 'euro_slide', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 28079.3 },
+  { id: 'euro_slide', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 27923.9 },
   { id: 'slimlux', in: { w: 200, h: 200, p: 2, form: 'อิสระ' }, cost: 13635 },
-  { id: 'open_door', in: { w: 150, h: 200, p: 1, form: 'มีธรณี' }, cost: 10597.6 },
-  { id: 'awning', in: { w: 40, h: 40, p: 1, form: 'อิสระ' }, cost: 5303.94 },
+  { id: 'open_door', in: { w: 150, h: 200, p: 1, form: 'มีธรณี' }, cost: 10734.2 },
+  { id: 'awning', in: { w: 40, h: 40, p: 1, form: 'อิสระ' }, cost: 5372.24 },
   { id: 'folding', in: { w: 180, h: 280, p: 2, form: '2บาน: รวบเปิดซ้าย (2-0)' }, cost: 17733.76, labor: 'baseXpanel' },   // calibrate HW ตรง matrix มด
   { id: 'fixed', in: { w: 150, h: 200, p: 1, form: 'กระจกล้วน' }, cost: 4302 },
   { id: 'topslide', in: { w: 360, h: 240, p: 2, form: 'เลื่อนซ้อน' }, cost: 21034.96 },
@@ -92,7 +92,7 @@ const ANCHORS = [
   { id: 'velora', in: { w: 220, h: 200, p: 1, form: 'เดี่ยว', color: 'sahara', glassType: 'เทมเปอร์ใส 6มม.' }, cost: 7111.6 },
   { id: 'pcdoor', in: { w: 150, h: 200, p: 2, form: 'แบ่ง 2' }, cost: 11403 },
   { id: 'banyok', in: { w: 100, h: 50, p: 1, form: 'เดี่ยว' }, cost: 7962 },
-  { id: 'fold_euro', in: { w: 180, h: 280, p: 2, form: '2บาน: 2-0 พับข้างเดียว' }, cost: 18065.76, labor: 'baseOnly' },
+  { id: 'fold_euro', in: { w: 180, h: 280, p: 2, form: '2บาน: 2-0 พับข้างเดียว' }, cost: 18270.66, labor: 'baseOnly' },
   { id: 'banklet', in: { w: 300, h: 150, p: 2, form: 'นอน' }, cost: 9842.8 },
   { id: 'curve_fixed', in: { w: 100, h: 50, p: 1, form: 'กระจกล้วน' }, cost: 4200 },
   // เปิดดัดโค้ง: ชีตตัวอย่างใช้กำไร 30% (บานสั่งร้านอื่น) → ตรวจที่กำไร 30 ให้ตรงชีต
@@ -114,13 +114,13 @@ const ANCHORS = [
 //   ⚠ ไม่ใส่ เฟี้ยม/เฟี้ยมยูโร — ชีตเขียนกำกับเองว่า "สูตร live ประมาณ" (ไม่ใช่เลขเป๊ะ)
 const ANCHORS150 = [
   { id: 'sms_slide', in: { p: 2, form: 'อิสระ' }, cost: 9158.25 },   // 9,190.85 − 285 (ยึดราคาสี/สโตร์)
-  { id: 'euro_slide', in: { p: 2, form: 'อิสระ' }, cost: 13178.15 },
+  { id: 'euro_slide', in: { p: 2, form: 'อิสระ' }, cost: 13081.75 },
   { id: 'eseries', in: { p: 2, form: 'อิสระ' }, cost: 12684.85 },
   { id: 'velora', in: { p: 2, form: 'เดี่ยว', color: 'white' }, cost: 5469.55 },      // สีขาว = ต้องมีค่าอบเรตเทา (rawAlu)
   { id: 'velora', in: { p: 2, form: 'เดี่ยว', color: 'sahara' }, cost: 5469.55 },     // เทา = เท่ากันเป๊ะตามสูตรชีต
-  { id: 'open_door', in: { p: 2, form: 'มีธรณี' }, cost: 11940.6 },
+  { id: 'open_door', in: { p: 2, form: 'มีธรณี' }, cost: 12077.2 },
   { id: 'pcdoor', in: { p: 1, form: 'แบ่ง 2', spec: { pcsill: 'มีธรณี', pcsoft: 'ใส่' } }, cost: 8474 },
-  { id: 'awning', in: { p: 1, form: 'อิสระ' }, cost: 5948.1 },
+  { id: 'awning', in: { p: 1, form: 'อิสระ' }, cost: 6016.4 },
   { id: 'banyok', in: { p: 1, form: 'เดี่ยว' }, cost: 8424 },
   { id: 'fixed', in: { p: 1, form: 'กระจกล้วน' }, cost: 4004 },
   { id: 'topslide', in: { p: 2, form: 'เลื่อนซ้อน' }, cost: 12573 },
@@ -268,8 +268,8 @@ console.log('\n═══ ②d ราคาตามสี (เทาซาฮา
 const ANCHORS_COLOR = [
   // SMS ขยับ −285 ทุกสีเท่ากัน (ฐานขาวเปลี่ยน · ตารางราคาสีเท่าเดิม) — ยึดชีตราคาสี v9
   ['sms_slide', { w: 150, h: 150, p: 2, form: 'อิสระ' }, { white: 9158.25, sahara: 9796.95, woodStock: 13637.85 }],
-  ['euro_slide', { w: 150, h: 150, p: 2, form: 'อิสระ' }, { white: 13178.15, sahara: 13980.75, woodStock: 18231.85 }],
-  ['open_door', { w: 150, h: 150, p: 2, form: 'มีธรณี' }, { white: 11940.6, sahara: 14855.22, woodStock: 16880.72 }],
+  ['euro_slide', { w: 150, h: 150, p: 2, form: 'อิสระ' }, { white: 13081.75, sahara: 13875.15, woodStock: 18061.55 }],
+  ['open_door', { w: 150, h: 150, p: 2, form: 'มีธรณี' }, { white: 12077.2, sahara: 15000.62, woodStock: 17070.52 }],
 ];
 for (const [id, inp, want] of ANCHORS_COLOR) {
   const prod = PRODUCTS[id];
@@ -361,6 +361,14 @@ console.log('\n═══ ②g ราคาเส้นแยกสีจริ�
   check('Aztec: ไม่คิดค่าอบซ้ำ (ราคาสีรวมค่าอบแล้ว)', az.cost.bake, 0, 0.01);
   check("น้ำหนัก กก./เส้น (ชีตน้ำหนักโปรไฟล์ = ชั่งจริง)", Object.keys(PB.ALUWEIGHT ?? {}).length, 130, 0);
   check("น้ำหนัก B20001 = 6.25 กก./เส้น (ไม่ใช่ 6.016 ที่เป็นราคา÷187)", PB.ALUWEIGHT?.B20001, 6.25, 0.001);
+  // ── 3 รหัสที่น้ำหนักในชีตไม่ใช่ของชั่งจริง → ถอดจาก "ราคาลายไม้สักทอง" ที่เจ้าของแจ้ง 19 ส.ค.69
+  //    วิธี: ลายไม้แพงกว่าขาวกี่เท่า (ของรหัสนั้นเอง) × 187 = เรตลายไม้ ฿/กก. · น้ำหนัก = ราคาจริง ÷ เรต
+  //    ราคาลายไม้ที่คิดออกมาต้องเท่าที่เจ้าของบอกเป๊ะ ไม่งั้นแปลว่าถอดผิด
+  for (const [code, teak] of Object.entries({ F7988: 120, F7986: 360, F7935: 630 }))
+    check(`${code} ลายไม้สักทอง = ${teak} ฿ (ราคาจริงจากเจ้าของ)`, PB.ALUCOLOR_KEY?.wood_teak?.[code], teak, 0.5);
+  check("F7935 น้ำหนักถอดใหม่ 2.424 (ชีตเขียน 0.285 = ไม่ใช่ของชั่ง)", PB.ALUWEIGHT?.F7935, 2.424, 0.002);
+  check("F7986 น้ำหนักถอดใหม่ 1.03 (ชีตเขียน 1.5)", PB.ALUWEIGHT?.F7986, 1.03, 0.002);
+  check("F7988 น้ำหนักถอดใหม่ 0.377 (ชีตเขียน 0.667)", PB.ALUWEIGHT?.F7988, 0.377, 0.002);
 }
 
 console.log('\n═══ ③ สวิตช์ค่าแรงในหน้าคิดราคา 4.0 (ต่อสายครบไหม) ═══');
