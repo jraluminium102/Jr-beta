@@ -355,8 +355,8 @@ console.log('\n═══ ②g ราคาเส้นแยกสีจริ�
   const az = computeCost(PB, PRODUCTS.sms_slide, { w: 600, h: 300, p: 3, form: 'อิสระ', color: 'special', colorKey: 'aztec' });
   check('Aztec: ค่าเปิดตู้อบยังคิดอยู่ (คงที่ ไม่ผูก กก.)', az.cost.openOven, PB.BAKE_OPEN_OVEN, 0.01);
   check('Aztec: ไม่คิดค่าอบซ้ำ (ราคาสีรวมค่าอบแล้ว)', az.cost.bake, 0, 0.01);
-  check('น้ำหนัก กก./เส้น เก็บไว้ครบ (เอาไปเติมสโตร์)', Object.keys(PB.ALUWEIGHT ?? {}).length, 100, 0);
-  check('น้ำหนัก B20001 = 6.016 กก./เส้น', PB.ALUWEIGHT?.B20001, 6.016, 0.001);
+  check("น้ำหนัก กก./เส้น (ชีตน้ำหนักโปรไฟล์ = ชั่งจริง)", Object.keys(PB.ALUWEIGHT ?? {}).length, 130, 0);
+  check("น้ำหนัก B20001 = 6.25 กก./เส้น (ไม่ใช่ 6.016 ที่เป็นราคา÷187)", PB.ALUWEIGHT?.B20001, 6.25, 0.001);
 }
 
 console.log('\n═══ ③ สวิตช์ค่าแรงในหน้าคิดราคา 4.0 (ต่อสายครบไหม) ═══');

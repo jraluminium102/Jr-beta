@@ -50,8 +50,17 @@ export function readColorPrices(file) {
     const code = String(c.A).trim();
     NAMES[code] = String(c.B ?? "").trim();
     if (num(c.L) > 0) ALUCODE[code] = num(c.L);
-    if (num(c.S) > 0) ALUWEIGHT[code] = Math.round(num(c.S) * 1000) / 1000;
+    // ⚠ ห้ามเอาน้ำหนักจากคอลัมน์ S ของชีตราคาสี — ตรวจแล้วมันคือ "ราคาขาว ÷ 187"
+    //   (B20001: 1125÷187 = 6.016) ไม่ใช่น้ำหนักที่ชั่งจริง (ชีตน้ำหนักโปรไฟล์ = 6.25)
+    //   น้ำหนักจริงอ่านจากชีต "น้ำหนักโปรไฟล์" ข้างล่าง (หัวชีตเขียนเองว่าเอาไปเสียบระบบ)
     for (const [key, col] of Object.entries(COLOR_COL)) if (num(c[col]) > 0) ALUCOLOR_KEY[key][code] = num(c[col]);
+  }
+  // ── น้ำหนักจริง: ชีต "น้ำหนักโปรไฟล์" (C รหัส · F ยาว(ม.) · G กก./ม. · H กก./เส้น) ──
+  const wsheet = X.sheets.find((s) => s.name === "น้ำหนักโปรไฟล์");
+  if (wsheet) for (const { cells: c } of X.read(wsheet.path)) {
+    const code = String(c.C ?? "").trim();
+    if (!isCode(code) || !(num(c.H) > 0)) continue;
+    ALUWEIGHT[code] = Math.round(num(c.H) * 1000) / 1000;
   }
   return { ALUCODE, ALUWEIGHT, ALUCOLOR_KEY, NAMES, count: rows.length, skipped, skipNote: SYSTEM_SKIP_NOTE };
 }
@@ -83,7 +92,8 @@ if (process.argv[1]?.endsWith("import-color-prices.mjs")) {
   for (const [k, m] of Object.entries(nw.ALUCOLOR_KEY)) console.log(`  ${k.padEnd(14)} ${String(Object.keys(m).length).padStart(4)} รหัส`);
 
   console.log("\n── ③ น้ำหนัก กก./เส้น (ALUWEIGHT) ──");
-  console.log(`  ${Object.keys(nw.ALUWEIGHT).length} รหัส — เอาไปเติมน้ำหนักในสโตร์ได้ (สายเรตต่อโล → ราคาต่อเส้น)`);
+  console.log(`  ${Object.keys(nw.ALUWEIGHT).length} รหัส (จากชีต "น้ำหนักโปรไฟล์" = น้ำหนักชั่งจริง)`);
+  console.log('  → เอาไปเติมน้ำหนักในสโตร์ได้ (สายเรตต่อโล → ราคาต่อเส้น)');
 
   if (!write) { console.log("\n(ยังไม่เขียนลง pricebook — ใส่ --write ถ้าจะเขียนจริง)"); process.exit(0); }
   pb.ALUCODE = { ...cur, ...nw.ALUCODE };

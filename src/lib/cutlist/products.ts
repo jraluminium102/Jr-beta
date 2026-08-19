@@ -70,6 +70,15 @@ function fujiSwingHardware(): HardwareDef[] {
 }
 
 const isPlug = (rail: string) => rail === "3รางเสียบ"; // 3รางเสียบ → ค่าหัก "เสียบ" · ไม่งั้น "เตี้ย"
+
+/**
+ * โหนกเกี่ยว (เสาเกี่ยวรับแรง B20010) — "ออโต้ตามความสูง"
+ *   บานสูงเกิน 240 ซม. ต้องใช้เสาเกี่ยวรับแรงเสมอ (คิดราคา 4.0 ใช้กฎนี้มาตลอด: count = H>2.4 ? ... )
+ *   เดิมใบตัดให้ติ๊กเอง + from-recipe ส่ง honk:false ตายตัว → ใบตัดกับคิดราคาไม่ตรงกันเวลาบานสูง
+ *   (เจ้าของเจอเองจากหน้าเทียบ 19 ส.ค.69: 600×300 → B20010 "มีแต่คิดราคา" · B20009 "จำนวนต่าง")
+ *   ติ๊กเองยังได้ = บังคับเปิด · สูงเกิน 240 = เปิดให้อัตโนมัติ ปิดไม่ได้ (ตรงกับสูตรคิดราคา)
+ */
+export const honkOf = (o: CutInput) => !!o.honk || Number(o.H) > 240;
 // มือจับเริ่มต้น (บานเลื่อน/ประตู) — ตรง default ในไฟล์ Excel
 const HANDLE_DEF_LR = { handleBrand: "เมโทร", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค", handleR: "ล็อค+ดัมมี่" };
 const HANDLE_DEF_L = { handleBrand: "เมโทร", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค" };
@@ -100,8 +109,8 @@ export const SMS_SLIDE_FREE: CutSpec = {
     { name: "เฟรมบน", code: "B20001", len: (o) => o.W - 4.4, qty: () => 1 },
     { name: "เฟรมข้าง", code: "B20003", len: (o) => o.H, qty: () => 2 },
     { name: "เสากุญแจ ML", code: "B20051", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3), qty: () => 2 },
-    { name: "เสาเกี่ยว", code: "B20009", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3), qty: (o) => (o.honk ? o.N - 1 : 2 * (o.N - 1)) },
-    { name: "เสาเกี่ยวโหนก", code: "B20010", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3), qty: (o) => (o.honk ? o.N - 1 : 0) },
+    { name: "เสาเกี่ยว", code: "B20009", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3), qty: (o) => (honkOf(o) ? o.N - 1 : 2 * (o.N - 1)) },
+    { name: "เสาเกี่ยวโหนก", code: "B20010", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3), qty: (o) => (honkOf(o) ? o.N - 1 : 0) },
     { name: "ขวางบน", code: "B20054", len: freeCross, qty: (o) => o.N },
     { name: "ขวางล่าง", code: "B20054", len: freeCross, qty: (o) => o.N },
     { name: "ฝาปิดเฟรมข้าง", code: "B20019", len: (o) => o.H - (isPlug(o.rail) ? 5 : 2.3), qty: () => 4 },
@@ -139,8 +148,8 @@ export const SMS_SLIDE_CENTER: CutSpec = {
     { name: "เฟรมข้าง", code: "B20003", len: (o) => o.H, qty: () => 2 },
     { name: "เสากุญแจมัลติพ้อย", code: "B20051", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3.2), qty: () => 2 },
     { name: "เสากุญแจบานตาย", code: "B20051", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3.2), qty: () => 2 },
-    { name: "เสาเกี่ยว", code: "B20009", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3.2), qty: (o) => (o.honk ? 2 : 4) },
-    { name: "เสาเกี่ยวโหนก", code: "B20010", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3.2), qty: (o) => (o.honk ? 2 : 0) },
+    { name: "เสาเกี่ยว", code: "B20009", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3.2), qty: (o) => (honkOf(o) ? 2 : 4) },
+    { name: "เสาเกี่ยวโหนก", code: "B20010", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3.2), qty: (o) => (honkOf(o) ? 2 : 0) },
     { name: "ชนกลาง", code: "B20046", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3.2), qty: () => 1 },
     { name: "ขวางบน", code: "B20054", len: centerCross, qty: () => 4 },
     { name: "ขวางล่าง", code: "B20054", len: centerCross, qty: () => 4 },
@@ -181,8 +190,8 @@ export const SMS_SLIDE_TOW: CutSpec = {
     { name: "เฟรมบน", code: "B20001", len: (o) => o.W - 4.4, qty: () => 1 },
     { name: "เฟรมข้าง", code: "B20003", len: (o) => o.H, qty: () => 2 },
     { name: "เสากุญแจ ML", code: "B20051", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3), qty: () => 2 },
-    { name: "เสาเกี่ยว", code: "B20009", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3), qty: (o) => (o.honk ? o.N - 1 : 2 * (o.N - 1)) },
-    { name: "เสาเกี่ยวโหนก", code: "B20010", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3), qty: (o) => (o.honk ? o.N - 1 : 0) },
+    { name: "เสาเกี่ยว", code: "B20009", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3), qty: (o) => (honkOf(o) ? o.N - 1 : 2 * (o.N - 1)) },
+    { name: "เสาเกี่ยวโหนก", code: "B20010", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3), qty: (o) => (honkOf(o) ? o.N - 1 : 0) },
     { name: "ขวางบน", code: "B20054", len: (o) => (o.W - 4.2 * o.N - 11.2) / o.N, qty: (o) => o.N },
     { name: "ขวางล่าง", code: "B20054", len: (o) => (o.W - 4.2 * o.N - 11.2) / o.N, qty: (o) => o.N },
     { name: "ฝาปิดเฟรมข้าง", code: "B20019", len: (o) => o.H - (isPlug(o.rail) ? 5 : 2.3), qty: () => 4 },
