@@ -31,6 +31,7 @@ import { ALU_COLOR_KEYS, ALU_COLOR_LABEL, resolveAluColor } from "@/lib/calculat
 import { groupGlass, allGlassKeys } from "@/lib/calculator40/glass-cats";
 // @ts-expect-error — engine เป็น ESM JS ล้วน
 import { computeCost, ceil100, CEIL_RATE } from "@/lib/calculator40/engine.mjs";
+import { stockColorOfCalc } from "@/lib/calculator40/stock-link";
 // @ts-expect-error — products เป็น ESM JS ล้วน
 import { PRODUCTS } from "@/lib/calculator40/products.mjs";
 // @ts-expect-error — mosquito helper เป็น ESM JS ล้วน
@@ -180,6 +181,7 @@ function panePrice(
   const opt: any = {
     w: wCm, h: hCm, p: pane.n || 1, form: formVal,
     color: rc.bake, colorName: rc.label, glassType, material: prod.defMaterial ?? undefined,
+    stockColor: stockColorOfCalc(pane.colorIdx || roomColor),   // ราคาเส้นตามสีจริงในสโตร์
     profitPct, installProfitPct: profitPct, addons: pane.addons || {},
     // ผนังแผ่นอลู (ลูกฟูก/คอมโพ · prod.showColor) — สีพิเศษบวกเรตสีอบ/ตร.ม. จาก R3.9 (ซาฮาร่า300/พิเศษ1700/ลายไม้2400)
     // finRate เป็น "ราคาขาย" → ÷(1+กำไร%) เป็นทุน (frameColorRate) แล้วเอนจิน ×(1+กำไร%) กลับเป็นราคาขายเป๊ะ (ไม่ขึ้นกับกำไร%)
