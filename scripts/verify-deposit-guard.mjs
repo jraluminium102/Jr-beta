@@ -42,8 +42,8 @@ function stub({ instAmount, instSeq, instPaid, depositAmount }) {
 
 const run = async (o) => {
   const s = stub(o);
-  const r = await applyInstallmentPayment(s.client, { installmentId: 1, billingNoteId: "1", paidAmount: o.recording });
-  return { error: r.error, writes: s.writes };
+  const r = await applyInstallmentPayment(s.client, { installmentId: 1, billingNoteId: "1", paidAmount: o.recording, force: o.force });
+  return { error: r.error, needsConfirm: r.needsConfirm, writes: s.writes };
 };
 
 console.log("\n═══ เคสจริงที่เจ้าของโดนบล็อก (BL2569080013) ═══");
@@ -58,9 +58,15 @@ console.log("\n═══ ทางอันตราย — ต้องยั�
 {
   // เคสเดิมที่ guard ถูกสร้างมาแก้: มัดจำจริง 30,000 แต่งวด 1 = 59,500
   const r = await run({ instAmount: 59500, instSeq: 1, instPaid: 0, depositAmount: 30000, recording: 59500 });
-  ok("มัดจำ 30,000 < บันทึก 59,500 → ต้องบล็อก", !!r.error, "ไม่บล็อก!");
-  ok("ข้อความบอกว่าบันทึกเกินเงินจริง", /มากกว่าเงินที่เข้าจริง/.test(r.error ?? ""), r.error ?? "");
-  ok("บล็อกก่อนแตะงวด (ไม่เขียนอะไรเลย)", r.writes.length === 0, JSON.stringify(r.writes).slice(0, 120));
+  ok("มัดจำ 30,000 < บันทึก 59,500 → ต้องบล็อก (โดยไม่ force)", !!r.error, "ไม่บล็อก!");
+  ok("คืน needsConfirm ให้หน้าจอถามยืนยัน (ไม่ block ตาย)", r.needsConfirm === true, "ไม่มี needsConfirm");
+  ok("ข้อความชวนกดยืนยันรับเงินจริง", /ยืนยันรับเงินจริง/.test(r.error ?? ""), r.error ?? "");
+  ok("ยังไม่แตะงวดจนกว่าจะยืนยัน (ไม่เขียนอะไรเลย)", r.writes.length === 0, JSON.stringify(r.writes).slice(0, 120));
+
+  // กด force = ยืนยันรับเงินจริง → ต้องปิดงวดได้ (มัดจำ token โตเป็นยอดงวด)
+  const rf = await run({ instAmount: 59500, instSeq: 1, instPaid: 0, depositAmount: 30000, recording: 59500, force: true });
+  ok("force = ยืนยันแล้ว → ผ่าน (ปิดงวดได้)", !rf.error, rf.error ?? "");
+  ok("force แล้วเขียนงวดจริง", rf.writes.length > 0, "ไม่เขียน!");
 }
 {
   const r = await run({ instAmount: 141240, instSeq: 1, instPaid: 141240 - 100, depositAmount: 141240, recording: 200 });
