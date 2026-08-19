@@ -123,7 +123,11 @@ console.log("\n═══ ④ ⚠ รหัสยังไม่ตั้งร�
     && plain.cost.hardware + plain.cost.consum > 0, "");
   ok("ราคาขายเท่าเดิมเป๊ะ (ไม่มีใครโดนคิดถูกลงโดยไม่ตั้งใจ)",
     noStock.sell.withInstall === plain.sell.withInstall, `${noStock.sell.withInstall} vs ${plain.sell.withInstall}`);
-  ok("รายงานรหัสที่ต้องไปตั้งราคา ครบทุกตัว", noStock.hwMissing.length === linesOf().length, String(noStock.hwMissing.length));
+  // 6 รหัสมีราคาสำรองจากไฟล์ถอดทุนแล้ว (④b) → ที่เหลือคือรหัสที่ต้องตั้งราคาในสโตร์เท่านั้น
+  ok("รายงานเฉพาะรหัสที่ยังไม่มีราคาเลย (ไฟล์ก็ไม่มี สโตร์ก็ไม่มี)",
+    noStock.hwMissing.length === linesOf().length - Object.keys(BASE.HWPRICE ?? {}).length - 1, String(noStock.hwMissing.length));
+  ok("รหัสที่มีราคาไฟล์แล้ว ต้องไม่โผล่ในรายการที่ขาด",
+    !noStock.hwMissing.some((m) => (BASE.HWPRICE ?? {})[m.sku.toUpperCase()] > 0), "");
   ok("รายงานทั้งรหัสและชื่อ (เอาไปหาในสโตร์ได้)",
     noStock.hwMissing.every((m) => m.sku && m.name), "");
   // ขาดแค่ตัวเดียวก็ต้องถอยทั้งชุด (ไม่ใช่คิดครึ่ง ๆ)
@@ -135,6 +139,42 @@ console.log("\n═══ ④ ⚠ รหัสยังไม่ตั้งร�
     plain.hwFromCutlist === false && plain.hwMissing.length === 0, "");
 }
 
+console.log("\n═══ ④b ราคาสำรองจากไฟล์ถอดทุน v9 (เจ้าของสั่ง 19 ส.ค.69: 6 รหัสไม่มีราคาในสโตร์) ═══");
+{
+  // ค่าตรึงจากไฟล์ ถอดทุน_รวมทั้งหมด v9.xlsx → ชีต "คิดทุน SMS"
+  //   ล้อ 27 = 80/ลูก (แถว21) · น็อต = 1/ตัว (แถว25) · สักหลาด = 1.5/ม. (แถว24) · ซิลิโคน = 90/หลอด (แถว8,26)
+  const WANT = { JR00576: 80, JR00864: 1, JR00863: 1, JR00794: 1.5, JR00504: 90 };
+  for (const [sku, v] of Object.entries(WANT))
+    ok(`ราคาไฟล์ ${sku} = ${v}`, BASE.HWPRICE?.[sku] === v, String(BASE.HWPRICE?.[sku]));
+
+  // สภาพจริงตามที่เจ้าของรายงาน: สโตร์มีราคา 10 รหัส (มือจับ+ชิ้นส่วน+ยางรูน้ำ) ขาด 6 รหัสนี้
+  const IN_STOCK = { JR00368: 260, JR00369: 230, JR00370: 150, JR00478: 18, JR00479: 22,
+    JR00476: 9, JR00475: 14, JR00477: 12, JR00589: 6, JR00485: 6 };
+  const pbReal = applyPriceOverride(JSON.parse(JSON.stringify(BASE)),
+    buildPriceOverride(Object.entries(IN_STOCK).map(([sku, c]) => ({ name: sku, sku, unit_cost: c })), BASE));
+  const r = computeCost(pbReal, PRODUCTS.sms_slide, { ...BASE_IN, hardwareLines: linesOf() });
+  ok("6 รหัสที่ขาด มีราคาไฟล์แล้ว → ใช้รายการใบตัดได้", r.hwFromCutlist === true, "");
+  ok("ไม่มีรหัสไหนขาดราคาอีก", r.hwMissing.length === 0, JSON.stringify(r.hwMissing));
+  const ln = (nm) => r.lines.find((l) => l.name.startsWith(nm));
+  ok("ล้อ 27: 6 × 80 = 480 (ตรงไฟล์)", ln("ล้อ 27").amount === 480, String(ln("ล้อ 27").amount));
+  ok("ซิลิโคน: 3 × 90 = 270 (ตรงไฟล์)", ln("ซิลิโคน").amount === 270, String(ln("ซิลิโคน").amount));
+  ok("สักหลาด ราคาไฟล์เป็น 'ต่อเมตร' อยู่แล้ว → ห้ามหารม้วน 250 ซ้ำ",
+    Math.abs(ln("สักหลาด").unitPrice - 1.5) < 0.001, String(ln("สักหลาด").unitPrice));
+  ok("บอกได้ว่าบรรทัดไหนใช้ราคาไฟล์ (ยังไม่ใช่ราคาสโตร์)",
+    r.hwFileFallback.length === 6 && r.lines.filter((l) => l.fromFile).length === 6, String(r.hwFileFallback.length));
+  ok("รายงานรหัส+ชื่อ ให้เอาไปตั้งราคาในสโตร์ได้", r.hwFileFallback.every((m) => /^JR\d+$/.test(m.sku) && m.name), "");
+
+  // สโตร์ต้องชนะไฟล์เสมอ — ตั้งราคาในสโตร์แล้วต้องสลับไปใช้ของสโตร์
+  const pb2 = applyPriceOverride(JSON.parse(JSON.stringify(BASE)),
+    buildPriceOverride(Object.entries({ ...IN_STOCK, JR00576: 95 }).map(([sku, c]) => ({ name: sku, sku, unit_cost: c })), BASE));
+  const r2 = computeCost(pb2, PRODUCTS.sms_slide, { ...BASE_IN, hardwareLines: linesOf() });
+  ok("ตั้งราคาในสโตร์ → ใช้ราคาสโตร์ ไม่ใช่ราคาไฟล์", r2.lines.find((l) => l.name.startsWith("ล้อ 27")).unitPrice === 95, "");
+  ok("บรรทัดที่ย้ายไปใช้ราคาสโตร์แล้ว ต้องหลุดจากรายการ 'ราคาไฟล์'",
+    r2.hwFileFallback.length === 5 && !r2.hwFileFallback.some((m) => m.sku === "JR00576"), String(r2.hwFileFallback.length));
+  ok("ราคาไฟล์ไม่ไปแตะรุ่นที่ยังไม่เปิด (ไม่มี hardwareLines = เหมือนเดิมเป๊ะ)",
+    computeCost(BASE, PRODUCTS.sms_slide, { ...BASE_IN }).sell.withInstall === 37500, "");
+}
+
 console.log("\n═══ ⑤ หน้าจอต่อสายครบไหม ═══");
 {
   const c = fs.readFileSync(path.join(ROOT, "src/components/Calculator40Client.tsx"), "utf8");
@@ -144,6 +184,7 @@ console.log("\n═══ ⑤ หน้าจอต่อสายครบไห
   ok("ตัวเลือกมือจับเข้า deps ของการคิดราคา (เปลี่ยนแล้วราคาขยับทันที)", c.includes("laborMode, cutSel]"), "");
   ok("เก็บตัวเลือกมือจับลงสูตรของข้อ (แก้ย้อนหลังได้รหัสเดิม)", c.includes("useSel, sillSel, cutSel,"), "");
   ok("เตือนบนหน้าจอว่ารหัสไหนยังไม่มีราคาในสโตร์", c.includes("hwMissing") && c.includes("ยังไม่มีราคาในสโตร์"), "");
+  ok("บอกบนหน้าจอว่ารหัสไหนยังใช้ราคาจากไฟล์ถอดทุน", c.includes("hwFileFallback") && c.includes("ราคาจากไฟล์ถอดทุน"), "");
   const cut = fs.readFileSync(path.join(ROOT, "src/lib/cutlist/hardware.ts"), "utf8");
   ok("ใบตัด SMS มีซิลิโคนแล้ว (เดิมไม่มี ทั้งที่คิดราคาคิดอยู่)", cut.includes('sku: "JR00504"'), "");
 }
