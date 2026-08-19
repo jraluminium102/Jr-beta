@@ -9,7 +9,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { auditStockLink, auditByProduct, bumpTest, STATUS_LABEL } from "../src/lib/calculator40/stock-audit.ts";
+import { auditStockLink, auditByProduct, auditKgLink, bumpTest, STATUS_LABEL } from "../src/lib/calculator40/stock-audit.ts";
 import { buildPriceOverride, applyPriceOverride, stockColorOfCalc } from "../src/lib/calculator40/stock-link.ts";
 import { computeCost } from "../src/lib/calculator40/engine.mjs";
 import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
@@ -138,6 +138,50 @@ console.log("\n═══ ⑤c ราคาเส้นแยกสี ต้อ�
   ok("แพงขึ้นตามสี: ขาว < เทา < ลายไม้", w.cost.total < sh.cost.total && sh.cost.total < wd.cost.total, "");
 }
 
+console.log("\n═══ ⑤d สายราคา 'ต่อโล → ต่อเส้น' (เจ้าของถาม 19 ส.ค.69) ═══");
+{
+  const mk = (o) => ({ name: o.n ?? "เฟรม", sku: o.sku, color: o.c ?? "อบขาว", is_weight_based: o.wb ?? true,
+    weight_per_unit: o.kg ?? 0, price_per_kg: o.rate ?? 0, unit_cost: o.cost ?? 0 });
+  const k = auditKgLink([
+    mk({ sku: "B20001", kg: 6.6, rate: 187, cost: 1234.2 }),                 // ถูกต้อง
+    mk({ sku: "B20003", kg: 0, rate: 187, cost: 870 }),                      // ไม่มีน้ำหนัก
+    mk({ sku: "B20041", kg: 11.5, rate: 187, cost: 1500 }),                  // ราคาไม่ตรงเรต
+    mk({ sku: "B20047", kg: 4.58, rate: 0, cost: 825 }),                     // ยังไม่ตั้งเรต
+    mk({ sku: "F7994", kg: 0.83, rate: 187, cost: 150, wb: false }),         // ตั้งราคาต่อเส้นตรง
+    mk({ sku: "JR99999", kg: 5, rate: 187, cost: 935 }),                     // ไม่ใช่เส้นที่สูตรใช้ → ต้องไม่โผล่
+  ]);
+  const st = (s) => k.find((r) => r.sku === s)?.status;
+  ok("เอาเฉพาะเส้นที่สูตรคิดราคาเรียกใช้จริง", k.length === 5 && !k.some((r) => r.sku === "JR99999"), String(k.length));
+  ok("น้ำหนัก × เรต = ราคาเส้น → ผ่าน", st("B20001") === "ok", String(st("B20001")));
+  ok("⚠ ไม่มีน้ำหนัก/เส้น → เตือน (กดเปลี่ยนเรตแล้วราคาไม่ขยับ)", st("B20003") === "no_weight", String(st("B20003")));
+  ok("⚠ ราคาเส้นไม่ตรง น้ำหนัก×เรต → เตือนว่าเป็นราคาเรตเก่า", st("B20041") === "stale", String(st("B20041")));
+  ok("ยังไม่ตั้งเรตต่อโล → แยกสถานะไว้", st("B20047") === "no_rate", String(st("B20047")));
+  ok("ไม่ได้ติดธงคิดต่อโล → บอกว่าตั้งราคาต่อเส้นตรง", st("F7994") === "not_kg", String(st("F7994")));
+  ok("เรียงตัวที่ต้องแก้ขึ้นบนสุด", k[0].status === "no_weight", k[0].status);
+  ok("บอกราคาที่ 'ควรเป็น' ให้เทียบได้", k.find((r) => r.sku === "B20041")?.expected === 2150.5, "");
+}
+
+console.log("\n═══ ⑤e ขึ้นเรตต่อโล ต้องเด้ง 'ครั้งเดียว' ไม่คิดซ้ำสองต่อ ═══");
+{
+  // สโตร์: B20001 หนัก 6.6 กก. · เรต 187 → 1,234.2 ฿/เส้น · supplier=SMS (= แบรนด์ในตาราง ALU)
+  const at = (rate) => [{ name: "เฟรมบน", sku: "B20001", color: "อบขาว", supplier: "SMS",
+    is_weight_based: true, weight_per_unit: 6.6, price_per_kg: rate, unit_cost: Math.round(6.6 * rate * 100) / 100 }];
+  const pbOf = (rate) => applyPriceOverride(JSON.parse(JSON.stringify(PB)), buildPriceOverride(at(rate), PB));
+  const lineOf = (pb) => computeCost(pb, PRODUCTS.sms_slide, { w: 300, h: 220, p: 3, form: "อิสระ" })
+    .lines.find((l) => l.name.startsWith("เฟรมบน"));
+
+  const a = lineOf(pbOf(187)), b = lineOf(pbOf(200));   // ขึ้นเรต 187 → 200 = +6.95%
+  ok("ราคาเส้นก่อนขึ้นเรต = น้ำหนัก × เรต", Math.abs(a.unitPrice - 1234.2) < 0.02, String(a.unitPrice));
+  ok("ขึ้นเรตต่อโลแล้วราคาเส้นขยับจริง", b.unitPrice > a.unitPrice, `${a.unitPrice}→${b.unitPrice}`);
+  ok("⚠ ขยับเท่าเรตพอดี ไม่คูณซ้ำ (200/187 = +6.95% ไม่ใช่ +14%)",
+    Math.abs(b.unitPrice / a.unitPrice - 200 / 187) < 0.001, String(Math.round((b.unitPrice / a.unitPrice - 1) * 1000) / 10 + "%"));
+  ok("ราคาเส้นใหม่ = 6.6 × 200 เป๊ะ", Math.abs(b.unitPrice - 1320) < 0.02, String(b.unitPrice));
+  // เส้นที่ยังไม่ผูกสโตร์ ต้องยังขยับตาม mult เหมือนเดิม (ไม่งั้นแก้เรตแล้วเงียบ)
+  const un = (pb) => computeCost(pb, PRODUCTS.sms_slide, { w: 300, h: 220, p: 3, form: "อิสระ" })
+    .lines.find((l) => l.cat === "alu" && !l.name.startsWith("เฟรมบน"));
+  ok("เส้นที่ยังไม่ผูกสโตร์ ยังขยับตามเรตแบรนด์เหมือนเดิม", un(pbOf(200)).unitPrice > un(pbOf(187)).unitPrice, "");
+}
+
 console.log("\n═══ ⑥ หน้าจอต่อสายครบไหม ═══");
 {
   const p = fs.readFileSync(path.join(ROOT, "src/app/(app)/calculator40/stock-audit/page.tsx"), "utf8");
@@ -151,7 +195,10 @@ console.log("\n═══ ⑥ หน้าจอต่อสายครบไห
   const cc = fs.readFileSync(path.join(ROOT, "src/components/Calculator40Client.tsx"), "utf8");
   ok("มีทางเข้าจากหน้าคิดราคา", /calculator40\/stock-audit/.test(cc), "");
   ok("ป้ายสถานะครบทุกแบบ", Object.keys(STATUS_LABEL).length === 6, "");
-  ok("ค่าตั้งต้นของหน้าคือมุม 'รายรุ่น'", c.includes('useState<"product" | "item">("product")'), "");
+  ok("ค่าตั้งต้นของหน้าคือมุม 'รายรุ่น'", c.includes('setView] = useState') && c.includes('>("product")'), "");
+  ok("มีมุม 'ราคาต่อโล → ราคาต่อเส้น' ให้กด", c.includes("ราคาต่อโล → ราคาต่อเส้น") && c.includes('view === "kg"'), "");
+  ok("ขึ้นป้ายจำนวนเส้นที่ต้องแก้บนปุ่ม (ไม่ต้องเข้าไปดูก่อน)", c.includes("kgBad"), "");
+  ok("ตารางต่อโลโชว์ 'ควรเป็น' เทียบ 'ราคาจริง'", c.includes("ควรเป็น ฿/เส้น") && c.includes("ราคาจริง ฿/เส้น"), "");
   ok("มีตารางรายรุ่นจริง", c.includes("รายรุ่น — รุ่นไหนผูกสโตร์ครบ"), "");
   ok("โชว์บรรทัดอลูที่ไม่มีรหัสในตารางรายรุ่น", c.includes("p.aluNoCode.join"), "");
   ok("สลับไปดูรายวัสดุทีละบรรทัดได้", c.includes("ดูรายวัสดุทีละบรรทัด"), "");
