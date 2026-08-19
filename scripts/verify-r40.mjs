@@ -69,7 +69,7 @@ function laborFromSheet(s) {
 //     'baseXpanel'= ฐาน × จำนวนบาน          (ชีต "คิดทุน เฟี้ยม" D64/D65)
 //     'baseOnly'  = ฐานเฉย ๆ                (ชีต "คิดทุน เฟี้ยมยูโร" E46/E47)
 const ANCHORS = [
-  { id: 'sms_slide', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 16648.4 },
+  { id: 'sms_slide', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 16678.4 },
   { id: 'euro_slide', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 29499.4 },
   { id: 'slimlux', in: { w: 200, h: 200, p: 2, form: 'อิสระ' }, cost: 13635 },
   { id: 'open_door', in: { w: 150, h: 200, p: 1, form: 'มีธรณี' }, cost: 10637 },
@@ -109,7 +109,7 @@ const ANCHORS = [
 //   ชีตนี้ล็อกทุนวัสดุจริงไว้ที่ 150×150 ทุกรุ่น = จุดยึดที่ 2 ฟรี ๆ จากไฟล์
 //   ⚠ ไม่ใส่ เฟี้ยม/เฟี้ยมยูโร — ชีตเขียนกำกับเองว่า "สูตร live ประมาณ" (ไม่ใช่เลขเป๊ะ)
 const ANCHORS150 = [
-  { id: 'sms_slide', in: { p: 2, form: 'อิสระ' }, cost: 9170.85 },
+  { id: 'sms_slide', in: { p: 2, form: 'อิสระ' }, cost: 9190.85 },
   { id: 'euro_slide', in: { p: 2, form: 'อิสระ' }, cost: 13789.85 },
   { id: 'eseries', in: { p: 2, form: 'อิสระ' }, cost: 12685 },
   { id: 'velora', in: { p: 2, form: 'เดี่ยว', color: 'white' }, cost: 5470 },      // สีขาว = ต้องมีค่าอบเรตเทา (rawAlu)
@@ -172,7 +172,7 @@ console.log('▶ แก้อลู SMS 187→200 (กระจก/อุปก�
   const base = computeCost(PB, PRODUCTS.sms_slide, { w: 600, h: 300, p: 3, form: 'อิสระ' });
   const PB2 = JSON.parse(JSON.stringify(PB)); PB2.ALU.SMS = 200;
   const r = computeCost(PB2, PRODUCTS.sms_slide, { w: 600, h: 300, p: 3, form: 'อิสระ' });
-  check('ทุนอลู = 10050×200/187', r.cost.alu, 10050 * 200 / 187, 1);
+  check('ทุนอลู = 10080×200/187', r.cost.alu, 10080 * 200 / 187, 1);
   check('กระจกนิ่ง', r.cost.glass, base.cost.glass, 0.01);
   check('อุปกรณ์นิ่ง', r.cost.hardware + r.cost.consum, base.cost.hardware + base.cost.consum, 0.01);
   check('ราคาแพงขึ้น (36100→' + r.sell.withInstall + ')', r.sell.withInstall > base.sell.withInstall ? 1 : 0, 1, 0);
@@ -262,8 +262,8 @@ for (const [id, form] of [['sms_slide', 'อิสระ'], ['euro_slide', 'อ�
 //                + Σ บาร์×กก.×ค่าอบ สำหรับเส้นที่ชีตไม่ได้ VLOOKUP (เช่น F7863/F7864 ของบานเปิด)
 console.log('\n═══ ②d ราคาตามสี (เทาซาฮาร่า / ลายไม้สต็อค) ═══');
 const ANCHORS_COLOR = [
-  ['sms_slide', { w: 150, h: 150, p: 2, form: 'อิสระ' }, { white: 9170.85, sahara: 9815.85, woodStock: 14010.88 }],
-  ['euro_slide', { w: 150, h: 150, p: 2, form: 'อิสระ' }, { white: 13789.85, sahara: 14718.18, woodStock: 20409.7 }],
+  ['sms_slide', { w: 150, h: 150, p: 2, form: 'อิสระ' }, { white: 9190.85, sahara: 10892.52, woodStock: 14289.57 }],
+  ['euro_slide', { w: 150, h: 150, p: 2, form: 'อิสระ' }, { white: 13789.85, sahara: 14634.85, woodStock: 20315.95 }],
   ['open_door', { w: 150, h: 150, p: 2, form: 'มีธรณี' }, { white: 11980, sahara: 14897.22, woodStock: 17203.78 }],
 ];
 for (const [id, inp, want] of ANCHORS_COLOR) {
@@ -272,6 +272,49 @@ for (const [id, inp, want] of ANCHORS_COLOR) {
     const r = computeCost(PB, prod, { ...inp, color: col });
     const up = Math.round((r.cost.total / want.white - 1) * 1000) / 10;
     check(`${prod.name} ${col}${col === 'white' ? '' : ' (+' + up + '% จากขาว)'}`, r.cost.total, want[col], 1);
+  }
+}
+
+// ── ②e ราง 2 แบบ ต้องใช้เฟรมล่าง+ตบราง คนละรหัส (เจ้าของยืนยัน 8 ส.ค.69) ──────
+//   รางกันน้ำ (นอก) = B20041 + F7994 · รางเตี้ย (งานใน) = B20047 + B20050
+//   ของเดิมเลือกรางแล้ววัสดุไม่เปลี่ยนเลย → รางเตี้ยคิดราคาเฟรมล่างกันน้ำ แพงเกิน
+console.log('\n═══ ②e ราง กันน้ำ / เตี้ย ต้องสลับวัสดุจริง ═══');
+{
+  const codesOf = (spec) => {
+    const r = computeCost(PB, PRODUCTS.sms_slide, { w: 300, h: 220, p: 3, form: 'อิสระ', spec });
+    const out = new Set();
+    for (const l of r.lines.filter((x) => x.cat === 'alu')) {
+      const it = PRODUCTS.sms_slide.alu.find((a) => l.name.startsWith(a.name));
+      if (it?.code && l.qty > 0) out.add(it.code);
+    }
+    return { codes: out, cost: r.cost.total };
+  };
+  const out = codesOf({ bottomrail: 'รางกันน้ำ' });
+  const low = codesOf({ bottomrail: 'รางเตี้ย (งานใน)' });
+  check('รางกันน้ำ ใช้ B20041 (เฟรมล่างกันน้ำ)', out.codes.has('B20041') ? 1 : 0, 1, 0);
+  check('รางกันน้ำ ใช้ F7994 (ตบรางล้อ)', out.codes.has('F7994') ? 1 : 0, 1, 0);
+  check('รางกันน้ำ ต้องไม่มี B20047/B20050', (out.codes.has('B20047') || out.codes.has('B20050')) ? 0 : 1, 1, 0);
+  check('รางเตี้ย ใช้ B20047 (เฟรมล่างภายใน)', low.codes.has('B20047') ? 1 : 0, 1, 0);
+  check('รางเตี้ย ใช้ B20050 (ตบปิดรางเตี้ย)', low.codes.has('B20050') ? 1 : 0, 1, 0);
+  check('รางเตี้ย ต้องไม่มี B20041/F7994', (low.codes.has('B20041') || low.codes.has('F7994')) ? 0 : 1, 1, 0);
+  check('รางเตี้ยต้องถูกกว่ารางกันน้ำ (ต่าง 1,255)', Math.round(out.cost - low.cost), 1255, 1);
+  check('ไม่ระบุราง = รางกันน้ำ (ค่ามาตรฐาน)', codesOf({}).cost, out.cost, 0.01);
+}
+
+// ── ②f เส้นสีเงินไม่อบสี (F7994) — ราคาเดียวทุกสี ห้ามบวกค่าอบ ─────────────────
+console.log('\n═══ ②f F7994 ตบรางล้อ สีเงิน — ราคาเดียวทุกสี ═══');
+{
+  check('อยู่ในรายการไม่คิดค่าสี', (PB.ALUCODE_NOCOLOR || []).includes('F7994') ? 1 : 0, 1, 0);
+  // SMS สีเทา: ค่าอบต้องมาจาก B20001+B20003 เท่านั้น (2 เส้นที่ยังไม่มีราคาสี)
+  //   ถ้า F7994 (3 เส้น × 0.833 กก.) หลุดเข้าไปด้วย ค่าอบจะเกินมา 250 บาท
+  const smsBake = computeCost(PB, PRODUCTS.sms_slide, { w: 300, h: 220, p: 3, form: 'อิสระ', color: 'sahara' }).cost.bake;
+  check('ค่าอบ SMS สีเทา = เฉพาะ B20001+B20003 (F7994 ไม่ปน)', Math.round(smsBake * 100) / 100, Math.round((6.86111 + 5.80556) * 100 * 100) / 100, 0.5);
+  const f = PRODUCTS.euro_slide.alu.find((a) => a.code === 'F7994');
+  const white = computeCost(PB, PRODUCTS.euro_slide, { w: 600, h: 300, p: 3, form: 'อิสระ', color: 'white' });
+  const line = white.lines.find((l) => l.name.startsWith(f.name));
+  for (const c of ['sahara', 'woodStock', 'special']) {
+    const r = computeCost(PB, PRODUCTS.euro_slide, { w: 600, h: 300, p: 3, form: 'อิสระ', color: c });
+    check(`ราคาต่อเส้น F7994 สี ${c} = เท่าสีขาว`, r.lines.find((l) => l.name.startsWith(f.name)).unitPrice, line.unitPrice, 0.01);
   }
 }
 
