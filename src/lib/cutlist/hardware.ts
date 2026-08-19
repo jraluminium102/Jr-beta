@@ -124,6 +124,8 @@ export function smsSlideHardware(
     { name: "สักหลาด 5×3 (รวม)", sku: "JR00794", qty: (o, ctx) => smsFeltMeters(o, ctx, panelsFn(o), postName), unit: "ม.", noStock: true, note: "ม้วนละ 250ม. · สะสมครบม้วนค่อยตัด (ไม่หักอัตโนมัติ)" },
     { name: "ยางรูน้ำลง", sku: "JR00589", qty: drainCount, unit: "อัน", note: "2 + เฟรมล่าง>150 เพิ่มทุก 50ซม." },
     { name: "วาวรูน้ำออก", sku: "JR00485", qty: drainCount, unit: "อัน", note: "2 + เฟรมล่าง>150 เพิ่มทุก 50ซม." },
+    // ซิลิโคนรอบวงกบ ใน+นอก — สูตรเดียวกับคิดราคา 4.0 (เส้นรอบรูป ×2 ÷ 12.5 ม./หลอด) · รหัสจากเจ้าของ 19 ส.ค.69
+    { name: "ซิลิโคน ใน+นอก", sku: "JR00504", qty: (o) => Math.ceil(((2 * (o.W + o.H)) / 100) * 2 / 12.5), unit: "หลอด" },
   ];
 }
 

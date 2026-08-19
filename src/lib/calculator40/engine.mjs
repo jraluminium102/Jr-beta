@@ -161,8 +161,35 @@ export function computeCost(PB, prod, opt) {
   }
 
   // (3) อุปกรณ์ + วัสดุสิ้นเปลือง (คงที่)
+  //   opt.hardwareLines = รายการอุปกรณ์ "จากใบตัด" (ชื่อ/รหัสสโตร์/จำนวน ตรงกับที่ช่างเบิกจริง)
+  //     ส่งมาเมื่อไร → ใช้แทน prod.hardware+prod.consum ทั้งชุด (กันคิดซ้ำ)
+  //     ราคา: รหัสในสโตร์ก่อน (PB.SKUPRICE) → ราคาสำรองที่ส่งมากับบรรทัด
+  //     เจ้าของสั่ง 19 ส.ค.69: อุปกรณ์ในใบตัด 15 บรรทัด ต้องเข้า "ค่าของ" ในคิดราคาด้วย
+  const rawHwLines = (Array.isArray(opt.hardwareLines) && opt.hardwareLines.length) ? opt.hardwareLines : null;
+  // ราคาต่อบรรทัด: รหัสสโตร์ก่อน (÷ per ถ้าสโตร์ขายเป็นแพ็ค) → ราคาสำรองที่ส่งมากับบรรทัด
+  const hwPrice = (it) => {
+    const sku = String(it.sku || '').toUpperCase();
+    return (sku && PB.SKUPRICE && PB.SKUPRICE[sku] > 0)
+      ? PB.SKUPRICE[sku] / (Number(it.per) || 1) : (Number(it.price) || 0);
+  };
+  // ⚠ กันคิดต่ำกว่าจริงเงียบ ๆ — รหัสไหนยังไม่ตั้งราคาในสโตร์ ค่าของบรรทัดนั้นจะเป็น 0
+  //   ถ้ามีแม้แต่ตัวเดียว → ไม่ใช้รายการจากใบตัดทั้งชุด กลับไปใช้ราคาเดิมในสูตร (ราคาไม่ตก)
+  //   แล้วรายงาน hwMissing ให้หน้าจอเตือนว่าต้องไปตั้งราคารหัสไหนบ้าง
+  const hwMissing = (rawHwLines || [])
+    .filter((it) => (Number(it.qty) || 0) > 0 && !(hwPrice(it) > 0))
+    .map((it) => ({ sku: String(it.sku || ''), name: it.name }));
+  const hwLines = rawHwLines && !hwMissing.length ? rawHwLines : null;
   let hwCost = 0;
-  for (const it of (prod.hardware || [])) {
+  for (const it of (hwLines || [])) {
+    const count = Number(it.qty) || 0;
+    if (count <= 0) continue;
+    const price = hwPrice(it);
+    const amount = count * price;
+    hwCost += amount;
+    lines.push({ cat: 'hardware', name: it.name, sku: String(it.sku || '').toUpperCase(),
+      qty: round2(count), unit: it.unit || 'ชิ้น', unitPrice: round2(price), amount: round2(amount) });
+  }
+  for (const it of (hwLines ? [] : prod.hardware || [])) {
     const count = val(it.count);
     if (count <= 0) continue;
     let price = pPrice(it.name, typeof it.price === 'number' ? it.price : val(it.price));   // รองรับ price เป็นสูตร + PARTS override (partsLinked)
@@ -173,7 +200,7 @@ export function computeCost(PB, prod, opt) {
     lines.push({ cat: 'hardware', name: it.name, qty: round2(count), unit: it.unit || 'ชิ้น', unitPrice: price, amount: round2(amount) });
   }
   let consumCost = 0;
-  for (const it of (prod.consum || [])) {
+  for (const it of (hwLines ? [] : prod.consum || [])) {
     const count = val(it.count);
     if (count <= 0) continue;
     let unitPrice = pPrice(it.name, typeof it.price === 'number' ? it.price : val(it.price));  // ราคา expression + PARTS override (partsLinked)
@@ -434,6 +461,8 @@ export function computeCost(PB, prod, opt) {
     },
     profit: round2(sellWithInstall - costTotalOut),  // กำไร (ขาย − ทุน)
     glassArea: round2(glassArea), aluKg: round2(aluKg),
+    // อุปกรณ์จากใบตัด: ใช้จริงไหม + รหัสไหนยังไม่ตั้งราคาในสโตร์ (หน้าจอเอาไปเตือน)
+    hwFromCutlist: !!hwLines, hwMissing,
     costPerSqm: area > 0 ? round2(costTotal / area) : 0,
     labor: { prod: round2(laborProd), install: round2(laborInstall) },
     // mfgOnly = ตามสูตรชีตคิดทุน (อย่าเอาไปโชว์/ขึ้นใบตรง ๆ) · mfgOnlyNet = ราคาขายส่งจริงหลังลด wholesalePct
