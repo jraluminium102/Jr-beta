@@ -19,6 +19,8 @@ const PB = JSON.parse(fs.readFileSync(path.join(ROOT, "src/lib/calculator40/pric
 let pass = 0, fail = 0;
 const ok = (name, cond, extra = "") => { cond ? pass++ : fail++; console.log(`${cond ? "✅" : "❌"} ${name}${cond ? "" : "  " + extra}`); };
 const find = (rows, f) => rows.find(f);
+// ราคาเส้นที่สูตรใช้จริง (ฐานใหม่ = น้ำหนักจริง × เรต ฿/กก.) — เทสต้องอ้างตัวนี้ ไม่ฝังเลข
+const B22001 = PB.ALUCODE.B22001;
 
 console.log("\n═══ ① สโตร์ว่าง → ทุกอย่างต้องขึ้น 'ไม่เจอ/ผูกไม่ได้' ไม่มีตัวไหนโชว์ว่าผูกแล้ว ═══");
 {
@@ -32,11 +34,11 @@ console.log("\n═══ ① สโตร์ว่าง → ทุกอย่�
 
 console.log("\n═══ ② จับคู่ด้วยรหัส (sku) — อลูรายเส้น ═══");
 {
-  const stock = [{ id: 1, name: "เฟรมบน B22001 อบขาว", sku: "B22001", color: "อบขาว", unit_cost: 1235 }];
+  const stock = [{ id: 1, name: "เฟรมบน B22001 อบขาว", sku: "B22001", color: "อบขาว", unit_cost: B22001 }];
   const rows = auditStockLink(stock, PB);
   const r = find(rows, (x) => x.section === "อลูรายเส้น" && x.key === "B22001");
   ok("เจอรหัสในสโตร์ → ผูกแล้ว", r?.status === "linked", `${r?.status} ${r?.note}`);
-  ok("รายงานราคาสโตร์กลับมาด้วย", r?.stockPrice === 1235, String(r?.stockPrice));
+  ok("รายงานราคาสโตร์กลับมาด้วย", r?.stockPrice === B22001, String(r?.stockPrice));
   // ถ้ามีวันไหนต้องใส่ตัวแปลงรหัสอีก (สูตรเขียนรหัสหนึ่ง แต่ระบบใช้อีกรหัส) ต้องเตือนให้เห็น
   // ตอนนี้ ALUCODE_ALIAS ว่าง (เจ้าของยืนยัน 8 ส.ค.69 ว่าสูตรถูกแล้ว) → ยิงด้วย PB จำลอง
   const PB2 = { ...PB, ALUCODE_ALIAS: { B20001: "B22001" } };
@@ -55,7 +57,7 @@ console.log("\n═══ ③ ราคาไม่ตรง / ราคา 0 / �
     ["zero", "missing"].includes(find(zero, (x) => x.key === "B22001")?.status), "");
   // หลายสี ไม่มีอบขาว → ระบบหยิบต่ำสุด ต้องเตือน
   const multi = auditStockLink([
-    { name: "เฟรมบน B22001 ดำ", sku: "B22001", color: "ดำ", unit_cost: 1235 },
+    { name: "เฟรมบน B22001 ดำ", sku: "B22001", color: "ดำ", unit_cost: B22001 },
     { name: "เฟรมบน B22001 เทาซาฮาร่า", sku: "B22001", color: "เทาซาฮาร่า", unit_cost: 1345 },
   ], PB);
   const m = find(multi, (x) => x.key === "B22001");
@@ -63,10 +65,10 @@ console.log("\n═══ ③ ราคาไม่ตรง / ราคา 0 / �
   ok("หลายสี → บอกจำนวนแถวที่เจอ", m?.matches === 2, String(m?.matches));
   // มีอบขาว → ต้องใช้ราคาอบขาว ไม่ใช่ต่ำสุด (ตรรกะเดียวกับ buildPriceOverride)
   const w = auditStockLink([
-    { name: "เฟรมบน B22001 อบขาว", sku: "B22001", color: "อบขาว", unit_cost: 1235 },
+    { name: "เฟรมบน B22001 อบขาว", sku: "B22001", color: "อบขาว", unit_cost: B22001 },
     { name: "เฟรมบน B22001 ดำ", sku: "B22001", color: "ดำ", unit_cost: 900 },
   ], PB);
-  ok("มีแถวอบขาว → ใช้ราคาอบขาว (ไม่ใช่ต่ำสุด)", find(w, (x) => x.key === "B22001")?.stockPrice === 1235, "");
+  ok("มีแถวอบขาว → ใช้ราคาอบขาว (ไม่ใช่ต่ำสุด)", find(w, (x) => x.key === "B22001")?.stockPrice === B22001, "");
 }
 
 console.log("\n═══ ④ เรตอลูต่อกิโล (ตัวที่ทำให้ราคาเด้ง) ═══");
