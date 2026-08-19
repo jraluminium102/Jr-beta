@@ -14,6 +14,9 @@ export interface ApplyPaymentOpts {
   paidDate?: string;
   /** receipt id ที่ผูกกับการชำระนี้ (ถ้ามี) — ใช้ set finance_entries.receipt_id [HIGH-3] */
   receiptId?: number | string;
+  /** ยืนยันว่ารับเงินจริง — ข้าม guard "มากกว่ามัดจำเดิม" (ผู้ใช้กดยืนยันหลังเห็นคำเตือน · เช่น มัดจำเป็น token
+   *  ก้อนเล็กที่ลงไว้ก่อน แล้วลูกค้าจ่ายงวดเต็มทีหลัง) — มัดจำเดิมจะถูกอัปเป็นยอดงวดที่รับจริง (ไม่แตกบัญชี) */
+  force?: boolean;
 }
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -36,7 +39,7 @@ function seqToType(seq: number): "DEPOSIT" | "INSTALLMENT_2" | "INSTALLMENT_3" |
 export async function applyInstallmentPayment(
   supabase: SupabaseClient,
   opts: ApplyPaymentOpts,
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; needsConfirm?: boolean; suggested?: number }> {
   // 1) ยืนยันงวดอยู่ในใบวางบิลนี้จริง + อ่านยอดงวด + seq + paid_amount ปัจจุบัน
   const { data: inst, error: iErr } = await supabase
     .from("billing_installments")
@@ -88,16 +91,20 @@ export async function applyInstallmentPayment(
           .is("billing_installment_id", null)
           .maybeSingle<{ amount: number }>()
       : { data: null };
-    if (pendingDeposit) {
+    if (pendingDeposit && !opts.force) {
       const depositAmt = round2(Number(pendingDeposit.amount) || 0);
       // ยอดที่กำลังจะบันทึกรวมทั้งงวด (สะสมกับที่เคยจ่าย) — ต้องเท่ามัดจำจริง
       const willBe = opts.paidAmount != null
         ? round2((Number(inst.paid_amount) || 0) + (Number(opts.paidAmount) || 0))
         : amount;
       if (willBe - depositAmt >= 0.01) {
+        // ไม่ block ตายตัว — คืน needsConfirm ให้หน้าจอถามยืนยัน แล้วส่ง force มาปิดได้
+        //   (เคสจริง: มัดจำเป็น token ก้อนเล็ก 7,000 ที่ลงไว้ก่อน · งวด 1 จริง 138,044.27 · ลูกค้าจ่ายเต็มแล้ว)
         return {
-          error: `บันทึกชำระ ฿${willBe.toLocaleString("th-TH", { minimumFractionDigits: 2 })} มากกว่าเงินที่เข้าจริง — งานนี้มีมัดจำที่รับจริงแค่ ฿${depositAmt.toLocaleString("th-TH", { minimumFractionDigits: 2 })}`
-            + ` · ถ้ารับเพิ่มจริงให้บันทึกเงินเข้าที่หน้าการเงินก่อน แล้วค่อยกลับมาปิดงวดนี้ (หรือ void มัดจำเดิมถ้าลงผิด)`,
+          error: `บันทึกชำระ ฿${willBe.toLocaleString("th-TH", { minimumFractionDigits: 2 })} มากกว่ามัดจำที่บันทึกไว้เดิม (฿${depositAmt.toLocaleString("th-TH", { minimumFractionDigits: 2 })})`
+            + ` — ถ้าลูกค้าจ่ายยอดนี้จริง กด “ยืนยันรับเงินจริง” เพื่อบันทึก (ระบบจะปรับมัดจำเดิมเป็นยอดนี้ให้)`,
+          needsConfirm: true,
+          suggested: willBe,
         };
       }
     }
@@ -234,9 +241,10 @@ export async function syncFinanceEntry(
         // ไม่เปลี่ยน is_auto_created (คงเป็น true)
       };
       if (opts.receiptId != null) linkPayload.receipt_id = opts.receiptId;
-      // อัปเดต payment_date ตามวันที่รับ แต่ไม่แตะ amount (คงยอดมัดจำจริง)
-      // ยกเว้นถ้ายอดงวดตรงกับมัดจำพอดี ให้ sync เพื่อความสอดคล้อง
-      if (Math.abs(depositAmt - opts.paid) < 0.01) {
+      // มัดจำเดิม = "ก้อนแรก" ของงวดนี้ · ถ้ารับงวด >= มัดจำ → ยอด finance = ยอดงวดที่รับจริง
+      //   (token ก้อนเล็ก เช่น 7,000 โตเป็นงวดเต็ม 138,044.27 · บัญชีไม่แตกสองทาง)
+      //   ถ้ามัดจำ > ยอดงวด (เงินในมือเกิน · เช่น BL2569080013) → คงยอดมัดจำเดิมไว้ ไม่ลด
+      if (opts.paid >= depositAmt - 0.01) {
         linkPayload.amount = opts.paid;
         linkPayload.payment_date = opts.paidDate;
       }

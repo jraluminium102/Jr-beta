@@ -20,13 +20,19 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const supabase = createClient();
 
   // ใช้ helper ร่วม (แหล่งความจริงเดียวกับ POST /receipts) — A1
-  const { error } = await applyInstallmentPayment(supabase, {
+  //   force = ผู้ใช้กดยืนยัน "รับเงินจริง" หลังเห็นคำเตือน (มัดจำ token < งวดจริง) → ข้าม guard
+  const res = await applyInstallmentPayment(supabase, {
     installmentId: body.installment_id,
     billingNoteId: params.id,
     paidAmount: paid_amount,
     paidDate: body.paid_date,
+    force: body.force === true,
   });
-  if (error) return fail("บันทึกรับชำระไม่สำเร็จ: " + error, 500);
+  if (res.error) {
+    // ต้องยืนยันก่อน (มัดจำเดิมน้อยกว่ายอดงวด) → 409 + flag ให้หน้าจอถามยืนยัน แล้วส่ง force มาใหม่
+    if (res.needsConfirm) return fail(res.error, 409, { needs_confirm: true, suggested: res.suggested });
+    return fail("บันทึกรับชำระไม่สำเร็จ: " + res.error, 500);
+  }
 
   return ok({ ok: true });
 }
