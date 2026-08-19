@@ -213,6 +213,20 @@ export default function QueuePage() {
   const [filterStatus, setFilterStatus] = useState<QueueStatus | "">("");
   const [filterDow, setFilterDow] = useState<number | null>(null); // (ข้อ 6) กรองตามวันในสัปดาห์ 0-6
   const [filterDate, setFilterDate] = useState(""); // เสิชวันที่เจาะจง (YYYY-MM-DD) — ดูคิวรายวัน
+  const [overdueOnly, setOverdueOnly] = useState(false); // ปุ่มเตือน: โชว์เฉพาะคิวเลยวันแล้วยังไม่ปิด/เสร็จ
+
+  // วันนี้ (ระดับหน้า) — ใช้เช็ค "เลยกำหนดยังไม่ปิด" · เที่ยงคืนจริงพอสำหรับเทียบวันแบบ string
+  const todayStr = useMemo(() => {
+    const n = new Date();
+    return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
+  }, []);
+  // คิว "ค้างกำหนด · ยังไม่ปิด" = มีวันนัดที่เลยวันนี้แล้ว + สถานะยังไม่ปิด (ไม่ใช่ DONE/CANCELLED)
+  const isOverdueUnclosed = useCallback(
+    (e: QueueEntry) =>
+      !!e.queue_date && (e.queue_date as string) < todayStr &&
+      (e.status === "PENDING" || e.status === "PROPOSED" || e.status === "CONFIRMED"),
+    [todayStr]
+  );
 
   // Availability (วันลา) สำหรับ calendar view
   const [avail, setAvail] = useState<AvailRow[]>([]);
@@ -320,10 +334,15 @@ export default function QueuePage() {
         }
         // (ข้อ 6) เสิชวันที่เจาะจง — โชว์เฉพาะคิววันนั้น
         if (filterDate && e.queue_date !== filterDate) return false;
+        // ปุ่มเตือน "ค้างยังไม่ปิด" — โชว์เฉพาะคิวเลยวันแล้วยังไม่ปิด
+        if (overdueOnly && !isOverdueUnclosed(e)) return false;
         return true;
       })
       .sort(cmp);
-  }, [rows, q, filterTeam, filterStatus, filterDow, filterDate, salesRank]);
+  }, [rows, q, filterTeam, filterStatus, filterDow, filterDate, overdueOnly, isOverdueUnclosed, salesRank]);
+
+  // จำนวนคิว "ค้างกำหนด · ยังไม่ปิด" ทั้งหมดที่โหลดมา (ไม่ขึ้นกับตัวกรองอื่น) — โชว์บนปุ่มเตือน
+  const overdueUnclosedCount = useMemo(() => rows.filter(isOverdueUnclosed).length, [rows, isOverdueUnclosed]);
 
   // แยก "รอจัดคิว" (queue_date=null) ออกจากที่นัดแล้ว
   const pendingRows = useMemo(() => list.filter((e) => !e.queue_date), [list]);
@@ -764,6 +783,27 @@ export default function QueuePage() {
             </select>
           </label>
 
+          {/* ปุ่มเตือน "ค้างยังไม่ปิด" — กดเพื่อดูเฉพาะคิวเลยวันแล้วยังไม่กดปิด/เสร็จ (list mode) */}
+          {viewMode === "list" && (overdueUnclosedCount > 0 || overdueOnly) && (
+            <button
+              type="button"
+              onClick={() => setOverdueOnly((v) => !v)}
+              aria-pressed={overdueOnly}
+              title="ดูเฉพาะคิวที่เลยวันนัดแล้วยังไม่กดปิด/เสร็จ"
+              className={`press flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-semibold border ${
+                overdueOnly
+                  ? "bg-red-600 text-white border-red-600"
+                  : "bg-red-50 text-red-800 border-red-200 hover:bg-red-100"
+              }`}
+            >
+              <Icon name="warn" size={14} />
+              ค้างยังไม่ปิด
+              <span className={`tabular-nums rounded-md px-1.5 py-0.5 text-xs ${overdueOnly ? "bg-white/25" : "bg-red-200/70"}`}>
+                {overdueUnclosedCount}
+              </span>
+            </button>
+          )}
+
           {/* Text search (list mode only) */}
           {viewMode === "list" && (
             <label className="relative block flex-1 min-w-[180px]">
@@ -830,7 +870,31 @@ export default function QueuePage() {
         ) : (
           /* ===== List View ===== */
           <>
-            {q.trim() ? (
+            {overdueOnly ? (
+              /* ปุ่มเตือน "ค้างยังไม่ปิด" กดอยู่ → โชว์คิวเลยวันแล้วยังไม่ปิดทั้งหมด เป็นลิสต์เดียว (ทุกเดือนที่โหลดมา) */
+              list.length === 0 ? (
+                <p className="text-center text-emerald-700 py-12 font-medium">
+                  ✓ ไม่มีคิวค้าง — ปิด/เสร็จครบทุกคิวที่เลยวันแล้ว
+                </p>
+              ) : (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-600 text-white text-sm font-semibold">
+                      <Icon name="warn" size={14} />
+                      ค้างกำหนด · ยังไม่กดปิด/เสร็จ
+                      <span className="tabular-nums ml-1 bg-white/25 rounded-md px-1.5 py-0.5 text-xs">{list.length}</span>
+                    </span>
+                    <span className="text-xs text-ink-3">เรียงวันเก่าสุดก่อน · กดแต่ละคิวเพื่อปิด/เลื่อน</span>
+                  </div>
+                  <div className="xl:hidden space-y-2">
+                    {list.map((e) => <MobileCard key={e.id} e={e} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} canWrite={canWrite} />)}
+                  </div>
+                  <div className="hidden xl:block overflow-x-auto rounded-xl border border-red-100">
+                    <DesktopTable rows={list} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} canWrite={canWrite} slotLabel={slotLabel} />
+                  </div>
+                </div>
+              )
+            ) : q.trim() ? (
               /* (ข้อ 3) เสิชชื่อ → ผลลัพธ์เด้งขึ้นบนสุดทันที (flat ไม่ต้องเลื่อนหา) */
               list.length === 0 ? (
                 <p className="text-center text-ink-3 py-12">ไม่พบ &quot;{q}&quot;</p>

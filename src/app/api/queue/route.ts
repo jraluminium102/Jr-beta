@@ -5,6 +5,7 @@ import { ok, created } from "@/lib/bff/response";
 import { dbError } from "@/lib/bff/db-error";
 import { can } from "@/lib/rbac";
 import { resolveMapLink } from "@/lib/queue-geo";
+import { fetchAllPaged } from "@/lib/supabase/fetch-all";
 
 export const dynamic = "force-dynamic";
 
@@ -88,13 +89,6 @@ export const GET = withRoute(async (req: Request) => {
     .order("team")
     .order("name");
 
-  let query = sb
-    .from("queue_entries")
-    .select(SELECT)
-    .order("queue_date", { ascending: true, nullsFirst: true })
-    .order("queue_time", { ascending: true, nullsFirst: true })
-    .order("created_at", { ascending: false });
-
   // Compute date range filter (default = current month)
   let dateFrom: string | null = null;
   let dateTo: string | null = null;
@@ -119,31 +113,45 @@ export const GET = withRoute(async (req: Request) => {
     }
   }
 
-  if (dateFrom && dateTo) {
-    // โชว์: (1) คิวรอจัด (queue_date null) เสมอ · (2) คิวในเดือนที่ดู ·
-    // (3) คิวเลยวัน "ยังไม่ปิด" (PENDING/PROPOSED/CONFIRMED ก่อนเดือนนี้) — กันงานค้างหายข้ามเดือน
-    query = query.or(
-      `queue_date.is.null,and(queue_date.gte.${dateFrom},queue_date.lte.${dateTo}),and(status.in.(PENDING,PROPOSED,CONFIRMED),queue_date.lt.${dateFrom})`
-    );
-  }
+  // โชว์: (1) คิวรอจัด (queue_date null) เสมอ · (2) คิวในเดือนที่ดู ·
+  // (3) คิวเลยวัน "ยังไม่ปิด" (PENDING/PROPOSED/CONFIRMED ก่อนเดือนนี้) — กันงานค้างหายข้ามเดือน
+  const orFilter = (dateFrom && dateTo)
+    ? `queue_date.is.null,and(queue_date.gte.${dateFrom},queue_date.lte.${dateTo}),and(status.in.(PENDING,PROPOSED,CONFIRMED),queue_date.lt.${dateFrom})`
+    : null;
 
   // SALES role: show only their own queue entries (RLS also guards at DB level)
   let unlinked = false;
+  let salesEq: string | null = null;
   if (!canWrite && ctx.role === "SALES") {
     const mine = (salesRows ?? []).find(
       (s: any) => s.profile_id === ctx.user.id
     );
     if (mine) {
-      query = query.eq("sales_id", mine.id);
+      salesEq = mine.id;
     } else {
       unlinked = true;
     }
   } else if (canWrite && salesParam) {
     // ADMIN can filter by sales_id via ?sales=
-    query = query.eq("sales_id", salesParam);
+    salesEq = salesParam;
   }
 
-  const rows = unlinked ? [] : (await query).data ?? [];
+  // ⚠ ต้องแบ่งหน้า (fetchAllPaged) — clause (3) ยกคิว "ค้างไม่ปิด" ทั้งอดีตมาด้วย ซึ่งอาจ >1,000 แถว
+  //   เดิม query เดียวโดน cap ~1,000 + เรียง queue_date ASC (คิวเก่าก่อน) → คิวเดือนล่าสุด (เช่น ก.ย.) ถูกตัดหาย
+  //   = บั๊ก "กดเลือกเดือนแล้วไม่โชว์คิวเดือนนั้น" · เพิ่ม .order("id") ท้ายสุดให้เพจไม่ซ้ำ/หาย
+  const rows = unlinked ? [] : await fetchAllPaged((from, to) => {
+    let q = sb
+      .from("queue_entries")
+      .select(SELECT)
+      .order("queue_date", { ascending: true, nullsFirst: true })
+      .order("queue_time", { ascending: true, nullsFirst: true })
+      .order("created_at", { ascending: false })
+      .order("id")
+      .range(from, to);
+    if (orFilter) q = q.or(orFilter);
+    if (salesEq) q = q.eq("sales_id", salesEq);
+    return q;
+  });
 
   return ok(rows, {
     can_write: canWrite,
