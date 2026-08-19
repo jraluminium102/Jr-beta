@@ -171,8 +171,9 @@ console.log("\n═══ ④b ราคาสำรองจากไฟล์�
   ok("ตั้งราคาในสโตร์ → ใช้ราคาสโตร์ ไม่ใช่ราคาไฟล์", r2.lines.find((l) => l.name.startsWith("ล้อ 27")).unitPrice === 95, "");
   ok("บรรทัดที่ย้ายไปใช้ราคาสโตร์แล้ว ต้องหลุดจากรายการ 'ราคาไฟล์'",
     r2.hwFileFallback.length === 5 && !r2.hwFileFallback.some((m) => m.sku === "JR00576"), String(r2.hwFileFallback.length));
-  ok("ราคาไฟล์ไม่ไปแตะรุ่นที่ยังไม่เปิด (ไม่มี hardwareLines = เหมือนเดิมเป๊ะ)",
-    computeCost(BASE, PRODUCTS.sms_slide, { ...BASE_IN }).sell.withInstall === 37500, "");
+  // ราคาขายฐาน SMS = 37,000 หลังยึดราคาสีจาก v9 (เดิม 37,500 · ดู verify-r40 ②g)
+  ok("ราคาไฟล์อุปกรณ์ไม่ไปแตะฝั่งอลู (ไม่มี hardwareLines = เท่าราคาฐาน)",
+    computeCost(BASE, PRODUCTS.sms_slide, { ...BASE_IN }).sell.withInstall === 37000, "");
 }
 
 console.log("\n═══ ④c เฟรมล่างรางเตี้ย = B20047 ไม่ใช่ B20046 (ชนกลาง) ═══");

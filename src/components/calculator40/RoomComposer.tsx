@@ -185,6 +185,7 @@ function panePrice(
     w: wCm, h: hCm, p: pane.n || 1, form: formVal,
     color: rc.bake, colorName: rc.label, glassType, material: prod.defMaterial ?? undefined,
     stockColor: stockColorOfCalc(pane.colorIdx || roomColor),   // ราคาเส้นตามสีจริงในสโตร์
+    colorKey: pane.colorIdx || roomColor,                        // ราคาเส้นแยกสีจากไฟล์ถอดทุน
     profitPct, installProfitPct: profitPct, addons: pane.addons || {},
     // ผนังแผ่นอลู (ลูกฟูก/คอมโพ · prod.showColor) — สีพิเศษบวกเรตสีอบ/ตร.ม. จาก R3.9 (ซาฮาร่า300/พิเศษ1700/ลายไม้2400)
     // finRate เป็น "ราคาขาย" → ÷(1+กำไร%) เป็นทุน (frameColorRate) แล้วเอนจิน ×(1+กำไร%) กลับเป็นราคาขายเป๊ะ (ไม่ขึ้นกับกำไร%)
