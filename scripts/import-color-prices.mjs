@@ -149,6 +149,8 @@ if (process.argv[1]?.endsWith("import-color-prices.mjs")) {
   pb.ALUCODE = { ...cur, ...nw.ALUCODE };
   pb.ALUCOLOR_KEY = nw.ALUCOLOR_KEY;
   pb.ALUWEIGHT = nw.ALUWEIGHT;
+  // รหัสที่น้ำหนักในชีตยังน่าสงสัย (ต่างจากที่ราคาบอกเกิน 15%) — ห้ามเอาไปเติมสโตร์
+  pb.ALUWEIGHT_SUSPECT = nw.outliers.map((o) => o.code).sort();
   fs.writeFileSync(PB_PATH, JSON.stringify(pb, null, 2) + "\n");
   console.log("\n✅ เขียนลง pricebook.json แล้ว");
 }

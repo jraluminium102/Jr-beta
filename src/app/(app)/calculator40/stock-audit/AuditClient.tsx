@@ -170,6 +170,7 @@ export default function AuditClient({ rows, products, bump, kgRows, stockCount }
           <p className="text-xs text-ink-3 mb-3">
             สโตร์คิด <b>ราคา/เส้น = น้ำหนัก/เส้น × เรตต่อโล</b> แล้วคิดราคา 4.0 อ่าน &quot;ราคา/เส้น&quot; ไปใช้
             {" "}→ เส้นที่ <b>ไม่มีน้ำหนัก</b> จะกดเปลี่ยนเรตต่อโลยังไงราคาก็ไม่ขยับ ต้องเติมน้ำหนักก่อน
+            {" "}<a href="/stock/weight-backfill" className="text-brand underline font-semibold">→ เปิดหน้าเติมน้ำหนัก</a>
           </p>
           <div className="flex gap-2 flex-wrap mb-3 text-xs">
             {(["no_weight", "stale", "no_rate", "not_kg", "ok"] as const).map((k) => (

@@ -147,6 +147,12 @@ export default function StockClient({
               ⚖️ เรตอลูต่อโล
             </a>
           )}
+          {/* เติมน้ำหนัก/เส้น จากไฟล์ถอดทุน — ไม่มีน้ำหนัก = เปลี่ยนเรตต่อโลแล้วราคาไม่ขยับ */}
+          {canPrice && (
+            <a href="/stock/weight-backfill" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark border border-brand/30 bg-white/60">
+              ⚖️ เติมน้ำหนักเส้นอลู
+            </a>
+          )}
           {canWrite && (
             <a href="/stock/import" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark border border-brand/30 bg-white/60">
               <Icon name="file" size={16} /> นำเข้าจากไฟล์
