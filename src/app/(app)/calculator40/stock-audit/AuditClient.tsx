@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
-import { STATUS_LABEL, type AuditRow, type AuditStatus, type BumpRow, type ProductAudit } from "@/lib/calculator40/stock-audit";
+import { STATUS_LABEL, KG_STATUS_LABEL, type AuditRow, type AuditStatus, type BumpRow, type KgRow, type KgStatus, type ProductAudit } from "@/lib/calculator40/stock-audit";
 
 const TONE: Record<AuditStatus, "emerald" | "amber" | "red" | "gray"> = {
   linked: "emerald", price_diff: "amber", multi: "amber", zero: "amber", missing: "red", no_key: "red",
@@ -12,13 +12,17 @@ const TONE: Record<AuditStatus, "emerald" | "amber" | "red" | "gray"> = {
 // เรียงตามความเร่งด่วนที่ต้องแก้ (ผูกไม่ได้เลย = หนักสุด)
 const ORDER: AuditStatus[] = ["no_key", "missing", "price_diff", "multi", "zero", "linked"];
 
+const KG_TONE: Record<KgStatus, "emerald" | "amber" | "red" | "gray"> = {
+  ok: "emerald", stale: "amber", no_rate: "amber", no_weight: "red", not_kg: "gray",
+};
+
 const P_TONE: Record<ProductAudit["status"], "emerald" | "amber" | "red" | "gray"> = {
   "ครบ": "emerald", "บางส่วน": "amber", "ไม่ผูกเลย": "red", "ไม่มีรายการวัสดุ": "gray",
 };
 
-export default function AuditClient({ rows, products, bump, stockCount }:
-  { rows: AuditRow[]; products: ProductAudit[]; bump: BumpRow[]; stockCount: number }) {
-  const [view, setView] = useState<"product" | "item">("product");
+export default function AuditClient({ rows, products, bump, kgRows, stockCount }:
+  { rows: AuditRow[]; products: ProductAudit[]; bump: BumpRow[]; kgRows: KgRow[]; stockCount: number }) {
+  const [view, setView] = useState<"product" | "item" | "kg">("product");
   const [sec, setSec] = useState("ทั้งหมด");
   const [st, setSt] = useState<"ทั้งหมด" | AuditStatus>("ทั้งหมด");
   const [q, setQ] = useState("");
@@ -53,6 +57,8 @@ export default function AuditClient({ rows, products, bump, stockCount }:
   }
 
   const stuck = bump.filter((b) => !b.moved);
+  // เส้นที่ "กดเปลี่ยนเรตต่อโลแล้วราคาไม่ขยับ" — คำถามตรง ๆ ของเจ้าของ 19 ส.ค.69
+  const kgBad = kgRows.filter((r) => r.status === "no_weight" || r.status === "stale").length;
   const chip = (on: boolean) =>
     "press rounded-xl px-3 py-1.5 text-xs font-semibold transition " + (on ? "bg-brand text-white shadow-brand" : "glass-soft text-ink-2");
 
@@ -109,7 +115,7 @@ export default function AuditClient({ rows, products, bump, stockCount }:
 
       {/* สลับมุมมอง — ค่าตั้งต้นคือ "รายรุ่น" เพราะเจ้าของเลือกงานจากรุ่น ไม่ใช่จากหมวดวัสดุ */}
       <div className="flex gap-2">
-        {([["product", "ดูรายรุ่นในเครื่องคิดราคา"], ["item", "ดูรายวัสดุทีละบรรทัด"]] as const).map(([k, label]) => (
+        {([["product", "ดูรายรุ่นในเครื่องคิดราคา"], ["item", "ดูรายวัสดุทีละบรรทัด"], ["kg", `ราคาต่อโล → ราคาต่อเส้น${kgBad ? ` (${kgBad} เส้นต้องแก้)` : ""}`]] as const).map(([k, label]) => (
           <button key={k} onClick={() => setView(k)} className={chip(view === k)}>{label}</button>
         ))}
       </div>
@@ -150,6 +156,54 @@ export default function AuditClient({ rows, products, bump, stockCount }:
                       <td className="p-2 text-xs text-ink-3">{p.aluNoCode.join(" · ")}</td>
                     </tr>
                   ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      ) : view === "kg" ? (
+        <Card className="p-5">
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <h2 className="font-bold text-brand-dark">ราคาต่อโล → ราคาต่อเส้น (สายราคาอลู)</h2>
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นหารหัส/ชื่อ/สี"
+              className="ml-auto glass-soft rounded-lg px-3 py-2 text-sm outline-none min-w-[180px]" />
+          </div>
+          <p className="text-xs text-ink-3 mb-3">
+            สโตร์คิด <b>ราคา/เส้น = น้ำหนัก/เส้น × เรตต่อโล</b> แล้วคิดราคา 4.0 อ่าน &quot;ราคา/เส้น&quot; ไปใช้
+            {" "}→ เส้นที่ <b>ไม่มีน้ำหนัก</b> จะกดเปลี่ยนเรตต่อโลยังไงราคาก็ไม่ขยับ ต้องเติมน้ำหนักก่อน
+          </p>
+          <div className="flex gap-2 flex-wrap mb-3 text-xs">
+            {(["no_weight", "stale", "no_rate", "not_kg", "ok"] as const).map((k) => (
+              <Badge key={k} tone={KG_TONE[k]}>{KG_STATUS_LABEL[k]} {kgRows.filter((r) => r.status === k).length}</Badge>
+            ))}
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left bg-brand-soft text-brand-dark">
+                  <th className="p-2 rounded-l-lg">รหัส</th><th>ชื่อ</th><th>สี</th>
+                  <th className="text-right">กก./เส้น</th><th className="text-right">เรต ฿/กก.</th>
+                  <th className="text-right">ควรเป็น ฿/เส้น</th><th className="text-right">ราคาจริง ฿/เส้น</th>
+                  <th className="p-2 rounded-r-lg">สถานะ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {kgRows
+                  .filter((r) => { const kw = q.trim().toLowerCase(); return !kw || `${r.sku} ${r.name} ${r.color}`.toLowerCase().includes(kw); })
+                  .map((r, i) => (
+                  <tr key={r.sku + r.color + i} className="border-t border-line/60">
+                    <td className="p-2 font-mono text-xs">{r.sku}</td>
+                    <td className="text-xs">{r.name}</td>
+                    <td className="text-xs">{r.color || "—"}</td>
+                    <td className="text-right tabular-nums">{r.kgPerUnit > 0 ? r.kgPerUnit : "—"}</td>
+                    <td className="text-right tabular-nums">{r.ratePerKg > 0 ? baht(r.ratePerKg) : "—"}</td>
+                    <td className="text-right tabular-nums">{r.expected > 0 ? baht(r.expected) : "—"}</td>
+                    <td className="text-right tabular-nums font-semibold">{baht(r.unitCost)}</td>
+                    <td className="p-2"><Badge tone={KG_TONE[r.status]}>{KG_STATUS_LABEL[r.status]}</Badge></td>
+                  </tr>
+                ))}
+                {!kgRows.length && (
+                  <tr><td colSpan={8} className="p-4 text-center text-ink-3">ยังไม่มีเส้นอลูในสโตร์ที่สูตรคิดราคาเรียกใช้</td></tr>
+                )}
               </tbody>
             </table>
           </div>

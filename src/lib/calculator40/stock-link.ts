@@ -139,6 +139,9 @@ export function applyPriceOverride(pb: any, ov?: PriceOverride | null): any {
     pb.ALUCOLOR_STOCK = pb.ALUCOLOR_STOCK || {};
     for (const c in ov.ALUCOLOR_STOCK) pb.ALUCOLOR_STOCK[c] = { ...(pb.ALUCOLOR_STOCK[c] || {}), ...ov.ALUCOLOR_STOCK[c] };
   }
+  // ธง "ราคาเส้นนี้มาจากสโตร์" — engine ใช้กัน mult คูณซ้ำ (สโตร์คิด น้ำหนัก×เรตต่อโล ให้แล้ว)
+  pb.ALUCODE_FROM_STOCK = pb.ALUCODE_FROM_STOCK || {};
+  for (const c in ov.ALUCODE || {}) pb.ALUCODE_FROM_STOCK[c] = true;
   for (const sec of ["GLASS", "ROOFMAT", "MOTOR", "STEEL", "ALU", "PARTS", "ALUCODE"] as const) {
     const o = ov[sec];
     if (!o) continue;

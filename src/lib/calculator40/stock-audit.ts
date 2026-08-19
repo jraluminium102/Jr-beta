@@ -15,6 +15,7 @@ export type AuditStockRow = {
   id?: number; name?: string | null; sku?: string | null; color?: string | null;
   category?: string | null; supplier?: string | null;
   is_weight_based?: boolean | null; unit_cost?: number | string | null; price_per_kg?: number | string | null;
+  weight_per_unit?: number | string | null;   // กก./เส้น — ตัวคูณของสาย "เรตต่อโล → ราคาต่อเส้น"
 };
 
 export type AuditStatus = "linked" | "price_diff" | "missing" | "no_key" | "multi" | "zero";
@@ -158,6 +159,50 @@ export function auditStockLink(stock: AuditStockRow[], PB: any): AuditRow[] {
     });
   }
   return rows;
+}
+
+// ── ตรวจสายราคา "ต่อโล → ต่อเส้น" (เจ้าของถาม 19 ส.ค.69) ─────────────────────
+//   สโตร์เก็บ: น้ำหนัก/เส้น (weight_per_unit) · เรตต่อโล (price_per_kg) · ราคา/เส้น (unit_cost)
+//   ตอนบันทึกราคา ระบบคิด unit_cost = น้ำหนัก × เรตต่อโล  แล้วคิดราคา 4.0 อ่าน unit_cost
+//   → เส้นที่ "ไม่มีน้ำหนัก" = กดเปลี่ยนเรตต่อโลแล้วราคาไม่ขยับ (ตรงกับที่เจ้าของกลัว)
+export type KgStatus = "ok" | "no_weight" | "no_rate" | "stale" | "not_kg";
+export const KG_STATUS_LABEL: Record<KgStatus, string> = {
+  ok: "ต่อโลเด้งได้",
+  no_weight: "⚠ ไม่มีน้ำหนัก/เส้น — เปลี่ยนเรตต่อโลแล้วราคาไม่ขยับ",
+  no_rate: "ยังไม่ได้ตั้งเรตต่อโล",
+  stale: "⚠ ราคา/เส้น ไม่เท่ากับ น้ำหนัก × เรต (ตั้งไว้ตอนเรตเก่า)",
+  not_kg: "ตั้งราคาต่อเส้นตรง (ไม่ได้ติดธงคิดต่อโล)",
+};
+export type KgRow = {
+  sku: string; name: string; color: string;
+  kgPerUnit: number; ratePerKg: number; unitCost: number; expected: number;
+  status: KgStatus;
+};
+
+/** ไล่เส้นอลูที่คิดราคา 4.0 ใช้จริง ว่าสาย "เรตต่อโล → ราคาต่อเส้น" ต่อครบไหม */
+export function auditKgLink(stock: AuditStockRow[]): KgRow[] {
+  const codes = new Set<string>();
+  for (const p of Object.values(PRODUCTS as Record<string, any>))
+    for (const a of (p?.alu || [])) if (a.code) codes.add(up(a.code));
+
+  const out: KgRow[] = [];
+  for (const r of stock || []) {
+    const sku = up(r.sku);
+    if (!sku || !codes.has(sku)) continue;                 // เอาเฉพาะเส้นที่สูตรเรียกใช้จริง
+    const kg = num((r as any).weight_per_unit);
+    const rate = num(r.price_per_kg);
+    const cost = num(r.unit_cost);
+    const expected = Math.round(kg * rate * 100) / 100;
+    let status: KgStatus;
+    if (!r.is_weight_based) status = "not_kg";
+    else if (kg <= 0) status = "no_weight";
+    else if (rate <= 0) status = "no_rate";
+    else if (!near(cost, expected)) status = "stale";
+    else status = "ok";
+    out.push({ sku, name: norm(r.name), color: norm(r.color), kgPerUnit: kg, ratePerKg: rate, unitCost: cost, expected, status });
+  }
+  const rank: Record<KgStatus, number> = { no_weight: 0, stale: 1, no_rate: 2, not_kg: 3, ok: 4 };
+  return out.sort((a, b) => rank[a.status] - rank[b.status] || a.sku.localeCompare(b.sku));
 }
 
 export type BumpRow = { id: string; name: string; before: number; after: number; moved: boolean; pct: number };

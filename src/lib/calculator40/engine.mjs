@@ -120,11 +120,17 @@ export function computeCost(PB, prod, opt) {
     const price = colorPrice > 0 ? colorPrice
       : (code && PB.ALUCODE && PB.ALUCODE[code] > 0) ? PB.ALUCODE[code]
       : pPrice(it.name, it.price);
-    const amount = bars * price * mult;
+    // ⚠ ห้ามคูณ mult ทับ "ราคาที่มาจากสโตร์" — สโตร์คิด ราคา/เส้น = น้ำหนัก × เรตต่อโล ปัจจุบัน ให้แล้ว
+    //   mult (= เรตต่อโลปัจจุบัน ÷ เรตตั้งต้น) มีไว้ขยับ "ราคาฝังในไฟล์" ที่ยังผูกสโตร์ไม่ได้เท่านั้น
+    //   ถ้าคูณทั้งคู่ = ขึ้นเรตต่อโล 7% แล้วราคาเด้ง 14% (คิดซ้ำสองต่อ)
+    const fromStock = !!(stockColorPrice > 0
+      || (!(colorPrice > 0) && code && PB.ALUCODE_FROM_STOCK && PB.ALUCODE_FROM_STOCK[code] && PB.ALUCODE[code] > 0));
+    const m = fromStock ? 1 : mult;
+    const amount = bars * price * m;
     aluCost += amount;
     // เส้นที่ราคารวมสีแล้ว หรือเป็นเส้นสีเงินไม่อบสี → ไม่เข้ากองคิดค่าอบ
     if (!(colorPrice > 0) && !noColor) aluKg += bars * (it.kg || 0);
-    lines.push({ cat: 'alu', name: it.name + (colorPrice > 0 ? ' (' + colorDisp + ')' : ''), qty: bars, unit: 'เส้น', unitPrice: round2(price * mult), amount: round2(amount) });
+    lines.push({ cat: 'alu', name: it.name + (colorPrice > 0 ? ' (' + colorDisp + ')' : ''), qty: bars, unit: 'เส้น', unitPrice: round2(price * m), amount: round2(amount) });
   }
   // ค่าอบสี (อลูเท่านั้น)
   let bakeCost = 0, openOven = 0;
