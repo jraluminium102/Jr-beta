@@ -43,12 +43,18 @@ export default function CutlistListClient({ rows, jobs, canWrite }: { rows: Row[
   }
 
   async function create(fromJob: boolean) {
+    // ไม่ผูกงาน → ใช้ข้อความในช่องค้นหาเป็น "ชื่อใบตัด" (ที่ผู้ใช้พิมพ์ไว้แล้ว) — ไม่มีช่องชื่อแยก
+    const blankName = jobQuery.trim();
+    if (!fromJob && !jobId && !blankName) {
+      setErr('ไม่ได้ผูกงานลูกค้า — พิมพ์ชื่อใบตัดในช่อง "ค้นหางาน / ชื่อใบตัด" ก่อน (เช่น "เบิกเส้นซ่อมหน้างาน")');
+      return;
+    }
     setBusy(true); setErr("");
     try {
       const res = await fetch("/api/cutlists", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(fromJob ? { job_id: jobId, from_job: true } : (jobId ? { job_id: jobId } : {})),
+        body: JSON.stringify(fromJob ? { job_id: jobId, from_job: true } : (jobId ? { job_id: jobId } : { name: blankName })),
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) { setErr(json?.error ?? `สร้างไม่สำเร็จ (${res.status})`); return; }
@@ -81,8 +87,8 @@ export default function CutlistListClient({ rows, jobs, canWrite }: { rows: Row[
           <div className="text-sm font-semibold text-brand-dark">สร้างใบตัดใหม่</div>
           <div className="flex flex-wrap items-end gap-2">
             <label className="block flex-1 min-w-[220px]">
-              <span className="text-xs font-medium text-ink-3">ค้นหางาน (ชื่อลูกค้า / รหัสงาน)</span>
-              <input value={jobQuery} onChange={(e) => setJobQuery(e.target.value)} placeholder="เช่น คุณตะวัน / JR2026-218"
+              <span className="text-xs font-medium text-ink-3">ค้นหางาน / ชื่อใบตัด (ถ้าไม่ผูกงาน)</span>
+              <input value={jobQuery} onChange={(e) => setJobQuery(e.target.value)} placeholder="เช่น คุณตะวัน / JR2026-218 · หรือชื่อใบเบิก เช่น เบิกเส้นซ่อมหน้างาน"
                 className="w-full glass-soft rounded-lg px-3 py-2 mt-1 outline-none" />
             </label>
             <label className="block flex-1 min-w-[260px]">
@@ -106,6 +112,9 @@ export default function CutlistListClient({ rows, jobs, canWrite }: { rows: Row[
               + ใบเปล่า (กรอกมือ)
             </button>
           </div>
+          <p className="text-xs text-ink-3">
+            ผูกงานลูกค้า → เลือกจาก &quot;งานลูกค้า&quot; แล้วกด &quot;สร้างจากงาน&quot; · <b>ไม่ผูกงาน</b> → พิมพ์ชื่อใบตัดในช่องซ้ายแล้วกด &quot;ใบเปล่า&quot; (ระบบใช้ข้อความนั้นเป็นชื่อใบ)
+          </p>
           {err && <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2">{err}</p>}
         </Card>
       )}
