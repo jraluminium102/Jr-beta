@@ -11,22 +11,18 @@ export async function GET(req: Request) {
   const sb = createServiceClient() as unknown as { from: (t: string) => any };
 
   const { data: bn } = await sb.from("billing_notes")
-    .select("*, billing_installments(*)").eq("code", code).maybeSingle();
-  const jobId = bn?.job_id ?? null;
+    .select("id, code, job_id, quotation_id, total, status, customer_snapshot, billing_installments(id, seq, label, amount, paid_amount, paid_date)")
+    .eq("code", code).maybeSingle();
 
-  let job = null, finance = null, production = null;
-  if (jobId) {
-    const { data: j } = await sb.from("jobs")
-      .select("id, job_code, customer_name, status, current_stage, deposit_date, deposit_amount, customer_id")
-      .eq("id", jobId).maybeSingle();
-    job = j;
-    const { data: fe } = await sb.from("finance_entries")
-      .select("id, type, amount, payment_date, is_voided, is_auto_created, channel, note")
-      .eq("job_id", jobId);
-    finance = fe;
-    const { data: pr } = await sb.from("production")
-      .select("id, status, current_stage, created_at").eq("job_id", jobId);
-    production = pr;
-  }
-  return NextResponse.json({ billing_note: bn, job, finance, production });
+  // มีงาน/ใบเสนอ/ลูกค้า ชื่อ "ทศรินทร์" อยู่ในระบบแล้วไหม
+  const { data: jobsMatch } = await sb.from("jobs")
+    .select("id, job_code, customer_name, status, current_stage, deposit_date, deposit_amount, customer_id")
+    .ilike("customer_name", "%ทศรินทร์%");
+  const { data: quotesMatch } = await sb.from("quotations")
+    .select("id, code, job_id, customer_snapshot, total, status")
+    .ilike("code", "%QT2026040059%");
+  const { data: custMatch } = await sb.from("customers")
+    .select("id, name, phone").ilike("name", "%ทศรินทร์%");
+
+  return NextResponse.json({ billing_note: bn, jobsMatch, quotesMatch, custMatch });
 }
