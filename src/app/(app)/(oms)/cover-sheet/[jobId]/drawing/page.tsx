@@ -129,6 +129,18 @@ export default function DrawingEditorPage({ params }: { params: { jobId: string 
     setAnnotations((cur) => cur.filter((a) => a.id !== id));
     setDirty(true);
   };
+  // ก๊อปกล่องข้อความ — สำเนาทั้งก้อน (ข้อความ + สีตัวอักษร + สีไฮไลต์ + ขนาด + จัดแนว) เลื่อนตำแหน่งนิดกันซ้อน
+  //   คืน id ใหม่ให้ canvas เลือกกล่องสำเนาต่อทันที (ลาก/แก้ได้เลย)
+  const duplicateAnnotation = (id: string): string => {
+    const newId = crypto.randomUUID();
+    setAnnotations((cur) => {
+      const src = cur.find((a) => a.id === id);
+      if (!src) return cur;
+      return [...cur, { ...src, id: newId, xf: Math.min(0.92, src.xf + 0.02), yf: Math.min(0.95, src.yf + 0.03) }];
+    });
+    setDirty(true);
+    return newId;
+  };
 
   const doSave = async () => {
     if (!selected) return;
@@ -288,12 +300,13 @@ export default function DrawingEditorPage({ params }: { params: { jobId: string 
                   onSetActivePage={setActivePage}
                   onPatch={patchAnnotation}
                   onRemove={removeAnnotation}
+                  onDuplicate={duplicateAnnotation}
                   onDropText={addAnnotation}
                   canWrite={canWrite}
                 />
               </div>
               <div className="lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100dvh-2rem)] lg:overflow-auto">
-                <PrefillPanel groups={prefill} onAddText={addAtActivePage} disabled={!canWrite} activePageLabel={activePage + 1} />
+                <PrefillPanel groups={prefill} onAddText={addAtActivePage} onAddBlank={() => addAtActivePage("")} disabled={!canWrite} activePageLabel={activePage + 1} />
               </div>
             </div>
           )}

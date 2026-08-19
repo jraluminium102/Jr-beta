@@ -1,26 +1,39 @@
 "use client";
-import { Plus, Layers } from "lucide-react";
+import { Plus, Layers, Type } from "lucide-react";
 import type { PrefillGroup } from "@/lib/job-drawings/types";
+
+// ปุ่ม "+ ข้อความเอง" — เพิ่มกล่องข้อความว่าง (ไม่ต้องมีสเปคในระบบ) แล้วพิมพ์เองบนแบบ
+function AddBlankButton({ onAddBlank }: { onAddBlank: () => void }) {
+  return (
+    <button type="button" onClick={onAddBlank}
+      className="focusable pressable w-full inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-white bg-sky-500 hover:bg-sky-600 min-h-[42px]">
+      <Type size={15} /> + ข้อความเอง
+    </button>
+  );
+}
 
 // แผงข้าง "สเปคจากใบเสนอ" — กด + เพื่อเพิ่มลงหน้าที่ "กำลังใช้งาน" หรือลากไปวางตำแหน่งที่ต้องการบนแบบ
 export default function PrefillPanel({
-  groups, onAddText, disabled, activePageLabel,
+  groups, onAddText, onAddBlank, disabled, activePageLabel,
 }: {
   groups: PrefillGroup[];
   onAddText: (text: string) => void;
+  onAddBlank: () => void;     // เพิ่มกล่องข้อความว่าง (ไม่พึ่งสเปค)
   disabled: boolean;
   activePageLabel?: number;   // เลขหน้าที่ + จะลง (เลื่อนตามที่มองอยู่)
 }) {
   if (groups.length === 0) {
     return (
-      <div className="glass-card rounded-2xl p-4 text-[13px]" style={{ color: "var(--t-mid)" }}>
-        งานนี้ยังไม่มีใบเสนอราคา (หรือใบเสนอยังไม่มีรายการ) — ยังดึงสเปคอัตโนมัติไม่ได้ พิมพ์กล่องข้อความเองบนแบบได้เลย
+      <div className="glass-card rounded-2xl p-4 space-y-3 text-[13px]" style={{ color: "var(--t-mid)" }}>
+        <div>งานนี้ยังไม่มีใบเสนอราคา (หรือใบเสนอยังไม่มีรายการ) — ยังดึงสเปคอัตโนมัติไม่ได้ กดปุ่มด้านล่างเพื่อเพิ่มกล่องข้อความเอง</div>
+        {!disabled && <AddBlankButton onAddBlank={onAddBlank} />}
       </div>
     );
   }
 
   return (
     <div className="glass-card rounded-2xl p-4 space-y-4">
+      {!disabled && <AddBlankButton onAddBlank={onAddBlank} />}
       <div className="text-[12px]" style={{ color: "var(--t-low)" }}>
         กด <b>+</b> เพื่อเพิ่มลงหน้าที่กำลังดูอยู่ หรือ <b>ลาก</b> ไปวางตำแหน่งที่ต้องการบนแบบได้เลย
       </div>

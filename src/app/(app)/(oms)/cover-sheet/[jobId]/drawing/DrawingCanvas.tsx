@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { GripVertical, Minus, Plus, Palette, AlignLeft, AlignCenter, AlignRight, Trash2, Highlighter } from "lucide-react";
+import { GripVertical, Minus, Plus, Palette, AlignLeft, AlignCenter, AlignRight, Trash2, Highlighter, Copy } from "lucide-react";
 import type { AnnotAlign, AnnotColor, DrawingAnnotation, DrawingPage } from "@/lib/job-drawings/types";
 import { HIGHLIGHT_HEX, nextHighlight } from "@/lib/highlight-colors";
 
@@ -17,7 +17,7 @@ const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
 
 // ── กล่องข้อความ 1 กล่อง — ลากย้ายด้วย pointer events (มือถือ/เมาส์ใช้ร่วมได้), พิมพ์แก้ในตัว ──
 function AnnotationBox({
-  a, pageRef, pageHeightPx, selected, onSelect, onPatch, onRemove, canWrite,
+  a, pageRef, pageHeightPx, selected, onSelect, onPatch, onRemove, onDuplicate, canWrite,
 }: {
   a: DrawingAnnotation;
   pageRef: React.RefObject<HTMLDivElement>;
@@ -26,6 +26,7 @@ function AnnotationBox({
   onSelect: () => void;
   onPatch: (patch: Partial<DrawingAnnotation>) => void;
   onRemove: () => void;
+  onDuplicate: () => void;
   canWrite: boolean;
 }) {
   const dragging = useRef(false);
@@ -93,6 +94,8 @@ function AnnotationBox({
               onClick={() => onPatch({ align: ALIGN_ORDER[(ALIGN_ORDER.indexOf(a.align ?? "left") + 1) % ALIGN_ORDER.length] })}
               className="w-7 h-7 grid place-items-center rounded hover:bg-white/15"><AlignIcon size={13} /></button>
           ); })()}
+          <button type="button" title="ก๊อปกล่องนี้ (พร้อมสี/ไฮไลต์)" onClick={onDuplicate}
+            className="w-7 h-7 grid place-items-center rounded hover:bg-white/15"><Copy size={13} /></button>
           <button type="button" title="ลบกล่องนี้" onClick={onRemove}
             className="w-7 h-7 grid place-items-center rounded hover:bg-rose-500/70 text-rose-200"><Trash2 size={13} /></button>
         </div>
@@ -128,7 +131,7 @@ function AnnotationBox({
 
 // ── 1 หน้าแบบ (รูป PNG) + กล่องข้อความทั้งหมดของหน้านั้น ──
 function PageBlock({
-  page, pageIndex, active, annotations, onActivate, onPatch, onRemove, onDropText, canWrite,
+  page, pageIndex, active, annotations, onActivate, onPatch, onRemove, onDuplicate, onDropText, canWrite,
 }: {
   page: DrawingPage;
   pageIndex: number;
@@ -137,6 +140,7 @@ function PageBlock({
   onActivate: () => void;
   onPatch: (id: string, patch: Partial<DrawingAnnotation>) => void;
   onRemove: (id: string) => void;
+  onDuplicate: (id: string) => string;
   onDropText: (xf: number, yf: number, text: string) => void;
   canWrite: boolean;
 }) {
@@ -199,6 +203,7 @@ function PageBlock({
             onSelect={() => setSelectedId(a.id)}
             onPatch={(patch) => onPatch(a.id, patch)}
             onRemove={() => { onRemove(a.id); setSelectedId(null); }}
+            onDuplicate={() => { const nid = onDuplicate(a.id); setSelectedId(nid); }}
             canWrite={canWrite}
           />
         ))}
@@ -208,7 +213,7 @@ function PageBlock({
 }
 
 export default function DrawingCanvas({
-  pages, annotations, activePage, onSetActivePage, onPatch, onRemove, onDropText, canWrite,
+  pages, annotations, activePage, onSetActivePage, onPatch, onRemove, onDuplicate, onDropText, canWrite,
 }: {
   pages: DrawingPage[];
   annotations: DrawingAnnotation[];
@@ -216,6 +221,7 @@ export default function DrawingCanvas({
   onSetActivePage: (i: number) => void;
   onPatch: (id: string, patch: Partial<DrawingAnnotation>) => void;
   onRemove: (id: string) => void;
+  onDuplicate: (id: string) => string;
   onDropText: (pageIndex: number, xf: number, yf: number, text: string) => void;
   canWrite: boolean;
 }) {
@@ -231,6 +237,7 @@ export default function DrawingCanvas({
           onActivate={() => onSetActivePage(i)}
           onPatch={onPatch}
           onRemove={onRemove}
+          onDuplicate={onDuplicate}
           onDropText={(xf, yf, text) => onDropText(i, xf, yf, text)}
           canWrite={canWrite}
         />
