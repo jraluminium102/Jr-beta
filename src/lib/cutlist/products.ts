@@ -96,7 +96,7 @@ export const SMS_SLIDE_FREE: CutSpec = {
   opts: [...HANDLE_OPTS_LR, ...MESH_OPTS, { key: "meshCount", label: "จำนวนมุ้ง", type: "number" }],
   defaults: { W: 350, H: 159, N: 3, rail: "3รางเสียบ", honk: false, ...HANDLE_DEF_LR, ...MESH_DEF, meshCount: 1 },
   profiles: [
-    { name: "เฟรมล่าง", code: (o) => (isPlug(o.rail) ? "B20041" : "B20046"), len: (o) => o.W - 4.4, qty: () => 1 },
+    { name: "เฟรมล่าง", code: (o) => (isPlug(o.rail) ? "B20041" : "B20047"), len: (o) => o.W - 4.4, qty: () => 1 },   // รางเตี้ย = B20047 เฟรมล่างภายใน (B20046 คือชนกลาง คนละตัว · ยืนยันจากชื่อในไฟล์ v9)
     { name: "เฟรมบน", code: "B20001", len: (o) => o.W - 4.4, qty: () => 1 },
     { name: "เฟรมข้าง", code: "B20003", len: (o) => o.H, qty: () => 2 },
     { name: "เสากุญแจ ML", code: "B20051", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3), qty: () => 2 },
@@ -134,7 +134,7 @@ export const SMS_SLIDE_CENTER: CutSpec = {
   opts: [...HANDLE_OPTS_LR, ...MESH_OPTS],
   defaults: { W: 350, H: 159, N: 4, rail: "3รางเสียบ", honk: false, ...HANDLE_DEF_LR, ...MESH_DEF },
   profiles: [
-    { name: "เฟรมล่าง", code: (o) => (isPlug(o.rail) ? "B20041" : "B20046"), len: (o) => o.W - 4.4, qty: () => 1 },
+    { name: "เฟรมล่าง", code: (o) => (isPlug(o.rail) ? "B20041" : "B20047"), len: (o) => o.W - 4.4, qty: () => 1 },   // รางเตี้ย = B20047 เฟรมล่างภายใน (B20046 คือชนกลาง คนละตัว · ยืนยันจากชื่อในไฟล์ v9)
     { name: "เฟรมบน", code: "B20001", len: (o) => o.W - 4.4, qty: () => 1 },
     { name: "เฟรมข้าง", code: "B20003", len: (o) => o.H, qty: () => 2 },
     { name: "เสากุญแจมัลติพ้อย", code: "B20051", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3.2), qty: () => 2 },
@@ -177,7 +177,7 @@ export const SMS_SLIDE_TOW: CutSpec = {
   opts: [...HANDLE_OPTS_L, ...MESH_OPTS, { key: "meshCount", label: "จำนวนมุ้ง", type: "number" }],
   defaults: { W: 200, H: 240, N: 3, rail: "3รางเสียบ", honk: false, ...HANDLE_DEF_L, ...MESH_DEF, meshCount: 1 },
   profiles: [
-    { name: "เฟรมล่าง", code: (o) => (isPlug(o.rail) ? "B20041" : "B20046"), len: (o) => o.W - 4.4, qty: () => 1 },
+    { name: "เฟรมล่าง", code: (o) => (isPlug(o.rail) ? "B20041" : "B20047"), len: (o) => o.W - 4.4, qty: () => 1 },   // รางเตี้ย = B20047 เฟรมล่างภายใน (B20046 คือชนกลาง คนละตัว · ยืนยันจากชื่อในไฟล์ v9)
     { name: "เฟรมบน", code: "B20001", len: (o) => o.W - 4.4, qty: () => 1 },
     { name: "เฟรมข้าง", code: "B20003", len: (o) => o.H, qty: () => 2 },
     { name: "เสากุญแจ ML", code: "B20051", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3), qty: () => 2 },

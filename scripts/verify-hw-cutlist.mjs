@@ -175,6 +175,27 @@ console.log("\n═══ ④b ราคาสำรองจากไฟล์�
     computeCost(BASE, PRODUCTS.sms_slide, { ...BASE_IN }).sell.withInstall === 37500, "");
 }
 
+console.log("\n═══ ④c เฟรมล่างรางเตี้ย = B20047 ไม่ใช่ B20046 (ชนกลาง) ═══");
+{
+  // ชื่อในไฟล์ v9 ชีต "ราคาสี": B20046 = ตัวต่อมัลติพ้อยท์ล็อค (ชนกลางบานเลื่อน) 240฿
+  //                             B20047 = เฟรมล่างบานเลื่อนภายใน 3 รางเสียบภายใน 825฿
+  // เดิมใบตัดใส่ B20046 เป็นเฟรมล่างรางเตี้ย = คนละตัวกันเลย (เจ้าของทักไว้ 8 ส.ค.69)
+  const bottomCode = (specId, rail) => {
+    const sp = CUT_SPEC_BY_ID[specId];
+    const p = sp.profiles.find((x) => x.name === "เฟรมล่าง");
+    const o = { ...sp.defaults, rail };
+    return typeof p.code === "function" ? p.code(o) : p.code;
+  };
+  for (const id of ["sms_slide_free", "sms_slide_center", "sms_slide_tow"])
+    ok(`${id} รางเตี้ย → เฟรมล่าง B20047`, bottomCode(id, "รางเตี้ย7มม") === "B20047", bottomCode(id, "รางเตี้ย7มม"));
+  ok("รางกันน้ำ (3รางเสียบ) ยังเป็น B20041 เหมือนเดิม",
+    bottomCode("sms_slide_free", "3รางเสียบ") === "B20041", bottomCode("sms_slide_free", "3รางเสียบ"));
+  ok("คิดราคา 4.0 ใช้ B20047 อยู่แล้ว → ตอนนี้ตรงกับใบตัด",
+    PRODUCTS.sms_slide.alu.some((a) => a.code === "B20047" && /รางเตี้ย/.test(a.name)), "");
+  ok("B20046 ยังใช้เป็น 'ชนกลาง' ที่อื่นได้ปกติ (ไม่ได้ลบทิ้ง)",
+    CUT_SPEC_BY_ID["sms_slide_center"].profiles.some((p) => p.name === "ชนกลาง" && p.code === "B20046"), "");
+}
+
 console.log("\n═══ ⑤ หน้าจอต่อสายครบไหม ═══");
 {
   const c = fs.readFileSync(path.join(ROOT, "src/components/Calculator40Client.tsx"), "utf8");
