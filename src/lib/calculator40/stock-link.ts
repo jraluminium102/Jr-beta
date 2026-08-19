@@ -6,7 +6,7 @@
 //   • อลูคิดจาก "เรตต่อกิโล/แบรนด์" (ตัวคูณ mult) → ใช้ค่าสูงสุดในกลุ่มแบรนด์ (กันคิดขาด) ควรตั้งให้เท่ากันทั้งแบรนด์
 //   • อลูรายเส้น (ก.ค.2026): ผูกด้วยรหัส stock_items.sku ↔ products.alu[].code (B####/F####/E-##/WM-K##)
 //     รหัสเดียวหลายแถว(แยกสี) → ใช้ราคาแถว "อบขาว" (ค่าสีคิดเป็นค่าอบ/กก. ใน engine อยู่แล้ว) · ไม่มีอบขาว = สูงสุด
-import PRICEBOOK from "./pricebook.json";
+import PRICEBOOK from "./pricebook.json" with { type: "json" };
 import { PRODUCTS } from "./products.mjs";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -63,11 +63,34 @@ export type PriceOverride = {
   ALU: Record<string, number>;
   PARTS: Record<string, number>;
   ALUCODE: Record<string, number>;   // ราคาเส้น/รหัส (B####/F####) — engine ใช้ก่อน PARTS/ราคา BOM
+  // ราคาเส้นแยก "สีจริงในสโตร์" → ALUCOLOR_STOCK["เทาซาฮาร่า"]["B20001"] = 1225
+  //   แยก อบขาว/ดำ ออกจากกันด้วย (ตอนนี้ราคาเท่ากัน แต่วันหน้าไม่เท่า แก้ในสโตร์ได้เลย)
+  ALUCOLOR_STOCK: Record<string, Record<string, number>>;
 };
+
+// ── สีจริงจากสโตร์ (เจ้าของยืนยัน 8 ส.ค.69: ยึดราคาสีตามสโตร์) ─────────────────
+// สโตร์ตั้ง "รหัสเดียวกันทุกสี" แล้วแยกด้วยช่อง สี — ถูกต้องแล้ว ไม่ต้องแก้สโตร์
+//   ของเดิมอ่านเฉพาะแถวสีอบขาวแถวเดียว สีอื่นถูกทิ้ง → สีเทา/ลายไม้ไปคิดแบบ ขาว+ค่าอบ×กก. (แพงเกิน)
+const CALC_TO_STOCK_COLOR: Record<string, string> = {
+  white: "อบขาว", black: "ดำ", sahara: "เทาซาฮาร่า", sahara_black: "ดำซาฮาร่า",
+  aztec: "Aztec gray", wood_teak: "ลายไม้สักทอง", wood_maho: "มะฮอกกานี", wood_whiteoak: "ไวท์โอ็ค",
+};
+const normColorName = (s: unknown) => String(s ?? "").replace(/\s+/g, "").trim();
+/** ชื่อสีในสโตร์ ของสีที่เลือกในเครื่องคิดราคา ("" = สีนั้นไม่มีในสโตร์ เช่น สีอบพิเศษ/สีชุบ) */
+export const stockColorOfCalc = (calcColorKey?: string | null) =>
+  normColorName(CALC_TO_STOCK_COLOR[String(calcColorKey ?? "")] ?? "");
+/** สีของแถวสต็อก — ใช้ช่อง สี ก่อน · ไม่มีค่อยอ่านท้ายชื่อ ("F7935-คิ้ว-อบขาว") */
+function rowColor(r: StockRow): string {
+  const c = normColorName((r as { color?: string | null }).color);
+  if (c) return c;
+  const t = String(r.name ?? "");
+  const i = t.lastIndexOf("-");
+  return i >= 0 ? normColorName(t.slice(i + 1)) : "";
+}
 
 // สร้าง "ผังราคาทับ" จากแถว stock (เทียบกับ pricebook pb) — เฉพาะราคา > 0 (กันวัสดุยังไม่ตั้งราคา = 0 ไปล้างราคาสูตร)
 export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverride {
-  const ov: PriceOverride = { GLASS: {}, ROOFMAT: {}, MOTOR: {}, STEEL: {}, EXTRA: {}, ALU: {}, PARTS: {}, ALUCODE: {} };
+  const ov: PriceOverride = { GLASS: {}, ROOFMAT: {}, MOTOR: {}, STEEL: {}, EXTRA: {}, ALU: {}, PARTS: {}, ALUCODE: {}, ALUCOLOR_STOCK: {} };
   const aluByBrand: Record<string, number> = {};
   // อลูรายเส้น: รหัสเดียวมีหลายแถว (แยกสี) → ราคาตัวตั้ง = แถว "อบขาว" ก่อน (ราคาฐานดิบ — ค่าสีคิดแยกใน engine เป็นค่าอบ/กก.)
   // ไม่มีอบขาว = ค่าต่ำสุด (ผลตรวจบัญชี: ถ้าใช้ max จะหยิบแถวสีพิเศษที่รวมค่าเคลือบแล้ว → engine บวกค่าอบซ้ำ = คิดเกิน)
@@ -89,6 +112,12 @@ export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverrid
         const e = aluByCode[code] || (aluByCode[code] = { white: 0, min: 0 });
         e.min = e.min > 0 ? Math.min(e.min, cost) : cost;
         if (name.includes("อบขาว")) e.white = Math.max(e.white, cost);
+        // เก็บราคา "ทุกสี" ไว้ด้วย (รหัสเดียวกันหลายแถว = คนละสี) — สีเดียวกันซ้ำหลายแถว เอาถูกสุด
+        const rc = rowColor(r);
+        if (rc) {
+          const bucket = ov.ALUCOLOR_STOCK[rc] || (ov.ALUCOLOR_STOCK[rc] = {});
+          bucket[code] = bucket[code] > 0 ? Math.min(bucket[code], cost) : cost;
+        }
       }
     }
     // อลู: เรตต่อกิโล/แบรนด์ = ค่าสูงสุดในกลุ่ม (กันคิดขาด)
@@ -105,6 +134,11 @@ export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverrid
 // ทับราคาลง pricebook (mutate) — เรียกกับสำเนา pb เท่านั้น
 export function applyPriceOverride(pb: any, ov?: PriceOverride | null): any {
   if (!pb || !ov) return pb;
+  // ราคาแยกสีจากสโตร์ — สโตร์เป็นตัวตั้ง ทับตารางในไฟล์
+  if (ov.ALUCOLOR_STOCK && Object.keys(ov.ALUCOLOR_STOCK).length) {
+    pb.ALUCOLOR_STOCK = pb.ALUCOLOR_STOCK || {};
+    for (const c in ov.ALUCOLOR_STOCK) pb.ALUCOLOR_STOCK[c] = { ...(pb.ALUCOLOR_STOCK[c] || {}), ...ov.ALUCOLOR_STOCK[c] };
+  }
   for (const sec of ["GLASS", "ROOFMAT", "MOTOR", "STEEL", "ALU", "PARTS", "ALUCODE"] as const) {
     const o = ov[sec];
     if (!o) continue;

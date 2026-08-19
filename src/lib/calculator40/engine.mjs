@@ -110,7 +110,13 @@ export function computeCost(PB, prod, opt) {
     // ALUCODE_NOCOLOR = เส้นสีเงิน/ผิวเดิม ไม่มีการอบสี → ราคาเดียวทุกสี ห้ามบวกค่าอบ
     //   (เจ้าของยืนยัน 8 ส.ค.69: F7994 ตบรางล้อ เป็นสีเงิน ใช้กับทุกสีราคาเดียว)
     const noColor = !!(code && (PB.ALUCODE_NOCOLOR || []).includes(code));
-    const colorPrice = (!noColor && code && PB.ALUCOLOR && PB.ALUCOLOR[color]) ? PB.ALUCOLOR[color][code] : null;
+    // ลำดับราคาเส้น: ① สีจริงจากสโตร์ (สโตร์เป็นตัวตั้ง — เจ้าของสั่ง 8 ส.ค.69)
+    //                ② ตารางราคาสีในไฟล์  ③ ราคาขาว + ค่าอบ×กก. (ทางสุดท้าย)
+    //   opt.stockColor = ชื่อสีในสโตร์ของสีที่ลูกค้าเลือก (แอปส่งมาให้ · "" = สีนั้นไม่มีในสโตร์)
+    const stockColorPrice = (!noColor && code && opt.stockColor && PB.ALUCOLOR_STOCK && PB.ALUCOLOR_STOCK[opt.stockColor])
+      ? PB.ALUCOLOR_STOCK[opt.stockColor][code] : null;
+    const colorPrice = stockColorPrice > 0 ? stockColorPrice
+      : (!noColor && code && PB.ALUCOLOR && PB.ALUCOLOR[color]) ? PB.ALUCOLOR[color][code] : null;
     const price = colorPrice > 0 ? colorPrice
       : (code && PB.ALUCODE && PB.ALUCODE[code] > 0) ? PB.ALUCODE[code]
       : pPrice(it.name, it.price);

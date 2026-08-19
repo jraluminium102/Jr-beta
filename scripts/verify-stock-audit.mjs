@@ -10,6 +10,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { auditStockLink, auditByProduct, bumpTest, STATUS_LABEL } from "../src/lib/calculator40/stock-audit.ts";
+import { buildPriceOverride, applyPriceOverride, stockColorOfCalc } from "../src/lib/calculator40/stock-link.ts";
+import { computeCost } from "../src/lib/calculator40/engine.mjs";
+import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PB = JSON.parse(fs.readFileSync(path.join(ROOT, "src/lib/calculator40/pricebook.json"), "utf8"));
@@ -103,6 +106,36 @@ console.log("\n═══ ⑤b สรุปรายรุ่น — มุมห
   ok("ติดผลทดสอบเด้งมาให้ทุกรุ่นที่คิดราคาออก", prods.filter((p) => p.moved !== null).length > 30, "");
   ok("นับเฉพาะบรรทัดของรุ่นนั้น ไม่ปนรุ่นอื่น",
     prods.every((p) => p.aluLinked <= p.aluTotal && p.hwLinked <= p.hwTotal), "");
+}
+
+console.log("\n═══ ⑤c ราคาเส้นแยกสี ต้องมาจากสโตร์ (เจ้าของสั่ง 8 ส.ค.69) ═══");
+{
+  // สโตร์ตั้ง "รหัสเดียวกันทุกสี" แล้วแยกด้วยช่อง สี — ต้องอ่านได้ครบทุกสี
+  const stock = [];
+  for (const [code, px] of [
+    ["B20001", { "อบขาว": 1125, "ดำ": 1125, "เทาซาฮาร่า": 1225, "ลายไม้สักทอง": 1825 }],
+    ["B20003", { "อบขาว": 870, "ดำ": 900, "เทาซาฮาร่า": 950, "ลายไม้สักทอง": 1395 }],
+  ]) for (const [c, v] of Object.entries(px)) stock.push({ name: `เฟรม ${code}`, sku: code, color: c, unit_cost: v });
+
+  const ov = buildPriceOverride(stock, PB);
+  ok("เก็บราคาครบทุกสี ไม่ทิ้งสีอื่น", Object.keys(ov.ALUCOLOR_STOCK).length === 4, Object.keys(ov.ALUCOLOR_STOCK).join(","));
+  ok("อบขาว/ดำ แยกกันจริง (ตั้งราคาต่างกันได้)",
+    ov.ALUCOLOR_STOCK["อบขาว"]?.B20003 === 870 && ov.ALUCOLOR_STOCK["ดำ"]?.B20003 === 900, "");
+
+  const pb2 = applyPriceOverride(JSON.parse(JSON.stringify(PB)), ov);
+  const run = (calcKey, bake) => computeCost(pb2, PRODUCTS.sms_slide,
+    { w: 300, h: 220, p: 3, form: "อิสระ", color: bake, stockColor: stockColorOfCalc(calcKey) });
+  const priceOf = (r, nm) => r.lines.find((l) => l.name.startsWith(nm))?.unitPrice;
+
+  const w = run("white", "white"), bk = run("black", "white"), sh = run("sahara", "sahara"), wd = run("wood_teak", "woodStock");
+  ok("สีขาว → ใช้ราคาสโตร์แถวอบขาว", priceOf(w, "เฟรมบน") === 1125 && priceOf(w, "เฟรมข้าง") === 870, "");
+  ok("สีดำ → ใช้ราคาสโตร์แถวดำ (แยกจากขาวได้)", priceOf(bk, "เฟรมข้าง") === 900, String(priceOf(bk, "เฟรมข้าง")));
+  ok("เทาซาฮาร่า → ใช้ราคาสโตร์แถวเทา", priceOf(sh, "เฟรมบน") === 1225 && priceOf(sh, "เฟรมข้าง") === 950, "");
+  ok("ลายไม้ → ใช้ราคาสโตร์แถวลายไม้", priceOf(wd, "เฟรมบน") === 1825, String(priceOf(wd, "เฟรมบน")));
+  ok("⚠ ห้ามบวกค่าอบซ้ำ เมื่อราคาสโตร์รวมสีแล้ว", sh.cost.bake === 0 && wd.cost.bake === 0, `${sh.cost.bake}/${wd.cost.bake}`);
+  ok("สีที่สโตร์ไม่มี (อบพิเศษ) ยังคิดแบบ ขาว+ค่าอบ ได้เหมือนเดิม",
+    computeCost(pb2, PRODUCTS.sms_slide, { w: 300, h: 220, p: 3, form: "อิสระ", color: "special", stockColor: stockColorOfCalc("special") }).cost.bake > 0, "");
+  ok("แพงขึ้นตามสี: ขาว < เทา < ลายไม้", w.cost.total < sh.cost.total && sh.cost.total < wd.cost.total, "");
 }
 
 console.log("\n═══ ⑥ หน้าจอต่อสายครบไหม ═══");

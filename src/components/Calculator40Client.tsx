@@ -32,6 +32,8 @@ import { computeRoofZipR4 } from "@/lib/calculator40/roof-zip.mjs";
 import { withUniversalAddons } from "@/lib/calculator40/universal-addons";
 import AddonsSection from "@/components/calculator40/AddonsSection";
 import { ALU_COLOR_KEYS, ALU_COLOR_LABEL, resolveAluColor } from "@/lib/calculator40/alu-colors";
+// ชื่อสีในสโตร์ของสีที่เลือก — ส่งเข้า engine เพื่อหยิบ "ราคาเส้นตามสีจริงในสโตร์"
+import { stockColorOfCalc } from "@/lib/calculator40/stock-link";
 import { groupGlass, allGlassKeys } from "@/lib/calculator40/glass-cats";
 import { computeServices, EMPTY_SERVICES, type ServiceInput } from "@/lib/calculator40/services";
 import SubPanesSection, { subDesc, subPrice, type SubPane } from "@/components/calculator40/SubPanesSection";
@@ -367,6 +369,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
         form: formVal,
         color: rc.bake,
         colorName: rc.label,
+        stockColor: stockColorOfCalc(color),   // สีจริงในสโตร์ (แยก อบขาว/ดำ ออกจากกัน)
         profitPct,
         spec,
         addons,
@@ -418,7 +421,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
           const sw = (+sg.w || 0) * 100, sh = (+sg.h || 0) * 100;
           if (!(sw > 0 && sh > 0)) return;
           const sr: any = computeCost(pb, prod, {
-            w: sw, h: sh, p: 1, form: formVal, material, color: rc.bake, addons: {}, profitPct, installProfitPct: profitPct,
+            w: sw, h: sh, p: 1, form: formVal, material, color: rc.bake, stockColor: stockColorOfCalc(color), addons: {}, profitPct, installProfitPct: profitPct,
           });
           const sAmt = laborMode === "mfg" ? sr.sell.mfgOnlyNet : sr.sell.withInstall;   // ขายส่ง = ราคาหลังลด
           sl.push({ desc: `หลังคาช่วง ${i + 2} (${sg.w || 0}×${sg.h || 0}ม. · ${material})`, amt: sAmt });
