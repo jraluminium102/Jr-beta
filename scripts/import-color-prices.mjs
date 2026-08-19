@@ -46,23 +46,42 @@ export function readColorPrices(file) {
     .map((r) => ({ code: String(r.cells.A).trim(), system: String(r.cells.C ?? "").trim() }));
   const ALUCODE = {}, ALUWEIGHT = {}, ALUCOLOR_KEY = {}, NAMES = {};
   for (const k of Object.keys(COLOR_COL)) ALUCOLOR_KEY[k] = {};
-  for (const { cells: c } of rows) {
-    const code = String(c.A).trim();
-    NAMES[code] = String(c.B ?? "").trim();
-    if (num(c.L) > 0) ALUCODE[code] = num(c.L);
-    // ⚠ ห้ามเอาน้ำหนักจากคอลัมน์ S ของชีตราคาสี — ตรวจแล้วมันคือ "ราคาขาว ÷ 187"
-    //   (B20001: 1125÷187 = 6.016) ไม่ใช่น้ำหนักที่ชั่งจริง (ชีตน้ำหนักโปรไฟล์ = 6.25)
-    //   น้ำหนักจริงอ่านจากชีต "น้ำหนักโปรไฟล์" ข้างล่าง (หัวชีตเขียนเองว่าเอาไปเสียบระบบ)
-    for (const [key, col] of Object.entries(COLOR_COL)) if (num(c[col]) > 0) ALUCOLOR_KEY[key][code] = num(c[col]);
-  }
+
   // ── น้ำหนักจริง: ชีต "น้ำหนักโปรไฟล์" (C รหัส · F ยาว(ม.) · G กก./ม. · H กก./เส้น) ──
+  //   หัวชีตเขียนเอง: "เอาไปเสียบระบบ ราคาเส้น = น้ำหนัก × ราคา/กก."
   const wsheet = X.sheets.find((s) => s.name === "น้ำหนักโปรไฟล์");
   if (wsheet) for (const { cells: c } of X.read(wsheet.path)) {
     const code = String(c.C ?? "").trim();
     if (!isCode(code) || !(num(c.H) > 0)) continue;
     ALUWEIGHT[code] = Math.round(num(c.H) * 1000) / 1000;
   }
-  return { ALUCODE, ALUWEIGHT, ALUCOLOR_KEY, NAMES, count: rows.length, skipped, skipNote: SYSTEM_SKIP_NOTE };
+  // ── คิดราคาใหม่จากน้ำหนักจริง (เจ้าของสั่ง 19 ส.ค.69: "ราคาคูณใหม่เลย") ────────
+  //   ⚠ น้ำหนักในชีตราคาสี (คอลัมน์ S) ไม่ใช่ของชั่งจริง — มันคือ "ราคาขาว ÷ 187"
+  //     (B20001: 1125÷187 = 6.016 เป๊ะทุกรหัส) ของจริงคือ 6.25 → ราคาในชีตจึงคิดขาดไป ~3.9%
+  //   วิธีแก้: ถอด "เรต ฿/กก. ของแต่ละสี" ที่ชีตตั้งใจไว้ออกมา (ราคาสี ÷ น้ำหนักที่ชีตใช้)
+  //           แล้วคูณกลับด้วยน้ำหนักจริง → ความสัมพันธ์ระหว่างสีคงเดิมเป๊ะ แก้เฉพาะน้ำหนักที่ผิด
+  //   ⚠ น้ำหนักบางรหัสในชีตดูเป็นเลขกลม ๆ ที่ยังไม่ได้ชั่ง (เช่น B20024 = "2.000" เป๊ะ
+  //     ทั้งที่ราคาบอกว่า ~0.99) ถ้าคูณตามจะทำให้ราคาเด้งเท่าตัว → กันไว้ที่ ±15%
+  //     เกินกรอบ = ไม่แก้ราคา เก็บเข้า outliers ให้เจ้าของไปเช็คน้ำหนักจริงก่อน
+  const MAX_FIX = 0.15;
+  const round1 = (n) => Math.round(n * 10) / 10;
+  const outliers = [];
+  for (const { cells: c } of rows) {
+    const code = String(c.A).trim();
+    NAMES[code] = String(c.B ?? "").trim();
+    const white = num(c.L);
+    const realKg = ALUWEIGHT[code] || 0;
+    const sheetKg = white > 0 ? white / 187 : 0;              // น้ำหนักที่ชีตใช้คิดราคา (ย้อนจากราคา)
+    let fix = (realKg > 0 && sheetKg > 0) ? realKg / sheetKg : 1;   // ตัวคูณแก้น้ำหนัก (ปกติ ≈1.039)
+    if (Math.abs(fix - 1) > MAX_FIX) {
+      outliers.push({ code, name: NAMES[code], sheetKg: round1(sheetKg * 100) / 100, realKg, white, would: round1(white * fix) });
+      fix = 1;   // ไม่แตะราคา รอเจ้าของยืนยันน้ำหนัก
+    }
+    if (white > 0) ALUCODE[code] = round1(white * fix);
+    for (const [key, col] of Object.entries(COLOR_COL))
+      if (num(c[col]) > 0) ALUCOLOR_KEY[key][code] = round1(num(c[col]) * fix);
+  }
+  return { ALUCODE, ALUWEIGHT, ALUCOLOR_KEY, NAMES, count: rows.length, skipped, skipNote: SYSTEM_SKIP_NOTE, outliers };
 }
 
 // ── CLI ──
@@ -94,6 +113,12 @@ if (process.argv[1]?.endsWith("import-color-prices.mjs")) {
   console.log("\n── ③ น้ำหนัก กก./เส้น (ALUWEIGHT) ──");
   console.log(`  ${Object.keys(nw.ALUWEIGHT).length} รหัส (จากชีต "น้ำหนักโปรไฟล์" = น้ำหนักชั่งจริง)`);
   console.log('  → เอาไปเติมน้ำหนักในสโตร์ได้ (สายเรตต่อโล → ราคาต่อเส้น)');
+  if (nw.outliers.length) {
+    console.log(`
+── ⚠ ${nw.outliers.length} รหัส น้ำหนักในชีตต่างจากที่ราคาบอกเกิน 15% — ไม่แก้ราคา รอเจ้าของเช็ค ──`);
+    for (const o of nw.outliers)
+      console.log(`    ${o.code.padEnd(9)} ราคาบอกว่าหนัก ${String(o.sheetKg).padStart(6)} กก. · ชีตเขียน ${String(o.realKg).padStart(6)} กก. → ถ้าคูณตาม ราคา ${b(o.white)} จะกลายเป็น ${b(o.would)}  ${o.name}`);
+  }
 
   if (!write) { console.log("\n(ยังไม่เขียนลง pricebook — ใส่ --write ถ้าจะเขียนจริง)"); process.exit(0); }
   pb.ALUCODE = { ...cur, ...nw.ALUCODE };
