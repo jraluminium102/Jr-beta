@@ -88,7 +88,7 @@ export function computeCost(PB, prod, opt) {
 
   const stockLen = prod.stockLen ?? STOCK_LEN;
   const lines = [];
-  let aluCost = 0, aluKg = 0;
+  let aluCost = 0, aluKg = 0, aluBarsAll = 0;
 
   // ราคาต่อชิ้นจาก PB.PARTS (เฉพาะสินค้าติดธง partsLinked = รุ่นถอดทุนใหม่ · แก้ราคาที่ stock แล้วเปลี่ยนตาม)
   // ตั้งต้น PARTS = ราคาเดิมใน BOM → behavior-preserving (verify 63/63 คงเดิม) · รุ่นเดิม (ไม่ติดธง) ใช้ it.price ปกติ
@@ -115,7 +115,13 @@ export function computeCost(PB, prod, opt) {
     //   opt.stockColor = ชื่อสีในสโตร์ของสีที่ลูกค้าเลือก (แอปส่งมาให้ · "" = สีนั้นไม่มีในสโตร์)
     const stockColorPrice = (!noColor && code && opt.stockColor && PB.ALUCOLOR_STOCK && PB.ALUCOLOR_STOCK[opt.stockColor])
       ? PB.ALUCOLOR_STOCK[opt.stockColor][code] : null;
+    // ② ราคาแยก "สีจริง" จากไฟล์ถอดทุน v9 (ALUCOLOR_KEY[คีย์สี][รหัส]) — เจ้าของเคาะ 19 ส.ค.69 ให้ยึดไฟล์
+    //    ไฟล์แยก 6 สีจริง (เทาซาฮาร่า/ดำซาฮาร่า/แอทแทคเกรย์/ลายไม้สักทอง/มะฮอกกานี/ไวท์โอ๊ค)
+    //    ละเอียดกว่าตารางเดิมที่แยกแค่ "หมวดค่าอบ" → ลายไม้ 3 สี เคยใช้ราคาเดียวกันหมด
+    const fileColorPrice = (!noColor && code && opt.colorKey && PB.ALUCOLOR_KEY && PB.ALUCOLOR_KEY[opt.colorKey])
+      ? PB.ALUCOLOR_KEY[opt.colorKey][code] : null;
     const colorPrice = stockColorPrice > 0 ? stockColorPrice
+      : fileColorPrice > 0 ? fileColorPrice
       : (!noColor && code && PB.ALUCOLOR && PB.ALUCOLOR[color]) ? PB.ALUCOLOR[color][code] : null;
     const price = colorPrice > 0 ? colorPrice
       : (code && PB.ALUCODE && PB.ALUCODE[code] > 0) ? PB.ALUCODE[code]
@@ -130,6 +136,7 @@ export function computeCost(PB, prod, opt) {
     aluCost += amount;
     // เส้นที่ราคารวมสีแล้ว หรือเป็นเส้นสีเงินไม่อบสี → ไม่เข้ากองคิดค่าอบ
     if (!(colorPrice > 0) && !noColor) aluKg += bars * (it.kg || 0);
+    aluBarsAll += bars;   // นับทุกเส้น (รวมเส้นที่ราคารวมสีมาแล้ว) — ใช้ตัดสินค่าเปิดตู้อบ
     // code/kg ติดมากับบรรทัดด้วย — หน้าเทียบ "คิดราคา ↔ ใบตัด" ใช้จับคู่รหัส + คิด ฿/กก. (ไม่กระทบตัวเลขใด ๆ)
     lines.push({ cat: 'alu', name: it.name + (colorPrice > 0 ? ' (' + colorDisp + ')' : ''), code: code || '', kg: it.kg || 0,
       qty: bars, unit: 'เส้น', unitPrice: round2(price * m), amount: round2(amount) });
@@ -138,8 +145,12 @@ export function computeCost(PB, prod, opt) {
   let bakeCost = 0, openOven = 0;
   if (bakeRate > 0 && aluKg > 0) {
     bakeCost = bakeRate * aluKg;
-    if (color === 'special' || color === 'woodSpecial') openOven = PB.BAKE_OPEN_OVEN || 0;
     lines.push({ cat: 'bake', name: 'ค่าอบสี (' + colorDisp + ' ' + bakeRate + '/กก. × ' + round2(aluKg) + 'กก.)', qty: round2(aluKg), unit: 'กก.', unitPrice: bakeRate, amount: round2(bakeCost) });
+  }
+  // ค่าเปิดตู้อบ = คงที่ต่องาน "ไม่ขึ้นตาม กก." (ไฟล์ถอดทุน ชีต อัปเดตราคาอลู)
+  //   ⚠ ต้องคิดแม้ทุกเส้นได้ราคารวมสีจากไฟล์/สโตร์มาแล้ว (aluKg = 0) ไม่งั้นตกค่าเปิดตู้อบ 2,000 เงียบ ๆ
+  if ((color === 'special' || color === 'woodSpecial') && aluBarsAll > 0) {
+    openOven = PB.BAKE_OPEN_OVEN || 0;
     if (openOven) lines.push({ cat: 'bake', name: 'ค่าเปิดตู้อบ', qty: 1, unit: 'งาน', unitPrice: openOven, amount: openOven });
   }
 

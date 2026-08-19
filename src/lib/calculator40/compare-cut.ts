@@ -65,7 +65,7 @@ export function compareCut(PB: any, inp: CompareInput) {
   const rc = resolveAluColor(inp.color || "white");
   const opt: any = {
     w: inp.w, h: inp.h, p: inp.p, form: inp.form || prod.defForm,
-    color: rc.bake, colorName: rc.label, stockColor: stockColorOfCalc(inp.color || "white"),
+    color: rc.bake, colorName: rc.label, stockColor: stockColorOfCalc(inp.color || "white"), colorKey: inp.color || "white",
     glassType: inp.glassType || prod.defGlass || undefined,
     spec: inp.spec ?? {}, addons: {},
     profitPct: inp.profitPct ?? 100, installProfitPct: inp.profitPct ?? 100,

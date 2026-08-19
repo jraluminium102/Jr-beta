@@ -47,10 +47,25 @@ function sharedStrings(zip) {
 export function sheetList(zip) {
   const wb = zip.get("xl/workbook.xml").toString("utf8");
   const rel = zip.get("xl/_rels/workbook.xml.rels").toString("utf8");
-  const relMap = new Map([...rel.matchAll(/<Relationship[^>]*Id="([^"]+)"[^>]*Target="([^"]+)"/g)]
-    .map((m) => [m[1], m[2].replace(/^\/?xl\//, "").replace(/^\//, "")]));
-  return [...wb.matchAll(/<sheet[^>]*name="([^"]*)"[^>]*r:id="([^"]+)"/g)]
-    .map((m) => ({ name: dec(m[1]), path: "xl/" + relMap.get(m[2]) }));
+  // ⚠ ลำดับ attribute ในไฟล์จริงสลับได้ (บางไฟล์ Target มาก่อน Id) → ดึงทีละ tag แล้วอ่านทีละ attr
+  const relMap = new Map();
+  for (const m of rel.matchAll(/<Relationship\b([^>]*)\/?>/g)) {
+    const id = (m[1].match(/\bId="([^"]+)"/) || [])[1];
+    const tg = (m[1].match(/\bTarget="([^"]+)"/) || [])[1];
+    if (id && tg) relMap.set(id, tg.replace(/^\/?xl\//, "").replace(/^\//, ""));
+  }
+  const out = [];
+  let i = 0;
+  for (const m of wb.matchAll(/<sheet\b([^>]*)\/?>/g)) {
+    const name = (m[1].match(/\bname="([^"]*)"/) || [])[1];
+    const rid = (m[1].match(/\br:id="([^"]+)"/) || m[1].match(/\bid="([^"]+)"/) || [])[1];
+    if (name == null) continue;
+    // ไม่มี rels ให้ใช้ → ถอยไปเดาตามลำดับที่ประกาศใน workbook (sheet1, sheet2, …)
+    const target = (rid && relMap.get(rid)) || `worksheets/sheet${i + 1}.xml`;
+    out.push({ name: dec(name), path: "xl/" + target });
+    i++;
+  }
+  return out;
 }
 
 const colOf = (ref) => (ref.match(/^[A-Z]+/) || ["A"])[0];

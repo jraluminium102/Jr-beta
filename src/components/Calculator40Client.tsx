@@ -375,6 +375,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
         color: rc.bake,
         colorName: rc.label,
         stockColor: stockColorOfCalc(color),   // สีจริงในสโตร์ (แยก อบขาว/ดำ ออกจากกัน)
+        colorKey: color,                       // คีย์สีจริง → ราคาเส้นแยกสีจากไฟล์ถอดทุน (ALUCOLOR_KEY)
         profitPct,
         spec,
         addons,
@@ -382,6 +383,9 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       // อุปกรณ์จากใบตัด (รุ่นที่เปิดแล้ว) → engine ใช้แทนรายการเดิม + คิดราคาจากรหัสสโตร์
       const hwl = cutHardwareLines({ prodId: prod.id, w: wCm, h: hCm, p: pCount, form: formVal, spec, cut: cutSel });
       if (hwl?.length) opt.hardwareLines = hwl;
+      // รุ่นเปิดผูกใบตัดแล้ว แต่ "รูปแบบ/จำนวนบานนี้" ไฟล์ยังไม่มีสูตรตัด (เช่น เปิดคู่กลาง ≠ 4 บาน
+      //   ชีตใบตัดล็อก 4 บานตายตัว: ขวางบน = (W−35.3)/4) → คิดราคาได้ปกติ แต่ค่าของใช้รายการเดิม
+      opt.hwNoCutSpec = HW_FROM_CUTLIST.has(prod.id) && !hwl?.length;
       if (glassType) opt.glassType = glassType;
       if (material) opt.material = material;
       // G4 kindOpts (ประเภทตู้/ชนิดชั้น/กระจกหน้าบาน/สีหน้าบาน/เกรดกระจกชั้น ฯลฯ) → engine อ่าน opt[key] ตรง ๆ ตรง app.js calc() บรรทัด 217
@@ -429,7 +433,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
           const sw = (+sg.w || 0) * 100, sh = (+sg.h || 0) * 100;
           if (!(sw > 0 && sh > 0)) return;
           const sr: any = computeCost(pb, prod, {
-            w: sw, h: sh, p: 1, form: formVal, material, color: rc.bake, stockColor: stockColorOfCalc(color), addons: {}, profitPct, installProfitPct: profitPct,
+            w: sw, h: sh, p: 1, form: formVal, material, color: rc.bake, stockColor: stockColorOfCalc(color), colorKey: color, addons: {}, profitPct, installProfitPct: profitPct,
           });
           const sAmt = laborMode === "mfg" ? sr.sell.mfgOnlyNet : sr.sell.withInstall;   // ขายส่ง = ราคาหลังลด
           sl.push({ desc: `หลังคาช่วง ${i + 2} (${sg.w || 0}×${sg.h || 0}ม. · ${material})`, amt: sAmt });
@@ -1114,6 +1118,12 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                   </div>
                   <div className="mt-1">ตั้งราคาที่หน้าสโตร์แล้วรีเฟรชหน้านี้ ระบบจะสลับไปคิดจากรายการใบตัดให้เอง</div>
                 </div>
+              )}
+              {(result as any)?.input && !(result as any)?.hwFromCutlist && HW_FROM_CUTLIST.has(prod.id) && (
+                <p className="mt-2 text-[11px] text-ink-3 bg-line/20 border border-line rounded-lg px-3 py-2">
+                  ⓘ รูปแบบ/จำนวนบานนี้ยังไม่มีสูตรใบตัดในไฟล์ — คิดราคาได้ปกติ แต่ &quot;ค่าของ&quot; ใช้รายการอุปกรณ์เดิมในสูตร
+                  (ไม่ได้แตกรายรหัสเหมือนรูปแบบที่มีใบตัด)
+                </p>
               )}
               {(result as any)?.hwFromCutlist && (
                 <div className="mt-2 text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">

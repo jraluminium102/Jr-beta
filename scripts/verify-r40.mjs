@@ -69,7 +69,10 @@ function laborFromSheet(s) {
 //     'baseXpanel'= ฐาน × จำนวนบาน          (ชีต "คิดทุน เฟี้ยม" D64/D65)
 //     'baseOnly'  = ฐานเฉย ๆ                (ชีต "คิดทุน เฟี้ยมยูโร" E46/E47)
 const ANCHORS = [
-  { id: 'sms_slide', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 16678.4 },
+  // ⚠ SMS: ชีต "ราคาสี" (ดึงจาก Stock.xlsx · v9) B20001=1125 B20003=870
+  //    แต่ชีต "คิดทุน SMS" ยังเขียน 1235/1030 (ยังไม่ซิงก์) → เจ้าของสั่งยึดราคาสโตร์ 19 ส.ค.69
+  //    16,678.4 − 285 (เฟรมบน −110 + เฟรมข้าง −175) = 16,393.4
+  { id: 'sms_slide', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 16393.4 },
   { id: 'euro_slide', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 29499.4 },
   { id: 'slimlux', in: { w: 200, h: 200, p: 2, form: 'อิสระ' }, cost: 13635 },
   { id: 'open_door', in: { w: 150, h: 200, p: 1, form: 'มีธรณี' }, cost: 10637 },
@@ -109,7 +112,7 @@ const ANCHORS = [
 //   ชีตนี้ล็อกทุนวัสดุจริงไว้ที่ 150×150 ทุกรุ่น = จุดยึดที่ 2 ฟรี ๆ จากไฟล์
 //   ⚠ ไม่ใส่ เฟี้ยม/เฟี้ยมยูโร — ชีตเขียนกำกับเองว่า "สูตร live ประมาณ" (ไม่ใช่เลขเป๊ะ)
 const ANCHORS150 = [
-  { id: 'sms_slide', in: { p: 2, form: 'อิสระ' }, cost: 9190.85 },
+  { id: 'sms_slide', in: { p: 2, form: 'อิสระ' }, cost: 8905.85 },   // 9,190.85 − 285 (ยึดราคาสี/สโตร์)
   { id: 'euro_slide', in: { p: 2, form: 'อิสระ' }, cost: 13789.85 },
   { id: 'eseries', in: { p: 2, form: 'อิสระ' }, cost: 12685 },
   { id: 'velora', in: { p: 2, form: 'เดี่ยว', color: 'white' }, cost: 5470 },      // สีขาว = ต้องมีค่าอบเรตเทา (rawAlu)
@@ -172,7 +175,7 @@ console.log('▶ แก้อลู SMS 187→200 (กระจก/อุปก�
   const base = computeCost(PB, PRODUCTS.sms_slide, { w: 600, h: 300, p: 3, form: 'อิสระ' });
   const PB2 = JSON.parse(JSON.stringify(PB)); PB2.ALU.SMS = 200;
   const r = computeCost(PB2, PRODUCTS.sms_slide, { w: 600, h: 300, p: 3, form: 'อิสระ' });
-  check('ทุนอลู = 10080×200/187', r.cost.alu, 10080 * 200 / 187, 1);
+  check('ทุนอลู = 9795×200/187', r.cost.alu, 9795 * 200 / 187, 1);   // ฐานขาว SMS ยึดชีตราคาสี v9 (เดิม 10080)
   check('กระจกนิ่ง', r.cost.glass, base.cost.glass, 0.01);
   check('อุปกรณ์นิ่ง', r.cost.hardware + r.cost.consum, base.cost.hardware + base.cost.consum, 0.01);
   check('ราคาแพงขึ้น (36100→' + r.sell.withInstall + ')', r.sell.withInstall > base.sell.withInstall ? 1 : 0, 1, 0);
@@ -262,7 +265,8 @@ for (const [id, form] of [['sms_slide', 'อิสระ'], ['euro_slide', 'อ�
 //                + Σ บาร์×กก.×ค่าอบ สำหรับเส้นที่ชีตไม่ได้ VLOOKUP (เช่น F7863/F7864 ของบานเปิด)
 console.log('\n═══ ②d ราคาตามสี (เทาซาฮาร่า / ลายไม้สต็อค) ═══');
 const ANCHORS_COLOR = [
-  ['sms_slide', { w: 150, h: 150, p: 2, form: 'อิสระ' }, { white: 9190.85, sahara: 10892.52, woodStock: 14289.57 }],
+  // SMS ขยับ −285 ทุกสีเท่ากัน (ฐานขาวเปลี่ยน · ตารางราคาสีเท่าเดิม) — ยึดชีตราคาสี v9
+  ['sms_slide', { w: 150, h: 150, p: 2, form: 'อิสระ' }, { white: 8905.85, sahara: 10607.52, woodStock: 14004.57 }],
   ['euro_slide', { w: 150, h: 150, p: 2, form: 'อิสระ' }, { white: 13789.85, sahara: 14634.85, woodStock: 20315.95 }],
   ['open_door', { w: 150, h: 150, p: 2, form: 'มีธรณี' }, { white: 11980, sahara: 14897.22, woodStock: 17203.78 }],
 ];
@@ -320,6 +324,41 @@ console.log('\n═══ ②f F7994 ตบรางล้อ สีเงิน 
 
 // ── ③ สวิตช์ "คิดค่าแรงแบบไหน" ในหน้าคิดราคา — ราคาที่ขึ้นใบต้องเปลี่ยนตามจริง ──
 //   เคยพลาดมาแล้ว: ทำปุ่มสวย ๆ แต่ลืมต่อสาย → กดแล้วราคาไม่ขยับ · ตรงนี้อ่านซอร์สจริง
+// ── ②g ราคาแยกสีจริงจากไฟล์ v9 (ALUCOLOR_KEY) — เจ้าของเคาะ 19 ส.ค.69 "เอา" ──
+//   ค่าตรึงจากชีต "ราคาสี" v9 บล็อก "ปัจจุบัน" (คอลัมน์ L–R) · ห้ามคิดสดจาก PB (ลบตารางแล้วต้องแดง)
+console.log('\n═══ ②g ราคาเส้นแยกสีจริง 6 สี (ไฟล์ v9 ชีตราคาสี) ═══');
+{
+  const WANT = {
+    B20001: { sahara: 1225, sahara_black: 1225, aztec: 2166, wood_teak: 1825, wood_maho: 2268, wood_whiteoak: 2268 },
+    B20003: { sahara: 950, sahara_black: 950, aztec: 1675, wood_teak: 1395, wood_maho: 1754, wood_whiteoak: 1754 },
+    B20041: { sahara: 2255, wood_teak: 3424 },
+  };
+  for (const [code, m] of Object.entries(WANT))
+    for (const [col, px] of Object.entries(m))
+      check(code + ' ' + col, PB.ALUCOLOR_KEY?.[col]?.[code], px, 0.01);
+  check('ฐานขาว B20001 (ยึดชีตราคาสี/สโตร์ ไม่ใช่ 1235 ของชีตคิดทุน)', PB.ALUCODE?.B20001, 1125, 0.01);
+  check('ฐานขาว B20003', PB.ALUCODE?.B20003, 870, 0.01);
+  check('ครบ 6 สี', Object.keys(PB.ALUCOLOR_KEY ?? {}).length, 6, 0);
+  check('ไม่ดึงระบบราคาประเมิน — SlimLux WM-K04 ต้องไม่โผล่', PB.ALUCOLOR_KEY?.sahara?.['WM-K04'] == null ? 1 : 0, 1, 0);
+  check('ไม่ดึง E-series — E-03 ต้องไม่โผล่', PB.ALUCOLOR_KEY?.sahara?.['E-03'] == null ? 1 : 0, 1, 0);
+  check('SlimLux ราคาขาวไม่ถูกทับด้วยราคาประเมิน', PB.ALUCODE?.['WM-K04'] == null ? 1 : 0, 1, 0);
+
+  const sell = (key, bake) => computeCost(PB, PRODUCTS.sms_slide,
+    { w: 600, h: 300, p: 3, form: 'อิสระ', color: bake, colorKey: key }).sell.withInstall;
+  const teak = sell('wood_teak', 'woodStock'), maho = sell('wood_maho', 'woodStock');
+  check('ลายไม้สักทอง ≠ มะฮอกกานี (แยกราคาได้แล้ว)', maho > teak ? 1 : 0, 1, 0);
+  check('SMS ลายไม้สักทอง', teak, 48600, 1);
+  check('SMS มะฮอกกานี', maho, 56000, 1);
+  check('SMS เทาซาฮาร่า', sell('sahara', 'sahara'), 38600, 1);
+  check('SMS สีขาว ไม่ขยับ', sell('white', 'white'), 37000, 1);
+
+  const az = computeCost(PB, PRODUCTS.sms_slide, { w: 600, h: 300, p: 3, form: 'อิสระ', color: 'special', colorKey: 'aztec' });
+  check('Aztec: ค่าเปิดตู้อบยังคิดอยู่ (คงที่ ไม่ผูก กก.)', az.cost.openOven, PB.BAKE_OPEN_OVEN, 0.01);
+  check('Aztec: ไม่คิดค่าอบซ้ำ (ราคาสีรวมค่าอบแล้ว)', az.cost.bake, 0, 0.01);
+  check('น้ำหนัก กก./เส้น เก็บไว้ครบ (เอาไปเติมสโตร์)', Object.keys(PB.ALUWEIGHT ?? {}).length, 100, 0);
+  check('น้ำหนัก B20001 = 6.016 กก./เส้น', PB.ALUWEIGHT?.B20001, 6.016, 0.001);
+}
+
 console.log('\n═══ ③ สวิตช์ค่าแรงในหน้าคิดราคา 4.0 (ต่อสายครบไหม) ═══');
 {
   const src = fs.readFileSync(path.join(__dirname, '../src/components/Calculator40Client.tsx'), 'utf8');
