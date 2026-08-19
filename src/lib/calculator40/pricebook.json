@@ -2426,5 +2426,12 @@
   "WHOLESALE_DISCOUNT_PCT": 10,
   "ALUCODE_NOCOLOR": [
     "F7994"
-  ]
+  ],
+  "HWPRICE": {
+    "JR00576": 80,
+    "JR00864": 1,
+    "JR00863": 1,
+    "JR00794": 1.5,
+    "JR00504": 90
+  }
 }

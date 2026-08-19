@@ -1111,9 +1111,18 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                 </div>
               )}
               {(result as any)?.hwFromCutlist && (
-                <p className="mt-2 text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                <div className="mt-2 text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
                   ✓ ค่าของ คิดจากรายการอุปกรณ์ในใบตัด (รหัสสโตร์ชุดเดียวกับที่ช่างเบิกจริง)
-                </p>
+                  {(result as any).hwFileFallback?.length > 0 && (
+                    <div className="mt-1 text-amber-800">
+                      ⓘ {(result as any).hwFileFallback.length} รายการยังใช้ราคาจากไฟล์ถอดทุน (สโตร์ยังไม่ตั้งราคา) —
+                      ตั้งราคาในสโตร์เมื่อไร ระบบใช้ของสโตร์ทันที
+                      <div className="mt-0.5 font-mono text-[10px] leading-relaxed">
+                        {(result as any).hwFileFallback.map((m: any) => `${m.sku} ${m.name}`).join(" · ")}
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* รีมาร์คสี (สีชุบ/Aztec ฯลฯ ที่ยังใช้ราคา R3.9 อ้างอิง — รอถอดทุน 4.0) */}

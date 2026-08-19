@@ -167,10 +167,17 @@ export function computeCost(PB, prod, opt) {
   //     เจ้าของสั่ง 19 ส.ค.69: อุปกรณ์ในใบตัด 15 บรรทัด ต้องเข้า "ค่าของ" ในคิดราคาด้วย
   const rawHwLines = (Array.isArray(opt.hardwareLines) && opt.hardwareLines.length) ? opt.hardwareLines : null;
   // ราคาต่อบรรทัด: รหัสสโตร์ก่อน (÷ per ถ้าสโตร์ขายเป็นแพ็ค) → ราคาสำรองที่ส่งมากับบรรทัด
+  //   PB.HWPRICE = ราคาสำรองจากไฟล์ถอดทุน (ชีต "คิดทุน …") สำหรับรหัสที่สโตร์ยังไม่ตั้งราคา
+  //   ราคาสโตร์ชนะเสมอ — พอเจ้าของตั้งราคาในสโตร์ ระบบสลับไปใช้ของสโตร์เอง
   const hwPrice = (it) => {
     const sku = String(it.sku || '').toUpperCase();
-    return (sku && PB.SKUPRICE && PB.SKUPRICE[sku] > 0)
-      ? PB.SKUPRICE[sku] / (Number(it.per) || 1) : (Number(it.price) || 0);
+    if (sku && PB.SKUPRICE && PB.SKUPRICE[sku] > 0) return PB.SKUPRICE[sku] / (Number(it.per) || 1);
+    if (sku && PB.HWPRICE && PB.HWPRICE[sku] > 0) return PB.HWPRICE[sku];   // ราคาไฟล์ = ต่อหน่วยย่อยอยู่แล้ว ไม่หาร per
+    return Number(it.price) || 0;
+  };
+  const hwFromFile = (it) => {
+    const sku = String(it.sku || '').toUpperCase();
+    return !!(sku && !(PB.SKUPRICE && PB.SKUPRICE[sku] > 0) && PB.HWPRICE && PB.HWPRICE[sku] > 0);
   };
   // ⚠ กันคิดต่ำกว่าจริงเงียบ ๆ — รหัสไหนยังไม่ตั้งราคาในสโตร์ ค่าของบรรทัดนั้นจะเป็น 0
   //   ถ้ามีแม้แต่ตัวเดียว → ไม่ใช้รายการจากใบตัดทั้งชุด กลับไปใช้ราคาเดิมในสูตร (ราคาไม่ตก)
@@ -187,7 +194,8 @@ export function computeCost(PB, prod, opt) {
     const amount = count * price;
     hwCost += amount;
     lines.push({ cat: 'hardware', name: it.name, sku: String(it.sku || '').toUpperCase(),
-      qty: round2(count), unit: it.unit || 'ชิ้น', unitPrice: round2(price), amount: round2(amount) });
+      qty: round2(count), unit: it.unit || 'ชิ้น', unitPrice: round2(price), amount: round2(amount),
+      fromFile: hwFromFile(it) });
   }
   for (const it of (hwLines ? [] : prod.hardware || [])) {
     const count = val(it.count);
@@ -463,6 +471,9 @@ export function computeCost(PB, prod, opt) {
     glassArea: round2(glassArea), aluKg: round2(aluKg),
     // อุปกรณ์จากใบตัด: ใช้จริงไหม + รหัสไหนยังไม่ตั้งราคาในสโตร์ (หน้าจอเอาไปเตือน)
     hwFromCutlist: !!hwLines, hwMissing,
+    // รหัสที่ยังใช้ "ราคาจากไฟล์ถอดทุน" (สโตร์ยังไม่ตั้งราคา) — หน้าจอเตือนให้ไปตั้งในสโตร์
+    hwFileFallback: (hwLines || []).filter((it) => (Number(it.qty) || 0) > 0 && hwFromFile(it))
+      .map((it) => ({ sku: String(it.sku || '').toUpperCase(), name: it.name })),
     costPerSqm: area > 0 ? round2(costTotal / area) : 0,
     labor: { prod: round2(laborProd), install: round2(laborInstall) },
     // mfgOnly = ตามสูตรชีตคิดทุน (อย่าเอาไปโชว์/ขึ้นใบตรง ๆ) · mfgOnlyNet = ราคาขายส่งจริงหลังลด wholesalePct
