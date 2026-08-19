@@ -130,7 +130,9 @@ export function computeCost(PB, prod, opt) {
     aluCost += amount;
     // เส้นที่ราคารวมสีแล้ว หรือเป็นเส้นสีเงินไม่อบสี → ไม่เข้ากองคิดค่าอบ
     if (!(colorPrice > 0) && !noColor) aluKg += bars * (it.kg || 0);
-    lines.push({ cat: 'alu', name: it.name + (colorPrice > 0 ? ' (' + colorDisp + ')' : ''), qty: bars, unit: 'เส้น', unitPrice: round2(price * m), amount: round2(amount) });
+    // code/kg ติดมากับบรรทัดด้วย — หน้าเทียบ "คิดราคา ↔ ใบตัด" ใช้จับคู่รหัส + คิด ฿/กก. (ไม่กระทบตัวเลขใด ๆ)
+    lines.push({ cat: 'alu', name: it.name + (colorPrice > 0 ? ' (' + colorDisp + ')' : ''), code: code || '', kg: it.kg || 0,
+      qty: bars, unit: 'เส้น', unitPrice: round2(price * m), amount: round2(amount) });
   }
   // ค่าอบสี (อลูเท่านั้น)
   let bakeCost = 0, openOven = 0;

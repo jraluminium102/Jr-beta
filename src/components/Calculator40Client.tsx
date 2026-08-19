@@ -860,6 +860,11 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
             className="press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold glass-soft text-ink-2">
             🔗 ตรวจผูกสโตร์
           </a>
+          {/* เทียบทีละรหัสว่าคิดราคาขึ้นของครบเท่าใบตัดไหม (เจ้าของสั่ง 19 ส.ค.69) */}
+          <a href="/calculator40/compare"
+            className="press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold glass-soft text-ink-2">
+            🔍 เทียบกับใบตัด
+          </a>
         </div>
       </div>
       <p className="text-sm text-ink-3 -mt-3">
