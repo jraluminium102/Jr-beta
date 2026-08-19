@@ -17,7 +17,7 @@ const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
 
 // ── กล่องข้อความ 1 กล่อง — ลากย้ายด้วย pointer events (มือถือ/เมาส์ใช้ร่วมได้), พิมพ์แก้ในตัว ──
 function AnnotationBox({
-  a, pageRef, pageHeightPx, selected, onSelect, onPatch, onRemove, onDuplicate, canWrite,
+  a, pageRef, pageHeightPx, selected, onSelect, onPatch, onRemove, onCopy, canWrite,
 }: {
   a: DrawingAnnotation;
   pageRef: React.RefObject<HTMLDivElement>;
@@ -26,7 +26,7 @@ function AnnotationBox({
   onSelect: () => void;
   onPatch: (patch: Partial<DrawingAnnotation>) => void;
   onRemove: () => void;
-  onDuplicate: () => void;
+  onCopy: () => void;
   canWrite: boolean;
 }) {
   const dragging = useRef(false);
@@ -94,7 +94,7 @@ function AnnotationBox({
               onClick={() => onPatch({ align: ALIGN_ORDER[(ALIGN_ORDER.indexOf(a.align ?? "left") + 1) % ALIGN_ORDER.length] })}
               className="w-7 h-7 grid place-items-center rounded hover:bg-white/15"><AlignIcon size={13} /></button>
           ); })()}
-          <button type="button" title="ก๊อปกล่องนี้ (พร้อมสี/ไฮไลต์)" onClick={onDuplicate}
+          <button type="button" title="ก๊อปข้อความนี้ (พร้อมสี/ไฮไลต์ — ไปวางหน้าอื่นได้)" onClick={onCopy}
             className="w-7 h-7 grid place-items-center rounded hover:bg-white/15"><Copy size={13} /></button>
           <button type="button" title="ลบกล่องนี้" onClick={onRemove}
             className="w-7 h-7 grid place-items-center rounded hover:bg-rose-500/70 text-rose-200"><Trash2 size={13} /></button>
@@ -131,7 +131,7 @@ function AnnotationBox({
 
 // ── 1 หน้าแบบ (รูป PNG) + กล่องข้อความทั้งหมดของหน้านั้น ──
 function PageBlock({
-  page, pageIndex, active, annotations, onActivate, onPatch, onRemove, onDuplicate, onDropText, canWrite,
+  page, pageIndex, active, annotations, onActivate, onPatch, onRemove, onCopy, onDropText, canWrite,
 }: {
   page: DrawingPage;
   pageIndex: number;
@@ -140,7 +140,7 @@ function PageBlock({
   onActivate: () => void;
   onPatch: (id: string, patch: Partial<DrawingAnnotation>) => void;
   onRemove: (id: string) => void;
-  onDuplicate: (id: string) => string;
+  onCopy: (id: string) => void;
   onDropText: (xf: number, yf: number, text: string) => void;
   canWrite: boolean;
 }) {
@@ -203,7 +203,7 @@ function PageBlock({
             onSelect={() => setSelectedId(a.id)}
             onPatch={(patch) => onPatch(a.id, patch)}
             onRemove={() => { onRemove(a.id); setSelectedId(null); }}
-            onDuplicate={() => { const nid = onDuplicate(a.id); setSelectedId(nid); }}
+            onCopy={() => onCopy(a.id)}
             canWrite={canWrite}
           />
         ))}
@@ -213,7 +213,7 @@ function PageBlock({
 }
 
 export default function DrawingCanvas({
-  pages, annotations, activePage, onSetActivePage, onPatch, onRemove, onDuplicate, onDropText, canWrite,
+  pages, annotations, activePage, onSetActivePage, onPatch, onRemove, onCopy, onDropText, canWrite,
 }: {
   pages: DrawingPage[];
   annotations: DrawingAnnotation[];
@@ -221,7 +221,7 @@ export default function DrawingCanvas({
   onSetActivePage: (i: number) => void;
   onPatch: (id: string, patch: Partial<DrawingAnnotation>) => void;
   onRemove: (id: string) => void;
-  onDuplicate: (id: string) => string;
+  onCopy: (id: string) => void;
   onDropText: (pageIndex: number, xf: number, yf: number, text: string) => void;
   canWrite: boolean;
 }) {
@@ -237,7 +237,7 @@ export default function DrawingCanvas({
           onActivate={() => onSetActivePage(i)}
           onPatch={onPatch}
           onRemove={onRemove}
-          onDuplicate={onDuplicate}
+          onCopy={onCopy}
           onDropText={(xf, yf, text) => onDropText(i, xf, yf, text)}
           canWrite={canWrite}
         />

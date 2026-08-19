@@ -69,6 +69,9 @@ export default function DrawingEditorPage({ params }: { params: { jobId: string 
   const [uploadErr, setUploadErr] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
+  // คลิปบอร์ดก๊อปกล่องข้อความ — เก็บสไตล์ทั้งก้อน (ข้อความ/สี/ไฮไลต์/ขนาด/จัดแนว) ไว้ "วาง" ข้ามหน้าได้
+  const [clip, setClip] = useState<Pick<DrawingAnnotation, "text" | "color" | "hl" | "size" | "align"> | null>(null);
+  const [copyMsg, setCopyMsg] = useState<string | null>(null);
 
   // เลือกแบบแรกให้อัตโนมัติเมื่อโหลดเสร็จ (ครั้งแรกเท่านั้น — ไม่ทับตอนแก้ต่อ)
   useEffect(() => {
@@ -129,17 +132,25 @@ export default function DrawingEditorPage({ params }: { params: { jobId: string 
     setAnnotations((cur) => cur.filter((a) => a.id !== id));
     setDirty(true);
   };
-  // ก๊อปกล่องข้อความ — สำเนาทั้งก้อน (ข้อความ + สีตัวอักษร + สีไฮไลต์ + ขนาด + จัดแนว) เลื่อนตำแหน่งนิดกันซ้อน
-  //   คืน id ใหม่ให้ canvas เลือกกล่องสำเนาต่อทันที (ลาก/แก้ได้เลย)
-  const duplicateAnnotation = (id: string): string => {
-    const newId = crypto.randomUUID();
-    setAnnotations((cur) => {
-      const src = cur.find((a) => a.id === id);
-      if (!src) return cur;
-      return [...cur, { ...src, id: newId, xf: Math.min(0.92, src.xf + 0.02), yf: Math.min(0.95, src.yf + 0.03) }];
-    });
+  // ก๊อปกล่องข้อความลงคลิปบอร์ด (ยังไม่วาง) — เก็บสไตล์ทั้งก้อน · แล้วไปกด "วาง" หน้าไหนก็ได้
+  const copyAnnotation = (id: string) => {
+    const src = annotations.find((a) => a.id === id);
+    if (!src) return;
+    setClip({ text: src.text, color: src.color, hl: src.hl, size: src.size, align: src.align });
+    setCopyMsg("ก๊อปแล้ว — เลื่อนไปหน้าที่ต้องการ แล้วกด “วางกล่องที่ก๊อป” ในแผงขวา");
+    setTimeout(() => setCopyMsg(null), 4000);
+  };
+  // วางกล่องที่ก๊อป ลง "หน้าที่กำลังดู" (activePage) — ข้ามหน้าได้ · ไล่ตำแหน่งลงกันซ้อน
+  const pasteAnnotation = () => {
+    if (!clip) return;
+    const countOnPage = annotations.filter((a) => a.page === activePage).length;
+    const yf = Math.min(0.95, 0.06 + (countOnPage % 10) * 0.045);
+    setAnnotations((cur) => [...cur, {
+      id: crypto.randomUUID(), page: activePage, xf: 0.06, yf,
+      size: clip.size ?? DEFAULT_ANNOT_SIZE, text: clip.text ?? "",
+      color: clip.color ?? "", align: clip.align ?? "left", hl: clip.hl,
+    }]);
     setDirty(true);
-    return newId;
   };
 
   const doSave = async () => {
@@ -238,6 +249,7 @@ export default function DrawingEditorPage({ params }: { params: { jobId: string 
       </div>
 
       {saveMsg && <div className="mb-3 rounded-lg bg-emerald-500 text-white text-[13px] font-medium px-3 py-2 inline-block">{saveMsg}</div>}
+      {copyMsg && <div className="mb-3 rounded-lg bg-sky-500 text-white text-[13px] font-medium px-3 py-2 inline-block">📋 {copyMsg}</div>}
       {uploadMsg && <div className="mb-3 rounded-lg bg-sky-500 text-white text-[13px] font-medium px-3 py-2 inline-block">{uploadMsg}</div>}
       {uploadErr && <div className="mb-3 rounded-lg bg-rose-600 text-white text-[13px] font-medium px-3 py-2 inline-block">{uploadErr}</div>}
 
@@ -300,13 +312,13 @@ export default function DrawingEditorPage({ params }: { params: { jobId: string 
                   onSetActivePage={setActivePage}
                   onPatch={patchAnnotation}
                   onRemove={removeAnnotation}
-                  onDuplicate={duplicateAnnotation}
+                  onCopy={copyAnnotation}
                   onDropText={addAnnotation}
                   canWrite={canWrite}
                 />
               </div>
               <div className="lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100dvh-2rem)] lg:overflow-auto">
-                <PrefillPanel groups={prefill} onAddText={addAtActivePage} onAddBlank={() => addAtActivePage("")} disabled={!canWrite} activePageLabel={activePage + 1} />
+                <PrefillPanel groups={prefill} onAddText={addAtActivePage} onAddBlank={() => addAtActivePage("")} onPaste={pasteAnnotation} hasClip={!!clip} disabled={!canWrite} activePageLabel={activePage + 1} />
               </div>
             </div>
           )}
