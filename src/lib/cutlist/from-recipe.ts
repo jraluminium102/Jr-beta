@@ -41,6 +41,23 @@ export function cutInputFromRecipe(recipe: any): RecipeCutMap | null {
       else m = { spec_id: "sms_slide_free", input: { W, H, N, rail, honk: false } }; // อิสระ/สลับ
       break;
     }
+    case "euro_slide": {
+      // บานเลื่อน ยูโร = FUJI (โปรไฟล์ F#### ยี่ห้อ Fuji) — ใบตัดอยู่ไฟล์ JR_FUJI_บานเลื่อน.xlsx
+      //   ราง: คิดราคาใช้ "รางกันน้ำ / รางเตี้ย (งานใน)" → ใบตัดใช้ตัวเลือก "งาน" ภายนอก/ภายใน
+      //   จำนวนราง = จำนวนบาน (ชีต "เลื่อนสลับ" = 2 บาน · "เลื่อน3ราง" = 3 บาน)
+      const work = String(recipe.spec?.bottomrail ?? "").includes("รางเตี้ย") ? "ภายใน" : "ภายนอก";
+      const form = String(recipe.form ?? "");
+      if (form === "เปิดคู่กลาง") {
+        // ไฟล์มี 2 ชีต: "เลื่อนแบ่ง4" (4 บาน) และ "เลื่อนแบ่ง6-กลาง" (6 บาน) — บานอื่นไม่มีสูตร
+        m = (N === 4 || N === 6) ? { spec_id: "fuji_slide_center", input: { W, H, N } } : null;
+      } else if (form === "ลากจูง") {
+        m = null;   // ⚠ ไฟล์ใบตัด FUJI ยังไม่มีชีต "ลากจูง" — รอเจ้าของส่งสูตร (ห้ามเดา)
+      } else {
+        // อิสระ/สลับ — ไฟล์มีชีต 2 ราง กับ 3 ราง (4/5 ราง ใช้โปรไฟล์คนละชุด ยังไม่ได้พอร์ต)
+        m = (N === 2 || N === 3) ? { spec_id: "fuji_slide", input: { W, H, N, rail: `${N}ราง`, work, honk: false } } : null;
+      }
+      break;
+    }
     case "slimlux": {
       // รูปแบบบาน: คิดราคา form อิสระ/สลับ/ลากจูง/เปิดคู่กลาง → ใบตัด sashMode (สลับ ≈ อิสระ)
       const form = String(recipe.form ?? "");

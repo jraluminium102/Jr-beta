@@ -20,7 +20,7 @@ import { resolveAluColor } from "./alu-colors.ts";
 export { HANDLE_FIELDS, HW_FROM_CUTLIST };
 
 /** รุ่นในคิดราคา 4.0 ที่แมปเข้าใบตัดได้ (ตาม from-recipe) — มีเท่านี้ที่เทียบได้ */
-export const COMPARABLE = ["sms_slide", "slimlux", "fixed", "folding", "velora", "pcdoor", "gate"] as const;
+export const COMPARABLE = ["sms_slide", "euro_slide", "slimlux", "fixed", "folding", "velora", "pcdoor", "gate"] as const;
 
 export type CompareInput = {
   prodId: string;
@@ -36,9 +36,9 @@ export type CompareInput = {
 export type AluRow = {
   code: string; name: string;
   calcBars: number; calcPricePerBar: number; calcAmount: number; kgPerBar: number; bahtPerKg: number;
-  calcLenCm: number; calcPieces: number;
+  calcLenCm: number; calcPieces: number; barCounted: boolean;
   cutBars: number; cutTotalLenCm: number; cutStockLen: number; cutPieces: number;
-  status: "ตรง" | "จำนวนต่าง" | "มีแต่คิดราคา" | "มีแต่ใบตัด" | "ไม่มีรหัส";
+  status: "ตรง" | "จำนวนต่าง" | "มีแต่คิดราคา" | "มีแต่ใบตัด" | "ไม่มีรหัส" | "นับคนละหน่วย";
 };
 export type HwRow = {
   sku: string; name: string;
@@ -96,11 +96,12 @@ export function compareCut(PB: any, inp: CompareInput) {
     const e = byCode.get(key) ?? {
       code, name: l.name, calcBars: 0, calcPricePerBar: l.unitPrice, calcAmount: 0,
       kgPerBar: l.kg || 0, bahtPerKg: l.kg > 0 ? r2(l.unitPrice / l.kg) : 0,
-      calcLenCm: 0, calcPieces: 0,
+      calcLenCm: 0, calcPieces: 0, barCounted: false,
       cutBars: 0, cutTotalLenCm: 0, cutStockLen: 0, cutPieces: 0, status: "ตรง",
     };
     e.calcBars = r2(e.calcBars + l.qty); e.calcAmount = r2(e.calcAmount + l.amount);
     e.calcLenCm = r2(e.calcLenCm + (Number(l.lenM) || 0) * 100); e.calcPieces = r2(e.calcPieces + (Number(l.pieces) || 0));
+    if (l.barCounted) e.barCounted = true;
     byCode.set(key, e);
   }
   for (const b of (cut?.barsByCode ?? [])) {
@@ -108,7 +109,7 @@ export function compareCut(PB: any, inp: CompareInput) {
     if (e) { e.cutBars = b.bars; e.cutTotalLenCm = b.totalLenCm; e.cutStockLen = b.stockLen; e.cutPieces = cutPiecesOf(b.code); }
     else byCode.set(b.code, {
       code: b.code, name: cut!.rows.find((r) => r.code === b.code)?.name ?? "",
-      calcBars: 0, calcPricePerBar: 0, calcAmount: 0, kgPerBar: 0, bahtPerKg: 0, calcLenCm: 0, calcPieces: 0,
+      calcBars: 0, calcPricePerBar: 0, calcAmount: 0, kgPerBar: 0, bahtPerKg: 0, calcLenCm: 0, calcPieces: 0, barCounted: false,
       cutBars: b.bars, cutTotalLenCm: b.totalLenCm, cutStockLen: b.stockLen, cutPieces: cutPiecesOf(b.code), status: "มีแต่ใบตัด",
     });
   }
@@ -116,7 +117,11 @@ export function compareCut(PB: any, inp: CompareInput) {
   //   • จำนวนเส้น — สองฝั่งนับคนละวิธีโดยตั้งใจ (คิดราคา = ยาวรวม÷6.4+เศษ30% ตามไฟล์ถอดทุน · ใบตัด = เส้นเต็มที่หยิบมาตัด)
   //   • ความยาว   — ใบตัดหักเผื่อประกอบรายเส้น (เช่น เฟรมบน = กว้าง−4.4 ซม.) คิดราคาใช้ขนาดเต็ม
   //   • จำนวนชิ้น — ต้องตรงกันเป๊ะ: ของที่ช่างตัดจริงกี่ท่อน คิดราคาต้องคิดเงินเท่านั้นท่อน
-  const alu: AluRow[] = [...byCode.values()].map((e) => ({ ...e, status: statusOf(r2(e.calcPieces), r2(e.cutPieces), !!e.code) }));
+  const alu: AluRow[] = [...byCode.values()].map((e) => ({
+    ...e,
+    // บรรทัดที่ไฟล์ถอดทุนนับเป็น "เส้นเต็ม" เทียบชิ้นกับใบตัดไม่ได้ — บอกตรง ๆ ว่าคนละหน่วย ดีกว่าขึ้นแดงหลอก
+    status: (e.barCounted && e.calcPieces > 0 && e.cutPieces > 0) ? "นับคนละหน่วย" : statusOf(r2(e.calcPieces), r2(e.cutPieces), !!e.code),
+  }));
 
   // ── ② เทียบอุปกรณ์รายรหัสสโตร์ ────────────────────────────────────────
   const calcHw = (calc.lines ?? []).filter((l: any) => l.cat === "hardware" || l.cat === "consum");

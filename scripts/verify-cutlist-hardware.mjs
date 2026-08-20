@@ -214,7 +214,7 @@ function check(label, res, want) {
   const res = computeCutList(spec, { ...spec.defaults }, 1);
   console.log("FUJI เลื่อนสลับ (2ราง):");
   check("FUJI", res, [
-    { nameHas: "ล้อ 20", sku: "JR00577", qty: 4 },
+    { nameHas: "ล้อ-15x20x230", sku: "JR00577", qty: 4 },
     { nameHas: "มือจับ กุญแจ", sku: "JR00368", qty: 1 },
     { nameHas: "มือจับ ล็อค", sku: "JR00369", qty: 2 },
     { nameHas: "แกนมือจับ A", sku: "JR00478", qty: 4 },

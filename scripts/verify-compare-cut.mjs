@@ -115,7 +115,7 @@ console.log("\n═══ ③ จับ 'ไม่ตรงกัน' ได้�
   ok("รุ่นที่แมปใบตัดไม่ได้ → บอกเหตุผล ไม่ใช่พังเงียบ",
     compareCut(PB, { ...IN, form: "เปิดคู่กลาง", p: 3 })?.ok === false, "");
   ok("รุ่นที่ไม่มีในระบบ → คืน null ไม่ throw", compareCut(PB, { ...IN, prodId: "ไม่มีจริง" }) === null, "");
-  ok("รายชื่อรุ่นที่เทียบได้ ตรงกับที่ from-recipe รองรับ", COMPARABLE.length === 7, String(COMPARABLE.length));
+  ok("รายชื่อรุ่นที่เทียบได้ ตรงกับที่ from-recipe รองรับ", COMPARABLE.length === 8, String(COMPARABLE.length));
   for (const id of COMPARABLE) ok(`รุ่น ${id} มีอยู่จริงในคิดราคา`, !!PRODUCTS[id], "");
 }
 
@@ -236,6 +236,44 @@ console.log("\n═══ เสารับแรง F7951 สูงเกิน
   ok("ใบตัด สูง 2.4 ม. → เสารับแรง 0 ท่อน", cutAt(240).post?.qty === 0, "");
   ok("ใบตัด สูง 3.0 ม. → จำนวนเท่าตบเกี่ยว", cutAt(300).post?.qty === cutAt(300).hook?.qty, "");
   ok("ใบตัด เสารับแรง ตัดยาวเท่าตบเกี่ยว", cutAt(300).post?.len === cutAt(300).hook?.len, "");
+}
+
+
+// ── บานเลื่อน ยูโร (FUJI) ↔ ใบตัด — เจ้าของสั่ง 20 ส.ค.69 "ผูกสโตร์ถูกตัว" ──────
+//   ค่าของอุปกรณ์ต้องมาจากใบตัดชุดเดียวกับที่ช่างเบิก (รหัสสโตร์ครบทุกบรรทัด)
+console.log("\n═══ ยูโร (FUJI) — ค่าของอุปกรณ์ต้องมาจากใบตัด ═══");
+{
+  // จำลองว่าสโตร์ตั้งราคาอุปกรณ์ครบแล้ว (ไม่ครบ = engine ถอยไปใช้รายการเดิมในสูตรโดยตั้งใจ)
+  const SIM = { JR00577: 40, JR00592: 12, JR00480: 2, JR00589: 5, JR00485: 5, JR00794: 375, JR00504: 90, JR00864: 1,
+    JR00368: 520, JR00369: 480, JR00370: 300, JR00475: 20, JR00476: 15, JR00477: 25, JR00478: 60, JR00479: 60 };
+  const PBs = { ...PB, SKUPRICE: { ...(PB.SKUPRICE || {}), ...SIM } };
+  const at = (form, p, bottomrail) => compareCut(PBs, { prodId: "euro_slide", w: 600, h: 300, p, form, spec: { bottomrail } });
+
+  const free3 = at("อิสระ", 3, "รางกันน้ำ");
+  ok("อิสระ 3 บาน แมปเข้าใบตัด FUJI ได้", free3?.ok !== false, "");
+  ok("อุปกรณ์ทุกบรรทัดมีรหัสสโตร์ (ไม่มี 'ไม่มีรหัส')",
+    free3.hardware.every((h) => !!h.sku), free3.hardware.filter((h) => !h.sku).map((h) => h.name).join(","));
+  ok("อุปกรณ์ตรงกับใบตัดทุกบรรทัด",
+    free3.hardware.every((h) => h.status === "ตรง"), free3.hardware.filter((h) => h.status !== "ตรง").map((h) => h.name + ":" + h.status).join(","));
+  ok("มี ยางรูน้ำ + วาวรูน้ำ (ของที่เบิกจริง เดิมคิดราคาไม่มี)",
+    free3.hardware.some((h) => h.sku === "JR00589") && free3.hardware.some((h) => h.sku === "JR00485"), "");
+  ok("มี ซิลิโคน + น็อต ครบ (ใบตัด FUJI เดิมไม่มี)",
+    free3.hardware.some((h) => h.sku === "JR00504") && free3.hardware.some((h) => h.sku === "JR00864"), "");
+
+  // งานใน (รางเตี้ย) ต้องสลับเฟรมล่างเป็น F7902 จริง ทั้งสองฝั่ง
+  const codesOf = (r, side) => new Set(r.alu.filter((a) => (side === "cut" ? a.cutPieces : a.calcPieces) > 0).map((a) => a.code));
+  const inner = at("สลับ", 3, "รางเตี้ย (งานใน)");
+  const outer = at("สลับ", 3, "รางกันน้ำ");
+  ok("งานใน: ใบตัดใช้เฟรมล่าง F7902", codesOf(inner, "cut").has("F7902"), "");
+  ok("งานใน: คิดราคาก็ใช้ F7902 เหมือนกัน", codesOf(inner, "calc").has("F7902"), "");
+  ok("งานนอก: ทั้งสองฝั่งไม่มี F7902", !codesOf(outer, "cut").has("F7902") && !codesOf(outer, "calc").has("F7902"), "");
+
+  // เปิดคู่กลาง — ไฟล์มีแค่ 4 กับ 6 บาน
+  ok("เปิดคู่กลาง 4 บาน แมปได้", at("เปิดคู่กลาง", 4, "รางกันน้ำ")?.ok !== false, "");
+  ok("เปิดคู่กลาง 6 บาน แมปได้", at("เปิดคู่กลาง", 6, "รางกันน้ำ")?.ok !== false, "");
+  ok("เปิดคู่กลาง 5 บาน ไม่มีสูตร → บอกตรง ๆ ไม่เดา", at("เปิดคู่กลาง", 5, "รางกันน้ำ")?.ok === false, "");
+  ok("ลากจูง ยังไม่มีชีตในไฟล์ใบตัด → ไม่เดา", at("ลากจูง", 3, "รางกันน้ำ")?.ok === false, "");
+  ok("อิสระ 4 บาน (4ราง) ยังไม่ได้พอร์ต → ไม่เดา", at("อิสระ", 4, "รางกันน้ำ")?.ok === false, "");
 }
 
 
