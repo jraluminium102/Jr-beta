@@ -27,7 +27,7 @@ import type { MutableRefObject } from "react";
 import Icon from "@/components/Icon";
 import { fmt } from "@/lib/calculator40/fmt";
 import AddonsSection from "@/components/calculator40/AddonsSection";
-import { ALU_COLOR_KEYS, ALU_COLOR_LABEL, resolveAluColor } from "@/lib/calculator40/alu-colors";
+import { ALU_COLOR_LABEL, resolveAluColor, aluColorKeysFor } from "@/lib/calculator40/alu-colors";
 import { groupGlass, allGlassKeys } from "@/lib/calculator40/glass-cats";
 // @ts-expect-error — engine เป็น ESM JS ล้วน
 import { computeCost, ceil100, CEIL_RATE } from "@/lib/calculator40/engine.mjs";
@@ -476,7 +476,7 @@ function ColsEditor({
             <select value={sel.colorIdx || ""} onChange={(e) => onPatchPane(sel.key, { colorIdx: e.target.value })}
               className="min-h-[32px] glass-soft rounded-lg px-2 py-1 outline-none text-xs">
               <option value="">ตามด้าน ({ALU_COLOR_LABEL[color] ?? COLOR_LABEL[color] ?? color})</option>
-              {ALU_COLOR_KEYS.map((c) => <option key={c} value={c}>{ALU_COLOR_LABEL[c]}</option>)}
+              {aluColorKeysFor(pane?.typeKey).map((c) => <option key={c} value={c}>{ALU_COLOR_LABEL[c]}</option>)}
             </select>
             {prod?.defGlass && (
               <>
@@ -1005,7 +1005,7 @@ export default function RoomComposer({
               <select value={sideColorOvr[i]?.color || ""} onChange={(e) => setSideColorOvr((m) => ({ ...m, [i]: { color: e.target.value, glass: m[i]?.glass || "" } }))}
                 className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 outline-none text-xs">
                 <option value="">สีตามห้อง ({ALU_COLOR_LABEL[mainColor] ?? COLOR_LABEL[mainColor] ?? mainColor})</option>
-                {ALU_COLOR_KEYS.map((c) => <option key={c} value={c}>{ALU_COLOR_LABEL[c]}</option>)}
+                {aluColorKeysFor(pane?.typeKey).map((c) => <option key={c} value={c}>{ALU_COLOR_LABEL[c]}</option>)}
               </select>
               <select value={sideColorOvr[i]?.glass || ""} onChange={(e) => setSideColorOvr((m) => ({ ...m, [i]: { color: m[i]?.color || "", glass: e.target.value } }))}
                 className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 outline-none text-xs">
