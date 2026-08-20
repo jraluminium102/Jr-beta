@@ -479,7 +479,7 @@ function ColsEditor({
             <select value={sel.colorIdx || ""} onChange={(e) => onPatchPane(sel.key, { colorIdx: e.target.value })}
               className="min-h-[32px] glass-soft rounded-lg px-2 py-1 outline-none text-xs">
               <option value="">ตามด้าน ({ALU_COLOR_LABEL[color] ?? COLOR_LABEL[color] ?? color})</option>
-              {aluColorKeysFor(pane?.typeKey).map((c) => <option key={c} value={c}>{ALU_COLOR_LABEL[c]}</option>)}
+              {aluColorKeysFor(sel?.typeKey).map((c) => <option key={c} value={c}>{ALU_COLOR_LABEL[c]}</option>)}
             </select>
             {prod?.defGlass && (
               <>
@@ -1052,7 +1052,7 @@ export default function RoomComposer({
               <select value={sideColorOvr[i]?.color || ""} onChange={(e) => setSideColorOvr((m) => ({ ...m, [i]: { color: e.target.value, glass: m[i]?.glass || "" } }))}
                 className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 outline-none text-xs">
                 <option value="">สีตามห้อง ({ALU_COLOR_LABEL[mainColor] ?? COLOR_LABEL[mainColor] ?? mainColor})</option>
-                {aluColorKeysFor(pane?.typeKey).map((c) => <option key={c} value={c}>{ALU_COLOR_LABEL[c]}</option>)}
+                {aluColorKeysFor(sidePanes(s)[0]?.typeKey).map((c) => <option key={c} value={c}>{ALU_COLOR_LABEL[c]}</option>)}
               </select>
               <select value={sideColorOvr[i]?.glass || ""} onChange={(e) => setSideColorOvr((m) => ({ ...m, [i]: { color: m[i]?.color || "", glass: e.target.value } }))}
                 className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 outline-none text-xs">
