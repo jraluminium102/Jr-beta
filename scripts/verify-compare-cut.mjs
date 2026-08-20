@@ -210,5 +210,34 @@ console.log("\n═══ ④ ห้ามมีสูตร/ราคาฝั�
     cli.includes("รหัส") && cli.includes("คิดราคา") && cli.includes("ใบตัด") && cli.includes("฿/เส้น"), "");
 }
 
+// ── เสารับแรง F7951 (บานเลื่อน FUJI/ยูโร) — สูงเกิน 2.6 ม. ต้องมี ทั้งคิดราคาและใบตัด ──
+//   เจ้าของเช็คหน้างานยืนยัน 20 ส.ค.69: ใช้ "ผสมกับ" ตบเกี่ยว ไม่ใช่แทนกัน · ตัดยาวเท่ากัน จำนวนเท่ากัน
+//   ไฟล์ Excel ใบตัดไม่ได้ใส่มา — เพิ่มในเว็บตามที่เจ้าของสั่ง
+console.log("\n═══ เสารับแรง F7951 สูงเกิน 2.6 ม. (คิดราคา + ใบตัด) ═══");
+{
+  const postOf = (h) => {
+    const r = computeCost(PB, PRODUCTS.euro_slide, { w: 600, h, p: 3, form: "อิสระ", color: "white" });
+    const g = (re) => r.lines.filter((l) => re.test(l.name)).reduce((s, l) => s + (l.pieces || 0), 0);
+    return { hook: g(/ตบเกี่ยว/), post: g(/เสารับแรง/) };
+  };
+  ok("คิดราคา สูง 2.4 ม. → ไม่มีเสารับแรง", postOf(240).post === 0, String(postOf(240).post));
+  ok("คิดราคา สูง 2.6 ม. → ยังไม่มี (เกณฑ์คือ 'เกิน' 2.6)", postOf(260).post === 0, String(postOf(260).post));
+  ok("คิดราคา สูง 2.7 ม. → มีเสารับแรง", postOf(270).post > 0, String(postOf(270).post));
+  const at300 = postOf(300);
+  ok("คิดราคา 600×300 3 บาน = ตบเกี่ยว 2 + เสารับแรง 2 (ตามที่เจ้าของเช็คหน้างาน)",
+    at300.hook === 2 && at300.post === 2, "ตบเกี่ยว " + at300.hook + " · เสารับแรง " + at300.post);
+
+  const cutAt = (H) => {
+    const r = computeCutList(CUT_SPEC_BY_ID.fuji_slide, { W: 600, H, N: 2, rail: "2ราง" }, 1);
+    const row = (n) => r.rows.find((x) => x.name === n);
+    return { hook: row("ตบเกี่ยว"), post: row("เสารับแรง") };
+  };
+  ok("ใบตัด FUJI มีบรรทัดเสารับแรง F7951", cutAt(300).post?.code === "F7951", "");
+  ok("ใบตัด สูง 2.4 ม. → เสารับแรง 0 ท่อน", cutAt(240).post?.qty === 0, "");
+  ok("ใบตัด สูง 3.0 ม. → จำนวนเท่าตบเกี่ยว", cutAt(300).post?.qty === cutAt(300).hook?.qty, "");
+  ok("ใบตัด เสารับแรง ตัดยาวเท่าตบเกี่ยว", cutAt(300).post?.len === cutAt(300).hook?.len, "");
+}
+
+
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);
