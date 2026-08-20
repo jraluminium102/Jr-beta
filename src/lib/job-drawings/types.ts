@@ -37,9 +37,19 @@ export type JobDrawing = {
 export type PrefillLine = { text: string };
 export type PrefillGroup = { n: number; title: string; lines: PrefillLine[] };
 
+// บับเบิ้ลจากใบปะหน้า (ช่อง 1 "สั่งของเตรียมผลิต") — คงสี/ไฮไลต์ให้ตรง annotation ของแบบช่าง
+export type CoverBubble = {
+  text: string;
+  color: AnnotColor;
+  hl: HighlightColor;
+  kind: "spec" | "group";
+  n?: number;
+};
+
 export type JobDrawingsGetResponse = {
   drawings: JobDrawing[];
   prefill: PrefillGroup[];
+  coverBubbles?: CoverBubble[];
   job: {
     job_code: string | null;
     customer_name: string;

@@ -36,14 +36,30 @@ export const GET = withRoute(async (req: Request) => {
   const jobId = url.searchParams.get("job_id") ?? "";
   if (!z.string().uuid().safeParse(jobId).success) return err("ระบุ job_id ให้ถูกต้อง", 422);
 
-  const [jobR, drawingsR] = await Promise.all([
+  const [jobR, drawingsR, coverR] = await Promise.all([
     sb.from("jobs").select("job_code, customer_name, status, deposit_date, customer_area, customer_id").eq("id", jobId).maybeSingle(),
     sb.from("job_drawings").select("*").eq("job_id", jobId).order("created_at", { ascending: true }),
+    // ใบปะหน้า (ถ้ามี) — เอาช่อง "รายละเอียด สั่งของเตรียมผลิต" (content.left) มาเป็นบับเบิ้ลให้เลือก
+    //   ไม่มีตาราง/ยังไม่ทำใบปะหน้า → coverR.data = null (ปล่อยผ่าน ไม่ error)
+    sb.from("cover_sheets").select("content").eq("job_id", jobId).maybeSingle(),
   ]);
 
   if (jobR.error) throw dbError(jobR.error);
   if (!jobR.data) return err("ไม่พบงานนี้", 404);
   if (drawingsR.error) throw dbError(drawingsR.error);
+
+  // บับเบิ้ลจากใบปะหน้า (ช่อง 1 · left) — คงข้อความ+สี+ไฮไลต์ (map ตรงกับ annotation ของแบบช่าง)
+  type CoverLineRow = { text?: string; color?: string; hl?: boolean; hlc?: string; kind?: string; n?: number };
+  const leftRaw = ((coverR?.data as { content?: { left?: CoverLineRow[] } } | null)?.content?.left ?? []) as CoverLineRow[];
+  const coverBubbles = leftRaw
+    .filter((l) => String(l.text ?? "").trim())
+    .map((l) => ({
+      text: String(l.text),
+      color: (["red", "blue", "green"].includes(l.color ?? "") ? l.color : "") as string,
+      hl: (l.hlc || (l.hl ? "yellow" : "")) as string,
+      kind: l.kind === "group" ? "group" : "spec",
+      n: typeof l.n === "number" ? l.n : undefined,
+    }));
 
   // ที่อยู่บ้านลูกค้า — ทะเบียนลูกค้าก่อน (เต็ม) ไม่งั้น customer_area ของงาน
   const jobRow = jobR.data as { customer_area: string | null; customer_id: number | null };
@@ -71,6 +87,7 @@ export const GET = withRoute(async (req: Request) => {
   return ok({
     drawings: drawingsR.data ?? [],
     prefill,
+    coverBubbles,
     job: { ...job, deposited: !!job.deposit_date, address },
     can_write: can(ctx.role, "drawings", "write"),
   });

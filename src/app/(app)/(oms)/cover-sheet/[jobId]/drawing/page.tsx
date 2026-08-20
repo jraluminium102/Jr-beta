@@ -7,7 +7,7 @@ import { api, ApiError } from "@/lib/api";
 import { Spinner, EmptyState } from "@/components/ui/primitives";
 import { uploadDrawingFiles } from "@/lib/job-drawings/pdf-render";
 import { drawingPublicUrl } from "@/lib/job-drawings/storage";
-import { DEFAULT_ANNOT_SIZE, type DrawingAnnotation, type JobDrawing, type JobDrawingsGetResponse } from "@/lib/job-drawings/types";
+import { DEFAULT_ANNOT_SIZE, type CoverBubble, type DrawingAnnotation, type JobDrawing, type JobDrawingsGetResponse } from "@/lib/job-drawings/types";
 import DrawingCanvas from "./DrawingCanvas";
 import PrefillPanel from "./PrefillPanel";
 
@@ -55,6 +55,7 @@ export default function DrawingEditorPage({ params }: { params: { jobId: string 
 
   const job = data?.data?.job ?? null;
   const prefill = data?.data?.prefill ?? [];
+  const coverBubbles: CoverBubble[] = data?.data?.coverBubbles ?? [];
   const canWrite = data?.data?.can_write ?? false;   // สิทธิ์แก้จริง (ADMIN/PRODUCTION/DESIGNER) — role อ่านอย่างเดียวเห็นแต่ดู/พิมพ์
   const drawings = useMemo(() => (data?.data?.drawings ?? []).map(hydrateDrawing), [data]);
 
@@ -123,6 +124,17 @@ export default function DrawingEditorPage({ params }: { params: { jobId: string 
     const countOnPage = annotations.filter((a) => a.page === activePage).length;
     const yf = 0.06 + (countOnPage % 10) * 0.045;
     addAnnotation(activePage, 0.06, yf, text);
+  };
+  // เพิ่มบับเบิ้ลจากใบปะหน้า — คงสีตัวอักษร + สีไฮไลต์ตามที่ตั้งในใบปะหน้า
+  const addCoverBubble = (b: CoverBubble) => {
+    const countOnPage = annotations.filter((a) => a.page === activePage).length;
+    const yf = Math.min(0.95, 0.06 + (countOnPage % 10) * 0.045);
+    setAnnotations((cur) => [...cur, {
+      id: crypto.randomUUID(), page: activePage, xf: 0.06, yf,
+      size: DEFAULT_ANNOT_SIZE, text: b.text, color: b.color || "", align: "left",
+      ...(b.hl ? { hl: b.hl } : {}),
+    }]);
+    setDirty(true);
   };
   const patchAnnotation = (id: string, patch: Partial<DrawingAnnotation>) => {
     setAnnotations((cur) => cur.map((a) => (a.id === id ? { ...a, ...patch } : a)));
@@ -318,7 +330,7 @@ export default function DrawingEditorPage({ params }: { params: { jobId: string 
                 />
               </div>
               <div className="lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100dvh-2rem)] lg:overflow-auto">
-                <PrefillPanel groups={prefill} onAddText={addAtActivePage} onAddBlank={() => addAtActivePage("")} onPaste={pasteAnnotation} hasClip={!!clip} disabled={!canWrite} activePageLabel={activePage + 1} />
+                <PrefillPanel groups={prefill} coverBubbles={coverBubbles} onAddText={addAtActivePage} onAddCover={addCoverBubble} onAddBlank={() => addAtActivePage("")} onPaste={pasteAnnotation} hasClip={!!clip} disabled={!canWrite} activePageLabel={activePage + 1} />
               </div>
             </div>
           )}
