@@ -88,6 +88,26 @@ export function computeCost(PB, prod, opt) {
 
   const stockLen = prod.stockLen ?? STOCK_LEN;
   const lines = [];
+  // อุปกรณ์ผูก "รหัสสโตร์" ได้ตรง ๆ — it.sku เป็นข้อความ หรือสูตร (เลือกรหัสตามสี/รูปแบบ) ก็ได้
+  //   ราคาจากสโตร์ชนะราคาฝังในสูตรเสมอ (เจ้าของ 19 ส.ค.69: สโตร์เป็นตัวตั้ง)
+  const skuOf = (it) => {
+    if (!it.sku) return '';
+    const v = String(it.sku).includes('?') ? val(it.sku) : it.sku;
+    return String(v ?? '').trim().toUpperCase();
+  };
+  const skuPrice = (sku) => (sku && PB.SKUPRICE && PB.SKUPRICE[sku] > 0) ? PB.SKUPRICE[sku] : null;
+  // กล่อง/ฉาก อลูเมืองทอง — ไม่มีรหัสโปรไฟล์ ผูกด้วย "ชนิด|ขนาด" แล้วเลือกราคาตามสีที่ลูกค้าเลือก
+  //   it.box = คีย์ เช่น 'กล่อง|1.6X3' · ไม่เจอในสโตร์ = ใช้ราคาในสูตรเหมือนเดิม (ห้ามหล่นเป็น 0)
+  const boxPrice = (it) => {
+    if (!it.box || !PB.BOXPRICE) return null;
+    const b = PB.BOXPRICE[it.box];
+    if (!b) return null;
+    const c = opt.stockColor || '';
+    if (c && b[c] > 0) return b[c];
+    for (const alt of ['มิว', 'อบขาว']) if (b[alt] > 0) return b[alt];
+    return null;
+  };
+
   let aluCost = 0, aluKg = 0, aluBarsAll = 0;
 
   // ราคาต่อชิ้นจาก PB.PARTS (เฉพาะสินค้าติดธง partsLinked = รุ่นถอดทุนใหม่ · แก้ราคาที่ stock แล้วเปลี่ยนตาม)
@@ -123,13 +143,15 @@ export function computeCost(PB, prod, opt) {
     const colorPrice = stockColorPrice > 0 ? stockColorPrice
       : fileColorPrice > 0 ? fileColorPrice
       : (!noColor && code && PB.ALUCOLOR && PB.ALUCOLOR[color]) ? PB.ALUCOLOR[color][code] : null;
-    const price = colorPrice > 0 ? colorPrice
+    const bxp = boxPrice(it);   // กล่อง/ฉาก ผูกด้วยชื่อ+ขนาด+สี (สโตร์เป็นตัวตั้ง)
+    const price = bxp != null ? bxp
+      : colorPrice > 0 ? colorPrice
       : (code && PB.ALUCODE && PB.ALUCODE[code] > 0) ? PB.ALUCODE[code]
       : pPrice(it.name, it.price);
     // ⚠ ห้ามคูณ mult ทับ "ราคาที่มาจากสโตร์" — สโตร์คิด ราคา/เส้น = น้ำหนัก × เรตต่อโล ปัจจุบัน ให้แล้ว
     //   mult (= เรตต่อโลปัจจุบัน ÷ เรตตั้งต้น) มีไว้ขยับ "ราคาฝังในไฟล์" ที่ยังผูกสโตร์ไม่ได้เท่านั้น
     //   ถ้าคูณทั้งคู่ = ขึ้นเรตต่อโล 7% แล้วราคาเด้ง 14% (คิดซ้ำสองต่อ)
-    const fromStock = !!(stockColorPrice > 0
+    const fromStock = !!(bxp != null || stockColorPrice > 0
       || (!(colorPrice > 0) && code && PB.ALUCODE_FROM_STOCK && PB.ALUCODE_FROM_STOCK[code] && PB.ALUCODE[code] > 0));
     const m = fromStock ? 1 : mult;
     const amount = bars * price * m;
@@ -178,15 +200,6 @@ export function computeCost(PB, prod, opt) {
   //     ส่งมาเมื่อไร → ใช้แทน prod.hardware+prod.consum ทั้งชุด (กันคิดซ้ำ)
   //     ราคา: รหัสในสโตร์ก่อน (PB.SKUPRICE) → ราคาสำรองที่ส่งมากับบรรทัด
   //     เจ้าของสั่ง 19 ส.ค.69: อุปกรณ์ในใบตัด 15 บรรทัด ต้องเข้า "ค่าของ" ในคิดราคาด้วย
-  // อุปกรณ์ผูก "รหัสสโตร์" ได้ตรง ๆ — it.sku เป็นข้อความ หรือสูตร (เลือกรหัสตามสี/รูปแบบ) ก็ได้
-  //   ราคาจากสโตร์ชนะราคาฝังในสูตรเสมอ (เจ้าของ 19 ส.ค.69: สโตร์เป็นตัวตั้ง)
-  const skuOf = (it) => {
-    if (!it.sku) return '';
-    const v = String(it.sku).includes('?') ? val(it.sku) : it.sku;
-    return String(v ?? '').trim().toUpperCase();
-  };
-  const skuPrice = (sku) => (sku && PB.SKUPRICE && PB.SKUPRICE[sku] > 0) ? PB.SKUPRICE[sku] : null;
-
   const rawHwLines = (Array.isArray(opt.hardwareLines) && opt.hardwareLines.length) ? opt.hardwareLines : null;
   // ราคาต่อบรรทัด: รหัสสโตร์ก่อน (÷ per ถ้าสโตร์ขายเป็นแพ็ค) → ราคาสำรองที่ส่งมากับบรรทัด
   //   PB.HWPRICE = ราคาสำรองจากไฟล์ถอดทุน (ชีต "คิดทุน …") สำหรับรหัสที่สโตร์ยังไม่ตั้งราคา
@@ -226,7 +239,7 @@ export function computeCost(PB, prod, opt) {
     if (it.ref) { const rp = refPrice(PB, it.ref); if (rp != null) price = rp; }   // ราคาจาก PB (แอดมินแก้ได้ · ไม่มี=ใช้ price เดิม)
     if (it.mult) price *= mult;   // กล่อง/โครง/เสา อลูเมืองทอง (รั้ว) → ขยับตามราคาอลู/กก. (mult=ปัจจุบัน/ตั้งต้น · ตั้งต้น=1)
     const hwSku = skuOf(it);
-    const sp = skuPrice(hwSku);
+    const sp = skuPrice(hwSku) ?? boxPrice(it);
     if (sp != null) price = sp;   // มีราคาในสโตร์ → ใช้ของสโตร์ (สโตร์เป็นตัวตั้ง)
     const amount = count * price;
     hwCost += amount;
@@ -240,7 +253,7 @@ export function computeCost(PB, prod, opt) {
     if (it.ref) { const rp = refPrice(PB, it.ref); if (rp != null) unitPrice = rp; }   // ราคาจาก PB (แอดมินแก้ได้ · ไม่มี=ใช้ price เดิม)
     if (it.mult) unitPrice *= mult;   // กล่องอลูเมืองทอง (ระแนงสลับ/หมุน) → ขยับตามราคาอลู/กก.
     const cSku = skuOf(it);
-    const csp = skuPrice(cSku);
+    const csp = skuPrice(cSku) ?? boxPrice(it);
     if (csp != null) unitPrice = csp;   // มีราคาในสโตร์ → ใช้ของสโตร์
     const amount = count * unitPrice;
     consumCost += amount;

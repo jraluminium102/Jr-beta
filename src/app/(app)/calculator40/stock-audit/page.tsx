@@ -5,6 +5,8 @@ import { fetchAllPaged } from "@/lib/supabase/fetch-all";
 import PRICEBOOK from "@/lib/calculator40/pricebook.json";
 import { buildPriceOverride, applyPriceOverride, type StockRow } from "@/lib/calculator40/stock-link";
 import { auditStockLink, auditByProduct, auditKgLink, bumpTest, type AuditStockRow } from "@/lib/calculator40/stock-audit";
+import { buildBoxPrices } from "@/lib/calculator40/box-link";
+import { auditBoxes, unusedBoxesInStock } from "@/lib/calculator40/box-audit";
 import AuditClient from "./AuditClient";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +39,9 @@ export default async function StockAuditPage() {
   const bump = bumpTest(pb, 10);
   const products = auditByProduct(rows, bump);
   const kgRows = auditKgLink(stock);   // สาย "เรตต่อโล → ราคาต่อเส้น" ต่อครบไหม
+  // กล่อง/ฉาก ผูกด้วยชื่อ+ขนาด (ไม่มีรหัสโปรไฟล์) — จับคู่แล้วเจอราคาสีไหนบ้าง
+  const boxRows = auditBoxes(buildBoxPrices(stock as never));
+  const boxExtra = unusedBoxesInStock(stock as never, new Set(boxRows.map((b) => b.key)));
 
-  return <AuditClient rows={rows} products={products} bump={bump} kgRows={kgRows} stockCount={stock.length} />;
+  return <AuditClient rows={rows} products={products} bump={bump} kgRows={kgRows} boxRows={boxRows} boxExtra={boxExtra} stockCount={stock.length} />;
 }

@@ -11,6 +11,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { auditStockLink, auditByProduct, auditKgLink, bumpTest, STATUS_LABEL } from "../src/lib/calculator40/stock-audit.ts";
 import { buildPriceOverride, applyPriceOverride, stockColorOfCalc } from "../src/lib/calculator40/stock-link.ts";
+import { parseBoxName, normSize, buildBoxPrices } from "../src/lib/calculator40/box-link.ts";
+import { auditBoxes, unusedBoxesInStock } from "../src/lib/calculator40/box-audit.ts";
 import { computeCost } from "../src/lib/calculator40/engine.mjs";
 import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
 
@@ -245,6 +247,57 @@ console.log("\n═══ ⑤g อุปกรณ์ผูกรหัสสโ�
     { w: 220, h: 200, p: 1, form: "เดี่ยว", color: "sahara", colorKey: "sahara", spec: { hwcolor: "ขาว" } });
   ok("สโตร์ไม่มีราคา → ใช้ราคาในสูตร (ไม่หล่นเป็น 0)",
     noStock.lines.find((l) => l.name.startsWith("มือจับ")).unitPrice === 450, "");
+}
+
+console.log("\n═══ ⑤h กล่อง/ฉาก ผูกด้วยชื่อ+ขนาด+สี (เจ้าของ 19 ส.ค.69) ═══");
+{
+  // สโตร์ตั้งชื่อลงตัว เช่น `กล่อง 4"x6"-Aztec gray` — ต้องอ่านออกทุกแบบที่เขียนต่างกัน
+  const P = (n) => parseBoxName(n);
+  ok("อ่าน `กล่อง 4\"x6\"-Aztec gray`", P('กล่อง 4"x6"-Aztec gray')?.size === "4X6" && P('กล่อง 4"x6"-Aztec gray')?.color === "Aztec gray", JSON.stringify(P('กล่อง 4"x6"-Aztec gray')));
+  ok("อ่าน `ฉาก 6 หุน-ดำ` (ขนาดแบบหุน)", P("ฉาก 6 หุน-ดำ")?.size === "6หุน" && P("ฉาก 6 หุน-ดำ")?.kind === "ฉาก", JSON.stringify(P("ฉาก 6 หุน-ดำ")));
+  ok("เขียนขนาดคนละแบบ ต้องได้คีย์เดียวกัน",
+    normSize('1.6"x3"') === normSize("1.6×3") && normSize("1.6×3") === normSize("1.6 X 3"), normSize('1.6"x3"'));
+  ok("½ แปลงเป็น .5", normSize("1×1½") === "1X1.5", normSize("1×1½"));
+  ok("ชื่อที่ไม่ใช่กล่อง/ฉาก → ไม่จับ", P("เฟรมบนบานเลื่อน-อบขาว") === null, "");
+  ok("กล่องไม่มีขนาด → ไม่จับ (กันจับมั่ว)", P("กล่องเฟรม-อบขาว") === null, "");
+
+  const stock = [
+    { name: 'กล่อง 1.6"x3"-อบขาว', color: "อบขาว", unit_cost: 1300 },
+    { name: 'กล่อง 1.6"x3"-ดำ', color: "ดำ", unit_cost: 1350 },
+    { name: 'กล่อง 1.6"x3"-เทาซาฮาร่า', color: "เทาซาฮาร่า", unit_cost: 1480 },
+    { name: 'กล่อง 9"x9"-อบขาว', color: "อบขาว", unit_cost: 5000 },   // สูตรไม่ได้ใช้ขนาดนี้
+    { name: 'กล่อง 1.6"x3"-ยังไม่ตั้งราคา', color: "มิว", unit_cost: 0 },
+  ];
+  const BOX = buildBoxPrices(stock);
+  ok("เก็บราคาแยกสีได้ครบ", Object.keys(BOX["กล่อง|1.6X3"] ?? {}).length === 3, JSON.stringify(BOX["กล่อง|1.6X3"]));
+  ok("ราคา 0 = ยังไม่ตั้ง ไม่เก็บ", !(BOX["กล่อง|1.6X3"]?.["มิว"] > 0), "");
+
+  const pb2 = applyPriceOverride(JSON.parse(JSON.stringify(PB)), buildPriceOverride(stock, PB));
+  const run = (stockColor) => computeCost(pb2, PRODUCTS.fixed,
+    { w: 150, h: 200, p: 1, form: "กระจกล้วน", color: "white", colorKey: "white", stockColor });
+  const px = (r) => r.lines.find((l) => String(l.name).includes("วิ่งรอบ"))?.unitPrice;
+  ok("สีขาว → ใช้ราคากล่องสีขาวจากสโตร์", px(run("อบขาว")) === 1300, String(px(run("อบขาว"))));
+  ok("สีดำ → ใช้ราคากล่องสีดำ", px(run("ดำ")) === 1350, String(px(run("ดำ"))));
+  ok("เทาซาฮาร่า → ใช้ราคากล่องสีเทา", px(run("เทาซาฮาร่า")) === 1480, String(px(run("เทาซาฮาร่า"))));
+  ok("สีที่สโตร์ยังไม่มี → ถอยไปสีมิว/อบขาว ไม่ใช่ 0", px(run("ไวท์โอ็ค")) === 1300, String(px(run("ไวท์โอ็ค"))));
+  ok("เปลี่ยนสีแล้วทุนต่างกันจริง", run("เทาซาฮาร่า").cost.total > run("อบขาว").cost.total, "");
+  // สโตร์ไม่มีเลย → ต้องใช้ราคาในสูตร ไม่ใช่ 0
+  const noStock = computeCost(PB, PRODUCTS.fixed,
+    { w: 150, h: 200, p: 1, form: "กระจกล้วน", color: "white", colorKey: "white", stockColor: "อบขาว" });
+  ok("สโตร์ไม่มีกล่อง → ใช้ราคาในสูตร (ไม่หล่นเป็น 0)",
+    noStock.lines.find((l) => String(l.name).includes("วิ่งรอบ"))?.unitPrice === 1240, "");
+
+  const rows = auditBoxes(BOX);
+  ok("รายงานกล่อง/ฉากทุกขนาดที่สูตรใช้", rows.length >= 8, String(rows.length));
+  const b163 = rows.find((r) => r.key === "กล่อง|1.6X3");
+  ok("บอกว่าเจอสีไหนบ้าง", b163?.colors.length === 3, JSON.stringify(b163?.colors));
+  ok("มีไม่ครบ 4 สีหลัก → สถานะ 'มีบางสี'", b163?.status === "มีบางสี", b163?.status);
+  ok("ขนาดที่ไม่เจอในสโตร์ → 'ไม่เจอในสโตร์'", rows.some((r) => r.status === "ไม่เจอในสโตร์"), "");
+  ok("เรียงตัวที่ต้องแก้ขึ้นก่อน", rows[0].status !== "ครบ", rows[0].status);
+  ok("บอกว่าใช้ในรุ่นไหน", (b163?.usedBy?.length ?? 0) > 0, "");
+  const extra = unusedBoxesInStock(stock, new Set(rows.map((r) => r.key)));
+  ok("บอกด้วยว่าสโตร์มีขนาดที่สูตรไม่ได้ใช้ (เผื่อพิมพ์ขนาดผิด)",
+    extra.some((e) => e.key === "กล่อง|9X9"), JSON.stringify(extra));
 }
 
 console.log("\n═══ ⑥ หน้าจอต่อสายครบไหม ═══");
