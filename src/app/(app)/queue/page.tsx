@@ -69,6 +69,18 @@ function timeToMin(t: string | null): number {
 
 // เปรียบเทียบคิว: วัน → เซลล์ (ตามลำดับใน salesRank = team→name) → เวลา → ลูกค้า
 // salesRank: map sales_id → ลำดับ (ยิ่งน้อยยิ่งมาก่อน); เซลล์ที่ไม่อยู่ในลิสต์/ไม่ระบุ → ท้ายสุด
+// ลิงก์ไปออกใบเสร็จ/ใบกำกับภาษี "ค่าประเมินหน้างาน" (VAT 7%) prefill จากคิว — เปิดแท็บใหม่ คิวไม่หาย
+//   ลูกค้าในทะเบียน (target_customer_id) → ส่ง cid ให้ดึงหัวบิลเต็ม (เหมือนฟอร์มอื่น)
+function feeReceiptHref(e: QueueEntry): string {
+  const p = new URLSearchParams();
+  if (e.customer_name) p.set("name", e.customer_name);
+  if (e.tel) p.set("phone", e.tel);
+  if (e.address) p.set("address", e.address);
+  if (e.assess_fee != null) p.set("fee", String(e.assess_fee));
+  if (e.target_customer_id != null) p.set("cid", String(e.target_customer_id));
+  return `/billing-notes/new-fee?${p.toString()}`;
+}
+
 function makeQueueCmp(salesRank: Map<string, number>) {
   return (a: QueueEntry, b: QueueEntry): number => {
     const da = a.queue_date ?? "0000-00-00";
@@ -1178,9 +1190,19 @@ function QueueRow({ e, onOpen, onToggleReceipt, onToggleFeePaid, canWrite, slotL
           title="ชำระค่าประเมินแล้ว" />
       </td>
       <td className="px-2 py-2.5 text-center" onClick={(ev) => ev.stopPropagation()}>
-        <input type="checkbox" checked={e.receipt_done} disabled={!canWrite}
-          onChange={(ev) => onToggleReceipt(e, ev.target.checked)}
-          className="w-4 h-4 accent-brand" />
+        <div className="inline-flex items-center gap-2">
+          <input type="checkbox" checked={e.receipt_done} disabled={!canWrite}
+            onChange={(ev) => onToggleReceipt(e, ev.target.checked)}
+            title="มาร์คว่าออกใบเสร็จแล้ว"
+            className="w-4 h-4 accent-brand" />
+          {canWrite && (
+            <a href={feeReceiptHref(e)} target="_blank" rel="noopener noreferrer"
+              title="ออกใบเสร็จ / ใบกำกับภาษี ค่าประเมิน (VAT 7%)"
+              className="press text-brand hover:text-brand-dark inline-flex">
+              <Icon name="receipt" size={15} />
+            </a>
+          )}
+        </div>
       </td>
       <td className="px-2 py-2.5 text-ink-2 max-w-[160px] truncate" title={e.note_admin ?? ""}>{e.note_admin || "—"}</td>
     </tr>
@@ -1317,6 +1339,12 @@ function MobileCard({ e, onOpen, onToggleReceipt, onToggleFeePaid, canWrite }: C
               onChange={(ev) => onToggleReceipt(e, ev.target.checked)}
               className="w-4 h-4 accent-brand" /> ใบเสร็จ
           </label>
+          {canWrite && (
+            <a href={feeReceiptHref(e)} target="_blank" rel="noopener noreferrer"
+              className="press inline-flex items-center gap-1 text-xs font-semibold text-brand min-h-[44px]">
+              <Icon name="receipt" size={14} /> ออกใบเสร็จ
+            </a>
+          )}
         </div>
       </div>
     </div>

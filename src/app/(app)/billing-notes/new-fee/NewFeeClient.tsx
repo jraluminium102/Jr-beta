@@ -30,23 +30,27 @@ function Field({ label, value, onChange, required, placeholder, className }: {
   );
 }
 
-export default function NewFeeClient() {
+export type FeePrefill = {
+  name?: string; address?: string; taxId?: string; phone?: string; contactPerson?: string; fee?: string;
+};
+
+export default function NewFeeClient({ initial }: { initial?: FeePrefill }) {
   const router = useRouter();
 
-  // ── ข้อมูลลูกค้า (ใบกำกับภาษีเต็มรูป) ──
+  // ── ข้อมูลลูกค้า (ใบกำกับภาษีเต็มรูป) — prefill จากคิว/ทะเบียนลูกค้าได้ (หัวบิลเหมือนฟอร์มอื่น) ──
   const [kind, setKind] = useState<"INDIVIDUAL" | "COMPANY">("INDIVIDUAL");
-  const [name, setName] = useState("");
-  const [address, setAddress] = useState("");
+  const [name, setName] = useState(initial?.name ?? "");
+  const [address, setAddress] = useState(initial?.address ?? "");
   const [postalCode, setPostalCode] = useState("");
-  const [taxId, setTaxId] = useState("");
+  const [taxId, setTaxId] = useState(initial?.taxId ?? "");
   const [branch, setBranch] = useState("สำนักงานใหญ่");
-  const [contactPerson, setContactPerson] = useState("");
-  const [phone, setPhone] = useState("");
+  const [contactPerson, setContactPerson] = useState(initial?.contactPerson ?? "");
+  const [phone, setPhone] = useState(initial?.phone ?? "");
 
   // ── รายการ ──
   const [itemName, setItemName] = useState("ค่าประเมินหน้างาน");
   const [qty, setQty] = useState("1");
-  const [unitPrice, setUnitPrice] = useState("");
+  const [unitPrice, setUnitPrice] = useState(initial?.fee ?? "");
 
   // ── ภาษี/ชำระ ──
   const [vat, setVat] = useState<0 | 7>(7);
