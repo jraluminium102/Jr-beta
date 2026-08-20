@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { computeCost } from '../src/lib/calculator40/engine.mjs';
 import { PRODUCTS } from '../src/lib/calculator40/products.mjs';
+import { aluColorKeysFor, ALU_COLOR_KEYS } from '../src/lib/calculator40/alu-colors.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PB = JSON.parse(fs.readFileSync(path.join(__dirname, '../src/lib/calculator40/pricebook.json'), 'utf8'));
@@ -430,6 +431,27 @@ console.log("\n═══ ②h กำไรแยก 3 ส่วน — ค่า
   // ใบเก่าที่ส่ง profitPct มาตัวเดียว ต้องยังใช้ได้ (ใช้กับทั้ง 3 ก้อน)
   const legacy = run({ profitPct: 50 });
   check("ใบเก่าส่งกำไรตัวเดียว → ใช้กับทั้ง 3 ก้อน", legacy.profit3.inst, 50, 0);
+}
+
+// ── ②i สีพิเศษ 3 สี เลือกได้เฉพาะรุ่นยูโร/Fuji (เจ้าของยืนยัน 19 ส.ค.69) ──
+//   Aztec gray · มะฮอกกานี · ไวท์โอ๊ค = อบพิเศษ ทำได้เฉพาะโปรไฟล์รหัส F####
+//   รุ่นที่ทำได้: บานเปิด · บานเลื่อน ยูโร · บานเฟี้ยมยูโร เท่านั้น
+//   ⚠ ไฟล์ถอดทุนใส่ราคา 3 สีนี้ให้ทุกรหัส (ขาว+ค่าอบ) — ถ้าไม่กรอง เซลล์จะเสนอสีที่ทำไม่ได้
+console.log("\n═══ ②i สีพิเศษ (Aztec/มะฮอกกานี/ไวท์โอ๊ค) เลือกได้เฉพาะรุ่นยูโร ═══");
+{
+  const has = (id, k) => aluColorKeysFor(id).includes(k);
+  for (const id of ["open_door", "euro_slide", "fold_euro"])
+    for (const k of ["aztec", "wood_maho", "wood_whiteoak"])
+      check(`${id} เลือก ${k} ได้`, has(id, k) ? 1 : 0, 1, 0);
+  for (const id of ["sms_slide", "slimlux", "velora", "fixed", "banyok", "eseries", "roof", "pcdoor"])
+    for (const k of ["aztec", "wood_maho", "wood_whiteoak"])
+      check(`${id} ต้องเลือก ${k} ไม่ได้`, has(id, k) ? 0 : 1, 1, 0);
+  // สีปกติต้องยังเลือกได้ครบทุกรุ่น
+  for (const k of ["white", "black", "sahara", "wood_teak", "special"])
+    check(`ทุกรุ่นยังเลือก ${k} ได้`, aluColorKeysFor("sms_slide").includes(k) ? 1 : 0, 1, 0);
+  check("รุ่นยูโรเห็นครบ 13 สี", aluColorKeysFor("euro_slide").length, ALU_COLOR_KEYS.length, 0);
+  check("รุ่นอื่นเห็น 10 สี (ตัด 3 สีพิเศษ)", aluColorKeysFor("sms_slide").length, ALU_COLOR_KEYS.length - 3, 0);
+  check("ไม่ระบุรุ่น = ปลอดภัยไว้ก่อน (ไม่โชว์สีพิเศษ)", aluColorKeysFor(null).includes("aztec") ? 0 : 1, 1, 0);
 }
 
 console.log('\n═══ ③ สวิตช์ค่าแรงในหน้าคิดราคา 4.0 (ต่อสายครบไหม) ═══');

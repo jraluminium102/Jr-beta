@@ -31,3 +31,17 @@ export function resolveAluColor(key: string): AluColor {
 
 export const ALU_COLOR_LABEL: Record<string, string> = Object.fromEntries(ALU_COLORS.map((c) => [c.key, c.label]));
 export const ALU_COLOR_KEYS: string[] = ALU_COLORS.map((c) => c.key);
+
+// ── สีที่ "ไม่ใช่ทุกรุ่นทำได้" (เจ้าของยืนยัน 19 ส.ค.69) ─────────────────────
+//   Aztec gray · มะฮอกกานี · ไวท์โอ๊ค — ทำได้เฉพาะโปรไฟล์ยูโร/Fuji (รหัส F####)
+//   เจ้าของระบุรุ่นมาเอง: บานเปิด · บานเลื่อน ยูโร · บานเฟี้ยมยูโร เท่านั้น
+//   ⚠ ไฟล์ถอดทุนใส่ราคา 3 สีนี้ให้ทุกรหัส (คิดจาก ขาว + ค่าอบ×กก.) — แต่ของจริงสั่งได้แค่รุ่นพวกนี้
+//     ถ้าไม่กรอง เซลล์จะเลือกสีที่โรงงานทำไม่ได้ แล้วเสนอราคาออกไปแล้ว
+export const SPECIAL_COLOR_KEYS = ["aztec", "wood_maho", "wood_whiteoak"] as const;
+export const SPECIAL_COLOR_PRODUCTS = new Set(["open_door", "euro_slide", "fold_euro"]);
+
+/** สีที่รุ่นนี้เลือกได้จริง — รุ่นที่ไม่ได้อยู่ในรายการ ตัด 3 สีพิเศษออก */
+export function aluColorKeysFor(prodId?: string | null): string[] {
+  if (prodId && SPECIAL_COLOR_PRODUCTS.has(prodId)) return ALU_COLOR_KEYS;
+  return ALU_COLOR_KEYS.filter((k) => !(SPECIAL_COLOR_KEYS as readonly string[]).includes(k));
+}

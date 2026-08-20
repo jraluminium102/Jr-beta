@@ -31,7 +31,7 @@ import { isFixedPane, paneUseOf, quoteProductName, paneSill, SILL_OPTS, sillIsFo
 import { computeRoofZipR4 } from "@/lib/calculator40/roof-zip.mjs";
 import { withUniversalAddons } from "@/lib/calculator40/universal-addons";
 import AddonsSection from "@/components/calculator40/AddonsSection";
-import { ALU_COLOR_KEYS, ALU_COLOR_LABEL, resolveAluColor } from "@/lib/calculator40/alu-colors";
+import { ALU_COLOR_LABEL, resolveAluColor, aluColorKeysFor } from "@/lib/calculator40/alu-colors";
 // ชื่อสีในสโตร์ของสีที่เลือก — ส่งเข้า engine เพื่อหยิบ "ราคาเส้นตามสีจริงในสโตร์"
 import { stockColorOfCalc } from "@/lib/calculator40/stock-link";
 // อุปกรณ์ "ค่าของ" ดึงรายการจากใบตัดชุดเดียวกัน (รหัสสโตร์ตรงกับที่ช่างเบิกจริง)
@@ -1094,7 +1094,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                   />
                 )}
                 <Select label="สีอลูมิเนียม" value={color} onChange={setColor}
-                  opts={ALU_COLOR_KEYS} labels={ALU_COLOR_LABEL} />
+                  opts={aluColorKeysFor(prod?.id)} labels={ALU_COLOR_LABEL} />
                 {(prod.defGlass || prod.composite) && (
                   <GlassSelect label="กระจก (ทั้งห้อง)" value={glassType} onChange={setGlassType} opts={glassKeys} />
                 )}

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Card, Badge } from "@/components/ui";
 import { baht } from "@/lib/money";
 import { PRODUCTS } from "@/lib/calculator40/products.mjs";
-import { ALU_COLOR_KEYS, ALU_COLOR_LABEL } from "@/lib/calculator40/alu-colors";
+import { ALU_COLOR_LABEL, aluColorKeysFor } from "@/lib/calculator40/alu-colors";
 import { compareCut, COMPARABLE, HANDLE_FIELDS, type AluRow, type HwRow } from "@/lib/calculator40/compare-cut";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -96,7 +96,7 @@ export default function CompareClient({ pb, stockCount }: { pb: any; stockCount:
           {num("สูง (ซม.)", h, setH)}
           {num("จำนวนบาน", p, setP)}
           {prod?.forms?.length > 0 && sel("รูปแบบ", form, setForm, prod.forms)}
-          {sel("สีอลู", color, setColor, [...ALU_COLOR_KEYS], ALU_COLOR_LABEL as any)}
+          {sel("สีอลู", color, setColor, aluColorKeysFor(prodId), ALU_COLOR_LABEL as any)}
           {(prod?.specOpts ?? []).filter((o: any) => o.type !== "number").map((o: any) => (
             <div key={o.key}>{sel(o.label, spec[o.key] ?? o.def ?? o.opts?.[0] ?? "", (v) => setSpec((s) => ({ ...s, [o.key]: v })), o.opts ?? [])}</div>
           ))}
