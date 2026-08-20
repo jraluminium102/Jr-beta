@@ -440,10 +440,10 @@ console.log("\n═══ ②h กำไรแยก 3 ส่วน — ค่า
 console.log("\n═══ ②i สีพิเศษ (Aztec/มะฮอกกานี/ไวท์โอ๊ค) เลือกได้เฉพาะรุ่นยูโร ═══");
 {
   const has = (id, k) => aluColorKeysFor(id).includes(k);
-  for (const id of ["open_door", "euro_slide", "fold_euro"])
+  for (const id of ["open_door", "euro_slide", "fold_euro", "awning", "pcdoor", "pivot", "fold_lift", "bansolid"])
     for (const k of ["aztec", "wood_maho", "wood_whiteoak"])
       check(`${id} เลือก ${k} ได้`, has(id, k) ? 1 : 0, 1, 0);
-  for (const id of ["sms_slide", "slimlux", "velora", "fixed", "banyok", "eseries", "roof", "pcdoor"])
+  for (const id of ["sms_slide", "slimlux", "velora", "fixed", "banyok", "eseries", "roof", "folding", "topslide"])
     for (const k of ["aztec", "wood_maho", "wood_whiteoak"])
       check(`${id} ต้องเลือก ${k} ไม่ได้`, has(id, k) ? 0 : 1, 1, 0);
   // สีปกติต้องยังเลือกได้ครบทุกรุ่น
