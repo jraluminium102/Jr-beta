@@ -3239,5 +3239,137 @@
     "F7855",
     "F7971",
     "F7993"
-  ]
+  ],
+  "PROFIT": {
+    "__default": {
+      "mat": 100,
+      "prod": 100,
+      "inst": 200
+    },
+    "sms_slide": {
+      "mat": 100,
+      "prod": 100,
+      "inst": 200
+    },
+    "euro_slide": {
+      "mat": 80,
+      "prod": 100,
+      "inst": 200
+    },
+    "slimlux": {
+      "mat": 120,
+      "prod": 100,
+      "inst": 200
+    },
+    "topslide": {
+      "mat": 100,
+      "prod": 100,
+      "inst": 200
+    },
+    "open_door": {
+      "mat": 100,
+      "prod": 100,
+      "inst": 200
+    },
+    "pivot": {
+      "mat": 100,
+      "prod": 100,
+      "inst": 200
+    },
+    "awning": {
+      "mat": 100,
+      "prod": 100,
+      "inst": 200
+    },
+    "folding": {
+      "mat": 100,
+      "prod": 100,
+      "inst": 200
+    },
+    "fixed": {
+      "mat": 120,
+      "prod": 100,
+      "inst": 200
+    },
+    "velora": {
+      "mat": 120,
+      "prod": 100,
+      "inst": 200
+    },
+    "eseries": {
+      "mat": 100,
+      "prod": 100,
+      "inst": 200
+    },
+    "pcdoor": {
+      "mat": 120,
+      "prod": 100,
+      "inst": 200
+    },
+    "banyok": {
+      "mat": 100,
+      "prod": 100,
+      "inst": 200
+    },
+    "fold_euro": {
+      "mat": 100,
+      "prod": 100,
+      "inst": 200
+    },
+    "curve_fixed": {
+      "mat": 100,
+      "prod": 100,
+      "inst": 200
+    },
+    "curve_open": {
+      "mat": 100,
+      "prod": 100,
+      "inst": 200
+    },
+    "louver_slip": {
+      "mat": 0,
+      "prod": 50,
+      "inst": 100
+    },
+    "banklet": {
+      "mat": 100,
+      "prod": 100,
+      "inst": 200
+    },
+    "louver_rotate": {
+      "mat": 0,
+      "prod": 50,
+      "inst": 100
+    },
+    "roof": {
+      "mat": 0,
+      "prod": 50,
+      "inst": 100
+    },
+    "roof_gable": {
+      "mat": 0,
+      "prod": 50,
+      "inst": 100
+    },
+    "roof_slide": {
+      "mat": 0,
+      "prod": 50,
+      "inst": 100
+    },
+    "shower": {
+      "mat": 100,
+      "prod": 100,
+      "inst": 200
+    },
+    "bansolid": {
+      "mat": 100,
+      "prod": 100,
+      "inst": 200
+    },
+    "fold_lift": {
+      "mat": 100,
+      "prod": 100,
+      "inst": 200
+    }
+  }
 }
