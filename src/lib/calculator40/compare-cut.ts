@@ -36,7 +36,8 @@ export type CompareInput = {
 export type AluRow = {
   code: string; name: string;
   calcBars: number; calcPricePerBar: number; calcAmount: number; kgPerBar: number; bahtPerKg: number;
-  cutBars: number; cutTotalLenCm: number; cutStockLen: number;
+  calcLenCm: number; calcPieces: number;
+  cutBars: number; cutTotalLenCm: number; cutStockLen: number; cutPieces: number;
   status: "ตรง" | "จำนวนต่าง" | "มีแต่คิดราคา" | "มีแต่ใบตัด" | "ไม่มีรหัส";
 };
 export type HwRow = {
@@ -83,6 +84,9 @@ export function compareCut(PB: any, inp: CompareInput) {
   const cutSel = Object.fromEntries(Object.entries(inp.cut ?? {}).filter(([, v]) => v != null && v !== ""));
   const cut = spec ? computeCutList(spec, { ...map!.input, ...cutSel } as Partial<CutInput>, map!.multiplier ?? 1) : null;
 
+  // จำนวนชิ้นต่อรหัสฝั่งใบตัด (รวมทุกบรรทัดที่ใช้รหัสเดียวกัน เช่น ขวางบน+ขวางล่าง)
+  const cutPiecesOf = (code: string) => r2((cut?.rows ?? []).filter((r: any) => r.code === code).reduce((s: number, r: any) => s + (Number(r.qty) || 0), 0));
+
   // ── ① เทียบอลูรายรหัส ─────────────────────────────────────────────────
   const calcAlu = (calc.lines ?? []).filter((l: any) => l.cat === "alu");
   const byCode = new Map<string, AluRow>();
@@ -92,21 +96,27 @@ export function compareCut(PB: any, inp: CompareInput) {
     const e = byCode.get(key) ?? {
       code, name: l.name, calcBars: 0, calcPricePerBar: l.unitPrice, calcAmount: 0,
       kgPerBar: l.kg || 0, bahtPerKg: l.kg > 0 ? r2(l.unitPrice / l.kg) : 0,
-      cutBars: 0, cutTotalLenCm: 0, cutStockLen: 0, status: "ตรง",
+      calcLenCm: 0, calcPieces: 0,
+      cutBars: 0, cutTotalLenCm: 0, cutStockLen: 0, cutPieces: 0, status: "ตรง",
     };
-    e.calcBars += l.qty; e.calcAmount = r2(e.calcAmount + l.amount);
+    e.calcBars = r2(e.calcBars + l.qty); e.calcAmount = r2(e.calcAmount + l.amount);
+    e.calcLenCm = r2(e.calcLenCm + (Number(l.lenM) || 0) * 100); e.calcPieces = r2(e.calcPieces + (Number(l.pieces) || 0));
     byCode.set(key, e);
   }
   for (const b of (cut?.barsByCode ?? [])) {
     const e = byCode.get(b.code);
-    if (e) { e.cutBars = b.bars; e.cutTotalLenCm = b.totalLenCm; e.cutStockLen = b.stockLen; }
+    if (e) { e.cutBars = b.bars; e.cutTotalLenCm = b.totalLenCm; e.cutStockLen = b.stockLen; e.cutPieces = cutPiecesOf(b.code); }
     else byCode.set(b.code, {
       code: b.code, name: cut!.rows.find((r) => r.code === b.code)?.name ?? "",
-      calcBars: 0, calcPricePerBar: 0, calcAmount: 0, kgPerBar: 0, bahtPerKg: 0,
-      cutBars: b.bars, cutTotalLenCm: b.totalLenCm, cutStockLen: b.stockLen, status: "มีแต่ใบตัด",
+      calcBars: 0, calcPricePerBar: 0, calcAmount: 0, kgPerBar: 0, bahtPerKg: 0, calcLenCm: 0, calcPieces: 0,
+      cutBars: b.bars, cutTotalLenCm: b.totalLenCm, cutStockLen: b.stockLen, cutPieces: cutPiecesOf(b.code), status: "มีแต่ใบตัด",
     });
   }
-  const alu: AluRow[] = [...byCode.values()].map((e) => ({ ...e, status: statusOf(e.calcBars, e.cutBars, !!e.code) }));
+  // เทียบด้วย "จำนวนชิ้นที่ต้องตัด" ไม่ใช่ "จำนวนเส้น" และไม่ใช่ "ความยาว":
+  //   • จำนวนเส้น — สองฝั่งนับคนละวิธีโดยตั้งใจ (คิดราคา = ยาวรวม÷6.4+เศษ30% ตามไฟล์ถอดทุน · ใบตัด = เส้นเต็มที่หยิบมาตัด)
+  //   • ความยาว   — ใบตัดหักเผื่อประกอบรายเส้น (เช่น เฟรมบน = กว้าง−4.4 ซม.) คิดราคาใช้ขนาดเต็ม
+  //   • จำนวนชิ้น — ต้องตรงกันเป๊ะ: ของที่ช่างตัดจริงกี่ท่อน คิดราคาต้องคิดเงินเท่านั้นท่อน
+  const alu: AluRow[] = [...byCode.values()].map((e) => ({ ...e, status: statusOf(r2(e.calcPieces), r2(e.cutPieces), !!e.code) }));
 
   // ── ② เทียบอุปกรณ์รายรหัสสโตร์ ────────────────────────────────────────
   const calcHw = (calc.lines ?? []).filter((l: any) => l.cat === "hardware" || l.cat === "consum");
@@ -150,7 +160,7 @@ export function compareCut(PB: any, inp: CompareInput) {
     hardware: hardware.sort(sortFn as any),
     aluRate: { brand, rate, base, mult: r2(rate / base) },
     totals: {
-      calcAluBars: alu.reduce((s, r) => s + r.calcBars, 0),
+      calcAluBars: r2(alu.reduce((s, r) => s + r.calcBars, 0)),
       cutAluBars: cut?.totalBars ?? 0,
       cutBarsByCode: (cut?.barsByCode ?? []).reduce((s, b) => s + b.bars, 0),
       aluCost: calc.cost?.alu ?? 0, bakeCost: calc.cost?.bake ?? 0, glassCost: calc.cost?.glass ?? 0,
