@@ -49,12 +49,12 @@ export function cutInputFromRecipe(recipe: any): RecipeCutMap | null {
       const form = String(recipe.form ?? "");
       if (form === "เปิดคู่กลาง") {
         // ไฟล์มี 2 ชีต: "เลื่อนแบ่ง4" (4 บาน) และ "เลื่อนแบ่ง6-กลาง" (6 บาน) — บานอื่นไม่มีสูตร
-        m = (N === 4 || N === 6) ? { spec_id: "fuji_slide_center", input: { W, H, N } } : null;
+        m = (N === 4 || N === 6) ? { spec_id: "fuji_slide_center", input: { W, H, N, work, glass: glassMm(recipe.glassType) } } : null;
       } else if (form === "ลากจูง") {
         m = null;   // ⚠ ไฟล์ใบตัด FUJI ยังไม่มีชีต "ลากจูง" — รอเจ้าของส่งสูตร (ห้ามเดา)
       } else {
         // อิสระ/สลับ — ไฟล์มีชีต 2 ราง กับ 3 ราง (4/5 ราง ใช้โปรไฟล์คนละชุด ยังไม่ได้พอร์ต)
-        m = (N === 2 || N === 3) ? { spec_id: "fuji_slide", input: { W, H, N, rail: `${N}ราง`, work, honk: false } } : null;
+        m = (N === 2 || N === 3) ? { spec_id: "fuji_slide", input: { W, H, N, rail: `${N}ราง`, work, glass: glassMm(recipe.glassType), honk: false } } : null;
       }
       break;
     }

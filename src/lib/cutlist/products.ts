@@ -606,6 +606,9 @@ const fSash = (o: CutInput) => (o.W - frc(o).sd) / frc(o).p + frc(o).sa; // ข�
 const fIn = (o: CutInput) => String((o as unknown as { work?: string }).work ?? "") === "ภายใน";
 const fPost = (o: CutInput) => o.H - (fIn(o) ? 4.8 : 7.4);   // "สูงกรอบบาน" — เสา/ตบเกี่ยว/ปิดตบเกี่ยว ใช้ค่านี้
 const fU = (o: CutInput) => o.H - (fIn(o) ? 5.3 : 9.0);      // ยูข้าง/ตบยูข้าง
+// คิ้วกระจก เลือกตามความหนากระจก (เจ้าของยืนยัน 20 ส.ค.69) — หน้าที่เดียวกัน คนละกรณี
+//   F7919 = กระจก 6-13 มม. · F7917 = กระจก 13-15 มม.
+const fBead = (o: CutInput) => ((Number(o.glass) || 6) > 13 ? "F7917" : "F7919");
 export const FUJI_SLIDE: CutSpec = {
   id: "fuji_slide", name: "FUJI บานเลื่อนสลับ (2/3 ราง · นอก/ใน)", stockLen: 640,
   rails: ["2ราง", "3ราง"],
@@ -619,8 +622,8 @@ export const FUJI_SLIDE: CutSpec = {
     { name: "ตบกันสาด", code: "F7992", len: (o) => o.W, qty: (o) => (fIn(o) ? 0 : 1), note: "งานในไม่มีกันสาด" },
     { name: "เสา", code: "F7980", len: fPost, qty: (o) => 2 * frc(o).p },
     { name: "ขวาง", code: "F7980", len: fSash, qty: (o) => 2 * frc(o).p, note: "อลูเดียวกับเสา" },
-    { name: "คิ้ว ตั้ง", code: "F7919", len: (o) => fPost(o) - 15.6, qty: (o) => 2 * frc(o).p },
-    { name: "คิ้ว ขวาง", code: "F7919", len: (o) => fSash(o) - 12.6, qty: (o) => 2 * frc(o).p, note: "อลูเดียวกับคิ้วตั้ง" },
+    { name: "คิ้ว ตั้ง", code: fBead, len: (o) => fPost(o) - 15.6, qty: (o) => 2 * frc(o).p },
+    { name: "คิ้ว ขวาง", code: fBead, len: (o) => fSash(o) - 12.6, qty: (o) => 2 * frc(o).p, note: "อลูเดียวกับคิ้วตั้ง" },
     { name: "ตบเกี่ยว", code: "F7983", len: fPost, qty: (o) => frc(o).hook },
     // เสารับแรง — ไฟล์ Excel ไม่ได้ใส่มา แต่ของจริงต้องมี (เจ้าของเช็คหน้างานยืนยัน 20 ส.ค.69)
     //   สูงเกิน 2.6 ม. ใส่เพิ่ม "ผสมกับ" ตบเกี่ยว (ไม่ใช่แทนกัน) · ตัดยาวเท่าตบเกี่ยว จำนวนเท่ากัน
@@ -629,8 +632,9 @@ export const FUJI_SLIDE: CutSpec = {
     { name: "ยูข้าง", code: "F7986", len: fU, qty: () => 2 },
     { name: "ตบเฟรมบน", code: "F7993", len: (o) => o.W - 4.2, qty: () => 3, stockLens: [500] },
     { name: "ตบยูข้าง", code: "F7988", len: fU, qty: () => 2 },
-    { name: "ปิดตบเกี่ยว", code: "-", len: fPost, qty: (o) => (fIn(o) ? 4 : frc(o).hook), note: "Excel รวมสต็อกกับ F7988 — รอเจ้าของเคาะรหัส" },
-    { name: "ตบกันสาด#2", code: "-", len: (o) => o.W, qty: (o) => (fIn(o) ? 0 : 1), note: "Excel รวมสต็อกกับ F7988 — รอเจ้าของเคาะ" },
+    // F7988 ใช้ 4 หน้าที่ (เจ้าของยืนยัน 20 ส.ค.69): ตบยูข้าง · ปิดตบเกี่ยว · ตบกันสาด#2 · ปิดรับล็อค
+    { name: "ปิดตบเกี่ยว", code: "F7988", len: fPost, qty: (o) => (fIn(o) ? 4 : frc(o).hook) },
+    { name: "ตบกันสาด#2", code: "F7988", len: (o) => o.W, qty: (o) => (fIn(o) ? 0 : 1) },
     { name: "ราง", code: "F7994", len: (o) => o.W - 4.2, qty: () => 3, stockLens: [500] },
   ],
   // ⑤ อุปกรณ์ FUJI เลื่อน (มี SKU ในไฟล์ คอลัมน์ AK-AY · ใช้ตาราง lookup มือจับเดียวกับ SMS)
@@ -660,32 +664,38 @@ function fujiSlideConsum(panels: (o: CutInput) => number = (o) => frc(o).p): Har
 // ⑨b FUJI บานเลื่อนเปิดคู่กลาง (ชีต "เลื่อนแบ่ง4" · "เลื่อนแบ่ง6-กลาง") — บานคู่แยกกลาง
 //   4 บาน = งานนอก (เฟรม F7976 · คิ้ว F7917 · เสาหัก 7.4) · 6 บาน = งานใน (เฟรม F7902 · คิ้ว F7919 · เสาหัก 4.8)
 //   ทั้งสองชีตมี "เฟรม ล่าง F7925 (ต่อชนกลาง)" 1 เส้น + "ปิดรับล็อค" 1 เส้น (รหัสเปล่าในไฟล์)
-const FUJI_CTR: Record<number, { sd: number; sa: number; post: number; u: number; hook: number; rail: number; bead: string; frame: string }> = {
-  4: { sd: 4.89, sa: 3.9, post: 7.4, u: 9.0, hook: 4, rail: 2, bead: "F7917", frame: "F7976" },
-  6: { sd: 5.1, sa: 5.2, post: 4.8, u: 5.3, hook: 8, rail: 3, bead: "F7919", frame: "F7902" },
+const FUJI_CTR: Record<number, { sd: number; sa: number; post: number; u: number; hook: number; rail: number }> = {
+  4: { sd: 4.89, sa: 3.9, post: 7.4, u: 9.0, hook: 4, rail: 2 },
+  6: { sd: 5.1, sa: 5.2, post: 4.8, u: 5.3, hook: 8, rail: 3 },
 };
 const fc = (o: CutInput) => FUJI_CTR[o.N] ?? FUJI_CTR[4];
 const fcPost = (o: CutInput) => o.H - fc(o).post;
 const fcSash = (o: CutInput) => (o.W - fc(o).sd) / o.N + fc(o).sa;
 export const FUJI_SLIDE_CENTER: CutSpec = {
-  id: "fuji_slide_center", name: "FUJI บานเลื่อนเปิดคู่กลาง (4 / 6 บาน)", stockLen: 640, rails: [],
-  opts: [...HANDLE_OPTS_LR],
-  defaults: { W: 600, H: 240, N: 4, handleBrand: "เมโทร", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค", handleR: "ล็อค+ดัมมี่" },
+  id: "fuji_slide_center", name: "FUJI บานเลื่อนเปิดคู่กลาง (4 / 6 บาน · นอก/ใน)", stockLen: 640, rails: [],
+  opts: [{ key: "work", label: "งาน", choices: ["ภายนอก", "ภายใน"] }, ...HANDLE_OPTS_LR],
+  defaults: { W: 600, H: 240, N: 4, work: "ภายนอก", handleBrand: "เมโทร", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค", handleR: "ล็อค+ดัมมี่" },
   profiles: [
     { name: "เฟรมข้าง", code: "F7978", len: (o) => o.H, qty: () => 2 },
-    { name: "เฟรม บน-ล่าง", code: (o) => fc(o).frame, len: (o) => o.W - 4.2, qty: () => 2 },
+    // เฟรมบน = F7976 เสมอ · เฟรมล่าง: งานนอก F7976 (ธรณีกันน้ำ) · งานใน F7902 (ตัวเตี้ย)
+    //   ⚠ ห้ามเอามารวมกัน — บานเลื่อนต้องเลือกได้ว่าใช้ภายนอกหรือภายใน (เจ้าของย้ำ 20 ส.ค.69)
+    { name: "เฟรมบน", code: "F7976", len: (o) => o.W - 4.2, qty: () => 1 },
+    { name: "เฟรมล่าง (งานนอก)", code: "F7976", len: (o) => o.W - 4.2, qty: (o) => (fIn(o) ? 0 : 1) },
+    { name: "เฟรมล่าง (งานใน)", code: "F7902", len: (o) => o.W - 4.2, qty: (o) => (fIn(o) ? 1 : 0) },
     { name: "เสา", code: "F7980", len: fcPost, qty: (o) => 2 * o.N },
     { name: "ขวาง", code: "F7980", len: fcSash, qty: (o) => 2 * o.N, note: "อลูเดียวกับเสา" },
-    { name: "คิ้ว ตั้ง", code: (o) => fc(o).bead, len: (o) => fcPost(o) - 15.6, qty: (o) => 2 * o.N },
-    { name: "คิ้ว ขวาง", code: (o) => fc(o).bead, len: (o) => fcSash(o) - 12.6, qty: (o) => 2 * o.N, note: "อลูเดียวกับคิ้วตั้ง" },
-    { name: "ต่อชนกลาง", code: "F7925", len: fcPost, qty: () => 1 },
+    { name: "คิ้ว ตั้ง", code: fBead, len: (o) => fcPost(o) - 15.6, qty: (o) => 2 * o.N },
+    { name: "คิ้ว ขวาง", code: fBead, len: (o) => fcSash(o) - 12.6, qty: (o) => 2 * o.N, note: "อลูเดียวกับคิ้วตั้ง" },
+    // ชนกลาง เลือกตามความสูง (เจ้าของยืนยัน 20 ส.ค.69) — ไม่เกิน 2.8 ม. ใช้ต่อชนกลาง · เกินนั้นใช้ตัวรับแรง
+    { name: "ต่อชนกลาง (ไม่เกิน 2.8 ม.)", code: "F7925", len: fcPost, qty: (o) => (o.H <= 280 ? 1 : 0) },
+    { name: "ชนกลางรับแรง (เกิน 2.8 ม.)", code: "F7855", len: fcPost, qty: (o) => (o.H > 280 ? 1 : 0) },
     { name: "ตบเกี่ยว", code: "F7983", len: fcPost, qty: (o) => fc(o).hook },
     { name: "เสารับแรง", code: "F7951", len: fcPost, qty: (o) => (o.H > 260 ? fc(o).hook : 0), note: "สูงเกิน 2.6 ม. เท่านั้น · ยาวเท่าตบเกี่ยว" },
     { name: "ยูข้าง", code: "F7986", len: (o) => o.H - fc(o).u, qty: () => 2 },
     { name: "ตบเฟรมบน", code: "F7993", len: (o) => o.W - 4.2, qty: () => 3, stockLens: [500] },
     { name: "ปิดตบเกี่ยว", code: "F7988", len: fcPost, qty: (o) => fc(o).hook },
-    { name: "ปิดรับล็อค", code: "-", len: fcPost, qty: () => 1, note: "ไฟล์ไม่ได้ใส่รหัส — รอเจ้าของเคาะ" },
-    { name: "ปิดตบกันสาด", code: "-", len: (o) => o.W, qty: () => 1, note: "ไฟล์ไม่ได้ใส่รหัส — รอเจ้าของเคาะ" },
+    { name: "ปิดรับล็อค", code: "F7988", len: fcPost, qty: () => 1 },
+    { name: "ปิดตบกันสาด", code: "F7988", len: (o) => o.W, qty: () => 1 },
     { name: "รางเลื่อน", code: "F7994", len: (o) => o.W - 4.2, qty: (o) => fc(o).rail, stockLens: [500] },
     { name: "ตบกันสาด", code: "F7992", len: (o) => o.W, qty: () => 1 },
   ],

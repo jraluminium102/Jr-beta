@@ -48,7 +48,7 @@ export function barsNeeded(segLen, count, stockLen = STOCK_LEN, waste = false) {
 
 // ── สร้าง evaluator ของ expression strings ในสเปกสินค้า ──────────────────────
 function buildEvaluator(extraVarNames) {
-  const base = ['W', 'H', 'P', 'form', 'area', 'color', 'material', 'ROW', 'spec', 'mult'];
+  const base = ['W', 'H', 'P', 'form', 'area', 'color', 'material', 'ROW', 'spec', 'mult', 'GMM'];
   const names = [...base, ...extraVarNames];
   const cache = new Map();
   const compile = (expr) => {
@@ -107,7 +107,9 @@ export function computeCost(PB, prod, opt) {
   const ev = buildEvaluator(Object.keys(varDefs));
   // ROW = แถวข้อมูลจาก LUT ต่อรุ่น (cascade เช่น ฝ้าไม้เทียม) เลือกด้วย material เป็น key
   // mult ฉีดเข้า scope → สูตรราคา consum (โครงเมืองทอง roof/ระแนง) อ้าง mult ได้ → ขยับตามราคาอลู/กก. (ตั้งต้น mult=1 ไม่กระทบ anchor)
-  const scope = { W, H, P, form, area, color, material, ROW: prod.lut ? (prod.lut[material] || {}) : {}, spec: opt.spec || {}, mult };
+  // GMM = ความหนากระจก (มม.) จากชื่อกระจก — สูตรบางรุ่นเลือกคิ้วตามความหนา (F7919 6-13 · F7917 13-15)
+  const GMM = Number((/(\d+)\s*มม/.exec(String(glassType)) || [])[1]) || 6;
+  const scope = { W, H, P, form, area, color, material, ROW: prod.lut ? (prod.lut[material] || {}) : {}, spec: opt.spec || {}, mult, GMM };
   for (const [k, expr] of Object.entries(varDefs)) {
     scope[k] = ev.compile(expr)(scope);
   }
@@ -153,7 +155,9 @@ export function computeCost(PB, prod, opt) {
     //   สูตรในชีตคิดทุนใช้คอลัมน์นั้นตรง ๆ (ไม่ใช่ ขาว + ค่าอบ×กก.) → เส้นที่คิดราคาสีแล้ว ห้ามบวกค่าอบซ้ำ
     //   เหลือแค่ สีอบพิเศษ/ลายไม้อบพิเศษ ที่ยังเป็น ขาว + เรต×กก. (+ค่าเปิดตู้อบ) ตามสูตรชีต
     // ALUCODE_ALIAS = รหัสในสูตรเขียนผิด → ชี้ไปรหัสที่ใช้จริง (ตอนนี้ว่าง — เจ้าของยืนยันว่าสูตรถูกแล้ว)
-    const code = (it.code && PB.ALUCODE_ALIAS && PB.ALUCODE_ALIAS[it.code]) || it.code;
+    // it.code เป็นข้อความ หรือสูตรก็ได้ (เลือกรหัสตามเงื่อนไข เช่น คิ้วกระจกเลือกตามความหนา)
+    const rawCode = (it.code && String(it.code).includes('?')) ? String(val(it.code) ?? '') : it.code;
+    const code = (rawCode && PB.ALUCODE_ALIAS && PB.ALUCODE_ALIAS[rawCode]) || rawCode;
     // ALUCODE_NOCOLOR = เส้นสีเงิน/ผิวเดิม ไม่มีการอบสี → ราคาเดียวทุกสี ห้ามบวกค่าอบ
     //   (เจ้าของยืนยัน 8 ส.ค.69: F7994 ตบรางล้อ เป็นสีเงิน ใช้กับทุกสีราคาเดียว)
     const noColor = !!(code && (PB.ALUCODE_NOCOLOR || []).includes(code));

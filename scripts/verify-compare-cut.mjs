@@ -218,7 +218,7 @@ console.log("\n═══ เสารับแรง F7951 สูงเกิน
   const postOf = (h) => {
     const r = computeCost(PB, PRODUCTS.euro_slide, { w: 600, h, p: 3, form: "อิสระ", color: "white" });
     const g = (re) => r.lines.filter((l) => re.test(l.name)).reduce((s, l) => s + (l.pieces || 0), 0);
-    return { hook: g(/ตบเกี่ยว/), post: g(/เสารับแรง/) };
+    return { hook: g(/^ตบเกี่ยว/), post: g(/^เสารับแรง/) };
   };
   ok("คิดราคา สูง 2.4 ม. → ไม่มีเสารับแรง", postOf(240).post === 0, String(postOf(240).post));
   ok("คิดราคา สูง 2.6 ม. → ยังไม่มี (เกณฑ์คือ 'เกิน' 2.6)", postOf(260).post === 0, String(postOf(260).post));
