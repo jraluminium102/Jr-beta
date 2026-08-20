@@ -1229,7 +1229,7 @@ function OfficeLeaveRow({ it }: { it: Extract<DayItem, { kind: "office" | "leave
 
 function DesktopTable({ rows, onOpen, onToggleReceipt, onToggleFeePaid, canWrite, slotLabel }: TableProps) {
   return (
-    <table className="w-full text-sm">
+    <table className="w-full text-[13px]">
       <QueueTableHead />
       <tbody>
         {rows.map((e) => (
@@ -1248,7 +1248,7 @@ function DayTable({ items, onOpen, onToggleReceipt, onToggleFeePaid, canWrite, s
   canWrite: boolean; slotLabel: (t: string | null) => string;
 }) {
   return (
-    <table className="w-full text-sm">
+    <table className="w-full text-[13px]">
       <QueueTableHead />
       <tbody>
         {items.map((it, i) => it.kind === "queue"
