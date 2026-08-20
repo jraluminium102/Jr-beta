@@ -117,7 +117,7 @@ export const SMS_SLIDE_FREE: CutSpec = {
     { name: "ตบเฟรมบน/ล่าง ร่องในบน", code: "-", len: (o) => o.W - 7, qty: (o) => (meshOf(o) === "ไม่มี" ? Math.max(3 - o.N, 0) : 0) },
     { name: "ตบเฟรมบน/ล่าง ร่องในล่าง", code: (o) => (meshOf(o) === "เฟรมเล็ก" ? "B20048" : "-"), len: (o) => o.W - 7, qty: (o) => (meshOf(o) === "เฟรมใหญ่" ? 0 : Math.max(3 - o.N, 0)) },
     { name: "เบรคบาน (ธรณี)", code: "B20050", len: (o) => o.W - 4.4, qty: (o) => (o.rail === "รางเตี้ย7มม" ? 2 : 0) },
-    { name: "ตบรางล้อ", code: "F7994", len: (o) => o.W - 4.4, qty: (o) => o.N },
+    { name: "ตบรางล้อ", code: "F7994", len: (o) => o.W - 4.4, qty: (o) => (isPlug(o.rail) ? o.N : 0) },   // รางเตี้ยไม่ใช้ตบรางล้อ (ใช้ B20050 แทน)
     { name: "ตบรางล้อ (มุ้งใหญ่)", code: "F7994", len: (o) => o.W - 4.4, qty: (o) => (meshOf(o) === "เฟรมใหญ่" ? meshCountOf(o) : 0) },
     { name: "เสานอนมุ้ง (เฟรมเล็ก)", code: "B30006", len: (o) => freeCross(o) + 9.7, qty: (o) => (meshOf(o) === "เฟรมเล็ก" ? 2 * meshCountOf(o) : 0) },
     { name: "เสาตั้งมุ้ง (เฟรมเล็ก)", code: "B30006", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3) - 1, qty: (o) => (meshOf(o) === "เฟรมเล็ก" ? 2 * meshCountOf(o) : 0) },
@@ -158,7 +158,7 @@ export const SMS_SLIDE_CENTER: CutSpec = {
     { name: "ตบเฟรมบน/ล่าง ร่องในล่าง", code: (o) => (meshOf(o) === "เฟรมเล็ก" ? "B20048" : "-"), len: (o) => o.W - 7, qty: (o) => (meshOf(o) === "เฟรมใหญ่" ? 0 : 1) },
     { name: "ตบเฟรมบน/ล่าง ร่องกลาง", code: "-", len: (o) => (o.W - 4.4) - 2 * (centerCross(o) + 9.7), qty: () => 2, note: "เฟรมบน − 2×(ขวางล่าง+9.7)" },
     { name: "เบรคบาน (ธรณี)", code: "B20050", len: (o) => o.W - 4.4, qty: (o) => (o.rail === "รางเตี้ย7มม" ? 2 : 0) },
-    { name: "ตบรางล้อ", code: "F7994", len: (o) => o.W - 4.4, qty: () => 2 },
+    { name: "ตบรางล้อ", code: "F7994", len: (o) => o.W - 4.4, qty: (o) => (isPlug(o.rail) ? 2 : 0) },   // รางเตี้ยไม่ใช้ตบรางล้อ
     { name: "ตบรางล้อ (มุ้งใหญ่)", code: "F7994", len: (o) => o.W - 4.4, qty: (o) => (meshOf(o) === "เฟรมใหญ่" ? 2 : 0) },
     { name: "เสานอนมุ้ง (เฟรมเล็ก)", code: "B30006", len: (o) => centerCross(o) + 9.7, qty: (o) => (meshOf(o) === "เฟรมเล็ก" ? 4 : 0) },
     { name: "เสาตั้งมุ้ง (เฟรมเล็ก)", code: "B30006", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3.2) - 1, qty: (o) => (meshOf(o) === "เฟรมเล็ก" ? 4 : 0) },
@@ -199,7 +199,7 @@ export const SMS_SLIDE_TOW: CutSpec = {
     { name: "ตบร่องบานตาย (ร่องในบน)", code: "-", len: (o) => (o.N <= 2 ? o.W - 7 : (o.W - 4.4) - 1.3 - towCross(o) - 9.7 * (o.N - 2)), qty: (o) => (meshOf(o) === "ไม่มี" ? 1 : 0), note: "N≤2: W−7 · N≥3: (W−4.4)−1.3−ขวางบน−9.7×(N−2)" },
     { name: "ตบร่องบานตาย (ร่องในล่าง)", code: (o) => (meshOf(o) === "เฟรมเล็ก" ? "B20048" : "-"), len: (o) => (o.N <= 2 ? o.W - 7 : (o.W - 4.4) - 1.3 - towCross(o) - 9.7 * (o.N - 2)), qty: (o) => (meshOf(o) === "เฟรมใหญ่" ? 0 : 1) },
     { name: "เบรคบาน (ธรณี)", code: "B20050", len: (o) => o.W - 4.4, qty: (o) => (o.rail === "รางเตี้ย7มม" ? 2 : 0) },
-    { name: "ตบรางล้อ", code: "F7994", len: (o) => o.W - 4.4, qty: (o) => o.N },
+    { name: "ตบรางล้อ", code: "F7994", len: (o) => o.W - 4.4, qty: (o) => (isPlug(o.rail) ? o.N : 0) },   // รางเตี้ยไม่ใช้ตบรางล้อ (ใช้ B20050 แทน)
     { name: "ตบรางล้อ (มุ้งใหญ่)", code: "F7994", len: (o) => o.W - 4.4, qty: (o) => (meshOf(o) === "เฟรมใหญ่" ? meshCountOf(o) : 0) },
     { name: "เสานอนมุ้ง (เฟรมเล็ก)", code: "B30006", len: (o) => towCross(o) + 9.7, qty: (o) => (meshOf(o) === "เฟรมเล็ก" ? 2 * meshCountOf(o) : 0) },
     { name: "เสาตั้งมุ้ง (เฟรมเล็ก)", code: "B30006", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3) - 1, qty: (o) => (meshOf(o) === "เฟรมเล็ก" ? 2 * meshCountOf(o) : 0) },
