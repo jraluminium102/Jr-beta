@@ -1127,22 +1127,22 @@ type TableProps = {
 const QueueTableHead = () => (
   <thead>
     <tr className="text-left text-ink-3 text-xs border-b border-gray-200/70 whitespace-nowrap bg-white/50">
-      <th className="px-2 py-2 font-semibold">สถานะ</th>
-      <th className="px-2 py-2 font-semibold">เวลา</th>
-      <th className="px-2 py-2 font-semibold">ประเภท</th>
-      <th className="px-2 py-2 font-semibold">เซลล์</th>
-      <th className="px-2 py-2 font-semibold">ผู้ช่วย</th>
-      <th className="px-2 py-2 font-semibold">ติดต่อ</th>
-      <th className="px-2 py-2 font-semibold">ชื่อ</th>
-      <th className="px-2 py-2 font-semibold">เบอร์</th>
-      <th className="px-2 py-2 font-semibold">ที่อยู่</th>
-      <th className="px-2 py-2 font-semibold">แผนที่</th>
-      <th className="px-2 py-2 font-semibold">ขนาด</th>
-      <th className="px-2 py-2 font-semibold text-right">ค่าประเมิน</th>
-      <th className="px-2 py-2 font-semibold">ชำระ</th>
-      <th className="px-2 py-2 font-semibold text-center">ค่าประเมิน</th>
-      <th className="px-2 py-2 font-semibold text-center">ใบเสร็จ</th>
-      <th className="px-2 py-2 font-semibold">หมายเหตุ</th>
+      <th className="px-1.5 py-2 font-semibold">สถานะ</th>
+      <th className="px-1.5 py-2 font-semibold">เวลา</th>
+      <th className="px-1.5 py-2 font-semibold">ประเภท</th>
+      <th className="px-1.5 py-2 font-semibold">เซลล์</th>
+      <th className="px-1.5 py-2 font-semibold">ผู้ช่วย</th>
+      <th className="px-1.5 py-2 font-semibold">ติดต่อ</th>
+      <th className="px-1.5 py-2 font-semibold">ชื่อ</th>
+      <th className="px-1.5 py-2 font-semibold">เบอร์</th>
+      <th className="px-1.5 py-2 font-semibold">ที่อยู่</th>
+      <th className="px-1.5 py-2 font-semibold">แผนที่</th>
+      <th className="px-1.5 py-2 font-semibold">ขนาด</th>
+      <th className="px-1.5 py-2 font-semibold text-right">ค่าประเมิน</th>
+      <th className="px-1.5 py-2 font-semibold">ชำระ</th>
+      <th className="px-1.5 py-2 font-semibold text-center">ค่าประเมิน</th>
+      <th className="px-1.5 py-2 font-semibold text-center">ใบเสร็จ</th>
+      <th className="px-1.5 py-2 font-semibold">หมายเหตุ</th>
     </tr>
   </thead>
 );
@@ -1158,20 +1158,20 @@ function QueueRow({ e, onOpen, onToggleReceipt, onToggleFeePaid, canWrite, slotL
   return (
     <tr onClick={() => onOpen({ entry: e })}
       className={`border-b border-gray-200/50 ${c?.row ?? ""} cursor-pointer hover:brightness-95 align-top`}>
-      <td className="px-2 py-2.5">
+      <td className="px-1.5 py-2.5">
         <Badge tone={STATUS_META[e.status].tone} dot>{STATUS_META[e.status].th}</Badge>
       </td>
-      <td className="px-2 py-2.5 whitespace-nowrap tabular-nums text-ink-2 font-medium">
+      <td className="px-1.5 py-2.5 whitespace-nowrap tabular-nums text-ink-2 font-medium">
         {slotLabel(e.queue_time)}
       </td>
-      <td className="px-2 py-2.5 text-ink-2">{e.job_type || "—"}</td>
-      <td className="px-2 py-2.5 text-ink-2 whitespace-nowrap">{e.sales?.name || "—"}</td>
-      <td className="px-2 py-2.5 text-ink-2 whitespace-nowrap">{e.assistant?.name || "—"}</td>
-      <td className="px-2 py-2.5 text-ink-2 max-w-[150px] truncate" title={e.line_contact ?? ""}>{e.line_contact ? `${e.contact_channel === "FB" ? "FB" : "Line"}: ${e.line_contact}` : "—"}</td>
-      <td className="px-2 py-2.5 font-medium text-ink whitespace-nowrap">{e.customer_name}</td>
-      <td className="px-2 py-2.5 text-ink-2 whitespace-nowrap">{e.tel || "—"}</td>
-      <td className="px-2 py-2.5 text-ink-2 max-w-[140px] truncate" title={e.address ?? ""}>{e.address || "—"}</td>
-      <td className="px-2 py-2.5">
+      <td className="px-1.5 py-2.5 text-ink-2">{e.job_type || "—"}</td>
+      <td className="px-1.5 py-2.5 text-ink-2 whitespace-nowrap">{e.sales?.name || "—"}</td>
+      <td className="px-1.5 py-2.5 text-ink-2 whitespace-nowrap">{e.assistant?.name || "—"}</td>
+      <td className="px-1.5 py-2.5 text-ink-2 max-w-[120px] truncate" title={e.line_contact ?? ""}>{e.line_contact ? `${e.contact_channel === "FB" ? "FB" : "Line"}: ${e.line_contact}` : "—"}</td>
+      <td className="px-1.5 py-2.5 font-medium text-ink whitespace-nowrap">{e.customer_name}</td>
+      <td className="px-1.5 py-2.5 text-ink-2 whitespace-nowrap">{e.tel || "—"}</td>
+      <td className="px-1.5 py-2.5 text-ink-2 max-w-[110px] truncate" title={e.address ?? ""}>{e.address || "—"}</td>
+      <td className="px-1.5 py-2.5">
         {e.location_url && /^https?:\/\//i.test(e.location_url) ? (
           <a href={e.location_url} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()}
             className="inline-flex items-center gap-1 text-brand font-medium hover:underline">
@@ -1180,16 +1180,16 @@ function QueueRow({ e, onOpen, onToggleReceipt, onToggleFeePaid, canWrite, slotL
           </a>
         ) : <span className="text-ink-3">—</span>}
       </td>
-      <td className="px-2 py-2.5 text-ink-2 whitespace-nowrap">{e.job_size ? JOB_SIZE_META[e.job_size] : "—"}</td>
-      <td className="px-2 py-2.5 text-right tabular-nums text-ink-2">{e.assess_fee != null ? e.assess_fee.toLocaleString("th-TH") : "—"}</td>
-      <td className="px-2 py-2.5 text-ink-2">{e.payment || "—"}</td>
-      <td className="px-2 py-2.5 text-center" onClick={(ev) => ev.stopPropagation()}>
+      <td className="px-1.5 py-2.5 text-ink-2 whitespace-nowrap">{e.job_size ? JOB_SIZE_META[e.job_size] : "—"}</td>
+      <td className="px-1.5 py-2.5 text-right tabular-nums text-ink-2">{e.assess_fee != null ? e.assess_fee.toLocaleString("th-TH") : "—"}</td>
+      <td className="px-1.5 py-2.5 text-ink-2">{e.payment || "—"}</td>
+      <td className="px-1.5 py-2.5 text-center" onClick={(ev) => ev.stopPropagation()}>
         <input type="checkbox" checked={e.fee_paid ?? false} disabled={!canWrite}
           onChange={(ev) => onToggleFeePaid(e, ev.target.checked)}
           className="w-4 h-4 accent-emerald-600"
           title="ชำระค่าประเมินแล้ว" />
       </td>
-      <td className="px-2 py-2.5 text-center" onClick={(ev) => ev.stopPropagation()}>
+      <td className="px-1.5 py-2.5 text-center" onClick={(ev) => ev.stopPropagation()}>
         <div className="inline-flex items-center gap-2">
           <input type="checkbox" checked={e.receipt_done} disabled={!canWrite}
             onChange={(ev) => onToggleReceipt(e, ev.target.checked)}
@@ -1204,7 +1204,7 @@ function QueueRow({ e, onOpen, onToggleReceipt, onToggleFeePaid, canWrite, slotL
           )}
         </div>
       </td>
-      <td className="px-2 py-2.5 text-ink-2 max-w-[110px] truncate" title={e.note_admin ?? ""}>{e.note_admin || "—"}</td>
+      <td className="px-1.5 py-2.5 text-ink-2 max-w-[85px] truncate" title={e.note_admin ?? ""}>{e.note_admin || "—"}</td>
     </tr>
   );
 }
@@ -1214,11 +1214,11 @@ function OfficeLeaveRow({ it }: { it: Extract<DayItem, { kind: "office" | "leave
   const m = dayItemMeta(it);
   return (
     <tr className={`border-b border-gray-200/50 ${m.rowCls} align-top`}>
-      <td className="px-2 py-2.5">
+      <td className="px-1.5 py-2.5">
         <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${m.tagCls}`}>{m.tagText}</span>
       </td>
-      <td className="px-2 py-2.5 whitespace-nowrap tabular-nums text-ink-2 font-medium">{m.timeText}</td>
-      <td className="px-2 py-2.5 text-ink-2" colSpan={14}>
+      <td className="px-1.5 py-2.5 whitespace-nowrap tabular-nums text-ink-2 font-medium">{m.timeText}</td>
+      <td className="px-1.5 py-2.5 text-ink-2" colSpan={14}>
         <span className="inline-flex items-center gap-1.5">
           <Icon name={it.kind === "office" ? "building" : "calendar"} size={13} /> {m.label}
         </span>
