@@ -245,12 +245,18 @@ console.log("\n═══ ยูโร (FUJI) — ค่าของอุปก�
 {
   // จำลองว่าสโตร์ตั้งราคาอุปกรณ์ครบแล้ว (ไม่ครบ = engine ถอยไปใช้รายการเดิมในสูตรโดยตั้งใจ)
   const SIM = { JR00577: 40, JR00592: 12, JR00480: 2, JR00589: 5, JR00485: 5, JR00794: 375, JR00504: 90, JR00864: 1,
-    JR00368: 520, JR00369: 480, JR00370: 300, JR00475: 20, JR00476: 15, JR00477: 25, JR00478: 60, JR00479: 60 };
+    JR00368: 520, JR00369: 480, JR00370: 300, JR00377: 99, JR00378: 99, JR00379: 62, JR00475: 20, JR00476: 15, JR00477: 25, JR00478: 60, JR00479: 60 };
   const PBs = { ...PB, SKUPRICE: { ...(PB.SKUPRICE || {}), ...SIM } };
-  const at = (form, p, bottomrail) => compareCut(PBs, { prodId: "euro_slide", w: 600, h: 300, p, form, spec: { bottomrail } });
+  const at = (form, p, bottomrail, handleBrand) => compareCut(PBs, { prodId: "euro_slide", w: 600, h: 300, p, form, spec: { bottomrail }, ...(handleBrand ? { cut: { handleBrand } } : {}) });
 
   const free3 = at("อิสระ", 3, "รางกันน้ำ");
   ok("อิสระ 3 บาน แมปเข้าใบตัด FUJI ได้", free3?.ok !== false, "");
+  // ยี่ห้อมือจับ: ใช้ได้ทั้ง 2 ยี่ห้อ แต่ค่าเริ่มต้น = Align (เจ้าของเคาะ 20 ส.ค.69 · เมโทรแพงกว่า ~3.4 เท่า)
+  ok("ค่าเริ่มต้นยี่ห้อมือจับ = Align",
+    free3.hardware.some((h) => /Align/.test(h.name)) && !free3.hardware.some((h) => /เมโทร/.test(h.name)),
+    free3.hardware.filter((h) => /มือจับ/.test(h.name)).map((h) => h.name).join(","));
+  ok("เลือกเมโทรได้ (ยังเป็นออปชั่น ไม่ได้ตัดทิ้ง)",
+    at("อิสระ", 3, "รางกันน้ำ", "เมโทร").hardware.some((h) => /เมโทร/.test(h.name)), "");
   ok("อุปกรณ์ทุกบรรทัดมีรหัสสโตร์ (ไม่มี 'ไม่มีรหัส')",
     free3.hardware.every((h) => !!h.sku), free3.hardware.filter((h) => !h.sku).map((h) => h.name).join(","));
   ok("อุปกรณ์ตรงกับใบตัดทุกบรรทัด",

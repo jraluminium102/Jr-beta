@@ -20,7 +20,7 @@ function check(label, res, want) {
 // ── SMS อิสระ/สลับ · default W350 H159 N3 3รางเสียบ · ซ้าย=กุญแจ+ล็อค ขวา=ล็อค+ดัมมี่ · เมโทร/อบขาว ──
 {
   const spec = CUT_SPEC_BY_ID["sms_slide_free"];
-  const res = computeCutList(spec, { ...spec.defaults }, 1);
+  const res = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1);
   // felt อิสระ: 4*(ขวางบน+เสากุญแจ)*N + 2N*เฟรมบน + 2N*เฟรมล่าง + เฟรมข้าง (3รางเสียบ)
   const cross = round1((350 - 4.2 * 3 - 11.2) / 3), post = 159 - 6.1, top = 345.6, bot = 345.6, side = 159;
   const felt = round1((4 * (cross + post) * 3 + 2 * 3 * top + 2 * 3 * bot + side) / 100);
@@ -48,7 +48,7 @@ function check(label, res, want) {
 // ── SMS เปิดคู่กลาง · N=4 แต่สปส.บาน=2 ──
 {
   const spec = CUT_SPEC_BY_ID["sms_slide_center"];
-  const res = computeCutList(spec, { ...spec.defaults }, 1);
+  const res = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1);
   console.log("SMS เปิดคู่กลาง (สปส.=2):");
   check("คู่กลาง", res, [
     { nameHas: "ล้อ 27", sku: "JR00576", qty: 4 },  // 2*2
@@ -62,7 +62,7 @@ function check(label, res, want) {
 // ── SMS ลากจูง · N=3 → บานขยับ 2 · มือจับชุดเดียว (ซ้าย=กุญแจ+ล็อค) ──
 {
   const spec = CUT_SPEC_BY_ID["sms_slide_tow"];
-  const res = computeCutList(spec, { ...spec.defaults }, 1);
+  const res = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1);
   console.log("SMS ลากจูง (N=3 → 2 บาน · มือจับเดียว):");
   check("ลากจูง", res, [
     { nameHas: "ล้อ 27", sku: "JR00576", qty: 4 },  // 2*(3-1)
@@ -90,7 +90,7 @@ function check(label, res, want) {
 // ── sets คูณจำนวน: 2 ชุด → ล้อ 12 ──
 {
   const spec = CUT_SPEC_BY_ID["sms_slide_free"];
-  const res = computeCutList(spec, { ...spec.defaults }, 2);
+  const res = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 2);
   const roller = res.hardware.find((h) => h.sku === "JR00576");
   if (!roller || roller.qty !== 12) { fails++; console.log(`  ✗ sets×2 ล้อ want 12 got ${roller?.qty}`); }
   else console.log("  ✓ sets×2 · ล้อ 27 qty=12");
@@ -99,7 +99,7 @@ function check(label, res, want) {
 // ── PC Door · default W300 H240 แบ่ง2 (pcN=2 · บานเลื่อน=1) · ซ้าย=กุญแจ+ล็อค ขวา=ล็อค+ดัมมี่ ──
 {
   const spec = CUT_SPEC_BY_ID["pc_door"];
-  const res = computeCutList(spec, { ...spec.defaults }, 1);
+  const res = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1);
   console.log("PC Door (แบ่ง2):");
   check("PC", res, [
     { nameHas: "ล้อรางบน Hafele", sku: "JR00544", qty: 1 },
@@ -117,11 +117,11 @@ function check(label, res, want) {
     { nameHas: "ปลายกลอน", sku: "JR00598", qty: 1 },
   ]);
   // แบ่ง4 → บานเลื่อน 2 · ล้อ 2 · ฝาครอบราง 4
-  const r4 = computeCutList(spec, { ...spec.defaults, split: "แบ่ง 4" }, 1);
+  const r4 = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร", split: "แบ่ง 4" }, 1);
   const roll = r4.hardware.find((h) => h.sku === "JR00544");
   if (!roll || roll.qty !== 2) { fails++; console.log(`  ✗ PC แบ่ง4 ล้อ want 2 got ${roll?.qty}`); } else console.log("  ✓ PC แบ่ง4 · ล้อ Hafele qty=2");
   // สีดำ → บานพับไม่บาก JR00474
-  const rBlack = computeCutList(spec, { ...spec.defaults, handleColor: "ดำ" }, 1);
+  const rBlack = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร", handleColor: "ดำ" }, 1);
   const hinge = rBlack.hardware.find((h) => h.name.includes("บานพับไม่บาก"));
   if (!hinge || hinge.sku !== "JR00474") { fails++; console.log(`  ✗ PC ดำ บานพับ want JR00474 got ${hinge?.sku}`); } else console.log("  ✓ PC ดำ · บานพับไม่บาก JR00474");
 }
@@ -129,7 +129,7 @@ function check(label, res, want) {
 // ── บานโซลิด · default W120 H279 N2 แม่-ลูก motherW80 มีธรณี · ขาว ล็อคปกติ เปิดออก · แม่=คิงโบล็อค+กุญแจ ลูก=ไม่ใส่ ──
 {
   const spec = CUT_SPEC_BY_ID["solid_door"];
-  const res = computeCutList(spec, { ...spec.defaults }, 1);
+  const res = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1);
   console.log("บานโซลิด (แม่-ลูก):");
   check("โซลิด", res, [
     { nameHas: "บานพับ hyda", sku: "JR00489", qty: 8 },  // แม่4 + ลูก4×1
@@ -160,7 +160,7 @@ function check(label, res, want) {
 // ── toprail (รางบนเฟรม) · default N2 SMS อิสระ → บานเลื่อน 2 · ใช้ handle table ──
 {
   const spec = CUT_SPEC_BY_ID["toprail_frame"];
-  const res = computeCutList(spec, { ...spec.defaults }, 1);
+  const res = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1);
   console.log("toprail รางบนเฟรม (N2 อิสระ):");
   check("toprail", res, [
     { nameHas: "ล้อรางบน Hafele", sku: "JR00544", qty: 2 },
@@ -173,7 +173,7 @@ function check(label, res, want) {
 // ── SlimLux · default N3 อิสระ ยัดในช่อง กล่องสั้นซ้าย → บานเลื่อน 3 ──
 {
   const spec = CUT_SPEC_BY_ID["slimlux_slide"];
-  const res = computeCutList(spec, { ...spec.defaults }, 1);
+  const res = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1);
   console.log("SlimLux (N3 อิสระ · กล่องสั้นซ้าย):");
   check("SlimLux", res, [
     { nameHas: "กล่องยาว", sku: "JR00573", qty: 2 },
@@ -186,7 +186,7 @@ function check(label, res, want) {
 // ── SMS240 เฟี้ยม · default 2L2R แบ่งบาน ขาว (LUT 2_2_1) ──
 {
   const spec = CUT_SPEC_BY_ID["sms240_bifold"];
-  const res = computeCutList(spec, { ...spec.defaults }, 1);
+  const res = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1);
   console.log("SMS240 เฟี้ยม (2L2R แบ่งบาน · เงิน):");
   check("เฟี้ยม", res, [
     { nameHas: "บานพับ (ระดับเดียว)", sku: "JR00610", qty: 2 },
@@ -211,7 +211,7 @@ function check(label, res, want) {
 // ── FUJI เลื่อนสลับ · default W350 2ราง (p=2) · ซ้าย=กุญแจ+ล็อค ขวา=ล็อค+ดัมมี่ ──
 {
   const spec = CUT_SPEC_BY_ID["fuji_slide"];
-  const res = computeCutList(spec, { ...spec.defaults }, 1);
+  const res = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1);
   console.log("FUJI เลื่อนสลับ (2ราง):");
   check("FUJI", res, [
     { nameHas: "ล้อ-15x20x230", sku: "JR00577", qty: 4 },
@@ -292,7 +292,7 @@ function check(label, res, want) {
   else console.log("  ✓ Cmech ดัมมี่+ดัมมี่ · กุญแจ/ล็อค ไม่โผล่ (qty=0)");
 
   // ยังเลือกคิงโบได้ปกติ (Cmech ไม่ควรโผล่เลย)
-  const rKingbo = computeCutList(spec, { ...spec.defaults }, 1);
+  const rKingbo = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1);
   if (rKingbo.hardware.some((h) => h.name.includes("Cmech"))) { fails++; console.log("  ✗ เลือกคิงโบ (default) ไม่ควรมีแถว Cmech ใดๆ"); }
   else console.log("  ✓ default คิงโบ · ไม่มีแถว Cmech");
 }
@@ -352,7 +352,7 @@ function check(label, res, want) {
 // ── B) FUJI บานเลื่อน — รหัสอลู "เลื่อนสลับ2ราง" F7978(เฟรมข้าง)/F7976(เฟรมบน-ล่าง) — ยืนยันแล้วค่าเดิมถูกอยู่แล้ว (ไม่แก้) ──
 {
   const spec = CUT_SPEC_BY_ID["fuji_slide"];
-  const res = computeCutList(spec, { ...spec.defaults }, 1);
+  const res = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1);
   const codeOf = (name) => res.rows.find((r) => r.name === name)?.code;
   console.log("FUJI บานเลื่อน (รหัสอลู):");
   if (codeOf("เฟรมข้าง") !== "F7978") { fails++; console.log(`  ✗ เฟรมข้าง ต้อง F7978 got ${codeOf("เฟรมข้าง")}`); } else console.log("  ✓ เฟรมข้าง = F7978");
@@ -362,7 +362,7 @@ function check(label, res, want) {
 // ── C) SMS เลื่อนอิสระ/สลับ (FREE) — เพิ่ม "ตบรางล้อ" F7994 (qty=N) + ระบบมุ้ง (เฟรมเล็ก=B30006 · เฟรมใหญ่=อลูหลัก+มือจับ/ล้อ) ──
 {
   const spec = CUT_SPEC_BY_ID["sms_slide_free"];
-  const base = computeCutList(spec, { ...spec.defaults }, 1); // W350 N3 mesh=ไม่มี
+  const base = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1); // W350 N3 mesh=ไม่มี
   const rowOf = (res, name) => res.rows.find((r) => r.name === name);
   console.log("SMS อิสระ/สลับ — ตบรางล้อ + มุ้ง:");
   const rail = rowOf(base, "ตบรางล้อ");
@@ -395,7 +395,7 @@ function check(label, res, want) {
 // ── C) SMS เปิดคู่กลาง (CENTER) — มุ้งคงที่ 2 เสมอ ──
 {
   const spec = CUT_SPEC_BY_ID["sms_slide_center"];
-  const base = computeCutList(spec, { ...spec.defaults }, 1);
+  const base = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1);
   const rail = base.rows.find((r) => r.name === "ตบรางล้อ");
   console.log("SMS เปิดคู่กลาง — ตบรางล้อ + มุ้ง:");
   if (!rail || rail.code !== "F7994" || rail.qty !== 2) { fails++; console.log(`  ✗ ตบรางล้อ (CENTER) want F7994 qty=2 got ${JSON.stringify(rail)}`); } else console.log("  ✓ ตบรางล้อ F7994 qty=2 (สปส.คงที่)");
@@ -407,7 +407,7 @@ function check(label, res, want) {
 // ── C) SMS ลากจูง (TOW) — ตบรางล้อ qty=N (ดิบ ไม่ใช่ N-1) ──
 {
   const spec = CUT_SPEC_BY_ID["sms_slide_tow"];
-  const res = computeCutList(spec, { ...spec.defaults }, 1); // N=3
+  const res = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1); // N=3
   const rail = res.rows.find((r) => r.name === "ตบรางล้อ");
   console.log("SMS ลากจูง — ตบรางล้อ (N ดิบ):");
   if (!rail || rail.code !== "F7994" || rail.qty !== 3) { fails++; console.log(`  ✗ ตบรางล้อ (TOW) want F7994 qty=3(N) got ${JSON.stringify(rail)}`); } else console.log("  ✓ ตบรางล้อ F7994 qty=3 (N ดิบ ไม่ใช่ N-1)");
@@ -416,7 +416,7 @@ function check(label, res, want) {
 // ── D) กันสาดเพิง (AWNING) — จันทัน max ไวนิล 75 · ค่าหักปิดปลาย/รางน้ำ · กล่องครอบเพลท×0.25 · แปเดี่ยว · ลบกล่องเหล็ก · override จันทันรวม ──
 {
   const spec = CUT_SPEC_BY_ID["awning"];
-  const res = computeCutList(spec, { ...spec.defaults }, 1); // W300 ไวนิล P150 deg7 รางน้ำ
+  const res = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1); // W300 ไวนิล P150 deg7 รางน้ำ
   console.log("กันสาดเพิง (AWNING):");
   const jack = res.rows.find((r) => r.name === "จันทันซอย 1.6×4");
   if (!jack || jack.qty !== 5) { fails++; console.log(`  ✗ จันทันซอย qty ต้อง 5 (⌈300/75⌉+1) got ${jack?.qty}`); } else console.log("  ✓ จันทัน max ไวนิล=75 → จันทันซอย qty=5");
@@ -446,7 +446,7 @@ function check(label, res, want) {
 {
   const spec = CUT_SPEC_BY_ID["sms240_bifold"];
   console.log("SMS240 เฟี้ยม — มุมตัด 45°/90°:");
-  const r45 = computeCutList(spec, { ...spec.defaults }, 1); // 2L2R default = 45°
+  const r45 = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1); // 2L2R default = 45°
   const r90 = computeCutList(spec, { ...spec.defaults, cutAngle: "90°" }, 1);
   const sash45 = r45.rows.find((r) => r.name === "ขวางบน+ล่าง")?.len;
   const sash90 = r90.rows.find((r) => r.name === "ขวางบน+ล่าง")?.len;
@@ -462,7 +462,7 @@ function check(label, res, want) {
 {
   const spec = CUT_SPEC_BY_ID["toprail_frame"];
   console.log("รางบนเฟรม — ไกด์ดำ:");
-  const free = computeCutList(spec, { ...spec.defaults }, 1); // sashMode=อิสระ
+  const free = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1); // sashMode=อิสระ
   const tow = computeCutList(spec, { ...spec.defaults, sashMode: "ลากจูง" }, 1);
   const gFree = free.hardware.find((h) => h.name.includes("ไกด์ดำ"));
   const gTow = tow.hardware.find((h) => h.name.includes("ไกด์ดำ"));
@@ -493,14 +493,14 @@ function check(label, res, want) {
   if (none.hardware.some((h) => ["ตลับกุญแจไฮด้า", "ไส้กุญแจ", "แผ่นรับล็อค"].includes(h.name) || h.name.includes("Digital lock (ซื้อแยก)"))) { fails++; console.log("  ✗ motherHandle=ไม่ใส่: ตลับ/ไส้/รับล็อค/Digital ไม่ควรโผล่"); }
   else console.log("  ✓ motherHandle=ไม่ใส่ · ตลับ/ไส้/รับล็อค/Digital lock qty=0 ไม่โผล่");
   // default (คิงโบ) ยังปกติ — ตลับ/ไส้/รับล็อค ต้องยังมี
-  const def = computeCutList(spec, { ...spec.defaults }, 1);
+  const def = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1);
   if (!def.hardware.some((h) => h.name === "ตลับกุญแจไฮด้า" && h.qty === 1)) { fails++; console.log("  ✗ default (คิงโบ) ตลับกุญแจไฮด้า ต้องยังมี qty=1"); } else console.log("  ✓ default (คิงโบ) ตลับกุญแจไฮด้า qty=1 (ไม่กระทบ)");
 }
 
 // ── H) FUJI บานยก (FUJI_HUNG) — เพิ่ม hardware 24 รายการ (noStock ทั้งหมด · รหัส SKU JR ว่าง) ──
 {
   const spec = CUT_SPEC_BY_ID["fuji_hung"];
-  const res = computeCutList(spec, { ...spec.defaults }, 1); // W104.3 H288.8 ดำ glass6
+  const res = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1); // W104.3 H288.8 ดำ glass6
   console.log("FUJI บานยก (HUNG) — hardware 24 รายการ:");
   const want = [
     ["ไกด์ประคองกรอบบาน", 4], ["ตะขอเกี่ยวตลับเชือก", 4], ["ตลับล้อพูเล่ย์", 2], ["ตลับใส่เชือก", 4],
@@ -533,7 +533,7 @@ function check(label, res, want) {
 //   รอยต่อ 1-2=นูน 2-3=เว้า 3-4=นูน · สูง 270/240 (drop=30) · ไวนิล (max=100,w=25) · แปคู่
 {
   const spec = CUT_SPEC_BY_ID["glasshouse_multi"];
-  const res = computeCutList(spec, { ...spec.defaults }, 1);
+  const res = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1);
   const rowsOf = (name) => res.rows.filter((r) => r.name.startsWith(name) && r.qty > 0);
   const rowAt = (name) => res.rows.find((r) => r.name === name);
   console.log("กลาสเฮ้าส์หลายด้าน (GLASSHOUSE_MULTI):");
@@ -601,7 +601,7 @@ function check(label, res, want) {
 //   raw จันทัน (ก่อนหัก ⑦) เหมือน GLASSHOUSE_MULTI เป๊ะ: ด้าน1[153×5,0] ด้าน2[0,58,43.5,0] ด้าน3[0,202.2,202.2,134.8,0] ด้าน4[0,76.5,153,153,153]
 {
   const spec = CUT_SPEC_BY_ID["awning_multi"];
-  const res = computeCutList(spec, { ...spec.defaults }, 1); // default roofEnd=รางน้ำ → หัก 10.2
+  const res = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1); // default roofEnd=รางน้ำ → หัก 10.2
   const rowsOf = (name) => res.rows.filter((r) => r.name.startsWith(name) && r.qty > 0);
   const rowAt = (name) => res.rows.find((r) => r.name === name);
   console.log("กันสาดหลายด้าน (AWNING_MULTI):");
