@@ -220,6 +220,33 @@ console.log("\n═══ ⑤f ผูกแล้วต้องได้รา�
   ok("ตั้งราคาตรงสูตร → ไม่มีรหัสไหนขึ้น 'ราคาไม่ตรง'", bad.length === 0, bad.map((r) => r.key).join(","));
 }
 
+console.log("\n═══ ⑤g อุปกรณ์ผูกรหัสสโตร์ได้ + แยกตามสี (Velora · 19 ส.ค.69) ═══");
+{
+  const px = { JR02885: 800, JR02886: 750, JR00561: 130, JR00560: 150, JR00355: 520, JR00356: 610 };
+  const pb2 = applyPriceOverride(JSON.parse(JSON.stringify(PB)),
+    buildPriceOverride(Object.entries(px).map(([sku, c]) => ({ name: sku, sku, unit_cost: c })), PB));
+  const run = (hwcolor) => computeCost(pb2, PRODUCTS.velora,
+    { w: 220, h: 200, p: 1, form: "เดี่ยว", color: "sahara", colorKey: "sahara", spec: { hwcolor } });
+  const w = run("ขาว"), b = run("ดำ");
+  const line = (r, nm) => r.lines.find((l) => l.name.startsWith(nm));
+  ok("อลู Velora ผูกรหัสแล้ว ราคามาจากสโตร์", line(w, "วงกบ").unitPrice === 800 && line(w, "บาน (").unitPrice === 750, "");
+  ok("บานพับ สีขาว → JR00561 ราคา 130", line(w, "บานพับ").sku === "JR00561" && line(w, "บานพับ").unitPrice === 130, line(w, "บานพับ").sku);
+  ok("บานพับ สีดำ → JR00560 ราคา 150", line(b, "บานพับ").sku === "JR00560" && line(b, "บานพับ").unitPrice === 150, line(b, "บานพับ").sku);
+  ok("มือจับ สีขาว → JR00355 ราคา 520", line(w, "มือจับ").sku === "JR00355" && line(w, "มือจับ").unitPrice === 520, line(w, "มือจับ").sku);
+  ok("มือจับ สีดำ → JR00356 ราคา 610", line(b, "มือจับ").sku === "JR00356" && line(b, "มือจับ").unitPrice === 610, line(b, "มือจับ").sku);
+  ok("เลือกสีอุปกรณ์แล้วทุนต่างกันจริง", b.cost.total > w.cost.total, `${w.cost.total} vs ${b.cost.total}`);
+  // ⚠ มือจับเคยเขียนเป็น "จำนวน 450 × ราคา 1" — ผูกรหัสแล้วจะคูณผิดมหาศาล ต้องเป็น จำนวนบาน × 450
+  ok("มือจับนับเป็นชุด ไม่ใช่ 450 ชุด", line(w, "มือจับ").qty === 1, String(line(w, "มือจับ").qty));
+  const two = computeCost(pb2, PRODUCTS.velora,
+    { w: 220, h: 200, p: 2, form: "คู่", color: "sahara", colorKey: "sahara", spec: { hwcolor: "ขาว" } });
+  ok("บานคู่ → มือจับ 2 ชุด (ชีตบอก คู่=900)", two.lines.find((l) => l.name.startsWith("มือจับ")).qty === 2, "");
+  // ไม่มีราคาในสโตร์ → ต้องกลับไปใช้ราคาในสูตร ไม่ใช่ 0
+  const noStock = computeCost(PB, PRODUCTS.velora,
+    { w: 220, h: 200, p: 1, form: "เดี่ยว", color: "sahara", colorKey: "sahara", spec: { hwcolor: "ขาว" } });
+  ok("สโตร์ไม่มีราคา → ใช้ราคาในสูตร (ไม่หล่นเป็น 0)",
+    noStock.lines.find((l) => l.name.startsWith("มือจับ")).unitPrice === 450, "");
+}
+
 console.log("\n═══ ⑥ หน้าจอต่อสายครบไหม ═══");
 {
   const p = fs.readFileSync(path.join(ROOT, "src/app/(app)/calculator40/stock-audit/page.tsx"), "utf8");

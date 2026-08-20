@@ -178,6 +178,15 @@ export function computeCost(PB, prod, opt) {
   //     ส่งมาเมื่อไร → ใช้แทน prod.hardware+prod.consum ทั้งชุด (กันคิดซ้ำ)
   //     ราคา: รหัสในสโตร์ก่อน (PB.SKUPRICE) → ราคาสำรองที่ส่งมากับบรรทัด
   //     เจ้าของสั่ง 19 ส.ค.69: อุปกรณ์ในใบตัด 15 บรรทัด ต้องเข้า "ค่าของ" ในคิดราคาด้วย
+  // อุปกรณ์ผูก "รหัสสโตร์" ได้ตรง ๆ — it.sku เป็นข้อความ หรือสูตร (เลือกรหัสตามสี/รูปแบบ) ก็ได้
+  //   ราคาจากสโตร์ชนะราคาฝังในสูตรเสมอ (เจ้าของ 19 ส.ค.69: สโตร์เป็นตัวตั้ง)
+  const skuOf = (it) => {
+    if (!it.sku) return '';
+    const v = String(it.sku).includes('?') ? val(it.sku) : it.sku;
+    return String(v ?? '').trim().toUpperCase();
+  };
+  const skuPrice = (sku) => (sku && PB.SKUPRICE && PB.SKUPRICE[sku] > 0) ? PB.SKUPRICE[sku] : null;
+
   const rawHwLines = (Array.isArray(opt.hardwareLines) && opt.hardwareLines.length) ? opt.hardwareLines : null;
   // ราคาต่อบรรทัด: รหัสสโตร์ก่อน (÷ per ถ้าสโตร์ขายเป็นแพ็ค) → ราคาสำรองที่ส่งมากับบรรทัด
   //   PB.HWPRICE = ราคาสำรองจากไฟล์ถอดทุน (ชีต "คิดทุน …") สำหรับรหัสที่สโตร์ยังไม่ตั้งราคา
@@ -216,9 +225,12 @@ export function computeCost(PB, prod, opt) {
     let price = pPrice(it.name, typeof it.price === 'number' ? it.price : val(it.price));   // รองรับ price เป็นสูตร + PARTS override (partsLinked)
     if (it.ref) { const rp = refPrice(PB, it.ref); if (rp != null) price = rp; }   // ราคาจาก PB (แอดมินแก้ได้ · ไม่มี=ใช้ price เดิม)
     if (it.mult) price *= mult;   // กล่อง/โครง/เสา อลูเมืองทอง (รั้ว) → ขยับตามราคาอลู/กก. (mult=ปัจจุบัน/ตั้งต้น · ตั้งต้น=1)
+    const hwSku = skuOf(it);
+    const sp = skuPrice(hwSku);
+    if (sp != null) price = sp;   // มีราคาในสโตร์ → ใช้ของสโตร์ (สโตร์เป็นตัวตั้ง)
     const amount = count * price;
     hwCost += amount;
-    lines.push({ cat: 'hardware', name: it.name, qty: round2(count), unit: it.unit || 'ชิ้น', unitPrice: price, amount: round2(amount) });
+    lines.push({ cat: 'hardware', name: it.name, sku: hwSku, qty: round2(count), unit: it.unit || 'ชิ้น', unitPrice: price, amount: round2(amount) });
   }
   let consumCost = 0;
   for (const it of (hwLines ? [] : prod.consum || [])) {
@@ -227,9 +239,12 @@ export function computeCost(PB, prod, opt) {
     let unitPrice = pPrice(it.name, typeof it.price === 'number' ? it.price : val(it.price));  // ราคา expression + PARTS override (partsLinked)
     if (it.ref) { const rp = refPrice(PB, it.ref); if (rp != null) unitPrice = rp; }   // ราคาจาก PB (แอดมินแก้ได้ · ไม่มี=ใช้ price เดิม)
     if (it.mult) unitPrice *= mult;   // กล่องอลูเมืองทอง (ระแนงสลับ/หมุน) → ขยับตามราคาอลู/กก.
+    const cSku = skuOf(it);
+    const csp = skuPrice(cSku);
+    if (csp != null) unitPrice = csp;   // มีราคาในสโตร์ → ใช้ของสโตร์
     const amount = count * unitPrice;
     consumCost += amount;
-    lines.push({ cat: 'consum', name: it.name, qty: round2(count), unit: it.unit || '', unitPrice: round2(unitPrice), amount: round2(amount) });
+    lines.push({ cat: 'consum', name: it.name, sku: cSku, qty: round2(count), unit: it.unit || '', unitPrice: round2(unitPrice), amount: round2(amount) });
   }
 
   // สีโครงพิเศษ — ค่าสีเพิ่ม/ตร.ม. (per-item · เฉพาะรุ่น showColor เช่น หลังคา · X รอราคา · ไม่ sync ทั้งใบ)
