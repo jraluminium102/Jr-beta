@@ -1167,7 +1167,7 @@ function QueueRow({ e, onOpen, onToggleReceipt, onToggleFeePaid, canWrite, slotL
       <td className="px-1.5 py-2.5 text-ink-2">{e.job_type || "—"}</td>
       <td className="px-1.5 py-2.5 text-ink-2 whitespace-nowrap">{e.sales?.name || "—"}</td>
       <td className="px-1.5 py-2.5 text-ink-2 whitespace-nowrap">{e.assistant?.name || "—"}</td>
-      <td className="px-1.5 py-2.5 text-ink-2 max-w-[120px] truncate" title={e.line_contact ?? ""}>{e.line_contact ? `${e.contact_channel === "FB" ? "FB" : "Line"}: ${e.line_contact}` : "—"}</td>
+      <td className="px-1.5 py-2.5 text-ink-2 max-w-[100px] truncate" title={e.line_contact ?? ""}>{e.line_contact ? `${e.contact_channel === "FB" ? "FB" : "Line"}: ${e.line_contact}` : "—"}</td>
       <td className="px-1.5 py-2.5 font-medium text-ink whitespace-nowrap">{e.customer_name}</td>
       <td className="px-1.5 py-2.5 text-ink-2 whitespace-nowrap">{e.tel || "—"}</td>
       <td className="px-1.5 py-2.5 text-ink-2 max-w-[110px] truncate" title={e.address ?? ""}>{e.address || "—"}</td>
