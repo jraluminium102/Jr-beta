@@ -155,7 +155,9 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   const [spec, setSpec] = useState<Record<string, string>>({});
   const [addons, setAddons] = useState<Record<string, any>>({});
   const [fixedPanes, setFixedPanes] = useState(0); // บานติดตาย (ไม่เลื่อน/ไม่เปิด) — ลด movePanes ของมุ้ง + ขึ้นใบ
-  const [profit, setProfit] = useState("100");
+  const [profit, setProfit] = useState("100");        // กำไรค่าวัสดุ % (ชื่อเดิม — เก็บลงสูตรของข้อ)
+  const [profitProd, setProfitProd] = useState("100"); // กำไรค่าผลิต %
+  const [profitInst, setProfitInst] = useState("200"); // กำไรค่าติดตั้ง %
   // ค่าแรงที่คิดลงใบเสนอ: "all" = ผลิต+ติดตั้ง (ค่ามาตรฐาน) · "mfg" = ค่าแรงผลิตอย่างเดียว (ขายส่ง JR ไม่ไปติดตั้ง)
   const [laborMode, setLaborMode] = useState<"all" | "mfg">("all");
   // ประตู/หน้าต่าง ที่จะเขียนลงใบเสนอ (เจ้าของสั่ง 7 ส.ค.69 ให้มีทุกชุดที่เป็นบาน ไม่ใช่แค่ห้องกระจก)
@@ -273,8 +275,15 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     [group]
   );
 
+  /** ค่ากำไรตั้งต้นของรุ่น — มาจากไฟล์ถอดทุน (บล็อก "⚙ ตั้งค่ากำไร" ท้ายชีตคิดทุน) */
+  function defProfit(id: string) {
+    const t = (pb as any)?.PROFIT ?? {};
+    return t[id] ?? t.__default ?? { mat: 100, prod: 100, inst: 200 };
+  }
   function pickProduct(x: any) {
     setProdId(x.id);
+    const dp = defProfit(x.id);
+    setProfit(String(dp.mat)); setProfitProd(String(dp.prod)); setProfitInst(String(dp.inst));
     setW(String(x.defaults?.w ?? 200));
     setH(String(x.defaults?.h ?? 200));
     setP(String(x.defaults?.p ?? 1));
@@ -364,7 +373,10 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       const hCm = Number(h) || prod.defaults?.h || 200;
       const pCount = Number(p) || prod.defaults?.p || 1;
       const formVal = form || prod.defForm;
-      const profitPct = Number(profit) || 100;
+      // กำไรแยก 3 ส่วน ตามไฟล์ถอดทุน v9 (บล็อก "⚙ ตั้งค่ากำไร")
+      const profitPct = Number(profit) || 100;          // ค่าวัสดุ — ชื่อเดิม ใช้กับสูตรเก่า (ระแนง/R3.9)
+      const pProd = Number(profitProd) || 0;
+      const pInst = Number(profitInst) || 0;
       // สีอลู: ผู้ใช้เลือก "ชื่อสีจริง" (13 สี) → แปลงเป็นหมวดค่าอบ (bake) สำหรับคิดราคา + ชื่อสีพิมพ์ลงใบ
       const rc = resolveAluColor(color);
       const opt: any = {
@@ -377,6 +389,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
         stockColor: stockColorOfCalc(color),   // สีจริงในสโตร์ (แยก อบขาว/ดำ ออกจากกัน)
         colorKey: color,                       // คีย์สีจริง → ราคาเส้นแยกสีจากไฟล์ถอดทุน (ALUCOLOR_KEY)
         profitPct,
+        profitMat: profitPct, profitProd: pProd, profitInst: pInst,
         spec,
         addons,
       };
@@ -450,7 +463,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     } catch (e) {
       return { error: e instanceof Error ? e.message : String(e) } as any;
     }
-  }, [pb, prod, w, h, p, form, color, glassType, material, spec, profit, addons, fixedPanes, kind, faceColorCode, depth, shelves, cabSides, sheetColor, roofSegs, subs, roomTotals, laborMode, cutSel]);
+  }, [pb, prod, w, h, p, form, color, glassType, material, spec, profit, profitProd, profitInst, addons, fixedPanes, kind, faceColorCode, depth, shelves, cabSides, sheetColor, roofSegs, subs, roomTotals, laborMode, cutSel]);
 
   const ok = result && !("error" in result);
   // ── ประตู/หน้าต่าง (เจ้าของสั่ง 7 ส.ค.69 ให้มีทุกชุดที่เป็นบาน) ─────────────
@@ -475,7 +488,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     return {
       v: 1, kind: "std", prodId: prod.id, group: prod.group,
       w, h, p, form, color, glassType, material,
-      spec, addons, fixedPanes, profit, laborMode, useSel, sillSel, cutSel,
+      spec, addons, fixedPanes, profit, profitProd, profitInst, laborMode, useSel, sillSel, cutSel,
       kindOpts: kind, faceColorCode, depth, shelves, cabSides, sheetColor, roofSegs, subs,
     };
   }
@@ -622,6 +635,9 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     setColor(r.color ?? "white");
     setGlassType(r.glassType ?? (px.defGlass ?? ""));
     setProfit(String(r.profit ?? "100"));
+    // ใบเก่าไม่มี 2 ช่องนี้ → ใช้กำไรเดิมทั้งก้อน (ผลเท่าของเดิมเป๊ะ)
+    setProfitProd(String(r.profitProd ?? r.profit ?? "100"));
+    setProfitInst(String(r.profitInst ?? r.profit ?? "200"));
     setLaborMode(r.laborMode === "mfg" ? "mfg" : "all");   // ใบเก่าไม่มีฟิลด์นี้ = คิดค่าแรงรวม (ค่าเดิมของระบบ)
     setUseSel(r.useSel === "door" || r.useSel === "window" ? r.useSel : "auto");  // ใบเก่า = ให้ระบบเดาเหมือนเดิม
     setSillSel(typeof r.sillSel === "string" ? r.sillSel : "");
@@ -1042,13 +1058,17 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                   {(prod.maxP ?? 1) > 1 || (prod.defaults?.p ?? 1) > 1 ? (
                     <Field label={`จำนวนบาน${prod.minP ? ` (${prod.minP}–${prod.maxP})` : ""}`} value={p} onChange={setP} />
                   ) : <div />}
-                  <Field label="กำไร %" value={profit} onChange={setProfit} />
+                  <Field label="กำไร ค่าของ %" value={profit} onChange={setProfit} />
+                  <Field label="กำไร ค่าผลิต %" value={profitProd} onChange={setProfitProd} />
+                  <Field label="กำไร ค่าติดตั้ง %" value={profitInst} onChange={setProfitInst} />
                 </div>
               )}
               {/* ห้องกระจก (G6) — ไม่มีกว้าง/สูง/บานระดับห้อง (กำหนดต่อบาน/ต่อด้านใน RoomComposer) แต่ยังต้องมีกำไร% + สี/กระจกหลัก (ทุกบานในห้องใช้ร่วมกัน) */}
               {prod.composite && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mt-4">
-                  <Field label="กำไร %" value={profit} onChange={setProfit} />
+                  <Field label="กำไร ค่าของ %" value={profit} onChange={setProfit} />
+                  <Field label="กำไร ค่าผลิต %" value={profitProd} onChange={setProfitProd} />
+                  <Field label="กำไร ค่าติดตั้ง %" value={profitInst} onChange={setProfitInst} />
                 </div>
               )}
 

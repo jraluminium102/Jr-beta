@@ -64,8 +64,19 @@ export function computeCost(PB, prod, opt) {
   const colorDisp = opt.colorName || colorLabel(color);      // ชื่อสีเฉพาะ (display) — ราคามาจาก bake key เท่านั้น
   const material = opt.material ?? prod.defMaterial ?? null;  // วัสดุมุงหลังคา (รุ่นที่มีตัวเลือก)
   const glassType = opt.glassType ?? prod.defGlass ?? 'เขียว 6มม.';
-  const profitPct = opt.profitPct ?? 100;
-  const installProfitPct = opt.installProfitPct ?? profitPct;
+  // ── กำไรแยก 3 ส่วน (ไฟล์ถอดทุน v9 บล็อก "⚙ ตั้งค่ากำไร" ท้ายชีตคิดทุนทุกใบ) ──
+  //   ค่าวัสดุ · ค่าผลิต · ค่าติดตั้ง ตั้ง % แยกกันได้ · ค่าตั้งต้นต่อรุ่นอยู่ใน PB.PROFIT
+  //   สูตรในชีต (ตรวจตรงเป๊ะกับ SMS/ยูโร): ปัดร้อย "ทีละก้อน" ไม่ใช่ปัดทีเดียวตอนท้าย
+  //     ขายวัสดุ         = ปัดร้อย( ทุนวัสดุ × (1 + กำไรวัสดุ%) )
+  //     ขายผลิตอย่างเดียว = ขายวัสดุ + ปัดร้อย( ค่าแรงผลิต × (1 + กำไรผลิต%) )
+  //     ขายผลิต+ติดตั้ง   = ขายผลิตอย่างเดียว + ปัดร้อย( ค่าแรงติดตั้ง × (1 + กำไรติดตั้ง%) )
+  const DEFP = (PB.PROFIT && (PB.PROFIT[prod.id] || PB.PROFIT.__default)) || { mat: 100, prod: 100, inst: 200 };
+  const pctMat = opt.profitMat ?? opt.profitPct ?? DEFP.mat;
+  const pctProd = opt.profitProd ?? opt.profitPct ?? DEFP.prod;
+  const pctInst = opt.profitInst ?? opt.installProfitPct ?? opt.profitPct ?? DEFP.inst;
+  // ชื่อเดิม — สูตรเก่าหลายที่ยังอ้างอยู่ (ระแนง/R3.9/ม่านซิป) ให้ชี้ไปกำไรค่าวัสดุ
+  const profitPct = pctMat;
+  const installProfitPct = pctInst;
 
   const brand = prod.brand;
   const mult = (PB.ALU[brand] ?? 1) / (PB.ALU_BASE[brand] ?? PB.ALU[brand] ?? 1);
@@ -451,9 +462,9 @@ export function computeCost(PB, prod, opt) {
     if (rnDisc > 0) lines.push({ cat: 'discount', name: 'ส่วนลดปริมาณ ' + Math.round((area > 30 ? 15 : area > 20 ? 11 : area > 15 ? 8 : 5)) + '% (พื้นที่ ' + round2(area) + ' ตร.ม.)', qty: 1, unit: '', unitPrice: -rnDisc, amount: -rnDisc });
     if (irate > 0) lines.push({ cat: 'labor', name: 'ค่าแรงติดตั้ง', qty: round2(aSell), unit: 'ตร.ม.', unitPrice: irate, amount: round2(aSell * irate) });
   } else {
-    sellBeforeLabor = ceil100(costTotal * (1 + profitPct / 100));
-    sellMfgOnly = ceil100((costTotal + laborProd) * (1 + profitPct / 100));
-    sellWithInstall = sellMfgOnly + ceil100(laborInstall * (1 + installProfitPct / 100));
+    sellBeforeLabor = ceil100(costTotal * (1 + pctMat / 100));
+    sellMfgOnly = sellBeforeLabor + ceil100(laborProd * (1 + pctProd / 100));
+    sellWithInstall = sellMfgOnly + ceil100(laborInstall * (1 + pctInst / 100));
     // ส่วนลดปริมาณระแนง/รั้ว (R3.9 ranaeDisc) — ลดเฉพาะค่าของ(งานผลิต) ไม่ลดค่าติดตั้ง
     if (prod.ranaeDisc) {
       const d = area > 30 ? 0.15 : area > 20 ? 0.11 : area > 15 ? 0.08 : area > 10 ? 0.05 : 0;
@@ -510,6 +521,7 @@ export function computeCost(PB, prod, opt) {
     },
     profit: round2(sellWithInstall - costTotalOut),  // กำไร (ขาย − ทุน)
     glassArea: round2(glassArea), aluKg: round2(aluKg),
+    profit3: { mat: pctMat, prod: pctProd, inst: pctInst },   // % ที่ใช้จริง (หน้าจอเอาไปโชว์/แก้)
     // อุปกรณ์จากใบตัด: ใช้จริงไหม + รหัสไหนยังไม่ตั้งราคาในสโตร์ (หน้าจอเอาไปเตือน)
     hwFromCutlist: !!hwLines, hwMissing,
     // รหัสที่ยังใช้ "ราคาจากไฟล์ถอดทุน" (สโตร์ยังไม่ตั้งราคา) — หน้าจอเตือนให้ไปตั้งในสโตร์

@@ -158,9 +158,13 @@ for (const a of ANCHORS) {
   const rateOn = shape === 'rate' ? 1 : 0;
   const wProd = Math.max(0, L.pBase + L.pRate * area * rateOn) * lp;
   const wInst = Math.max(0, L.iBase + L.iRate * area * rateOn) * lp;
-  const pf = a.in.profitPct ?? 100;
-  const wantMfg = ceil100((a.cost + wProd) * (1 + pf / 100));
-  const wantInst = wantMfg + ceil100(wInst * (1 + pf / 100));
+  // กำไรแยก 3 ส่วน ตามบล็อก "⚙ ตั้งค่ากำไร" ท้ายชีตคิดทุน (ไฟล์ v9)
+  //   ปัดร้อย "ทีละก้อน" — วัสดุ / ค่าแรงผลิต / ค่าแรงติดตั้ง (ตรวจตรงเป๊ะกับชีต SMS + ยูโร)
+  const DP = PB.PROFIT[a.id] ?? PB.PROFIT.__default;
+  const pM = a.in.profitPct ?? DP.mat, pP = a.in.profitPct ?? DP.prod, pI = a.in.profitPct ?? DP.inst;
+  const wantMat = ceil100(a.cost * (1 + pM / 100));
+  const wantMfg = wantMat + ceil100(wProd * (1 + pP / 100));
+  const wantInst = wantMfg + ceil100(wInst * (1 + pI / 100));
   check(`ค่าแรงผลิต (${shape})`, r.labor.prod, Math.round(wProd * 100) / 100, 1);
   check('ค่าแรงติดตั้ง', r.labor.install, Math.round(wInst * 100) / 100, 1);
   check('ขายผลิตอย่างเดียว (ตามชีต)', r.sell.mfgOnly, wantMfg, 1);
@@ -351,10 +355,10 @@ console.log('\n═══ ②g ราคาเส้นแยกสีจริ�
     { w: 600, h: 300, p: 3, form: 'อิสระ', color: bake, colorKey: key }).sell.withInstall;
   const teak = sell('wood_teak', 'woodStock'), maho = sell('wood_maho', 'woodStock');
   check('ลายไม้สักทอง ≠ มะฮอกกานี (แยกราคาได้แล้ว)', maho > teak ? 1 : 0, 1, 0);
-  check('SMS ลายไม้สักทอง', teak, 49600, 1);
-  check('SMS มะฮอกกานี', maho, 57300, 1);
-  check('SMS เทาซาฮาร่า', sell('sahara', 'sahara'), 39300, 1);
-  check('SMS สีขาว', sell('white', 'white'), 37600, 1);
+  check('SMS ลายไม้สักทอง', teak, 50800, 1);
+  check('SMS มะฮอกกานี', maho, 58500, 1);
+  check('SMS เทาซาฮาร่า', sell('sahara', 'sahara'), 40500, 1);
+  check('SMS สีขาว', sell('white', 'white'), 38800, 1);
 
   const az = computeCost(PB, PRODUCTS.sms_slide, { w: 600, h: 300, p: 3, form: 'อิสระ', color: 'special', colorKey: 'aztec' });
   check('Aztec: ค่าเปิดตู้อบยังคิดอยู่ (คงที่ ไม่ผูก กก.)', az.cost.openOven, PB.BAKE_OPEN_OVEN, 0.01);
@@ -371,6 +375,63 @@ console.log('\n═══ ②g ราคาเส้นแยกสีจริ�
   check("F7988 น้ำหนักถอดใหม่ 0.377 (ชีตเขียน 0.667)", PB.ALUWEIGHT?.F7988, 0.377, 0.002);
 }
 
+// ── ②h กำไรแยก 3 ส่วน (ไฟล์ v9 บล็อก "⚙ ตั้งค่ากำไร" ท้ายชีตคิดทุนทุกใบ) ──
+//   ค่าตรึงจากไฟล์: SMS 100/100/200 · ยูโร 80/100/200 · SlimLux 120/100/200 · หลังคา 0/50/100
+//   สูตร: ปัดร้อย "ทีละก้อน" ไม่ใช่ปัดทีเดียวตอนท้าย
+console.log("\n═══ ②h กำไรแยก 3 ส่วน — ค่าของ / ค่าผลิต / ค่าติดตั้ง ═══");
+{
+  const WANT = {
+    sms_slide: [100, 100, 200], euro_slide: [80, 100, 200], slimlux: [120, 100, 200],
+    fixed: [120, 100, 200], velora: [120, 100, 200], pcdoor: [120, 100, 200],
+    roof: [0, 50, 100], louver_rotate: [0, 50, 100],
+  };
+  for (const [id, [m, p, i2]] of Object.entries(WANT)) {
+    const t = PB.PROFIT?.[id];
+    check(`${id} กำไร ของ/ผลิต/ติดตั้ง = ${m}/${p}/${i2}`,
+      t ? (t.mat === m && t.prod === p && t.inst === i2 ? 1 : 0) : 0, 1, 0);
+  }
+  check("มีค่าตั้งต้นกลางไว้ให้รุ่นที่ยังไม่ได้ตั้ง", PB.PROFIT?.__default?.inst, 200, 0);
+
+  // ทวนกับตัวเลขในชีตตรง ๆ — SMS 600×300 3บาน: ทุน 18,865.12 · ผลิต 962.45 · ติดตั้ง 1,093.70
+  //   ชีตเขียน: ขายวัสดุ 37,800 · ผลิตอย่างเดียว 39,800 · ผลิต+ติดตั้ง 43,100
+  const sheetMat = ceil100(18865.11875 * 2);
+  const sheetMfg = sheetMat + ceil100(962.4475 * 2);
+  const sheetAll = sheetMfg + ceil100(1093.6975 * 3);
+  check("ทวนสูตรกับชีต SMS: ขายวัสดุ", sheetMat, 37800, 0);
+  check("ทวนสูตรกับชีต SMS: ผลิตอย่างเดียว", sheetMfg, 39800, 0);
+  check("ทวนสูตรกับชีต SMS: ผลิต+ติดตั้ง", sheetAll, 43100, 0);
+  // ยูโร (กำไรวัสดุ 80%) — ชีตเขียน 62,200 / 67,100
+  const eM = ceil100(32989.55625 * 1.8);
+  const eMfg = eM + ceil100(1400 * 2);
+  check("ทวนสูตรกับชีต ยูโร: ผลิตอย่างเดียว", eMfg, 62200, 0);
+  check("ทวนสูตรกับชีต ยูโร: ผลิต+ติดตั้ง", eMfg + ceil100(1602.4 * 3), 67100, 0);
+
+  // engine ต้องคิดแบบเดียวกัน + ปรับ % แยกส่วนได้จริง
+  const run = (o) => computeCost(PB, PRODUCTS.sms_slide,
+    { w: 600, h: 300, p: 3, form: "อิสระ", color: "white", colorKey: "white", ...o });
+  const base = run({});
+  check("engine ใช้ค่าตั้งต้นของรุ่น (100/100/200)", base.profit3.inst, 200, 0);
+  check("ขายวัสดุ = ปัดร้อย(ทุน × 2)", base.sell.beforeLabor, ceil100(base.cost.total * 2), 1);
+  check("ผลิตอย่างเดียว = ขายวัสดุ + ปัดร้อย(ค่าแรงผลิต × 2)",
+    base.sell.mfgOnly, base.sell.beforeLabor + ceil100(base.labor.prod * 2), 1);
+  check("ผลิต+ติดตั้ง = ผลิตอย่างเดียว + ปัดร้อย(ค่าแรงติดตั้ง × 3)",
+    base.sell.withInstall, base.sell.mfgOnly + ceil100(base.labor.install * 3), 1);
+  // แยกส่วนได้จริง — ขยับทีละตัวต้องกระทบเฉพาะก้อนนั้น
+  const upMat = run({ profitMat: 200 });
+  check("ขึ้นกำไรค่าของ → ขายวัสดุขยับ", upMat.sell.beforeLabor > base.sell.beforeLabor ? 1 : 0, 1, 0);
+  const upProd = run({ profitProd: 300 });
+  check("ขึ้นกำไรค่าผลิต → ขายวัสดุต้องนิ่ง", upProd.sell.beforeLabor, base.sell.beforeLabor, 0.01);
+  check("ขึ้นกำไรค่าผลิต → ผลิตอย่างเดียวขยับ", upProd.sell.mfgOnly > base.sell.mfgOnly ? 1 : 0, 1, 0);
+  const upInst = run({ profitInst: 400 });
+  check("ขึ้นกำไรค่าติดตั้ง → ผลิตอย่างเดียวต้องนิ่ง", upInst.sell.mfgOnly, base.sell.mfgOnly, 0.01);
+  check("ขึ้นกำไรค่าติดตั้ง → ราคาพร้อมติดตั้งขยับ", upInst.sell.withInstall > base.sell.withInstall ? 1 : 0, 1, 0);
+  check("กำไร 0% = ขายเท่าทุน (ปัดร้อย)", run({ profitMat: 0, profitProd: 0, profitInst: 0 }).sell.beforeLabor,
+    ceil100(base.cost.total), 1);
+  // ใบเก่าที่ส่ง profitPct มาตัวเดียว ต้องยังใช้ได้ (ใช้กับทั้ง 3 ก้อน)
+  const legacy = run({ profitPct: 50 });
+  check("ใบเก่าส่งกำไรตัวเดียว → ใช้กับทั้ง 3 ก้อน", legacy.profit3.inst, 50, 0);
+}
+
 console.log('\n═══ ③ สวิตช์ค่าแรงในหน้าคิดราคา 4.0 (ต่อสายครบไหม) ═══');
 {
   const src = fs.readFileSync(path.join(__dirname, '../src/components/Calculator40Client.tsx'), 'utf8');
@@ -382,7 +443,10 @@ console.log('\n═══ ③ สวิตช์ค่าแรงในหน้
   has('การ์ดราคาโชว์ราคาขายส่งหลังลด', /baht\(result\.sell\.mfgOnlyNet\)/);
   has('ยอดรวม (มีรายการเสริม) ใช้ราคาหลังลด', /laborMode === "mfg" \? result\.sell\.mfgOnlyNet : result\.sell\.withInstall\) \+ \(\(result as any\)\.subSell/);
   has('เลือก "ผลิตอย่างเดียว" แล้วเขียนกำกับลงใบว่าไม่รวมติดตั้ง', /laborMode === "mfg"\)\s*jobLines\.push\("- ราคานี้ไม่รวมค่าติดตั้ง/);
-  has('บันทึกลงสูตร (recipe) เพื่อกลับมาแก้ข้อได้', /profit,\s*laborMode,/);
+  has('บันทึกลงสูตร (recipe) เพื่อกลับมาแก้ข้อได้', /profit, profitProd, profitInst, laborMode,/);
+  has('มีช่องกรอกกำไรแยก 3 ส่วนบนหน้าจอ', /กำไร ค่าของ %[\s\S]*กำไร ค่าผลิต %[\s\S]*กำไร ค่าติดตั้ง %/);
+  has('เปลี่ยนรุ่นแล้วตั้งกำไรตั้งต้นของรุ่นนั้นให้', /setProfitProd\(String\(dp\.prod\)\)/);
+  has('ใบเก่าไม่มี 2 ช่องใหม่ → ใช้กำไรเดิม (ผลเท่าเดิม)', /r\.profitProd \?\? r\.profit/);
   has('โหลดสูตรเก่ากลับมาแล้วตั้งค่าสวิตช์คืน', /setLaborMode\(r\.laborMode === "mfg"/);
   has('โชว์ค่าแรงแยก ผลิต/ติดตั้ง/รวม', /result\.labor\.prod \+ result\.labor\.install/);
 }
