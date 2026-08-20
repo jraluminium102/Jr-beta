@@ -38,7 +38,11 @@ export const ALU_COLOR_KEYS: string[] = ALU_COLORS.map((c) => c.key);
 //   ⚠ ไฟล์ถอดทุนใส่ราคา 3 สีนี้ให้ทุกรหัส (คิดจาก ขาว + ค่าอบ×กก.) — แต่ของจริงสั่งได้แค่รุ่นพวกนี้
 //     ถ้าไม่กรอง เซลล์จะเลือกสีที่โรงงานทำไม่ได้ แล้วเสนอราคาออกไปแล้ว
 export const SPECIAL_COLOR_KEYS = ["aztec", "wood_maho", "wood_whiteoak"] as const;
-export const SPECIAL_COLOR_PRODUCTS = new Set(["open_door", "euro_slide", "fold_euro"]);
+//   เจ้าของยืนยันเพิ่ม 19 ส.ค.69: กระทุ้ง · PC Door · บานหมุน · เฟี้ยมยก · บานโซลิด ก็มี
+export const SPECIAL_COLOR_PRODUCTS = new Set([
+  "open_door", "euro_slide", "fold_euro",
+  "awning", "pcdoor", "pivot", "fold_lift", "bansolid",
+]);
 
 /** สีที่รุ่นนี้เลือกได้จริง — รุ่นที่ไม่ได้อยู่ในรายการ ตัด 3 สีพิเศษออก */
 export function aluColorKeysFor(prodId?: string | null): string[] {

@@ -1365,6 +1365,48 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                     <div className={"font-bold leading-tight " + (laborMode === "all" ? "text-3xl" : "text-2xl text-brand-dark")}>฿{baht(result.sell.withInstall)}</div>
                     <div className={"text-[11px] mt-0.5 " + (laborMode === "all" ? "text-red-100" : "text-ink-3")}>พื้นที่ {result.input.area} ตร.ม. · อลู {result.aluKg} กก.</div>
                   </button>
+                  {/* ── แยก 3 ก้อน: ค่าของ / ค่าผลิต / ค่าติดตั้ง + กดเพิ่มกำไรได้ (เจ้าของสั่ง 19 ส.ค.69)
+                       โครงตามไฟล์ถอดทุน v9 บล็อก "⚙ ตั้งค่ากำไร" — คูณกำไรแยกก้อน ปัดร้อยแยกก้อน */}
+                  <div className="col-span-2 rounded-2xl px-4 py-3 bg-white border border-line">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-sm font-semibold text-brand-dark">แยกเป็น 3 ก้อน</span>
+                      <span className="text-[11px] text-ink-3">กดปุ่มปรับกำไรได้ทีละก้อน</span>
+                      <button type="button" onClick={() => { const d = defProfit(prod?.id ?? ""); setProfit(String(d.mat)); setProfitProd(String(d.prod)); setProfitInst(String(d.inst)); }}
+                        className="press ml-auto text-[11px] font-semibold text-ink-2 glass-soft rounded-lg px-2 py-1">
+                        คืนค่าตามไฟล์
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {([
+                        ["ค่าของ", showCost ? result.cost.total : null, profit, setProfit, result.sell.beforeLabor],
+                        ["ค่าผลิต", showCost ? result.labor.prod : null, profitProd, setProfitProd, result.sell.mfgOnly - result.sell.beforeLabor],
+                        ["ค่าติดตั้ง", showCost ? result.labor.install : null, profitInst, setProfitInst, result.sell.withInstall - result.sell.mfgOnly],
+                      ] as [string, number | null, string, (v: string) => void, number][]).map(([label, cost, pct, setPct, sell]) => (
+                        <div key={label} className="rounded-xl border border-line px-3 py-2 bg-ground/40">
+                          <div className="text-[11px] font-medium text-ink-3">{label}</div>
+                          {cost != null && <div className="text-xs text-ink-3 tabular-nums">ทุน ฿{baht(cost)}</div>}
+                          <div className="text-xl font-bold text-brand-dark tabular-nums leading-tight">฿{baht(sell)}</div>
+                          <div className="flex items-center gap-1 mt-1.5">
+                            <button type="button" aria-label={`ลดกำไร ${label}`}
+                              onClick={() => setPct(String(Math.max(0, (Number(pct) || 0) - 10)))}
+                              className="press w-7 h-7 rounded-lg glass-soft text-ink-2 font-bold leading-none">−</button>
+                            <input value={pct} onChange={(e) => setPct(e.target.value)} inputMode="numeric"
+                              aria-label={`กำไร ${label} เปอร์เซ็นต์`}
+                              className="w-14 text-center glass-soft rounded-lg px-1 py-1 text-sm tabular-nums outline-none" />
+                            <span className="text-xs text-ink-3">%</span>
+                            <button type="button" aria-label={`เพิ่มกำไร ${label}`}
+                              onClick={() => setPct(String((Number(pct) || 0) + 10))}
+                              className="press w-7 h-7 rounded-lg glass-soft text-ink-2 font-bold leading-none">+</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-ink-3 mt-2">
+                      ราคาขายพร้อมติดตั้ง = ค่าของ + ค่าผลิต + ค่าติดตั้ง = <b className="tabular-nums">฿{baht(result.sell.withInstall)}</b>
+                      {" "}· กำไร 100% = ขาย 2 เท่าทุน · 200% = 3 เท่า
+                    </p>
+                  </div>
+
                   {/* ค่าแรงแยก — โชว์ทุกคน (ไม่ใช่ข้อมูลทุน) เพราะเจ้าของต้องเห็นว่าแต่ละรุ่นค่าแรงไม่เท่ากัน */}
                   <div className="col-span-2 rounded-2xl px-5 py-3 bg-slate-50 border border-slate-200">
                     <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-slate-700">
