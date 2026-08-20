@@ -7,8 +7,10 @@ export const dynamic = "force-dynamic";
 type Sb = { from: (t: string) => any };
 
 // POST /api/floor-queue/pull — ดึงลูกค้าอัตโนมัติเข้าคิวงานพื้น
-//   เงื่อนไข: floor_work != 'none' AND มัดจำแล้ว (deposit_date ไม่ว่าง) AND ยังไม่อยู่ในคิว (กันซ้ำด้วย unique job_id อยู่แล้ว
-//   แต่กรองซ้ำที่นี่ก่อน insert เพื่อไม่ให้ error รก + คืนจำนวนที่เพิ่มจริงได้)
+//   เงื่อนไข: floor_work = 'jr' (JR ทำพื้นเอง เท่านั้น) AND มัดจำแล้ว (deposit_date ไม่ว่าง) AND ยังไม่อยู่ในคิว
+//   ⚠ ต้อง 'jr' อย่างเดียว — 'customer' = ผรม.ลูกค้าทำพื้นเอง JR ไม่ได้ทำ ไม่ต้องจัดคิวช่างพื้น JR
+//   (แก้ 20 ส.ค.69: เดิม != 'none' ดึง 'customer' มาด้วย = ผิด · เจ้าของทัก)
+//   กรองซ้ำที่นี่ก่อน insert เพื่อไม่ให้ error รก + คืนจำนวนที่เพิ่มจริงได้
 export const POST = withRoute(async () => {
   const ctx = await requirePermission("floor_queue", "write");
   const sb = ctx.supabase as unknown as Sb;
@@ -23,7 +25,7 @@ export const POST = withRoute(async () => {
   const { data: jobs, error: jobsErr } = await sb
     .from("jobs")
     .select("id, customer_name")
-    .neq("floor_work", "none")
+    .eq("floor_work", "jr")   // เฉพาะงานพื้นที่ JR ทำ (ไม่รวม 'customer' = ผรม.ลูกค้าทำเอง)
     .not("deposit_date", "is", null);
   if (jobsErr) throw dbError(jobsErr);
 
