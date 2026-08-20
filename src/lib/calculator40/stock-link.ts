@@ -8,6 +8,7 @@
 //     รหัสเดียวหลายแถว(แยกสี) → ใช้ราคาแถว "อบขาว" (ค่าสีคิดเป็นค่าอบ/กก. ใน engine อยู่แล้ว) · ไม่มีอบขาว = สูงสุด
 import PRICEBOOK from "./pricebook.json" with { type: "json" };
 import { PRODUCTS } from "./products.mjs";
+import { buildBoxPrices, type BoxPrices } from "./box-link.ts";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const PB: any = PRICEBOOK;
@@ -69,6 +70,8 @@ export type PriceOverride = {
   // ราคาต่อรหัสสโตร์ (JR#####) — ใช้คิด "ค่าของ" อุปกรณ์ที่ดึงรายการมาจากใบตัด
   //   ใบตัดผูก sku ไว้ครบแล้ว → คิดราคาอ่านราคาจากรหัสเดียวกัน = ของชิ้นเดียวกัน ราคาเดียวกัน
   SKUPRICE: Record<string, number>;
+  // กล่อง/ฉาก อลูเมืองทอง — ไม่มีรหัสโปรไฟล์ ผูกด้วย "ชนิด+ขนาด" แล้วแยกราคาตามสี
+  BOXPRICE: BoxPrices;
 };
 
 // ── สีจริงจากสโตร์ (เจ้าของยืนยัน 8 ส.ค.69: ยึดราคาสีตามสโตร์) ─────────────────
@@ -93,7 +96,9 @@ function rowColor(r: StockRow): string {
 
 // สร้าง "ผังราคาทับ" จากแถว stock (เทียบกับ pricebook pb) — เฉพาะราคา > 0 (กันวัสดุยังไม่ตั้งราคา = 0 ไปล้างราคาสูตร)
 export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverride {
-  const ov: PriceOverride = { GLASS: {}, ROOFMAT: {}, MOTOR: {}, STEEL: {}, EXTRA: {}, ALU: {}, PARTS: {}, ALUCODE: {}, ALUCOLOR_STOCK: {}, SKUPRICE: {} };
+  const ov: PriceOverride = { GLASS: {}, ROOFMAT: {}, MOTOR: {}, STEEL: {}, EXTRA: {}, ALU: {}, PARTS: {}, ALUCODE: {}, ALUCOLOR_STOCK: {}, SKUPRICE: {}, BOXPRICE: {} };
+  // กล่อง/ฉาก: จับคู่ด้วยชื่อ+ขนาด (สโตร์ตั้งชื่อลงตัว เช่น `กล่อง 4"x6"-Aztec gray`)
+  ov.BOXPRICE = buildBoxPrices(rows as any);
   const aluByBrand: Record<string, number> = {};
   // อลูรายเส้น: รหัสเดียวมีหลายแถว (แยกสี) → ราคาตัวตั้ง = แถว "อบขาว" ก่อน (ราคาฐานดิบ — ค่าสีคิดแยกใน engine เป็นค่าอบ/กก.)
   // ไม่มีอบขาว = ค่าต่ำสุด (ผลตรวจบัญชี: ถ้าใช้ max จะหยิบแถวสีพิเศษที่รวมค่าเคลือบแล้ว → engine บวกค่าอบซ้ำ = คิดเกิน)
@@ -149,6 +154,10 @@ export function applyPriceOverride(pb: any, ov?: PriceOverride | null): any {
     for (const c in ov.ALUCOLOR_STOCK) pb.ALUCOLOR_STOCK[c] = { ...(pb.ALUCOLOR_STOCK[c] || {}), ...ov.ALUCOLOR_STOCK[c] };
   }
   if (ov.SKUPRICE && Object.keys(ov.SKUPRICE).length) pb.SKUPRICE = { ...(pb.SKUPRICE || {}), ...ov.SKUPRICE };
+  if (ov.BOXPRICE && Object.keys(ov.BOXPRICE).length) {
+    pb.BOXPRICE = pb.BOXPRICE || {};
+    for (const k in ov.BOXPRICE) pb.BOXPRICE[k] = { ...(pb.BOXPRICE[k] || {}), ...ov.BOXPRICE[k] };
+  }
   // ธง "ราคาเส้นนี้มาจากสโตร์" — engine ใช้กัน mult คูณซ้ำ (สโตร์คิด น้ำหนัก×เรตต่อโล ให้แล้ว)
   pb.ALUCODE_FROM_STOCK = pb.ALUCODE_FROM_STOCK || {};
   for (const c in ov.ALUCODE || {}) pb.ALUCODE_FROM_STOCK[c] = true;

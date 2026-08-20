@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
+import type { BoxRow } from "@/lib/calculator40/box-audit";
 import { STATUS_LABEL, KG_STATUS_LABEL, type AuditRow, type AuditStatus, type BumpRow, type KgRow, type KgStatus, type ProductAudit } from "@/lib/calculator40/stock-audit";
 
 const TONE: Record<AuditStatus, "emerald" | "amber" | "red" | "gray"> = {
@@ -20,9 +21,10 @@ const P_TONE: Record<ProductAudit["status"], "emerald" | "amber" | "red" | "gray
   "ครบ": "emerald", "บางส่วน": "amber", "ไม่ผูกเลย": "red", "ไม่มีรายการวัสดุ": "gray",
 };
 
-export default function AuditClient({ rows, products, bump, kgRows, stockCount }:
-  { rows: AuditRow[]; products: ProductAudit[]; bump: BumpRow[]; kgRows: KgRow[]; stockCount: number }) {
-  const [view, setView] = useState<"product" | "item" | "kg">("product");
+export default function AuditClient({ rows, products, bump, kgRows, boxRows, boxExtra, stockCount }:
+  { rows: AuditRow[]; products: ProductAudit[]; bump: BumpRow[]; kgRows: KgRow[];
+    boxRows: BoxRow[]; boxExtra: { key: string; sample: string; colors: number }[]; stockCount: number }) {
+  const [view, setView] = useState<"product" | "item" | "kg" | "box">("product");
   const [sec, setSec] = useState("ทั้งหมด");
   const [st, setSt] = useState<"ทั้งหมด" | AuditStatus>("ทั้งหมด");
   const [q, setQ] = useState("");
@@ -59,6 +61,8 @@ export default function AuditClient({ rows, products, bump, kgRows, stockCount }
   const stuck = bump.filter((b) => !b.moved);
   // เส้นที่ "กดเปลี่ยนเรตต่อโลแล้วราคาไม่ขยับ" — คำถามตรง ๆ ของเจ้าของ 19 ส.ค.69
   const kgBad = kgRows.filter((r) => r.status === "no_weight" || r.status === "stale").length;
+  // กล่อง/ฉาก ที่ยังไม่เจอราคาในสโตร์ (ผูกด้วยชื่อ+ขนาด)
+  const boxBad = boxRows.filter((r) => r.status !== "ครบ").length;
   const chip = (on: boolean) =>
     "press rounded-xl px-3 py-1.5 text-xs font-semibold transition " + (on ? "bg-brand text-white shadow-brand" : "glass-soft text-ink-2");
 
@@ -115,7 +119,8 @@ export default function AuditClient({ rows, products, bump, kgRows, stockCount }
 
       {/* สลับมุมมอง — ค่าตั้งต้นคือ "รายรุ่น" เพราะเจ้าของเลือกงานจากรุ่น ไม่ใช่จากหมวดวัสดุ */}
       <div className="flex gap-2">
-        {([["product", "ดูรายรุ่นในเครื่องคิดราคา"], ["item", "ดูรายวัสดุทีละบรรทัด"], ["kg", `ราคาต่อโล → ราคาต่อเส้น${kgBad ? ` (${kgBad} เส้นต้องแก้)` : ""}`]] as const).map(([k, label]) => (
+        {([["product", "ดูรายรุ่นในเครื่องคิดราคา"], ["item", "ดูรายวัสดุทีละบรรทัด"], ["kg", `ราคาต่อโล → ราคาต่อเส้น${kgBad ? ` (${kgBad} เส้นต้องแก้)` : ""}`],
+          ["box", `กล่อง/ฉาก${boxBad ? ` (${boxBad} ขนาดยังไม่ครบ)` : ""}`]] as const).map(([k, label]) => (
           <button key={k} onClick={() => setView(k)} className={chip(view === k)}>{label}</button>
         ))}
       </div>
@@ -159,6 +164,66 @@ export default function AuditClient({ rows, products, bump, kgRows, stockCount }
               </tbody>
             </table>
           </div>
+        </Card>
+      ) : view === "box" ? (
+        <Card className="p-5">
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <h2 className="font-bold text-brand-dark">กล่อง / ฉาก อลูเมืองทอง</h2>
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นหาขนาด/รุ่น"
+              className="ml-auto glass-soft rounded-lg px-3 py-2 text-sm outline-none min-w-[180px]" />
+          </div>
+          <p className="text-xs text-ink-3 mb-3">
+            กล่อง/ฉาก ไม่มีรหัสโปรไฟล์เหมือนเส้นอลู → ระบบจับคู่ด้วย <b>ชื่อ + ขนาด</b> ที่ตั้งไว้ในสโตร์
+            (เช่น <span className="font-mono">กล่อง 4&quot;x6&quot;-Aztec gray</span>) แล้วเลือกราคาตามสีที่ลูกค้าเลือก
+            {" "}· ขนาดไหนยังไม่มีราคาในสโตร์ ระบบใช้ราคาในสูตรไปก่อน (ไม่หล่นเป็น 0)
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left bg-brand-soft text-brand-dark">
+                  <th className="p-2 rounded-l-lg">ชนิด</th><th>ขนาด</th>
+                  <th className="text-right">ราคาในสูตร</th>
+                  <th>ราคาในสโตร์ (แยกสี)</th>
+                  <th>ใช้ในรุ่น</th><th className="p-2 rounded-r-lg">สถานะ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {boxRows
+                  .filter((r) => { const kw = q.trim().toLowerCase(); return !kw || `${r.key} ${r.usedBy.join(" ")} ${r.lines.join(" ")}`.toLowerCase().includes(kw); })
+                  .map((r) => (
+                  <tr key={r.key} className="border-t border-line/60">
+                    <td className="p-2">{r.kind}</td>
+                    <td className="font-mono text-xs">{r.size}</td>
+                    <td className="px-2 text-right tabular-nums text-ink-3">{r.formulaPrice ? baht(r.formulaPrice) : "สูตร"}</td>
+                    <td className="px-2 text-xs">
+                      {r.colors.length
+                        ? r.colors.map((c) => (
+                            <span key={c.color} className="inline-block mr-2 whitespace-nowrap">
+                              {c.color} <b className="tabular-nums">{baht(c.price)}</b>
+                            </span>
+                          ))
+                        : <span className="text-ink-3">— ยังไม่เจอในสโตร์</span>}
+                    </td>
+                    <td className="px-2 text-xs text-ink-3">{r.usedBy.join(" · ")}</td>
+                    <td className="p-2">
+                      <Badge tone={r.status === "ครบ" ? "emerald" : r.status === "มีบางสี" ? "amber" : "red"}>{r.status}</Badge>
+                    </td>
+                  </tr>
+                ))}
+                {!boxRows.length && (
+                  <tr><td colSpan={6} className="p-4 text-center text-ink-3">สูตรยังไม่มีบรรทัดกล่อง/ฉากที่ผูกได้</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          {boxExtra.length > 0 && (
+            <div className="mt-4 text-xs text-ink-3 bg-line/20 border border-line rounded-lg px-3 py-2">
+              ⓘ ในสโตร์มีกล่อง/ฉากอีก {boxExtra.length} ขนาดที่สูตรยังไม่ได้เรียกใช้ —
+              ถ้าคิดว่าควรใช้ แปลว่าสูตรอาจพิมพ์ขนาดไม่ตรง:
+              <span className="font-mono"> {boxExtra.slice(0, 12).map((b) => b.key.replace("|", " ")).join(" · ")}</span>
+              {boxExtra.length > 12 ? ` … อีก ${boxExtra.length - 12}` : ""}
+            </div>
+          )}
         </Card>
       ) : view === "kg" ? (
         <Card className="p-5">
