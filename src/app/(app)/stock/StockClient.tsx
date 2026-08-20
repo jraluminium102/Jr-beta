@@ -9,6 +9,8 @@ import type { StockItem, StockMove, StockMoveType, StockCategory, StockPrice } f
 import { calcLink, isAluCode } from "@/lib/calculator40/stock-link";
 import { isInCutlist } from "@/lib/cutlist/codes";
 import { colorFromName } from "@/lib/cutlist/stock-match";
+import { stockDisplayName } from "@/lib/stock/display-name";
+
 import ImageZoom from "@/components/ImageZoom";
 import JobPicker, { type StockJob } from "@/components/stock/JobPicker";
 import MergePanel from "@/components/stock/MergePanel";
@@ -66,7 +68,7 @@ export default function StockClient({
     .filter((c) => (boqOnly ? isInCutlist(c.sku) : true))
     .filter((c) => (dupOnly ? isDupHint(c) : true))
     .filter((c) => (catFilter ? c.category_id === catFilter : true))
-    .filter((c) => [c.name, c.sku, c.category].join(" ").toLowerCase().includes(q.toLowerCase()));
+    .filter((c) => [c.name, c.color, c.sku, c.category].join(" ").toLowerCase().includes(q.toLowerCase()));
 
   // หลังรวมรายการซ้ำ: เอาตัวที่ลบออกจากลิสต์ + โหลดตัวหลักใหม่ (ชื่อ/รหัส/ราคาอาจเปลี่ยน)
   function afterMerge(removedIds: number[], keepId: number) {
@@ -86,7 +88,7 @@ export default function StockClient({
     const esc = (v: unknown) => { const s = String(v ?? ""); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
     const header = ["id", "รหัส", "ชื่อ", "หมวด", "ร้าน", "คงเหลือในระบบ", "หน่วย", "จำนวนนับใหม่"];
     const lines = [header.join(",")];
-    for (const c of rows) lines.push([c.id, c.sku, c.name, c.category, c.supplier, c.qty_on_hand, c.unit, ""].map(esc).join(","));
+    for (const c of rows) lines.push([c.id, c.sku, stockDisplayName(c), c.category, c.supplier, c.qty_on_hand, c.unit, ""].map(esc).join(","));
     const csv = "﻿" + lines.join("\r\n"); // BOM ให้ Excel อ่านไทยถูก
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -216,7 +218,7 @@ export default function StockClient({
                       <div className="font-semibold text-sm truncate flex items-center gap-1">
                         {calcLink(c).linked && <span title="ราคาลิงค์กับคิดราคา 4.0" className="shrink-0">🧮</span>}
                         {isInCutlist(c.sku) && <span title="ใช้ในใบตัด/ถอด BOQ (หักสต็อกตอนตัด)" className="shrink-0">✂️</span>}
-                        <span className="truncate">{c.name}</span>
+                        <span className="truncate">{stockDisplayName(c)}</span>
                       </div>
                       {low && (active
                         ? <span className="text-xs font-semibold bg-white/25 rounded-full px-2 py-0.5 shrink-0">ใกล้หมด</span>
@@ -321,7 +323,7 @@ function ItemDetail({
           <div className="min-w-0">
             {/* ชื่อ + สี — โชว์สีครั้งเดียว: ถ้าชื่อมีสีอยู่แล้วใช้ชื่อตามเดิม · ถ้าไม่มีแต่ช่องสีตั้งไว้ ต่อสีท้ายชื่อ (กันซ้ำ) */}
             <h3 className="text-lg font-bold text-brand-dark truncate">
-              {colorFromName(item.name, item.sku) || !item.color ? item.name : `${item.name} ${item.color}`}
+              {stockDisplayName(item)}
             </h3>
             <p className="text-sm text-ink-3 truncate">
               {item.category || "—"}{item.sku ? ` · ${item.sku}` : ""}{item.supplier ? ` · ร้าน ${item.supplier}` : ""}
