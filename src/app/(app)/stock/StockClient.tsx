@@ -366,10 +366,31 @@ function ItemDetail({
         </div>
         {canViewCost && (
           <div className="rounded-2xl px-5 py-4 glass-soft">
-            <div className="text-xs font-medium text-ink-3">ต้นทุน/หน่วย{item.is_weight_based ? " (คิดต่อโล)" : ""}</div>
+            <div className="text-xs font-medium text-ink-3">ต้นทุน/หน่วย</div>
             <div className="text-3xl font-bold leading-tight text-brand-dark">฿{baht(item.unit_cost)}</div>
-            {item.is_weight_based && (
-              <div className="text-xs text-ink-3 mt-1">{baht(item.price_per_kg)} ฿/กก. × {fmt3(item.weight_per_unit)} กก./{item.unit}</div>
+            {/* บอกให้ชัดว่าตัวนี้คิดยังไง — ต่อโล หรือตั้งราคาต่อหน่วยตรง (เจ้าของสั่ง 19 ส.ค.69) */}
+            {item.is_weight_based ? (
+              <div className="text-xs mt-1.5">
+                <span className="inline-flex items-center rounded-full px-2 py-0.5 font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  คิดต่อโล
+                </span>
+                <span className="text-ink-3 ml-2">
+                  {baht(item.price_per_kg)} ฿/กก. × {fmt3(item.weight_per_unit)} กก./{item.unit}
+                </span>
+                <div className="text-ink-3 mt-1">เปลี่ยนเรตต่อโลเมื่อไร ราคาต่อ{item.unit}คิดใหม่ให้เอง</div>
+              </div>
+            ) : (
+              <div className="text-xs mt-1.5">
+                <span className="inline-flex items-center rounded-full px-2 py-0.5 font-semibold bg-line/40 text-ink-2 border border-line">
+                  ตั้งราคาต่อ{item.unit}ตรง
+                </span>
+                <div className="text-ink-3 mt-1">
+                  ตัวนี้ยังไม่ได้คิดต่อโล — แก้ราคาต้องพิมพ์ราคาต่อ{item.unit}เอง
+                  {Number(item.weight_per_unit) > 0
+                    ? ` (มีน้ำหนัก ${fmt3(item.weight_per_unit)} กก. แล้ว เปลี่ยนเป็นคิดต่อโลได้เลย)`
+                    : ` (ยังไม่มีน้ำหนักต่อ${item.unit} ต้องใส่น้ำหนักก่อนถึงจะคิดต่อโลได้)`}
+                </div>
+              </div>
             )}
             <div className="text-xs text-ink-3 mt-0.5">มูลค่าคงคลัง ≈ ฿{baht(Number(item.qty_on_hand) * Number(item.unit_cost))}</div>
           </div>
@@ -611,6 +632,38 @@ function MoveForm({ item, canViewCost, onDone }: { item: StockItem; canViewCost:
   );
 }
 
+/** สลับ "คิดต่อโล ↔ ตั้งราคาต่อหน่วยตรง" — ราคาต่อหน่วยไม่ขยับ + ลงประวัติราคาให้ครบ */
+function ModeSwitch({ item, onDone }: { item: StockItem; onDone: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const toWeight = !item.is_weight_based;
+  const kg = Number(item.weight_per_unit) || 0;
+  const blocked = toWeight && kg <= 0;   // ไม่มีน้ำหนัก = เปลี่ยนเป็นต่อโลไม่ได้ (ราคาจะกลายเป็น 0)
+
+  async function go() {
+    const msg = toWeight
+      ? `เปลี่ยน "${item.name}" เป็นคิดต่อโล?\n\nเรตตั้งต้นคิดจากราคาปัจจุบัน ÷ ${kg} กก. → ราคาต่อ${item.unit}เท่าเดิม\nต่อไปแก้ที่ "เรตต่อโล" แล้วราคาต่อ${item.unit}คิดใหม่ให้เอง`
+      : `เปลี่ยน "${item.name}" กลับเป็นตั้งราคาต่อ${item.unit}ตรง?\n\nราคาเท่าเดิม ต่อไปต้องพิมพ์ราคาต่อ${item.unit}เอง`;
+    if (!confirm(msg)) return;
+    setBusy(true);
+    const res = await fetch(`/api/stock/${item.id}/pricing-mode`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ weight_based: toWeight }),
+    });
+    const json = await res.json().catch(() => null);
+    setBusy(false);
+    if (!res.ok) { alert(json?.error ?? "เปลี่ยนไม่สำเร็จ"); return; }
+    onDone();
+  }
+
+  return (
+    <button onClick={go} disabled={busy || blocked}
+      title={blocked ? `ต้องใส่น้ำหนักต่อ${item.unit}ก่อน ถึงจะเปลี่ยนเป็นคิดต่อโลได้` : undefined}
+      className="press text-xs font-semibold text-ink-2 glass-soft rounded-lg px-2.5 py-1.5 disabled:opacity-40">
+      {busy ? "กำลังเปลี่ยน…" : toWeight ? "⚖️ เปลี่ยนเป็นคิดต่อโล" : `เปลี่ยนเป็นราคาต่อ${item.unit}ตรง`}
+    </button>
+  );
+}
+
 // ── ต้นทุน/ราคา + ประวัติราคา ──
 function PriceSection({ item, prices, canPrice, isAdmin, onDone }: { item: StockItem; prices: StockPrice[]; canPrice: boolean; isAdmin: boolean; onDone: () => void }) {
   const [open, setOpen] = useState(false);
@@ -648,9 +701,12 @@ function PriceSection({ item, prices, canPrice, isAdmin, onDone }: { item: Stock
       <div className="flex items-center justify-between">
         <div className="text-sm font-semibold text-brand-dark">ต้นทุน / ประวัติราคา</div>
         {canPrice && (
-          <button onClick={() => setOpen((v) => !v)} className="press text-xs font-semibold text-brand-dark glass-soft rounded-lg px-2.5 py-1.5">
-            + อัปเดตราคา
-          </button>
+          <div className="flex gap-2">
+            <ModeSwitch item={item} onDone={onDone} />
+            <button onClick={() => setOpen((v) => !v)} className="press text-xs font-semibold text-brand-dark glass-soft rounded-lg px-2.5 py-1.5">
+              + อัปเดตราคา
+            </button>
+          </div>
         )}
       </div>
       {calcLink(item).linked && (

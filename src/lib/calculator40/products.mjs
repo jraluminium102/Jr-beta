@@ -387,12 +387,14 @@ export const PRODUCTS = {
     defaults: { w: 150, h: 200, p: 2 }, defGlass: 'เขียว 6มม.', minP: 2, maxP: 4,
     vars: { SILL: "spec.pcsill==='ไม่มีธรณี'?0:1" },
     alu: [
-      { name: 'วงกบ 3 ด้าน F7859', price: 1100, kg: 6.11111, seg: 'W+2*H', count: '1' },
-      { name: 'ธรณี F7938B', price: 1400, kg: 7.77778, seg: 'W', count: 'SILL' },
-      { name: 'ตบธรณี F7960', price: 575, kg: 3.19444, seg: 'W', count: 'SILL' },
+      // ผูกรหัสสโตร์ (19 ส.ค.69) — ชื่อบรรทัดมีรหัสอยู่แล้ว แค่ยังไม่ได้ใส่ช่อง code
+      //   น้ำหนักยึดชีต "น้ำหนักโปรไฟล์" (ชั่งจริง) · 3 รหัสที่ยังไม่มีในไฟล์ (F7863/7864/F7945c) รอเจ้าของ
+      { name: 'วงกบ 3 ด้าน F7859', code: 'F7859', price: 1100, kg: 5.61, seg: 'W+2*H', count: '1' },
+      { name: 'ธรณี F7938B', code: 'F7938B', price: 1400, kg: 7.77778, seg: 'W', count: 'SILL' },
+      { name: 'ตบธรณี F7960', code: 'F7960', price: 575, kg: 3.056, seg: 'W', count: 'SILL' },
       { name: 'เสริมใต้บาน F7863', price: 435, kg: 2.41667, seg: 'W', count: '1-SILL' },
       { name: 'กรอบประตู 7864', price: 1995, kg: 11.08333, seg: '2*P*H+2*W', count: '1' },
-      { name: 'คิ้ว F7935', price: 360, kg: 2, seg: '2*P*H+2*W', count: '1' },
+      { name: 'คิ้ว F7935', code: 'F7935', price: 360, kg: 2.424, seg: '2*P*H+2*W', count: '1' },
       { name: 'เปิดกลาง F7945c', price: 775, kg: 4.30556, seg: 'H', count: "form==='แบ่ง 4'?1:0" },
     ],
     glass: 'W*H',
