@@ -27,7 +27,7 @@ export const SKU_PACK: Record<string, { per: number; note: string }> = {
 
 /** ตัวเลือกมือจับที่โผล่ในหน้าคิดราคา (ชุดเดียวกับใบตัด — ห้ามแยกรายการกัน) */
 export const HANDLE_FIELDS = [
-  { key: "handleBrand", label: "ยี่ห้อมือจับ", choices: [...HANDLE_BRANDS], def: "เมโทร" },
+  { key: "handleBrand", label: "ยี่ห้อมือจับ", choices: [...HANDLE_BRANDS], def: "Align" },
   { key: "handleColor", label: "สีมือจับ", choices: [...HANDLE_COLORS], def: "อบขาว" },
   { key: "handleL", label: "มือจับ ซ้าย", choices: [...HANDLE_TYPES], def: "กุญแจ+ล็อค" },
   { key: "handleR", label: "มือจับ ขวา", choices: [...HANDLE_TYPES], def: "ล็อค+ดัมมี่" },

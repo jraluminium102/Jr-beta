@@ -80,8 +80,8 @@ const isPlug = (rail: string) => rail === "3รางเสียบ"; // 3ร�
  */
 export const honkOf = (o: CutInput) => !!o.honk || Number(o.H) > 240;
 // มือจับเริ่มต้น (บานเลื่อน/ประตู) — ตรง default ในไฟล์ Excel
-const HANDLE_DEF_LR = { handleBrand: "เมโทร", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค", handleR: "ล็อค+ดัมมี่" };
-const HANDLE_DEF_L = { handleBrand: "เมโทร", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค" };
+const HANDLE_DEF_LR = { handleBrand: "Align", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค", handleR: "ล็อค+ดัมมี่" };
+const HANDLE_DEF_L = { handleBrand: "Align", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค" };
 
 // ── ระบบมุ้ง SMS เลื่อน (FREE/CENTER/TOW) — พอร์ต JR_SMS_เลื่อนอิสระ_รวม.xlsx (v2) ──
 //   มุ้ง: "ไม่มี" | "เฟรมเล็ก" (เส้น B30006 เสริม ไม่มีมือจับ/ล้อ) | "เฟรมใหญ่" (เต็มบาน ใช้อลูเดียวกับโครงหลัก + มีมือจับ/ล้อ)
@@ -613,7 +613,7 @@ export const FUJI_SLIDE: CutSpec = {
   id: "fuji_slide", name: "FUJI บานเลื่อนสลับ (2/3 ราง · นอก/ใน)", stockLen: 640,
   rails: ["2ราง", "3ราง"],
   opts: [{ key: "work", label: "งาน", choices: ["ภายนอก", "ภายใน"] }, ...HANDLE_OPTS_LR],
-  defaults: { W: 350, H: 240, N: 2, rail: "2ราง", honk: false, work: "ภายนอก", handleBrand: "เมโทร", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค", handleR: "ล็อค+ดัมมี่" },
+  defaults: { W: 350, H: 240, N: 2, rail: "2ราง", honk: false, work: "ภายนอก", handleBrand: "Align", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค", handleR: "ล็อค+ดัมมี่" },
   profiles: [
     { name: "เฟรมข้าง", code: "F7978", len: (o) => o.H, qty: () => 2 },
     // งานนอก = F7976 บน+ล่าง 2 เส้น · งานใน = บน F7976 1 เส้น + ล่าง F7902 (ตัวเตี้ย) 1 เส้น
@@ -674,7 +674,7 @@ const fcSash = (o: CutInput) => (o.W - fc(o).sd) / o.N + fc(o).sa;
 export const FUJI_SLIDE_CENTER: CutSpec = {
   id: "fuji_slide_center", name: "FUJI บานเลื่อนเปิดคู่กลาง (4 / 6 บาน · นอก/ใน)", stockLen: 640, rails: [],
   opts: [{ key: "work", label: "งาน", choices: ["ภายนอก", "ภายใน"] }, ...HANDLE_OPTS_LR],
-  defaults: { W: 600, H: 240, N: 4, work: "ภายนอก", handleBrand: "เมโทร", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค", handleR: "ล็อค+ดัมมี่" },
+  defaults: { W: 600, H: 240, N: 4, work: "ภายนอก", handleBrand: "Align", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค", handleR: "ล็อค+ดัมมี่" },
   profiles: [
     { name: "เฟรมข้าง", code: "F7978", len: (o) => o.H, qty: () => 2 },
     // เฟรมบน = F7976 เสมอ · เฟรมล่าง: งานนอก F7976 (ธรณีกันน้ำ) · งานใน F7902 (ตัวเตี้ย)
@@ -863,7 +863,7 @@ export const PC_DOOR: CutSpec = {
     { key: "sill", label: "ธรณี", choices: ["มีธรณี", "ไม่มีธรณี"] },
     ...HANDLE_OPTS_LR,
   ],
-  defaults: { W: 300, H: 240, N: 2, rail: "", honk: false, beam: "1×4", split: "แบ่ง 2", sill: "มีธรณี", handleBrand: "เมโทร", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค", handleR: "ล็อค+ดัมมี่" },
+  defaults: { W: 300, H: 240, N: 2, rail: "", honk: false, beam: "1×4", split: "แบ่ง 2", sill: "มีธรณี", handleBrand: "Align", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค", handleR: "ล็อค+ดัมมี่" },
   profiles: [
     { name: "คาน", code: (o) => boxCode(o.beam ?? "1×4"), len: (o) => o.W, qty: () => 1, note: "ตัดเท่าช่อง" },
     { name: "ฝาครอบรางบน", code: "-", len: (o) => o.W - 3.3 - 2.5, qty: () => 1 },
@@ -1791,7 +1791,7 @@ export const TOPRAIL_FRAME: CutSpec = {
     { key: "beam", label: "คาน (กล่อง)", choices: ["1×1.6", "1.6×1.6", "1×3", "2×4", "4×4", "2×4+4×4"] },
     ...HANDLE_OPTS_LR,
   ],
-  defaults: { W: 360, H: 240, N: 2, rail: "", honk: false, sys: "SMS", sashMode: "อิสระ", fit: "ยัดในช่อง", handle: "ฝัง", beam: "2×4", handleBrand: "เมโทร", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค", handleR: "ล็อค+ดัมมี่" },
+  defaults: { W: 360, H: 240, N: 2, rail: "", honk: false, sys: "SMS", sashMode: "อิสระ", fit: "ยัดในช่อง", handle: "ฝัง", beam: "2×4", handleBrand: "Align", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค", handleR: "ล็อค+ดัมมี่" },
   profiles: [
     // คานผสม "2×4+4×4" ห้ามเข้า boxCode ตรงๆ (ได้รหัสผี กล่อง 2"x4+4") → แตก 2 โปรไฟล์เหมือน SlimLux
     { name: "คานรับราง", code: (o) => beamBoxCodes(o.beam ?? "2×4")[0] ?? "-", len: (o) => o.W, qty: () => 1, note: "ตัดเท่าช่อง" },
