@@ -20,6 +20,7 @@ import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
 import { computeCutList } from "../src/lib/cutlist/engine.ts";
 import { CUT_SPEC_BY_ID } from "../src/lib/cutlist/products.ts";
 import { cutHardwareLines } from "../src/lib/calculator40/hardware-from-cutlist.ts";
+import { buildPriceOverride, applyPriceOverride } from "../src/lib/calculator40/stock-link.ts";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PB = JSON.parse(fs.readFileSync(path.join(ROOT, "src/lib/calculator40/pricebook.json"), "utf8"));
@@ -141,6 +142,44 @@ console.log("\n═══ ③b โหนกเกี่ยว ออโต้ต�
     compareCut(PB, { ...IN, h: 200, cut: { ...CUT, honk: true } }).alu.find((a) => a.code === 'B20010')?.cutBars > 0, '');
   ok('600×300 3 บาน — อลูตรงกันทุกรหัส (เคสที่เจ้าของเจอ)',
     at(300).alu.every((a) => a.status === 'ตรง'), at(300).alu.filter((a) => a.status !== 'ตรง').map((a) => `${a.code}:${a.status}`).join(','));
+}
+
+// ── ③c SMS ปิดจบ: คิดราคา = ใบตัด ทุกรูปแบบ × ทุกราง (เจ้าของเคาะ 19 ส.ค.69) ──
+//   ① ตบปิดรางเตี้ย B20050 = 2 เส้นคงที่ (ตามใบตัด ไม่ใช่ตามจำนวนบาน)
+//   ② เปิดคู่กลาง ต้องมีชนกลาง B20046 1 เส้น (เดิมคิดราคาไม่คิดเงิน = ขาดของ)
+//   ③ ตบรางล้อ F7994 คิดตาม "ร่องราง" (อิสระ/สลับ/ลากจูง = จำนวนบาน · เปิดคู่กลาง = 2)
+//      และรางเตี้ยไม่ใช้ F7994 เลย (ใช้ B20050 แทน — เจ้าของยืนยัน 8 ส.ค.69)
+console.log("\n═══ ③c SMS บานเลื่อน — คิดราคา = ใบตัด ทุกเคส ═══");
+{
+  const SK = ["JR00576","JR00368","JR00369","JR00370","JR00478","JR00479","JR00476",
+    "JR00475","JR00477","JR00864","JR00863","JR00794","JR00589","JR00485","JR00504"];
+  const pbFull = applyPriceOverride(JSON.parse(JSON.stringify(PB)),
+    buildPriceOverride(SK.map((s) => ({ name: s, sku: s, unit_cost: 100 })), PB));
+  let bad = 0, n = 0;
+  for (const [form, p] of [["อิสระ", 3], ["อิสระ", 2], ["สลับ", 3], ["ลากจูง", 3], ["เปิดคู่กลาง", 4]])
+    for (const rail of ["รางกันน้ำ", "รางเตี้ย (งานใน)"])
+      for (const h of [200, 300]) {
+        n++;
+        const r = compareCut(pbFull, { ...IN, p, h, form, spec: { bottomrail: rail } });
+        const diff = [...r.alu, ...r.hardware].filter((x) => x.status !== "ตรง");
+        if (diff.length) { bad++; console.log(`   ${form}(${p}) ${rail} สูง${h}: ${diff.map((d) => (d.code || d.sku) + ":" + d.status).join(", ")}`); }
+      }
+  ok(`ทุกรูปแบบ × ทุกราง × 2 ความสูง (${n} เคส) คิดราคาตรงใบตัดหมด`, bad === 0, `ไม่ตรง ${bad} เคส`);
+
+  const at = (form, p, rail) => compareCut(pbFull, { ...IN, p, form, spec: { bottomrail: rail } });
+  const bar = (r, c) => r.alu.find((a) => a.code === c);
+  ok("รางเตี้ย: ไม่ใช้ตบรางล้อ F7994 ทั้งสองฝั่ง", !bar(at("อิสระ", 3, "รางเตี้ย (งานใน)"), "F7994"), "");
+  ok("รางเตี้ย: ตบปิดราง B20050 = 2 เส้น (ตามใบตัด)",
+    bar(at("อิสระ", 3, "รางเตี้ย (งานใน)"), "B20050")?.calcBars === 2, "");
+  ok("รางกันน้ำ: ไม่มี B20050", !bar(at("อิสระ", 3, "รางกันน้ำ"), "B20050"), "");
+  ok("อิสระ 3 บาน: ตบรางล้อ 3 เส้น (ตามร่องราง)",
+    bar(at("อิสระ", 3, "รางกันน้ำ"), "F7994")?.calcBars === 3, "");
+  ok("ลากจูง 3 บาน: ตบรางล้อ 3 เส้น (ไม่ใช่ 2 ตามบานเลื่อน)",
+    bar(at("ลากจูง", 3, "รางกันน้ำ"), "F7994")?.calcBars === 3, "");
+  ok("เปิดคู่กลาง: ตบรางล้อ 2 เส้น", bar(at("เปิดคู่กลาง", 4, "รางกันน้ำ"), "F7994")?.calcBars === 2, "");
+  ok("เปิดคู่กลาง: มีชนกลาง B20046 1 เส้น (เดิมคิดราคาไม่คิดเงิน)",
+    bar(at("เปิดคู่กลาง", 4, "รางกันน้ำ"), "B20046")?.calcBars === 1, "");
+  ok("รูปแบบอื่นต้องไม่มีชนกลาง", !bar(at("อิสระ", 3, "รางกันน้ำ"), "B20046"), "");
 }
 
 console.log("\n═══ ④ ห้ามมีสูตร/ราคาฝังในหน้านี้ (กันอัปเดตแยกกัน) ═══");
