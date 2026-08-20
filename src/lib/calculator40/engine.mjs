@@ -191,7 +191,10 @@ export function computeCost(PB, prod, opt) {
       qty: bars, unit: 'เส้น', unitPrice: round2(price * m), amount: round2(amount),
       // ความยาวที่ต้องตัดจริง + จำนวนชิ้น — หน้าเทียบ "คิดราคา ↔ ใบตัด" ใช้ตัวนี้เทียบ
       //   (เทียบ "จำนวนเส้น" ตรง ๆ ไม่ได้แล้ว: คิดราคานับแบบไฟล์ ÷6.4+เศษ · ใบตัดนับเส้นเต็ม)
-      lenM: round2(seg * count), pieces: count });
+      lenM: round2(seg * count), pieces: count,
+      // ไฟล์ถอดทุนเขียนบางบรรทัดเป็น "จำนวนเส้นเต็ม" ไม่ใช่จำนวนชิ้น (seg = ความยาวเส้นพอดี)
+      //   บรรทัดพวกนี้เอาไปเทียบ "ชิ้น" กับใบตัดไม่ได้ — หน้าเทียบจะขึ้นว่า 'นับคนละหน่วย'
+      barCounted: Math.abs(seg - stockLen) < 1e-9 });
   }
   // ค่าอบสี (อลูเท่านั้น)
   let bakeCost = 0, openOven = 0;
