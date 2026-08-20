@@ -90,7 +90,7 @@ const ANCHORS = [
   // ── รุ่นใหม่ (Wave 1+2) — subagent self-verify diff≈0 ──
   { id: 'eseries', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 19026.4 },
   { id: 'velora', in: { w: 220, h: 200, p: 1, form: 'เดี่ยว', color: 'sahara', glassType: 'เทมเปอร์ใส 6มม.' }, cost: 7111.6 },
-  { id: 'pcdoor', in: { w: 150, h: 200, p: 2, form: 'แบ่ง 2' }, cost: 11403 },
+  { id: 'pcdoor', in: { w: 150, h: 200, p: 2, form: 'แบ่ง 2' }, cost: 11665.2 },
   { id: 'banyok', in: { w: 100, h: 50, p: 1, form: 'เดี่ยว' }, cost: 7962 },
   { id: 'fold_euro', in: { w: 180, h: 280, p: 2, form: '2บาน: 2-0 พับข้างเดียว' }, cost: 18270.66, labor: 'baseOnly' },
   { id: 'banklet', in: { w: 300, h: 150, p: 2, form: 'นอน' }, cost: 9842.8 },
@@ -119,7 +119,7 @@ const ANCHORS150 = [
   { id: 'velora', in: { p: 2, form: 'เดี่ยว', color: 'white' }, cost: 5469.55 },      // สีขาว = ต้องมีค่าอบเรตเทา (rawAlu)
   { id: 'velora', in: { p: 2, form: 'เดี่ยว', color: 'sahara' }, cost: 5469.55 },     // เทา = เท่ากันเป๊ะตามสูตรชีต
   { id: 'open_door', in: { p: 2, form: 'มีธรณี' }, cost: 12077.2 },
-  { id: 'pcdoor', in: { p: 1, form: 'แบ่ง 2', spec: { pcsill: 'มีธรณี', pcsoft: 'ใส่' } }, cost: 8474 },
+  { id: 'pcdoor', in: { p: 1, form: 'แบ่ง 2', spec: { pcsill: 'มีธรณี', pcsoft: 'ใส่' } }, cost: 8642.9 },
   { id: 'awning', in: { p: 1, form: 'อิสระ' }, cost: 6016.4 },
   { id: 'banyok', in: { p: 1, form: 'เดี่ยว' }, cost: 8424 },
   { id: 'fixed', in: { p: 1, form: 'กระจกล้วน' }, cost: 4004 },
