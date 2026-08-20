@@ -116,8 +116,8 @@ const ANCHORS150 = [
   { id: 'sms_slide', in: { p: 2, form: 'อิสระ' }, cost: 9158.25 },   // 9,190.85 − 285 (ยึดราคาสี/สโตร์)
   { id: 'euro_slide', in: { p: 2, form: 'อิสระ' }, cost: 13081.75 },
   { id: 'eseries', in: { p: 2, form: 'อิสระ' }, cost: 12684.85 },
-  { id: 'velora', in: { p: 2, form: 'เดี่ยว', color: 'white' }, cost: 5469.55 },      // สีขาว = ต้องมีค่าอบเรตเทา (rawAlu)
-  { id: 'velora', in: { p: 2, form: 'เดี่ยว', color: 'sahara' }, cost: 5469.55 },     // เทา = เท่ากันเป๊ะตามสูตรชีต
+  { id: 'velora', in: { p: 2, form: 'เดี่ยว', color: 'white' }, cost: 5919.55 },      // สีขาว = ต้องมีค่าอบเรตเทา (rawAlu)
+  { id: 'velora', in: { p: 2, form: 'เดี่ยว', color: 'sahara' }, cost: 5919.55 },     // เทา = เท่ากันเป๊ะตามสูตรชีต
   { id: 'open_door', in: { p: 2, form: 'มีธรณี' }, cost: 12077.2 },
   { id: 'pcdoor', in: { p: 1, form: 'แบ่ง 2', spec: { pcsill: 'มีธรณี', pcsoft: 'ใส่' } }, cost: 8642.9 },
   { id: 'awning', in: { p: 1, form: 'อิสระ' }, cost: 6016.4 },
