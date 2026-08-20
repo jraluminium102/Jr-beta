@@ -152,19 +152,25 @@ export default function CompareClient({ pb, stockCount }: { pb: any; stockCount:
             </div>
             <p className="mt-2 text-xs text-ink-3">
               น้ำหนักอลูที่เข้ากองคิดค่าอบ {n1(r.totals.aluKg)} กก. ·
-              เส้นรวม คิดราคา <b>{r.totals.calcAluBars}</b> เส้น · ใบตัด <b>{r.totals.cutBarsByCode}</b> เส้น ·
+              เส้นรวม คิดราคา <b>{n1(r.totals.calcAluBars)}</b> เส้น · ใบตัด <b>{r.totals.cutBarsByCode}</b> เส้น ·
               ค่าแรง ผลิต ฿{baht(r.totals.laborProd)} + ติดตั้ง ฿{baht(r.totals.laborInstall)}
             </p>
           </Card>
 
           {/* ① อลูรายเส้น */}
           <Card className="p-5">
-            <h2 className="font-bold text-brand-dark mb-2">① อลูรายเส้น — จำนวนเส้นตรงกันไหม</h2>
+            <h2 className="font-bold text-brand-dark mb-2">① อลูรายเส้น — จำนวนชิ้นตรงกันไหม</h2>
+            <p className="text-xs text-ink-3 mb-2">
+              ดู <b>ชิ้น</b> เป็นหลัก — ของที่ช่างตัดจริงกี่ท่อน คิดราคาต้องคิดเงินเท่านั้นท่อน ·
+              ช่อง <b>เส้น</b> ไม่ต้องตรงกัน (คิดราคานับแบบไฟล์ถอดทุน = ยาวรวม ÷ 6.4 + เศษ 30% · ใบตัดนับเส้นเต็มที่หยิบมาตัด)
+            </p>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left bg-brand-soft text-brand-dark">
                     <th className="p-2 rounded-l-lg">รหัส</th><th>ชื่อ</th>
+                    <th className="text-right">คิดราคา<br /><span className="font-normal text-[11px]">ชิ้น</span></th>
+                    <th className="text-right">ใบตัด<br /><span className="font-normal text-[11px]">ชิ้น</span></th>
                     <th className="text-right">คิดราคา<br /><span className="font-normal text-[11px]">เส้น</span></th>
                     <th className="text-right">ใบตัด<br /><span className="font-normal text-[11px]">เส้น</span></th>
                     <th className="text-right">฿/เส้น</th><th className="text-right">กก./เส้น</th>
@@ -178,8 +184,10 @@ export default function CompareClient({ pb, stockCount }: { pb: any; stockCount:
                     <tr key={(a.code || a.name) + i} className="border-t border-line/60">
                       <td className="p-2 font-mono text-xs">{a.code || "—"}</td>
                       <td className="text-xs">{a.name}</td>
-                      <td className={cell + " text-right font-semibold"}>{a.calcBars || "—"}</td>
-                      <td className={cell + " text-right font-semibold"}>{a.cutBars || "—"}</td>
+                      <td className={cell + " text-right font-semibold"}>{a.calcPieces || "—"}</td>
+                      <td className={cell + " text-right font-semibold"}>{a.cutPieces || "—"}</td>
+                      <td className={cell + " text-right text-ink-3"}>{a.calcBars ? n1(a.calcBars) : "—"}</td>
+                      <td className={cell + " text-right text-ink-3"}>{a.cutBars || "—"}</td>
                       <td className={cell + " text-right"}>{a.calcPricePerBar ? baht(a.calcPricePerBar) : "—"}</td>
                       <td className={cell + " text-right"}>{a.kgPerBar ? n1(a.kgPerBar) : "—"}</td>
                       <td className={cell + " text-right"}>{a.bahtPerKg ? baht(a.bahtPerKg) : "—"}</td>

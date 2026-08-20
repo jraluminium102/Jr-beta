@@ -22,6 +22,8 @@ const SLIDE_VARS = {
   //   รางเตี้ย (งานใน)   = เฟรมล่าง B20047 + ตบปิดรางเตี้ย B20050
   //   ⚠ ของเดิมเลือกรางแล้ววัสดุไม่เปลี่ยนเลย (เป็นแค่ข้อความ) → รางเตี้ยคิดราคาเฟรมล่างกันน้ำ แพงเกิน 1,245/เส้น
   LOWRAIL: "((spec&&spec.bottomrail)||'').indexOf('รางเตี้ย')>=0 ? 1 : 0",
+  // ยางรูน้ำ/วาวรูน้ำ — จำนวนตามใบตัด: 2 อัน แล้วเฟรมล่างเกิน 150 ซม. เพิ่มทุก 50 ซม.
+  DRAIN: '2 + Math.max(0, Math.ceil((W*100 - 4.2 - 150) / 50))',
 };
 // ── ค่าคงที่ที่ใช้ซ้ำหลายรุ่น (รวมไว้ที่เดียว · แก้ครั้งเดียวมีผลทุกรุ่น) ──
 const CF_EXPR = "mult*((({white:1,sahara:1.5208,woodStock:1.5859,special:1.9010,woodSpecial:1.9896})[color])||1)";   // ปัจจัยสีกล่อง (R3.9)
@@ -57,7 +59,7 @@ export const PRODUCTS = {
 
   // ═══════════════════════ G1 บาน ═══════════════════════
   sms_slide: {
-    id: 'sms_slide', group: 1, name: 'บานเลื่อน SMS', brand: 'SMS', laborKey: 'บานเลื่อน SMS',
+    id: 'sms_slide', aluWaste: true, group: 1, name: 'บานเลื่อน SMS', brand: 'SMS', laborKey: 'บานเลื่อน SMS',
     // saleName = ชื่อบรรยายลงใบเสนอราคา ({form} = รูปแบบที่เลือก เช่น ลากจูง) · name = ชื่อสั้นในลิสต์เลือกรุ่น
     saleName: 'ประตูบานเลื่อน{form} รางล่าง (รุ่นกันน้ำ)',
     icon: '🪟', defForm: 'อิสระ', forms: ['อิสระ', 'สลับ', 'ลากจูง', 'เปิดคู่กลาง'],
@@ -69,7 +71,10 @@ export const PRODUCTS = {
       // code = รหัสเส้นในสต็อก (B####) — ผูกราคารายเส้น: แก้ราคาใน stock แล้วราคาที่นี่เปลี่ยนตาม (ALUCODE override)
       // บานเลื่อน SMS ใช้ซีรีส์ B20xxx เป็นหลัก (เจ้าของยืนยัน 10 ก.ค.69: B22xxx คนละตัว แทบไม่ใช้)
       { name: 'เฟรมบน', code: 'B20001', price: 1235, kg: 6.86111, seg: 'W', count: '1' },
-      { name: 'เฟรมข้าง', code: 'B20003', price: 1045, kg: 5.80556, seg: 'H', count: '1' },
+      // เฟรมข้าง = 2 ด้าน (ซ้าย+ขวา) · ของเดิมนับ 1 ด้าน = ขาดอลูไปครึ่งหนึ่งของบรรทัดนี้
+      //   วิธีนับเส้นแบบเก่า (ปัดขึ้นเต็มเส้น) กลบไว้จนมองไม่เห็น — เจอตอนเทียบจำนวนกับชีต 20 ส.ค.69
+      //   ชีต "คิดทุน SMS" 600×300: เฟรมข้าง 1.21875 เส้น = 6.0 ม. = สูง 3 ม. × 2 ด้าน
+      { name: 'เฟรมข้าง', code: 'B20003', price: 1045, kg: 5.80556, seg: 'H', count: '2' },
       { name: 'เฟรมล่างกันน้ำ (รางนอก)', code: 'B20041', price: 2070, kg: 11.5, seg: 'W', count: 'LOWRAIL?0:1' },
       { name: 'เฟรมล่างรางเตี้ย (งานใน)', code: 'B20047', price: 825, kg: 4.58333, seg: 'W', count: 'LOWRAIL?1:0' },
       { name: 'เสากุญแจ ML', code: 'B20051', price: 885, kg: 4.91667, seg: 'H', count: 'F5' },
@@ -100,18 +105,24 @@ export const PRODUCTS = {
   },
 
   euro_slide: {
-    id: 'euro_slide', group: 1, name: 'บานเลื่อน ยูโร', brand: 'EURO', laborKey: 'บานเลื่อน ยูโร',
+    id: 'euro_slide', aluWaste: true, group: 1, name: 'บานเลื่อน ยูโร', brand: 'EURO', laborKey: 'บานเลื่อน ยูโร',
     icon: '🪟', defForm: 'อิสระ', forms: ['อิสระ', 'สลับ', 'ลากจูง', 'เปิดคู่กลาง'],
     specOpts: [{ key: 'bottomrail', label: 'ราง', opts: ['รางกันน้ำ', 'รางเตี้ย (งานใน)'], def: 'รางกันน้ำ' }], // R3.9 label-only · รางเตี้ย=งานในระบุในใบ
     addons: ['mosquito', 'cmech', 'stainless', 'digihandle', 'frame_wrap', 'drop_floor', 'demolish'],   // ห้องกระจก G6 พาริตี้ (2ก.ค.)
     defaults: { w: 600, h: 300, p: 3 }, defGlass: 'เขียว 6มม.', minP: 2, maxP: 6,
     vars: SLIDE_VARS,
     alu: [
-      // code จับคู่จากสต็อก EURO (id 15-33): ชื่อ+ราคา ตรงกัน — เฟรมบน/ล่างนอก ใช้เส้นเดียวกัน F7869 (กรอบเฟรมบน/ล่างนอก)
+      // code จับคู่จากสต็อก EURO (id 15-33): ชื่อ+ราคา ตรงกัน
+      // ── เฟรมบน/ล่าง ยึดตามใบตัด FUJI (เจ้าของเคาะ 20 ส.ค.69) ──────────────
+      //   เดิมใช้ F7869 ทั้งคู่ = ผิด · F7869 คือ "เฟรมล่างบานเฟี้ยม" (ชื่อในสโตร์เขียนผิดว่าเป็นบานเลื่อน)
+      //   ใบตัดทุกชีตของ FUJI บานเลื่อน ใช้ F7976 "เฟรม บน-ล่าง" → ยึดตามนั้น
+      //   งานใน (รางเตี้ย) เฟรมล่างเปลี่ยนเป็น F7902 ตัวเตี้ย ตามชีต "เลื่อนสลับ ภายใน"
+      //   ⚠ ของเดิมเลือกรางแล้ววัสดุไม่เปลี่ยนเลย (เป็นแค่ข้อความ) — บั๊กแบบเดียวกับที่เจอใน SMS
       { name: 'กรอบบาน (รอบ)', code: 'F7980', price: 1445, kg: 7.81081, seg: '2*H*P+2*W', count: '1' },
       { name: 'คิ้วกระจก', code: 'F7919', price: 200, kg: 1.08108, seg: '2*H*P+2*W', count: '1' },
-      { name: 'เฟรมบน', code: 'F7869', price: 2615, kg: 14.13514, seg: 'W', count: '1' },
-      { name: 'เฟรมล่างนอก', code: 'F7869', price: 2615, kg: 14.13514, seg: 'W', count: '1' },
+      { name: 'เฟรมบน', code: 'F7976', price: 2110, kg: 11.722, seg: 'W', count: '1' },
+      { name: 'เฟรมล่าง (งานนอก)', code: 'F7976', price: 2110, kg: 11.722, seg: 'W', count: 'LOWRAIL?0:1' },
+      { name: 'เฟรมล่าง (งานใน ตัวเตี้ย)', code: 'F7902', price: 1130, kg: 6.278, seg: 'W', count: 'LOWRAIL?1:0' },
       { name: 'เฟรมข้าง', code: 'F7978', price: 935, kg: 5.05405, seg: '2*H', count: '1' },
       { name: 'เดือย', code: 'F7986', price: 285, kg: 1.54054, seg: 6.4, count: '1' },
       { name: 'ตบเกี่ยว', code: 'F7983', price: 465, kg: 2.51351, seg: 6.4, count: "form==='เปิดคู่กลาง'?2:(P-1)" },
@@ -125,16 +136,22 @@ export const PRODUCTS = {
       { name: 'ตบปิดเฟรมร่องกลาง', code: 'F7879', price: 355, kg: 1.91892, seg: 6.4, count: "form==='เปิดคู่กลาง'?2:0" },
     ],
     glass: '((W)+(P-1)*0.1)*H',
+    // อุปกรณ์ผูกรหัสสโตร์ทุกตัว (เจ้าของเคาะ 20 ส.ค.69) — แก้ราคาในสโตร์ ราคาที่นี่เปลี่ยนตาม
+    //   ล้อ: ยูโรใช้ "ล้อ-15x20x230" JR00577 (ของเดิมเขียน ล้อ 27 = ก๊อปมาจากชีต SMS ผิด)
+    //   ยางรูน้ำ/วาวรูน้ำ: ใบตัดมี แต่คิดราคาเดิมไม่มี = เบิกจริงแต่ไม่ได้คิดเงิน
+    //     จำนวนตามใบตัด = 2 + เฟรมล่างเกิน 150 ซม. เพิ่มทุก 50 ซม.
     hardware: [
-      { name: 'ล้อ 27 (2/บาน)', price: 80, unit: 'ลูก', count: '2*F2' },
+      { name: 'ล้อ-15x20x230 (2/บาน)', sku: 'JR00577', price: 80, unit: 'ตัว', count: '2*F2' },
       { name: 'มือจับ Align (2/บาน)', price: 99, unit: 'ตัว', count: '2*F3' },
       { name: 'ชุดล็อค', price: 189, unit: 'ชุด', count: 'F4' },
-      { name: 'มุมเลื่อน (8/บาน)', price: 2, unit: 'ตัว', count: '8*P' },
-      { name: 'สปริงก็อต (4/บาน)', price: 29, unit: 'ตัว', count: '4*P' },
+      { name: 'ฉากประกอบมุม (8/บาน)', sku: 'JR00480', price: 2, unit: 'ตัว', count: '8*P' },
+      { name: 'สปิงก็อท (4/บาน)', sku: 'JR00592', price: 29, unit: 'ตัว', count: '4*P' },
+      { name: 'ยางรูน้ำ', sku: 'JR00589', price: 0, unit: 'อัน', count: 'DRAIN' },
+      { name: 'วาวรูน้ำ', sku: 'JR00485', price: 0, unit: 'อัน', count: 'DRAIN' },
     ],
     consum: [
-      { name: 'สักหลาด', price: 1.5, unit: 'ม.', count: '6*H+9*W+2*(F5+F6)*H' },
-      { name: 'น็อต', price: 1, unit: 'ตัว', count: '8+4*P' },
+      { name: 'สักหลาด', sku: 'JR00794', per: 250, price: 1.5, unit: 'ม.', count: '6*H+9*W+2*(F5+F6)*H' },
+      { name: 'น็อต', sku: 'JR00864', price: 1, unit: 'ตัว', count: '8+4*P' },
       SILICONE,
     ],
   },
@@ -177,7 +194,7 @@ export const PRODUCTS = {
   },
 
   open_door: {
-    id: 'open_door', group: 1, name: 'บานเปิด', brand: 'EURO', laborKey: 'บานเปิด (ยูโร)',
+    id: 'open_door', aluWaste: true, group: 1, name: 'บานเปิด', brand: 'EURO', laborKey: 'บานเปิด (ยูโร)',
     icon: '🚪', defForm: 'มีธรณี', forms: ['มีธรณี', 'ไม่มีธรณี'],
     addons: ['thresh', 'closer', 'mosquito', 'cmech', 'stainless', 'digihandle', 'frame_wrap', 'drop_floor', 'demolish'],   // ห้องกระจก G6 พาริตี้ (2ก.ค.) — ธรณีหลังเต่า/โช้คอัพ/มือจับ/มุ้ง
     defaults: { w: 150, h: 200, p: 1 }, defGlass: 'เขียว 6มม.', minP: 1, maxP: 4,
@@ -208,7 +225,7 @@ export const PRODUCTS = {
   },
 
   awning: {
-    id: 'awning', group: 1, name: 'บานกระทุ้ง', brand: 'EURO', laborKey: 'บานกระทุ้ง (ยูโร)',
+    id: 'awning', aluWaste: true, group: 1, name: 'บานกระทุ้ง', brand: 'EURO', laborKey: 'บานกระทุ้ง (ยูโร)',
     icon: '🪟', defForm: 'เปิดล่าง', forms: ['เปิดล่าง', 'เปิดข้าง'], // แบบเปิด (R3.9 awn_mode) · Tilt&Turn = ออปชั่น awn_tt (+5,000/บาน)
     addons: ['awn_tt', 'awn_brace', 'awn_auto', 'mosquito', 'frame_wrap', 'drop_floor', 'demolish'],   // ห้องกระจก G6 พาริตี้ (2ก.ค.) — Tilt&Turn/แขนค้ำ/ชุดออโต้/มุ้ง
     defaults: { w: 40, h: 40, p: 1 }, defGlass: 'เขียว 6มม.', minP: 1, maxP: 4,
@@ -323,7 +340,7 @@ export const PRODUCTS = {
   },
 
   eseries: {
-    id: 'eseries', group: 1, name: 'บานเลื่อน E-series', brand: 'SMS', laborKey: 'บานเลื่อน SMS',
+    id: 'eseries', aluWaste: true, group: 1, name: 'บานเลื่อน E-series', brand: 'SMS', laborKey: 'บานเลื่อน SMS',
     icon: '🪟', defForm: 'อิสระ', forms: ['อิสระ', 'สลับ', 'ลากจูง', 'เปิดคู่กลาง'],
     specOpts: [{ key: 'bottomrail', label: 'ราง', opts: ['รางกันน้ำ', 'รางเตี้ย (งานใน)'], def: 'รางกันน้ำ' }], // R3.9 label-only · รางเตี้ย=งานในระบุในใบ
     defaults: { w: 600, h: 300, p: 3 }, defGlass: 'เขียว 6มม.', minP: 2, maxP: 6,
@@ -336,7 +353,8 @@ export const PRODUCTS = {
       { name: 'เฟรมบน E-01', code: 'E-01', price: 2235, kg: 12.41667, seg: 'W', count: '1' },
       { name: 'เฟรมล่างกันน้ำ E-03', code: 'E-03', price: 2152, kg: 11.95556, seg: 'W', count: '1' },
       { name: 'เฟรมข้าง E-02C', code: 'E-02C', price: 1995, kg: 11.08333, seg: 'H', count: '2' },
-      { name: 'ถาดลองน้ำ E-03B', code: 'E-03B', price: 742, kg: 4.12222, seg: 'W', count: '1' },
+      // ชีต "คิดทุน E-series" เขียนถาดลองน้ำเป็น 1 เส้นเต็ม (เส้นอื่นในชีตเดียวกันเป็นทศนิยม) → ไม่บวกเศษ
+      { name: 'ถาดลองน้ำ E-03B', code: 'E-03B', price: 742, kg: 4.12222, seg: 'W', count: '1', noWaste: true },
       { name: 'เสากุญแจสลิม E-04e', code: 'E-04E', price: 1080, kg: 6, seg: 'H', count: 'F3' },
       { name: 'เสาเกี่ยวสลิม E-05e', code: 'E-05E', price: 1072, kg: 5.95556, seg: 'H', count: '2*F4' },
       { name: 'ขวางบน/ล่าง E-07e', code: 'E-07E', price: 1162, kg: 6.45556, seg: 'W/P', count: '2*P' },
@@ -388,7 +406,7 @@ export const PRODUCTS = {
   },
 
   pcdoor: {
-    id: 'pcdoor', group: 1, name: 'ประตูบานเปิด PC Door', brand: 'EURO', laborKey: 'PC Door',
+    id: 'pcdoor', aluWaste: true, group: 1, name: 'ประตูบานเปิด PC Door', brand: 'EURO', laborKey: 'PC Door',
     icon: '🚪', defForm: 'แบ่ง 2', forms: ['แบ่ง 2', 'แบ่ง 4'],
     specOpts: [ // มด dropdown: ธรณี (B8) + ล้อ/ซอฟต์โคลส (B10) — default = มีธรณี+ใส่ (เท่าเดิม · verify anchor ไม่ขยับ)
       { key: 'pcsill', label: 'ธรณี', opts: ['มีธรณี', 'ไม่มีธรณี'], def: 'มีธรณี' },

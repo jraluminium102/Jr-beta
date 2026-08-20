@@ -22,9 +22,25 @@ export function rateOf(x, tiers) {
   return tiers[tiers.length - 1][2];
 }
 
-// จำนวนเส้น stock ที่ต้องใช้ (bar-nesting) — segLen=ความยาวชิ้น(ม.), count=จำนวนชิ้น
-export function barsNeeded(segLen, count, stockLen = STOCK_LEN) {
+// เศษอลู — ไฟล์ถอดทุนบวกเศษ 30% ให้เส้นที่ตัดจากความยาว (เจ้าของเคาะ 20 ส.ค.69)
+export const WASTE_FACTOR = 1.3;
+
+// จำนวนเส้น stock ที่ต้องใช้ — segLen=ความยาวชิ้น(ม.), count=จำนวนชิ้น
+//
+// มี 2 วิธี เพราะไฟล์ถอดทุนเองก็ใช้ 2 วิธี (ไล่เทียบทุกชีตแล้ว 20 ส.ค.69):
+//   waste=true  "ใช้กี่เมตรรวม ÷ ความยาวเส้น + เศษ 30%" — เศษที่เหลือเอาไปใช้งานอื่นต่อได้
+//               ใช้กับเส้นโปรไฟล์ Fuji/SMS (ชีต SMS · ยูโร · บานเปิด · กระทุ้ง · E-series · PC Door · Velora)
+//   waste=false "ซื้อเต็มเส้น" (ปัดขึ้น) — ของเดิม · ยังใช้กับรุ่นที่ยังไม่ได้ไล่เทียบทีละเส้นกับชีต
+//
+// ⚠ เปิด waste ให้รุ่นไหน ต้องไล่เทียบจำนวนทุกเส้นกับชีตของรุ่นนั้นก่อน (scripts/verify-alu-qty.mjs)
+//   บางชีตยังเขียนจำนวนเป็นเลขเต็มแบบเก่าอยู่ (เช่น "คิดทุน บานหมุน") — เปิดมั่วจะได้ราคาผิด
+//   เส้นที่สูตรเขียน seg = ความยาวเส้นเต็มพอดี = ไฟล์นับเป็น "จำนวนเส้น" มาแล้ว → ไม่คูณเศษซ้ำ
+export function barsNeeded(segLen, count, stockLen = STOCK_LEN, waste = false) {
   if (!(segLen > 0) || !(count > 0)) return 0;
+  if (waste) {
+    if (Math.abs(segLen - stockLen) < 1e-9) return count;
+    return (segLen * count / stockLen) * WASTE_FACTOR;
+  }
   const fit = Math.floor(stockLen / segLen);
   if (fit >= 1) return Math.ceil(count / fit);
   return Math.ceil(segLen / stockLen) * count;
@@ -131,7 +147,7 @@ export function computeCost(PB, prod, opt) {
   for (const it of (prod.alu || [])) {
     const seg = typeof it.seg === 'number' ? it.seg : val(it.seg);
     const count = val(it.count);
-    const bars = barsNeeded(seg, count, stockLen);
+    const bars = barsNeeded(seg, count, stockLen, !!prod.aluWaste && !it.noWaste);
     if (bars <= 0) continue;
     // ราคาเส้น "ตามสี" (PB.ALUCOLOR) มาก่อน — ชีต "ราคาสี" มีคอลัมน์ เทาซาฮาร่า/ลายไม้สต็อค เป็นราคาเส้นสำเร็จ
     //   สูตรในชีตคิดทุนใช้คอลัมน์นั้นตรง ๆ (ไม่ใช่ ขาว + ค่าอบ×กก.) → เส้นที่คิดราคาสีแล้ว ห้ามบวกค่าอบซ้ำ
@@ -172,7 +188,10 @@ export function computeCost(PB, prod, opt) {
     aluBarsAll += bars;   // นับทุกเส้น (รวมเส้นที่ราคารวมสีมาแล้ว) — ใช้ตัดสินค่าเปิดตู้อบ
     // code/kg ติดมากับบรรทัดด้วย — หน้าเทียบ "คิดราคา ↔ ใบตัด" ใช้จับคู่รหัส + คิด ฿/กก. (ไม่กระทบตัวเลขใด ๆ)
     lines.push({ cat: 'alu', name: it.name + (colorPrice > 0 ? ' (' + colorDisp + ')' : ''), code: code || '', kg: it.kg || 0,
-      qty: bars, unit: 'เส้น', unitPrice: round2(price * m), amount: round2(amount) });
+      qty: bars, unit: 'เส้น', unitPrice: round2(price * m), amount: round2(amount),
+      // ความยาวที่ต้องตัดจริง + จำนวนชิ้น — หน้าเทียบ "คิดราคา ↔ ใบตัด" ใช้ตัวนี้เทียบ
+      //   (เทียบ "จำนวนเส้น" ตรง ๆ ไม่ได้แล้ว: คิดราคานับแบบไฟล์ ÷6.4+เศษ · ใบตัดนับเส้นเต็ม)
+      lenM: round2(seg * count), pieces: count });
   }
   // ค่าอบสี (อลูเท่านั้น)
   let bakeCost = 0, openOven = 0;
@@ -231,6 +250,15 @@ export function computeCost(PB, prod, opt) {
   const hwMissing = (rawHwLines || [])
     .filter((it) => (Number(it.qty) || 0) > 0 && !(hwPrice(it) > 0))
     .map((it) => ({ sku: String(it.sku || ''), name: it.name }));
+  // บรรทัดในสูตรที่ผูกรหัสสโตร์ไว้แต่สโตร์ยังไม่ตั้งราคา และไม่มีราคาสำรองในสูตร → ค่าของบรรทัดนั้น = 0
+  //   ต้องเตือนเหมือนกัน ไม่งั้นคิดต่ำกว่าจริงเงียบ ๆ (เช่น ยางรูน้ำ/วาวรูน้ำ ที่ไฟล์ถอดทุนไม่มีราคา)
+  const noteMissing = (it, count) => {
+    if (!(count > 0) || !it.sku) return;
+    const sku = String(it.sku).toUpperCase();
+    if ((PB.SKUPRICE && PB.SKUPRICE[sku] > 0) || (Number(it.price) || 0) > 0) return;
+    if (hwMissing.some((m) => m.sku === sku)) return;
+    hwMissing.push({ sku, name: it.name });
+  };
   const hwLines = rawHwLines && !hwMissing.length ? rawHwLines : null;
   let hwCost = 0;
   for (const it of (hwLines || [])) {
@@ -250,8 +278,11 @@ export function computeCost(PB, prod, opt) {
     if (it.ref) { const rp = refPrice(PB, it.ref); if (rp != null) price = rp; }   // ราคาจาก PB (แอดมินแก้ได้ · ไม่มี=ใช้ price เดิม)
     if (it.mult) price *= mult;   // กล่อง/โครง/เสา อลูเมืองทอง (รั้ว) → ขยับตามราคาอลู/กก. (mult=ปัจจุบัน/ตั้งต้น · ตั้งต้น=1)
     const hwSku = skuOf(it);
-    const sp = skuPrice(hwSku) ?? boxPrice(it);
+    // per = สโตร์ตั้งราคาเป็นแพ็ค แต่สูตรนับเป็นหน่วยย่อย (เช่น สักหลาดม้วนละ 250 ม.)
+    const spRaw = skuPrice(hwSku);
+    const sp = spRaw != null ? spRaw / (Number(it.per) || 1) : boxPrice(it);
     if (sp != null) price = sp;   // มีราคาในสโตร์ → ใช้ของสโตร์ (สโตร์เป็นตัวตั้ง)
+    noteMissing({ ...it, sku: hwSku }, count);
     const amount = count * price;
     hwCost += amount;
     lines.push({ cat: 'hardware', name: it.name, sku: hwSku, qty: round2(count), unit: it.unit || 'ชิ้น', unitPrice: price, amount: round2(amount) });
@@ -264,8 +295,10 @@ export function computeCost(PB, prod, opt) {
     if (it.ref) { const rp = refPrice(PB, it.ref); if (rp != null) unitPrice = rp; }   // ราคาจาก PB (แอดมินแก้ได้ · ไม่มี=ใช้ price เดิม)
     if (it.mult) unitPrice *= mult;   // กล่องอลูเมืองทอง (ระแนงสลับ/หมุน) → ขยับตามราคาอลู/กก.
     const cSku = skuOf(it);
-    const csp = skuPrice(cSku) ?? boxPrice(it);
-    if (csp != null) unitPrice = csp;   // มีราคาในสโตร์ → ใช้ของสโตร์
+    const cspRaw = skuPrice(cSku);
+    const csp = cspRaw != null ? cspRaw / (Number(it.per) || 1) : boxPrice(it);
+    if (csp != null) unitPrice = csp;   // มีราคาในสโตร์ → ใช้ของสโตร์ (÷ per ถ้าสโตร์ขายเป็นแพ็ค)
+    noteMissing({ ...it, sku: cSku }, count);
     const amount = count * unitPrice;
     consumCost += amount;
     lines.push({ cat: 'consum', name: it.name, sku: cSku, qty: round2(count), unit: it.unit || '', unitPrice: round2(unitPrice), amount: round2(amount) });

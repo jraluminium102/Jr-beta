@@ -1132,7 +1132,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                   (ไม่งั้นค่าของหายเงียบ = เสนอราคาต่ำกว่าจริง) ระบบยังใช้ราคาเดิมไปก่อน */}
               {(result as any)?.hwMissing?.length > 0 && (
                 <div className="mt-2 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                  ⚠ อุปกรณ์ {(result as any).hwMissing.length} รายการยังไม่มีราคาในสโตร์ — ตอนนี้คิด &quot;ค่าของ&quot; ด้วยราคาเดิมในสูตรไปก่อน
+                  ⚠ อุปกรณ์ {(result as any).hwMissing.length} รายการยังไม่มีราคาในสโตร์ — รายการที่มีราคาสำรองในสูตรจะใช้ราคานั้นไปก่อน ส่วนที่ไม่มีเลยจะคิดเป็น ฿0 (ค่าของต่ำกว่าจริง)
                   <div className="mt-1 font-mono text-[10px] leading-relaxed">
                     {(result as any).hwMissing.map((m: any) => `${m.sku || "ไม่มีรหัส"} ${m.name}`).join(" · ")}
                   </div>
