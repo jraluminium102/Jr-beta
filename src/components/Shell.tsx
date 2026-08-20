@@ -139,7 +139,7 @@ export default function Shell({ profile, children }: { profile: Profile; childre
 
   return (
     <div className="bgwrap">
-      <div className="flex max-w-[1320px] mx-auto">
+      <div className="flex max-w-[1600px] mx-auto">
         {/* Desktop sidebar */}
         <aside className="w-60 flex-shrink-0 p-4 sticky top-0 h-screen hidden md:block no-print">
           <Sidebar />
