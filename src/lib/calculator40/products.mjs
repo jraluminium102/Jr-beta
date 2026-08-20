@@ -286,7 +286,7 @@ export const PRODUCTS = {
     ],
     glass: 'W*H',
     hardware: [
-      { box: 'ฉาก|1X1', name: 'ฉาก อลู 1"x1" (4 มุม/ช่อง)', price: 5, unit: 'มุม', count: '4*P' },
+      { box: 'ฉาก|1', name: 'ฉาก อลู 1"x1" (4 มุม/ช่อง)', price: 5, unit: 'มุม', count: '4*P' },
     ],
     consum: [
       { name: 'เทปหนุนกระจก', price: 10, unit: 'ม.', count: 'Math.round((2*W + 2*P*H)*10)/10' },

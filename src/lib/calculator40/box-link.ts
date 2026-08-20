@@ -30,6 +30,8 @@ export function normSize(raw: unknown): string {
     .replace(/นิ้ว|inch/gi, "")
     .replace(/\s+/g, "")
     .toUpperCase();
+  // เศษส่วน: `1/2"x1"` → `0.5X1` (ถ้าไม่แปลงก่อน จะอ่านเป็น "2X1" = คนละของกันเลย)
+  s = s.replace(/(\d+)\/(\d+)/g, (_, a, b) => String(Number(a) / Number(b)));
   const num = (v: string) => String(Number(v));       // 1.60 → 1.6 · 4.0 → 4
   const m = s.match(/(\d+(?:\.\d+)?)X(\d+(?:\.\d+)?)/);
   if (m) return `${num(m[1])}X${num(m[2])}`;
