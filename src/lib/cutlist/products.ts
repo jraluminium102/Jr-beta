@@ -695,9 +695,10 @@ export const FUJI_SLIDE_CENTER: CutSpec = {
     { name: "ตบเฟรมบน", code: "F7993", len: (o) => o.W - 4.2, qty: () => 3, stockLens: [500] },
     { name: "ปิดตบเกี่ยว", code: "F7988", len: fcPost, qty: (o) => fc(o).hook },
     { name: "ปิดรับล็อค", code: "F7988", len: fcPost, qty: () => 1 },
-    { name: "ปิดตบกันสาด", code: "F7988", len: (o) => o.W, qty: () => 1 },
+    // ตบกันสาด — งานใน (รางเตี้ย) ไม่ใช้ (เจ้าของเคาะ 20 ส.ค.69)
+    { name: "ปิดตบกันสาด", code: "F7988", len: (o) => o.W, qty: (o) => (fIn(o) ? 0 : 1) },
     { name: "รางเลื่อน", code: "F7994", len: (o) => o.W - 4.2, qty: (o) => fc(o).rail, stockLens: [500] },
-    { name: "ตบกันสาด", code: "F7992", len: (o) => o.W, qty: () => 1 },
+    { name: "ตบกันสาด", code: "F7992", len: (o) => o.W, qty: (o) => (fIn(o) ? 0 : 1) },
   ],
   hardware: [
     { name: "ล้อ-15x20x230", sku: "JR00577", qty: (o) => 2 * o.N, unit: "ตัว" },
