@@ -4,6 +4,7 @@ import { ok } from "@/lib/bff/response";
 import { fetchAllPaged } from "@/lib/supabase/fetch-all";
 import { canSeeCost } from "@/lib/rbac";
 import { createServiceClient } from "@/lib/supabase/admin";
+import { stockDisplayName } from "@/lib/stock/display-name";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ type Row = {
   requester: string | null; ref: string | null; note: string | null;
   unit_cost: number | null; total_price: number | null; job_id: string | null; created_by: string | null;
   is_voided: boolean | null; void_reason: string | null; edited_at: string | null;
-  stock_items: { id: number; name: string; sku: string | null; unit: string | null; category: string | null; qty_on_hand: number | null; is_weight_based: boolean | null; weight_per_unit: number | null } | null;
+  stock_items: { id: number; name: string; sku: string | null; color: string | null; unit: string | null; category: string | null; qty_on_hand: number | null; is_weight_based: boolean | null; weight_per_unit: number | null } | null;
   jobs: { job_code: string | null; customer_name: string | null } | null;
 };
 
@@ -40,7 +41,7 @@ export const GET = withRoute(async (req: Request) => {
   const sb = ctx.supabase as any;
   const moves = await fetchAllPaged<Row>((f, t) => {
     let query = sb.from("stock_moves")
-      .select("id, created_at, type, qty, requester, ref, note, unit_cost, total_price, job_id, created_by, is_voided, void_reason, edited_at, stock_items(id, name, sku, unit, category, qty_on_hand, is_weight_based, weight_per_unit), jobs:job_id(job_code, customer_name)")
+      .select("id, created_at, type, qty, requester, ref, note, unit_cost, total_price, job_id, created_by, is_voided, void_reason, edited_at, stock_items(id, name, sku, color, unit, category, qty_on_hand, is_weight_based, weight_per_unit), jobs:job_id(job_code, customer_name)")
       .gte("created_at", start).lte("created_at", end)
       .order("id", { ascending: true }).range(f, t);
     if (!includeVoided) query = query.eq("is_voided", false);
@@ -77,7 +78,8 @@ export const GET = withRoute(async (req: Request) => {
       sid: si?.id ?? null,
       onHand: Number(si?.qty_on_hand) || 0,
       sku: si?.sku ?? null,
-      name: si?.name ?? "—",
+      // ชื่อ + สี — วัสดุที่ต่างกันแค่สีตั้งชื่อซ้ำกัน ถ้าไม่ต่อสีท้ายชื่อ คนอ่านสมุดแยกไม่ออกว่าเบิกสีไหน
+      name: si ? stockDisplayName(si) : "—",
       category: si?.category ?? "",
       unit: si?.unit ?? "",
       qty,
