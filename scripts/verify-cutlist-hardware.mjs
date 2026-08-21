@@ -356,7 +356,7 @@ function check(label, res, want) {
   const codeOf = (name) => res.rows.find((r) => r.name === name)?.code;
   console.log("FUJI บานเลื่อน (รหัสอลู):");
   if (codeOf("เฟรมข้าง") !== "F7978") { fails++; console.log(`  ✗ เฟรมข้าง ต้อง F7978 got ${codeOf("เฟรมข้าง")}`); } else console.log("  ✓ เฟรมข้าง = F7978");
-  if (codeOf("เฟรม บน-ล่าง") !== "F7976") { fails++; console.log(`  ✗ เฟรม บน-ล่าง ต้อง F7976 got ${codeOf("เฟรม บน-ล่าง")}`); } else console.log("  ✓ เฟรม บน-ล่าง = F7976");
+  if (codeOf("เฟรม บน-ล่าง") !== "F7869") { fails++; console.log(`  ✗ เฟรม บน-ล่าง ต้อง F7869 (ตัวหนา) got ${codeOf("เฟรม บน-ล่าง")}`); } else console.log("  ✓ เฟรม บน-ล่าง = F7976");
 }
 
 // ── C) SMS เลื่อนอิสระ/สลับ (FREE) — เพิ่ม "ตบรางล้อ" F7994 (qty=N) + ระบบมุ้ง (เฟรมเล็ก=B30006 · เฟรมใหญ่=อลูหลัก+มือจับ/ล้อ) ──
