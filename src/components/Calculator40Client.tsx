@@ -11,6 +11,9 @@ import { useRouter } from "next/navigation";
 import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { baht, sumDiscountLines, type DiscountLine } from "@/lib/money";
+
+/** ตัวเลขจำนวน — ตัดทศนิยมเหลือ 2 ตำแหน่ง (จำนวนเส้นอลูเป็นทศนิยมได้ เช่น 1.22 เส้น) */
+const r2 = (n: unknown) => Math.round((Number(n) || 0) * 100) / 100;
 import type { Customer } from "@/lib/types";
 // @ts-expect-error — engine เป็น ESM JS ล้วน (คงไฟล์เดิมเป๊ะเพื่อ parity 63/63)
 import { computeCost } from "@/lib/calculator40/engine.mjs";
@@ -143,6 +146,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   const [showCost, setShowCost] = useState(false);   // โหมดดูทุน/กำไร
   const [adminOpen, setAdminOpen] = useState(false); // แผงแก้ราคา
   const [linesOpen, setLinesOpen] = useState(false);
+  const [howOpen, setHowOpen] = useState<string | null>(null);   // กางวิธีคิดก้อนไหนอยู่ (ค่าของ/ค่าผลิต/ค่าติดตั้ง)
 
   // อินพุตต่อรายการ
   const [w, setW] = useState("");
@@ -1382,7 +1386,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                         ["ค่าผลิต", showCost ? result.labor.prod : null, profitProd, setProfitProd, result.sell.mfgOnly - result.sell.beforeLabor],
                         ["ค่าติดตั้ง", showCost ? result.labor.install : null, profitInst, setProfitInst, result.sell.withInstall - result.sell.mfgOnly],
                       ] as [string, number | null, string, (v: string) => void, number][]).map(([label, cost, pct, setPct, sell]) => (
-                        <div key={label} className="rounded-xl border border-line px-3 py-2 bg-ground/40">
+                        <div key={label} className={"rounded-xl border px-3 py-2 " + (howOpen === label ? "border-brand bg-brand/5" : "border-line bg-ground/40")}>
                           <div className="text-[11px] font-medium text-ink-3">{label}</div>
                           {cost != null && <div className="text-xs text-ink-3 tabular-nums">ทุน ฿{baht(cost)}</div>}
                           <div className="text-xl font-bold text-brand-dark tabular-nums leading-tight">฿{baht(sell)}</div>
@@ -1398,9 +1402,100 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                               onClick={() => setPct(String((Number(pct) || 0) + 10))}
                               className="press w-7 h-7 rounded-lg glass-soft text-ink-2 font-bold leading-none">+</button>
                           </div>
+                          <button type="button" onClick={() => setHowOpen(howOpen === label ? null : label)}
+                            className="press mt-1.5 text-[11px] font-semibold text-brand-dark">
+                            {howOpen === label ? "ซ่อนวิธีคิด ▲" : "ดูวิธีคิด ▼"}
+                          </button>
                         </div>
                       ))}
                     </div>
+
+                    {/* ── กางวิธีคิดทีละก้อน (เจ้าของสั่ง 20 ส.ค.69) ────────────────────────
+                        ค่าของ = กางรายการของที่ใช้ + รหัสสโตร์ · ตัวไหนสโตร์ยังไม่ตั้งราคา ขึ้น ฿0 ให้เห็นว่าขาด
+                        ค่าผลิต/ค่าติดตั้ง = กางสูตรค่าแรงจากชีต "ค่าแรง" (ฐาน + เรต × ตร.ม.) */}
+                    {howOpen === "ค่าของ" && (
+                      <div className="mt-2 rounded-xl border border-line bg-white/70 p-3">
+                        <div className="text-xs font-semibold text-brand-dark mb-1">ของที่ใช้ทั้งหมด ({result.lines.length} รายการ)</div>
+                        <div className="max-h-72 overflow-y-auto">
+                          <table className="w-full text-xs">
+                            <thead className="sticky top-0 bg-white">
+                              <tr className="text-left text-ink-3 border-b border-line">
+                                <th className="py-1">รายการ</th><th>รหัสสโตร์</th>
+                                <th className="text-right">จำนวน</th>
+                                {showCost && <><th className="text-right">฿/หน่วย</th><th className="text-right">รวม</th></>}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {result.lines.map((l: any, i: number) => {
+                                const code = l.sku || l.code || "";
+                                const noPrice = !(Number(l.unitPrice) > 0);
+                                return (
+                                  <tr key={i} className={"border-t border-line/50 " + (noPrice ? "bg-amber-50" : "")}>
+                                    <td className="py-1 pr-2">{l.name}</td>
+                                    <td className="font-mono text-[11px] text-ink-3">{code || "—"}</td>
+                                    <td className="text-right tabular-nums">{r2(l.qty)} {l.unit || ""}</td>
+                                    {showCost && <>
+                                      <td className={"text-right tabular-nums " + (noPrice ? "text-red-600 font-bold" : "")}>
+                                        ฿{baht(l.unitPrice)}
+                                      </td>
+                                      <td className="text-right tabular-nums">฿{baht(l.amount)}</td>
+                                    </>}
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                            {showCost && (
+                              <tfoot>
+                                <tr className="border-t-2 border-line font-bold">
+                                  <td className="py-1" colSpan={4}>ทุนรวม</td>
+                                  <td className="text-right tabular-nums">฿{baht(result.cost.total)}</td>
+                                </tr>
+                              </tfoot>
+                            )}
+                          </table>
+                        </div>
+                        {(result as any)?.hwMissing?.length > 0 && (
+                          <p className="text-[11px] text-red-700 mt-1.5">
+                            ⚠ แถวสีเหลือง = ยังไม่มีราคาในสโตร์ คิดเป็น ฿0 (ค่าของต่ำกว่าจริง) — ไปตั้งราคาที่หน้าสโตร์
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {(howOpen === "ค่าผลิต" || howOpen === "ค่าติดตั้ง") && (() => {
+                      const lc = (result as any).laborCalc || {};
+                      const isProd = howOpen === "ค่าผลิต";
+                      const base = isProd ? lc.pBase : lc.iBase;
+                      const rate = isProd ? lc.pRate : lc.iRate;
+                      const raw = isProd ? result.labor.prod : result.labor.install;
+                      const pct = Number(isProd ? profitProd : profitInst) || 0;
+                      const sell = isProd ? result.sell.mfgOnly - result.sell.beforeLabor : result.sell.withInstall - result.sell.mfgOnly;
+                      const unit = lc.mode === "perLeaf" ? "ใบ" : "บาน";
+                      return (
+                        <div className="mt-2 rounded-xl border border-line bg-white/70 p-3 text-xs text-ink-2 space-y-1">
+                          <div className="font-semibold text-brand-dark">{howOpen} คิดยังไง</div>
+                          <div>ค่าแรงของรุ่นนี้มาจากชีต &quot;ค่าแรง&quot; ในไฟล์ถอดทุน — หัวข้อ <b>{lc.key || "—"}</b></div>
+                          {lc.mode === "baseOnly" ? (
+                            <div className="tabular-nums">
+                              ฐาน ฿{baht(base)}{lc.mult > 1 ? ` × ${lc.mult} บาน` : ""} = <b>฿{baht(raw)}</b>
+                              <span className="text-ink-3"> (รุ่นนี้คิดฐานอย่างเดียว ไม่บวกตามพื้นที่)</span>
+                            </div>
+                          ) : (
+                            <div className="tabular-nums">
+                              (ฐาน ฿{baht(base)}{lc.mode === "perLeaf" ? ` × ${lc.mult} ${unit}` : ""} + ฿{baht(rate)}/ตร.ม. × {r2(lc.area)} ตร.ม.)
+                              {lc.mode !== "perLeaf" && lc.mult > 1 ? ` × ${lc.mult} บาน` : ""} = <b>฿{baht(raw)}</b>
+                            </div>
+                          )}
+                          <div className="tabular-nums">
+                            บวกกำไร {pct}% → ปัดขึ้นหลักร้อย = <b className="text-brand-dark">฿{baht(sell)}</b>
+                          </div>
+                          <p className="text-[11px] text-ink-3">
+                            แก้ค่าแรงต้องแก้ในไฟล์ถอดทุน ชีต &quot;ค่าแรง&quot; แล้วซิงก์เข้าระบบ — แก้ในหน้านี้ไม่ได้ (กันตัวเลขหลุดจากไฟล์)
+                          </p>
+                        </div>
+                      );
+                    })()}
+
                     <p className="text-[11px] text-ink-3 mt-2">
                       ราคาขายพร้อมติดตั้ง = ค่าของ + ค่าผลิต + ค่าติดตั้ง = <b className="tabular-nums">฿{baht(result.sell.withInstall)}</b>
                       {" "}· กำไร 100% = ขาย 2 เท่าทุน · 200% = 3 เท่า
