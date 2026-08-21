@@ -356,5 +356,34 @@ console.log("\n═══ ยูโร (FUJI) — ค่าของอุปก�
 }
 
 
+// ── SlimLux — คิดราคา ↔ ใบตัด ต้องตรงกันทุกเส้น (เจ้าของสั่งลุยต่อ 21 ส.ค.69) ──────
+//   จำนวนท่อน/ความยาวยึดไฟล์ตัดประกอบ "SlimLux เลื่อน" (ยัดในช่อง · คาน 1×4 · เสารับ 1×3)
+console.log("\n═══ SlimLux — คิดราคา ↔ ใบตัด ═══");
+{
+  const at = (w, h, p, form, slxhandle = "X-J", slxhwcolor = "ขาว") =>
+    compareCut(PB, { prodId: "slimlux", w, h, p, form, spec: { slxhandle, slxhwcolor } });
+  const CASES = [[300, 240, 3, "อิสระ", "X-J"], [200, 200, 2, "อิสระ", "X-J"],
+    [400, 240, 4, "ลากจูง", "X-J"], [500, 240, 4, "เปิดคู่กลาง", "มือจับล็อค (มาตรฐาน)"],
+    [300, 240, 3, "อิสระ", "มือจับล็อค (มาตรฐาน)"], [300, 240, 3, "อิสระ", "ลูกค้าเตรียมเอง"]];
+  for (const [w, h, p, form, hd] of CASES) {
+    const r = at(w, h, p, form, hd);
+    // ซิลิโคน = ข้อยกเว้นที่เจ้าของสั่งไม่ใส่ในใบตัด (เก็บไว้ฝั่งคิดราคาอย่างเดียว)
+    const bad = [...r.alu, ...r.hardware].filter((x) => x.status !== "ตรง" && !/ซิลิโคน/.test(x.name));
+    ok(`${w}×${h} ${p} บาน ${form} · ${hd}`, bad.length === 0,
+      bad.map((x) => (x.code || x.sku || x.name) + ":" + x.status).join(","));
+  }
+  // มือจับ: เลือก X-J → ไม่มีมือจับล็อค · เลือกมือจับล็อค → ไม่มีเสา X-J (ใช้ร่วมกันไม่ได้)
+  const xj = at(300, 240, 3, "อิสระ", "X-J"), lk = at(300, 240, 3, "อิสระ", "มือจับล็อค (มาตรฐาน)");
+  const pcs = (r, c) => r.alu.find((a) => a.code === c)?.calcPieces ?? 0;
+  const hw = (r, c) => r.hardware.find((a) => a.sku === c)?.calcQty ?? 0;
+  ok("เลือก X-J → มีเสา X-J · ไม่มีมือจับล็อค", pcs(xj, "JR02890") > 0 && hw(xj, "JR00366") === 0, "");
+  ok("เลือกมือจับล็อค → มีมือจับล็อค · ไม่มีเสา X-J", pcs(lk, "JR02890") === 0 && hw(lk, "JR00366") > 0, "");
+  ok("สีมือจับล็อค ดำ → JR00367", hw(at(300, 240, 3, "อิสระ", "มือจับล็อค (มาตรฐาน)", "ดำ"), "JR00367") > 0, "");
+  // สีนอกจากขาว/ดำ → เสา X-J ใช้ตัวมิว JR02891 (สีดิบ) แล้วบวกค่าอบ
+  const gray = compareCut(PB, { prodId: "slimlux", w: 300, h: 240, p: 3, form: "อิสระ", color: "sahara", spec: { slxhandle: "X-J" } });
+  ok("สีเทาซาฮาร่า → เสา X-J ใช้มิว JR02891", (gray.alu.find((a) => a.code === "JR02891")?.calcPieces ?? 0) > 0, "");
+}
+
+
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);

@@ -68,7 +68,13 @@ export function cutInputFromRecipe(recipe: any): RecipeCutMap | null {
       // รูปแบบบาน: คิดราคา form อิสระ/สลับ/ลากจูง/เปิดคู่กลาง → ใบตัด sashMode (สลับ ≈ อิสระ)
       const form = String(recipe.form ?? "");
       const sashMode = form === "ลากจูง" ? "ลากจูง" : form === "เปิดคู่กลาง" ? "เปิดคู่กลาง" : "อิสระ";
-      m = { spec_id: "slimlux_slide", input: { W, H, N, sashMode, fit: "ยัดในช่อง", beam: "1×4", handle: "X-J" } };
+      // มือจับ: คิดราคาเลือกที่ spec.slxhandle → ส่งต่อเข้าใบตัด (เดิมล็อก "X-J" ตายตัว = สองฝั่งไม่ตรงกัน)
+      const slx = String(recipe.spec?.slxhandle ?? "");
+      const handle = slx === "X-J" ? "X-J" : slx.includes("ลูกค้าเตรียม") ? "ไม่มี" : "มือจับล็อค";
+      m = { spec_id: "slimlux_slide", input: {
+        W, H, N, sashMode, fit: "ยัดในช่อง", beam: "1×4", receiverBox: "1×3", handle,
+        handleColor: recipe.spec?.slxhwcolor === "ดำ" ? "ดำ" : "ขาว",
+      } };
       break;
     }
     case "fixed": {
