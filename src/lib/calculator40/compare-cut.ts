@@ -38,7 +38,7 @@ export type AluRow = {
   calcBars: number; calcPricePerBar: number; calcAmount: number; kgPerBar: number; bahtPerKg: number;
   calcLenCm: number; calcPieces: number; barCounted: boolean;
   cutBars: number; cutTotalLenCm: number; cutStockLen: number; cutPieces: number;
-  status: "ตรง" | "จำนวนต่าง" | "มีแต่คิดราคา" | "มีแต่ใบตัด" | "ไม่มีรหัส" | "นับคนละหน่วย";
+  status: "ตรง" | "จำนวนต่าง" | "มีแต่คิดราคา" | "มีแต่ใบตัด" | "ไม่มีรหัส";
 };
 export type HwRow = {
   sku: string; name: string;
@@ -117,10 +117,15 @@ export function compareCut(PB: any, inp: CompareInput) {
   //   • จำนวนเส้น — สองฝั่งนับคนละวิธีโดยตั้งใจ (คิดราคา = ยาวรวม÷6.4+เศษ30% ตามไฟล์ถอดทุน · ใบตัด = เส้นเต็มที่หยิบมาตัด)
   //   • ความยาว   — ใบตัดหักเผื่อประกอบรายเส้น (เช่น เฟรมบน = กว้าง−4.4 ซม.) คิดราคาใช้ขนาดเต็ม
   //   • จำนวนชิ้น — ต้องตรงกันเป๊ะ: ของที่ช่างตัดจริงกี่ท่อน คิดราคาต้องคิดเงินเท่านั้นท่อน
+  // บรรทัดที่ไฟล์ถอดทุนนับเป็น "เส้นเต็ม" (ไม่ได้บอกความยาวชิ้น) → คิดราคาไม่รู้จำนวนชิ้น
+  //   เทียบชิ้นกับใบตัดไม่ได้ แต่เทียบ "จำนวนเส้นที่ต้องซื้อ" ได้ตรง ๆ → เทียบช่องเส้นแทน
+  //   (เจ้าของถาม 20 ส.ค.69: ป้าย "นับคนละหน่วย" เดิมขึ้นทุกบรรทัดพวกนี้ ทั้งที่ส่วนใหญ่เส้นตรงกันอยู่แล้ว)
   const alu: AluRow[] = [...byCode.values()].map((e) => ({
     ...e,
-    // บรรทัดที่ไฟล์ถอดทุนนับเป็น "เส้นเต็ม" เทียบชิ้นกับใบตัดไม่ได้ — บอกตรง ๆ ว่าคนละหน่วย ดีกว่าขึ้นแดงหลอก
-    status: (e.barCounted && e.calcPieces > 0 && e.cutPieces > 0) ? "นับคนละหน่วย" : statusOf(r2(e.calcPieces), r2(e.cutPieces), !!e.code),
+    calcPieces: e.barCounted ? 0 : e.calcPieces,   // 0 = หน้าจอขึ้น "—" (คิดราคาไม่ได้นับเป็นชิ้น)
+    status: e.barCounted
+      ? statusOf(r2(e.calcBars), r2(e.cutBars), !!e.code)
+      : statusOf(r2(e.calcPieces), r2(e.cutPieces), !!e.code),
   }));
 
   // ── ② เทียบอุปกรณ์รายรหัสสโตร์ ────────────────────────────────────────
