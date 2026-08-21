@@ -246,7 +246,7 @@ export const SLIMLUX_SLIDE: CutSpec = {
     { key: "boxSide", label: "กล่องสั้น (บานกลาง) ด้าน", choices: ["ซ้าย", "ขวา"] },
     { key: "receiverBox", label: "กล่องเสารับบาน", choices: RECEIVER_BOX_CHOICES },
   ],
-  defaults: { W: 300, H: 240, N: 3, rail: "", honk: false, fit: "ยัดในช่อง", sashMode: "อิสระ", beam: "1×4", handle: "X-J", handleColor: "ขาว", boxSide: "ซ้าย", receiverBox: "1×4+1×4" },
+  defaults: { W: 300, H: 240, N: 3, rail: "", honk: false, fit: "ยัดในช่อง", sashMode: "อิสระ", beam: "1×4", handle: "X-J", handleColor: "ขาว", boxSide: "ซ้าย", receiverBox: "1×3" },
   profiles: [
     // คาน: รหัสต้องเป็นรูปแบบสต็อกจริง กล่อง 1"x4" (เดิมออก "กล่อง 1×4" → จับสต็อกไม่ติด โชว์ไม่มีในสต็อก)
     // คานผสม (1×4+1×1.6 / 2×4+4×4) = 2 กล่องตัดยาวเท่ากัน → แตกเป็น 2 โปรไฟล์ (ตัวเสริมอยู่บรรทัดถัดไป)
@@ -265,8 +265,14 @@ export const SLIMLUX_SLIDE: CutSpec = {
     { name: "ตบเกี่ยวใส่สักหลาด", code: "OPK-A204-40", len: (o) => o.H - slimBeamCut(o.beam) - 5.1, qty: (o) => o.N - slimDead(o.sashMode) + 1 + (o.fit === "แปะนอก" ? 1 : 0), note: "บานเลื่อน+1 (+1 ถ้าแปะนอก)" },
     // เสามือจับ X-J = เส้นอลู (มีในสโตร์แล้ว 3 สี "มือจับ xj ยาว 2.8m" — รอรหัสจากเจ้าของ)
     //   เลือก "มือจับล็อค" แล้ว X-J เป็น 0 อัตโนมัติ (เจ้าของสั่ง 21 ส.ค.69 — ใช้ร่วมกันไม่ได้)
-    { name: "มือจับ X-J (เสามือจับ)", code: "-", len: (o) => o.H - slimBeamCut(o.beam) - 12.1, qty: (o) => (o.handle === "X-J" ? (o.sashMode === "เปิดคู่กลาง" ? 4 : 2) : 0), note: "ยาวเท่าเสากุญแจ · เลือกมือจับล็อคแล้วเป็น 0" },
-    { name: 'ฉากปิดราง 2"', code: "-", len: (o) => o.W, qty: () => 2 },
+    // เสามือจับ X-J — ขายเป็นท่อนยาว 2.8 ม. · แยกรหัสตามสี (เจ้าของให้รหัส 21 ส.ค.69)
+    //   ขาว JR02890 · ดำ JR02889 · สีอื่นใช้ "มิว" JR02891 (สีดิบ) แล้วบวกค่าอบ
+    { name: "มือจับ X-J (เสามือจับ)",
+      code: (o) => { const c = String(o.color ?? ""); return /ขาว/.test(c) ? "JR02890" : /ดำ/.test(c) ? "JR02889" : "JR02891"; },
+      len: (o) => o.H - slimBeamCut(o.beam) - 12.1,
+      qty: (o) => (o.handle === "X-J" ? (o.sashMode === "เปิดคู่กลาง" ? 4 : 2) : 0),
+      stockLens: [280], note: "ท่อนยาว 2.8 ม. · ยาวเท่าเสากุญแจ · เลือกมือจับล็อคแล้วเป็น 0" },
+    { name: 'ฉากปิดราง 2"', code: 'ฉาก 2"', len: (o) => o.W, qty: () => 2 },
     { name: "ตบปิดใต้รางริม", code: "XSW400013", len: (o) => (o.fit === "แปะนอก" ? o.W * 2 : o.W - 5), qty: () => 2, note: "ยาวเท่ารางบน" },
     { name: "ตบปิดใต้รางกลาง", code: "XSW400023", len: (o) => (o.fit === "แปะนอก" ? o.W * 2 : o.W - 5), qty: (o) => Math.max(o.N - slimDead(o.sashMode) - 1, 0), note: "บานเลื่อน − 1" },
   ],
