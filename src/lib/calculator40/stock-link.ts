@@ -23,8 +23,16 @@ const partNames = new Set(Object.keys(PB.PARTS || {}));   // อุปกรณ�
 // รหัสอลูรายเส้น (B####/F####/E-##/WM-K##) จากสูตรทุกรุ่น — ผูกกับ stock_items.sku (ALUCODE override)
 const normCode = (s: string) => s.trim().toUpperCase();
 const aluCodes = new Set<string>();
+// ⚠ code เป็น "สูตร" ได้ด้วย (เลือกรหัสตามสี/ความหนา เช่น "CKEY==='white'?'JR02890':'JR02891'")
+//   ต้องดึงรหัสที่อยู่ในเครื่องหมายคำพูดออกมาทุกตัว ไม่งั้นสโตร์หาไม่เจอ = ไม่มีราคา
+//   (เจ้าของเจอ 21 ส.ค.69: มือจับ X-J JR02890 ไม่มีราคา ทั้งที่สโตร์ตั้งไว้แล้ว)
+const codesIn = (code: string): string[] => {
+  const t = String(code);
+  if (!t.includes("?")) return [t];
+  return [...t.matchAll(/'([^']+)'|"([^"]+)"/g)].map((m) => m[1] ?? m[2]).filter(Boolean);
+};
 for (const p of Object.values(PRODUCTS as Record<string, any>))
-  for (const a of (p?.alu || [])) if (a.code) aluCodes.add(normCode(a.code));
+  for (const a of (p?.alu || [])) if (a.code) for (const c of codesIn(a.code)) aluCodes.add(normCode(c));
 
 // sku นี้ผูกรายเส้นกับสูตร 4.0 ไหม (ใช้แสดงคำอธิบายหน้าสต็อก)
 export const isAluCode = (sku?: string | null) => !!sku && aluCodes.has(normCode(sku));
