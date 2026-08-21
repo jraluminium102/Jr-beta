@@ -90,8 +90,12 @@ export function cutOptionsFor(inp: Pick<CompareInput, "prodId" | "w" | "h" | "p"
   const spec = map ? CUT_SPEC_BY_ID[map.spec_id] : null;
   if (!spec) return [];
   const def = (spec.defaults ?? {}) as Record<string, unknown>;
+  // ⚠ ตัดช่องที่ from-recipe กำหนดให้แล้วจากฝั่งคิดราคาออก (เช่น SlimLux "มือจับ" มาจาก spec.slxhandle)
+  //   ถ้าโชว์ซ้ำ = มี 2 ช่อง กดช่องใบตัดแล้วราคาไม่ขยับ (เจ้าของเจอ 21 ส.ค.69: เลือก X-J แล้วยังคิดมือจับล็อค)
+  const derived = new Set(Object.keys(map?.input ?? {}));
   // บาง spec มี opt ที่ไม่ใช่ dropdown (ช่องกรอกเอง) → ข้ามไป ไม่งั้นหน้าจอพัง
   return (spec.opts ?? [])
+    .filter((o: { key: string; choices?: readonly string[] }) => !derived.has(o.key))
     .filter((o: { choices?: readonly string[] }) => Array.isArray(o.choices) && o.choices.length > 0)
     .map((o: { key: string; label: string; choices: readonly string[] }) => ({
       key: o.key, label: o.label, choices: [...o.choices],
