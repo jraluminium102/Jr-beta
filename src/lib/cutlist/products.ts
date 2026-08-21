@@ -241,11 +241,12 @@ export const SLIMLUX_SLIDE: CutSpec = {
     { key: "fit", label: "รูปแบบช่องปูน", choices: ["ยัดในช่อง", "แปะนอก"] },
     { key: "sashMode", label: "รูปแบบบาน", choices: ["อิสระ", "ลากจูง", "เปิดคู่กลาง"] },
     { key: "beam", label: "คาน (กล่อง)", choices: ["1×2", "2×2", "1×4", "2×4", "1×4+1×1.6", "2×4+4×4", "4×4"] },
-    { key: "handle", label: "มือจับ", choices: ["X-J", "ไม่มี", "อื่นๆ"] },
+    { key: "handle", label: "มือจับ", choices: ["X-J", "มือจับล็อค", "ไม่มี", "อื่นๆ"] },
+    { key: "handleColor", label: "สีมือจับล็อค", choices: ["ขาว", "ดำ"] },
     { key: "boxSide", label: "กล่องสั้น (บานกลาง) ด้าน", choices: ["ซ้าย", "ขวา"] },
     { key: "receiverBox", label: "กล่องเสารับบาน", choices: RECEIVER_BOX_CHOICES },
   ],
-  defaults: { W: 300, H: 240, N: 3, rail: "", honk: false, fit: "ยัดในช่อง", sashMode: "อิสระ", beam: "1×4", handle: "X-J", boxSide: "ซ้าย", receiverBox: "1×4+1×4" },
+  defaults: { W: 300, H: 240, N: 3, rail: "", honk: false, fit: "ยัดในช่อง", sashMode: "อิสระ", beam: "1×4", handle: "X-J", handleColor: "ขาว", boxSide: "ซ้าย", receiverBox: "1×4+1×4" },
   profiles: [
     // คาน: รหัสต้องเป็นรูปแบบสต็อกจริง กล่อง 1"x4" (เดิมออก "กล่อง 1×4" → จับสต็อกไม่ติด โชว์ไม่มีในสต็อก)
     // คานผสม (1×4+1×1.6 / 2×4+4×4) = 2 กล่องตัดยาวเท่ากัน → แตกเป็น 2 โปรไฟล์ (ตัวเสริมอยู่บรรทัดถัดไป)
@@ -273,6 +274,13 @@ export const SLIMLUX_SLIDE: CutSpec = {
     { name: "กล่องสั้น ซ้าย (บานกลาง)", sku: "JR00575", qty: (o) => (o.boxSide === "ซ้าย" ? Math.max(o.N - 2, 0) : 0), unit: "กล่อง" },
     { name: "กล่องสั้น ขวา (บานกลาง)", sku: "JR00574", qty: (o) => (o.boxSide === "ขวา" ? Math.max(o.N - 2, 0) : 0), unit: "กล่อง" },
     { name: "ล้อล่าง", sku: "JR00572", qty: (o) => 2 * (o.N - slimDead(o.sashMode)), unit: "ตัว", note: "บานเลื่อนละ 2 ตัว" },
+    // มือจับล็อค — คนละรหัสตามสี (เจ้าของให้รหัส 20 ส.ค.69) · X-J เป็นเส้นอลู อยู่ในบล็อกโปรไฟล์
+    { name: (o) => `มือจับล็อค สลิม (${o.handleColor === "ดำ" ? "ดำ" : "ขาว"})`,
+      sku: (o) => (o.handleColor === "ดำ" ? "JR00367" : "JR00366"),
+      qty: (o) => (o.handle === "มือจับล็อค" ? (o.sashMode === "เปิดคู่กลาง" ? 2 : 1) : 0), unit: "ชุด" },
+    // สักหลาด — ใช้ยาวเท่า "ตบเกี่ยวใส่สักหลาด" (เจ้าของสั่ง 20 ส.ค.69) · สลิมใช้เบอร์ JR00776 (ไม่ใช่ JR00794 ของ SMS)
+    { name: "สักหลาด (ม.)", sku: "JR00776", unit: "ม.", noStock: true, note: "ยาวเท่าตบเกี่ยว × จำนวนท่อน",
+      qty: (o, ctx) => Math.round(ctx.len("ตบเกี่ยวใส่สักหลาด") * (o.N - slimDead(o.sashMode) + 1 + (o.fit === "แปะนอก" ? 1 : 0)) / 100 * 10) / 10 },
     otherHandleRow("handle"),
   ],
 };
