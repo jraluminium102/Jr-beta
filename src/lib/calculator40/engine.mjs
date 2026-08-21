@@ -322,11 +322,14 @@ export function computeCost(PB, prod, opt) {
   // (4) ค่าแรง = ฐาน + เรต × ตร.ม.  (บางรุ่นคิดต่อบาน → ×จำนวนบาน)
   const L = PB.LABOR[prod.laborKey] || { pBase: 0, pRate: 0, iBase: 0, iRate: 0 };
   let laborProd, laborInstall;
+  // laborShow = ตัวเลขดิบของสูตรค่าแรง — หน้าจอเอาไปกาง "วิธีคิด" ให้ผู้ใช้เห็น (ไม่ได้ใช้คำนวณ)
+  let laborShow = { mode: 'rate', mult: 1, pBase: 0, pRate: 0, iBase: 0, iRate: 0 };
   if (prod.laborPerLeaf) {
     // ค่าแรง "ต่อใบ": ฐาน×จำนวนใบ + เรต×พื้นที่รวม (เช่น มุ้ง — ชีต "ราคามุ้ง" L–O)
     const leaves = val(prod.laborLeaves);
     laborProd = Math.max(0, L.pBase * leaves + L.pRate * area);
     laborInstall = Math.max(0, L.iBase * leaves + L.iRate * area);
+    laborShow = { mode: 'perLeaf', mult: leaves, pBase: L.pBase, pRate: L.pRate, iBase: L.iBase, iRate: L.iRate };
   } else {
     const lp = prod.laborPerPanel ? P : 1;  // บางรุ่นคิดต่อบาน → ×จำนวนบาน
     // laborNoRate = ชีตคิดทุนของรุ่นนั้นใช้ "ฐานอย่างเดียว" ไม่บวกเรตต่อ ตร.ม.
@@ -336,6 +339,7 @@ export function computeCost(PB, prod, opt) {
     const ri = prod.laborNoRate ? 0 : L.iRate;
     laborProd = Math.max(0, L.pBase + rp * area) * lp;
     laborInstall = Math.max(0, L.iBase + ri * area) * lp;
+    laborShow = { mode: prod.laborNoRate ? 'baseOnly' : 'rate', mult: lp, pBase: L.pBase, pRate: rp, iBase: L.iBase, iRate: ri };
   }
 
   // (5) ราคาขาย
@@ -569,6 +573,7 @@ export function computeCost(PB, prod, opt) {
       .map((it) => ({ sku: String(it.sku || '').toUpperCase(), name: it.name })),
     costPerSqm: area > 0 ? round2(costTotal / area) : 0,
     labor: { prod: round2(laborProd), install: round2(laborInstall) },
+    laborCalc: { ...laborShow, key: prod.laborKey || '', area: round2(area), panels: P },
     // mfgOnly = ตามสูตรชีตคิดทุน (อย่าเอาไปโชว์/ขึ้นใบตรง ๆ) · mfgOnlyNet = ราคาขายส่งจริงหลังลด wholesalePct
     sell: { beforeLabor: sellBeforeLabor, mfgOnly: sellMfgOnly, mfgOnlyNet: sellMfgOnlyNet, withInstall: sellWithInstall, wholesalePct: wsPct },
     lines,
