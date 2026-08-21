@@ -137,12 +137,16 @@ export function computeCost(PB, prod, opt) {
   const skuPrice = (sku) => (sku && PB.SKUPRICE && PB.SKUPRICE[sku] > 0) ? PB.SKUPRICE[sku] : null;
   // กล่อง/ฉาก อลูเมืองทอง — ไม่มีรหัสโปรไฟล์ ผูกด้วย "ชนิด|ขนาด" แล้วเลือกราคาตามสีที่ลูกค้าเลือก
   //   it.box = คีย์ เช่น 'กล่อง|1.6X3' · ไม่เจอในสโตร์ = ใช้ราคาในสูตรเหมือนเดิม (ห้ามหล่นเป็น 0)
+  // boxColorDone = จับคู่ "สีที่ลูกค้าเลือก" ได้เป๊ะ → ราคานั้นรวมค่าอบมาแล้ว (ห้ามบวกค่าอบซ้ำ)
+  //   หลักเดียวกับเส้นอลูที่มีราคาสี (②) · ตกมาใช้ มิว = สีดิบ ยังต้องอบ → เข้ากองค่าอบตามปกติ
+  let boxColorDone = false;
   const boxPrice = (it) => {
+    boxColorDone = false;
     if (!it.box || !PB.BOXPRICE) return null;
     const b = PB.BOXPRICE[it.box];
     if (!b) return null;
     const c = opt.stockColor || '';
-    if (c && b[c] > 0) return b[c];
+    if (c && b[c] > 0) { boxColorDone = !/มิว/.test(c); return b[c]; }
     for (const alt of ['มิว', 'อบขาว']) if (b[alt] > 0) return b[alt];
     return null;
   };
@@ -202,7 +206,7 @@ export function computeCost(PB, prod, opt) {
     const amount = bars * price * m;
     aluCost += amount;
     // เส้นที่ราคารวมสีแล้ว หรือเป็นเส้นสีเงินไม่อบสี → ไม่เข้ากองคิดค่าอบ
-    if (!(colorPrice > 0) && !noColor) aluKg += bars * (it.kg || 0);
+    if (!(colorPrice > 0) && !boxColorDone && !noColor) aluKg += bars * (it.kg || 0);
     aluBarsAll += bars;   // นับทุกเส้น (รวมเส้นที่ราคารวมสีมาแล้ว) — ใช้ตัดสินค่าเปิดตู้อบ
     // code/kg ติดมากับบรรทัดด้วย — หน้าเทียบ "คิดราคา ↔ ใบตัด" ใช้จับคู่รหัส + คิด ฿/กก. (ไม่กระทบตัวเลขใด ๆ)
     lines.push({ cat: 'alu', name: it.name + (colorPrice > 0 ? ' (' + colorDisp + ')' : ''), code: code || '', kg: it.kg || 0,

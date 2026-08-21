@@ -433,6 +433,34 @@ console.log("\n═══ ②h กำไรแยก 3 ส่วน — ค่า
   check("ใบเก่าส่งกำไรตัวเดียว → ใช้กับทั้ง 3 ก้อน", legacy.profit3.inst, 50, 0);
 }
 
+// ── ②j กล่อง/ฉาก ที่สโตร์ตั้งราคา "สีนั้น" ไว้แล้ว — ห้ามบวกค่าอบซ้ำ ─────────────
+//   สโตร์ตั้งชื่อกล่องแยกสีอยู่แล้ว (กล่อง 1"x4"-เทาซาฮาร่า) = ราคาสำเร็จรวมอบมาแล้ว
+//   ถ้ายังเอา กก. ของกล่องไปเข้ากองค่าอบ = คิดค่าอบซ้ำ (หลักเดียวกับ Aztec ที่ ②e)
+console.log('\n═══ ②j กล่อง/ฉาก ราคาตามสีจากสโตร์ — ไม่คิดค่าอบซ้ำ ═══');
+{
+  const OPT = { w: 300, h: 240, p: 3, form: 'อิสระ', color: 'sahara', colorKey: 'sahara', glassType: 'เทมเปอร์ 6มม.' };
+  const base = computeCost(PB, PRODUCTS.slimlux, OPT);
+  const beam = PRODUCTS.slimlux.alu.find((a) => a.box === 'กล่อง|1X4');
+  const beamKg = barsNeeded(3, 1, 6.4, true) * beam.kg;      // คาน seg=W=3 ม. × 1 ท่อน
+  // ① สโตร์มีกล่องสีเทา → ค่าอบต้องหายไปเท่ากับ กก.ของคาน × เรตเทา
+  const withColor = JSON.parse(JSON.stringify(PB));
+  withColor.BOXPRICE = { 'กล่อง|1X4': { 'เทาซาฮาร่า': 2000 } };
+  const r1 = computeCost(withColor, PRODUCTS.slimlux, { ...OPT, stockColor: 'เทาซาฮาร่า' });
+  check('กล่องสีเทาจากสโตร์ → กก. เข้ากองค่าอบน้อยลงเท่าคาน', r1.aluKg, base.aluKg - beamKg, 0.02);
+  check('ค่าอบลดลงตาม (ไม่คิดซ้ำ)', r1.cost.bake, base.cost.bake - beamKg * PB.BAKE.sahara, 1);
+  check('ราคากล่องใช้ของสโตร์', r1.lines.find((l) => l.name.startsWith(beam.name)).unitPrice, 2000, 0.01);
+  // ② สโตร์มีแค่ "มิว" (สีดิบ) → ตกมาใช้ราคามิว แต่ยังต้องอบ → กองค่าอบเท่าเดิม
+  const rawOnly = JSON.parse(JSON.stringify(PB));
+  rawOnly.BOXPRICE = { 'กล่อง|1X4': { 'มิว': 1200 } };
+  const r2 = computeCost(rawOnly, PRODUCTS.slimlux, { ...OPT, stockColor: 'เทาซาฮาร่า' });
+  check('กล่องมิว (สีดิบ) → ยังคิดค่าอบเต็ม', r2.aluKg, base.aluKg, 0.02);
+  check('ราคากล่องมิวมาจากสโตร์', r2.lines.find((l) => l.name.startsWith(beam.name)).unitPrice, 1200, 0.01);
+  // ③ กล่องที่สโตร์ยังไม่มีราคา = ต้องไม่พลอยหลุดจากกองค่าอบ
+  const r3 = computeCost(withColor, PRODUCTS.slimlux, { ...OPT, stockColor: 'เทาซาฮาร่า' });
+  const post = PRODUCTS.slimlux.alu.find((a) => a.box === 'กล่อง|1X3');
+  check('กล่อง 1x3 ที่ไม่มีราคาสี ยังอยู่ในกองค่าอบ', r3.aluKg > barsNeeded(2.375, 2, 6.4, true) * post.kg ? 1 : 0, 1, 0);
+}
+
 // ── ②i สีพิเศษ 3 สี เลือกได้เฉพาะรุ่นยูโร/Fuji (เจ้าของยืนยัน 19 ส.ค.69) ──
 //   Aztec gray · มะฮอกกานี · ไวท์โอ๊ค = อบพิเศษ ทำได้เฉพาะโปรไฟล์รหัส F####
 //   รุ่นที่ทำได้: บานเปิด · บานเลื่อน ยูโร · บานเฟี้ยมยูโร เท่านั้น
