@@ -6,7 +6,7 @@ import { Card, Badge } from "@/components/ui";
 import { baht } from "@/lib/money";
 import { PRODUCTS } from "@/lib/calculator40/products.mjs";
 import { ALU_COLOR_LABEL, aluColorKeysFor } from "@/lib/calculator40/alu-colors";
-import { compareCut, COMPARABLE, HANDLE_FIELDS, type AluRow, type HwRow } from "@/lib/calculator40/compare-cut";
+import { compareCut, COMPARABLE, cutOptionsFor, type AluRow, type HwRow } from "@/lib/calculator40/compare-cut";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const TONE = {
@@ -32,9 +32,8 @@ export default function CompareClient({ pb, stockCount }: { pb: any; stockCount:
   const [spec, setSpec] = useState<Record<string, string>>(
     Object.fromEntries((prod?.specOpts ?? []).map((o: any) => [o.key, o.def ?? o.opts?.[0] ?? ""])),
   );
-  const [cut, setCut] = useState<Record<string, string>>(
-    Object.fromEntries(HANDLE_FIELDS.map((f) => [f.key, f.def])),
-  );
+  // ตัวเลือกฝั่งใบตัด = ของรุ่นที่เลือกจริง ๆ (ไม่ใช่รายการมือจับ SMS ยัดไว้ทุกรุ่น)
+  const [cut, setCut] = useState<Record<string, string>>({});
 
   function pickProduct(id: string) {
     const x: any = (PRODUCTS as any)[id];
@@ -45,6 +44,12 @@ export default function CompareClient({ pb, stockCount }: { pb: any; stockCount:
     setP(String(x?.defaults?.p ?? 1));
     setSpec(Object.fromEntries((x?.specOpts ?? []).map((o: any) => [o.key, o.def ?? o.opts?.[0] ?? ""])));
   }
+
+  // ตัวเลือกฝั่งใบตัดของรุ่นที่เลือก — เปลี่ยนรุ่น/รูปแบบแล้วรายการเปลี่ยนตาม
+  const cutOpts = useMemo(
+    () => cutOptionsFor({ prodId, w: Number(w) || 0, h: Number(h) || 0, p: Number(p) || 1, form, spec }),
+    [prodId, w, h, p, form, spec],
+  );
 
   const r: any = useMemo(() => {
     try {
@@ -100,8 +105,8 @@ export default function CompareClient({ pb, stockCount }: { pb: any; stockCount:
           {(prod?.specOpts ?? []).filter((o: any) => o.type !== "number").map((o: any) => (
             <div key={o.key}>{sel(o.label, spec[o.key] ?? o.def ?? o.opts?.[0] ?? "", (v) => setSpec((s) => ({ ...s, [o.key]: v })), o.opts ?? [])}</div>
           ))}
-          {HANDLE_FIELDS.map((f) => (
-            <div key={f.key}>{sel(f.label, cut[f.key] ?? f.def, (v) => setCut((c) => ({ ...c, [f.key]: v })), [...f.choices])}</div>
+          {cutOpts.map((f) => (
+            <div key={f.key}>{sel(f.label, cut[f.key] ?? f.def, (v) => setCut((c) => ({ ...c, [f.key]: v })), f.choices)}</div>
           ))}
         </div>
       </Card>

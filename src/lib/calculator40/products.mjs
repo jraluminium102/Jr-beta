@@ -27,7 +27,7 @@ const SLIDE_VARS = {
 };
 // ── ค่าคงที่ที่ใช้ซ้ำหลายรุ่น (รวมไว้ที่เดียว · แก้ครั้งเดียวมีผลทุกรุ่น) ──
 const CF_EXPR = "mult*((({white:1,sahara:1.5208,woodStock:1.5859,special:1.9010,woodSpecial:1.9896})[color])||1)";   // ปัจจัยสีกล่อง (R3.9)
-const SILICONE = { name: 'ซิลิโคน', price: 90, unit: 'หลอด', count: 'Math.ceil(2*(W+H)*2/12.5)' };                  // ซิลิโคนรอบวงกบ (เส้นรอบรูป×2)
+const SILICONE = { name: 'ซิลิโคน', sku: 'JR00501', price: 90, unit: 'หลอด', count: 'Math.ceil(2*(W+H)*2/12.5)' };                  // ซิลิโคนรอบวงกบ (เส้นรอบรูป×2)
 const PERIM_VARS = { PERIM: '2*(W+H)' };                                                                            // เส้นรอบรูป (ฝ้า/ผนัง)
 const FAB_SPEC = { key: 'fabcolor', label: 'สีผ้ามุ้ง', opts: ['ดำ', 'เทา', 'ขาว', 'เงิน'], def: 'ดำ', optsByMaterial: { 'ไฟเบอร์': ['ดำ', 'เทา'], 'ไนล่อน': ['ดำ', 'เทา'], 'สแตนเลส': ['เงิน'], 'กันแมว': ['ขาว'], 'กันหนู': ['เงิน', 'ดำ'] } };   // สีผ้ามุ้งตามชนิด (มุ้งทุกรุ่น)
 const SCREEN_FABRIC_ROWS = [   // ผ้ามุ้ง 5 ชนิด (screen/screen_big ใช้ร่วม · ราคาตรงชีต)
