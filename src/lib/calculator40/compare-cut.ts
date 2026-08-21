@@ -76,6 +76,29 @@ function whyNoCut(prodId: string, form: string, panels: number): string {
   return "รุ่น/รูปแบบนี้ยังไม่มีสูตรใบตัดในระบบ — ต้องกรอกใบตัดเอง";
 }
 
+/**
+ * ตัวเลือกฝั่งใบตัดของรุ่นนี้จริง ๆ (มือจับ/ราง/คาน ฯลฯ) — หน้าจอเอาไปสร้าง dropdown
+ * ⚠ ห้าม hardcode รายการมือจับของ SMS ไว้ทุกรุ่น — SlimLux ไม่มี "ล็อค+ดัมมี่" (เจ้าของเจอ 21 ส.ค.69)
+ */
+export function cutOptionsFor(inp: Pick<CompareInput, "prodId" | "w" | "h" | "p" | "form" | "spec" | "glassType">) {
+  const prod = (PRODUCTS as any)[inp.prodId];
+  if (!prod) return [];
+  const map = cutInputFromRecipe({
+    kind: "std", prodId: inp.prodId, w: inp.w, h: inp.h, p: inp.p,
+    form: inp.form || prod.defForm, spec: inp.spec ?? {}, glassType: inp.glassType,
+  });
+  const spec = map ? CUT_SPEC_BY_ID[map.spec_id] : null;
+  if (!spec) return [];
+  const def = (spec.defaults ?? {}) as Record<string, unknown>;
+  // บาง spec มี opt ที่ไม่ใช่ dropdown (ช่องกรอกเอง) → ข้ามไป ไม่งั้นหน้าจอพัง
+  return (spec.opts ?? [])
+    .filter((o: { choices?: readonly string[] }) => Array.isArray(o.choices) && o.choices.length > 0)
+    .map((o: { key: string; label: string; choices: readonly string[] }) => ({
+      key: o.key, label: o.label, choices: [...o.choices],
+      def: String(def[o.key] ?? o.choices[0] ?? ""),
+    }));
+}
+
 export function compareCut(PB: any, inp: CompareInput) {
   const prod = (PRODUCTS as any)[inp.prodId];
   if (!prod) return null;

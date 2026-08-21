@@ -14,7 +14,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { compareCut, COMPARABLE } from "../src/lib/calculator40/compare-cut.ts";
+import { compareCut, COMPARABLE, cutOptionsFor } from "../src/lib/calculator40/compare-cut.ts";
 import { computeCost } from "../src/lib/calculator40/engine.mjs";
 import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
 import { computeCutList } from "../src/lib/cutlist/engine.ts";
@@ -382,6 +382,15 @@ console.log("\n═══ SlimLux — คิดราคา ↔ ใบตัด �
   // สีนอกจากขาว/ดำ → เสา X-J ใช้ตัวมิว JR02891 (สีดิบ) แล้วบวกค่าอบ
   const gray = compareCut(PB, { prodId: "slimlux", w: 300, h: 240, p: 3, form: "อิสระ", color: "sahara", spec: { slxhandle: "X-J" } });
   ok("สีเทาซาฮาร่า → เสา X-J ใช้มิว JR02891", (gray.alu.find((a) => a.code === "JR02891")?.calcPieces ?? 0) > 0, "");
+  // ตัวเลือกบนหน้าเทียบต้องเป็นของรุ่นนั้นจริง ๆ — เจ้าของเจอ 21 ส.ค.69: เปิด SlimLux แล้วมี "ล็อค+ดัมมี่" ของ SMS โผล่
+  {
+    const labels = (id, w, h, p, form) => cutOptionsFor({ prodId: id, w, h, p, form, spec: {} }).map((o) => o.label);
+    const slx = labels("slimlux", 300, 240, 3, "อิสระ");
+    ok("SlimLux ไม่มีช่องมือจับของ SMS (ซ้าย/ขวา)", !slx.some((l) => /ซ้าย|ขวา|ยี่ห้อ/.test(l)), slx.join(","));
+    ok("SlimLux มีช่องของตัวเอง (คาน · กล่องเสารับ)", slx.some((l) => /คาน/.test(l)) && slx.some((l) => /เสารับ/.test(l)), "");
+    ok("SMS ยังมีช่องมือจับ ซ้าย/ขวา ตามเดิม", labels("sms_slide", 600, 300, 3, "อิสระ").some((l) => /ซ้าย/.test(l)), "");
+    ok("รุ่นที่ใบตัดไม่มีตัวเลือก → ไม่โชว์ช่องอะไรเลย", labels("velora", 220, 200, 1, "เดี่ยว").length === 0, "");
+  }
 }
 
 
