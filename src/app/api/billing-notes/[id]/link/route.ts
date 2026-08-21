@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
-import { syncFinanceEntry } from "@/lib/billing";
+import { syncFinanceEntry, promoteJobToProductionIfPending } from "@/lib/billing";
 
 // PATCH /api/billing-notes/[id]/link
 // "ดึงใบวางบิลนอกระบบเข้าระบบ" — ผูกบิลที่ออกไปก่อนแล้ว เข้ากับใบเสนอราคา/งานที่ออกทีหลัง
@@ -120,6 +120,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       if (err) warnings.push(`งวด ${it.seq}: ลงบัญชีไม่สำเร็จ (${err})`);
       else backfilled++;
     }
+    // งวดมัดจำ (seq 1) จ่ายแล้ว → ดันงานเข้าผลิตอัตโนมัติ (กันเคสผูกใบวางบิลนอกระบบแล้วงานไม่เข้าผลิต · Steve)
+    const dep1 = insts.find((i) => i.seq === 1);
+    if (dep1) await promoteJobToProductionIfPending(supabase, q.job_id, dep1.paid_date || new Date().toISOString().slice(0, 10));
   } else {
     warnings.push("ใบเสนอนี้ยังไม่ผูกงาน — เงินที่รับจะยังไม่ขึ้นในบัญชี/ค้างรับ ให้ผูกงานที่ใบเสนอก่อน");
   }

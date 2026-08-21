@@ -30,6 +30,28 @@ function seqToType(seq: number): "DEPOSIT" | "INSTALLMENT_2" | "INSTALLMENT_3" |
   return "FINAL";
 }
 
+const PRE_DEPOSIT_STATUSES = ["LEAD", "PENDING_QUOTE", "QUOTE_SENT", "PENDING_DECISION"];
+
+/**
+ * ดันงานเข้าผลิตเมื่อจ่ายงวดมัดจำ (seq 1) แล้ว — ถ้างานยังเป็นสถานะ "ก่อนมัดจำ" → set DEPOSITED + deposit_date
+ *   → trigger tg_on_deposit สร้าง production PENDING_MEASURE + stage 9 · deposit_amount คงเป็น null = ไม่สร้าง finance ซ้ำ
+ *     (เงินลงแล้วจากการจ่ายงวด/backfill · trigger ข้ามสร้าง finance เพราะ deposit_amount null)
+ * ใช้ทั้งตอนจ่ายงวด (applyInstallmentPayment) และตอนผูกใบวางบิลนอกระบบเข้างาน (link route backfill)
+ * บทเรียน: เดิมจ่ายงวด 1 บนใบวางบิลแล้วเงินลงแต่งานไม่เข้าผลิต ต้องกดมัดจำเองอีกที (เจ้าของเจอ Steve BL2569080059)
+ * best-effort: ไม่ throw — ถ้าพลาดก็ไม่ทำให้การจ่ายเงินล้ม
+ */
+export async function promoteJobToProductionIfPending(
+  supabase: SupabaseClient, jobId: string | null | undefined, depositDate: string,
+): Promise<void> {
+  if (!jobId) return;
+  const { data: job } = await supabase
+    .from("jobs").select("status").eq("id", jobId).maybeSingle();
+  const status = (job as { status?: string } | null)?.status;
+  if (status && PRE_DEPOSIT_STATUSES.includes(status)) {
+    await supabase.from("jobs").update({ status: "DEPOSITED", deposit_date: depositDate }).eq("id", jobId);
+  }
+}
+
 /**
  * บันทึกรับชำระงวด → set paid_amount/paid_date/status ของงวด
  * แล้ว recompute billing_notes.status (unpaid/partial/paid) จากผลรวมที่จ่าย
@@ -169,6 +191,10 @@ export async function applyInstallmentPayment(
     if (syncErr) {
       // best-effort: log แต่ไม่ fail การจ่ายเงิน
       console.error("[billing] sync finance_entry failed:", syncErr);
+    }
+    // จ่ายงวดมัดจำ (seq 1) แล้ว → ดันงานเข้าผลิตอัตโนมัติ (ถ้ายังไม่มัดจำ) — กันเคสงานไม่เด้งเข้าผลิต
+    if (inst.seq === 1) {
+      await promoteJobToProductionIfPending(supabase, bn.job_id, opts.paidDate || today());
     }
   }
 
