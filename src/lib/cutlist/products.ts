@@ -609,8 +609,10 @@ const fU = (o: CutInput) => o.H - (fIn(o) ? 5.3 : 9.0);      // ยูข้า�
 // คิ้วกระจก เลือกตามความหนากระจก (เจ้าของยืนยัน 20 ส.ค.69) — หน้าที่เดียวกัน คนละกรณี
 //   F7919 = กระจก 6-13 มม. · F7917 = กระจก 13-15 มม.
 const fBead = (o: CutInput) => ((Number(o.glass) || 6) > 13 ? "F7917" : "F7919");
+// ⚠ ใช้เฟรม "3 ราง" (F7976 บน-ล่าง · F7978 ข้าง) เป็นหลักทั้ง 2 และ 3 บาน — เจ้าของเคาะ 20 ส.ค.69
+//   ไฟล์มีชีต "เลื่อนสลับ2ราง" ที่ใช้ F7977/F7979 อยู่ด้วย แต่ไม่เอาเข้าระบบ (กันเลือกผิด)
 export const FUJI_SLIDE: CutSpec = {
-  id: "fuji_slide", name: "FUJI บานเลื่อนสลับ (2/3 ราง · นอก/ใน)", stockLen: 640,
+  id: "fuji_slide", name: "FUJI บานเลื่อนสลับ (2/3 บาน · นอก/ใน)", stockLen: 640,
   rails: ["2ราง", "3ราง"],
   opts: [{ key: "work", label: "งาน", choices: ["ภายนอก", "ภายใน"] }, ...HANDLE_OPTS_LR],
   defaults: { W: 350, H: 240, N: 2, rail: "2ราง", honk: false, work: "ภายนอก", handleBrand: "Align", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค", handleR: "ล็อค+ดัมมี่" },
