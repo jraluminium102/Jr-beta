@@ -11,8 +11,7 @@
  *   fprice override > computeCost(รุ่นจริง, w,h,n, form, สี/กระจกตามบานหลัก) + extra (มุ้ง/วัสดุ/คาดตาราง แบบ flat legacy)
  * ผลรวม subSell/subCost คำนวณใน Calculator40Client.tsx (เหมือน roofSegs) แล้วบวกเข้า sell ตอนขึ้นใบ
  */
-// @ts-expect-error — engine เป็น ESM JS ล้วน
-import { computeCost } from "@/lib/calculator40/engine.mjs";
+import { panePrice } from "@/lib/calculator40/pane-calc";
 // @ts-expect-error — products เป็น ESM JS ล้วน
 import { PRODUCTS } from "@/lib/calculator40/products.mjs";
 
@@ -55,14 +54,12 @@ export function subPrice(s: SubPane, pb: any, mainColor: string, mainGlass: stri
   const sForm = s.form && (sp.forms ?? []).includes(s.form) ? s.form : sp.defForm;
   let base = 0;
   if (s.fprice! > 0) base = +s.fprice!;
-  else {
-    const r: any = computeCost(pb, sp, {
-      w: (s.w || 1) * 100, h: (s.h || 1) * 100, p: s.n || 1, form: sForm,
-      color: mainColor, glassType: mainGlass, material: sp.defMaterial ?? undefined,
-      profitPct, installProfitPct: profitPct, addons: {},
-    });
-    base = r.sell.withInstall;
-  }
+  // ใช้ตัวคิดราคาก้อนเดียวกับหน้า G1 / ห้องกระจก (pane-calc) — ได้ spec (ราง/มือจับ) + อุปกรณ์จากใบตัด
+  //   + ราคาเส้นตามสีจริงจากสโตร์ ครบเหมือนกดที่หน้า G1 (เจ้าของสั่ง 21 ส.ค.69 "ทำให้เป็นก้อนเดียวกัน")
+  //   ⚠ mainColor = "คีย์สี" (white/sahara/wood_teak) ไม่ใช่หมวดค่าอบ — pane-calc แปลงเอง
+  //      เดิมการ์ดในหน้าจอส่งคีย์สี แต่ตอนลงใบเสนอส่งหมวดค่าอบ = ตัวเลขสองที่ไม่ตรงกัน
+  else base = panePrice({ key: 0, typeKey: s.pid, w: s.w || 1, h: s.h || 1, n: s.n || 1, form: sForm, addons: {} },
+    pb, mainColor, mainGlass, profitPct).amount;
   let extra = 0;
   if (s.mat === "frame" || s.mat === "pleat") extra += 3000;
   else if (s.mat === "solid") extra += Math.ceil(((s.w || 1) * (s.h || 1) * 3500) / 100) * 100;

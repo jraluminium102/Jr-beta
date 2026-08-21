@@ -437,7 +437,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       // ── ผสมบาน (G1) — คิดราคาตามชนิดจริง (สี/กระจกตามบานหลัก) ตรง app.js calc() บรรทัด 236-245 ──
       if (subs.length) {
         subs.forEach((s) => {
-          const amt = subPrice(s, pb, rc.bake, glassType, profitPct);
+          const amt = subPrice(s, pb, color, glassType, profitPct);
           if (amt <= 0) return;
           sl.push({ desc: subDesc(s), amt });
           sSell += amt;
