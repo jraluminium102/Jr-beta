@@ -75,7 +75,7 @@ const ANCHORS = [
   //    ชีต "คิดทุน ___" ยังเขียนราคาเก่าอยู่ (ยังไม่ซิงก์) → anchor ชุดนี้จึงต่างจากชีตคิดทุน
   //    ตัวยึดที่ตรวจเลขได้เองอยู่ที่ ②g (ราคาขาว = กก. × 187)
   { id: 'sms_slide', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 18924.11 },
-  { id: 'euro_slide', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 31400.92 },
+  { id: 'euro_slide', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 31251.11 },
   { id: 'slimlux', in: { w: 200, h: 200, p: 2, form: 'อิสระ' }, cost: 13635 },
   { id: 'open_door', in: { w: 150, h: 200, p: 1, form: 'มีธรณี' }, cost: 7980.52 },
   { id: 'awning', in: { w: 40, h: 40, p: 1, form: 'อิสระ' }, cost: 2211.41 },
@@ -115,7 +115,7 @@ const ANCHORS = [
 //   ⚠ ไม่ใส่ เฟี้ยม/เฟี้ยมยูโร — ชีตเขียนกำกับเองว่า "สูตร live ประมาณ" (ไม่ใช่เลขเป๊ะ)
 const ANCHORS150 = [
   { id: 'sms_slide', in: { p: 2, form: 'อิสระ' }, cost: 5414.95 },   // 9,190.85 − 285 (ยึดราคาสี/สโตร์)
-  { id: 'euro_slide', in: { p: 2, form: 'อิสระ' }, cost: 8850.25 },
+  { id: 'euro_slide', in: { p: 2, form: 'อิสระ' }, cost: 8675.65 },
   { id: 'eseries', in: { p: 2, form: 'อิสระ' }, cost: 7060.06 },
   { id: 'velora', in: { p: 2, form: 'เดี่ยว', color: 'white' }, cost: 5919.55 },      // สีขาว = ต้องมีค่าอบเรตเทา (rawAlu)
   { id: 'velora', in: { p: 2, form: 'เดี่ยว', color: 'sahara' }, cost: 5919.55 },     // เทา = เท่ากันเป๊ะตามสูตรชีต
@@ -273,7 +273,7 @@ console.log('\n═══ ②d ราคาตามสี (เทาซาฮา
 const ANCHORS_COLOR = [
   // SMS ขยับ −285 ทุกสีเท่ากัน (ฐานขาวเปลี่ยน · ตารางราคาสีเท่าเดิม) — ยึดชีตราคาสี v9
   ['sms_slide', { w: 150, h: 150, p: 2, form: 'อิสระ' }, { white: 5414.95, sahara: 5723.42, woodStock: 7560.96 }],
-  ['euro_slide', { w: 150, h: 150, p: 2, form: 'อิสระ' }, { white: 8850.25, sahara: 9344.47, woodStock: 11954.23 }],
+  ['euro_slide', { w: 150, h: 150, p: 2, form: 'อิสระ' }, { white: 8675.65, sahara: 9152.53, woodStock: 11657.54 }],
   ['open_door', { w: 150, h: 150, p: 2, form: 'มีธรณี' }, { white: 9566.17, sahara: 11889.4, woodStock: 13223.1 }],
 ];
 for (const [id, inp, want] of ANCHORS_COLOR) {
