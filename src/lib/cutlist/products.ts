@@ -716,6 +716,60 @@ export const FUJI_SLIDE_CENTER: CutSpec = {
 };
 
 
+
+// ⑨c FUJI บานเลื่อน 4 / 5 บาน (ชีต "เลื่อน4 (2)" · "เลื่อน5") — เฟรม 2 ชุดต่อกัน
+//   4 บาน = 2 ราง + 2 ราง ต่อกัน (เฟรม 2 ราง F7977/F7979) · 5 บาน = 3 ราง + 2 ราง (เฟรม 3 ราง F7976)
+//   ที่เพิ่มจากรุ่น 2/3 บาน: ต่อเฟรมข้าง F7989 · ต่อราง F7990 (ตัวต่อระหว่างเฟรม 2 ชุด)
+//   ⚠ ทุกตัวเลขอ่านจากแผงแก้สูตรในไฟล์ตรง ๆ (คอลัมน์ E–K = ค่าหัก · L = จำนวน/ชุด)
+const FUJI_MULTI: Record<number, {
+  sd: number; sa: number; side79: number; side78: number; joinSide: number;
+  topFrame: string; joinRail: number; awning: number; hook: number; topCap: number; rail: number;
+}> = {
+  // เลื่อน4 (2): ขวาง = ((กว้าง−21−1−1−3.6−21)/4)+(78×3/4) → หักรวม 4.76 ซม. · บวก 5.85 ซม.
+  4: { sd: 4.76, sa: 5.85, side79: 4, side78: 0, joinSide: 2, topFrame: "F7977", joinRail: 4, awning: 2, hook: 6, topCap: 4, rail: 4 },
+  // เลื่อน5: ขวาง = ((กว้าง−21−3−3−4.8−21)/5)+(78×4/5) → หักรวม 5.28 ซม. · บวก 6.24 ซม.
+  5: { sd: 5.28, sa: 6.24, side79: 2, side78: 2, joinSide: 2, topFrame: "F7976", joinRail: 4, awning: 1, hook: 8, topCap: 5, rail: 5 },
+};
+const fm = (o: CutInput) => FUJI_MULTI[o.N] ?? FUJI_MULTI[4];
+const fmPost = (o: CutInput) => o.H - 7.4;                       // "สูงกรอบบาน"
+const fmSash = (o: CutInput) => (o.W - fm(o).sd) / o.N + fm(o).sa;
+export const FUJI_SLIDE_MULTI: CutSpec = {
+  id: "fuji_slide_multi", name: "FUJI บานเลื่อน 4 / 5 บาน (เฟรมต่อ)", stockLen: 640, rails: [],
+  opts: [...HANDLE_OPTS_LR],
+  defaults: { W: 800, H: 240, N: 4, handleBrand: "Align", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค", handleR: "ล็อค+ดัมมี่" },
+  profiles: [
+    { name: "เฟรมข้าง (2 ราง)", code: "F7979", len: (o) => o.H, qty: (o) => fm(o).side79 },
+    { name: "เฟรมข้าง (3 ราง)", code: "F7978", len: (o) => o.H, qty: (o) => fm(o).side78 },
+    { name: "ต่อเฟรมข้าง", code: "F7989", len: (o) => o.H, qty: (o) => fm(o).joinSide },
+    // เฟรมบน + รางล่างกันน้ำ = F7869 ตัวหนา ทุกรูปแบบการเลื่อน (เจ้าของสั่ง 20 ส.ค.69 · ทับไฟล์ที่เขียน F7977/F7976)
+    { name: "เฟรม บน-ล่าง", code: "F7869", len: (o) => o.W - 4.2, qty: () => 2 },
+    { name: "ต่อราง", code: "F7990", len: (o) => o.W - 4.2, qty: (o) => fm(o).joinRail },
+    { name: "ตบกันสาด", code: "F7992", len: (o) => o.W, qty: (o) => fm(o).awning },
+    { name: "เสา", code: "F7980", len: fmPost, qty: (o) => 2 * o.N },
+    { name: "ขวาง", code: "F7980", len: fmSash, qty: (o) => 2 * o.N, note: "อลูเดียวกับเสา" },
+    { name: "คิ้ว ตั้ง", code: fBead, len: (o) => fmPost(o) - 15.6, qty: (o) => 2 * o.N },
+    { name: "คิ้ว ขวาง", code: fBead, len: (o) => fmSash(o) - 12.6, qty: (o) => 2 * o.N, note: "อลูเดียวกับคิ้วตั้ง" },
+    { name: "ตบเกี่ยว", code: "F7983", len: fmPost, qty: (o) => fm(o).hook },
+    // เสารับแรง — ไฟล์ตัดประกอบไม่มี · เจ้าของสั่งเพิ่ม (สูงเกิน 2.6 ม. · ยาว/จำนวนเท่าตบเกี่ยว)
+    { name: "เสารับแรง", code: "F7951", len: fmPost, qty: (o) => (o.H > 260 ? fm(o).hook : 0), note: "ไฟล์ตัดประกอบไม่มี — เจ้าของสั่งเพิ่ม" },
+    { name: "ยูข้าง", code: "F7986", len: (o) => o.H - 9.0, qty: () => 2 },
+    { name: "ตบเฟรมบน", code: "F7993", len: (o) => o.W - 4.2, qty: (o) => fm(o).topCap, stockLens: [500] },
+    { name: "ตบยูข้าง", code: "F7988", len: (o) => o.H - 9.0, qty: () => 2 },
+    { name: "ราง", code: "F7994", len: (o) => o.W - 4.2, qty: (o) => fm(o).rail, stockLens: [500] },
+  ],
+  hardware: [
+    { name: "ล้อ-15x20x230", sku: "JR00577", qty: (o) => 2 * o.N, unit: "ตัว" },
+    ...handleHardware("LR"),
+    { name: "สปิงก็อท", sku: "JR00592", qty: (o) => 4 * o.N, unit: "ตัว" },
+    { name: "ฉากประกอบมุม", sku: "JR00480", qty: (o) => 16 * o.N, unit: "ตัว" },
+    { name: "ยางรูน้ำ", sku: "JR00589", qty: (o) => 2 + Math.max(0, Math.ceil((o.W - 4.2 - 150) / 50)), unit: "อัน" },
+    { name: "วาวรูน้ำ", sku: "JR00485", qty: (o) => 2 + Math.max(0, Math.ceil((o.W - 4.2 - 150) / 50)), unit: "อัน" },
+    { name: "สักหลาด (ม.)", sku: "JR00794", unit: "ม.", noStock: true, note: "สะสมม้วน",
+      qty: (o, ctx) => Math.round((2 * 2 * (ctx.len("ขวาง") + ctx.len("เสา")) * o.N + ctx.len("ตบเกี่ยว") * fm(o).hook) / 100 * 10) / 10 },
+    ...fujiSlideConsum((o) => o.N),
+  ],
+};
+
 /**
  * ⑩ FUJI บานเปิด/กระทุ้ง (casement · JR_FUJI_บานเปิด-บานกระทุ้ง v2.xlsx — เทียบทุกเส้นกับชีทจริง "FUJI บานเปิด")
  * v2 เปลี่ยน 3 อย่าง (เจ้าของยืนยัน มุ้ง/กันสาด = ตัวเลือก ใส่/ไม่ใส่):
@@ -1862,7 +1916,7 @@ export const CUT_SPECS: CutSpec[] = [
   SMS_SLIDE_FREE, SMS_SLIDE_CENTER, SMS_SLIDE_TOW,
   SLIMLUX_SLIDE, FIXED_PANEL,
   VELORA_SWING, SMS240_BIFOLD, EURO_BIFOLD, EURO_BIFOLD_CORNER, EURO_LIFT,
-  FUJI_SLIDE, FUJI_SLIDE_CENTER, FUJI_SWING, FUJI_DOOR, FUJI_FIX, FUJI_HUNG,
+  FUJI_SLIDE, FUJI_SLIDE_CENTER, FUJI_SLIDE_MULTI, FUJI_SWING, FUJI_DOOR, FUJI_FIX, FUJI_HUNG,
   PC_DOOR, GATE_SLIDE, SOLID_DOOR, WOODJAMB_SWING,
   AWNING, AWNING_L, AWNING_MULTI, GABLE_STRAIGHT, GABLE_MULTI, GLASSHOUSE, GLASSHOUSE_MULTI, LOUVER_PANEL, TOPRAIL_FRAME,
 ];

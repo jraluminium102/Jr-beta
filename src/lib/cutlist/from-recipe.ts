@@ -54,7 +54,12 @@ export function cutInputFromRecipe(recipe: any): RecipeCutMap | null {
         m = null;   // ⚠ ไฟล์ใบตัด FUJI ยังไม่มีชีต "ลากจูง" — รอเจ้าของส่งสูตร (ห้ามเดา)
       } else {
         // อิสระ/สลับ — ไฟล์มีชีต 2 ราง กับ 3 ราง (4/5 ราง ใช้โปรไฟล์คนละชุด ยังไม่ได้พอร์ต)
-        m = (N === 2 || N === 3) ? { spec_id: "fuji_slide", input: { W, H, N, rail: `${N}ราง`, work, glass: glassMm(recipe.glassType), honk: false } } : null;
+        // 2-3 บาน = เฟรมชุดเดียว (ชีต "เลื่อนสลับ" / "เลื่อน3ราง")
+        // 4-5 บาน = เฟรม 2 ชุดต่อกัน (ชีต "เลื่อน4 (2)" / "เลื่อน5") — งานนอกเท่านั้น
+        //   งานใน 4/5 ราง ใช้เฟรมล่าง B27018 ที่ยังไม่มีในระบบ → ยังพอร์ตไม่ได้
+        if (N === 2 || N === 3) m = { spec_id: "fuji_slide", input: { W, H, N, rail: `${N}ราง`, work, glass: glassMm(recipe.glassType), honk: false } };
+        else if ((N === 4 || N === 5) && work === "ภายนอก") m = { spec_id: "fuji_slide_multi", input: { W, H, N, glass: glassMm(recipe.glassType) } };
+        else m = null;
       }
       break;
     }
