@@ -8,13 +8,13 @@ import { baht } from "@/lib/money";
 import { CHANNEL } from "@/lib/constants";
 
 type Money = number | null;
-type Deposit = { id: string; job_code: string | null; customer_name: string; deposit_date: string | null; net: Money; sales: string; area: string };
+type Deposit = { id: string; job_code: string | null; customer_name: string; deposit_date: string | null; net: Money; net_vat: Money; sales: string; area: string };
 type Stats = {
   range: { from: string; to: string };
   can_finance: boolean;
-  summary: { jobs: number; won: number; close_rate: number; deposited_period: number; revenue_closed: Money; revenue_deposited: Money; collected: Money; quotations: number; ext_quotes: number; ext_pct: number };
+  summary: { jobs: number; won: number; close_rate: number; deposited_period: number; revenue_closed: Money; revenue_deposited: Money; revenue_closed_vat: Money; revenue_deposited_vat: Money; collected: Money; quotations: number; ext_quotes: number; ext_pct: number };
   deposits: Deposit[];
-  byMonth: { month: string; quoted: Money; closed: Money }[];
+  byMonth: { month: string; quoted: Money; closed: Money; closed_vat: Money }[];
   byArea: { area: string; jobs: number; won: number; revenue: Money }[];
   areaUnknown: number;
   areaOther: number;
@@ -157,11 +157,11 @@ function StatsTab({ data, onDeposits }: { data: Stats; onDeposits: (title: strin
               <div className="text-[10px] text-brand mt-0.5">กดดูรายชื่อ</div>
             </Card>
           </button>
-          {canFin && <Kpi label="ยอดขายที่ปิดได้ (฿)" value={baht(s.revenue_deposited ?? 0)} color="#1F4E78" />}
+          {canFin && <Kpi label="ยอดขายที่ปิดได้ · ก่อน VAT (฿)" value={baht(s.revenue_deposited ?? 0)} color="#1F4E78" sub={<>หลัง VAT ฿{baht(s.revenue_deposited_vat ?? 0)}</>} />}
           {canFin && <Kpi label="เก็บเงินเข้าจริง (฿)" value={baht(s.collected ?? 0)} color="#7d0f15" />}
           {!canFin && <div />}
         </div>
-        {canFin && <p className="text-[11px] text-ink-3 mt-1"><b>ยอดขายที่ปิดได้</b> = มูลค่างานที่ลูกค้ามัดจำในช่วงนี้ (เต็มมูลค่า ไม่สนเก็บครบงวดยัง) · <b>เก็บเงินเข้าจริง</b> = เงินสดที่รับเข้ามาจริง</p>}
+        {canFin && <p className="text-[11px] text-ink-3 mt-1"><b>ยอดขายที่ปิดได้</b> = มูลค่างานที่ลูกค้ามัดจำในช่วงนี้ อิงยอดจากใบวางบิล (ก่อน/หลัง VAT · เต็มมูลค่า ไม่สนเก็บครบงวดยัง) · <b>เก็บเงินเข้าจริง</b> = เงินสดที่รับเข้ามาจริง</p>}
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
@@ -456,7 +456,8 @@ function DepositsModal({ title, rows, canFin, onClose }: { title: string; rows: 
                 <th className="font-semibold">พื้นที่</th>
                 <th className="font-semibold">เซลล์</th>
                 <th className="font-semibold text-center">วันมัดจำ</th>
-                {canFin && <th className="font-semibold text-right">ยอด (฿)</th>}
+                {canFin && <th className="font-semibold text-right">ก่อน VAT (฿)</th>}
+                {canFin && <th className="font-semibold text-right">หลัง VAT (฿)</th>}
               </tr></thead>
               <tbody>
                 {rows.map((d) => (
@@ -466,23 +467,28 @@ function DepositsModal({ title, rows, canFin, onClose }: { title: string; rows: 
                     <td className="text-ink-3 text-xs">{d.sales}</td>
                     <td className="text-center tabular-nums text-ink-3 text-xs">{fmtDate(d.deposit_date)}</td>
                     {canFin && <td className="text-right tabular-nums text-ink-2">{baht(d.net ?? 0)}</td>}
+                    {canFin && <td className="text-right tabular-nums text-ink-2">{baht(d.net_vat ?? 0)}</td>}
                   </tr>
                 ))}
               </tbody>
             </table>
           )}
         </div>
-        <div className="px-4 py-2.5 border-t border-black/10 text-xs text-ink-3">รวม {rows.length} งาน</div>
+        <div className="px-4 py-2.5 border-t border-black/10 text-xs text-ink-3 flex justify-between">
+          <span>รวม {rows.length} งาน</span>
+          {canFin && <span className="tabular-nums">ก่อน VAT ฿{baht(rows.reduce((a, d) => a + (d.net ?? 0), 0))} · หลัง VAT ฿{baht(rows.reduce((a, d) => a + (d.net_vat ?? 0), 0))}</span>}
+        </div>
       </div>
     </div>
   );
 }
 
-function Kpi({ label, value, color }: { label: string; value: React.ReactNode; color?: string }) {
+function Kpi({ label, value, color, sub }: { label: string; value: React.ReactNode; color?: string; sub?: React.ReactNode }) {
   return (
     <Card className="p-4 h-full">
       <div className="text-xs font-medium text-ink-3">{label}</div>
       <div className="text-xl sm:text-2xl font-extrabold mt-1.5 tabular-nums" style={{ color: color ?? "#1f2127" }}>{value}</div>
+      {sub != null && <div className="text-[11px] text-ink-3 mt-0.5 tabular-nums">{sub}</div>}
     </Card>
   );
 }

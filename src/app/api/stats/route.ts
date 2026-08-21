@@ -77,7 +77,7 @@ export const GET = withRoute(async (req: Request) => {
 
   const [jobs, fin, issues, quotations, qitems, queueRows, salesRows, custRows] = await Promise.all([
     fetchAllPaged<any>((f, t) => sb.from("jobs")
-      .select("id, job_code, status, current_stage, net_amount, deposit_date, assess_date, quote_sent_date, design_state, design_start, design_end, design_due_date, on_hold, customer_area, customer_id, customer_name, channel, estimator_id, estimator:estimator_id(full_name), designer_ref, designer_lookup:designer_ref(name), queue_entry_id")
+      .select("id, job_code, status, current_stage, net_amount, total_amount, deposit_date, assess_date, quote_sent_date, design_state, design_start, design_end, design_due_date, on_hold, customer_area, customer_id, customer_name, channel, estimator_id, estimator:estimator_id(full_name), designer_ref, designer_lookup:designer_ref(name), queue_entry_id")
       .order("id", { ascending: true }).range(f, t)),
     fetchAllPaged<any>((f, t) => sb.from("finance_entries")
       .select("amount, payment_date").eq("is_voided", false)
@@ -159,8 +159,11 @@ export const GET = withRoute(async (req: Request) => {
 
   // ── summary ──
   const collected = F.filter((f: any) => inRange(f.payment_date)).reduce((s: number, f: any) => s + num(f.amount), 0);
+  // ยอดขาย: net_amount = ก่อน VAT · total_amount = หลัง VAT (อิงใบวางบิล ผ่าน migration 0125)
   const revenue_closed = wonJobs.reduce((s: number, j: any) => s + num(j.net_amount), 0);
   const revenue_deposited = depositedInRange.reduce((s: number, j: any) => s + num(j.net_amount), 0);
+  const revenue_closed_vat = wonJobs.reduce((s: number, j: any) => s + num(j.total_amount), 0);
+  const revenue_deposited_vat = depositedInRange.reduce((s: number, j: any) => s + num(j.total_amount), 0);
 
   // ใบเสนอในช่วง (มีรายการ ≥1) + สัดส่วนนอกระบบ (ทุกรายการ category ว่าง = พิมพ์เอง/นำเข้า)
   const catByQuote = new Map<string, boolean>(), quoteHasItems = new Set<string>();
@@ -177,8 +180,10 @@ export const GET = withRoute(async (req: Request) => {
     won: wonJobs.length,                                 // มัดจำ "จากที่ประเมินในช่วง" (cohort)
     close_rate: inJobs.length ? Math.round((wonJobs.length / inJobs.length) * 100) : 0,
     deposited_period: depositedInRange.length,           // มัดจำ "ที่เกิดในช่วง" (อิงวันมัดจำ)
-    revenue_closed: mask(revenue_closed),                // ยอดขายจาก cohort
-    revenue_deposited: mask(revenue_deposited),          // ยอดขายที่ปิดในช่วง (อิงวันมัดจำ)
+    revenue_closed: mask(revenue_closed),                // ยอดขายจาก cohort (ก่อน VAT)
+    revenue_deposited: mask(revenue_deposited),          // ยอดขายที่ปิดในช่วง อิงวันมัดจำ (ก่อน VAT)
+    revenue_closed_vat: mask(revenue_closed_vat),        // ยอดขายจาก cohort (หลัง VAT)
+    revenue_deposited_vat: mask(revenue_deposited_vat),  // ยอดขายที่ปิดในช่วง อิงวันมัดจำ (หลัง VAT)
     collected: mask(collected),
     quotations: inQuotes.length,
     ext_quotes: extQuotes.length,
@@ -189,7 +194,7 @@ export const GET = withRoute(async (req: Request) => {
   const deposits = depositedInRange
     .map((j: any) => ({
       id: j.id, job_code: j.job_code ?? null, customer_name: j.customer_name ?? "",
-      deposit_date: j.deposit_date ?? null, net: mask(num(j.net_amount)),
+      deposit_date: j.deposit_date ?? null, net: mask(num(j.net_amount)), net_vat: mask(num(j.total_amount)),
       sales: jobSalesName(j), area: areaLabel(addressOf(j)) || "-",
     }))
     .sort((a, b) => String(b.deposit_date ?? "").localeCompare(String(a.deposit_date ?? "")));
@@ -202,6 +207,7 @@ export const GET = withRoute(async (req: Request) => {
     month: m,
     quoted: mask(J.filter((j: any) => mk(j.assess_date) === m && j.status !== "CANCELLED").reduce((s: number, j: any) => s + num(j.net_amount), 0)),
     closed: mask(J.filter((j: any) => mk(j.deposit_date) === m && j.status !== "CANCELLED").reduce((s: number, j: any) => s + num(j.net_amount), 0)),
+    closed_vat: mask(J.filter((j: any) => mk(j.deposit_date) === m && j.status !== "CANCELLED").reduce((s: number, j: any) => s + num(j.total_amount), 0)),
   }));
 
   // ── พื้นที่ (โซนกรุงเทพ / จังหวัด / ภูเก็ตรายอำเภอ) ──
