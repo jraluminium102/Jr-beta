@@ -20,7 +20,7 @@ import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
 import { computeCutList } from "../src/lib/cutlist/engine.ts";
 import { CUT_SPEC_BY_ID } from "../src/lib/cutlist/products.ts";
 import { cutHardwareLines } from "../src/lib/calculator40/hardware-from-cutlist.ts";
-import { buildPriceOverride, applyPriceOverride } from "../src/lib/calculator40/stock-link.ts";
+import { buildPriceOverride, applyPriceOverride, isAluCode } from "../src/lib/calculator40/stock-link.ts";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PB = JSON.parse(fs.readFileSync(path.join(ROOT, "src/lib/calculator40/pricebook.json"), "utf8"));
@@ -392,6 +392,23 @@ console.log("\n═══ SlimLux — คิดราคา ↔ ใบตัด �
     ok("SlimLux ไม่มีช่องมือจับซ้ำ (คิดราคาคุมอยู่แล้ว)", !slx.some((l) => /มือจับ/.test(l)), slx.join(","));
     ok("SMS ยังมีช่องมือจับ ซ้าย/ขวา ตามเดิม", labels("sms_slide", 600, 300, 3, "อิสระ").some((l) => /ซ้าย/.test(l)), "");
     ok("รุ่นที่ใบตัดไม่มีตัวเลือก → ไม่โชว์ช่องอะไรเลย", labels("velora", 220, 200, 1, "เดี่ยว").length === 0, "");
+  }
+  // รหัสที่เขียนเป็น "สูตร" (เลือกตามสี/ความหนา) ต้องผูกสโตร์ได้ทุกตัว
+  //   เจ้าของเจอ 21 ส.ค.69: มือจับ X-J JR02890 ไม่มีราคา ทั้งที่สโตร์ตั้งไว้แล้ว
+  //   ต้นเหตุ: stock-link เก็บ "ทั้งสูตร" เป็นรหัส แทนที่จะดึงรหัสในเครื่องหมายคำพูดออกมา
+  {
+    for (const c of ["JR02890", "JR02889", "JR02891", "F7917", "F7919"])
+      ok(`รหัสในสูตร ${c} ผูกสโตร์ได้`, isAluCode(c), "");
+    // ตั้งราคาในสโตร์ → ราคาบนคิดราคาต้องเด้งตาม
+    const rows = [{ name: "มือจับ xj ยาว 2.8m", sku: "JR02890", color: "ขาว", unit_cost: 820 },
+      { name: "มือจับ xj ยาว 2.8m", sku: "JR02891", color: "มิว", unit_cost: 320 }];
+    const PBs = applyPriceOverride(JSON.parse(JSON.stringify(PB)), buildPriceOverride(rows, PB));
+    ok("ตั้งราคา X-J ในสโตร์ → ALUCODE รับค่า", PBs.ALUCODE?.JR02890 === 820 && PBs.ALUCODE?.JR02891 === 320, "");
+    const xjPrice = (colorKey) => computeCost(PBs, PRODUCTS.slimlux,
+      { w: 300, h: 240, p: 3, form: "อิสระ", color: colorKey === "white" ? "white" : "sahara", colorKey, spec: { slxhandle: "X-J" } })
+      .lines.find((l) => /X-J/.test(l.name))?.unitPrice;
+    ok("สีขาว → เสา X-J ใช้ราคา JR02890 (฿820)", xjPrice("white") === 820, String(xjPrice("white")));
+    ok("สีเทา → เสา X-J ใช้ราคา JR02891 มิว (฿320)", xjPrice("sahara") === 320, String(xjPrice("sahara")));
   }
 }
 
