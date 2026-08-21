@@ -1415,14 +1415,19 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                         ค่าผลิต/ค่าติดตั้ง = กางสูตรค่าแรงจากชีต "ค่าแรง" (ฐาน + เรต × ตร.ม.) */}
                     {howOpen === "ค่าของ" && (
                       <div className="mt-2 rounded-xl border border-line bg-white/70 p-3">
-                        <div className="text-xs font-semibold text-brand-dark mb-1">ของที่ใช้ทั้งหมด ({result.lines.length} รายการ)</div>
+                        {/* ตารางนี้โชว์ราคาเสมอ ไม่ผูกกับปุ่ม 💰 ดูทุน/กำไร — ต้องกด "ดูวิธีคิด" ถึงจะกางอยู่แล้ว
+                            (เจ้าของแจ้ง 20 ส.ค.69: กางแล้วไม่เห็นราคา เพราะปุ่มทุนปิดอยู่) */}
+                        <div className="flex items-baseline gap-2 mb-1">
+                          <span className="text-xs font-semibold text-brand-dark">ของที่ใช้ทั้งหมด ({result.lines.length} รายการ)</span>
+                          <span className="text-[11px] text-ink-3">ราคาทุนจากสโตร์</span>
+                        </div>
                         <div className="max-h-72 overflow-y-auto">
                           <table className="w-full text-xs">
                             <thead className="sticky top-0 bg-white">
                               <tr className="text-left text-ink-3 border-b border-line">
                                 <th className="py-1">รายการ</th><th>รหัสสโตร์</th>
                                 <th className="text-right">จำนวน</th>
-                                {showCost && <><th className="text-right">฿/หน่วย</th><th className="text-right">รวม</th></>}
+                                <th className="text-right">฿/หน่วย</th><th className="text-right">รวม</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -1434,24 +1439,20 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                                     <td className="py-1 pr-2">{l.name}</td>
                                     <td className="font-mono text-[11px] text-ink-3">{code || "—"}</td>
                                     <td className="text-right tabular-nums">{r2(l.qty)} {l.unit || ""}</td>
-                                    {showCost && <>
-                                      <td className={"text-right tabular-nums " + (noPrice ? "text-red-600 font-bold" : "")}>
-                                        ฿{baht(l.unitPrice)}
-                                      </td>
-                                      <td className="text-right tabular-nums">฿{baht(l.amount)}</td>
-                                    </>}
+                                    <td className={"text-right tabular-nums " + (noPrice ? "text-red-600 font-bold" : "")}>
+                                      ฿{baht(l.unitPrice)}
+                                    </td>
+                                    <td className="text-right tabular-nums">฿{baht(l.amount)}</td>
                                   </tr>
                                 );
                               })}
                             </tbody>
-                            {showCost && (
-                              <tfoot>
-                                <tr className="border-t-2 border-line font-bold">
-                                  <td className="py-1" colSpan={4}>ทุนรวม</td>
-                                  <td className="text-right tabular-nums">฿{baht(result.cost.total)}</td>
-                                </tr>
-                              </tfoot>
-                            )}
+                            <tfoot>
+                              <tr className="border-t-2 border-line font-bold">
+                                <td className="py-1" colSpan={4}>ทุนรวม</td>
+                                <td className="text-right tabular-nums">฿{baht(result.cost.total)}</td>
+                              </tr>
+                            </tfoot>
                           </table>
                         </div>
                         {(result as any)?.hwMissing?.length > 0 && (
