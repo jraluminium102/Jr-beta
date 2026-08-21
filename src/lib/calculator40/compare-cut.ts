@@ -97,6 +97,7 @@ export function compareCut(PB: any, inp: CompareInput) {
   const map = cutInputFromRecipe({
     kind: "std", prodId: inp.prodId, w: inp.w, h: inp.h, p: inp.p,
     form: opt.form, spec: inp.spec ?? {}, glassType: opt.glassType,
+    color: inp.color || "white",   // ⚠ ต้องส่งสีด้วย — เส้นที่เลือกรหัสตามสี (X-J) จะเพี้ยนถ้าไม่ส่ง
   });
   const spec = map ? CUT_SPEC_BY_ID[map.spec_id] : null;
   const cutSel = Object.fromEntries(Object.entries(inp.cut ?? {}).filter(([, v]) => v != null && v !== ""));
