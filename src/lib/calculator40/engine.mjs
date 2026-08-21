@@ -48,7 +48,7 @@ export function barsNeeded(segLen, count, stockLen = STOCK_LEN, waste = false) {
 
 // ── สร้าง evaluator ของ expression strings ในสเปกสินค้า ──────────────────────
 function buildEvaluator(extraVarNames) {
-  const base = ['W', 'H', 'P', 'form', 'area', 'color', 'material', 'ROW', 'spec', 'mult', 'GMM'];
+  const base = ['W', 'H', 'P', 'form', 'area', 'color', 'material', 'ROW', 'spec', 'mult', 'GMM', 'CKEY'];
   const names = [...base, ...extraVarNames];
   const cache = new Map();
   const compile = (expr) => {
@@ -109,7 +109,7 @@ export function computeCost(PB, prod, opt) {
   // mult ฉีดเข้า scope → สูตรราคา consum (โครงเมืองทอง roof/ระแนง) อ้าง mult ได้ → ขยับตามราคาอลู/กก. (ตั้งต้น mult=1 ไม่กระทบ anchor)
   // GMM = ความหนากระจก (มม.) จากชื่อกระจก — สูตรบางรุ่นเลือกคิ้วตามความหนา (F7919 6-13 · F7917 13-15)
   const GMM = Number((/(\d+)\s*มม/.exec(String(glassType)) || [])[1]) || 6;
-  const scope = { W, H, P, form, area, color, material, ROW: prod.lut ? (prod.lut[material] || {}) : {}, spec: opt.spec || {}, mult, GMM };
+  const scope = { W, H, P, form, area, color, material, ROW: prod.lut ? (prod.lut[material] || {}) : {}, spec: opt.spec || {}, mult, GMM, CKEY: String(opt.colorKey ?? '') };
   for (const [k, expr] of Object.entries(varDefs)) {
     scope[k] = ev.compile(expr)(scope);
   }
@@ -117,6 +117,16 @@ export function computeCost(PB, prod, opt) {
 
   const stockLen = prod.stockLen ?? STOCK_LEN;
   const lines = [];
+  // ⚠ กันคิดต่ำกว่าจริงเงียบ ๆ — เก็บทุกบรรทัดที่ราคาออกมา 0 (สโตร์ยังไม่ตั้งราคา + สูตรไม่มีราคาสำรอง)
+  //   ใช้ทั้งฝั่งอลูและฝั่งอุปกรณ์ · หน้าจอเอาไปขึ้นเตือนว่าต้องไปตั้งราคารหัสไหนบ้าง
+  const hwMissing = [];
+  const noteMissing = (it, count) => {
+    if (!(count > 0) || !it.sku) return;
+    const sku = String(it.sku).toUpperCase();
+    if ((PB.SKUPRICE && PB.SKUPRICE[sku] > 0) || (Number(it.price) || 0) > 0) return;
+    if (hwMissing.some((m) => m.sku === sku)) return;
+    hwMissing.push({ sku, name: it.name });
+  };
   // อุปกรณ์ผูก "รหัสสโตร์" ได้ตรง ๆ — it.sku เป็นข้อความ หรือสูตร (เลือกรหัสตามสี/รูปแบบ) ก็ได้
   //   ราคาจากสโตร์ชนะราคาฝังในสูตรเสมอ (เจ้าของ 19 ส.ค.69: สโตร์เป็นตัวตั้ง)
   const skuOf = (it) => {
@@ -149,7 +159,8 @@ export function computeCost(PB, prod, opt) {
   for (const it of (prod.alu || [])) {
     const seg = typeof it.seg === 'number' ? it.seg : val(it.seg);
     const count = val(it.count);
-    const bars = barsNeeded(seg, count, stockLen, !!prod.aluWaste && !it.noWaste);
+    // it.stockLen = ความยาวเส้นเฉพาะบรรทัดนี้ (เช่น มือจับ X-J ขายเป็นท่อน 2.8 ม. ไม่ใช่ 6 ม.)
+    const bars = barsNeeded(seg, count, Number(it.stockLen) || stockLen, !!prod.aluWaste && !it.noWaste);
     if (bars <= 0) continue;
     // ราคาเส้น "ตามสี" (PB.ALUCOLOR) มาก่อน — ชีต "ราคาสี" มีคอลัมน์ เทาซาฮาร่า/ลายไม้สต็อค เป็นราคาเส้นสำเร็จ
     //   สูตรในชีตคิดทุนใช้คอลัมน์นั้นตรง ๆ (ไม่ใช่ ขาว + ค่าอบ×กก.) → เส้นที่คิดราคาสีแล้ว ห้ามบวกค่าอบซ้ำ
@@ -185,6 +196,9 @@ export function computeCost(PB, prod, opt) {
     const fromStock = !!(bxp != null || stockColorPrice > 0
       || (!(colorPrice > 0) && code && PB.ALUCODE_FROM_STOCK && PB.ALUCODE_FROM_STOCK[code] && PB.ALUCODE[code] > 0));
     const m = fromStock ? 1 : mult;
+    // เส้นที่ราคาออกมาเป็น 0 (สโตร์ยังไม่ตั้งราคา + สูตรไม่มีราคาสำรอง) → เตือนบนหน้าจอ
+    //   ไม่งั้นค่าของหายเงียบ ๆ เหมือนเคสอุปกรณ์ (เจ้าของเจอมาแล้ว)
+    if (!(price > 0)) noteMissing({ sku: code || it.box || it.name, name: it.name, price: 0 }, bars);
     const amount = bars * price * m;
     aluCost += amount;
     // เส้นที่ราคารวมสีแล้ว หรือเป็นเส้นสีเงินไม่อบสี → ไม่เข้ากองคิดค่าอบ
@@ -254,18 +268,9 @@ export function computeCost(PB, prod, opt) {
   // ⚠ กันคิดต่ำกว่าจริงเงียบ ๆ — รหัสไหนยังไม่ตั้งราคาในสโตร์ ค่าของบรรทัดนั้นจะเป็น 0
   //   ถ้ามีแม้แต่ตัวเดียว → ไม่ใช้รายการจากใบตัดทั้งชุด กลับไปใช้ราคาเดิมในสูตร (ราคาไม่ตก)
   //   แล้วรายงาน hwMissing ให้หน้าจอเตือนว่าต้องไปตั้งราคารหัสไหนบ้าง
-  const hwMissing = (rawHwLines || [])
-    .filter((it) => (Number(it.qty) || 0) > 0 && !(hwPrice(it) > 0))
-    .map((it) => ({ sku: String(it.sku || ''), name: it.name }));
-  // บรรทัดในสูตรที่ผูกรหัสสโตร์ไว้แต่สโตร์ยังไม่ตั้งราคา และไม่มีราคาสำรองในสูตร → ค่าของบรรทัดนั้น = 0
-  //   ต้องเตือนเหมือนกัน ไม่งั้นคิดต่ำกว่าจริงเงียบ ๆ (เช่น ยางรูน้ำ/วาวรูน้ำ ที่ไฟล์ถอดทุนไม่มีราคา)
-  const noteMissing = (it, count) => {
-    if (!(count > 0) || !it.sku) return;
-    const sku = String(it.sku).toUpperCase();
-    if ((PB.SKUPRICE && PB.SKUPRICE[sku] > 0) || (Number(it.price) || 0) > 0) return;
-    if (hwMissing.some((m) => m.sku === sku)) return;
-    hwMissing.push({ sku, name: it.name });
-  };
+  for (const it of (rawHwLines || [])) {
+    if ((Number(it.qty) || 0) > 0 && !(hwPrice(it) > 0)) hwMissing.push({ sku: String(it.sku || ''), name: it.name });
+  }
   const hwLines = rawHwLines && !hwMissing.length ? rawHwLines : null;
   let hwCost = 0;
   for (const it of (hwLines || [])) {
