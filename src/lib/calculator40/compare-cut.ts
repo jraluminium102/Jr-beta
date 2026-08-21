@@ -58,6 +58,22 @@ function statusOf(calc: number, cut: number, hasKey: boolean): AluRow["status"] 
   return eq(calc, cut) ? "ตรง" : "จำนวนต่าง";
 }
 
+
+/**
+ * บอกให้ชัดว่า "ทำไมเทียบไม่ได้" — บอกด้วยว่าไฟล์ตัดประกอบมีแบบไหนบ้าง
+ * เจ้าของงง 20 ส.ค.69: เห็นขึ้นว่าไม่มีสูตร ทั้งที่ไฟล์มีชีตอยู่ (แค่คนละจำนวนบาน)
+ */
+function whyNoCut(prodId: string, form: string, panels: number): string {
+  if (prodId === "euro_slide") {
+    if (form === "เปิดคู่กลาง")
+      return `ไฟล์ตัดประกอบ FUJI มีเปิดคู่กลางเฉพาะ 4 บาน (ชีต "เลื่อนแบ่ง4") กับ 6 บาน (ชีต "เลื่อนแบ่ง6-กลาง") — ตอนนี้เลือก ${panels} บาน`;
+    if (form === "ลากจูง")
+      return "ไฟล์ตัดประกอบ FUJI ไม่มีชีตลากจูงเลย (มีเฉพาะไฟล์ SMS) — ต้องกรอกใบตัดเอง";
+    return `ไฟล์ตัดประกอบ FUJI ที่ลงระบบแล้วมี 2 กับ 3 บาน — ตอนนี้เลือก ${panels} บาน (ไฟล์มีชีต 4/5 บานอยู่ แต่ยังไม่ได้พอร์ตขึ้นระบบ)`;
+  }
+  return "รุ่น/รูปแบบนี้ยังไม่มีสูตรใบตัดในระบบ — ต้องกรอกใบตัดเอง";
+}
+
 export function compareCut(PB: any, inp: CompareInput) {
   const prod = (PRODUCTS as any)[inp.prodId];
   if (!prod) return null;
@@ -165,7 +181,7 @@ export function compareCut(PB: any, inp: CompareInput) {
     ok: !!cut,
     cutSpecId: map?.spec_id ?? "",
     cutSpecName: spec?.name ?? "",
-    note: cut ? "" : "รุ่น/รูปแบบนี้ยังไม่มีสูตรใบตัด (หรือรูปแบบไม่รองรับ) — เทียบไม่ได้",
+    note: cut ? "" : whyNoCut(inp.prodId, inp.form || prod.defForm, inp.p),
     alu: alu.sort(sortFn as any),
     hardware: hardware.sort(sortFn as any),
     aluRate: { brand, rate, base, mult: r2(rate / base) },
