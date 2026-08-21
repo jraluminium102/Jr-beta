@@ -32,6 +32,10 @@ import { groupGlass, allGlassKeys } from "@/lib/calculator40/glass-cats";
 // @ts-expect-error — engine เป็น ESM JS ล้วน
 import { computeCost, ceil100, CEIL_RATE } from "@/lib/calculator40/engine.mjs";
 import { stockColorOfCalc } from "@/lib/calculator40/stock-link";
+// บานในห้องกระจก: ชนิดบาน + ราคาต่อบาน + ค่าตั้งต้น spec — ก้อนเดียวกับหน้า G1
+import { PANE_TYPES, PANE_BY_KEY, SHEET_FIN, panePrice, paneSpec, paneCut, type Pane } from "@/lib/calculator40/pane-calc";
+// อุปกรณ์ "ค่าของ" ดึงจากใบตัดชุดเดียวกับหน้า G1 — บานในห้องกระจกต้องคิดเท่ากันเป๊ะ (เจ้าของสั่ง 21 ส.ค.69)
+import { cutHardwareLines, HANDLE_FIELDS, HW_FROM_CUTLIST } from "@/lib/calculator40/hardware-from-cutlist";
 // @ts-expect-error — products เป็น ESM JS ล้วน
 import { PRODUCTS } from "@/lib/calculator40/products.mjs";
 // @ts-expect-error — mosquito helper เป็น ESM JS ล้วน
@@ -53,46 +57,8 @@ function fmtNum(n: number) {
   return (n || 0).toLocaleString("th-TH", { maximumFractionDigits: 2 });
 }
 
-// ── map ชนิดบาน (ห้อง R3.9 เดิม → R4.0 product id) ──────────────────────────
-// ตัวไหนไม่มี R4.0 คู่ตรง ๆ ใช้ตัวใกล้เคียงที่สุดที่มีอยู่จริงในระบบ (คอมเมนต์กำกับ)
-// ── ชนิดบานในห้องกระจก = ดึง "ทุกรุ่น G1" อัตโนมัติ (เจ้าของสั่ง 30ก.ค.69: ต้องครบเหมือน G1 · เดิม curate มือ → ตกหล่น บานยก/SlimLux/รางบน/E-series/Velora/เฟี้ยมยูโร/บานเกล็ด/ดัดโค้ง/เฟี้ยมยก/โซลิด/YKK)
-//   label = ชื่อรุ่นจริง · เรียงตาม products.mjs · รุ่น G1 ใหม่ในอนาคตจะโผล่เองไม่ต้องมาเติมที่นี่
-//   ราคาต่อบาน = computeCost(prod) จริง (panePrice) · form/สี/กระจก/ของเสริม render อัตโนมัติตาม prod
-const WALL_PANES: { key: string; label: string }[] = [
-  // ผนังทึบ (รวมโครง) — ใส่เป็น "ช่องบาน" ในด้านได้ (mix กับบานเปิด/ฟิกในด้านเดียว) · ไม่ใช่ G1 จึงระบุมือ
-  { key: "wall_smartboard", label: "ผนังสมาร์ทบอร์ด (รวมโครง)" },
-  { key: "wall_corrugated", label: "ผนังอลูลูกฟูก (รวมโครง)" },
-  { key: "wall_composite", label: "ผนังคอมโพสิต (รวมโครง)" },
-];
-const PANE_TYPES: { key: string; label: string; slideLike?: boolean }[] = [
-  ...Object.values(PRODUCTS as Record<string, any>)
-    .filter((p) => p && p.group === 1 && !p.pickerHide)
-    .map((p) => ({ key: p.id as string, label: p.name as string })),
-  ...WALL_PANES.filter((w) => (PRODUCTS as Record<string, any>)[w.key]),
-];
-
-// ออปชั่น universal ของบานในห้องกระจก — ใช้ตัวกลางตัวเดียวกับหน้าหลัก (elec/solid_panel/roof_zip)
-// + door_zip (ม่านซิปประตู) ที่มีเฉพาะใน G6
-//   เดิมที่นี่เติมแค่ door_zip → บานใน G6 ไม่มี "งานไฟ/บานล่างทึบ" ให้เลือก ต่างจากหน้าหลัก (แก้ 6 ส.ค.69)
-const PANE_BY_KEY: Record<string, any> = Object.fromEntries(
-  PANE_TYPES.map((t) => {
-    const base = (PRODUCTS as any)[t.key];
-    return [t.key, base ? withUniversalAddons(base, { doorZip: true }) : base];
-  })
-);
-
-type Pane = {
-  key: number;
-  typeKey: string; // R4.0 product id
-  form?: string;   // รูปแบบเปิด (อิสระ/สลับ/ลากจูง/เปิดคู่กลาง ฯลฯ) — ดึงจาก prod.forms เหมือน G1 · undefined = prod.defForm
-  w: number; h: number; n: number; // เมตร, เมตร, จำนวนบาน
-  fixedPanes?: number; // บานติดตาย (เฉพาะบานเลื่อน — ลด movePanes ของมุ้ง)
-  addons: Record<string, any>; // per-pane option เต็ม (มือจับ/ล็อค/ธรณี/มุ้ง/ครอบวงกบ ฯลฯ) — ตรง shape ที่ AddonsSection ใช้
-  colorIdx?: string; // สีอลูเฟรมต่อบาน override ("" = ตามห้อง) — ใช้ colorKey ของ pb.BAKE
-  glassOvr?: string; // กระจกต่อบาน override ("" = ตามห้อง)
-  use?: PaneUse;     // ประตู/หน้าต่าง — คุมคำขึ้นต้นในใบเสนอ (ไม่ตั้ง = เดาจากรุ่น/ความสูง ดู paneUse)
-  sill?: string;     // พื้นล่างของประตู (รางล่าง/มีธรณี/ไม่มีธรณี) — label เท่านั้น ไม่กระทบราคา
-};
+// ชนิดบาน / ราคาต่อบาน / ค่าตั้งต้น spec — ย้ายไป lib/calculator40/pane-calc
+//   เพื่อให้ "บานในห้องกระจก" กับ "บานหน้า G1" คิดจากก้อนเดียวกัน (verify-room-parity เทียบให้)
 
 // ช่อง (column) = ตำแหน่งซ้าย→ขวา · pcs = บานซ้อนบน→ล่างในช่องนั้น (2 มิติ เหมือน R3.9 G6R)
 type Col = { key: number; pcs: Pane[] };
@@ -106,10 +72,6 @@ type Side =
   | { kind: "open"; cols?: Col[]; stash?: SideStash };
 
 const WALL_RATE = 1350; // ผนังเบา ฿/ตร.ม. (R3.9 flat — ไม่มี R4.0 product คู่ตรง ๆ ของ "ผนังเบา" ชนิดบาง — ยังใช้ราคานี้ ติดป้าย (R3.9))
-
-// สีอบพิเศษ/ตร.ม. (ราคาขาย) — จาก r39-data.json "fin" ของระแนงอลู · ใช้กับผนังแผ่นอลู (ลูกฟูก/คอมโพ · prod.showColor)
-// bake key (จาก resolveAluColor) → เรตส่วนเพิ่ม · สีมาตรฐาน (white=อบขาว/ดำ) = 0
-const SHEET_FIN: Record<string, number> = { white: 0, sahara: 300, special: 1700, woodSpecial: 2400, woodStock: 2400 };
 
 const WALL_TYPES: { key: Side extends { kind: "wall" } ? Side["wallType"] : never; label: string }[] = [
   { key: "light", label: "ผนังเบา (R3.9)" },
@@ -163,41 +125,20 @@ function sideCols(s: Side): Col[] {
 function sidePanes(s: Side): Pane[] {
   return sideCols(s).flatMap((c) => c.pcs);
 }
+// สีที่เลือกได้ "ทั้งด้าน" — ต้องเป็นสีที่ทุกบานในด้านนั้นทำได้จริง (intersection)
+//   ด้านที่มีบานยูโรอย่างเดียว = ได้ 3 สีพิเศษด้วย · มีบานรุ่นอื่นปนแม้บานเดียว = ตัดออก (กันเลือกสีที่ผลิตไม่ได้)
+function colorKeysForSide(s: Side): string[] {
+  const panes = sidePanes(s);
+  if (!panes.length) return aluColorKeysFor(null);
+  return panes.reduce<string[]>((acc, p) => {
+    const ok = new Set(aluColorKeysFor(p.typeKey));
+    return acc.filter((c) => ok.has(c));
+  }, aluColorKeysFor(panes[0].typeKey));
+}
+
 // พื้นที่รวมของบาน (ประตู/หน้าต่าง) ในด้านนี้ — ใช้หักพื้นที่ผนังสุทธิ (wall net-area)
 function paneAreaSum(s: Side): number {
   return sidePanes(s).reduce((a, p) => a + (p.w || 0) * (p.h || 0) * (p.n || 1), 0);
-}
-
-// ราคาต่อ pane — computeCost + addons (มือจับ/ล็อค/ธรณี/มุ้ง/ครอบวงกบ ฯลฯ) ตรง prod.addons จริงของแต่ละชนิดบาน
-function panePrice(
-  pane: Pane, pb: any, roomColor: string, roomGlass: string, profitPct: number, movePanesOverride?: number
-): { amount: number; mosqLabel?: string } {
-  const prod = PANE_BY_KEY[pane.typeKey];
-  if (!prod) return { amount: 0 };
-  const rc = resolveAluColor(pane.colorIdx || roomColor); // ชื่อสี → หมวดค่าอบ (พาริตี้ 13 สี)
-  const glassType = prod.defGlass ? (pane.glassOvr || roomGlass || prod.defGlass) : undefined;
-  const wCm = (pane.w || 1) * 100, hCm = (pane.h || 1) * 100;
-  const formVal = (prod.forms?.length ? (pane.form || prod.defForm) : prod.defForm); // ใช้รูปแบบที่เลือก (เปิดคู่กลาง ฯลฯ) เหมือน G1
-  const opt: any = {
-    w: wCm, h: hCm, p: pane.n || 1, form: formVal,
-    color: rc.bake, colorName: rc.label, glassType, material: prod.defMaterial ?? undefined,
-    stockColor: stockColorOfCalc(pane.colorIdx || roomColor),   // ราคาเส้นตามสีจริงในสโตร์
-    colorKey: pane.colorIdx || roomColor,                        // ราคาเส้นแยกสีจากไฟล์ถอดทุน
-    profitPct, installProfitPct: profitPct, addons: pane.addons || {},
-    // ผนังแผ่นอลู (ลูกฟูก/คอมโพ · prod.showColor) — สีพิเศษบวกเรตสีอบ/ตร.ม. จาก R3.9 (ซาฮาร่า300/พิเศษ1700/ลายไม้2400)
-    // finRate เป็น "ราคาขาย" → ÷(1+กำไร%) เป็นทุน (frameColorRate) แล้วเอนจิน ×(1+กำไร%) กลับเป็นราคาขายเป๊ะ (ไม่ขึ้นกับกำไร%)
-    frameColorRate: prod.showColor ? ((SHEET_FIN[rc.bake] || 0) / (1 + (profitPct || 100) / 100)) : 0,
-  };
-  // มุ้งบวกบาน R4.0 จริง (ไม่ใช่ R3.9 fallback) — ตรง Calculator40Client
-  const movePanes = movePanesOverride ?? Math.max(1, (pane.n || 1) - (pane.fixedPanes || 0));
-  const mq = computeMosquitoR4(PRODUCTS, pane.addons || {}, { wCm, hCm, movePanes, form: formVal }, pb, profitPct, profitPct);
-  if (mq) opt.mosquitoR4 = mq;
-  if (pane.addons?.dgNc) opt.digiNc = true;
-  // ม่านซิปประตู (Z100/Z120) — universal add-on ของทุกชนิดบาน (คิดจริงจากรุ่น G7 ม่านซิป)
-  const dz = computeDoorZipR4(pane.addons || {}, { wCm, hCm }, pb, profitPct);
-  if (dz) opt.doorZipR4 = dz;
-  const r: any = computeCost(pb, prod, opt);
-  return { amount: r.sell.withInstall, mosqLabel: mq?.label };
 }
 
 // ราคาผนัง (ไม่รวมบานที่เจาะในผนัง) — คิดจาก "พื้นที่สุทธิ" (พื้นที่ผนังเต็ม − Σพื้นที่ช่องบาน) กันคิดสมาร์ทบอร์ด/
@@ -420,7 +361,7 @@ function ColsEditor({
           className="rounded-lg border border-brand ring-2 ring-brand/30 bg-white/70 p-2.5 space-y-2 scroll-mt-2">
           <div className="text-[11px] font-semibold text-brand-dark">⚙️ ตั้งค่าบานที่เลือก</div>
           <div className="flex items-center gap-2 flex-wrap">
-            <select value={sel.typeKey} onChange={(e) => onPatchPane(sel.key, { typeKey: e.target.value, addons: {}, form: undefined })}
+            <select value={sel.typeKey} onChange={(e) => onPatchPane(sel.key, { typeKey: e.target.value, addons: {}, form: undefined, spec: undefined, cut: undefined })}
               className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 text-xs font-semibold outline-none">
               {PANE_TYPES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
             </select>
@@ -470,13 +411,55 @@ function ColsEditor({
             </label>
           ) : null}
 
+          {/* ตัวเลือกของรุ่น (ราง / มือจับ SlimLux ฯลฯ) + มือจับจากใบตัด — ชุดเดียวกับหน้า G1 เป๊ะ
+              เดิมห้องกระจกไม่มีช่องพวกนี้เลย → บานเดียวกันคิดคนละราคากับ G1 (แก้ 21 ส.ค.69) */}
+          {((prod?.specOpts?.length ?? 0) > 0 || HW_FROM_CUTLIST.has(sel.typeKey)) && (
+            <div className="flex items-center gap-2 flex-wrap text-[11px]">
+              {(prod?.specOpts ?? []).map((o: any) => {
+                // specOpts ตัวเลข (ขนาดประตู/ช่องปูนของ Shower) — ต้องกรอกได้เหมือน G1 ไม่งั้นคิดจากค่าตั้งต้นเสมอ
+                if (o.type === "number") {
+                  return (
+                    <span key={o.key} className="inline-flex items-center gap-1">
+                      <span className="text-ink-3">{o.label}</span>
+                      <input type="number" step={o.step ?? 0.1} min={0} value={paneSpec(prod, sel)[o.key] ?? ""}
+                        onChange={(e) => onPatchPane(sel.key, { spec: { ...paneSpec(prod, sel), [o.key]: e.target.value } })}
+                        className="min-h-[32px] w-20 glass-soft rounded-lg px-2 py-1 outline-none tabular-nums text-xs" />
+                    </span>
+                  );
+                }
+                const opts: string[] = (o.optsByMaterial && o.optsByMaterial[prod.defMaterial]) || o.opts || [];
+                const cur = paneSpec(prod, sel)[o.key];
+                return (
+                  <span key={o.key} className="inline-flex items-center gap-1">
+                    <span className="text-ink-3">{o.label}</span>
+                    <select value={opts.includes(cur) ? cur : (opts[0] ?? "")}
+                      onChange={(e) => onPatchPane(sel.key, { spec: { ...paneSpec(prod, sel), [o.key]: e.target.value } })}
+                      className="min-h-[32px] glass-soft rounded-lg px-2 py-1 outline-none text-xs">
+                      {opts.map((v) => <option key={v} value={v}>{o.labels?.[v] ?? v}</option>)}
+                    </select>
+                  </span>
+                );
+              })}
+              {HW_FROM_CUTLIST.has(sel.typeKey) && HANDLE_FIELDS.map((f) => (
+                <span key={f.key} className="inline-flex items-center gap-1">
+                  <span className="text-ink-3">{f.label}</span>
+                  <select value={paneCut(sel)[f.key]}
+                    onChange={(e) => onPatchPane(sel.key, { cut: { ...paneCut(sel), [f.key]: e.target.value } })}
+                    className="min-h-[32px] glass-soft rounded-lg px-2 py-1 outline-none text-xs">
+                    {f.choices.map((v) => <option key={v} value={v}>{v}</option>)}
+                  </select>
+                </span>
+              ))}
+            </div>
+          )}
+
           {/* สี/กระจกต่อบาน override (ค่าว่าง = ตามด้าน/ห้อง) */}
           <div className="flex items-center gap-2 flex-wrap text-[11px]">
             <span className="text-ink-3">สีเฟรมบานนี้</span>
             <select value={sel.colorIdx || ""} onChange={(e) => onPatchPane(sel.key, { colorIdx: e.target.value })}
               className="min-h-[32px] glass-soft rounded-lg px-2 py-1 outline-none text-xs">
               <option value="">ตามด้าน ({ALU_COLOR_LABEL[color] ?? COLOR_LABEL[color] ?? color})</option>
-              {aluColorKeysFor(pane?.typeKey).map((c) => <option key={c} value={c}>{ALU_COLOR_LABEL[c]}</option>)}
+              {aluColorKeysFor(sel.typeKey).map((c) => <option key={c} value={c}>{ALU_COLOR_LABEL[c]}</option>)}
             </select>
             {prod?.defGlass && (
               <>
@@ -1005,7 +988,7 @@ export default function RoomComposer({
               <select value={sideColorOvr[i]?.color || ""} onChange={(e) => setSideColorOvr((m) => ({ ...m, [i]: { color: e.target.value, glass: m[i]?.glass || "" } }))}
                 className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 outline-none text-xs">
                 <option value="">สีตามห้อง ({ALU_COLOR_LABEL[mainColor] ?? COLOR_LABEL[mainColor] ?? mainColor})</option>
-                {aluColorKeysFor(pane?.typeKey).map((c) => <option key={c} value={c}>{ALU_COLOR_LABEL[c]}</option>)}
+                {colorKeysForSide(s).map((c) => <option key={c} value={c}>{ALU_COLOR_LABEL[c]}</option>)}
               </select>
               <select value={sideColorOvr[i]?.glass || ""} onChange={(e) => setSideColorOvr((m) => ({ ...m, [i]: { color: m[i]?.color || "", glass: e.target.value } }))}
                 className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 outline-none text-xs">
