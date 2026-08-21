@@ -257,16 +257,18 @@ export const SLIMLUX_SLIDE: CutSpec = {
     { name: "เสารับบาน (กล่อง 1×1.6)", code: () => boxCode("1×1.6"), len: (o) => o.H - slimBeamCut(o.beam), qty: (o) => receiverCount(o, "1×1.6") },
     { name: "เสารับบาน (กล่อง 1×4)", code: () => boxCode("1×4"), len: (o) => o.H - slimBeamCut(o.beam), qty: (o) => receiverCount(o, "1×4") },
     { name: "เสารับบาน (กล่อง 1×3)", code: () => boxCode("1×3"), len: (o) => o.H - slimBeamCut(o.beam), qty: (o) => receiverCount(o, "1×3") },
-    { name: "บังใบ 4 หุน", code: "-", len: (o) => o.H - slimBeamCut(o.beam) - 3.6, qty: () => 2 },
+    { name: "บังใบ 4 หุน (กล่อง 4 หุน)", code: 'กล่อง 4 หุน', len: (o) => o.H - slimBeamCut(o.beam) - 3.6, qty: () => 2 },
     { name: "ขวางบน-ล่าง", code: "OPK-A201-40", len: (o) => (o.fit === "แปะนอก" ? (o.W - 0.8) / o.N + 0.2 * o.N : (o.W - 5) / o.N + 0.2 * o.N), qty: (o) => 2 * o.N },
     { name: "เสากุญแจ", code: "OPK-A202-40", len: (o) => o.H - slimBeamCut(o.beam) - 12.1, qty: (o) => 2 * o.N, stockLens: [480, 600], note: "เส้นมี 2 ขนาด 4.8/6 ม. — เลือกอันคุ้มสุด" },
     { name: "ตบเรียบหน้าเสากุญแจ (บานเลื่อน)", code: "OPK-A203-40", len: (o) => o.H - slimBeamCut(o.beam) - 5.1, qty: (o) => (o.fit === "แปะนอก" ? 1 : 2) },
     { name: "ตบเรียบหน้าเสากุญแจ (บานตาย)", code: "OPK-A203-40", len: (o) => o.H - slimBeamCut(o.beam), qty: () => 0, note: "Excel = 0 คงที่ (แก้มือเมื่อมีบานตาย — รอเจ้าของเคาะสูตร)" },
     { name: "ตบเกี่ยวใส่สักหลาด", code: "OPK-A204-40", len: (o) => o.H - slimBeamCut(o.beam) - 5.1, qty: (o) => o.N - slimDead(o.sashMode) + 1 + (o.fit === "แปะนอก" ? 1 : 0), note: "บานเลื่อน+1 (+1 ถ้าแปะนอก)" },
-    { name: "มือจับ X-J (เสามือจับ)", code: "-", len: (o) => o.H - slimBeamCut(o.beam) - 12.1, qty: (o) => (o.handle === "X-J" ? (o.sashMode === "เปิดคู่กลาง" ? 4 : 2) : 0), note: "ยาวเท่าเสากุญแจ" },
+    // เสามือจับ X-J = เส้นอลู (มีในสโตร์แล้ว 3 สี "มือจับ xj ยาว 2.8m" — รอรหัสจากเจ้าของ)
+    //   เลือก "มือจับล็อค" แล้ว X-J เป็น 0 อัตโนมัติ (เจ้าของสั่ง 21 ส.ค.69 — ใช้ร่วมกันไม่ได้)
+    { name: "มือจับ X-J (เสามือจับ)", code: "-", len: (o) => o.H - slimBeamCut(o.beam) - 12.1, qty: (o) => (o.handle === "X-J" ? (o.sashMode === "เปิดคู่กลาง" ? 4 : 2) : 0), note: "ยาวเท่าเสากุญแจ · เลือกมือจับล็อคแล้วเป็น 0" },
     { name: 'ฉากปิดราง 2"', code: "-", len: (o) => o.W, qty: () => 2 },
     { name: "ตบปิดใต้รางริม", code: "XSW400013", len: (o) => (o.fit === "แปะนอก" ? o.W * 2 : o.W - 5), qty: () => 2, note: "ยาวเท่ารางบน" },
-    { name: "ตบปิดใต้รางกลาง", code: "XSW400013", len: (o) => (o.fit === "แปะนอก" ? o.W * 2 : o.W - 5), qty: (o) => Math.max(o.N - slimDead(o.sashMode) - 1, 0), note: "บานเลื่อน − 1" },
+    { name: "ตบปิดใต้รางกลาง", code: "XSW400023", len: (o) => (o.fit === "แปะนอก" ? o.W * 2 : o.W - 5), qty: (o) => Math.max(o.N - slimDead(o.sashMode) - 1, 0), note: "บานเลื่อน − 1" },
   ],
   // ⑥ อุปกรณ์ SlimLux (มี SKU · กล่อง+ล้อ) — กล่องยาว หัว/ท้าย · กล่องสั้น บานกลางเลือกด้าน · ล้อล่าง 2/บานเลื่อน
   hardware: [
