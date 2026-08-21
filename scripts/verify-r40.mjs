@@ -76,7 +76,7 @@ const ANCHORS = [
   //    ตัวยึดที่ตรวจเลขได้เองอยู่ที่ ②g (ราคาขาว = กก. × 187)
   { id: 'sms_slide', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 18924.11 },
   { id: 'euro_slide', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 32502.23 },
-  { id: 'slimlux', in: { w: 200, h: 200, p: 2, form: 'อิสระ' }, cost: 13635 },
+  { id: 'slimlux', in: { w: 200, h: 200, p: 2, form: 'อิสระ' }, cost: 11285 },
   { id: 'open_door', in: { w: 150, h: 200, p: 1, form: 'มีธรณี' }, cost: 7980.52 },
   { id: 'awning', in: { w: 40, h: 40, p: 1, form: 'อิสระ' }, cost: 2211.41 },
   { id: 'folding', in: { w: 180, h: 280, p: 2, form: '2บาน: รวบเปิดซ้าย (2-0)' }, cost: 17733.76, labor: 'baseXpanel' },   // calibrate HW ตรง matrix มด
