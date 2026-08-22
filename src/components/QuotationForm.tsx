@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card } from "./ui";
 import Icon from "./Icon";
 import OptionAdder from "@/components/quotation/OptionAdder";
@@ -19,8 +19,13 @@ const blank = (): Item => ({ name: "", detail: "", qty: 1, unit_price: 0, catego
 
 export default function QuotationForm({ customers }: { customers: Pick<Customer, "id" | "name" | "job" | "address">[] }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const manualMode = searchParams?.get("manual") === "1";
   // ไม่ default เป็นลูกค้าคนแรก — กันผูกผิดคนเงียบ ๆ (ต้องเลือก/ดึงจากเครื่องคิดราคาเสมอ)
   const [customerId, setCustomerId] = useState<number | "">("");
+  // ลูกค้านอกระบบ: เลือกจากทะเบียน หรือ พิมพ์ชื่อใหม่ (สร้างเข้าระบบตอนบันทึก) — เจ้าของสั่ง 22 ส.ค.69
+  const [custMode, setCustMode] = useState<"existing" | "new">("existing");
+  const [newCust, setNewCust] = useState({ name: "", job: "", phone: "", address: "", tax_id: "" });
   const [issueDate, setIssueDate] = useState(new Date().toISOString().slice(0, 10));
   const [items, setItems] = useState<Item[]>([blank()]);
   const [vat, setVat] = useState(7);
@@ -60,6 +65,11 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
 
   // รับรายการจากเครื่องคิดราคา (สะพาน) ตอน mount
   useEffect(() => {
+    // เปิดจากปุ่ม "พิมพ์ใบเสนอเอง" (manual=1) → เริ่มใหม่ล้วน · เคลียร์สะพานเก่าทิ้ง กันรายการ calc ค้างเด้งเข้ามา
+    if (manualMode) {
+      try { sessionStorage.removeItem("jr_quote_items"); localStorage.removeItem("jr_quote_bridge"); } catch { /* ignore */ }
+      return;
+    }
     let raw: string | null = null;
     try {
       raw = sessionStorage.getItem("jr_quote_items") ?? localStorage.getItem("jr_quote_bridge");
@@ -241,9 +251,13 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
 
   async function submit() {
     setErr("");
-    if (!customerId) { setErr("ต้องเลือกลูกค้าก่อน (ช่องบนสุด) แล้วกดบันทึกอีกครั้ง"); return; }
-    if (activeJobsLoading) { setErr("กำลังโหลดรายการงานของลูกค้า รอสักครู่แล้วกดอีกครั้ง"); return; }
-    if (activeJobs.length >= 2 && !selectedJobId) { setErr("ลูกค้ามีหลายงาน — เลือกงานที่จะผูกก่อน (ช่อง 'เลือกงานที่จะผูก')"); return; }
+    if (custMode === "new") {
+      if (!newCust.name.trim()) { setErr("กรอกชื่อลูกค้าใหม่ก่อน (ช่องบนสุด) แล้วกดบันทึกอีกครั้ง"); return; }
+    } else {
+      if (!customerId) { setErr("ต้องเลือกลูกค้าก่อน (ช่องบนสุด) แล้วกดบันทึกอีกครั้ง"); return; }
+      if (activeJobsLoading) { setErr("กำลังโหลดรายการงานของลูกค้า รอสักครู่แล้วกดอีกครั้ง"); return; }
+      if (activeJobs.length >= 2 && !selectedJobId) { setErr("ลูกค้ามีหลายงาน — เลือกงานที่จะผูกก่อน (ช่อง 'เลือกงานที่จะผูก')"); return; }
+    }
     const valid = items.filter((i) => i.name.trim() && Number(i.qty) > 0);
     if (valid.length === 0) { setErr("ต้องมีรายการอย่างน้อย 1 บรรทัด (ระบุชื่อ + จำนวน)"); return; }
     setBusy(true);
@@ -252,7 +266,13 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customer_id: customerId,
+          ...(custMode === "new"
+            ? { new_customer: { name: newCust.name.trim(), job: newCust.job.trim(), phone: newCust.phone.trim(), address: newCust.address.trim(), tax_id: newCust.tax_id.trim() } }
+            : {
+                customer_id: customerId,
+                ...(selectedJobId ? { job_id: selectedJobId } : {}),
+                ...(billingProfileId ? { billing_profile_id: billingProfileId } : {}),
+              }),
           issue_date: issueDate,
           items: valid,
           vat_rate: vat,
@@ -261,8 +281,6 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
           discount_label: discounts.length === 1 ? (discounts[0].label ?? "").trim() : "",
           wht_rate: wht,
           note,
-          ...(selectedJobId ? { job_id: selectedJobId } : {}),
-          ...(billingProfileId ? { billing_profile_id: billingProfileId } : {}),
           ...(hdr.name.trim() ? { header_override: hdr } : {}),
           ...(condEdited ? {
             conditions_work: condWork.map((s) => s.trim()).filter(Boolean),
@@ -288,8 +306,8 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
         <span className="text-white rounded-xl w-9 h-9 inline-flex items-center justify-center bg-brand shadow-brand">
           <Icon name="file" size={18} />
         </span>
-        สร้างใบเสนอราคา (จากเครื่องคิดราคา)
-        <span className="text-xs font-normal text-ink-3">(รายการ+ราคา+ลูกค้า ดึงมาจากเครื่องคิดราคา · รหัสออกอัตโนมัติเมื่อบันทึก)</span>
+        สร้างใบเสนอราคา {fromCalc ? "(จากเครื่องคิดราคา)" : "(พิมพ์เอง / นอกระบบ)"}
+        <span className="text-xs font-normal text-ink-3">{fromCalc ? "(รายการ+ราคา+ลูกค้า ดึงมาจากเครื่องคิดราคา · รหัสออกอัตโนมัติเมื่อบันทึก)" : "(พิมพ์รายการเอง · เลย์เอาท์เหมือนใบเสนอปกติ · รหัสออกอัตโนมัติเมื่อบันทึก)"}</span>
       </h1>
 
       {fromCalc && (
@@ -302,26 +320,64 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
       <div className="grid lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 space-y-4">
           <Card className="p-5">
+            {/* เลือกลูกค้า: จากทะเบียน หรือ พิมพ์ชื่อใหม่ (นอกระบบ → สร้างเข้าระบบตอนบันทึก) */}
+            <div className="inline-flex rounded-lg overflow-hidden border border-gray-300 text-sm mb-3">
+              {(["existing", "new"] as const).map((m) => (
+                <button key={m} type="button" onClick={() => setCustMode(m)}
+                  className={`px-3 py-1.5 ${custMode === m ? "bg-brand text-white" : "text-ink-2"}`}>
+                  {m === "existing" ? "เลือกจากทะเบียน" : "พิมพ์ชื่อใหม่ (นอกระบบ)"}
+                </button>
+              ))}
+            </div>
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <label className="block">
-                <span className="text-xs font-medium text-ink-3">ลูกค้า / งาน *</span>
-                <select value={customerId} onChange={(e) => setCustomerId(e.target.value ? Number(e.target.value) : "")}
-                  className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none">
-                  <option value="">— เลือกลูกค้า —</option>
-                  {customers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} · {c.job}{c.address ? ` — 📍${c.address.slice(0, 40)}` : ""}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {custMode === "existing" ? (
+                <label className="block">
+                  <span className="text-xs font-medium text-ink-3">ลูกค้า / งาน *</span>
+                  <select value={customerId} onChange={(e) => setCustomerId(e.target.value ? Number(e.target.value) : "")}
+                    className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none">
+                    <option value="">— เลือกลูกค้า —</option>
+                    {customers.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} · {c.job}{c.address ? ` — 📍${c.address.slice(0, 40)}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : (
+                <label className="block">
+                  <span className="text-xs font-medium text-ink-3">ชื่อลูกค้าใหม่ *</span>
+                  <input value={newCust.name} onChange={(e) => setNewCust({ ...newCust, name: e.target.value })}
+                    placeholder="ชื่อลูกค้า (จะบันทึกเข้าทะเบียนให้อัตโนมัติ)"
+                    className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none" />
+                </label>
+              )}
               <label className="block">
                 <span className="text-xs font-medium text-ink-3">วันที่</span>
                 <DateField value={issueDate} onChange={(iso) => setIssueDate(iso)} className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none" aria-label="วันที่" />
               </label>
             </div>
-            {customers.length === 0 && (
-              <p className="text-sm text-amber-700 mt-2">ยังไม่มีลูกค้า — ไปเพิ่มที่เมนู "ทะเบียนลูกค้า" ก่อน</p>
+            {custMode === "new" && (
+              <div className="grid grid-cols-2 gap-3 text-sm mt-3">
+                <label className="block">
+                  <span className="text-xs font-medium text-ink-3">งาน / รายละเอียด</span>
+                  <input value={newCust.job} onChange={(e) => setNewCust({ ...newCust, job: e.target.value })}
+                    placeholder="เช่น บ้านคุณสมชาย" className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none" />
+                </label>
+                <label className="block">
+                  <span className="text-xs font-medium text-ink-3">เบอร์โทร</span>
+                  <input value={newCust.phone} onChange={(e) => setNewCust({ ...newCust, phone: e.target.value })}
+                    placeholder="(ไม่บังคับ)" className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none" />
+                </label>
+                <label className="block col-span-2">
+                  <span className="text-xs font-medium text-ink-3">ที่อยู่</span>
+                  <input value={newCust.address} onChange={(e) => setNewCust({ ...newCust, address: e.target.value })}
+                    placeholder="(ไม่บังคับ · ใช้ขึ้นหัวเอกสาร)" className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none" />
+                </label>
+                <p className="col-span-2 text-[11px] text-ink-3">ลูกค้าใหม่จะถูกบันทึกเข้าทะเบียนให้อัตโนมัติ · ปรับหัวเอกสาร/นิติบุคคลได้ที่ "แก้หัวบิล" ด้านล่าง</p>
+              </div>
+            )}
+            {custMode === "existing" && customers.length === 0 && (
+              <p className="text-sm text-amber-700 mt-2">ยังไม่มีลูกค้า — สลับไป "พิมพ์ชื่อใหม่" หรือเพิ่มที่เมนู "ทะเบียนลูกค้า" ก่อน</p>
             )}
             {/* (0069) เลือกนามออกบิล — หัวเอกสารจะเป็นนามนี้ · แก้/เพิ่มนามได้ที่ทะเบียนลูกค้า */}
             {customerId !== "" && billingProfiles.length > 0 && (
@@ -340,7 +396,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
             )}
 
             {/* แก้หัวบิลตรงนี้ (ออกในนามนิติบุคคล) — autofill จากนามออกบิลที่เลือก (ข้อมูลบริษัทจากคิวเด้งเข้าให้) · แก้ได้เฉพาะใบนี้ */}
-            {customerId !== "" && (
+            {(customerId !== "" || custMode === "new") && (
               <div className="mt-3">
                 <button type="button" onClick={() => setHdrOpen((v) => !v)} className="press text-sm font-semibold text-brand-dark inline-flex items-center gap-1.5">
                   <Icon name="pencil" size={14} /> แก้หัวบิล / ออกในนามบริษัท {hdrOpen ? "▲" : "▼"}

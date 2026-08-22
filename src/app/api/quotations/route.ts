@@ -34,7 +34,6 @@ export async function POST(req: Request) {
 
   const items = Array.isArray(body.items) ? body.items : [];
   if (items.length === 0) return fail("ต้องมีรายการอย่างน้อย 1 บรรทัด");
-  if (!body.customer_id) return fail("ต้องเลือกลูกค้า");
 
   const vat_rate = Number(body.vat_rate) || 0;
   const discount_pct = Number(body.discount_pct) || 0;
@@ -51,11 +50,35 @@ export async function POST(req: Request) {
 
   const supabase = createClient();
 
+  // 0) ลูกค้า: เลือกจากทะเบียน (customer_id) หรือ "ลูกค้านอกระบบ" กรอกชื่อใหม่ → สร้างเข้าระบบก่อน
+  //    (เจ้าของสั่ง 22 ส.ค.69: ใบเสนอนอกระบบ ชื่อลูกค้าจะในระบบ/นอกระบบก็ได้ แต่เอาเข้าระบบทั้งคู่)
+  let customerId = body.customer_id;
+  if (!customerId) {
+    const nc = body.new_customer;
+    const ncName = nc && typeof nc === "object" ? String(nc.name ?? "").trim() : "";
+    if (!ncName) return fail("ต้องเลือกลูกค้า หรือกรอกชื่อลูกค้าใหม่");
+    const { data: created, error: ncErr } = await supabase
+      .from("customers")
+      .insert({
+        name: ncName,
+        job: String(nc.job ?? "").trim(),
+        address: String(nc.address ?? "").trim(),
+        phone: String(nc.phone ?? "").trim(),
+        tax_id: String(nc.tax_id ?? "").trim(),
+        contact_channel: "OTHER",
+        created_by: profile.id,
+      })
+      .select("id")
+      .single<{ id: number }>();
+    if (ncErr || !created) return fail("สร้างลูกค้าใหม่ไม่สำเร็จ: " + (ncErr?.message ?? ""), 500);
+    customerId = created.id;
+  }
+
   // 1) snapshot ข้อมูลลูกค้า ณ วันออก
   const { data: cust, error: cErr } = await supabase
     .from("customers")
     .select("*")
-    .eq("id", body.customer_id)
+    .eq("id", customerId)
     .single<Customer>();
   if (cErr || !cust) return fail("ไม่พบลูกค้า", 404);
 

@@ -42,7 +42,12 @@ export default async function QuotationsPage({ searchParams }: { searchParams?: 
         <div className="flex items-center gap-2 flex-wrap">
           <TestDocsToggle cutoff={cutoff} includeTest={includeTest} basePath="/quotations" />
           {canWrite(profile?.role) && (
-            <Link href="/calculator" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">
+            <Link href="/quotations/new?manual=1" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark glass-soft">
+              <Icon name="pencil" size={16} /> พิมพ์ใบเสนอเอง (นอกระบบ)
+            </Link>
+          )}
+          {canWrite(profile?.role) && (
+            <Link href="/calculator40" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">
               <Icon name="calculator" size={16} /> คิดราคา + สร้างใบเสนอ
             </Link>
           )}
@@ -53,7 +58,11 @@ export default async function QuotationsPage({ searchParams }: { searchParams?: 
         {rows.length === 0 ? (
           <div className="text-center py-12 text-ink-3">
             <p>ยังไม่มีใบเสนอราคา</p>
-            <Link href="/calculator" className="text-brand font-semibold text-sm">+ คิดราคา + สร้างใบแรก</Link>
+            <div className="flex items-center justify-center gap-3 mt-1">
+              <Link href="/calculator40" className="text-brand font-semibold text-sm">+ คิดราคา + สร้างใบแรก</Link>
+              <span className="text-ink-3">·</span>
+              <Link href="/quotations/new?manual=1" className="text-brand font-semibold text-sm">พิมพ์เอง (นอกระบบ)</Link>
+            </div>
           </div>
         ) : (
           <div className="overflow-x-auto">
