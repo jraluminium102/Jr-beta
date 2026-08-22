@@ -35,6 +35,8 @@ import { computeRoofZipR4 } from "@/lib/calculator40/roof-zip.mjs";
 import { withUniversalAddons } from "@/lib/calculator40/universal-addons";
 import AddonsSection from "@/components/calculator40/AddonsSection";
 import { ALU_COLOR_LABEL, resolveAluColor, aluColorKeysFor } from "@/lib/calculator40/alu-colors";
+// กติกาจำนวนบานต่อรูปแบบ (เปิดคู่กลาง = 4/6 + คำอธิบายบนหน้าจอ) — ใช้ร่วมกับห้องกระจก
+import { formRule, formNote, allowedPanes, snapPanes } from "@/lib/calculator40/form-rules";
 // ชื่อสีในสโตร์ของสีที่เลือก — ส่งเข้า engine เพื่อหยิบ "ราคาเส้นตามสีจริงในสโตร์"
 import { stockColorOfCalc } from "@/lib/calculator40/stock-link";
 // อุปกรณ์ "ค่าของ" ดึงรายการจากใบตัดชุดเดียวกัน (รหัสสโตร์ตรงกับที่ช่างเบิกจริง)
@@ -316,6 +318,15 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
 
   // จำนวนบานเลื่อน/เปิดจริง (หักบานติดตาย) — ใช้เป็น default จำนวนบานมุ้ง (ตรง app.js c.p - c.fixedPanes)
   const movePanes = Math.max(1, (Number(p) || prod?.defaults?.p || 1) - (fixedPanes || 0));
+
+  // ดัดจำนวนบานให้ตรงกติกาของรูปแบบที่เลือก (เปิดคู่กลาง = 4 หรือ 6 เท่านั้น)
+  //   สลับมาเปิดคู่กลางตอนอยู่ 3 บาน → เด้งเป็น 4 ให้เลย ไม่ปล่อยให้คิดราคาแบบล้อ 0 ตัว
+  useEffect(() => {
+    if (!prod || !formRule(prod, form)?.panes?.length) return;
+    const cur = Number(p) || prod.defaults?.p || 1;
+    const snapped = snapPanes(prod, form, cur);
+    if (snapped !== cur) setP(String(snapped));
+  }, [prod, form, p]);
 
   // clamp บานติดตาย เมื่อจำนวนบานเปลี่ยน (ตรง app.js: fixedPanes = max(0, min(p-1, fixedPanes)))
   useEffect(() => {
@@ -1060,7 +1071,15 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                     </>
                   )}
                   {(prod.maxP ?? 1) > 1 || (prod.defaults?.p ?? 1) > 1 ? (
-                    <Field label={`จำนวนบาน${prod.minP ? ` (${prod.minP}–${prod.maxP})` : ""}`} value={p} onChange={setP} />
+                    // รูปแบบที่ล็อกจำนวนบาน (เปิดคู่กลาง = 4 หรือ 6) → ให้เลือกจากลิสต์ ไม่ให้พิมพ์เลขอื่น
+                    //   เดิมพิมพ์ 2-3 ได้ แล้วสูตรหักบานติดตาย 2 ทิ้ง = ล้อ 0 ตัว แต่ราคายังออกสวย ๆ
+                    formRule(prod, form)?.panes?.length ? (
+                      <Select label="จำนวนบาน" value={String(p)} onChange={setP}
+                        opts={allowedPanes(prod, form).map(String)}
+                        labels={Object.fromEntries(allowedPanes(prod, form).map((v) => [String(v), `${v} บาน (เลื่อน ${v - 2} + ติดตาย 2)`]))} />
+                    ) : (
+                      <Field label={`จำนวนบาน${prod.minP ? ` (${prod.minP}–${prod.maxP})` : ""}`} value={p} onChange={setP} />
+                    )
                   ) : <div />}
                   <Field label="กำไร ค่าของ %" value={profit} onChange={setProfit} />
                   <Field label="กำไร ค่าผลิต %" value={profitProd} onChange={setProfitProd} />
@@ -1079,6 +1098,12 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm mt-3">
                 {prod.forms?.length > 0 && !prod.composite && (
                   <Select label="รูปแบบ" value={form} onChange={setForm} opts={prod.forms} />
+                )}
+                {/* คำอธิบายรูปแบบ (เช่น เปิดคู่กลาง = เลื่อน N−2 + ติดตาย 2) — ให้คนคิดราคาเข้าใจว่านับยังไง */}
+                {formNote(prod, form) && (
+                  <p className="col-span-2 md:col-span-3 text-[11px] text-brand-dark bg-brand/5 border border-brand/20 rounded-lg px-3 py-2 -mt-1">
+                    ⓘ {formNote(prod, form)}
+                  </p>
                 )}
                 {/* ประตู/หน้าต่าง — คุมคำขึ้นต้นชื่อรายการในใบเสนอ · "อัตโนมัติ" = เดาจากความสูง (≥1.9ม.=ประตู) */}
                 {paneKindOn && (

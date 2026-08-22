@@ -220,7 +220,7 @@ function check(label, res, want) {
     { nameHas: "แกนมือจับ A", sku: "JR00478", qty: 4 },
     { nameHas: "ก้ามปูรับล็อค", sku: "JR00477", qty: 4 },
     { nameHas: "สปิงก็อท", sku: "JR00592", qty: 8 },
-    { nameHas: "ฉากประกอบมุม", sku: "JR00480", qty: 32 },
+    { nameHas: "ฉากประกอบมุม", sku: "JR00480", qty: 24 },   // 12/บาน × 2 บาน — เจ้าของเคาะ 21 ส.ค.69 (เดิมไฟล์เขียน 16/บาน)
     { nameHas: "ยางรูน้ำ", sku: "JR00589", qty: 6 },
     { nameHas: "วาวรูน้ำ", sku: "JR00485", qty: 6 },
   ]);

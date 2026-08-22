@@ -34,6 +34,8 @@ import { computeCost, ceil100, CEIL_RATE } from "@/lib/calculator40/engine.mjs";
 import { stockColorOfCalc } from "@/lib/calculator40/stock-link";
 // บานในห้องกระจก: ชนิดบาน + ราคาต่อบาน + ค่าตั้งต้น spec — ก้อนเดียวกับหน้า G1
 import { PANE_TYPES, PANE_BY_KEY, SHEET_FIN, panePrice, paneSpec, paneCut, type Pane } from "@/lib/calculator40/pane-calc";
+// กติกาจำนวนบานต่อรูปแบบ (เปิดคู่กลาง = 4/6) — ก้อนเดียวกับหน้า G1
+import { formRule, formNote, allowedPanes, snapPanes } from "@/lib/calculator40/form-rules";
 // อุปกรณ์ "ค่าของ" ดึงจากใบตัดชุดเดียวกับหน้า G1 — บานในห้องกระจกต้องคิดเท่ากันเป๊ะ (เจ้าของสั่ง 21 ส.ค.69)
 import { cutHardwareLines, HANDLE_FIELDS, HW_FROM_CUTLIST } from "@/lib/calculator40/hardware-from-cutlist";
 // @ts-expect-error — products เป็น ESM JS ล้วน
@@ -369,7 +371,8 @@ function ColsEditor({
               {PANE_TYPES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
             </select>
             {(prod?.forms?.length ?? 0) > 0 && (
-              <select value={sel.form || prod.defForm} onChange={(e) => onPatchPane(sel.key, { form: e.target.value })}
+              <select value={sel.form || prod.defForm}
+                onChange={(e) => onPatchPane(sel.key, { form: e.target.value, n: snapPanes(prod, e.target.value, sel.n || 1) })}
                 className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 text-xs font-semibold outline-none" title="รูปแบบการเปิด (เหมือน G1)">
                 {prod.forms.map((f: string) => <option key={f} value={f}>{f}</option>)}
               </select>
@@ -395,14 +398,32 @@ function ColsEditor({
             <input type="number" step={0.1} value={sel.h || ""} placeholder="สูง(ม.)"
               onChange={(e) => onPatchPane(sel.key, { h: +e.target.value || 0 })}
               className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-20 outline-none tabular-nums text-sm" />
-            <input type="number" value={sel.n || 1} placeholder="บาน"
-              onChange={(e) => onPatchPane(sel.key, { n: Math.max(1, Math.round(+e.target.value) || 1) })}
-              className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-16 outline-none tabular-nums text-sm" />
+            {/* รูปแบบที่ล็อกจำนวนบาน (เปิดคู่กลาง = 4/6) → เลือกจากลิสต์ · อื่น ๆ พิมพ์เลขได้ตามเดิม */}
+            {formRule(prod, sel.form || prod?.defForm)?.panes?.length ? (
+              <select value={String(sel.n || 1)} title="จำนวนบาน (รูปแบบนี้ล็อกไว้)"
+                onChange={(e) => onPatchPane(sel.key, { n: Number(e.target.value) })}
+                className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 outline-none text-xs font-semibold">
+                {allowedPanes(prod, sel.form || prod?.defForm).map((v) => (
+                  <option key={v} value={v}>{v} บาน (เลื่อน {v - 2} + ติดตาย 2)</option>
+                ))}
+              </select>
+            ) : (
+              <input type="number" value={sel.n || 1} placeholder="บาน"
+                onChange={(e) => onPatchPane(sel.key, { n: Math.max(1, Math.round(+e.target.value) || 1) })}
+                className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-16 outline-none tabular-nums text-sm" />
+            )}
             <span className="text-sm font-semibold text-brand-dark tabular-nums">{fmtBaht(price)}</span>
             <button type="button" onClick={() => onRemovePane(sel.key)} className="press text-ink-3 hover:text-red-600 ml-auto min-h-[36px] min-w-[36px]">
               <Icon name="trash" size={14} />
             </button>
           </div>
+
+          {/* คำอธิบายรูปแบบ (เปิดคู่กลาง = เลื่อน N−2 + ติดตาย 2) — ข้อความเดียวกับหน้า G1 */}
+          {formNote(prod, sel.form || prod?.defForm) && (
+            <p className="text-[11px] text-brand-dark bg-brand/5 border border-brand/20 rounded-lg px-2 py-1.5">
+              ⓘ {formNote(prod, sel.form || prod?.defForm)}
+            </p>
+          )}
 
           {sel.typeKey === "sms_slide" || sel.typeKey === "euro_slide" ? (
             <label className="flex items-center gap-2 text-xs text-ink-3">
