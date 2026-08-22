@@ -70,6 +70,26 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     .from("stock_items").update(patch).eq("id", params.id).select("*").single();
   if (error) return fail(error.message, 500);
 
+  // ── กรอกน้ำหนักทีหลัง → ต้องคิดราคา/หน่วยใหม่ให้เอง (เจ้าของเจอ 21 ส.ค.69) ────────
+  // ของคิดต่อโล: ราคา/หน่วย = ราคา/กก. × น้ำหนัก/หน่วย · /price คิดให้ตอน "ตั้งราคา" เท่านั้น
+  //   ตั้งราคา/กก. ไว้ก่อนแล้วค่อยมากรอกน้ำหนัก → ราคา/หน่วย ค้างที่ 0 เงียบ ๆ (คิดราคาเลยได้ ฿0)
+  //   เขียนเข้าประวัติ stock_prices ด้วย เพื่อให้ trigger sync กลับเข้า stock_items เหมือนทางปกติ
+  if ("weight_per_unit" in patch || "is_weight_based" in patch) {
+    const it = data as Record<string, unknown> | null;
+    const kg = Number(it?.weight_per_unit) || 0;
+    const rate = Number(it?.price_per_kg) || 0;
+    const cost = Number(it?.unit_cost) || 0;
+    const want = Math.round(rate * kg * 100) / 100;
+    if (it?.is_weight_based && rate > 0 && kg > 0 && Math.abs(want - cost) >= 0.01) {
+      await supabase.from("stock_prices").insert({
+        stock_item_id: Number(params.id), price_per_kg: rate, unit_cost: want,
+        effective_date: new Date().toISOString().slice(0, 10),
+        supplier: "", note: "คิดใหม่อัตโนมัติ (กรอกน้ำหนัก/เปลี่ยนโหมดคิดต่อโล)", created_by: profile.id,
+      });
+      (data as Record<string, unknown>).unit_cost = want;
+    }
+  }
+
   // สี (0106) — เขียนแยกแบบ non-fatal · ถ้าไม่กรอกสี แต่ชื่อมีสี → ดึงสีจากชื่อมาเติมอัตโนมัติ (กันช่องสีว่าง + ตรงกับชื่อ)
   if ("color" in body || "name" in body) {
     const nm = body.name ?? (data as Record<string, unknown>)?.name;

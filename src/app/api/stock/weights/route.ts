@@ -22,7 +22,7 @@ export async function POST(req: Request) {
 
   const sb = createClient() as unknown as Sb;
   const { data: items, error: e0 } = await sb
-    .from("stock_items").select("id, sku, name, weight_per_unit").in("id", ids);
+    .from("stock_items").select("id, sku, name, weight_per_unit, is_weight_based, price_per_kg, unit_cost").in("id", ids);
   if (e0) return fail(e0.message, 500);
 
   // น้ำหนักต้องมาจากตารางกลางเท่านั้น — client ส่งตัวเลขน้ำหนักมาเองไม่ได้ (กันยัดค่ามั่ว)
@@ -48,9 +48,29 @@ export async function POST(req: Request) {
   }
   if (errs.length && !updated) return fail(`เติมน้ำหนักไม่สำเร็จ: ${errs[0]}`, 500);
 
+  // ── ตัวที่ "ตั้งเรตต่อโลไว้แล้ว" ต้องคิดราคา/หน่วยใหม่ตามน้ำหนักที่เพิ่งเติม ──────
+  //   ไม่ใช่การขึ้นราคา — เป็นการคิดสูตรเดิม (เรต × น้ำหนัก) ให้จบ ที่ค้างอยู่เพราะยังไม่มีน้ำหนัก
+  //   ตัวที่ยังไม่มีเรตต่อโล ไม่แตะ (ต้องไปกด "ตั้งเรตต่อโล" ที่หน้าเรตอลูเหมือนเดิม)
+  let repriced = 0;
+  for (const t of todo) {
+    const r = t.r as unknown as { id: number; is_weight_based?: boolean; price_per_kg?: number; unit_cost?: number };
+    const rate = Number(r.price_per_kg) || 0;
+    if (!r.is_weight_based || !(rate > 0)) continue;
+    const want = Math.round(rate * t.kg * 100) / 100;
+    if (Math.abs(want - (Number(r.unit_cost) || 0)) < 0.01) continue;
+    const { error } = await sb.from("stock_prices").insert({
+      stock_item_id: r.id, price_per_kg: rate, unit_cost: want,
+      effective_date: new Date().toISOString().slice(0, 10),
+      supplier: "", note: "คิดใหม่อัตโนมัติ (เติมน้ำหนักเส้น)", created_by: profile.id,
+    });
+    if (!error) repriced++;
+  }
+
   return ok({
-    updated, skipped,
+    updated, skipped, repriced,
     warns: errs.length ? [`บางกลุ่มไม่สำเร็จ (${errs.length}) — ${errs[0]}`] : [],
-    note: "เติมน้ำหนักแล้ว · ราคายังเท่าเดิม — ถ้าจะให้ราคาขยับ ไปกด \"ตั้งเรตต่อโล\" ที่หน้าเรตอลู",
+    note: repriced
+      ? `เติมน้ำหนักแล้ว · คิดราคา/หน่วยใหม่ให้ ${repriced} รายการ (เรตต่อโล × น้ำหนัก) · ตัวที่ยังไม่มีเรตต่อโล ให้ไปกด "ตั้งเรตต่อโล" ที่หน้าเรตอลู`
+      : "เติมน้ำหนักแล้ว · ราคายังเท่าเดิม — ถ้าจะให้ราคาขยับ ไปกด \"ตั้งเรตต่อโล\" ที่หน้าเรตอลู",
   });
 }
