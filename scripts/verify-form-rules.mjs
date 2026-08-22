@@ -72,6 +72,11 @@ console.log('\n═══ ④ ของที่เจ้าของเคาะ
   // กล่อง 4 หุน มีน้ำหนัก (ไม่งั้นค่าอบขาด)
   const box = PRODUCTS.slimlux.alu.find((a) => a.box === 'กล่อง|4หุน');
   ok('กล่อง 4 หุน น้ำหนัก 0.9 กก./เส้น', box?.kg === 0.9, String(box?.kg));
+  ok('กล่อง 4 หุน ราคาสำรอง ฿210/เส้น (สีมิว-ดิบ)', box?.price === 210, String(box?.price));
+  // ⚠ ราคานี้เป็น 'ราคาสีดิบ' → ต้องอยู่ในกองค่าอบเสมอ (สีอื่นบวกค่าอบตาม 0.9 กก.)
+  //   ถ้าไปตั้งราคานี้ที่แถวสีในสโตร์ ระบบจะถือว่า 'ราคารวมอบแล้ว' แล้วตัดค่าอบทิ้ง = ถูกกว่าจริง
+  ok('กล่อง/ฉาก ทุกตัวที่ใช้ มีราคาสำรอง (ไม่มีตัวไหนโชว์ ฿0)',
+    Object.values(PRODUCTS).flatMap((pr) => pr?.alu || []).filter((a2) => a2.box).every((a2) => Number(a2.price) > 0));
   // SlimLux ของเสริม = รื้อของเดิม อย่างเดียว
   ok('SlimLux ของเสริม = รื้อของเดิม', JSON.stringify(PRODUCTS.slimlux.addons) === '["demolish"]', JSON.stringify(PRODUCTS.slimlux.addons));
 }
