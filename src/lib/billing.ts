@@ -298,3 +298,93 @@ export async function syncFinanceEntry(
   const { error } = await supabase.from("finance_entries").insert(insertPayload);
   return error?.message ?? null;
 }
+
+/**
+ * "ผูกงาน + ดันเข้าผลิต" สำหรับใบวางบิลที่ยังไม่มีงาน (job_id null)
+ *   เคสเจ้าของ 22 ส.ค.69 (BL2569080073): ใบเสนอนอกระบบพิมพ์เอง (ลูกค้าใหม่ยังไม่มีงาน)
+ *   → วางบิล + บันทึกชำระแล้ว แต่งานไม่เข้าผลิต เพราะ bn.job_id = null → sync/promote ถูกข้าม
+ * สิ่งที่ทำ (idempotent — รันซ้ำปลอดภัย):
+ *   1) ถ้ายังไม่มีงาน → สร้างงานจากลูกค้าของใบเสนอ/บิล (PENDING_QUOTE) แล้วผูก billing + quotation
+ *   2) เติม finance_entries ย้อนหลังทุกงวดที่จ่ายแล้ว (กันเงินไม่เข้าบัญชี · ผูก receipt_id ถ้ามี)
+ *   3) งวดมัดจำ (seq 1) จ่ายแล้ว → ดันงานเข้าผลิต (DEPOSITED → trigger สร้าง production)
+ */
+const CH_MAP: Record<string, string> = { LINE: "LINE", FB: "FACEBOOK", FACEBOOK: "FACEBOOK", IG: "INSTAGRAM", INSTAGRAM: "INSTAGRAM", OTHER: "OTHER" };
+
+export async function ensureBillingJobAndPromote(
+  supabase: SupabaseClient, billingNoteId: string, profileId: string,
+): Promise<{ error?: string; jobId?: string; created?: boolean; promoted?: boolean; backfilled?: number }> {
+  // 1) โหลดใบวางบิล
+  const { data: bn } = await supabase
+    .from("billing_notes")
+    .select("id, status, job_id, quotation_id, customer_snapshot")
+    .eq("id", billingNoteId)
+    .single<{ id: string; status: string; job_id: string | null; quotation_id: number | null; customer_snapshot: Record<string, unknown> | null }>();
+  if (!bn) return { error: "ไม่พบใบวางบิล" };
+  if (bn.status === "cancelled") return { error: "ใบวางบิลถูกยกเลิกแล้ว" };
+
+  let jobId = bn.job_id;
+  let created = false;
+
+  // 2) ยังไม่มีงาน → สร้างให้ + ผูก
+  if (!jobId) {
+    let customerId: number | null = null;
+    let snap: Record<string, unknown> = bn.customer_snapshot ?? {};
+    if (bn.quotation_id) {
+      const { data: q } = await supabase
+        .from("quotations").select("customer_id, customer_snapshot").eq("id", bn.quotation_id)
+        .maybeSingle<{ customer_id: number | null; customer_snapshot: Record<string, unknown> | null }>();
+      if (q?.customer_id != null) customerId = q.customer_id;
+      if (q?.customer_snapshot) snap = q.customer_snapshot;
+    }
+    const name = String((snap?.name as string) ?? "").trim() || "ลูกค้า";
+    const ch = CH_MAP[String((snap?.contact_channel as string) ?? "").toUpperCase()] ?? "OTHER";
+    const { data: newJob, error: jErr } = await supabase
+      .from("jobs")
+      .insert({ customer_name: name, ...(customerId != null ? { customer_id: customerId } : {}), channel: ch, assess_date: today(), status: "PENDING_QUOTE" } as never)
+      .select("id")
+      .single<{ id: string }>();
+    if (jErr || !newJob) return { error: "สร้างงานไม่สำเร็จ: " + (jErr?.message ?? "") };
+    jobId = newJob.id;
+    created = true;
+    await supabase.from("billing_notes").update({ job_id: jobId }).eq("id", billingNoteId);
+    if (bn.quotation_id) await supabase.from("quotations").update({ job_id: jobId }).eq("id", bn.quotation_id);
+  }
+
+  // 3) เติม finance_entries ย้อนหลัง (ทุกงวดที่จ่ายแล้ว)
+  const { data: paidInsts } = await supabase
+    .from("billing_installments")
+    .select("id, seq, paid_amount, paid_date")
+    .eq("billing_note_id", billingNoteId)
+    .gt("paid_amount", 0)
+    .order("seq", { ascending: true });
+  const insts = (paidInsts ?? []) as { id: number; seq: number; paid_amount: number; paid_date: string | null }[];
+  const receiptOf = new Map<number, number>();
+  if (insts.length) {
+    const { data: rcs } = await supabase
+      .from("receipts").select("id, installment_id")
+      .in("installment_id", insts.map((i) => i.id)).eq("is_voided", false);
+    for (const r of (rcs ?? []) as { id: number; installment_id: number | null }[]) {
+      if (r.installment_id != null) receiptOf.set(r.installment_id, r.id);
+    }
+  }
+  let backfilled = 0;
+  for (const it of insts) {
+    const err = await syncFinanceEntry(supabase, {
+      jobId, installmentId: it.id, seq: it.seq,
+      paid: Number(it.paid_amount) || 0,
+      paidDate: it.paid_date || today(),
+      ...(receiptOf.has(it.id) ? { receiptId: receiptOf.get(it.id) } : {}),
+    });
+    if (!err) backfilled++;
+  }
+
+  // 4) งวดมัดจำจ่ายแล้ว → ดันเข้าผลิต
+  let promoted = false;
+  const dep1 = insts.find((i) => i.seq === 1);
+  if (dep1) {
+    await promoteJobToProductionIfPending(supabase, jobId, dep1.paid_date || today());
+    promoted = true;
+  }
+  void profileId;
+  return { jobId, created, promoted, backfilled };
+}

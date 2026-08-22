@@ -9,6 +9,7 @@ import BillingActions from "./BillingActions";
 import { VoidBillingNoteButton, InstallmentEditor, EditBillingTotalButton, EditBillingBreakdownButton, IssueReceiptButton, EditBillingStatusButton, EditBillingDateButton } from "./BillingFinanceActions";
 import { EditDocHeaderModal } from "@/components/finance/EditDocHeaderModal";
 import LinkToSystemPanel, { type LinkableQuotation } from "./LinkToSystemPanel";
+import EnsureJobButton from "./EnsureJobButton";
 import { BILLING_STATUS_LABEL, type BillingNote, type BillingStatus } from "@/lib/types";
 import { can } from "@/lib/rbac";
 import type { Role } from "@/lib/database.types";
@@ -127,6 +128,10 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
           <Link href={`/billing-notes/${bn.id}/print`} className="press inline-flex items-center gap-1.5 glass-soft rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark">
             <Icon name="printer" size={16} /> พิมพ์ / PDF
           </Link>
+          {/* ใบวางบิลยังไม่มีงาน (ใบเสนอนอกระบบพิมพ์เอง ลูกค้าใหม่) → ผูกงาน + ดันเข้าผลิต */}
+          {writable && !isCancelled && !isAssess && !(bn as unknown as { job_id?: string | null }).job_id && (
+            <EnsureJobButton billingNoteId={bn.id} />
+          )}
           {/* บิลค่าแรง (หัก ณ ที่จ่ายเฉพาะค่าแรง · ภาษี booked ต่องวด) — ซ่อนปุ่มแก้ยอด/VAT/งวด
               (RPC re-split ยังไม่รักษาภาษีต่องวด · server บล็อกอีกชั้น · ต้องยกเลิกแล้วออกใหม่ถ้าจะแก้) */}
           {writable && !isCancelled && !hasAnyPayment && !laborBill && (

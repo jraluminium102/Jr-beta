@@ -42,7 +42,7 @@ export async function POST(req: Request) {
   // 1) ดึงใบเสนอราคา
   const { data: q, error: qErr } = await supabase
     .from("quotations")
-    .select("id, status, net, subtotal, discount_pct, discount_amt, discount_label, vat_rate, wht_rate, customer_snapshot, job_id")
+    .select("id, status, net, subtotal, discount_pct, discount_amt, discount_label, vat_rate, wht_rate, customer_snapshot, customer_id, job_id")
     .eq("id", body.quotation_id)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .single<any>();
@@ -121,11 +121,29 @@ export async function POST(req: Request) {
   const { code, error: codeErrMsg } = await nextDocumentCode(supabase, "BL", issueDate);
   if (!code) return fail("ออกรหัสไม่สำเร็จ: " + (codeErrMsg ?? ""), 500);
 
+  // 3.5) ใบเสนอนอกระบบ/ลูกค้าใหม่ที่ยังไม่มีงาน (job_id null) → สร้างงานให้ก่อนวางบิล
+  //   วางบิล = ดีลจริง → ต้องมีงานเพื่อให้ "บันทึกชำระมัดจำ" ดันเข้าผลิตได้ (กันเคส BL2569080073 งานไม่เข้าผลิต)
+  let linkedJobId: string | null = q.job_id ?? null;
+  if (!linkedJobId) {
+    const snap = (q.customer_snapshot ?? {}) as Record<string, unknown>;
+    const cName = String((snap.name as string) ?? "").trim() || "ลูกค้า";
+    const chMap: Record<string, string> = { LINE: "LINE", FB: "FACEBOOK", FACEBOOK: "FACEBOOK", IG: "INSTAGRAM", INSTAGRAM: "INSTAGRAM", OTHER: "OTHER" };
+    const cCh = chMap[String((snap.contact_channel as string) ?? "").toUpperCase()] ?? "OTHER";
+    const { data: newJob, error: jErr } = await supabase
+      .from("jobs")
+      .insert({ customer_name: cName, ...(q.customer_id != null ? { customer_id: q.customer_id } : {}), channel: cCh, assess_date: issueDate, status: "PENDING_QUOTE" } as never)
+      .select("id")
+      .single<{ id: string }>();
+    if (jErr || !newJob) return fail("สร้างงานให้ใบวางบิลไม่สำเร็จ: " + (jErr?.message ?? ""), 500);
+    linkedJobId = newJob.id;
+    await supabase.from("quotations").update({ job_id: linkedJobId }).eq("id", q.id);
+  }
+
   // 4) insert หัวเอกสาร
   const bnBase: Record<string, unknown> = {
     code,
     quotation_id: q.id,
-    job_id: q.job_id ?? null,          // เชื่อม job เพื่อ sync finance_entries
+    job_id: linkedJobId,               // เชื่อม job เพื่อ sync finance_entries (สร้างให้แล้วถ้าใบเสนอยังไม่มีงาน)
     customer_snapshot: q.customer_snapshot,
     issue_date: issueDate,
     total: billTotal,
