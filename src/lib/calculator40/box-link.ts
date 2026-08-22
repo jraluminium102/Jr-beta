@@ -17,6 +17,8 @@ export const BOX_KINDS = ["กล่อง", "ฉาก", "แป๊บ", "ต�
 export type BoxKind = (typeof BOX_KINDS)[number];
 
 const th = (s: unknown) => String(s ?? "").trim();
+/** ชื่อสีแบบเทียบได้ — ตัดช่องว่างทิ้ง ให้ตรงกับ normColorName ใน stock-link ("Aztec gray" = "Aztecgray") */
+export const normColor = (s: unknown) => String(s ?? "").replace(/\s+/g, "").trim();
 
 /**
  * ล้างขนาดให้เป็นรูปเดียว: ตัดฟุตหุน/ช่องว่าง · ×→x · ½→.5 · ตัด .0 ท้าย
@@ -76,7 +78,9 @@ export function buildBoxPrices(rows: BoxStockRow[]): BoxPrices {
     const p = parseBoxName(r.name);
     if (!p) continue;
     // สีจากช่อง "สี" มาก่อน ไม่มีค่อยใช้สีที่อ่านจากท้ายชื่อ
-    const color = th(r.color) || p.color;
+    //   ⚠ ต้องตัดช่องว่างออกให้เหมือน stockColorOfCalc (normColorName) ไม่งั้นสีที่ชื่อมีเว้นวรรค
+    //   อย่าง "Aztec gray" จะหาไม่เจอ แล้วตกไปใช้ราคาสีมิว/ขาวเงียบ ๆ (เจอจริง 21 ส.ค.69)
+    const color = normColor(th(r.color) || p.color);
     if (!color) continue;
     const k = boxKey(p.kind, p.size);
     const b = out[k] || (out[k] = {});
@@ -90,7 +94,7 @@ export function buildBoxPrices(rows: BoxStockRow[]): BoxPrices {
 export function boxPriceOf(BOX: BoxPrices | undefined, key: string, color: string): number | null {
   const b = BOX?.[key];
   if (!b) return null;
-  const c = th(color);
+  const c = normColor(color);
   if (c && b[c] > 0) return b[c];
   for (const alt of ["มิว", "อบขาว"]) if (b[alt] > 0) return b[alt];
   return null;
