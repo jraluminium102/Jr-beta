@@ -6,6 +6,8 @@ import { fileURLToPath } from 'url';
 import { computeCost, barsNeeded } from '../src/lib/calculator40/engine.mjs';
 import { PRODUCTS } from '../src/lib/calculator40/products.mjs';
 import { aluColorKeysFor, ALU_COLOR_KEYS } from '../src/lib/calculator40/alu-colors.ts';
+import { buildBoxPrices, boxPriceOf } from '../src/lib/calculator40/box-link.ts';
+import { stockColorOfCalc } from '../src/lib/calculator40/stock-link.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PB = JSON.parse(fs.readFileSync(path.join(__dirname, '../src/lib/calculator40/pricebook.json'), 'utf8'));
@@ -459,6 +461,10 @@ console.log('\n═══ ②j กล่อง/ฉาก ราคาตามส
   const r3 = computeCost(withColor, PRODUCTS.slimlux, { ...OPT, stockColor: 'เทาซาฮาร่า' });
   const post = PRODUCTS.slimlux.alu.find((a) => a.box === 'กล่อง|1X3');
   check('กล่อง 1x3 ที่ไม่มีราคาสี ยังอยู่ในกองค่าอบ', r3.aluKg > barsNeeded(2.375, 2, 6.4, true) * post.kg ? 1 : 0, 1, 0);
+  // สีที่ชื่อมีเว้นวรรค (Aztec gray) ต้องจับคู่ได้ ไม่ตกไปใช้ราคามิว/ขาว (เจอจริง 21 ส.ค.69)
+  const bpA = buildBoxPrices([{ name: 'กล่อง 4 หุน-Aztec gray', unit_cost: 400 }, { name: 'กล่อง 4 หุน-มิว', unit_cost: 300 }]);
+  check('Aztec gray: กล่องใช้ราคาสีตัวเอง (ไม่ตกไปมิว)', boxPriceOf(bpA, 'กล่อง|4หุน', stockColorOfCalc('aztec')), 400, 0.01);
+  check('สีที่สโตร์ไม่มี: ตกไปใช้ราคามิว', boxPriceOf(bpA, 'กล่อง|4หุน', stockColorOfCalc('sahara')), 300, 0.01);
 }
 
 // ── ②i สีพิเศษ 3 สี เลือกได้เฉพาะรุ่นยูโร/Fuji (เจ้าของยืนยัน 19 ส.ค.69) ──
