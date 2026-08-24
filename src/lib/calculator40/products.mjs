@@ -481,7 +481,7 @@ export const PRODUCTS = {
     ],
     consum: [
       { name: 'เทปหนุนกระจก', price: 10, unit: 'ม.', count: 'Math.round((2*W + 2*P*H)*10)/10' },
-      { name: 'ซิลิโคน ใน+นอก', price: 90, unit: 'หลอด', count: 'Math.ceil((2*W + 2*P*H)*2/12.5)' },
+      { name: 'ซิลิโคน ใน+นอก', sku: 'JR00504', price: 90, unit: 'หลอด', count: 'Math.ceil((2*W + 2*P*H)*2/12.5)' },   // ผูกสโตร์ 21 ส.ค.69
     ],
   },
 
@@ -569,7 +569,7 @@ export const PRODUCTS = {
       { name: 'มือจับ', sku: "spec.hwcolor==='ดำ'?'JR00356':'JR00355'", price: 450, unit: 'ชุด', count: 'P' },
     ],
     consum: [
-      { name: 'ซิลิโคน', price: 90, unit: 'หลอด', count: 'Math.ceil(2*(W+H)/1*2/12.5 -1e-9)' },
+      { name: 'ซิลิโคน', sku: 'JR00504', price: 90, unit: 'หลอด', count: 'Math.ceil(2*(W+H)/1*2/12.5 -1e-9)' },   // ผูกสโตร์ 21 ส.ค.69
     ],
     note: 'Velora เป็นบานเปิด (casement) · สีตั้งต้น เทาซาฮาร่า ตามชีต · form "คู่"(2บาน) ถอดจากสูตร ยังไม่ทดสอบเลขจริง (เช็คซ้ำ)',
   },
@@ -585,27 +585,30 @@ export const PRODUCTS = {
     defaults: { w: 150, h: 200, p: 2 }, defGlass: 'เขียว 6มม.', minP: 2, maxP: 4,
     vars: { SILL: "spec.pcsill==='ไม่มีธรณี'?0:1" },
     alu: [
-      // ผูกรหัสสโตร์ (19 ส.ค.69) — ชื่อบรรทัดมีรหัสอยู่แล้ว แค่ยังไม่ได้ใส่ช่อง code
-      //   น้ำหนักยึดชีต "น้ำหนักโปรไฟล์" (ชั่งจริง) · 3 รหัสที่ยังไม่มีในไฟล์ (F7863/7864/F7945c) รอเจ้าของ
+      // รหัสยึด "ช่อง sku ในสโตร์" (F7938/F7945 — ตัว B/C อยู่ในชื่อ ไม่ใช่รหัส · เจ้าของยืนยัน 21 ส.ค.69)
+      //   น้ำหนักจริงที่เจ้าของแจ้ง 21 ส.ค.69: F7864 11.328 · F7863 2.202 · F7935 1.766 กก./เส้น
       { name: 'วงกบ 3 ด้าน F7859', code: 'F7859', price: 1100, kg: 5.61, seg: 'W+2*H', count: '1' },
-      { name: 'ธรณี F7938B', code: 'F7938B', price: 1400, kg: 7.77778, seg: 'W', count: 'SILL' },
+      { name: 'ธรณี F7938', code: 'F7938', price: 1400, kg: 7.77778, seg: 'W', count: 'SILL' },
       { name: 'ตบธรณี F7960', code: 'F7960', price: 575, kg: 3.056, seg: 'W', count: 'SILL' },
-      { name: 'เสริมใต้บาน F7863', price: 435, kg: 2.41667, seg: 'W', count: '1-SILL' },
-      { name: 'กรอบประตู 7864', price: 1995, kg: 11.08333, seg: '2*P*H+2*W', count: '1' },
-      { name: 'คิ้ว F7935', code: 'F7935', price: 360, kg: 2.424, seg: '2*P*H+2*W', count: '1' },
-      { name: 'เปิดกลาง F7945c', price: 775, kg: 4.30556, seg: 'H', count: "form==='แบ่ง 4'?1:0" },
+      { name: 'เสริมใต้บาน F7863', code: 'F7863', price: 435, kg: 2.202, seg: 'W', count: '1-SILL' },
+      { name: 'กรอบประตู F7864', code: 'F7864', price: 1995, kg: 11.328, seg: '2*P*H+2*W', count: '1' },
+      { name: 'คิ้ว F7935', code: 'F7935', price: 360, kg: 1.766, seg: '2*P*H+2*W', count: '1' },
+      { name: 'เปิดกลาง F7945', code: 'F7945', price: 775, kg: 4.30556, seg: 'H', count: "form==='แบ่ง 4'?1:0" },
     ],
     glass: 'W*H',
     hardware: [
-      { name: 'บานพับ hyda', price: 117, unit: 'ตัว', count: "form==='แบ่ง 2'?4:8" },
-      { name: 'ล้อ+ซอฟโค้ด (ชุด)', price: 1170, unit: 'ชุด', count: "spec.pcsoft==='ไม่ใส่'?0:(form==='แบ่ง 2'?1:2)" },
-      { name: 'มือจับ Align SMS', price: 198, unit: 'บาน', count: 'P' },
-      { name: 'กลอนบานลอง', price: 450, unit: 'ชุด', count: '1' },
-      { name: 'น็อตเฟรม', price: 1, unit: 'ตัว', count: 'SILL?8:6' },
+      // รหัสอุปกรณ์จากไฟล์ใบตัด PC Door (รวมใบตัด_JR_2 · ⑤.1 สรุปอุปกรณ์) — ราคาสำรองตามชีตถอดทุน v9
+      { name: 'บานพับไม่บาก (hyda)', sku: 'JR00473', price: 117, unit: 'ตัว', count: "form==='แบ่ง 2'?4:8" },
+      { name: 'ล้อรางบน Hafele + ซอฟโค้ด (ชุด)', sku: 'JR00544', price: 1170, unit: 'ชุด', count: "spec.pcsoft==='ไม่ใส่'?0:(form==='แบ่ง 2'?1:2)" },
+      // มือจับ Align 2 ตัว/บาน (99×2=198 ตามชีต) — ผูกตัวล็อคอบขาว JR00378 เป็นตัวแทน
+      { name: 'มือจับ Align SMS (2/บาน)', sku: 'JR00378', per: 0.5, price: 198, unit: 'บาน', count: 'P' },
+      // ชีตรวม "กลอนบานลอง ฿450" = กลอน JR00630 + ปลายกลอน JR00598 → ลงที่กลอนก้อนเดียว ยอดเท่าไฟล์
+      { name: 'กลอนบานลอง (รวมปลายกลอน)', sku: 'JR00630', price: 450, unit: 'ชุด', count: '1' },
+      { name: 'น็อตเฟรม', sku: 'JR00864', price: 1, unit: 'ตัว', count: 'SILL?8:6' },
       { name: 'ยาง', price: 11, unit: 'ม.', count: 'Math.round(2*(W+H)*P)' },
     ],
     consum: [
-      { name: 'ซิลิโคน ใน+นอก', price: 90, unit: 'หลอด', count: 'Math.ceil(2*(W+H)*2/12.5)' },
+      { name: 'ซิลิโคน ใน+นอก', sku: 'JR00504', price: 90, unit: 'หลอด', count: 'Math.ceil(2*(W+H)*2/12.5)' },
     ],
     note: 'ดีฟอลต์ มีธรณี + ใส่ซอฟโค้ด · ออปชั่นไม่มีธรณี/ไม่ใส่ซอฟโค้ด = spec (มด dropdown B8/B10) แล้ว · มุ้ง=addon ยังไม่ทำ',
   },
@@ -667,15 +670,15 @@ export const PRODUCTS = {
       HINGE: "(function(){var f=form;var hmm=H*1000;var L;if(f.indexOf('2บาน')===0)L=[2700,7,9999,10,10];else if(f.indexOf('3บาน')===0){L=(f.indexOf('3-0')>=0||f.indexOf('0-3')>=0)?[3000,7,9999,13,13]:[9999,9,9999,12,12];}else if(f.indexOf('4บาน')===0){if(f.indexOf('4-0')>=0||f.indexOf('0-4')>=0)L=[9999,11,9999,16,16];else if(f.indexOf('2-2')>=0)L=[3000,14,9999,26,26];else L=[9999,7,9999,10,10];}else if(f.indexOf('5บาน')===0){if(f.indexOf('5-0')>=0||f.indexOf('0-5')>=0)L=[9999,11,9999,16,16];else L=[9999,14,9999,20,20];}else if(f.indexOf('6บาน')===0){if(f.indexOf('6-0')>=0||f.indexOf('0-6')>=0)L=[9999,15,9999,22,22];else if(f.indexOf('3-3')>=0)L=[3000,14,9999,22,22];else if(f.indexOf('4-2')>=0)L=[9999,16,9999,24,24];else L=[9999,11,9999,16,16];}else L=[2700,7,9999,10,10];if(hmm<=L[0])return L[1];if(hmm<=L[2])return L[3];return L[4];})()",
     },
     alu: [
-      { name: 'F7968 เฟรมบน', code: 'F7968', price: 3140, kg: 0, seg: '(W*1000-36)/1000', count: '1' },
-      { name: 'F7969 เฟรมล่าง', code: 'F7969', price: 1730, kg: 0, seg: '(W*1000-36)/1000', count: '1' },
-      { name: 'F7970 เฟรมข้าง', code: 'F7970', price: 1065, kg: 0, seg: 'H*2', count: '1' },
-      { name: 'F7971 คิ้วตบเฟรมข้าง', code: 'F7971', price: 475, kg: 0, seg: '(H*1000-120)*2/1000', count: '1' },
-      { name: 'F7973 ตบปิดเฟรม', code: 'F7973', price: 230, kg: 0, seg: '(W*1000-36)/1000', count: '1' },
-      { name: 'F7972 กรอบบาน (4ด้าน)', code: 'F7972', price: 1670, kg: 0, seg: '((H*1000-94)*(2*P)+bw*1000*(2*P))/1000', count: '1' },
-      { name: 'F7974 ชนกลางบานคู่', code: 'F7974', price: 540, kg: 0, seg: '(H*1000-94)*cmid/1000', count: "form.indexOf('เปิดกลาง')>=0?1:0" },
-      { name: 'F7962 รับล็อค', code: 'F7962', price: 965, kg: 0, seg: '(H*1000-80)/1000', count: '1' },
-      { name: 'F7935 คิ้วกระจก (4ด้าน)', code: 'F7935', price: 340, kg: 0, seg: '((H*1000-254)*(2*P)+(bw*1000-120)*(2*P))/1000', count: '1' },
+      { name: 'F7968 เฟรมบน', code: 'F7968', price: 3140, kg: 17.444, seg: '(W*1000-36)/1000', count: '1' },
+      { name: 'F7969 เฟรมล่าง', code: 'F7969', price: 1730, kg: 9.611, seg: '(W*1000-36)/1000', count: '1' },
+      { name: 'F7970 เฟรมข้าง', code: 'F7970', price: 1065, kg: 5.917, seg: 'H*2', count: '1' },
+      { name: 'F7971 คิ้วตบเฟรมข้าง', code: 'F7971', price: 475, kg: 2.56, seg: '(H*1000-120)*2/1000', count: '1' },
+      { name: 'F7973 ตบปิดเฟรม', code: 'F7973', price: 230, kg: 1.278, seg: '(W*1000-36)/1000', count: '1' },
+      { name: 'F7972 กรอบบาน (4ด้าน)', code: 'F7972', price: 1670, kg: 9.278, seg: '((H*1000-94)*(2*P)+bw*1000*(2*P))/1000', count: '1' },
+      { name: 'F7974 ชนกลางบานคู่', code: 'F7974', price: 540, kg: 5.167, seg: '(H*1000-94)*cmid/1000', count: "form.indexOf('เปิดกลาง')>=0?1:0" },
+      { name: 'F7962 รับล็อค', code: 'F7962', price: 965, kg: 5.361, seg: '(H*1000-80)/1000', count: '1' },
+      { name: 'F7935 คิ้วกระจก (4ด้าน)', code: 'F7935', price: 340, kg: 1.766, seg: '((H*1000-254)*(2*P)+(bw*1000-120)*(2*P))/1000', count: '1' },
     ],
     glass: 'W*H',
     hardware: [
@@ -683,7 +686,7 @@ export const PRODUCTS = {
       { name: 'HD-641 บานพับเฟี้ยม', price: 72, unit: 'ตัว', count: 'HINGE' },
       { name: 'HD-642 บานพับมือจับ', price: 109, unit: 'ตัว', count: '1' },
       { name: 'HD-643 บานพับไกด์ล่าง', price: 199, unit: 'ตัว', count: '1' },
-      { name: 'HD-474 มือจับกลอน', price: 85, unit: 'ตัว', count: '1' },
+      { name: 'HD-474 มือจับกลอน', sku: 'JR00213', price: 85, unit: 'ตัว', count: '1' },   // สโตร์: JR00213 = HD-474 ฿85 (ตรงชื่อ+ราคา)
       { name: 'HD-312 ตลับกลอนล็อค', price: 88, unit: 'ตัว', count: '1' },
       { name: 'HD-1180 ก้านสไลด์', price: 73, unit: 'ตัว', count: '2' },
       { name: 'HD-213 ฉากเข้ามุม', price: 15, unit: 'ตัว', count: '4*P' },
@@ -1694,13 +1697,13 @@ export const PRODUCTS = {
     defaults: { w: 200, h: 120, p: 2 }, defGlass: 'เขียว 6มม.', minP: 2, maxP: 8,
     vars: {},
     alu: [
-      { name: 'F7968 เฟรมข้าง', code: 'F7968', price: 3435, kg: 0, seg: '(2*(H*100-2))/100', count: '1' },
-      { name: 'F7969 เฟรมล่าง', code: 'F7969', price: 1905, kg: 0, seg: '(W*100-11)/100', count: '1' },
-      { name: 'F7970 เฟรมบน', code: 'F7970', price: 1125, kg: 0, seg: 'W', count: '1' },
-      { name: 'F7971 คิ้วเฟรมบน', code: 'F7971', price: 520, kg: 0, seg: '(W*100-15)/100', count: '1' },
-      { name: 'F7973 ตบปิดเฟรม', code: 'F7973', price: 245, kg: 0, seg: '((H*100-6.5)*2+(W*100-11))/100', count: '1' },
-      { name: 'F7972 กรอบบาน', code: 'F7972', price: 1885, kg: 0, seg: '(((H*100-8.2)/2)*4+(W*100-12.4)*4)/100', count: '1' },
-      { name: 'F7935 คิ้วกระจก', code: 'F7935', price: 385, kg: 0, seg: '(((H*100-39.5)/2)*4+(W*100-24)*4)/100', count: '1' },
+      { name: 'F7968 เฟรมข้าง', code: 'F7968', price: 3435, kg: 17.444, seg: '(2*(H*100-2))/100', count: '1' },
+      { name: 'F7969 เฟรมล่าง', code: 'F7969', price: 1905, kg: 9.611, seg: '(W*100-11)/100', count: '1' },
+      { name: 'F7970 เฟรมบน', code: 'F7970', price: 1125, kg: 5.917, seg: 'W', count: '1' },
+      { name: 'F7971 คิ้วเฟรมบน', code: 'F7971', price: 520, kg: 2.56, seg: '(W*100-15)/100', count: '1' },
+      { name: 'F7973 ตบปิดเฟรม', code: 'F7973', price: 245, kg: 1.278, seg: '((H*100-6.5)*2+(W*100-11))/100', count: '1' },
+      { name: 'F7972 กรอบบาน', code: 'F7972', price: 1885, kg: 9.278, seg: '(((H*100-8.2)/2)*4+(W*100-12.4)*4)/100', count: '1' },
+      { name: 'F7935 คิ้วกระจก', code: 'F7935', price: 385, kg: 1.766, seg: '(((H*100-39.5)/2)*4+(W*100-24)*4)/100', count: '1' },
     ],
     glass: '((W*100-25.4)/100)*(((H*100-8.2)/2-13)/100)*P',
     hardware: [
@@ -1708,7 +1711,7 @@ export const PRODUCTS = {
       { name: 'HD-641 บานพับเฟี้ยม', price: 72, unit: 'ตัว', count: '(W*100)<=270?7:10' },
       { name: 'HD-642 บานพับมือจับ', price: 109, unit: 'ตัว', count: '1' },
       { name: 'HD-643 บานพับไกด์ล่าง', price: 199, unit: 'ตัว', count: '1' },
-      { name: 'HD-474 มือจับกลอน', price: 85, unit: 'ตัว', count: '1' },
+      { name: 'HD-474 มือจับกลอน', sku: 'JR00213', price: 85, unit: 'ตัว', count: '1' },   // สโตร์: JR00213 = HD-474 ฿85 (ตรงชื่อ+ราคา)
       { name: 'HD-312 ตลับกลอนล็อค', price: 88, unit: 'ตัว', count: '1' },
       { name: 'HD-1180 ก้านสไลด์', price: 73, unit: 'ตัว', count: '2' },
       { name: 'HD-213 ฉากเข้ามุม', price: 15, unit: 'ตัว', count: '4*P' },
