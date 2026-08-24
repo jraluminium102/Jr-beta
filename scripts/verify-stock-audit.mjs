@@ -102,9 +102,9 @@ console.log("\n═══ ⑤b สรุปรายรุ่น — มุมห
   ok("ออกครบทุกรุ่นในเครื่องคิดราคา", prods.length > 40, String(prods.length));
   ok("เรียงรุ่นที่ต้องแก้ก่อนขึ้นบนสุด", prods[0]?.status === "ไม่ผูกเลย", prods[0]?.status ?? "");
   const pc = prods.find((p) => p.id === "pcdoor");
-  // PC Door ผูกรหัสไปแล้ว 4/7 (19 ส.ค.69) — เหลือ 3 รหัสที่ยังไม่มีในไฟล์ (F7863/7864/F7945c)
-  ok("PC Door: อลู 7 บรรทัด · ยังไม่มีรหัส 3", pc?.aluTotal === 7 && pc?.aluNoCode?.length === 3, JSON.stringify(pc));
-  ok("PC Door: บอกชื่อบรรทัดที่ยังไม่มีรหัสมาด้วย", (pc?.aluNoCode?.length ?? 0) === 3, String(pc?.aluNoCode?.length));
+  // PC Door ผูกรหัสครบ 7/7 แล้ว (21 ส.ค.69 — F7863/F7864/F7945 ยึด sku สโตร์)
+  ok("PC Door: อลู 7 บรรทัด · มีรหัสครบ", pc?.aluTotal === 7 && pc?.aluNoCode?.length === 0, JSON.stringify(pc));
+  ok("PC Door: ไม่เหลือบรรทัดไม่มีรหัส", (pc?.aluNoCode?.length ?? 9) === 0, String(pc?.aluNoCode?.length));
   const solid = prods.find((p) => p.id === "bansolid");
   ok("บานโซลิด: อลูมีรหัสครบ (ไม่มีบรรทัดตกหล่น)", solid?.aluTotal === 7 && solid?.aluNoCode.length === 0, JSON.stringify(solid));
   ok("รุ่นที่ไม่มีรายการวัสดุเลย แยกสถานะไว้ต่างหาก", prods.some((p) => p.status === "ไม่มีรายการวัสดุ"), "");
