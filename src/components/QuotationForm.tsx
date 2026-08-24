@@ -149,9 +149,10 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
         if (cancelled) return;
         const jobs: ActiveJob[] = Array.isArray(json?.data) ? json.data : [];
         setActiveJobs(jobs);
-        // งานจากเช็คลิสต์ (bridgeJobId) → เลือกงานนั้นให้เลยถ้ายังอยู่ในลิสต์ · ไม่งั้น 1 งาน→auto · ≥2→เว้นว่าง
+        // งานจากเช็คลิสต์ (bridgeJobId) → เลือกงานนั้นให้ · ไม่งั้น "เว้นว่าง = สร้างงานใหม่"
+        //   ⚠ ห้าม auto-เลือกงานเดิมแม้มีงานเดียว (เจ้าของสั่ง 24 ส.ค.69: หลายออเดอร์ชื่อซ้ำ อย่าไปรวม)
         const bridged = bridgeJobId && jobs.find((j) => j.id === bridgeJobId);
-        setSelectedJobId(bridged ? bridgeJobId : (jobs.length === 1 ? jobs[0].id : ""));
+        setSelectedJobId(bridged ? bridgeJobId : "");
       })
       .catch(() => { if (!cancelled) setActiveJobs([]); })
       .finally(() => { if (!cancelled) setActiveJobsLoading(false); });
@@ -256,7 +257,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
     } else {
       if (!customerId) { setErr("ต้องเลือกลูกค้าก่อน (ช่องบนสุด) แล้วกดบันทึกอีกครั้ง"); return; }
       if (activeJobsLoading) { setErr("กำลังโหลดรายการงานของลูกค้า รอสักครู่แล้วกดอีกครั้ง"); return; }
-      if (activeJobs.length >= 2 && !selectedJobId) { setErr("ลูกค้ามีหลายงาน — เลือกงานที่จะผูกก่อน (ช่อง 'เลือกงานที่จะผูก')"); return; }
+      // เว้นว่าง = สร้างงานใหม่ (ไม่รวมงานเดิม) = ค่าเริ่มต้นที่ถูกต้อง — ไม่บล็อกอีกต่อไป
     }
     const valid = items.filter((i) => i.name.trim() && Number(i.qty) > 0);
     if (valid.length === 0) { setErr("ต้องมีรายการอย่างน้อย 1 บรรทัด (ระบุชื่อ + จำนวน)"); return; }
@@ -459,32 +460,28 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
                   </p>
                 )}
                 {!activeJobsLoading && activeJobs.length === 0 && (
-                  <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2 border border-amber-200">
-                    ลูกค้ายังไม่มีงานในระบบ — ใบเสนอราคานี้จะยังไม่ผูกกับงาน (สามารถผูกทีหลังได้)
+                  <p className="text-xs text-ink-3 bg-white/40 rounded-lg px-3 py-2 border border-gray-200/70">
+                    🆕 ออเดอร์ใหม่ — ระบบจะสร้างงานให้ตอนวางบิล
                   </p>
                 )}
-                {!activeJobsLoading && activeJobs.length === 1 && (
-                  <p className="text-xs text-green-700 bg-green-50 rounded-lg px-3 py-2 border border-green-200">
-                    <Icon name="briefcase" size={12} className="inline mr-1" />
-                    จะผูกกับงาน <strong>{activeJobs[0].job_code ?? activeJobs[0].id}</strong> อัตโนมัติ
-                  </p>
-                )}
-                {!activeJobsLoading && activeJobs.length >= 2 && (
+                {!activeJobsLoading && activeJobs.length > 0 && (
                   <label className="block">
-                    <span className="text-xs font-medium text-ink-3">เลือกงานที่จะผูก *</span>
+                    <span className="text-xs font-medium text-ink-3">ออเดอร์นี้เป็นงานใหม่ หรือผูกกับงานเดิม?</span>
                     <select
                       value={selectedJobId}
                       onChange={(e) => setSelectedJobId(e.target.value)}
                       className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none text-sm text-ink"
                     >
-                      <option value="">— เลือกงาน —</option>
+                      <option value="">🆕 งานใหม่ (แนะนำ — ไม่รวมกับออเดอร์เดิม)</option>
                       {activeJobs.map((j) => (
                         <option key={j.id} value={j.id}>
-                          {j.job_code ?? j.id} — {j.status} ({new Date(j.created_at).toLocaleDateString("th-TH", { day: "2-digit", month: "short", year: "2-digit" })})
+                          🔗 ผูกกับ {j.job_code ?? j.id} — {j.status} ({new Date(j.created_at).toLocaleDateString("th-TH", { day: "2-digit", month: "short", year: "2-digit" })})
                         </option>
                       ))}
                     </select>
-                    <span className="text-xs text-amber-700 mt-0.5 block">ลูกค้ามี {activeJobs.length} งาน active — กรุณาเลือกให้ถูกต้องเพื่อกัน auto ผูกผิด</span>
+                    <span className="text-xs text-ink-3 mt-0.5 block">
+                      ค่าเริ่มต้น = <b>งานใหม่</b> (ลูกค้ามี {activeJobs.length} งานอยู่แล้ว แต่จะไม่รวมให้) · เลือก "ผูกกับงานเดิม" เฉพาะเมื่อเป็นออเดอร์เดียวกัน เช่น แก้ราคาใบเดิม
+                    </span>
                   </label>
                 )}
               </div>

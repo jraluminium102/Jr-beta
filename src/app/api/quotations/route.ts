@@ -121,12 +121,10 @@ export async function POST(req: Request) {
     snapshot.phone = String(ho.phone ?? "").trim();
   }
 
-  // 2) ผูกใบเสนอกับงาน (job) ของลูกค้า — ไม่สร้างงานใหม่
-  //    ลำดับความสำคัญ:
-  //    a) ถ้า body.job_id ส่งมา → validate ว่าเป็น active job ของลูกค้านี้จริง แล้วใช้ค่านั้น
-  //    b) ถ้าไม่มี/ไม่ผ่าน validate → fallback: auto-link งาน active ล่าสุดของลูกค้า (พฤติกรรมเดิม)
-  //    ถ้าลูกค้ายังไม่มีงาน active → job_id = null (หน้า list/หัวใบจะโชว์ป้าย "ยังไม่ผูกงาน")
-  //    สำคัญ: ถ้า null → BOQ/วางบิล/การเงิน/สถิติ จะตามงานนี้ไม่เจอ (ต้นเหตุงานหลุดทั้งสาย)
+  // 2) ผูกใบเสนอกับงาน (job) — เฉพาะเมื่อ "เลือกงานมาชัดเจน" (body.job_id) เท่านั้น
+  //    ⚠ เจ้าของสั่ง 24 ส.ค.69: ห้าม auto-รวมใบเสนอใหม่เข้างานเดิมแค่เพราะชื่อลูกค้าซ้ำ
+  //      (ลูกค้าคนเดียวมีหลายออเดอร์ = คนละงาน · เดิม fallback auto-link งาน active ล่าสุด → อัดรวมกันมั่ว)
+  //    ถ้าไม่เลือกงาน → jobId = null · ตอนวางบิลจะสร้างงานใหม่ให้เอง (POST /billing-notes) = แต่ละออเดอร์แยกงาน
   let jobId: string | null = null;
   const requestedJobId = typeof body.job_id === "string" && body.job_id.trim() ? body.job_id.trim() : null;
   if (requestedJobId) {
@@ -144,18 +142,6 @@ export async function POST(req: Request) {
       // ผู้ใช้เลือกงานมาแล้วแต่ใช้ไม่ได้ (ถูกปิด/ยกเลิก/id เพี้ยน) → ห้าม fallback เงียบ ให้เลือกใหม่
       return fail("งานที่เลือกผูกใช้ไม่ได้แล้ว (อาจถูกปิดหรือยกเลิก) — กรุณาเลือกงานใหม่", 409);
     }
-  }
-  if (!jobId) {
-    // fallback: auto-link งาน active ล่าสุด (พฤติกรรมเดิม)
-    const { data: activeJob } = await supabase
-      .from("jobs")
-      .select("id")
-      .eq("customer_id", cust.id)
-      .not("status", "in", "(COMPLETED,CANCELLED)")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle<{ id: string }>();
-    jobId = activeJob?.id ?? null;
   }
 
   // 3) คำนวณยอด (แหล่งความจริงเดียว · ส่งบาทมา = ใช้ตรง ๆ ชนะ %)
