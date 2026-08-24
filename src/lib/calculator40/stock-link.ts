@@ -118,6 +118,14 @@ export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverrid
     if (cost > 0) {
       // ราคาต่อรหัสสโตร์ — เก็บทุกแถวที่มีรหัส (ซ้ำรหัส = เอาถูกสุด กันแถวสีพิเศษดันราคาขึ้น)
       if (sku) { const k = normCode(sku); ov.SKUPRICE[k] = ov.SKUPRICE[k] > 0 ? Math.min(ov.SKUPRICE[k], cost) : cost; }
+      // ── รหัสผู้ผลิตที่อยู่ใน "ชื่อ" (HD-640 · HD-1180 ฯลฯ) — เจ้าของยืนยัน 21 ส.ค.69 ────
+      //   ของพวกนี้สโตร์ตั้งชื่อตามรหัสผู้ผลิต แต่ช่อง sku เป็น JR##### ที่รันอัตโนมัติ
+      //   สูตรคิดราคาอ้างรหัส HD ตรง ๆ (ตรงกับไฟล์ถอดทุน/ใบตัด) → ทำดัชนีจากชื่อให้ผูกราคาได้เลย
+      //   ไม่ต้องรู้เลข JR · เปลี่ยนชื่อ/ย้ายรหัสในสโตร์แล้วยังผูกติดอยู่
+      for (const m of name.matchAll(/\bHD[-\s]?(\d{3,4}[A-Za-z]?)\b/g)) {
+        const k = `HD-${m[1].toUpperCase()}`;
+        ov.SKUPRICE[k] = ov.SKUPRICE[k] > 0 ? Math.min(ov.SKUPRICE[k], cost) : cost;
+      }
       if (name && pb.GLASS && name in pb.GLASS) ov.GLASS[name] = cost;
       else if (name && pb.ROOFMAT && name in pb.ROOFMAT) ov.ROOFMAT[name] = cost;
       else if (name && pb.MOTOR && name in pb.MOTOR) ov.MOTOR[name] = cost;

@@ -8,7 +8,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { computeCost } from '../src/lib/calculator40/engine.mjs';
 import { PRODUCTS } from '../src/lib/calculator40/products.mjs';
-import { isAluCode } from '../src/lib/calculator40/stock-link.ts';
+import { isAluCode, applyPriceOverride, buildPriceOverride } from '../src/lib/calculator40/stock-link.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PB = JSON.parse(fs.readFileSync(path.join(__dirname, '../src/lib/calculator40/pricebook.json'), 'utf8'));
@@ -81,6 +81,30 @@ console.log('\n═══ ④ Velora + บานติดตาย ═══');
   const F = PRODUCTS.fixed;
   ok('บานติดตาย: กล่องผูกด้วยชื่อ (BOXPRICE) + 9014 มีรหัส', F.alu.some((a) => a.box) && F.alu.some((a) => a.code === '9014'));
   ok('บานติดตาย ซิลิโคน → JR00504', F.consum.some((c) => c.sku === 'JR00504'));
+}
+
+// ── ⑤ อุปกรณ์ HD — ผูกสโตร์ด้วย "รหัสในชื่อ" (เจ้าของยืนยัน 21 ส.ค.69 ว่ามีในสโตร์) ──
+//   สโตร์ตั้งชื่อตามรหัสผู้ผลิต (HD-640 ...) แต่ sku เป็น JR##### ที่รันอัตโนมัติ
+//   stock-link ทำดัชนีจากชื่อให้ → สูตรอ้างรหัส HD ตรง ๆ ได้ ไม่ต้องรู้เลข JR
+console.log('\n═══ ⑤ อุปกรณ์ HD ผูกสโตร์ด้วยรหัสในชื่อ ═══');
+{
+  const HD = ['HD-640', 'HD-641', 'HD-642', 'HD-643', 'HD-312', 'HD-1180', 'HD-213', 'HD-200'];
+  for (const id of ['fold_euro', 'fold_lift']) {
+    const Pr = PRODUCTS[id];
+    ok(`${Pr.name}: อุปกรณ์ทุกบรรทัดมีรหัสสโตร์`, Pr.hardware.every((h) => !!h.sku),
+      Pr.hardware.filter((h) => !h.sku).map((h) => h.name).join(','));
+    for (const c of HD) ok(`${Pr.name}: ใช้รหัส ${c}`, Pr.hardware.some((h) => h.sku === c));
+  }
+  const rows = [{ sku: 'JR09001', name: 'HD-640 บานพับล้อบนเฟี้ยม', unit_cost: 350 },
+    { sku: 'JR09002', name: 'HD-1180 ก้าน AL สไลด์ 19.5 mm', unit_cost: 90 }];
+  const PB2 = applyPriceOverride(JSON.parse(JSON.stringify(PB)), buildPriceOverride(rows, PB));
+  ok('ดัชนี HD-640 จากชื่อ = 350', PB2.SKUPRICE?.['HD-640'] === 350, String(PB2.SKUPRICE?.['HD-640']));
+  ok('ดัชนี HD-1180 จากชื่อ = 90', PB2.SKUPRICE?.['HD-1180'] === 90, String(PB2.SKUPRICE?.['HD-1180']));
+  const opt = { w: 180, h: 280, p: 2, form: '2บาน: รวบเปิดซ้าย (2-0)', color: 'white', colorKey: 'white', glassType: 'เขียว 6มม.' };
+  const a = computeCost(PB, PRODUCTS.fold_euro, opt), b = computeCost(PB2, PRODUCTS.fold_euro, opt);
+  ok(`ตั้งราคาสโตร์ → ทุนขยับ (${Math.round(a.cost.total)} → ${Math.round(b.cost.total)})`, b.cost.total > a.cost.total);
+  const l = b.lines.find((x) => x.sku === 'HD-640');
+  ok('HD-640 ใช้ราคาสโตร์ ฿350 (ไม่ใช่ ฿299 ในไฟล์)', l?.unitPrice === 350, String(l?.unitPrice));
 }
 
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
