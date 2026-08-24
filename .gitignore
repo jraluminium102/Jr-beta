@@ -57,3 +57,4 @@ docs/_*.json
 # ผลลัพธ์ PDF จาก scripts/verify-quote-print.mjs (ของชั่วคราว)
 scratch-print/
 scratchpad/
+sweep.mjs

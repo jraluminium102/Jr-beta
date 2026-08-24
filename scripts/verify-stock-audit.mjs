@@ -281,7 +281,8 @@ console.log("\n═══ ⑤h กล่อง/ฉาก ผูกด้วยช
   const pb2 = applyPriceOverride(JSON.parse(JSON.stringify(PB)), buildPriceOverride(stock, PB));
   const run = (stockColor) => computeCost(pb2, PRODUCTS.fixed,
     { w: 150, h: 200, p: 1, form: "กระจกล้วน", color: "white", colorKey: "white", stockColor });
-  const px = (r) => r.lines.find((l) => String(l.name).includes("วิ่งรอบ"))?.unitPrice;
+  // ชื่อบรรทัดเปลี่ยนเป็น "กล่อง 1.6×3 — ตั้ง/นอน" (แยกท่อนตามใบตัด 21 ส.ค.69)
+  const px = (r) => r.lines.find((l) => String(l.name).includes("กล่อง 1.6×3"))?.unitPrice;
   ok("สีขาว → ใช้ราคากล่องสีขาวจากสโตร์", px(run("อบขาว")) === 1300, String(px(run("อบขาว"))));
   ok("สีดำ → ใช้ราคากล่องสีดำ", px(run("ดำ")) === 1350, String(px(run("ดำ"))));
   ok("เทาซาฮาร่า → ใช้ราคากล่องสีเทา", px(run("เทาซาฮาร่า")) === 1480, String(px(run("เทาซาฮาร่า"))));
@@ -291,7 +292,7 @@ console.log("\n═══ ⑤h กล่อง/ฉาก ผูกด้วยช
   const noStock = computeCost(PB, PRODUCTS.fixed,
     { w: 150, h: 200, p: 1, form: "กระจกล้วน", color: "white", colorKey: "white", stockColor: "อบขาว" });
   ok("สโตร์ไม่มีกล่อง → ใช้ราคาในสูตร (ไม่หล่นเป็น 0)",
-    noStock.lines.find((l) => String(l.name).includes("วิ่งรอบ"))?.unitPrice === 1240, "");
+    noStock.lines.find((l) => String(l.name).includes("กล่อง 1.6×3"))?.unitPrice === 1240, "");
 
   const rows = auditBoxes(BOX);
   ok("รายงานกล่อง/ฉากทุกขนาดที่สูตรใช้", rows.length >= 8, String(rows.length));

@@ -287,6 +287,8 @@ export const SLIMLUX_SLIDE: CutSpec = {
       sku: (o) => (o.handleColor === "ดำ" ? "JR00367" : "JR00366"),
       qty: (o) => (o.handle === "มือจับล็อค" ? (o.sashMode === "เปิดคู่กลาง" ? 2 : 1) : 0), unit: "ชุด" },
     // สักหลาด — ใช้ยาวเท่า "ตบเกี่ยวใส่สักหลาด" (เจ้าของสั่ง 20 ส.ค.69) · สลิมใช้เบอร์ JR00776 (ไม่ใช่ JR00794 ของ SMS)
+    // ซิลิโคน ใน+นอก — คิดราคาคิดอยู่แล้ว (ของใช้จริงทุกงาน) เติมฝั่งใบตัดให้ตรงกัน 21 ส.ค.69
+    { name: "ซิลิโคน ใน+นอก", sku: "JR00504", qty: (o) => Math.ceil(((2 * (o.W + o.H)) / 100) * 2 / 12.5), unit: "หลอด" },
     { name: "สักหลาด (ม.)", sku: "JR00776", unit: "ม.", noStock: true, note: "ยาวเท่าตบเกี่ยว × จำนวนท่อน",
       qty: (o, ctx) => Math.round(ctx.len("ตบเกี่ยวใส่สักหลาด") * (o.N - slimDead(o.sashMode) + 1 + (o.fit === "แปะนอก" ? 1 : 0)) / 100 * 10) / 10 },
     otherHandleRow("handle"),
@@ -307,10 +309,10 @@ export const FIXED_PANEL: CutSpec = {
   opts: [{ key: "box", label: "ชนิดกล่อง", choices: ["กล่อง 1.6×3 + 9014", "กล่อง 1.6×4 + ฉาก", "กล่องร่อง"] }],
   defaults: { W: 150, H: 200, N: 1, rail: "", honk: false, box: "กล่อง 1.6×3 + 9014" },
   profiles: [
-    { name: "กล่อง 1.6×3 — ตั้ง", code: "-", len: (o) => o.H, qty: (o) => (boxIs(o, "กล่อง 1.6×3 + 9014") ? o.N + 1 : 0) },
-    { name: "กล่อง 1.6×3 — นอน", code: "-", len: (o) => o.W - 9, qty: (o) => (boxIs(o, "กล่อง 1.6×3 + 9014") ? 2 * o.N : 0) },
-    { name: "9014 คัลเทิลวอล — ตั้ง", code: "-", len: (o) => o.H, qty: (o) => (boxIs(o, "กล่อง 1.6×3 + 9014") ? o.N + 1 : 0) },
-    { name: "9014 คัลเทิลวอล — นอน", code: "-", len: (o) => o.W - 9, qty: (o) => (boxIs(o, "กล่อง 1.6×3 + 9014") ? 2 * o.N : 0) },
+    { name: "กล่อง 1.6×3 — ตั้ง", code: "กล่อง 1.6\"x3\"", len: (o) => o.H, qty: (o) => (boxIs(o, "กล่อง 1.6×3 + 9014") ? o.N + 1 : 0) },
+    { name: "กล่อง 1.6×3 — นอน", code: "กล่อง 1.6\"x3\"", len: (o) => o.W - 9, qty: (o) => (boxIs(o, "กล่อง 1.6×3 + 9014") ? 2 * o.N : 0) },
+    { name: "9014 คัลเทิลวอล — ตั้ง", code: "9014", len: (o) => o.H, qty: (o) => (boxIs(o, "กล่อง 1.6×3 + 9014") ? o.N + 1 : 0) },
+    { name: "9014 คัลเทิลวอล — นอน", code: "9014", len: (o) => o.W - 9, qty: (o) => (boxIs(o, "กล่อง 1.6×3 + 9014") ? 2 * o.N : 0) },
     { name: "กล่อง 1.6×4 — ตั้ง", code: "-", len: (o) => o.H, qty: (o) => (boxIs(o, "กล่อง 1.6×4 + ฉาก") ? o.N + 1 : 0) },
     { name: "กล่อง 1.6×4 — นอน", code: "-", len: (o) => o.W - 9, qty: (o) => (boxIs(o, "กล่อง 1.6×4 + ฉาก") ? 2 * o.N : 0) },
     { name: "กล่อง 4หุน — ตั้ง", code: "-", len: (o) => o.H - 9 - 2.4, qty: (o) => (boxIs(o, "กล่อง 1.6×4 + ฉาก") ? o.N + 1 : 0) },
@@ -324,7 +326,11 @@ export const FIXED_PANEL: CutSpec = {
     { name: "ตบร่อง — ตั้ง (ทุกเสากลาง)", code: "-", len: (o) => o.H, qty: (o) => (boxIs(o, "กล่องร่อง") ? Math.max(o.N - 1, 0) : 0), note: "โน้ตชีต 700/เส้น (ขัดสูตร /600 — รอเคาะ)" },
   ],
   hardware: [
-    { name: "เทปหนุนกระจก", qty: (o) => Math.round(((2 * o.W + 2 * o.H) * o.N) / 100 * 10) / 10, unit: "ม." },
+    // เทปวิ่งรอบกระจกแต่ละช่อง — ช่องกว้าง W/N (เดิมใช้ W เต็มต่อช่อง = เกินจริง เมื่อหลายช่อง)
+    { name: "เทปนอร์ตัน (หนุนกระจก)", sku: "JR02937", qty: (o) => Math.round((2 * o.W + 2 * o.N * o.H) / 100 * 10) / 10, unit: "ม." },
+    // ซิลิโคน + ฉากเข้ามุม — คิดราคาคิดอยู่ (ของใช้จริง) เติมฝั่งใบตัดให้ตรงกัน 21 ส.ค.69
+    { name: "ซิลิโคน ใน+นอก", sku: "JR00504", qty: (o) => Math.ceil(((2 * o.W + 2 * o.N * o.H) / 100) * 2 / 12.5), unit: "หลอด" },
+    { name: "ฉากเข้ามุม (4 มุม/ช่อง)", sku: "JR00557", qty: (o) => 4 * o.N, unit: "ตัว" },
   ],
 };
 
@@ -341,18 +347,20 @@ export const VELORA_SWING: CutSpec = {
   name: "Velora บานเปิด",
   stockLen: 640, // TODO: ไฟล์ไม่ระบุ — รอเจ้าของยืนยัน
   rails: ["ยัดในช่อง", "ครอบวงกบ"],
-  defaults: { W: 220, H: 200, N: 1, rail: "ยัดในช่อง", honk: false },
+  opts: [{ key: "hwColor", label: "สีอุปกรณ์", choices: ["ขาว", "ดำ"] }],
+  defaults: { W: 220, H: 200, N: 1, rail: "ยัดในช่อง", honk: false, hwColor: "ขาว" },
   profiles: [
-    { name: "วงกบบน", code: "Velora 01", len: (o) => o.W + (vFit(o.rail) ? 0 : 2), qty: () => 1, note: "ตัด 45° 2 ฝั่ง" },
-    { name: "วงกบข้าง", code: "Velora 01", len: (o) => o.H + (vFit(o.rail) ? 0 : 1), qty: () => 2, note: "ตัด 45° 1 ฝั่ง" },
-    { name: "กรอบบาน แนวนอน", code: "Velora 02", len: (o) => o.W - (vFit(o.rail) ? 5.7 : 3.5), qty: () => 2, note: "เข้ามุม 45°" },
-    { name: "กรอบบาน แนวตั้ง", code: "Velora 02", len: (o) => o.H - (vFit(o.rail) ? 3.3 : 2.2), qty: () => 2, note: "เข้ามุม 45°" },
+    { name: "วงกบบน", code: "JR02885", len: (o) => o.W + (vFit(o.rail) ? 0 : 2), qty: () => 1, note: "ตัด 45° 2 ฝั่ง" },
+    { name: "วงกบข้าง", code: "JR02885", len: (o) => o.H + (vFit(o.rail) ? 0 : 1), qty: () => 2, note: "ตัด 45° 1 ฝั่ง" },
+    { name: "กรอบบาน แนวนอน", code: "JR02886", len: (o) => o.W - (vFit(o.rail) ? 5.7 : 3.5), qty: () => 2, note: "เข้ามุม 45°" },
+    { name: "กรอบบาน แนวตั้ง", code: "JR02886", len: (o) => o.H - (vFit(o.rail) ? 3.3 : 2.2), qty: () => 2, note: "เข้ามุม 45°" },
     { name: "ลูกฟูก 2 ทาง แนวตั้ง", code: "-", len: (o) => o.H + (vFit(o.rail) ? 0 : 1), qty: (o) => (vFit(o.rail) ? 2 : 0) },
     { name: "ลูกฟูก 2 ทาง แนวนอน", code: "-", len: (o) => o.W + (vFit(o.rail) ? 0 : 2), qty: (o) => (vFit(o.rail) ? 1 : 0) },
   ],
   hardware: [
-    { name: "บานพับ", qty: () => 4, unit: "ตัว" },
-    { name: "มือจับ (ล็อค)", qty: () => 1, unit: "ชุด" },
+    // รหัสตามสีฮาร์ดแวร์ (ชุดเดียวกับคิดราคา) — ดำ JR00560/JR00356 · ขาว JR00561/JR00355
+    { name: "บานพับ", sku: (o: any) => (String(o.hwColor ?? "ขาว") === "ดำ" ? "JR00560" : "JR00561"), qty: () => 4, unit: "ตัว" },
+    { name: "มือจับ (ล็อค)", sku: (o: any) => (String(o.hwColor ?? "ขาว") === "ดำ" ? "JR00356" : "JR00355"), qty: () => 1, unit: "ชุด" },
     { name: "ซิลิโคน ใน+นอก", sku: "JR00504", qty: (o) => Math.ceil(((2 * (o.W + o.H)) / 100) * 2 / 12.5), unit: "หลอด" },
   ],
 };
