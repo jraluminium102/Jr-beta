@@ -87,12 +87,20 @@ export async function GET(req: Request) {
     covers = cv ?? [];
   }
 
-  return NextResponse.json({
-    customers: custs,
-    jobs: jobs.map((j) => ({ id: j.id, code: j.job_code, name: j.customer_name, cust: j.customer_id, status: j.status, stage: j.current_stage, dep: j.deposit_date, net: j.net_amount, total: j.total_amount, created: j.created_at })),
-    quotations: quoView,
-    billing_notes: bnView,
-    productions: prods,
-    cover_sheets: covers,
-  });
+  const esc = (s: any) => String(s ?? "").replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]!));
+  const jobsHtml = jobs.map((j) => `<tr><td>${esc(j.job_code)}</td><td>${esc(j.customer_name)}</td><td>cust=${esc(j.customer_id)}</td><td><b>${esc(j.status)}</b></td><td>stage ${esc(j.current_stage)}</td><td>มัดจำ ${esc(j.deposit_date)}</td><td>net ${esc(j.net_amount)}</td><td>${esc(String(j.id).slice(0, 8))}</td><td>${esc(String(j.created_at).slice(0, 16))}</td></tr>`).join("");
+  const quoHtml = quoView.map((q) => `<tr><td>${esc(q.code)}</td><td><b>${esc(q.first_item)}</b></td><td>${esc(q.status)}</td><td>job=${esc(String(q.job_id ?? "—").slice(0, 8))}</td><td>cust=${esc(q.customer_id)}</td><td>${esc(q.snap_name)}</td><td>${esc(String(q.created_at).slice(0, 16))}</td></tr>`).join("");
+  const bnHtml = bnView.map((b) => `<tr><td>${esc(b.code)}</td><td><b>${esc(b.status)}</b></td><td>฿${esc(b.total)}</td><td>job=${esc(String(b.job_id ?? "—").slice(0, 8))}</td><td>quo=${esc(b.quotation_id)}</td><td>${esc(b.snap_name)}</td><td>${esc(b.paid.map((p: any) => `ง${p.seq}:จ่าย${p.paid ?? 0}/${p.amt}(${p.st})`).join(" · "))}</td><td>${esc(String(b.created_at).slice(0, 16))}</td></tr>`).join("");
+  const custHtml = (custs ?? []).map((c: any) => `<tr><td>${esc(c.id)}</td><td><b>${esc(c.name)}</b></td><td>${esc(c.job)}</td><td>active=${esc(c.is_active)}</td><td>${esc(String(c.created_at).slice(0, 16))}</td></tr>`).join("");
+  const prodHtml = prods.map((p) => `<tr><td>job=${esc(String(p.job_id).slice(0, 8))}</td><td><b>${esc(p.status)}</b></td><td>${esc(String(p.status_updated_at).slice(0, 16))}</td></tr>`).join("");
+  const covHtml = covers.map((c) => `<tr><td>job=${esc(String(c.job_id).slice(0, 8))}</td><td>quo=${esc(c.quotation_id)}</td><td>${esc(c.mode)}</td><td>${esc(String(c.updated_at).slice(0, 16))}</td></tr>`).join("");
+  const html = `<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><style>body{font-family:system-ui;padding:12px;font-size:13px}h3{margin:14px 0 4px;color:#7d0f15}table{border-collapse:collapse;width:100%;margin-bottom:8px}td,th{border:1px solid #ccc;padding:3px 6px;text-align:left}b{color:#0f4}</style>
+  <h2>วินิจฉัย คุณนัฐพงษ์</h2>
+  <h3>ลูกค้า (${(custs ?? []).length}) — ซ้ำไหม?</h3><table>${custHtml || "<tr><td>ไม่พบ</td></tr>"}</table>
+  <h3>งาน (${jobs.length}) — ซ้ำไหม? อันไหนเข้าผลิต?</h3><table>${jobsHtml || "<tr><td>ไม่พบ</td></tr>"}</table>
+  <h3>ใบเสนอ (${quoView.length}) — รายการแรก = งานอะไร? ผูก job ไหน?</h3><table>${quoHtml || "<tr><td>ไม่พบ</td></tr>"}</table>
+  <h3>ใบวางบิล (${bnView.length})</h3><table>${bnHtml || "<tr><td>ไม่พบ</td></tr>"}</table>
+  <h3>ผลิต (${prods.length})</h3><table>${prodHtml || "<tr><td>ไม่มี</td></tr>"}</table>
+  <h3>ใบปะหน้า (${covers.length})</h3><table>${covHtml || "<tr><td>ไม่มี</td></tr>"}</table>`;
+  return new NextResponse(html, { headers: { "content-type": "text/html; charset=utf-8" } });
 }
