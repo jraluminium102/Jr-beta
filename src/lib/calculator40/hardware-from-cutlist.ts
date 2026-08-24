@@ -18,7 +18,7 @@ import { cutInputFromRecipe } from "../cutlist/from-recipe.ts";
 import { HANDLE_BRANDS, HANDLE_COLORS, HANDLE_TYPES } from "../cutlist/hardware.ts";
 
 /** รุ่นที่ "ค่าของ" คิดจากใบตัดแล้ว — เปิดทีละรุ่นหลังเจ้าของไล่เช็ครายการครบ */
-export const HW_FROM_CUTLIST = new Set<string>(["sms_slide", "euro_slide"]);
+export const HW_FROM_CUTLIST = new Set<string>(["sms_slide", "euro_slide", "folding"]);   // +บานเฟี้ยม SMS 21 ส.ค.69 (จำนวนอุปกรณ์ยึด LUT ใบตัด)
 
 /** หน่วยที่สโตร์ตั้งราคาเป็น "แพ็ค" แต่ใบตัดนับเป็นหน่วยย่อย → ตัวหารให้ได้ราคาต่อหน่วยย่อย */
 export const SKU_PACK: Record<string, { per: number; note: string }> = {

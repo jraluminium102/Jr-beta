@@ -231,7 +231,7 @@ console.log("\n═══ ⑤g อุปกรณ์ผูกรหัสสโ�
     { w: 220, h: 200, p: 1, form: "เดี่ยว", color: "sahara", colorKey: "sahara", spec: { hwcolor } });
   const w = run("ขาว"), b = run("ดำ");
   const line = (r, nm) => r.lines.find((l) => l.name.startsWith(nm));
-  ok("อลู Velora ผูกรหัสแล้ว ราคามาจากสโตร์", line(w, "วงกบ").unitPrice === 800 && line(w, "บาน (").unitPrice === 750, "");
+  ok("อลู Velora ผูกรหัสแล้ว ราคามาจากสโตร์", line(w, "วงกบบน").unitPrice === 800 && line(w, "กรอบบาน แนวนอน").unitPrice === 750, "");
   ok("บานพับ สีขาว → JR00561 ราคา 130", line(w, "บานพับ").sku === "JR00561" && line(w, "บานพับ").unitPrice === 130, line(w, "บานพับ").sku);
   ok("บานพับ สีดำ → JR00560 ราคา 150", line(b, "บานพับ").sku === "JR00560" && line(b, "บานพับ").unitPrice === 150, line(b, "บานพับ").sku);
   ok("มือจับ สีขาว → JR00355 ราคา 520", line(w, "มือจับ").sku === "JR00355" && line(w, "มือจับ").unitPrice === 520, line(w, "มือจับ").sku);

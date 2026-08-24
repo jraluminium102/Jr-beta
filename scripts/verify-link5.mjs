@@ -84,7 +84,7 @@ console.log('\n═══ ③ PC Door — รหัส + อุปกรณ์ผ
 console.log('\n═══ ④ Velora + บานติดตาย ═══');
 {
   const V = PRODUCTS.velora;
-  ok('Velora อลูผูก JR02885/JR02886', V.alu[0]?.code === 'JR02885' && V.alu[1]?.code === 'JR02886');
+  ok('Velora อลูผูก JR02885/JR02886 ครบทุกบรรทัด', V.alu.every((a) => a.code === 'JR02885' || a.code === 'JR02886'), V.alu.map((a) => a.code).join(','));
   ok('Velora ซิลิโคน → JR00504', V.consum.some((c) => c.sku === 'JR00504'));
   ok('Velora บานพับ/มือจับ ผูกตามสี (JR00560/561 · JR00355/356)',
     V.hardware.every((h) => String(h.sku || '').includes('JR')));
