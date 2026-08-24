@@ -87,8 +87,13 @@ export function cutInputFromRecipe(recipe: any): RecipeCutMap | null {
       //   เดิมส่งไปเทียบกับสูตรเฟี้ยมยูโร (F79xx) → หน้าเทียบขึ้น "ไม่ตรง" ทั้งแผงทุกรูปแบบ
       //   ทั้งที่เป็นคนละตระกูลกันตั้งแต่ต้น (เจ้าของเจอเอง: ไม่ตรงสักบาน)
       //   fold2 = แบ่งบาน/เดี่ยว ตามชีต HOMELIFE — รูปแบบ "เปิดกลาง" = แบ่งบาน
+      //   ⚠ ชีต SMS 240 คิดจำนวนท่อน/อุปกรณ์จาก "config พับ" (xLyR) ไม่ใช่ N
+      //     ไม่ส่ง rail = ใช้ค่าตั้งต้น 2L2R (4 บาน) → เพี้ยนทุกเคสที่ไม่ใช่ 4 บาน
+      //     ชื่อรูปแบบในคิดราคาเขียน "(2-0)" / "(3-1)" ท้ายชื่อ → แปลงเป็น 2L0R / 3L1R
       const f = String(recipe.form ?? "");
-      m = { spec_id: "sms240_bifold", input: { W, H, N, fold2: /เปิดกลาง/.test(f) ? "แบ่งบาน" : "เดี่ยว", glass: glassMm(recipe.glassType), honk: false } };
+      const lr = /\((\d+)\s*-\s*(\d+)\)/.exec(f);
+      const rail = lr ? `${lr[1]}L${lr[2]}R` : `${N}L0R`;
+      m = { spec_id: "sms240_bifold", input: { W, H, N, rail, fold2: /เปิดกลาง/.test(f) ? "แบ่งบาน" : "เดี่ยว", glass: glassMm(recipe.glassType), honk: false } };
       break;
     }
     case "fold_euro": {

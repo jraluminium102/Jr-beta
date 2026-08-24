@@ -47,7 +47,8 @@ console.log("\n═══ ① รายการอุปกรณ์ต้อง
   ok("ล้อ 27 = 2 ลูก/บาน × 3 บาน", qtyOf(ls, "ล้อ 27") === 6, String(qtyOf(ls, "ล้อ 27")));
   ok("รุ่นที่ยังไม่เปิด ยังใช้รายการเดิมในสูตร (คืน null)",
     cutHardwareLines({ prodId: "pcdoor", ...BASE_IN, cut: DEF_CUT }) === null, "");
-  ok("เปิดทีละรุ่น — ตอนนี้เปิด SMS + ยูโร (FUJI)", HW_FROM_CUTLIST.has("sms_slide") && HW_FROM_CUTLIST.has("euro_slide") && HW_FROM_CUTLIST.size === 2, [...HW_FROM_CUTLIST].join(","));
+  ok("เปิดทีละรุ่น — SMS + ยูโร (FUJI) + บานเฟี้ยม SMS (21 ส.ค.69)",
+    JSON.stringify([...HW_FROM_CUTLIST].sort()) === JSON.stringify(["euro_slide", "folding", "sms_slide"]), [...HW_FROM_CUTLIST].join(","));
 }
 
 console.log("\n═══ ② มือจับ: ยี่ห้อ × สี × ชนิด → รหัสสโตร์ถูกตัว (เจ้าของไล่เช็คมาแล้ว) ═══");
