@@ -46,9 +46,9 @@ console.log("\n═══ ① รายการอุปกรณ์ต้อง
   ok("ซิลิโคน = JR00504 (เจ้าของให้)", skuOf(ls, "ซิลิโคน") === "JR00504", skuOf(ls, "ซิลิโคน"));
   ok("ล้อ 27 = 2 ลูก/บาน × 3 บาน", qtyOf(ls, "ล้อ 27") === 6, String(qtyOf(ls, "ล้อ 27")));
   ok("รุ่นที่ยังไม่เปิด ยังใช้รายการเดิมในสูตร (คืน null)",
-    cutHardwareLines({ prodId: "pcdoor", ...BASE_IN, cut: DEF_CUT }) === null, "");
-  ok("เปิดทีละรุ่น — SMS + ยูโร (FUJI) + บานเฟี้ยม SMS (21 ส.ค.69)",
-    JSON.stringify([...HW_FROM_CUTLIST].sort()) === JSON.stringify(["euro_slide", "folding", "sms_slide"]), [...HW_FROM_CUTLIST].join(","));
+    cutHardwareLines({ prodId: "velora", ...BASE_IN, cut: DEF_CUT }) === null, "");
+  ok("เปิดทีละรุ่น — SMS + ยูโร (FUJI) + บานเฟี้ยม SMS + PC Door (24 ส.ค.69)",
+    JSON.stringify([...HW_FROM_CUTLIST].sort()) === JSON.stringify(["euro_slide", "folding", "pcdoor", "sms_slide"]), [...HW_FROM_CUTLIST].join(","));
 }
 
 console.log("\n═══ ② มือจับ: ยี่ห้อ × สี × ชนิด → รหัสสโตร์ถูกตัว (เจ้าของไล่เช็คมาแล้ว) ═══");

@@ -97,9 +97,15 @@ export function cutInputFromRecipe(recipe: any): RecipeCutMap | null {
       break;
     }
     case "fold_euro": {
-      // บานเฟี้ยม ยูโร (F79xx) → ชีตเฟี้ยมยูโร 45° · ทิศพับจาก spec.folddir → จำนวนบานพับซ้าย L
+      // บานเฟี้ยม ยูโร (F79xx) → ชีตเฟี้ยมยูโร 45°
+      // ⚠ L (บานพับซ้าย) ต้องอ่านจาก "ชื่อรูปแบบ" — แหล่งเดียวกับที่คิดราคาใช้
+      //   เดิมอ่านจาก spec.folddir ที่ปกติไม่ได้ตั้ง → ได้ L=N (รวบชนผนัง) ทุกเคส
+      //   ทำให้บานพับ/ชนกลาง/บังใบ เพี้ยนเมื่อเลือก "เปิดกลาง" (เจ้าของเจอ 21 ส.ค.69)
+      const ff = String(recipe.form ?? "");
+      const lr2 = /\((\d+)\s*-\s*(\d+)\)/.exec(ff);
       const dir = String(recipe.spec?.folddir ?? "");
-      const L = dir === "เปิดขวา" ? 0 : dir === "แยกกลาง" ? Math.ceil(N / 2) : N; // เปิดซ้าย (default) = พับซ้ายทั้งหมด
+      const L = lr2 ? Number(lr2[1])
+        : dir === "เปิดขวา" ? 0 : dir === "แยกกลาง" ? Math.ceil(N / 2) : N;
       const rail = recipe.spec?.threshf === "รางยู" ? "รางยู" : "เฟรมล่าง";
       m = { spec_id: "euro_bifold", input: { W, H, N, L, rail, glass: glassMm(recipe.glassType) } };
       break;

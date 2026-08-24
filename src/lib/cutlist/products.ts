@@ -527,6 +527,21 @@ const euroSashW = (o: { W: number; N: number; L?: number }) => {
   return (o.W - 2 * 1.8 - pts * 0.95 - laps * 0.8 - euroCase(o).M) / o.N;
 };
 const euroSashH = (o: { H: number; rail: string }) => o.H - 5.5 - 2 * 0.7 - (eIsU(o.rail) ? 0 : 2.5);
+// จำนวนบานพับเฟี้ยม HD-641 — ตาราง LUT จากไฟล์ (ขึ้นกับจำนวนบาน · รูปแบบพับ · ความสูง)
+//   ชุดเดียวกับที่คิดราคา 4.0 ใช้ (ตัวแปร HINGE) — แก้ที่นี่ต้องแก้ที่นั่นด้วย
+const euroHinge = (o: { N: number; L?: number; H: number }): number => {
+  const L = o.L ?? Math.ceil(o.N / 2);
+  const wall = L === 0 || L === o.N;      // รวบชนผนัง (X-0 / 0-X)
+  const hmm = o.H * 10;                   // ซม. → มม.
+  const T: Record<string, [number, number, number, number]> = {
+    "2w": [2700, 7, 9999, 10], "3w": [3000, 7, 9999, 13], "3m": [9999, 9, 9999, 12],
+    "4w": [9999, 11, 9999, 16], "4m": [3000, 14, 9999, 26],
+    "5w": [9999, 11, 9999, 16], "5m": [9999, 14, 9999, 20],
+    "6w": [9999, 15, 9999, 22], "6m": [3000, 14, 9999, 22],
+  };
+  const t = T[`${o.N}${wall ? "w" : "m"}`] ?? T["2w"];
+  return hmm <= t[0] ? t[1] : t[3];
+};
 const euroBead = (o: { glass?: number }) => (Number(o.glass ?? 6) <= 12 ? "F7935" : "F7949"); // มู่ลี่ = F7853 (เลือกมือ)
 
 export const EURO_BIFOLD: CutSpec = {
@@ -555,7 +570,26 @@ export const EURO_BIFOLD: CutSpec = {
     { name: "คิ้วกระจก (ตั้ง)", code: euroBead, len: (o) => euroSashH(o) - 16, qty: (o) => 2 * o.N },
     { name: "คิ้วกระจก (นอน)", code: euroBead, len: (o) => euroSashW(o) - 12, qty: (o) => 2 * o.N },
   ],
-  // กระจก: (ขวาง−13มม.=1.3ซม.… ตามไฟล์ (sashW−1.3)×(sashH−1.3) × N แผ่น · ฮาร์ดแวร์ HD-### LUT รอเฟสถัดไป
+  // อุปกรณ์ตามไฟล์ตัดประกอบ ⑤ (JR_เฟี้ยมยูโร.xlsx) — ชุดเดียวกับคิดราคา 4.0
+  hardware: [
+    { name: "HD-640 บานพับล้อบน", sku: "HD-640", qty: () => 1, unit: "ตัว" },
+    { name: "HD-641 บานพับเฟี้ยม", sku: "HD-641", qty: euroHinge, unit: "ตัว" },
+    { name: "HD-642 บานพับมือจับ", sku: "HD-642", qty: () => 1, unit: "ตัว" },
+    { name: "HD-643 บานพับไกด์ล่าง", sku: "HD-643", qty: () => 1, unit: "ตัว" },
+    { name: "HD-474 มือจับกลอน", sku: "JR00213", qty: () => 1, unit: "ตัว" },
+    { name: "HD-312 ตลับกลอนล็อค", sku: "HD-312", qty: () => 1, unit: "ตัว" },
+    { name: "HD-1180 ก้านสไลด์", sku: "HD-1180", qty: () => 2, unit: "ตัว" },
+    { name: "HD-213 ฉากเข้ามุม", sku: "HD-213", qty: (o) => 4 * o.N, unit: "ตัว" },
+    { name: "HD-200 ฉากประคองมุม", sku: "HD-200", qty: (o) => 12 * o.N, unit: "ตัว" },
+    // ยาง/สักหลาด — สูตรชุดเดียวกับคิดราคา 4.0 (ยังไม่มีรหัสสโตร์ · เทียบด้วยชื่อ)
+    // ⚠ คิดเป็น มม. แล้ว ÷1000 — ต้องปัดเศษลำดับเดียวกับฝั่งคิดราคา ไม่งั้นต่างกัน 0.1 ม.
+    { name: "ยางลูกโป่ง 6mm", qty: (o) => Math.round(((o.W * 10 - 36) * 2 + o.H * 10 + (o.H * 10 - 120) * 2
+      + (o.H * 10 - 94) * (2 * o.N) * 2 + (o.H * 10 - 94) * (2 * o.N) * 2 + euroSashW(o) * 10 * 3 + (o.H * 10 - 80)) / 1000 * 10) / 10, unit: "ม." },
+    { name: "สักหลาด 5mm", qty: (o) => Math.round(((o.H * 10 - 94) * 2 + (o.H * 10 - 80) * 2) / 1000 * 10) / 10, unit: "ม." },
+    { name: "ยางอัด", qty: (o) => Math.round(((o.H * 10 - 224) + (euroSashW(o) * 10 - 130)) * 2 * o.N / 1000 * 10) / 10, unit: "ม." },
+    { name: "ยางรอง", qty: (o) => Math.round(((o.H * 10 - 224) + (euroSashW(o) * 10 - 130)) * 2 * o.N / 1000 * 10) / 10, unit: "ม." },
+  ],
+  // กระจก: (ขวาง−13มม.)×(สูงบาน−1.3ซม.) × N แผ่น ตามไฟล์
 };
 
 // ═══ เฟี้ยมยูโร CORNER (เข้ามุม 2 ผนัง) — JR_เฟี้ยมยูโร.xlsx sheet CORNER (6 sheet ตรวจครบ) ═══
