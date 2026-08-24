@@ -115,7 +115,7 @@ console.log("\n═══ ③ จับ 'ไม่ตรงกัน' ได้�
   ok("รุ่นที่แมปใบตัดไม่ได้ → บอกเหตุผล ไม่ใช่พังเงียบ",
     compareCut(PB, { ...IN, form: "เปิดคู่กลาง", p: 3 })?.ok === false, "");
   ok("รุ่นที่ไม่มีในระบบ → คืน null ไม่ throw", compareCut(PB, { ...IN, prodId: "ไม่มีจริง" }) === null, "");
-  ok("รายชื่อรุ่นที่เทียบได้ ตรงกับที่ from-recipe รองรับ", COMPARABLE.length === 8, String(COMPARABLE.length));
+  ok("รายชื่อรุ่นที่เทียบได้ ตรงกับที่ from-recipe รองรับ", COMPARABLE.length === 10, String(COMPARABLE.length));   // +fold_euro +fold_lift (21 ส.ค.69)
   for (const id of COMPARABLE) ok(`รุ่น ${id} มีอยู่จริงในคิดราคา`, !!PRODUCTS[id], "");
 }
 

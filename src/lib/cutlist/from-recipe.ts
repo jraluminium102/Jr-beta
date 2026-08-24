@@ -83,11 +83,25 @@ export function cutInputFromRecipe(recipe: any): RecipeCutMap | null {
       break;
     }
     case "folding": {
-      // เฟี้ยม (calc = EURO) → เฟี้ยมยูโร 45° · ทิศพับจาก spec.folddir → จำนวนบานพับซ้าย L
+      // ⚠ แก้ 21 ส.ค.69: "บานเฟี้ยม" ในคิดราคา = ตระกูล SMS 240 (รหัส B24xxx) ไม่ใช่ยูโร
+      //   เดิมส่งไปเทียบกับสูตรเฟี้ยมยูโร (F79xx) → หน้าเทียบขึ้น "ไม่ตรง" ทั้งแผงทุกรูปแบบ
+      //   ทั้งที่เป็นคนละตระกูลกันตั้งแต่ต้น (เจ้าของเจอเอง: ไม่ตรงสักบาน)
+      //   fold2 = แบ่งบาน/เดี่ยว ตามชีต HOMELIFE — รูปแบบ "เปิดกลาง" = แบ่งบาน
+      const f = String(recipe.form ?? "");
+      m = { spec_id: "sms240_bifold", input: { W, H, N, fold2: /เปิดกลาง/.test(f) ? "แบ่งบาน" : "เดี่ยว", glass: glassMm(recipe.glassType), honk: false } };
+      break;
+    }
+    case "fold_euro": {
+      // บานเฟี้ยม ยูโร (F79xx) → ชีตเฟี้ยมยูโร 45° · ทิศพับจาก spec.folddir → จำนวนบานพับซ้าย L
       const dir = String(recipe.spec?.folddir ?? "");
       const L = dir === "เปิดขวา" ? 0 : dir === "แยกกลาง" ? Math.ceil(N / 2) : N; // เปิดซ้าย (default) = พับซ้ายทั้งหมด
       const rail = recipe.spec?.threshf === "รางยู" ? "รางยู" : "เฟรมล่าง";
       m = { spec_id: "euro_bifold", input: { W, H, N, L, rail, glass: glassMm(recipe.glassType) } };
+      break;
+    }
+    case "fold_lift": {
+      // บานเฟี้ยมยก (พับขึ้น) — ชีต euro_lift ล็อก 2 บาน · บานอื่นยังไม่มีสูตร
+      m = N === 2 ? { spec_id: "euro_lift", input: { W, H, N: 2, glass: glassMm(recipe.glassType) } } : null;
       break;
     }
     case "velora": {
