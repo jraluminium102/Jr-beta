@@ -133,8 +133,14 @@ export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverrid
       else if (name && pb.EXTRA && name in pb.EXTRA) ov.EXTRA[name] = cost;
       else if (name && pb.PARTS && name in pb.PARTS) ov.PARTS[name] = cost;   // อุปกรณ์/โปรไฟล์ ถอดทุน 4.0
       // อลูรายเส้นด้วยรหัส (ไม่ else — แถวเดียวเป็นได้ทั้ง PARTS(ชื่อ) และ ALUCODE(รหัส))
-      const code = sku ? normCode(sku) : "";
-      if (code && aluCodes.has(code)) {
+      //   ── รหัสอาจอยู่ใน "ชื่อ" ไม่ใช่ช่อง sku (เจ้าของยืนยัน 21 ส.ค.69) ──────────────
+      //   สโตร์บางแถวตั้งชื่อ "F7938B-เฟรมบานกระทุ้ง" แต่ช่อง sku เขียนสั้นกว่า (F7938)
+      //   สูตรคิดราคาอ้าง F7938B ตามที่เจ้าของใช้จริง → ต้องอ่านรหัสจากชื่อมาผูกด้วย
+      //   ไม่งั้นราคา/ราคาสี ไม่เข้า = คิดจากราคาสำรองในสูตรตลอด
+      const nameCodes = [...name.matchAll(/\b([FBE]\d{4,5}[A-Za-z]?)\b/g)].map((m) => normCode(m[1]));
+      const skuCode = sku ? normCode(sku) : "";
+      const codes = [skuCode, ...nameCodes].filter((c) => c && aluCodes.has(c));
+      for (const code of [...new Set(codes)]) {
         const e = aluByCode[code] || (aluByCode[code] = { white: 0, min: 0 });
         e.min = e.min > 0 ? Math.min(e.min, cost) : cost;
         // ⚠ สีต้องอ่านจาก "ช่องสี" ก่อน แล้วค่อยดูในชื่อ — ใช้ rowColor() ตัวเดียวกับที่อื่น

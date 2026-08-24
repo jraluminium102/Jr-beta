@@ -57,14 +57,24 @@ console.log('\n═══ ③ PC Door — รหัส + อุปกรณ์ผ
 {
   const P = PRODUCTS.pcdoor;
   const codes = P.alu.map((a) => String(a.code || ''));
-  ok('ไม่มี F7938B/F7945C หลงเหลือ (ยึด sku สโตร์)', !codes.some((c) => /F7938B|F7945C/.test(c)));
-  for (const c of ['F7859', 'F7938', 'F7960', 'F7863', 'F7864', 'F7935', 'F7945'])
+  ok('ใช้ F7938B/F7945C ตามที่มีในสโตร์ (เจ้าของยืนยัน)', codes.includes('F7938B') && codes.includes('F7945C'));
+  for (const c of ['F7859', 'F7938B', 'F7960', 'F7863', 'F7864', 'F7935', 'F7945C'])
     ok(`ใช้รหัส ${c}`, codes.includes(c));
   for (const [name, sku] of [['บานพับ', 'JR00473'], ['ล้อรางบน', 'JR00544'], ['มือจับ Align', 'JR00378'], ['กลอน', 'JR00630'], ['น็อตเฟรม', 'JR00864']]) {
     const h = P.hardware.find((x) => x.name.includes(name));
     ok(`${name} → ${sku}`, h?.sku === sku, String(h?.sku));
   }
   ok('ซิลิโคน → JR00504', P.consum.some((c) => c.sku === 'JR00504'));
+  // ราคา/ราคาสี ต้องเข้าแม้สโตร์เขียน sku สั้นกว่าชื่อ (sku=F7938 · ชื่อ F7938B-...) — อ่านรหัสจากชื่อ
+  {
+    const rows = [{ sku: 'F7938', name: 'F7938B-เฟรมบานกระทุ้ง (ติดมุ้ง)', color: 'อบขาว', unit_cost: 1350 },
+      { sku: 'F7938', name: 'F7938B-เฟรมบานกระทุ้ง (ติดมุ้ง)', color: 'เทาซาฮาร่า', unit_cost: 1450 },
+      { sku: 'F7945', name: 'F7945C-เสารับล็อกเปิดกลาง', color: 'อบขาว', unit_cost: 695 }];
+    const PB3 = applyPriceOverride(JSON.parse(JSON.stringify(PB)), buildPriceOverride(rows, PB));
+    ok('อ่านรหัสจากชื่อ: ALUCODE F7938B = 1350', PB3.ALUCODE?.F7938B === 1350, String(PB3.ALUCODE?.F7938B));
+    ok('อ่านรหัสจากชื่อ: ALUCODE F7945C = 695', PB3.ALUCODE?.F7945C === 695, String(PB3.ALUCODE?.F7945C));
+    ok('ราคาสีเทา F7938B = 1450', PB3.ALUCOLOR_STOCK?.['เทาซาฮาร่า']?.F7938B === 1450, String(PB3.ALUCOLOR_STOCK?.['เทาซาฮาร่า']?.F7938B));
+  }
   // ยอดอุปกรณ์ต้องเท่าชีตถอดทุน (แบ่ง 2 มีธรณี ใส่ซอฟโค้ด): 468+1170+396+450+8 = 2,492
   const r = computeCost(PB, P, { w: 150, h: 200, p: 2, form: 'แบ่ง 2', color: 'white', colorKey: 'white', glassType: 'เขียว 6มม.', spec: { pcsill: 'มีธรณี', pcsoft: 'ใส่' } });
   ok(`ค่าอุปกรณ์ = 2,492+ยาง 154 ตามชีต (฿${Math.round(r.cost.hardware)})`, Math.abs(r.cost.hardware - 2646) <= 1, String(r.cost.hardware));
