@@ -87,6 +87,21 @@ export async function GET(req: Request) {
     covers = cv ?? [];
   }
 
+  // finance_entries + receipts for these jobs (สำหรับวางแผน void — ดูเงินจริง)
+  let fins: any[] = [], rcs: any[] = [];
+  if (jobIds.length) {
+    const { data: fe } = await sb.from("finance_entries")
+      .select("job_id, type, amount, is_auto_created, is_voided, billing_installment_id, payment_date")
+      .in("job_id", jobIds).order("payment_date");
+    fins = fe ?? [];
+  }
+  const bnIds = bns.map((b) => b.id);
+  if (bnIds.length) {
+    const { data: rc } = await sb.from("receipts")
+      .select("code, billing_note_id, installment_id, is_voided, total").in("billing_note_id", bnIds);
+    rcs = rc ?? [];
+  }
+
   const esc = (s: any) => String(s ?? "").replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]!));
   const jobsHtml = jobs.map((j) => `<tr><td>${esc(j.job_code)}</td><td>${esc(j.customer_name)}</td><td>cust=${esc(j.customer_id)}</td><td><b>${esc(j.status)}</b></td><td>stage ${esc(j.current_stage)}</td><td>มัดจำ ${esc(j.deposit_date)}</td><td>net ${esc(j.net_amount)}</td><td>${esc(String(j.id).slice(0, 8))}</td><td>${esc(String(j.created_at).slice(0, 16))}</td></tr>`).join("");
   const quoHtml = quoView.map((q) => `<tr><td>${esc(q.code)}</td><td><b>${esc(q.first_item)}</b></td><td>${esc(q.status)}</td><td>job=${esc(String(q.job_id ?? "—").slice(0, 8))}</td><td>cust=${esc(q.customer_id)}</td><td>${esc(q.snap_name)}</td><td>${esc(String(q.created_at).slice(0, 16))}</td></tr>`).join("");
@@ -94,6 +109,8 @@ export async function GET(req: Request) {
   const custHtml = (custs ?? []).map((c: any) => `<tr><td>${esc(c.id)}</td><td><b>${esc(c.name)}</b></td><td>${esc(c.job)}</td><td>active=${esc(c.is_active)}</td><td>${esc(String(c.created_at).slice(0, 16))}</td></tr>`).join("");
   const prodHtml = prods.map((p) => `<tr><td>job=${esc(String(p.job_id).slice(0, 8))}</td><td><b>${esc(p.status)}</b></td><td>${esc(String(p.status_updated_at).slice(0, 16))}</td></tr>`).join("");
   const covHtml = covers.map((c) => `<tr><td>job=${esc(String(c.job_id).slice(0, 8))}</td><td>quo=${esc(c.quotation_id)}</td><td>${esc(c.mode)}</td><td>${esc(String(c.updated_at).slice(0, 16))}</td></tr>`).join("");
+  const finHtml = fins.map((f: any) => `<tr><td>job=${esc(String(f.job_id).slice(0, 8))}</td><td>${esc(f.type)}</td><td>฿${esc(f.amount)}</td><td>auto=${esc(f.is_auto_created)}</td><td>${f.is_voided ? "<b style=color:red>VOIDED</b>" : "active"}</td><td>inst=${esc(f.billing_installment_id ?? "—")}</td><td>${esc(String(f.payment_date).slice(0, 10))}</td></tr>`).join("");
+  const rcHtml = rcs.map((r: any) => `<tr><td>${esc(r.code)}</td><td>bn=${esc(r.billing_note_id)}</td><td>inst=${esc(r.installment_id ?? "—")}</td><td>฿${esc(r.total)}</td><td>${r.is_voided ? "<b style=color:red>VOIDED</b>" : "active"}</td></tr>`).join("");
   const html = `<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><style>body{font-family:system-ui;padding:12px;font-size:13px}h3{margin:14px 0 4px;color:#7d0f15}table{border-collapse:collapse;width:100%;margin-bottom:8px}td,th{border:1px solid #ccc;padding:3px 6px;text-align:left}b{color:#0f4}</style>
   <h2>วินิจฉัย คุณนัฐพงษ์</h2>
   <h3>ลูกค้า (${(custs ?? []).length}) — ซ้ำไหม?</h3><table>${custHtml || "<tr><td>ไม่พบ</td></tr>"}</table>
@@ -101,6 +118,8 @@ export async function GET(req: Request) {
   <h3>ใบเสนอ (${quoView.length}) — รายการแรก = งานอะไร? ผูก job ไหน?</h3><table>${quoHtml || "<tr><td>ไม่พบ</td></tr>"}</table>
   <h3>ใบวางบิล (${bnView.length})</h3><table>${bnHtml || "<tr><td>ไม่พบ</td></tr>"}</table>
   <h3>ผลิต (${prods.length})</h3><table>${prodHtml || "<tr><td>ไม่มี</td></tr>"}</table>
-  <h3>ใบปะหน้า (${covers.length})</h3><table>${covHtml || "<tr><td>ไม่มี</td></tr>"}</table>`;
+  <h3>ใบปะหน้า (${covers.length})</h3><table>${covHtml || "<tr><td>ไม่มี</td></tr>"}</table>
+  <h3>เงินที่ลงบัญชี finance_entries (${fins.length}) — auto=true คือมัดจำที่ void แล้ว "คงเงิน"</h3><table>${finHtml || "<tr><td>ไม่มี</td></tr>"}</table>
+  <h3>ใบเสร็จ (${rcs.length})</h3><table>${rcHtml || "<tr><td>ไม่มี</td></tr>"}</table>`;
   return new NextResponse(html, { headers: { "content-type": "text/html; charset=utf-8" } });
 }
