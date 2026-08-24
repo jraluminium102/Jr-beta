@@ -20,7 +20,7 @@ import { resolveAluColor } from "./alu-colors.ts";
 export { HANDLE_FIELDS, HW_FROM_CUTLIST };
 
 /** รุ่นในคิดราคา 4.0 ที่แมปเข้าใบตัดได้ (ตาม from-recipe) — มีเท่านี้ที่เทียบได้ */
-export const COMPARABLE = ["sms_slide", "euro_slide", "slimlux", "fixed", "folding", "velora", "pcdoor", "gate"] as const;
+export const COMPARABLE = ["sms_slide", "euro_slide", "slimlux", "fixed", "folding", "fold_euro", "fold_lift", "velora", "pcdoor", "gate"] as const;
 
 export type CompareInput = {
   prodId: string;
@@ -97,7 +97,7 @@ export function cutOptionsFor(inp: Pick<CompareInput, "prodId" | "w" | "h" | "p"
   return (spec.opts ?? [])
     .filter((o: { key: string; choices?: readonly string[] }) => !derived.has(o.key))
     .filter((o: { choices?: readonly string[] }) => Array.isArray(o.choices) && o.choices.length > 0)
-    .map((o: { key: string; label: string; choices: readonly string[] }) => ({
+    .map((o: any) => ({
       key: o.key, label: o.label, choices: [...o.choices],
       def: String(def[o.key] ?? o.choices[0] ?? ""),
     }));
@@ -175,7 +175,21 @@ export function compareCut(PB: any, inp: CompareInput) {
   }));
 
   // ── ② เทียบอุปกรณ์รายรหัสสโตร์ ────────────────────────────────────────
-  const calcHw = (calc.lines ?? []).filter((l: any) => l.cat === "hardware" || l.cat === "consum");
+  // ⚠ รุ่นที่ "ค่าของมาจากใบตัด" (HW_FROM_CUTLIST): ถ้ามีรหัสไหนยังไม่ตั้งราคาในสโตร์แม้ตัวเดียว
+  //   engine จะถอยไปใช้รายการอุปกรณ์เดิมในสูตรทั้งชุด (กันราคาตก) — ตัวเลขเงินถูกแล้ว
+  //   แต่ "หน้าเทียบ" ต้องโชว์รายการที่รุ่นนี้ใช้จริง (= รายการจากใบตัด) ไม่งั้นขึ้น
+  //   "มีแต่ใบตัด" ทั้งแผงทั้งที่ของตรงกันเป๊ะ (เจ้าของเจอ 21 ส.ค.69 — ไม่ตรงสักรุ่น)
+  //   → ฝั่งคิดราคาใช้ hwl เป็นตัวตั้ง แล้วดึงราคาที่ engine คิดได้จริงมาแปะ
+  const engHw = (calc.lines ?? []).filter((l: any) => l.cat === "hardware" || l.cat === "consum");
+  const engBySku = new Map<string, any>();
+  for (const l of engHw) if (l.sku) engBySku.set(String(l.sku).toUpperCase(), l);
+  const calcHw = hwl?.length
+    ? hwl.map((h) => {
+      const eng = engBySku.get(String(h.sku || "").toUpperCase());
+      const unitPrice = Number(eng?.unitPrice) || 0;
+      return { sku: h.sku, name: h.name, qty: h.qty, unit: h.unit, unitPrice, amount: r2(unitPrice * h.qty) };
+    })
+    : engHw;
   const bySku = new Map<string, HwRow>();
   for (const l of calcHw) {
     const sku = String(l.sku || "");
