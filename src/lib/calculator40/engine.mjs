@@ -48,7 +48,8 @@ export function barsNeeded(segLen, count, stockLen = STOCK_LEN, waste = false) {
 
 // ── สร้าง evaluator ของ expression strings ในสเปกสินค้า ──────────────────────
 function buildEvaluator(extraVarNames) {
-  const base = ['W', 'H', 'P', 'form', 'area', 'color', 'material', 'ROW', 'spec', 'mult', 'GMM', 'CKEY'];
+  // TBL = ตารางค่าคงที่ของรุ่น (prod.tables) — เช่น จำนวนเสา/บังใบ ต่อ config พับ ที่ลอกมาจากใบตัด
+  const base = ['W', 'H', 'P', 'form', 'area', 'color', 'material', 'ROW', 'spec', 'mult', 'GMM', 'CKEY', 'TBL'];
   const names = [...base, ...extraVarNames];
   const cache = new Map();
   const compile = (expr) => {
@@ -109,7 +110,7 @@ export function computeCost(PB, prod, opt) {
   // mult ฉีดเข้า scope → สูตรราคา consum (โครงเมืองทอง roof/ระแนง) อ้าง mult ได้ → ขยับตามราคาอลู/กก. (ตั้งต้น mult=1 ไม่กระทบ anchor)
   // GMM = ความหนากระจก (มม.) จากชื่อกระจก — สูตรบางรุ่นเลือกคิ้วตามความหนา (F7919 6-13 · F7917 13-15)
   const GMM = Number((/(\d+)\s*มม/.exec(String(glassType)) || [])[1]) || 6;
-  const scope = { W, H, P, form, area, color, material, ROW: prod.lut ? (prod.lut[material] || {}) : {}, spec: opt.spec || {}, mult, GMM, CKEY: String(opt.colorKey ?? '') };
+  const scope = { W, H, P, form, area, color, material, ROW: prod.lut ? (prod.lut[material] || {}) : {}, spec: opt.spec || {}, mult, GMM, CKEY: String(opt.colorKey ?? ''), TBL: prod.tables || {} };
   for (const [k, expr] of Object.entries(varDefs)) {
     scope[k] = ev.compile(expr)(scope);
   }
@@ -157,15 +158,32 @@ export function computeCost(PB, prod, opt) {
   // ตั้งต้น PARTS = ราคาเดิมใน BOM → behavior-preserving (verify 63/63 คงเดิม) · รุ่นเดิม (ไม่ติดธง) ใช้ it.price ปกติ
   const pPrice = (name, base) => (prod.partsLinked && PB.PARTS && name in PB.PARTS) ? PB.PARTS[name] : base;
 
+  // prod.poolBars = นับเส้นแบบ "รวมทุกท่อนที่ใช้รหัสเดียวกันก่อน แล้วค่อยหารเส้น" — วิธีเดียวกับหน้าใบตัด
+  //   (cutlist/engine barsByCode) · เศษเส้นเอาไปตัดท่อนอื่นของรหัสเดียวกันต่อได้จริงในโรงงาน
+  //   ไม่เปิด = นับทีละบรรทัด (เส้นละบรรทัด ปัดขึ้นทุกบรรทัด) เหมือนเดิมทุกรุ่น
+  //   จำนวนเส้นรวมของรหัส = ceil(Σยาว/เส้น) แล้วเฉลี่ยกลับเข้าแต่ละบรรทัดตามสัดส่วนความยาว
+  //   → บรรทัดละเศษเส้น แต่รวมทั้งรหัสเท่าใบตัดเป๊ะ (ไม่มีบรรทัด ฿0 ให้งง)
+  const poolShare = new Map();
+  if (prod.poolBars) {
+    const sum = new Map();
+    for (const it of (prod.alu || [])) {
+      const seg = typeof it.seg === 'number' ? it.seg : val(it.seg);
+      const count = val(it.count);
+      const key = (it.code && String(it.code).includes('?')) ? String(val(it.code) ?? '') : it.code;
+      if (!key || !(seg > 0) || !(count > 0)) continue;
+      const e = sum.get(key) || { len: 0, stock: Number(it.stockLen) || stockLen };
+      e.len += seg * count;
+      sum.set(key, e);
+    }
+    for (const [key, e] of sum) poolShare.set(key, { bars: Math.ceil(e.len / e.stock - 1e-9), len: e.len });
+  }
+
   // (1) อลู — bar-nesting × ราคาเส้น × mult  (+bake×kg ถ้าสีพิเศษ)
   // ราคาเส้นผูก "รหัส" (B####/F####) กับสต็อก: PB.ALUCODE[code] มาก่อน → PARTS(ชื่อ) → ราคาเดิมใน BOM
   // ไม่มีราคาสต็อก = ราคาเดิมเป๊ะ (behavior-preserving · verify 63/63 คงเดิม)
   for (const it of (prod.alu || [])) {
     const seg = typeof it.seg === 'number' ? it.seg : val(it.seg);
     const count = val(it.count);
-    // it.stockLen = ความยาวเส้นเฉพาะบรรทัดนี้ (เช่น มือจับ X-J ขายเป็นท่อน 2.8 ม. ไม่ใช่ 6 ม.)
-    const bars = barsNeeded(seg, count, Number(it.stockLen) || stockLen, !!prod.aluWaste && !it.noWaste);
-    if (bars <= 0) continue;
     // ราคาเส้น "ตามสี" (PB.ALUCOLOR) มาก่อน — ชีต "ราคาสี" มีคอลัมน์ เทาซาฮาร่า/ลายไม้สต็อค เป็นราคาเส้นสำเร็จ
     //   สูตรในชีตคิดทุนใช้คอลัมน์นั้นตรง ๆ (ไม่ใช่ ขาว + ค่าอบ×กก.) → เส้นที่คิดราคาสีแล้ว ห้ามบวกค่าอบซ้ำ
     //   เหลือแค่ สีอบพิเศษ/ลายไม้อบพิเศษ ที่ยังเป็น ขาว + เรต×กก. (+ค่าเปิดตู้อบ) ตามสูตรชีต
@@ -173,6 +191,12 @@ export function computeCost(PB, prod, opt) {
     // it.code เป็นข้อความ หรือสูตรก็ได้ (เลือกรหัสตามเงื่อนไข เช่น คิ้วกระจกเลือกตามความหนา)
     const rawCode = (it.code && String(it.code).includes('?')) ? String(val(it.code) ?? '') : it.code;
     const code = (rawCode && PB.ALUCODE_ALIAS && PB.ALUCODE_ALIAS[rawCode]) || rawCode;
+    // it.stockLen = ความยาวเส้นเฉพาะบรรทัดนี้ (เช่น มือจับ X-J ขายเป็นท่อน 2.8 ม. ไม่ใช่ 6 ม.)
+    const pool = poolShare.get(rawCode);
+    const bars = pool && pool.len > 0
+      ? pool.bars * (seg * count) / pool.len
+      : barsNeeded(seg, count, Number(it.stockLen) || stockLen, !!prod.aluWaste && !it.noWaste);
+    if (bars <= 0) continue;
     // ALUCODE_NOCOLOR = เส้นสีเงิน/ผิวเดิม ไม่มีการอบสี → ราคาเดียวทุกสี ห้ามบวกค่าอบ
     //   (เจ้าของยืนยัน 8 ส.ค.69: F7994 ตบรางล้อ เป็นสีเงิน ใช้กับทุกสีราคาเดียว)
     const noColor = !!(code && (PB.ALUCODE_NOCOLOR || []).includes(code));

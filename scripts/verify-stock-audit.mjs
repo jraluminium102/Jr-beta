@@ -103,7 +103,7 @@ console.log("\n═══ ⑤b สรุปรายรุ่น — มุมห
   ok("เรียงรุ่นที่ต้องแก้ก่อนขึ้นบนสุด", prods[0]?.status === "ไม่ผูกเลย", prods[0]?.status ?? "");
   const pc = prods.find((p) => p.id === "pcdoor");
   // PC Door ผูกรหัสครบ 7/7 แล้ว (21 ส.ค.69 — F7863/F7864/F7945 ยึด sku สโตร์)
-  ok("PC Door: อลู 7 บรรทัด · มีรหัสครบ", pc?.aluTotal === 7 && pc?.aluNoCode?.length === 0, JSON.stringify(pc));
+  ok("PC Door: อลู 9 บรรทัด · มีรหัสครบ", pc?.aluTotal === 9 && pc?.aluNoCode?.length === 0, JSON.stringify(pc));
   ok("PC Door: ไม่เหลือบรรทัดไม่มีรหัส", (pc?.aluNoCode?.length ?? 9) === 0, String(pc?.aluNoCode?.length));
   const solid = prods.find((p) => p.id === "bansolid");
   ok("บานโซลิด: อลูมีรหัสครบ (ไม่มีบรรทัดตกหล่น)", solid?.aluTotal === 7 && solid?.aluNoCode.length === 0, JSON.stringify(solid));

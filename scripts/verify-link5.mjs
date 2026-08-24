@@ -19,6 +19,23 @@ const ok = (label, cond, got = '') => {
   console.log(`  ${cond ? '✅' : '❌'} ${label}${cond || got === '' ? '' : `  (${got})`}`);
 };
 
+// code ของบางเส้นเป็น "สูตรเลือกรหัส" เช่น (GMM<=12?'F7935':'F7949') — ต้องตรวจทุกรหัสที่สูตรเลือกได้
+const codesOf = (code) => {
+  const s = String(code ?? '');
+  if (!s) return [];
+  if (!s.includes('?')) return [s];
+  return [...s.matchAll(/'([^']+)'|"([^"]+)"/g)].map((m) => m[1] ?? m[2]).filter(Boolean);
+};
+const allCodesOk = (code) => { const c = codesOf(code); return c.length > 0 && c.every(isAluCode); };
+// รหัสที่ "ไม่มีราคาในไฟล์" ได้ เพราะสโตร์เก็บไว้ใต้ sku อื่น แล้ว stock-link อ่านรหัสจากชื่อของให้เอง
+const PRICED_FROM_STOCK = {
+  F7949: 'สโตร์เก็บเป็น JR02893 (คิ้วมุ้ง F7949) — stock-link อ่านรหัสจากชื่อ · ใช้เฉพาะกระจกหนา >12 มม.',
+};
+const allPriced = (code) => {
+  const c = codesOf(code);
+  return c.length > 0 && c.every((x) => PB.ALUCODE?.[x] > 0 || x in PRICED_FROM_STOCK);
+};
+
 // ── ① เฟี้ยม SMS (B####) — ทุกเส้นผูกรหัสสโตร์ + มีราคา + มีน้ำหนัก ──────────────
 console.log('\n═══ ① บานเฟี้ยม SMS — รหัส B#### ผูกสโตร์ครบ ═══');
 {
@@ -37,8 +54,8 @@ console.log('\n═══ ② บานเฟี้ยมยูโร — น้�
 {
   const P = PRODUCTS.fold_euro;
   for (const a of P.alu) {
-    ok(`${a.name}: ผูกสโตร์ (${a.code}) + kg ${a.kg}`, !!a.code && isAluCode(a.code) && a.kg > 0);
-    ok(`${a.name}: ราคาไฟล์ ${PB.ALUCODE?.[a.code] ?? '—'}`, PB.ALUCODE?.[a.code] > 0);
+    ok(`${a.name}: ผูกสโตร์ (${a.code}) + kg ${a.kg}`, allCodesOk(a.code) && a.kg > 0);
+    ok(`${a.name}: ราคาไฟล์ (${codesOf(a.code).map((c) => PB.ALUCODE?.[c] ?? '—').join('/')})`, allPriced(a.code));
   }
   const hd474 = P.hardware.find((h) => /HD-474/.test(h.name));
   ok('HD-474 มือจับกลอน ผูก JR00213 (สโตร์ ฿85 ตรงชื่อ+ราคา)', hd474?.sku === 'JR00213', String(hd474?.sku));
