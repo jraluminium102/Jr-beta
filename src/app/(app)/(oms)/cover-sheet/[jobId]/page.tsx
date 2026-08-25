@@ -1,10 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { ArrowLeft, Zap, Save, Printer, Plus, Trash2, Highlighter, Layers, PenSquare } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { Spinner, EmptyState } from "@/components/ui/primitives";
+import { useUnsavedWarning } from "@/lib/useUnsavedWarning";
 import type {
   CoverColor, CoverContent, CoverLine, CoverMode,
   CoverSheetGetResponse, GenerateResponse,
@@ -72,21 +73,37 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
   const [measurer, setMeasurer] = useState("");     // ตัวช่วย "วัดงาน" — ชื่อคนวัด
   const [measureDate, setMeasureDate] = useState(""); // วันวัด (YYYY-MM-DD)
 
+  // เตือน "มีของยังไม่บันทึก" (เจ้าของสั่ง 25 ส.ค.69) — เทียบ 4 ตัวที่แก้ได้ (content/mode/measurer/measureDate)
+  // กับ snapshot ล่าสุดที่โหลด/บันทึกแล้ว · savedRef กัน false-positive ตอนโหลดครั้งแรก
+  const savedRef = useRef<string>("");
+  const [dirty, setDirty] = useState(false);
+
   useEffect(() => {
     const d = data?.data;
     if (!d || loadedOnce) return;
     const c = d.cover?.content;
-    setMode(d.cover?.mode ?? "short");
-    setContent({
+    const loadedMode = d.cover?.mode ?? "short";
+    const loadedContent: CoverContent = {
       floorNote: c?.floorNote ?? d.job?.floor_note ?? "",
       warnings: c?.warnings ?? [],
       left: c?.left ?? [],
       mid: c?.mid ?? [],
       right: c?.right ?? [],
-    });
+    };
+    setMode(loadedMode);
+    setContent(loadedContent);
     setQuotationId(d.quotation?.id ?? null);
     setLoadedOnce(true);
+    savedRef.current = JSON.stringify({ mode: loadedMode, content: loadedContent, measurer: "", measureDate: "" });
+    setDirty(false);
   }, [data, loadedOnce]);
+
+  useEffect(() => {
+    if (!loadedOnce) return;
+    setDirty(JSON.stringify({ mode, content, measurer, measureDate }) !== savedRef.current);
+  }, [loadedOnce, mode, content, measurer, measureDate]);
+
+  useUnsavedWarning(dirty);
 
   const job = data?.data?.job ?? null;
   const quotation = data?.data?.quotation ?? null;
@@ -156,6 +173,8 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
     try {
       await api.put(`/cover-sheets/${jobId}`, { mode, content, quotation_id: quotationId });
       setSaveMsg("บันทึกแล้ว ✓");
+      savedRef.current = JSON.stringify({ mode, content, measurer, measureDate });
+      setDirty(false);
       qc.invalidateQueries({ queryKey: ["cover-sheet", jobId] });
       setTimeout(() => setSaveMsg(null), 2500);
     } catch (e) {

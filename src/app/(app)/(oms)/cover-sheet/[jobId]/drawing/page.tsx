@@ -8,6 +8,7 @@ import { Spinner, EmptyState } from "@/components/ui/primitives";
 import { uploadDrawingFiles } from "@/lib/job-drawings/pdf-render";
 import { drawingPublicUrl } from "@/lib/job-drawings/storage";
 import { DEFAULT_ANNOT_SIZE, type CoverBubble, type DrawingAnnotation, type JobDrawing, type JobDrawingsGetResponse } from "@/lib/job-drawings/types";
+import { useUnsavedWarning } from "@/lib/useUnsavedWarning";
 import DrawingCanvas from "./DrawingCanvas";
 import PrefillPanel from "./PrefillPanel";
 
@@ -90,6 +91,9 @@ export default function DrawingEditorPage({ params }: { params: { jobId: string 
     setActivePage(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, dirty]);
+
+  // เตือน "มีของยังไม่บันทึก" (เจ้าของสั่ง 25 ส.ค.69) — dirty มีอยู่แล้วในหน้านี้ (ตั้ง true ทุกจุดที่แก้ annotation, ตั้ง false ตอนบันทึก/อัปโหลด/ลบ/สลับแบบ)
+  useUnsavedWarning(dirty);
 
   if (isLoading) return <div className="max-w-[1500px] mx-auto pb-10"><Spinner /></div>;
   if (error || !job) {

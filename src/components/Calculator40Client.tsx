@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { baht, sumDiscountLines, type DiscountLine } from "@/lib/money";
+import { useUnsavedWarning } from "@/lib/useUnsavedWarning";
 
 /** ตัวเลขจำนวน — ตัดทศนิยมเหลือ 2 ตำแหน่ง (จำนวนเส้นอลูเป็นทศนิยมได้ เช่น 1.22 เส้น) */
 const r2 = (n: unknown) => Math.round((Number(n) || 0) * 100) / 100;
@@ -195,6 +196,10 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   // ใบเสนอราคาอย่างย่อ
   const [quote, setQuote] = useState<QuoteItem[]>([]);
   const [keySeq, setKeySeq] = useState(1);
+  // เตือน "มีของยังไม่บันทึก" (เจ้าของสั่ง 25 ส.ค.69) — เทียบ quote ปัจจุบันกับ baseline (snapshot ล่าสุดที่ "ปลอดภัยแล้ว":
+  //   โหลดใบเดิมมาแก้ / ล้างรายการ / ส่งออกใบเสนอสำเร็จ) + กันไว้อีกชั้นถ้ากำลังกรอกขนาด (w/h) ของข้อที่ยังไม่กด "เพิ่ม"
+  //   ไม่รวม sessionStorage restore (?restore=1) — ตั้งใจให้ยัง dirty ต่อ กันเหนียวกรณีไม่ได้กดกลับมาจริง
+  const quoteBaselineRef = useRef<string>("[]");
   // ข้อที่กำลังแก้ (คลิก ✏️ ในรายการ) — กด "อัปเดตข้อนี้" = แทนที่เดิม ตำแหน่งเดิม (0093)
   const [editingKey, setEditingKey] = useState<number | null>(null);
   // โหมดแก้ใบเสนอเดิม (?edit=<id>) — โหลดใบ+สูตรเข้ามา แก้ แล้วบันทึกกลับใบเดิม (เลือก Rev ได้)
@@ -239,13 +244,15 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
         setQWht(Number(d.wht_rate) || 0);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const its = ((d.quotation_items ?? []) as any[]).slice().sort((a, b) => a.sort_order - b.sort_order);
-        setQuote(its.map((it, i) => ({
+        const loadedItems = its.map((it, i) => ({
           key: i + 1, name: it.name, desc: String(it.detail ?? ""), qty: Number(it.qty) || 1,
           perUnit: Number(it.unit_price) || 0, cost: 0,
           prodId: it.product_id || undefined, groupLabel: it.category || "",
           heading: it.group_label || "", // หัวข้อชุด (0076) — เก็บไว้ส่งกลับ ไม่ให้หายตอนเซฟ
           recipe: it.calc_recipe ?? null,
-        })));
+        }));
+        setQuote(loadedItems);
+        quoteBaselineRef.current = JSON.stringify(loadedItems); // โหลดใบเดิม = "ปลอดภัย" ยังไม่แก้ → ไม่เตือนจนกว่าจะแก้จริง
         setKeySeq(its.length + 1);
         setRevLabel(`Rev${String(revNo + 1).padStart(2, "0")}`);
         // ใบที่ส่งลูกค้าแล้ว → แนะนำนับ Rev (แก้หลังส่ง = ควรมีร่องรอย) · ร่าง → ทับเฉยๆ
@@ -263,6 +270,13 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   const [qDiscounts, setQDiscounts] = useState<DiscountLine[]>([]);
   const [qWht, setQWht] = useState(0);
   const [issueDate] = useState(() => new Date().toISOString().slice(0, 10));
+
+  // dirty = มีรายการในใบที่ต่างจาก baseline (เพิ่ม/แก้/ลบข้อ ยังไม่ส่งออก) หรือกำลังกรอกขนาดข้อใหม่ (w/h) ที่ยังไม่กด "เพิ่ม"
+  const [dirty, setDirty] = useState(false);
+  useEffect(() => {
+    setDirty(JSON.stringify(quote) !== quoteBaselineRef.current || w.trim() !== "" || h.trim() !== "");
+  }, [quote, w, h]);
+  useUnsavedWarning(dirty);
 
   // เพิ่ม add-on universal ที่ชั้น app (augment · ไม่แตะ products.mjs/verify-r40 · ไม่เลือก → computeAddon null = ราคาไม่ขยับ)
   //   - "งานไฟ"(elec) + "บานล่างทึบ"(solid_panel) ให้ทุกงาน (เจ้าของสั่ง 17ก.ค.69)
@@ -736,7 +750,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
         }),
       });
       const json = await res.json().catch(() => null);
-      if (res.ok) { router.push(`/quotations/${editingQ.id}`); return; }
+      if (res.ok) { quoteBaselineRef.current = JSON.stringify(quote); router.push(`/quotations/${editingQ.id}`); return; }
       setSaveErr(json?.error ?? `บันทึกไม่สำเร็จ (${res.status})`);
     } catch {
       setSaveErr("เชื่อมต่อไม่สำเร็จ — ลองอีกครั้ง");
@@ -782,6 +796,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       sessionStorage.setItem("jr_quote_items", JSON.stringify(payload));
       sessionStorage.setItem("jr_calc_quote", JSON.stringify(quote)); // เก็บไว้ให้ย้อนกลับมาแก้ในเครื่องคิดราคาได้
     } catch { /* ignore */ }
+    quoteBaselineRef.current = JSON.stringify(quote); // ส่งออกแล้ว (อยู่ใน sessionStorage แล้ว) — เลิกเตือน
     router.push("/quotations/new?from=calc");
   }
 
@@ -1693,7 +1708,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
               className="press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold glass-soft text-ink-2 disabled:opacity-50">
               <Icon name="printer" size={15} /> พิมพ์ฟอร์มนี้
             </button>
-            {quote.length > 0 && <button onClick={() => { setQuote([]); setEditingKey(null); }} className="press text-xs text-ink-3 hover:text-red-600 px-2">ล้างรายการ</button>}
+            {quote.length > 0 && <button onClick={() => { setQuote([]); setEditingKey(null); quoteBaselineRef.current = "[]"; }} className="press text-xs text-ink-3 hover:text-red-600 px-2">ล้างรายการ</button>}
           </div>
 
           {/* (0093) รายการข้อ — ✏️ แก้ (โหลดสูตรกลับ) · 📋 ก็อป · ▲▼ เลื่อน · ✕ ลบ */}
