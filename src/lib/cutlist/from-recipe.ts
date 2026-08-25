@@ -128,8 +128,24 @@ export function cutInputFromRecipe(recipe: any): RecipeCutMap | null {
       break;
     }
     case "gate": {
-      // คิดราคาเก็บแค่แนวระแนง (form) — ด้านโชว์/ช่องห่าง/โหมดสลับ ต้องกรอกในใบตัดเอง
-      m = { spec_id: "gate_slide", input: { W, H, N: 1, slatDir: String(recipe.form ?? "") === "ตั้ง" ? "ตั้ง" : "นอน", slatType: "ระแนง", fit: "ยัดใน" } };
+      // ประตูรั้ว รื้อใหม่ 24 ส.ค.69 — คิดราคาเก็บตัวเลือกครบตามไฟล์แล้ว ส่งต่อใบตัดทั้งชุด
+      //   material = กล่องใบระแนง A ("1x1.6") · ใบตัดใช้รูป "1×1.6" → แปลงเครื่องหมายให้ตรง
+      const gBox = (v: unknown, fb: string) => String(v ?? fb).replace(/x/gi, "×");
+      const gFace = (v: unknown) => ({ "1": "1 cm", "5": "5 cm", "2.54": '1"', "3.81": '1½"', "4.06": '1.6"', "10.16": '4"' })[String(v ?? "4.06")] ?? '1.6"';
+      const sp = (recipe.spec ?? {}) as Record<string, unknown>;
+      m = { spec_id: "gate_slide", input: {
+        W, H, N: 1,
+        slatDir: String(recipe.form ?? "") === "ตั้ง" ? "ตั้ง" : "นอน",
+        slatType: String(sp.gslat ?? "") === "ระแนงสลับ" ? "ระแนงสลับ" : "ระแนง",
+        fit: String(sp.gfit ?? "") === "แปะนอก" ? "แปะนอก" : "ยัดใน",
+        boxA: gBox(recipe.material, "1x1.6"),
+        boxB: gBox(sp.gboxB ?? recipe.material, "1x1.6"),
+        showA: gFace(sp.rnFace), showB: gFace(sp.gfaceB ?? sp.rnFace),
+        gap: Number(sp.rnGap ?? 5) || 5,
+        aRun: Number(sp.gaRun ?? 3) || 3, bRun: Number(sp.gbRun ?? 5) || 5,
+        gateDrive: String(sp.drive ?? "").includes("มือผลัก") ? "มือผลัก" : "มอเตอร์",
+        gateRemote: Number(sp.gremote ?? 0) || 0,
+      } };
       break;
     }
     // ⚠ ไม่ auto-map: open_door (บานเปิดยูโร) ใช้ดายชุดเดียวกับบานโซลิดแต่เป็น "บานกระจก" (เรขาคณิตต่าง) →

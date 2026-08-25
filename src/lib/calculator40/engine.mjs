@@ -35,6 +35,23 @@ export const WASTE_FACTOR = 1.3;
 // ⚠ เปิด waste ให้รุ่นไหน ต้องไล่เทียบจำนวนทุกเส้นกับชีตของรุ่นนั้นก่อน (scripts/verify-alu-qty.mjs)
 //   บางชีตยังเขียนจำนวนเป็นเลขเต็มแบบเก่าอยู่ (เช่น "คิดทุน บานหมุน") — เปิดมั่วจะได้ราคาผิด
 //   เส้นที่สูตรเขียน seg = ความยาวเส้นเต็มพอดี = ไฟล์นับเป็น "จำนวนเส้น" มาแล้ว → ไม่คูณเศษซ้ำ
+/**
+ * จำนวนเส้นที่ต้องซื้อ — จัดชิ้นลงเส้นจริง (First-Fit Decreasing)
+ * ⚠ สูตรเดียวกับ packBars() ใน cutlist/engine.ts — แก้ต้องแก้ทั้งคู่ แล้วรัน scripts/verify-gate.mjs
+ *   "รวมยาว ÷ ความยาวเส้น" ใช้ไม่ได้กับชิ้นยาว: ใบระแนงนอน 19 ใบ × 3.296 ม. รวม 62.6 ม. ÷ 6 = 11 เส้น
+ *   แต่ของจริงตัดได้เส้นละใบ (เศษ 2.7 ม. ทำใบที่ 2 ไม่ได้) = ต้อง 19 เส้น
+ */
+export function packBars(lengths, stockLen) {
+  const items = lengths.filter((L) => L > 0).sort((a, b) => b - a);
+  const bins = [];
+  for (const L of items) {
+    if (L > stockLen + 1e-9) { bins.push(L); continue; }   // ชิ้นยาวเกินเส้น = ต้องต่อ นับเป็นเส้นของมันเอง
+    const i = bins.findIndex((used) => used + L <= stockLen + 1e-9);
+    if (i < 0) bins.push(L); else bins[i] += L;
+  }
+  return bins.length;
+}
+
 export function barsNeeded(segLen, count, stockLen = STOCK_LEN, waste = false) {
   if (!(segLen > 0) || !(count > 0)) return 0;
   if (waste) {
@@ -164,18 +181,23 @@ export function computeCost(PB, prod, opt) {
   //   จำนวนเส้นรวมของรหัส = ceil(Σยาว/เส้น) แล้วเฉลี่ยกลับเข้าแต่ละบรรทัดตามสัดส่วนความยาว
   //   → บรรทัดละเศษเส้น แต่รวมทั้งรหัสเท่าใบตัดเป๊ะ (ไม่มีบรรทัด ฿0 ให้งง)
   const poolShare = new Map();
-  if (prod.poolBars) {
+  if (prod.poolBars || prod.packBars) {
     const sum = new Map();
     for (const it of (prod.alu || [])) {
       const seg = typeof it.seg === 'number' ? it.seg : val(it.seg);
       const count = val(it.count);
       const key = (it.code && String(it.code).includes('?')) ? String(val(it.code) ?? '') : it.code;
       if (!key || !(seg > 0) || !(count > 0)) continue;
-      const e = sum.get(key) || { len: 0, stock: Number(it.stockLen) || stockLen };
+      const e = sum.get(key) || { len: 0, stock: Number(it.stockLen) || stockLen, lens: [] };
       e.len += seg * count;
+      for (let i = 0; i < Math.round(count); i++) e.lens.push(seg);
       sum.set(key, e);
     }
-    for (const [key, e] of sum) poolShare.set(key, { bars: Math.ceil(e.len / e.stock - 1e-9), len: e.len });
+    for (const [key, e] of sum) {
+      // packBars = จัดชิ้นลงเส้นจริง (ตรงใบตัด) · ไม่เปิด = รวมยาวหารเส้น (พฤติกรรมเดิม)
+      const bars = prod.packBars ? packBars(e.lens, e.stock) : Math.ceil(e.len / e.stock - 1e-9);
+      poolShare.set(key, { bars, len: e.len });
+    }
   }
 
   // (1) อลู — bar-nesting × ราคาเส้น × mult  (+bake×kg ถ้าสีพิเศษ)
