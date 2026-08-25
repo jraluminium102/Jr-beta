@@ -23,11 +23,11 @@ export default async function ChangCutlistPage({ params }: { params: { token: st
   const sb = createServiceClient() as unknown as { from: (t: string) => any };
 
   // ⚠ ต้องแบ่งหน้า — สต็อก ~1,800 แถว เกิน cap 1,000/ครั้งของ Supabase (ดึงรวดเดียว = รหัสหลังแถว 1,000 หายเงียบ)
-  const stock = await fetchAllStockRows<{ id: number; sku: string | null; name: string | null; qty_on_hand: number | null; image_url: string | null; category: string | null; unit: string | null }>(
-    sb, "id, sku, name, qty_on_hand, image_url, category, unit",
+  const stock = await fetchAllStockRows<{ id: number; sku: string | null; name: string | null; color: string | null; qty_on_hand: number | null; image_url: string | null; category: string | null; unit: string | null }>(
+    sb, "id, sku, name, color, qty_on_hand, image_url, category, unit",
   );
   const stockList: StockLite[] = stock.map((r) => ({
-    id: Number(r.id), sku: r.sku ?? "", name: r.name ?? "", qty: Number(r.qty_on_hand) || 0, image: r.image_url || "", category: r.category ?? "", unit: r.unit ?? "",
+    id: Number(r.id), sku: r.sku ?? "", name: r.name ?? "", color: r.color ?? "", qty: Number(r.qty_on_hand) || 0, image: r.image_url || "", category: r.category ?? "", unit: r.unit ?? "",
   }));
 
   // ชื่อคนเบิกเก่า (datalist ตอนตัดสต็อก) — service client (ช่างไม่มี session)
