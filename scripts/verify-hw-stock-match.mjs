@@ -63,5 +63,33 @@ for (const id of ["euro_bifold", "euro_lift"]) {
     miss.map((h) => `${h.sku} ${h.name}`).join(" · "));
 }
 
+// ── ⑤ ชุดอุปกรณ์บานเฟี้ยม SMS — ล็อกว่า sku ในใบตัด ชี้ไปชุด 05-xxx + สี ที่ถูกต้อง ──
+//    ชื่อ/รหัสด้านล่างคัดจากสโตร์จริง (เปิดดูหน้าสโตร์ 24 ส.ค.69) — ผูกผิดตัวเดียว = เบิกผิดของทั้งงาน
+//    เคยผิดจริง: "ชุดสลักล็อค" ผูก JR00563 ซึ่งคือ CDQ ชุดบานเฟี้ยม CMECH คนละยี่ห้อกันเลย
+const KIT = {
+  JR00602: ["05-004", "สีดำ"], JR00603: ["05-005", "สีดำ"], JR00604: ["05-006", "สีดำ"], JR00605: ["05-007", "สีดำ"],
+  JR00606: ["05-008", "สีดำ"], JR00607: ["05-009", "สีดำ"], JR00608: ["05-010", "สีดำ"], JR00609: ["05-011", "สีดำ"],
+  JR00610: ["05-004", "สีเงิน"], JR00611: ["05-005", "สีเงิน"], JR00612: ["05-006", "สีเงิน"], JR00613: ["05-007", "สีเงิน"],
+  JR00614: ["05-008", "สีเงิน"], JR00615: ["05-009", "สีเงิน"], JR00616: ["05-010", "สีเงิน"], JR00617: ["05-011", "สีเงิน"],
+};
+console.log("\n═══ ⑤ เฟี้ยม SMS: ชุดอุปกรณ์ผูกตรงชุด 05-xxx + สี (เทียบสโตร์จริง) ═══");
+{
+  const spec = CUT_SPEC_BY_ID.sms240_bifold;
+  for (const hwColor of ["ดำ", "เงิน"]) {
+    const r = computeCutList(spec, { ...spec.defaults, hwColor }, 1);
+    const bad = [];
+    for (const h of r.hardware) {
+      if (!h.sku || !/^JR006/.test(h.sku)) continue;      // ยาง/ซิลิโคน/ของไม่มี sku ข้าม
+      const k = KIT[h.sku];
+      if (!k) { bad.push(`${h.name} → ${h.sku} (ไม่ใช่ชุดบานเฟี้ยม)`); continue; }
+      if (k[1] !== `สี${hwColor}`) bad.push(`${h.name} → ${h.sku} เป็น${k[1]} แต่เลือกสี${hwColor}`);
+    }
+    ok(`สีอุปกรณ์ "${hwColor}" → ชุดสีเดียวกันทุกบรรทัด`, bad.length === 0, bad.join(" · "));
+  }
+  const noSku = computeCutList(spec, spec.defaults, 1).hardware.filter((h) => /สลักล็อค/.test(h.name));
+  ok("ชุดสลักล็อค (05-014) ไม่ผูก sku — สโตร์ยังไม่มี ห้ามไปหักตัวอื่นแทน",
+    noSku.length > 0 && noSku.every((h) => !h.sku && h.noStock), JSON.stringify(noSku.map((h) => h.sku)));
+}
+
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);
