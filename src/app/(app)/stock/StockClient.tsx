@@ -358,7 +358,11 @@ function ItemDetail({
           <div className={`text-3xl font-bold leading-tight ${isLow(item) ? "text-red-700" : "text-brand-dark"}`}>
             {baht(item.qty_on_hand)} <span className="text-base font-semibold text-ink-3">{item.unit}</span>
           </div>
-          <div className="text-xs text-ink-3 mt-1">จุดเตือนขั้นต่ำ {baht(item.min_qty)} {item.unit}</div>
+          <div className="text-xs text-ink-3 mt-1">
+            {item.is_stocked === false
+              ? <span className="inline-flex items-center rounded-full px-2 py-0.5 font-semibold bg-amber-50 text-amber-800 border border-amber-200">🛒 ของสั่งตามงาน — ไม่หักสต็อก</span>
+              : <>จุดเตือนขั้นต่ำ {baht(item.min_qty)} {item.unit}</>}
+          </div>
         </div>
         {canViewCost && (
           <div className="rounded-2xl px-5 py-4 glass-soft">
@@ -628,6 +632,41 @@ function MoveForm({ item, canViewCost, onDone }: { item: StockItem; canViewCost:
   );
 }
 
+/**
+ * สลับ "ของมีสต็อก ↔ ของสั่งตามงาน" (0125)
+ *   ของสั่งตามงาน = ไม่ได้สต็อกไว้ สั่งซื้อเมื่อมีงาน — ใช้เป็น "ราคา" ให้คิดราคา 4.0 อย่างเดียว
+ *   ตอนกดตัดออกสโตร์ ระบบจะข้าม ไม่หักจนติดลบ · ไม่เตือนของใกล้หมด · ไม่ต้องนับรายวัน
+ */
+function StockedSwitch({ item, onDone }: { item: StockItem; onDone: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const orderOnly = item.is_stocked === false;
+  async function go() {
+    const msg = orderOnly
+      ? `เปลี่ยน "${item.name}" เป็นของมีสต็อก?
+
+ต่อไประบบจะหักสต็อกตัวนี้เวลากดตัดออกสโตร์ และเตือนเมื่อของใกล้หมด`
+      : `เปลี่ยน "${item.name}" เป็นของสั่งตามงาน?
+
+ใช้เป็นราคาให้คิดราคา 4.0 อย่างเดียว — ไม่หักสต็อก ไม่เตือนของใกล้หมด ไม่ต้องนับรายวัน`;
+    if (!confirm(msg)) return;
+    setBusy(true);
+    const res = await fetch(`/api/stock/${item.id}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_stocked: orderOnly }),
+    });
+    const json = await res.json().catch(() => null);
+    setBusy(false);
+    if (!res.ok) { alert(json?.error ?? "เปลี่ยนไม่สำเร็จ"); return; }
+    onDone();
+  }
+  return (
+    <button onClick={go} disabled={busy}
+      className="press text-xs font-semibold text-ink-2 glass-soft rounded-lg px-2.5 py-1.5 disabled:opacity-40">
+      {busy ? "กำลังเปลี่ยน…" : orderOnly ? "📦 เปลี่ยนเป็นของมีสต็อก" : "🛒 เปลี่ยนเป็นของสั่งตามงาน"}
+    </button>
+  );
+}
+
 /** สลับ "คิดต่อโล ↔ ตั้งราคาต่อหน่วยตรง" — ราคาต่อหน่วยไม่ขยับ + ลงประวัติราคาให้ครบ */
 function ModeSwitch({ item, onDone }: { item: StockItem; onDone: () => void }) {
   const [busy, setBusy] = useState(false);
@@ -698,6 +737,7 @@ function PriceSection({ item, prices, canPrice, isAdmin, onDone }: { item: Stock
         <div className="text-sm font-semibold text-brand-dark">ต้นทุน / ประวัติราคา</div>
         {canPrice && (
           <div className="flex gap-2">
+            <StockedSwitch item={item} onDone={onDone} />
             <ModeSwitch item={item} onDone={onDone} />
             <button onClick={() => setOpen((v) => !v)} className="press text-xs font-semibold text-brand-dark glass-soft rounded-lg px-2.5 py-1.5">
               + อัปเดตราคา

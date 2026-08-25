@@ -1,6 +1,6 @@
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 import { cutlistActor } from "@/lib/cutlist/actor";
-import { resolveStock, fetchAllStockRows, type StockLite } from "@/lib/cutlist/stock-match";
+import { resolveStock, isStockTracked, fetchAllStockRows, type StockLite } from "@/lib/cutlist/stock-match";
 
 export const dynamic = "force-dynamic";
 
@@ -28,8 +28,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const failedList: { code: string; color: string; bars: number }[] = Array.isArray(summary.failed) ? summary.failed : [];
   if (!failedList.length) return fail("ไม่มีรายการที่ค้าง (หักครบแล้ว)", 400);
 
-  const stockRows = await fetchAllStockRows<{ id: number; sku: string | null; name: string | null; color: string | null; unit_cost: number | null }>(sb, "id, sku, name, color, unit_cost");
-  const stockList: (StockLite & { id: number })[] = stockRows.map((s) => ({ id: Number(s.id), sku: s.sku ?? "", name: s.name ?? "", color: s.color ?? "", qty: 0, unitCost: Number(s.unit_cost) || 0 }));
+  const stockRows = await fetchAllStockRows<{ id: number; sku: string | null; name: string | null; color: string | null; is_stocked: boolean | null; unit_cost: number | null }>(sb, "id, sku, name, color, is_stocked, unit_cost");
+  const stockList: (StockLite & { id: number })[] = stockRows.map((s) => ({ id: Number(s.id), sku: s.sku ?? "", name: s.name ?? "", color: s.color ?? "", isStocked: s.is_stocked !== false, qty: 0, unitCost: Number(s.unit_cost) || 0 }));
 
   const newDeducted: { code: string; color: string; bars: number; stock_item_id: number }[] = [];
   const stillFailed: { code: string; color: string; bars: number; error: string }[] = [];
@@ -39,6 +39,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     if (bars <= 0) continue;
     const item = resolveStock(stockList, f.code, f.color) as (StockLite & { id: number }) | null;
     if (!item) { stillFailed.push({ code: f.code, color: f.color, bars, error: "ไม่มีในสต็อก (สร้างวัสดุก่อน)" }); continue; }
+    // ของสั่งตามงาน — ไม่หักสต็อก ถือว่าเคลียร์รายการค้างนี้แล้ว (0125)
+    if (!isStockTracked(item)) continue;
     const unitCost = Number(item.unitCost) || 0;
     const { error: mvErr } = await sb.from("stock_moves").insert({
       stock_item_id: Number(item.id),

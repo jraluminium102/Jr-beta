@@ -9,7 +9,7 @@
  *
  *   node scripts/verify-stock-match.mjs
  */
-import { matchStock, nameHasCode, stockColorOf, MATCH_REASON_TH } from "../src/lib/cutlist/stock-match.ts";
+import { matchStock, nameHasCode, stockColorOf, isStockTracked, MATCH_REASON_TH } from "../src/lib/cutlist/stock-match.ts";
 
 let pass = 0, fail = 0;
 const ok = (label, cond, got = "") => {
@@ -67,6 +67,21 @@ ok("F7938 ยังจับ F7938B ได้ (สโตร์เขียนต
 ok("ยางอัดตัวเล็ก/ตัวใหญ่ 044 → เจอ 2 ตัว ไม่หัก",
   matchStock([{ id: 1, sku: "", name: "ยางอัดตัวเล็ก 044", color: "", qty: 1 },
     { id: 2, sku: "", name: "ยางอัดตัวใหญ่ 044", color: "", qty: 1 }], "044", "").reason === "ambiguous");
+
+// ── ⑤ ของสั่งตามงาน (migration 0125) — ยังเป็น "ราคา" ได้ แต่ห้ามหักสต็อก ──
+//    เจ้าของเคาะ 24 ส.ค.69 แบบ ก. "ไม่บันทึกเลย แค่เป็นราคา"
+//    เคสจริง: HD-640 ในสโตร์เป็นแถวราคาล้วน (ผู้ขาย "ถอดทุน R4.0" ยอด 0) — หักแล้วติดลบเปล่า ๆ
+console.log("\n═══ ⑤ ของสั่งตามงาน — ใช้เป็นราคาได้ แต่ห้ามหักสต็อก ═══");
+{
+  const orderOnly = { id: 9, sku: "JR00198", name: "HD-640 บานพับล้อบน", color: "", qty: 0, isStocked: false };
+  const stocked = { id: 8, sku: "JR00489", name: "บานพับ HD-631", color: "", qty: 3 };
+  ok("ยังจับคู่เจอ (ใช้เป็นราคา + โชว์ในใบตัดได้)", matchStock([orderOnly], "HD-640", "").item?.id === 9);
+  ok("ธงบอกว่าอย่าหักสต็อก", isStockTracked(orderOnly) === false);
+  ok("ของมีสต็อกปกติ → หักตามเดิม", isStockTracked(stocked) === true);
+  ok("ของเก่าที่ยังไม่มีธง → หักตามเดิม (ไม่เปลี่ยนพฤติกรรมย้อนหลัง)",
+    isStockTracked({ id: 1, sku: "X", name: "ของเก่า", qty: 1 }) === true);
+  ok("หาไม่เจอ → ไม่หัก", isStockTracked(null) === false && isStockTracked(undefined) === false);
+}
 
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);

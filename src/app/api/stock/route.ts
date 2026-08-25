@@ -82,6 +82,7 @@ export async function POST(req: Request) {
       supplier: body.supplier ?? "",
       image_url: body.image_url ?? "",
       is_weight_based: isWeight,
+      is_stocked: body.is_stocked !== false,   // 0125 — ปิด = ของสั่งตามงาน ใช้เป็นราคาอย่างเดียว
       weight_per_unit: weightPerUnit,
       price_per_kg: pricePerKg,
       unit_cost: unitCost,

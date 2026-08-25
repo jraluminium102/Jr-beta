@@ -183,6 +183,7 @@ export interface StockItem {
   color?: string;             // 0106 — สีวัสดุ (แยกจากชื่อ)
   unit_cost: number;          // ต้นทุนต่อหน่วยฐาน (ต่อเส้น/ชิ้น) ล่าสุด
   is_weight_based: boolean;   // true = อลู คิดต่อโล
+  is_stocked?: boolean;       // 0125 — false = ของสั่งตามงาน (ไม่ได้สต็อกไว้) ใช้เป็นราคาอย่างเดียว ไม่หักสต็อก
   weight_per_unit: number;    // กก. ต่อ 1 หน่วย
   price_per_kg: number;       // ราคาต่อโลล่าสุด
   created_at: string;
