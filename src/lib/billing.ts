@@ -388,3 +388,70 @@ export async function ensureBillingJobAndPromote(
   void profileId;
   return { jobId, created, promoted, backfilled };
 }
+
+// ============================================================
+// Rev ใบวางบิลได้แม้ชำระแล้ว (24 ส.ค.69) — หา "งวด locked" จริงจาก DB
+//   ต้องตรงนิยามเดียวกับ RPC replace_unpaid_installments (0126) เป๊ะ ไม่งั้นแผนที่คิดฝั่ง TS
+//   จะไม่ตรงกับที่ RPC เห็นจริง (RPC จะ raise LOCKED_CHANGED กันไว้อีกชั้นถ้าไม่ตรง — แต่ควรตรงกันตั้งแต่ต้น)
+//   locked = paid หรือ paid_amount>0 (จ่ายบางส่วนก็ locked) หรือมี receipts/finance_entries ผูก (ไม่สนใจ is_voided)
+// ============================================================
+export interface InstallmentForLock {
+  id: number;
+  seq: number;
+  label: string;
+  amount: number;
+  paid_amount: number | null;
+  status: string;
+  base_amt?: number | null;
+  kind?: string | null;
+}
+
+export interface LockedInstallmentsResult {
+  lockedIds: Set<number>;
+  lockedSum: number;
+  paidLocked: number;
+  lockedMaterialBase: number;  // Σ base_amt kind='material'|'retention' (locked)
+  lockedLaborBase: number;     // Σ base_amt kind='labor' (locked)
+  lockedUnknownBase: number;   // locked แต่ไม่รู้ kind/base_amt ชัด (ใบเก่า) — ใช้ amount แทน (อนุรักษ์นิยม) + ยก taxWarning
+}
+
+export async function classifyLockedInstallments(
+  supabase: SupabaseClient,
+  installments: InstallmentForLock[],
+): Promise<LockedInstallmentsResult> {
+  const ids = installments.map((i) => i.id).filter((v): v is number => v != null);
+  const receiptIds = new Set<number>();
+  const financeIds = new Set<number>();
+  if (ids.length > 0) {
+    const [{ data: rc }, { data: fe }] = await Promise.all([
+      supabase.from("receipts").select("installment_id").in("installment_id", ids),
+      supabase.from("finance_entries").select("billing_installment_id").in("billing_installment_id", ids),
+    ]);
+    for (const r of (rc ?? []) as { installment_id: number | null }[]) {
+      if (r.installment_id != null) receiptIds.add(Number(r.installment_id));
+    }
+    for (const f of (fe ?? []) as { billing_installment_id: number | null }[]) {
+      if (f.billing_installment_id != null) financeIds.add(Number(f.billing_installment_id));
+    }
+  }
+
+  const lockedIds = new Set<number>();
+  let lockedSum = 0, paidLocked = 0, lockedMaterialBase = 0, lockedLaborBase = 0, lockedUnknownBase = 0;
+  for (const i of installments) {
+    const paid = Number(i.paid_amount) || 0;
+    const locked = i.status === "paid" || paid > 0 || receiptIds.has(i.id) || financeIds.has(i.id);
+    if (!locked) continue;
+    lockedIds.add(i.id);
+    lockedSum = round2(lockedSum + (Number(i.amount) || 0));
+    paidLocked = round2(paidLocked + paid);
+    const base = i.base_amt != null ? Number(i.base_amt) : null;
+    if (base == null || !i.kind) {
+      lockedUnknownBase = round2(lockedUnknownBase + (base ?? (Number(i.amount) || 0)));
+    } else if (i.kind === "labor") {
+      lockedLaborBase = round2(lockedLaborBase + base);
+    } else {
+      lockedMaterialBase = round2(lockedMaterialBase + base); // material + retention
+    }
+  }
+  return { lockedIds, lockedSum, paidLocked, lockedMaterialBase, lockedLaborBase, lockedUnknownBase };
+}

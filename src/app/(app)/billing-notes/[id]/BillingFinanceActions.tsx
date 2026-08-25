@@ -12,31 +12,47 @@ import DateField from "@/components/ui/DateField";
 export function EditBillingTotalButton({
   billingNoteId,
   currentTotal,
+  hasAnyPayment,
+  paidLocked,
 }: {
   billingNoteId: number;
   currentTotal: number;
+  /** มีงวดจ่ายแล้ว/ล็อกอยู่ไหม (จ่ายเต็ม/บางส่วน/มีใบเสร็จ-รายการเงินผูก) — true = ต้องผ่านโหมด Rev (เหตุผลบังคับ) */
+  hasAnyPayment?: boolean;
+  /** เงินที่รับจริงจากงวด locked (สำหรับเตือน "รับเกิน" ก่อนบันทึก) */
+  paidLocked?: number;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(String(currentTotal));
+  const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [overpaidNotice, setOverpaidNotice] = useState<number | null>(null);
+
+  const rev = !!hasAnyPayment;
+  const reasonOk = !rev || reason.trim().length >= 5;
+  const willOverpay = rev && (paidLocked ?? 0) > (Number(value) || 0) + 0.005;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const newTotal = Number(value);
     if (!newTotal || newTotal <= 0) { setError("ยอดต้องมากกว่า 0"); return; }
+    if (!reasonOk) { setError("Rev (แก้แม้ชำระแล้ว) ต้องระบุเหตุผล อย่างน้อย 5 ตัวอักษร"); return; }
     setBusy(true);
     setError("");
     const res = await fetch(`/api/billing-notes/${billingNoteId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ total: newTotal }),
+      body: JSON.stringify(rev ? { total: newTotal, rev: true, reason: reason.trim() } : { total: newTotal }),
     });
-    const json = await res.json();
+    const json = await res.json().catch(() => null);
     setBusy(false);
-    if (res.ok) { setOpen(false); router.refresh(); }
-    else setError(json.error ?? "แก้ยอดไม่สำเร็จ");
+    if (res.ok) {
+      const overpaid = Number(json?.data?.overpaid) || 0;
+      if (overpaid > 0.01) { setOverpaidNotice(overpaid); return; }
+      setOpen(false); router.refresh();
+    } else setError(json?.error ?? "แก้ยอดไม่สำเร็จ");
   }
 
   if (!open) {
@@ -46,8 +62,26 @@ export function EditBillingTotalButton({
         className="press inline-flex items-center gap-1.5 glass-soft rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark min-h-[44px] focus:outline-none focus-visible:ring-2"
         aria-label="แก้ยอดบิล"
       >
-        <Icon name="pencil" size={16} /> แก้ยอดบิล
+        <Icon name="pencil" size={16} /> {rev ? "แก้ยอดบิล (Rev)" : "แก้ยอดบิล"}
       </button>
+    );
+  }
+
+  if (overpaidNotice != null) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true" aria-label="แจ้งเตือนรับเงินเกิน">
+        <div className="relative w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl space-y-4">
+          <div className="text-sm text-red-800 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5 space-y-1">
+            <p className="font-bold flex items-center gap-1.5"><Icon name="warn" size={16} /> รับเงินเกิน ฿{baht(overpaidNotice)}</p>
+            <p>ยอดบิลใหม่ต่ำกว่าเงินที่ลูกค้าจ่ายมาแล้ว — <b>ต้องคืนเงินหรือออกเครดิตให้ลูกค้า</b> (บันทึก Rev สำเร็จแล้ว แต่ยอดนี้ยังค้างต้องจัดการ)</p>
+            <p className="mt-1.5 text-[12px]">⚠ ใบวางบิลนี้มีบรรทัดปรับยอด — <b>อย่าออกใบกำกับภาษีจากใบนี้</b> · ให้ออก<b>ใบลดหนี้</b>/คืนเงินในระบบบัญชี (FlowAccount)</p>
+          </div>
+          <button type="button" onClick={() => { setOverpaidNotice(null); setOpen(false); router.refresh(); }}
+            className="press w-full bg-brand text-white rounded-xl py-2.5 text-sm font-semibold min-h-[44px] focus:outline-none focus-visible:ring-2">
+            รับทราบ
+          </button>
+        </div>
+      </div>
     );
   }
 
@@ -64,7 +98,7 @@ export function EditBillingTotalButton({
       >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-brand-dark flex items-center gap-2">
-            <Icon name="pencil" size={18} /> แก้ยอดบิล
+            <Icon name="pencil" size={18} /> {rev ? "แก้ยอดบิล (Rev — แก้แม้ชำระแล้ว)" : "แก้ยอดบิล"}
           </h2>
           <button
             type="button"
@@ -80,8 +114,16 @@ export function EditBillingTotalButton({
           ยอดปัจจุบัน:{" "}
           <b className="tabular-nums">฿{baht(currentTotal)}</b>
           <br />
-          งวดชำระจะถูก re-split อัตโนมัติ — แก้งวดต่อได้ภายหลัง
+          {rev
+            ? "งวดที่จ่ายแล้ว/มีใบเสร็จผูกอยู่จะถูกตรึงไว้เป๊ะ — ระบบ re-split เฉพาะงวดที่เหลือให้อัตโนมัติ"
+            : "งวดชำระจะถูก re-split อัตโนมัติ — แก้งวดต่อได้ภายหลัง"}
         </div>
+
+        {willOverpay && (
+          <div className="text-sm text-red-800 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">
+            ⚠ ยอดใหม่นี้ต่ำกว่าเงินที่รับมาแล้ว (฿{baht(paidLocked ?? 0)}) — จะถือเป็น <b>&quot;รับเงินเกิน&quot;</b> ต้องคืน/เครดิตลูกค้า
+          </div>
+        )}
 
         <label className="block text-sm">
           <span className="text-xs font-medium text-gray-500">
@@ -100,6 +142,17 @@ export function EditBillingTotalButton({
           />
         </label>
 
+        {rev && (
+          <label className="block text-sm">
+            <span className="text-xs font-medium text-gray-500">เหตุผลที่ Rev <span className="text-red-600">*</span></span>
+            <textarea
+              required rows={2} value={reason} onChange={(e) => setReason(e.target.value)}
+              placeholder="เช่น ลูกค้าเพิ่มงาน / แก้ไขยอดหลังตกลงราคาใหม่"
+              className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus-visible:ring-2 resize-none"
+            />
+          </label>
+        )}
+
         {error && (
           <p role="alert" className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
             {error}
@@ -117,7 +170,7 @@ export function EditBillingTotalButton({
           </button>
           <button
             type="submit"
-            disabled={busy || !value || Number(value) <= 0}
+            disabled={busy || !value || Number(value) <= 0 || !reasonOk}
             className="press flex-1 bg-brand text-white rounded-xl py-2.5 text-sm font-semibold shadow-brand disabled:opacity-50 min-h-[44px] flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2"
           >
             {busy && (
@@ -136,41 +189,63 @@ export function EditBillingTotalButton({
 // คิดใหม่จาก subtotal ของบิลเอง → net → re-split งวด (API โหมด B)
 // ─────────────────────────────────────────────
 export function EditBillingBreakdownButton({
-  billingNoteId, subtotal, discount_pct, vat_rate, wht_rate,
+  billingNoteId, subtotal, discount_pct, vat_rate, wht_rate, hasAnyPayment, paidLocked, forceRev,
 }: {
   billingNoteId: number;
   subtotal: number;
   discount_pct: number;
   vat_rate: number;
   wht_rate: number;
+  /** มีงวดจ่ายแล้ว/ล็อกอยู่ไหม — true = ต้องผ่านโหมด Rev (เหตุผลบังคับ) */
+  hasAnyPayment?: boolean;
+  /** เงินที่รับจริงจากงวด locked (สำหรับเตือน "รับเกิน") */
+  paidLocked?: number;
+  /** บิลค่าแรง (labor_amt) — ต้องผ่าน Rev เสมอไม่ว่าจ่ายหรือยัง (ทางเดียวที่ re-split ภาษีต่องวดถูก) */
+  forceRev?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [disc, setDisc] = useState(discount_pct);
   const [vat, setVat] = useState(vat_rate);
   const [wht, setWht] = useState(wht_rate);
+  const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [overpaidNotice, setOverpaidNotice] = useState<number | null>(null);
+  const [taxWarnNotice, setTaxWarnNotice] = useState(false);
+
+  const rev = !!hasAnyPayment || !!forceRev;
+  const reasonOk = !rev || reason.trim().length >= 5;
 
   const base = Number(subtotal) || 0;
   const t = useMemo(
     () => computeTotals({ items: [{ qty: 1, unit_price: base }], vat_rate: vat, discount_pct: disc, wht_rate: wht }),
     [base, vat, disc, wht]
   );
+  const willOverpay = rev && (paidLocked ?? 0) > t.net + 0.005;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (!reasonOk) { setError("Rev (แก้แม้ชำระแล้ว) ต้องระบุเหตุผล อย่างน้อย 5 ตัวอักษร"); return; }
     setBusy(true);
     setError("");
     const res = await fetch(`/api/billing-notes/${billingNoteId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ discount_pct: disc, vat_rate: vat, wht_rate: wht }),
+      body: JSON.stringify(
+        rev ? { discount_pct: disc, vat_rate: vat, wht_rate: wht, rev: true, reason: reason.trim() }
+          : { discount_pct: disc, vat_rate: vat, wht_rate: wht }
+      ),
     });
     const json = await res.json().catch(() => null);
     setBusy(false);
-    if (res.ok) { setOpen(false); router.refresh(); }
-    else setError(json?.error ?? "แก้ยอดแยกไม่สำเร็จ");
+    if (res.ok) {
+      const overpaid = Number(json?.data?.overpaid) || 0;
+      const warn = !!json?.data?.taxWarning;
+      if (overpaid > 0.01) { setOverpaidNotice(overpaid); return; }
+      if (warn) { setTaxWarnNotice(true); return; }
+      setOpen(false); router.refresh();
+    } else setError(json?.error ?? "แก้ยอดแยกไม่สำเร็จ");
   }
 
   if (!open) {
@@ -180,8 +255,42 @@ export function EditBillingBreakdownButton({
         className="press inline-flex items-center gap-1.5 glass-soft rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark min-h-[44px] focus:outline-none focus-visible:ring-2"
         aria-label="แก้ VAT / ส่วนลด"
       >
-        <Icon name="pencil" size={16} /> แก้ VAT / ส่วนลด
+        <Icon name="pencil" size={16} /> {rev ? "แก้ VAT / ส่วนลด (Rev)" : "แก้ VAT / ส่วนลด"}
       </button>
+    );
+  }
+
+  if (overpaidNotice != null) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true" aria-label="แจ้งเตือนรับเงินเกิน">
+        <div className="relative w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl space-y-4">
+          <div className="text-sm text-red-800 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5 space-y-1">
+            <p className="font-bold flex items-center gap-1.5"><Icon name="warn" size={16} /> รับเงินเกิน ฿{baht(overpaidNotice)}</p>
+            <p>ยอดบิลใหม่ต่ำกว่าเงินที่ลูกค้าจ่ายมาแล้ว — <b>ต้องคืนเงินหรือออกเครดิตให้ลูกค้า</b> (บันทึก Rev สำเร็จแล้ว แต่ยอดนี้ยังค้างต้องจัดการ)</p>
+            <p className="mt-1.5 text-[12px]">⚠ ใบวางบิลนี้มีบรรทัดปรับยอด — <b>อย่าออกใบกำกับภาษีจากใบนี้</b> · ให้ออก<b>ใบลดหนี้</b>/คืนเงินในระบบบัญชี (FlowAccount)</p>
+          </div>
+          <button type="button" onClick={() => { setOverpaidNotice(null); setOpen(false); router.refresh(); }}
+            className="press w-full bg-brand text-white rounded-xl py-2.5 text-sm font-semibold min-h-[44px] focus:outline-none focus-visible:ring-2">
+            รับทราบ
+          </button>
+        </div>
+      </div>
+    );
+  }
+  if (taxWarnNotice) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true" aria-label="แจ้งเตือนตรวจภาษีต่องวด">
+        <div className="relative w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl space-y-4">
+          <div className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 space-y-1">
+            <p className="font-bold flex items-center gap-1.5"><Icon name="warn" size={16} /> บันทึกสำเร็จ — ตรวจภาษีต่องวดเอง</p>
+            <p>มีงวดเก่าที่ระบบไม่มีข้อมูลภาษีต่องวดชัดเจน (ใบเก่า) — ยอดรวมถูกต้อง แต่การแยกฐาน/VAT/หัก ณ ที่จ่ายต่องวดของ Rev นี้ควรให้บัญชีตรวจซ้ำก่อนออกใบเสร็จ</p>
+          </div>
+          <button type="button" onClick={() => { setTaxWarnNotice(false); setOpen(false); router.refresh(); }}
+            className="press w-full bg-brand text-white rounded-xl py-2.5 text-sm font-semibold min-h-[44px] focus:outline-none focus-visible:ring-2">
+            รับทราบ
+          </button>
+        </div>
+      </div>
     );
   }
 
@@ -190,7 +299,7 @@ export function EditBillingBreakdownButton({
       <form onSubmit={submit} className="relative w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-brand-dark flex items-center gap-2">
-            <Icon name="pencil" size={18} /> แก้ VAT / ส่วนลด
+            <Icon name="pencil" size={18} /> {rev ? "แก้ VAT / ส่วนลด (Rev — แก้แม้ชำระแล้ว)" : "แก้ VAT / ส่วนลด"}
           </h2>
           <button type="button" onClick={() => setOpen(false)} aria-label="ปิด"
             className="press w-9 h-9 inline-flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 focus:outline-none focus-visible:ring-2">
@@ -199,8 +308,26 @@ export function EditBillingBreakdownButton({
         </div>
 
         <div className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
-          คิดใหม่จากยอดก่อนภาษี <b className="tabular-nums">฿{baht(base)}</b> · งวดชำระจะ re-split อัตโนมัติตามยอดใหม่
+          คิดใหม่จากยอดก่อนภาษี <b className="tabular-nums">฿{baht(base)}</b> ·{" "}
+          {rev ? "งวด locked ตรึงไว้ + re-split เฉพาะที่เหลือ" : "งวดชำระจะ re-split อัตโนมัติตามยอดใหม่"}
         </div>
+
+        {willOverpay && (
+          <div className="text-sm text-red-800 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">
+            ⚠ ยอดใหม่นี้ต่ำกว่าเงินที่รับมาแล้ว (฿{baht(paidLocked ?? 0)}) — จะถือเป็น <b>&quot;รับเงินเกิน&quot;</b> ต้องคืน/เครดิตลูกค้า
+          </div>
+        )}
+
+        {rev && (
+          <label className="block text-sm">
+            <span className="text-xs font-medium text-gray-500">เหตุผลที่ Rev <span className="text-red-600">*</span></span>
+            <textarea
+              required rows={2} value={reason} onChange={(e) => setReason(e.target.value)}
+              placeholder="เช่น ลูกค้าเพิ่มงาน / แก้ไขยอดหลังตกลงราคาใหม่"
+              className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus-visible:ring-2 resize-none"
+            />
+          </label>
+        )}
 
         {/* footer เดียวกับตอนสร้าง */}
         <div className="space-y-1.5 text-sm">
@@ -242,7 +369,7 @@ export function EditBillingBreakdownButton({
             className="press flex-1 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-700 hover:bg-gray-50 min-h-[44px] focus:outline-none focus-visible:ring-2">
             ยกเลิก
           </button>
-          <button type="submit" disabled={busy}
+          <button type="submit" disabled={busy || !reasonOk}
             className="press flex-1 bg-brand text-white rounded-xl py-2.5 text-sm font-semibold shadow-brand disabled:opacity-50 min-h-[44px] flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2">
             {busy && <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />}
             บันทึก
@@ -743,36 +870,43 @@ export function InstallmentEditor({
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
-  // แยกงวด: จ่ายเต็ม(ล็อก ไม่แตะ) / จ่ายบางส่วน(block) / ยังไม่จ่าย(แก้ได้)
-  const isFullyPaid = (i: InstallmentRow) =>
-    i.status === "paid" || (Number(i.paid_amount) || 0) >= i.amount;
-  const isPartial = (i: InstallmentRow) => {
-    const p = Number(i.paid_amount) || 0;
-    return p > 0 && p < i.amount;
-  };
-  const paidRows = initialInstallments.filter(isFullyPaid).slice().sort((a, b) => a.seq - b.seq);
-  const hasPartial = initialInstallments.some(isPartial);
-  const hasPaid = paidRows.length > 0;
-  const paidSum = round2(paidRows.reduce((s, i) => s + (Number(i.amount) || 0), 0));
-  const maxPaidSeq = paidRows.reduce((m, i) => Math.max(m, i.seq), 0);
-  // ยอดที่งวดที่ยังไม่จ่ายต้องรวมให้ได้ = ยอดบิล − งวดที่จ่ายแล้ว
-  const targetSum = round2(total - paidSum);
+  // แยกงวด: locked (จ่ายเต็ม/จ่ายบางส่วน/มีใบเสร็จ-รายการเงินผูก — ตรึงไว้ ไม่แตะ) / ยังไม่จ่าย (แก้ได้)
+  // ⚠ client รู้แค่ status/paid_amount (ไม่รู้ receipts/finance_entries ที่ผูกอยู่) — เป็น preview เท่านั้น
+  //   ตัวตัดสินจริงอยู่ที่ RPC replace_unpaid_installments (0126) ฝั่ง server เสมอ
+  const isLocked = (i: InstallmentRow) =>
+    i.status === "paid" || (Number(i.paid_amount) || 0) > 0;
+  const lockedRows = initialInstallments.filter(isLocked).slice().sort((a, b) => a.seq - b.seq);
+  const hasPaid = lockedRows.length > 0;
+  const lockedSum = round2(lockedRows.reduce((s, i) => s + (Number(i.amount) || 0), 0));
+  const paidLocked = round2(lockedRows.reduce((s, i) => s + (Number(i.paid_amount) || 0), 0));
+  const maxPaidSeq = lockedRows.reduce((m, i) => Math.max(m, i.seq), 0);
 
-  // rid stable key — แก้ได้เฉพาะงวดที่ยังไม่จ่าย
+  // Rev: ยอดบิลใหม่แก้ได้ (default = ยอดเดิม) — เฉพาะตอนมีงวด locked เท่านั้น (ไม่งั้นแก้ยอดตรงผ่านปุ่ม "แก้ยอดบิล" อยู่แล้ว)
+  const [newTotalStr, setNewTotalStr] = useState(String(total));
+  const newTotal = hasPaid ? (Number(newTotalStr) || 0) : total;
+  // ยอดที่งวดที่ยังไม่จ่ายต้องรวมให้ได้ = ยอดบิลใหม่ − งวด locked
+  const targetSum = round2(newTotal - lockedSum);
+  const belowLocked = hasPaid && targetSum < -0.005; // ยอดใหม่ < ที่ล็อกไว้ (รับเกิน) — เครื่องมือนี้ไม่รองรับ ชี้ไปปุ่ม "แก้ยอดบิล"
+
+  const [reason, setReason] = useState("");
+  const reasonOk = !hasPaid || reason.trim().length >= 5;
+
+  // rid stable key — แก้ได้เฉพาะงวดที่ยังไม่ locked
   const ridRef = useRef(0);
   type EditRow = { rid: number; label: string; amount: number; due_date: string | null };
   const [rows, setRows] = useState<EditRow[]>(() =>
     initialInstallments
-      .filter((i) => !isFullyPaid(i) && !isPartial(i))
+      .filter((i) => !isLocked(i))
       .sort((a, b) => a.seq - b.seq)
       .map((i) => ({ rid: ridRef.current++, label: i.label, amount: i.amount, due_date: i.due_date }))
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [overpaidNotice, setOverpaidNotice] = useState<number | null>(null); // แสดงเตือนหลังบันทึกสำเร็จ ก่อนปิด/refresh
 
   const sum = round2(rows.reduce((s, r) => s + (Number(r.amount) || 0), 0));
   const diff = round2(Math.abs(sum - targetSum));
-  const sumOk = diff <= 0.01;
+  const sumOk = !belowLocked && diff <= 0.01;
 
   function addRow() {
     // เติมยอดที่เหลือ (targetSum − ผลรวมปัจจุบัน) ให้งวดใหม่ → ผลรวมไม่เพี้ยน บันทึกได้ทันที
@@ -819,30 +953,35 @@ export function InstallmentEditor({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (belowLocked) {
+      setError(`ยอดใหม่ (${baht(newTotal)}) ต่ำกว่างวดที่ล็อกไว้แล้ว (${baht(lockedSum)}) — เครื่องมือนี้ไม่รองรับกรณี "รับเกิน" ใช้ปุ่ม "แก้ยอดบิล" แทน`);
+      return;
+    }
     if (!sumOk) {
       setError(hasPaid
-        ? `ผลรวมงวดที่เหลือ ${baht(sum)} ต้องเท่ากับ ${baht(targetSum)} (ยอดบิล − ที่จ่ายแล้ว)`
+        ? `ผลรวมงวดที่เหลือ ${baht(sum)} ต้องเท่ากับ ${baht(targetSum)} (ยอดบิลใหม่ − งวดที่ล็อกไว้)`
         : `ผลรวม ${baht(sum)} ต้องตรงกับยอดบิล ${baht(total)}`);
       return;
     }
+    if (hasPaid && !reasonOk) { setError("Rev (แก้แม้ชำระแล้ว) ต้องระบุเหตุผล อย่างน้อย 5 ตัวอักษร"); return; }
     setBusy(true);
     setError("");
-    // มีงวดจ่ายแล้ว → endpoint แก้เฉพาะงวดยังไม่จ่าย (เก็บงวด paid ไว้); ไม่มี → replace ทั้งชุด
-    const endpoint = hasPaid
-      ? `/api/billing-notes/${billingNoteId}/installments/unpaid`
-      : `/api/billing-notes/${billingNoteId}/installments`;
+    // มีงวด locked → ใช้โหมด Rev (เก็บงวด locked ไว้ + ยอดบิลเปลี่ยนได้); ไม่มี → replace ทั้งชุด (เดิม)
     const payload = hasPaid
-      ? { installments: rows.map((r) => ({ label: r.label, amount: Number(r.amount) || 0, due_date: r.due_date ?? null })) }
+      ? { installments: rows.map((r) => ({ label: r.label, amount: Number(r.amount) || 0, due_date: r.due_date ?? null })), rev: true, reason: reason.trim() }
       : { installments: rows.map((r, idx) => ({ seq: idx + 1, label: r.label, amount: Number(r.amount) || 0, due_date: r.due_date ?? null })) };
-    const res = await fetch(endpoint, {
+    const res = await fetch(`/api/billing-notes/${billingNoteId}/installments`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    const json = await res.json();
+    const json = await res.json().catch(() => null);
     setBusy(false);
-    if (res.ok) { setOpen(false); router.refresh(); }
-    else setError(json.error ?? "บันทึกไม่สำเร็จ");
+    if (res.ok) {
+      const overpaid = Number(json?.data?.overpaid) || 0;
+      if (overpaid > 0.01) { setOverpaidNotice(overpaid); return; } // ค้างเตือนไว้ก่อนปิด
+      setOpen(false); router.refresh();
+    } else setError(json?.error ?? "บันทึกไม่สำเร็จ");
   }
 
   if (!open) {
@@ -857,26 +996,19 @@ export function InstallmentEditor({
     );
   }
 
-  // งวดจ่ายบางส่วน → block (re-split งวดค้างจ่ายต้องคนตัดสิน) — ชี้ไป void
-  if (hasPartial) {
+  // บันทึก Rev สำเร็จแล้วพบว่า "รับเกิน" — เตือนเด่น ๆ ก่อนปิด (ห้ามซ่อน/ห้ามทำให้เงินหาย)
+  if (overpaidNotice != null) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true" aria-label="แก้ไขงวดชำระ">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true" aria-label="แจ้งเตือนรับเงินเกิน">
         <div className="relative w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-brand-dark flex items-center gap-2">
-              <Icon name="clipboard" size={18} /> แก้ไขงวดชำระ
-            </h2>
-            <button type="button" onClick={() => setOpen(false)} aria-label="ปิด"
-              className="press w-9 h-9 inline-flex items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 focus:outline-none focus-visible:ring-2">
-              <Icon name="close" size={18} />
-            </button>
+          <div className="text-sm text-red-800 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5 space-y-1">
+            <p className="font-bold flex items-center gap-1.5"><Icon name="warn" size={16} /> รับเงินเกิน ฿{baht(overpaidNotice)}</p>
+            <p>ยอดบิลใหม่ต่ำกว่าเงินที่ลูกค้าจ่ายมาแล้ว — <b>ต้องคืนเงินหรือออกเครดิตให้ลูกค้า</b> (บันทึก Rev สำเร็จแล้ว แต่ยอดนี้ยังค้างต้องจัดการ)</p>
+            <p className="mt-1.5 text-[12px]">⚠ ใบวางบิลนี้มีบรรทัดปรับยอด — <b>อย่าออกใบกำกับภาษีจากใบนี้</b> · ให้ออก<b>ใบลดหนี้</b>/คืนเงินในระบบบัญชี (FlowAccount)</p>
           </div>
-          <div className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
-            มีงวดที่จ่ายบางส่วน (ยังไม่เต็มงวด) — <b>ปรับงวดไม่ได้</b> ต้องเก็บงวดนั้นให้ครบ หรือ &quot;ยกเลิกใบวางบิล&quot; แล้วออกใหม่
-          </div>
-          <button type="button" onClick={() => setOpen(false)}
-            className="press w-full border border-gray-200 rounded-xl py-2.5 text-sm text-gray-700 hover:bg-gray-50 min-h-[44px] focus:outline-none focus-visible:ring-2">
-            เข้าใจแล้ว
+          <button type="button" onClick={() => { setOverpaidNotice(null); setOpen(false); router.refresh(); }}
+            className="press w-full bg-brand text-white rounded-xl py-2.5 text-sm font-semibold min-h-[44px] focus:outline-none focus-visible:ring-2">
+            รับทราบ
           </button>
         </div>
       </div>
@@ -904,11 +1036,40 @@ export function InstallmentEditor({
           </button>
         </div>
 
-        {/* ตัวเตือนผลรวม — ปรับข้อความตามว่ามีงวดจ่ายแล้วไหม */}
+        {/* Rev: แก้ยอดบิลใหม่ได้ตรงนี้เลย (เฉพาะตอนมีงวด locked) */}
+        {hasPaid && (
+          <div className="rounded-xl border border-brand/20 bg-brand-soft/40 p-3 space-y-2">
+            <label className="block text-sm">
+              <span className="text-xs font-medium text-brand-dark flex items-center gap-1"><Icon name="pencil" size={13} /> ยอดบิลใหม่ (Rev)</span>
+              <input
+                type="number" inputMode="decimal" step="0.01"
+                value={newTotalStr}
+                onChange={(e) => setNewTotalStr(e.target.value)}
+                className="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-right tabular-nums outline-none focus-visible:ring-2"
+              />
+            </label>
+            {belowLocked && (
+              <p className="text-xs text-red-700">
+                ยอดใหม่ต่ำกว่างวดที่ล็อกไว้ (฿{baht(lockedSum)}) — เครื่องมือนี้ไม่รองรับกรณี &quot;รับเกิน&quot; ใช้ปุ่ม &quot;แก้ยอดบิล&quot; แทน
+              </p>
+            )}
+            <label className="block text-sm">
+              <span className="text-xs font-medium text-gray-500">เหตุผลที่ Rev <span className="text-red-600">*</span></span>
+              <textarea
+                required rows={2} value={reason} onChange={(e) => setReason(e.target.value)}
+                placeholder="เช่น ลูกค้าเพิ่มงาน / แก้ไขยอดหลังตกลงราคาใหม่"
+                className="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm outline-none focus-visible:ring-2 resize-none"
+              />
+            </label>
+          </div>
+        )}
+
+        {/* ตัวเตือนผลรวม — ปรับข้อความตามว่ามีงวด locked ไหม */}
         <div className={`text-sm px-3 py-2 rounded-xl border ${sumOk ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-red-50 border-red-200 text-red-800"}`}>
           {hasPaid ? (
             <>
-              จ่ายแล้ว <b className="tabular-nums">{baht(paidSum)}</b>
+              ล็อกไว้ (ตรึง ไม่แตะ) <b className="tabular-nums">{baht(lockedSum)}</b>
+              {" · "}จ่ายจริงในงวดล็อก <b className="tabular-nums">{baht(paidLocked)}</b>
               {" · "}งวดที่เหลือต้องรวม <b className="tabular-nums">{baht(targetSum)}</b>
               {" "}(ตอนนี้ <b className="tabular-nums">{baht(sum)}</b>)
             </>
@@ -918,17 +1079,17 @@ export function InstallmentEditor({
               {" "}/ ยอดบิล: <b className="tabular-nums">{baht(total)}</b>
             </>
           )}
-          {!sumOk && <span className="ml-2">ต่างกัน {baht(diff)}</span>}
+          {!sumOk && !belowLocked && <span className="ml-2">ต่างกัน {baht(diff)}</span>}
         </div>
 
-        {/* งวดที่จ่ายแล้ว (ล็อก แก้ไม่ได้) */}
-        {paidRows.map((p) => (
-          <div key={`paid-${p.id}`} className="grid grid-cols-12 gap-2 items-center bg-emerald-50/60 border border-emerald-100 rounded-lg px-1 py-1.5">
+        {/* งวด locked (จ่ายแล้ว/มีใบเสร็จ-รายการเงินผูก — ตรึงไว้ แก้ไม่ได้) */}
+        {lockedRows.map((p) => (
+          <div key={`locked-${p.id}`} className="grid grid-cols-12 gap-2 items-center bg-emerald-50/60 border border-emerald-100 rounded-lg px-1 py-1.5">
             <div className="col-span-1 text-xs text-gray-400 text-center">{p.seq}</div>
             <div className="col-span-4 text-sm text-ink-2 truncate px-1">{p.label}</div>
             <div className="col-span-3 text-sm text-right tabular-nums font-medium px-1">฿{baht(p.amount)}</div>
             <div className="col-span-4 text-xs text-emerald-700 font-medium text-center inline-flex items-center justify-center gap-1">
-              <Icon name="check" size={13} /> ชำระแล้ว
+              <Icon name="shield" size={13} /> ล็อก
             </div>
           </div>
         ))}
@@ -1018,10 +1179,10 @@ export function InstallmentEditor({
             className="press flex-1 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-700 hover:bg-gray-50 min-h-[44px] focus:outline-none focus-visible:ring-2">
             ยกเลิก
           </button>
-          <button type="submit" disabled={busy || !sumOk}
+          <button type="submit" disabled={busy || !sumOk || !reasonOk}
             className="press flex-1 bg-brand text-white rounded-xl py-2.5 text-sm font-semibold shadow-brand disabled:opacity-50 min-h-[44px] flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2">
             {busy && <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />}
-            บันทึกงวด
+            {hasPaid ? "บันทึก Rev" : "บันทึกงวด"}
           </button>
         </div>
       </form>

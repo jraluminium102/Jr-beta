@@ -5,7 +5,11 @@ import { ok, fail, UNAUTHORIZED } from "@/lib/bff";
 import { requirePermission } from "@/lib/bff/context";
 import { withRoute, audit } from "@/lib/bff/handler";
 import { err, notFound } from "@/lib/bff/response";
-import { suggestInstallments, computeTotals, footerSnapshot, backoutVat } from "@/lib/money";
+import {
+  suggestInstallments, computeTotals, footerSnapshot, backoutVat,
+  planRevUnpaidInstallments, planRevUnpaidInstallmentsLabor,
+} from "@/lib/money";
+import { classifyLockedInstallments, type InstallmentForLock } from "@/lib/billing";
 
 // GET /api/billing-notes/[id]  → ใบวางบิล + งวดชำระ
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
@@ -37,6 +41,11 @@ const PatchSchema = z.object({
   vat_rate: z.number().min(0).max(100).optional(),
   wht_rate: z.number().min(0).max(100).optional(),
   labor_ratio: z.number().min(0, "% ค่าแรงต้อง ≥ 0").max(100, "% ค่าแรงต้องอยู่ 0–100").nullable().optional(),
+  // ── Rev ใบวางบิลได้แม้ชำระแล้ว (24 ส.ค.69) — แยก flow จาก edit ก่อนจ่ายเดิมโดยสิ้นเชิง ──
+  //   rev:true = ข้าม guard "ห้ามแก้ถ้าจ่ายแล้ว" แล้วใช้ replace_unpaid_installments (0126) แทน
+  //   (ตรึงงวด locked ไว้ + re-split เฉพาะที่เหลือ) — ต้องระบุ reason เสมอ (บังคับ audit trail)
+  rev: z.boolean().optional(),
+  reason: z.string().max(500).optional(),
 });
 
 export const PATCH = withRoute(
@@ -85,19 +94,32 @@ export const PATCH = withRoute(
     if (!isBreakdownMode && parsed.data.total == null) return err("ต้องระบุยอดใหม่ หรือ ส่วนลด/VAT", 400);
     const bnId = params.id;
 
-    // 1) ดึงใบวางบิล + งวดปัจจุบัน (subtotal ใช้เป็นฐานโหมด B)
+    // Rev หลังชำระแล้ว (24 ส.ค.69) — ต้องระบุเหตุผลเสมอ (บังคับ audit trail)
+    const rev = parsed.data.rev === true;
+    const revReason = (parsed.data.reason ?? "").trim();
+    if (rev && revReason.length < 5) {
+      return err("Rev (แก้แม้ชำระแล้ว) ต้องระบุเหตุผล อย่างน้อย 5 ตัวอักษร", 400);
+    }
+
+    // 1) ดึงใบวางบิล + งวดปัจจุบัน (subtotal ใช้เป็นฐานโหมด B) + ฟิลด์ภาษี booked ต่องวด (0102/0117 — ใช้คำนวณ Rev บิลค่าแรง)
     // ดึง breakdown เดิมด้วย (ใช้ rollback ให้ครบถ้า RPC fail — บัญชีเตือน footer ต้องตรง total เสมอ)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: bn, error: bnErr } = await (ctx.supabase as any)
       .from("billing_notes")
-      .select("id, total, subtotal, discount_pct, discount_amt, vat_rate, vat_amt, wht_rate, wht_amt, has_tax_breakdown, vat_rate_set, labor_ratio, labor_amt, quotation_id, status, billing_installments(id, status, paid_amount)")
+      .select("id, total, subtotal, discount_pct, discount_amt, vat_rate, vat_amt, wht_rate, wht_amt, has_tax_breakdown, vat_rate_set, labor_ratio, labor_amt, quotation_id, status, billing_installments(id, seq, label, amount, status, paid_amount, base_amt, kind)")
       .eq("id", bnId)
       .single();
     if (bnErr || !bn) return notFound("ไม่พบใบวางบิล");
     if (bn.status === "cancelled") return err("ใบวางบิลถูกยกเลิกแล้ว แก้ยอดไม่ได้", 409);
-    // 🔴 บิลค่าแรง (หัก ณ ที่จ่ายเฉพาะค่าแรง · ภาษี booked ต่องวด) — re-split (โหมด A/B) จะล้างภาษีต่องวด → ใบเสร็จหักผิด
-    //    บล็อกไว้ก่อน (RPC ยังไม่รองรับ labor-split re-split) · ต้องยกเลิกใบวางบิลแล้วออกใหม่
-    if (bn.labor_amt != null) return err("ใบวางบิลค่าแรง (หัก ณ ที่จ่ายเฉพาะค่าแรง) แก้ยอด/ส่วนลด/VAT/งวดไม่ได้ — ต้องยกเลิกใบวางบิลแล้วออกใหม่ (กันภาษีต่องวดเพี้ยน)", 409);
+    const isLaborBill = bn.labor_amt != null;
+    // 🔴 บิลค่าแรง (หัก ณ ที่จ่ายเฉพาะค่าแรง · ภาษี booked ต่องวด) — ต้องผ่านโหมด B + Rev เท่านั้น (มีทาง re-split
+    //    แบบ tax-aware ทางเดียว คือ planRevUnpaidInstallmentsLabor — ทำได้แม้ยังไม่จ่ายก็ได้ แค่ต้องใช้ path นี้เสมอ)
+    if (isLaborBill && !isBreakdownMode) {
+      return err("ใบวางบิลค่าแรง (หัก ณ ที่จ่ายเฉพาะค่าแรง) แก้ยอดตรง (flat) ไม่ได้ — ใช้ 'แก้ VAT / ส่วนลด' แบบ Rev แทน", 409);
+    }
+    if (isLaborBill && !rev) {
+      return err("ใบวางบิลค่าแรง (หัก ณ ที่จ่ายเฉพาะค่าแรง) แก้ยอด/ส่วนลด/VAT ต้องผ่านโหมด Rev (ระบุเหตุผล) เท่านั้น — กันภาษีต่องวดเพี้ยน", 409);
+    }
 
     // breakdown เดิม (สำหรับ rollback) — คืนให้ครบทุกคอลัมน์ ไม่ใช่แค่ total
     const oldBreakdown = {
@@ -109,6 +131,8 @@ export const PATCH = withRoute(
     // คำนวณ newTotal + breakdown ตามโหมด
     let newTotal: number;
     let breakdown: Record<string, number | boolean | null>;
+    // labor bill เท่านั้น: เป้าหมายฐาน material/labor (ก่อน VAT) ใหม่ทั้งใบ — ใช้วางแผน Rev ต่อ (planRevUnpaidInstallmentsLabor)
+    let laborTargets: { material: number; labor: number } | null = null;
     if (isBreakdownMode) {
       // กันยอด booked เพี้ยน (บัญชีสั่ง 13ก.ค.): บิลที่ส่วนลดเป็น "จำนวนเงิน" (pct×subtotal ≠ discount_amt เป๊ะ)
       // mode B คิด footer ใหม่จาก % → total/งวดจะ drift · ยังไม่รองรับส่วนลดบาทในโหมดคิดใหม่ → กั้นไว้
@@ -134,16 +158,27 @@ export const PATCH = withRoute(
       const disc = Number(parsed.data.discount_pct) || 0;
       const vat = Number(parsed.data.vat_rate) || 0;
       const wht = Number(parsed.data.wht_rate) || 0;
-      const bt = computeTotals({ items: [{ qty: 1, unit_price: sub }], vat_rate: vat, discount_pct: disc, wht_rate: wht });
+      // บิลค่าแรง: ส่ง labor_amount เดิม (bn.labor_amt) เข้า computeTotals → WHT คิดเฉพาะค่าแรง (ตรงกับตอนสร้างบิล)
+      const bt = computeTotals({
+        items: [{ qty: 1, unit_price: sub }], vat_rate: vat, discount_pct: disc, wht_rate: wht,
+        ...(isLaborBill ? { labor_amount: Number(bn.labor_amt) || 0 } : {}),
+      });
       newTotal = bt.net;
       breakdown = {
         subtotal: bt.subtotal, discount_pct: disc, discount_amt: bt.discount_amt,
         vat_rate: vat, vat_amt: bt.vat_amt, wht_rate: wht, wht_amt: bt.wht_amt,
         has_tax_breakdown: true, vat_rate_set: true, // ผู้ใช้ยืนยันอัตรา VAT เอง → ใบเสร็จใช้ค่านี้ (0095)
       };
-      // labor_ratio ปรับได้พร้อมกัน (null = ล้างการแยกค่าแรง/ค่าของ) — ตั้งเฉพาะเมื่อส่งมา
-      // ⚠ ใช้ร่วมกับหัก ณ ที่จ่ายระดับใบ (wht>0) ไม่ได้ → บังคับ null (ยอดงวดหลัง WHT ทำถอด VAT เพี้ยน)
-      if (parsed.data.labor_ratio !== undefined) breakdown.labor_ratio = wht > 0 ? null : parsed.data.labor_ratio;
+      if (isLaborBill) {
+        // labor_amt ที่แท้จริง (clamp ตาม after_discount) + labor_ratio derive ไว้โชว์ (สูตรเดียวกับตอนสร้างบิล POST /billing-notes)
+        breakdown.labor_amt = bt.labor_amt;
+        breakdown.labor_ratio = bt.after_discount > 0 ? Math.round((bt.labor_amt / bt.after_discount) * 10000) / 100 : null;
+        laborTargets = { material: bt.material_amt, labor: bt.labor_amt };
+      } else if (parsed.data.labor_ratio !== undefined) {
+        // labor_ratio ปรับได้พร้อมกัน (null = ล้างการแยกค่าแรง/ค่าของ) — ตั้งเฉพาะเมื่อส่งมา
+        // ⚠ ใช้ร่วมกับหัก ณ ที่จ่ายระดับใบ (wht>0) ไม่ได้ → บังคับ null (ยอดงวดหลัง WHT ทำถอด VAT เพี้ยน)
+        breakdown.labor_ratio = wht > 0 ? null : parsed.data.labor_ratio;
+      }
     } else {
       // ── โหมด A: แก้ยอดตรง (flat) ──
       // ⚠ ใบที่มีหัก ณ ที่จ่าย: ยอด flat ที่กรอกคือ "ก่อนหัก WHT" หรือ "เงินที่โอนจริงหลังหัก"? — ไม่มีทางรู้
@@ -166,84 +201,120 @@ export const PATCH = withRoute(
     }
     if (newTotal <= 0) return err("ยอดสุทธิต้องมากกว่า 0", 400);
 
-    const installments = bn.billing_installments ?? [];
+    const installments = (bn.billing_installments ?? []) as InstallmentForLock[];
     const instIds = installments.map((i) => i.id);
 
-    // 2) guard: มีงวด paid หรือ receipt/finance_entry ผูกอยู่
-    const hasPaidInstallment = installments.some(
-      (i) => i.status === "paid" || (Number(i.paid_amount) || 0) > 0
-    );
-    if (hasPaidInstallment) {
-      return err("มีการชำระแล้ว แก้ยอดไม่ได้ ต้องยกเลิกบิลออกใหม่", 409);
-    }
-    if (instIds.length > 0) {
-      const [{ count: rcCount }, { count: feCount }] = await Promise.all([
-        ctx.supabase
-          .from("receipts")
-          .select("id", { count: "exact", head: true })
-          .in("installment_id", instIds),
-        ctx.supabase
-          .from("finance_entries")
-          .select("id", { count: "exact", head: true })
-          .in("billing_installment_id", instIds),
-      ]);
-      if ((rcCount ?? 0) > 0 || (feCount ?? 0) > 0) {
-        return err("มีการชำระแล้ว แก้ยอดไม่ได้ ต้องยกเลิกบิลออกใหม่", 409);
+    // 2) guard: มีงวด paid หรือ receipt/finance_entry ผูกอยู่ — ข้ามถ้า rev:true (ใช้ locked-aware re-split แทน)
+    let lockedSum = 0, paidLocked = 0, lockedMaterialBase = 0, lockedLaborBase = 0, lockedUnknownBase = 0;
+    if (rev) {
+      const li = await classifyLockedInstallments(ctx.supabase, installments);
+      lockedSum = li.lockedSum; paidLocked = li.paidLocked;
+      lockedMaterialBase = li.lockedMaterialBase; lockedLaborBase = li.lockedLaborBase; lockedUnknownBase = li.lockedUnknownBase;
+    } else {
+      const hasPaidInstallment = installments.some(
+        (i) => i.status === "paid" || (Number(i.paid_amount) || 0) > 0
+      );
+      if (hasPaidInstallment) {
+        return err("มีการชำระแล้ว แก้ยอดไม่ได้ ต้องยกเลิกบิลออกใหม่ (หรือใช้โหมด Rev)", 409);
+      }
+      if (instIds.length > 0) {
+        const [{ count: rcCount }, { count: feCount }] = await Promise.all([
+          ctx.supabase
+            .from("receipts")
+            .select("id", { count: "exact", head: true })
+            .in("installment_id", instIds),
+          ctx.supabase
+            .from("finance_entries")
+            .select("id", { count: "exact", head: true })
+            .in("billing_installment_id", instIds),
+        ]);
+        if ((rcCount ?? 0) > 0 || (feCount ?? 0) > 0) {
+          return err("มีการชำระแล้ว แก้ยอดไม่ได้ ต้องยกเลิกบิลออกใหม่ (หรือใช้โหมด Rev)", 409);
+        }
       }
     }
 
     const oldTotal = Number(bn.total) || 0;
 
     // 3) อัปเดต total + breakdown ก่อน (RPC อ่าน total ใหม่ → งวดตรง · footer ตรง total เสมอ)
+    //    หมายเหตุ rev: RPC (0126) จะคำนวณ total ใหม่เองจาก locked+items อีกชั้น (ควรตรงค่านี้เป๊ะโดยสร้างจาก
+    //    plan เดียวกัน) — เขียนไว้ก่อนเพื่อ footer สอดคล้องทันทีแม้ RPC fail กลางทาง (มี rollback ด้านล่าง)
     let { error: upErr } = await ctx.supabase
       .from("billing_notes")
       .update({ total: newTotal, ...breakdown })
       .eq("id", bnId);
     // กันพัง: ถ้า 0078/0079/0081 (ยอดแยก) ยังไม่รัน → อัปเดตแค่ total (ยอดยังถูก)
-    if (upErr && /subtotal|discount_amt|vat_amt|wht_amt|discount_pct|vat_rate|wht_rate|has_tax_breakdown|vat_rate_set|labor_ratio/i.test(upErr.message ?? "")) {
+    if (upErr && /subtotal|discount_amt|vat_amt|wht_amt|discount_pct|vat_rate|wht_rate|has_tax_breakdown|vat_rate_set|labor_ratio|labor_amt/i.test(upErr.message ?? "")) {
       ({ error: upErr } = await ctx.supabase.from("billing_notes").update({ total: newTotal }).eq("id", bnId));
     }
     if (upErr) return err("อัปเดตยอดไม่สำเร็จ: " + upErr.message, 500);
-
-    // 4) re-split งวดผ่าน RPC replace_billing_installments (1 txn → constraint ผ่าน)
-    const plan = suggestInstallments(newTotal, Number(breakdown.vat_rate) || 0);  // ส่ง VAT → label บรรทัดย่อย "ค่าวัสดุ (รวมVat)"
-    const items = plan.map((p) => ({
-      seq: p.seq,
-      label: p.label,
-      amount: p.amount,
-      due_date: null,
-    }));
 
     const sb = ctx.supabase as unknown as {
       rpc: (
         fn: string,
         args: Record<string, unknown>
-      ) => Promise<{ error: { message: string } | null }>;
+      ) => Promise<{ data: unknown; error: { message: string } | null }>;
     };
-    const { error: rpcErr } = await sb.rpc("replace_billing_installments", {
-      p_bn_id: Number(bnId),
-      p_items: items,
-    });
-    if (rpcErr) {
-      // rollback total + breakdown ให้ครบถ้า RPC ล้มเหลว (best-effort) — footer ต้องตรง total เดิม
-      let { error: rbErr } = await ctx.supabase
-        .from("billing_notes")
-        .update({ total: oldTotal, ...oldBreakdown })
-        .eq("id", bnId);
-      if (rbErr) ({ error: rbErr } = await ctx.supabase.from("billing_notes").update({ total: oldTotal }).eq("id", bnId));
-      return err("re-split งวดไม่สำเร็จ: " + rpcErr.message, 500);
+
+    let items: { seq?: number; label: string; amount: number; due_date: string | null }[];
+    let overpaid = 0;
+    let taxWarning = false;
+
+    if (!rev) {
+      // 4a) แก้ก่อนจ่าย (เดิม) — re-split ทั้งชุดผ่าน replace_billing_installments (1 txn → constraint ผ่าน)
+      const plan = suggestInstallments(newTotal, Number(breakdown.vat_rate) || 0);  // ส่ง VAT → label บรรทัดย่อย "ค่าวัสดุ (รวมVat)"
+      items = plan.map((p) => ({ seq: p.seq, label: p.label, amount: p.amount, due_date: null }));
+      const { error: rpcErr } = await sb.rpc("replace_billing_installments", { p_bn_id: Number(bnId), p_items: items });
+      if (rpcErr) {
+        let { error: rbErr } = await ctx.supabase.from("billing_notes").update({ total: oldTotal, ...oldBreakdown }).eq("id", bnId);
+        if (rbErr) ({ error: rbErr } = await ctx.supabase.from("billing_notes").update({ total: oldTotal }).eq("id", bnId));
+        return err("re-split งวดไม่สำเร็จ: " + rpcErr.message, 500);
+      }
+    } else {
+      // 4b) Rev — ตรึงงวด locked ไว้ + re-split เฉพาะที่เหลือ ผ่าน replace_unpaid_installments (0126)
+      const revPlan = isLaborBill
+        ? planRevUnpaidInstallmentsLabor({
+            targetMaterialBase: laborTargets!.material, targetLaborBase: laborTargets!.labor,
+            lockedMaterialBase, lockedLaborBase, lockedUnknownBase, lockedSum, paidLocked,
+            vatRate: Number(breakdown.vat_rate) || 0, whtRate: Number(breakdown.wht_rate) || 0,
+            newTotalTarget: newTotal,
+          })
+        : planRevUnpaidInstallments({
+            newTotalTarget: newTotal, lockedSum, paidLocked, vatRate: Number(breakdown.vat_rate) || 0,
+          });
+      const { data: rpcData, error: rpcErr } = await sb.rpc("replace_unpaid_installments", {
+        p_bn_id: Number(bnId), p_items: revPlan.items, p_expected_locked_sum: lockedSum,
+      });
+      if (rpcErr) {
+        let { error: rbErr } = await ctx.supabase.from("billing_notes").update({ total: oldTotal, ...oldBreakdown }).eq("id", bnId);
+        if (rbErr) ({ error: rbErr } = await ctx.supabase.from("billing_notes").update({ total: oldTotal }).eq("id", bnId));
+        const status = /LOCKED_CHANGED/.test(rpcErr.message) ? 409 : 500;
+        return err("Rev งวดไม่สำเร็จ: " + rpcErr.message, status);
+      }
+      items = revPlan.items;
+      overpaid = revPlan.overpaid;
+      taxWarning = revPlan.taxWarning;
+      // RPC เป็นผู้ตัดสิน total จริง (คำนวณสดจาก locked+items ในทรานแซกชันเดียวกัน) — sync ให้ตรงถ้าต่างจากที่เขียนไว้ก่อนหน้า (ไม่ควรเกิด แต่กันไว้)
+      const rpcTotal = rpcData && typeof rpcData === "object" ? Number((rpcData as Record<string, unknown>).new_total) : NaN;
+      if (Number.isFinite(rpcTotal) && Math.abs(rpcTotal - newTotal) > 0.01) {
+        await ctx.supabase.from("billing_notes").update({ total: rpcTotal }).eq("id", bnId);
+        newTotal = rpcTotal;
+      }
     }
 
     // 5) audit
     await audit({
       userId: ctx.user.id,
-      action: isBreakdownMode ? "UPDATE_BILLING_BREAKDOWN" : "UPDATE_BILLING_TOTAL",
+      action: rev ? "REVISE_BILLING_AFTER_PAYMENT" : (isBreakdownMode ? "UPDATE_BILLING_BREAKDOWN" : "UPDATE_BILLING_TOTAL"),
       table: "billing_notes",
       recordId: bnId,
-      oldValue: { total: oldTotal },
-      newValue: { total: newTotal, ...(breakdown ?? {}), installments: items },
+      oldValue: { total: oldTotal, ...(rev ? { locked_sum: lockedSum, paid_locked: paidLocked } : {}) },
+      newValue: {
+        total: newTotal, ...(breakdown ?? {}), installments: items,
+        ...(rev ? { reason: revReason, overpaid, tax_warning: taxWarning } : {}),
+      },
     });
 
-    return ok({ ok: true, total: newTotal, installments: items });
+    return ok({ ok: true, total: newTotal, installments: items, ...(rev ? { overpaid, taxWarning } : {}) });
   }
 );

@@ -41,10 +41,12 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
   // ป้ายสถานะที่แสดง: ใช้ override ถ้ามี (display_status) ไม่งั้นใช้สถานะจริง
   const effStatus: BillingStatus = (bn.display_status ?? bn.status) as BillingStatus;
   const statusOverridden = !!bn.display_status && bn.display_status !== bn.status;
-  // ซ่อนปุ่มแก้ยอดถ้ามีงวดที่ชำระแล้ว (BFF guard ซ้ำอีกชั้น)
+  // มีงวดจ่ายแล้ว/ล็อกอยู่ไหม — true = ปุ่มแก้ยอด/VAT/งวด ทำงานผ่านโหมด Rev (24 ส.ค.69 · แก้แม้ชำระแล้วได้ ไม่ต้อง void ก่อน)
   const hasAnyPayment = installments.some(
     (i) => i.status === "paid" || (Number(i.paid_amount) || 0) > 0
   );
+  // เงินที่รับจริงจากงวดที่จ่ายแล้ว — ใช้เตือน "รับเกิน" ก่อนบันทึก Rev (preview ฝั่ง client · server ตัดสินจริง)
+  const paidLocked = installments.reduce((s, i) => s + (Number(i.paid_amount) || 0), 0);
 
   // ดึงใบเสนออ้างอิง — รหัส + ยอดก่อนภาษี(subtotal จริง) ใช้เป็นฐานปุ่ม "แก้ VAT/ส่วนลด"
   let refCode: string | null = null;
@@ -132,22 +134,27 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
           {writable && !isCancelled && !isAssess && !(bn as unknown as { job_id?: string | null }).job_id && (
             <EnsureJobButton billingNoteId={bn.id} />
           )}
-          {/* บิลค่าแรง (หัก ณ ที่จ่ายเฉพาะค่าแรง · ภาษี booked ต่องวด) — ซ่อนปุ่มแก้ยอด/VAT/งวด
-              (RPC re-split ยังไม่รักษาภาษีต่องวด · server บล็อกอีกชั้น · ต้องยกเลิกแล้วออกใหม่ถ้าจะแก้) */}
-          {writable && !isCancelled && !hasAnyPayment && !laborBill && (
+          {/* บิลค่าแรง (หัก ณ ที่จ่ายเฉพาะค่าแรง · ภาษี booked ต่องวด) — แก้ยอดตรง (flat) ไม่ได้เสมอ (กำกวม WHT)
+              ต้องแก้ผ่าน "แก้ VAT/ส่วนลด" (โหมด B) เท่านั้น — Rev หลังชำระแล้วได้แล้ว (24 ส.ค.69, ไม่ต้อง void ก่อน) */}
+          {writable && !isCancelled && !laborBill && (
             <EditBillingTotalButton
               billingNoteId={bn.id}
               currentTotal={bn.total}
+              hasAnyPayment={hasAnyPayment}
+              paidLocked={paidLocked}
             />
           )}
-          {/* แก้ VAT/ส่วนลด (footer) — โผล่ถ้าใบเสนอต้นทางมียอดก่อนภาษีจริง และยังไม่จ่าย (ฐานมาจากใบเสนอ) */}
-          {writable && !isCancelled && !hasAnyPayment && !laborBill && quoteBase && editDefaults && (
+          {/* แก้ VAT/ส่วนลด (footer) — โผล่ถ้าใบเสนอต้นทางมียอดก่อนภาษีจริง · Rev หลังชำระแล้วได้ (บังคับเหตุผล) */}
+          {writable && !isCancelled && quoteBase && editDefaults && (
             <EditBillingBreakdownButton
               billingNoteId={bn.id}
               subtotal={quoteBase.subtotal}
               discount_pct={editDefaults.discount_pct}
               vat_rate={editDefaults.vat_rate}
               wht_rate={editDefaults.wht_rate}
+              hasAnyPayment={hasAnyPayment}
+              paidLocked={paidLocked}
+              forceRev={laborBill}
             />
           )}
           {writable && !isCancelled && !laborBill && (
@@ -159,7 +166,7 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
             />
           )}
           {writable && !isCancelled && laborBill && (
-            <span className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">บิลค่าแรง — แก้งวด/VAT ไม่ได้ (ยกเลิกแล้วออกใหม่)</span>
+            <span className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">บิลค่าแรง — แก้งวดตรงไม่ได้ ใช้ &quot;แก้ VAT / ส่วนลด&quot; แทน</span>
           )}
           {writable && !isCancelled && (
             <EditDocHeaderModal endpoint={`/api/billing-notes/${bn.id}/header`} snapshot={c} />

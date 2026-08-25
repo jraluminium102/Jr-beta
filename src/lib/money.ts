@@ -419,3 +419,107 @@ export function planInstallments(opts: {
   });
   return { installments: out, retentionApplied: useRet, retentionRequested: hasRetention };
 }
+
+// ============================================================
+// Rev ใบวางบิลได้แม้ชำระแล้ว (24 ส.ค.69 · accountant approve) — วางแผนงวด "ที่เหลือ" (unpaid) เท่านั้น
+//   งวด locked (paid/partial-paid/มี receipt-finance ผูก) ตรึงไว้เป๊ะ ไม่แตะ — คำนวณจากยอดที่ "เหลือ" หลังหักไปแล้ว
+//   ฟังก์ชัน pure (ไม่แตะ DB) — DB-touching (หา locked set จริง) อยู่ที่ lib/billing.ts:classifyLockedInstallments
+//   ทดสอบได้ตรงด้วย scripts/verify-billing-rev.mjs (ไม่ต้องมี DB จริง)
+// ============================================================
+export interface RevPlanItem {
+  label: string;
+  amount: number;          // + = เก็บเงินเพิ่ม · − = รายการปรับปรุงยอด "รับเกินจากลูกค้า" (บาท)
+  due_date: string | null;
+  base_amt?: number | null;
+  vat_amt?: number;
+  wht_amt?: number;
+  vat_rate?: number;
+  wht_rate?: number;
+  kind?: string | null;
+}
+export interface RevPlanResult {
+  items: RevPlanItem[];
+  newTotal: number;   // = lockedSum + Σ(items.amount) เสมอ (invariant ที่ RPC บังคับซ้ำอีกชั้น)
+  overpaid: number;   // > 0 = paidLocked มากกว่า newTotal → ต้องคืน/เครดิตลูกค้า (แสดงเตือน ไม่บล็อก)
+  taxWarning: boolean; // true = มีงวด locked ที่ไม่รู้ kind/base_amt (ใบเก่า) → เตือน "ตรวจภาษีต่องวดเอง"
+}
+
+const ADJUSTMENT_LABEL = "ปรับปรุงยอด — รับเงินเกินจากลูกค้า (Rev) ต้องคืน/เครดิตให้ลูกค้า";
+
+/** บิลธรรมดา (ไม่มี labor_amt) — วางแผนใหม่จากยอดเป้าหมายทั้งใบ (newTotalTarget) ลบ lockedSum */
+export function planRevUnpaidInstallments(opts: {
+  newTotalTarget: number;
+  lockedSum: number;
+  paidLocked: number;
+  vatRate: number;
+}): RevPlanResult {
+  const target = round2(Number(opts.newTotalTarget) || 0);
+  const lockedSum = round2(Number(opts.lockedSum) || 0);
+  const paidLocked = round2(Number(opts.paidLocked) || 0);
+  const remaining = round2(target - lockedSum);
+
+  if (remaining < -0.005) {
+    // ยอดใหม่ต่ำกว่างวด locked (เกิดจาก "ยอดใหม่ < paidLocked" ที่เจ้าของอนุญาตให้ผ่าน 24 ส.ค.69)
+    const items: RevPlanItem[] = [{ label: ADJUSTMENT_LABEL, amount: remaining, due_date: null }];
+    const newTotal = round2(lockedSum + remaining); // = target เป๊ะ
+    return { items, newTotal, overpaid: round2(Math.max(0, paidLocked - newTotal)), taxWarning: false };
+  }
+  if (remaining <= 0.005) {
+    return { items: [], newTotal: lockedSum, overpaid: round2(Math.max(0, paidLocked - lockedSum)), taxWarning: false };
+  }
+  const plan = suggestInstallments(remaining, opts.vatRate);
+  const items: RevPlanItem[] = plan.map((p) => ({ label: p.label, amount: p.amount, due_date: null }));
+  const newTotal = round2(lockedSum + remaining);
+  return { items, newTotal, overpaid: round2(Math.max(0, paidLocked - newTotal)), taxWarning: false };
+}
+
+/** บิลค่าแรง (labor_amt != null) — วางแผนใหม่จากฐาน material/labor ที่เหลือ (ก่อน VAT) ผ่าน planInstallments
+ *  เพื่อให้ภาษีต่องวดถูกต้อง (base/vat/wht booked) เหมือนตอนสร้างบิลจริง */
+export function planRevUnpaidInstallmentsLabor(opts: {
+  targetMaterialBase: number;  // bt.material_amt ใหม่ทั้งใบ (หลังส่วนลด ก่อน VAT)
+  targetLaborBase: number;     // bt.labor_amt ใหม่ทั้งใบ (หลังส่วนลด ก่อน VAT)
+  lockedMaterialBase: number;  // Σ base_amt งวด locked kind=material/retention
+  lockedLaborBase: number;     // Σ base_amt งวด locked kind=labor
+  lockedUnknownBase: number;   // Σ (base_amt ?? amount) งวด locked ที่ไม่รู้ kind/base_amt ชัด (ใบเก่า) — กันไว้ฝั่ง material อนุรักษ์นิยม
+  lockedSum: number;
+  paidLocked: number;
+  vatRate: number;
+  whtRate: number;
+  hasRetention?: boolean;
+  retention?: number;
+  /** ยอดเป้าหมายทั้งใบ (bt.net) — ใช้เทียบ overpaid เมื่อไม่เหลือให้วางแผน (remMaterial+remLabor<=0) */
+  newTotalTarget: number;
+}): RevPlanResult {
+  const lockedSum = round2(Number(opts.lockedSum) || 0);
+  const paidLocked = round2(Number(opts.paidLocked) || 0);
+  const taxWarning = (Number(opts.lockedUnknownBase) || 0) > 0.005;
+
+  const remLabor = round2(Math.max(0, (Number(opts.targetLaborBase) || 0) - (Number(opts.lockedLaborBase) || 0)));
+  const remMaterial = round2(Math.max(
+    0,
+    (Number(opts.targetMaterialBase) || 0) - (Number(opts.lockedMaterialBase) || 0) - (Number(opts.lockedUnknownBase) || 0),
+  ));
+
+  if (remLabor + remMaterial <= 0.005) {
+    const target = round2(Number(opts.newTotalTarget) || 0);
+    const remaining = round2(target - lockedSum);
+    if (remaining < -0.005) {
+      const items: RevPlanItem[] = [{ label: ADJUSTMENT_LABEL, amount: remaining, due_date: null }];
+      return { items, newTotal: round2(lockedSum + remaining), overpaid: round2(Math.max(0, paidLocked - target)), taxWarning: true };
+    }
+    return { items: [], newTotal: lockedSum, overpaid: round2(Math.max(0, paidLocked - lockedSum)), taxWarning };
+  }
+
+  const plan = planInstallments({
+    material_amt: remMaterial, labor_amt: remLabor,
+    vat_rate: opts.vatRate, wht_rate: opts.whtRate,
+    hasRetention: opts.hasRetention, retention: opts.retention,
+  });
+  const items: RevPlanItem[] = plan.installments.map((p) => ({
+    label: p.label, amount: p.amount, due_date: null,
+    base_amt: p.base_amt, vat_amt: p.vat_amt, wht_amt: p.wht_amt, vat_rate: p.vat_rate, wht_rate: p.wht_rate, kind: p.kind,
+  }));
+  const newSum = round2(items.reduce((s, it) => s + it.amount, 0));
+  const newTotal = round2(lockedSum + newSum);
+  return { items, newTotal, overpaid: round2(Math.max(0, paidLocked - newTotal)), taxWarning };
+}
