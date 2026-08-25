@@ -28,8 +28,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const failedList: { code: string; color: string; bars: number }[] = Array.isArray(summary.failed) ? summary.failed : [];
   if (!failedList.length) return fail("ไม่มีรายการที่ค้าง (หักครบแล้ว)", 400);
 
-  const stockRows = await fetchAllStockRows<{ id: number; sku: string | null; name: string | null; unit_cost: number | null }>(sb, "id, sku, name, unit_cost");
-  const stockList: (StockLite & { id: number })[] = stockRows.map((s) => ({ id: Number(s.id), sku: s.sku ?? "", name: s.name ?? "", qty: 0, unitCost: Number(s.unit_cost) || 0 }));
+  const stockRows = await fetchAllStockRows<{ id: number; sku: string | null; name: string | null; color: string | null; unit_cost: number | null }>(sb, "id, sku, name, color, unit_cost");
+  const stockList: (StockLite & { id: number })[] = stockRows.map((s) => ({ id: Number(s.id), sku: s.sku ?? "", name: s.name ?? "", color: s.color ?? "", qty: 0, unitCost: Number(s.unit_cost) || 0 }));
 
   const newDeducted: { code: string; color: string; bars: number; stock_item_id: number }[] = [];
   const stillFailed: { code: string; color: string; bars: number; error: string }[] = [];

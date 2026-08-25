@@ -11,7 +11,10 @@
  *     → ไม่ hardcode mapping (จะผิด) · ให้ dropdown "อ่านสีจริงจากสต็อก" ตอน runtime แทน
  */
 
-export type StockLite = { id?: number; sku: string; name: string; qty: number; image?: string; unitCost?: number; category?: string; unit?: string };
+export type StockLite = { id?: number; sku: string; name: string; qty: number; image?: string; unitCost?: number; category?: string; unit?: string;
+  /** ช่องสีจริงในตาราง stock_items (migration 0106) — เป็นตัวตั้งของการจับคู่สี
+   *  ⚠ ทุกที่ที่ดึงสต็อกมาจับคู่ ต้อง select "color" มาด้วย ไม่งั้นตกไปเดาสีจากชื่อ (ดู stockColorOf) */
+  color?: string };
 
 /**
  * ดึง stock_items "ทั้งหมด" แบบแบ่งหน้า — PostgREST/Supabase คืนสูงสุด ~1,000 แถว/ครั้ง
@@ -58,6 +61,10 @@ const KNOWN_NORM = new Set(KNOWN_ALU_COLORS.map(normColor));
  * → สี = ข้อความหลัง "-" ตัวสุดท้าย (ถ้าเป็นสีที่รู้จัก) · ไม่ใช่สี = "" (ของกลาง ใช้ได้ทุกสี)
  */
 export function stockColorOf(s: StockLite): string {
+  // ① ช่องสีจริงมาก่อนเสมอ — ไม่ต้องพึ่งรูปแบบชื่อ และรองรับสีใหม่ที่ยังไม่อยู่ใน KNOWN_ALU_COLORS
+  const col = String(s.color ?? "").trim();
+  if (col) return col;
+  // ② ของเก่าที่ช่องสียังว่าง — เดาจากท้ายชื่อ "รหัส-ชื่อ-สี" (ต้องเป็นสีที่รู้จักเท่านั้น)
   for (const src of [s.name, s.sku]) {
     const t = String(src ?? "");
     const i = t.lastIndexOf("-");
@@ -76,27 +83,69 @@ const stockHasColor = (s: StockLite, color: string) => !color || normColor(stock
 const isColorAgnostic = (s: StockLite) => stockColorOf(s) === "";
 
 /**
- * จับคู่ (รหัส, สี) → รายการสต็อกตัวเดียว (null = ไม่มีในสต็อก / ไม่มีสีนั้น)
- *   รวมผู้สมัครทั้งหมดก่อน (sku ตรงรหัส + ชื่อมีรหัส) แล้วค่อยกรองสี — รหัสเดียวหลายสีจับถูกตัว
- *   ถ้าเลือกสี:  มีตัวสีตรง → ใช้ตัวนั้น · ไม่มีแต่มีตัวไม่ระบุสี → ใช้ของกลาง · มีแต่สีอื่น → null (กันหักผิดสี)
- *   ถ้าไม่เลือกสี: หยิบตัวแรก (sku ตรงก่อน) — ⚠ รหัสหลายสีควรเลือกสีก่อน ไม่งั้นอาจได้ผิดตัว
+ * รหัสอยู่ใน "ชื่อ" ของรายการสต็อกไหม — เทียบแบบมีขอบ ห้ามให้ตัวเลขติดกัน
+ *   B24001 ต้องไม่ถูกจับด้วยรหัส B2400 · HD-2000 ต้องไม่ถูกจับด้วย HD-200
+ *   ยอมให้ตัวอักษรต่อท้ายได้ (F7938 จับ "F7938B-..." ได้) เพราะสโตร์เขียนตัวห้อยไว้ในชื่อจริง
+ *   ตัวกันพลาดจริงคือ "เจอหลายตัว = ไม่หัก" ใน matchStock() ไม่ใช่กฎขอบอย่างเดียว
  */
-export function resolveStock(stock: StockLite[], code: string, color?: string): StockLite | null {
+export function nameHasCode(name: unknown, code: string): boolean {
   const uc = U(code);
-  if (!uc || uc === "-") return null;
+  if (!uc) return false;
+  const re = new RegExp(`(^|[^0-9])${uc.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![0-9])`, "i");
+  return re.test(String(name ?? "").toUpperCase());
+}
+
+export type MatchReason =
+  | "ok"               // เจอตัวเดียว ชัดเจน
+  | "not_found"        // ไม่มีรหัสนี้ในสต็อก
+  | "need_color"       // รหัสนี้มีหลายสี แต่ใบตัดไม่ได้ระบุสี → ห้ามเดา
+  | "color_not_found"  // มีรหัส แต่ไม่มีสีที่ขอ
+  | "ambiguous";       // เจอหลายตัวในสีเดียวกัน → ห้ามเดา
+export type MatchResult = { item: StockLite | null; reason: MatchReason };
+
+export const MATCH_REASON_TH: Record<MatchReason, string> = {
+  ok: "",
+  not_found: "ไม่มีรหัสนี้ในสต็อก",
+  need_color: "รหัสนี้มีหลายสีในสต็อก แต่ใบตัดยังไม่ได้เลือกสี — เลือกสีก่อนถึงจะหักได้",
+  color_not_found: "มีรหัสนี้ แต่ไม่มีสีที่เลือกในสต็อก",
+  ambiguous: "เจอมากกว่า 1 รายการที่เข้าเงื่อนไข — ไม่หักเพื่อกันหักผิดตัว",
+};
+
+/**
+ * จับคู่ (รหัส, สี) → รายการสต็อก + "เหตุผล" เมื่อจับไม่ได้
+ *
+ * กฎเหล็ก (เจ้าของสั่ง 24 ส.ค.69 หลังเจอบั๊กอุปกรณ์ HD ไม่ถูกหัก):
+ *   ห้าม "หยิบตัวแรก" เมื่อยังชี้ชัดไม่ได้ — ของแบบเดียวกันคนละสีมีเต็มสต็อก เดาแล้วหักผิดสีเงียบ ๆ
+ *   ไม่ชัด = ไม่หัก + บอกเหตุผลขึ้นจอ ให้คนตัดสินใจ
+ *   (ของเดิมคืน cand[0] เมื่อไม่ได้เลือกสี = หยิบสีไหนก็ได้ที่เจอก่อน)
+ */
+export function matchStock(stock: StockLite[], code: string, color?: string): MatchResult {
+  const uc = U(code);
+  if (!uc || uc === "-") return { item: null, reason: "not_found" };
   const skuHits = stock.filter((s) => U(s.sku) === uc);
-  const nameHits = stock.filter((s) => U(s.name).includes(uc) && !skuHits.includes(s));
+  const nameHits = stock.filter((s) => nameHasCode(s.name, uc) && !skuHits.includes(s));
   const cand = [...skuHits, ...nameHits]; // sku ตรงก่อน แล้วชื่อมีรหัส
-  if (!cand.length) return null;
+  if (!cand.length) return { item: null, reason: "not_found" };
+
   const col = String(color ?? "").trim();
-  if (col) {
-    const exact = cand.filter((s) => stockHasColor(s, col));
-    if (exact.length) return exact[0];
-    const agnostic = cand.filter((s) => isColorAgnostic(s));
-    if (agnostic.length) return agnostic[0];
-    return null; // มีแต่สีอื่น → ไม่หัก
+  if (!col) {
+    if (cand.length === 1) return { item: cand[0], reason: "ok" };
+    const colors = new Set(cand.map((s) => normColor(stockColorOf(s))).filter(Boolean));
+    // หลายแถวแต่สีเดียว/ไม่ระบุสี = ของซ้ำในสต็อก ไม่ใช่เรื่องสี
+    return { item: null, reason: colors.size >= 2 ? "need_color" : "ambiguous" };
   }
-  return cand[0];
+  const exact = cand.filter((s) => stockHasColor(s, col));
+  if (exact.length === 1) return { item: exact[0], reason: "ok" };
+  if (exact.length > 1) return { item: null, reason: "ambiguous" };
+  const agnostic = cand.filter((s) => isColorAgnostic(s));
+  if (agnostic.length === 1) return { item: agnostic[0], reason: "ok" };
+  if (agnostic.length > 1) return { item: null, reason: "ambiguous" };
+  return { item: null, reason: "color_not_found" };
+}
+
+/** เอาแต่ตัวของ (ไว้โชว์บนจอ) — ตรรกะเดียวกับ matchStock ทุกประการ ห้ามแยกกฎกัน */
+export function resolveStock(stock: StockLite[], code: string, color?: string): StockLite | null {
+  return matchStock(stock, code, color).item;
 }
 
 /**
@@ -117,9 +166,7 @@ export function resolveHwStock(stock: StockLite[], sku: string): StockLite | nul
   const exact = stock.find((s) => U(s.sku) === want);
   if (exact) return exact;
   if (!HW_CODE.test(want)) return null;   // JR##### ที่หา sku ไม่เจอ = ไม่มีจริง อย่าเดาจากชื่อ
-  // ขอบคำ: "HD-200" ต้องไม่ไปแมช "HD-2000" (ใช้ includes เฉย ๆ จะหักผิดตัวเงียบ ๆ)
-  const re = new RegExp(`(^|[^0-9A-Z])${want.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^0-9A-Z]|$)`, "i");
-  const hits = stock.filter((s) => re.test(String(s.name ?? "")));
+  const hits = stock.filter((s) => nameHasCode(s.name, want));
   return hits.length === 1 ? hits[0] : null;
 }
 

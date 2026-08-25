@@ -253,7 +253,10 @@ export default function CutlistEditorClient({
       setCutSummary({ ...d, at: new Date().toISOString() });
       setConfirmCut(false);
       const parts = [`ตัดสต็อกแล้ว ✓ หัก ${d.deducted?.length ?? 0} รหัส`];
-      if (d.skipped?.length) parts.push(`ข้าม ${d.skipped.length} รหัส (ไม่มีในสต็อก)`);
+      // โชว์ "เหตุผล" ที่ไม่หัก ไม่ใช่แค่จำนวน — ของที่ข้ามคือของที่สต็อกจะเพี้ยน ต้องเห็นทันที
+      if (d.skipped?.length) parts.push(`ข้ามอลู ${d.skipped.length} รหัส (${[...new Set(d.skipped.map((x: { why?: string }) => x.why || "ไม่มีในสต็อก"))].join(" · ")})`);
+      if (d.hwSkipped?.length) parts.push(`⚠ ข้ามอุปกรณ์ ${d.hwSkipped.length} รายการ: ${d.hwSkipped.map((x: { sku: string; name: string }) => `${x.sku} ${x.name}`).join(", ")} — ยังไม่ถูกหักออกจากสต็อก`);
+      if (d.hwFailed?.length) parts.push(`⚠ อุปกรณ์หักไม่สำเร็จ ${d.hwFailed.length} รายการ`);
       if (d.failed?.length) parts.push(`⚠ หักไม่สำเร็จ ${d.failed.length} รหัส (${d.failed.map((f: { code: string }) => f.code).join(", ")}) — เช็ค/หักมือที่หน้าสต๊อก`);
       setOkMsg(parts.join(" · "));
       router.refresh();
@@ -338,7 +341,8 @@ export default function CutlistEditorClient({
       {status === "stock_cut" && (
         <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-900 no-print">
           ✓ ใบนี้ตัดสต็อกแล้ว{cutSummary?.at ? ` (${String(cutSummary.at).slice(0, 10)})` : ""} — แก้ข้อไม่ได้ · หัก {cutSummary?.deducted?.length ?? 0} รหัส
-          {cutSummary?.skipped?.length ? ` · ข้าม ${cutSummary.skipped.length} รหัส: ${cutSummary.skipped.map((s: { code: string }) => s.code).join(", ")} (ไม่มีในสต็อก — หักมือได้ที่หน้าสต๊อก)` : ""}
+          {cutSummary?.skipped?.length ? ` · ข้ามอลู ${cutSummary.skipped.length} รหัส: ${cutSummary.skipped.map((s: { code: string; why?: string }) => `${s.code}${s.why ? ` (${s.why})` : ""}`).join(", ")} — หักมือได้ที่หน้าสต๊อก` : ""}
+          {cutSummary?.hwSkipped?.length ? ` · ข้ามอุปกรณ์ ${cutSummary.hwSkipped.length} รายการ: ${cutSummary.hwSkipped.map((s: { sku: string; name: string }) => `${s.sku} ${s.name}`).join(", ")} — หักมือได้ที่หน้าสต๊อก` : ""}
           {cutSummary?.failed?.length ? ` · ⚠ หักไม่สำเร็จ ${cutSummary.failed.length} รหัส: ${cutSummary.failed.map((s: { code: string }) => s.code).join(", ")}` : ""}
           {cutSummary?.failed?.length && canCutStock ? (
             <button onClick={retryFailed} disabled={busy}
