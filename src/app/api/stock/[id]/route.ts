@@ -46,7 +46,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
   const body = await req.json().catch(() => ({}));
   const allowed = ["sku", "name", "unit", "min_qty", "note", "is_active", "supplier",
-    "image_url", "is_weight_based", "weight_per_unit"];
+    "image_url", "is_weight_based", "weight_per_unit", "is_stocked"];
   const patch: Record<string, unknown> = {};
   for (const k of allowed) if (k in body) patch[k] = body[k];
 

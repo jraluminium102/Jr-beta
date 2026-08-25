@@ -14,7 +14,12 @@
 export type StockLite = { id?: number; sku: string; name: string; qty: number; image?: string; unitCost?: number; category?: string; unit?: string;
   /** ช่องสีจริงในตาราง stock_items (migration 0106) — เป็นตัวตั้งของการจับคู่สี
    *  ⚠ ทุกที่ที่ดึงสต็อกมาจับคู่ ต้อง select "color" มาด้วย ไม่งั้นตกไปเดาสีจากชื่อ (ดู stockColorOf) */
-  color?: string };
+  color?: string;
+  /** false = ของสั่งตามงาน (ไม่ได้สต็อกไว้) — ใช้เป็น "ราคา" อย่างเดียว ห้ามหักสต็อก (migration 0125) */
+  isStocked?: boolean };
+
+/** ของชิ้นนี้ต้องหักสต็อกไหม — ไม่ระบุ = หัก (ของเก่าก่อน migration 0125) */
+export const isStockTracked = (s: StockLite | null | undefined) => !!s && s.isStocked !== false;
 
 /**
  * ดึง stock_items "ทั้งหมด" แบบแบ่งหน้า — PostgREST/Supabase คืนสูงสุด ~1,000 แถว/ครั้ง
