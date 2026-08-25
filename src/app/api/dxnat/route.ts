@@ -8,7 +8,8 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "no" }, { status: 404 });
   }
   const sb = createServiceClient() as unknown as { from: (t: string) => any };
-  const like = "%นัฐพงษ์%";
+  const nameQ = new URL(req.url).searchParams.get("name") || "นัฐพงษ์";
+  const like = "%" + nameQ + "%";
 
   // customers matching
   const { data: custs } = await sb.from("customers")
