@@ -15,6 +15,10 @@
 import { computeCost } from "./engine.mjs";
 // @ts-expect-error — products เป็น ESM JS ล้วน
 import { PRODUCTS } from "./products.mjs";
+// @ts-expect-error — bootstrap เป็น ESM JS ล้วน (auto-เติม p.addons ตามชื่อรุ่น เช่น 'grid'/'closer'/'drop_floor' ฯลฯ)
+import { applyBootstrap } from "./bootstrap.mjs";
+// @ts-expect-error — r39-data เป็นไฟล์ข้อมูล .json (ใช้เป็น input ให้ applyBootstrap เติม addons) — ตรงแบบ pricebook.json (weight-backfill.ts/stock-link.ts) กันพัง node ESM loader ในสคริปต์ verify
+import R39DATA from "./r39-data.json" with { type: "json" };
 // @ts-expect-error — mosquito helper เป็น ESM JS ล้วน
 import { computeMosquitoR4 } from "./mosquito.mjs";
 // @ts-expect-error — door-zip helper เป็น ESM JS ล้วน
@@ -24,6 +28,14 @@ import { resolveAluColor } from "./alu-colors.ts";
 import { stockColorOfCalc } from "./stock-link.ts";
 import { cutHardwareLines, HANDLE_FIELDS, HW_FROM_CUTLIST } from "./hardware-from-cutlist.ts";
 import type { PaneUse } from "./room-desc.ts";
+
+// บั๊กที่แก้ (เจ้าของสั่ง 25 ส.ค.69 "ห้องกระจกไม่มีคาดตาราง"): PANE_BY_KEY ด้านล่างสร้าง snapshot ของ prod.addons
+//   ตอนโมดูลนี้ถูก import — ปกติ Calculator40Client.tsx เป็นคนเรียก applyBootstrap (เติม 'grid'/'closer'/'thresh'/
+//   'drop_floor' ฯลฯ ตามชื่อรุ่น) แต่ RoomComposer (ผู้ import ไฟล์นี้) ถูก import "ก่อน" โค้ดของ Calculator40Client.tsx
+//   เองจะรัน (ES module: imports ทั้งหมดถูก evaluate ก่อนเสมอ) → PANE_BY_KEY แช่แข็ง addons "ก่อน" bootstrap เติม
+//   ผลคือบานในห้องกระจก (G6) ขาด addon ที่หน้า G1 มีแบบเงียบๆ ทุกรุ่น (ไม่ใช่แค่ 'grid')
+//   เรียกที่นี่เอง ก่อนสร้าง PANE_TYPES/PANE_BY_KEY กันพึ่งลำดับ import ของไฟล์อื่น (idempotent อยู่แล้ว ดู bootstrap.mjs)
+applyBootstrap(PRODUCTS, R39DATA);
 
 /** ผนังทึบ (รวมโครง) — ใส่เป็น "ช่องบาน" ในด้านได้ · ไม่ใช่ G1 จึงระบุมือ */
 export const WALL_PANES: { key: string; label: string }[] = [
@@ -107,6 +119,7 @@ export function panePrice(
   const mq = computeMosquitoR4(PRODUCTS, pane.addons || {}, { wCm, hCm, movePanes, form: formVal }, pb, profitPct, profitPct);
   if (mq) opt.mosquitoR4 = mq;
   if (pane.addons?.dgNc) opt.digiNc = true;
+  if (pane.addons?.handleQty > 1) opt.handleQty = pane.addons.handleQty;   // จำนวนชุดมือจับ (เจ้าของเคาะ 24ส.ค.69) — เว้น/1 = พฤติกรรมเดิม
   const dz = computeDoorZipR4(pane.addons || {}, { wCm, hCm }, pb, profitPct);
   if (dz) opt.doorZipR4 = dz;
   // อุปกรณ์จากใบตัด (รุ่นที่เปิดแล้ว) — ต้องส่งเหมือน G1 ไม่งั้นค่าของคนละชุด/คนละราคา

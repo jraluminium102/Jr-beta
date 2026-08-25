@@ -424,6 +424,8 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       if (prod.sellCabinet && !prod.faceOnly) opt.cabSides = cabSides; // กั้นด้านตู้ ซ้าย/ขวา/หลัง (เฉพาะตู้เต็ม ไม่ใช่ฝาตู้อย่างเดียว)
       // มือจับดิจิตอล nc (บานเปิดยูโร +โช้ค 5,000) — engine อ่านจาก opt.digiNc ตรง ๆ (ไม่ใช่ opt.addons.dgNc) ตรง app.js A.dgNc
       if (addons?.dgNc) opt.digiNc = true;
+      // จำนวนชุดมือจับ (cmech/stainless/digihandle) — เจ้าของเคาะ 24ส.ค.69 · engine อ่านจาก opt.handleQty ตรง ๆ (เว้น/1 = พฤติกรรมเดิม)
+      if (addons?.handleQty > 1) opt.handleQty = addons.handleQty;
       // มุ้งบวกบาน R4.0 — คิดจากรุ่นมุ้งจริง (screen/screen_big/screen_ready) แล้วส่งเข้า opt.mosquitoR4
       // ตรง app.js ~232-235: computeMosquitoR4(c.addons||{}, {wCm,hCm,movePanes,form}, pb, profitPct, installProfitPct)
       const mqR4 = computeMosquitoR4(

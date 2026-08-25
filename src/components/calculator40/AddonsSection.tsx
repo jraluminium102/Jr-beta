@@ -264,7 +264,15 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
     return (
       <Field label="ชนิดมือจับ">
         <ChipRow items={chips} value={cur} onChange={onPick} />
-        {cur !== "none" && <div className="mt-2.5">{renderHandleModel(cur, prod, A, setAddons, set)}</div>}
+        {cur !== "none" && (
+          <>
+            <div className="mt-2.5">{renderHandleModel(cur, prod, A, setAddons, set)}</div>
+            <div className="mt-2.5 max-w-[160px]">
+              <div className="text-[11px] text-ink-3 mb-0.5">จำนวนชุด</div>
+              <NumberInput value={A.handleQty || 1} onChange={(v) => set("handleQty", Math.max(1, Math.round(v) || 1))} placeholder="1" />
+            </div>
+          </>
+        )}
       </Field>
     );
   }

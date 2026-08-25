@@ -687,7 +687,9 @@ export function computeAddon(id, sel, ctx) {
     const pr = +sel || 0;
     if (pr <= 0) return null;
     const ncAdd = (ctx.opt && ctx.opt.digiNc) ? 5000 : 0;
-    return { label: 'มือจับดิจิตอล' + (ncAdd ? ' +โช้ค 1 ตัว (บานหลัก)' : '') + ' (R3.9)', qty: 1, unit: 'ชุด', unitPrice: pr + ncAdd, amount: pr + ncAdd };
+    const n = (ctx.opt && ctx.opt.handleQty > 0) ? Math.round(ctx.opt.handleQty) : 1;   // จำนวนชุด (เจ้าของเคาะ 24ส.ค.69) — default 1 = พฤติกรรมเดิม
+    const unitPrice = pr + ncAdd;
+    return { label: 'มือจับดิจิตอล' + (ncAdd ? ' +โช้ค 1 ตัว (บานหลัก)' : '') + (n > 1 ? ' × ' + n + ' ชุด' : '') + ' (R3.9)', qty: n, unit: 'ชุด', unitPrice, amount: unitPrice * n };
   }
   if (id === 'mosquito') {              // มุ้งบวกบาน — ใช้ราคา R4.0 จาก cost-engine มุ้ง (app คำนวณส่งมาทาง opt.mosquitoR4)
     const r4 = ctx.opt && ctx.opt.mosquitoR4;
@@ -722,11 +724,13 @@ export function computeAddon(id, sel, ctx) {
   // ── ออปชั่นเฟส 2 ② (ราคา R3.9 จาก audit · ติดป้าย R3.9) ──
   if (id === 'cmech') {                 // มือจับ Cmech (ตาราง CMECH_TIERS — แหล่งเดียวกับ UI)
     const t = CMECH_TIERS[sel]; if (!t) return null;
-    return { label: 'มือจับ Cmech ' + t.l + ' (R3.9)', qty: 1, unit: 'ชุด', unitPrice: t.p, amount: t.p };
+    const n = (ctx.opt && ctx.opt.handleQty > 0) ? Math.round(ctx.opt.handleQty) : 1;   // จำนวนชุด (เจ้าของเคาะ 24ส.ค.69) — default 1 = พฤติกรรมเดิม
+    return { label: 'มือจับ Cmech ' + t.l + (n > 1 ? ' × ' + n + ' ชุด' : '') + ' (R3.9)', qty: n, unit: 'ชุด', unitPrice: t.p, amount: t.p * n };
   }
   if (id === 'stainless') {             // มือจับสแตนเลสอร่าม (ตาราง STAINLESS_TIERS — แหล่งเดียวกับ UI)
     const t = STAINLESS_TIERS[sel]; if (!t) return null;
-    return { label: 'มือจับสแตนเลส ' + t.l + ' (R3.9)', qty: 1, unit: 'ชุด', unitPrice: t.p, amount: t.p };
+    const n = (ctx.opt && ctx.opt.handleQty > 0) ? Math.round(ctx.opt.handleQty) : 1;   // จำนวนชุด (เจ้าของเคาะ 24ส.ค.69) — default 1 = พฤติกรรมเดิม
+    return { label: 'มือจับสแตนเลส ' + t.l + (n > 1 ? ' × ' + n + ' ชุด' : '') + ' (R3.9)', qty: n, unit: 'ชุด', unitPrice: t.p, amount: t.p * n };
   }
   if (id === 'motor') {                 // มอเตอร์บานยก (ทุนราคาออโต้ 80=4,500/300=12,500 · ขาย=max(ทุน×2.5,6,000))
     const cmap = { '80': motorCost(ctx.PB, 'บานยก ยก80', 4500), '300': motorCost(ctx.PB, 'บานยก ยก300', 12500) };
