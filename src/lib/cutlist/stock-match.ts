@@ -99,6 +99,30 @@ export function resolveStock(stock: StockLite[], code: string, color?: string): 
   return cand[0];
 }
 
+/**
+ * จับคู่ "อุปกรณ์" (ฮาร์ดแวร์) → รายการสต็อก
+ *
+ * ปัญหาที่แก้ (เจ้าของทัก 24 ส.ค.69): ใบตัดเฟี้ยมยูโร/เฟี้ยมยก เขียนรหัสผู้ผลิตตรง ๆ (HD-640)
+ *   สโตร์ก็มีของจริง แต่เก็บรหัสไว้ "ในชื่อ" (เช่น "HD-640 บานพับล้อบนเฟี้ยม") ส่วนช่อง sku
+ *   เป็น JR##### ที่รันอัตโนมัติ → ฝั่งราคาหาเจอ (อ่านรหัสจากชื่อ) แต่ฝั่ง "ตัดออกสโตร์"
+ *   จับคู่ด้วย sku ตรงตัวอย่างเดียว อุปกรณ์เฟี้ยมยูโรจึงไม่เคยถูกหักออกจากสต็อกเลย
+ *
+ * ลำดับ: ① sku ตรงตัว (พฤติกรรมเดิม ไม่เปลี่ยน) → ② รหัสผู้ผลิตในชื่อ (ต้องเจอตัวเดียวเท่านั้น)
+ * ⚠ เจอหลายตัว = คืน null ตั้งใจ — ยอมข้ามดีกว่าหักผิดตัว (คนกดจะเห็นในรายการที่ข้าม)
+ */
+const HW_CODE = /^(?:HD-?\d{3,4}[A-Z]?|\d{2}-\d{3}(?:-[A-Z]{2})?)$/i;
+export function resolveHwStock(stock: StockLite[], sku: string): StockLite | null {
+  const want = U(sku);
+  if (!want) return null;
+  const exact = stock.find((s) => U(s.sku) === want);
+  if (exact) return exact;
+  if (!HW_CODE.test(want)) return null;   // JR##### ที่หา sku ไม่เจอ = ไม่มีจริง อย่าเดาจากชื่อ
+  // ขอบคำ: "HD-200" ต้องไม่ไปแมช "HD-2000" (ใช้ includes เฉย ๆ จะหักผิดตัวเงียบ ๆ)
+  const re = new RegExp(`(^|[^0-9A-Z])${want.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^0-9A-Z]|$)`, "i");
+  const hits = stock.filter((s) => re.test(String(s.name ?? "")));
+  return hits.length === 1 ? hits[0] : null;
+}
+
 // รหัสนี้ในสต็อกมี "หลายสี" ไหม (≥ 2 สีต่างกัน) — ไว้เตือนตอนไม่ได้เลือกสี
 export function hasMultipleColors(stock: StockLite[], code: string): boolean {
   const uc = U(code);
