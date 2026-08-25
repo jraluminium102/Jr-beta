@@ -1031,64 +1031,111 @@ export const PC_DOOR: CutSpec = {
   ],
 };
 
-// ⑯ ประตูรั้วบานเลื่อน (JR_ประตูรั้ว) — โครงกล่อง 2×4 (+หาง) + ระแนง · เส้น 600 ยืนยันในไฟล์
+// ⑯ ประตูรั้วบานเลื่อน — รื้อใหม่ทั้งก้อน 24 ส.ค.69 ยึด "JR_ประตูรั้ว.xlsx" ทุกบรรทัด (เจ้าของสั่ง "คิดใหม่ทำใหม่")
+// ─────────────────────────────────────────────────────────────────────────────
+// ⑥ แผงแก้ค่า ในไฟล์ = ค่าคงที่ชุดนี้ · แก้ที่นี่ที่เดียว ทั้งใบตัดและคิดราคาเปลี่ยนตาม
+//   (คิดราคา 4.0 ใช้ชุดเดียวกัน — ดู GATE_CONST ที่ products.mjs อ้างถึงในคอมเมนต์)
+const gR1 = (x: number) => Math.round(x * 10) / 10;
+const gR2 = (x: number) => Math.round(x * 100) / 100;
+const GATE = {
+  standIn: 15.5,     // หักเสาตั้ง ยัดใน
+  standOut: 17.5,    // หักเสาตั้ง แปะนอก
+  slatCutIn: 20.4,   // หักใบระแนง ยัดใน
+  slatAddOut: 5,     // บวกใบระแนง แปะนอก
+  tail: 30,          // หางยื่น (เสานอน = W + 30)
+  tailFront: 40,     // หางหน้าลง
+  tailBack: 15,      // หางท้ายลง
+  guideAddOut: 5,    // บวกเสารับไกด์ แปะนอก
+  railCut: 50,       // หักราง (ยาว = W×2 − 50)
+  stock: 600,        // ยาวเส้นสต็อก (ซม.)
+} as const;
+
+// ด้านโชว์ (ซม.) — ตรงดรอปดาวน์ในไฟล์
 const GATE_SHOW: Record<string, number> = { "1 cm": 1, "5 cm": 5, '1"': 2.54, '1½"': 3.81, '1.6"': 4.06, '4"': 10.16 };
 const gShow = (s?: string) => GATE_SHOW[s ?? '1.6"'] ?? 4.06;
-const gStand = (o: CutInput) => o.H - (o.fit === "แปะนอก" ? 17.5 : 15.5);
+/** กล่องที่เลือกได้สำหรับใบระแนง — ชื่อตรงสโตร์ ("กล่อง 1\"x1.6\"-อบขาว" ฯลฯ) */
+export const GATE_BOXES = ['1×1', '1×1.5', '1×1.6', '1×4', '1×5', '1.6×1.6', '1.6×4'];
+const gOut = (o: CutInput) => o.fit === "แปะนอก";
+
+// ② คำนวณ (ตรงไฟล์)
+const gStand = (o: CutInput) => o.H - (gOut(o) ? GATE.standOut : GATE.standIn);      // เสาตั้ง
+/** ช่วงกระจายใบ — ไฟล์เขียน "ตั้ง=เสานอน / นอน=เสาตั้ง" (นอน กระจายบนเสาตั้งที่หักกรอบแล้ว) */
 const gSpan = (o: CutInput) => (o.slatDir === "นอน" ? gStand(o) : o.W);
-const gSlatLen = (o: CutInput) =>
-  o.slatDir === "นอน"
-    ? (o.fit === "แปะนอก" ? o.W : o.W - 20.4)
-    : (o.fit === "แปะนอก" ? gStand(o) + 5 : gStand(o) - 20.4);
-const GATE_DIAG = Math.round(Math.sqrt(30 ** 2 + (40 - 15) ** 2) * 10) / 10; // เส้นทแยงค้ำมุม = 39.1 คงที่
+/** ยาว/ใบระแนง — ตั้ง วิ่งตามเสาตั้ง · นอน วิ่งตามเสานอน(W) · ยัดในหัก 20.4 · แปะนอกบวก 5 */
+const gSlatLen = (o: CutInput) => {
+  const base = o.slatDir === "นอน" ? o.W : gStand(o);
+  return gR1(base + (gOut(o) ? GATE.slatAddOut : -GATE.slatCutIn));
+};
+// เส้นทแยงค้ำหาง = √(หางยื่น² + (หางหน้าลง − หางท้ายลง)²) = 39.1
+const GATE_DIAG = gR1(Math.sqrt(GATE.tail ** 2 + (GATE.tailFront - GATE.tailBack) ** 2));
 const gAlt = (o: CutInput) => o.slatType === "ระแนงสลับ";
+
+/**
+ * จำนวนใบระแนง — ตรงไฟล์
+ *   เดี่ยว : nf = INT(ช่วง ÷ pitchA) + 1   (pitch = ด้านโชว์ + ช่องห่าง)
+ *   สลับ  : เรียงใบตามรูปแบบ A×aRun, B×bRun วนไป เติมจนเต็มช่วง แล้วนับแยก A/B
+ *           (ไฟล์ตัวอย่าง 350 ซม. โชว์ 4.06 ห่าง 5 · A3:B5 → รวม 39 = A 15 + B 24)
+ *   ห่างจริง = (ช่วง − หน้ารวม) ÷ (n − 1)
+ */
 function gCounts(o: CutInput) {
   const span = gSpan(o), fA = gShow(o.showA), fB = gShow(o.showB), gap = o.gap ?? 5;
+  const single = Math.max(1, Math.trunc(span / (fA + gap) + 1e-9) + 1);
+  if (!gAlt(o)) return { nA: single, nB: 0, faceSum: gR1(single * fA), gapReal: single > 1 ? gR2((span - single * fA) / (single - 1)) : 0 };
   const aRun = Math.max(1, Math.round(o.aRun ?? 3)), bRun = Math.max(1, Math.round(o.bRun ?? 5));
-  const E6 = fA + gap;
-  const E9 = Math.max(Math.trunc((span + gap) / E6), 2);
-  const d1 = Math.abs((span - E9 * fA) / (E9 - 1) - gap);
-  const d2 = Math.abs((span - (E9 + 1) * fA) / E9 - gap);
-  const single = d1 <= d2 ? E9 : E9 + 1;
-  let cum = 0, aCount = 0, bCount = 0;
-  for (let k = 1; k <= 400; k++) {
+  let cum = 0, nA = 0, nB = 0;
+  for (let k = 1; k <= 999; k++) {
     const isA = ((k - 1) % (aRun + bRun)) < aRun;
-    cum += isA ? fA : fB;
-    if (cum + (k - 1) * gap <= span + 1e-9) { if (isA) aCount++; else bCount++; } else break;
+    const next = cum + (isA ? fA : fB);
+    if (next + (k - 1) * gap > span + 1e-9) break;
+    cum = next; if (isA) nA++; else nB++;
   }
-  return { single, aCount, bCount };
+  const n = nA + nB;
+  return { nA, nB, faceSum: gR1(cum), gapReal: n > 1 ? gR2((span - cum) / (n - 1)) : 0 };
 }
+
 export const GATE_SLIDE: CutSpec = {
-  id: "gate_slide", name: "ประตูรั้วบานเลื่อน (โครงกล่อง 2×4 + ระแนง)", stockLen: 600, rails: [],
+  id: "gate_slide", name: "ประตูรั้วบานเลื่อน (โครงกล่อง 2×4 45° + หางเสือ + ระแนง)", stockLen: GATE.stock, rails: [],
+  packBars: true,   // ④ ในไฟล์นับ "เส้นที่ต้องซื้อ" — ต้องจัดชิ้นลงเส้นจริง ไม่ใช่รวมยาวหาร
   opts: [
     { key: "fit", label: "แบบประกอบ", choices: ["ยัดใน", "แปะนอก"] },
     { key: "slatDir", label: "แนวระแนง", choices: ["ตั้ง", "นอน"] },
     { key: "slatType", label: "ชนิดใบ", choices: ["ระแนง", "ระแนงสลับ"] },
-    { key: "showA", label: "ด้านโชว์ A", choices: ["1 cm", "5 cm", '1"', '1½"', '1.6"', '4"'] },
-    { key: "showB", label: "ด้านโชว์ B (สลับ)", choices: ["1 cm", "5 cm", '1"', '1½"', '1.6"', '4"'] },
-    { key: "gap", label: "ช่องห่าง (ซม.)", type: "number" },
-    { key: "aRun", label: "สลับ: A ท่อน/ชุด", type: "number" },
-    { key: "bRun", label: "สลับ: B ท่อน/ชุด", type: "number" },
+    { key: "boxA", label: "กล่องใบระแนง (A)", choices: GATE_BOXES },
+    { key: "showA", label: "ด้านโชว์ (A)", choices: Object.keys(GATE_SHOW) },
+    { key: "gap", label: "ช่องห่างที่ต้องการ (ซม.)", type: "number" },
+    { key: "boxB", label: "[สลับ] กล่อง B", choices: GATE_BOXES },
+    { key: "showB", label: "[สลับ] ด้านโชว์ B", choices: Object.keys(GATE_SHOW) },
+    { key: "aRun", label: "[สลับ] A กี่ท่อน/ชุด", type: "number" },
+    { key: "bRun", label: "[สลับ] B กี่ท่อน/ชุด", type: "number" },
   ],
-  defaults: { W: 350, H: 180, N: 1, rail: "", honk: false, fit: "ยัดใน", slatDir: "ตั้ง", slatType: "ระแนง", showA: '1.6"', showB: '1.6"', gap: 5, aRun: 3, bRun: 5 },
+  defaults: {
+    W: 350, H: 180, N: 1, rail: "", honk: false,
+    fit: "ยัดใน", slatDir: "ตั้ง", slatType: "ระแนง",
+    boxA: '1×1.6', showA: '1.6"', gap: 5, boxB: '1×1.6', showB: '1.6"', aRun: 3, bRun: 5,
+  },
+  // ③ ใบตัด — เรียงตรงลำดับในไฟล์ 1…10
   profiles: [
-    { name: "เสาตั้งข้าง (กล่อง 2×4)", code: boxCode("2×4"), len: gStand, qty: () => 2 },
-    { name: "เสานอนบน (2×4, รวมหาง)", code: boxCode("2×4"), len: (o) => o.W + 30, qty: () => 1, note: "W+30" },
-    { name: "เสานอนล่าง (2×4, รวมหาง)", code: boxCode("2×4"), len: (o) => o.W + 30, qty: () => 1 },
-    { name: "เสาตั้งท้ายหาง (2×4)", code: boxCode("2×4"), len: gStand, qty: () => 1 },
+    { name: "เสาตั้งข้าง (2×4)", code: boxCode("2×4"), len: gStand, qty: () => 2, note: "ยัดใน H−15.5 / แปะนอก H−17.5" },
+    { name: "เสานอนบน (2×4, รวมหาง)", code: boxCode("2×4"), len: (o) => o.W + GATE.tail, qty: () => 1, note: "W+30" },
+    { name: "เสานอนล่าง (2×4, รวมหาง)", code: boxCode("2×4"), len: (o) => o.W + GATE.tail, qty: () => 1, note: "W+30 (เหมือนบน)" },
+    { name: "เสาตั้งท้ายหาง (2×4)", code: boxCode("2×4"), len: gStand, qty: () => 1, note: "เท่าเสาตั้ง" },
     { name: "เส้นทแยงค้ำมุมบน (2×4)", code: boxCode("2×4"), len: () => GATE_DIAG, qty: () => 1, note: "√(30²+25²)=39.1" },
-    { name: "ใบระแนง A", code: "-", len: gSlatLen, qty: (o) => (gAlt(o) ? gCounts(o).aCount : gCounts(o).single) },
-    { name: "ใบระแนง B (สลับ)", code: "-", len: (o) => (gAlt(o) ? gSlatLen(o) : 0), qty: (o) => (gAlt(o) ? gCounts(o).bCount : 0) },
-    { name: 'ฉากข้อ 2" (แปะนอก)', code: "-", len: (o) => o.W, qty: (o) => (o.fit === "แปะนอก" ? 1 : 0) },
-    { name: "เสารับไกด์ (กล่อง 4×4) — เสาแยก", code: boxCode("4×4"), len: (o) => (o.fit === "แปะนอก" ? o.H + 5 : o.H), qty: () => 1 },
-    { name: "ราง (ฉากเหล็ก+เพลา)", code: "-", len: (o) => o.W * 2 - 50, qty: () => 1, note: "W×2−50" },
+    { name: "ใบระแนง A", code: (o) => boxCode(String(o.boxA ?? '1×1.6')), len: gSlatLen, qty: (o) => gCounts(o).nA, note: "แนว=ตามที่เลือก · คิดแค่ช่อง" },
+    { name: "ใบระแนง B (สลับ)", code: (o) => boxCode(String(o.boxB ?? '1×1.6')), len: (o) => (gAlt(o) ? gSlatLen(o) : 0), qty: (o) => gCounts(o).nB, note: "เฉพาะระแนงสลับ · ยาวเท่า A" },
+    { name: 'ฉากข้อ 2" (เฉพาะแปะนอก)', code: 'ฉาก 2"', len: (o) => o.W, qty: (o) => (gOut(o) ? 1 : 0), note: "ยาว=เสานอน(W)" },
+    { name: "เสารับไกด์ (4×4) — เสาแยก", code: boxCode("4×4"), len: (o) => o.H + (gOut(o) ? GATE.guideAddOut : 0), qty: () => 1, note: "ยัดใน H / แปะนอก H+5" },
+    // ราง = ฉากเหล็ก 1.5" + เพลา 4 หุน — เหล็ก ไม่ใช่อลู ยังไม่มีรหัสในสโตร์ (ดูสรุปของที่ยังไม่มี)
+    { name: 'ราง ฉากเหล็ก 1.5"+เพลา 4หุน', code: "-", len: (o) => o.W * 2 - GATE.railCut, qty: () => 1, note: "ยาว=กว้าง×2−50" },
   ],
+  // ⑤ อุปกรณ์ — ไฟล์เขียนกำกับว่า "ไม่สต็อก ซื้อต่อออเดอร์ เว้นรหัส" → ตั้งใจไม่ผูก sku
   hardware: [
-    // v2 (Excel R39): เดิม qty คงที่ 2 → กว้าง>400 เพิ่มล้อทุก 100 ซม.
-    { name: 'ล้อวิ่ง 3"', qty: (o) => 2 + (o.W > 400 ? Math.ceil((o.W - 400) / 100) : 0), unit: "ลูก", note: "2 + กว้าง>400 เพิ่มทุก 100ซม." },
-    { name: "ล้อไกด์ประคองหลัง", qty: () => 4, unit: "ชิ้น" },
+    { name: 'ล้อวิ่ง 3"', qty: (o) => 2 + (o.W > 400 ? Math.ceil((o.W - 400) / 100) : 0), unit: "ตัว", noStock: true, note: "ไม่สต็อก · 2 + กว้าง>400 เพิ่มทุก 100 ซม. (R3.9)" },
+    { name: "ล้อไกด์ประคองหลัง", qty: () => 4, unit: "ตัว", noStock: true, note: "ไม่สต็อก ซื้อต่อออเดอร์" },
+    { name: "มอเตอร์", qty: (o) => (o.gateDrive === "มือผลัก" ? 0 : 1), unit: "ตัว", noStock: true, note: "ออปชั่น · ไม่สต็อก" },
+    { name: "รีโมท", qty: (o) => Math.max(0, Math.round(o.gateRemote ?? 0)), unit: "ตัว", noStock: true, note: "ออปชั่น · ตามจำนวน" },
   ],
 };
+
 
 // ⑰ บานโซลิด (JR_บานโซลิด) — บานเปิดทึบ + ลูกฟูก + เส้นคาด · รองรับแม่-ลูก · เส้น 600 ยืนยันในไฟล์
 // ⚠ รหัส "7864" ต้องเปล่า (ไม่ใส่ F) — ชื่อในสต็อกคือ "กรอบประตู 7864"

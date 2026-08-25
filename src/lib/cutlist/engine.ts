@@ -51,6 +51,8 @@ export type CutInput = {
   bRun?: number;     // สลับ: B กี่ท่อน/ชุด
   boxA?: string;     // บานระแนง: กล่อง A (label)  · boxB = กล่อง B
   boxB?: string;
+  gateDrive?: string;// ประตูรั้ว: ระบบขับเคลื่อน "มอเตอร์"|"มือผลัก"
+  gateRemote?: number;// ประตูรั้ว: จำนวนรีโมท
   gapA?: number;     // บานระแนง: ระยะห่าง A (ซม.) · gapB = ระยะห่าง B
   gapB?: number;
   // หลังคา / กันสาด / จั่ว / กลาสเฮ้าส์
@@ -134,6 +136,8 @@ export type CutSpec = {
   id: string;
   name: string;
   stockLen: number;              // ความยาวเส้นสต็อก (ซม.)
+  /** นับเส้นแบบ "จัดชิ้นลงเส้นจริง" (FFD) แทน "รวมยาวหารเส้น" — เปิดทีละรุ่น (ดู packBars) */
+  packBars?: boolean;
   defaults: CutInput;
   rails: string[];               // ตัวเลือกราง ([] = รุ่นนี้ไม่มีราง)
   opts?: CutOpt[];               // ตัวเลือกเฉพาะรุ่น (dropdown เพิ่มเติม)
@@ -166,6 +170,25 @@ export type CutResult = {
 const ceil = (x: number) => Math.ceil(x - 1e-9);
 const round1 = (x: number) => Math.round(x * 10) / 10;
 
+/**
+ * จำนวนเส้นที่ต้องซื้อ — จัดชิ้นลงเส้นจริง (First-Fit Decreasing)
+ *   ทำไมไม่ใช้ "รวมยาว ÷ ความยาวเส้น": วิธีนั้นสมมติว่าเอาเศษมาต่อกันได้
+ *   ใบระแนงนอน 19 ใบ × 329.6 ซม. รวม 62.6 ม. ÷ 6 = 11 เส้น — แต่ของจริงตัดได้เส้นละใบ
+ *   (เศษ 270 ซม. ทำใบที่ 2 ไม่ได้) ต้องใช้ 19 เส้น
+ *   FFD ให้ผลตรงตัวเลขในไฟล์ JR_ประตูรั้ว ทั้ง 2 จุดที่ไฟล์ยกตัวอย่างไว้
+ *   (กล่อง 2×4 = 3 เส้น · ใบระแนงตั้ง = 10 เส้น) และถูกต้องกับแนวนอนด้วย
+ */
+export function packBars(lengths: number[], stockLen: number): number {
+  const items = lengths.filter((L) => L > 0).sort((a, b) => b - a);
+  const bins: number[] = [];
+  for (const L of items) {
+    if (L > stockLen + 1e-9) { bins.push(L); continue; }   // ชิ้นยาวเกินเส้น — ต้องต่อ นับเป็นเส้นของมันเอง
+    const i = bins.findIndex((used) => used + L <= stockLen + 1e-9);
+    if (i < 0) bins.push(L); else bins[i] += L;
+  }
+  return bins.length;
+}
+
 // เลือกความยาวเส้นสต็อกที่ "คุ้มสุด" ต่อรหัส (เศษน้อยสุด) จากตัวเลือกที่มี (เช่น เสากุญแจ SlimLux 4.8/6 ม.)
 //  · ต้องยาว ≥ ชิ้นยาวสุด (ตัดได้จริง) · เศษ = bars×B − sumLen ต่ำสุด · เท่ากันเลือกจำนวนเส้นน้อยกว่า
 function pickStock(sumLen: number, maxCut: number, candidates: number[]): { stockLen: number; bars: number } {
@@ -195,17 +218,18 @@ export function computeCutList(spec: CutSpec, input: Partial<CutInput>, sets = 1
     const stockLens = p.stockLens?.length ? p.stockLens : [spec.stockLen];
     // เส้นระดับบรรทัด (โชว์): ใช้เส้นสั้นสุดที่ตัดได้ ของโปรไฟล์นี้
     const rowStock = stockLens.filter((b) => b >= len).sort((a, b) => a - b)[0] ?? Math.max(...stockLens);
-    const bars = qty > 0 && len > 0 ? ceil((len * qty) / rowStock) : 0;
+    const bars = qty > 0 && len > 0 ? (spec.packBars ? packBars(Array(qty).fill(len), rowStock) : ceil((len * qty) / rowStock)) : 0;
     return { row: { name: p.name, code, len, qty, bars, stockLen: rowStock, note: p.note } as CutRow, stockLens };
   });
   const rows = meta.map((m) => m.row);
   // สรุปเส้นต่อรหัส — รวมยาว + ชิ้นยาวสุด + ตัวเลือกเส้น ต่อรหัส แล้วเลือกเส้นคุ้มสุด (nesting ต่อรหัส)
-  const agg = new Map<string, { sumLen: number; maxCut: number; bars: Set<number> }>();
+  const agg = new Map<string, { sumLen: number; maxCut: number; bars: Set<number>; lens: number[] }>();
   for (const m of meta) {
     const r = m.row;
     if (!r.code || r.code === "-" || r.qty <= 0 || r.len <= 0) continue;
-    const a = agg.get(r.code) ?? { sumLen: 0, maxCut: 0, bars: new Set<number>() };
+    const a = agg.get(r.code) ?? { sumLen: 0, maxCut: 0, bars: new Set<number>(), lens: [] };
     a.sumLen += r.len * r.qty;
+    for (let i = 0; i < r.qty; i++) a.lens.push(r.len);
     a.maxCut = Math.max(a.maxCut, r.len);
     m.stockLens.forEach((b) => a.bars.add(b));
     agg.set(r.code, a);
@@ -213,7 +237,8 @@ export function computeCutList(spec: CutSpec, input: Partial<CutInput>, sets = 1
   const barsByCode = [...agg.entries()]
     .map(([code, a]) => {
       const pick = pickStock(a.sumLen, a.maxCut, [...a.bars]);
-      return { code, totalLenCm: round1(a.sumLen), bars: pick.bars, stockLen: pick.stockLen };
+      const bars = spec.packBars ? packBars(a.lens, pick.stockLen) : pick.bars;
+      return { code, totalLenCm: round1(a.sumLen), bars, stockLen: pick.stockLen };
     })
     .sort((a, b) => a.code.localeCompare(b.code));
   // ctx: ให้สูตรฮาร์ดแวร์อ้างความยาว/จำนวนต่อชิ้นของโปรไฟล์ (per-unit ก่อนคูณ sets) ตามชื่อ — ตรง Excel ตาราง ④
