@@ -2,21 +2,15 @@
 
 import { useEffect } from "react";
 
-// เตือน "มีของยังไม่บันทึก" ก่อนออก/เปลี่ยนหน้า (เจ้าของสั่ง 25 ส.ค.69 — คิดราคา4.0/ใบปะหน้า/แบบช่าง)
-//   ครอบ 2 ทาง:
-//   1) beforeunload — ปิดแท็บ/รีเฟรช/กด back ระดับเบราว์เซอร์ → กล่องเตือน native
-//   2) คลิกลิงก์ในแอป (เมนู <a>) — ถาม confirm ก่อนพาออก (SPA nav ไม่ยิง beforeunload)
+// เตือน "มีของยังไม่บันทึก" ก่อนเปลี่ยนหน้าในแอป (เจ้าของสั่ง 25 ส.ค.69 — คิดราคา4.0/ใบปะหน้า/แบบช่าง)
+//   ⚠ ไม่ใช้ beforeunload — เดิมใช้แล้วเบราว์เซอร์เด้งกล่อง native ภาษาอังกฤษ (แก้ข้อความไม่ได้)
+//     + ไปเด้งตอนกดปุ่ม "ออกใบเสนอราคา" (router.push = การบันทึก) จนบล็อกการบันทึกเงียบ ๆ (25 ส.ค.69)
+//   เหลือแค่: ดักคลิกลิงก์ในแอป (เมนู <a>) → ถาม confirm ภาษาไทยก่อนพาออก
+//     ปุ่มบันทึก/ออกใบเสนอ เป็น <button>+router.push (ไม่ใช่ <a>) → ไม่โดนดัก = บันทึกได้ปกติ
 // ใช้: useUnsavedWarning(isDirty) — isDirty=true เมื่อมีของที่แก้แล้วยังไม่บันทึก
 export function useUnsavedWarning(isDirty: boolean) {
   useEffect(() => {
     if (!isDirty) return;
-
-    const onBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = ""; // Chrome ต้อง set returnValue ถึงจะโชว์กล่อง
-      return "";
-    };
-    window.addEventListener("beforeunload", onBeforeUnload);
 
     // ดักคลิกลิงก์ในแอป (capture phase — ก่อน router จะพาไป)
     const onClickCapture = (e: MouseEvent) => {
@@ -25,7 +19,7 @@ export function useUnsavedWarning(isDirty: boolean) {
       if (!a) return;
       const href = a.getAttribute("href");
       if (!href || href.startsWith("#") || a.target === "_blank" || a.hasAttribute("download")) return;
-      // ลิงก์ออกนอกเว็บ (http/mailto/tel) ปล่อยให้ beforeunload จัดการ
+      // ลิงก์ออกนอกเว็บ (http/mailto/tel) — ไม่ดัก (ปล่อยไปตามปกติ)
       if (/^(https?:|mailto:|tel:)/i.test(href)) return;
       if (!window.confirm("มีข้อมูลที่ยังไม่บันทึก — ออกจากหน้านี้เลยไหม?\nที่ทำไว้จะหายนะ")) {
         e.preventDefault();
@@ -35,7 +29,6 @@ export function useUnsavedWarning(isDirty: boolean) {
     document.addEventListener("click", onClickCapture, true);
 
     return () => {
-      window.removeEventListener("beforeunload", onBeforeUnload);
       document.removeEventListener("click", onClickCapture, true);
     };
   }, [isDirty]);
