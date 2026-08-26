@@ -7,6 +7,7 @@ import { api, ApiError } from "@/lib/api";
 import { Spinner, EmptyState } from "@/components/ui/primitives";
 import Icon from "@/components/Icon";
 import DateField from "@/components/ui/DateField";
+import { FloorWorkBadge } from "@/components/ui/FloorWorkBadge";
 import { thDate } from "@/lib/format";
 
 // ── types ────────────────────────────────────────────────────────────────────
@@ -19,6 +20,9 @@ type MeasureEntry = {
   customer_area: string | null;
   customer_tel: string | null;
   location_url: string | null;   // ลิงก์แผนที่ (จากคิวประเมิน) — ไว้ก๊อปส่งช่างวัด
+  floor_work: string | null;     // ผรม. (งานพื้น 0090)
+  floor_note: string | null;
+  sales_name: string | null;     // เซลล์
   measure_scheduled: string | null;
   measure_time: string | null;
   measure_actual: string | null;
@@ -270,12 +274,16 @@ function EntryRow({ entry, canWrite, onBook }: { entry: MeasureEntry; canWrite?:
               <Icon name="check" size={10} /> วัดแล้ว
             </span>
           )}
+          <FloorWorkBadge floorWork={entry.floor_work} floorNote={entry.floor_note} dark />
         </div>
         <div className="text-[12px] mt-0.5 flex items-center gap-2 flex-wrap" style={{ color: "var(--t-low)" }}>
           {entry.customer_tel && (
             <span className="flex items-center gap-1">
               <Icon name="users" size={11} /> {entry.customer_tel}
             </span>
+          )}
+          {entry.sales_name && (
+            <span className="flex items-center gap-1 font-semibold text-sky-200">Sale: {entry.sales_name}</span>
           )}
           {entry.measurer_name && (
             <span className="flex items-center gap-1">
@@ -778,6 +786,8 @@ export default function MeasureSchedulePage() {
               >
                 <div className="min-w-0">
                   <span className="font-medium text-white text-sm">{e.customer_name ?? "—"}</span>
+                  <span className="ml-1.5 align-middle"><FloorWorkBadge floorWork={e.floor_work} floorNote={e.floor_note} dark /></span>
+                  {e.sales_name && <span className="ml-2 text-[11px] font-semibold text-sky-200">Sale: {e.sales_name}</span>}
                   {e.customer_area && <span className="ml-2 text-[12px]" style={{ color: "var(--t-low)" }}>{e.customer_area}</span>}
                   {e.job_code && <span className="ml-2 text-[11px]" style={{ color: "var(--t-low)" }}>{e.job_code}</span>}
                   {e.measurer_name && <span className="ml-2 text-[11px]" style={{ color: "var(--t-low)" }}>ช่าง: {e.measurer_name}</span>}

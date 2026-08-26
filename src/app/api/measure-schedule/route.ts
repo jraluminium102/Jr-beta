@@ -10,25 +10,19 @@ export const GET = withRoute(async () => {
   const ctx = await requirePermission("production", "read");
 
   // ดึง PENDING_MEASURE ทั้งหมด (นัดแล้ว + รอนัด) และ MEASURED ล่าสุด 7 วัน (อ้างอิง)
-  const { data, error } = await ctx.supabase
+  const baseCols = `id, job_id, status, measure_scheduled, measure_time, measure_actual, measure_actual_time, measured_by_name, measurer_id, measurer_name, measurer:measurer_id(full_name),`;
+  // job join แบบ enrich (floor_work=ผรม. + estimator/queue sales=เซลล์) — ถ้า embed sales/estimator พังจะ fallback ไม่ให้หน้าล่ม
+  const jobEnriched = `job:job_id(job_code, customer_name, customer_area, customer_tel, status, floor_work, floor_note, estimator:estimator_id(full_name), queue_entry:queue_entry_id(location_url, sales:sales_id(name)))`;
+  const jobBasic    = `job:job_id(job_code, customer_name, customer_area, customer_tel, status, floor_work, floor_note, queue_entry:queue_entry_id(location_url))`;
+  const runSelect = (jobSel: string) => ctx.supabase
     .from("productions")
-    .select(`
-      id,
-      job_id,
-      status,
-      measure_scheduled,
-      measure_time,
-      measure_actual,
-      measure_actual_time,
-      measured_by_name,
-      measurer_id,
-      measurer_name,
-      job:job_id(job_code, customer_name, customer_area, customer_tel, status, queue_entry:queue_entry_id(location_url)),
-      measurer:measurer_id(full_name)
-    `)
+    .select(`${baseCols} ${jobSel}`)
     .in("status", ["PENDING_MEASURE", "MEASURED"])
     .order("measure_scheduled", { ascending: true, nullsFirst: false });
 
+  let { data, error } = await runSelect(jobEnriched);
+  // กันพัง: ถ้า embed estimator/sales ไม่ resolve (ชื่อ relationship/สิทธิ์) → ดึงแบบ basic (ผรม.ยังมี · เซลล์แค่หายชั่วคราว)
+  if (error) ({ data, error } = await runSelect(jobBasic));
   if (error) throw new Error(error.message);
 
   // ตัดงานที่ job ถูกยกเลิก
@@ -46,7 +40,7 @@ export const GET = withRoute(async () => {
       return true; // PENDING_MEASURE ทั้งหมด
     })
     .map((p) => {
-      const job = p.job as { job_code?: string; customer_name?: string; customer_area?: string | null; customer_tel?: string | null; queue_entry?: { location_url?: string | null } | null } | null;
+      const job = p.job as { job_code?: string; customer_name?: string; customer_area?: string | null; customer_tel?: string | null; floor_work?: string | null; floor_note?: string | null; estimator?: { full_name?: string | null } | null; queue_entry?: { location_url?: string | null; sales?: { name?: string | null } | null } | null } | null;
       const measurer = p.measurer as { full_name?: string | null } | null;
       // ใช้ measurer_name (free-text 0040) เป็นหลัก — fallback ชื่อจาก profile
       const displayMeasurerName = (p.measurer_name as string | null) ?? measurer?.full_name ?? null;
@@ -58,6 +52,9 @@ export const GET = withRoute(async () => {
         customer_area: job?.customer_area ?? null,
         customer_tel: job?.customer_tel ?? null,
         location_url: job?.queue_entry?.location_url ?? null,   // ลิงก์แผนที่จากคิวประเมิน (ไว้ก๊อปส่งช่างวัด)
+        floor_work: job?.floor_work ?? null,                    // ผรม. (งานพื้น 0090) → โชว์ป้าย
+        floor_note: job?.floor_note ?? null,
+        sales_name: job?.queue_entry?.sales?.name ?? job?.estimator?.full_name ?? null,  // เซลล์ (คิว → estimator fallback)
         measure_scheduled: p.measure_scheduled,
         measure_time: p.measure_time ?? null,
         measure_actual: p.measure_actual ?? null,
