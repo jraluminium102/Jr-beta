@@ -11,6 +11,8 @@ import { compareCut, COMPARABLE, cutOptionsFor, type AluRow, type HwRow } from "
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const TONE = {
   "ตรง": "emerald", "จำนวนต่าง": "red", "มีแต่คิดราคา": "amber", "มีแต่ใบตัด": "red", "ไม่มีรหัส": "gray",
+  // ของสั่งตามงาน = ตั้งใจไม่ผูกสโตร์ ราคาอยู่ในสูตร → เขียว ไม่ใช่ปัญหา
+  "ไม่สต็อก สั่งใหม่": "emerald",
 } as const;
 
 const n1 = (n: number) => Number(n).toLocaleString("th-TH", { maximumFractionDigits: 1 });

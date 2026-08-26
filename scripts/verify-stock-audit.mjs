@@ -321,7 +321,7 @@ console.log("\n═══ ⑥ หน้าจอต่อสายครบไห
   ok("เรียงตัวที่ต้องแก้ก่อนขึ้นบนสุด", /ORDER: AuditStatus\[\] = \["no_key", "missing"/.test(c), "");
   const cc = fs.readFileSync(path.join(ROOT, "src/components/Calculator40Client.tsx"), "utf8");
   ok("มีทางเข้าจากหน้าคิดราคา", /calculator40\/stock-audit/.test(cc), "");
-  ok("ป้ายสถานะครบทุกแบบ", Object.keys(STATUS_LABEL).length === 6, "");
+  ok("ป้ายสถานะครบทุกแบบ (+order_only 26 ส.ค.69)", Object.keys(STATUS_LABEL).length === 7, String(Object.keys(STATUS_LABEL).length));
   ok("ค่าตั้งต้นของหน้าคือมุม 'รายรุ่น'", c.includes('setView] = useState') && c.includes('>("product")'), "");
   ok("มีมุม 'ราคาต่อโล → ราคาต่อเส้น' ให้กด", c.includes("ราคาต่อโล → ราคาต่อเส้น") && c.includes('view === "kg"'), "");
   ok("ขึ้นป้ายจำนวนเส้นที่ต้องแก้บนปุ่ม (ไม่ต้องเข้าไปดูก่อน)", c.includes("kgBad"), "");

@@ -37,14 +37,18 @@ export type AluRow = {
   code: string; name: string;
   calcBars: number; calcPricePerBar: number; calcAmount: number; kgPerBar: number; bahtPerKg: number;
   calcLenCm: number; calcPieces: number; barCounted: boolean;
+  /** ของสั่งตามงาน — ตั้งใจไม่ผูกสโตร์ ราคาอยู่ในสูตร */
+  orderOnly?: boolean;
   cutBars: number; cutTotalLenCm: number; cutStockLen: number; cutPieces: number;
-  status: "ตรง" | "จำนวนต่าง" | "มีแต่คิดราคา" | "มีแต่ใบตัด" | "ไม่มีรหัส";
+  status: "ตรง" | "จำนวนต่าง" | "มีแต่คิดราคา" | "มีแต่ใบตัด" | "ไม่มีรหัส" | "ไม่สต็อก สั่งใหม่";
 };
 export type HwRow = {
   sku: string; name: string;
   calcQty: number; calcPrice: number; calcAmount: number; calcUnit: string;
+  /** ของสั่งตามงาน — ตั้งใจไม่ผูกสโตร์ ราคาอยู่ในสูตร */
+  orderOnly?: boolean;
   cutQty: number; cutUnit: string;
-  status: "ตรง" | "จำนวนต่าง" | "มีแต่คิดราคา" | "มีแต่ใบตัด" | "ไม่มีรหัส";
+  status: "ตรง" | "จำนวนต่าง" | "มีแต่คิดราคา" | "มีแต่ใบตัด" | "ไม่มีรหัส" | "ไม่สต็อก สั่งใหม่";
 };
 
 const r2 = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
@@ -58,7 +62,10 @@ const eq = (a: number, b: number) => {
 };
 
 /** สถานะจากคู่จำนวน (ฝั่งคิดราคา, ฝั่งใบตัด) */
-function statusOf(calc: number, cut: number, hasKey: boolean): AluRow["status"] {
+function statusOf(calc: number, cut: number, hasKey: boolean, orderOnly = false): AluRow["status"] {
+  // ของสั่งตามงาน (มอเตอร์/ราง/เหล็กยัดเสา ฯลฯ) — ตั้งใจไม่ผูกสโตร์ ราคาอยู่ในสูตร
+  //   ไม่ใช่ "ตกหล่น" → ขึ้นเขียว ไม่ต้องให้ใครมาไล่ตามอีก (เจ้าของสั่ง 26 ส.ค.69)
+  if (orderOnly && calc > 0) return "ไม่สต็อก สั่งใหม่";
   // ⚠ ลำดับสำคัญ: เช็ค "จำนวนตรงกันไหม" ก่อน แล้วค่อยเช็คว่าผูกรหัสหรือยัง
   //   ของบางตัวยังไม่มีรหัสสโตร์ (ยาง/สักหลาด) แต่ทั้งสองฝั่งมีชื่อเดียวกันจำนวนเท่ากัน = ตรง
   //   เรื่อง "ผูกรหัสหรือยัง" มีหน้าตรวจสโตร์ดูแลแยกอยู่แล้ว (เจ้าของสั่ง 21 ส.ค.69 เอาเขียวล้วน)
@@ -153,7 +160,7 @@ export function compareCut(PB: any, inp: CompareInput) {
     const e = byCode.get(key) ?? {
       code, name: l.name, calcBars: 0, calcPricePerBar: l.unitPrice, calcAmount: 0,
       kgPerBar: l.kg || 0, bahtPerKg: l.kg > 0 ? r2(l.unitPrice / l.kg) : 0,
-      calcLenCm: 0, calcPieces: 0, barCounted: false,
+      calcLenCm: 0, calcPieces: 0, barCounted: false, orderOnly: !!l.orderOnly,
       cutBars: 0, cutTotalLenCm: 0, cutStockLen: 0, cutPieces: 0, status: "ตรง",
     };
     e.calcBars = r2(e.calcBars + l.qty); e.calcAmount = r2(e.calcAmount + l.amount);
@@ -181,8 +188,8 @@ export function compareCut(PB: any, inp: CompareInput) {
     ...e,
     calcPieces: e.barCounted ? 0 : e.calcPieces,   // 0 = หน้าจอขึ้น "—" (คิดราคาไม่ได้นับเป็นชิ้น)
     status: e.barCounted
-      ? statusOf(r2(e.calcBars), r2(e.cutBars), !!e.code)
-      : statusOf(r2(e.calcPieces), r2(e.cutPieces), !!e.code),
+      ? statusOf(r2(e.calcBars), r2(e.cutBars), !!e.code, e.orderOnly)
+      : statusOf(r2(e.calcPieces), r2(e.cutPieces), !!e.code, e.orderOnly),
   }));
 
   // ── ② เทียบอุปกรณ์รายรหัสสโตร์ ────────────────────────────────────────
@@ -207,6 +214,7 @@ export function compareCut(PB: any, inp: CompareInput) {
     const key = sku || `ไม่มีรหัส:${l.name}`;
     const e = bySku.get(key) ?? {
       sku, name: l.name, calcQty: 0, calcPrice: l.unitPrice, calcAmount: 0, calcUnit: l.unit || "",
+      orderOnly: !!(l as { orderOnly?: boolean }).orderOnly,
       cutQty: 0, cutUnit: "", status: "ตรง" as HwRow["status"],
     };
     e.calcQty = r2(e.calcQty + l.qty); e.calcAmount = r2(e.calcAmount + l.amount);
@@ -221,14 +229,14 @@ export function compareCut(PB: any, inp: CompareInput) {
       cutQty: h.qty, cutUnit: h.unit, status: "มีแต่ใบตัด",
     });
   }
-  const hardware: HwRow[] = [...bySku.values()].map((e) => ({ ...e, status: statusOf(e.calcQty, e.cutQty, !!e.sku) }));
+  const hardware: HwRow[] = [...bySku.values()].map((e) => ({ ...e, status: statusOf(e.calcQty, e.cutQty, !!e.sku, e.orderOnly) }));
 
   // ── ③ เรตอลู ฿/กก. ที่ใช้จริง ────────────────────────────────────────
   const brand = prod.brand || "SMS";
   const rate = Number(PB.ALU?.[brand]) || 0;
   const base = Number(PB.ALU_BASE?.[brand]) || rate || 1;
 
-  const order = { "มีแต่ใบตัด": 0, "จำนวนต่าง": 1, "มีแต่คิดราคา": 2, "ไม่มีรหัส": 3, "ตรง": 4 } as const;
+  const order = { "มีแต่ใบตัด": 0, "จำนวนต่าง": 1, "มีแต่คิดราคา": 2, "ไม่มีรหัส": 3, "ไม่สต็อก สั่งใหม่": 4, "ตรง": 5 } as const;
   const sortFn = (a: { status: string; code?: string; sku?: string }, b: typeof a) =>
     (order as any)[a.status] - (order as any)[b.status] || String(a.code ?? a.sku).localeCompare(String(b.code ?? b.sku));
 
