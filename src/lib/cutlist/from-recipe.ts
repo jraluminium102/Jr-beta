@@ -5,7 +5,7 @@
  *
  * ขยายรุ่น: เพิ่ม case ใน switch ให้ตรง spec_id ใน products.ts (พอร์ตจาก Excel "ตัดประกอบ")
  */
-import { CUT_SPEC_BY_ID } from "./products.ts";
+import { CUT_SPEC_BY_ID, GATE_BOX_FROM_CALC } from "./products.ts";
 import type { CutInput } from "./engine.ts";
 import { calcColorToStock } from "./stock-match.ts";
 
@@ -130,7 +130,7 @@ export function cutInputFromRecipe(recipe: any): RecipeCutMap | null {
     case "gate": {
       // ประตูรั้ว รื้อใหม่ 24 ส.ค.69 — คิดราคาเก็บตัวเลือกครบตามไฟล์แล้ว ส่งต่อใบตัดทั้งชุด
       //   material = กล่องใบระแนง A ("1x1.6") · ใบตัดใช้รูป "1×1.6" → แปลงเครื่องหมายให้ตรง
-      const gBox = (v: unknown, fb: string) => String(v ?? fb).replace(/x/gi, "×");
+      const gBox = (v: unknown, fb: string) => GATE_BOX_FROM_CALC[String(v ?? fb)] ?? GATE_BOX_FROM_CALC[fb];
       const gFace = (v: unknown) => ({ "1": "1 cm", "5": "5 cm", "2.54": '1"', "3.81": '1½"', "4.06": '1.6"', "10.16": '4"' })[String(v ?? "4.06")] ?? '1.6"';
       const sp = (recipe.spec ?? {}) as Record<string, unknown>;
       m = { spec_id: "gate_slide", input: {
