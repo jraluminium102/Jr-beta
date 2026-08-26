@@ -1148,14 +1148,18 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                   <Select label={prod.materialLabel || "วัสดุ"} value={material} onChange={setMaterial} opts={prod.materials} labels={prod.materialLabels} />
                 )}
                 {(prod.specOpts ?? []).map((o: any) => {
+                  // ฟิลด์ label ขึ้นต้น "[สลับ]" ใช้เฉพาะตอนเลือก gslat='ระแนงสลับ' — ไม่งั้นล็อกไว้กันกดมั่ว (25 ส.ค.69)
+                  const isAltField = typeof o.label === "string" && o.label.startsWith("[สลับ]");
+                  const altLocked = isAltField && spec.gslat !== "ระแนงสลับ";
                   // specOpts type:'number' → ช่องกรอกตัวเลข (มิติเพิ่ม เช่น บานเปิด/ช่องปูน Shower · ลึกตู้)
                   if (o.type === 'number') {
                     return (
                       <label key={o.key} className="block">
-                        <span className="text-xs font-medium text-ink-3">{o.label}</span>
+                        <span className={altLocked ? "text-xs font-medium text-ink-3/40" : "text-xs font-medium text-ink-3"}>{o.label}</span>
                         <input type="number" step={o.step ?? 0.1} min={0} value={spec[o.key] ?? ""} placeholder={o.placeholder ?? ""}
                           onChange={(e) => setSpec((s) => ({ ...s, [o.key]: e.target.value }))}
-                          className="mt-1.5 w-full min-h-[44px] glass-soft rounded-lg px-3 py-2 outline-none tabular-nums text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" />
+                          disabled={altLocked}
+                          className="mt-1.5 w-full min-h-[44px] glass-soft rounded-lg px-3 py-2 outline-none tabular-nums text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand disabled:opacity-40 disabled:cursor-not-allowed" />
                       </label>
                     );
                   }
@@ -1163,7 +1167,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                   const opts: string[] = (o.optsByMaterial && o.optsByMaterial[material]) || o.opts;
                   const val = opts.includes(spec[o.key]) ? spec[o.key] : (o.def && opts.includes(o.def) ? o.def : opts[0]);
                   return (
-                    <Select key={o.key} label={o.label} value={val ?? ""} onChange={(v) => setSpec((s) => ({ ...s, [o.key]: v }))} opts={opts} labels={o.labels} />
+                    <Select key={o.key} label={o.label} value={val ?? ""} onChange={(v) => setSpec((s) => ({ ...s, [o.key]: v }))} opts={opts} labels={o.labels} disabled={altLocked} />
                   );
                 })}
                 {/* มือจับ — ยี่ห้อ/สี/ชนิดต่อบาน · แต่ละคู่ = คนละรหัสสโตร์ ราคาจึงต่างกันได้จริง
@@ -1990,14 +1994,14 @@ function MetersField({ label, cm, onCm }: { label: string; cm: string; onCm: (cm
   );
 }
 
-function Select({ label, value, onChange, opts, labels }: {
-  label: string; value: string; onChange: (v: string) => void; opts: string[]; labels?: Record<string, string>;
+function Select({ label, value, onChange, opts, labels, disabled }: {
+  label: string; value: string; onChange: (v: string) => void; opts: string[]; labels?: Record<string, string>; disabled?: boolean;
 }) {
   return (
     <label className="block">
-      <span className="text-xs font-medium text-ink-3">{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)}
-        className="w-full glass-soft rounded-lg px-3 py-2 mt-1 outline-none">
+      <span className={disabled ? "text-xs font-medium text-ink-3/40" : "text-xs font-medium text-ink-3"}>{label}</span>
+      <select value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled}
+        className="w-full glass-soft rounded-lg px-3 py-2 mt-1 outline-none disabled:opacity-40 disabled:cursor-not-allowed">
         {opts.map((o) => <option key={o} value={o}>{labels?.[o] ?? o}</option>)}
       </select>
     </label>

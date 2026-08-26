@@ -440,14 +440,18 @@ function ColsEditor({
           {((prod?.specOpts?.length ?? 0) > 0 || HW_FROM_CUTLIST.has(sel.typeKey)) && (
             <div className="flex items-center gap-2 flex-wrap text-[11px]">
               {(prod?.specOpts ?? []).map((o: any) => {
+                // ฟิลด์ label ขึ้นต้น "[สลับ]" ใช้เฉพาะตอนเลือก gslat='ระแนงสลับ' — ไม่งั้นล็อกไว้กันกดมั่ว (25 ส.ค.69)
+                const isAltField = typeof o.label === "string" && o.label.startsWith("[สลับ]");
+                const altLocked = isAltField && paneSpec(prod, sel).gslat !== "ระแนงสลับ";
                 // specOpts ตัวเลข (ขนาดประตู/ช่องปูนของ Shower) — ต้องกรอกได้เหมือน G1 ไม่งั้นคิดจากค่าตั้งต้นเสมอ
                 if (o.type === "number") {
                   return (
                     <span key={o.key} className="inline-flex items-center gap-1">
-                      <span className="text-ink-3">{o.label}</span>
+                      <span className={altLocked ? "text-ink-3/40" : "text-ink-3"}>{o.label}</span>
                       <input type="number" step={o.step ?? 0.1} min={0} value={paneSpec(prod, sel)[o.key] ?? ""}
                         onChange={(e) => onPatchPane(sel.key, { spec: { ...paneSpec(prod, sel), [o.key]: e.target.value } })}
-                        className="min-h-[32px] w-20 glass-soft rounded-lg px-2 py-1 outline-none tabular-nums text-xs" />
+                        disabled={altLocked}
+                        className="min-h-[32px] w-20 glass-soft rounded-lg px-2 py-1 outline-none tabular-nums text-xs disabled:opacity-40 disabled:cursor-not-allowed" />
                     </span>
                   );
                 }
@@ -455,10 +459,11 @@ function ColsEditor({
                 const cur = paneSpec(prod, sel)[o.key];
                 return (
                   <span key={o.key} className="inline-flex items-center gap-1">
-                    <span className="text-ink-3">{o.label}</span>
+                    <span className={altLocked ? "text-ink-3/40" : "text-ink-3"}>{o.label}</span>
                     <select value={opts.includes(cur) ? cur : (opts[0] ?? "")}
                       onChange={(e) => onPatchPane(sel.key, { spec: { ...paneSpec(prod, sel), [o.key]: e.target.value } })}
-                      className="min-h-[32px] glass-soft rounded-lg px-2 py-1 outline-none text-xs">
+                      disabled={altLocked}
+                      className="min-h-[32px] glass-soft rounded-lg px-2 py-1 outline-none text-xs disabled:opacity-40 disabled:cursor-not-allowed">
                       {opts.map((v) => <option key={v} value={v}>{o.labels?.[v] ?? v}</option>)}
                     </select>
                   </span>
