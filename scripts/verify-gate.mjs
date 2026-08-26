@@ -38,7 +38,7 @@ console.log('\n═══ ① ตรงตัวอย่างในไฟล์
     ["เส้นทแยงค้ำมุมบน (2×4)", 39.1, 1],
     ["ใบระแนง A", 144.1, 39],
     ["ใบระแนง B (สลับ)", 0, 0],
-    ['ฉากข้อ 2" (เฉพาะแปะนอก)', 350, 0],
+    ['ฉากข้อต่อ 2" (เฉพาะแปะนอก)', 350, 0],
     ["เสารับไกด์ (4×4) — เสาแยก", 180, 1],
     ['ราง ฉากเหล็ก 1.5"+เพลา 4หุน', 650, 1],
   ];
@@ -74,7 +74,7 @@ console.log("\n═══ ③ แปะนอก (⑥ แผงแก้ค่า
     row(inn, "ใบระแนง A").len === 144.1 && row(out, "ใบระแนง A").len === 167.5,
     `${row(inn, "ใบระแนง A").len} / ${row(out, "ใบระแนง A").len}`);
   ok('ฉากข้อ 2" มีเฉพาะแปะนอก (ยาว = W)',
-    row(inn, 'ฉากข้อ 2" (เฉพาะแปะนอก)').qty === 0 && row(out, 'ฉากข้อ 2" (เฉพาะแปะนอก)').qty === 1 && row(out, 'ฉากข้อ 2" (เฉพาะแปะนอก)').len === 350);
+    row(inn, 'ฉากข้อต่อ 2" (เฉพาะแปะนอก)').qty === 0 && row(out, 'ฉากข้อต่อ 2" (เฉพาะแปะนอก)').qty === 1 && row(out, 'ฉากข้อต่อ 2" (เฉพาะแปะนอก)').len === 350);
   ok("เสารับไกด์ ยัดใน H · แปะนอก H+5",
     row(inn, "เสารับไกด์ (4×4) — เสาแยก").len === 180 && row(out, "เสารับไกด์ (4×4) — เสาแยก").len === 185);
 }
@@ -125,11 +125,20 @@ console.log("\n═══ ⑥ กฎที่ต้องไม่พัง ═�
   ok("ทุกเส้นอลูผูกรหัสสโตร์ (ยกเว้นรางเหล็ก ที่ยังไม่มีในสโตร์)",
     PRODUCTS.gate.alu.filter((a) => !a.code).every((a) => /ราง/.test(a.name)),
     PRODUCTS.gate.alu.filter((a) => !a.code).map((a) => a.name).join(","));
-  ok("ทุกเส้นมี box ผูกชื่อกล่องในสโตร์ (ยกเว้นราง)",
-    PRODUCTS.gate.alu.filter((a) => !a.box).every((a) => /ราง/.test(a.name)));
+  // ฉากข้อต่อ ผูกด้วย sku ตรง (JR02944) ไม่ใช่ชื่อกล่อง · รางเหล็กไม่มีในสโตร์
+  ok("ทุกเส้นมี box ผูกชื่อกล่อง (ยกเว้น ฉากข้อต่อ ที่ผูก sku ตรง กับ ราง ที่ไม่มีในสโตร์)",
+    PRODUCTS.gate.alu.filter((a) => !a.box).every((a) => /ราง|ฉากข้อต่อ/.test(a.name)),
+    PRODUCTS.gate.alu.filter((a) => !a.box).map((a) => a.name).join(","));
   const r = cut({});
-  ok("อุปกรณ์ในใบตัดตั้งใจไม่ผูก sku (ไฟล์เขียน 'ไม่สต็อก ซื้อต่อออเดอร์ เว้นรหัส')",
-    r.hardware.every((h) => !h.sku && h.noStock), r.hardware.map((h) => h.name + ":" + (h.sku || "-")).join(","));
+  // เจ้าของให้รหัส 26 ส.ค.69: ล้อ 2 ตัวมีในสโตร์ หักสต็อกจริง · มอเตอร์/รีโมท ของสั่งตามงาน ไม่ผูก
+  const hwSku = (n) => r.hardware.find((h) => h.name.includes(n));
+  ok('ล้อวิ่ง 3" → JR02942 (หักสต็อก)', hwSku("ล้อวิ่ง")?.sku === "JR02942" && !hwSku("ล้อวิ่ง")?.noStock, String(hwSku("ล้อวิ่ง")?.sku));
+  ok("ล้อไกด์ประคองหลัง → JR02943 (หักสต็อก)", hwSku("ล้อไกด์")?.sku === "JR02943" && !hwSku("ล้อไกด์")?.noStock, String(hwSku("ล้อไกด์")?.sku));
+  ok("มอเตอร์/รีโมท = ของสั่งตามงาน ไม่ผูก sku ไม่หักสต็อก",
+    r.hardware.filter((h) => /มอเตอร์|รีโมท/.test(h.name)).every((h) => !h.sku && h.noStock));
+  ok("ฉากข้อต่อ 2\" ผูก JR02944", PRODUCTS.gate.alu.some((a) => a.code === "JR02944"));
+  ok("กล่อง 1×5 ผูกชื่อจริงในสโตร์ \"กล่อง 1x5\" (เซนติเมตร ไม่ใช่นิ้ว)",
+    PRODUCTS.gate.alu.some((a) => a.code === "กล่อง 1x5"));
   // ช่องห่างมาก = ใบน้อยลง = ถูกลง · ถี่ = แพงขึ้น (กันสูตรกลับด้าน)
   const cheap = computeCost(PB, PRODUCTS.gate, { w: 350, h: 180, p: 1, form: "ตั้ง", material: "1x1.6", color: "white", colorKey: "white", spec: { rnGap: "15" }, addons: {} });
   const dear = computeCost(PB, PRODUCTS.gate, { w: 350, h: 180, p: 1, form: "ตั้ง", material: "1x1.6", color: "white", colorKey: "white", spec: { rnGap: "2" }, addons: {} });

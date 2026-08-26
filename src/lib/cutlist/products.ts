@@ -1053,8 +1053,23 @@ const GATE = {
 // ด้านโชว์ (ซม.) — ตรงดรอปดาวน์ในไฟล์
 const GATE_SHOW: Record<string, number> = { "1 cm": 1, "5 cm": 5, '1"': 2.54, '1½"': 3.81, '1.6"': 4.06, '4"': 10.16 };
 const gShow = (s?: string) => GATE_SHOW[s ?? '1.6"'] ?? 4.06;
-/** กล่องที่เลือกได้สำหรับใบระแนง — ชื่อตรงสโตร์ ("กล่อง 1\"x1.6\"-อบขาว" ฯลฯ) */
-export const GATE_BOXES = ['1×1', '1×1.5', '1×1.6', '1×4', '1×5', '1.6×1.6', '1.6×4'];
+/**
+ * กล่องใบระแนง — ตัวเลือก → "ชื่อรหัสจริงในสโตร์"
+ * ⚠ ห้ามสร้างรหัสจากขนาดเอง สโตร์เขียนไม่เหมือนกันทุกตัว
+ *   "1×5" = 1 × 5 เซนติเมตร (ไม่ใช่นิ้ว) สโตร์ชื่อ "กล่อง 1x5" — เจ้าของยืนยัน 26 ส.ค.69
+ */
+export const GATE_BOX_CODE: Record<string, string> = {
+  "1×1": 'กล่อง 1"x1"', "1×1.5": 'กล่อง 1"x1.5"', "1×1.6": 'กล่อง 1"x1.6"',
+  "1×4": 'กล่อง 1"x4"', "1×5 ซม.": "กล่อง 1x5",
+  "1.6×1.6": 'กล่อง 1.6"x1.6"', "1.6×4": 'กล่อง 1.6"x4"',
+};
+export const GATE_BOXES = Object.keys(GATE_BOX_CODE);
+/** คีย์กล่องฝั่งคิดราคา 4.0 (material / spec.gboxB) → คีย์ในใบตัด — ใช้ที่ from-recipe */
+export const GATE_BOX_FROM_CALC: Record<string, string> = {
+  "1x1": "1×1", "1x1.5": "1×1.5", "1x1.6": "1×1.6", "1x4": "1×4",
+  "1x5": "1×5 ซม.", "1.6x1.6": "1.6×1.6", "1.6x4": "1.6×4",
+};
+const gateBoxCode = (v: unknown) => GATE_BOX_CODE[String(v ?? "1×1.6")] ?? GATE_BOX_CODE["1×1.6"];
 const gOut = (o: CutInput) => o.fit === "แปะนอก";
 
 // ② คำนวณ (ตรงไฟล์)
@@ -1111,7 +1126,7 @@ export const GATE_SLIDE: CutSpec = {
   defaults: {
     W: 350, H: 180, N: 1, rail: "", honk: false,
     fit: "ยัดใน", slatDir: "ตั้ง", slatType: "ระแนง",
-    boxA: '1×1.6', showA: '1.6"', gap: 5, boxB: '1×1.6', showB: '1.6"', aRun: 3, bRun: 5,
+    boxA: "1×1.6", showA: '1.6"', gap: 5, boxB: "1×1.6", showB: '1.6"', aRun: 3, bRun: 5,
   },
   // ③ ใบตัด — เรียงตรงลำดับในไฟล์ 1…10
   profiles: [
@@ -1120,17 +1135,18 @@ export const GATE_SLIDE: CutSpec = {
     { name: "เสานอนล่าง (2×4, รวมหาง)", code: boxCode("2×4"), len: (o) => o.W + GATE.tail, qty: () => 1, note: "W+30 (เหมือนบน)" },
     { name: "เสาตั้งท้ายหาง (2×4)", code: boxCode("2×4"), len: gStand, qty: () => 1, note: "เท่าเสาตั้ง" },
     { name: "เส้นทแยงค้ำมุมบน (2×4)", code: boxCode("2×4"), len: () => GATE_DIAG, qty: () => 1, note: "√(30²+25²)=39.1" },
-    { name: "ใบระแนง A", code: (o) => boxCode(String(o.boxA ?? '1×1.6')), len: gSlatLen, qty: (o) => gCounts(o).nA, note: "แนว=ตามที่เลือก · คิดแค่ช่อง" },
-    { name: "ใบระแนง B (สลับ)", code: (o) => boxCode(String(o.boxB ?? '1×1.6')), len: (o) => (gAlt(o) ? gSlatLen(o) : 0), qty: (o) => gCounts(o).nB, note: "เฉพาะระแนงสลับ · ยาวเท่า A" },
-    { name: 'ฉากข้อ 2" (เฉพาะแปะนอก)', code: 'ฉาก 2"', len: (o) => o.W, qty: (o) => (gOut(o) ? 1 : 0), note: "ยาว=เสานอน(W)" },
+    { name: "ใบระแนง A", code: (o) => gateBoxCode(o.boxA), len: gSlatLen, qty: (o) => gCounts(o).nA, note: "แนว=ตามที่เลือก · คิดแค่ช่อง" },
+    { name: "ใบระแนง B (สลับ)", code: (o) => gateBoxCode(o.boxB), len: (o) => (gAlt(o) ? gSlatLen(o) : 0), qty: (o) => gCounts(o).nB, note: "เฉพาะระแนงสลับ · ยาวเท่า A" },
+    // สโตร์ชื่อ "ฉากข้อต่อ 2\"" (JR02944) — คนละตัวกับ "ฉาก 2\"" ที่เคยผูกผิด (เจ้าของให้รหัส 26 ส.ค.69)
+    { name: 'ฉากข้อต่อ 2" (เฉพาะแปะนอก)', code: "JR02944", len: (o) => o.W, qty: (o) => (gOut(o) ? 1 : 0), note: "ยาว=เสานอน(W)" },
     { name: "เสารับไกด์ (4×4) — เสาแยก", code: boxCode("4×4"), len: (o) => o.H + (gOut(o) ? GATE.guideAddOut : 0), qty: () => 1, note: "ยัดใน H / แปะนอก H+5" },
     // ราง = ฉากเหล็ก 1.5" + เพลา 4 หุน — เหล็ก ไม่ใช่อลู ยังไม่มีรหัสในสโตร์ (ดูสรุปของที่ยังไม่มี)
     { name: 'ราง ฉากเหล็ก 1.5"+เพลา 4หุน', code: "-", len: (o) => o.W * 2 - GATE.railCut, qty: () => 1, note: "ยาว=กว้าง×2−50" },
   ],
   // ⑤ อุปกรณ์ — ไฟล์เขียนกำกับว่า "ไม่สต็อก ซื้อต่อออเดอร์ เว้นรหัส" → ตั้งใจไม่ผูก sku
   hardware: [
-    { name: 'ล้อวิ่ง 3"', qty: (o) => 2 + (o.W > 400 ? Math.ceil((o.W - 400) / 100) : 0), unit: "ตัว", noStock: true, note: "ไม่สต็อก · 2 + กว้าง>400 เพิ่มทุก 100 ซม. (R3.9)" },
-    { name: "ล้อไกด์ประคองหลัง", qty: () => 4, unit: "ตัว", noStock: true, note: "ไม่สต็อก ซื้อต่อออเดอร์" },
+    { name: 'ล้อวิ่ง 3"', sku: "JR02942", qty: (o) => 2 + (o.W > 400 ? Math.ceil((o.W - 400) / 100) : 0), unit: "ตัว", note: "2 + กว้าง>400 เพิ่มทุก 100 ซม. (R3.9)" },
+    { name: "ล้อไกด์ประคองหลัง", sku: "JR02943", qty: () => 4, unit: "ตัว" },
     { name: "มอเตอร์", qty: (o) => (o.gateDrive === "มือผลัก" ? 0 : 1), unit: "ตัว", noStock: true, note: "ออปชั่น · ไม่สต็อก" },
     { name: "รีโมท", qty: (o) => Math.max(0, Math.round(o.gateRemote ?? 0)), unit: "ตัว", noStock: true, note: "ออปชั่น · ตามจำนวน" },
   ],
