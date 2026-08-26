@@ -51,12 +51,18 @@ export async function GET(req: Request) {
   // 4) สร้างงานใหม่ + ย้าย ใบเสนอ/บิล/เงิน มาที่งานใหม่
   if (!jobId) {
     const snap = (bn.customer_snapshot ?? {}) as Record<string, any>;
-    const name = String(snap.name ?? "").trim() || "ลูกค้า";
     const chMap: Record<string, string> = { LINE: "LINE", FB: "FACEBOOK", FACEBOOK: "FACEBOOK", IG: "INSTAGRAM", INSTAGRAM: "INSTAGRAM", OTHER: "OTHER" };
     const ch = chMap[String(snap.contact_channel ?? "").toUpperCase()] ?? "OTHER";
     // customer_id จากใบเสนอ
     const { data: q } = await sb.from("quotations").select("customer_id").eq("id", bn.quotation_id).maybeSingle();
     const custId = q?.customer_id ?? null;
+    // ⚠ ชื่อในงาน = ชื่อลูกค้าจริง (customers.name) ไม่ใช่นามบิล/บริษัทใน snapshot (25 ส.ค.69)
+    let name = "";
+    if (custId != null) {
+      const { data: rc } = await sb.from("customers").select("name").eq("id", custId).maybeSingle();
+      name = String(rc?.name ?? "").trim();
+    }
+    if (!name) name = String(snap.name ?? "").trim() || "ลูกค้า";
 
     const { data: newJob, error: jErr } = await sb.from("jobs")
       .insert({ customer_name: name, ...(custId != null ? { customer_id: custId } : {}), channel: ch, assess_date: today, status: "PENDING_QUOTE" })
