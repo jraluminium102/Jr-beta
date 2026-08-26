@@ -31,6 +31,7 @@ export default function CompareClient({ pb, stockCount }: { pb: any; stockCount:
   const [p, setP] = useState("3");
   const [form, setForm] = useState<string>(prod?.defForm ?? "");
   const [color, setColor] = useState("white");
+  const [material, setMaterial] = useState<string>(prod?.defMaterial ?? "");   // วัสดุมุง (หลังคา/กันสาด)
   const [spec, setSpec] = useState<Record<string, string>>(
     Object.fromEntries((prod?.specOpts ?? []).map((o: any) => [o.key, o.def ?? o.opts?.[0] ?? ""])),
   );
@@ -44,23 +45,24 @@ export default function CompareClient({ pb, stockCount }: { pb: any; stockCount:
     setW(String(x?.defaults?.w ?? 200));
     setH(String(x?.defaults?.h ?? 200));
     setP(String(x?.defaults?.p ?? 1));
+    setMaterial(x?.defMaterial ?? "");
     setSpec(Object.fromEntries((x?.specOpts ?? []).map((o: any) => [o.key, o.def ?? o.opts?.[0] ?? ""])));
   }
 
   // ตัวเลือกฝั่งใบตัดของรุ่นที่เลือก — เปลี่ยนรุ่น/รูปแบบแล้วรายการเปลี่ยนตาม
   const cutOpts = useMemo(
-    () => cutOptionsFor({ prodId, w: Number(w) || 0, h: Number(h) || 0, p: Number(p) || 1, form, spec }),
-    [prodId, w, h, p, form, spec],
+    () => cutOptionsFor({ prodId, w: Number(w) || 0, h: Number(h) || 0, p: Number(p) || 1, form, spec, material }),
+    [prodId, w, h, p, form, spec, material],
   );
 
   const r: any = useMemo(() => {
     try {
       return compareCut(pb, {
         prodId, w: Number(w) || 0, h: Number(h) || 0, p: Number(p) || 1,
-        form, color, spec, cut,
+        form, color, material, spec, cut,
       });
     } catch (e) { return { error: String((e as Error).message || e) }; }
-  }, [pb, prodId, w, h, p, form, color, spec, cut]);
+  }, [pb, prodId, w, h, p, form, color, material, spec, cut]);
 
   const aluBad = (r?.alu ?? []).filter((x: AluRow) => x.status !== "ตรง").length;
   const hwBad = (r?.hardware ?? []).filter((x: HwRow) => x.status !== "ตรง").length;
@@ -103,6 +105,7 @@ export default function CompareClient({ pb, stockCount }: { pb: any; stockCount:
           {num("สูง (ซม.)", h, setH)}
           {num("จำนวนบาน", p, setP)}
           {prod?.forms?.length > 0 && sel("รูปแบบ", form, setForm, prod.forms)}
+          {prod?.materials?.length > 0 && sel(prod.materialLabel ?? "วัสดุ", material, setMaterial, prod.materials)}
           {sel("สีอลู", color, setColor, aluColorKeysFor(prodId), ALU_COLOR_LABEL as any)}
           {(prod?.specOpts ?? []).filter((o: any) => o.type !== "number").map((o: any) => (
             <div key={o.key}>{sel(o.label, spec[o.key] ?? o.def ?? o.opts?.[0] ?? "", (v) => setSpec((s) => ({ ...s, [o.key]: v })), o.opts ?? [])}</div>

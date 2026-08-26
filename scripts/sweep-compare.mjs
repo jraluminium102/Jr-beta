@@ -14,8 +14,14 @@ const PB = JSON.parse(fs.readFileSync("src/lib/calculator40/pricebook.json", "ut
 // 24 ส.ค.69: ว่างแล้ว — เจ้าของเคาะ PC Door (รหัส F#### ลงใบตัด + แถวที่ชีตตกหล่น) และอุปกรณ์เฟี้ยมยกลงใบตัดครบ
 const KNOWN = {};
 
+// รุ่นที่ "ดึงขึ้นหน้าเทสดิบ ๆ" แต่ยังไม่ยกเครื่อง BOM ให้ตรงใบตัด → ยังไม่รวมใน gate เขียว
+//   roof (กันสาด): คิดราคาเป็นโมเดลเหมาซื้อเส้น (consum ไม่มีรหัส) · ใบตัด awning ตัดทีละชิ้นมีรหัส
+//   เจ้าของเคาะ 26 ส.ค.69 "ดึงขึ้นก่อน" — เฟสถัดไปยกเครื่องให้ออกรหัสแล้วค่อยเอาเข้า gate
+//   (ระบุ prodId ตรง ๆ ตอนรันจะทดสอบได้ปกติ เช่น `node scripts/sweep-compare.mjs roof`)
+const RAW_NOT_READY = new Set(["roof"]);
+
 const only = process.argv.slice(2);
-const ids = (only.length ? only : [...COMPARABLE]).filter((id) => PRODUCTS[id]);
+const ids = (only.length ? only : [...COMPARABLE].filter((id) => !RAW_NOT_READY.has(id))).filter((id) => PRODUCTS[id]);
 
 let ok = 0;
 let bad = 0;

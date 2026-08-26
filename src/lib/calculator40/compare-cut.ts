@@ -20,13 +20,14 @@ import { resolveAluColor } from "./alu-colors.ts";
 export { HANDLE_FIELDS, HW_FROM_CUTLIST };
 
 /** รุ่นในคิดราคา 4.0 ที่แมปเข้าใบตัดได้ (ตาม from-recipe) — มีเท่านี้ที่เทียบได้ */
-export const COMPARABLE = ["sms_slide", "euro_slide", "slimlux", "fixed", "folding", "fold_euro", "fold_lift", "velora", "pcdoor", "gate"] as const;
+export const COMPARABLE = ["sms_slide", "euro_slide", "slimlux", "fixed", "folding", "fold_euro", "fold_lift", "velora", "pcdoor", "gate", "roof"] as const;
 
 export type CompareInput = {
   prodId: string;
   w: number; h: number; p: number;
   form?: string;
   color?: string;                       // คีย์สีในคิดราคา (white/black/sahara/...)
+  material?: string;                    // วัสดุมุง (หลังคา/กันสาด) — รุ่นที่มี prod.materials
   glassType?: string;
   spec?: Record<string, unknown>;
   cut?: Record<string, unknown>;        // ตัวเลือกฝั่งใบตัด (มือจับ/ราง/มุ้ง)
@@ -98,13 +99,14 @@ function whyNoCut(prodId: string, form: string, panels: number): string {
  * ตัวเลือกฝั่งใบตัดของรุ่นนี้จริง ๆ (มือจับ/ราง/คาน ฯลฯ) — หน้าจอเอาไปสร้าง dropdown
  * ⚠ ห้าม hardcode รายการมือจับของ SMS ไว้ทุกรุ่น — SlimLux ไม่มี "ล็อค+ดัมมี่" (เจ้าของเจอ 21 ส.ค.69)
  */
-export function cutOptionsFor(inp: Pick<CompareInput, "prodId" | "w" | "h" | "p" | "form" | "spec" | "glassType">) {
+export function cutOptionsFor(inp: Pick<CompareInput, "prodId" | "w" | "h" | "p" | "form" | "spec" | "glassType" | "material">) {
   const prod = (PRODUCTS as any)[inp.prodId];
   if (!prod) return [];
   const map = cutInputFromRecipe({
     kind: "std", prodId: inp.prodId, w: inp.w, h: inp.h, p: inp.p,
     form: inp.form || prod.defForm, spec: inp.spec ?? {}, glassType: inp.glassType,
-  });
+    material: inp.material ?? prod.defMaterial,
+  }, { rawCompare: true });   // หน้าเทียบ read-only → อนุญาตรุ่นดิบ (กันสาด)
   const spec = map ? CUT_SPEC_BY_ID[map.spec_id] : null;
   if (!spec) return [];
   const def = (spec.defaults ?? {}) as Record<string, unknown>;
@@ -131,6 +133,7 @@ export function compareCut(PB: any, inp: CompareInput) {
     w: inp.w, h: inp.h, p: inp.p, form: inp.form || prod.defForm,
     color: rc.bake, colorName: rc.label, stockColor: stockColorOfCalc(inp.color || "white"), colorKey: inp.color || "white",
     glassType: inp.glassType || prod.defGlass || undefined,
+    material: inp.material ?? prod.defMaterial ?? undefined,   // วัสดุมุง (หลังคา/กันสาด)
     spec: inp.spec ?? {}, addons: {},
     profitPct: inp.profitPct ?? 100, installProfitPct: inp.profitPct ?? 100,
   };
@@ -142,8 +145,9 @@ export function compareCut(PB: any, inp: CompareInput) {
   const map = cutInputFromRecipe({
     kind: "std", prodId: inp.prodId, w: inp.w, h: inp.h, p: inp.p,
     form: opt.form, spec: inp.spec ?? {}, glassType: opt.glassType,
+    material: inp.material ?? prod.defMaterial,   // วัสดุมุง → ชนิดแผ่นใบตัด (กันสาด)
     color: inp.color || "white",   // ⚠ ต้องส่งสีด้วย — เส้นที่เลือกรหัสตามสี (X-J) จะเพี้ยนถ้าไม่ส่ง
-  });
+  }, { rawCompare: true });   // หน้าเทียบ read-only → อนุญาตรุ่นดิบ (กันสาด)
   const spec = map ? CUT_SPEC_BY_ID[map.spec_id] : null;
   const cutSel = Object.fromEntries(Object.entries(inp.cut ?? {}).filter(([, v]) => v != null && v !== ""));
   const cut = spec ? computeCutList(spec, { ...map!.input, ...cutSel } as Partial<CutInput>, map!.multiplier ?? 1) : null;

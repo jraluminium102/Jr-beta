@@ -18,8 +18,11 @@ const glassMm = (s: unknown): number => {
   return m ? Number(m[1]) : 6;
 };
 
+// opts.rawCompare = อนุญาต "รุ่นดิบ" ที่ยังไม่ยกเครื่อง BOM (กันสาด/roof) ให้ map ได้ — ใช้เฉพาะหน้าเทียบ (read-only)
+//   ⚠ /api/cutlists (สร้างใบตัดจริง → หักสต็อก) ห้ามส่ง rawCompare → กันสาดจะตกไป skipped ให้ช่างกรอกเอง
+//   (โมเดลราคา↔ใบตัดกันสาดยังคนละแบบ + หลังคาหลายช่วง roofSegs ยังไม่ถูกอ่าน → auto-seed = ตัดสต็อกผิดเงียบ)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function cutInputFromRecipe(recipe: any): RecipeCutMap | null {
+export function cutInputFromRecipe(recipe: any, opts?: { rawCompare?: boolean }): RecipeCutMap | null {
   if (!recipe || recipe.kind !== "std") return null; // room (G6) แตกเป็นบานย่อยจาก recipe รวมไม่ได้ — เฟสถัดไป
   const W = Number(recipe.w) || 0;
   const H = Number(recipe.h) || 0;
@@ -145,6 +148,27 @@ export function cutInputFromRecipe(recipe: any): RecipeCutMap | null {
         aRun: Number(sp.gaRun ?? 3) || 3, bRun: Number(sp.gbRun ?? 5) || 5,
         gateDrive: String(sp.drive ?? "").includes("มือผลัก") ? "มือผลัก" : "มอเตอร์",
         gateRemote: Number(sp.gremote ?? 0) || 0,
+      } };
+      break;
+    }
+    case "roof": {
+      if (!opts?.rawCompare) { m = null; break; }   // งานจริง (/api/cutlists) = skip ให้ช่างกรอกเอง · เฉพาะหน้าเทียบเท่านั้นที่ map
+      // กันสาด (หลังคาเพิง) — ดึงเข้าหน้าเทียบใบตัด (เจ้าของสั่ง 26 ส.ค.69 "ดึงขึ้นก่อน")
+      //   ⚠ คิดราคา 4.0 คิดกันสาดเป็นโมเดล "เหมาซื้อเส้น 6ม." (consum ไม่มีรหัส) · ใบตัด awning ตัดทีละชิ้นมีรหัส
+      //     → หน้าเทียบจะเห็น diff ดิบ (คนละโมเดล) ยังไม่ตรง จนกว่าจะยกเครื่อง BOM ให้ออกรหัส (เฟสถัดไป)
+      //   หน่วย: คิดราคา W=กว้าง · H=ยื่น/ลึก (ซม.) → awning W / P
+      const sp = (recipe.spec ?? {}) as Record<string, unknown>;
+      const mat = String(recipe.material ?? "ไวนิล");
+      // วัสดุมุงคิดราคา (18 ชนิด) → ชนิดแผ่นใบตัด (6 ชนิด) · กระจก/ชินโคร์รุ่นย่อย ยังไม่มีในใบตัด → fallback
+      const sheet = mat.startsWith("เมทัล") ? "เมทัลชีท"
+        : mat === "ชินโคร์ Sup" ? "ชินโคร์ Sup"
+        : mat.startsWith("ชินโคร์") ? "ชินโคร์ HC"
+        : (mat === "ไวนิล" || mat === "ดีไลท์" || mat === "โพลีตัน") ? mat
+        : "ไวนิล";   // กระจก/อื่นๆ ยังไม่มีชนิดแผ่นในใบตัด → ไวนิล (ช่างปรับเอง)
+      m = { spec_id: "awning", input: {
+        W, H: 0, N: 1, P: H, deg: 7,
+        sheet, purlin: sp.batten === "แปเดี่ยว" ? "แปเดี่ยว" : "แปคู่",
+        roofEnd: "รางน้ำ", rakeTotal: 0,
       } };
       break;
     }
