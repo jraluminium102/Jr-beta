@@ -1,10 +1,14 @@
 import { z } from "zod";
 import { requirePermission } from "@/lib/bff/context";
 import { withRoute, audit } from "@/lib/bff/handler";
-import { ok, created } from "@/lib/bff/response";
+import { ok, created, err } from "@/lib/bff/response";
 import { can } from "@/lib/rbac";
 import { buildScheduleRows, createAdhocJob } from "@/lib/production/schedule";
 import { requireChangOr } from "@/lib/bff/chang-ctx";
+
+// ตัดคำนำหน้า/ช่องว่าง/ตัวพิมพ์ ไว้เทียบชื่อลูกค้าแบบหลวม — ⚠ ใช้ตัวเดียวกับ /api/dxghost (เครื่องมือตรวจงานผี)
+//   ห้ามแก้ที่นี่โดยไม่แก้ที่นั่นด้วย ไม่งั้นผลตรวจ/กันซ้ำจะไม่ตรงกัน
+const normName = (s: string) => String(s ?? "").replace(/^คุณ\s*/, "").replace(/\s+/g, "").toLowerCase();
 
 // ── ตารางผลิตสำหรับช่าง (งานในระบบ + งานจดเอง) ──
 // ⚠ query อยู่ใน src/lib/production/schedule.ts — "ตัวเดียวกับลิงก์ช่าง /api/chang/<token>"
@@ -23,6 +27,7 @@ const createSchema = z.object({
   install_date: z.string().nullish(),
   producer_note: z.string().nullish(),
   job_amount: z.number().nonnegative().nullish(),   // ยอดงาน (ไม่บังคับ · เผื่อสถิติ) — กรอก = ลง net_amount ให้งาน
+  confirm: z.boolean().nullish(),   // true = ผู้ใช้กดยืนยันแล้วหลังเห็นคำเตือน "ลูกค้านี้มีงานอยู่แล้ว" → ข้ามเช็คซ้ำ
 });
 
 // POST — เพิ่ม "งานจดเอง" (รับทั้งคนล็อกอิน + ช่างผ่านลิงก์ · เจ้าของสั่ง 22 ก.ค.69 ให้ช่างลิงก์เพิ่มได้)
@@ -36,6 +41,34 @@ export const POST = withRoute(async (req: Request) => {
   const uid = ctx.user.id || null;   // ช่างผ่านลิงก์ไม่มี session → created_by = null
   const detail = [b.title, b.producer_note].filter(Boolean).join(" · ");
   const remark = detail || (ctx.isChang && ctx.actorName ? `งานจดเอง โดย ${ctx.actorName}` : "งานจดเอง (เพิ่มในตารางผลิต)");
+
+  // กัน "งานผีซ้ำ" (เจ้าของสั่ง 25 ส.ค.69) — ชื่อพิมพ์ตรงกับลูกค้าที่มีงาน active อยู่แล้ว → เตือนก่อน ไม่บล็อกตาย
+  //   ยังยืนยันเพิ่มได้ถ้าเป็นคนละงานจริง (เช่น ลูกค้าเก่ากลับมาสั่งงานใหม่) ด้วย confirm:true
+  if (!b.confirm) {
+    const nm = normName(b.customer_name);
+    const { data: custs } = await sb.from("customers")
+      .select("id, name")
+      .ilike("name", "%" + b.customer_name.replace(/^คุณ\s*/, "").trim() + "%");
+    const realCust = (custs ?? []).find((c: { id: number; name: string }) => {
+      const cn = normName(c.name);
+      return cn === nm || cn.includes(nm) || nm.includes(cn);
+    }) as { id: number; name: string } | undefined;
+
+    if (realCust) {
+      const { data: activeJobs } = await sb.from("jobs")
+        .select("job_code")
+        .eq("customer_id", realCust.id)
+        .not("status", "in", "(CANCELLED,COMPLETED)");
+      const codes = (activeJobs ?? []).map((j: { job_code: string }) => j.job_code).filter(Boolean);
+      if (codes.length) {
+        return err(
+          `ลูกค้า ${realCust.name} มีงานอยู่แล้ว (${codes.join(", ")}) — มัดจำแล้วงานจะเข้าผลิตเอง ไม่ต้องจดซ้ำ · ยืนยันเพิ่มงานจดเองจริง?`,
+          409,
+          { needs_confirm: true, existing_jobs: codes },
+        );
+      }
+    }
+  }
 
   // สร้างงานจริง (job+production เข้าคิวผลิต) ผ่าน helper กลาง — ดู createAdhocJob ใน schedule.ts
   //   (อยู่ในไฟล์กลางเพื่อคง parity: route นี้ห้าม query productions ตรง ๆ)

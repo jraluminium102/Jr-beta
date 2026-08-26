@@ -42,19 +42,27 @@ export default function AddProductionJobModal({ producerList = [], isChang = fal
 
   const MODAL_DATALIST_ID = "modal-producers-list";
 
-  const submit = async () => {
+  const submit = async (confirm = false) => {
     setErr(null); setSaving(true);
     try {
       if (tab === "adhoc" || isChang) {
         if (!cust.trim()) { setErr("กรุณาระบุชื่อลูกค้า"); setSaving(false); return; }
-        await api.post("/production-schedule", { customer_name: cust, title, produce_date: pdate, install_date: idate, producer_note: producer, job_amount: amount ? Number(amount) : null });
+        await api.post("/production-schedule", { customer_name: cust, title, produce_date: pdate, install_date: idate, producer_note: producer, job_amount: amount ? Number(amount) : null, confirm });
       } else {
         if (!pickId) { setErr("กรุณาเลือกงาน"); setSaving(false); return; }
         if (!pdate) { setErr("กรุณากรอกวันกำหนดเสร็จ"); setSaving(false); return; }
         await api.patch(`/production/${pickId}`, { status: "QUEUED", production_due_date: pdate, ...(idate ? { planned_install_date: idate } : {}) });
       }
       onSaved();
-    } catch (e) { setErr(e instanceof ApiError ? e.message : "บันทึกไม่สำเร็จ"); setSaving(false); }
+    } catch (e) {
+      // ลูกค้าชื่อตรงกับงาน active อยู่แล้ว (กันงานผีซ้ำ) → ถามยืนยันก่อน ไม่ใช่บล็อกตาย
+      if (e instanceof ApiError && e.status === 409 && (e.details as { needs_confirm?: boolean } | undefined)?.needs_confirm) {
+        setSaving(false);
+        if (window.confirm(`${e.message}`)) { submit(true); }
+        return;
+      }
+      setErr(e instanceof ApiError ? e.message : "บันทึกไม่สำเร็จ"); setSaving(false);
+    }
   };
 
   const inp = "w-full glass-card rounded-xl px-3.5 py-2.5 text-base text-white outline-none placeholder-white/40 min-h-[48px]";
@@ -136,7 +144,7 @@ export default function AddProductionJobModal({ producerList = [], isChang = fal
 
         <div className="flex gap-2 px-5 py-4 shrink-0 border-t border-white/10">
           <button onClick={onClose} className="focusable pressable glass-card text-white rounded-2xl px-5 min-h-[52px] font-medium">ปิด</button>
-          <button onClick={submit} disabled={saving} className="focusable pressable flex-1 min-h-[52px] rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold shadow-lg disabled:opacity-60 flex items-center justify-center gap-2">
+          <button onClick={() => submit()} disabled={saving} className="focusable pressable flex-1 min-h-[52px] rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold shadow-lg disabled:opacity-60 flex items-center justify-center gap-2">
             {saving ? <span className="w-5 h-5 rounded-full border-2 border-white/40 border-t-white animate-spin" /> : <Check size={20} />} บันทึก
           </button>
         </div>
