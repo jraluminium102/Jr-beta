@@ -126,7 +126,14 @@ export async function POST(req: Request) {
   let linkedJobId: string | null = q.job_id ?? null;
   if (!linkedJobId) {
     const snap = (q.customer_snapshot ?? {}) as Record<string, unknown>;
-    const cName = String((snap.name as string) ?? "").trim() || "ลูกค้า";
+    // ⚠ ชื่อในผลิต/ติดตั้ง = ชื่อลูกค้าจริง (customers.name) — ไม่ใช่ snapshot.name ที่อาจเป็น "นามบิล/บริษัท"
+    //   (25 ส.ค.69: ลูกค้าออกเอกสารในนามบริษัท → เดิมเอาชื่อบริษัทไปโชว์ในผลิต · บริษัทเป็นแค่เรื่องเอกสารการเงิน)
+    let cName = "";
+    if (q.customer_id != null) {
+      const { data: rc } = await supabase.from("customers").select("name").eq("id", q.customer_id).maybeSingle<{ name: string }>();
+      cName = String(rc?.name ?? "").trim();
+    }
+    if (!cName) cName = String((snap.name as string) ?? "").trim() || "ลูกค้า";
     const chMap: Record<string, string> = { LINE: "LINE", FB: "FACEBOOK", FACEBOOK: "FACEBOOK", IG: "INSTAGRAM", INSTAGRAM: "INSTAGRAM", OTHER: "OTHER" };
     const cCh = chMap[String((snap.contact_channel as string) ?? "").toUpperCase()] ?? "OTHER";
     const { data: newJob, error: jErr } = await supabase

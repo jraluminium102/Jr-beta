@@ -336,7 +336,13 @@ export async function ensureBillingJobAndPromote(
       if (q?.customer_id != null) customerId = q.customer_id;
       if (q?.customer_snapshot) snap = q.customer_snapshot;
     }
-    const name = String((snap?.name as string) ?? "").trim() || "ลูกค้า";
+    // ⚠ ชื่อในผลิต/ติดตั้ง = ชื่อลูกค้าจริง (customers.name) ไม่ใช่นามบิล/บริษัทใน snapshot (25 ส.ค.69)
+    let name = "";
+    if (customerId != null) {
+      const { data: rc } = await supabase.from("customers").select("name").eq("id", customerId).maybeSingle<{ name: string }>();
+      name = String(rc?.name ?? "").trim();
+    }
+    if (!name) name = String((snap?.name as string) ?? "").trim() || "ลูกค้า";
     const ch = CH_MAP[String((snap?.contact_channel as string) ?? "").toUpperCase()] ?? "OTHER";
     const { data: newJob, error: jErr } = await supabase
       .from("jobs")
