@@ -12,6 +12,7 @@ import fs from "node:fs";
 import { computeCutList } from "../src/lib/cutlist/engine.ts";
 import { CUT_SPEC_BY_ID } from "../src/lib/cutlist/products.ts";
 import { cutInputFromRecipe } from "../src/lib/cutlist/from-recipe.ts";
+import { compareCut } from "../src/lib/calculator40/compare-cut.ts";
 import { computeCost } from "../src/lib/calculator40/engine.mjs";
 import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
 
@@ -150,6 +151,19 @@ console.log("\n═══ ⑥ กฎที่ต้องไม่พัง ═�
   // รีโมท 2 ตัว = +1,000
   const rem = computeCost(PB, PRODUCTS.gate, { w: 350, h: 180, p: 1, form: "ตั้ง", material: "1x1.6", color: "white", colorKey: "white", spec: { gremote: "2" }, addons: {} });
   ok("รีโมท 2 ตัว = +1,000 (ของใหม่ ตามไฟล์ ⑤)", Math.round(rem.cost.total - moto.cost.total) === 1000, String(Math.round(rem.cost.total - moto.cost.total)));
+}
+
+// ── ⑦ ของสั่งตามงาน ต้องขึ้นเขียว "ไม่สต็อก สั่งใหม่" ไม่ใช่เทา "ไม่มีรหัส" (เจ้าของสั่ง 26 ส.ค.69) ──
+console.log('\n═══ ⑦ ของสั่งตามงาน — หน้าเทียบต้องขึ้นเขียว ไม่ใช่ของตกหล่น ═══');
+{
+  const r = compareCut(PB, { prodId: "gate", w: 350, h: 180, p: 1, form: "ตั้ง", color: "white", spec: { gfit: "แปะนอก", gremote: "2" } });
+  const all = [...(r.alu ?? []), ...(r.hardware ?? [])];
+  const find = (n) => all.find((x) => x.name.includes(n));
+  for (const n of ["ราง ฉากเหล็ก", "เหล็กยัดเสา", "มอเตอร์", "รีโมท"])
+    ok(`${n} → "ไม่สต็อก สั่งใหม่"`, find(n)?.status === "ไม่สต็อก สั่งใหม่", String(find(n)?.status));
+  ok("ไม่เหลือสถานะเทา/แดง/เหลืองสักบรรทัด",
+    all.every((x) => x.status === "ตรง" || x.status === "ไม่สต็อก สั่งใหม่"),
+    all.filter((x) => x.status !== "ตรง" && x.status !== "ไม่สต็อก สั่งใหม่").map((x) => `${x.name}:${x.status}`).join(" · "));
 }
 
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);

@@ -968,17 +968,17 @@ export const PRODUCTS = {
       { code: 'JR02944', name: 'ฉากข้อต่อ 2" (เฉพาะแปะนอก)', price: 320, kg: 0, seg: 'W', count: 'OUT' },
       { box: 'กล่อง|4X4', code: 'กล่อง 4"x4"', name: 'เสารับไกด์ (4×4) — เสาแยก', price: 2210, kg: 0, seg: 'H + (OUT ? 0.05 : 0)', count: '1' },
       // ราง = ฉากเหล็ก 1.5" + เพลา 4 หุน — ยังไม่มีในสโตร์ ใช้ราคาชุด 6 ม. ตามชีตถอดทุน
-      { name: 'ราง ฉากเหล็ก 1.5"+เพลา 4หุน (ชุด 6 ม.)', price: 1090, kg: 0, seg: 'NRAIL', count: "(spec && spec.gaterail && spec.gaterail.indexOf('ใช้รางเดิม') >= 0) ? 0 : 1" },
+      { name: 'ราง ฉากเหล็ก 1.5"+เพลา 4หุน (ชุด 6 ม.)', orderOnly: true, price: 1090, kg: 0, seg: 'NRAIL', count: "(spec && spec.gaterail && spec.gaterail.indexOf('ใช้รางเดิม') >= 0) ? 0 : 1" },
     ],
     glass: null,
     // ⑤ อุปกรณ์ — ไฟล์เขียนกำกับ "ไม่สต็อก ซื้อต่อออเดอร์ เว้นรหัส" · เหล็กยัดเสา มีเฉพาะชีตถอดทุน
     hardware: [
       // ไม่ผูกสโตร์ = ของสั่งตามงาน ราคาอยู่ในสูตร (เจ้าของยืนยัน 26 ส.ค.69)
-      { name: 'เหล็กยัดเสา 4"×4"', price: 860, unit: 'ชิ้น', count: '1' },
+      { name: 'เหล็กยัดเสา 4"×4"', orderOnly: true, price: 860, unit: 'ชิ้น', count: '1' },
       { name: 'ล้อวิ่ง 3"', sku: 'JR02942', price: 299, unit: 'ตัว', count: '2 + (W*100 > 400 ? Math.ceil((W*100-400)/100) : 0)' },
       { name: 'ล้อไกด์ประคองหลัง', sku: 'JR02943', price: 30, unit: 'ตัว', count: '4' },
-      { name: 'มอเตอร์', price: 16000, ref: 'MOTOR.ประตูรั้ว', unit: 'ตัว', count: "(spec && spec.drive && spec.drive.indexOf('มือผลัก') >= 0) ? 0 : 1" },
-      { name: 'รีโมท', price: 500, unit: 'ตัว', count: 'Math.max(0, Math.round(+spec.gremote || 0))' },
+      { name: 'มอเตอร์', orderOnly: true, price: 16000, ref: 'MOTOR.ประตูรั้ว', unit: 'ตัว', count: "(spec && spec.drive && spec.drive.indexOf('มือผลัก') >= 0) ? 0 : 1" },
+      { name: 'รีโมท', orderOnly: true, price: 500, unit: 'ตัว', count: 'Math.max(0, Math.round(+spec.gremote || 0))' },
     ],
     consum: [],
     addons: ['gate_curve', 'gate_motor', 'gate_wire'],
