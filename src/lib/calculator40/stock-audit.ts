@@ -129,14 +129,6 @@ export function auditStockLink(stock: AuditStockRow[], PB: any): AuditRow[] {
     for (const grp of ["hardware", "consum"] as const) {
       for (const it of (p[grp] || [])) {
         const nm = norm(it.name);
-        // ค่าแรง/ค่าบริการ — ไม่ใช่ "ของ" ที่มีในสโตร์ (ค่าแรงผลิต/ติดตั้ง · ค่ากรีดราง · ค่าเปิดตู้อบ · ค่าดัดโค้ง)
-        //   เดิมกองรวมอยู่ใน "ผูกไม่ได้" → หน้าตรวจดูแย่เกินจริง และกลบของที่ขาดจริง (เจ้าของท้วง 27 ส.ค.69)
-        if (it.labor) {
-          push({ section: "อุปกรณ์/สิ้นเปลือง", usedBy: p.name || p.id, item: nm, key: "", keyKind: "-",
-            formulaPrice: it.price ?? null, status: "labor",
-            note: "ค่าแรง/ค่าบริการ ไม่ใช่ของในสโตร์ — แก้ราคาที่สูตร ไม่ต้องผูก" });
-          continue;
-        }
         if (it.orderOnly) {
           push({ section: "อุปกรณ์/สิ้นเปลือง", usedBy: p.name || p.id, item: nm, key: "", keyKind: "-",
             formulaPrice: it.price ?? null, status: "order_only",
@@ -178,6 +170,15 @@ export function auditStockLink(stock: AuditStockRow[], PB: any): AuditRow[] {
           push({ section: "อุปกรณ์/สิ้นเปลือง", usedBy: p.name || p.id, item: nm, key: box, keyKind: "ชื่อ",
             formulaPrice: it.price ?? null, status: has ? "linked" : "missing",
             note: has ? "ผูกราคากล่อง/ฉากในสโตร์ (ชื่อ+ขนาด)" : "ยังไม่มีกล่อง/ฉากขนาดนี้ในสโตร์ → ใช้ราคาในสูตร" });
+          continue;
+        }
+        // ค่าแรง/ค่าบริการ ที่ 'ไม่มีรหัสสโตร์' — ไม่ใช่ของ ผูกไม่ได้อยู่แล้ว (ค่าแรงผลิต/ติดตั้ง · ค่าเปิดตู้อบ · ค่าดัดโค้ง)
+        //   เดิมกองรวมอยู่ใน "ผูกไม่ได้" → หน้าตรวจดูแย่เกินจริง และกลบของที่ขาดจริง (เจ้าของท้วง 27 ส.ค.69)
+        //   ⚠ เช็คทีหลัง sku/ref/box เพราะบางค่าแรงมีแถวในสโตร์จริง (เช่น 'ค่ากรีดราง' JR00202) — ตัวนั้นต้องขึ้นว่าผูกแล้ว
+        if (it.labor) {
+          push({ section: "อุปกรณ์/สิ้นเปลือง", usedBy: p.name || p.id, item: nm, key: "", keyKind: "-",
+            formulaPrice: it.price ?? null, status: "labor",
+            note: "ค่าแรง/ค่าบริการ ไม่ใช่ของในสโตร์ — แก้ราคาที่สูตร ไม่ต้องผูก" });
           continue;
         }
         if (!p.partsLinked) {
