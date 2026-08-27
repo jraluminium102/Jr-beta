@@ -338,7 +338,12 @@ console.log("\n═══ ⑧ อุปกรณ์ที่มีรหัสส
 {
   const rows = auditStockLink([], PB).filter((r) => r.section === "อุปกรณ์/สิ้นเปลือง");
   const checkable = rows.filter((r) => r.status !== "no_key" && r.status !== "order_only").length;
-  ok(`อุปกรณ์ที่มีรหัสให้ตรวจ ≥ 140 บรรทัด (เดิมนับได้แค่ 70)`, checkable >= 140, String(checkable));
+  ok(`อุปกรณ์ที่มีรหัส/ref/box ให้ตรวจ ≥ 200 บรรทัด (เดิมนับได้แค่ 70)`, checkable >= 200, String(checkable));
+  // ref (ตารางราคากลาง) + box (กล่อง/ฉากในสโตร์) ก็คือผูกแล้ว — แอดมินแก้ราคาที่ต้นทางได้
+  const viaRef = rows.filter((r) => /ผูกผ่านตารางราคากลาง/.test(r.note)).length;
+  const viaBox = rows.filter((r) => /|/.test(r.key)).length;
+  ok("นับบรรทัดที่ผูกตารางราคากลาง (ref) ด้วย", viaRef >= 50, String(viaRef));
+  ok("นับบรรทัดที่ผูกราคากล่อง/ฉาก (box) ด้วย", viaBox >= 15, String(viaBox));
 
   // รุ่นที่ไม่ติดธง แต่ใส่ sku ไว้แล้ว ต้องไม่ถูกตีเป็น no_key
   const smsRows = rows.filter((r) => r.usedBy === PRODUCTS.sms_slide.name);
