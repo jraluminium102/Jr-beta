@@ -442,15 +442,16 @@ export const PRODUCTS = {
       { name: 'CDQ (บานลอง)', sku: 'JR00596', price: 450, unit: 'ตัว', count: 'WIN?0:Math.max(P-1,0)' },
       { name: 'ปลายกลอน (บานลอง)', sku: 'JR00598', price: 0, unit: 'ตัว', count: 'WIN?0:Math.max(P-1,0)' },   // ราคารวมอยู่ใน CDQ แล้ว (ตามไฟล์)
       // ▸ ชุดหน้าต่าง (ไม่มีบานพับ — ใช้วิทโก้)
-      { name: 'มือจับหน้าต่าง ใบ 1', sku: 'JR00304', price: 0, unit: 'ชุด', count: 'WIN?1:0' },
-      { name: 'มือจับหน้าต่าง ใบ 2', sku: 'JR00305', price: 0, unit: 'ชุด', count: 'WIN?Math.max(P-1,0):0' },
-      { name: 'CDQ กระทุ้ง', sku: 'JR00566', price: 0, unit: 'ตัว', count: 'WIN?P:0' },
-      { name: 'วิทโก้', sku: 'JR00559', price: 0, unit: 'ตัว', count: 'WIN?2*P:0' },
+      // มือจับหลบมุ้ง KINGBO-FH3016 — 4 รหัส (2 สี × ซ้าย/ขวา) ราคาเท่ากันหมด ฿111
+      //   เจ้าของสั่งเปลี่ยน 27 ส.ค.69 (เดิม JR00304/JR00305 มือจับ CENZA) · รหัสจริงเลือกที่ใบตัด
+      { name: 'มือจับหลบมุ้ง KINGBO-FH3016', sku: "CKEY==='black'?'JR00316':'JR00318'", price: 111, unit: 'ชุด', count: 'WIN?P:0' },
+      { name: 'CDQ Kingbo', sku: 'JR00564', price: 99, unit: 'ตัว', count: 'WIN?P:0' },
+      { name: 'วิทโก้ (บานพับ SC-304P)', sku: 'JR00559', price: 360, unit: 'ตัว', count: 'WIN?2*P:0' },
       { name: 'ลูกเบี้ยวล็อค', sku: 'JR00486', price: 0, unit: 'ตัว', count: 'WIN?2*P:0' },
       { name: 'รับล็อคลูกเบี้ยว', sku: 'JR00483', price: 0, unit: 'ตัว', count: 'WIN?2*P:0' },
       // ▸ ใช้ร่วมกันทั้งสองชุด
-      { name: 'สปิงก็อท', sku: 'JR00482', price: 0, unit: 'ตัว', count: '4*P' },
-      { name: 'ฉากประคองมุม', sku: 'JR00557', price: 0, unit: 'ตัว', count: '8*P' },
+      { name: 'สปิงก็อท', sku: 'JR00592', price: 0, unit: 'ตัว', count: '4*P' },
+      { name: 'ฉากประคองมุม', sku: 'JR00267', price: 0, unit: 'ตัว', count: '8*P' },
       { name: 'น็อตเฟรม 1"', sku: 'JR00864', price: 1, unit: 'ตัว', count: 'WIN?8:(S?8:6)' },
     ],
     consum: [
