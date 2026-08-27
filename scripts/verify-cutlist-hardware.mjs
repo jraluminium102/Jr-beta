@@ -133,8 +133,8 @@ function check(label, res, want) {
   console.log("บานโซลิด (แม่-ลูก):");
   check("โซลิด", res, [
     { nameHas: "บานพับ hyda", sku: "JR00489", qty: 8 },  // แม่4 + ลูก4×1
-    { nameHas: "สปิงก็อท", sku: "JR00482", qty: 8 },      // 4×2
-    { nameHas: "ฉากประคองมุม", sku: "JR00557", qty: 16 }, // 8×2
+    { nameHas: "สปิงก็อท", sku: "JR00592", qty: 8 },      // 4×2
+    { nameHas: "ฉากประคองมุม", sku: "JR00267", qty: 16 }, // 8×2
     { nameHas: "มือจับ ล็อค+กุญแจ (คิงโบ)", sku: "JR00315", qty: 1 },
     { nameHas: "ตลับกุญแจไฮด้า", sku: "JR00551", qty: 1 },
     { nameHas: "ไส้กุญแจ", sku: "JR00499", qty: 1 },
@@ -232,13 +232,14 @@ function check(label, res, want) {
   const sw = computeCutList(CUT_SPEC_BY_ID["fuji_swing"], { ...CUT_SPEC_BY_ID["fuji_swing"].defaults }, 1);
   console.log("FUJI บานเปิด (FUJI_SWING — ชุดใหม่):");
   check("FUJIเปิด", sw, [
-    { nameHas: "มือจับ (บานเปิด/กระทุ้ง)", sku: "JR00304", qty: 1 },
-    { nameHas: "CDQ กระทุ้ง", sku: "JR00566", qty: 1 },
+    // เจ้าของสั่งเปลี่ยน 27 ส.ค.69: มือจับ → KINGBO-FH3016 (4 รหัส 2 สี × ซ้าย/ขวา) · CDQ → Kingbo JR00564
+    { nameHas: "KINGBO-FH3016", sku: "JR00318", qty: 1 },
+    { nameHas: "CDQ Kingbo", sku: "JR00564", qty: 1 },
     { nameHas: "วิทโก้", sku: "JR00559", qty: 2 },
     { nameHas: "ลูกเบี้ยวล็อค", sku: "JR00486", qty: 2 },
     { nameHas: "รับล็อคลูกเบี้ยว", sku: "JR00483", qty: 2 },
-    { nameHas: "สปิงก็อท", sku: "JR00482", qty: 4 },
-    { nameHas: "ฉากประคองมุม", sku: "JR00557", qty: 8 },
+    { nameHas: "สปิงก็อท", sku: "JR00592", qty: 4 },
+    { nameHas: "ฉากประคองมุม", sku: "JR00267", qty: 8 },
     { nameHas: "น็อตเฟรม", sku: "JR00864", qty: 8 },
     { nameHas: "ยางกรอบบาน", sku: "JR00770", qty: 4.4 }, // round(2*(80+140)/100,1)
     { nameHas: "ยางวงกบ", sku: "JR00770", qty: 4.4 },

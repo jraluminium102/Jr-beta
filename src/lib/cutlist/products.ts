@@ -28,8 +28,8 @@ const SWING_DOOR_DEF = { hwColor: "ขาว", lockType: "ล็อคปกต�
 function casementDoorHardware(hasSill: (o: CutInput) => boolean, sashN: (o: CutInput) => number = () => 1): HardwareDef[] {
   return [
     { name: "บานพับ hyda", sku: (o) => (o.hwColor === "ดำ" ? "JR00488" : "JR00489"), qty: (o) => (o.H > 300 || o.W / sashN(o) > 120 ? 5 : 4) * sashN(o), unit: "ตัว" },
-    { name: "สปิงก็อท", sku: "JR00482", qty: (o) => 4 * sashN(o), unit: "ตัว" },
-    { name: "ฉากประคองมุม", sku: "JR00557", qty: (o) => 8 * sashN(o), unit: "ตัว" },
+    { name: "สปิงก็อท", sku: "JR00592", qty: (o) => 4 * sashN(o), unit: "ตัว" },
+    { name: "ฉากประคองมุม", sku: "JR00267", qty: (o) => 8 * sashN(o), unit: "ตัว" },
     { name: "มือจับ ล็อค+กุญแจ (คิงโบ)", sku: (o) => (o.hwColor === "ดำ" ? "JR00314" : "JR00315"), qty: (o) => (o.motherHandle === "คิงโบ ล็อค+กุญแจ" ? 1 : 0), unit: "ชุด" },
     { name: "มือจับ ดัมมี่+ดัมมี่ (คิงโบ)", sku: (o) => (o.hwColor === "ดำ" ? "JR00312" : "JR00313"), qty: (o) => (o.motherHandle === "คิงโบ ดัมมี่+ดัมมี่" ? 1 : 0), unit: "ชุด" },
     { name: "มือจับ Cmech กุญแจ", sku: "JR00293", qty: (o) => (o.motherHandle === "Cmech กุญแจ+ล็อค" ? 1 : 0), unit: "ชุด", noStock: true, note: "ไม่ตัดสต็อก" },
@@ -52,17 +52,26 @@ function casementDoorHardware(hasSill: (o: CutInput) => boolean, sashN: (o: CutI
  *   sheet A1="FUJI บานเปิด" (แท็บชื่อ "Fix3") · ⑤.1 สรุปอุปกรณ์ แถว 69-78 (1 บาน/ชุด)
  *   ⚠ ไม่ใช้ casementDoorHardware (ชุดประตู) — ชุดนี้เป็นชุดเฉพาะ FUJI_SWING เอง (มือจับ/CDQ/วิทโก้/ลูกเบี้ยวล็อค ต่างจากประตู)
  */
+/** มือจับหลบมุ้ง KINGBO-FH3016 — เลือกรหัสตาม สี × ด้าน (ราคาเท่ากันหมด เลือกผิดแค่หักสต็อกผิดตัว) */
+const winHandleSku = (o: CutInput) => {
+  const dark = String(o.winHandleColor ?? "อบขาว") === "ดำ";
+  const right = String(o.winHandleSide ?? "ซ้าย") === "ขวา";
+  return dark ? (right ? "JR00317" : "JR00316") : (right ? "JR00319" : "JR00318");
+};
+
 function fujiSwingHardware(): HardwareDef[] {
   const lockExtra = (o: CutInput) => 2 + Math.max(0, Math.ceil((o.H - 180) / 50)); // สูง(ซม.)>180 เพิ่มทุก 50ซม. (ไฟล์: mm>1800 ทุก 500mm)
   const rubberM = (o: CutInput) => Math.round((2 * (o.W + o.H) / 100) * 10) / 10;
   return [
-    { name: "มือจับ (บานเปิด/กระทุ้ง)", sku: "JR00304", qty: () => 1, unit: "ชุด" },
-    { name: "CDQ กระทุ้ง", sku: "JR00566", qty: () => 1, unit: "ตัว" },
+    // มือจับหลบมุ้ง KINGBO-FH3016 — 2 สี × ซ้าย/ขวา = 4 รหัส (ราคาเท่ากันทุกตัว ฿111)
+    //   เจ้าของสั่งเปลี่ยน 27 ส.ค.69 (เดิม JR00304 มือจับ CENZA)
+    { name: "มือจับหลบมุ้ง KINGBO-FH3016", sku: winHandleSku, qty: () => 1, unit: "ชุด" },
+    { name: "CDQ Kingbo", sku: "JR00564", qty: () => 1, unit: "ตัว" },   // เดิม JR00566 CDQ ชุดบานกระทุ้ง-เงิน
     { name: "วิทโก้", sku: "JR00559", qty: () => 2, unit: "ตัว" },
     { name: "ลูกเบี้ยวล็อค", sku: "JR00486", qty: lockExtra, unit: "ตัว", note: "2 + สูง>180 เพิ่มทุก 50ซม." },
     { name: "รับล็อคลูกเบี้ยว", sku: "JR00483", qty: lockExtra, unit: "ตัว", note: "2 + สูง>180 เพิ่มทุก 50ซม." },
-    { name: "สปิงก็อท", sku: "JR00482", qty: () => 4, unit: "ตัว" },
-    { name: "ฉากประคองมุม", sku: "JR00557", qty: () => 8, unit: "ตัว" },
+    { name: "สปิงก็อท", sku: "JR00592", qty: () => 4, unit: "ตัว" },
+    { name: "ฉากประคองมุม", sku: "JR00267", qty: () => 8, unit: "ตัว" },
     { name: "น็อตเฟรม", sku: "JR00864", qty: () => 8, unit: "ตัว" },
     { name: "ยางกรอบบาน", sku: "JR00770", qty: rubberM, unit: "เมตร" },
     { name: "ยางวงกบ", sku: "JR00770", qty: rubberM, unit: "เมตร" },
@@ -854,8 +863,10 @@ export const FUJI_SWING: CutSpec = {
   opts: [
     { key: "mesh", label: "มุ้ง", choices: ["ไม่ใส่", "ใส่"] },
     { key: "awning", label: "กันสาด", choices: ["ไม่ใส่", "ใส่"] },
+    { key: "winHandleColor", label: "สีมือจับ", choices: ["อบขาว", "ดำ"] },
+    { key: "winHandleSide", label: "มือจับ ด้าน", choices: ["ซ้าย", "ขวา"] },
   ],
-  defaults: { W: 80, H: 140, N: 1, rail: "", honk: false, mesh: "ไม่ใส่", awning: "ไม่ใส่" },
+  defaults: { W: 80, H: 140, N: 1, rail: "", honk: false, mesh: "ไม่ใส่", awning: "ไม่ใส่", winHandleColor: "อบขาว", winHandleSide: "ซ้าย" },
   profiles: [
     // รหัสผูกกับมุ้ง: ไม่ใส่=F7859 (sheet เดิม) · ใส่=F7938 (sheet +มุ้ง) — ยาวเท่าเดิมทั้ง 2 กรณี
     { name: "เฟรมข้าง", code: (o) => (o.mesh === "ใส่" ? "F7938" : "F7859"), len: (o) => o.H, qty: () => 2 },
@@ -1208,8 +1219,8 @@ export const SOLID_DOOR: CutSpec = {
   hardware: [
     { name: "บานพับ hyda", sku: (o) => (o.hwColor === "ดำ" ? "JR00488" : "JR00489"), unit: "ตัว",
       qty: (o) => (o.H > 300 || sMother(o) > 120 ? 5 : 4) + (sChild(o) > 0 ? (o.H > 300 || sChild(o) > 120 ? 5 : 4) * sChildN(o) : 0) },
-    { name: "สปิงก็อท", sku: "JR00482", qty: (o) => 4 * o.N, unit: "ตัว" },
-    { name: "ฉากประคองมุม", sku: "JR00557", qty: (o) => 8 * o.N, unit: "ตัว" },
+    { name: "สปิงก็อท", sku: "JR00592", qty: (o) => 4 * o.N, unit: "ตัว" },
+    { name: "ฉากประคองมุม", sku: "JR00267", qty: (o) => 8 * o.N, unit: "ตัว" },
     { name: "มือจับ ล็อค+กุญแจ (คิงโบ)", sku: (o) => (o.hwColor === "ดำ" ? "JR00314" : "JR00315"), unit: "ชุด",
       qty: (o) => (o.motherHandle === "คิงโบ ล็อค+กุญแจ" ? 1 : 0) + (sChildN(o) > 0 && o.childHandle === "คิงโบ ล็อค+กุญแจ" ? 1 : 0) },
     { name: "มือจับ ดัมมี่+ดัมมี่ (คิงโบ)", sku: (o) => (o.hwColor === "ดำ" ? "JR00312" : "JR00313"), unit: "ชุด",
