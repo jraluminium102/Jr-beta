@@ -14,7 +14,7 @@ import { computeCutList, type CutInput } from "../cutlist/engine.ts";
 import { CUT_SPEC_BY_ID } from "../cutlist/products.ts";
 import { cutInputFromRecipe } from "../cutlist/from-recipe.ts";
 import { cutHardwareLines, HANDLE_FIELDS, HW_FROM_CUTLIST } from "./hardware-from-cutlist.ts";
-import { cutAluLines, cutRoofConsumLines, multiRoofArea, ALU_FROM_CUTLIST } from "./alu-from-cutlist.ts";
+import { cutAluLines, cutRoofConsumLines, cutUncodedLines, multiRoofArea, ALU_FROM_CUTLIST } from "./alu-from-cutlist.ts";
 import { RM } from "./products.mjs";
 import { stockColorOfCalc } from "./stock-link.ts";
 import { resolveAluColor } from "./alu-colors.ts";
@@ -158,8 +158,11 @@ export function compareCut(PB: any, inp: CompareInput) {
     if (al?.length) opt.aluLines = al;
     const cl = cutRoofConsumLines({ prodId: inp.prodId, cutInput: ci as Record<string, unknown>, material: String(opt.material ?? "ไวนิล"), rm: RM as never, planArea: ar });
     if (cl?.length) opt.consumLines = cl;
+    // แถวใบตัดที่ไม่มีรหัสสโตร์ (ราง/เสารับ/ฉาก) — ของจริงที่ต้องจ่าย ห้ามหล่นหาย
+    const un = cutUncodedLines({ prodId: inp.prodId, cutInput: ci as Record<string, unknown> });
+    if (un?.length) opt.consumLines = [...(opt.consumLines ?? prod.consum ?? []), ...un];
     // พื้นที่ = ผลรวมทุกด้าน (ไม่ใช่ กว้าง×สูง) — ส่งเสมอแม้เป็น 0 ไม่งั้นตกไปใช้ กว้าง×สูง
-    opt.areaOverride = ar;
+    if (ar > 0 || prod.multiSide) opt.areaOverride = ar;
   }
   const calc: any = computeCost(PB, prod, opt);
   const spec = map ? CUT_SPEC_BY_ID[map.spec_id] : null;

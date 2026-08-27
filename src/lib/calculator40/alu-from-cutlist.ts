@@ -121,6 +121,54 @@ const NO_CODE_PRICE: { match: RegExp; price: number; unit: string }[] = [
   { match: /^(รางน้ำอลู|ราง\/เชิงชาย)/, price: 2273, unit: "เส้น" },
 ];
 
+/**
+ * ราคาต่อ "แถวใบตัดที่ไม่มีรหัสสโตร์" ของรุ่นที่ไม่ใช่หลังคา — คีย์ = ชื่อแถวในใบตัด
+ * ⚠ แถวพวกนี้เป็นของจริงที่ต้องจ่ายเงิน ถ้าไม่ประกาศไว้ = หายไปจากทุนเงียบ ๆ
+ *   (เจอตอนผูกบานเลื่อนรางบน 27 ส.ค.69: ราง/เสารับ/ชนกลาง/ฉาก รวม ~10,365 บาท เกือบหลุด)
+ *   ราคายกมาจากสูตรเดิมของรุ่นนั้นตรง ๆ — จำนวนเปลี่ยนไปใช้ของใบตัดแทน
+ */
+const UNCODED_BY_PROD: Record<string, { match: RegExp; name: string; price: number; unit: string; stockLen?: number }[]> = {
+  topslide: [
+    { match: /^รางบน Hafele/, name: "รางบน Hafele", price: 2010, unit: "เส้น" },
+    { match: /^เสารับบาน/, name: 'เสารับบาน (กล่อง 1"x4")', price: 905, unit: "เส้น" },
+    { match: /^ชนกลางรับบาน/, name: "ชนกลางรับบาน", price: 300, unit: "เส้น" },
+    { match: /^ฉาก 4/, name: 'ฉาก 4" ปิดราง', price: 280, unit: "เส้น" },
+  ],
+};
+
+/**
+ * แถวใบตัดที่ไม่มีรหัสสโตร์ → บรรทัดสิ้นเปลือง (นับเป็น "เส้น" จากความยาวจริง ตัดจากเส้น 6 ม.)
+ * คืน null = รุ่นนี้ไม่ได้ประกาศราคาไว้ → ผู้เรียกต้องไม่ตัด prod.consum ทิ้ง
+ */
+export function cutUncodedLines(inp: CalcAluInput): ConsumLine[] | null {
+  const map = UNCODED_BY_PROD[inp.prodId];
+  const specId = ALU_FROM_CUTLIST[inp.prodId];
+  const spec = specId ? CUT_SPEC_BY_ID[specId] : null;
+  if (!map || !spec) return null;
+  let rows;
+  try {
+    rows = computeCutList(spec, { ...spec.defaults, ...inp.cutInput } as CutInput, 1).rows;
+  } catch { return null; }
+
+  // รวมความยาวต่อชนิดก่อน แล้วค่อยหารเส้น (เศษเส้นเอาไปตัดท่อนอื่นชนิดเดียวกันต่อได้)
+  const len = new Map<number, number>();
+  for (const r of rows) {
+    const code = String(r.code ?? "");
+    if (code && code !== "-") continue;
+    if (!(r.qty > 0) || !(r.len > 0)) continue;
+    const i = map.findIndex((m) => m.match.test(String(r.name)));
+    if (i < 0) continue;
+    len.set(i, (len.get(i) ?? 0) + r.len * r.qty);
+  }
+  const out: ConsumLine[] = [];
+  for (const [i, total] of len) {
+    const m = map[i];
+    const bars = Math.ceil(total / (m.stockLen ?? 600) - 1e-9);
+    if (bars > 0) out.push({ name: m.name, price: m.price, unit: m.unit, count: bars });
+  }
+  return out.length ? out : null;
+}
+
 /** วัสดุมุงคิดราคา (18 ชนิด) → ชนิดแผ่นใบตัด (6 ชนิด) — กติกาเดียวกับ from-recipe ห้ามแยกกัน */
 export function sheetOfMaterial(mat: string): string {
   const m = String(mat ?? "ไวนิล");

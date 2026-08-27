@@ -581,6 +581,10 @@ export const PRODUCTS = {
     icon: '🚪', defForm: 'เลื่อนซ้อน', forms: ['เลื่อนซ้อน'],
     defaults: { w: 360, h: 240, p: 2 }, defGlass: 'เขียว 6มม.', minP: 2, maxP: 6,
     vars: {},
+    // ⏳ รอผูกใบตัด (toprail_frame) — ใบตัดมี BOM ครบ 12 โปรไฟล์ + 12 อุปกรณ์ มีรหัสสโตร์
+    //    ติดตัวเดียว: "ไกด์ดำ" = JR00558 ในสโตร์แต่ยังไม่ตั้งราคา → เอนจินตีตกทั้งชุด
+    //    พอ JR00558 มีราคา: เพิ่ม topslide เข้า ALU_FROM_CUTLIST + HW_FROM_CUTLIST + COMPARABLE
+    //    แล้ว "ล้าง hardware ด้านล่างนี้ทิ้ง" (ไม่งั้นคิดซ้ำ) · uncoded rows มี UNCODED_BY_PROD รออยู่แล้ว
     alu: [],
     glass: 'W*H',
     hardware: [
