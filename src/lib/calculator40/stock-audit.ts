@@ -150,6 +150,27 @@ export function auditStockLink(stock: AuditStockRow[], PB: any): AuditRow[] {
           }
           continue;
         }
+        // ผูกผ่าน "ตารางราคากลาง" (ref: ROOFMAT.ไวนิล · STEEL.plate · MOTOR.…) — แอดมินแก้ราคาที่ตารางนั้นได้
+        //   ไม่ใช่ "ผูกไม่ได้" · ตัวตารางเองมีหัวข้อ ③ ตรวจกับสโตร์อยู่แล้ว
+        const ref = String(it.ref ?? "");
+        if (ref) {
+          const [tbl, ...rest] = ref.split(".");
+          const key = rest.join(".");
+          // ตารางราคากลางเองก็สร้างจากสโตร์ (buildPriceOverride จับด้วยชื่อ) → ตรวจด้วยชื่อคีย์เหมือนหมวด ③
+          //   สโตร์ไม่มีของชื่อนี้ = ยังผูกไม่ติดจริง (ใช้ราคาที่ฝังในสูตร) — ต้องรายงานตามจริง
+          byKey("อุปกรณ์/สิ้นเปลือง", p.name || p.id, nm, key, "ชื่อ", it.price ?? null,
+            `ผูกผ่านตารางราคากลาง ${tbl} → แก้ราคาที่ตารางนั้น/สโตร์`);
+          continue;
+        }
+        // ผูกด้วย "ชนิด+ขนาด" ของกล่อง/ฉากอลูเมืองทอง (box: 'กล่อง|1.6X4') — ราคามาจากสโตร์ผ่าน box-link
+        const box = String(it.box ?? "");
+        if (box) {
+          const has = (PB.BOXPRICE as Record<string, unknown>)?.[box] != null;
+          push({ section: "อุปกรณ์/สิ้นเปลือง", usedBy: p.name || p.id, item: nm, key: box, keyKind: "ชื่อ",
+            formulaPrice: it.price ?? null, status: has ? "linked" : "missing",
+            note: has ? "ผูกราคากล่อง/ฉากในสโตร์ (ชื่อ+ขนาด)" : "ยังไม่มีกล่อง/ฉากขนาดนี้ในสโตร์ → ใช้ราคาในสูตร" });
+          continue;
+        }
         if (!p.partsLinked) {
           push({ section: "อุปกรณ์/สิ้นเปลือง", usedBy: p.name || p.id, item: nm, key: "", keyKind: "-",
             formulaPrice: it.price ?? null, status: "no_key",

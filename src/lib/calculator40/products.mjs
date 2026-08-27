@@ -478,21 +478,27 @@ export const PRODUCTS = {
       { name: 'เปิดกลาง F7945c', code: 'F7945C', price: 775, kg: 4.30556, seg: 'H', count: '(P>1?1:0)' },
     ],
     glass: 'W*H',
+    // ผูกรหัสสโตร์ครบทั้งชุด 27 ส.ค.69 (เดิมไม่มีรหัสสักตัว — แก้ราคาในสโตร์แล้วไม่มีผล)
+    //   ชุดเดียวกับใบตัด FUJI บานเปิด/กระทุ้ง · เจ้าของไล่เช็คทีละตัวแล้ว
     hardware: [
-      { name: 'มือจับ', price: 140, unit: 'ตัว', count: '1' },
-      { name: 'วิทโก้', price: 200, unit: 'ตัว', count: '2*P' },
-      { name: 'CDQ', price: 150, unit: 'ชุด', count: 'P' },
-      { name: 'รับล็อคลูกเบี้ยว', price: 15, unit: 'ตัว', count: '2' },
-      { name: 'ลูกเบี้ยว', price: 17, unit: 'ตัว', count: '2' },
+      // มือจับหลบมุ้ง KINGBO-FH3016 — 4 รหัส (2 สี × ซ้าย/ขวา) ราคาเท่ากันหมด ฿111
+      { name: 'มือจับหลบมุ้ง KINGBO-FH3016', sku: "CKEY==='black'?'JR00316':'JR00318'", price: 111, unit: 'ชุด', count: 'P' },
+      { name: 'วิทโก้ (บานพับ SC-304P)', sku: 'JR00559', price: 360, unit: 'ตัว', count: '2*P' },
+      { name: 'CDQ Kingbo', sku: 'JR00564', price: 99, unit: 'ชุด', count: 'P' },
+      { name: 'รับล็อคลูกเบี้ยว', sku: 'JR00483', price: 15, unit: 'ตัว', count: '2' },
+      { name: 'ลูกเบี้ยวล็อค', sku: 'JR00486', price: 17, unit: 'ตัว', count: '2' },
+      // แกนล็อค/แป้นรับล็อค/คลิปเข้ามุม/วาวล์ระบายน้ำ — ใบตัดไม่มี 4 ตัวนี้ · ยังไม่เจอรหัสในสโตร์
+      //   คงไว้ก่อน (ถอดออก = ทุนหาย) รอเจ้าของยืนยันว่ายังใช้อยู่ไหม
       { name: 'แกนล็อค', price: 63, unit: 'ตัว', count: '2*P' },
       { name: 'แป้นรับล็อค', price: 45, unit: 'ตัว', count: '2*P' },
-      { name: 'สปริก็อต', price: 12, unit: 'ตัว', count: '4*P' },
+      { name: 'สปิงก็อท', sku: 'JR00592', price: 12, unit: 'ตัว', count: '4*P' },
+      { name: 'ฉากประคองมุม', sku: 'JR00267', price: 1.5, unit: 'ตัว', count: '8*P' },   // ใบตัดมี คิดราคาเดิมไม่มี
       { name: 'คลิปเข้ามุม', price: 5, unit: 'ตัว', count: '12*P' },
-      { name: 'น็อตประกอบบาน', price: 1, unit: 'ตัว', count: '8' },
+      { name: 'น็อตเฟรม 1"', sku: 'JR00864', price: 1, unit: 'ตัว', count: '8' },
       { name: 'วาวล์ระบายน้ำ', price: 14, unit: 'ตัว', count: '2' },
     ],
     consum: [
-      { name: 'ยางอัดกระจก', price: 11, unit: 'ม.', count: 'Math.round(2*(W+H)*10)/10' },
+      { name: 'ยางอัดกระจก', sku: 'JR00770', price: 11, unit: 'ม.', count: 'Math.round(2*(W+H)*10)/10' },
       { name: 'ยาง foam', price: 5, unit: 'ม.', count: 'Math.round(4*(W+H)*10)/10' },
       SILICONE,
     ],
@@ -590,7 +596,7 @@ export const PRODUCTS = {
     glass: 'W*H',
     hardware: [
       { name: 'รางบน Hafele', price: 2010, unit: 'เส้น', count: 'Math.ceil(W*2/6)*P' },
-      { name: 'ล้อ Hafele', price: 1170, unit: 'กล่อง', count: 'P' },
+      { name: 'ล้อรางบน Hafele 100kg', sku: 'JR00544', price: 1170, unit: 'กล่อง', count: 'P' },   // รหัสตามใบตัด toprail_frame
       { name: 'เสารับ 1"x4"', price: 905, unit: 'เส้น', count: 'Math.ceil(H/6)' },
       { name: 'คานรับราง 1.6"x4"', price: 1220, unit: 'เส้น', count: 'Math.ceil(W*2/6)' },
       { name: 'กรอบบาน เสากุญแจ 20051', price: 885, unit: 'เส้น', count: 'Math.ceil(2*(W+P*H)/6)' },
