@@ -18,7 +18,7 @@ export type AuditStockRow = {
   weight_per_unit?: number | string | null;   // กก./เส้น — ตัวคูณของสาย "เรตต่อโล → ราคาต่อเส้น"
 };
 
-export type AuditStatus = "linked" | "price_diff" | "missing" | "no_key" | "multi" | "zero" | "order_only";
+export type AuditStatus = "linked" | "price_diff" | "missing" | "no_key" | "multi" | "zero" | "order_only" | "labor";
 export type AuditRow = {
   section: string;              // หมวด (อลูรายเส้น / อุปกรณ์ / กระจก ...)
   usedBy: string;               // ใช้ในรุ่นไหน (ว่าง = ตารางราคากลาง)
@@ -44,6 +44,7 @@ export const STATUS_LABEL: Record<AuditStatus, string> = {
   missing: "ไม่เจอในสโตร์",
   no_key: "ผูกไม่ได้ (ไม่มีรหัส/ยังไม่เปิดผูก)",
   order_only: "ไม่สต็อก สั่งใหม่ (ตั้งใจไม่ผูก · ราคาอยู่ในสูตร)",
+  labor: "ค่าแรง/ค่าบริการ (ไม่ใช่ของในสโตร์)",
   multi: "เจอหลายแถว ต้องเลือกสี",
   zero: "เจอแล้วแต่ราคาเป็น 0",
 };
@@ -127,6 +128,14 @@ export function auditStockLink(stock: AuditStockRow[], PB: any): AuditRow[] {
     for (const grp of ["hardware", "consum"] as const) {
       for (const it of (p[grp] || [])) {
         const nm = norm(it.name);
+        // ค่าแรง/ค่าบริการ — ไม่ใช่ "ของ" ที่มีในสโตร์ (ค่าแรงผลิต/ติดตั้ง · ค่ากรีดราง · ค่าเปิดตู้อบ · ค่าดัดโค้ง)
+        //   เดิมกองรวมอยู่ใน "ผูกไม่ได้" → หน้าตรวจดูแย่เกินจริง และกลบของที่ขาดจริง (เจ้าของท้วง 27 ส.ค.69)
+        if (it.labor) {
+          push({ section: "อุปกรณ์/สิ้นเปลือง", usedBy: p.name || p.id, item: nm, key: "", keyKind: "-",
+            formulaPrice: it.price ?? null, status: "labor",
+            note: "ค่าแรง/ค่าบริการ ไม่ใช่ของในสโตร์ — แก้ราคาที่สูตร ไม่ต้องผูก" });
+          continue;
+        }
         if (it.orderOnly) {
           push({ section: "อุปกรณ์/สิ้นเปลือง", usedBy: p.name || p.id, item: nm, key: "", keyKind: "-",
             formulaPrice: it.price ?? null, status: "order_only",
@@ -306,7 +315,7 @@ export function auditByProduct(rows: AuditRow[], bump: BumpRow[]): ProductAudit[
     const mine = rows.filter((r) => r.usedBy === (p.name || p.id));
     const alu = mine.filter((r) => r.section === "อลูรายเส้น");
     const hw = mine.filter((r) => r.section === "อุปกรณ์/สิ้นเปลือง");
-    const linked = (r: AuditRow) => r.status !== "no_key" && r.status !== "missing";   // order_only = ตั้งใจ นับว่าเรียบร้อย
+    const linked = (r: AuditRow) => r.status !== "no_key" && r.status !== "missing";   // order_only/labor = ตั้งใจ นับว่าเรียบร้อย
     const aluLinked = alu.filter(linked).length, hwLinked = hw.filter(linked).length;
     const total = alu.length + hw.length, ok = aluLinked + hwLinked;
     const b = byId.get(p.id);
