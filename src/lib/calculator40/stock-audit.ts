@@ -134,10 +134,26 @@ export function auditStockLink(stock: AuditStockRow[], PB: any): AuditRow[] {
             note: "ไม่ได้สต็อกไว้ สั่งซื้อเมื่อมีงาน — ราคาอยู่ในสูตร ตั้งใจไม่ผูกสโตร์" });
           continue;
         }
+        // ⚠ บรรทัดที่ "มีรหัสสโตร์อยู่แล้ว" ผูกติดจริงไม่ว่าจะติดธง partsLinked หรือไม่ —
+        //   เอนจินคิดราคาอ่านราคาจาก PB.SKUPRICE[sku] ตรง ๆ (hwPrice ใน engine.mjs)
+        //   ของเดิมเช็คด้วย "ชื่อ" อย่างเดียว บรรทัดที่มี sku เลยถูกตีเป็น "ผูกไม่ได้" ทั้งที่ผูกแล้ว
+        //   → หน้าตรวจโชว์ว่าแทบไม่มีอะไรผูก ทั้งที่ของจริงผูกเยอะกว่านั้น (เจ้าของท้วง 27 ส.ค.69)
+        const skuRaw = String(it.sku ?? "");
+        // sku เป็นสูตรได้ (เลือกรหัสตามเงื่อนไข เช่น "WIN?'JR00770':'JR00771'") → ดึงรหัสในเครื่องหมายคำพูดออกมา
+        const skus = skuRaw.includes("?")
+          ? [...skuRaw.matchAll(/'([^']+)'|"([^"]+)"/g)].map((m) => m[1] ?? m[2]).filter(Boolean)
+          : (skuRaw ? [skuRaw] : []);
+        if (skus.length) {
+          for (const s of skus) {
+            byKey("อุปกรณ์/สิ้นเปลือง", p.name || p.id, skus.length > 1 ? `${nm} (${s})` : nm, s, "sku",
+              it.price ?? null, skus.length > 1 ? "สูตรเลือกรหัสตามเงื่อนไข" : "");
+          }
+          continue;
+        }
         if (!p.partsLinked) {
           push({ section: "อุปกรณ์/สิ้นเปลือง", usedBy: p.name || p.id, item: nm, key: "", keyKind: "-",
             formulaPrice: it.price ?? null, status: "no_key",
-            note: "รุ่นนี้ยังไม่เปิดผูกสโตร์ (ไม่มีธง partsLinked) → ราคาฝังในสูตร" });
+            note: "สูตรไม่ได้ใส่รหัสสโตร์ + รุ่นนี้ยังไม่เปิดผูกด้วยชื่อ (partsLinked) → ราคาฝังในสูตร" });
           continue;
         }
         byKey("อุปกรณ์/สิ้นเปลือง", p.name || p.id, nm, nm, "ชื่อ", PB.PARTS?.[nm] ?? (it.price ?? null),
