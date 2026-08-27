@@ -376,6 +376,9 @@ console.log("═══ ⑨ ค่าแรง/ค่าบริการ แย
   const rs = rows.filter((r) => r.usedBy === PRODUCTS.roof_slide.name);
   const beams = rs.filter((r) => /^(จันทัน|แป กล่อง)/.test(r.item));
   ok("หลังคาเลื่อน จันทัน/แป ผูกรหัสกล่องครบ", beams.length >= 6 && beams.every((r) => r.key.includes("|")), String(beams.length));
+  // ค่าแรงที่ "มีรหัสในสโตร์" (ค่ากรีดราง JR00202) ต้องขึ้นว่าผูกแล้ว ไม่ใช่ถูกป้ายค่าแรงกลบ
+  const grind = rows.find((r) => r.item === "ค่ากรีดราง");
+  ok("ค่าแรงที่มีรหัสสโตร์ ต้องนับว่าผูก", !!grind && grind.status !== "labor" && grind.key === "JR00202", grind ? grind.status + "/" + grind.key : "ไม่เจอ");
 }
 
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);

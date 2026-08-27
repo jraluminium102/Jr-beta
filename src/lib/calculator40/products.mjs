@@ -165,7 +165,7 @@ export const PRODUCTS = {
     glass: '(W+(P-1)*0.1)*H',
     hardware: [
       { name: 'ล้อ 27 (2/บาน)', sku: 'JR00228', price: 80, unit: 'ลูก', count: '2*F2' },
-      { name: 'มือจับ Align', price: 99, unit: 'ตัว', count: '2*F3' },
+      { name: 'มือจับ Align', sku: 'JR00378', price: 99, unit: 'ตัว', count: '2*F3' },
       { name: 'ชุดล็อค', sku: 'JR00246', price: 189, unit: 'ชุด', count: 'F4' },
     ],
     consum: [
@@ -259,7 +259,7 @@ export const PRODUCTS = {
     //     จำนวนตามใบตัด = 2 + เฟรมล่างเกิน 150 ซม. เพิ่มทุก 50 ซม.
     hardware: [
       { name: 'ล้อ-15x20x230 (2/บาน)', sku: 'JR00577', price: 80, unit: 'ตัว', count: '2*F2' },
-      { name: 'มือจับ Align (2/บาน)', price: 99, unit: 'ตัว', count: '2*F3' },
+      { name: 'มือจับ Align (2/บาน)', sku: 'JR00378', price: 99, unit: 'ตัว', count: '2*F3' },
       { name: 'ชุดล็อค', sku: 'JR00246', price: 189, unit: 'ชุด', count: 'F4' },
       { name: 'ฉากประกอบมุม (12/บาน)', sku: 'JR00480', price: 2, unit: 'ตัว', count: '12*P' },   // เจ้าของเคาะ 21 ส.ค.69: 12/บาน ทั้งถอดทุนและตัดประกอบ (เดิม ถอดทุน 8 · ตัดประกอบ 16)
       { name: 'สปิงก็อท (4/บาน)', sku: 'JR00592', price: 29, unit: 'ตัว', count: '4*P' },
@@ -599,10 +599,10 @@ export const PRODUCTS = {
       { name: 'ล้อรางบน Hafele 100kg', sku: 'JR00544', price: 1170, unit: 'กล่อง', count: 'P' },   // รหัสตามใบตัด toprail_frame
       { name: 'เสารับ 1"x4"', price: 905, unit: 'เส้น', count: 'Math.ceil(H/6)' },
       { name: 'คานรับราง 1.6"x4"', price: 1220, unit: 'เส้น', count: 'Math.ceil(W*2/6)' },
-      { name: 'กรอบบาน เสากุญแจ 20051', price: 885, unit: 'เส้น', count: 'Math.ceil(2*(W+P*H)/6)' },
+      { name: 'กรอบบาน เสากุญแจ 20051', sku: 'JR00256', price: 885, unit: 'เส้น', count: 'Math.ceil(2*(W+P*H)/6)' },
       { name: 'ชนกลางรับบาน', price: 300, unit: 'ท่อน', count: 'Math.ceil(H/6)' },
       { box: 'ฉาก|4', name: 'ฉาก 4" ปิดราง', price: 280, unit: 'ท่อน', count: '2*Math.ceil(W*2/6)' },
-      { name: 'มือจับ Align', price: 99, unit: 'ตัว', count: '2*P' },
+      { name: 'มือจับ Align', sku: 'JR00378', price: 99, unit: 'ตัว', count: '2*P' },
       { name: 'ชุดล็อค', sku: 'JR00246', price: 189, unit: 'ชุด', count: 'P' },
     ],
     consum: [
@@ -893,7 +893,7 @@ export const PRODUCTS = {
     hardware: [],
     consum: [
       { labor: true, name: 'ค่าดัดโค้ง (อลูทั้งชุด รวมกล่อง)', price: 1, unit: 'ชุด', count: 'Math.ceil((W+H+0.4)*1.4*220+1500)*P' },
-      { name: 'ซิลิโคน (ใน+นอก)', price: 90, unit: 'หลอด', count: 'Math.ceil(2*(W*100+H*100)/100*2/12.5)' },
+      { name: 'ซิลิโคน (ใน+นอก)', sku: 'JR00221', price: 90, unit: 'หลอด', count: 'Math.ceil(2*(W*100+H*100)/100*2/12.5)' },
       { name: 'กล่องเปิด+ตบปิดเปิด', price: 1849, unit: 'เส้น', count: 'Math.ceil((W*100)/600)' },
       { labor: true, name: 'ปัดขึ้นหลักร้อย', price: 1, unit: '', count: 'Math.ceil(RAW/100)*100 - RAW' },
     ],
@@ -916,7 +916,7 @@ export const PRODUCTS = {
       { orderOnly: true, name: 'ราคาบาน (สั่งร้านอื่น รวมอุปกรณ์)', price: 1, unit: 'ชุด', count: 'DOOR' },
     ],
     consum: [
-      { name: 'ซิลิโคน (PU) ใน+นอก', price: 90, unit: 'หลอด', count: 'Math.ceil(2*(W+H)*2/12.5)' },
+      { name: 'ซิลิโคน (PU) ใน+นอก', sku: 'JR00221', price: 90, unit: 'หลอด', count: 'Math.ceil(2*(W+H)*2/12.5)' },
     ],
     note: 'บานสั่งร้านอื่น (ราคาตาม จำนวนบาน|สูง|สี · รองรับสูง ≤2.8ม.) · สีอบพิเศษไม่บวกค่าอบ (เช็คซ้ำ)',
   },
@@ -1222,7 +1222,7 @@ export const PRODUCTS = {
       { name: 'ตบปิดรางเตี้ย (ภายใน) 20050', sku: 'JR00222', price: 145, unit: 'เส้น6ม', count: "form==='ภายใน'?2*Math.ceil(W*100/600):0" },
       { name: 'ลูกฟูก2ทาง (แทนกระจก)', sku: 'JR00206', price: 432, unit: 'เส้น6ม', count: 'Math.ceil( Math.ceil(W*100/10) / Math.max(1, Math.trunc(600/Math.max(1,H*100))) )' },
       { name: 'ล้อ 27 (2/บาน)', sku: 'JR00228', price: 80, unit: 'ตัว', count: '2*F2' },
-      { name: 'มือจับ Align (2/บาน)', price: 99, unit: 'ตัว', count: '2*F3' },
+      { name: 'มือจับ Align (2/บาน)', sku: 'JR00378', price: 99, unit: 'ตัว', count: '2*F3' },
       { name: 'ชุดล็อค', sku: 'JR00246', price: 189, unit: 'ชุด', count: 'F4' },
       { name: 'น็อต', sku: 'JR00226', price: 1, unit: 'ตัว', count: '8+4*P' },
       { name: 'ล้อลูกฟูก (=จำนวนลูกฟูก)', sku: 'JR00209', price: 7, unit: 'ตัว', count: 'Math.ceil(W*100/10)' },
@@ -1230,7 +1230,7 @@ export const PRODUCTS = {
     ],
     consum: [
       { name: 'สักหลาด', sku: 'JR00242', price: 1.5, unit: 'ม.', count: '6*H+9*W+2*(F5+F6)*H' },
-      { name: 'ซิลิโคน', price: 90, unit: 'หลอด', count: 'Math.ceil(2*(W+H)*2/12.5)' },
+      { name: 'ซิลิโคน', sku: 'JR00221', price: 90, unit: 'หลอด', count: 'Math.ceil(2*(W+H)*2/12.5)' },
     ],
     note: '⚠ สีพิเศษ(ซาฮาร่า/อบพิเศษ/ลายไม้) ยังคิดฐานอบขาว/ดำ · ถอดทุน R4.0 (SMS+ลูกฟูก2ทาง) · form=รางล่าง · โหมด=material · auto=ออปชั่น',
   },
@@ -1682,7 +1682,7 @@ export const PRODUCTS = {
       { box: 'กล่อง|1.6X4', name: 'กล่อง 1.6×4" โครงรอบ (เส้น 6ม.)', price: 1220, unit: 'เส้น', count: 'Math.ceil(PERIM/6)' },
       { box: 'ฉาก|4หุน', name: 'ฉาก 4หุน นอก+ใน (เส้น 6ม.)', price: 70, unit: 'เส้น', count: 'Math.ceil(2*PERIM/6)' },
       { name: 'สกรู/รีเวท + ยึด (เหมา)', price: 50, unit: 'งาน', count: '1' },
-      { name: 'ซิลิโคน/ซีล', price: 90, unit: 'หลอด', count: 'Math.ceil((2*PERIM+2*(Math.ceil(W/1.2)-1)*H)/10)' },
+      { name: 'ซิลิโคน/ซีล', sku: 'JR00221', price: 90, unit: 'หลอด', count: 'Math.ceil((2*PERIM+2*(Math.ceil(W/1.2)-1)*H)/10)' },
       { labor: true, name: 'ค่าแรงผลิต', price: 700, unit: 'ตร.ม.', count: 'area' },
       { labor: true, name: 'ค่าแรงติดตั้ง', price: 440, unit: 'ตร.ม.', count: 'area' },
     ],
@@ -1846,7 +1846,7 @@ export const PRODUCTS = {
     glass: null,
     hardware: [],
     consum: [
-      { name: 'เสากุญแจบาน 20051 (เส้น 6ม.)', price: 885, unit: 'เส้น', count: 'Math.round(N*2*H/6*100)/100' },
+      { name: 'เสากุญแจบาน 20051 (เส้น 6ม.)', sku: 'JR00256', price: 885, unit: 'เส้น', count: 'Math.round(N*2*H/6*100)/100' },
       { name: 'ขวาง 20051 (เส้น 6ม.)', price: 885, unit: 'เส้น', count: 'Math.round(N*2*SW/6*100)/100' },
       { name: 'ยางอัด (ม.)', price: 5, unit: 'ม.', count: 'Math.round(N*2*(SW+H)*100)/100' },
       ...SCREEN_FABRIC_ROWS,
@@ -1917,7 +1917,7 @@ export const PRODUCTS = {
       { name: 'สกรู (8/บาน)', sku: 'JR00224', price: 0.5, unit: 'ตัว', count: '8*P' },
       { name: 'ชุดล้อ (4ล้อ)', sku: 'JR00214', price: 100, unit: 'ชุด', count: "form==='บานเลื่อน'?P:0" },
       { name: 'รางยู', sku: 'JR00270', price: 180, unit: 'เส้น6ม', count: "form==='บานเลื่อน'?(2*(W/P)/6)*P:0" },
-      { labor: true, name: 'ค่ากรีดราง', price: 800, unit: 'ม.', count: "form==='บานเลื่อน'?2*W:0" },
+      { labor: true, name: 'ค่ากรีดราง', sku: 'JR00202', price: 800, unit: 'ม.', count: "form==='บานเลื่อน'?2*W:0" },
     ],
     consum: [
       { labor: true, name: 'ค่าแรง (ผลิต+ติดตั้ง)', price: 87.5, unit: 'ชม.', count: '12*P' },   // (ผลิต7+ติดตั้ง5)×87.5×บาน (Excel E25)
