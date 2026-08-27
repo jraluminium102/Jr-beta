@@ -3,8 +3,9 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { PROD_STATUS } from "@/lib/constants";
+import type { ProdStatus } from "@/lib/database.types";
 import { thDate } from "@/lib/format";
 import { Chip, Spinner, EmptyState } from "@/components/ui/primitives";
 import { TriangleAlert, Clock, ChevronRight, PackageCheck, Search } from "@/components/ui/icons";
@@ -71,6 +72,50 @@ function daysSince(d: string | null, created: string) {
   return Math.floor((Date.now() - new Date(base).getTime()) / 86400000);
 }
 
+// ทุกสถานะผลิต (เรียงตาม flow) — ดรอปดาวน์ "แก้เฟส" บนการ์ด
+const ALL_PROD_STATUSES: ProdStatus[] = ["PENDING_MEASURE", "MEASURED", "PENDING_MEETING", "REVISING", "PENDING_CONFIRM", "QUEUED", "MANUFACTURING", "QC", "READY", "ISSUE"];
+
+// ดรอปดาวน์เปลี่ยนเฟสตรงบนการ์ด (ADMIN) — แก้กรณีใส่ผิดขั้นตอน · มี confirm กันกดพลาด · stopPropagation กันเปิด modal
+function QuickStageSelect({ row, onDone }: { row: Row; onDone: () => void | Promise<unknown> }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <select
+      value={row.status}
+      disabled={busy}
+      title="เปลี่ยนเฟส (แก้กรณีใส่ผิดขั้นตอน)"
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+      onChange={async (e) => {
+        e.stopPropagation();
+        const to = e.target.value as ProdStatus;
+        const sel = e.currentTarget;
+        if (to === row.status) return;
+        // ⚠ ย้ายออกจาก "พร้อมติดตั้ง" → backend ลบใบนัดติดตั้งที่ยังไม่เริ่ม (ทีม/วันที่หาย) — เตือนให้ชัด
+        const leavingReady = row.status === "READY" && to !== "READY";
+        const warn = leavingReady ? "\n\n⚠ ถ้างานนี้มีใบนัดติดตั้งที่ยังไม่เริ่ม จะถูกลบทิ้ง (ทีม/วันที่ที่จัดคิวไว้หาย ต้องจัดใหม่)" : "";
+        if (!confirm(`ย้ายเฟส ${row.job?.job_code ?? ""} เป็น "${PROD_STATUS[to]}"?\n(แก้กรณีใส่ผิดขั้นตอน — ข้ามลำดับได้)${warn}`)) {
+          sel.value = row.status;   // ยกเลิก → คืนค่าเดิม
+          return;
+        }
+        setBusy(true);
+        try {
+          await api.post(`/production/${row.id}/override-status`, { status: to });
+          await onDone();   // รอ refetch จบก่อนปลดล็อก (กัน race แสดงสถานะเก่า)
+        } catch (err) {
+          alert(err instanceof ApiError ? err.message : "ย้ายเฟสไม่สำเร็จ");
+          sel.value = row.status;
+        } finally {
+          setBusy(false);
+        }
+      }}
+      className="shrink-0 rounded-lg bg-white/90 text-[#1F4E78] text-[12px] font-semibold pl-2.5 pr-1.5 py-2 min-h-[36px] border border-white/25 max-w-[140px] disabled:opacity-50 cursor-pointer"
+    >
+      {ALL_PROD_STATUSES.map((s) => <option key={s} value={s}>{PROD_STATUS[s]}</option>)}
+    </select>
+  );
+}
+
 // ── Deep-link handler (useSearchParams ต้อง Suspense) ────────────────────────
 function DeepLinkHandler({ rows, setOpen, setFilterKey }: {
   rows: Row[];
@@ -125,11 +170,12 @@ export default function ProductionPage() {
   const canUndeposit = (data?.meta?.can_undeposit as boolean) ?? false;
   const adhocJobs = (data?.meta?.adhoc as AdhocJob[] | undefined) ?? [];
 
-  const invalidateAll = () => {
-    queryClient.invalidateQueries({ queryKey: ["production"] });
-    queryClient.invalidateQueries({ queryKey: ["measure-schedule"] });
-    queryClient.invalidateQueries({ queryKey: ["overdue-count"] });
-  };
+  // คืน Promise (รอ refetch จบ) — ปุ่มแก้เฟสจะ await ก่อนปลดล็อก กัน race แสดงค่าสถานะเก่า
+  const invalidateAll = () => Promise.all([
+    queryClient.invalidateQueries({ queryKey: ["production"] }),
+    queryClient.invalidateQueries({ queryKey: ["measure-schedule"] }),
+    queryClient.invalidateQueries({ queryKey: ["overdue-count"] }),
+  ]);
 
   const markAdhocDone = async (id: string) => {
     if (!confirm("ทำเครื่องหมายว่างานจดเองนี้เสร็จแล้ว?")) return;
@@ -325,6 +371,7 @@ export default function ProductionPage() {
                   </div>
                   <div className="flex items-center gap-2 mt-2 flex-wrap">
                     <Chip>{phaseLabel(r)}</Chip>
+                    {isAdmin && <QuickStageSelect row={r} onDone={invalidateAll} />}
                     {r.production_queued &&<span className="text-[12px] tnum" style={{ color: "var(--t-low)" }}>คิว: {thDate(r.production_queued)}</span>}
                     {r.production_done && <span className="text-[12px] tnum" style={{ color: "var(--t-low)" }}>เสร็จ: {thDate(r.production_done)}</span>}
                     {r.job?.deposit_date && (() => {
