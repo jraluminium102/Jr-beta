@@ -1236,7 +1236,7 @@ export const PRODUCTS = {
   // ═══════════════════════ G3 หลังคา/ฝ้า/ผนัง ═══════════════════════
   roof: {
     stockLen: 6.0, packBars: true,   // ปัดขึ้นเส้นเต็ม จัดชิ้นลงเส้นจริง (เจ้าของเคาะ 27 ส.ค.69)
-    id: 'roof', group: 3, name: 'หลังคา', brand: 'MTONG', laborKey: 'หลังคา', roofSegments: true, roofShape: true,   // ตัวเข้า picker เดียว → เลือกทรง (สโลป/จั่ว/เลื่อน) ผ่าน renderRoofShapeBar (พี่สั่ง 1ก.ค.)
+    id: 'roof', group: 3, name: 'หลังคา', brand: 'MTONG', laborKey: 'หลังคา', roofShape: true,   // ถอด roofSegments (ขยัก) 27 ส.ค.69 — ทรงหักมุมใช้รุ่น *_multi ที่ดึงของจากใบตัดจริง   // ตัวเข้า picker เดียว → เลือกทรง (สโลป/จั่ว/เลื่อน) ผ่าน renderRoofShapeBar (พี่สั่ง 1ก.ค.)
     showColor: true, outdoor: true,   // งานนอก → สีโครงตัดสีชุบ colorNote: '🎨 สีโครงอลู — เลือกได้ พิมพ์ลงใบ · ยังไม่บวกเงิน (รอราคาทุนสีโครง/ตร.ม. ใน Excel แล้วคิดทันที)',
     icon: '🏠', defForm: 'หลังคาเพิง', forms: ['หลังคาเพิง'],
     defaults: { w: 400, h: 200, p: 1 }, defGlass: null, minP: 1, maxP: 1,
