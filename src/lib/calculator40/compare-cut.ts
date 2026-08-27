@@ -14,13 +14,16 @@ import { computeCutList, type CutInput } from "../cutlist/engine.ts";
 import { CUT_SPEC_BY_ID } from "../cutlist/products.ts";
 import { cutInputFromRecipe } from "../cutlist/from-recipe.ts";
 import { cutHardwareLines, HANDLE_FIELDS, HW_FROM_CUTLIST } from "./hardware-from-cutlist.ts";
+import { cutAluLines, cutRoofConsumLines, multiRoofArea, ALU_FROM_CUTLIST } from "./alu-from-cutlist.ts";
+import { RM } from "./products.mjs";
 import { stockColorOfCalc } from "./stock-link.ts";
 import { resolveAluColor } from "./alu-colors.ts";
 
 export { HANDLE_FIELDS, HW_FROM_CUTLIST };
 
 /** รุ่นในคิดราคา 4.0 ที่แมปเข้าใบตัดได้ (ตาม from-recipe) — มีเท่านี้ที่เทียบได้ */
-export const COMPARABLE = ["sms_slide", "euro_slide", "slimlux", "fixed", "folding", "fold_euro", "fold_lift", "velora", "pcdoor", "gate", "roof", "roof_gable"] as const;
+export const COMPARABLE = ["sms_slide", "euro_slide", "slimlux", "fixed", "folding", "fold_euro", "fold_lift", "velora", "pcdoor", "gate", "roof", "roof_gable",
+  "roof_multi", "glasshouse_multi", "gable_multi"] as const;
 
 export type CompareInput = {
   prodId: string;
@@ -139,15 +142,26 @@ export function compareCut(PB: any, inp: CompareInput) {
   };
   const hwl = cutHardwareLines({ prodId: inp.prodId, w: inp.w, h: inp.h, p: inp.p, form: opt.form, spec: inp.spec, cut: inp.cut });
   if (hwl?.length) opt.hardwareLines = hwl;
-  const calc: any = computeCost(PB, prod, opt);
 
   // ── ฝั่งใบตัด — เรียก engine ใบตัดตัวเดียวกับหน้าใบตัด ────────────────
+  //   ⚠ ต้องทำก่อน computeCost — หลังคาหลายด้านเอาเส้นอลูมาจากใบตัดโดยตรง (ALU_FROM_CUTLIST)
   const map = cutInputFromRecipe({
     kind: "std", prodId: inp.prodId, w: inp.w, h: inp.h, p: inp.p,
     form: opt.form, spec: inp.spec ?? {}, glassType: opt.glassType,
     material: inp.material ?? prod.defMaterial,   // วัสดุมุง → ชนิดแผ่นใบตัด (กันสาด)
     color: inp.color || "white",   // ⚠ ต้องส่งสีด้วย — เส้นที่เลือกรหัสตามสี (X-J) จะเพี้ยนถ้าไม่ส่ง
   }, { rawCompare: true });   // หน้าเทียบ read-only → อนุญาตรุ่นดิบ (กันสาด)
+  if (ALU_FROM_CUTLIST[inp.prodId] && map) {
+    const ci = { ...map.input, ...Object.fromEntries(Object.entries(inp.cut ?? {}).filter(([, v]) => v != null && v !== "")) };
+    const ar = multiRoofArea(inp.prodId, ci as Record<string, unknown>);   // พื้นที่รวมทุกด้าน (ตร.ม.)
+    const al = cutAluLines({ prodId: inp.prodId, cutInput: ci as Record<string, unknown> });
+    if (al?.length) opt.aluLines = al;
+    const cl = cutRoofConsumLines({ prodId: inp.prodId, cutInput: ci as Record<string, unknown>, material: String(opt.material ?? "ไวนิล"), rm: RM as never, planArea: ar });
+    if (cl?.length) opt.consumLines = cl;
+    // พื้นที่ = ผลรวมทุกด้าน (ไม่ใช่ กว้าง×สูง) — ส่งเสมอแม้เป็น 0 ไม่งั้นตกไปใช้ กว้าง×สูง
+    opt.areaOverride = ar;
+  }
+  const calc: any = computeCost(PB, prod, opt);
   const spec = map ? CUT_SPEC_BY_ID[map.spec_id] : null;
   const cutSel = Object.fromEntries(Object.entries(inp.cut ?? {}).filter(([, v]) => v != null && v !== ""));
   const cut = spec ? computeCutList(spec, { ...map!.input, ...cutSel } as Partial<CutInput>, map!.multiplier ?? 1) : null;

@@ -8,6 +8,8 @@
 import { CUT_SPEC_BY_ID, GATE_BOX_FROM_CALC } from "./products.ts";
 import type { CutInput } from "./engine.ts";
 import { calcColorToStock } from "./stock-match.ts";
+// ค่าตั้งต้นรายด้านของหลังคาหลายด้าน — ดึงจากฝั่งคิดราคา แหล่งเดียว ห้ามพิมพ์ซ้ำสองที่
+import { MULTI_SIDE_DEF } from "../calculator40/products.mjs";
 
 // multiplier = ตัวคูณจำนวนชุด (เช่น Velora: ใบตัด 1 บาน/ชุด แต่ใบเสนอสั่ง N บาน → sets ×N) — ผู้เรียกต้องคูณเข้า sets
 export type RecipeCutMap = { spec_id: string; input: Partial<CutInput> & Record<string, unknown>; multiplier?: number };
@@ -188,6 +190,40 @@ export function cutInputFromRecipe(recipe: any, opts?: { rawCompare?: boolean })
         W, H: 0, N: 1, D: H, ridgeH: ridge > 0 ? ridge : 150,   // ค่าตั้งต้นต้องตรง specOpts.ridge (=150)
         sheet, purlin: sp.batten === "แปเดี่ยว" ? "แปเดี่ยว" : "แปคู่",
         roofEnd: sp.roofend === "ปล่อยปลาย" ? "ปล่อยปลาย" : "รางน้ำ",
+      } };
+      break;
+    }
+    // ── หลังคาหลายด้าน 3 ทรง — ช่องกรอกรายด้านอยู่ใน spec ส่งต่อเข้าใบตัดตรง ๆ ──
+    //   คิดราคาไม่มี BOM ของตัวเอง (เส้นอลูมาจากเอนจินใบตัด — ดู calculator40/alu-from-cutlist.ts)
+    case "roof_multi":
+    case "glasshouse_multi":
+    case "gable_multi": {
+      if (!opts?.rawCompare) { m = null; break; }   // งานจริงให้ช่างกรอกเอง เหมือนหลังคาอื่น
+      const sp = (recipe.spec ?? {}) as Record<string, unknown>;
+      const mat = String(recipe.material ?? "ไวนิล");
+      const sheet = mat.startsWith("เมทัล") ? "เมทัลชีท"
+        : mat === "ชินโคร์ Sup" ? "ชินโคร์ Sup"
+        : mat.startsWith("ชินโคร์") ? "ชินโคร์ HC"
+        : (mat === "ไวนิล" || mat === "ดีไลท์" || mat === "โพลีตัน") ? mat
+        : "ไวนิล";
+      const nOr = (k: string, d: number) => { const v = Number(sp[k]); return Number.isFinite(v) ? v : d; };
+      const isGable = recipe.prodId === "gable_multi";
+      const jointEnd = isGable ? "ติดบ้าน" : "ชนผนัง";   // ⚠ จั่วเรียก "ติดบ้าน" — ต้องตรง opts ของ CutSpec
+      const sides: Record<string, unknown> = {};
+      for (let i = 1; i <= 6; i++) {
+        const dd = (MULTI_SIDE_DEF as Record<number, { w: number; p: number; d: number }>)[i];
+        if (isGable) sides[`side${i}D`] = nOr(`side${i}D`, dd ? dd.d : 0);
+        else { sides[`side${i}W`] = nOr(`side${i}W`, dd ? dd.w : 0); sides[`side${i}P`] = nOr(`side${i}P`, dd ? dd.p : 0); }
+        // ค่าตั้งต้นรอยต่อต้องตรง specOpts (ด้าน 1 นูน · ที่เหลือ ชนผนัง) ไม่งั้นหน้าเทียบเพี้ยนตอนยังไม่ได้เลือก
+        if (i < 6) sides[`joint${i}`] = String(sp[`joint${i}`] ?? (i === 1 ? "นูน" : jointEnd));
+      }
+      const end = String(sp.roofend ?? "รางน้ำ");
+      m = { spec_id: recipe.prodId === "roof_multi" ? "awning_multi" : recipe.prodId, input: {
+        W, H: 0, N: 1, sheet,
+        purlin: sp.batten === "แปเดี่ยว" ? "แปเดี่ยว" : "แปคู่",
+        roofEnd: end === "ปิดปลาย" || end === "ยื่นปลาย" ? end : "รางน้ำ",
+        ...(isGable ? { ridgeH: nOr("ridge", 150) } : { hiH: nOr("hiH", 270), loH: nOr("loH", 240) }),
+        ...sides,
       } };
       break;
     }
