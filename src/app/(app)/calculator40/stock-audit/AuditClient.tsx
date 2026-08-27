@@ -5,7 +5,7 @@ import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
 import type { BoxRow } from "@/lib/calculator40/box-audit";
-import { STATUS_LABEL, KG_STATUS_LABEL, type AuditRow, type AuditStatus, type BumpRow, type KgRow, type KgStatus, type ProductAudit } from "@/lib/calculator40/stock-audit";
+import { STATUS_LABEL, KG_STATUS_LABEL, type AuditRow, type AuditStatus, type BumpRow, type KgRow, type KgStatus, type ProductAudit, type FamilyAudit, type FamilyCodeStatus } from "@/lib/calculator40/stock-audit";
 
 const TONE: Record<AuditStatus, "emerald" | "amber" | "red" | "gray"> = {
   linked: "emerald", price_diff: "amber", multi: "amber", zero: "amber", missing: "red", no_key: "red",
@@ -21,10 +21,20 @@ const P_TONE: Record<ProductAudit["status"], "emerald" | "amber" | "red" | "gray
   "ครบ": "emerald", "บางส่วน": "amber", "ไม่ผูกเลย": "red", "ไม่มีรายการวัสดุ": "gray",
 };
 
-export default function AuditClient({ rows, products, bump, kgRows, boxRows, boxExtra, stockCount }:
+const FCODE_TONE: Record<FamilyCodeStatus, "emerald" | "amber" | "red" | "gray"> = {
+  linked: "emerald", multi: "amber", zero: "amber", missing: "red", box: "gray",
+};
+const FCODE_LABEL: Record<FamilyCodeStatus, string> = {
+  linked: "มีในสโตร์", multi: "ซ้ำ (หลายแถว/ต้องเลือกสี)", zero: "เจอแต่ราคา 0", missing: "ไม่มีในสโตร์", box: "กล่อง (ดูแท็บกล่อง)",
+};
+const FCODE_ORDER: FamilyCodeStatus[] = ["missing", "multi", "zero", "box", "linked"];
+
+export default function AuditClient({ rows, products, bump, kgRows, boxRows, boxExtra, families, stockCount }:
   { rows: AuditRow[]; products: ProductAudit[]; bump: BumpRow[]; kgRows: KgRow[];
-    boxRows: BoxRow[]; boxExtra: { key: string; sample: string; colors: number }[]; stockCount: number }) {
-  const [view, setView] = useState<"product" | "item" | "kg" | "box">("product");
+    boxRows: BoxRow[]; boxExtra: { key: string; sample: string; colors: number }[]; families: FamilyAudit[]; stockCount: number }) {
+  const [view, setView] = useState<"product" | "family" | "item" | "kg" | "box">("product");
+  const [famKey, setFamKey] = useState<string>(families[0]?.key ?? "");
+  const [famAll, setFamAll] = useState(false);   // false = โชว์เฉพาะที่ต้องแก้ (หาย/ซ้ำ/ราคา0)
   const [sec, setSec] = useState("ทั้งหมด");
   const [st, setSt] = useState<"ทั้งหมด" | AuditStatus>("ทั้งหมด");
   const [q, setQ] = useState("");
@@ -63,6 +73,17 @@ export default function AuditClient({ rows, products, bump, kgRows, boxRows, box
   const kgBad = kgRows.filter((r) => r.status === "no_weight" || r.status === "stale").length;
   // กล่อง/ฉาก ที่ยังไม่เจอราคาในสโตร์ (ผูกด้วยชื่อ+ขนาด)
   const boxBad = boxRows.filter((r) => r.status !== "ครบ").length;
+  // ใบตัด รายรุ่น — รวมจำนวน "ต้องแก้" (หาย+ซ้ำ+ราคา0) ทุกรุ่น
+  const famBad = families.reduce((s, f) => s + f.missing + f.dup + f.zero, 0);
+  const fam = families.find((f) => f.key === famKey) ?? families[0];
+  const famCodes = useMemo(() => {
+    if (!fam) return [];
+    const kw = q.trim().toLowerCase();
+    return fam.codes
+      .filter((c) => (famAll ? true : c.status === "missing" || c.status === "multi" || c.status === "zero"))
+      .filter((c) => !kw || `${c.code} ${c.name} ${c.stockSku}`.toLowerCase().includes(kw))
+      .sort((a, b) => FCODE_ORDER.indexOf(a.status) - FCODE_ORDER.indexOf(b.status) || a.code.localeCompare(b.code, "th"));
+  }, [fam, famAll, q]);
   const chip = (on: boolean) =>
     "press rounded-xl px-3 py-1.5 text-xs font-semibold transition " + (on ? "bg-brand text-white shadow-brand" : "glass-soft text-ink-2");
 
@@ -118,8 +139,8 @@ export default function AuditClient({ rows, products, bump, kgRows, boxRows, box
       </Card>
 
       {/* สลับมุมมอง — ค่าตั้งต้นคือ "รายรุ่น" เพราะเจ้าของเลือกงานจากรุ่น ไม่ใช่จากหมวดวัสดุ */}
-      <div className="flex gap-2">
-        {([["product", "ดูรายรุ่นในเครื่องคิดราคา"], ["item", "ดูรายวัสดุทีละบรรทัด"], ["kg", `ราคาต่อโล → ราคาต่อเส้น${kgBad ? ` (${kgBad} เส้นต้องแก้)` : ""}`],
+      <div className="flex gap-2 flex-wrap">
+        {([["product", "🧮 คิดราคา — รายรุ่น"], ["family", `✂️ ใบตัด — รายรุ่น${famBad ? ` (${famBad} ต้องแก้)` : ""}`], ["item", "ดูรายวัสดุทีละบรรทัด"], ["kg", `ราคาต่อโล → ราคาต่อเส้น${kgBad ? ` (${kgBad} เส้นต้องแก้)` : ""}`],
           ["box", `กล่อง/ฉาก${boxBad ? ` (${boxBad} ขนาดยังไม่ครบ)` : ""}`]] as const).map(([k, label]) => (
           <button key={k} onClick={() => setView(k)} className={chip(view === k)}>{label}</button>
         ))}
@@ -164,6 +185,88 @@ export default function AuditClient({ rows, products, bump, kgRows, boxRows, box
               </tbody>
             </table>
           </div>
+        </Card>
+      ) : view === "family" ? (
+        <Card className="p-5">
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <h2 className="font-bold text-brand-dark">✂️ ใบตัด — รายรุ่น เทียบสโตร์</h2>
+            <span className="text-xs text-ink-3">รหัสที่รุ่นนั้น &quot;ตัดจริง&quot; (อลู + อุปกรณ์) มีในสโตร์ครบไหม · ซ้ำไหม</span>
+          </div>
+          <p className="text-xs text-ink-3 mb-3">
+            <b className="text-red-700">ไม่มีในสโตร์</b> = ยังไม่ได้สร้างวัสดุตัวนี้ (ตัดสต๊อก/ตั้งราคาไม่ได้) ·
+            <b className="text-amber-700"> ซ้ำ</b> = รหัสเดียวมีหลายแถวไม่มีสีอบขาว (ระบบเดาราคาต่ำสุด — ควรยุบรวม/ตั้งสี) ·
+            <b className="text-gray-600"> กล่อง</b> = จับด้วยชื่อ+ขนาด ไปดูแท็บ &quot;กล่อง/ฉาก&quot;
+          </p>
+
+          {/* ภาพรวมทุกรุ่น — รุ่นที่ต้องแก้มากขึ้นก่อน กดเลือกได้ */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 mb-4">
+            {families.map((f) => {
+              const bad = f.missing + f.dup + f.zero;
+              const on = f.key === famKey;
+              return (
+                <button key={f.key} onClick={() => { setFamKey(f.key); setFamAll(false); }}
+                  className={`press text-left rounded-xl px-3 py-2 border ${on ? "border-brand bg-brand/10" : "border-line glass-soft"}`}>
+                  <div className="font-semibold text-sm text-brand-dark truncate">{f.label}</div>
+                  <div className="text-[11px] mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 tabular-nums">
+                    <span className="text-emerald-700">✓{f.linked}</span>
+                    {f.missing > 0 && <span className="text-red-700 font-semibold">✗{f.missing} หาย</span>}
+                    {f.dup > 0 && <span className="text-amber-700">⚠{f.dup} ซ้ำ</span>}
+                    {f.zero > 0 && <span className="text-amber-700">฿0×{f.zero}</span>}
+                    {bad === 0 && f.box === 0 && <span className="text-emerald-700 font-semibold">ครบ</span>}
+                    {f.box > 0 && <span className="text-gray-500">กล่อง{f.box}</span>}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {fam && (
+            <>
+              <div className="flex items-center gap-2 flex-wrap mb-2">
+                <h3 className="font-bold text-brand-dark">{fam.label}</h3>
+                <span className="text-xs text-ink-3 tabular-nums">
+                  ทั้งหมด {fam.total} รหัส · <span className="text-emerald-700">มี {fam.linked}</span>
+                  {fam.missing > 0 && <span className="text-red-700 font-semibold"> · หาย {fam.missing}</span>}
+                  {fam.dup > 0 && <span className="text-amber-700"> · ซ้ำ {fam.dup}</span>}
+                  {fam.zero > 0 && <span className="text-amber-700"> · ราคา 0: {fam.zero}</span>}
+                  {fam.box > 0 && <span className="text-gray-500"> · กล่อง {fam.box}</span>}
+                </span>
+                <button onClick={() => setFamAll((v) => !v)} className={chip(famAll) + " ml-auto"}>
+                  {famAll ? "โชว์เฉพาะที่ต้องแก้" : "โชว์ทั้งหมด"}
+                </button>
+                <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นหารหัส/ชื่อ"
+                  className="glass-soft rounded-lg px-3 py-2 text-sm outline-none min-w-[160px]" />
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left bg-brand-soft text-brand-dark">
+                      <th className="p-2 rounded-l-lg">รหัส</th><th>ชื่อในสโตร์</th>
+                      <th className="text-center">เจอ (แถว)</th><th>สี</th>
+                      <th className="text-right">ต้นทุน</th><th className="p-2 rounded-r-lg">สถานะ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {famCodes.map((c, i) => (
+                      <tr key={c.code + i} className="border-t border-line/60">
+                        <td className="p-2 font-mono text-xs">{c.code}</td>
+                        <td className="text-xs">{c.status === "missing" || c.status === "box" ? <span className="text-ink-3">—</span> : c.name}</td>
+                        <td className="text-center tabular-nums">{c.matches || "—"}</td>
+                        <td className="text-xs text-ink-3">{c.colors.length ? c.colors.join(", ") : "—"}</td>
+                        <td className="text-right tabular-nums">{c.cost ? `฿${baht(c.cost)}` : "—"}</td>
+                        <td className="p-2"><Badge tone={FCODE_TONE[c.status]}>{FCODE_LABEL[c.status]}</Badge></td>
+                      </tr>
+                    ))}
+                    {famCodes.length === 0 && (
+                      <tr><td colSpan={6} className="p-4 text-center text-emerald-700 font-semibold">
+                        {famAll ? "ไม่มีรหัส" : "✓ รุ่นนี้ไม่มีรายการที่ต้องแก้ (รหัสเส้น/อุปกรณ์ครบ)"}
+                      </td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </Card>
       ) : view === "box" ? (
         <Card className="p-5">

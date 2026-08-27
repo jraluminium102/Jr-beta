@@ -10,6 +10,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { PRODUCTS } from "./products.mjs";
 import { computeCost } from "./engine.mjs";
+import { FAMILIES, familyCodeSets } from "../cutlist/family-codes.ts";
 
 export type AuditStockRow = {
   id?: number; name?: string | null; sku?: string | null; color?: string | null;
@@ -284,4 +285,68 @@ export function auditByProduct(rows: AuditRow[], bump: BumpRow[]): ProductAudit[
   }
   const rank = { "ไม่ผูกเลย": 0, "บางส่วน": 1, "ไม่มีรายการวัสดุ": 2, "ครบ": 3 } as const;
   return out.sort((a, b) => rank[a.status] - rank[b.status] || a.group - b.group || a.name.localeCompare(b.name, "th"));
+}
+
+// ═══════════════════════ ใบตัด — รายรุ่น (ตระกูล) เทียบสโตร์ ═══════════════════════
+// เจ้าของสั่ง 27 ส.ค.69: เช็ค "คิดราคา 4.0 + ใบตัด เทียบสโตร์ แบ่งตามหมวด(รุ่น)"
+//   ไล่ทุกรหัสที่รุ่นนั้นตัดจริง (อลู B/F + อุปกรณ์ JR จาก family-codes) → มีในสโตร์ไหม/ซ้ำไหม/ราคา0ไหม
+//   ⚠ "กล่อง …" ไม่มีรหัสโปรไฟล์ในสโตร์ (จับด้วยชื่อ+ขนาด ที่แท็บกล่อง) → แยกไว้ ไม่ธงว่า "หาย" มั่ว
+export type FamilyCodeStatus = "linked" | "missing" | "multi" | "zero" | "box";
+export type FamilyCodeAudit = {
+  code: string; name: string; matches: number; colors: string[]; stockSku: string; cost: number; status: FamilyCodeStatus;
+};
+export type FamilyAudit = {
+  key: string; label: string;
+  total: number; linked: number; missing: number; dup: number; zero: number; box: number;
+  codes: FamilyCodeAudit[];
+};
+
+/** ต่อรุ่น(ตระกูล): ไล่รหัสใบตัดทั้งหมด → เทียบสโตร์จริง (หาย/ซ้ำ/ราคา0) */
+export function auditCutlistFamilies(stock: AuditStockRow[]): FamilyAudit[] {
+  const bySku = new Map<string, AuditStockRow[]>();
+  for (const r of stock || []) {
+    const s = up(r.sku);
+    if (!s) continue;
+    if (!bySku.has(s)) bySku.set(s, []);
+    bySku.get(s)!.push(r);
+  }
+  const isWhite = (r: AuditStockRow) => norm(r.name).includes("อบขาว") || norm(r.color).includes("อบขาว");
+  const pickCost = (list: AuditStockRow[]) => {
+    const costs = list.map((r) => num(r.unit_cost)).filter((c) => c > 0);
+    if (!costs.length) return 0;
+    const wc = list.filter(isWhite).map((r) => num(r.unit_cost)).filter((c) => c > 0);
+    return wc.length ? Math.max(...wc) : Math.min(...costs);
+  };
+
+  const sets = familyCodeSets();
+  const out: FamilyAudit[] = [];
+  for (const f of FAMILIES) {
+    const codes = [...(sets.get(f.key) ?? [])].sort((a, b) => a.localeCompare(b, "th"));
+    const detail: FamilyCodeAudit[] = codes.map((code) => {
+      // กล่อง/ฉาก = จับด้วยชื่อ+ขนาด (แท็บกล่อง) ไม่ใช่รหัสโปรไฟล์ → ไม่เช็คตรงนี้
+      if (/^กล่อง/.test(code)) {
+        return { code, name: code, matches: 0, colors: [], stockSku: "", cost: 0, status: "box" as const };
+      }
+      const list = bySku.get(up(code)) ?? [];
+      const colors = [...new Set(list.map((r) => norm(r.color) || "-"))];
+      const cost = pickCost(list);
+      const hasWhite = list.some(isWhite);
+      let status: FamilyCodeStatus = "linked";
+      if (!list.length) status = "missing";
+      else if (cost <= 0) status = "zero";
+      else if (list.length > 1 && !hasWhite) status = "multi";
+      return { code, name: norm(list[0]?.name) || code, matches: list.length, colors, stockSku: norm(list[0]?.sku), cost, status };
+    });
+    out.push({
+      key: f.key, label: f.label, total: detail.length,
+      linked: detail.filter((d) => d.status === "linked").length,
+      missing: detail.filter((d) => d.status === "missing").length,
+      dup: detail.filter((d) => d.status === "multi").length,
+      zero: detail.filter((d) => d.status === "zero").length,
+      box: detail.filter((d) => d.status === "box").length,
+      codes: detail,
+    });
+  }
+  // เรียงรุ่นที่ต้องแก้ก่อน (หาย+ซ้ำ+ราคา0 มากสุดขึ้นบน)
+  return out.sort((a, b) => (b.missing + b.dup + b.zero) - (a.missing + a.dup + a.zero) || a.label.localeCompare(b.label, "th"));
 }

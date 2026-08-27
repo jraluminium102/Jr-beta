@@ -4,7 +4,7 @@ import { getProfile, canWrite } from "@/lib/auth";
 import { fetchAllPaged } from "@/lib/supabase/fetch-all";
 import PRICEBOOK from "@/lib/calculator40/pricebook.json";
 import { buildPriceOverride, applyPriceOverride, type StockRow } from "@/lib/calculator40/stock-link";
-import { auditStockLink, auditByProduct, auditKgLink, bumpTest, type AuditStockRow } from "@/lib/calculator40/stock-audit";
+import { auditStockLink, auditByProduct, auditKgLink, bumpTest, auditCutlistFamilies, type AuditStockRow } from "@/lib/calculator40/stock-audit";
 import { buildBoxPrices } from "@/lib/calculator40/box-link";
 import { auditBoxes, unusedBoxesInStock } from "@/lib/calculator40/box-audit";
 import AuditClient from "./AuditClient";
@@ -42,6 +42,7 @@ export default async function StockAuditPage() {
   // กล่อง/ฉาก ผูกด้วยชื่อ+ขนาด (ไม่มีรหัสโปรไฟล์) — จับคู่แล้วเจอราคาสีไหนบ้าง
   const boxRows = auditBoxes(buildBoxPrices(stock as never));
   const boxExtra = unusedBoxesInStock(stock as never, new Set(boxRows.map((b) => b.key)));
+  const families = auditCutlistFamilies(stock);   // ใบตัด รายรุ่น เทียบสโตร์ (หาย/ซ้ำ/ราคา0)
 
-  return <AuditClient rows={rows} products={products} bump={bump} kgRows={kgRows} boxRows={boxRows} boxExtra={boxExtra} stockCount={stock.length} />;
+  return <AuditClient rows={rows} products={products} bump={bump} kgRows={kgRows} boxRows={boxRows} boxExtra={boxExtra} families={families} stockCount={stock.length} />;
 }
