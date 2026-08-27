@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { StockItem, StockMove, StockMoveType, StockCategory, StockPrice } from "@/lib/types";
 import { calcLink, isAluCode } from "@/lib/calculator40/stock-link";
 import { isInCutlist } from "@/lib/cutlist/codes";
+import { FAMILIES, skuInFamily } from "@/lib/cutlist/family-codes";
 import { colorFromName } from "@/lib/cutlist/stock-match";
 import { stockDisplayName } from "@/lib/stock/display-name";
 
@@ -50,6 +51,10 @@ export default function StockClient({
   const [boqOnly, setBoqOnly] = useState(false);
   const [dupOnly, setDupOnly] = useState(false);
   const [catFilter, setCatFilter] = useState<number | null>(null);
+  const [famFilter, setFamFilter] = useState<string>("");   // ใช้กับรุ่นอะไร (บานเฟี้ยม/บานเลื่อน SMS ฯลฯ)
+  const [noPrice, setNoPrice] = useState(false);            // ยังไม่มีราคา
+  const [noImage, setNoImage] = useState(false);            // ยังไม่มีรูป
+  const [noQty, setNoQty] = useState(false);                // ไม่มีจำนวน (คงเหลือ ≤ 0)
   const [adding, setAdding] = useState(false);
   const [manageCat, setManageCat] = useState(false);
   const [merging, setMerging] = useState(false);
@@ -62,11 +67,22 @@ export default function StockClient({
   const calcCount = list.filter((c) => calcLink(c).linked).length;
   const boqCount = list.filter((c) => isInCutlist(c.sku)).length;
   const dupCount = list.filter(isDupHint).length;
+  // ไม่มีราคา = ต้นทุน/หน่วย ≤ 0 (คิดต่อโลที่เรต/น้ำหนัก 0 ก็ออกมา 0 → จับได้ด้วย) · ไม่มีจำนวน = คงเหลือ ≤ 0
+  const noPriceOf = (c: StockItem) => !(Number(c.unit_cost) > 0);
+  const noImageOf = (c: StockItem) => !c.image_url;
+  const noQtyOf = (c: StockItem) => !(Number(c.qty_on_hand) > 0);
+  const noPriceCount = list.filter(noPriceOf).length;
+  const noImageCount = list.filter(noImageOf).length;
+  const noQtyCount = list.filter(noQtyOf).length;
   const filtered = list
     .filter((c) => (lowOnly ? isLow(c) : true))
     .filter((c) => (calcOnly ? calcLink(c).linked : true))
     .filter((c) => (boqOnly ? isInCutlist(c.sku) : true))
     .filter((c) => (dupOnly ? isDupHint(c) : true))
+    .filter((c) => (famFilter ? skuInFamily(c.sku, famFilter) : true))
+    .filter((c) => (noPrice ? noPriceOf(c) : true))
+    .filter((c) => (noImage ? noImageOf(c) : true))
+    .filter((c) => (noQty ? noQtyOf(c) : true))
     .filter((c) => (catFilter ? c.category_id === catFilter : true))
     .filter((c) => [c.name, c.color, c.sku, c.category].join(" ").toLowerCase().includes(q.toLowerCase()));
 
@@ -185,6 +201,15 @@ export default function StockClient({
               <option key={c.id} value={c.id}>{c.name}{catCount(c.id) > 0 ? ` (${catCount(c.id)})` : ""}</option>
             ))}
           </select>
+          {/* กรอง "ใช้กับรุ่นอะไร" — จับจากรหัสที่รุ่นนั้นตัดจริง (อลู + อุปกรณ์) */}
+          <select value={famFilter} onChange={(e) => setFamFilter(e.target.value)}
+            aria-label="กรองตามรุ่นที่ใช้"
+            className="w-full glass-soft rounded-xl px-3 py-2.5 text-sm outline-none mb-2">
+            <option value="">🔧 ใช้กับรุ่น — ทุกรุ่น</option>
+            {FAMILIES.map((f) => (
+              <option key={f.key} value={f.key}>{f.label} ({list.filter((c) => skuInFamily(c.sku, f.key)).length})</option>
+            ))}
+          </select>
           <div className="flex items-center gap-2 mb-3 flex-wrap">
             <button onClick={() => setLowOnly((v) => !v)}
               className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${lowOnly ? "bg-red-600 text-white" : "glass-soft text-ink-2"}`}>
@@ -198,6 +223,18 @@ export default function StockClient({
               className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${boqOnly ? "bg-emerald-600 text-white" : "glass-soft text-ink-2"}`}>
               ✂️ ใช้ในใบตัด {boqCount > 0 ? `(${boqCount})` : ""}
             </button>
+            <button onClick={() => setNoPrice((v) => !v)} title="วัสดุที่ยังไม่ได้ตั้งราคา/ต้นทุน"
+              className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${noPrice ? "bg-rose-600 text-white" : "glass-soft text-ink-2"}`}>
+              🏷️ ไม่มีราคา {noPriceCount > 0 ? `(${noPriceCount})` : ""}
+            </button>
+            <button onClick={() => setNoImage((v) => !v)} title="วัสดุที่ยังไม่มีรูป"
+              className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${noImage ? "bg-indigo-600 text-white" : "glass-soft text-ink-2"}`}>
+              🖼️ ไม่มีรูป {noImageCount > 0 ? `(${noImageCount})` : ""}
+            </button>
+            <button onClick={() => setNoQty((v) => !v)} title="วัสดุที่คงเหลือ ≤ 0 (ไม่มีของ)"
+              className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${noQty ? "bg-slate-600 text-white" : "glass-soft text-ink-2"}`}>
+              📦 ไม่มีจำนวน {noQtyCount > 0 ? `(${noQtyCount})` : ""}
+            </button>
             {canMerge && (
               <button onClick={() => setDupOnly((v) => !v)} title="สต็อก 0 แต่ผูกใบตัด/คิดราคา — น่าจะเป็นตัวซ้ำที่ควรยุบรวม"
                 className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${dupOnly ? "bg-amber-500 text-white" : "glass-soft text-ink-2"}`}>
@@ -210,7 +247,7 @@ export default function StockClient({
                 🕘 ประวัติการรวม
               </button>
             )}
-            {(lowOnly || calcOnly || boqOnly || dupOnly || catFilter !== null) && <button onClick={() => { setLowOnly(false); setCalcOnly(false); setBoqOnly(false); setDupOnly(false); setCatFilter(null); }} className="text-xs text-ink-3">ล้างตัวกรอง</button>}
+            {(lowOnly || calcOnly || boqOnly || dupOnly || noPrice || noImage || noQty || famFilter || catFilter !== null) && <button onClick={() => { setLowOnly(false); setCalcOnly(false); setBoqOnly(false); setDupOnly(false); setNoPrice(false); setNoImage(false); setNoQty(false); setFamFilter(""); setCatFilter(null); }} className="text-xs text-ink-3">ล้างตัวกรอง</button>}
           </div>
           <div className="space-y-2 max-h-[62vh] overflow-y-auto">
             {filtered.map((c) => {

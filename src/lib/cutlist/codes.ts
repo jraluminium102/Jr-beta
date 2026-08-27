@@ -23,27 +23,31 @@ function inputVariants(spec: CutSpec): Partial<CutInput>[] {
   return out;
 }
 
+/** รหัสทั้งหมด (uppercase) ที่ "สเปกเดียว" อ้าง — อลูจากโปรไฟล์ + อุปกรณ์ JR (ทุก variant) */
+export function collectCodesForSpec(spec: CutSpec): Set<string> {
+  const set = new Set<string>();
+  for (const v of inputVariants(spec)) {
+    const o = { ...spec.defaults, ...v } as CutInput;
+    // อลู: รหัสโปรไฟล์ (string หรือ fn)
+    for (const p of spec.profiles) {
+      const code = typeof p.code === "function" ? p.code(o) : p.code;
+      if (code && code !== "-") set.add(norm(code));
+    }
+    // อุปกรณ์: sku (string หรือ fn — มือจับตามยี่ห้อ/สี)
+    for (const h of spec.hardware ?? []) {
+      const sku = typeof h.sku === "function" ? h.sku(o) : h.sku;
+      if (sku) set.add(norm(sku));
+    }
+  }
+  return set;
+}
+
 let cached: Set<string> | null = null;
 /** เซ็ตรหัสทั้งหมด (uppercase) ที่ใบตัดอ้าง — อลูจากโปรไฟล์ + อุปกรณ์ JR จาก hardware.sku (ทุก variant) */
 export function collectCutlistCodes(): Set<string> {
   if (cached) return cached;
   const set = new Set<string>();
-  for (const spec of CUT_SPECS) {
-    const variants = inputVariants(spec);
-    for (const v of variants) {
-      const o = { ...spec.defaults, ...v } as CutInput;
-      // อลู: รหัสโปรไฟล์ (string หรือ fn)
-      for (const p of spec.profiles) {
-        const code = typeof p.code === "function" ? p.code(o) : p.code;
-        if (code && code !== "-") set.add(norm(code));
-      }
-      // อุปกรณ์: sku (string หรือ fn — มือจับตามยี่ห้อ/สี)
-      for (const h of spec.hardware ?? []) {
-        const sku = typeof h.sku === "function" ? h.sku(o) : h.sku;
-        if (sku) set.add(norm(sku));
-      }
-    }
-  }
+  for (const spec of CUT_SPECS) for (const c of collectCodesForSpec(spec)) set.add(c);
   cached = set;
   return set;
 }
