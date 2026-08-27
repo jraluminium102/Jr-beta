@@ -64,8 +64,12 @@ export default function CompareClient({ pb, stockCount }: { pb: any; stockCount:
     } catch (e) { return { error: String((e as Error).message || e) }; }
   }, [pb, prodId, w, h, p, form, color, material, spec, cut]);
 
-  const aluBad = (r?.alu ?? []).filter((x: AluRow) => x.status !== "ตรง").length;
-  const hwBad = (r?.hardware ?? []).filter((x: HwRow) => x.status !== "ตรง").length;
+  // "ไม่ตรง" = จำนวนไม่เท่ากันจริง ๆ เท่านั้น · "ไม่มีรหัส"/"ไม่สต็อก สั่งใหม่" = ตั้งใจ ไม่ใช่ของพัง
+  //   (นับเหมือน scripts/sweep-compare.mjs — เดิมนับเทา/เขียวเป็นไม่ตรงด้วย เลยขึ้นแดงทั้งที่ของตรงหมด)
+  const isBad = (s: string) => s === "จำนวนต่าง" || s === "มีแต่ใบตัด" || s === "มีแต่คิดราคา";
+  const aluBad = (r?.alu ?? []).filter((x: AluRow) => isBad(x.status)).length;
+  const hwBad = (r?.hardware ?? []).filter((x: HwRow) => isBad(x.status)).length;
+  const noCode = [...(r?.alu ?? []), ...(r?.hardware ?? [])].filter((x) => x.status === "ไม่มีรหัส").length;
 
   const num = (label: string, v: string, set: (s: string) => void) => (
     <label className="block">
@@ -126,6 +130,7 @@ export default function CompareClient({ pb, stockCount }: { pb: any; stockCount:
               <Badge tone={aluBad + hwBad === 0 ? "emerald" : "red"}>
                 {aluBad + hwBad === 0 ? "✓ ตรงกันทุกรายการ" : `ไม่ตรง ${aluBad + hwBad} รายการ`}
               </Badge>
+              {noCode > 0 && <Badge tone="gray">ยังไม่ผูกรหัสสโตร์ {noCode} รายการ</Badge>}
               <Badge tone="gray">สูตรใบตัด: {r.cutSpecName || "—"}</Badge>
               <Badge tone="gray">
                 เรตอลู {r.aluRate.brand} {baht(r.aluRate.rate)} ฿/กก.
