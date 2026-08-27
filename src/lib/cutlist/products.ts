@@ -1426,6 +1426,7 @@ const gCutEnd = (o: CutInput) => (o.roofEnd === "รางน้ำ" ? 10.2 : 10
 const gPurRows = (o: CutInput) => ceil(o.W / 2 / 50) + 1;
 export const GABLE_STRAIGHT: CutSpec = {
   id: "gable_straight", name: "หลังคาจั่วตรง (1 ช่วง · 2 สโลป)", stockLen: 600, rails: [],
+  packBars: true,   // ปัดขึ้นเส้นเต็ม จัดชิ้นลงเส้นจริง — ให้ตรงคิดราคา 4.0
   opts: [
     { key: "sheet", label: "ชนิดแผ่น", choices: SHEET_TYPES },
     { key: "D", label: "ยื่น/ลึก D (ซม.)", type: "number" },

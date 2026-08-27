@@ -173,6 +173,24 @@ export function cutInputFromRecipe(recipe: any, opts?: { rawCompare?: boolean })
       } };
       break;
     }
+    case "roof_gable": {
+      if (!opts?.rawCompare) { m = null; break; }   // งานจริงให้ช่างกรอกเอง เหมือน roof
+      // หลังคาจั่ว → ใบตัด gable_straight · หน่วย: คิดราคา W=กว้าง(สแปน) · H=ลึก/ยื่น → D
+      const sp = (recipe.spec ?? {}) as Record<string, unknown>;
+      const mat = String(recipe.material ?? "ไวนิล");
+      const sheet = mat.startsWith("เมทัล") ? "เมทัลชีท"
+        : mat === "ชินโคร์ Sup" ? "ชินโคร์ Sup"
+        : mat.startsWith("ชินโคร์") ? "ชินโคร์ HC"
+        : (mat === "ไวนิล" || mat === "ดีไลท์" || mat === "โพลีตัน") ? mat
+        : "ไวนิล";   // กระจก/อื่นๆ ยังไม่มีชนิดแผ่นในใบตัด → ไวนิล (ช่างปรับเอง)
+      const ridge = Number(sp.ridge);
+      m = { spec_id: "gable_straight", input: {
+        W, H: 0, N: 1, D: H, ridgeH: ridge > 0 ? ridge : 150,   // ค่าตั้งต้นต้องตรง specOpts.ridge (=150)
+        sheet, purlin: sp.batten === "แปเดี่ยว" ? "แปเดี่ยว" : "แปคู่",
+        roofEnd: sp.roofend === "ปล่อยปลาย" ? "ปล่อยปลาย" : "รางน้ำ",
+      } };
+      break;
+    }
     // ⚠ ไม่ auto-map: open_door (บานเปิดยูโร) ใช้ดายชุดเดียวกับบานโซลิดแต่เป็น "บานกระจก" (เรขาคณิตต่าง) →
     //   จับคู่อัตโนมัติจะผิด · บานโซลิด/วงกบไม้ ให้สร้างข้อในใบตัดเอง
     default:

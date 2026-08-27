@@ -92,5 +92,44 @@ console.log("\n═══ ④ กฎที่ต้องไม่พัง ═�
   ok("ชินโคร์ (จันทัน 138) ใช้จันทันน้อยกว่าไวนิล (75)", nr("ชินโคร์ HC") < nr("ไวนิล"), `${nr("ชินโคร์ HC")} < ${nr("ไวนิล")}`);
 }
 
+// ── ⑤ หลังคาจั่ว (roof_gable) ต้องตรงใบตัด gable_straight ──
+console.log("\n═══ ⑤ หลังคาจั่ว — คิดราคา = ใบตัด 'หลังคาจั่วตรง' ═══");
+{
+  const G = PRODUCTS.roof_gable, GS = CUT_SPEC_BY_ID.gable_straight;
+  ok("สูงสัน เลือกได้แล้ว (เดิมตรึง 150)", (G.specOpts ?? []).some((o) => o.key === "ridge" && o.type === "number"));
+  ok("แป/ปลายหลังคา เลือกได้ (ตรงช่องกรอกใบตัด)",
+    ["batten", "roofend"].every((k) => (G.specOpts ?? []).some((o) => o.key === k)));
+  ok("โครงผูกรหัสกล่องครบทุกบรรทัด", G.alu.length > 0 && G.alu.every((a) => !!a.code && !!a.box));
+  ok("นับเส้นแบบจัดชิ้นลงเส้นจริง (packBars)", G.packBars === true && GS.packBars === true);
+  const gE1 = (material) => new Function("material", `return ${G.vars.E1}`)(material);
+  ok("ระยะจันทันไวนิล 75 ตรง ROOF_SHEET (เดิม 100)", gE1("ไวนิล") === 75, String(gE1("ไวนิล")));
+
+  const MAT = ["ไวนิล", "ดีไลท์", "โพลีตัน", "ชินโคร์ HC", "ชินโคร์ Sup", "เมทัลชีท", "กระจก 4+4", "กระจก 5+5"];
+  let n = 0; const bad = [];
+  for (const material of MAT)
+    for (const batten of ["แปเดี่ยว", "แปคู่"])
+      for (const roofend of ["รางน้ำ", "ปล่อยปลาย"])
+        for (const ridge of ["80", "150", "250"])
+          for (const [w, h] of [[400, 200], [300, 300], [600, 400], [800, 250], [250, 500]]) {
+            n++; const spec = { batten, roofend, ridge };
+            const calc = computeCost(PB, G, { w, h, p: 1, form: "หลังคาจั่ว", material, color: "white", colorKey: "white", spec, addons: {} });
+            const map = cutInputFromRecipe({ kind: "std", prodId: "roof_gable", w, h, p: 1, form: "หลังคาจั่ว", material, spec }, { rawCompare: true });
+            const c = computeCutList(GS, map.input, 1);
+            const A = new Map(), B = new Map();
+            for (const l of calc.lines) if (l.cat === "alu" && l.code) A.set(l.code, (A.get(l.code) ?? 0) + (Number(l.pieces) || 0));
+            for (const x of c.rows) if (x.code && x.code !== "-" && x.qty > 0) B.set(x.code, (B.get(x.code) ?? 0) + x.qty);
+            for (const [code, q] of B) {
+              const got = Math.round(A.get(code) ?? 0);
+              if (got !== q) bad.push(`${material}/${batten}/${roofend}/สัน${ridge}/${w}×${h} ${code}: ${got} ≠ ${q}`);
+            }
+          }
+  ok(`${n} คอมบิเนชัน — ชิ้นตรงกันทุกเคส`, bad.length === 0, bad.slice(0, 4).join(" · "));
+
+  const GC = (o) => computeCost(PB, G, { w: 400, h: 200, p: 1, form: "หลังคาจั่ว", material: "ไวนิล", color: "white", colorKey: "white", spec: {}, addons: {}, ...o }).cost.total;
+  ok("สันสูงขึ้น = แพงขึ้น (จันทันยาวขึ้น)", GC({ spec: { ridge: "80" } }) < GC({ spec: { ridge: "250" } }));
+  const gp = (purlin) => computeCutList(GS, { ...GS.defaults, W: 400, D: 200, ridgeH: 150, purlin }, 1).rows.find((x) => x.name === "แป 1×1½").qty;
+  ok("แปคู่ (ค่าตั้งต้นรุ่นนี้) ใช้แป 2 เท่าของแปเดี่ยว", gp("แปคู่") === 2 * gp("แปเดี่ยว"), `${gp("แปคู่")} vs ${gp("แปเดี่ยว")}`);
+}
+
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);
