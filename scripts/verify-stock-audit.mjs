@@ -321,7 +321,7 @@ console.log("\n═══ ⑥ หน้าจอต่อสายครบไห
   ok("เรียงตัวที่ต้องแก้ก่อนขึ้นบนสุด", /ORDER: AuditStatus\[\] = \["no_key", "missing"/.test(c), "");
   const cc = fs.readFileSync(path.join(ROOT, "src/components/Calculator40Client.tsx"), "utf8");
   ok("มีทางเข้าจากหน้าคิดราคา", /calculator40\/stock-audit/.test(cc), "");
-  ok("ป้ายสถานะครบทุกแบบ (+order_only 26 ส.ค.69)", Object.keys(STATUS_LABEL).length === 7, String(Object.keys(STATUS_LABEL).length));
+  ok("ป้ายสถานะครบทุกแบบ (+labor 27 ส.ค.69)", Object.keys(STATUS_LABEL).length === 8, String(Object.keys(STATUS_LABEL).length));
   ok("ค่าตั้งต้นของหน้าคือมุม 'รายรุ่น'", c.includes('setView] = useState') && c.includes('>("product")'), "");
   ok("มีมุม 'ราคาต่อโล → ราคาต่อเส้น' ให้กด", c.includes("ราคาต่อโล → ราคาต่อเส้น") && c.includes('view === "kg"'), "");
   ok("ขึ้นป้ายจำนวนเส้นที่ต้องแก้บนปุ่ม (ไม่ต้องเข้าไปดูก่อน)", c.includes("kgBad"), "");
@@ -337,7 +337,7 @@ console.log("\n═══ ⑥ หน้าจอต่อสายครบไห
 console.log("\n═══ ⑧ อุปกรณ์ที่มีรหัสสโตร์ ต้องนับว่าผูก (ไม่ต้องรอธง partsLinked) ═══");
 {
   const rows = auditStockLink([], PB).filter((r) => r.section === "อุปกรณ์/สิ้นเปลือง");
-  const checkable = rows.filter((r) => r.status !== "no_key" && r.status !== "order_only").length;
+  const checkable = rows.filter((r) => r.status !== "no_key" && r.status !== "order_only" && r.status !== "labor").length;
   ok(`อุปกรณ์ที่มีรหัส/ref/box ให้ตรวจ ≥ 200 บรรทัด (เดิมนับได้แค่ 70)`, checkable >= 200, String(checkable));
   // ref (ตารางราคากลาง) + box (กล่อง/ฉากในสโตร์) ก็คือผูกแล้ว — แอดมินแก้ราคาที่ต้นทางได้
   const viaRef = rows.filter((r) => /ผูกผ่านตารางราคากลาง/.test(r.note)).length;
@@ -358,6 +358,24 @@ console.log("\n═══ ⑧ อุปกรณ์ที่มีรหัสส
     const both = rows.filter((r) => r.usedBy === PRODUCTS.open_door.name && /JR00770|JR00771/.test(r.key));
     ok("sku ที่เป็นสูตร แตกออกมาตรวจครบทุกรหัส", both.length >= 2, String(both.length));
   }
+}
+
+// ── ค่าแรง/ค่าบริการ ต้องไม่ไปกองรวมกับ "ผูกไม่ได้" ────────────────────────────
+//    ค่าแรงผลิต/ติดตั้ง · ค่ากรีดราง · ค่าเปิดตู้อบ · ค่าดัดโค้ง ไม่ใช่ของที่มีในสโตร์
+//    เดิมนับเป็น no_key ทำให้หน้าตรวจดูแย่เกินจริง และกลบของที่ขาดจริง (เจ้าของท้วง 27 ส.ค.69)
+console.log("");
+console.log("═══ ⑨ ค่าแรง/ค่าบริการ แยกออกจากกอง 'ผูกไม่ได้' ═══");
+{
+  const rows = auditStockLink([], PB).filter((r) => r.section === "อุปกรณ์/สิ้นเปลือง");
+  const lab = rows.filter((r) => r.status === "labor");
+  ok("จับค่าแรง/ค่าบริการได้ ≥ 15 บรรทัด", lab.length >= 15, String(lab.length));
+  ok("บรรทัดค่าแรงไม่ถูกนับเป็น no_key อีก", !rows.some((r) => r.status === "no_key" && /^(ค่าแรง|ค่ากรีด|ค่าดัด|สีพิเศษ|ปัดขึ้น)/.test(r.item)), "");
+  ok("ป้ายค่าแรงบอกชัดว่าไม่ต้องผูก", lab.every((r) => /ไม่ใช่ของในสโตร์/.test(r.note)), "");
+  // กันเผลอติดธง labor ให้ "ของจริง" — ชื่อทุกบรรทัดต้องขึ้นต้นด้วยค่าแรง/ค่าบริการเท่านั้น
+  ok("ไม่เหมาวัสดุจริงเป็นค่าแรง", lab.every((r) => /^(ค่าแรง|ค่ากรีด|ค่าดัด|สีพิเศษ|ปัดขึ้น)/.test(r.item)), lab.map((r) => r.item).join(" · "));
+  const rs = rows.filter((r) => r.usedBy === PRODUCTS.roof_slide.name);
+  const beams = rs.filter((r) => /^(จันทัน|แป กล่อง)/.test(r.item));
+  ok("หลังคาเลื่อน จันทัน/แป ผูกรหัสกล่องครบ", beams.length >= 6 && beams.every((r) => r.key.includes("|")), String(beams.length));
 }
 
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
