@@ -19,7 +19,7 @@ import { cutInputFromRecipe } from "../src/lib/cutlist/from-recipe.ts";
 import { cutAluLines, cutRoofConsumLines, multiRoofArea, ALU_FROM_CUTLIST } from "../src/lib/calculator40/alu-from-cutlist.ts";
 import { RM } from "../src/lib/calculator40/products.mjs";
 import { compareCut } from "../src/lib/calculator40/compare-cut.ts";
-import { normalizeSides, removeSide, flattenSides, parseSides } from "../src/lib/calculator40/roof-sides.ts";
+import { normalizeSides, removeSide, flattenSides, parseSides, planRects } from "../src/lib/calculator40/roof-sides.ts";
 
 const PB = JSON.parse(fs.readFileSync("src/lib/calculator40/pricebook.json", "utf8"));
 let pass = 0, fail = 0;
@@ -213,6 +213,23 @@ console.log("\n═══ ⑨ ถอดหลังคาหลายช่วง
   ok("ยังโหลด roofSegs จากสูตรที่บันทึกไว้", cl.includes("setRoofSegs(Array.isArray(r.roofSegs)"));
   ok("ยังบันทึก roofSegs ต่อ (ใบเก่าเซฟทับแล้วไม่หาย)", /roofSegs,/.test(cl));
   ok("มีคำเตือนบอกให้ไปใช้เมนูหลายด้านแทน", cl.includes("เลิกใช้แล้ว"));
+}
+
+// ── ⑩ ผังหลังคา: ทุกด้านที่คิดเงิน ต้องถูกวาด (เจอตอนกดเทสหน้าจริง 27 ส.ค.69) ──
+//    เดิม break ทิ้งเมื่อเจอรอยต่อ "ชนผนัง" → 4 ด้านคิดเงินครบ แต่ผังโชว์แค่ 2 = จ่ายแต่มองไม่เห็น
+console.log("\n═══ ⑩ ผังหลังคา — ห้ามมีด้านที่คิดเงินแล้วไม่ถูกวาด ═══");
+{
+  const sides = [{ w: 400, p: 150 }, { w: 300, p: 100 }, { w: 300, p: 100 }, { w: 300, p: 100 }];
+  const SETS = [["นูน", "ชนผนัง", "นูน"], ["นูน", "นูน", "นูน"], ["ชนผนัง", "ชนผนัง", "ชนผนัง"],
+    ["เว้า", "ชนผนัง", "เว้า"], ["ชนผนัง", "นูน", "เว้า"]];
+  const bad = SETS.filter((j) => planRects(sides, j, "wp", 0).length !== sides.length);
+  ok("วาดครบทุกด้านทุกแบบรอยต่อ", bad.length === 0, bad.map((j) => j.join("/")).join(" · "));
+  // ด้านที่กว้าง/ยื่น = 0 ไม่ต้องวาด (ไม่ถูกคิดเงินอยู่แล้ว)
+  ok("ด้านที่ยังไม่กรอก ไม่ต้องวาด",
+    planRects([{ w: 400, p: 150 }, { w: 0, p: 0 }], ["ชนผนัง"], "wp", 0).length === 1);
+  // รอยต่อ ชนผนัง ต้องขึ้นโซ่ใหม่ (ไม่ใช่ต่อกันเป็นเส้นเดียว)
+  ok("รอยต่อ “ชนผนัง” แยกเป็นคนละโซ่",
+    new Set(planRects(sides, ["ชนผนัง", "นูน", "นูน"], "wp", 0).map((r) => r.run)).size === 2);
 }
 
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);

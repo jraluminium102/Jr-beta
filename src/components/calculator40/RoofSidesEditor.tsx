@@ -15,32 +15,10 @@
  */
 import { useMemo } from "react";
 import Icon from "@/components/Icon";
-import { type RoofSide, type RoofSidesValue, MAX_SIDES, MIN_SIDES, normalizeSides, removeSide, flattenSides, parseSides } from "@/lib/calculator40/roof-sides";
+import { type RoofSide, type RoofSidesValue, MAX_SIDES, MIN_SIDES, normalizeSides, removeSide, flattenSides, parseSides, planRects } from "@/lib/calculator40/roof-sides";
 
 export { normalizeSides, removeSide, flattenSides, parseSides };
 export type { RoofSide, RoofSidesValue };
-
-// ── ผังมองจากด้านบน ────────────────────────────────────────────────────────
-// เดินแบบเต่า: วางด้าน 1 ไปทางขวา · "นูน" หมุน +90° (มุมยื่นออก) · "เว้า" หมุน −90° · ชนผนัง/ติดบ้าน = จบเส้น
-type Rect = { x: number; y: number; w: number; h: number; deg: number; i: number; hip: boolean };
-function planRects(sides: RoofSide[], joints: string[], kind: "wp" | "d", depth: number): Rect[] {
-  const out: Rect[] = [];
-  let x = 0, y = 0, deg = 0;
-  for (let i = 0; i < sides.length; i++) {
-    const s = sides[i];
-    const w = s.w, p = kind === "d" ? depth : s.p;
-    if (!(w > 0) || !(p > 0)) continue;
-    const j = joints[i] ?? "";
-    out.push({ x, y, w, h: p, deg, i, hip: j === "นูน" || j === "เว้า" });
-    // เดินไปจุดเริ่มของด้านถัดไปตามทิศปัจจุบัน แล้วหมุนตามชนิดรอยต่อ
-    const rad = (deg * Math.PI) / 180;
-    x += w * Math.cos(rad); y += w * Math.sin(rad);
-    if (j === "นูน") deg += 90;
-    else if (j === "เว้า") deg -= 90;
-    else break;   // ชนผนัง/ติดบ้าน = จบโซ่
-  }
-  return out;
-}
 
 function RoofPlan({ sides, joints, kind, depth }: { sides: RoofSide[]; joints: string[]; kind: "wp" | "d"; depth: number }) {
   const rects = useMemo(() => planRects(sides, joints, kind, depth), [sides, joints, kind, depth]);
@@ -81,7 +59,10 @@ function RoofPlan({ sides, joints, kind, depth }: { sides: RoofSide[]; joints: s
           ))}
         </g>
       </svg>
-      <p className="text-[11px] text-ink-3 mt-1">▨ ผืนหลังคา · ▬ ฝั่งชนบ้าน · ┈ ตะเข้ (มุมหัก)</p>
+      <p className="text-[11px] text-ink-3 mt-1">
+        ▨ ผืนหลังคา · ▬ ฝั่งชนบ้าน · ┈ ตะเข้ (มุมหัก)
+        {rects.some((r) => r.run > 0) && " · ผืนที่วางแยกข้างล่าง = หลังรอยต่อ “ชนผนัง” (คนละโซ่ ไม่ได้ต่อกัน)"}
+      </p>
     </div>
   );
 }
