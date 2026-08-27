@@ -134,6 +134,8 @@ export function computeCost(PB, prod, opt) {
   // opt.areaOverride — รุ่นที่ "พื้นที่ ≠ กว้าง×สูง" (หลังคาหลายด้าน = ผลรวมทุกด้าน)
   //   ผู้เรียกคิดมาให้เป็นตัวเลข ไม่ใช่สูตร เพราะขนาดรายด้านอยู่ในอินพุตใบตัด (มีค่าตั้งต้นครบ) ไม่ใช่ spec
   //   ค่าแรง/ราคาต่อ ตร.ม. ใช้ area ตัวนี้ต่อทั้งหมด
+  // prod.areaExpr — รุ่นที่พื้นที่คิดเอง จากตัวแปรของรุ่น (หลังคาเลื่อน = ติดตาย + เลื่อน×บาน)
+  if (prod.areaExpr) { const a2 = Number(ev.compile(prod.areaExpr)(scope)); if (Number.isFinite(a2) && a2 >= 0) { area = a2; scope.area = a2; } }
   //   ⚠ ต้องรับค่า 0 ด้วย — ยังไม่กรอกด้าน = พื้นที่ 0 ถ้าตกไปใช้ กว้าง×สูง จะได้ค่าแรงจากเลขที่ค้างในช่องที่ซ่อนอยู่
   if (Number.isFinite(Number(opt.areaOverride)) && Number(opt.areaOverride) >= 0) {
     area = Number(opt.areaOverride); scope.area = area;

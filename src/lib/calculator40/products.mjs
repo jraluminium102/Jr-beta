@@ -1432,7 +1432,7 @@ export const PRODUCTS = {
   },
 
   roof_slide: {
-    id: 'roof_slide', group: 3, name: 'หลังคาเลื่อน (เปิด-ปิดได้)', brand: 'MTONG', laborKey: 'เหมารวม (ค่าแรงในวัสดุ)', roofShape: true, pickerHide: true,
+    id: 'roof_slide', group: 3, name: 'หลังคาเลื่อน (เปิด-ปิดได้)', brand: 'MTONG', roofShape: true, pickerHide: true,
     icon: '🏠', defForm: 'เลื่อนยื่น', forms: ['เลื่อนยื่น', 'เลื่อนข้าง', 'เลื่อนเปิดกลาง'], // มด หลังคาเลื่อน B3 (3 ทิศ · label · ไม่กระทบ BOM)
     addons: ['slide_motor', 'roof_pole', 'truss_beam', 'roof_eave', 'gutter', 'chain_drain', 'pipe_cover', 'gutter_cover', 'beam_cover', 'roof_sealer', 'demolish'],  // มอเตอร์(เลือก 80/300/1500) + ของเสริมหลังคา
     // วัสดุมุง 8 ชนิด (ตรงชีต "คิดทุน หลังคาเลื่อน" H7/J7 · ทั้งติดตาย+เลื่อน · ไวนิล=anchor 88836)
@@ -1448,18 +1448,32 @@ export const PRODUCTS = {
       'เมทัลชีท': SC_METAL,
     },
     defaults: { w: 400, h: 200, p: 2 }, defGlass: null, minP: 1, maxP: 6,
+    // ช่องกรอกตามชีตถอดทุน "คิดทุน หลังคาเลื่อน" — เดิมตรึงส่วนเลื่อน 150×150 ซม. ตายตัว (ชีต B7/C7 เป็นช่องกรอก)
+    //   ⚠ ไม่มีไฟล์ตัดประกอบสำหรับหลังคาเลื่อน (เจ้าของยืนยัน 27 ส.ค.69) → ชีตถอดทุนคือแหล่งความจริงเดียว
+    specOpts: [
+      { key: 'slidew', label: 'ส่วนเลื่อน กว้าง/บาน (ซม.)', type: 'number', def: '150', step: 10, placeholder: '150' },
+      { key: 'slideh', label: 'ส่วนเลื่อน ยื่น/บาน (ซม.)', type: 'number', def: '150', step: 10, placeholder: '150' },
+      { key: 'batten', label: 'แป', opts: ['แปเดี่ยว', 'แปคู่'], def: 'แปเดี่ยว' },
+    ],
+    laborKey: 'หลังคาเลื่อน',
+    areaExpr: 'fArea + sArea*P',   // ค่าแรงคิดจากพื้นที่ ติดตาย + เลื่อน×บาน (ชีต D14/D15)
     vars: {
-      SW: '150',
-      SH: '150',
+      SW: 'Number(spec.slidew)>0?Number(spec.slidew):150',
+      SH: 'Number(spec.slideh)>0?Number(spec.slideh):150',
       Wcm: 'W*100',
       Hcm: 'H*100',
-      E1: "material==='โพลีตัน'?122:(material&&material.indexOf('ชินโคร์')>=0?138:100)",   // จันทันห่างตามวัสดุ (ส่วนติดตาย)
-      H6: 'Hcm<=300?3:(Hcm<=400?4:(Hcm<=500?5:6))',                                        // จำนวนแผ่นชินโคร์ (ส่วนติดตาย)
-      fJ: 'Math.ceil(Wcm/E1)+1',                                                            // จันทันส่วนติดตาย (ตามจันทันห่างวัสดุ · ไวนิล E1=100=เดิม)
-      sJ: 'Math.ceil(150/100)+1',
-      fArea: '(W*100/100)*(H*100/100)',
-      sArea: '(150/100)*(150/100)',
-      railLen: "form==='เลื่อนยื่น'?150:150",
+      E1: "material==='โพลีตัน'?122:(material&&material.indexOf('ชินโคร์')>=0?138:100)",   // จันทันห่างตามวัสดุ (ชีต H1/J1)
+      H6: 'Hcm<=300?3:(Hcm<=400?4:(Hcm<=500?5:6))',                                        // จำนวนแผ่นชินโคร์ ส่วนติดตาย (ชีต H6)
+      J6: 'SH<=300?3:(SH<=400?4:(SH<=500?5:6))',                                            // จำนวนแผ่นชินโคร์ ส่วนเลื่อน (ชีต J6 — เดิมตรึง 3)
+      fJ: 'Math.ceil(Wcm/E1)+1',                                                            // แนวจันทัน ติดตาย (ชีต H2)
+      sJ: 'Math.ceil(SW/E1)+1',                                                             // แนวจันทัน เลื่อน (ชีต J2 — เดิมตรึง ⌈150/100⌉+1)
+      BATP: "spec.batten==='แปคู่'?393:770",                                                // ราคาแป/เส้น (ชีต F5/F6)
+      fArea: 'Wcm*Hcm/10000',
+      sArea: 'SW*SH/10000',
+      // ⚠ แผ่นไวนิลยาว 7 ม. — 1 แผ่นตัดได้หลายแถบตามระยะยื่น (ชีต H7/J7) ไม่ใช่ซื้อ 1 แผ่นต่อ 1 แถบ
+      fVinyl: 'Math.ceil(Math.ceil(Wcm/25)/Math.max(1,Math.trunc(700/Hcm)))',
+      sVinyl: 'Math.ceil(Math.ceil(SW/25)/Math.max(1,Math.trunc(700/SH)))',
+      railLen: "form==='เลื่อนยื่น'?SH:SW",                                                  // ชีต D12: เลื่อนยื่น=ใช้ยื่น · อื่น=ใช้กว้าง (เดิมตรึง 150 ทั้งคู่)
       CF: CF_EXPR,
     },
     alu: [],
@@ -1467,13 +1481,13 @@ export const PRODUCTS = {
     hardware: [],
     consum: [
       { name: 'จันทัน 1.6×4 (ติดตาย)', price: 'CF*1220', unit: 'เส้น', count: 'fJ*Math.ceil(Hcm/600)' },
-      { name: 'แป กล่อง (ติดตาย)', price: 'CF*770', unit: 'เส้น', count: '(Math.ceil(Hcm/50)+1)*Math.ceil(Wcm/600)' },
+      { name: 'แป กล่อง (ติดตาย)', price: 'CF*BATP', unit: 'เส้น', count: '(Math.ceil(Hcm/50)+1)*Math.ceil(Wcm/600)' },
       { box: 'ฉาก|6หุน', name: 'ฉาก 6 หุน (ติดตาย)', price: 'CF*140', unit: 'เส้น', count: 'Math.ceil(Wcm/600)' },
       { name: 'แซด 4" (ติดตาย)', price: 'CF*140', unit: 'เส้น', count: 'Math.ceil(Wcm/600)' },
       { name: 'กล่องเหล็ก 1×1 (ติดตาย)', price: 110, ref: 'STEEL.box1', unit: 'เส้น', count: 'fJ*Math.ceil(Hcm/600)' },
       { name: 'เพลทเหล็ก (ติดตาย)', price: 15, ref: 'STEEL.plate', unit: 'แผ่น', count: '2*fJ' },
       // แผ่นมุงส่วนติดตาย ตามวัสดุ (ชีต H7/H8 · B6=Wcm C6=Hcm) · ไวนิล=anchor
-      rm('ไวนิล', 'แผ่นไวนิล (ติดตาย)', "material==='ไวนิล'?Math.ceil(Wcm/25):0"),
+      rm('ไวนิล', 'แผ่นไวนิล (ติดตาย)', "material==='ไวนิล'?fVinyl:0"),
       rm('ฝาครอบไวนิล', 'ฝาครอบไวนิล (ติดตาย)', "material==='ไวนิล'?Math.ceil(Wcm/25):0"),
       rm('ดีไลท์', 'แผ่นดีไลท์ (ติดตาย)', "material==='ดีไลท์'?Math.ceil(Wcm/100):0"),
       rm('โพลีตัน', 'แผ่นโพลีตัน (ติดตาย)', "material==='โพลีตัน'?Math.ceil(Wcm/122)*Math.ceil(Hcm/100):0"),
@@ -1484,26 +1498,27 @@ export const PRODUCTS = {
       rm('กระจก 4+4', 'กระจก 4+4 (ติดตาย)', "material==='กระจก 4+4'?fArea:0"),
       rm('กระจก 5+5', 'กระจก 5+5 (ติดตาย)', "material==='กระจก 5+5'?fArea:0"),
       { name: 'จันทัน 1.6×4 (เลื่อน)', price: 'CF*1220', unit: 'เส้น', count: 'P*(sJ*Math.ceil(SH/600))' },
-      { name: 'แป กล่อง (เลื่อน)', price: 'CF*770', unit: 'เส้น', count: 'P*((Math.ceil(SH/50)+1)*Math.ceil(SW/600))' },
+      { name: 'แป กล่อง (เลื่อน)', price: 'CF*BATP', unit: 'เส้น', count: 'P*((Math.ceil(SH/50)+1)*Math.ceil(SW/600))' },
       { box: 'ฉาก|6หุน', name: 'ฉาก 6 หุน (เลื่อน)', price: 'CF*140', unit: 'เส้น', count: 'P*Math.ceil(SW/600)' },
       { name: 'แซด 4" (เลื่อน)', price: 'CF*140', unit: 'เส้น', count: 'P*Math.ceil(SW/600)' },
       { name: 'กล่องเหล็ก 1×1 (เลื่อน)', price: 110, ref: 'STEEL.box1', unit: 'เส้น', count: 'P*(sJ*Math.ceil(SH/600))' },
       { name: 'เพลทเหล็ก (เลื่อน)', price: 15, ref: 'STEEL.plate', unit: 'แผ่น', count: 'P*(2*sJ)' },
       // แผ่นมุงส่วนเลื่อน ตามวัสดุ ×P บาน (ชีต J7/J8 · B7=SW=150 C7=SH=150 · J6=3) · ไวนิล=anchor
-      rm('ไวนิล', 'แผ่นไวนิล (เลื่อน)', "material==='ไวนิล'?P*Math.ceil(SW/25):0"),
+      rm('ไวนิล', 'แผ่นไวนิล (เลื่อน)', "material==='ไวนิล'?P*sVinyl:0"),
       rm('ฝาครอบไวนิล', 'ฝาครอบไวนิล (เลื่อน)', "material==='ไวนิล'?P*Math.ceil(SW/25):0"),
       rm('ดีไลท์', 'แผ่นดีไลท์ (เลื่อน)', "material==='ดีไลท์'?P*Math.ceil(SW/100):0"),
       rm('โพลีตัน', 'แผ่นโพลีตัน (เลื่อน)', "material==='โพลีตัน'?P*Math.ceil(SW/122)*Math.ceil(SH/100):0"),
       rm('ครอบโพลีตัน', 'ตัวครอบโพลีตัน (เลื่อน)', "material==='โพลีตัน'?P*sJ:0"),
-      rm('ชินโคร์ HC', 'ชินโคร์ Heat Cut (เลื่อน)', "material==='ชินโคร์ HC'?P*Math.ceil(SW/138)*(1.38*3):0"),
-      rm('ชินโคร์ Sup', 'ชินโคร์ Superior (เลื่อน)', "material==='ชินโคร์ Sup'?P*Math.ceil(SW/138)*(1.38*3):0"),
+      rm('ชินโคร์ HC', 'ชินโคร์ Heat Cut (เลื่อน)', "material==='ชินโคร์ HC'?P*Math.ceil(SW/138)*(1.38*J6):0"),
+      rm('ชินโคร์ Sup', 'ชินโคร์ Superior (เลื่อน)', "material==='ชินโคร์ Sup'?P*Math.ceil(SW/138)*(1.38*J6):0"),
       rm('เมทัลชีท', 'เมทัลชีท (เลื่อน)', "material==='เมทัลชีท'?P*Math.ceil(SW/34)*(0.34*SH/100):0"),
       rm('กระจก 4+4', 'กระจก 4+4 (เลื่อน)', "material==='กระจก 4+4'?P*sArea:0"),
       rm('กระจก 5+5', 'กระจก 5+5 (เลื่อน)', "material==='กระจก 5+5'?P*sArea:0"),
-      { name: 'ราง (2 ฝั่ง)', price: 4080, unit: 'เส้น', count: '2*Math.ceil(railLen/600)' },
+      // ราง — ชีต D12 คิดตามสัดส่วนเส้น (ไม่ปัดขึ้นเต็มเส้น) + เผื่อเศษ 30% × 2 ฝั่ง
+      { name: 'ราง (2 ฝั่ง)', price: 4080, unit: 'เส้น', count: '(railLen/600)*1.3*2' },
       // มอเตอร์ย้ายไปเป็น addon "slide_motor" (เลือก 80/300/1500 + ฟันเฟือง + เซนเซอร์ · ขาย ×2.5/6,000) — ดึงออกจาก markup ×2 ปกติ
-      { name: 'ค่าแรงผลิต (15.4/ตร.ม.)', price: 1, unit: 'งาน', count: 'Math.round(15.4*(fArea+sArea*P))' },
-      { name: 'ค่าแรงติดตั้ง (15.4/ตร.ม.)', price: 1, unit: 'งาน', count: 'Math.round(15.4*(fArea+sArea*P))' },
+      // ค่าแรงเลิกฝังในวัสดุแล้ว — ใช้ตารางค่าแรงกลาง (LABOR "หลังคาเลื่อน" 804/1530 ต่อ ตร.ม. ตรงชีต ค่าแรง แถว 27)
+      //   ของเดิมใส่เป็นบรรทัดวัสดุ 15.4 บาท/ตร.ม. → ค่าแรงออกมา 193 บาททั้งงาน (ชีตจริง 10,050 + 19,125)
     ],
     note: 'หลังคาเลื่อน = ติดตาย(W×H) + บานเลื่อน P บาน (ฝังขนาด 150×150ซม.) + ราง + มอเตอร์ · ค่าแรงฝังในวัสดุ (laborKey ศูนย์ กันคิดซ้ำ) · ขนาดบานเลื่อนแยก/วัสดุมุงอื่น/มอเตอร์รุ่นอื่น ยังไม่ทำ',
   },
