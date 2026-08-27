@@ -47,6 +47,10 @@ import { computeServices, EMPTY_SERVICES, type ServiceInput } from "@/lib/calcul
 import SubPanesSection, { subDesc, subPrice, type SubPane } from "@/components/calculator40/SubPanesSection";
 import RoomComposer, { type RoomTotals } from "@/components/calculator40/RoomComposer";
 import QuoteFormPreview, { type PreviewItem } from "@/components/calculator40/QuoteFormPreview";
+import RoofSidesEditor, { parseSides, flattenSides, type RoofSidesValue } from "@/components/calculator40/RoofSidesEditor";
+import { cutAluLines, cutRoofConsumLines, multiRoofArea, ALU_FROM_CUTLIST } from "@/lib/calculator40/alu-from-cutlist";
+import { cutInputFromRecipe } from "@/lib/cutlist/from-recipe";
+import { RM } from "@/lib/calculator40/products.mjs";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -183,6 +187,8 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
   // G3 หลังคา: สีวัสดุมุง (label พิมพ์ลงใบ ไม่กระทบราคา) + หลังคาหลายช่วง (ขยัก · คิด computeCost ต่อช่วงจริง)
   const [sheetColor, setSheetColor] = useState("");
   const [roofSegs, setRoofSegs] = useState<{ w: number; h: number }[]>([]);
+  // หลังคาหลายด้าน — เก็บเป็น array (ลบด้านกลางแล้วรอยต่อยุบตาม) แบนเป็นคีย์ side1W/joint1 ตอนคิดราคา
+  const [roofSides, setRoofSides] = useState<RoofSidesValue>({ sides: [], joints: [] });
   // G1 ผสมบาน — เพิ่มบานหลายชนิดในชุดเดียว (คิดราคาตามชนิดจริง สี/กระจกตามบานหลัก) ตรง app.js SUB_GROUPS/renderSubPanes
   const [subs, setSubs] = useState<SubPane[]>([]);
   // G6 ห้องกระจก (composite) — RoomComposer คิดราคาเองทั้งก้อน (ผลรวมด้าน+ฝ้า+หลังคา) แล้ว callback กลับมาที่นี่
@@ -327,6 +333,8 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
     setCabSides({ left: { on: true, mat: "alu" }, right: { on: true, mat: "alu" }, back: { on: false, mat: "alu" } });
     setSheetColor("");
     setRoofSegs([]);
+    // หลังคาหลายด้าน → ตั้งด้านเริ่มต้นจาก specOpts ของรุ่น (แหล่งเดียวกับฝั่งใบตัด)
+    setRoofSides(x.multiSide ? parseSides(s, x.multiSide, x.multiSide === "d" ? "ติดบ้าน" : "ชนผนัง") : { sides: [], joints: [] });
     setSubs([]); // เปลี่ยนรุ่น → เคลียร์บานย่อย (ผสมบานผูกกับบานหลักที่กำลังตั้งค่าอยู่)
   }
 
@@ -402,6 +410,10 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       const hCm = Number(h) || prod.defaults?.h || 200;
       const pCount = Number(p) || prod.defaults?.p || 1;
       const formVal = form || prod.defForm;
+      // หลังคาหลายด้าน: แบน sides[]/joints[] เป็นคีย์ side1W/side1P/joint1… ที่เครื่องคิด+ใบตัดใช้ร่วมกัน
+      const specForCalc = prod.multiSide
+        ? { ...spec, ...flattenSides(roofSides, prod.multiSide, prod.multiSide === "d" ? "ติดบ้าน" : "ชนผนัง") }
+        : spec;
       // กำไรแยก 3 ส่วน ตามไฟล์ถอดทุน v9 (บล็อก "⚙ ตั้งค่ากำไร")
       const profitPct = Number(profit) || 100;          // ค่าวัสดุ — ชื่อเดิม ใช้กับสูตรเก่า (ระแนง/R3.9)
       const pProd = Number(profitProd) || 0;
@@ -419,9 +431,26 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
         colorKey: color,                       // คีย์สีจริง → ราคาเส้นแยกสีจากไฟล์ถอดทุน (ALUCOLOR_KEY)
         profitPct,
         profitMat: profitPct, profitProd: pProd, profitInst: pInst,
-        spec,
+        spec: specForCalc,
         addons,
       };
+      // ── หลังคาหลายด้าน: เส้นอลู + แผ่นมุง + พื้นที่ ดึงจากเอนจินใบตัดตรง ๆ (ตรงกันโดยโครงสร้าง) ──
+      if (prod.multiSide && ALU_FROM_CUTLIST[prod.id]) {
+        const map = cutInputFromRecipe({
+          kind: "std", prodId: prod.id, w: wCm, h: hCm, p: pCount, form: formVal,
+          spec: specForCalc, material, color,
+        }, { rawCompare: true });
+        if (map) {
+          const ci = map.input as Record<string, unknown>;
+          const ar = multiRoofArea(prod.id, ci);           // พื้นที่รวมทุกด้าน (ตร.ม.)
+          const al = cutAluLines({ prodId: prod.id, cutInput: ci });
+          if (al?.length) opt.aluLines = al;
+          const cl = cutRoofConsumLines({ prodId: prod.id, cutInput: ci, material: String(material || "ไวนิล"), rm: RM as never, planArea: ar });
+          if (cl?.length) opt.consumLines = cl;
+          // ส่งเสมอแม้เป็น 0 — ไม่งั้นตกไปใช้ กว้าง×สูง ที่ค้างอยู่ในช่องที่ซ่อนไป (ค่าแรงเพี้ยน)
+          opt.areaOverride = ar;
+        }
+      }
       // อุปกรณ์จากใบตัด (รุ่นที่เปิดแล้ว) → engine ใช้แทนรายการเดิม + คิดราคาจากรหัสสโตร์
       const hwl = cutHardwareLines({ prodId: prod.id, w: wCm, h: hCm, p: pCount, form: formVal, spec, cut: cutSel });
       if (hwl?.length) opt.hardwareLines = hwl;
@@ -1060,7 +1089,8 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                   <label className="block">
                     <span className="text-xs font-medium text-ink-3">ทรงหลังคา <span className="text-brand font-semibold">(เลือกก่อน)</span></span>
                     <div className="flex flex-wrap gap-1.5 mt-1.5">
-                      {([["roof", "สโลปทางเดียว (กันสาด)"], ["roof_gable", "จั่ว สโลป 2 ทาง"], ["roof_slide", "หลังคาเลื่อน"]] as [string, string][])
+                      {([["roof", "สโลปทางเดียว (กันสาด)"], ["roof_gable", "จั่ว สโลป 2 ทาง"], ["roof_slide", "หลังคาเลื่อน"],
+                        ["roof_multi", "กันสาดหลายด้าน"], ["glasshouse_multi", "กลาสเฮ้าส์หลายด้าน"], ["gable_multi", "จั่วหลายด้าน"]] as [string, string][])
                         .filter(([pid]) => (PRODUCTS as any)[pid])
                         .map(([pid, label]) => (
                           <button key={pid} type="button" onClick={() => { if (pid !== prodId) pickProduct((PRODUCTS as any)[pid]); }}
@@ -1076,7 +1106,10 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
               {!prod.composite && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mt-4">
                   {/* หลังคา: กรอกเป็นเมตร + ป้าย "ยื่น" (เจ้าของขอ) · อื่น ๆ กรอก ซม. ป้าย "สูง" */}
-                  {prod.roofShape ? (
+                  {prod.multiSide === "d" ? (
+                    // จั่วหลายด้าน: ยาวช่วงกรอกรายด้าน แต่ "ลึก 2 สโลป" ใช้ค่าเดียวทั้งหลัง = ช่องกว้างนี้
+                    <MetersField label="กว้าง — ลึก 2 สโลป (ม.)" cm={w} onCm={setW} />
+                  ) : prod.multiSide ? null : prod.roofShape ? (
                     <>
                       <MetersField label="ความกว้าง (ม.)" cm={w} onCm={setW} />
                       <MetersField label="ยื่น (ม.)" cm={h} onCm={setH} />
@@ -1147,7 +1180,8 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                 {prod.materials?.length > 0 && (
                   <Select label={prod.materialLabel || "วัสดุ"} value={material} onChange={setMaterial} opts={prod.materials} labels={prod.materialLabels} />
                 )}
-                {(prod.specOpts ?? []).map((o: any) => {
+                {/* ช่องรายด้าน/รอยต่อ ของหลังคาหลายด้าน ไม่โผล่ตรงนี้ — RoofSidesEditor คุมทั้งชุด (ไม่งั้นได้ 2 ที่กรอกชนกัน) */}
+                {(prod.specOpts ?? []).filter((o: any) => !/^(side\d|joint\d)/.test(o.key)).map((o: any) => {
                   // ฟิลด์ label ขึ้นต้น "[สลับ]" ใช้เฉพาะตอนเลือก gslat='ระแนงสลับ' — ไม่งั้นล็อกไว้กันกดมั่ว (25 ส.ค.69)
                   const isAltField = typeof o.label === "string" && o.label.startsWith("[สลับ]");
                   const altLocked = isAltField && spec.gslat !== "ระแนงสลับ";
@@ -1369,6 +1403,19 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                     <p className="text-[11px] text-ink-3">ช่วงหลังคาเพิ่มคิดวัสดุ/โครงตามขนาดจริง · วัสดุ/สีตามช่วงหลัก · รวมพื้นที่ในรายการเดียว (ออปหลังคา เช่น รางน้ำ คิดที่ช่วงหลัก)</p>
                   )}
                 </div>
+              )}
+
+              {/* หลังคาหลายด้าน — กรอกกว้าง/ยื่นรายด้าน + รอยต่อ พร้อมผังมองจากด้านบน (RoofSidesEditor) */}
+              {prod.multiSide && (
+                <RoofSidesEditor
+                  kind={prod.multiSide}
+                  jointOpts={(prod.specOpts ?? []).find((o: any) => o.key === "joint1")?.opts ?? []}
+                  jointEnd={prod.multiSide === "d" ? "ติดบ้าน" : "ชนผนัง"}
+                  value={roofSides}
+                  onChange={setRoofSides}
+                  depth={(Number(w) || 0) / 2}
+                  area={(result as any)?.area}
+                />
               )}
 
               {/* ➕ ผสมบาน (G1) — เพิ่มบานหลายชนิดในชุดเดียว ตรง app.js renderSubPanes ~1356-1367

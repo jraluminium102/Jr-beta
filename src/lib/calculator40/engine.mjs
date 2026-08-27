@@ -93,7 +93,7 @@ export function computeCost(PB, prod, opt) {
   const H = (opt.h ?? prod.defaults.h) / 100;   // ม.
   const P = opt.p ?? prod.defaults.p ?? 1;
   const form = opt.form ?? prod.defForm ?? 'std';
-  const area = W * H;
+  let area = W * H;   // let — หลังคาหลายด้านทับด้วย opt.areaOverride ด้านล่าง (พื้นที่ = ผลรวมทุกด้าน)
   const color = opt.color ?? 'white';
   const colorDisp = opt.colorName || colorLabel(color);      // ชื่อสีเฉพาะ (display) — ราคามาจาก bake key เท่านั้น
   const material = opt.material ?? prod.defMaterial ?? null;  // วัสดุมุงหลังคา (รุ่นที่มีตัวเลือก)
@@ -130,6 +130,13 @@ export function computeCost(PB, prod, opt) {
   const scope = { W, H, P, form, area, color, material, ROW: prod.lut ? (prod.lut[material] || {}) : {}, spec: opt.spec || {}, mult, GMM, CKEY: String(opt.colorKey ?? ''), TBL: prod.tables || {} };
   for (const [k, expr] of Object.entries(varDefs)) {
     scope[k] = ev.compile(expr)(scope);
+  }
+  // opt.areaOverride — รุ่นที่ "พื้นที่ ≠ กว้าง×สูง" (หลังคาหลายด้าน = ผลรวมทุกด้าน)
+  //   ผู้เรียกคิดมาให้เป็นตัวเลข ไม่ใช่สูตร เพราะขนาดรายด้านอยู่ในอินพุตใบตัด (มีค่าตั้งต้นครบ) ไม่ใช่ spec
+  //   ค่าแรง/ราคาต่อ ตร.ม. ใช้ area ตัวนี้ต่อทั้งหมด
+  //   ⚠ ต้องรับค่า 0 ด้วย — ยังไม่กรอกด้าน = พื้นที่ 0 ถ้าตกไปใช้ กว้าง×สูง จะได้ค่าแรงจากเลขที่ค้างในช่องที่ซ่อนอยู่
+  if (Number.isFinite(Number(opt.areaOverride)) && Number(opt.areaOverride) >= 0) {
+    area = Number(opt.areaOverride); scope.area = area;
   }
   const val = (expr) => ev.compile(expr)(scope);
 
@@ -180,10 +187,13 @@ export function computeCost(PB, prod, opt) {
   //   ไม่เปิด = นับทีละบรรทัด (เส้นละบรรทัด ปัดขึ้นทุกบรรทัด) เหมือนเดิมทุกรุ่น
   //   จำนวนเส้นรวมของรหัส = ceil(Σยาว/เส้น) แล้วเฉลี่ยกลับเข้าแต่ละบรรทัดตามสัดส่วนความยาว
   //   → บรรทัดละเศษเส้น แต่รวมทั้งรหัสเท่าใบตัดเป๊ะ (ไม่มีบรรทัด ฿0 ให้งง)
+  // opt.aluLines = บรรทัดอลูที่ผู้เรียกคิดมาจาก 'ใบตัด' แล้ว (หลังคาหลายด้าน — ดู alu-from-cutlist.ts)
+  //   รูปแบบเดียวกับ prod.alu แต่ seg/count เป็นตัวเลขสำเร็จ ไม่ใช่สูตร → ทางเดินราคา/สี/นับเส้น ใช้ของเดิมทั้งหมด
+  const ALU = (opt.aluLines && opt.aluLines.length) ? opt.aluLines : (prod.alu || []);
   const poolShare = new Map();
   if (prod.poolBars || prod.packBars) {
     const sum = new Map();
-    for (const it of (prod.alu || [])) {
+    for (const it of ALU) {
       const seg = typeof it.seg === 'number' ? it.seg : val(it.seg);
       const count = val(it.count);
       const key = (it.code && String(it.code).includes('?')) ? String(val(it.code) ?? '') : it.code;
@@ -203,9 +213,9 @@ export function computeCost(PB, prod, opt) {
   // (1) อลู — bar-nesting × ราคาเส้น × mult  (+bake×kg ถ้าสีพิเศษ)
   // ราคาเส้นผูก "รหัส" (B####/F####) กับสต็อก: PB.ALUCODE[code] มาก่อน → PARTS(ชื่อ) → ราคาเดิมใน BOM
   // ไม่มีราคาสต็อก = ราคาเดิมเป๊ะ (behavior-preserving · verify 63/63 คงเดิม)
-  for (const it of (prod.alu || [])) {
+  for (const it of ALU) {
     const seg = typeof it.seg === 'number' ? it.seg : val(it.seg);
-    const count = val(it.count);
+    const count = typeof it.count === 'number' ? it.count : val(it.count);
     // ราคาเส้น "ตามสี" (PB.ALUCOLOR) มาก่อน — ชีต "ราคาสี" มีคอลัมน์ เทาซาฮาร่า/ลายไม้สต็อค เป็นราคาเส้นสำเร็จ
     //   สูตรในชีตคิดทุนใช้คอลัมน์นั้นตรง ๆ (ไม่ใช่ ขาว + ค่าอบ×กก.) → เส้นที่คิดราคาสีแล้ว ห้ามบวกค่าอบซ้ำ
     //   เหลือแค่ สีอบพิเศษ/ลายไม้อบพิเศษ ที่ยังเป็น ขาว + เรต×กก. (+ค่าเปิดตู้อบ) ตามสูตรชีต
@@ -350,8 +360,10 @@ export function computeCost(PB, prod, opt) {
     lines.push({ cat: 'hardware', name: it.name, sku: hwSku, qty: round2(count), unit: it.unit || 'ชิ้น', unitPrice: price, amount: round2(amount), orderOnly: !!it.orderOnly });
   }
   let consumCost = 0;
-  for (const it of (hwLines ? [] : prod.consum || [])) {
-    const count = val(it.count);
+  // opt.consumLines = แผ่นมุง/เหล็ก/ราง ที่ผู้เรียกคิดมาจากใบตัดแล้ว (หลังคาหลายด้าน) — ทับ prod.consum
+  const CONSUM = (opt.consumLines && opt.consumLines.length) ? opt.consumLines : (hwLines ? [] : prod.consum || []);
+  for (const it of CONSUM) {
+    const count = typeof it.count === 'number' ? it.count : val(it.count);
     if (count <= 0) continue;
     let unitPrice = pPrice(it.name, typeof it.price === 'number' ? it.price : val(it.price));  // ราคา expression + PARTS override (partsLinked)
     if (it.ref) { const rp = refPrice(PB, it.ref); if (rp != null) unitPrice = rp; }   // ราคาจาก PB (แอดมินแก้ได้ · ไม่มี=ใช้ price เดิม)
@@ -623,6 +635,7 @@ export function computeCost(PB, prod, opt) {
     profit3: { mat: pctMat, prod: pctProd, inst: pctInst },   // % ที่ใช้จริง (หน้าจอเอาไปโชว์/แก้)
     // อุปกรณ์จากใบตัด: ใช้จริงไหม + รหัสไหนยังไม่ตั้งราคาในสโตร์ (หน้าจอเอาไปเตือน)
     hwFromCutlist: !!hwLines, hwMissing,
+    aluFromCutlist: !!(opt.aluLines && opt.aluLines.length),
     // รหัสที่ยังใช้ "ราคาจากไฟล์ถอดทุน" (สโตร์ยังไม่ตั้งราคา) — หน้าจอเตือนให้ไปตั้งในสโตร์
     hwFileFallback: (hwLines || []).filter((it) => (Number(it.qty) || 0) > 0 && hwFromFile(it))
       .map((it) => ({ sku: String(it.sku || '').toUpperCase(), name: it.name })),

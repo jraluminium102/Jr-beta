@@ -3356,6 +3356,21 @@
    "prod": 50,
    "inst": 100
   },
+    "roof_multi": {
+   "mat": 0,
+   "prod": 50,
+   "inst": 100
+  },
+    "glasshouse_multi": {
+   "mat": 0,
+   "prod": 50,
+   "inst": 100
+  },
+    "gable_multi": {
+   "mat": 0,
+   "prod": 50,
+   "inst": 100
+  },
   "shower": {
    "mat": 100,
    "prod": 100,

@@ -1,0 +1,223 @@
+/**
+ * alu-from-cutlist — "เส้นอลู/กล่อง" ในคิดราคา 4.0 ดึงรายการมาจาก "ใบตัด" ตัวเดียวกัน
+ * ─────────────────────────────────────────────────────────────────────────────
+ * ตัวเดียวกับ hardware-from-cutlist แต่เป็นฝั่งอลู
+ *
+ * ทำไม (เจ้าของสั่ง 27 ส.ค.69 "ทำหลังคาหลายด้านให้ครบ"):
+ *   หลังคาหลายด้าน = หลังคาที่หักมุมรอบบ้าน ได้ถึง 6 ด้าน · จันทันตรงรอยต่อใช้ร่วมกัน 2 ด้าน
+ *   และร่นสั้นลงตามมุมที่หัก (ตะเข้) → คิดแยกทีละด้านแล้วบวกกัน "ไม่ตรงของจริง"
+ *
+ *   ของเดิมในเว็บ (ปุ่ม "หลังคาหลายช่วง (ขยัก)") คิดแต่ละช่วงเป็นหลังคาเดี่ยวเต็มใบแล้วบวกกัน
+ *   เทียบกับใบตัดจริงที่ 4 ด้าน (400×150 · 300×100 · 350×200 · 200×150):
+ *     กล่อง 4"x4"    ใบตัด 14 ชิ้น → คิดแยกช่วง  0 ชิ้น  (ขอบ/ตะเข้ หายทั้งหมด)
+ *     กล่อง 1.6"x4"  ใบตัด 41 ชิ้น → คิดแยกช่วง 60 ชิ้น  (เกิน)
+ *     กล่อง 1"x1.5"  ใบตัด 82 ชิ้น → คิดแยกช่วง 146 ชิ้น (เกิน)
+ *
+ *   แทนที่จะลอกเรขาคณิตตะเข้ (mhPos/mhAD/mhAE ~150 บรรทัด) มาเขียนใหม่เป็นสูตรในคิดราคา
+ *   ให้คิดราคา "เรียกเอนจินใบตัดตัวจริง" แล้วแปลงแถวเป็นบรรทัดอลู → ตรงกันโดยโครงสร้าง
+ *   แก้สูตรตัดที่เดียว คิดราคาเด้งตาม ไม่มีทางหลุดกัน
+ */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { computeCutList, type CutInput } from "../cutlist/engine.ts";
+import { CUT_SPEC_BY_ID } from "../cutlist/products.ts";
+
+/** รุ่นที่ "เส้นอลู" คิดจากใบตัดแล้ว — เปิดทีละรุ่น */
+export const ALU_FROM_CUTLIST: Record<string, string> = {
+  roof_multi: "awning_multi",
+  glasshouse_multi: "glasshouse_multi",
+  gable_multi: "gable_multi",
+};
+
+/**
+ * รหัสกล่องในใบตัด → คีย์ราคากล่องในสโตร์ (PB.BOXPRICE) + ราคาสำรองต่อเส้น
+ * ราคาสำรอง = ราคาที่สูตรคิดราคาเดิมใช้อยู่ (ใช้ต่อเมื่อสโตร์ยังไม่ตั้งราคากล่องนั้น ห้ามหล่นเป็น 0)
+ */
+export const BOX_BY_CODE: Record<string, { box: string; price: number }> = {
+  'กล่อง 1"x1"': { box: "กล่อง|1X1", price: 310 },
+  'กล่อง 1"x1.5"': { box: "กล่อง|1X1.5", price: 393 },
+  'กล่อง 1"x1.6"': { box: "กล่อง|1X1.6", price: 485 },
+  'กล่อง 1"x3"': { box: "กล่อง|1X3", price: 761 },
+  'กล่อง 1"x4"': { box: "กล่อง|1X4", price: 905 },
+  'กล่อง 1.6"x1.6"': { box: "กล่อง|1.6X1.6", price: 770 },
+  'กล่อง 1.6"x3"': { box: "กล่อง|1.6X3", price: 950 },
+  'กล่อง 1.6"x4"': { box: "กล่อง|1.6X4", price: 1220 },
+  'กล่อง 2"x4"': { box: "กล่อง|2X4", price: 1540 },
+  'กล่อง 4"x4"': { box: "กล่อง|4X4", price: 2208 },
+};
+
+export type AluLine = {
+  box?: string; code: string; name: string;
+  price: number; kg: number;
+  seg: number;    // ยาวต่อชิ้น (เมตร) — engine คิดเส้นจากตรงนี้
+  count: number;  // จำนวนชิ้น
+};
+
+export type CalcAluInput = {
+  prodId: string;
+  cutInput: Record<string, unknown>;   // ช่องกรอกฝั่งใบตัด (ด้าน/รอยต่อ/ชนิดแผ่น ฯลฯ)
+};
+
+/**
+ * บรรทัดอลูของรุ่นนี้ = แถวใบตัดที่มีรหัสกล่อง ยุบตามรหัส+ความยาว
+ * คืน null = รุ่นยังไม่เปิด / ไม่มีสูตรตัด → ผู้เรียกใช้ prod.alu เดิม
+ *
+ * ⚠ ยุบตาม "รหัส+ความยาว" ไม่ใช่ตามชื่อ — จันทันหลายด้านออกมาเป็นคนละแถวแต่ยาวเท่ากันได้
+ *   ถ้าไม่ยุบจะได้บรรทัดละชิ้นเป็นร้อยบรรทัดในใบเสนอ
+ */
+/**
+ * ชื่อแถวใบตัด → ชื่อบรรทัดคิดราคา: ตัดเลขด้าน/เลขตำแหน่งออก (ยุบข้ามด้านแล้ว เลขด้านทำให้เข้าใจผิด)
+ * ⚠ ตัดเฉพาะ "ด้าน" ที่ตามด้วยตัวเลข ไม่งั้นกินคำว่า "รวมทุกด้าน" ไปด้วย
+ */
+const cleanRowName = (n: string) =>
+  n.replace(/\s*#\d+/g, "").replace(/\s*ด้าน\s*\d+/g, "").replace(/\s{2,}/g, " ").replace(/\s+\)/g, ")").trim();
+
+/** ต่อท้าย "(ทุกด้าน)" — เว้นแถวที่ใบตัดเขียนว่ารวมทุกด้านมาอยู่แล้ว (เพลทเหล็ก) */
+const allSides = (n: string) => (/ทุกด้าน/.test(n) ? n : `${n} (ทุกด้าน)`);
+
+export function cutAluLines(inp: CalcAluInput): AluLine[] | null {
+  const specId = ALU_FROM_CUTLIST[inp.prodId];
+  if (!specId) return null;
+  const spec = CUT_SPEC_BY_ID[specId];
+  if (!spec) return null;
+
+  let rows;
+  try {
+    rows = computeCutList(spec, { ...spec.defaults, ...inp.cutInput } as CutInput, 1).rows;
+  } catch {
+    return null;
+  }
+
+  const agg = new Map<string, AluLine>();
+  for (const r of rows) {
+    const code = String(r.code ?? "");
+    if (!code || code === "-" || !(r.qty > 0) || !(r.len > 0)) continue;
+    const b = BOX_BY_CODE[code];
+    const key = `${code}|${r.len}`;
+    const hit = agg.get(key);
+    if (hit) { hit.count += r.qty; continue; }
+    agg.set(key, {
+      box: b?.box, code,
+      // ชื่อไม่เอาเลขด้าน/เลขตำแหน่ง (จันทัน ด้าน 1 #3) — ยุบข้ามด้านแล้ว เลขด้านทำให้เข้าใจผิด
+      name: `${cleanRowName(String(r.name))} (ยาว ${r.len} ซม.)`,
+      price: b?.price ?? 0, kg: 0,
+      seg: r.len / 100, count: r.qty,
+    });
+  }
+  const out = [...agg.values()];
+  return out.length ? out : null;
+}
+
+/** ราคาสำรองต่อหน่วย ของแถวใบตัดที่ "ไม่มีรหัสสโตร์" (เหล็ก/ราง) — ตรงกับสูตรหลังคาเดี่ยวที่ใช้อยู่ */
+const NO_CODE_PRICE: { match: RegExp; price: number; unit: string }[] = [
+  { match: /^ฉาก 6 หุน/, price: 140, unit: "เส้น" },
+  { match: /^แซด 4/, price: 140, unit: "เส้น" },
+  { match: /^กล่องเหล็ก/, price: 110, unit: "เส้น" },
+  { match: /^เพลทเหล็ก/, price: 15, unit: "แผ่น" },
+  { match: /^(รางน้ำอลู|ราง\/เชิงชาย)/, price: 393, unit: "เส้น" },
+];
+
+/** วัสดุมุงคิดราคา (18 ชนิด) → ชนิดแผ่นใบตัด (6 ชนิด) — กติกาเดียวกับ from-recipe ห้ามแยกกัน */
+export function sheetOfMaterial(mat: string): string {
+  const m = String(mat ?? "ไวนิล");
+  if (m.startsWith("เมทัล")) return "เมทัลชีท";
+  if (m === "ชินโคร์ Sup") return "ชินโคร์ Sup";
+  if (m.startsWith("ชินโคร์")) return "ชินโคร์ HC";
+  if (m === "ไวนิล" || m === "ดีไลท์" || m === "โพลีตัน") return m;
+  return "ไวนิล";   // กระจก/อื่นๆ ยังไม่มีชนิดแผ่นในใบตัด → ไวนิล (ช่างปรับเอง)
+}
+
+/** กว้างใช้งานต่อแผ่น (ซม.) ตามตาราง MH_SHEET ของไฟล์หลายด้าน — ⚠ ไวนิล 25 · ไม่ใช่ตาราง ROOF_SHEET */
+const MH_W: Record<string, number> = {
+  "ไวนิล": 25, "ดีไลท์": 100, "เมทัลชีท": 34, "โพลีตัน": 122, "ชินโคร์ HC": 138, "ชินโคร์ Sup": 138,
+};
+
+export type ConsumLine = { name: string; price: number; ref?: string; unit: string; count: number };
+
+/**
+ * บรรทัด "แผ่นมุง + เหล็ก + ราง" จากแถวใบตัดที่ไม่มีรหัสสโตร์
+ * แผ่นมุงคิดตามหน่วยที่ราคาตั้งไว้ (แผ่น / เมตร / ตร.ม.) — ใบตัดบอกจำนวนแผ่น + ยาวต่อแผ่น
+ */
+export function cutRoofConsumLines(
+  inp: CalcAluInput & { material: string; rm: Record<string, { p: number; u: string }>; planArea?: number },
+): ConsumLine[] | null {
+  const specId = ALU_FROM_CUTLIST[inp.prodId];
+  const spec = specId ? CUT_SPEC_BY_ID[specId] : null;
+  if (!spec) return null;
+  let rows;
+  try {
+    rows = computeCutList(spec, { ...spec.defaults, ...inp.cutInput } as CutInput, 1).rows;
+  } catch { return null; }
+
+  const sheetKey = sheetOfMaterial(inp.material);
+  const sheetW = MH_W[sheetKey] ?? 25;
+  // วัสดุที่ใบตัดไม่มีชนิดแผ่นให้ (กระจก) → sheetOfMaterial ตกไปเป็นไวนิล ทั้งที่ไม่ใช่ไวนิลจริง
+  const noSheetType = sheetKey !== inp.material;
+  const planArea = Number(inp.planArea) || 0;
+  let flatAreaDone = false;   // กระจกคิดพื้นที่รวมครั้งเดียว ไม่ใช่ต่อด้าน
+  const out: ConsumLine[] = [];
+  const bump = (name: string, price: number, ref: string | undefined, unit: string, count: number) => {
+    if (!(count > 0)) return;
+    const hit = out.find((x) => x.name === name);
+    if (hit) hit.count = Math.round((hit.count + count) * 100) / 100;
+    else out.push({ name, price, ref, unit, count: Math.round(count * 100) / 100 });
+  };
+
+  for (const r of rows) {
+    const code = String(r.code ?? "");
+    if (code && code !== "-") continue;
+    // ⚠ กันความยาว/จำนวนติดลบ — รอยต่อ "เว้า" หักยื่นของด้านข้างเคียง ถ้ายื่นนั้นยาวกว่ากว้างด้านนี้
+    //   ใบตัดจะได้ J ติดลบ (เอนจินใบตัดมีตัวกันอยู่แล้ว แต่ฝั่งคิดราคาไม่มี → ทุนติดลบเงียบ ๆ)
+    //   เพลทเหล็กเป็นข้อยกเว้น: ใบตัดให้ len = 0 เพราะนับเป็นแผ่น ไม่มีความยาว
+    if (!(r.qty > 0)) continue;
+    if (r.len < 0) continue;
+    const nm = String(r.name);
+
+    if (/^แผ่นหลังคา/.test(nm)) {
+      const price = inp.rm[inp.material];
+      if (!price) continue;
+      // ⚠ วัสดุที่ใบตัด "ไม่มีชนิดแผ่น" (กระจก) จะตกไปใช้เรขาคณิตของไวนิล (แผ่นกว้าง 25 ซม.)
+      //   ถ้าเอาจำนวนแผ่นนั้นมาคูณกลับเป็น ตร.ม. จะเกินจริง 37-96% → กระจกคิดจากพื้นที่หลังคาตรง ๆ
+      //   (หลังคาทรงเดี่ยวก็คิดแบบนี้: rm('กระจก 4+4', …, "material==='กระจก 4+4'?area:0"))
+      if (noSheetType && price.u === "ตร.ม.") {
+        // ใบตัดออกแถว "แผ่นหลังคา" ด้านละแถว → ต้องลงบรรทัดเดียว ไม่ใช่บวกพื้นที่รวมซ้ำทุกด้าน
+        if (planArea > 0 && !flatAreaDone) {
+          flatAreaDone = true;
+          bump(allSides(`แผ่น${inp.material}`), price.p, `ROOFMAT.${inp.material}`, price.u, planArea);
+        }
+        continue;
+      }
+      // 'แผ่น' = นับใบตรง ๆ · 'ม.' = ยาวรวม · 'ตร.ม.' = ใบ × กว้างแผ่น × ยาว
+      const n = price.u === "แผ่น" ? r.qty
+        : price.u === "ม." ? (r.qty * r.len) / 100
+        : (r.qty * (sheetW / 100) * (r.len / 100));
+      bump(allSides(`แผ่น${inp.material === "ไวนิล" ? "ไวนิล" : inp.material}`), price.p, `ROOFMAT.${inp.material}`, price.u, n);
+      // ฝาครอบไวนิล เดินคู่แผ่นไวนิลเสมอ (เหมือนหลังคาเดี่ยว)
+      if (inp.material === "ไวนิล" && inp.rm["ฝาครอบไวนิล"]) {
+        bump("ฝาครอบไวนิล (ทุกด้าน)", inp.rm["ฝาครอบไวนิล"].p, "ROOFMAT.ฝาครอบไวนิล", inp.rm["ฝาครอบไวนิล"].u, r.qty);   // เดินคู่แผ่นไวนิลเสมอ
+      }
+      continue;
+    }
+    if (/^ฝาครอบ/.test(nm)) continue;   // คิดคู่แผ่นไปแล้วด้านบน ไม่นับซ้ำ
+
+    const hit = NO_CODE_PRICE.find((x) => x.match.test(nm));
+    if (hit) bump(allSides(cleanRowName(nm)), hit.price, undefined, hit.unit, r.qty);
+  }
+  return out.length ? out : null;
+}
+
+/** พื้นที่หลังคารวมทุกด้าน (ตร.ม.) — ใช้คิดค่าแรง/ราคาต่อ ตร.ม. แทน กว้าง×สูง */
+export function multiRoofArea(prodId: string, cutInput: Record<string, unknown>): number {
+  const n = (k: string) => Number(cutInput[k]) || 0;
+  let a = 0;
+  for (let i = 1; i <= 6; i++) {
+    if (prodId === "gable_multi") {
+      // จั่วหลายด้าน: ด้าน i ยาว D · กว้างสแปนใช้ค่าเดียวทั้งงาน (W) · 2 สโลป
+      const d = n(`side${i}D`);
+      if (d > 0) a += (d / 100) * (n("W") / 100);
+    } else {
+      const w = n(`side${i}W`), p = n(`side${i}P`);
+      if (w > 0 && p > 0) a += (w / 100) * (p / 100);
+    }
+  }
+  return Math.round(a * 100) / 100;
+}

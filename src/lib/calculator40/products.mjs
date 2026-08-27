@@ -50,7 +50,7 @@ const SCREEN_FABRIC_ROWS = [   // ผ้ามุ้ง 5 ชนิด (screen/s
 ];
 
 // แผ่นมุงหลังคา — ราคา fallback/หน่วย ต่อวัสดุ (ราคาจริงมาจาก PB.ROOFMAT ผ่าน ref) · แหล่งเดียว ใช้ทั้ง roof/roof_gable/roof_slide (count ต่างกันต่อรุ่น)
-const RM = {
+export const RM = {
   'ไวนิล': { p: 1540, u: 'แผ่น' }, 'ฝาครอบไวนิล': { p: 245, u: 'เส้น' }, 'ดีไลท์': { p: 4700, u: 'แผ่น' },
   'โพลีตัน': { p: 1200, u: 'ม.' }, 'ครอบโพลีตัน': { p: 420, u: 'จุด' },
   'ชินโคร์ HC': { p: 2800, u: 'ตร.ม.' }, 'ชินโคร์ Sup': { p: 2100, u: 'ตร.ม.' },
@@ -91,6 +91,38 @@ const gateSlats = (side) => Object.entries(GATE_BOX).map(([m, b]) => {
     count: '(' + pick + ') ? ' + (side === 'A' ? 'NA' : 'NB') + ' : 0',
   };
 });
+
+// ── หลังคาหลายด้าน: ตัวสร้างช่องกรอก "รายด้าน" ────────────────────────────────
+//   หลังคาที่หักมุมรอบบ้าน ได้ถึง 6 ด้าน · จันทันตรงรอยต่อใช้ร่วม 2 ด้านและร่นสั้นตามมุม (ตะเข้)
+//   → คิดแยกทีละด้านแล้วบวกกันไม่ตรงของจริง (ดู alu-from-cutlist.ts ที่เทียบตัวเลขไว้)
+//   เส้นอลูทั้งหมดของรุ่นพวกนี้มาจากเอนจินใบตัดตรง ๆ (ALU_FROM_CUTLIST) — ที่นี่มีแต่ "ช่องกรอก"
+const MULTI_SIDES = 6;
+// ⚠ ตัวเลือกรอยต่อ "ตัวที่ 3" เรียกไม่เหมือนกัน — กันสาด/กลาสเฮ้าส์ = "ชนผนัง" · จั่ว = "ติดบ้าน"
+//   ต้องตรงกับ opts ใน CutSpec เป๊ะ (ส่งค่านี้เข้าใบตัดตรง ๆ) ส่งผิด = ใบตัดตีเป็น "ไม่ชนผนัง" เงียบ ๆ
+const MULTI_JOINTS = { wp: ['นูน', 'เว้า', 'ชนผนัง'], d: ['นูน', 'เว้า', 'ติดบ้าน'] };
+export const MULTI_JOINT_END = { wp: 'ชนผนัง', d: 'ติดบ้าน' };
+// kind 'wp' = กรอก กว้าง+ยื่น ต่อด้าน (กันสาด/กลาสเฮ้าส์) · 'd' = กรอกยาวด้านอย่างเดียว (จั่ว — สแปนใช้ค่าเดียวทั้งงาน)
+const multiSideOpts = (kind) => {
+  const out = [];
+  for (let i = 1; i <= MULTI_SIDES; i++) {
+    const D = MULTI_SIDE_DEF[i];   // ตั้งต้นเปิด 2 ด้าน · ด้าน 3-6 = 0 (ไม่ใช้) ผู้ใช้กดเพิ่มเอง
+    if (kind === 'd') {
+      out.push({ key: 'side' + i + 'D', label: 'ด้าน ' + i + ' ยาวช่วง (ซม.)', type: 'number', def: String(D ? D.d : 0), step: 10, side: i });
+    } else {
+      out.push({ key: 'side' + i + 'W', label: 'ด้าน ' + i + ' กว้าง (ซม.)', type: 'number', def: String(D ? D.w : 0), step: 10, side: i });
+      out.push({ key: 'side' + i + 'P', label: 'ด้าน ' + i + ' ยื่น (ซม.)', type: 'number', def: String(D ? D.p : 0), step: 10, side: i });
+    }
+    if (i < MULTI_SIDES) out.push({ key: 'joint' + i, label: 'รอยต่อ ด้าน ' + i + ' → ' + (i + 1), opts: MULTI_JOINTS[kind], def: i === 1 ? 'นูน' : MULTI_JOINT_END[kind], joint: i });
+  }
+  return out;
+};
+// พื้นที่รวม (ตร.ม.) คิดที่ multiRoofArea ใน alu-from-cutlist.ts แล้วส่งเข้า engine เป็น opt.areaOverride
+// ค่าตั้งต้นรายด้าน — แหล่งเดียว ใช้ทั้ง specOpts (หน้าคิดราคา) และ from-recipe (ฝั่งใบตัด)
+//   ⚠ ถ้าสองฝั่งตั้งต้นไม่ตรงกัน หน้าเทียบจะโชว์ "ไม่ตรง" ตอนผู้ใช้ยังไม่ได้แตะอะไรเลย (เคยพลาดมาแล้ว 2 รอบ)
+export const MULTI_SIDE_DEF = { 1: { w: 400, p: 150, d: 400 }, 2: { w: 300, p: 100, d: 300 } };   // ด้าน 3-6 = 0 (ยังไม่ใช้)
+const MULTI_SHEET_COLORS = { 'ไวนิล': SC_VINYL, 'ดีไลท์': SC_DELIGHT, 'เมทัลชีท': SC_METAL };
+const MULTI_MATERIALS = ['ไวนิล', 'ดีไลท์', 'โพลีตัน', 'ชินโคร์ HC', 'ชินโคร์ Sup', 'เมทัลชีท', 'กระจก 4+4', 'กระจก 5+5'];
+const MULTI_ADDONS = ['roof_pole', 'truss_beam', 'roof_eave', 'gutter', 'chain_drain', 'pipe_cover', 'gutter_cover', 'beam_cover', 'hide_slope', 'roof_sealer', 'roof_film', 'ceil_under', 'demolish'];
 
 export const PRODUCTS = {
 
@@ -1474,6 +1506,69 @@ export const PRODUCTS = {
       { name: 'ค่าแรงติดตั้ง (15.4/ตร.ม.)', price: 1, unit: 'งาน', count: 'Math.round(15.4*(fArea+sArea*P))' },
     ],
     note: 'หลังคาเลื่อน = ติดตาย(W×H) + บานเลื่อน P บาน (ฝังขนาด 150×150ซม.) + ราง + มอเตอร์ · ค่าแรงฝังในวัสดุ (laborKey ศูนย์ กันคิดซ้ำ) · ขนาดบานเลื่อนแยก/วัสดุมุงอื่น/มอเตอร์รุ่นอื่น ยังไม่ทำ',
+  },
+
+  // ═══ กันสาดหลายด้าน — เส้นอลูมาจากเอนจินใบตัดตรง ๆ (alu-from-cutlist) ไม่มี BOM ซ้ำในนี้ ═══
+  roof_multi: {
+    id: 'roof_multi', group: 3, name: 'กันสาดหลายด้าน', brand: 'MTONG', laborKey: 'หลังคา', roofShape: true, pickerHide: true, multiSide: 'wp',
+    icon: '🏠', defForm: 'กันสาดหลายด้าน', forms: ['กันสาดหลายด้าน'],
+    addons: MULTI_ADDONS,
+    materialLabel: 'วัสดุมุง',
+    materials: MULTI_MATERIALS, defMaterial: 'ไวนิล', sheetColors: MULTI_SHEET_COLORS,
+    defaults: { w: 400, h: 200, p: 1 }, defGlass: null, minP: 1, maxP: 1,
+    specOpts: [
+      { key: 'hiH', label: 'สูงฝั่งสูง ชนบ้าน (ซม.)', type: 'number', def: '270', step: 5 },
+      { key: 'loH', label: 'สูงฝั่งต่ำ ริมนอก (ซม.)', type: 'number', def: '240', step: 5 },
+      { key: 'roofend', label: 'ปลายหลังคา', opts: ['รางน้ำ', 'ปิดปลาย', 'ยื่นปลาย'], def: 'รางน้ำ' },
+      { key: 'batten', label: 'แป', opts: ['แปคู่', 'แปเดี่ยว'], def: 'แปคู่' },
+      ...multiSideOpts('wp'),
+    ],
+    stockLen: 6.0,
+    vars: { CF: CF_EXPR },
+    alu: [], glass: null, hardware: [], consum: [],
+    note: 'กันสาดหักมุมรอบบ้าน ได้ถึง 6 ด้าน · กรอกกว้าง+ยื่นรายด้าน + รอยต่อ (นูน/เว้า/ชนผนัง) · เส้นอลูดึงจากใบตัด กันสาดหลายด้าน · พื้นที่คิดรวมทุกด้าน',
+  },
+
+  // ═══ กลาสเฮ้าส์หลายด้าน — เส้นอลูมาจากเอนจินใบตัดตรง ๆ (alu-from-cutlist) ไม่มี BOM ซ้ำในนี้ ═══
+  glasshouse_multi: {
+    id: 'glasshouse_multi', group: 3, name: 'กลาสเฮ้าส์หลายด้าน', brand: 'MTONG', laborKey: 'หลังคา', roofShape: true, pickerHide: true, multiSide: 'wp',
+    icon: '🏠', defForm: 'กลาสเฮ้าส์หลายด้าน', forms: ['กลาสเฮ้าส์หลายด้าน'],
+    addons: MULTI_ADDONS,
+    materialLabel: 'วัสดุมุง',
+    materials: MULTI_MATERIALS, defMaterial: 'ไวนิล', sheetColors: MULTI_SHEET_COLORS,
+    defaults: { w: 400, h: 200, p: 1 }, defGlass: null, minP: 1, maxP: 1,
+    specOpts: [
+      { key: 'hiH', label: 'สูงฝั่งสูง ชนบ้าน (ซม.)', type: 'number', def: '270', step: 5 },
+      { key: 'loH', label: 'สูงฝั่งต่ำ ริมนอก (ซม.)', type: 'number', def: '240', step: 5 },
+      { key: 'roofend', label: 'ปลายหลังคา', opts: ['รางน้ำ', 'ปิดปลาย', 'ยื่นปลาย'], def: 'รางน้ำ' },
+      { key: 'batten', label: 'แป', opts: ['แปคู่', 'แปเดี่ยว'], def: 'แปคู่' },
+      ...multiSideOpts('wp'),
+    ],
+    stockLen: 6.0,
+    vars: { CF: CF_EXPR },
+    alu: [], glass: null, hardware: [], consum: [],
+    note: 'กลาสเฮ้าส์หักมุมรอบบ้าน (หลังคา+เสาในตัว) ได้ถึง 6 ด้าน · เส้นอลูดึงจากใบตัด กลาสเฮ้าส์หลายด้าน',
+  },
+
+  // ═══ จั่วหลายด้าน — เส้นอลูมาจากเอนจินใบตัดตรง ๆ (alu-from-cutlist) ไม่มี BOM ซ้ำในนี้ ═══
+  gable_multi: {
+    id: 'gable_multi', group: 3, name: 'จั่วหลายด้าน', brand: 'MTONG', laborKey: 'หลังคาจั่ว', roofShape: true, pickerHide: true, multiSide: 'd',
+    icon: '🏠', defForm: 'จั่วหลายด้าน', forms: ['จั่วหลายด้าน'],
+    addons: MULTI_ADDONS,
+    materialLabel: 'วัสดุมุง',
+    materials: MULTI_MATERIALS, defMaterial: 'ไวนิล', sheetColors: MULTI_SHEET_COLORS,
+    defaults: { w: 400, h: 200, p: 1 }, defGlass: null, minP: 1, maxP: 1,
+    specOpts: [
+      { key: 'ridge', label: 'สูงสัน (ซม.)', type: 'number', def: '150', step: 5 },
+      // ⚠ ไม่มีช่อง "ปลายหลังคา" — ไฟล์ตัดจั่วหลายด้านหักปลายจันทัน 10.2 ตายตัว ไม่ได้อ้างตัวเลือกนี้เลย
+      //   (ต่างจากกันสาดหลายด้านที่สลับ 10.2/10/12.5) ใส่ไปก็เป็นช่องหลอก กดแล้วราคาไม่ขยับ
+      { key: 'batten', label: 'แป', opts: ['แปคู่', 'แปเดี่ยว'], def: 'แปคู่' },
+      ...multiSideOpts('d'),
+    ],
+    stockLen: 6.0,
+    vars: { CF: CF_EXPR },
+    alu: [], glass: null, hardware: [], consum: [],
+    note: 'จั่วสันต่อเนื่องหักมุม ได้ถึง 6 ด้าน · กรอกความยาวรายด้าน (สแปนกว้างใช้ช่อง กว้าง ค่าเดียวทั้งงาน) · เส้นอลูดึงจากใบตัด จั่วหลายด้าน',
   },
 
   // ── ฝ้า/ผนัง (G3) — โมเดล BOM ถอดทุนเต็ม → ขาย = ทุน×2 (ค่าแรงฝังในก้อนทุน) · กว้าง×ยาว เป็นเมตร (กรอก ซม.) ──
