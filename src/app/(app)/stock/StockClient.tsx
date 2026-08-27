@@ -114,6 +114,25 @@ export default function StockClient({
     alert(`ส่งออกอลูฯ ${rows.length} รายการแล้ว\nไฟล์: ${a.download}\nดูในโฟลเดอร์ Downloads`);
   }
 
+  // ส่งออกทั้งหมด (อลู + อุปกรณ์ + ทุกอย่าง) — ไว้เทียบกับเกณฑ์หน้าเทียบ แล้วไล่ปรับสโตร์ให้ตรง
+  function exportAllCsv() {
+    const rows = [...list].sort((a, b) => (a.sku || "").localeCompare(b.sku || "", "th") || (a.name || "").localeCompare(b.name || "", "th"));
+    const esc = (v: unknown) => { const s = String(v ?? ""); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+    const header = ["id", "รหัส", "ชื่อ", "สี", "หมวด", "ร้าน", "คงเหลือ", "หน่วย", "ต้นทุน/หน่วย", "คิดต่อโล", "มีรูป", "ใช้ในใบตัด"];
+    const lines = [header.join(",")];
+    for (const c of rows) lines.push([
+      c.id, c.sku, c.name, c.color, c.category, c.supplier, c.qty_on_hand, c.unit,
+      c.unit_cost, c.is_weight_based ? "ใช่" : "", c.image_url ? "มี" : "", isInCutlist(c.sku) ? "ใช่" : "",
+    ].map(esc).join(","));
+    const csv = "﻿" + lines.join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `stock-all-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    alert(`ส่งออกทั้งหมด ${rows.length} รายการแล้ว (อลู+อุปกรณ์)\nไฟล์: ${a.download}\nดูในโฟลเดอร์ Downloads`);
+  }
+
   async function refreshCats() {
     const r = await fetch("/api/stock/categories");
     const j = await r.json().catch(() => null);
@@ -152,6 +171,12 @@ export default function StockClient({
             <button onClick={exportAluCsv} title="ส่งออกอลูฯ ทั้งหมดเป็น CSV (มีช่องจำนวนนับใหม่ให้สโตร์กรอก)"
               className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark border border-brand/30 bg-white/60">
               ⬇️ ส่งออกอลู (นับสต๊อก)
+            </button>
+          )}
+          {canWrite && (
+            <button onClick={exportAllCsv} title="ส่งออกทั้งหมด (อลู+อุปกรณ์) เป็น CSV ไว้เทียบเกณฑ์/ปรับสโตร์ให้ตรง"
+              className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark border border-brand/30 bg-white/60">
+              ⬇️ ส่งออกทั้งหมด
             </button>
           )}
           {canWrite && (
