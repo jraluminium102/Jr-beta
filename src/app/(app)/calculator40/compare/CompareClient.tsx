@@ -71,18 +71,18 @@ export default function CompareClient({ pb, stockCount }: { pb: any; stockCount:
   const hwBad = (r?.hardware ?? []).filter((x: HwRow) => isBad(x.status)).length;
   const noCode = [...(r?.alu ?? []), ...(r?.hardware ?? [])].filter((x) => x.status === "ไม่มีรหัส").length;
 
-  const num = (label: string, v: string, set: (s: string) => void) => (
+  const num = (label: string, v: string, set: (s: string) => void, disabled?: boolean) => (
     <label className="block">
-      <span className="text-xs font-medium text-ink-3">{label}</span>
-      <input type="number" value={v} onChange={(e) => set(e.target.value)}
-        className="mt-1.5 w-full min-h-[44px] glass-soft rounded-lg px-3 py-2 outline-none tabular-nums text-sm" />
+      <span className={disabled ? "text-xs font-medium text-ink-3/40" : "text-xs font-medium text-ink-3"}>{label}</span>
+      <input type="number" value={v} onChange={(e) => set(e.target.value)} disabled={disabled}
+        className="mt-1.5 w-full min-h-[44px] glass-soft rounded-lg px-3 py-2 outline-none tabular-nums text-sm disabled:opacity-40 disabled:cursor-not-allowed" />
     </label>
   );
-  const sel = (label: string, v: string, set: (s: string) => void, opts: string[], labels?: Record<string, string>) => (
+  const sel = (label: string, v: string, set: (s: string) => void, opts: string[], labels?: Record<string, string>, disabled?: boolean) => (
     <label className="block">
-      <span className="text-xs font-medium text-ink-3">{label}</span>
-      <select value={v} onChange={(e) => set(e.target.value)}
-        className="mt-1.5 w-full min-h-[44px] glass-soft rounded-lg px-3 py-2 outline-none text-sm">
+      <span className={disabled ? "text-xs font-medium text-ink-3/40" : "text-xs font-medium text-ink-3"}>{label}</span>
+      <select value={v} onChange={(e) => set(e.target.value)} disabled={disabled}
+        className="mt-1.5 w-full min-h-[44px] glass-soft rounded-lg px-3 py-2 outline-none text-sm disabled:opacity-40 disabled:cursor-not-allowed">
         {opts.map((o) => <option key={o} value={o}>{labels?.[o] ?? o}</option>)}
       </select>
     </label>
@@ -109,16 +109,21 @@ export default function CompareClient({ pb, stockCount }: { pb: any; stockCount:
           {num("สูง (ซม.)", h, setH)}
           {num("จำนวนบาน", p, setP)}
           {prod?.forms?.length > 0 && sel("รูปแบบ", form, setForm, prod.forms)}
-          {prod?.materials?.length > 0 && sel(prod.materialLabel ?? "วัสดุ", material, setMaterial, prod.materials)}
+          {/* ต้องส่ง materialLabels ด้วย — ไม่งั้นกล่องระแนงโชว์เป็นคีย์ดิบ "1x1.6" แทน "1×1.6″" */}
+          {prod?.materials?.length > 0 && sel(prod.materialLabel ?? "วัสดุ", material, setMaterial, prod.materials, prod.materialLabels)}
           {sel("สีอลู", color, setColor, aluColorKeysFor(prodId), ALU_COLOR_LABEL as any)}
-          {/* ช่องตัวเลข (เช่น สูงสัน หลังคาจั่ว) ต้องกรอกได้ด้วย ไม่งั้นเทสได้ค่าเดียว */}
-          {(prod?.specOpts ?? []).map((o: any) => (
-            <div key={o.key}>
-              {o.type === "number"
-                ? num(o.label, spec[o.key] ?? o.def ?? "", (v) => setSpec((s) => ({ ...s, [o.key]: v })))
-                : sel(o.label, spec[o.key] ?? o.def ?? o.opts?.[0] ?? "", (v) => setSpec((s) => ({ ...s, [o.key]: v })), o.opts ?? [])}
-            </div>
-          ))}
+          {/* ช่องตัวเลข (เช่น สูงสัน หลังคาจั่ว) ต้องกรอกได้ด้วย ไม่งั้นเทสได้ค่าเดียว
+              ฟิลด์ "[สลับ]" ใช้เฉพาะตอนชนิดใบ = ระแนงสลับ → ล็อกไว้เหมือนหน้าคิดราคา (กันเลือกกล่อง B ทั้งที่ไม่ใช่ระแนงผสม) */}
+          {(prod?.specOpts ?? []).map((o: any) => {
+            const altLocked = typeof o.label === "string" && o.label.startsWith("[สลับ]") && spec.gslat !== "ระแนงสลับ";
+            return (
+              <div key={o.key}>
+                {o.type === "number"
+                  ? num(o.label, spec[o.key] ?? o.def ?? "", (v) => setSpec((s) => ({ ...s, [o.key]: v })), altLocked)
+                  : sel(o.label, spec[o.key] ?? o.def ?? o.opts?.[0] ?? "", (v) => setSpec((s) => ({ ...s, [o.key]: v })), o.opts ?? [], o.labels, altLocked)}
+              </div>
+            );
+          })}
           {cutOpts.map((f) => (
             <div key={f.key}>{sel(f.label, cut[f.key] ?? f.def, (v) => setCut((c) => ({ ...c, [f.key]: v })), f.choices)}</div>
           ))}
