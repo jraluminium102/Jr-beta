@@ -331,5 +331,29 @@ console.log("\n═══ ⑥ หน้าจอต่อสายครบไห
   ok("สลับไปดูรายวัสดุทีละบรรทัดได้", c.includes("ดูรายวัสดุทีละบรรทัด"), "");
 }
 
+// ── อุปกรณ์ที่ "มีรหัสสโตร์" ต้องนับว่าผูกแล้ว ไม่ว่าจะติดธง partsLinked หรือไม่ ──
+//    เจ้าของท้วง 27 ส.ค.69 "หน้าตรวจแทบไม่มีอะไรผูกเลย" — สาเหตุคือหน้าตรวจเช็คอุปกรณ์ด้วย "ชื่อ"
+//    อย่างเดียว บรรทัดที่ใส่ sku ไว้แล้วเลยถูกตีเป็น "ผูกไม่ได้" ทั้งที่เอนจินคิดราคาอ่าน SKUPRICE อยู่จริง
+console.log("\n═══ ⑧ อุปกรณ์ที่มีรหัสสโตร์ ต้องนับว่าผูก (ไม่ต้องรอธง partsLinked) ═══");
+{
+  const rows = auditStockLink([], PB).filter((r) => r.section === "อุปกรณ์/สิ้นเปลือง");
+  const checkable = rows.filter((r) => r.status !== "no_key" && r.status !== "order_only").length;
+  ok(`อุปกรณ์ที่มีรหัสให้ตรวจ ≥ 140 บรรทัด (เดิมนับได้แค่ 70)`, checkable >= 140, String(checkable));
+
+  // รุ่นที่ไม่ติดธง แต่ใส่ sku ไว้แล้ว ต้องไม่ถูกตีเป็น no_key
+  const smsRows = rows.filter((r) => r.usedBy === PRODUCTS.sms_slide.name);
+  const withSku = (PRODUCTS.sms_slide.hardware ?? []).filter((h) => h.sku).length;
+  ok("บานเลื่อน SMS: บรรทัดที่มี sku ไม่ถูกตีว่าผูกไม่ได้",
+    withSku === 0 || smsRows.filter((r) => r.status !== "no_key").length >= withSku,
+    `${smsRows.filter((r) => r.status !== "no_key").length} จาก ${withSku}`);
+
+  // sku ที่เป็นสูตร (เลือกรหัสตามเงื่อนไข) ต้องแตกออกมาตรวจทุกตัว ไม่ใช่ทิ้ง
+  const cond = (PRODUCTS.open_door.consum ?? []).find((c) => String(c.sku ?? "").includes("?"));
+  if (cond) {
+    const both = rows.filter((r) => r.usedBy === PRODUCTS.open_door.name && /JR00770|JR00771/.test(r.key));
+    ok("sku ที่เป็นสูตร แตกออกมาตรวจครบทุกรหัส", both.length >= 2, String(both.length));
+  }
+}
+
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);
