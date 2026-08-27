@@ -1294,6 +1294,7 @@ const aEndJack = (o: CutInput) => (o.roofEnd === "ยื่นปลาย" ? 14
 const aOut = (o: CutInput) => o.roofEnd === "ยื่นปลาย";
 export const AWNING: CutSpec = {
   id: "awning", name: "กันสาดเพิง (หลังคา)", stockLen: 600, rails: [],
+  packBars: true,   // ปัดขึ้นเส้นเต็ม จัดชิ้นลงเส้นจริง — ให้ตรงคิดราคา 4.0 (เจ้าของเคาะ 27 ส.ค.69)
   opts: [
     { key: "sheet", label: "ชนิดแผ่น", choices: SHEET_TYPES },
     { key: "P", label: "ยื่น P (ซม.)", type: "number" },

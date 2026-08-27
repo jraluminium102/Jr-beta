@@ -154,8 +154,8 @@ export function cutInputFromRecipe(recipe: any, opts?: { rawCompare?: boolean })
     case "roof": {
       if (!opts?.rawCompare) { m = null; break; }   // งานจริง (/api/cutlists) = skip ให้ช่างกรอกเอง · เฉพาะหน้าเทียบเท่านั้นที่ map
       // กันสาด (หลังคาเพิง) — ดึงเข้าหน้าเทียบใบตัด (เจ้าของสั่ง 26 ส.ค.69 "ดึงขึ้นก่อน")
-      //   ⚠ คิดราคา 4.0 คิดกันสาดเป็นโมเดล "เหมาซื้อเส้น 6ม." (consum ไม่มีรหัส) · ใบตัด awning ตัดทีละชิ้นมีรหัส
-      //     → หน้าเทียบจะเห็น diff ดิบ (คนละโมเดล) ยังไม่ตรง จนกว่าจะยกเครื่อง BOM ให้ออกรหัส (เฟสถัดไป)
+      //   27 ส.ค.69 ยกเครื่อง BOM คิดราคาเสร็จ → โครงตรงใบตัดทุกชิ้น (scripts/verify-roof.mjs)
+      //   ยังไม่เปิด map ให้ใบตัดงานจริง — ช่างกรอกเอง (ปลายหลังคา/จันทันกรอกมือ ยังไม่มีในคิดราคา)
       //   หน่วย: คิดราคา W=กว้าง · H=ยื่น/ลึก (ซม.) → awning W / P
       const sp = (recipe.spec ?? {}) as Record<string, unknown>;
       const mat = String(recipe.material ?? "ไวนิล");
@@ -167,7 +167,8 @@ export function cutInputFromRecipe(recipe: any, opts?: { rawCompare?: boolean })
         : "ไวนิล";   // กระจก/อื่นๆ ยังไม่มีชนิดแผ่นในใบตัด → ไวนิล (ช่างปรับเอง)
       m = { spec_id: "awning", input: {
         W, H: 0, N: 1, P: H, deg: 7,
-        sheet, purlin: sp.batten === "แปเดี่ยว" ? "แปเดี่ยว" : "แปคู่",
+        // ค่าตั้งต้นต้องตรงกับ specOpts.batten ของรุ่น roof (= แปเดี่ยว) ไม่งั้นหน้าเทียบเพี้ยนตอนยังไม่ได้เลือก
+        sheet, purlin: sp.batten === "แปคู่" ? "แปคู่" : "แปเดี่ยว",
         roofEnd: "รางน้ำ", rakeTotal: 0,
       } };
       break;

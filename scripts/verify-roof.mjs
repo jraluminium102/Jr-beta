@@ -1,0 +1,96 @@
+#!/usr/bin/env node
+/**
+ * verify-roof — กันสาดเพิง คิดราคา 4.0 (`roof`) ต้องตรงใบตัด `awning` (ไฟล์ JR_กันสาด ชีต "กันสาดเพิง")
+ * ─────────────────────────────────────────────────────────────────────────────
+ * เจ้าของเคาะ 27 ส.ค.69: ① ระยะจันทัน ไวนิล = 75 (ตามใบตัด ไม่ใช่ 100 ตามชีตถอดทุน)
+ *                        ② กล่องเหล็ก 1"×1" = เก็บไว้ (ใบตัดเขียน "ยกเลิก" แต่ของจริงยังใช้)
+ *                        ③ นับเส้นแบบปัดขึ้นเส้นเต็ม (จัดชิ้นลงเส้นจริง เหมือนประตูรั้ว)
+ *
+ *   node scripts/verify-roof.mjs
+ */
+import fs from "node:fs";
+import { computeCutList } from "../src/lib/cutlist/engine.ts";
+import { CUT_SPEC_BY_ID } from "../src/lib/cutlist/products.ts";
+import { cutInputFromRecipe } from "../src/lib/cutlist/from-recipe.ts";
+import { computeCost } from "../src/lib/calculator40/engine.mjs";
+import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
+
+const PB = JSON.parse(fs.readFileSync("src/lib/calculator40/pricebook.json", "utf8"));
+const SPEC = CUT_SPEC_BY_ID.awning;
+let pass = 0, fail = 0;
+const ok = (label, cond, got = "") => {
+  cond ? pass++ : fail++;
+  console.log(`  ${cond ? "✅" : "❌"} ${label}${cond || got === "" ? "" : `  (${got})`}`);
+};
+const cut = (o) => computeCutList(SPEC, { ...SPEC.defaults, ...o }, 1);
+const row = (r, n) => r.rows.find((x) => x.name === n);
+
+// ── ① ค่าที่เจ้าของเคาะ ต้องอยู่ในสูตร ──
+console.log("\n═══ ① ค่าที่เจ้าของเคาะ 27 ส.ค.69 ═══");
+{
+  const P = PRODUCTS.roof;
+  const E1 = (material) => new Function("material", `return ${P.vars.E1}`)(material);
+  ok("ระยะจันทัน ไวนิล = 75 (ตามใบตัด ไม่ใช่ 100 ตามชีตถอดทุน)", E1("ไวนิล") === 75, String(E1("ไวนิล")));
+  ok("วัสดุที่ใบตัดไม่มีชนิดแผ่น (กระจก) ตกไปไวนิล 75 เหมือน from-recipe", E1("กระจก 4+4") === 75, String(E1("กระจก 4+4")));
+  ok('กล่องเหล็ก 1"×1" ยังอยู่ (เจ้าของสั่งเก็บไว้)', P.consum.some((c) => /กล่องเหล็ก/.test(c.name)));
+  ok("นับเส้นแบบจัดชิ้นลงเส้นจริง (packBars)", P.packBars === true && SPEC.packBars === true);
+  ok("โครงผูกรหัสกล่องในสโตร์ครบทุกบรรทัด",
+    P.alu.length > 0 && P.alu.every((a) => !!a.code && !!a.box), P.alu.filter((a) => !a.code).map((a) => a.name).join(","));
+}
+
+// ── ② เทียบตัวอย่างกับใบตัดตรง ๆ (400×200 ไวนิล แปเดี่ยว) ──
+console.log("\n═══ ② โครงตรงใบตัด (400×200 · ไวนิล · แปเดี่ยว · ปลาย=รางน้ำ) ═══");
+{
+  const r = cut({ W: 400, P: 200, sheet: "ไวนิล", purlin: "แปเดี่ยว" });
+  // จันทันรวม = ⌈400/75⌉+1 = 7 · ช่อง 6 · แถวแป = ⌈200/50⌉+1 = 5
+  ok("จันทันรวม 7 แนว (ระยะ 75)", row(r, "จันทันซอย 1.6×4").qty === 7, String(row(r, "จันทันซอย 1.6×4").qty));
+  ok("จันทันรัดรอบ กว้าง = W−0.4 × 2", row(r, "จันทันรัดรอบ (กว้าง หน้า-หลัง)").len === 399.6);
+  ok("แป เดี่ยว = ช่อง 6 × แถว 5 = 30 ท่อน", row(r, "แป (ยัดในช่อง)").qty === 30, String(row(r, "แป (ยัดในช่อง)").qty));
+  ok("แป เดี่ยว ใช้กล่อง 1.6×1.6", row(r, "แป (ยัดในช่อง)").code === 'กล่อง 1.6"x1.6"');
+  const rd = cut({ W: 400, P: 200, sheet: "ไวนิล", purlin: "แปคู่" });
+  ok("แป คู่ = 30 × 2 = 60 ท่อน · กล่อง 1×1½",
+    rd.rows.find((x) => x.name === "แป (ยัดในช่อง)").qty === 60 && rd.rows.find((x) => x.name === "แป (ยัดในช่อง)").code === 'กล่อง 1"x1.5"');
+}
+
+// ── ③ กวาดทุกคอมบิเนชัน — จำนวนชิ้นต่อรหัส ฝั่งคิดราคาต้องเท่าใบตัด ──
+console.log("\n═══ ③ กวาดทุกรูปแบบ — ชิ้นต่อรหัส ใบตัด = คิดราคา ═══");
+{
+  const MAT = ["ไวนิล", "ดีไลท์", "โพลีตัน", "ชินโคร์ HC", "ชินโคร์ Sup", 'เมทัล 1" PVC', "กระจก 4+4"];
+  let n = 0; const bad = [];
+  for (const material of MAT)
+    for (const batten of ["แปเดี่ยว", "แปคู่"])
+      for (const [w, h] of [[400, 200], [200, 200], [600, 150], [800, 400], [300, 500]]) {
+        n++;
+        const spec = { batten };
+        const calc = computeCost(PB, PRODUCTS.roof, { w, h, p: 1, form: "หลังคาเพิง", material, color: "white", colorKey: "white", spec, addons: {} });
+        const map = cutInputFromRecipe({ kind: "std", prodId: "roof", w, h, p: 1, form: "หลังคาเพิง", material, spec }, { rawCompare: true });
+        const c = computeCutList(SPEC, map.input, 1);
+        const calcPc = new Map(), cutPc = new Map();
+        for (const l of calc.lines) if (l.cat === "alu" && l.code) calcPc.set(l.code, (calcPc.get(l.code) ?? 0) + (Number(l.pieces) || 0));
+        for (const x of c.rows) if (x.code && x.code !== "-" && x.qty > 0) cutPc.set(x.code, (cutPc.get(x.code) ?? 0) + x.qty);
+        for (const [code, q] of cutPc) {
+          const got = Math.round(calcPc.get(code) ?? 0);
+          if (got !== q) bad.push(`${material}/${batten}/${w}×${h} ${code}: คิดราคา ${got} ≠ ใบตัด ${q}`);
+        }
+      }
+  ok(`${n} คอมบิเนชัน — ชิ้นตรงกันทุกเคส`, bad.length === 0, bad.slice(0, 4).join(" · ") + (bad.length > 4 ? ` …อีก ${bad.length - 4}` : ""));
+}
+
+// ── ④ กฎที่ต้องไม่พัง ──
+console.log("\n═══ ④ กฎที่ต้องไม่พัง ═══");
+{
+  const C = (o) => computeCost(PB, PRODUCTS.roof, { w: 400, h: 200, p: 1, form: "หลังคาเพิง", material: "ไวนิล", color: "white", colorKey: "white", spec: {}, addons: {}, ...o }).cost.total;
+  ok("กว้างขึ้น = แพงขึ้น", C({ w: 400 }) < C({ w: 600 }));
+  ok("ยื่นลึกขึ้น = แพงขึ้น", C({ h: 200 }) < C({ h: 400 }));
+  // แปคู่ = 2 ท่อนต่อช่อง (กล่อง 1×1½) · แปเดี่ยว = 1 ท่อน (กล่อง 1.6×1.6) — ราคาต่อเส้นต่างกัน ไม่การันตีว่าคู่แพงกว่า
+  {
+    const pc = (b) => cut({ W: 400, P: 200, sheet: "ไวนิล", purlin: b }).rows.find((x) => x.name === "แป (ยัดในช่อง)").qty;
+    ok("แปคู่ = 2 เท่าของแปเดี่ยว", pc("แปคู่") === pc("แปเดี่ยว") * 2, `${pc("แปคู่")} vs ${pc("แปเดี่ยว")}`);
+  }
+  // ระยะจันทันต่างตามวัสดุ → ชินโคร์ (138) ใช้จันทันน้อยกว่าไวนิล (75)
+  const nr = (m) => cut({ W: 400, P: 200, sheet: m }).rows.find((x) => x.name === "จันทันซอย 1.6×4").qty;
+  ok("ชินโคร์ (จันทัน 138) ใช้จันทันน้อยกว่าไวนิล (75)", nr("ชินโคร์ HC") < nr("ไวนิล"), `${nr("ชินโคร์ HC")} < ${nr("ไวนิล")}`);
+}
+
+console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
+process.exit(fail ? 1 : 0);
