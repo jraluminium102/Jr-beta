@@ -111,8 +111,13 @@ export default function CompareClient({ pb, stockCount }: { pb: any; stockCount:
           {prod?.forms?.length > 0 && sel("รูปแบบ", form, setForm, prod.forms)}
           {prod?.materials?.length > 0 && sel(prod.materialLabel ?? "วัสดุ", material, setMaterial, prod.materials)}
           {sel("สีอลู", color, setColor, aluColorKeysFor(prodId), ALU_COLOR_LABEL as any)}
-          {(prod?.specOpts ?? []).filter((o: any) => o.type !== "number").map((o: any) => (
-            <div key={o.key}>{sel(o.label, spec[o.key] ?? o.def ?? o.opts?.[0] ?? "", (v) => setSpec((s) => ({ ...s, [o.key]: v })), o.opts ?? [])}</div>
+          {/* ช่องตัวเลข (เช่น สูงสัน หลังคาจั่ว) ต้องกรอกได้ด้วย ไม่งั้นเทสได้ค่าเดียว */}
+          {(prod?.specOpts ?? []).map((o: any) => (
+            <div key={o.key}>
+              {o.type === "number"
+                ? num(o.label, spec[o.key] ?? o.def ?? "", (v) => setSpec((s) => ({ ...s, [o.key]: v })))
+                : sel(o.label, spec[o.key] ?? o.def ?? o.opts?.[0] ?? "", (v) => setSpec((s) => ({ ...s, [o.key]: v })), o.opts ?? [])}
+            </div>
           ))}
           {cutOpts.map((f) => (
             <div key={f.key}>{sel(f.label, cut[f.key] ?? f.def, (v) => setCut((c) => ({ ...c, [f.key]: v })), f.choices)}</div>
