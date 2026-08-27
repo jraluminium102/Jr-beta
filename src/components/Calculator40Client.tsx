@@ -500,8 +500,12 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
           sCost += Math.round(amt / (1 + (profitPct || 100) / 100)); // ทุนบานย่อย ≈ ถอดจาก markup ปัจจุบัน (ตรง app.js sellToCost)
         });
       }
-      // ── หลังคาหลายช่วง (ขยัก) — ช่วงเพิ่ม คิด computeCost ต่อช่วงจริง (วัสดุ/สีตามช่วงหลัก) ตรง app.js calc() บรรทัด 246-256 ──
-      if (prod.roofSegments && roofSegs.length) {
+      // ── หลังคาหลายช่วง (ขยัก) — เลิกใช้แล้ว (เจ้าของสั่งถอด 27 ส.ค.69) ──
+      //   คิดแต่ละช่วงเป็นหลังคาเดี่ยวเต็มใบแล้วบวกกัน → กล่อง 4×4 ตัวขอบ/ตะเข้ ไม่เคยถูกคิดเงิน
+      //   ทรงหักมุมให้ใช้ "กันสาดหลายด้าน / กลาสเฮ้าส์หลายด้าน / จั่วหลายด้าน" แทน (ดึงของจากใบตัดจริง)
+      //   ⚠ เก็บทางคิดไว้ให้ "ใบเสนอเก่า" ที่บันทึก roofSegs ไว้แล้ว เปิดกลับมาต้องได้ราคาเท่าเดิม
+      //     (ไม่ผูก prod.roofSegments แล้ว เพราะถอดธงออกจากรุ่นหลังคาไปแล้ว)
+      if (roofSegs.length) {
         roofSegs.forEach((sg, i) => {
           const sw = (+sg.w || 0) * 100, sh = (+sg.h || 0) * 100;
           if (!(sw > 0 && sh > 0)) return;
@@ -1373,17 +1377,19 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                 />
               )}
 
-              {/* หลังคาหลายช่วง (ขยัก) — ช่วงเพิ่ม คิดวัสดุ/โครงตามขนาดจริง (วัสดุ/สีตามช่วงหลัก) รวมพื้นที่ในรายการเดียว
-                  ตรง app.js renderRoofSegs ~1426-1440 */}
-              {prod.roofSegments && (
+              {/* หลังคาหลายช่วง (ขยัก) — เลิกใช้ (เจ้าของสั่งถอด 27 ส.ค.69 · ทรงหักมุมใช้เมนู "หลายด้าน" แทน)
+                  โผล่เฉพาะใบเสนอเก่าที่บันทึกช่วงไว้แล้ว → แก้/ลบได้ แต่เพิ่มใหม่ไม่ได้ (ไม่มีปุ่มเพิ่ม)
+                  ⚠ ห้ามลบบล็อกนี้ทิ้ง ไม่งั้นใบเก่าเปิดมาแล้วราคาหายเงียบ โดยไม่มีใครเห็นว่าหายอะไร */}
+              {roofSegs.length > 0 && (
                 <div className="mt-4 space-y-2.5 rounded-2xl glass-soft p-4">
                   <div className="text-sm font-bold text-brand-dark flex items-center gap-1.5">
-                    🏠 หลังคาหลายช่วง (ขยัก) <span className="text-xs font-normal text-ink-3">(ช่วงเพิ่ม · รวมพื้นที่)</span>
+                    🏠 หลังคาหลายช่วง (ขยัก) <span className="text-xs font-normal text-amber-700">· เลิกใช้แล้ว</span>
                   </div>
-                  <button type="button" onClick={() => setRoofSegs((s) => [...s, { w: 3, h: 2 }])}
-                    className="press text-xs font-semibold rounded-full px-3.5 py-2 glass-soft text-ink-2 hover:bg-white/70">
-                    ＋ เพิ่มช่วงหลังคา
-                  </button>
+                  <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    วิธีนี้คิดแต่ละช่วงเป็นหลังคาเดี่ยวเต็มใบ ทำให้กล่อง 4″×4″ ตัวขอบกับตะเข้ไม่ถูกคิดเงิน
+                    งานหลังคาหักมุมให้เลือกทรง <b>กันสาดหลายด้าน / กลาสเฮ้าส์หลายด้าน / จั่วหลายด้าน</b> ด้านบนแทน
+                    (ช่วงด้านล่างเป็นของใบเก่า แก้หรือลบได้ แต่เพิ่มใหม่ไม่ได้แล้ว)
+                  </p>
                   {roofSegs.map((s, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <span className="text-xs font-medium text-ink-3 w-14 shrink-0">ช่วง {i + 2}</span>

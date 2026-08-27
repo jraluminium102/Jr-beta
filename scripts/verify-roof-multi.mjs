@@ -202,5 +202,18 @@ console.log("\n═══ ⑧ บั๊กที่เคยเจอ (QA 27 ส.
     fs.readFileSync("src/components/Calculator40Client.tsx", "utf8").includes("!/^(side\\d|joint\\d)/.test(o.key)"));
 }
 
+// ── ⑨ ถอด "หลังคาหลายช่วง (ขยัก)" — ของใหม่ห้ามสร้าง แต่ใบเก่าต้องไม่พัง ──
+console.log("\n═══ ⑨ ถอดหลังคาหลายช่วง (ขยัก) — ใบเก่าต้องยังคิดได้เท่าเดิม ═══");
+{
+  ok("รุ่นหลังคาไม่มีธง roofSegments แล้ว (สร้างช่วงใหม่ไม่ได้)", !PRODUCTS.roof.roofSegments);
+  const cl = fs.readFileSync("src/components/Calculator40Client.tsx", "utf8");
+  ok("ไม่มีปุ่ม “＋ เพิ่มช่วงหลังคา” แล้ว", !cl.includes("＋ เพิ่มช่วงหลังคา"));
+  // ⚠ ทางคิดต้องอยู่ต่อ ไม่งั้นใบเสนอเก่าที่บันทึก roofSegs ไว้ เปิดมาแล้วราคาหายเงียบ
+  ok("ยังคิดช่วงเก่าให้ใบที่บันทึกไว้แล้ว (ไม่ผูกธงที่ถอดไป)", cl.includes("if (roofSegs.length) {"));
+  ok("ยังโหลด roofSegs จากสูตรที่บันทึกไว้", cl.includes("setRoofSegs(Array.isArray(r.roofSegs)"));
+  ok("ยังบันทึก roofSegs ต่อ (ใบเก่าเซฟทับแล้วไม่หาย)", /roofSegs,/.test(cl));
+  ok("มีคำเตือนบอกให้ไปใช้เมนูหลายด้านแทน", cl.includes("เลิกใช้แล้ว"));
+}
+
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);

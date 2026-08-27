@@ -273,8 +273,9 @@ function buildFields(prod) {
       fields.push(`sheetColor:สีวัสดุมุง[${sc.map((x) => x.n).join("|")}] (ตาม defMaterial="${prod.defMaterial}" · label เท่านั้น)`);
     }
   }
-  if (prod.roofSegments) {
-    fields.push("roofSegs:หลังคาหลายช่วง(ขยัก)[+เพิ่มช่วง w,h] (คิด computeCost ต่อช่วงจริง รวมเข้า subLines)");
+  // roofSegments (หลังคาหลายช่วง/ขยัก) ถอดออกแล้ว 27 ส.ค.69 — ทรงหักมุมใช้รุ่น *_multi ที่ดึงของจากใบตัดจริง
+  if (prod.multiSide) {
+    fields.push(`ด้านหลังคา:${prod.multiSide === "d" ? "ยาวช่วงรายด้าน" : "กว้าง+ยื่นรายด้าน"} ×6 + รอยต่อ ×5 (RoofSidesEditor · เส้นอลูดึงจากใบตัด)`);
   }
 
   // บานติดตาย — เงื่อนไขเต็ม ตรง Calculator40Client.tsx บรรทัด 357-358:
