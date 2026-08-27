@@ -780,7 +780,11 @@ export function computeAddon(id, sel, ctx) {
     const s = (sel && typeof sel === 'object') ? sel : { kw: '1500' };
     const kw = String(s.kw || '1500');
     const cmap = { '80': motorCost(ctx.PB, 'หลังคาเลื่อน ยก80', 4500), '300': motorCost(ctx.PB, 'หลังคาเลื่อน ยก300', 12500), '1500': motorCost(ctx.PB, 'หลังคาเลื่อน ยก1500', 13325) };
-    const mcost = cmap[kw]; if (mcost == null) return null;
+    // ทุนมอเตอร์ = ราคา + ค่าส่ง (ชีตถอดทุน D13 บวก 2 คอลัมน์ · เจ้าของเคาะ 27 ส.ค.69 "เอาตามชีท")
+    //   เดิมคิดแต่ราคา ตกค่าส่งไป → 80 กก. คิด 4,500 ทั้งที่ชีตคิด 6,200
+    const ship = motorCost(ctx.PB, 'หลังคาเลื่อน ค่าส่ง', 1700);
+    const mcost = cmap[kw] == null ? null : cmap[kw] + ship;
+    if (mcost == null) return null;
     const out = [{ label: 'มอเตอร์หลังคาเลื่อน ยก ' + kw + ' กก.', qty: 1, unit: 'ชุด', unitPrice: motorSell(mcost), amount: motorSell(mcost), cost: mcost }];
     if (kw === '1500') {                 // ฟันเฟือง + เซนเซอร์ เฉพาะ 1500 กก.
       const gl = +s.gearLen || 0;
