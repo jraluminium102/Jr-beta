@@ -55,3 +55,30 @@ export function parseSides(spec: Record<string, unknown>, kind: "wp" | "d", join
   const joints = Array.from({ length: sides.length - 1 }, (_, i) => String(spec[`joint${i + 1}`] ?? jointEnd));
   return { sides, joints };
 }
+
+// ── ผังมองจากด้านบน ────────────────────────────────────────────────────────
+// เดินแบบเต่า: วางด้าน 1 ไปทางขวา · "นูน" หมุน +90° (มุมยื่นออก) · "เว้า" หมุน −90°
+// "ชนผนัง/ติดบ้าน" = จบโซ่ → ด้านที่เหลือขึ้นต้นโซ่ใหม่ วางแยกไว้ด้านล่าง
+//   ⚠ ห้าม break ทิ้ง — ด้านหลังรอยต่อยังถูกคิดเงินอยู่ ถ้าไม่วาดจะกลายเป็น "จ่ายแต่มองไม่เห็น"
+//   (เจอตอนกดเทสหน้าจริง 27 ส.ค.69: 4 ด้านคิดเงินครบ แต่ผังโชว์แค่ 2)
+export type Rect = { x: number; y: number; w: number; h: number; deg: number; i: number; hip: boolean; run: number };
+export function planRects(sides: RoofSide[], joints: string[], kind: "wp" | "d", depth: number): Rect[] {
+  const out: Rect[] = [];
+  let x = 0, y = 0, deg = 0, run = 0, maxY = 0;
+  for (let i = 0; i < sides.length; i++) {
+    const s = sides[i];
+    const w = s.w, p = kind === "d" ? depth : s.p;
+    if (!(w > 0) || !(p > 0)) continue;
+    const j = joints[i] ?? "";
+    out.push({ x, y, w, h: p, deg, i, hip: j === "นูน" || j === "เว้า", run });
+    // เก็บขอบล่างสุดที่วาดไปแล้ว ไว้ใช้เป็นจุดเริ่มของโซ่ถัดไป
+    const rad = (deg * Math.PI) / 180, c = Math.cos(rad), sn = Math.sin(rad);
+    for (const [dx, dy] of [[0, 0], [w, 0], [w, p], [0, p]] as [number, number][])
+      maxY = Math.max(maxY, y + dx * sn + dy * c);
+    x += w * c; y += w * sn;
+    if (j === "นูน") deg += 90;
+    else if (j === "เว้า") deg -= 90;
+    else { run++; x = 0; y = maxY + Math.max(p, 40) * 0.5; deg = 0; }   // จบโซ่ → ขึ้นโซ่ใหม่ข้างล่าง
+  }
+  return out;
+}
