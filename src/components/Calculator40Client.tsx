@@ -48,7 +48,7 @@ import SubPanesSection, { subDesc, subPrice, type SubPane } from "@/components/c
 import RoomComposer, { type RoomTotals } from "@/components/calculator40/RoomComposer";
 import QuoteFormPreview, { type PreviewItem } from "@/components/calculator40/QuoteFormPreview";
 import RoofSidesEditor, { parseSides, flattenSides, type RoofSidesValue } from "@/components/calculator40/RoofSidesEditor";
-import { cutAluLines, cutRoofConsumLines, multiRoofArea, ALU_FROM_CUTLIST } from "@/lib/calculator40/alu-from-cutlist";
+import { cutAluLines, cutRoofConsumLines, cutUncodedLines, multiRoofArea, ALU_FROM_CUTLIST } from "@/lib/calculator40/alu-from-cutlist";
 import { cutInputFromRecipe } from "@/lib/cutlist/from-recipe";
 import { RM } from "@/lib/calculator40/products.mjs";
 
@@ -435,7 +435,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
         addons,
       };
       // ── หลังคาหลายด้าน: เส้นอลู + แผ่นมุง + พื้นที่ ดึงจากเอนจินใบตัดตรง ๆ (ตรงกันโดยโครงสร้าง) ──
-      if (prod.multiSide && ALU_FROM_CUTLIST[prod.id]) {
+      if (ALU_FROM_CUTLIST[prod.id]) {
         const map = cutInputFromRecipe({
           kind: "std", prodId: prod.id, w: wCm, h: hCm, p: pCount, form: formVal,
           spec: specForCalc, material, color,
@@ -447,8 +447,11 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
           if (al?.length) opt.aluLines = al;
           const cl = cutRoofConsumLines({ prodId: prod.id, cutInput: ci, material: String(material || "ไวนิล"), rm: RM as never, planArea: ar });
           if (cl?.length) opt.consumLines = cl;
-          // ส่งเสมอแม้เป็น 0 — ไม่งั้นตกไปใช้ กว้าง×สูง ที่ค้างอยู่ในช่องที่ซ่อนไป (ค่าแรงเพี้ยน)
-          opt.areaOverride = ar;
+          // แถวใบตัดที่ไม่มีรหัสสโตร์ (ราง/เสารับ/ฉาก) — ของจริงที่ต้องจ่าย ห้ามหล่นหาย
+          const un = cutUncodedLines({ prodId: prod.id, cutInput: ci });
+          if (un?.length) opt.consumLines = [...(opt.consumLines ?? prod.consum ?? []), ...un];
+          // หลังคาหลายด้าน: ส่งพื้นที่เสมอแม้เป็น 0 — ไม่งั้นตกไปใช้ กว้าง×สูง ที่ค้างในช่องที่ซ่อนไป
+          if (ar > 0 || prod.multiSide) opt.areaOverride = ar;
         }
       }
       // อุปกรณ์จากใบตัด (รุ่นที่เปิดแล้ว) → engine ใช้แทนรายการเดิม + คิดราคาจากรหัสสโตร์

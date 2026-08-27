@@ -193,6 +193,20 @@ export function cutInputFromRecipe(recipe: any, opts?: { rawCompare?: boolean })
       } };
       break;
     }
+    // บานเลื่อนรางบน (Hafele) — คิดราคาไม่มี BOM ของตัวเองเลย (alu 0 บรรทัด) ของทั้งชุดดึงจากใบตัด
+    case "topslide": {
+      if (!opts?.rawCompare) { m = null; break; }   // ⏳ ยังไม่เปิดใช้กับงานจริง (รอ JR00558 ตั้งราคา)
+      const sp = (recipe.spec ?? {}) as Record<string, unknown>;
+      m = { spec_id: "toprail_frame", input: {
+        W, H, N,
+        sys: sp.sys === "ยูโร" ? "ยูโร" : "SMS",
+        sashMode: sp.sashmode === "ลากจูง" ? "ลากจูง" : sp.sashmode === "เปิดคู่กลาง" ? "เปิดคู่กลาง" : "อิสระ",
+        fit: sp.fit === "แปะนอกชนผนัง" ? "แปะนอกชนผนัง" : sp.fit === "แปะนอกไปต่อ" ? "แปะนอกไปต่อ" : "ยัดในช่อง",
+        handle: sp.handlekind === "เมโทร" ? "เมโทร" : "ฝัง",
+        beam: String(sp.beam ?? "2×4"),
+      } };
+      break;
+    }
     // ── หลังคาหลายด้าน 3 ทรง — ช่องกรอกรายด้านอยู่ใน spec ส่งต่อเข้าใบตัดตรง ๆ ──
     //   คิดราคาไม่มี BOM ของตัวเอง (เส้นอลูมาจากเอนจินใบตัด — ดู calculator40/alu-from-cutlist.ts)
     case "roof_multi":

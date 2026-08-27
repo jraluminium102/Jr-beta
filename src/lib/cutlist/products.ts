@@ -2028,7 +2028,7 @@ export const TOPRAIL_FRAME: CutSpec = {
         const cross = trSMS(o) ? ctx.len("ขวางบน/ล่าง B20054 (SMS·นอน)") : ctx.len("เสากุญแจยูโร (นอน 45°)");
         return Math.round((4 * (post + cross) * trSlide(o) + 2 * o.H) / 100 * 10) / 10;
       } },
-    { name: "ไกด์ดำ", qty: (o) => (o.sashMode === "ลากจูง" ? 1 : 2), unit: "ตัว", noStock: true, note: "เปิดคู่กลาง/อิสระ 2 · ลากจูง 1 (ไฟล์ไม่มี SKU)" },
+    { name: "ไกด์ดำ", sku: "JR00558", qty: (o) => (o.sashMode === "ลากจูง" ? 1 : 2), unit: "ตัว", note: "เปิดคู่กลาง/อิสระ 2 · ลากจูง 1 · สโตร์ JR00558 ไกด์รางแขวน-ดำ (ไฟล์ตัดไม่ได้ใส่รหัสไว้)" },
   ],
 };
 

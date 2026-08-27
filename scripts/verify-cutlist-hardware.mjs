@@ -467,7 +467,8 @@ function check(label, res, want) {
   const tow = computeCutList(spec, { ...spec.defaults, sashMode: "ลากจูง" }, 1);
   const gFree = free.hardware.find((h) => h.name.includes("ไกด์ดำ"));
   const gTow = tow.hardware.find((h) => h.name.includes("ไกด์ดำ"));
-  if (!gFree || gFree.qty !== 2 || !gFree.noStock) { fails++; console.log(`  ✗ ไกด์ดำ (อิสระ) want qty=2 noStock got ${JSON.stringify(gFree)}`); } else console.log("  ✓ ไกด์ดำ อิสระ qty=2 noStock=true");
+  // ผูกรหัส JR00558 (ไกด์รางแขวน-ดำ) แล้ว 27 ส.ค.69 — ไม่ใช่ noStock อีกต่อไป (ไฟล์ตัดไม่ได้ใส่รหัสไว้ แต่สโตร์มี)
+  if (!gFree || gFree.qty !== 2 || gFree.sku !== "JR00558") { fails++; console.log(`  ✗ ไกด์ดำ (อิสระ) want qty=2 sku=JR00558 got ${JSON.stringify(gFree)}`); } else console.log("  ✓ ไกด์ดำ อิสระ qty=2 · ผูก JR00558");
   if (!gTow || gTow.qty !== 1) { fails++; console.log(`  ✗ ไกด์ดำ (ลากจูง) want qty=1 got ${JSON.stringify(gTow)}`); } else console.log("  ✓ ไกด์ดำ ลากจูง qty=1");
 }
 
