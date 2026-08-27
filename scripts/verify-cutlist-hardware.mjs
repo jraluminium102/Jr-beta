@@ -640,9 +640,10 @@ function check(label, res, want) {
   }
 
   // ⑥ เหล็ก + ฝาครอบ ด้าน 1 — ฉาก/แซด ยาว=B(กว้างดิบ 400) จำนวน=⌈400/600⌉=1 · กล่องเหล็ก/ครอบเพลท ยาว=E(153.0)/÷3 จำนวน=จันทันรวม(5)
-  const angle1 = rowAt("ฉาก 6 หุน ด้าน 1 (เหล็ก)");
+  // ฉาก/แซด ตัดคำว่า (เหล็ก) ออกแล้ว — เป็นอลูมิเนียม มีรหัสสโตร์ (เจ้าของท้วง 27 ส.ค.69)
+  const angle1 = rowAt("ฉาก 6 หุน ด้าน 1");
   if (!angle1 || angle1.qty !== 1 || Math.abs(angle1.len - 400) > 0.05) { fails++; console.log(`  ✗ ฉาก6หุน ด้าน1 ต้อง len=400 qty=1 got ${JSON.stringify(angle1)}`); } else console.log("  ✓ ฉาก 6 หุน ด้าน1 len=400(กว้างดิบ) qty=1");
-  const zed1 = rowAt('แซด 4" ด้าน 1 (เหล็ก)');
+  const zed1 = rowAt('แซด 4" ด้าน 1');
   if (!zed1 || zed1.qty !== 1 || Math.abs(zed1.len - 400) > 0.05) { fails++; console.log(`  ✗ แซด4" ด้าน1 ต้อง len=400 qty=1 got ${JSON.stringify(zed1)}`); } else console.log('  ✓ แซด 4" ด้าน1 len=400 qty=1');
   const steelBox1 = rowAt("กล่องเหล็ก 1×1 ด้าน 1");
   if (!steelBox1 || steelBox1.qty !== 5 || Math.abs(steelBox1.len - 153.0) > 0.05) { fails++; console.log(`  ✗ กล่องเหล็ก1×1 ด้าน1 ต้อง len=153.0 qty=5 got ${JSON.stringify(steelBox1)}`); } else console.log("  ✓ กล่องเหล็ก 1×1 ด้าน1 len=153.0(=E) qty=5(จันทันรวม)");

@@ -968,6 +968,12 @@ export const FUJI_HUNG: CutSpec = {
 // ═══════════════════════ ประตู 4 รุ่น (ไฟล์เป็น ซม. อยู่แล้ว — ไม่ต้อง ÷10) ═══════════════════════
 // รหัสกล่องอลู → ชื่อในสต็อก "หมวดอลูมิเนียม" รูปแบบ: กล่อง 2"x4" (แยกต่อสี · เลือกสีที่ dropdown สีอลู)
 // ⚠ ห้ามใช้รหัสหลวมอย่าง "2x4" — หมวด "อุปกรณ์" มีกล่องไฟฟ้า (กล่องลอย-2x4/กล่องกันนํ้า-2x4) จะหักผิดของ
+// ฉาก 6 หุน / แซด 4" = อลูมิเนียม ไม่ใช่เหล็ก (เจ้าของยืนยัน 27 ส.ค.69) — ผูกสโตร์ด้วยชื่อเหมือนกล่อง
+//   สโตร์ตั้งชื่อ "ฉาก 6 หุน-<สี>" ครบทุกสีแล้ว (JR01893-01901)
+//   ⚠ "แซด 4"" ยังไม่มีในสโตร์ — ตั้งชื่อ "ตัวZ 4"-<สี>" เมื่อไร ระบบผูกให้เอง (box-link รองรับชนิด ตัวZ แล้ว)
+const ANGLE_6 = 'ฉาก 6 หุน';
+const ZBAR_4 = 'แซด 4"';
+
 const boxCode = (size: string) => {
   const [a, b] = String(size).split(/[×xX*]/).map((s) => s.trim());
   return b ? `กล่อง ${a}"x${b}"` : `กล่อง ${a}`;
@@ -1309,12 +1315,12 @@ export const AWNING: CutSpec = {
     { name: "จันทันรัดรอบ (ยื่น ข้าง)", code: boxCode("1.6×4"), len: (o) => aRake(o) - aEndSide(o), qty: () => 2 },
     { name: "จันทันซอย 1.6×4", code: boxCode("1.6×4"), len: (o) => aRake(o) - aEndJack(o), qty: aNr },
     { name: "แป (ยัดในช่อง)", code: (o) => boxCode(o.purlin === "แปเดี่ยว" ? "1.6×1.6" : "1×1.5"), len: (o) => (o.W - aNr(o) * 4.5) / aBays(o), qty: (o) => aBays(o) * aNp(o) * dblP(o), note: "แปเดี่ยว=กล่อง1.6×1.6 · แปคู่=กล่อง1×1½" },
-    { name: "ฉาก 6 หุน (เหล็ก)", code: "-", len: (o) => o.W, qty: (o) => ceil(o.W / 600), note: "⚠ ไฟล์: ยาว=W แต่จำนวน=⌈W/600⌉" },
-    { name: 'แซด 4" (เหล็ก)', code: "-", len: (o) => o.W, qty: (o) => ceil(o.W / 600) },
+    { name: "ฉาก 6 หุน", code: ANGLE_6, len: (o) => o.W, qty: (o) => ceil(o.W / 600), note: "⚠ ไฟล์: ยาว=W แต่จำนวน=⌈W/600⌉" },
+    { name: 'แซด 4"', code: ZBAR_4, len: (o) => o.W, qty: (o) => ceil(o.W / 600) },
     { name: "เพลทเหล็ก", code: "-", len: () => 0, qty: (o) => 2 * aNr(o), note: "2/จันทัน · ไม่มีความยาว" },
     { name: "กล่องครอบเพลท 1.6×4", code: boxCode("1.6×4"), len: (o) => aRake(o) * 0.25, qty: aNr, note: "25% ของยื่นเอียง · ⏳ ไฟล์ยังไม่ใส่ค่าหักเพิ่ม (F44=0)" },
-    { name: "รัดรอบ (หน้า)", code: "-", len: (o) => (aOut(o) ? 0 : o.W + (o.roofEnd === "ปิดปลาย" ? 1 : 5.4)), qty: (o) => (aOut(o) ? 0 : 1) },
-    { name: "รัดรอบ (ข้าง)", code: "-", len: (o) => (aOut(o) ? 0 : aRake(o) + (o.roofEnd === "ปิดปลาย" ? 0.5 : 2.7)), qty: (o) => (aOut(o) ? 0 : 2) },
+    { name: "รัดรอบ (หน้า)", code: boxCode("1×1.5"), len: (o) => (aOut(o) ? 0 : o.W + (o.roofEnd === "ปิดปลาย" ? 1 : 5.4)), qty: (o) => (aOut(o) ? 0 : 1) },
+    { name: "รัดรอบ (ข้าง)", code: boxCode("1×1.5"), len: (o) => (aOut(o) ? 0 : aRake(o) + (o.roofEnd === "ปิดปลาย" ? 0.5 : 2.7)), qty: (o) => (aOut(o) ? 0 : 2) },
     { name: "รางน้ำอลู", code: "-", len: (o) => o.W, qty: (o) => (o.roofEnd === "รางน้ำ" ? ceil(o.W / 600) : 0) },
     { name: "แผ่นหลังคา", code: "-", len: aRake, qty: (o) => ceil(o.W / sW(o)) },
   ],
@@ -1742,11 +1748,11 @@ export const AWNING_MULTI: CutSpec = {
     })),
     // ⑥ เหล็ก + ฝาครอบ ต่อด้าน — เฉพาะกันสาด (ไม่มีใน GLASSHOUSE_MULTI)
     ...MH_SIDE_NUMS.map((i) => ({
-      name: `ฉาก 6 หุน ด้าน ${i} (เหล็ก)`, code: "-",
+      name: `ฉาก 6 หุน ด้าน ${i}`, code: ANGLE_6,
       len: (o: CutInput) => mhW(o, i), qty: (o: CutInput) => (mhActive(o, i) ? ceil(mhW(o, i) / 600) : 0),
     })),
     ...MH_SIDE_NUMS.map((i) => ({
-      name: `แซด 4" ด้าน ${i} (เหล็ก)`, code: "-",
+      name: `แซด 4" ด้าน ${i}`, code: ZBAR_4,
       len: (o: CutInput) => mhW(o, i), qty: (o: CutInput) => (mhActive(o, i) ? ceil(mhW(o, i) / 600) : 0),
     })),
     ...MH_SIDE_NUMS.map((i) => ({

@@ -1310,13 +1310,18 @@ export const PRODUCTS = {
       { box: 'กล่อง|1.6X1.6', code: 'กล่อง 1.6"x1.6"', name: 'แป (ยัดในช่อง) — เดี่ยว', price: 770, kg: 0, seg: '((Wc-E2*4.5)/BAYS)/100', count: "spec.batten==='แปคู่' ? 0 : BAYS*NP" },
       { box: 'กล่อง|1X1.5', code: 'กล่อง 1"x1.5"', name: 'แป (ยัดในช่อง) — คู่', price: 393, kg: 0, seg: '((Wc-E2*4.5)/BAYS)/100', count: "spec.batten==='แปคู่' ? BAYS*NP*2 : 0" },
       { box: 'กล่อง|1.6X4', code: 'กล่อง 1.6"x4"', name: 'กล่องครอบเพลท 1.6×4', price: 1220, kg: 0, seg: '(RAKE*0.25)/100', count: 'E2' },
+      // ⚠ 3 ตัวนี้เป็นอลูมิเนียม ไม่ใช่เหล็ก และมีรหัสในสโตร์ (เจ้าของท้วง 27 ส.ค.69)
+      //   เดิมกองอยู่ใน consum ไม่มีรหัส → หน้าเทียบขึ้น "ไม่มีรหัส" · หักสต็อกไม่ได้ · ไม่ขึ้นค่าอบสี
+      { box: 'ฉาก|6หุน', code: 'ฉาก 6 หุน', name: 'ฉาก 6 หุน', price: 140, kg: 0, seg: 'Wc/100', count: 'nChak' },
+      { box: 'ตัวZ|4', code: 'แซด 4"', name: 'แซด 4"', price: 140, kg: 0, seg: 'Wc/100', count: 'nZ' },
+      // รัดรอบแยก หน้า/ข้าง ตามใบตัด (เดิมรวมเป็นบรรทัดเดียวแล้วหารเส้น → เทียบชิ้นกับใบตัดไม่ได้)
+      { box: 'กล่อง|1X1.5', code: 'กล่อง 1"x1.5"', name: 'รัดรอบ (หน้า)', price: 393, kg: 0, seg: '(Wc+5.4)/100', count: '1' },
+      { box: 'กล่อง|1X1.5', code: 'กล่อง 1"x1.5"', name: 'รัดรอบ (ข้าง)', price: 393, kg: 0, seg: '(RAKE+2.7)/100', count: '2' },
     ],
     glass: null,
     hardware: [],
     consum: [
-      // เหล็ก/รัดรอบ/รางน้ำ — ยังไม่มีรหัสในสโตร์ (ใบตัดก็เขียน "-") ราคาอยู่ในสูตร
-      { box: 'ฉาก|6หุน', name: 'ฉาก 6 หุน (เหล็ก)', price: 'CF*140', unit: 'เส้น', count: 'nChak' },
-      { name: 'แซด 4" (เหล็ก)', price: 'CF*140', unit: 'เส้น', count: 'nZ' },
+      // เหล็กจริง ๆ เหลือ 2 ตัวนี้ (ยังไม่มีรหัสในสโตร์ · ใบตัดก็เขียน "-") ราคาอยู่ในสูตร
       // เจ้าของเคาะ 27 ส.ค.69 "เก็บไว้" — ใบตัดเขียน "ยกเลิก (ไม่ใช้)" แต่ของจริงยังใช้
       { name: 'กล่องเหล็ก 1"×1"', price: 110, ref: 'STEEL.box1', unit: 'เส้น', count: 'nSteel' },
       { name: 'เพลทเหล็ก', price: 15, ref: 'STEEL.plate', unit: 'แผ่น', count: 'nPlate' },
@@ -1348,8 +1353,7 @@ export const PRODUCTS = {
       rm('เมทัล 2" เหล็ก-PU', 'แผ่นเมทัลชีท 2" เหล็ก (PU)', "material==='เมทัล 2\" เหล็ก-PU'?area:0"),
       rm('กระจก 4+4', 'กระจกลามิเนต 4+4', "material==='กระจก 4+4'?area:0"),
       rm('กระจก 5+5', 'กระจกลามิเนต 5+5', "material==='กระจก 5+5'?area:0"),
-      // รัดรอบ 3 ด้าน (ใบตัดข้อ 10-11) — หน้า W+5.4 · ข้าง (ยื่นเอียง+2.7)×2 · ปลายหลังคา = รางน้ำ
-      { box: 'กล่อง|1X1.5', name: 'กล่องรัดรอบ 1×1½', price: 'CF*393', unit: 'เส้น', count: 'Math.ceil(((Wc+5.4) + 2*(RAKE+2.7))/600)' },
+
     ],
     note: 'วัสดุมุงครบ (ตรงสูตรชีตหลัก) · ระยะจันทันต่างตามวัสดุ (โพลีตัน 122/ชินโคร์ 138/อื่นๆ 100) · ⚠️ ชินโคร์ Nature/Shade/Prime/Grand = ทุน R4.0/ตร.ม. รอกรอก Excel (BOM โชว์ "รอราคาทุน") · ปลายหลังคา/รางน้ำ/แปคู่ ยังไม่ทำ',
   },
@@ -1414,8 +1418,9 @@ export const PRODUCTS = {
     hardware: [],
     consum: [
       // เหล็ก/รางน้ำ — ใบตัดจั่วไม่ได้ลิสต์เหล็กไว้ แต่ของจริงใช้ (ชุดเดียวกับกันสาด) เก็บไว้ ราคาอยู่ในสูตร
-      { box: 'ฉาก|6หุน', name: 'ฉาก 6 หุน (2 ชายคา · เหล็ก)', price: 'CF*140', unit: 'เส้น', count: '2*nDeepBars' },
-      { name: 'แซด 4" (2 ชายคา · เหล็ก)', price: 'CF*140', unit: 'เส้น', count: '2*nDeepBars' },
+      // ฉาก/แซด = อลูมิเนียม (เจ้าของท้วง 27 ส.ค.69) · ใบตัดจั่วไม่มีแถวนี้ให้เทียบ จึงคงอยู่ใน consum แต่ผูกราคาสโตร์ผ่าน box
+      { box: 'ฉาก|6หุน', name: 'ฉาก 6 หุน (2 ชายคา)', price: 'CF*140', unit: 'เส้น', count: '2*nDeepBars' },
+      { box: 'ตัวZ|4', name: 'แซด 4" (2 ชายคา)', price: 'CF*140', unit: 'เส้น', count: '2*nDeepBars' },
       { name: 'กล่องเหล็ก 1"×1"', price: 110, ref: 'STEEL.box1', unit: 'เส้น', count: '2*E3*nRafterBars' },
       { name: 'เพลทเหล็ก', price: 15, ref: 'STEEL.plate', unit: 'แผ่น', count: '4*E3' },
       { name: 'รางน้ำอลู', price: 'CF*393', unit: 'เส้น', count: "spec.roofend==='ปล่อยปลาย'?0:2*Math.ceil(Dc/600)" },
@@ -1487,7 +1492,7 @@ export const PRODUCTS = {
       { name: 'จันทัน 1.6×4 (ติดตาย)', price: 'CF*1220', unit: 'เส้น', count: 'fJ*Math.ceil(Hcm/600)' },
       { name: 'แป กล่อง (ติดตาย)', price: 'CF*BATP', unit: 'เส้น', count: '(Math.ceil(Hcm/50)+1)*Math.ceil(Wcm/600)' },
       { box: 'ฉาก|6หุน', name: 'ฉาก 6 หุน (ติดตาย)', price: 'CF*140', unit: 'เส้น', count: 'Math.ceil(Wcm/600)' },
-      { name: 'แซด 4" (ติดตาย)', price: 'CF*140', unit: 'เส้น', count: 'Math.ceil(Wcm/600)' },
+      { box: 'ตัวZ|4', name: 'แซด 4" (ติดตาย)', price: 'CF*140', unit: 'เส้น', count: 'Math.ceil(Wcm/600)' },
       { name: 'กล่องเหล็ก 1×1 (ติดตาย)', price: 110, ref: 'STEEL.box1', unit: 'เส้น', count: 'fJ*Math.ceil(Hcm/600)' },
       { name: 'เพลทเหล็ก (ติดตาย)', price: 15, ref: 'STEEL.plate', unit: 'แผ่น', count: '2*fJ' },
       // แผ่นมุงส่วนติดตาย ตามวัสดุ (ชีต H7/H8 · B6=Wcm C6=Hcm) · ไวนิล=anchor
@@ -1504,7 +1509,7 @@ export const PRODUCTS = {
       { name: 'จันทัน 1.6×4 (เลื่อน)', price: 'CF*1220', unit: 'เส้น', count: 'P*(sJ*Math.ceil(SH/600))' },
       { name: 'แป กล่อง (เลื่อน)', price: 'CF*BATP', unit: 'เส้น', count: 'P*((Math.ceil(SH/50)+1)*Math.ceil(SW/600))' },
       { box: 'ฉาก|6หุน', name: 'ฉาก 6 หุน (เลื่อน)', price: 'CF*140', unit: 'เส้น', count: 'P*Math.ceil(SW/600)' },
-      { name: 'แซด 4" (เลื่อน)', price: 'CF*140', unit: 'เส้น', count: 'P*Math.ceil(SW/600)' },
+      { box: 'ตัวZ|4', name: 'แซด 4" (เลื่อน)', price: 'CF*140', unit: 'เส้น', count: 'P*Math.ceil(SW/600)' },
       { name: 'กล่องเหล็ก 1×1 (เลื่อน)', price: 110, ref: 'STEEL.box1', unit: 'เส้น', count: 'P*(sJ*Math.ceil(SH/600))' },
       { name: 'เพลทเหล็ก (เลื่อน)', price: 15, ref: 'STEEL.plate', unit: 'แผ่น', count: 'P*(2*sJ)' },
       // แผ่นมุงส่วนเลื่อน ตามวัสดุ ×P บาน (ชีต J7/J8 · B7=SW=150 C7=SH=150 · J6=3) · ไวนิล=anchor
