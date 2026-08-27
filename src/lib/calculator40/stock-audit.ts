@@ -76,7 +76,7 @@ export function auditStockLink(stock: AuditStockRow[], PB: any): AuditRow[] {
 
   const byKey = (
     section: string, usedBy: string, item: string, key: string, kind: "sku" | "ชื่อ",
-    formulaPrice: number | null, extraNote = "",
+    formulaPrice: number | null, extraNote = "", per = 1,
   ) => {
     if (!key || key === "-") {
       push({ section, usedBy, item, key: "", keyKind: "-", formulaPrice, status: "no_key",
@@ -89,12 +89,16 @@ export function auditStockLink(stock: AuditStockRow[], PB: any): AuditRow[] {
         note: extraNote || "ไม่มีสินค้านี้ในสโตร์ → ใช้ราคาที่ฝังในสูตร" });
       return;
     }
-    const cost = pickCost(list);
+    // per = สโตร์ขายเป็นแพ็ค (เช่น มือจับ Align ขาย 2 ตัว/ชุด) — เอนจินหาร per ก่อนใช้
+    //   ถ้าไม่หารตาม จะขึ้น "ราคาไม่ตรง" ทั้งที่ตรง แล้วไปกลบตัวที่ต่างจริง
+    const rawCost = pickCost(list);
+    const cost = per && per !== 1 ? Math.round((rawCost / per) * 100) / 100 : rawCost;
     const colors = new Set(list.map((r) => norm(r.color) || "-"));
     const hasWhite = list.some(isWhite);
     const notes: string[] = [];
     if (list.length > 1) notes.push(`เจอ ${list.length} แถว (สี: ${[...colors].join(", ")})`);
     if (list.length > 1 && !hasWhite) notes.push("⚠ ไม่มีแถวสีอบขาว → ระบบหยิบราคาต่ำสุดมาใช้");
+    if (per && per !== 1) notes.push("สโตร์ขายเป็นแพ็ค " + rawCost + " ÷ " + per + " = " + cost);
     if (extraNote) notes.push(extraNote);
     let status: AuditStatus = "linked";
     if (cost <= 0) status = "zero";
@@ -147,7 +151,7 @@ export function auditStockLink(stock: AuditStockRow[], PB: any): AuditRow[] {
         if (skus.length) {
           for (const s of skus) {
             byKey("อุปกรณ์/สิ้นเปลือง", p.name || p.id, skus.length > 1 ? `${nm} (${s})` : nm, s, "sku",
-              it.price ?? null, skus.length > 1 ? "สูตรเลือกรหัสตามเงื่อนไข" : "");
+              it.price ?? null, skus.length > 1 ? "สูตรเลือกรหัสตามเงื่อนไข" : "", Number(it.per) || 1);
           }
           continue;
         }
