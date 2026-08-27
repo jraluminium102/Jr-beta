@@ -666,8 +666,13 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
       //   ราง: รางกันน้ำ = ค่ามาตรฐาน ไม่ต้องขึ้น · แต่ "รางเตี้ย (งานใน)" ยังต้องขึ้น (งานในต้องระบุ)
       //   เติมคู่ [key, value] ใหม่ที่นี่ได้เรื่อย ๆ ถ้าเจ้าของสั่งซ่อนค่าอื่น
       if (SKIP_SPEC_DETAIL.some(([k, val]) => k === o.key && val === v)) return;
-      if (o.priced) workLines.push(`- ${o.label}: ${v}`);
-      else specDetailLines.push(`- ${o.label}: ${v}`);
+      // ฟิลด์ "[สลับ]" ใช้เฉพาะระแนงสลับ — ไม่ใช่ระแนงผสมแล้วยังพิมพ์ลงใบ = ลูกค้าอ่านแล้วงง (และสูตรก็ไม่ได้คิดเงินให้)
+      const isAlt = typeof o.label === "string" && o.label.startsWith("[สลับ]");
+      if (isAlt && spec.gslat !== "ระแนงสลับ") return;
+      const lb = String(o.label).replace(/^\[สลับ\]\s*/, "");   // ป้าย [สลับ] เป็นของหลังบ้าน ไม่ต้องพิมพ์ให้ลูกค้าเห็น
+      const vt = o.labels?.[v] ?? v;                            // โชว์หน่วยตามที่ตั้งไว้ (กล่อง 1×1.6″ · 1×5 ซม.) ไม่ใช่คีย์ดิบ
+      if (o.priced) workLines.push(`- ${lb}: ${vt}`);
+      else specDetailLines.push(`- ${lb}: ${vt}`);
     });
     // ── "รายละเอียดงาน" (ล่าง · คุณสมบัติวัสดุ/ผิว) ──
     const jobLines = [aluColorLine(color)];

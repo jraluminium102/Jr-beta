@@ -166,5 +166,40 @@ console.log('\n═══ ⑦ ของสั่งตามงาน — หน�
     all.filter((x) => x.status !== "ตรง" && x.status !== "ไม่สต็อก สั่งใหม่").map((x) => `${x.name}:${x.status}`).join(" · "));
 }
 
+// ── ช่อง "[สลับ]" + หน่วยกล่อง (เจ้าของท้วง 27 ส.ค.69 "มั่วมาก") ──
+console.log("\n═══ ⑦ ช่องระแนงสลับ ต้องล็อก + กล่องต้องโชว์หน่วย ═══");
+{
+  const G = PRODUCTS.gate;
+  const ALT_KEYS = ["gboxB", "gfaceB", "gaRun", "gbRun"];
+  ok("ฟิลด์เฉพาะระแนงสลับ ติดป้าย [สลับ] ครบ (หน้าเว็บใช้ป้ายนี้ล็อกช่อง)",
+    ALT_KEYS.every((k) => String(G.specOpts.find((o) => o.key === k)?.label ?? "").startsWith("[สลับ]")),
+    ALT_KEYS.filter((k) => !String(G.specOpts.find((o) => o.key === k)?.label ?? "").startsWith("[สลับ]")).join(","));
+
+  // เลือกกล่อง B ตอนชนิดใบ = ระแนง ต้องไม่กระทบราคา (สูตรต้องเมิน ไม่ใช่แค่ UI ล็อก)
+  const C = (spec) => computeCost(PB, G, { w: 350, h: 180, p: 1, form: "นอน", material: "1.6x4", color: "white", colorKey: "white", spec, addons: {} }).cost.total;
+  ok("ระแนง (ไม่สลับ) → เปลี่ยนกล่อง B ราคาไม่ขยับ",
+    C({ gslat: "ระแนง", gboxB: "1x1" }) === C({ gslat: "ระแนง", gboxB: "1.6x4" }));
+  ok("ระแนงสลับ → เปลี่ยนกล่อง B ราคาต้องขยับ",
+    C({ gslat: "ระแนงสลับ", gboxB: "1x1" }) !== C({ gslat: "ระแนงสลับ", gboxB: "1.6x4" }));
+
+  // หน่วย: นิ้วตามกล่อง ยกเว้น 1×5 ที่เป็นเซนติเมตร — ต้องมีป้ายครบทั้งกล่อง A และ B
+  const bl = G.specOpts.find((o) => o.key === "gboxB")?.labels ?? {};
+  ok("กล่อง A มีป้ายหน่วยครบทุกขนาด", G.materials.every((m) => !!G.materialLabels?.[m]));
+  ok("กล่อง B มีป้ายหน่วยครบทุกขนาด", G.specOpts.find((o) => o.key === "gboxB")?.opts.every((m) => !!bl[m]));
+  ok('กล่องนิ้วโชว์เครื่องหมายนิ้ว (1×1.6″)', /″/.test(G.materialLabels["1x1.6"]) && /″/.test(bl["1x1.6"]));
+  ok("กล่อง 1×5 โชว์เป็น ซม. ไม่ใช่นิ้ว",
+    /ซม\./.test(G.materialLabels["1x5"]) && !/″/.test(G.materialLabels["1x5"]) && /ซม\./.test(bl["1x5"]) && !/″/.test(bl["1x5"]));
+
+  // หน้าเทียบ + ใบเสนอ ต้องใช้ป้ายเดียวกัน ไม่โชว์คีย์ดิบ
+  const cc = fs.readFileSync("src/app/(app)/calculator40/compare/CompareClient.tsx", "utf8");
+  ok("หน้าเทียบส่งป้ายกล่อง A (materialLabels) ไปด้วย", cc.includes("prod.materialLabels"));
+  ok("หน้าเทียบส่งป้าย specOpts (o.labels) ไปด้วย", cc.includes("o.opts ?? [], o.labels"));
+  ok("หน้าเทียบล็อกช่อง [สลับ] เหมือนหน้าคิดราคา", cc.includes('o.label.startsWith("[สลับ]")'));
+  const cl = fs.readFileSync("src/components/Calculator40Client.tsx", "utf8");
+  ok("ใบเสนอพิมพ์ค่าตามป้าย ไม่ใช่คีย์ดิบ", cl.includes("o.labels?.[v] ?? v"));
+  ok("ใบเสนอไม่พิมพ์ช่อง [สลับ] ตอนไม่ใช่ระแนงสลับ", cl.includes('if (isAlt && spec.gslat !== "ระแนงสลับ") return;'));
+  ok("ใบเสนอไม่พิมพ์ป้าย [สลับ] ให้ลูกค้าเห็น", cl.includes('replace(/^\\[สลับ\\]\\s*/, "")'));
+}
+
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);
