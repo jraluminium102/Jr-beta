@@ -730,5 +730,32 @@ console.log("═══ ⑨ เฟี้ยม SMS ↔ ไฟล์ตัดป�
   }
 }
 
+
+// ── ⑩ บรรทัดที่ผูก "กล่อง/ฉาก" (ชนิด+ขนาด) ต้องมีรหัสสโตร์ติดตัว ─────────────────
+//    เจ้าของท้วง 31 ส.ค.69: หลังคาจั่ว ฉาก 6 หุน / แซด 4" / รางน้ำอลู มีรหัสในสโตร์แล้ว
+//    แต่หน้าเทียบใบตัดขึ้นว่า "ยังไม่มีรหัสสโตร์" — เพราะผูกด้วยชนิด+ขนาด ไม่มีรหัสติดบรรทัด
+console.log("");
+console.log("═══ ⑩ box → รหัสสโตร์ (BOXSKU) ═══");
+{
+  const okb = (label, cond, extra = "") => check(label + (cond ? "" : " [" + extra + "]"), cond ? 1 : 0, 1, 0);
+  const stock = [
+    { name: 'ฉาก 6 หุน-อบขาว', sku: "JR02988", color: "อบขาว", unit_cost: 140 },
+    { name: 'ตัวZ 4"-อบขาว', sku: "JR02993", color: "อบขาว", unit_cost: 140 },   // สโตร์ตั้งชื่อ "ตัวZ" (สูตรเรียก "แซด")
+    { name: 'กล่องเปิด 4"-อบขาว', sku: "JR02987", color: "อบขาว", unit_cost: 2273 },
+  ];
+  const ov = buildPriceOverride(stock, PB);
+  okb("เก็บรหัสฉาก 6 หุน", ov.BOXSKU?.["ฉาก|6หุน"]?.["อบขาว"] === "JR02988", JSON.stringify(ov.BOXSKU));
+  okb('เก็บรหัสแซด 4"', ov.BOXSKU?.["ตัวZ|4"]?.["อบขาว"] === "JR02993", "");
+  const PB4 = applyPriceOverride(JSON.parse(JSON.stringify(PB)), ov);
+  const r = computeCost(PB4, PRODUCTS.roof_gable, { w: 400, h: 300, p: 1, form: "จั่ว", material: "ไวนิล", stockColor: "อบขาว" });
+  const pick = (re) => r.lines.find((l) => re.test(l.name));
+  const chak = pick(/^ฉาก 6 หุน/), zed = pick(/^แซด 4/), gut = pick(/^รางน้ำอลู/);
+  okb("หลังคาจั่ว: ฉาก 6 หุน มีรหัส JR02988", chak?.sku === "JR02988", JSON.stringify(chak));
+  okb('หลังคาจั่ว: แซด 4" มีรหัส JR02993', zed?.sku === "JR02993", JSON.stringify(zed));
+  okb("หลังคาจั่ว: รางน้ำอลู มีรหัส JR02987", gut?.sku === "JR02987", JSON.stringify(gut));
+  const base = computeCost(PB, PRODUCTS.roof_gable, { w: 400, h: 300, p: 1, form: "จั่ว", material: "ไวนิล" });
+  check("ติดรหัสแล้วทุนไม่ขยับ", r.cost.total, base.cost.total, 1);
+}
+
 console.log(`\n═══ สรุป: ✅ ${pass} anchor ผ่าน · ❌ ${fail} ไม่ผ่าน · ② sweep ${sweepPass} รุ่นดี/${sweepFail} พัง ═══`);
 process.exit((fail + sweepFail) > 0 ? 1 : 0);

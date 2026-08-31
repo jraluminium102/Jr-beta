@@ -160,6 +160,16 @@ export function computeCost(PB, prod, opt) {
     // ไม่มีรหัสในสูตร แต่ผูกตารางราคากลางไว้ → ใช้รหัสสโตร์ของตารางนั้น (PB.REFSKU สร้างจากสโตร์)
     //   ทำให้แผ่นมุง/เหล็ก/มอเตอร์/กระจก มีรหัสติดบรรทัดครบ โดยไม่ต้องไล่ใส่ทีละรุ่น
     if (!it.sku && it.ref && PB.REFSKU && PB.REFSKU[it.ref]) return String(PB.REFSKU[it.ref]).trim().toUpperCase();
+    // ผูกด้วย "ชนิด+ขนาด" (กล่อง/ฉาก/แซด) — ไม่มีรหัสโปรไฟล์ แต่สโตร์มีรหัส JR ของมันอยู่
+    //   ไม่ติดรหัสให้ = หน้าเทียบใบตัดขึ้น "ยังไม่มีรหัสสโตร์" ทั้งที่ผูกราคาอยู่ (เจ้าของท้วง 31 ส.ค.69)
+    if (!it.sku && it.box && PB.BOXSKU) {
+      const bk = boxOf(it);
+      const bt = bk ? PB.BOXSKU[bk] : null;
+      // สีที่เลือกก่อน → มิว/อบขาว → สีไหนก็ได้ (บางกลุ่มใช้รหัสเดียวทุกสี) — หลักเดียวกับ boxPriceOf
+      const bc = String(opt.stockColor || "").replace(/s+/g, "");
+      const bs = bt ? (bt[bc] || bt["มิว"] || bt["อบขาว"] || bt[Object.keys(bt)[0]] || "") : "";
+      if (bs) return String(bs).trim().toUpperCase();
+    }
     if (!it.sku) return '';
     const v = String(it.sku).includes('?') ? val(it.sku) : it.sku;
     return String(v ?? '').trim().toUpperCase();
