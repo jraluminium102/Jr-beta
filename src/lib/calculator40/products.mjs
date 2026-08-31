@@ -1611,6 +1611,26 @@ export const PRODUCTS = {
     note: 'กลาสเฮ้าส์หักมุมรอบบ้าน (หลังคา+เสาในตัว) ได้ถึง 6 ด้าน · เส้นอลูดึงจากใบตัด กลาสเฮ้าส์หลายด้าน',
   },
 
+  // ═══ กลาสเฮ้าส์ (เพิงตรง) — เส้นอลูมาจากเอนจินใบตัดตรง ๆ (alu-from-cutlist) ไม่มี BOM ซ้ำในนี้ ═══
+  //   ใบตัด "JR_กลาสเฮ้าส์.xlsx" มีมานานแล้ว แต่คิดราคา 4.0 มีแต่ทรงหลายด้าน → ตีราคาเพิงตรงไม่ได้ (เจ้าของทัก 28 ส.ค.69)
+  //   กว้าง = W · ยื่น = ยาวทิศลาด (D) · สูงฝั่งสูง/ฝั่งต่ำ กรอกแยก → ความชันคิดจากส่วนต่าง
+  glasshouse: {
+    id: 'glasshouse', group: 3, name: 'กลาสเฮ้าส์ (เพิงตรง)', brand: 'MTONG', laborKey: 'หลังคา', roofShape: true, pickerHide: true,
+    icon: '🏠', defForm: 'กลาสเฮ้าส์', forms: ['กลาสเฮ้าส์'],
+    addons: MULTI_ADDONS,
+    materialLabel: 'วัสดุมุง',
+    materials: MULTI_MATERIALS, defMaterial: 'ไวนิล', sheetColors: MULTI_SHEET_COLORS,
+    defaults: { w: 400, h: 300, p: 1 }, defGlass: null, minP: 1, maxP: 1,
+    specOpts: [
+      { key: 'hiH', label: 'สูงฝั่งสูง ชนบ้าน (ซม.)', type: 'number', def: '270', step: 5 },
+      { key: 'loH', label: 'สูงฝั่งต่ำ หน้า (ซม.)', type: 'number', def: '240', step: 5 },
+    ],
+    stockLen: 6.0,
+    vars: { CF: CF_EXPR },
+    alu: [], glass: null, hardware: [], consum: [],
+    note: 'กลาสเฮ้าส์เพิงตรง (หลังคา+เสาในตัว) · เส้นอลูดึงจากใบตัด JR_กลาสเฮ้าส์ ทุกบรรทัด · ราง(ขอบต่ำ) ใช้ราคารางน้ำอลูเดียวกับหลังคา',
+  },
+
   // ═══ จั่วหลายด้าน — เส้นอลูมาจากเอนจินใบตัดตรง ๆ (alu-from-cutlist) ไม่มี BOM ซ้ำในนี้ ═══
   gable_multi: {
     id: 'gable_multi', group: 3, name: 'จั่วหลายด้าน', brand: 'MTONG', laborKey: 'หลังคาจั่ว', roofShape: true, pickerHide: true, multiSide: 'd',

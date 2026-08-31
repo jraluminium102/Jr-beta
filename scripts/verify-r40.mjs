@@ -8,6 +8,9 @@ import { PRODUCTS } from '../src/lib/calculator40/products.mjs';
 import { aluColorKeysFor, ALU_COLOR_KEYS } from '../src/lib/calculator40/alu-colors.ts';
 import { buildBoxPrices, boxPriceOf } from '../src/lib/calculator40/box-link.ts';
 import { stockColorOfCalc } from '../src/lib/calculator40/stock-link.ts';
+import { ALU_FROM_CUTLIST, cutAluLines, cutRoofConsumLines, multiRoofArea } from '../src/lib/calculator40/alu-from-cutlist.ts';
+import { cutInputFromRecipe } from '../src/lib/cutlist/from-recipe.ts';
+import { RM } from '../src/lib/calculator40/products.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PB = JSON.parse(fs.readFileSync(path.join(__dirname, '../src/lib/calculator40/pricebook.json'), 'utf8'));
@@ -122,6 +125,8 @@ const ANCHORS = [
   { id: 'ceil_ranae_1x5', in: { w: 300, h: 400, p: 1, form: 'มาตรฐาน' }, cost: 17000, costOnly: true },
   { id: 'ceil_ranae_16_5', in: { w: 300, h: 400, p: 1, form: 'มาตรฐาน' }, cost: 13095, costOnly: true },
   { id: 'ceil_ranae_16_2', in: { w: 300, h: 400, p: 1, form: 'มาตรฐาน' }, cost: 21825, costOnly: true },
+  // กลาสเฮ้าส์ (เพิงตรง) — เส้นอลูดึงจากใบตัด JR_กลาสเฮ้าส์ · ต้องส่ง aluLines/consumLines เข้ามา
+  //   จึงตรวจแยกในบล็อก ⑦ ข้างล่าง ไม่ใช่ anchor ปกติ
   // หลังคาจั่ว รื้อใหม่ 27 ส.ค.69 ยึดใบตัด "หลังคาจั่วตรง" — โครงแตกรายท่อนออกรหัสกล่อง (ดู scripts/verify-roof.mjs ⑤)
   //   ต่างจากของเดิม 50,936 อยู่ −1,239 มาจาก 3 จุด
   //     จันทัน       เดิม 2×แนว×⌈เฉียง/6ม.⌉ = 6 เส้น → จัดชิ้นลงเส้นจริง 4 เส้น            −2,440
@@ -601,6 +606,37 @@ console.log("═══ ⑥ ชินโคร์/รางหลังคาเ�
   }
   const rail = (PRODUCTS.roof_slide.consum || []).find((c) => c.name === "ราง (2 ฝั่ง)");
   okb("รางหลังคาเลื่อนผูก ROOFMAT", String(rail?.ref) === "ROOFMAT.รางหลังคาเลื่อน", String(rail?.ref));
+}
+
+
+// ── ⑦ กลาสเฮ้าส์ (เพิงตรง) — รุ่นใหม่ 28 ส.ค.69 · ใบตัดมีมานาน แต่คิดราคา 4.0 ไม่มี ────────
+//    เส้นอลู/แผ่นมุง/ราง ดึงจากเอนจินใบตัด JR_กลาสเฮ้าส์ ตรง ๆ (ตรงกันโดยโครงสร้าง)
+console.log("");
+console.log("═══ ⑦ กลาสเฮ้าส์ (เพิงตรง) ═══");
+{
+  const okb = (label, cond, extra = "") => check(label + (cond ? "" : " [" + extra + "]"), cond ? 1 : 0, 1, 0);
+  const p = PRODUCTS.glasshouse;
+  okb("มีรุ่น glasshouse ในคิดราคา 4.0", !!p, "");
+  okb("ผูกใบตัด glasshouse", ALU_FROM_CUTLIST.glasshouse === "glasshouse", String(ALU_FROM_CUTLIST.glasshouse));
+  const spec = { hiH: "270", loH: "240" };
+  const map = cutInputFromRecipe({ kind: "std", prodId: "glasshouse", w: 400, h: 300, p: 1,
+    form: "กลาสเฮ้าส์", spec, material: "ไวนิล", color: "อบขาว" }, { rawCompare: true });
+  okb("แปลงค่าเข้าใบตัดได้", !!map && map.spec_id === "glasshouse", JSON.stringify(map));
+  const ci = map.input;
+  okb("กว้าง→W · ยื่น→D (ยาวทิศลาด)", ci.W === 400 && ci.D === 300, JSON.stringify(ci));
+  const ar = multiRoofArea("glasshouse", ci);
+  okb("พื้นที่ผัง = กว้าง×ยาวลาด (12 ตร.ม.)", Math.abs(ar - 12) < 0.01, String(ar));
+  const al = cutAluLines({ prodId: "glasshouse", cutInput: ci });
+  okb("ได้เส้นอลูจากใบตัด 6 บรรทัด", (al || []).length === 6, String((al || []).length));
+  const cl = cutRoofConsumLines({ prodId: "glasshouse", cutInput: ci, material: "ไวนิล", rm: RM, planArea: ar }) || [];
+  okb("ราง (ขอบต่ำ) ไม่หาย — คิด 2,273/เส้น", cl.some((x) => /^ราง/.test(x.name) && x.price === 2273),
+    cl.map((x) => x.name + ":" + x.price).join(" · "));
+  okb("รุ่นด้านเดียว ไม่ต่อท้าย (ทุกด้าน)", !cl.some((x) => /ทุกด้าน/.test(x.name)), cl.map((x) => x.name).join(" · "));
+  const r = computeCost(PB, p, { w: 400, h: 300, p: 1, form: "กลาสเฮ้าส์", material: "ไวนิล", spec,
+    aluLines: al, consumLines: cl, areaOverride: ar });
+  check("ทุนรวม 400×300 ไวนิล", r.cost.total, 40803, 1);
+  okb("ค่าแรงไม่เป็นศูนย์ (พื้นที่ส่งเข้าถูก)", (r.labor?.total ?? (r.labor?.make ?? 0) + (r.labor?.install ?? 0)) > 0,
+    JSON.stringify(r.labor));
 }
 
 console.log(`\n═══ สรุป: ✅ ${pass} anchor ผ่าน · ❌ ${fail} ไม่ผ่าน · ② sweep ${sweepPass} รุ่นดี/${sweepFail} พัง ═══`);

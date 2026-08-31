@@ -24,6 +24,7 @@ import { CUT_SPEC_BY_ID } from "../cutlist/products.ts";
 /** รุ่นที่ "เส้นอลู" คิดจากใบตัดแล้ว — เปิดทีละรุ่น */
 export const ALU_FROM_CUTLIST: Record<string, string> = {
   roof_multi: "awning_multi",
+  glasshouse: "glasshouse",
   glasshouse_multi: "glasshouse_multi",
   gable_multi: "gable_multi",
 };
@@ -77,6 +78,8 @@ const cleanRowName = (n: string) =>
 
 /** ต่อท้าย "(ทุกด้าน)" — เว้นแถวที่ใบตัดเขียนว่ารวมทุกด้านมาอยู่แล้ว (เพลทเหล็ก) */
 const allSides = (n: string) => (/ทุกด้าน/.test(n) ? n : `${n} (ทุกด้าน)`);
+/** รุ่นด้านเดียว (กลาสเฮ้าส์เพิงตรง) ไม่ต้องต่อท้าย "(ทุกด้าน)" — มีด้านเดียวอยู่แล้ว อ่านแล้วงง */
+const SINGLE_SIDE = new Set(["glasshouse"]);
 
 export function cutAluLines(inp: CalcAluInput): AluLine[] | null {
   const specId = ALU_FROM_CUTLIST[inp.prodId];
@@ -119,6 +122,9 @@ const NO_CODE_PRICE: { match: RegExp; price: number; unit: string }[] = [
   { match: /^เพลทเหล็ก/, price: 15, unit: "แผ่น" },
   // รางน้ำอลู 2,273/เส้น ตามชีตถอดทุน v9 — เดิมใส่ 393 = ราคากล่อง 1×1½ ที่อยู่บรรทัดข้าง ๆ (คนละของ)
   { match: /^(รางน้ำอลู|ราง\/เชิงชาย)/, price: 2273, unit: "เส้น" },
+  // กลาสเฮ้าส์เพิงตรง — ไฟล์ตัดเขียน "ราง (เท่ากว้าง) · ขอบต่ำ" ไม่ระบุวัสดุ
+  //   = รางน้ำที่ขอบต่ำ ใช้ราคาเดียวกับรางน้ำอลูของหลังคา (2,273/เส้น ชีตถอดทุน v9)
+  { match: /^ราง \(เท่ากว้าง\)/, price: 2273, unit: "เส้น" },
 ];
 
 /**
@@ -209,6 +215,7 @@ export function cutRoofConsumLines(
   // วัสดุที่ใบตัดไม่มีชนิดแผ่นให้ (กระจก) → sheetOfMaterial ตกไปเป็นไวนิล ทั้งที่ไม่ใช่ไวนิลจริง
   const noSheetType = sheetKey !== inp.material;
   const planArea = Number(inp.planArea) || 0;
+  const sideTag = SINGLE_SIDE.has(inp.prodId) ? (n: string) => n : allSides;
   let flatAreaDone = false;   // กระจกคิดพื้นที่รวมครั้งเดียว ไม่ใช่ต่อด้าน
   const out: ConsumLine[] = [];
   const bump = (name: string, price: number, ref: string | undefined, unit: string, count: number) => {
@@ -238,7 +245,7 @@ export function cutRoofConsumLines(
         // ใบตัดออกแถว "แผ่นหลังคา" ด้านละแถว → ต้องลงบรรทัดเดียว ไม่ใช่บวกพื้นที่รวมซ้ำทุกด้าน
         if (planArea > 0 && !flatAreaDone) {
           flatAreaDone = true;
-          bump(allSides(`แผ่น${inp.material}`), price.p, `ROOFMAT.${inp.material}`, price.u, planArea);
+          bump(sideTag(`แผ่น${inp.material}`), price.p, `ROOFMAT.${inp.material}`, price.u, planArea);
         }
         continue;
       }
@@ -248,17 +255,17 @@ export function cutRoofConsumLines(
       const n = price.u === "แผ่น" ? Math.ceil(r.qty / Math.max(1, Math.trunc(SHEET_LEN_CM / r.len)))
         : price.u === "ม." ? (r.qty * r.len) / 100
         : (r.qty * (sheetW / 100) * (r.len / 100));
-      bump(allSides(`แผ่น${inp.material === "ไวนิล" ? "ไวนิล" : inp.material}`), price.p, `ROOFMAT.${inp.material}`, price.u, n);
+      bump(sideTag(`แผ่น${inp.material === "ไวนิล" ? "ไวนิล" : inp.material}`), price.p, `ROOFMAT.${inp.material}`, price.u, n);
       // ฝาครอบไวนิล เดินคู่แผ่นไวนิลเสมอ (เหมือนหลังคาเดี่ยว)
       if (inp.material === "ไวนิล" && inp.rm["ฝาครอบไวนิล"]) {
-        bump("ฝาครอบไวนิล (ทุกด้าน)", inp.rm["ฝาครอบไวนิล"].p, "ROOFMAT.ฝาครอบไวนิล", inp.rm["ฝาครอบไวนิล"].u, r.qty);   // เดินคู่แผ่นไวนิลเสมอ
+        bump(sideTag("ฝาครอบไวนิล"), inp.rm["ฝาครอบไวนิล"].p, "ROOFMAT.ฝาครอบไวนิล", inp.rm["ฝาครอบไวนิล"].u, r.qty);   // เดินคู่แผ่นไวนิลเสมอ
       }
       continue;
     }
     if (/^ฝาครอบ/.test(nm)) continue;   // คิดคู่แผ่นไปแล้วด้านบน ไม่นับซ้ำ
 
     const hit = NO_CODE_PRICE.find((x) => x.match.test(nm));
-    if (hit) bump(allSides(cleanRowName(nm)), hit.price, undefined, hit.unit, r.qty);
+    if (hit) bump(sideTag(cleanRowName(nm)), hit.price, undefined, hit.unit, r.qty);
   }
   return out.length ? out : null;
 }
@@ -266,6 +273,9 @@ export function cutRoofConsumLines(
 /** พื้นที่หลังคารวมทุกด้าน (ตร.ม.) — ใช้คิดค่าแรง/ราคาต่อ ตร.ม. แทน กว้าง×สูง */
 export function multiRoofArea(prodId: string, cutInput: Record<string, unknown>): number {
   const n = (k: string) => Number(cutInput[k]) || 0;
+  // กลาสเฮ้าส์เพิงตรง = ด้านเดียว ไม่มี side1..6 → พื้นที่ผัง = กว้าง × ยาวทิศลาด
+  //   ถ้าไม่ดักไว้จะได้ 0 แล้วค่าแรงหายทั้งก้อน (ค่าแรงหลังคาคิดต่อ ตร.ม.)
+  if (prodId === "glasshouse") return Math.round((n("W") / 100) * (n("D") / 100) * 100) / 100;
   let a = 0;
   for (let i = 1; i <= 6; i++) {
     if (prodId === "gable_multi") {
