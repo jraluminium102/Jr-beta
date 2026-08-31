@@ -10,6 +10,7 @@ import { buildBoxPrices, boxPriceOf } from '../src/lib/calculator40/box-link.ts'
 import { stockColorOfCalc, buildPriceOverride, applyPriceOverride } from '../src/lib/calculator40/stock-link.ts';
 import { ALU_FROM_CUTLIST, cutAluLines, cutRoofConsumLines, multiRoofArea } from '../src/lib/calculator40/alu-from-cutlist.ts';
 import { cutInputFromRecipe } from '../src/lib/cutlist/from-recipe.ts';
+import { CUT_SPEC_BY_ID } from '../src/lib/cutlist/products.ts';
 import { RM } from '../src/lib/calculator40/products.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -687,6 +688,46 @@ console.log("═══ ⑧ ref → รหัสสโตร์ (REFSKU) ══�
   // ราคาต้องไม่เพี้ยน — รหัสมาจากแถวเดียวกับที่ให้ราคาตาราง
   const base = computeCost(PB, PRODUCTS.roof, { w: 400, h: 300, p: 1, form: "เพิง", material: "ไวนิล" });
   check("ใส่รหัสแล้วทุนไม่ขยับ", r.cost.total, base.cost.total, 1);
+}
+
+
+// ── ⑨ เฟี้ยม SMS: รหัสสโตร์ต้องตรงไฟล์ตัดประกอบ JR_เฟี้ยม_SMS_รวม.xlsx (เจ้าของส่งไฟล์ยืนยัน 31 ส.ค.69) ──
+//    ตาราง ⑤ ในไฟล์ (แถว 47-57) — รหัส JR ต่อสี: สูตร IF($F$5="ดำ", <ดำ>, <เงิน>)
+console.log("");
+console.log("═══ ⑨ เฟี้ยม SMS ↔ ไฟล์ตัดประกอบ ═══");
+{
+  const okb = (label, cond, extra = "") => check(label + (cond ? "" : " [" + extra + "]"), cond ? 1 : 0, 1, 0);
+  const spec = CUT_SPEC_BY_ID.sms240_bifold;
+  const hw = spec.hardware || [];
+  // คู่ ดำ/เงิน ตามไฟล์ (D47-D54)
+  const WANT = [
+    ["ชุดบานพับ (ระดับเดียว)", "JR00602", "JR00610"],
+    ["ชุดบานพับ (ต่างระดับ)", "JR00603", "JR00611"],
+    ["ล้อแขวนบานตาย ซ้าย", "JR00604", "JR00612"],
+    ["ล้อแขวนบานตาย ขวา", "JR00605", "JR00613"],
+    ["ล้อแขวนปลาย ซ้าย", "JR00606", "JR00614"],
+    ["ล้อแขวนปลาย ขวา", "JR00607", "JR00615"],
+    ["ล้อแขวนบานกลาง (Meeting)", "JR00608", "JR00616"],
+    ["ล้อแขวนบานกลาง (Inter)", "JR00609", "JR00617"],
+  ];
+  for (const [nm, bk, wh] of WANT) {
+    const it = hw.find((h) => h.name === nm);
+    const gb = it && typeof it.sku === "function" ? it.sku({ hwColor: "ดำ" }) : null;
+    const gw = it && typeof it.sku === "function" ? it.sku({ hwColor: "อบขาว" }) : null;
+    okb(`${nm} = ${bk}/${wh}`, gb === bk && gw === wh, gb + "/" + gw);
+  }
+  const tb = hw.find((h) => /Twin Bolt/.test(String(h.name)));
+  okb("ชุดสลักล็อค (05-014) = JR00563 ตามไฟล์", tb?.sku === "JR00563", String(tb?.sku));
+  const rb1 = hw.find((h) => /^ยางเฟรม/.test(String(h.name)));
+  const rb2 = hw.find((h) => /^ยางกรอบบาน/.test(String(h.name)));
+  okb("ยางเฟรม = JR00804", rb1?.sku === "JR00804", String(rb1?.sku));
+  okb("ยางกรอบบาน = JR00805", rb2?.sku === "JR00805", String(rb2?.sku));
+  // โปรไฟล์ตามไฟล์ (แถว 14-25)
+  const P = { "เฟรมบน": "B24001", "บังใบบน": "B24002", "เฟรมล่าง": "B24003", "ตัวตับธรณี": "B24004" };
+  for (const [nm, code] of Object.entries(P)) {
+    const it = (spec.profiles || []).find((x) => x.name === nm);
+    okb(`${nm} = ${code}`, it?.code === code, String(it?.code));
+  }
 }
 
 console.log(`\n═══ สรุป: ✅ ${pass} anchor ผ่าน · ❌ ${fail} ไม่ผ่าน · ② sweep ${sweepPass} รุ่นดี/${sweepFail} พัง ═══`);
