@@ -8,7 +8,7 @@
 //     รหัสเดียวหลายแถว(แยกสี) → ใช้ราคาแถว "อบขาว" (ค่าสีคิดเป็นค่าอบ/กก. ใน engine อยู่แล้ว) · ไม่มีอบขาว = สูงสุด
 import PRICEBOOK from "./pricebook.json" with { type: "json" };
 import { PRODUCTS } from "./products.mjs";
-import { buildBoxPrices, type BoxPrices } from "./box-link.ts";
+import { buildBoxPrices, buildBoxSkus, type BoxPrices } from "./box-link.ts";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const PB: any = PRICEBOOK;
@@ -84,6 +84,8 @@ export type PriceOverride = {
   //   เก็บรหัสไว้ตรงนี้ตอนจับคู่ชื่อ → ได้รหัสครบทุกบรรทัดพร้อมกันทั้งระบบ ไม่ต้องไล่ใส่ทีละรุ่น
   //   ⚠ เก็บแม้ราคา 0 (ชินโคร์ Nature ฯลฯ) — รหัสมีจริง แค่ยังไม่ตั้งราคา
   REFSKU: Record<string, string>;
+  /** รหัสสโตร์ของกล่อง/ฉาก (ชนิด|ขนาด → สี → รหัส) — ให้บรรทัดที่ผูก box มีรหัสติดตัว */
+  BOXSKU: Record<string, Record<string, string>>;
   // กล่อง/ฉาก อลูเมืองทอง — ไม่มีรหัสโปรไฟล์ ผูกด้วย "ชนิด+ขนาด" แล้วแยกราคาตามสี
   BOXPRICE: BoxPrices;
 };
@@ -110,9 +112,10 @@ function rowColor(r: StockRow): string {
 
 // สร้าง "ผังราคาทับ" จากแถว stock (เทียบกับ pricebook pb) — เฉพาะราคา > 0 (กันวัสดุยังไม่ตั้งราคา = 0 ไปล้างราคาสูตร)
 export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverride {
-  const ov: PriceOverride = { GLASS: {}, ROOFMAT: {}, MOTOR: {}, STEEL: {}, EXTRA: {}, ALU: {}, PARTS: {}, ALUCODE: {}, ALUCOLOR_STOCK: {}, SKUPRICE: {}, BOXPRICE: {}, REFSKU: {} };
+  const ov: PriceOverride = { GLASS: {}, ROOFMAT: {}, MOTOR: {}, STEEL: {}, EXTRA: {}, ALU: {}, PARTS: {}, ALUCODE: {}, ALUCOLOR_STOCK: {}, SKUPRICE: {}, BOXPRICE: {}, REFSKU: {}, BOXSKU: {} };
   // กล่อง/ฉาก: จับคู่ด้วยชื่อ+ขนาด (สโตร์ตั้งชื่อลงตัว เช่น `กล่อง 4"x6"-Aztec gray`)
   ov.BOXPRICE = buildBoxPrices(rows as any);
+  ov.BOXSKU = buildBoxSkus(rows as any);
   const aluByBrand: Record<string, number> = {};
   // อลูรายเส้น: รหัสเดียวมีหลายแถว (แยกสี) → ราคาตัวตั้ง = แถว "อบขาว" ก่อน (ราคาฐานดิบ — ค่าสีคิดแยกใน engine เป็นค่าอบ/กก.)
   // ไม่มีอบขาว = ค่าต่ำสุด (ผลตรวจบัญชี: ถ้าใช้ max จะหยิบแถวสีพิเศษที่รวมค่าเคลือบแล้ว → engine บวกค่าอบซ้ำ = คิดเกิน)
@@ -192,6 +195,10 @@ export function applyPriceOverride(pb: any, ov?: PriceOverride | null): any {
   }
   if (ov.SKUPRICE && Object.keys(ov.SKUPRICE).length) pb.SKUPRICE = { ...(pb.SKUPRICE || {}), ...ov.SKUPRICE };
   if (ov.REFSKU && Object.keys(ov.REFSKU).length) pb.REFSKU = { ...(pb.REFSKU || {}), ...ov.REFSKU };
+  if (ov.BOXSKU && Object.keys(ov.BOXSKU).length) {
+    pb.BOXSKU = pb.BOXSKU || {};
+    for (const k in ov.BOXSKU) pb.BOXSKU[k] = { ...(pb.BOXSKU[k] || {}), ...ov.BOXSKU[k] };
+  }
   if (ov.BOXPRICE && Object.keys(ov.BOXPRICE).length) {
     pb.BOXPRICE = pb.BOXPRICE || {};
     for (const k in ov.BOXPRICE) pb.BOXPRICE[k] = { ...(pb.BOXPRICE[k] || {}), ...ov.BOXPRICE[k] };

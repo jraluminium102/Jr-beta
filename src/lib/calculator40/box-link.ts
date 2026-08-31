@@ -70,6 +70,40 @@ export type BoxStockRow = { name?: string | null; color?: string | null; unit_co
 export type BoxPrices = Record<string, Record<string, number>>;
 
 /** รวมราคากล่อง/ฉาก จากสโตร์ — เอาเฉพาะที่ตั้งราคาแล้ว (ราคา 0 = ยังไม่ตั้ง ข้ามไป) */
+/**
+ * รหัสสโตร์ของกล่อง/ฉาก แยกตามสี — BOXSKU["ฉาก|6หุน"]["อบขาว"] = "JR02988"
+ * ของพวกนี้ผูกด้วย "ชนิด+ขนาด" ไม่ใช่รหัสโปรไฟล์ → บรรทัดในสูตรเลยไม่มีรหัสติดตัว
+ *   หน้าเทียบใบตัดขึ้น "ยังไม่มีรหัสสโตร์" ทั้งที่ผูกราคาอยู่ (เจ้าของท้วง 31 ส.ค.69 — หลังคาจั่ว ฉาก/แซด/รางน้ำ)
+ *   เก็บรหัสไว้ตรงนี้ตอนจับคู่ชื่อ+ขนาด → engine เอาไปติดบรรทัดให้เอง ไม่ต้องไล่ใส่ทีละรุ่น
+ */
+export type BoxSkus = Record<string, Record<string, string>>;
+export function buildBoxSkus(rows: BoxStockRow[]): BoxSkus {
+  const out: BoxSkus = {};
+  for (const r of rows ?? []) {
+    const sku = th((r as { sku?: string }).sku);
+    if (!sku) continue;
+    const p = parseBoxName(r.name);
+    if (!p) continue;
+    const color = normColor(th(r.color) || p.color);
+    if (!color) continue;
+    const k = boxKey(p.kind, p.size);
+    const b = out[k] || (out[k] = {});
+    if (!b[color]) b[color] = sku;
+  }
+  return out;
+}
+
+/** รหัสกล่องของสีนั้น — ไม่เจอสีที่ขอ ลองมิว/อบขาว แล้วค่อยเอาสีไหนก็ได้ (รหัสเดียวกันทั้งกลุ่มก็มี) */
+export function boxSkuOf(BOX: BoxSkus | undefined, key: string, color: string): string {
+  const b = BOX?.[key];
+  if (!b) return "";
+  const c = normColor(color);
+  if (c && b[c]) return b[c];
+  for (const alt of ["มิว", "อบขาว"]) if (b[alt]) return b[alt];
+  const first = Object.keys(b)[0];
+  return first ? b[first] : "";
+}
+
 export function buildBoxPrices(rows: BoxStockRow[]): BoxPrices {
   const out: BoxPrices = {};
   for (const r of rows ?? []) {
