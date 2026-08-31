@@ -3402,6 +3402,11 @@
       "mat": 100,
       "prod": 50,
       "inst": 100
+    },
+    "glasshouse": {
+      "mat": 0,
+      "prod": 50,
+      "inst": 100
     }
   }
 }

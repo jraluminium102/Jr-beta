@@ -23,7 +23,7 @@ export { HANDLE_FIELDS, HW_FROM_CUTLIST };
 
 /** รุ่นในคิดราคา 4.0 ที่แมปเข้าใบตัดได้ (ตาม from-recipe) — มีเท่านี้ที่เทียบได้ */
 export const COMPARABLE = ["sms_slide", "euro_slide", "slimlux", "fixed", "folding", "fold_euro", "fold_lift", "velora", "pcdoor", "gate", "roof", "roof_gable",
-  "roof_multi", "glasshouse_multi", "gable_multi"] as const;
+  "roof_multi", "glasshouse_multi", "gable_multi", "glasshouse"] as const;
 
 export type CompareInput = {
   prodId: string;

@@ -1102,6 +1102,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                     <span className="text-xs font-medium text-ink-3">ทรงหลังคา <span className="text-brand font-semibold">(เลือกก่อน)</span></span>
                     <div className="flex flex-wrap gap-1.5 mt-1.5">
                       {([["roof", "สโลปทางเดียว (กันสาด)"], ["roof_gable", "จั่ว สโลป 2 ทาง"], ["roof_slide", "หลังคาเลื่อน"],
+                        ["glasshouse", "กลาสเฮ้าส์ (เพิงตรง)"],
                         ["roof_multi", "กันสาดหลายด้าน"], ["glasshouse_multi", "กลาสเฮ้าส์หลายด้าน"], ["gable_multi", "จั่วหลายด้าน"]] as [string, string][])
                         .filter(([pid]) => (PRODUCTS as any)[pid])
                         .map(([pid, label]) => (

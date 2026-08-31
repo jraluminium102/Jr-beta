@@ -207,6 +207,26 @@ export function cutInputFromRecipe(recipe: any, opts?: { rawCompare?: boolean })
       } };
       break;
     }
+    // ── กลาสเฮ้าส์ เพิงตรง — คิดราคา W=กว้าง · H=ยาวทิศลาด (ยื่น) → ใบตัด W / D ──
+    case "glasshouse": {
+      if (!opts?.rawCompare) { m = null; break; }   // งานจริงให้ช่างกรอกเอง เหมือนหลังคาอื่น
+      const sp = (recipe.spec ?? {}) as Record<string, unknown>;
+      const mat = String(recipe.material ?? "ไวนิล");
+      const sheet = mat.startsWith("เมทัล") ? "เมทัลชีท"
+        : mat === "ชินโคร์ Sup" ? "ชินโคร์ Sup"
+        : mat.startsWith("ชินโคร์") ? "ชินโคร์ HC"
+        : (mat === "ไวนิล" || mat === "ดีไลท์" || mat === "โพลีตัน") ? mat
+        : "ไวนิล";
+      const nOr = (k: string, d: number) => { const v = Number(sp[k]); return Number.isFinite(v) && v > 0 ? v : d; };
+      m = { spec_id: "glasshouse", input: {
+        W, H: 0, N: 1, rail: "", honk: false,
+        sheet,
+        D: H,                       // ยื่น/ลึก (ซม.) = ยาวทิศลาดของใบตัด
+        hiH: nOr("hiH", 270),
+        loH: nOr("loH", 240),
+      } };
+      break;
+    }
     // ── หลังคาหลายด้าน 3 ทรง — ช่องกรอกรายด้านอยู่ใน spec ส่งต่อเข้าใบตัดตรง ๆ ──
     //   คิดราคาไม่มี BOM ของตัวเอง (เส้นอลูมาจากเอนจินใบตัด — ดู calculator40/alu-from-cutlist.ts)
     case "roof_multi":
