@@ -1101,9 +1101,9 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                   <label className="block">
                     <span className="text-xs font-medium text-ink-3">ทรงหลังคา <span className="text-brand font-semibold">(เลือกก่อน)</span></span>
                     <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      {/* กลาสเฮ้าส์ 2 รุ่น ย้ายไป G6 ห้องกระจกแล้ว (เจ้าของทัก 28 ส.ค.69) — แถบนี้เหลือแต่ทรงหลังคาจริง ๆ */}
                       {([["roof", "สโลปทางเดียว (กันสาด)"], ["roof_gable", "จั่ว สโลป 2 ทาง"], ["roof_slide", "หลังคาเลื่อน"],
-                        ["glasshouse", "กลาสเฮ้าส์ (เพิงตรง)"],
-                        ["roof_multi", "กันสาดหลายด้าน"], ["glasshouse_multi", "กลาสเฮ้าส์หลายด้าน"], ["gable_multi", "จั่วหลายด้าน"]] as [string, string][])
+                        ["roof_multi", "กันสาดหลายด้าน"], ["gable_multi", "จั่วหลายด้าน"]] as [string, string][])
                         .filter(([pid]) => (PRODUCTS as any)[pid])
                         .map(([pid, label]) => (
                           <button key={pid} type="button" onClick={() => { if (pid !== prodId) pickProduct((PRODUCTS as any)[pid]); }}
@@ -1122,7 +1122,7 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
                   {prod.multiSide === "d" ? (
                     // จั่วหลายด้าน: ยาวช่วงกรอกรายด้าน แต่ "ลึก 2 สโลป" ใช้ค่าเดียวทั้งหลัง = ช่องกว้างนี้
                     <MetersField label="กว้าง — ลึก 2 สโลป (ม.)" cm={w} onCm={setW} />
-                  ) : prod.multiSide ? null : prod.roofShape ? (
+                  ) : prod.multiSide ? null : (prod.roofShape || prod.spanMeters) ? (
                     <>
                       <MetersField label="ความกว้าง (ม.)" cm={w} onCm={setW} />
                       <MetersField label="ยื่น (ม.)" cm={h} onCm={setH} />

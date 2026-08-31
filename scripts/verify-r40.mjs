@@ -617,6 +617,12 @@ console.log("═══ ⑦ กลาสเฮ้าส์ (เพิงตรง
   const okb = (label, cond, extra = "") => check(label + (cond ? "" : " [" + extra + "]"), cond ? 1 : 0, 1, 0);
   const p = PRODUCTS.glasshouse;
   okb("มีรุ่น glasshouse ในคิดราคา 4.0", !!p, "");
+  // กลาสเฮ้าส์ = ห้องกระจก (G6) ไม่ใช่หลังคา (G3) — เจ้าของทัก 28 ส.ค.69
+  okb("กลาสเฮ้าส์เพิงตรง อยู่ G6 ห้องกระจก", p.group === 6, "group=" + p.group);
+  okb("กลาสเฮ้าส์หลายด้าน อยู่ G6 ด้วย", PRODUCTS.glasshouse_multi.group === 6, "group=" + PRODUCTS.glasshouse_multi.group);
+  okb("กลาสเฮ้าส์ทั้ง 2 รุ่น โผล่เป็นการ์ดใน G6 (ไม่ซ่อน)",
+    !p.pickerHide && !PRODUCTS.glasshouse_multi.pickerHide, "");
+  okb("ไม่โผล่ในแถบทรงหลังคาแล้ว", !p.roofShape && !PRODUCTS.glasshouse_multi.roofShape, "");
   okb("ผูกใบตัด glasshouse", ALU_FROM_CUTLIST.glasshouse === "glasshouse", String(ALU_FROM_CUTLIST.glasshouse));
   const spec = { hiH: "270", loH: "240" };
   const map = cutInputFromRecipe({ kind: "std", prodId: "glasshouse", w: 400, h: 300, p: 1,
