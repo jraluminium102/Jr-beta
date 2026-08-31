@@ -764,5 +764,24 @@ console.log("═══ ⑩ box → รหัสสโตร์ (BOXSKU) ══�
   check("ติดรหัสแล้วทุนไม่ขยับ", r.cost.total, base.cost.total, 1);
 }
 
+
+// ── ⑪ บานยก: จำนวนเส้น 3 บรรทัดที่ "ตั้งใจต่างจากใบตัด" — เจ้าของเคาะ 31 ส.ค.69 ให้ยึดไฟล์ v20 ──
+//    กันคนมาแก้ตามใบตัดทีหลังโดยไม่รู้ว่าเคาะไว้แล้ว (ถ้าแก้ ทุนจะขยับ 5,282.64 → 5,546.06)
+console.log("");
+console.log("═══ ⑪ บานยก: ยึดไฟล์ v20 ไม่ใช่ใบตัด (เจ้าของเคาะ) ═══");
+{
+  const okb = (label, cond, extra = "") => check(label + (cond ? "" : " [" + extra + "]"), cond ? 1 : 0, 1, 0);
+  const alu = PRODUCTS.banyok.alu;
+  const g = (code) => alu.find((a) => a.code === code);
+  okb("B28015 กล่องร่องมีสกรู = 1 ท่อน ยาวเท่ากว้าง", g("B28015")?.seg === "W" && g("B28015")?.count === "1",
+    JSON.stringify(g("B28015")));
+  okb("B28012 อแดปเตอร์รูสกรู = 1 ท่อน", g("B28012")?.seg === "W" && g("B28012")?.count === "1", JSON.stringify(g("B28012")));
+  okb("B28011 กรอบบาน = 2 ท่อน ยาว 2*(W+H/2)", g("B28011")?.seg === "2*(W+H/2)" && g("B28011")?.count === "2",
+    JSON.stringify(g("B28011")));
+  okb("เปิดเผื่อเศษอลู (aluWaste) ตาม buf_scrap ในไฟล์", PRODUCTS.banyok.aluWaste === true, "");
+  okb("ค่าดำเนินการ 30% เปิดเฉพาะบานยก", PRODUCTS.banyok.opCostPct === 30
+    && Object.values(PRODUCTS).filter((p) => p.opCostPct).length === 1, "");
+}
+
 console.log(`\n═══ สรุป: ✅ ${pass} anchor ผ่าน · ❌ ${fail} ไม่ผ่าน · ② sweep ${sweepPass} รุ่นดี/${sweepFail} พัง ═══`);
 process.exit((fail + sweepFail) > 0 ? 1 : 0);
