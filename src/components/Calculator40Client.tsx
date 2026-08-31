@@ -415,7 +415,10 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
         ? { ...spec, ...flattenSides(roofSides, prod.multiSide, prod.multiSide === "d" ? "ติดบ้าน" : "ชนผนัง") }
         : spec;
       // กำไรแยก 3 ส่วน ตามไฟล์ถอดทุน v9 (บล็อก "⚙ ตั้งค่ากำไร")
-      const profitPct = Number(profit) || 100;          // ค่าวัสดุ — ชื่อเดิม ใช้กับสูตรเก่า (ระแนง/R3.9)
+      // ⚠ ห้ามใช้ ||  — พิมพ์ 0% แล้ว 0||100 = 100 (กรอกกำไร 0 ไม่ได้ ราคาเด้งเป็น 2 เท่าเงียบ ๆ)
+      //   เจอ 28 ส.ค.69: หลังคา/ระแนง 9 รุ่นตั้งกำไรค่าของ 0 ในตาราง แต่เว็บคิด 100 มาตลอด
+      const mNum = Number(profit);
+      const profitPct = Number.isFinite(mNum) && profit !== "" ? mNum : 100;   // ค่าวัสดุ — ชื่อเดิม ใช้กับสูตรเก่า (ระแนง/R3.9)
       const pProd = Number(profitProd) || 0;
       const pInst = Number(profitInst) || 0;
       // สีอลู: ผู้ใช้เลือก "ชื่อสีจริง" (13 สี) → แปลงเป็นหมวดค่าอบ (bake) สำหรับคิดราคา + ชื่อสีพิมพ์ลงใบ
