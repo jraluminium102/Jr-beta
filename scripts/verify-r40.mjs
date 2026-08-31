@@ -632,6 +632,16 @@ console.log("═══ ⑦ กลาสเฮ้าส์ (เพิงตรง
   okb("ราง (ขอบต่ำ) ไม่หาย — คิด 2,273/เส้น", cl.some((x) => /^ราง/.test(x.name) && x.price === 2273),
     cl.map((x) => x.name + ":" + x.price).join(" · "));
   okb("รุ่นด้านเดียว ไม่ต่อท้าย (ทุกด้าน)", !cl.some((x) => /ทุกด้าน/.test(x.name)), cl.map((x) => x.name).join(" · "));
+  // ราง ขายเป็นเส้น 6 ม. — งานกว้างเกิน 6 ม. ต้องต่อ 2 เส้น (เดิมนับ 1 เส้นเสมอ = ขาดเงิน)
+  {
+    const wide = cutInputFromRecipe({ kind: "std", prodId: "glasshouse", w: 800, h: 300, p: 1,
+      form: "กลาสเฮ้าส์", spec, material: "ไวนิล", color: "อบขาว" }, { rawCompare: true }).input;
+    const cw = cutRoofConsumLines({ prodId: "glasshouse", cutInput: wide, material: "ไวนิล", rm: RM,
+      planArea: multiRoofArea("glasshouse", wide) }) || [];
+    const rw = cw.find((x) => /^ราง/.test(x.name));
+    okb("กว้าง 8 ม. → ราง 2 เส้น (ตัดจากเส้น 6 ม. ไม่พอ)", rw?.count === 2, JSON.stringify(rw));
+    okb("ชื่อบรรทัดรางบอกชัดว่า (เท่ากว้าง) คือความยาว", /ยาวเท่าความกว้าง/.test(String(rw?.name)), String(rw?.name));
+  }
   const r = computeCost(PB, p, { w: 400, h: 300, p: 1, form: "กลาสเฮ้าส์", material: "ไวนิล", spec,
     aluLines: al, consumLines: cl, areaOverride: ar });
   check("ทุนรวม 400×300 ไวนิล", r.cost.total, 40803, 1);
