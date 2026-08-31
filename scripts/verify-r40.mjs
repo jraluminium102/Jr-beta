@@ -629,7 +629,7 @@ console.log("═══ ⑦ กลาสเฮ้าส์ (เพิงตรง
   const al = cutAluLines({ prodId: "glasshouse", cutInput: ci });
   okb("ได้เส้นอลูจากใบตัด 6 บรรทัด", (al || []).length === 6, String((al || []).length));
   const cl = cutRoofConsumLines({ prodId: "glasshouse", cutInput: ci, material: "ไวนิล", rm: RM, planArea: ar }) || [];
-  okb("ราง (ขอบต่ำ) ไม่หาย — คิด 2,273/เส้น", cl.some((x) => /^ราง/.test(x.name) && x.price === 2273),
+  okb("รางน้ำอลู (ขอบต่ำ) ไม่หาย — คิด 2,273/เส้น", cl.some((x) => /^ราง/.test(x.name) && x.price === 2273),
     cl.map((x) => x.name + ":" + x.price).join(" · "));
   okb("รุ่นด้านเดียว ไม่ต่อท้าย (ทุกด้าน)", !cl.some((x) => /ทุกด้าน/.test(x.name)), cl.map((x) => x.name).join(" · "));
   // ราง ขายเป็นเส้น 6 ม. — งานกว้างเกิน 6 ม. ต้องต่อ 2 เส้น (เดิมนับ 1 เส้นเสมอ = ขาดเงิน)
