@@ -587,11 +587,17 @@ console.log("═══ ⑥ ชินโคร์/รางหลังคาเ�
     const sheet = r.lines.filter((l) => /ชินโคร์/.test(l.name)).reduce((a, l) => a + l.amount, 0);
     okb(`${m} คิดทุนแผ่นมุงจริง (≥${min})`, sheet >= min, String(Math.round(sheet)));
   }
-  // Nature/Grand ยังไม่มีราคา → ต้องขึ้นเตือน ไม่ใช่คิดเป็นศูนย์เงียบ ๆ
-  for (const m of ["ชินโคร์ Nature 6มม", "ชินโคร์ Grand 10มม"]) {
+  // Nature/Grand — เจ้าของให้ราคา 28 ส.ค.69 (Nature จากตารางราคาแผ่น · Grand เท่า Prime)
+  okb("Nature 6มม ราคา 1,944.44/ตร.ม. (ตารางแผ่น 16,100 ÷ 1.38×6)",
+    Math.abs((shin.find((c) => /Nature/.test(c.name))?.price ?? 0) - 1944.44) < 0.01,
+    String(shin.find((c) => /Nature/.test(c.name))?.price));
+  okb("Grand 10มม ราคาเท่า Prime (4,348)", shin.find((c) => /Grand/.test(c.name))?.price === 4348,
+    String(shin.find((c) => /Grand/.test(c.name))?.price));
+  for (const [m, min] of [["ชินโคร์ Nature 6มม", 20000], ["ชินโคร์ Grand 10มม", 50000]]) {
     const r = computeCost(PB, roof, { w: 400, h: 300, p: 1, form: "เพิง", material: m });
-    okb(`${m} ยังไม่มีราคา → เตือนบนหน้าจอ`, (r.hwMissing || []).some((x) => x.name === m),
-      JSON.stringify(r.hwMissing));
+    const sheet = r.lines.filter((l) => /ชินโคร์/.test(l.name)).reduce((a, l) => a + l.amount, 0);
+    okb(`${m} คิดทุนแผ่นมุงจริง (≥${min})`, sheet >= min, String(Math.round(sheet)));
+    okb(`${m} ไม่ขึ้นเตือนราคา 0 แล้ว`, !(r.hwMissing || []).some((x) => x.name === m), JSON.stringify(r.hwMissing));
   }
   const rail = (PRODUCTS.roof_slide.consum || []).find((c) => c.name === "ราง (2 ฝั่ง)");
   okb("รางหลังคาเลื่อนผูก ROOFMAT", String(rail?.ref) === "ROOFMAT.รางหลังคาเลื่อน", String(rail?.ref));
