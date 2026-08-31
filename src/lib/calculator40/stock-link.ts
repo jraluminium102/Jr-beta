@@ -78,6 +78,12 @@ export type PriceOverride = {
   // ราคาต่อรหัสสโตร์ (JR#####) — ใช้คิด "ค่าของ" อุปกรณ์ที่ดึงรายการมาจากใบตัด
   //   ใบตัดผูก sku ไว้ครบแล้ว → คิดราคาอ่านราคาจากรหัสเดียวกัน = ของชิ้นเดียวกัน ราคาเดียวกัน
   SKUPRICE: Record<string, number>;
+  // รหัสสโตร์ของ "ตารางราคากลาง" → REFSKU["ROOFMAT.ไวนิล"] = "JR00134"
+  //   บรรทัดในสูตรที่ผูกด้วย ref (แผ่นมุง/เหล็ก/มอเตอร์/กระจก) ไม่เคยมีรหัสติดตัว
+  //   → หน้าเทียบใบตัดขึ้น "ไม่มีรหัสในสโตร์" ทั้งที่สโตร์มี และหักสต็อกไม่ได้ (เจ้าของท้วง 28 ส.ค.69)
+  //   เก็บรหัสไว้ตรงนี้ตอนจับคู่ชื่อ → ได้รหัสครบทุกบรรทัดพร้อมกันทั้งระบบ ไม่ต้องไล่ใส่ทีละรุ่น
+  //   ⚠ เก็บแม้ราคา 0 (ชินโคร์ Nature ฯลฯ) — รหัสมีจริง แค่ยังไม่ตั้งราคา
+  REFSKU: Record<string, string>;
   // กล่อง/ฉาก อลูเมืองทอง — ไม่มีรหัสโปรไฟล์ ผูกด้วย "ชนิด+ขนาด" แล้วแยกราคาตามสี
   BOXPRICE: BoxPrices;
 };
@@ -104,7 +110,7 @@ function rowColor(r: StockRow): string {
 
 // สร้าง "ผังราคาทับ" จากแถว stock (เทียบกับ pricebook pb) — เฉพาะราคา > 0 (กันวัสดุยังไม่ตั้งราคา = 0 ไปล้างราคาสูตร)
 export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverride {
-  const ov: PriceOverride = { GLASS: {}, ROOFMAT: {}, MOTOR: {}, STEEL: {}, EXTRA: {}, ALU: {}, PARTS: {}, ALUCODE: {}, ALUCOLOR_STOCK: {}, SKUPRICE: {}, BOXPRICE: {} };
+  const ov: PriceOverride = { GLASS: {}, ROOFMAT: {}, MOTOR: {}, STEEL: {}, EXTRA: {}, ALU: {}, PARTS: {}, ALUCODE: {}, ALUCOLOR_STOCK: {}, SKUPRICE: {}, BOXPRICE: {}, REFSKU: {} };
   // กล่อง/ฉาก: จับคู่ด้วยชื่อ+ขนาด (สโตร์ตั้งชื่อลงตัว เช่น `กล่อง 4"x6"-Aztec gray`)
   ov.BOXPRICE = buildBoxPrices(rows as any);
   const aluByBrand: Record<string, number> = {};
@@ -115,6 +121,15 @@ export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverrid
     const name = (r.name || "").trim();
     const sku = (r.sku || "").trim();
     const cost = Number(r.unit_cost) || 0;
+    // รหัสของตารางราคากลาง — เก็บก่อน ไม่สนราคา (ของที่ยังไม่ตั้งราคาก็มีรหัสจริง)
+    if (sku) {
+      const put = (sec: string) => { const k = sec + "." + name; if (!ov.REFSKU[k]) ov.REFSKU[k] = sku; };
+      if (name && pb.GLASS && name in pb.GLASS) put("GLASS");
+      if (name && pb.ROOFMAT && name in pb.ROOFMAT) put("ROOFMAT");
+      if (name && pb.MOTOR && name in pb.MOTOR) put("MOTOR");
+      if (name && pb.EXTRA && name in pb.EXTRA) put("EXTRA");
+      if (pb.STEEL && sku in pb.STEEL) { const k = "STEEL." + sku; if (!ov.REFSKU[k]) ov.REFSKU[k] = sku; }
+    }
     if (cost > 0) {
       // ราคาต่อรหัสสโตร์ — เก็บทุกแถวที่มีรหัส (ซ้ำรหัส = เอาถูกสุด กันแถวสีพิเศษดันราคาขึ้น)
       if (sku) { const k = normCode(sku); ov.SKUPRICE[k] = ov.SKUPRICE[k] > 0 ? Math.min(ov.SKUPRICE[k], cost) : cost; }
@@ -176,6 +191,7 @@ export function applyPriceOverride(pb: any, ov?: PriceOverride | null): any {
     for (const c in ov.ALUCOLOR_STOCK) pb.ALUCOLOR_STOCK[c] = { ...(pb.ALUCOLOR_STOCK[c] || {}), ...ov.ALUCOLOR_STOCK[c] };
   }
   if (ov.SKUPRICE && Object.keys(ov.SKUPRICE).length) pb.SKUPRICE = { ...(pb.SKUPRICE || {}), ...ov.SKUPRICE };
+  if (ov.REFSKU && Object.keys(ov.REFSKU).length) pb.REFSKU = { ...(pb.REFSKU || {}), ...ov.REFSKU };
   if (ov.BOXPRICE && Object.keys(ov.BOXPRICE).length) {
     pb.BOXPRICE = pb.BOXPRICE || {};
     for (const k in ov.BOXPRICE) pb.BOXPRICE[k] = { ...(pb.BOXPRICE[k] || {}), ...ov.BOXPRICE[k] };

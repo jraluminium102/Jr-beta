@@ -7,7 +7,7 @@ import { computeCost, barsNeeded } from '../src/lib/calculator40/engine.mjs';
 import { PRODUCTS } from '../src/lib/calculator40/products.mjs';
 import { aluColorKeysFor, ALU_COLOR_KEYS } from '../src/lib/calculator40/alu-colors.ts';
 import { buildBoxPrices, boxPriceOf } from '../src/lib/calculator40/box-link.ts';
-import { stockColorOfCalc } from '../src/lib/calculator40/stock-link.ts';
+import { stockColorOfCalc, buildPriceOverride, applyPriceOverride } from '../src/lib/calculator40/stock-link.ts';
 import { ALU_FROM_CUTLIST, cutAluLines, cutRoofConsumLines, multiRoofArea } from '../src/lib/calculator40/alu-from-cutlist.ts';
 import { cutInputFromRecipe } from '../src/lib/cutlist/from-recipe.ts';
 import { RM } from '../src/lib/calculator40/products.mjs';
@@ -656,6 +656,37 @@ console.log("═══ ⑦ กลาสเฮ้าส์ (เพิงตรง
   check("ทุนรวม 400×300 ไวนิล", r.cost.total, 40803, 1);
   okb("ค่าแรงไม่เป็นศูนย์ (พื้นที่ส่งเข้าถูก)", (r.labor?.total ?? (r.labor?.make ?? 0) + (r.labor?.install ?? 0)) > 0,
     JSON.stringify(r.labor));
+}
+
+
+// ── ⑧ บรรทัดที่ผูก "ตารางราคากลาง" ต้องมีรหัสสโตร์ติดตัว (เจ้าของท้วง 28 ส.ค.69) ──────────
+//    เดิม แผ่นไวนิล/ฝาครอบ/เหล็ก/มอเตอร์/กระจก ผูกด้วย ref เท่านั้น ไม่มีรหัส
+//    → หน้าเทียบใบตัดขึ้น "ไม่มีรหัสในสโตร์" ทั้งที่สโตร์มี (JR00134 ไวนิล · JR00138 ฝาครอบ) และหักสต็อกไม่ได้
+console.log("");
+console.log("═══ ⑧ ref → รหัสสโตร์ (REFSKU) ═══");
+{
+  const okb = (label, cond, extra = "") => check(label + (cond ? "" : " [" + extra + "]"), cond ? 1 : 0, 1, 0);
+  const stock = [
+    { name: "ไวนิล", sku: "JR00134", unit_cost: 1540 },
+    { name: "ฝาครอบไวนิล", sku: "JR00138", unit_cost: 245 },
+    { name: "ชินโคร์ Nature 6มม", sku: "JR00150", unit_cost: 0 },     // ยังไม่ตั้งราคา — รหัสต้องติดอยู่ดี
+    { name: "เขียว 6มม.", sku: "JR00900", unit_cost: 300 },
+  ];
+  const ov = buildPriceOverride(stock, PB);
+  okb("เก็บรหัสวัสดุมุงได้", ov.REFSKU["ROOFMAT.ไวนิล"] === "JR00134", JSON.stringify(ov.REFSKU));
+  okb("เก็บรหัสฝาครอบได้", ov.REFSKU["ROOFMAT.ฝาครอบไวนิล"] === "JR00138", "");
+  okb("ของราคา 0 ก็ต้องเก็บรหัส", ov.REFSKU["ROOFMAT.ชินโคร์ Nature 6มม"] === "JR00150", "");
+  okb("กระจกก็เก็บรหัส", ov.REFSKU["GLASS.เขียว 6มม."] === "JR00900", "");
+
+  const PB3 = applyPriceOverride(JSON.parse(JSON.stringify(PB)), ov);
+  const r = computeCost(PB3, PRODUCTS.roof, { w: 400, h: 300, p: 1, form: "เพิง", material: "ไวนิล" });
+  const vin = r.lines.find((l) => /^แผ่นไวนิล/.test(l.name));
+  const cap = r.lines.find((l) => /^ฝาครอบไวนิล/.test(l.name));
+  okb("บรรทัดแผ่นไวนิลมีรหัส JR00134", vin?.sku === "JR00134", JSON.stringify(vin));
+  okb("บรรทัดฝาครอบมีรหัส JR00138", cap?.sku === "JR00138", JSON.stringify(cap));
+  // ราคาต้องไม่เพี้ยน — รหัสมาจากแถวเดียวกับที่ให้ราคาตาราง
+  const base = computeCost(PB, PRODUCTS.roof, { w: 400, h: 300, p: 1, form: "เพิง", material: "ไวนิล" });
+  check("ใส่รหัสแล้วทุนไม่ขยับ", r.cost.total, base.cost.total, 1);
 }
 
 console.log(`\n═══ สรุป: ✅ ${pass} anchor ผ่าน · ❌ ${fail} ไม่ผ่าน · ② sweep ${sweepPass} รุ่นดี/${sweepFail} พัง ═══`);
