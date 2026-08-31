@@ -603,6 +603,17 @@ export function computeCost(PB, prod, opt) {
     sellBeforeLabor = ceil100(costTotal * (1 + pctMat / 100));
     sellMfgOnly = sellBeforeLabor + ceil100(laborProd * (1 + pctProd / 100));
     sellWithInstall = sellMfgOnly + ceil100(laborInstall * (1 + pctInst / 100));
+    // ค่าดำเนินการ % — ไฟล์ถอดทุน v20 บวกทับราคาขายอีกชั้น (ช่อง "ค่าดำเนินการ %" ท้ายชีต)
+    //   สูตรในไฟล์: ขายผลิต = ปัดร้อย( (ขายวัสดุ + ขายค่าแรงผลิต) × (1+op%) )
+    //               ขาย+ติดตั้ง = ขายผลิต + ปัดร้อย( ขายค่าแรงติดตั้ง × (1+op%) )
+    //   เปิดทีละรุ่นด้วย prod.opCostPct — รุ่นที่ไม่ตั้งไว้ ราคาไม่ขยับ (เจ้าของสั่งพอร์ตเฉพาะบานยก 31 ส.ค.69)
+    const opPct = Number(prod.opCostPct) || 0;
+    if (opPct > 0) {
+      const instSell = sellWithInstall - sellMfgOnly;
+      sellMfgOnly = ceil100(sellMfgOnly * (1 + opPct / 100));
+      sellBeforeLabor = ceil100(sellBeforeLabor * (1 + opPct / 100));
+      sellWithInstall = sellMfgOnly + ceil100(instSell * (1 + opPct / 100));
+    }
     // ส่วนลดปริมาณระแนง/รั้ว (R3.9 ranaeDisc) — ลดเฉพาะค่าของ(งานผลิต) ไม่ลดค่าติดตั้ง
     if (prod.ranaeDisc) {
       const d = area > 30 ? 0.15 : area > 20 ? 0.11 : area > 15 ? 0.08 : area > 10 ? 0.05 : 0;
