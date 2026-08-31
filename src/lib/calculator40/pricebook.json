@@ -3329,7 +3329,7 @@
       "inst": 200
     },
     "louver_slip": {
-      "mat": 0,
+      "mat": 100,
       "prod": 50,
       "inst": 100
     },
@@ -3339,37 +3339,37 @@
       "inst": 200
     },
     "louver_rotate": {
-      "mat": 0,
+      "mat": 100,
       "prod": 50,
       "inst": 100
     },
     "roof": {
-      "mat": 0,
+      "mat": 100,
       "prod": 50,
       "inst": 100
     },
     "roof_gable": {
-      "mat": 0,
+      "mat": 100,
       "prod": 50,
       "inst": 100
     },
     "roof_slide": {
-      "mat": 0,
+      "mat": 100,
       "prod": 50,
       "inst": 100
     },
     "roof_multi": {
-      "mat": 0,
+      "mat": 100,
       "prod": 50,
       "inst": 100
     },
     "glasshouse_multi": {
-      "mat": 0,
+      "mat": 100,
       "prod": 50,
       "inst": 100
     },
     "gable_multi": {
-      "mat": 0,
+      "mat": 100,
       "prod": 50,
       "inst": 100
     },
@@ -3404,7 +3404,7 @@
       "inst": 100
     },
     "glasshouse": {
-      "mat": 0,
+      "mat": 100,
       "prod": 50,
       "inst": 100
     }
