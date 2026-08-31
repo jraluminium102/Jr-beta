@@ -366,6 +366,8 @@ export function computeCost(PB, prod, opt) {
     const sp = spRaw != null ? spRaw / (Number(it.per) || 1) : boxPrice(it);
     if (sp != null) price = sp;   // มีราคาในสโตร์ → ใช้ของสโตร์ (สโตร์เป็นตัวตั้ง)
     noteMissing({ ...it, sku: hwSku }, count);
+    // ราคาออกมา 0 ทั้งที่ไม่ได้ตั้งใจ (ตารางราคากลางยังว่าง) → ต้องเตือน ไม่ใช่คิดเป็นศูนย์เงียบ ๆ
+    if (!(price > 0) && !it.orderOnly && !it.labor) noteMissing({ sku: hwSku || it.ref || it.name, name: it.name, price: 0 }, count);
     const amount = count * price;
     hwCost += amount;
     lines.push({ cat: 'hardware', name: it.name, sku: hwSku, qty: round2(count), unit: it.unit || 'ชิ้น', unitPrice: price, amount: round2(amount), orderOnly: !!it.orderOnly });
@@ -384,6 +386,7 @@ export function computeCost(PB, prod, opt) {
     const csp = cspRaw != null ? cspRaw / (Number(it.per) || 1) : boxPrice(it);
     if (csp != null) unitPrice = csp;   // มีราคาในสโตร์ → ใช้ของสโตร์ (÷ per ถ้าสโตร์ขายเป็นแพ็ค)
     noteMissing({ ...it, sku: cSku }, count);
+    if (!(unitPrice > 0) && !it.orderOnly && !it.labor) noteMissing({ sku: cSku || it.ref || it.name, name: it.name, price: 0 }, count);
     const amount = count * unitPrice;
     consumCost += amount;
     lines.push({ cat: 'consum', name: it.name, sku: cSku, qty: round2(count), unit: it.unit || '', unitPrice: round2(unitPrice), amount: round2(amount) });

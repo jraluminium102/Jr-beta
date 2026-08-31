@@ -565,5 +565,37 @@ for (const [id, prod] of Object.entries(PRODUCTS)) {
 }
 console.log(`  ✅ ${sweepPass} รุ่นคิดออกราคาได้สมเหตุผล · ❌ ${sweepFail} พัง`);
 
+
+// ── ⑥ ชินโคร์ไลท์ 4 รุ่น + รางหลังคาเลื่อน ต้องผูกตารางราคากลาง (28 ส.ค.69) ──────────
+//    เดิม 4 บรรทัดชินโคร์ตรึง price 0 ทั้งชุด ทั้งที่ Shade/Prime มีราคาในไฟล์ v9 อยู่แล้ว
+//    = เลือก 2 รุ่นนี้แล้วทุนแผ่นมุงเป็นศูนย์ ใบเสนอถูกกว่าความจริงมาก
+console.log("");
+console.log("═══ ⑥ ชินโคร์/รางหลังคาเลื่อน ผูกตารางราคากลาง ═══");
+{
+  // ตัวช่วยเช็คแบบ true/false (ไฟล์นี้ใช้ check() เทียบตัวเลขเป็นหลัก)
+  const okb = (label, cond, extra = "") => check(label + (cond ? "" : " [" + extra + "]"), cond ? 1 : 0, 1, 0);
+  const roof = PRODUCTS.roof;
+  const shin = (roof.consum || []).filter((c) => /ชินโคร์ (Nature|Shade|Prime|Grand)/.test(c.name));
+  okb("ชินโคร์ 4 รุ่นผูก ROOFMAT ครบ", shin.length === 4 && shin.every((c) => /^ROOFMAT\./.test(String(c.ref || ""))),
+    shin.map((c) => c.name + ":" + (c.ref || "-")).join(" · "));
+  const shade = shin.find((c) => /Shade/.test(c.name)), prime = shin.find((c) => /Prime/.test(c.name));
+  okb("Shade 4มม ราคา 1,050 (ไฟล์ v9)", shade?.price === 1050, String(shade?.price));
+  okb("Prime 10มม ราคา 4,348 (ไฟล์ v9)", prime?.price === 4348, String(prime?.price));
+  // เลือก Shade/Prime แล้วต้องมีทุนแผ่นมุงจริง ไม่ใช่ 0
+  for (const [m, min] of [["ชินโคร์ Shade 4มม", 12000], ["ชินโคร์ Prime 10มม", 50000]]) {
+    const r = computeCost(PB, roof, { w: 400, h: 300, p: 1, form: "เพิง", material: m });
+    const sheet = r.lines.filter((l) => /ชินโคร์/.test(l.name)).reduce((a, l) => a + l.amount, 0);
+    okb(`${m} คิดทุนแผ่นมุงจริง (≥${min})`, sheet >= min, String(Math.round(sheet)));
+  }
+  // Nature/Grand ยังไม่มีราคา → ต้องขึ้นเตือน ไม่ใช่คิดเป็นศูนย์เงียบ ๆ
+  for (const m of ["ชินโคร์ Nature 6มม", "ชินโคร์ Grand 10มม"]) {
+    const r = computeCost(PB, roof, { w: 400, h: 300, p: 1, form: "เพิง", material: m });
+    okb(`${m} ยังไม่มีราคา → เตือนบนหน้าจอ`, (r.hwMissing || []).some((x) => x.name === m),
+      JSON.stringify(r.hwMissing));
+  }
+  const rail = (PRODUCTS.roof_slide.consum || []).find((c) => c.name === "ราง (2 ฝั่ง)");
+  okb("รางหลังคาเลื่อนผูก ROOFMAT", String(rail?.ref) === "ROOFMAT.รางหลังคาเลื่อน", String(rail?.ref));
+}
+
 console.log(`\n═══ สรุป: ✅ ${pass} anchor ผ่าน · ❌ ${fail} ไม่ผ่าน · ② sweep ${sweepPass} รุ่นดี/${sweepFail} พัง ═══`);
 process.exit((fail + sweepFail) > 0 ? 1 : 0);
