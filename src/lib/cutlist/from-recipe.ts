@@ -207,6 +207,18 @@ export function cutInputFromRecipe(recipe: any, opts?: { rawCompare?: boolean })
       } };
       break;
     }
+    // ── บานยก (FUJI HUNG) — เข้าหน้าเทียบใบตัด (เจ้าของขอ 31 ส.ค.69) ──
+    //   คิดราคา W=กว้าง H=สูง (ซม.) → ใบตัด W/H ตรง ๆ · 1 ชุด = 2 บานเสมอ (N=1 ชุด)
+    case "banyok": {
+      if (!opts?.rawCompare) { m = null; break; }   // งานจริงให้ช่างกรอกเอง
+      const gmm = Number(String(recipe.glassType ?? "").replace(/[^0-9.]/g, "")) || 6;
+      m = { spec_id: "fuji_hung", input: {
+        W, H, N: 1, rail: "", honk: false,
+        hungHandleColor: String(recipe.color ?? "").includes("ดำ") ? "ดำ" : "ขาว",
+        glass: gmm,
+      } };
+      break;
+    }
     // ── กลาสเฮ้าส์ เพิงตรง — คิดราคา W=กว้าง · H=ยาวทิศลาด (ยื่น) → ใบตัด W / D ──
     case "glasshouse": {
       if (!opts?.rawCompare) { m = null; break; }   // งานจริงให้ช่างกรอกเอง เหมือนหลังคาอื่น
