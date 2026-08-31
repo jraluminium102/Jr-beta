@@ -157,6 +157,9 @@ export function computeCost(PB, prod, opt) {
   // อุปกรณ์ผูก "รหัสสโตร์" ได้ตรง ๆ — it.sku เป็นข้อความ หรือสูตร (เลือกรหัสตามสี/รูปแบบ) ก็ได้
   //   ราคาจากสโตร์ชนะราคาฝังในสูตรเสมอ (เจ้าของ 19 ส.ค.69: สโตร์เป็นตัวตั้ง)
   const skuOf = (it) => {
+    // ไม่มีรหัสในสูตร แต่ผูกตารางราคากลางไว้ → ใช้รหัสสโตร์ของตารางนั้น (PB.REFSKU สร้างจากสโตร์)
+    //   ทำให้แผ่นมุง/เหล็ก/มอเตอร์/กระจก มีรหัสติดบรรทัดครบ โดยไม่ต้องไล่ใส่ทีละรุ่น
+    if (!it.sku && it.ref && PB.REFSKU && PB.REFSKU[it.ref]) return String(PB.REFSKU[it.ref]).trim().toUpperCase();
     if (!it.sku) return '';
     const v = String(it.sku).includes('?') ? val(it.sku) : it.sku;
     return String(v ?? '').trim().toUpperCase();
