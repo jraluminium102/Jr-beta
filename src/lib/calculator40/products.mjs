@@ -1592,7 +1592,8 @@ export const PRODUCTS = {
 
   // ═══ กลาสเฮ้าส์หลายด้าน — เส้นอลูมาจากเอนจินใบตัดตรง ๆ (alu-from-cutlist) ไม่มี BOM ซ้ำในนี้ ═══
   glasshouse_multi: {
-    id: 'glasshouse_multi', group: 3, name: 'กลาสเฮ้าส์หลายด้าน', brand: 'MTONG', laborKey: 'หลังคา', roofShape: true, pickerHide: true, multiSide: 'wp',
+    // ย้ายจาก G3 หลังคา มา G6 ห้องกระจก พร้อมกับเพิงตรง (เจ้าของทัก 28 ส.ค.69)
+    id: 'glasshouse_multi', group: 6, name: 'กลาสเฮ้าส์หลายด้าน', brand: 'MTONG', laborKey: 'หลังคา', multiSide: 'wp',
     icon: '🏠', defForm: 'กลาสเฮ้าส์หลายด้าน', forms: ['กลาสเฮ้าส์หลายด้าน'],
     addons: MULTI_ADDONS,
     materialLabel: 'วัสดุมุง',
@@ -1615,7 +1616,9 @@ export const PRODUCTS = {
   //   ใบตัด "JR_กลาสเฮ้าส์.xlsx" มีมานานแล้ว แต่คิดราคา 4.0 มีแต่ทรงหลายด้าน → ตีราคาเพิงตรงไม่ได้ (เจ้าของทัก 28 ส.ค.69)
   //   กว้าง = W · ยื่น = ยาวทิศลาด (D) · สูงฝั่งสูง/ฝั่งต่ำ กรอกแยก → ความชันคิดจากส่วนต่าง
   glasshouse: {
-    id: 'glasshouse', group: 3, name: 'กลาสเฮ้าส์ (เพิงตรง)', brand: 'MTONG', laborKey: 'หลังคา', roofShape: true, pickerHide: true,
+    // อยู่ G6 ห้องกระจก ไม่ใช่ G3 หลังคา (เจ้าของทัก 28 ส.ค.69 — กลาสเฮ้าส์ = ห้องกระจก คนละเรื่องกับหลังคา)
+    //   spanMeters = กรอกเป็นเมตร + ป้าย "ยื่น" แบบหลังคา (แต่ไม่โผล่ในแถบทรงหลังคา)
+    id: 'glasshouse', group: 6, name: 'กลาสเฮ้าส์ (เพิงตรง)', brand: 'MTONG', laborKey: 'หลังคา', spanMeters: true,
     icon: '🏠', defForm: 'กลาสเฮ้าส์', forms: ['กลาสเฮ้าส์'],
     addons: MULTI_ADDONS,
     materialLabel: 'วัสดุมุง',
