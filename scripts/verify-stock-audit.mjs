@@ -385,6 +385,13 @@ console.log("═══ ⑨ ค่าแรง/ค่าบริการ แย
     ok("หารราคาแพ็คก่อนเทียบ (per)", one.length > 0 && one.every((r) => r.status !== "price_diff"),
       one.map((r) => r.status + "/" + r.stockPrice).join(" "));
   }
+  // box เป็นสูตร (ระแนง เลือกกล่องได้) → หน้าตรวจต้องกางเป็นทุกขนาด ไม่ใช่โชว์สูตรดิบ
+  {
+    const rn = rows.filter((r) => r.usedBy === PRODUCTS.louver.name && /ใบระแนง/.test(r.item));
+    ok("ระแนง: กางกล่องทุกขนาดที่เลือกได้", rn.length >= 7, String(rn.length));
+    ok("ระแนง: คีย์กล่องไม่ใช่สูตรดิบ", rn.every((r) => !/spec.|[?+()]/.test(r.key)), rn.map((r) => r.key).join(" "));
+    ok("ระแนง: คีย์อยู่ในรูป ชนิด|ขนาด", rn.every((r) => /^กล่อง|[0-9.X]+$/.test(r.key)), rn.map((r) => r.key).join(" "));
+  }
   const grind = rows.find((r) => r.item === "ค่ากรีดราง");
   ok("ค่าแรงที่มีรหัสสโตร์ ต้องนับว่าผูก", !!grind && grind.status !== "labor" && grind.key === "JR00202", grind ? grind.status + "/" + grind.key : "ไม่เจอ");
 }

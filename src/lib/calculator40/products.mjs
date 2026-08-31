@@ -959,8 +959,8 @@ export const PRODUCTS = {
     alu: [], glass: null,
     hardware: [],
     consum: [
-      { name: 'ใบระแนง (กล่อง)', price: 'BOXP', unit: 'เส้น', count: 'NLINE' },
-      { name: 'โครงดาม 1"×1.6" (รวมโครง)', price: 'FRAMEP', unit: 'เส้น', count: 'NFRAME' },
+      { box: "'กล่อง|'+(spec.rnBox?String(spec.rnBox).toUpperCase():'1.6X4')", name: 'ใบระแนง (กล่อง)', price: 'BOXP', unit: 'เส้น', count: 'NLINE' },
+      { box: 'กล่อง|1X1.6', name: 'โครงดาม 1"×1.6" (รวมโครง)', price: 'FRAMEP', unit: 'เส้น', count: 'NFRAME' },
       { labor: true, name: 'สีพิเศษ (ค่าเปิดตู้อบ)', price: 2000, unit: 'งาน', count: 'spec.rnCustomColor ? 1 : 0' },
     ],
     note: 'ระแนงบังตา — คิดทุน BOM ตามชีต Excel: กล่อง→หน้าโชว์→**ช่องห่างกรอกเอง**→โครง(รวม/ไม่รวม) · pitch=หน้าโชว์+ช่องห่าง · นับใบ/เส้น (สต็อก 6ม.) × ราคากล่อง×ปัจจัยสี · โครงดาม 1"×1.6" · สีพิเศษ +2,000 · ค่าแรง 300+600/ตร.ม. · ส่วนลดปริมาณ >10ตร.ม. · บานเลื่อน/เฟี้ยม/เปิด +ค่าบาน รอราคา',
@@ -1097,9 +1097,9 @@ export const PRODUCTS = {
     glass: null,
     hardware: [],
     consum: [
-      { name: 'กล่อง A (ใบระแนง)', price: 'BOXPA', unit: 'เส้น', count: 'barsA' },
-      { name: 'กล่อง B (ใบระแนง)', price: 'BOXPB', unit: 'เส้น', count: 'barsB' },
-      { name: 'โครงดาม 1"×1.6" (รวมโครง)', price: 'FRAMEP', unit: 'เส้น', count: 'NFRAME' },
+      { box: "'กล่อง|'+(spec.boxA?String(spec.boxA).toUpperCase():'1.6X4')", name: 'กล่อง A (ใบระแนง)', price: 'BOXPA', unit: 'เส้น', count: 'barsA' },
+      { box: "'กล่อง|'+(spec.boxB?String(spec.boxB).toUpperCase():'1X1.6')", name: 'กล่อง B (ใบระแนง)', price: 'BOXPB', unit: 'เส้น', count: 'barsB' },
+      { box: 'กล่อง|1X1.6', name: 'โครงดาม 1"×1.6" (รวมโครง)', price: 'FRAMEP', unit: 'เส้น', count: 'NFRAME' },
       { labor: true, name: 'สีพิเศษ (ค่าเปิดตู้อบ)', price: 2000, unit: 'งาน', count: "(color==='special'||color==='woodSpecial') ? 1 : 0" },
     ],
     note: 'ระแนงสลับคละกล่อง 2 แบบ — คิดทุน BOM ตรงชีต Excel "คิดทุน ระแนงสลับ": เลือกกล่อง A/B + ด้านโชว์ A/B + จำนวนท่อนต่อชุด(สลับ) + ระยะห่างเป้า + โครง(รวม/ไม่รวม) · จำลองสลับเต็มกว้าง → นับท่อน → เส้น(สต็อก 6ม.)×ราคากล่อง×ปัจจัยสี · ค่าแรง 300+600/ตร.ม. · ส่วนลดปริมาณ · (ต่อระแนงยังไม่ทำ)',
@@ -1735,25 +1735,91 @@ export const PRODUCTS = {
 
   // ── ฝ้าระแนงอลู 3 ชนิด (R3.9 per_sqm · ราคาขายรวมติดตั้ง · ดึงเรตจริง index.html:738-740) ──
   ceil_ranae_1x5: {
-    id: 'ceil_ranae_1x5', group: 3, name: 'ฝ้าระแนงอลู 1×5 ซม. (โชว์ 1 เว้น 5)', brand: 'MTONG',
-    sellR39: true, r39method: 'per_sqm', r39rate: 3300, r39min: 0,
-    icon: '▦', defForm: 'มาตรฐาน', forms: ['มาตรฐาน'], defaults: { w: 300, h: 400, p: 1 }, defGlass: null, minP: 1, maxP: 1,
-    alu: [], glass: null, hardware: [], consum: [],
-    note: 'ฝ้าระแนงอลู 1×5 ซม. · ราคาขาย R3.9 3,300/ตร.ม. (รวมติดตั้ง · ยังไม่ถอดทุน)',
+    id: 'ceil_ranae_1x5', group: 3, name: 'ฝ้าระแนงอลู 1×5 ซม. (โชว์ 1 เว้น 5)', brand: 'MTONG', laborKey: 'ระแนง', ranaeDisc: true,
+    showColor: true, icon: '▦', defForm: 'มาตรฐาน', forms: ['มาตรฐาน'],
+    defaults: { w: 300, h: 400, p: 1 }, defGlass: null, minP: 1, maxP: 1,
+    // ถอดทุน R4.0 ตามโมเดลใบตัด JR_บานระแนง_v2 (กล่อง→ด้านโชว์→ช่องห่าง) — ตรึงค่าตามชื่อรุ่น
+    //   กล่อง 1X5 · ด้านโชว์ 1 ซม. · ช่องห่าง 5 ซม. → pitch 6.00 ซม.
+    //   ราคาขายเดิม R3.9 = 3300/ตร.ม. (เก็บไว้เทียบใน r39ref — ไม่ได้ใช้คิดเงินแล้ว)
+    r39ref: 3300,
+    specOpts: [
+      { key: 'rnFrame', label: 'โครงดาม', opts: ['ไม่รวมโครง', 'รวมโครง'], def: 'ไม่รวมโครง', priced: true },
+    ],
+    vars: {
+      PITCH: 6.00,
+      LONGV: 'W*100', SPREAD: 'H*100',
+      NLEAF: 'Math.floor(SPREAD/PITCH)+1',
+      NLINE: 'Math.ceil(NLEAF / Math.max(Math.floor(600/LONGV),1))',
+      CF: CF_EXPR,
+      BOXP: 'Math.round(500*CF/5)*5',
+      NFRAME: "(spec.rnFrame==='รวมโครง' ? Math.ceil((H*100<=250?2:3)/Math.max(Math.floor(600/(W*100)),1)) : 0)",
+      FRAMEP: 'Math.round(485*CF/5)*5',
+    },
+    alu: [], glass: null, hardware: [],
+    consum: [
+      { box: 'กล่อง|1X5', name: 'ใบระแนง (กล่อง 1X5)', price: 'BOXP', unit: 'เส้น', count: 'NLINE' },
+      { box: 'กล่อง|1X1.6', name: 'โครงดาม 1"×1.6" (รวมโครง)', price: 'FRAMEP', unit: 'เส้น', count: 'NFRAME' },
+      { labor: true, name: 'สีพิเศษ (ค่าเปิดตู้อบ)', price: 2000, unit: 'งาน', count: 'spec.rnCustomColor ? 1 : 0' },
+    ],
+    note: 'ฝ้าระแนงอลู 1×5 ซม. (โชว์ 1 เว้น 5) — ถอดทุน R4.0 แล้ว (เดิมใช้ราคาขาย R3.9 3300/ตร.ม.) · BOM ตามโมเดลใบตัด JR_บานระแนง_v2: กล่อง 1X5 ด้านโชว์ 1 ซม. ช่องห่าง 5 ซม. · นับใบ/เส้น (สต็อก 6ม.) × ราคากล่องจากสโตร์ × ปัจจัยสี · ค่าแรงเรตระแนง 300+600/ตร.ม.',
   },
   ceil_ranae_16_5: {
-    id: 'ceil_ranae_16_5', group: 3, name: 'ฝ้าระแนงอลู 1.6" (โชว์ 1" เว้น 5)', brand: 'MTONG',
-    sellR39: true, r39method: 'per_sqm', r39rate: 3700, r39min: 0,
-    icon: '▦', defForm: 'มาตรฐาน', forms: ['มาตรฐาน'], defaults: { w: 300, h: 400, p: 1 }, defGlass: null, minP: 1, maxP: 1,
-    alu: [], glass: null, hardware: [], consum: [],
-    note: 'ฝ้าระแนงอลู 1.6" โชว์ 1" เว้น 5 ซม. · ราคาขาย R3.9 3,700/ตร.ม. (รวมติดตั้ง · ยังไม่ถอดทุน)',
+    id: 'ceil_ranae_16_5', group: 3, name: 'ฝ้าระแนงอลู 1.6" (โชว์ 1" เว้น 5)', brand: 'MTONG', laborKey: 'ระแนง', ranaeDisc: true,
+    showColor: true, icon: '▦', defForm: 'มาตรฐาน', forms: ['มาตรฐาน'],
+    defaults: { w: 300, h: 400, p: 1 }, defGlass: null, minP: 1, maxP: 1,
+    // ถอดทุน R4.0 ตามโมเดลใบตัด JR_บานระแนง_v2 (กล่อง→ด้านโชว์→ช่องห่าง) — ตรึงค่าตามชื่อรุ่น
+    //   กล่อง 1X1.6 · ด้านโชว์ 2.54 ซม. · ช่องห่าง 5 ซม. → pitch 7.54 ซม.
+    //   ราคาขายเดิม R3.9 = 3700/ตร.ม. (เก็บไว้เทียบใน r39ref — ไม่ได้ใช้คิดเงินแล้ว)
+    r39ref: 3700,
+    specOpts: [
+      { key: 'rnFrame', label: 'โครงดาม', opts: ['ไม่รวมโครง', 'รวมโครง'], def: 'ไม่รวมโครง', priced: true },
+    ],
+    vars: {
+      PITCH: 7.54,
+      LONGV: 'W*100', SPREAD: 'H*100',
+      NLEAF: 'Math.floor(SPREAD/PITCH)+1',
+      NLINE: 'Math.ceil(NLEAF / Math.max(Math.floor(600/LONGV),1))',
+      CF: CF_EXPR,
+      BOXP: 'Math.round(485*CF/5)*5',
+      NFRAME: "(spec.rnFrame==='รวมโครง' ? Math.ceil((H*100<=250?2:3)/Math.max(Math.floor(600/(W*100)),1)) : 0)",
+      FRAMEP: 'Math.round(485*CF/5)*5',
+    },
+    alu: [], glass: null, hardware: [],
+    consum: [
+      { box: 'กล่อง|1X1.6', name: 'ใบระแนง (กล่อง 1X1.6)', price: 'BOXP', unit: 'เส้น', count: 'NLINE' },
+      { box: 'กล่อง|1X1.6', name: 'โครงดาม 1"×1.6" (รวมโครง)', price: 'FRAMEP', unit: 'เส้น', count: 'NFRAME' },
+      { labor: true, name: 'สีพิเศษ (ค่าเปิดตู้อบ)', price: 2000, unit: 'งาน', count: 'spec.rnCustomColor ? 1 : 0' },
+    ],
+    note: 'ฝ้าระแนงอลู 1.6" (โชว์ 1" เว้น 5) — ถอดทุน R4.0 แล้ว (เดิมใช้ราคาขาย R3.9 3700/ตร.ม.) · BOM ตามโมเดลใบตัด JR_บานระแนง_v2: กล่อง 1X1.6 ด้านโชว์ 2.54 ซม. ช่องห่าง 5 ซม. · นับใบ/เส้น (สต็อก 6ม.) × ราคากล่องจากสโตร์ × ปัจจัยสี · ค่าแรงเรตระแนง 300+600/ตร.ม.',
   },
   ceil_ranae_16_2: {
-    id: 'ceil_ranae_16_2', group: 3, name: 'ฝ้าระแนงอลู 1.6" (โชว์ 1" เว้น 2)', brand: 'MTONG',
-    sellR39: true, r39method: 'per_sqm', r39rate: 4800, r39min: 0,
-    icon: '▦', defForm: 'มาตรฐาน', forms: ['มาตรฐาน'], defaults: { w: 300, h: 400, p: 1 }, defGlass: null, minP: 1, maxP: 1,
-    alu: [], glass: null, hardware: [], consum: [],
-    note: 'ฝ้าระแนงอลู 1.6" โชว์ 1" เว้น 2 ซม. · ราคาขาย R3.9 4,800/ตร.ม. (รวมติดตั้ง · ยังไม่ถอดทุน)',
+    id: 'ceil_ranae_16_2', group: 3, name: 'ฝ้าระแนงอลู 1.6" (โชว์ 1" เว้น 2)', brand: 'MTONG', laborKey: 'ระแนง', ranaeDisc: true,
+    showColor: true, icon: '▦', defForm: 'มาตรฐาน', forms: ['มาตรฐาน'],
+    defaults: { w: 300, h: 400, p: 1 }, defGlass: null, minP: 1, maxP: 1,
+    // ถอดทุน R4.0 ตามโมเดลใบตัด JR_บานระแนง_v2 (กล่อง→ด้านโชว์→ช่องห่าง) — ตรึงค่าตามชื่อรุ่น
+    //   กล่อง 1X1.6 · ด้านโชว์ 2.54 ซม. · ช่องห่าง 2 ซม. → pitch 4.54 ซม.
+    //   ราคาขายเดิม R3.9 = 4800/ตร.ม. (เก็บไว้เทียบใน r39ref — ไม่ได้ใช้คิดเงินแล้ว)
+    r39ref: 4800,
+    specOpts: [
+      { key: 'rnFrame', label: 'โครงดาม', opts: ['ไม่รวมโครง', 'รวมโครง'], def: 'ไม่รวมโครง', priced: true },
+    ],
+    vars: {
+      PITCH: 4.54,
+      LONGV: 'W*100', SPREAD: 'H*100',
+      NLEAF: 'Math.floor(SPREAD/PITCH)+1',
+      NLINE: 'Math.ceil(NLEAF / Math.max(Math.floor(600/LONGV),1))',
+      CF: CF_EXPR,
+      BOXP: 'Math.round(485*CF/5)*5',
+      NFRAME: "(spec.rnFrame==='รวมโครง' ? Math.ceil((H*100<=250?2:3)/Math.max(Math.floor(600/(W*100)),1)) : 0)",
+      FRAMEP: 'Math.round(485*CF/5)*5',
+    },
+    alu: [], glass: null, hardware: [],
+    consum: [
+      { box: 'กล่อง|1X1.6', name: 'ใบระแนง (กล่อง 1X1.6)', price: 'BOXP', unit: 'เส้น', count: 'NLINE' },
+      { box: 'กล่อง|1X1.6', name: 'โครงดาม 1"×1.6" (รวมโครง)', price: 'FRAMEP', unit: 'เส้น', count: 'NFRAME' },
+      { labor: true, name: 'สีพิเศษ (ค่าเปิดตู้อบ)', price: 2000, unit: 'งาน', count: 'spec.rnCustomColor ? 1 : 0' },
+    ],
+    note: 'ฝ้าระแนงอลู 1.6" (โชว์ 1" เว้น 2) — ถอดทุน R4.0 แล้ว (เดิมใช้ราคาขาย R3.9 4800/ตร.ม.) · BOM ตามโมเดลใบตัด JR_บานระแนง_v2: กล่อง 1X1.6 ด้านโชว์ 2.54 ซม. ช่องห่าง 2 ซม. · นับใบ/เส้น (สต็อก 6ม.) × ราคากล่องจากสโตร์ × ปัจจัยสี · ค่าแรงเรตระแนง 300+600/ตร.ม.',
   },
 
   ceil_wood: {

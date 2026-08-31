@@ -167,10 +167,19 @@ export function computeCost(PB, prod, opt) {
   // boxColorDone = จับคู่ "สีที่ลูกค้าเลือก" ได้เป๊ะ → ราคานั้นรวมค่าอบมาแล้ว (ห้ามบวกค่าอบซ้ำ)
   //   หลักเดียวกับเส้นอลูที่มีราคาสี (②) · ตกมาใช้ มิว = สีดิบ ยังต้องอบ → เข้ากองค่าอบตามปกติ
   let boxColorDone = false;
+  // it.box เป็นสูตรได้ (เลือกกล่องตามที่ลูกค้าเลือก เช่น ระแนง) — หลักเดียวกับ skuOf
+  //   ไม่งั้นระแนงต้องฝังราคากล่องไว้ในสูตร → แก้ราคากล่องในสโตร์แล้วราคาไม่ขยับ (ผิดเป้า "ผูกสโตร์")
+  const boxOf = (it) => {
+    if (!it.box) return "";
+    const raw = String(it.box);
+    const v = /[?+()]/.test(raw) ? val(raw) : it.box;   // มีตัวดำเนินการ = เป็นสูตร · คีย์ปกติเป็นข้อความล้วน
+    return String(v ?? "").trim();
+  };
   const boxPrice = (it) => {
     boxColorDone = false;
-    if (!it.box || !PB.BOXPRICE) return null;
-    const b = PB.BOXPRICE[it.box];
+    const key = boxOf(it);
+    if (!key || !PB.BOXPRICE) return null;
+    const b = PB.BOXPRICE[key];
     if (!b) return null;
     const c = opt.stockColor || '';
     if (c && b[c] > 0) { boxColorDone = !/มิว/.test(c); return b[c]; }

@@ -168,12 +168,25 @@ export function auditStockLink(stock: AuditStockRow[], PB: any): AuditRow[] {
           continue;
         }
         // ผูกด้วย "ชนิด+ขนาด" ของกล่อง/ฉากอลูเมืองทอง (box: 'กล่อง|1.6X4') — ราคามาจากสโตร์ผ่าน box-link
-        const box = String(it.box ?? "");
-        if (box) {
-          const has = (PB.BOXPRICE as Record<string, unknown>)?.[box] != null;
-          push({ section: "อุปกรณ์/สิ้นเปลือง", usedBy: p.name || p.id, item: nm, key: box, keyKind: "ชื่อ",
-            formulaPrice: it.price ?? null, status: has ? "linked" : "missing",
-            note: has ? "ผูกราคากล่อง/ฉากในสโตร์ (ชื่อ+ขนาด)" : "ยังไม่มีกล่อง/ฉากขนาดนี้ในสโตร์ → ใช้ราคาในสูตร" });
+        const boxRaw = String(it.box ?? "");
+        if (boxRaw) {
+          // box เป็นสูตรได้ (ระแนง: กล่องเปลี่ยนตามที่ลูกค้าเลือก) → กางเป็นทุกขนาดที่เลือกได้ จาก specOpts
+          //   ไม่งั้นหน้าตรวจโชว์สูตรดิบ และไม่รู้ว่าขนาดไหนยังไม่มีราคาในสโตร์
+          let keys: string[] = [boxRaw];
+          const mSpec = boxRaw.match(/spec\.(\w+)/);
+          if (/[?+()]/.test(boxRaw) && mSpec) {
+            const kind = (boxRaw.match(/['"]([^'"|]+)\|/) || [])[1] || "กล่อง";
+            const opt = (p.specOpts || []).find((o: any) => o.key === mSpec[1]);
+            keys = (opt?.opts || []).map((v: string) => `${kind}|${String(v).toUpperCase()}`);
+            if (!keys.length) keys = [boxRaw];
+          }
+          for (const k of keys) {
+            const has = (PB.BOXPRICE as Record<string, unknown>)?.[k] != null;
+            push({ section: "อุปกรณ์/สิ้นเปลือง", usedBy: p.name || p.id,
+              item: keys.length > 1 ? `${nm} (${k.split("|")[1]})` : nm, key: k, keyKind: "ชื่อ",
+              formulaPrice: it.price ?? null, status: has ? "linked" : "missing",
+              note: has ? "ผูกราคากล่อง/ฉากในสโตร์ (ชื่อ+ขนาด)" : "ยังไม่มีกล่อง/ฉากขนาดนี้ในสโตร์ → ใช้ราคาในสูตร" });
+          }
           continue;
         }
         // ค่าแรง/ค่าบริการ ที่ 'ไม่มีรหัสสโตร์' — ไม่ใช่ของ ผูกไม่ได้อยู่แล้ว (ค่าแรงผลิต/ติดตั้ง · ค่าเปิดตู้อบ · ค่าดัดโค้ง)
