@@ -338,15 +338,18 @@ export async function ensureBillingJobAndPromote(
     }
     // ⚠ ชื่อในผลิต/ติดตั้ง = ชื่อลูกค้าจริง (customers.name) ไม่ใช่นามบิล/บริษัทใน snapshot (25 ส.ค.69)
     let name = "";
+    let area = "";   // ที่อยู่ (customer_area) — ต้องดึงจากทะเบียนด้วย ไม่งั้นผลิต/ติดตั้งที่อยู่ว่าง (บัคคุณธนัชชา 30 ส.ค.69)
     if (customerId != null) {
-      const { data: rc } = await supabase.from("customers").select("name").eq("id", customerId).maybeSingle<{ name: string }>();
+      const { data: rc } = await supabase.from("customers").select("name, address").eq("id", customerId).maybeSingle<{ name: string; address: string }>();
       name = String(rc?.name ?? "").trim();
+      area = String(rc?.address ?? "").trim();
     }
     if (!name) name = String((snap?.name as string) ?? "").trim() || "ลูกค้า";
+    if (!area) area = String((snap?.address as string) ?? "").trim();
     const ch = CH_MAP[String((snap?.contact_channel as string) ?? "").toUpperCase()] ?? "OTHER";
     const { data: newJob, error: jErr } = await supabase
       .from("jobs")
-      .insert({ customer_name: name, ...(customerId != null ? { customer_id: customerId } : {}), channel: ch, assess_date: today(), status: "PENDING_QUOTE" } as never)
+      .insert({ customer_name: name, ...(customerId != null ? { customer_id: customerId } : {}), ...(area ? { customer_area: area } : {}), channel: ch, assess_date: today(), status: "PENDING_QUOTE" } as never)
       .select("id")
       .single<{ id: string }>();
     if (jErr || !newJob) return { error: "สร้างงานไม่สำเร็จ: " + (jErr?.message ?? "") };

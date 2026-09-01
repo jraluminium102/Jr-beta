@@ -138,6 +138,19 @@ export async function POST(req: Request) {
       .maybeSingle<{ id: string }>();
     if (requestedJob?.id) {
       jobId = requestedJob.id;
+      // ⚠ กัน "หลายออเดอร์ปนงานเดียว" (บัคคุณไอซ์ 30 ส.ค.69): งานที่มีใบวางบิล active อยู่แล้ว = ออเดอร์จริงไปแล้ว
+      //   ผูกใบเสนอใหม่เข้าไปอีก → ผลิต/ใบปะหน้า/ใบตัด ปนกัน (ผลิตเป็น 1 งาน=1 ออเดอร์)
+      //   → ไม่รวมเงียบ · ให้ยืนยันด้วย allow_merge_job (accountant: เตือน+ยืนยัน ไม่ hard-block เผื่อ revise/เพิ่มงวดที่ตั้งใจ)
+      if (body.allow_merge_job !== true) {
+        const { count: activeBills } = await supabase
+          .from("billing_notes")
+          .select("id", { count: "exact", head: true })
+          .eq("job_id", jobId)
+          .neq("status", "cancelled");
+        if ((activeBills ?? 0) > 0) {
+          return fail("งานนี้มีออเดอร์ (ใบวางบิล) อยู่แล้ว — ถ้าเป็นออเดอร์ใหม่ ควรแยกเป็นงานใหม่ (กันงานปนกันในผลิต) · ถ้าตั้งใจผูกงานเดิม (เช่น แก้ราคาใบเดิม) กดยืนยันเพื่อดำเนินการต่อ", 409, { needs_confirm: true });
+        }
+      }
     } else {
       // ผู้ใช้เลือกงานมาแล้วแต่ใช้ไม่ได้ (ถูกปิด/ยกเลิก/id เพี้ยน) → ห้าม fallback เงียบ ให้เลือกใหม่
       return fail("งานที่เลือกผูกใช้ไม่ได้แล้ว (อาจถูกปิดหรือยกเลิก) — กรุณาเลือกงานใหม่", 409);

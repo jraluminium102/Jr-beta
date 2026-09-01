@@ -4,6 +4,7 @@ import { withRoute } from "@/lib/bff/handler";
 import { ok } from "@/lib/bff/response";
 import { dbError } from "@/lib/bff/db-error";
 import { specBulletsFromDetail } from "@/lib/cover-sheet/generate.mjs";
+import { pickJobQuotation } from "@/lib/cover-sheet/pick-quotation";
 
 export const dynamic = "force-dynamic";
 type Sb = { from: (t: string) => any };
@@ -27,12 +28,8 @@ export const POST = withRoute(async (req: Request) => {
   const { job_id } = schema.parse(await req.json());
   const sb = ctx.supabase as unknown as Sb;
 
-  // ใบเสนอล่าสุดของงาน (ตัด cancelled · เรียง created_at ล่าสุด — pattern เดียวกับใบปะหน้า)
-  const { data: quos, error: qErr } = await sb.from("quotations")
-    .select("id, created_at").eq("job_id", job_id).neq("status", "cancelled")
-    .order("created_at", { ascending: false });
-  if (qErr) throw dbError(qErr);
-  const latest = (quos ?? [])[0];
+  // เลือก "ใบเสนอที่ใช้จริง" (ใบที่มีบิล/มัดจำ) ตัวเดียวกับใบปะหน้า/ใบตัด — กันแต่ละหน้าเลือกคนละออเดอร์ (30 ส.ค.69)
+  const latest = await pickJobQuotation(sb, job_id);
   if (!latest) return ok({ created: 0, skipped: 0, reason: "no_quotation" });
 
   const { data: items, error: iErr } = await sb.from("quotation_items")

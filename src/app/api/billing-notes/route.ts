@@ -129,16 +129,19 @@ export async function POST(req: Request) {
     // ⚠ ชื่อในผลิต/ติดตั้ง = ชื่อลูกค้าจริง (customers.name) — ไม่ใช่ snapshot.name ที่อาจเป็น "นามบิล/บริษัท"
     //   (25 ส.ค.69: ลูกค้าออกเอกสารในนามบริษัท → เดิมเอาชื่อบริษัทไปโชว์ในผลิต · บริษัทเป็นแค่เรื่องเอกสารการเงิน)
     let cName = "";
+    let cArea = "";   // ที่อยู่ (customer_area) — ดึงจากทะเบียนด้วย ไม่งั้นผลิต/ติดตั้งที่อยู่ว่างหลังมัดจำ (บัคคุณธนัชชา 30 ส.ค.69)
     if (q.customer_id != null) {
-      const { data: rc } = await supabase.from("customers").select("name").eq("id", q.customer_id).maybeSingle<{ name: string }>();
+      const { data: rc } = await supabase.from("customers").select("name, address").eq("id", q.customer_id).maybeSingle<{ name: string; address: string }>();
       cName = String(rc?.name ?? "").trim();
+      cArea = String(rc?.address ?? "").trim();
     }
     if (!cName) cName = String((snap.name as string) ?? "").trim() || "ลูกค้า";
+    if (!cArea) cArea = String((snap.address as string) ?? "").trim();
     const chMap: Record<string, string> = { LINE: "LINE", FB: "FACEBOOK", FACEBOOK: "FACEBOOK", IG: "INSTAGRAM", INSTAGRAM: "INSTAGRAM", OTHER: "OTHER" };
     const cCh = chMap[String((snap.contact_channel as string) ?? "").toUpperCase()] ?? "OTHER";
     const { data: newJob, error: jErr } = await supabase
       .from("jobs")
-      .insert({ customer_name: cName, ...(q.customer_id != null ? { customer_id: q.customer_id } : {}), channel: cCh, assess_date: issueDate, status: "PENDING_QUOTE" } as never)
+      .insert({ customer_name: cName, ...(q.customer_id != null ? { customer_id: q.customer_id } : {}), ...(cArea ? { customer_area: cArea } : {}), channel: cCh, assess_date: issueDate, status: "PENDING_QUOTE" } as never)
       .select("id")
       .single<{ id: string }>();
     if (jErr || !newJob) return fail("สร้างงานให้ใบวางบิลไม่สำเร็จ: " + (jErr?.message ?? ""), 500);

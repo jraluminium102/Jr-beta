@@ -2,6 +2,7 @@ import { dbMessage } from "@/lib/bff/db-error";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 import { cutInputFromRecipe } from "@/lib/cutlist/from-recipe";
 import { cutlistActor } from "@/lib/cutlist/actor";
+import { pickJobQuotation } from "@/lib/cover-sheet/pick-quotation";
 
 export const dynamic = "force-dynamic";
 
@@ -56,14 +57,13 @@ export async function POST(req: Request) {
   const items: NewItem[] = [];
   const skipped: string[] = [];
   if (body.from_job && jobId) {
-    const { data: q } = await sb
+    // เลือก "ใบเสนอที่ใช้จริง" (ใบที่มีบิล/มัดจำ) ตัวเดียวกับใบปะหน้า — กันแต่ละหน้าเลือกคนละออเดอร์ (30 ส.ค.69)
+    const picked = await pickJobQuotation(sb, jobId);
+    const { data: q } = picked ? await sb
       .from("quotations")
       .select("id, code, quotation_items(*)")
-      .eq("job_id", jobId)
-      .neq("status", "cancelled")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .eq("id", picked.id)
+      .maybeSingle() : { data: null };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const qItems = ((q?.quotation_items ?? []) as any[]).slice().sort((a, b) => a.sort_order - b.sort_order);
     for (const it of qItems) {

@@ -262,8 +262,9 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
     const valid = items.filter((i) => i.name.trim() && Number(i.qty) > 0);
     if (valid.length === 0) { setErr("ต้องมีรายการอย่างน้อย 1 บรรทัด (ระบุชื่อ + จำนวน)"); return; }
     setBusy(true);
-    try {
-      const res = await fetch("/api/quotations", {
+    // allowMerge: ผูกใบเสนอเข้างานที่มีบิลแล้ว (ยืนยันแล้ว เช่น แก้ราคาใบเดิม) — retry หลัง 409 needs_confirm
+    async function post(allowMerge: boolean) {
+      return fetch("/api/quotations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -282,6 +283,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
           discount_label: discounts.length === 1 ? (discounts[0].label ?? "").trim() : "",
           wht_rate: wht,
           note,
+          ...(allowMerge ? { allow_merge_job: true } : {}),
           ...(hdr.name.trim() ? { header_override: hdr } : {}),
           ...(condEdited ? {
             conditions_work: condWork.map((s) => s.trim()).filter(Boolean),
@@ -289,7 +291,18 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
           } : {}),
         }),
       });
-      const json = await res.json().catch(() => ({}));
+    }
+    try {
+      let res = await post(false);
+      let json = await res.json().catch(() => ({}));
+      // งานนี้มีบิลแล้ว → ถามยืนยันก่อนผูกงานเดิม (กันงานปนกันในผลิตโดยไม่ตั้งใจ)
+      if (res.status === 409 && json?.needs_confirm) {
+        if (!confirm(`${json.error}\n\nกด "ตกลง" = ผูกกับงานเดิม · "ยกเลิก" = ยังไม่บันทึก (ถ้าเป็นออเดอร์ใหม่ ให้เปลี่ยนเป็น "งานใหม่" ก่อน)`)) {
+          setBusy(false); return;
+        }
+        res = await post(true);
+        json = await res.json().catch(() => ({}));
+      }
       if (!res.ok) { setErr(json.error ?? `บันทึกไม่สำเร็จ (${res.status}) — ลองอีกครั้ง`); return; }
       if (!json?.data?.id) { setErr("บันทึกแล้วแต่ไม่ได้รหัสกลับ — เปิดหน้าใบเสนอราคาเพื่อตรวจสอบ"); return; }
       router.push(`/quotations/${json.data.id}`);
