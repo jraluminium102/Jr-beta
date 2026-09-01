@@ -26,7 +26,7 @@ const patchSchema = z.object({
   // ผลิต/hold แยกชุด (0131) — install_status แก้ผ่าน /production-sets/:id/install-status (สิทธิ์ installation:write) เท่านั้น
   produce_status: z.enum(["PENDING", "PRODUCING", "DONE"]).optional(),
   hold: z.boolean().optional(),
-  hold_reason: t,
+  hold_reason: z.string().nullish(),  // ปลด hold → UI ส่ง null (z.string().optional() ไม่รับ null = 400 · ต้อง nullish)
 });
 
 // PATCH /api/production-sets/:id — แก้ช่องใน worksheet (ออฟฟิศ/ผลิต)

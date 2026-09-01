@@ -66,7 +66,7 @@ export const POST = withRoute(async (req: Request, { params }: Params) => {
     measurer_name: current.measurer_name,
     measured: current.measure_actual,
     measured_time: current.measure_actual_time,
-    measured_by: current.measured_by_name,
+    measured_by: current.measured_by_name ?? current.measurer_name,  // measured_by_name อาจว่าง → ใช้ชื่อผู้วัด (measurer_name เป็นหลักตาม measure-schedule)
     reason: body.reason,
     scope_note: body.scope_note || "",
     created_by: ctx.user.id || null,
