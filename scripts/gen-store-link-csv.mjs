@@ -30,6 +30,7 @@ const n2 = v => (typeof v === "number" && Number.isFinite(v)) ? Math.round(v*100
 const HEAD = ['รุ่น','หมวด','ชื่อรายการ','รหัสสโตร์','มีรหัสไหม','ราคา/หน่วย','หน่วย','จำนวน','ยอดเงิน',
   'ขนาดที่ใช้คิด','รหัสในใบตัด','จำนวนในใบตัด','ตรงกันไหม','ไฟล์ตัดประกอบ'];
 const esc = v => { const s=String(v??''); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; };
+const SUFFIX = process.argv[2] || '';   // เลี่ยงไฟล์ถูกล็อกตอนเจ้าของเปิดค้างใน Excel
 const outDir = 'docs/csv-ผูกสโตร์';
 fs.rmSync(outDir, { recursive:true, force:true }); fs.mkdirSync(outDir, { recursive:true });
 const safe = s => String(s).replace(/[\/:*?"<>|]/g,'-');
@@ -72,7 +73,7 @@ for (const p of Object.values(PRODUCTS)) {
     '\ufeff' + [HEAD, ...rows].map(r=>r.map(esc).join(',')).join('\r\n') + '\r\n');
   all.push(...rows);
 }
-fs.writeFileSync('docs/ผูกสโตร์-ทุกบาน-1ก.ย.69.csv',
+fs.writeFileSync(`docs/ผูกสโตร์-ทุกบาน-1ก.ย.69${SUFFIX}.csv`,
   '\ufeff' + [HEAD, ...all].map(r=>r.map(esc).join(',')).join('\r\n') + '\r\n');
 
 // ── Excel: แท็บ "สรุป" + "รวมทุกบาน" + แท็บละบาน (เจ้าของเปิด CSV ไม่ได้) ──
@@ -89,7 +90,7 @@ const sheets = [
   { name:"รวมทุกบาน", rows:[HEAD, ...all], widths:W },
   ...prodNames.map(n=>({ name:n, rows:[HEAD, ...all.filter(r=>r[0]===n)], widths:W })),
 ];
-writeXlsx("docs/ผูกสโตร์-ทุกบาน-1ก.ย.69.xlsx", sheets);
+writeXlsx(`docs/ผูกสโตร์-ทุกบาน-1ก.ย.69${SUFFIX}.xlsx`, sheets);
 console.log("Excel:", sheets.length, "แท็บ");
 const c = k => all.filter(r=>r[12]===k).length;
 console.log('รุ่น', fs.readdirSync(outDir).length, '· แถวรวม', all.length);
