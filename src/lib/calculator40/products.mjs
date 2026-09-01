@@ -273,6 +273,12 @@ export const PRODUCTS = {
     hardware: [
       { name: 'ล้อ-15x20x230 (2/บาน)', sku: 'JR00577', price: 80, unit: 'ตัว', count: '2*F2' },
       { name: 'มือจับ Align (2/บาน)', sku: 'JR00378', price: 99, unit: 'ตัว', count: '2*F3' },
+      // แตกชิ้นส่วนมือจับตามใบตัด (เจ้าของเคาะ 1 ก.ย.69 "เอาเป็นชิ้น") — จำนวนอิงจำนวนชุดล็อค
+      { name: 'แกนมือจับ A', sku: 'JR00478', price: 18, unit: 'อัน', count: '2*(F3)' },
+      { name: 'แกนมือจับ B', sku: 'JR00479', price: 18, unit: 'อัน', count: '(H>2.8?2:(H>1.4?1:0))*(F3)' },
+      { name: 'ปลายมือจับ ดำ', sku: 'JR00476', price: 30, unit: 'อัน', count: '2*(F3)' },
+      { name: 'ตัวที เงิน', sku: 'JR00475', price: 30, unit: 'อัน', count: 'F3' },
+      { name: 'ก้ามปูรับล็อค', sku: 'JR00477', price: 9, unit: 'อัน', count: '2*(F3)' },
       { name: 'ชุดล็อค', sku: 'JR00246', price: 189, unit: 'ชุด', count: 'F4' },
       { name: 'ฉากประกอบมุม (12/บาน)', sku: 'JR00480', price: 2, unit: 'ตัว', count: '12*P' },   // เจ้าของเคาะ 21 ส.ค.69: 12/บาน ทั้งถอดทุนและตัดประกอบ (เดิม ถอดทุน 8 · ตัดประกอบ 16)
       { name: 'สปิงก็อท (4/บาน)', sku: 'JR00592', price: 29, unit: 'ตัว', count: '4*P' },
@@ -613,6 +619,12 @@ export const PRODUCTS = {
       { name: 'ชนกลางรับบาน', needCode: true, price: 300, unit: 'ท่อน', count: 'Math.ceil(H/6)' },
       { box: 'ฉาก|4', name: 'ฉาก 4" ปิดราง', price: 280, unit: 'ท่อน', count: '2*Math.ceil(W*2/6)' },
       { name: 'มือจับ Align', sku: 'JR00378', price: 99, unit: 'ตัว', count: '2*P' },
+      // แตกชิ้นส่วนมือจับตามใบตัด (เจ้าของเคาะ 1 ก.ย.69 "เอาเป็นชิ้น") — จำนวนอิงจำนวนชุดล็อค
+      { name: 'แกนมือจับ A', sku: 'JR00478', price: 18, unit: 'อัน', count: '2*(P)' },
+      { name: 'แกนมือจับ B', sku: 'JR00479', price: 18, unit: 'อัน', count: '(H>2.8?2:(H>1.4?1:0))*(P)' },
+      { name: 'ปลายมือจับ ดำ', sku: 'JR00476', price: 30, unit: 'อัน', count: '2*(P)' },
+      { name: 'ตัวที เงิน', sku: 'JR00475', price: 30, unit: 'อัน', count: 'P' },
+      { name: 'ก้ามปูรับล็อค', sku: 'JR00477', price: 9, unit: 'อัน', count: '2*(P)' },
       { name: 'ชุดล็อค', sku: 'JR00246', price: 189, unit: 'ชุด', count: 'P' },
     ],
     consum: [
@@ -740,6 +752,12 @@ export const PRODUCTS = {
       { name: 'ล้อรางบน Hafele + ซอฟโค้ด (ชุด)', sku: 'JR00544', price: 1170, unit: 'ชุด', count: "spec.pcsoft==='ไม่ใส่'?0:(form==='แบ่ง 2'?1:2)" },
       // มือจับ Align 2 ตัว/บาน (99×2=198 ตามชีต) — ผูกตัวล็อคอบขาว JR00378 เป็นตัวแทน
       { name: 'มือจับ Align SMS (2/บาน)', sku: 'JR00378', per: 0.5, price: 198, unit: 'บาน', count: 'P' },
+      // แตกชิ้นส่วนมือจับตามใบตัด (เจ้าของเคาะ 1 ก.ย.69 "เอาเป็นชิ้น") — จำนวนอิงจำนวนชุดล็อค
+      { name: 'แกนมือจับ A', sku: 'JR00478', price: 18, unit: 'อัน', count: '2*(P)' },
+      { name: 'แกนมือจับ B', sku: 'JR00479', price: 18, unit: 'อัน', count: '(H>2.8?2:(H>1.4?1:0))*(P)' },
+      { name: 'ปลายมือจับ ดำ', sku: 'JR00476', price: 30, unit: 'อัน', count: '2*(P)' },
+      { name: 'ตัวที เงิน', sku: 'JR00475', price: 30, unit: 'อัน', count: 'P' },
+      { name: 'ก้ามปูรับล็อค', sku: 'JR00477', price: 9, unit: 'อัน', count: '2*(P)' },
       // ชีตรวม "กลอนบานลอง ฿450" = กลอน JR00630 + ปลายกลอน JR00598 → ลงที่กลอนก้อนเดียว ยอดเท่าไฟล์
       { name: 'กลอนบานลอง (รวมปลายกลอน)', sku: 'JR00630', price: 450, unit: 'ชุด', count: '1' },
       { name: 'น็อตเฟรม', sku: 'JR00864', price: 1, unit: 'ตัว', count: 'SILL?8:6' },
@@ -2186,18 +2204,29 @@ export const PRODUCTS = {
       { name: 'เปิดกลาง F7945c', code: 'F7945C', price: 775, kg: 4.30556, seg: 'H', count: 'P>1?1:0' },
     ],
     glass: null,
+    // ── ยึดใบตัด JR_บานโซลิด_3 (เจ้าของเคาะ 1 ก.ย.69 "เอาของใบตัด" + "เอาเป็นชิ้น") ──
+    //   สลับรหัส 3 ตัว: บานพับ JR00237→JR00489 · น็อตเฟรม JR00212→JR00864 · ยาง JR00244→JR00771
+    //   แตกชุด "มือจับ+ล็อค ใบหลัก" (JR00233 ชุดละ 1,045) เป็น 4 ชิ้นตามใบตัด
+    //   ⚠ ห้ามยุบกลับเป็นชุดโดยไม่ถามเจ้าของ
     hardware: [
-      { name: 'บานพับ hyda', sku: 'JR00237', price: 117, unit: 'ตัว', count: 'HG*P' },
-      { name: 'มือจับ+ล็อค ใบหลัก', sku: 'JR00233', price: 1045, unit: 'ชุด', count: '1' },
+      { name: 'บานพับ hyda', sku: 'JR00489', price: 85, unit: 'ตัว', count: 'HG*P' },
+      { name: 'มือจับ ล็อค+กุญแจ (คิงโบ)', sku: 'JR00315', price: 330, unit: 'ชุด', count: '1' },
+      { name: 'ตลับกุญแจไฮด้า', sku: 'JR00551', price: 180, unit: 'ตัว', count: '1' },
+      { name: 'ไส้กุญแจ', sku: 'JR00499', price: 400, unit: 'ตัว', count: '1' },
+      { name: 'แผ่นรับล็อค', sku: 'JR00562', price: 62, unit: 'ชุด', count: '1' },
+      { name: 'สปิงก็อท', sku: 'JR00592', price: 29, unit: 'ตัว', count: '4*P' },        // ใบตัดมี คิดราคาเดิมไม่มี
+      { name: 'ฉากประคองมุม', sku: 'JR00267', price: 1.5, unit: 'ตัว', count: '8*P' },   // ใบตัดมี คิดราคาเดิมไม่มี
       { name: 'ชุดกลอน ใบลอง', sku: 'JR00195', price: 450, unit: 'ชุด', count: 'Math.max(P-1,0)' },
-      { name: 'น็อตเฟรม', sku: 'JR00212', price: 1, unit: 'ตัว', count: 'S?8:6' },
+      { name: 'น็อตเฟรม 1"', sku: 'JR00864', price: 1, unit: 'ตัว', count: 'S?8:6' },
       // ลูกฟูก2ทาง 2 ฝั่ง (SlimLux ตัดไม่ต่อ) — จำนวนเส้น 6ม. ตามการตัด · Excel R24
       { name: 'ลูกฟูก2ทาง 2 ฝั่ง', sku: 'JR00249', price: 432, unit: 'เส้น', count: 'Math.ceil( Math.ceil((W*100/P)/10) * P * 2 / Math.max(1, Math.trunc(600/Math.max(1,H*100))) )' },
       // เส้นคาดตาราง แนวตั้ง 2 ฝั่ง — Excel R33 (เส้นกว้าง1.8 ช่อง2 เว้นข้าง10)
       { name: 'เส้นคาดตาราง 2 ฝั่ง', sku: 'JR00263', price: 140, unit: 'เส้น', count: 'Math.ceil( Math.max(0, Math.trunc((W*100/P-18)/3.8)) * P * 2 / Math.max(1, Math.trunc(600/Math.max(1,H*100))) )' },
     ],
     consum: [
-      { name: 'ยาง', sku: 'JR00244', price: 11, unit: 'ม.', count: 'Math.round(2*(W+H)*P)' },
+      // ใบตัดแยก ยางกรอบบาน / ยางวงกบ คนละบรรทัด — รหัสเดียวกัน JR00771 (ยาง epdm sponge)
+      { name: 'ยางกรอบบาน', sku: 'JR00771', price: 11, unit: 'ม.', count: 'Math.round(2*(W+H)*P)' },
+      { name: 'ยางวงกบ', sku: 'JR00771', price: 11, unit: 'ม.', count: 'Math.round(W+2*H)' },
       SILICONE,
     ],
   },
