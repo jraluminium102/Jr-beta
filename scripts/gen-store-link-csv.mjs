@@ -13,7 +13,7 @@ import * as CUTP from '../src/lib/cutlist/products.ts';
 import { CUT_SPEC_BY_ID } from '../src/lib/cutlist/products.ts';
 import { cutInputFromRecipe } from '../src/lib/cutlist/from-recipe.ts';
 import { createRequire } from 'node:module';
-import { writeXlsx } from './xlsxwrite.mjs';
+import { writeXlsx, S } from './xlsxwrite.mjs';
 const PB = createRequire(import.meta.url)('../src/lib/calculator40/pricebook.json');
 
 const MAP = { awning:'FUJI_SWING', open_door:'FUJI_DOOR', bansolid:'SOLID_DOOR', topslide:'TOPRAIL_FRAME',
@@ -29,8 +29,22 @@ const FILEOF = { FUJI_SWING:'JR_FUJI_บานเปิดบานกระท�
 const norm = s => String(s||'').replace(/[\s\-–—()"'·.]/g,'').toLowerCase();
 const val = (f,o) => { try { return typeof f==='function' ? f(o) : f; } catch { return ''; } };
 const n2 = v => (typeof v === "number" && Number.isFinite(v)) ? Math.round(v*100)/100 : v;   // เลขทศนิยมยาว ๆ อ่านไม่รู้เรื่องใน Excel
-const HEAD = ['รุ่น','หมวด','ชื่อรายการ','รหัสสโตร์','มีรหัสไหม','ราคา/หน่วย','หน่วย','จำนวน','ยอดเงิน',
+const HEAD = ['ต้องเช็ค','รุ่น','หมวด','ชื่อรายการ','รหัสสโตร์','มีรหัสไหม','ราคา/หน่วย','หน่วย','จำนวน','ยอดเงิน',
   'ขนาดที่ใช้คิด','รหัสในใบตัด','จำนวนในใบตัด','หน่วยในใบตัด','ตรงกันไหม','ไฟล์ตัดประกอบ'];
+
+// ธง + สีตามสถานะ — เจ้าของขอ "ไฮไลท์ให้รู้ว่าต้องดูตรงไหน" (1 ก.ย.69)
+const LEVEL = {
+  "รหัสไม่ตรง":        { flag:"🔴 ต้องแก้",   style:S.RED },
+  "จำนวนต่าง":         { flag:"🔴 ต้องแก้",   style:S.RED },
+  "คิดราคาไม่มีรายการนี้": { flag:"🟠 ต้องเติม",  style:S.ORANGE },
+  "คิดราคายังไม่มีรหัส":  { flag:"🟡 ต้องเคาะ",  style:S.YELLOW },
+  "ใบตัดไม่ให้รหัส":     { flag:"🟡 ต้องเคาะ",  style:S.YELLOW },
+  "ตรง":               { flag:"✓ ผ่าน",       style:S.GREEN },
+  "ใบตัดไม่มีรายการนี้":  { flag:"— ไม่ต้องทำ",  style:S.GREY },
+  "ยังไม่ผูกไฟล์":       { flag:"— ไม่มีใบตัด",  style:S.GREY },
+};
+const FLAG = st => (LEVEL[st]?.flag) || "";
+const STYLE = st => (LEVEL[st]?.style) ?? 0;
 const esc = v => { const s=String(v??''); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; };
 const SUFFIX = process.argv[2] || '';   // เลี่ยงไฟล์ถูกล็อกตอนเจ้าของเปิดค้างใน Excel
 const outDir = 'docs/csv-ผูกสโตร์';
@@ -107,15 +121,15 @@ for (const p of Object.values(PRODUCTS)) {
       : !code ? 'คิดราคายังไม่มีรหัส' : !hit.sku ? 'ใบตัดไม่ให้รหัส'
       : code.toUpperCase()!==String(hit.sku).toUpperCase() ? 'รหัสไม่ตรง'
       : Math.abs(myQty - hit.qty) <= Math.max(0.05, hit.qty*0.02) ? 'ตรง' : 'จำนวนต่าง';
-    rows.push([ p.name, cat, l.name, code, code?'มี':'ยังไม่มี', n2(l.unitPrice ?? ''), l.unit || '',
+    rows.push([ FLAG(same), p.name, cat, l.name, code, code?'มี':'ยังไม่มี', n2(l.unitPrice ?? ''), l.unit || '',
       n2(l.cat==='alu' ? myQty : (l.qty ?? '')), n2(l.amount ?? ''), sz,
       hit?(hit.sku||'—'):'', hit?n2(hit.qty):'', hit?(hit.unit||''):'', same, fileLabel ]);
   }
   cutList.forEach((c,ix)=>{ if(used.has(ix)) return;
-    rows.push([ p.name, 'มีแต่ในใบตัด', c.name, '', 'ยังไม่มี', '', '', '', '', sz,
+    rows.push([ FLAG("คิดราคาไม่มีรายการนี้"), p.name, 'มีแต่ในใบตัด', c.name, '', 'ยังไม่มี', '', '', '', '', sz,
       c.sku||'—', n2(c.qty), c.unit||'', 'คิดราคาไม่มีรายการนี้', fileLabel ]); });
   for (const [c,e] of cutProf) { if (usedProf.has(c)) continue;
-    rows.push([ p.name, 'มีแต่ในใบตัด (อลู)', e.name, '', 'ยังไม่มี', '', '', '', '', sz,
+    rows.push([ FLAG("คิดราคาไม่มีรายการนี้"), p.name, 'มีแต่ในใบตัด (อลู)', e.name, '', 'ยังไม่มี', '', '', '', '', sz,
       e.sku, n2(e.qty), e.unit, 'คิดราคาไม่มีรายการนี้', fileLabel ]); }
   if (!rows.length) continue;
   fs.writeFileSync(path.join(outDir, safe(p.name)+'.csv'),
@@ -127,21 +141,27 @@ fs.writeFileSync(`docs/ผูกสโตร์-ทุกบาน-1ก.ย.69${
 
 // ── Excel: แท็บ "สรุป" + "รวมทุกบาน" + แท็บละบาน (เจ้าของเปิด CSV ไม่ได้) ──
 const STATUS = ["ตรง","จำนวนต่าง","รหัสไม่ตรง","คิดราคายังไม่มีรหัส","ใบตัดไม่ให้รหัส","ใบตัดไม่มีรายการนี้","คิดราคาไม่มีรายการนี้","ยังไม่ผูกไฟล์"];
-const prodNames = [...new Set(all.map(r=>r[0]))];
+const prodNames = [...new Set(all.map(r=>r[1]))];
 const summary = [["รุ่น","แถวรวม", ...STATUS, "ไฟล์ตัดประกอบ"]];
 for (const n of prodNames) {
-  const rs = all.filter(r=>r[0]===n);
-  summary.push([n, rs.length, ...STATUS.map(k=>rs.filter(r=>r[13]===k).length || ""), rs.find(r=>r[14])?.[14] || "— ไม่มีไฟล์ตัดประกอบ —"]);
+  const rs = all.filter(r=>r[1]===n);
+  summary.push([n, rs.length, ...STATUS.map(k=>rs.filter(r=>r[14]===k).length || ""), rs.find(r=>r[15])?.[15] || "— ไม่มีไฟล์ตัดประกอบ —"]);
 }
-const W = [22,14,34,16,11,12,10,10,12,16,16,13,13,22,26];
+const W = [13,22,14,34,16,11,12,10,10,12,16,16,13,13,22,26];
+const sty = rs => [0, ...rs.map(r=>STYLE(r[14]))];
+// เรียง "ต้องเช็คก่อน" ในแท็บรวมและแท็บต้องเช็ค
+const RANK = { "รหัสไม่ตรง":0, "จำนวนต่าง":1, "คิดราคาไม่มีรายการนี้":2, "คิดราคายังไม่มีรหัส":3, "ใบตัดไม่ให้รหัส":4, "ตรง":5, "ใบตัดไม่มีรายการนี้":6, "ยังไม่ผูกไฟล์":7 };
+const todo = all.filter(r=>RANK[r[14]] <= 4)
+  .sort((a,b)=> RANK[a[14]]-RANK[b[14]] || String(a[1]).localeCompare(String(b[1]),"th"));
 const sheets = [
-  { name:"สรุป", rows:summary, widths:[30,9,7,10,10,14,12,16,16,12,26] },
-  { name:"รวมทุกบาน", rows:[HEAD, ...all], widths:W },
-  ...prodNames.map(n=>({ name:n, rows:[HEAD, ...all.filter(r=>r[0]===n)], widths:W })),
+  { name:"🔴 ต้องเช็ค", rows:[HEAD, ...todo], widths:W, rowStyles:sty(todo) },
+  { name:"สรุป", rows:summary, widths:[30,9,7,10,10,10,14,12,16,16,12,26] },
+  { name:"รวมทุกบาน", rows:[HEAD, ...all], widths:W, rowStyles:sty(all) },
+  ...prodNames.map(n=>{ const rs=all.filter(r=>r[1]===n); return { name:n, rows:[HEAD, ...rs], widths:W, rowStyles:sty(rs) }; }),
 ];
 writeXlsx(`docs/ผูกสโตร์-ทุกบาน-1ก.ย.69${SUFFIX}.xlsx`, sheets);
-console.log("Excel:", sheets.length, "แท็บ");
-const c = k => all.filter(r=>r[13]===k).length;
+console.log("Excel:", sheets.length, "แท็บ · แถวที่ต้องเช็ค", todo.length);
+const c = k => all.filter(r=>r[14]===k).length;
 console.log('รุ่น', fs.readdirSync(outDir).length, '· แถวรวม', all.length);
 for (const k of ['ตรง','รหัสไม่ตรง','ใบตัดไม่มีรายการนี้','คิดราคาไม่มีรายการนี้','คิดราคายังไม่มีรหัส','ใบตัดไม่ให้รหัส','ยังไม่ผูกไฟล์'])
   console.log('  '+k+' = '+c(k));

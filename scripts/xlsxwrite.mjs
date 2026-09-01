@@ -74,7 +74,7 @@ export function sheetName(raw, used = new Set()) {
   return s;
 }
 
-function sheetXml(rows, widths, freezeHeader) {
+function sheetXml(rows, widths, freezeHeader, rowStyles) {
   const cols = widths?.length
     ? `<cols>${widths.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join("")}</cols>`
     : "";
@@ -84,7 +84,8 @@ function sheetXml(rows, widths, freezeHeader) {
   const body = rows.map((r, ri) => {
     const cells = r.map((v, ci) => {
       const ref = colName(ci) + (ri + 1);
-      const style = ri === 0 ? ' s="1"' : "";
+      const st = ri === 0 ? 1 : (rowStyles && rowStyles[ri]) || 0;
+      const style = st ? ` s="${st}"` : "";
       // เซลล์ว่าง = ไม่เขียนเลย (Excel เองก็ทำแบบนี้) — เขียน <c/> เปล่าไว้ทำให้ตัวอ่านบางตัวสับสน
       if (v === null || v === undefined || v === "") return "";
       if (typeof v === "number" && Number.isFinite(v)) return `<c r="${ref}"${style}><v>${v}</v></c>`;
@@ -98,19 +99,41 @@ function sheetXml(rows, widths, freezeHeader) {
     rows.length > 1 ? `<autoFilter ref="A1:${colName(rows[0].length - 1)}${rows.length}"/>` : ""}</worksheet>`;
 }
 
+/**
+ * สไตล์ที่ใช้ได้ (ส่งเป็นเลขใน sheet.rowStyles)
+ *   0 ปกติ · 1 หัวตาราง · 2 แดง (ต้องแก้) · 3 ส้ม (ต้องเติม) · 4 เหลือง (ต้องเคาะ)
+ *   5 เขียว (ตรงแล้ว) · 6 เทาจาง (ไม่ต้องทำอะไร)
+ */
+export const S = { NORMAL: 0, HEAD: 1, RED: 2, ORANGE: 3, YELLOW: 4, GREEN: 5, GREY: 6 };
 const STYLES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-<fonts count="2"><font><sz val="11"/><name val="Tahoma"/></font><font><b/><sz val="11"/><name val="Tahoma"/></font></fonts>
-<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE8EEF7"/><bgColor indexed="64"/></patternFill></fill></fills>
+<fonts count="3"><font><sz val="11"/><name val="Tahoma"/></font><font><b/><sz val="11"/><name val="Tahoma"/></font><font><sz val="11"/><color rgb="FF9AA0A6"/><name val="Tahoma"/></font></fonts>
+<fills count="7">
+<fill><patternFill patternType="none"/></fill>
+<fill><patternFill patternType="gray125"/></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FFDCE6F1"/><bgColor indexed="64"/></patternFill></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FFFFC7CE"/><bgColor indexed="64"/></patternFill></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FFFFD9A0"/><bgColor indexed="64"/></patternFill></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FFFFF2A8"/><bgColor indexed="64"/></patternFill></fill>
+<fill><patternFill patternType="solid"><fgColor rgb="FFD9EAD3"/><bgColor indexed="64"/></patternFill></fill>
+</fills>
 <borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>
 <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-<cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/></cellXfs>
+<cellXfs count="7">
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+<xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/>
+<xf numFmtId="0" fontId="0" fillId="3" borderId="0" xfId="0" applyFill="1"/>
+<xf numFmtId="0" fontId="0" fillId="4" borderId="0" xfId="0" applyFill="1"/>
+<xf numFmtId="0" fontId="0" fillId="5" borderId="0" xfId="0" applyFill="1"/>
+<xf numFmtId="0" fontId="0" fillId="6" borderId="0" xfId="0" applyFill="1"/>
+<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>
+</cellXfs>
 </styleSheet>`;
 
 /**
  * เขียนไฟล์ xlsx
  * @param {string} file ปลายทาง
- * @param {{name:string, rows:(string|number)[][], widths?:number[]}[]} sheets
+ * @param {{name:string, rows:(string|number)[][], widths?:number[], rowStyles?:number[]}[]} sheets
  */
 export function writeXlsx(file, sheets) {
   const used = new Set();
@@ -134,7 +157,7 @@ ${sheets.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" Co
       names.map((_, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join("")
       }<Relationship Id="rId${names.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`, "utf8") },
     { name: "xl/styles.xml", data: Buffer.from(STYLES, "utf8") },
-    ...sheets.map((s, i) => ({ name: `xl/worksheets/sheet${i + 1}.xml`, data: Buffer.from(sheetXml(s.rows, s.widths, true), "utf8") })),
+    ...sheets.map((s, i) => ({ name: `xl/worksheets/sheet${i + 1}.xml`, data: Buffer.from(sheetXml(s.rows, s.widths, true, s.rowStyles), "utf8") })),
   ];
   fs.writeFileSync(file, zip(files));
   return file;
