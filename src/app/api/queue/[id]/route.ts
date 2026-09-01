@@ -212,6 +212,18 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
 
     if (!jobId) return ok(data, { job_id: null });
 
+    // เติม "ที่อยู่" (customer_area) จากทะเบียนถ้างานยังว่าง — promote/ผูก target ไม่ก๊อป address ให้ (บัคคุณธนัชชา 30 ส.ค.69)
+    //   ทำ app-side (ปลอดภัยกว่ารื้อ RPC _promote_queue_core) · เฉพาะเมื่อว่างจริง ไม่ทับที่อยู่ไซต์ที่กรอกไว้
+    try {
+      const { data: jrow } = await sb.from("jobs").select("customer_id, customer_area").eq("id", jobId).maybeSingle();
+      const jj = jrow as { customer_id?: number | null; customer_area?: string | null } | null;
+      if (jj?.customer_id != null && !String(jj.customer_area ?? "").trim()) {
+        const { data: crow } = await sb.from("customers").select("address").eq("id", jj.customer_id).maybeSingle();
+        const addr = String((crow as { address?: string } | null)?.address ?? "").trim();
+        if (addr) await sb.from("jobs").update({ customer_area: addr }).eq("id", jobId);
+      }
+    } catch { /* best-effort: ไม่ให้ปิดคิวล่มเพราะเติมที่อยู่ไม่สำเร็จ */ }
+
     // ─── path เคลียร์แบบ ──────────────────────────────────────────────────
     if (isClearRevise) {
       if (clear_revise !== false) {
