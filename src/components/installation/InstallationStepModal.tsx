@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "@/lib/api";
 import { INST_STATUS } from "@/lib/constants";
 import { thDate } from "@/lib/format";
@@ -10,6 +11,7 @@ import type { InstStatus } from "@/lib/database.types";
 
 export type InstRow = {
   id: string;
+  job_id?: string | null;   // ใช้ดึงชุดผลิต (production_sets) มาติ๊ก "ติดตั้งชุดนี้แล้ว" (0131)
   status: InstStatus;
   install_scheduled: string | null;
   install_actual: string | null;
@@ -17,6 +19,81 @@ export type InstRow = {
   warranty_until: string | null;
   job: { job_code: string; customer_name: string; customer_area: string | null } | null;
 };
+
+// ชุดงานผลิต (subset ที่การ์ดนี้ต้องใช้ — ผลิต/ติดตั้งแยกชุด + hold · 0131)
+type ProdSet = {
+  id: number; set_label: string;
+  install_status?: string | null; hold?: boolean | null; hold_reason?: string | null;
+};
+
+// เช็คลิสต์ "ติดตั้งชุดนี้แล้ว" รายชุด — แสดงเฉพาะงานที่มี worksheet (production_sets) แล้ว
+function InstallSetsChecklist({ jobId, canWrite, onBlockChange }: {
+  jobId: string; canWrite: boolean;
+  onBlockChange: (reason: string | null) => void;
+}) {
+  const qc = useQueryClient();
+  const key = ["production-sets", jobId];
+  const { data, isLoading } = useQuery({ queryKey: key, queryFn: () => api.get<ProdSet[]>(`/production-sets?job_id=${jobId}`) });
+  const sets = data?.data ?? [];
+  const [busyId, setBusyId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (sets.length === 0) { onBlockChange(null); return; }
+    const holdCount = sets.filter((s) => s.hold).length;
+    const activeNotInstalled = sets.filter((s) => !s.hold && s.install_status !== "INSTALLED").length;
+    if (activeNotInstalled > 0) onBlockChange(`ยังติดตั้งไม่ครบ — เหลือ ${activeNotInstalled} ชุดที่ยังไม่ติดตั้ง`);
+    else if (holdCount > 0) onBlockChange(`มี ${holdCount} ชุดที่ hold ค้างอยู่ — ปลด hold ก่อนจึงจะปิดงานได้`);
+    else onBlockChange(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, sets.length, sets.map((s) => `${s.id}:${s.install_status}:${s.hold}`).join(",")]);
+
+  if (isLoading || sets.length === 0) return null;
+
+  const toggle = async (s: ProdSet) => {
+    if (!canWrite) return;
+    const next = s.install_status === "INSTALLED" ? "PENDING" : "INSTALLED";
+    setBusyId(s.id);
+    try {
+      await api.patch(`/production-sets/${s.id}/install-status`, { install_status: next });
+      qc.invalidateQueries({ queryKey: key });
+    } catch (e) {
+      alert(e instanceof ApiError ? e.message : "บันทึกไม่สำเร็จ");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  return (
+    <div className="mt-4 glass-card rounded-2xl p-4 border border-white/10">
+      <div className="text-[13px] font-semibold text-white mb-2">ชุดงาน — ติ๊กที่ติดตั้งแล้ว</div>
+      <div className="space-y-1.5">
+        {sets.map((s) => {
+          const installed = s.install_status === "INSTALLED";
+          return (
+            <div key={s.id} className={`flex items-center justify-between gap-2 rounded-xl px-3 py-2 border ${installed ? "bg-emerald-500/10 border-emerald-300/25" : "bg-white/5 border-white/10"}`}>
+              <div className="min-w-0">
+                <div className={`text-[13px] font-medium truncate ${installed ? "text-emerald-200" : "text-white/85"}`}>{s.set_label || "ชุดงาน"}</div>
+                {s.hold && (
+                  <div className="text-[11px] text-amber-200 truncate">⏸ Hold{s.hold_reason ? `: ${s.hold_reason}` : ""}</div>
+                )}
+              </div>
+              {canWrite ? (
+                <button onClick={() => toggle(s)} disabled={busyId === s.id}
+                  className={`focusable pressable shrink-0 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold min-h-[40px] disabled:opacity-50 ${installed ? "bg-emerald-500/20 border border-emerald-300/30 text-emerald-100" : "bg-white/10 border border-white/20 text-white/80"}`}>
+                  {busyId === s.id ? <span className="w-3.5 h-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin" /> : (installed ? <Check size={13} /> : null)}
+                  {installed ? "ติดตั้งแล้ว" : "ติดตั้งชุดนี้แล้ว"}
+                </button>
+              ) : (
+                <span className={`shrink-0 text-[12px] ${installed ? "text-emerald-200" : "text-white/50"}`}>{installed ? "ติดตั้งแล้ว" : "ยังไม่ติดตั้ง"}</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 type StepField = { field: string; label: string; type?: "date" | "note"; optional?: boolean };
 type Tone = "go" | "warn" | "wait";
@@ -105,6 +182,8 @@ export function InstallationStepModal({
 
   const [armed, setArmed] = useState<string | null>(null);
   const [vals, setVals] = useState<Record<string, string>>({});
+  // เกตปิดงาน (0131) — ชุดผลิต active ต้องติดตั้งครบ + ห้ามมี hold ค้าง (คำนวณฝั่ง client ให้เห็นทันที · server เช็คซ้ำเสมอ)
+  const [installBlock, setInstallBlock] = useState<string | null>(null);
 
   const actions = TRANSITIONS[inst.status] ?? [];
 
@@ -128,6 +207,10 @@ export function InstallationStepModal({
   };
 
   const clickAction = (a: Action) => {
+    if (a.to === "COMPLETED" && installBlock) {
+      setErr(installBlock);
+      return;
+    }
     if (!a.fields || a.fields.length === 0) {
       patch({ status: a.to });
       return;
@@ -204,6 +287,16 @@ export function InstallationStepModal({
             <Chip>{INST_STATUS[inst.status]}</Chip>
           </div>
         </div>
+
+        {/* ชุดงาน — ติ๊กติดตั้งแล้ว (0131) — โชว์เฉพาะงานที่มี worksheet แยกชุด */}
+        {inst.job_id && inst.status !== "COMPLETED" && (
+          <InstallSetsChecklist jobId={inst.job_id} canWrite={canWrite} onBlockChange={setInstallBlock} />
+        )}
+        {installBlock && inst.status !== "COMPLETED" && (
+          <div className="mt-3 rounded-xl border border-amber-300/30 bg-amber-500/12 px-3.5 py-2.5 text-[13px] text-amber-100 flex items-start gap-2">
+            <TriangleAlert size={15} className="shrink-0 mt-0.5 text-amber-300" /> {installBlock}
+          </div>
+        )}
 
         {!canWrite ? (
           <p className="text-center text-sm mt-4" style={{ color: "var(--t-low)" }}>

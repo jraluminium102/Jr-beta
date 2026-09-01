@@ -54,6 +54,13 @@ export interface Production {
   notes: string | null; status_updated_at: string | null; remark: string | null;
   created_at: string; updated_at: string;
   production_due_date: string | null; production_actual: string | null;  // production dates (0019)
+  measure_round_no: number;  // วัดซ้ำ (0130) — >1 = วัดมากกว่า 1 รอบ
+}
+export interface MeasureRound {  // ประวัติรอบวัด (0130) — snapshot ก่อนเคลียร์ไปวัดรอบใหม่
+  id: number; production_id: string; job_id: string; round_no: number;
+  scheduled: string | null; sched_time: string | null; measurer_name: string | null;
+  measured: string | null; measured_time: string | null; measured_by: string | null;
+  reason: string; scope_note: string; created_by: string | null; created_at: string;
 }
 export interface Installation {
   id: string; job_id: string; status: InstStatus;
@@ -136,6 +143,7 @@ export interface Database {
       profiles:        Tbl<Profile>;
       jobs:            Tbl<Job>;
       productions:     Tbl<Production>;
+      measure_rounds:  Tbl<MeasureRound>;
       installations:   Tbl<Installation>;
       issues:          Tbl<Issue>;
       finance_entries: Tbl<FinanceEntry>;

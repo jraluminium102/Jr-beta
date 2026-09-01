@@ -103,6 +103,9 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
   const [saved, setSaved] = useState(false); // แฟลช "บันทึกแล้ว ✓" หลังเซฟสำเร็จ (auto-save เงียบ → ให้ feedback)
   const [editKeys, setEditKeys] = useState<Record<string, boolean>>({}); // ช่อง mark ที่กด "แก้" override อยู่
   const [optField, setOptField] = useState<{ key: string; label: string } | null>(null); // แผงจัดการตัวเลือกที่เปิดอยู่
+  // ผลิต/ติดตั้ง แยกชุด + Hold (0131) — ชุดที่กำลังกรอกเหตุผล hold อยู่
+  const [holdOpenId, setHoldOpenId] = useState<number | null>(null);
+  const [holdReasonDraft, setHoldReasonDraft] = useState("");
 
   // ตัวเลือกดรอปดาวน์จาก DB (0099) — ยังไม่รัน migration → data ว่าง แล้วตกไปใช้ FALLBACK
   const optKey = ["production-set-options"];
@@ -126,6 +129,14 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
       qc.invalidateQueries({ queryKey: key }); // refetch → เห็นค่าล่าสุด/ใครกด (กัน stale ทับ)
       setSaved(true); setTimeout(() => setSaved(false), 1600); // แฟลชป้าย "บันทึกแล้ว ✓"
     } catch { /* keep typed value */ }
+  }
+  // เซฟหลายฟิลด์ในคำขอเดียว — ใช้ตอน hold (hold + hold_reason พร้อมกัน กันแฟลชค้าง/เรียก 2 รอบ)
+  async function saveMany(id: number, patch: Record<string, any>) {
+    try {
+      await api.patch(`/production-sets/${id}`, patch);
+      qc.invalidateQueries({ queryKey: key });
+      setSaved(true); setTimeout(() => setSaved(false), 1600);
+    } catch { /* ignore */ }
   }
   async function add() {
     setBusy(true);
@@ -261,6 +272,67 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
     );
   };
 
+  // ── ผลิต/ติดตั้ง แยกชุด + Hold (0131) ───────────────────────────────────────
+  const PRODUCE_LABELS: Record<string, string> = { PENDING: "รอผลิต", PRODUCING: "กำลังผลิต", DONE: "ผลิตเสร็จ" };
+  const produceSel = (s: SetRow) => (
+    <div className="relative">
+      <select value={(s.produce_status as string) ?? "PENDING"} disabled={!canWrite}
+        onChange={(e) => save(s.id, "produce_status", e.target.value)} className={selectCls}>
+        {Object.entries(PRODUCE_LABELS).map(([v, l]) => <option key={v} value={v} style={optStyle}>{l}</option>)}
+      </select>
+      <ChevronDown size={18} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-white/50" />
+    </div>
+  );
+  // ติดตั้งรายชุด — read-only ที่นี่ (ติ๊กจริงที่หน้าติดตั้ง ป้องกันสถานะสองที่ขัดกัน)
+  const installBadge = (s: SetRow) => {
+    const installed = s.install_status === "INSTALLED";
+    return (
+      <div className={`w-full rounded-lg border px-3 py-2.5 text-[15px] ${installed ? "bg-emerald-500/15 border-emerald-300/30 text-emerald-200" : "bg-slate-900/50 border-white/20 text-white/60"}`}>
+        {installed ? "✓ ติดตั้งแล้ว" : "ยังไม่ติดตั้ง"}
+        <span className="block text-[11px] mt-0.5 opacity-70">ติ๊กจริงที่หน้า &quot;แผนติดตั้ง&quot;</span>
+      </div>
+    );
+  };
+  const holdControl = (s: SetRow) => {
+    const onHold = !!s.hold;
+    if (onHold) {
+      return (
+        <div className="rounded-lg border border-amber-300/30 bg-amber-500/10 px-3 py-2.5 space-y-1.5">
+          <div className="text-[14px] font-semibold text-amber-100">⏸ Hold อยู่{s.hold_reason ? `: ${s.hold_reason}` : ""}</div>
+          {canWrite && (
+            <button type="button" onClick={() => saveMany(s.id, { hold: false, hold_reason: null })}
+              className="text-[13px] text-emerald-300 underline underline-offset-2">ปลด Hold</button>
+          )}
+        </div>
+      );
+    }
+    if (canWrite && holdOpenId === s.id) {
+      return (
+        <div className="rounded-lg border border-amber-300/30 bg-amber-500/10 px-3 py-2.5 space-y-2">
+          <input value={holdReasonDraft} onChange={(e) => setHoldReasonDraft(e.target.value)}
+            placeholder="เหตุผล hold เช่น รอลูกค้าคอนเฟิร์มสี" className={fieldCls + " placeholder-amber-200/50"} />
+          <div className="flex gap-2">
+            <button type="button"
+              onClick={async () => {
+                if (!holdReasonDraft.trim()) { alert("กรุณาระบุเหตุผล hold"); return; }
+                await saveMany(s.id, { hold: true, hold_reason: holdReasonDraft.trim() });
+                setHoldOpenId(null); setHoldReasonDraft("");
+              }}
+              className="flex-1 min-h-[40px] rounded-lg bg-amber-500 hover:bg-amber-400 text-white text-[13px] font-semibold">ยืนยัน Hold</button>
+            <button type="button" onClick={() => { setHoldOpenId(null); setHoldReasonDraft(""); }}
+              className="flex-1 min-h-[40px] rounded-lg bg-slate-900/60 border border-white/20 text-white/70 text-[13px]">ยกเลิก</button>
+          </div>
+        </div>
+      );
+    }
+    return canWrite ? (
+      <button type="button" onClick={() => { setHoldOpenId(s.id); setHoldReasonDraft(""); }}
+        className="w-full min-h-[44px] rounded-lg border border-dashed border-amber-300/40 text-amber-200 text-[14px] hover:bg-amber-500/10">
+        ⏸ Hold ชุดนี้
+      </button>
+    ) : <div className="text-[13px] text-white/40 px-1">— ไม่ hold —</div>;
+  };
+
   return (
     <div className="mt-3 glass-card rounded-2xl p-4 border border-white/10">
       <div className="flex items-center justify-between mb-2.5">
@@ -276,6 +348,23 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
           </div>
         )}
       </div>
+
+      {/* แถบสรุป ผลิต/ติดตั้ง/hold (0131) */}
+      {sets.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-3">
+          <span className="text-[12px] font-semibold rounded-full px-2.5 py-1 bg-emerald-500/15 border border-emerald-300/25 text-emerald-100">
+            ผลิต {sets.filter((s) => s.produce_status === "DONE").length}/{sets.length}
+          </span>
+          <span className="text-[12px] font-semibold rounded-full px-2.5 py-1 bg-sky-500/15 border border-sky-300/25 text-sky-100">
+            ติดตั้ง {sets.filter((s) => s.install_status === "INSTALLED").length}/{sets.length}
+          </span>
+          {sets.some((s) => s.hold) && (
+            <span className="text-[12px] font-semibold rounded-full px-2.5 py-1 bg-amber-500/15 border border-amber-300/25 text-amber-100">
+              ⏸ Hold {sets.filter((s) => s.hold).length}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* ประวัติสเปคกระจก (ใช้ร่วมทุกชุด) */}
       <datalist id="glass-spec-history">
@@ -339,6 +428,12 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
               </div>
 
               <div className="space-y-4">
+                <Group title="ผลิต / ติดตั้ง / Hold">
+                  <F label="สถานะผลิต (ปิดชุด)">{produceSel(s)}</F>
+                  <F label="ติดตั้ง (แยกชุด)">{installBadge(s)}</F>
+                  <div className="sm:col-span-2 lg:col-span-2"><F label="Hold">{holdControl(s)}</F></div>
+                </Group>
+
                 <Group title="แบบ & วัด">
                   <F label="แบบถึงผลิต 👷 (ช่างกด)" onEditOpts={openOpts("design_received", "แบบถึงผลิต")}>{markRO(s, "design_received", "design_received_by", "design_received_at", valuesOf("design_received"))}</F>
                   <F label="วันวัดจริง">{date(s, "measure_actual")}</F>

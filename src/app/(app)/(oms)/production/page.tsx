@@ -216,6 +216,7 @@ export default function ProductionPage() {
   const canWrite = (data?.meta?.can_write as boolean) ?? false;
   const isAdmin = (data?.meta?.is_admin as boolean) ?? false;
   const canUndeposit = (data?.meta?.can_undeposit as boolean) ?? false;
+  const canRemeasure = (data?.meta?.can_remeasure as boolean) ?? false;
   const adhocJobs = (data?.meta?.adhoc as AdhocJob[] | undefined) ?? [];
 
   // คืน Promise (รอ refetch จบ) — ปุ่มแก้เฟสจะ await ก่อนปลดล็อก กัน race แสดงค่าสถานะเก่า
@@ -409,6 +410,10 @@ export default function ProductionPage() {
                     <span className="text-white font-semibold tnum">{r.job?.job_code}</span>
                     {/* มีงาน ผรม. (0090) — read-only marker ต่อเลขงาน */}
                     <FloorWorkBadge floorWork={r.job?.floor_work} floorNote={r.job?.floor_note} dark />
+                    {/* ป้ายวัดรอบ (0130) — วัดซ้ำมาแล้ว */}
+                    {(r.measure_round_no ?? 1) > 1 && (
+                      <span className="text-[11px] font-bold rounded-full px-2 py-0.5 bg-sky-500/25 border border-sky-300/35 text-sky-100">🔁 วัดรอบ {r.measure_round_no}</span>
+                    )}
                     <span className="text-[13px]" style={{ color: "var(--t-mid)" }}>{r.job?.customer_name}</span>
                     {/* โน้ตเด่น "ทำไมยังวัด/ผลิตไม่ได้" (0098) — กดใส่/เอาออกเร็วจากรายการ */}
                     <BlockerNotesInline jobId={r.job_id} customerName={r.job?.customer_name ?? ""} notes={r.job?.job_blocker_notes ?? []} canWrite={canWrite} onChanged={invalidateAll} />
@@ -471,6 +476,7 @@ export default function ProductionPage() {
           canWrite={canWrite}
           canAdmin={isAdmin}
           canUndeposit={canUndeposit}
+          canRemeasure={canRemeasure}
           onClose={() => setOpen(null)}
           onSavedInPlace={() => invalidateAll()}
           onSavedAndClose={() => { setOpen(null); invalidateAll(); }}

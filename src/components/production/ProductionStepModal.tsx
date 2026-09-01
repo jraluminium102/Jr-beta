@@ -25,6 +25,7 @@ export type ProdRow = {
   producer_note?: string | null;
   cover_sheet_exists?: boolean;                                          // มีใบปะหน้าแล้วหรือยัง (0111) — ป้าย CoverSheetChip
   drawing_exists?: boolean;                                              // สแตมป์สเปคลงแบบแล้วหรือยัง (0117) — ป้าย DrawingChip
+  measure_round_no?: number | null;                                      // รอบวัด (0130) — >1 = วัดซ้ำมาแล้ว
   job: {
     job_code: string; customer_name: string; customer_area: string | null; deposit_date: string | null;
     floor_work?: string | null; floor_note?: string | null;             // งานพื้น ผรม. (0090) — read-only marker
@@ -240,6 +241,7 @@ export function ProductionStepModal({
   canWrite,
   canAdmin = false,
   canUndeposit = false,
+  canRemeasure = false,
   onClose,
   onSavedInPlace,
   onSavedAndClose,
@@ -250,6 +252,7 @@ export function ProductionStepModal({
   canWrite: boolean;
   canAdmin?: boolean;      // ADMIN — แก้เฟสงาน (override)
   canUndeposit?: boolean;  // ADMIN/ACCOUNTING (finance:void) — ถอยมัดจำ
+  canRemeasure?: boolean;  // ADMIN/PRODUCTION — วัดซ้ำ (0130)
   onClose: () => void;
   onSavedInPlace?: () => void;
   onSavedAndClose?: () => void;
@@ -293,6 +296,35 @@ export function ProductionStepModal({
   const [adminErr, setAdminErr] = useState<string | null>(null);
   // แตกออเดอร์ที่ปนอยู่ในงานเดียว ออกเป็นงานใหม่ (0129) — ADMIN เท่านั้น
   const [splitOpen, setSplitOpen] = useState(false);
+
+  // ── วัดซ้ำ (0130) — ADMIN/PRODUCTION เท่านั้น ──
+  const [remeasureOpen, setRemeasureOpen] = useState(false);
+  const [remeasureReason, setRemeasureReason] = useState("");
+  const [remeasureScopeNote, setRemeasureScopeNote] = useState("");
+  const [remeasureBusy, setRemeasureBusy] = useState(false);
+  const [remeasureErr, setRemeasureErr] = useState<string | null>(null);
+
+  const doRemeasure = async () => {
+    if (!remeasureReason.trim()) { setRemeasureErr("กรุณาระบุเหตุผลที่ต้องวัดซ้ำ"); return; }
+    setRemeasureErr(null); setRemeasureBusy(true);
+    try {
+      await api.post(`/production/${prod.id}/remeasure`, { reason: remeasureReason.trim(), scope_note: remeasureScopeNote.trim() || undefined });
+      if (onSavedAndClose) onSavedAndClose(); else onClose();
+    } catch (e) {
+      setRemeasureErr(e instanceof ApiError ? e.message : "วัดซ้ำไม่สำเร็จ");
+    } finally {
+      setRemeasureBusy(false);
+    }
+  };
+
+  // ประวัติรอบวัด (measure_rounds) — โหลดตอนกางประวัติ (ใช้ query key ร่วมกันได้กับ histOpen ด้านล่าง)
+  const { data: measureRoundsRes } = useQuery({
+    queryKey: ["measure-rounds", prod.id],
+    queryFn: () => api.get<{ round_no: number; scheduled: string | null; measured: string | null; reason: string; scope_note: string; created_at: string }[]>(`/production/${prod.id}/remeasure`),
+    enabled: (row.measure_round_no ?? 1) > 1,
+    staleTime: 30_000,
+  });
+  const measureRounds = measureRoundsRes?.data ?? [];
 
   const doOverride = async () => {
     if (ovStatus === prod.status) { setAdminErr("เลือกเฟสใหม่ที่ต่างจากปัจจุบันก่อน"); return; }
@@ -482,6 +514,12 @@ export function ProductionStepModal({
             <div className="flex items-center gap-2 flex-wrap">
               <div className="text-white font-bold text-xl tnum">{prod.job?.job_code}</div>
               <FloorWorkBadge floorWork={prod.job?.floor_work} floorNote={prod.job?.floor_note} dark />
+              {/* ป้ายวัดรอบ (0130) — ไม่ถอย current_stage แค่บอกว่าวัดซ้ำมาแล้ว */}
+              {(row.measure_round_no ?? 1) > 1 && (
+                <span className="text-[11px] font-bold rounded-full px-2 py-0.5 bg-sky-500/25 border border-sky-300/35 text-sky-100">
+                  🔁 วัดรอบ {row.measure_round_no}
+                </span>
+              )}
             </div>
             <div className="text-sm truncate" style={{ color: "var(--t-mid)" }}>{prod.job?.customer_name} · {prod.job?.customer_area ?? "—"}</div>
           </div>
@@ -522,6 +560,41 @@ export function ProductionStepModal({
         })()}
         {/* summary chips อ่านจาก row (สดหลัง in-place save) */}
         <SummaryChips row={row} />
+
+        {/* วัดซ้ำ (0130) — ADMIN/PRODUCTION เท่านั้น · เปิดฟอร์มเหตุผลก่อนยืนยัน · ไม่โชว์ถ้าพร้อมติดตั้งแล้ว (READY) */}
+        {canRemeasure && prod.status !== "READY" && (
+          !remeasureOpen ? (
+            <button onClick={() => { setRemeasureOpen(true); setRemeasureErr(null); }}
+              className="focusable pressable w-full mt-3 min-h-[44px] rounded-2xl border border-sky-300/30 bg-sky-500/10 text-sky-100 text-[13px] font-medium flex items-center justify-center gap-2">
+              🔁 วัดซ้ำ
+            </button>
+          ) : (
+            <div className="mt-3 glass-card rounded-2xl p-4 border border-sky-300/25 space-y-2.5">
+              <div className="text-[13px] font-semibold text-sky-100">วัดซ้ำ — จะบันทึกรอบวัดเดิมไว้ในประวัติ แล้วเด้งงานกลับ "รอวัด" (ไม่ถอยขั้นงานที่ลูกค้าเห็น)</div>
+              <div>
+                <label className="block text-[12px] mb-1 text-white/80">เหตุผลที่ต้องวัดซ้ำ *</label>
+                <textarea value={remeasureReason} onChange={(e) => setRemeasureReason(e.target.value)} rows={2}
+                  placeholder="เช่น ลูกค้าเปลี่ยนแบบ ต้องวัดเพิ่ม"
+                  className="focusable w-full glass-card rounded-xl px-3.5 py-2.5 text-sm text-white outline-none resize-none placeholder-white/40" />
+              </div>
+              <div>
+                <label className="block text-[12px] mb-1 text-white/80">ขอบเขตที่ต้องวัดใหม่ (ไม่บังคับ)</label>
+                <input value={remeasureScopeNote} onChange={(e) => setRemeasureScopeNote(e.target.value)}
+                  placeholder="เช่น เฉพาะห้องนอน"
+                  className="focusable w-full glass-card rounded-xl px-3.5 py-2.5 text-sm text-white outline-none placeholder-white/40" />
+              </div>
+              {remeasureErr && <p role="alert" className="text-[12px] text-rose-200 bg-rose-500/15 border border-rose-300/25 rounded-lg px-2.5 py-1.5">{remeasureErr}</p>}
+              <div className="flex gap-2">
+                <button onClick={() => { setRemeasureOpen(false); setRemeasureReason(""); setRemeasureScopeNote(""); setRemeasureErr(null); }}
+                  disabled={remeasureBusy} className="focusable pressable flex-1 min-h-[40px] rounded-xl glass-card border border-white/15 text-white/80 text-[12px]">ยกเลิก</button>
+                <button onClick={doRemeasure} disabled={remeasureBusy}
+                  className="focusable pressable flex-1 min-h-[40px] rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-[12px] font-semibold disabled:opacity-60">
+                  {remeasureBusy ? "กำลังบันทึก…" : "ยืนยันวัดซ้ำ"}
+                </button>
+              </div>
+            </div>
+          )
+        )}
 
         {!canWrite ? (
           <p className="text-center text-sm mt-4" style={{ color: "var(--t-low)" }}>บทบาทนี้ดูได้อย่างเดียว</p>
@@ -820,7 +893,7 @@ export function ProductionStepModal({
             {prod.job_id && <JobCutlists jobId={prod.job_id} canWrite={canWrite} />}
 
             {/* ── ข้อ 8: ประวัติการทำงาน — collapsible ล่างสุด ── */}
-            {(row.measure_scheduled || row.measure_actual || row.measure_actual_time || row.measured_by_name || row.measurer_name || row.planned_install_date || row.production_queued || row.production_done || row.qc_result) && (
+            {(row.measure_scheduled || row.measure_actual || row.measure_actual_time || row.measured_by_name || row.measurer_name || row.planned_install_date || row.production_queued || row.production_done || row.qc_result || measureRounds.length > 0) && (
               <div className="mt-4">
                 <button
                   onClick={() => setHistOpen((v) => !v)}
@@ -856,6 +929,18 @@ export function ProductionStepModal({
                       </div>
                     )}
                     {row.qc_note && <div className="text-white/60">หมายเหตุ: {row.qc_note}</div>}
+                    {/* ประวัติรอบวัด (0130) — โชว์เฉพาะงานที่เคยวัดซ้ำ */}
+                    {measureRounds.length > 0 && (
+                      <div className="mt-2 pt-2 border-t border-white/10 space-y-1.5">
+                        <div className="text-white/70 font-medium">ประวัติวัดซ้ำ ({measureRounds.length} รอบก่อนหน้า)</div>
+                        {measureRounds.map((r) => (
+                          <div key={r.round_no} className="pl-2 border-l border-sky-300/30">
+                            <div>รอบ {r.round_no}: <span className="text-white/70">{r.reason}</span>{r.scope_note && <span className="text-white/50"> · {r.scope_note}</span>}</div>
+                            {r.measured && <div className="text-white/50 tnum">วัดจริง (รอบนั้น): {thDate(r.measured)}</div>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

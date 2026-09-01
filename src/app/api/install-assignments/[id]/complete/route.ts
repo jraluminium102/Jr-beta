@@ -2,6 +2,7 @@ import { requirePermission } from "@/lib/bff/context";
 import { withRoute, audit } from "@/lib/bff/handler";
 import { ok, err } from "@/lib/bff/response";
 import { dbError } from "@/lib/bff/db-error";
+import { installCompleteBlockReason } from "@/lib/production/install-gate";
 
 type Params = { params: { id: string } };
 
@@ -16,6 +17,10 @@ export const POST = withRoute(async (_req: Request, { params }: Params) => {
   // การ์ดในปฏิทิน = install_assignments · หา job_id ของงานนั้น (คิวนอกระบบ = ไม่มี job → กดจบไม่ได้)
   const { data: asg } = await sb.from("install_assignments").select("job_id").eq("id", params.id).maybeSingle();
   if (!asg?.job_id) return err("งานพิเศษ (คิวนอกระบบ · ไม่ผูกงานในระบบ) — กดจบงานไม่ได้", 400);
+
+  // 0131: ชุดผลิต active ต้องติดตั้งครบ + ห้ามมี hold ค้าง ก่อนปิดงาน
+  const blockReason = await installCompleteBlockReason(sb, asg.job_id);
+  if (blockReason) return err(blockReason, 409);
 
   const today = new Date().toISOString().slice(0, 10);
   const { data, error } = await sb.from("installations")

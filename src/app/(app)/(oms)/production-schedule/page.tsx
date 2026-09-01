@@ -23,6 +23,10 @@ export type ProdSet = {
   actual_done_date: string | null; install_date: string | null; note: string;
   factories?: string[];   // โรงงานผลิต (0114) — ใช้กรองตารางแยกโรง
   factory_start?: Record<string, string> | null;   // วันเริ่มผลิตแยกโรง (0115)
+  produce_status?: string;   // PENDING | PRODUCING | DONE (0131)
+  install_status?: string;   // PENDING | INSTALLED (0131)
+  hold?: boolean;            // ชุดพักรอ — ไม่นับใน gate "ส่งติดตั้ง"/เฟสรวม (0131)
+  hold_reason?: string | null;
 };
 type SchedRow = {
   kind: "job" | "adhoc";
@@ -86,9 +90,12 @@ function derivePhase(r: SchedRow): string {
   if (r.status !== "MANUFACTURING" && r.status !== "QC") return "รอผลิต";
   const sets = r.sets ?? [];
   if (!sets.length) return "กำลังผลิต";
-  const allFrame = sets.every((s) => s.frame_done === V_FRAME_DONE);
-  const allGlass = sets.every((s) => s.glass_installed === V_GLASS_DONE);
-  const allQc = sets.every((s) => s.qc_after_glass === V_QC_PASS);
+  // 0131: ชุด hold ไม่นับตัดสินเฟสรวม (ชุด active ครบ = เดินหน้าได้แม้มี hold ค้าง) — ถ้าไม่มีชุด active เลย ใช้ทั้งหมดแทน (กันตัดสินผิดตอนทุกชุด hold)
+  const active = sets.filter((s) => !s.hold);
+  const gauge = active.length ? active : sets;
+  const allFrame = gauge.every((s) => s.frame_done === V_FRAME_DONE);
+  const allGlass = gauge.every((s) => s.glass_installed === V_GLASS_DONE);
+  const allQc = gauge.every((s) => s.qc_after_glass === V_QC_PASS);
   if (allGlass || allQc) return "QC";     // ใส่กระจกครบ → รอ/อยู่ QC
   if (allFrame) return "กระจก";           // เฟรมเสร็จ → กำลังใส่กระจก
   return "กำลังผลิต";                      // ยังทำเฟรม
@@ -261,9 +268,14 @@ export default function ProductionSchedulePage() {
   //   ถ้าเช็คแค่ r.sets จะส่งทั้งงานเข้าติดตั้งได้ทั้งที่อีกโรงยังผลิตไม่เสร็จ (BUG-1)
   const allSetsReady = (r: SchedRow) => {
     const ss = r.allSets ?? r.sets;
-    return !!ss && ss.length > 0 &&
-      ss.every((s) => s.qc_after_glass === "ผ่าน" && (!s.screen_type?.trim() || s.screen_installed === "ใส่แล้ว"));
+    if (!ss || ss.length === 0) return false;
+    // 0131: กรอง hold ก่อนกรองโรง — ชุด active (ไม่ hold) ครบ = ส่งติดตั้งได้ แม้มี hold ค้าง (ป้าย hold แยกโชว์ต่างหาก)
+    const active = ss.filter((s) => !s.hold);
+    if (active.length === 0) return false;   // ทั้งงาน hold หมด — ยังไม่ถือว่าพร้อม
+    return active.every((s) => s.qc_after_glass === "ผ่าน" && (!s.screen_type?.trim() || s.screen_installed === "ใส่แล้ว"));
   };
+  // จำนวนชุด hold ของงาน (ใช้ full sets เสมอ ไม่ผ่านตัวกรองโรง) — โชว์ป้ายเตือนแม้เฟสรวมเป็น "พร้อม" (ข้อ 3)
+  const holdCountOf = (r: SchedRow) => (r.allSets ?? r.sets ?? []).filter((s) => s.hold).length;
 
   // ปุ่มเลื่อนสถานะสำหรับงานในระบบ (kind==='job') — QC ทำในเช็คลิสต์การ์ด ไม่มีเฟส รอ QC แยก
   const JOB_NEXT: Record<string, { label: string; nextStatus: string; confirmMsg: (title: string) => string }> = {
@@ -483,6 +495,10 @@ export default function ProductionSchedulePage() {
                           ) : (
                             <span className="text-[10px] rounded-md px-1.5 py-0.5 font-semibold" style={{ background: "#fff3e0", color: IOS.orange }}>จดเอง</span>
                           )}
+                          {/* ป้าย hold (0131) — เตือนแม้เฟสรวมเป็น "พร้อม" (ชุด active ครบแต่มี hold ค้าง) */}
+                          {r.kind === "job" && holdCountOf(r) > 0 && (
+                            <span className="text-[10px] font-bold rounded-md px-1.5 py-0.5" style={{ background: "#fff0e0", color: IOS.orange }}>⏸ Hold {holdCountOf(r)}</span>
+                          )}
                           <span className="ml-auto text-[12px] font-semibold" style={{ color: IOS.blue }}>{expandedId === r.id ? "ซ่อน ▲" : "ติ๊ก ▾"}</span>
                         </div>
                         <div className="flex items-center gap-2.5 flex-wrap mt-1">
@@ -676,6 +692,9 @@ export default function ProductionSchedulePage() {
                           <div className="flex items-center gap-1.5">
                             <span className="font-bold text-[14px] truncate" style={{ color: IOS.ink }}>{r.title}</span>
                             {r.job_code && <span className="text-[10px] tnum rounded px-1 py-0.5" style={{ background: "#eaf3ff", color: IOS.blue }}>{r.job_code}</span>}
+                            {r.kind === "job" && holdCountOf(r) > 0 && (
+                              <span className="text-[10px] font-bold rounded px-1 py-0.5" style={{ background: "#fff0e0", color: IOS.orange }}>⏸ Hold {holdCountOf(r)}</span>
+                            )}
                           </div>
                           <div className="text-[11.5px] truncate" style={{ color: IOS.ink3 }}>{r.customer_area || r.subtitle || "—"}</div>
                           {pi >= 0 && <span className="inline-flex gap-[3px] mt-1">{PHASE_ORDER.map((_, x) => <span key={x} className="rounded-full" style={{ width: x === pi ? 9 : 7, height: x === pi ? 9 : 7, background: x < pi ? IOS.green : x === pi ? IOS.blue : "#d0d0d5" }} />)}</span>}
@@ -793,6 +812,12 @@ function SetCard({ s, saving, mark, canMark }: {
         <span className="text-[12.5px] font-bold px-2.5 py-1 rounded-full" style={{ background: tone.bg, color: tone.fg }}>
           {dl.tone === "over" && "🔴 "}{dl.tone === "soon" && "⚠️ "}{dl.text}
         </span>
+        {/* Hold (0131) — ชุดนี้พักรอ ไม่นับ gate ส่งติดตั้ง */}
+        {s.hold && (
+          <span title={s.hold_reason || "Hold"} className="text-[12px] font-bold px-2.5 py-1 rounded-full" style={{ background: "#fff0e0", color: "#c2410c" }}>
+            ⏸ HOLD{s.hold_reason ? `: ${s.hold_reason}` : ""}
+          </span>
+        )}
       </div>
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2 text-[12.5px]">
         {s.must_finish_date && <span className="tnum font-medium" style={{ color: IOS.ink }}>⏰ ต้องเสร็จ {thShort(s.must_finish_date)}</span>}
@@ -832,6 +857,11 @@ function SetCard({ s, saving, mark, canMark }: {
                   ? mark(s.id, { screen_installed: "ยังไม่ใส่" }, "ยกเลิก “ใส่มุ้งแล้ว” ?")
                   : mark(s.id, { screen_installed: V_SCREEN_DONE })} />
             )}
+            {/* ปิดชุด (0131) — produce_status แยกจาก frame_done: ใช้ตัดสิน gate ผลิต/ติดตั้งแยกชุด+hold */}
+            <MarkBtn label={s.produce_status === "DONE" ? "ปิดชุดแล้ว" : "ปิดชุด (ผลิตเสร็จ)"} done={s.produce_status === "DONE"} saving={saving}
+              onClick={() => s.produce_status === "DONE"
+                ? mark(s.id, { produce_status: "PENDING" }, "ยกเลิก “ปิดชุด” ?")
+                : mark(s.id, { produce_status: "DONE" })} />
           </div>
           {/* 🔔 เตือน QC เด่นๆ เมื่อผลิตเสร็จแต่ยังไม่ตรวจก่อนใส่กระจก */}
           {waitQcBefore && (
@@ -871,6 +901,7 @@ function SetCard({ s, saving, mark, canMark }: {
           <RoRow label="อลู อบสี" v={s.mat_alu_painted} />
           <RoRow label="ใส่กระจกเสร็จ" v={s.glass_done_date ? thShort(s.glass_done_date) : ""} />
           <RoRow label="เสร็จจริง" v={s.actual_done_date ? thShort(s.actual_done_date) : ""} />
+          <RoRow label="ติดตั้ง (แยกชุด)" v={s.install_status === "INSTALLED" ? "ติดตั้งแล้ว" : "ยังไม่ติดตั้ง"} />
           {s.note && <div className="col-span-2"><RoRow label="หมายเหตุ" v={s.note} /></div>}
         </div>
       )}

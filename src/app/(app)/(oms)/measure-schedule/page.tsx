@@ -30,6 +30,7 @@ type MeasureEntry = {
   measured_by_name: string | null;
   measurer_name: string | null;
   measurer_id: string | null;
+  measure_round_no: number;   // รอบวัด (0130) — >1 = วัดซ้ำมาแล้ว
   status: "PENDING_MEASURE" | "MEASURED";
   is_overdue: boolean;
 };
@@ -275,6 +276,11 @@ function EntryRow({ entry, canWrite, onBook }: { entry: MeasureEntry; canWrite?:
             </span>
           )}
           <FloorWorkBadge floorWork={entry.floor_work} floorNote={entry.floor_note} dark />
+          {entry.measure_round_no > 1 && (
+            <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded-md bg-sky-400/20 border border-sky-300/30 text-sky-200 font-semibold">
+              🔁 วัดรอบ {entry.measure_round_no}
+            </span>
+          )}
         </div>
         <div className="text-[12px] mt-0.5 flex items-center gap-2 flex-wrap" style={{ color: "var(--t-low)" }}>
           {entry.customer_tel && (
@@ -787,6 +793,7 @@ export default function MeasureSchedulePage() {
                 <div className="min-w-0">
                   <span className="font-medium text-white text-sm">{e.customer_name ?? "—"}</span>
                   <span className="ml-1.5 align-middle"><FloorWorkBadge floorWork={e.floor_work} floorNote={e.floor_note} dark /></span>
+                  {e.measure_round_no > 1 && <span className="ml-2 text-[11px] font-semibold text-sky-200">🔁 วัดรอบ {e.measure_round_no}</span>}
                   {e.sales_name && <span className="ml-2 text-[11px] font-semibold text-sky-200">Sale: {e.sales_name}</span>}
                   {e.customer_area && <span className="ml-2 text-[12px]" style={{ color: "var(--t-low)" }}>{e.customer_area}</span>}
                   {e.job_code && <span className="ml-2 text-[11px]" style={{ color: "var(--t-low)" }}>{e.job_code}</span>}

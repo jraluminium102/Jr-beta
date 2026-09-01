@@ -10,7 +10,7 @@ export const GET = withRoute(async () => {
   const ctx = await requirePermission("production", "read");
 
   // ดึง PENDING_MEASURE ทั้งหมด (นัดแล้ว + รอนัด) และ MEASURED ล่าสุด 7 วัน (อ้างอิง)
-  const baseCols = `id, job_id, status, measure_scheduled, measure_time, measure_actual, measure_actual_time, measured_by_name, measurer_id, measurer_name, measurer:measurer_id(full_name),`;
+  const baseCols = `id, job_id, status, measure_scheduled, measure_time, measure_actual, measure_actual_time, measured_by_name, measurer_id, measurer_name, measure_round_no, measurer:measurer_id(full_name),`;
   // job join แบบ enrich (floor_work=ผรม. + estimator/queue sales=เซลล์) — ถ้า embed sales/estimator พังจะ fallback ไม่ให้หน้าล่ม
   const jobEnriched = `job:job_id(job_code, customer_name, customer_area, customer_tel, status, floor_work, floor_note, estimator:estimator_id(full_name), queue_entry:queue_entry_id(location_url, sales:sales_id(name)))`;
   const jobBasic    = `job:job_id(job_code, customer_name, customer_area, customer_tel, status, floor_work, floor_note, queue_entry:queue_entry_id(location_url))`;
@@ -62,6 +62,7 @@ export const GET = withRoute(async () => {
         measured_by_name: (p.measured_by_name as string | null) ?? null,
         measurer_name: displayMeasurerName,
         measurer_id: p.measurer_id,
+        measure_round_no: (p.measure_round_no as number | null) ?? 1,
         status: p.status,
         // สถานะเลยนัดแล้วยังไม่วัด
         is_overdue: p.status === "PENDING_MEASURE" && p.measure_scheduled != null && p.measure_scheduled < today,

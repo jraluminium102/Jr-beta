@@ -3,6 +3,7 @@ import { requirePermission } from "@/lib/bff/context";
 import { withRoute, audit } from "@/lib/bff/handler";
 import { ok, err } from "@/lib/bff/response";
 import { dbError } from "@/lib/bff/db-error";
+import { installCompleteBlockReason } from "@/lib/production/install-gate";
 
 type Params = { params: { id: string } };
 
@@ -33,9 +34,15 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
   // Guard: ห้าม rollback จาก COMPLETED
   if (body.status && body.status !== "ISSUE") {
     const { data: current } = await ctx.supabase
-      .from("installations").select("status").eq("id", params.id).single();
+      .from("installations").select("status, job_id").eq("id", params.id).single();
     if (current?.status === "COMPLETED" && body.status !== "COMPLETED") {
       return err("งานจบแล้ว ไม่สามารถเปลี่ยนสถานะกลับได้", 409);
+    }
+    // 0131: ปิดงาน (COMPLETED) — ชุดผลิต active ต้องติดตั้งครบ + ห้ามมี hold ค้าง
+    if (body.status === "COMPLETED" && current?.job_id) {
+      const sbAny = ctx.supabase as unknown as { from: (t: string) => any }; // eslint-disable-line @typescript-eslint/no-explicit-any
+      const blockReason = await installCompleteBlockReason(sbAny, current.job_id);
+      if (blockReason) return err(blockReason, 409);
     }
   }
 

@@ -23,6 +23,10 @@ const patchSchema = z.object({
   install_date: d, note: t,
   factories: z.array(z.string()).optional(),   // โรงงานผลิต (หลายโรงต่อชุด · 0114)
   factory_start: z.record(z.string(), z.string().nullable()).optional(),  // วันเริ่มผลิตแยกโรง (0115)
+  // ผลิต/hold แยกชุด (0131) — install_status แก้ผ่าน /production-sets/:id/install-status (สิทธิ์ installation:write) เท่านั้น
+  produce_status: z.enum(["PENDING", "PRODUCING", "DONE"]).optional(),
+  hold: z.boolean().optional(),
+  hold_reason: t,
 });
 
 // PATCH /api/production-sets/:id — แก้ช่องใน worksheet (ออฟฟิศ/ผลิต)
@@ -50,6 +54,17 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
     const marked = clean[field] === a.done;
     clean[a.by] = marked ? actor : null;
     clean[a.at] = marked ? nowIso : null;
+  }
+
+  // ผลิตเสร็จรายชุด (0131) — ปั๊มผู้กด+เวลาเหมือน MARK_AUDIT (แยกเพราะ produce_status เป็น enum ไม่ใช่ "ค่า=ทำแล้ว")
+  if (body.produce_status !== undefined) {
+    const done = body.produce_status === "DONE";
+    clean.produce_done_by = done ? actor : null;
+    clean.produce_done_at = done ? nowIso : null;
+  }
+  // ปลด hold → เคลียร์เหตุผลค้าง (กันข้อความเก่าโผล่กลับตอน hold รอบใหม่)
+  if (body.hold === false && body.hold_reason === undefined) {
+    clean.hold_reason = null;
   }
 
   const sb = ctx.supabase as unknown as Sb;

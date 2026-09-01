@@ -629,7 +629,7 @@ function StatusBoard({ data, onOpen, refetch }: { data: any; onOpen: (r: InstRow
   const jobs = ((data?.data ?? []) as any[]).filter((j) => j.installations?.length && j.status !== "CANCELLED");
   void refetch;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const open = (j: any) => { const inst = j.installations[0]; if (!inst) return; onOpen({ id: inst.id, status: inst.status, install_scheduled: inst.install_scheduled, install_actual: inst.install_actual, completed_date: inst.completed_date, warranty_until: inst.warranty_until, job: { job_code: j.job_code, customer_name: j.customer_name, customer_area: j.customer_area } }); };
+  const open = (j: any) => { const inst = j.installations[0]; if (!inst) return; onOpen({ id: inst.id, job_id: j.id, status: inst.status, install_scheduled: inst.install_scheduled, install_actual: inst.install_actual, completed_date: inst.completed_date, warranty_until: inst.warranty_until, job: { job_code: j.job_code, customer_name: j.customer_name, customer_area: j.customer_area } }); };
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
       {COLS.map((c) => {

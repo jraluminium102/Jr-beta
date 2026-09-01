@@ -2,6 +2,7 @@ import { requirePermission } from "@/lib/bff/context";
 import { withRoute, audit } from "@/lib/bff/handler";
 import { ok, err } from "@/lib/bff/response";
 import { dbError } from "@/lib/bff/db-error";
+import { installCompleteBlockReason } from "@/lib/production/install-gate";
 
 export const dynamic = "force-dynamic";
 type Params = { params: { id: string } };
@@ -15,6 +16,10 @@ export const POST = withRoute(async (_req: Request, { params }: Params) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = ctx.supabase as any;
   const today = new Date().toISOString().slice(0, 10);
+
+  // 0131: ชุดผลิต active ต้องติดตั้งครบ + ห้ามมี hold ค้าง ก่อนปิดงาน
+  const blockReason = await installCompleteBlockReason(sb, params.id);
+  if (blockReason) return err(blockReason, 409);
 
   const { data, error } = await sb.from("installations")
     .update({ status: "COMPLETED", install_actual: today, completed_date: today })

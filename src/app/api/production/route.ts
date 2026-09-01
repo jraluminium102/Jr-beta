@@ -6,7 +6,7 @@ import { can } from "@/lib/rbac";
 // GET /api/production — ตารางงานผลิตทั้งหมด (สำหรับช่าง) + ข้อมูลงาน + วันสำคัญ
 export const GET = withRoute(async () => {
   const ctx = await requirePermission("production", "read");
-  const baseCols = `id, job_id, status, status_updated_at, created_at, planned_install_date, measure_scheduled, measure_actual, measure_actual_time, measured_by_name, measure_time, measurer_id, measurer_name, production_queued, production_due_date, production_done, qc_result, qc_date, qc_note, producer_note, notes`;
+  const baseCols = `id, job_id, status, status_updated_at, created_at, planned_install_date, measure_scheduled, measure_actual, measure_actual_time, measured_by_name, measure_time, measurer_id, measurer_name, measure_round_no, production_queued, production_due_date, production_done, qc_result, qc_date, qc_note, producer_note, notes`;
   let { data, error } = await ctx.supabase
     .from("productions")
     .select(`${baseCols},
@@ -90,6 +90,7 @@ export const GET = withRoute(async () => {
     can_write: can(ctx.role, "production", "write"),
     is_admin: ctx.role === "ADMIN",                       // แก้เฟสงาน (override) = แอดมิน
     can_undeposit: can(ctx.role, "finance", "void"),       // ถอยมัดจำ = ADMIN/ACCOUNTING (void เงิน)
+    can_remeasure: ctx.role === "ADMIN" || ctx.role === "PRODUCTION",   // วัดซ้ำ (0130) — เฉพาะออฟฟิศ/ผลิต
     adhoc: adhoc ?? [],
   });
 });
