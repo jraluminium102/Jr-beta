@@ -53,6 +53,7 @@ const LEVEL = {
   "ตรง":               { flag:"✓ ผ่าน",       style:S.GREEN },
   "ใบตัดไม่มีรายการนี้":  { flag:"— ไม่ต้องทำ",  style:S.GREY },
   "ยังไม่ผูกไฟล์":       { flag:"— ไม่มีใบตัด",  style:S.GREY },
+  "ไม่ได้ใช้ที่ขนาดนี้":   { flag:"— ไม่ต้องทำ",  style:S.GREY },
 };
 const FLAG = st => (LEVEL[st]?.flag) || "";
 const STYLE = st => (LEVEL[st]?.style) ?? 0;
@@ -82,11 +83,19 @@ for (const p of Object.values(PRODUCTS)) {
   // ⚠ ต้องเก็บทั้ง hardware (อุปกรณ์) และ profiles (อลูรายเส้น)
   //   บั๊กเดิม (เจ้าของจับได้ 1 ก.ย.69): อ่านแค่ spec.hardware → บรรทัดอลูทุกเส้นขึ้น
   //   "ใบตัดไม่มีรายการนี้" ทั้งที่ใบตัดมีครบ ทำให้รายงานหลอกตาไป 120+ แถว
+  //   ⚠ รวมตามรหัสด้วย — ใบตัดเขียนของชิ้นเดียวกันหลายบรรทัดได้ (ยางกรอบบาน + ยางวงกบ = JR00770)
+  //     ถ้าไม่รวม บรรทัดคิดราคาบรรทัดเดียวจะจับได้แค่แถวแรก อีกแถวค้างเป็น "คิดราคาไม่มี" ทั้งที่มี
   const cutList = [];
+  const cutBySku = new Map();
   if (spec) for (const h of (spec.hardware||[])) {
     const q = (Number(val(h.qty,co))||0)*mult; if (q<=0) continue;
-    cutList.push({ name:String(val(h.name,co)), sku:String(val(h.sku,co)||''), qty:q, unit:h.unit||'' });
+    const sku = String(val(h.sku,co)||''), nm = String(val(h.name,co));
+    const key = sku ? sku.toUpperCase() : null;
+    if (key && cutBySku.has(key)) { const e = cutBySku.get(key); e.qty += q; e._names.push(nm); continue; }
+    const e = { name:nm, sku, qty:q, unit:h.unit||'', _names:[nm] };
+    cutList.push(e); if (key) cutBySku.set(key, e);
   }
+  for (const e of cutList) if (e._names.length > 1) e.name = e._names.join(' + ');
   // อลู: รวมทุกบรรทัดที่ใช้รหัสเดียวกัน (ขวางบน+ขวางล่าง ฯลฯ) → จำนวน "ชิ้น" ต่อรหัส
   const cutProf = new Map();
   if (spec) for (const pr of (spec.profiles||[])) {
@@ -98,6 +107,8 @@ for (const p of Object.values(PRODUCTS)) {
   const fileLabel = (sn && FILEOF[sn]) || (spec ? 'ใบตัด: '+spec.id : '');
   const rawBy = new Map();
   for (const g of ["hardware","consum"]) for (const it of (p[g]||[])) if (!rawBy.has(it.name)) rawBy.set(it.name, it);
+  const rawAlu = new Map();
+  for (const it of (p.alu||[])) if (!rawAlu.has(it.name)) rawAlu.set(it.name, it);
   const used = new Set(), usedProf = new Set();
   const rows = [];
   // อลูฝั่งคิดราคาต้อง "รวมตามรหัส" ก่อนเทียบ — รหัสเดียวมักถูกเขียนหลายบรรทัด (เสา/ขวาง/คิ้ว ใช้ F7935 ร่วมกัน)
@@ -105,36 +116,52 @@ for (const p of Object.values(PRODUCTS)) {
   //   (หน้าเทียบคิดราคา↔ใบตัด รวมตามรหัสอยู่แล้ว — ทำให้ตรงกัน)
   const lines = [];
   const aluByCode = new Map();
+  //   ⚠ อุปกรณ์ก็ต้องรวมตามรหัสเหมือนกัน — สูตรเขียนของชิ้นเดียวกันหลายบรรทัดได้
+  //     (ยางกรอบบาน + ยางวงกบ = JR00771) ถ้ารวมแค่ฝั่งใบตัด ฝั่งคิดราคาจะเหลือบรรทัดที่หาคู่ไม่เจอ
   for (const l of (calc.lines||[])) {
     if (l.cat === 'labor') continue;
-    const c = String(l.code || '').toUpperCase();
-    if (l.cat !== 'alu' || !c) { lines.push(l); continue; }
+    const c = String(l.cat === 'alu' ? (l.code||'') : (l.code || l.sku || '')).toUpperCase();
+    if (!c || l.cat === 'glass') { lines.push(l); continue; }
     const e = aluByCode.get(c);
     if (!e) { aluByCode.set(c, { ...l, _names:[l.name] }); lines.push(aluByCode.get(c)); continue; }
     e.qty = (e.qty||0) + (l.qty||0); e.pieces = (e.pieces||0) + (l.pieces||0);
     e.amount = (e.amount||0) + (l.amount||0); e._names.push(l.name);
   }
   for (const e of aluByCode.values()) if (e._names.length > 1) e.name = e._names.join(' + ');
+  // ── จับคู่ 2 รอบ ──
+  //   รอบ 1 จับด้วย "รหัส" ให้ครบทุกบรรทัดก่อน · รอบ 2 ค่อยเดาด้วยชื่อจากที่เหลือ
+  //   ถ้าไม่แยกรอบ บรรทัดที่ไม่มีรหัส (เช่น "รางบน Hafele") จะเดาชื่อไปคว้าแถว JR00544
+  //   ตัดหน้าบรรทัด "ล้อรางบน Hafele 100kg" ที่มีรหัสตรงเป๊ะ → ของจริงเลยขึ้นว่าใบตัดไม่มี
+  const hitOf = new Map();
+  for (const l of lines) {
+    if (l.cat === 'alu') continue;
+    const mine = skuVariants(l, rawBy.get(l.name));
+    if (!mine.length) continue;
+    const i = cutList.findIndex((c,ix)=>!used.has(ix) && c.sku && mine.includes(String(c.sku).toUpperCase()));
+    if (i>=0) { used.add(i); hitOf.set(l, cutList[i]); }
+  }
+  for (const l of lines) {
+    if (l.cat === 'alu' || hitOf.has(l)) continue;
+    const i = cutList.findIndex((c,ix)=>!used.has(ix) && (norm(c.name)===norm(l.name)
+      || norm(c.name).includes(norm(l.name)) || norm(l.name).includes(norm(c.name))));
+    if (i>=0) { used.add(i); hitOf.set(l, cutList[i]); }
+  }
   for (const l of lines) {
     const cat = l.cat==='alu' ? 'อลูมิเนียม' : l.cat==='glass' ? 'กระจก' : 'อุปกรณ์/สิ้นเปลือง';
     const code = String(l.code || l.sku || '');
     const raw = rawBy.get(l.name);
-    const variants = l.cat === 'alu' ? (code?[code.toUpperCase()]:[]) : skuVariants(l, raw);
+    // อลูก็มีรหัสสำรองตามสี/ความหนากระจก (เช่น คิ้ว F7919 กระจกบาง · F7917 กระจกหนา) → กางให้ครบ
+    const variants = l.cat === 'alu'
+      ? skuVariants({ code }, { sku: (rawAlu.get(String(l._names?.[0] ?? l.name))||{}).code })
+      : skuVariants(l, raw);
     let hit = null;
     if (l.cat === 'alu') {
       // อลูจับคู่ด้วย "รหัสเส้น" ไม่ใช่ชื่อ (ชื่อสองฝั่งเรียกคนละแบบ) · เทียบกันที่ "จำนวนชิ้น"
       const e = cutProf.get(code.toUpperCase());
       if (e) { hit = e; usedProf.add(code.toUpperCase()); }
     } else {
-      // ⚠ ต้องจับด้วย "รหัส" ก่อนชื่อเสมอ (เจ้าของจับได้ 1 ก.ย.69)
-      //   เดิมจับด้วยชื่ออย่างเดียว → "มือจับ Align (2/บาน)" กับ "มือจับ ล็อค (Align)"
-      //   เป็นรหัสเดียวกัน (JR00378) แต่ชื่อไม่เหมือน เลยแตกเป็น 2 แถวขัดกันเอง
-      //   แถวหนึ่งบอก "ใบตัดไม่มี" อีกแถวบอก "คิดราคาไม่มี" ทั้งที่เป็นของชิ้นเดียวกัน
-      const mine = skuVariants(l, raw);
-      let i = mine.length ? cutList.findIndex((c,ix)=>!used.has(ix) && c.sku && mine.includes(String(c.sku).toUpperCase())) : -1;
-      if (i < 0) i = cutList.findIndex((c,ix)=>!used.has(ix) && (norm(c.name)===norm(l.name)
-        || norm(c.name).includes(norm(l.name)) || norm(l.name).includes(norm(c.name))));
-      if (i>=0) { used.add(i); hit = cutList[i]; }
+      // จับคู่มาแล้ว 2 รอบด้านบน (รหัสก่อน แล้วค่อยชื่อ) — ตรงนี้แค่หยิบผลมาใช้
+      hit = hitOf.get(l) || null;
     }
     // อลูเทียบชิ้นต่อชิ้น (คิดราคาเก็บ pieces มาให้แล้ว) · อุปกรณ์เทียบจำนวนตรง ๆ
     const myQty = l.cat === 'alu' ? Number(l.pieces)||0 : Number(l.qty)||0;
@@ -152,6 +179,25 @@ for (const p of Object.values(PRODUCTS)) {
   for (const [c,e] of cutProf) { if (usedProf.has(c)) continue;
     rows.push([ FLAG("คิดราคาไม่มีรายการนี้"), p.name, 'มีแต่ในใบตัด (อลู)', e.name, e.sku||'', '', '', e.unit||'', '', '', sz,
       e.sku, n2(e.qty), e.unit, 'คิดราคาไม่มีรายการนี้', fileLabel ]); }
+  // ⚠ ของที่สูตรมีแต่ "จำนวน = 0" ที่ขนาดตัวอย่าง (เช่น เสาเปิดกลาง ใช้เฉพาะ 2 บานขึ้นไป)
+  //   ต้องโชว์ด้วย ไม่งั้นเจ้าของไม่มีทางรู้ว่ารุ่นนี้ยังใช้รหัสอะไรอีก — "หายเงียบ" คือบั๊กที่แย่ที่สุด
+  {
+    const shown = new Set();
+    for (const r of rows) for (const c of [String(r[4]||"").toUpperCase(), String(r[11]||"").toUpperCase()]) if (c) shown.add(c);
+    for (const v of String(rows.map(r=>r[5]).join(" · ")).split("·")) { const t=v.trim().toUpperCase(); if (t) shown.add(t); }
+    const seenX = new Set();
+    for (const g of ["alu","hardware","consum"]) for (const it of (p[g]||[])) {
+      // รหัสอลูเป็นสูตรเลือกตามสี/ความหนากระจกได้ → ต้องกางออก ไม่งั้นได้สูตรดิบมาโชว์เป็น "รหัส"
+      const codes = g === "alu" ? skuVariants({}, { sku: it.code }) : skuVariants({}, it);
+      for (const c of codes) {
+        if (!c || shown.has(c) || seenX.has(c)) continue;
+        seenX.add(c);
+        rows.push([ FLAG("ไม่ได้ใช้ที่ขนาดนี้"), p.name, g==="alu"?"อลูมิเนียม (ไม่ได้ใช้)":"อุปกรณ์ (ไม่ได้ใช้)",
+          it.name, c, "", n2(it.price ?? ""), it.unit || "", 0, 0, sz, "", "", "",
+          "ไม่ได้ใช้ที่ขนาดนี้", fileLabel ]);
+      }
+    }
+  }
   if (!rows.length) continue;
   fs.writeFileSync(path.join(outDir, safe(p.name)+'.csv'),
     '\ufeff' + [HEAD, ...rows].map(r=>r.map(esc).join(',')).join('\r\n') + '\r\n');
@@ -161,7 +207,7 @@ fs.writeFileSync(`docs/ผูกสโตร์-ทุกบาน-1ก.ย.69${
   '\ufeff' + [HEAD, ...all].map(r=>r.map(esc).join(',')).join('\r\n') + '\r\n');
 
 // ── Excel: แท็บ "สรุป" + "รวมทุกบาน" + แท็บละบาน (เจ้าของเปิด CSV ไม่ได้) ──
-const STATUS = ["ตรง","จำนวนต่าง","รหัสไม่ตรง","คิดราคายังไม่มีรหัส","ใบตัดไม่ให้รหัส","ใบตัดไม่มีรายการนี้","คิดราคาไม่มีรายการนี้","ยังไม่ผูกไฟล์"];
+const STATUS = ["ตรง","จำนวนต่าง","รหัสไม่ตรง","คิดราคายังไม่มีรหัส","ใบตัดไม่ให้รหัส","ใบตัดไม่มีรายการนี้","คิดราคาไม่มีรายการนี้","ยังไม่ผูกไฟล์","ไม่ได้ใช้ที่ขนาดนี้"];
 const prodNames = [...new Set(all.map(r=>r[1]))];
 const summary = [["รุ่น","แถวรวม", ...STATUS, "ไฟล์ตัดประกอบ"]];
 for (const n of prodNames) {
@@ -171,7 +217,7 @@ for (const n of prodNames) {
 const W = [13,22,14,34,16,11,12,10,10,12,16,16,13,13,22,26];
 const sty = rs => [0, ...rs.map(r=>STYLE(r[14]))];
 // เรียง "ต้องเช็คก่อน" ในแท็บรวมและแท็บต้องเช็ค
-const RANK = { "รหัสไม่ตรง":0, "จำนวนต่าง":1, "คิดราคาไม่มีรายการนี้":2, "คิดราคายังไม่มีรหัส":3, "ใบตัดไม่ให้รหัส":4, "ตรง":5, "ใบตัดไม่มีรายการนี้":6, "ยังไม่ผูกไฟล์":7 };
+const RANK = { "รหัสไม่ตรง":0, "จำนวนต่าง":1, "คิดราคาไม่มีรายการนี้":2, "คิดราคายังไม่มีรหัส":3, "ใบตัดไม่ให้รหัส":4, "ตรง":5, "ใบตัดไม่มีรายการนี้":6, "ยังไม่ผูกไฟล์":7, "ไม่ได้ใช้ที่ขนาดนี้":8 };
 const todo = all.filter(r=>RANK[r[14]] <= 4)
   .sort((a,b)=> RANK[a[14]]-RANK[b[14]] || String(a[1]).localeCompare(String(b[1]),"th"));
 const sheets = [
