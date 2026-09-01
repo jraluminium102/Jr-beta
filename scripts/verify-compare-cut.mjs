@@ -14,7 +14,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { compareCut, COMPARABLE, cutOptionsFor } from "../src/lib/calculator40/compare-cut.ts";
+import { compareCut, COMPARABLE, cutOptionsFor, statusOf } from "../src/lib/calculator40/compare-cut.ts";
 import { computeCost } from "../src/lib/calculator40/engine.mjs";
 import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
 import { computeCutList } from "../src/lib/cutlist/engine.ts";
@@ -100,15 +100,16 @@ console.log("\n═══ ③ จับ 'ไม่ตรงกัน' ได้�
   const r = compareCut(PB, IN);
   const all = [...r.alu, ...r.hardware];
   ok("มีคอลัมน์สถานะครบทุกแถว", all.every((x) => ["ตรง", "จำนวนต่าง", "มีแต่คิดราคา", "มีแต่ใบตัด", "ไม่มีรหัส"].includes(x.status)), "");
-  // ยัดบรรทัดอลูปลอมเข้าไปในสูตรคิดราคา → ต้องขึ้น "มีแต่คิดราคา"
-  const fake = JSON.parse(JSON.stringify(PRODUCTS.sms_slide));
-  fake.alu.push({ name: "เส้นปลอมทดสอบ", code: "ZZ9999", price: 100, kg: 1, seg: "W", count: "1" });
-  const savedProd = PRODUCTS.sms_slide;
-  PRODUCTS.sms_slide = fake;
+  // ⚠ เดิมเทสนี้ยัดรุ่นปลอมเข้า PRODUCTS แล้วเรียก compareCut — แต่ compare-cut โหลด products.mjs
+  //   คนละ instance กับเทส (ผ่าน tsx) การยัดเลยไม่ถึง = เทสเช็คลม ขึ้นแดงค้างมาตลอด
+  //   แก้ 1 ก.ย.69: เรียก statusOf ตรง ๆ ครบทุกกรณี (โค้ดโปรดักชันไม่ได้พัง — เอนจินออกบรรทัดถูกอยู่แล้ว)
+  ok("statusOf: มีแต่คิดราคา (ใบตัดไม่มี · มีรหัส)", statusOf(2, 0, true) === "มีแต่คิดราคา", statusOf(2, 0, true));
+  ok("statusOf: มีแต่ใบตัด (คิดราคาไม่มี)", statusOf(0, 2, true) === "มีแต่ใบตัด", statusOf(0, 2, true));
+  ok("statusOf: ไม่มีรหัส มาก่อน มีแต่คิดราคา", statusOf(2, 0, false) === "ไม่มีรหัส", statusOf(2, 0, false));
+  ok("statusOf: จำนวนต่าง", statusOf(2, 8, true) === "จำนวนต่าง", statusOf(2, 8, true));
+  ok("statusOf: ตรง", statusOf(2, 2, true) === "ตรง", statusOf(2, 2, true));
+  ok("statusOf: ไม่สต็อก สั่งใหม่ ชนะทุกกรณี", statusOf(2, 0, false, true) === "ไม่สต็อก สั่งใหม่", statusOf(2, 0, false, true));
   const r2 = compareCut(PB, IN);
-  PRODUCTS.sms_slide = savedProd;
-  const z = r2.alu.find((a) => a.code === "ZZ9999");
-  ok("อลูที่มีแต่ฝั่งคิดราคา → ขึ้น 'มีแต่คิดราคา'", z?.status === "มีแต่คิดราคา", z?.status ?? "ไม่เจอ");
   ok("เรียงแถวที่ไม่ตรงขึ้นก่อนแถวที่ตรง", r2.alu[0].status !== "ตรง" || r2.alu.every((a) => a.status === "ตรง"), r2.alu[0].status);
   ok("ฟ้อง ฿/กก. รายเส้น (ราคาเส้น ÷ น้ำหนักเส้น)",
     r.alu.filter((a) => a.kgPerBar > 0).every((a) => Math.abs(a.bahtPerKg - a.calcPricePerBar / a.kgPerBar) < 0.02), "");

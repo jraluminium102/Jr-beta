@@ -66,7 +66,9 @@ const eq = (a: number, b: number) => {
 };
 
 /** สถานะจากคู่จำนวน (ฝั่งคิดราคา, ฝั่งใบตัด) */
-function statusOf(calc: number, cut: number, hasKey: boolean, orderOnly = false): AluRow["status"] {
+// export เพื่อให้เทสเรียกตรงได้ — เดิมเทสยัดรุ่นปลอมเข้า PRODUCTS แล้วเรียก compareCut
+//   แต่ compare-cut โหลด products.mjs คนละ instance กับเทส (tsx) → การยัดไม่ถึง = เทสเช็คลม ผ่าน/ไม่ผ่านมั่ว
+export function statusOf(calc: number, cut: number, hasKey: boolean, orderOnly = false): AluRow["status"] {
   // ของสั่งตามงาน (มอเตอร์/ราง/เหล็กยัดเสา ฯลฯ) — ตั้งใจไม่ผูกสโตร์ ราคาอยู่ในสูตร
   //   ไม่ใช่ "ตกหล่น" → ขึ้นเขียว ไม่ต้องให้ใครมาไล่ตามอีก (เจ้าของสั่ง 26 ส.ค.69)
   if (orderOnly && calc > 0) return "ไม่สต็อก สั่งใหม่";
