@@ -4,13 +4,14 @@
  *   ฝั่งขวา  = ไฟล์ตัดประกอบ 30-7-2026 (ผ่าน CutSpec ที่พอร์ตจากไฟล์ · รหัส/จำนวน)
  *   แถวที่ใบตัดมีแต่คิดราคาไม่มี → ต่อท้ายด้วยหมวด "มีแต่ในใบตัด"
  *   ยกเว้น บานเลื่อน SMS ตามที่เจ้าของสั่ง
- *   ออก: docs/csv-ผูกสโตร์/<รุ่น>.csv + ไฟล์รวม
+ *   ออก: docs/csv-ผูกสโตร์/<รุ่น>.csv + ไฟล์รวม + Excel แท็บละบาน (เจ้าของเปิด csv ไม่ได้)
  */
 import fs from 'node:fs'; import path from 'node:path';
 import { PRODUCTS } from '../src/lib/calculator40/products.mjs';
 import { computeCost } from '../src/lib/calculator40/engine.mjs';
 import * as CUTP from '../src/lib/cutlist/products.ts';
 import { createRequire } from 'node:module';
+import { writeXlsx } from './xlsxwrite.mjs';
 const PB = createRequire(import.meta.url)('../src/lib/calculator40/pricebook.json');
 
 const MAP = { awning:'FUJI_SWING', open_door:'FUJI_DOOR', bansolid:'SOLID_DOOR', topslide:'TOPRAIL_FRAME',
@@ -25,6 +26,7 @@ const FILEOF = { FUJI_SWING:'JR_FUJI_บานเปิดบานกระท�
 
 const norm = s => String(s||'').replace(/[\s\-–—()"'·.]/g,'').toLowerCase();
 const val = (f,o) => { try { return typeof f==='function' ? f(o) : f; } catch { return ''; } };
+const n2 = v => (typeof v === "number" && Number.isFinite(v)) ? Math.round(v*100)/100 : v;   // เลขทศนิยมยาว ๆ อ่านไม่รู้เรื่องใน Excel
 const HEAD = ['รุ่น','หมวด','ชื่อรายการ','รหัสสโตร์','มีรหัสไหม','ราคา/หน่วย','หน่วย','จำนวน','ยอดเงิน',
   'ขนาดที่ใช้คิด','รหัสในใบตัด','จำนวนในใบตัด','ตรงกันไหม','ไฟล์ตัดประกอบ'];
 const esc = v => { const s=String(v??''); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; };
@@ -59,12 +61,12 @@ for (const p of Object.values(PRODUCTS)) {
     const same = !spec ? 'ยังไม่ผูกไฟล์' : !hit ? 'ใบตัดไม่มีรายการนี้'
       : !code ? 'คิดราคายังไม่มีรหัส' : !hit.sku ? 'ใบตัดไม่ให้รหัส'
       : code.toUpperCase()===hit.sku.toUpperCase() ? 'ตรง' : 'รหัสไม่ตรง';
-    rows.push([ p.name, cat, l.name, code, code?'มี':'ยังไม่มี', l.unitPrice ?? '', l.unit || '',
-      l.qty ?? '', l.amount ?? '', sz, hit?(hit.sku||'—'):'', hit?hit.qty:'', same, sn?FILEOF[sn]:'' ]);
+    rows.push([ p.name, cat, l.name, code, code?'มี':'ยังไม่มี', n2(l.unitPrice ?? ''), l.unit || '',
+      n2(l.qty ?? ''), n2(l.amount ?? ''), sz, hit?(hit.sku||'—'):'', hit?n2(hit.qty):'', same, sn?FILEOF[sn]:'' ]);
   }
   cutList.forEach((c,ix)=>{ if(used.has(ix)) return;
     rows.push([ p.name, 'มีแต่ในใบตัด', c.name, '', 'ยังไม่มี', '', c.unit, '', '', sz,
-      c.sku||'—', c.qty, 'คิดราคาไม่มีรายการนี้', FILEOF[sn] ]); });
+      c.sku||'—', n2(c.qty), 'คิดราคาไม่มีรายการนี้', FILEOF[sn] ]); });
   if (!rows.length) continue;
   fs.writeFileSync(path.join(outDir, safe(p.name)+'.csv'),
     '\ufeff' + [HEAD, ...rows].map(r=>r.map(esc).join(',')).join('\r\n') + '\r\n');
@@ -72,6 +74,23 @@ for (const p of Object.values(PRODUCTS)) {
 }
 fs.writeFileSync('docs/ผูกสโตร์-ทุกบาน-1ก.ย.69.csv',
   '\ufeff' + [HEAD, ...all].map(r=>r.map(esc).join(',')).join('\r\n') + '\r\n');
+
+// ── Excel: แท็บ "สรุป" + "รวมทุกบาน" + แท็บละบาน (เจ้าของเปิด CSV ไม่ได้) ──
+const STATUS = ["ตรง","รหัสไม่ตรง","คิดราคายังไม่มีรหัส","ใบตัดไม่ให้รหัส","ใบตัดไม่มีรายการนี้","คิดราคาไม่มีรายการนี้","ยังไม่ผูกไฟล์"];
+const prodNames = [...new Set(all.map(r=>r[0]))];
+const summary = [["รุ่น","แถวรวม", ...STATUS, "ไฟล์ตัดประกอบ"]];
+for (const n of prodNames) {
+  const rs = all.filter(r=>r[0]===n);
+  summary.push([n, rs.length, ...STATUS.map(k=>rs.filter(r=>r[12]===k).length || ""), rs.find(r=>r[13])?.[13] || "— ไม่มีไฟล์ตัดประกอบ —"]);
+}
+const W = [22,12,34,16,11,12,10,10,12,16,16,13,22,26];
+const sheets = [
+  { name:"สรุป", rows:summary, widths:[30,9,7,10,14,12,16,16,12,26] },
+  { name:"รวมทุกบาน", rows:[HEAD, ...all], widths:W },
+  ...prodNames.map(n=>({ name:n, rows:[HEAD, ...all.filter(r=>r[0]===n)], widths:W })),
+];
+writeXlsx("docs/ผูกสโตร์-ทุกบาน-1ก.ย.69.xlsx", sheets);
+console.log("Excel:", sheets.length, "แท็บ");
 const c = k => all.filter(r=>r[12]===k).length;
 console.log('รุ่น', fs.readdirSync(outDir).length, '· แถวรวม', all.length);
 for (const k of ['ตรง','รหัสไม่ตรง','ใบตัดไม่มีรายการนี้','คิดราคาไม่มีรายการนี้','คิดราคายังไม่มีรหัส','ใบตัดไม่ให้รหัส','ยังไม่ผูกไฟล์'])

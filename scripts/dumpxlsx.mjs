@@ -75,7 +75,10 @@ const rowOf = (ref) => Number((ref.match(/\d+/) || [0])[0]);
 export function readSheet(zip, path, ss) {
   const xml = zip.get(path)?.toString("utf8") ?? "";
   const rows = new Map();
-  for (const m of xml.matchAll(/<c\b([^>]*)(?:\/>|>([\s\S]*?)<\/c>)/g)) {
+  // ⚠ attr ต้อง lazy — ถ้า greedy เจอเซลล์ปิดในตัว `<c r="K2"/>` มันจะกิน `/` แล้วไปจับ `>`
+  //   ทำให้ body ลากยาวข้ามไปกลืนเซลล์ถัดไปทั้งเซลล์ (ข้อมูลหายเงียบ ๆ)
+  //   Excel ปกติไม่เขียนเซลล์ว่าง เลยไม่เคยโผล่ — แต่ไฟล์จากเครื่องมืออื่นเขียน
+  for (const m of xml.matchAll(/<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)) {
     const attr = m[1], body = m[2] ?? "";
     const ref = (attr.match(/r="([A-Z]+\d+)"/) || [])[1];
     if (!ref) continue;
