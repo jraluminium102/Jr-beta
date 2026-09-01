@@ -783,5 +783,32 @@ console.log("═══ ⑪ บานยก: ยึดไฟล์ v20 ไม่�
     && Object.values(PRODUCTS).filter((p) => p.opCostPct).length === 1, "");
 }
 
+
+// ── ⑫ ห้ามเอา "รหัสที่สร้างเอง" กลับเข้าสูตร (เจ้าของสั่ง 1 ก.ย.69) ──────────────
+//    เจ้าของสั่ง: ยึดไฟล์ตัดประกอบเท่านั้น · ไฟล์ไม่ให้รหัส = ปล่อยว่าง + needCode แล้วเจ้าของไล่เติมเอง
+//    เหตุผล: JR030xx ที่ผู้ช่วยสร้างเองในสโตร์ เสี่ยงซ้ำกับของที่มีอยู่แล้ว
+console.log("");
+console.log("═══ ⑫ ไม่มีรหัสที่สร้างเองหลงเหลือในสูตร (เจ้าของสั่ง 1 ก.ย.69) ═══");
+{
+  const okc = (label, cond, extra = "") => check(label + (cond ? "" : " [" + extra + "]"), cond ? 1 : 0, 1, 0);
+  const src = fs.readFileSync(path.join(__dirname, "../src/lib/calculator40/products.mjs"), "utf8");
+  const leak1 = (src.match(/JR030dd/g) || []);
+  okc("ไม่มี JR030xx (รหัสที่สร้างเอง) ในสูตรคิดราคา", leak1.length === 0, leak1.join(","));
+  const cut = fs.readFileSync(path.join(__dirname, "../src/lib/cutlist/products.ts"), "utf8");
+  const leak2 = (cut.match(/JR030dd/g) || []);
+  okc("ไม่มี JR030xx ในสูตรใบตัด", leak2.length === 0, leak2.join(","));
+  let need = 0; const zero = [];
+  for (const p of Object.values(PRODUCTS)) {
+    for (const a of (p.alu || [])) if (a.needCode) need++;
+    for (const g of ["hardware", "consum"]) for (const it of (p[g] || [])) {
+      if (!it.needCode) continue;
+      need++;
+      if (!(Number(it.price) > 0)) zero.push((p.name || p.id) + "/" + it.name);
+    }
+  }
+  check("บรรทัดที่รอเจ้าของเติมรหัส (needCode)", need, 79, 0);
+  okc("ทุกบรรทัด needCode ยังมีราคาสำรองในสูตร (ทุนไม่หายเงียบ)", zero.length === 0, zero.join(" · "));
+}
+
 console.log(`\n═══ สรุป: ✅ ${pass} anchor ผ่าน · ❌ ${fail} ไม่ผ่าน · ② sweep ${sweepPass} รุ่นดี/${sweepFail} พัง ═══`);
 process.exit((fail + sweepFail) > 0 ? 1 : 0);

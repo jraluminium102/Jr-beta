@@ -318,10 +318,11 @@ console.log("\n═══ ⑥ หน้าจอต่อสายครบไห
   const c = fs.readFileSync(path.join(ROOT, "src/app/(app)/calculator40/stock-audit/AuditClient.tsx"), "utf8");
   ok("มีปุ่มโหลด CSV (สร้างฝั่งเบราว์เซอร์)", /download = /.test(c) && /text\/csv/.test(c), "");
   ok("CSV ใส่ BOM ให้ Excel อ่านไทยออก", /"\\ufeff"|﻿/.test(c) || c.includes("BOM"), "");
-  ok("เรียงตัวที่ต้องแก้ก่อนขึ้นบนสุด", /ORDER: AuditStatus\[\] = \["no_key", "missing"/.test(c), "");
+  ok("เรียงตัวที่ต้องแก้ก่อนขึ้นบนสุด (need_code มาก่อน — เจ้าของไล่เติมรหัสเอง)",
+    c.includes('const ORDER: AuditStatus[] = ["need_code", "no_key", "missing"'), "");
   const cc = fs.readFileSync(path.join(ROOT, "src/components/Calculator40Client.tsx"), "utf8");
   ok("มีทางเข้าจากหน้าคิดราคา", /calculator40\/stock-audit/.test(cc), "");
-  ok("ป้ายสถานะครบทุกแบบ (+labor 27 ส.ค.69)", Object.keys(STATUS_LABEL).length === 8, String(Object.keys(STATUS_LABEL).length));
+  ok("ป้ายสถานะครบทุกแบบ (+labor 27 ส.ค. · +need_code 1 ก.ย.69)", Object.keys(STATUS_LABEL).length === 9, String(Object.keys(STATUS_LABEL).length));
   ok("ค่าตั้งต้นของหน้าคือมุม 'รายรุ่น'", c.includes('setView] = useState') && c.includes('>("product")'), "");
   ok("มีมุม 'ราคาต่อโล → ราคาต่อเส้น' ให้กด", c.includes("ราคาต่อโล → ราคาต่อเส้น") && c.includes('view === "kg"'), "");
   ok("ขึ้นป้ายจำนวนเส้นที่ต้องแก้บนปุ่ม (ไม่ต้องเข้าไปดูก่อน)", c.includes("kgBad"), "");
