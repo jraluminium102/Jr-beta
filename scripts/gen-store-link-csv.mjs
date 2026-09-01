@@ -26,11 +26,22 @@ const FILEOF = { FUJI_SWING:'JR_FUJI_บานเปิดบานกระท�
   SMS240_BIFOLD:'JR_เฟี้ยม_SMS_รวม', EURO_BIFOLD:'JR_เฟี้ยมยูโร', EURO_LIFT:'JR_เฟี้ยมยก',
   FUJI_HUNG:'JR_บานยก_ฟูจิ', GATE_SLIDE:'JR_ประตูรั้ว', FUJI_SLIDE:'JR_FUJI_บานเลื่อน' };
 
+
+// รหัสทั้งหมดของบรรทัดนี้ (สูตร sku เลือกตามสีได้ เช่น "CKEY==='black'?'JR00316':'JR00318'")
+//   คืนรายการรหัสทุกสี — ใช้จับคู่กับใบตัด และโชว์ให้เจ้าของรู้ว่าต้องกรอกกี่รหัส
+const skuVariants = (line, rawItem) => {
+  const rawSku = String(rawItem?.sku ?? "");
+  // เอาเฉพาะที่หน้าตาเป็น "รหัส" — สูตรมีค่าเงื่อนไขปนด้วย (เช่น 'black') ห้ามหลุดไปโชว์เป็นรหัส
+  const isCode = t => /^(JR\d{5}|[A-Z]{1,4}-?\d{3,5}[A-Z]?|OPK-[A-Z0-9-]+|XSW\d+|HD-\d+)$/i.test(t);
+  if (rawSku.includes("?")) return [...rawSku.matchAll(/'([^']+)'|"([^"]+)"/g)].map(m=>(m[1]??m[2]).toUpperCase()).filter(isCode);
+  const one = String(line.sku || line.code || rawSku || "").toUpperCase();
+  return one ? [one] : [];
+};
 const norm = s => String(s||'').replace(/[\s\-–—()"'·.]/g,'').toLowerCase();
 const val = (f,o) => { try { return typeof f==='function' ? f(o) : f; } catch { return ''; } };
 const n2 = v => (typeof v === "number" && Number.isFinite(v)) ? Math.round(v*100)/100 : v;   // เลขทศนิยมยาว ๆ อ่านไม่รู้เรื่องใน Excel
-const HEAD = ['ต้องเช็ค','รุ่น','หมวด','ชื่อรายการ','รหัสสโตร์','มีรหัสไหม','ราคา/หน่วย','หน่วย','จำนวน','ยอดเงิน',
-  'ขนาดที่ใช้คิด','รหัสในใบตัด','จำนวนในใบตัด','หน่วยในใบตัด','ตรงกันไหม','ไฟล์ตัดประกอบ'];
+const HEAD = ['ต้องเช็ค','รุ่น','หมวด','ชื่อรายการ','รหัส (คิดราคา)','รหัสอื่นตามสี','ราคา/หน่วย','หน่วย','จำนวน','ยอดเงิน',
+  'ขนาดที่ใช้คิด','รหัส (ใบตัด)','จำนวนในใบตัด','หน่วยในใบตัด','ตรงกันไหม','ไฟล์ตัดประกอบ'];
 
 // ธง + สีตามสถานะ — เจ้าของขอ "ไฮไลท์ให้รู้ว่าต้องดูตรงไหน" (1 ก.ย.69)
 const LEVEL = {
@@ -85,6 +96,8 @@ for (const p of Object.values(PRODUCTS)) {
     e.qty += q; cutProf.set(c, e);
   }
   const fileLabel = (sn && FILEOF[sn]) || (spec ? 'ใบตัด: '+spec.id : '');
+  const rawBy = new Map();
+  for (const g of ["hardware","consum"]) for (const it of (p[g]||[])) if (!rawBy.has(it.name)) rawBy.set(it.name, it);
   const used = new Set(), usedProf = new Set();
   const rows = [];
   // อลูฝั่งคิดราคาต้อง "รวมตามรหัส" ก่อนเทียบ — รหัสเดียวมักถูกเขียนหลายบรรทัด (เสา/ขวาง/คิ้ว ใช้ F7935 ร่วมกัน)
@@ -105,13 +118,21 @@ for (const p of Object.values(PRODUCTS)) {
   for (const l of lines) {
     const cat = l.cat==='alu' ? 'อลูมิเนียม' : l.cat==='glass' ? 'กระจก' : 'อุปกรณ์/สิ้นเปลือง';
     const code = String(l.code || l.sku || '');
+    const raw = rawBy.get(l.name);
+    const variants = l.cat === 'alu' ? (code?[code.toUpperCase()]:[]) : skuVariants(l, raw);
     let hit = null;
     if (l.cat === 'alu') {
       // อลูจับคู่ด้วย "รหัสเส้น" ไม่ใช่ชื่อ (ชื่อสองฝั่งเรียกคนละแบบ) · เทียบกันที่ "จำนวนชิ้น"
       const e = cutProf.get(code.toUpperCase());
       if (e) { hit = e; usedProf.add(code.toUpperCase()); }
     } else {
-      const i = cutList.findIndex((c,ix)=>!used.has(ix) && (norm(c.name)===norm(l.name)
+      // ⚠ ต้องจับด้วย "รหัส" ก่อนชื่อเสมอ (เจ้าของจับได้ 1 ก.ย.69)
+      //   เดิมจับด้วยชื่ออย่างเดียว → "มือจับ Align (2/บาน)" กับ "มือจับ ล็อค (Align)"
+      //   เป็นรหัสเดียวกัน (JR00378) แต่ชื่อไม่เหมือน เลยแตกเป็น 2 แถวขัดกันเอง
+      //   แถวหนึ่งบอก "ใบตัดไม่มี" อีกแถวบอก "คิดราคาไม่มี" ทั้งที่เป็นของชิ้นเดียวกัน
+      const mine = skuVariants(l, raw);
+      let i = mine.length ? cutList.findIndex((c,ix)=>!used.has(ix) && c.sku && mine.includes(String(c.sku).toUpperCase())) : -1;
+      if (i < 0) i = cutList.findIndex((c,ix)=>!used.has(ix) && (norm(c.name)===norm(l.name)
         || norm(c.name).includes(norm(l.name)) || norm(l.name).includes(norm(c.name))));
       if (i>=0) { used.add(i); hit = cutList[i]; }
     }
@@ -121,15 +142,15 @@ for (const p of Object.values(PRODUCTS)) {
       : !code ? 'คิดราคายังไม่มีรหัส' : !hit.sku ? 'ใบตัดไม่ให้รหัส'
       : code.toUpperCase()!==String(hit.sku).toUpperCase() ? 'รหัสไม่ตรง'
       : Math.abs(myQty - hit.qty) <= Math.max(0.05, hit.qty*0.02) ? 'ตรง' : 'จำนวนต่าง';
-    rows.push([ FLAG(same), p.name, cat, l.name, code, code?'มี':'ยังไม่มี', n2(l.unitPrice ?? ''), l.unit || '',
+    rows.push([ FLAG(same), p.name, cat, l.name, code, variants.filter(v=>v!==code.toUpperCase()).join(" · "), n2(l.unitPrice ?? ''), l.unit || '',
       n2(l.cat==='alu' ? myQty : (l.qty ?? '')), n2(l.amount ?? ''), sz,
       hit?(hit.sku||'—'):'', hit?n2(hit.qty):'', hit?(hit.unit||''):'', same, fileLabel ]);
   }
   cutList.forEach((c,ix)=>{ if(used.has(ix)) return;
-    rows.push([ FLAG("คิดราคาไม่มีรายการนี้"), p.name, 'มีแต่ในใบตัด', c.name, '', 'ยังไม่มี', '', '', '', '', sz,
+    rows.push([ FLAG("คิดราคาไม่มีรายการนี้"), p.name, 'มีแต่ในใบตัด', c.name, c.sku||'', '', '', c.unit||'', '', '', sz,
       c.sku||'—', n2(c.qty), c.unit||'', 'คิดราคาไม่มีรายการนี้', fileLabel ]); });
   for (const [c,e] of cutProf) { if (usedProf.has(c)) continue;
-    rows.push([ FLAG("คิดราคาไม่มีรายการนี้"), p.name, 'มีแต่ในใบตัด (อลู)', e.name, '', 'ยังไม่มี', '', '', '', '', sz,
+    rows.push([ FLAG("คิดราคาไม่มีรายการนี้"), p.name, 'มีแต่ในใบตัด (อลู)', e.name, e.sku||'', '', '', e.unit||'', '', '', sz,
       e.sku, n2(e.qty), e.unit, 'คิดราคาไม่มีรายการนี้', fileLabel ]); }
   if (!rows.length) continue;
   fs.writeFileSync(path.join(outDir, safe(p.name)+'.csv'),
