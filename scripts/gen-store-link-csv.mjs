@@ -10,6 +10,8 @@ import fs from 'node:fs'; import path from 'node:path';
 import { PRODUCTS } from '../src/lib/calculator40/products.mjs';
 import { computeCost } from '../src/lib/calculator40/engine.mjs';
 import * as CUTP from '../src/lib/cutlist/products.ts';
+import { CUT_SPEC_BY_ID } from '../src/lib/cutlist/products.ts';
+import { cutInputFromRecipe } from '../src/lib/cutlist/from-recipe.ts';
 import { createRequire } from 'node:module';
 import { writeXlsx } from './xlsxwrite.mjs';
 const PB = createRequire(import.meta.url)('../src/lib/calculator40/pricebook.json');
@@ -28,7 +30,7 @@ const norm = s => String(s||'').replace(/[\s\-–—()"'·.]/g,'').toLowerCase()
 const val = (f,o) => { try { return typeof f==='function' ? f(o) : f; } catch { return ''; } };
 const n2 = v => (typeof v === "number" && Number.isFinite(v)) ? Math.round(v*100)/100 : v;   // เลขทศนิยมยาว ๆ อ่านไม่รู้เรื่องใน Excel
 const HEAD = ['รุ่น','หมวด','ชื่อรายการ','รหัสสโตร์','มีรหัสไหม','ราคา/หน่วย','หน่วย','จำนวน','ยอดเงิน',
-  'ขนาดที่ใช้คิด','รหัสในใบตัด','จำนวนในใบตัด','ตรงกันไหม','ไฟล์ตัดประกอบ'];
+  'ขนาดที่ใช้คิด','รหัสในใบตัด','จำนวนในใบตัด','หน่วยในใบตัด','ตรงกันไหม','ไฟล์ตัดประกอบ'];
 const esc = v => { const s=String(v??''); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; };
 const SUFFIX = process.argv[2] || '';   // เลี่ยงไฟล์ถูกล็อกตอนเจ้าของเปิดค้างใน Excel
 const outDir = 'docs/csv-ผูกสโตร์';
@@ -43,31 +45,78 @@ for (const p of Object.values(PRODUCTS)) {
   let calc; try {
     calc = computeCost(PB, p, { w:d.w, h:d.h, p:d.p||1, form:p.defForm, color:'white', colorKey:'white' });
   } catch { continue; }
-  const sn = MAP[p.id], spec = sn ? CUTP[sn] : null;
-  const co = spec ? { ...spec.defaults, W:d.w, H:d.h, N:d.p||1 } : null;
+  const sn = MAP[p.id];
+  // ใช้ตัวแปลง "คิดราคา → ใบตัด" ตัวจริง (from-recipe) ก่อน — ตัวเดียวกับหน้าเทียบ
+  //   ถ้าเดา input เอง (แค่ยัด W/H/N) รุ่นที่ใบตัดนับคนละฐาน (เลื่อนยูโร ฯลฯ) จะออกมาผิดเป็นกอง
+  let spec = sn ? CUTP[sn] : null, co = null;
+  const rec = cutInputFromRecipe({ kind:'std', prodId:p.id, w:d.w, h:d.h, p:d.p||1,
+    form:p.defForm, spec:{}, glassType:p.defGlass }, { rawCompare:true });
+  if (rec && CUT_SPEC_BY_ID[rec.spec_id]) { spec = CUT_SPEC_BY_ID[rec.spec_id]; co = { ...spec.defaults, ...rec.input }; }
+  else if (spec) co = { ...spec.defaults, W:d.w, H:d.h, N:d.p||1 };
+  const mult = (rec && rec.multiplier) || 1;
+  // ⚠ ต้องเก็บทั้ง hardware (อุปกรณ์) และ profiles (อลูรายเส้น)
+  //   บั๊กเดิม (เจ้าของจับได้ 1 ก.ย.69): อ่านแค่ spec.hardware → บรรทัดอลูทุกเส้นขึ้น
+  //   "ใบตัดไม่มีรายการนี้" ทั้งที่ใบตัดมีครบ ทำให้รายงานหลอกตาไป 120+ แถว
   const cutList = [];
   if (spec) for (const h of (spec.hardware||[])) {
-    const q = Number(val(h.qty,co))||0; if (q<=0) continue;
+    const q = (Number(val(h.qty,co))||0)*mult; if (q<=0) continue;
     cutList.push({ name:String(val(h.name,co)), sku:String(val(h.sku,co)||''), qty:q, unit:h.unit||'' });
   }
-  const used = new Set();
+  // อลู: รวมทุกบรรทัดที่ใช้รหัสเดียวกัน (ขวางบน+ขวางล่าง ฯลฯ) → จำนวน "ชิ้น" ต่อรหัส
+  const cutProf = new Map();
+  if (spec) for (const pr of (spec.profiles||[])) {
+    const c = String(val(pr.code,co)||'').toUpperCase(); if (!c || c === '-') continue;
+    const q = (Number(val(pr.qty,co))||0)*mult; if (q<=0) continue;
+    const e = cutProf.get(c) || { sku:c, qty:0, unit:'ชิ้น', name:String(val(pr.name,co)) };
+    e.qty += q; cutProf.set(c, e);
+  }
+  const fileLabel = (sn && FILEOF[sn]) || (spec ? 'ใบตัด: '+spec.id : '');
+  const used = new Set(), usedProf = new Set();
   const rows = [];
+  // อลูฝั่งคิดราคาต้อง "รวมตามรหัส" ก่อนเทียบ — รหัสเดียวมักถูกเขียนหลายบรรทัด (เสา/ขวาง/คิ้ว ใช้ F7935 ร่วมกัน)
+  //   ถ้าไม่รวม แต่ละบรรทัดจะไปเทียบกับยอดรวมของใบตัด → ขึ้น "จำนวนต่าง" หลอก ๆ ทั้งกอง
+  //   (หน้าเทียบคิดราคา↔ใบตัด รวมตามรหัสอยู่แล้ว — ทำให้ตรงกัน)
+  const lines = [];
+  const aluByCode = new Map();
   for (const l of (calc.lines||[])) {
     if (l.cat === 'labor') continue;
+    const c = String(l.code || '').toUpperCase();
+    if (l.cat !== 'alu' || !c) { lines.push(l); continue; }
+    const e = aluByCode.get(c);
+    if (!e) { aluByCode.set(c, { ...l, _names:[l.name] }); lines.push(aluByCode.get(c)); continue; }
+    e.qty = (e.qty||0) + (l.qty||0); e.pieces = (e.pieces||0) + (l.pieces||0);
+    e.amount = (e.amount||0) + (l.amount||0); e._names.push(l.name);
+  }
+  for (const e of aluByCode.values()) if (e._names.length > 1) e.name = e._names.join(' + ');
+  for (const l of lines) {
     const cat = l.cat==='alu' ? 'อลูมิเนียม' : l.cat==='glass' ? 'กระจก' : 'อุปกรณ์/สิ้นเปลือง';
     const code = String(l.code || l.sku || '');
-    const i = cutList.findIndex((c,ix)=>!used.has(ix) && (norm(c.name)===norm(l.name)
-      || norm(c.name).includes(norm(l.name)) || norm(l.name).includes(norm(c.name))));
-    const hit = i>=0 ? (used.add(i), cutList[i]) : null;
+    let hit = null;
+    if (l.cat === 'alu') {
+      // อลูจับคู่ด้วย "รหัสเส้น" ไม่ใช่ชื่อ (ชื่อสองฝั่งเรียกคนละแบบ) · เทียบกันที่ "จำนวนชิ้น"
+      const e = cutProf.get(code.toUpperCase());
+      if (e) { hit = e; usedProf.add(code.toUpperCase()); }
+    } else {
+      const i = cutList.findIndex((c,ix)=>!used.has(ix) && (norm(c.name)===norm(l.name)
+        || norm(c.name).includes(norm(l.name)) || norm(l.name).includes(norm(c.name))));
+      if (i>=0) { used.add(i); hit = cutList[i]; }
+    }
+    // อลูเทียบชิ้นต่อชิ้น (คิดราคาเก็บ pieces มาให้แล้ว) · อุปกรณ์เทียบจำนวนตรง ๆ
+    const myQty = l.cat === 'alu' ? Number(l.pieces)||0 : Number(l.qty)||0;
     const same = !spec ? 'ยังไม่ผูกไฟล์' : !hit ? 'ใบตัดไม่มีรายการนี้'
       : !code ? 'คิดราคายังไม่มีรหัส' : !hit.sku ? 'ใบตัดไม่ให้รหัส'
-      : code.toUpperCase()===hit.sku.toUpperCase() ? 'ตรง' : 'รหัสไม่ตรง';
+      : code.toUpperCase()!==String(hit.sku).toUpperCase() ? 'รหัสไม่ตรง'
+      : Math.abs(myQty - hit.qty) <= Math.max(0.05, hit.qty*0.02) ? 'ตรง' : 'จำนวนต่าง';
     rows.push([ p.name, cat, l.name, code, code?'มี':'ยังไม่มี', n2(l.unitPrice ?? ''), l.unit || '',
-      n2(l.qty ?? ''), n2(l.amount ?? ''), sz, hit?(hit.sku||'—'):'', hit?n2(hit.qty):'', same, sn?FILEOF[sn]:'' ]);
+      n2(l.cat==='alu' ? myQty : (l.qty ?? '')), n2(l.amount ?? ''), sz,
+      hit?(hit.sku||'—'):'', hit?n2(hit.qty):'', hit?(hit.unit||''):'', same, fileLabel ]);
   }
   cutList.forEach((c,ix)=>{ if(used.has(ix)) return;
-    rows.push([ p.name, 'มีแต่ในใบตัด', c.name, '', 'ยังไม่มี', '', c.unit, '', '', sz,
-      c.sku||'—', n2(c.qty), 'คิดราคาไม่มีรายการนี้', FILEOF[sn] ]); });
+    rows.push([ p.name, 'มีแต่ในใบตัด', c.name, '', 'ยังไม่มี', '', '', '', '', sz,
+      c.sku||'—', n2(c.qty), c.unit||'', 'คิดราคาไม่มีรายการนี้', fileLabel ]); });
+  for (const [c,e] of cutProf) { if (usedProf.has(c)) continue;
+    rows.push([ p.name, 'มีแต่ในใบตัด (อลู)', e.name, '', 'ยังไม่มี', '', '', '', '', sz,
+      e.sku, n2(e.qty), e.unit, 'คิดราคาไม่มีรายการนี้', fileLabel ]); }
   if (!rows.length) continue;
   fs.writeFileSync(path.join(outDir, safe(p.name)+'.csv'),
     '\ufeff' + [HEAD, ...rows].map(r=>r.map(esc).join(',')).join('\r\n') + '\r\n');
@@ -77,22 +126,22 @@ fs.writeFileSync(`docs/ผูกสโตร์-ทุกบาน-1ก.ย.69${
   '\ufeff' + [HEAD, ...all].map(r=>r.map(esc).join(',')).join('\r\n') + '\r\n');
 
 // ── Excel: แท็บ "สรุป" + "รวมทุกบาน" + แท็บละบาน (เจ้าของเปิด CSV ไม่ได้) ──
-const STATUS = ["ตรง","รหัสไม่ตรง","คิดราคายังไม่มีรหัส","ใบตัดไม่ให้รหัส","ใบตัดไม่มีรายการนี้","คิดราคาไม่มีรายการนี้","ยังไม่ผูกไฟล์"];
+const STATUS = ["ตรง","จำนวนต่าง","รหัสไม่ตรง","คิดราคายังไม่มีรหัส","ใบตัดไม่ให้รหัส","ใบตัดไม่มีรายการนี้","คิดราคาไม่มีรายการนี้","ยังไม่ผูกไฟล์"];
 const prodNames = [...new Set(all.map(r=>r[0]))];
 const summary = [["รุ่น","แถวรวม", ...STATUS, "ไฟล์ตัดประกอบ"]];
 for (const n of prodNames) {
   const rs = all.filter(r=>r[0]===n);
-  summary.push([n, rs.length, ...STATUS.map(k=>rs.filter(r=>r[12]===k).length || ""), rs.find(r=>r[13])?.[13] || "— ไม่มีไฟล์ตัดประกอบ —"]);
+  summary.push([n, rs.length, ...STATUS.map(k=>rs.filter(r=>r[13]===k).length || ""), rs.find(r=>r[14])?.[14] || "— ไม่มีไฟล์ตัดประกอบ —"]);
 }
-const W = [22,12,34,16,11,12,10,10,12,16,16,13,22,26];
+const W = [22,14,34,16,11,12,10,10,12,16,16,13,13,22,26];
 const sheets = [
-  { name:"สรุป", rows:summary, widths:[30,9,7,10,14,12,16,16,12,26] },
+  { name:"สรุป", rows:summary, widths:[30,9,7,10,10,14,12,16,16,12,26] },
   { name:"รวมทุกบาน", rows:[HEAD, ...all], widths:W },
   ...prodNames.map(n=>({ name:n, rows:[HEAD, ...all.filter(r=>r[0]===n)], widths:W })),
 ];
 writeXlsx(`docs/ผูกสโตร์-ทุกบาน-1ก.ย.69${SUFFIX}.xlsx`, sheets);
 console.log("Excel:", sheets.length, "แท็บ");
-const c = k => all.filter(r=>r[12]===k).length;
+const c = k => all.filter(r=>r[13]===k).length;
 console.log('รุ่น', fs.readdirSync(outDir).length, '· แถวรวม', all.length);
 for (const k of ['ตรง','รหัสไม่ตรง','ใบตัดไม่มีรายการนี้','คิดราคาไม่มีรายการนี้','คิดราคายังไม่มีรหัส','ใบตัดไม่ให้รหัส','ยังไม่ผูกไฟล์'])
   console.log('  '+k+' = '+c(k));
