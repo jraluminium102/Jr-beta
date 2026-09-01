@@ -18,7 +18,7 @@ export type AuditStockRow = {
   weight_per_unit?: number | string | null;   // กก./เส้น — ตัวคูณของสาย "เรตต่อโล → ราคาต่อเส้น"
 };
 
-export type AuditStatus = "linked" | "price_diff" | "missing" | "no_key" | "multi" | "zero" | "order_only" | "labor";
+export type AuditStatus = "linked" | "price_diff" | "missing" | "no_key" | "need_code" | "multi" | "zero" | "order_only" | "labor";
 export type AuditRow = {
   section: string;              // หมวด (อลูรายเส้น / อุปกรณ์ / กระจก ...)
   usedBy: string;               // ใช้ในรุ่นไหน (ว่าง = ตารางราคากลาง)
@@ -43,6 +43,7 @@ export const STATUS_LABEL: Record<AuditStatus, string> = {
   price_diff: "ผูกแล้ว แต่ราคาไม่ตรง",
   missing: "ไม่เจอในสโตร์",
   no_key: "ผูกไม่ได้ (ไม่มีรหัส/ยังไม่เปิดผูก)",
+  need_code: "⏳ รอเจ้าของเติมรหัสสโตร์",
   order_only: "ไม่สต็อก สั่งใหม่ (ตั้งใจไม่ผูก · ราคาอยู่ในสูตร)",
   labor: "ค่าแรง/ค่าบริการ (ไม่ใช่ของในสโตร์)",
   multi: "เจอหลายแถว ต้องเลือกสี",
@@ -122,6 +123,12 @@ export function auditStockLink(stock: AuditStockRow[], PB: any): AuditRow[] {
           note: "ไม่ได้สต็อกไว้ สั่งซื้อเมื่อมีงาน — ราคาอยู่ในสูตร ตั้งใจไม่ผูกสโตร์" });
         continue;
       }
+      if (a.needCode) {
+        push({ section: "อลูรายเส้น", usedBy: p.name || p.id, item: a.name, key: "", keyKind: "-",
+          formulaPrice: a.price ?? null, status: "need_code",
+          note: "ไฟล์ตัดประกอบไม่ได้ให้รหัสไว้ — รอเจ้าของเติมรหัสสโตร์ (ตอนนี้ใช้ราคาในไฟล์ถอดทุน)" });
+        continue;
+      }
       byKey("อลูรายเส้น", p.name || p.id, a.name, eff, "sku",
         PB.ALUCODE?.[eff] ?? (a.price ?? null),
         eff && eff !== code ? `สูตรเขียนรหัส ${code} แต่ระบบชี้ไป ${eff}` : "");
@@ -142,6 +149,13 @@ export function auditStockLink(stock: AuditStockRow[], PB: any): AuditRow[] {
         //   เอนจินคิดราคาอ่านราคาจาก PB.SKUPRICE[sku] ตรง ๆ (hwPrice ใน engine.mjs)
         //   ของเดิมเช็คด้วย "ชื่อ" อย่างเดียว บรรทัดที่มี sku เลยถูกตีเป็น "ผูกไม่ได้" ทั้งที่ผูกแล้ว
         //   → หน้าตรวจโชว์ว่าแทบไม่มีอะไรผูก ทั้งที่ของจริงผูกเยอะกว่านั้น (เจ้าของท้วง 27 ส.ค.69)
+        // รอเจ้าของเติมรหัส (เจ้าของสั่ง 1 ก.ย.69: ห้ามสร้างของเองในสโตร์ เสี่ยงซ้ำ)
+        if (it.needCode) {
+          push({ section: "อุปกรณ์/สิ้นเปลือง", usedBy: p.name || p.id, item: nm, key: "", keyKind: "-",
+            formulaPrice: it.price ?? null, status: "need_code",
+            note: "ไฟล์ตัดประกอบไม่ได้ให้รหัสไว้ — รอเจ้าของเติมรหัสสโตร์ (ตอนนี้ใช้ราคาในไฟล์ถอดทุน)" });
+          continue;
+        }
         const skuRaw = String(it.sku ?? "");
         // sku เป็นสูตรได้ (เลือกรหัสตามเงื่อนไข เช่น "WIN?'JR00770':'JR00771'") → ดึงรหัสในเครื่องหมายคำพูดออกมา
         const skus = skuRaw.includes("?")
@@ -333,13 +347,14 @@ export function auditByProduct(rows: AuditRow[], bump: BumpRow[]): ProductAudit[
     const mine = rows.filter((r) => r.usedBy === (p.name || p.id));
     const alu = mine.filter((r) => r.section === "อลูรายเส้น");
     const hw = mine.filter((r) => r.section === "อุปกรณ์/สิ้นเปลือง");
-    const linked = (r: AuditRow) => r.status !== "no_key" && r.status !== "missing";   // order_only/labor = ตั้งใจ นับว่าเรียบร้อย
+    // need_code = ยังไม่ผูก (รอเจ้าของเติมรหัส) → นับเป็น "ยังไม่ครบ" เหมือน no_key ไม่ใช่ของที่ตั้งใจไม่ผูก
+    const linked = (r: AuditRow) => r.status !== "no_key" && r.status !== "missing" && r.status !== "need_code";   // order_only/labor = ตั้งใจ นับว่าเรียบร้อย
     const aluLinked = alu.filter(linked).length, hwLinked = hw.filter(linked).length;
     const total = alu.length + hw.length, ok = aluLinked + hwLinked;
     const b = byId.get(p.id);
     out.push({
       id: p.id, name: p.name || p.id, group: p.group ?? 0, groupLabel: GROUP_LABEL[p.group] ?? "อื่น ๆ",
-      aluTotal: alu.length, aluLinked, aluNoCode: alu.filter((r) => r.status === "no_key").map((r) => r.item),
+      aluTotal: alu.length, aluLinked, aluNoCode: alu.filter((r) => r.status === "no_key" || r.status === "need_code").map((r) => r.item),
       aluOrderOnly: alu.filter((r) => r.status === "order_only").map((r) => r.item),
       hwTotal: hw.length, hwLinked,
       moved: b ? b.moved : null, price: b?.before ?? 0,

@@ -8,10 +8,10 @@ import type { BoxRow } from "@/lib/calculator40/box-audit";
 import { STATUS_LABEL, KG_STATUS_LABEL, type AuditRow, type AuditStatus, type BumpRow, type KgRow, type KgStatus, type ProductAudit } from "@/lib/calculator40/stock-audit";
 
 const TONE: Record<AuditStatus, "emerald" | "amber" | "red" | "gray"> = {
-  linked: "emerald", price_diff: "amber", multi: "amber", zero: "amber", missing: "red", no_key: "red", order_only: "gray", labor: "gray",
+  linked: "emerald", price_diff: "amber", multi: "amber", zero: "amber", missing: "red", no_key: "red", need_code: "amber", order_only: "gray", labor: "gray",
 };
 // เรียงตามความเร่งด่วนที่ต้องแก้ (ผูกไม่ได้เลย = หนักสุด)
-const ORDER: AuditStatus[] = ["no_key", "missing", "price_diff", "multi", "zero", "linked", "labor"];
+const ORDER: AuditStatus[] = ["need_code", "no_key", "missing", "price_diff", "multi", "zero", "linked", "labor"];
 
 const KG_TONE: Record<KgStatus, "emerald" | "amber" | "red" | "gray"> = {
   ok: "emerald", stale: "amber", no_rate: "amber", no_weight: "red", not_kg: "gray",
