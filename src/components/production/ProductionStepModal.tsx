@@ -11,6 +11,7 @@ import DateField from "@/components/ui/DateField";
 import { ProductionSetsSection } from "@/components/production/ProductionSetsSection";
 import JobCutlists from "@/components/cutlist/JobCutlists";
 import { FloorWorkBadge } from "@/components/ui/FloorWorkBadge";
+import { SplitOrdersPanel } from "@/components/production/SplitOrdersPanel";
 import type { BlockerNote } from "@/components/production/BlockerNotesInline";
 import type { ProdStatus } from "@/lib/database.types";
 
@@ -290,6 +291,8 @@ export function ProductionStepModal({
   const [undepReason, setUndepReason] = useState("");
   const [undepBusy, setUndepBusy] = useState(false);
   const [adminErr, setAdminErr] = useState<string | null>(null);
+  // แตกออเดอร์ที่ปนอยู่ในงานเดียว ออกเป็นงานใหม่ (0129) — ADMIN เท่านั้น
+  const [splitOpen, setSplitOpen] = useState(false);
 
   const doOverride = async () => {
     if (ovStatus === prod.status) { setAdminErr("เลือกเฟสใหม่ที่ต่างจากปัจจุบันก่อน"); return; }
@@ -923,6 +926,25 @@ export function ProductionStepModal({
                               </button>
                             </div>
                           </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* แตกออเดอร์ที่ปนอยู่ในงานเดียว ออกเป็นงานใหม่ (0129) */}
+                    {canAdmin && prod.job_id && (
+                      <div className="glass-card rounded-2xl p-4 border border-sky-300/20">
+                        <div className="text-[13px] font-semibold text-sky-100 mb-1">แตกออเดอร์ที่ปนกันในงานนี้</div>
+                        <p className="text-[11px] mb-2" style={{ color: "var(--t-low)" }}>
+                          งานที่มีหลายออเดอร์ (หลายใบเสนอ) ปนกัน — ทำให้ใบปะหน้า/ใบตัด/ผลิตอ่านผิดออเดอร์
+                          (1 งานผลิต = 1 ออเดอร์เท่านั้น) เครื่องมือนี้แยกออเดอร์ที่เลือกออกเป็นงานใหม่ทั้งใบเสนอ+บิล+เงิน
+                        </p>
+                        {!splitOpen ? (
+                          <button onClick={() => setSplitOpen(true)}
+                            className="focusable pressable w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-sky-100 bg-sky-500/20 border border-sky-300/30 min-h-[44px]">
+                            เปิดเครื่องมือแตกออเดอร์…
+                          </button>
+                        ) : (
+                          <SplitOrdersPanel jobId={prod.job_id} onSplit={() => { setSplitOpen(false); if (onSavedAndClose) onSavedAndClose(); else onClose(); }} />
                         )}
                       </div>
                     )}

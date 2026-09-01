@@ -156,6 +156,54 @@ function DeepLinkHandler({ rows, setOpen, setFilterKey }: {
 
 type AdhocJob = { id: string; title: string; customer_name: string | null; produce_date: string | null; install_date: string | null; producer_note: string | null; status: string };
 
+// ── ADMIN: "งานที่ปนหลายออเดอร์" (>1 ใบเสนอ/ใบวางบิล Active) — จุดที่ต้องใช้เครื่องมือ "แตกออเดอร์" (0129) ──
+type SplitCandidate = {
+  id: string; job_code: string | null; customer_name: string; customer_area: string | null; status: string;
+  active_quotation_count: number; active_billing_count: number;
+};
+function SplitCandidatesBanner({ rows, onOpen }: { rows: Row[]; onOpen: (r: Row) => void }) {
+  const [collapsed, setCollapsed] = useState(true);
+  const { data } = useQuery({
+    queryKey: ["split-candidates"],
+    queryFn: () => api.get<SplitCandidate[]>("/jobs/split-candidates"),
+    staleTime: 60_000,
+  });
+  const candidates = data?.data ?? [];
+  if (candidates.length === 0) return null;
+  return (
+    <div className="mb-4 rounded-xl border border-amber-300/25 bg-amber-500/10 px-3.5 py-2.5">
+      <button onClick={() => setCollapsed((v) => !v)} className="focusable pressable w-full flex items-center justify-between gap-2 text-left">
+        <span className="text-[13px] font-semibold text-amber-100 flex items-center gap-1.5">
+          <TriangleAlert size={14} className="shrink-0" /> งานที่ปนหลายออเดอร์ ({candidates.length}) — ควรแยกด้วย &quot;แตกออเดอร์&quot;
+        </span>
+        <ChevronRight size={14} className={`text-amber-200 transition-transform ${collapsed ? "" : "rotate-90"}`} />
+      </button>
+      {!collapsed && (
+        <div className="mt-2 space-y-1.5">
+          {candidates.map((c) => {
+            const prodRow = rows.find((r) => r.job_id === c.id);
+            return (
+              <div key={c.id} className="flex items-center justify-between gap-2 text-[12px] rounded-lg bg-white/5 px-2.5 py-2">
+                <div className="min-w-0 truncate text-amber-50">
+                  <span className="tnum font-semibold">{c.job_code ?? "—"}</span> · {c.customer_name}
+                  <span className="text-amber-200/70 ml-1.5">({c.active_quotation_count} ใบเสนอ · {c.active_billing_count} บิล)</span>
+                </div>
+                {prodRow ? (
+                  <button onClick={() => onOpen(prodRow)} className="focusable pressable shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-amber-100 bg-amber-500/20 border border-amber-300/30 min-h-[32px]">
+                    เปิดดู
+                  </button>
+                ) : (
+                  <span className="shrink-0 text-[11px] text-amber-200/60">ยังไม่เข้าผลิต</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ProductionPage() {
   const [filterKey, setFilterKey] = useState<string | null>(null);
   const [q, setQ] = useState("");
@@ -231,6 +279,9 @@ export default function ProductionPage() {
         </div>
       </div>
       <p className="text-sm mb-3" style={{ color: "var(--t-low)" }}>แตะการ์ด/แถวเพื่ออัปเดตงาน · ปุ่มเดียวไปขั้นต่อไป</p>
+
+      {/* ADMIN: หา "งานที่ปนหลายออเดอร์" — จุดที่ควรใช้เครื่องมือ "แตกออเดอร์" (0129) */}
+      {isAdmin && <SplitCandidatesBanner rows={rows} onOpen={(r) => setOpen(r)} />}
 
       {/* ป้ายบอกหน้า + ปุ่มเปิดตารางผลิตช่าง (ลิงก์แยก · เปิดแท็บใหม่) — ยุบหน้าตารางผลิตออฟฟิศแล้ว เจ้าของสั่ง 23 ก.ค.69 */}
       <div className="flex flex-wrap items-center gap-2 mb-4 rounded-xl px-3.5 py-2.5" style={{ background: "rgba(55,138,221,.12)", border: "1px solid rgba(55,138,221,.28)" }}>
