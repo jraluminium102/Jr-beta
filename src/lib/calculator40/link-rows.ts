@@ -99,6 +99,69 @@ export const STATUS_LABEL: Record<LinkRowStatus, string> = {
   untested: "ยังไม่ได้ตรวจ", fyi: "ดูเฉย ๆ", pass: "ผ่าน",
 };
 
+/**
+ * อธิบายเป็นประโยคว่า "แถวนี้ผิดตรงไหน · ต้องทำอะไร"
+ *
+ * ⚠ ทำไมต้องมี (เจ้าของท้วง 1 ก.ย.69):
+ *   "ไม่มีเขียนดี ๆ ว่ามันผิดตรงไหน ... แท็กที่ต้องลงมือ ที่ต้องคิด บอกตรง ๆ ไม่รู้เรื่องว่าต้องการให้ชั้นทำอะไร"
+ *   ป้ายสีอย่างเดียวไม่พอ — ต้องบอกเป็นคำพูดว่าเลขไหนไม่ตรงกับเลขไหน แล้วให้ทำอะไรต่อ
+ *   และต้องกำกับเสมอว่า "พูดถึงบานแบบไหน ขนาดเท่าไร" (ดู sizeLabel) เพราะขนาด/รูปแบบเปลี่ยนของที่ใช้
+ */
+export type LinkRowExplain = { problem: string; todo: string };
+
+const q = (n: number | null, u: string) =>
+  n == null ? "—" : `${n.toLocaleString("th-TH", { maximumFractionDigits: 2 })}${u ? " " + u : ""}`;
+
+export function explainRow(r: {
+  status: LinkRowStatus; name: string; calcSku: string; cutSku: string;
+  calcQty: number | null; cutQty: number | null; calcUnit: string; cutUnit: string;
+  section: string; hasCutSpec: boolean;
+}): LinkRowExplain {
+  const cq = q(r.calcQty, r.calcUnit), uq = q(r.cutQty, r.cutUnit);
+  switch (r.status) {
+    case "fix":
+      if (r.calcSku && r.cutSku && r.calcSku.toUpperCase() !== r.cutSku.toUpperCase())
+        return {
+          problem: `คนละรหัสกัน — คิดราคาใช้ ${r.calcSku} แต่ใบตัดเบิก ${r.cutSku}`,
+          todo: "เลือกว่าจะยึดรหัสไหน แล้วกดแก้ให้ตรงกันทั้งสองฝั่ง",
+        };
+      return {
+        problem: `จำนวนไม่เท่ากัน — คิดราคาคิด ${cq} แต่ใบตัดเบิก ${uq}`,
+        todo: `ถ้าใบตัดถูก แก้จำนวนฝั่งคิดราคาเป็น ${uq} · ถ้าคิดราคาถูก แก้ใบตัดแทน`,
+      };
+    case "add":
+      return {
+        problem: `ใบตัดเบิก ${uq} แต่คิดราคาไม่มีรายการนี้เลย = เบิกของจริงแต่ไม่ได้คิดเงิน`,
+        todo: "กด “เพิ่มรายการ” ใส่เข้าคิดราคา (ทุนจะเพิ่ม ราคาขายขยับตาม)",
+      };
+    case "over":
+      return {
+        problem: `คิดราคาคิดเงิน ${cq} แต่ใบตัดไม่ได้เบิกของนี้ = อาจคิดเกินลูกค้า`,
+        todo: "ถ้าใช้จริงแต่ใบตัดตกหล่น เติมในใบตัด · ถ้าไม่ได้ใช้ ปิดแถวนี้ (ทุนจะลด)",
+      };
+    case "decide":
+      return {
+        problem: r.calcSku ? "ใบตัดไม่ได้ระบุรหัสสโตร์ให้" : "ยังไม่มีรหัสสโตร์ — แก้ราคาที่สโตร์แล้วราคาตรงนี้ไม่ขยับตาม",
+        todo: "หารหัสจริงในสโตร์แล้วกดใส่ในช่องรหัส (กดรหัสข้าง ๆ เพื่อเปิดดูสโตร์ได้)",
+      };
+    case "untested":
+      return {
+        problem: "ของชิ้นนี้ไม่โผล่ในขนาด/รูปแบบที่ระบบลองให้ เลยยังไม่เคยถูกเทียบกับใบตัดเลย",
+        todo: "เปลี่ยนขนาด/รูปแบบด้านบนให้ตรงกับงานที่ใช้ของชิ้นนี้ แล้วดูอีกที",
+      };
+    case "fyi":
+      return {
+        problem: "ใบตัดไม่เคยลงของประเภทนี้อยู่แล้ว (กระจก/ซิลิโคน/ค่าอบสี)",
+        todo: "ไม่ต้องทำอะไร",
+      };
+    default:
+      return {
+        problem: r.hasCutSpec ? `ตรงกันทั้งรหัสและจำนวน (${cq})` : "ไม่มีใบตัดให้เทียบ แต่รหัสผูกสโตร์แล้ว",
+        todo: "",
+      };
+  }
+}
+
 const isCodeLike = (t: string) => /^(JR\d{5}|[A-Z]{1,4}-?\d{3,5}[A-Z]?|OPK-[A-Z0-9-]+|XSW\d+|HD-\d+)$/i.test(t);
 /** รหัสทั้งหมดของบรรทัดนี้ — สูตร sku เลือกตามสีได้ (เช่น "CKEY==='black'?'JR00316':'JR00318'") ต้องกางออกทีละรหัส */
 function skuVariants(line: any, rawItem: any): string[] {

@@ -26,16 +26,18 @@ import { PRODUCTS } from "@/lib/calculator40/products.mjs";
 import PRICEBOOK from "@/lib/calculator40/pricebook.json";
 import { applyPriceOverride, type PriceOverride } from "@/lib/calculator40/stock-link";
 import { applyLineOverrides, isSafeCalcExpr, pristineProducts, type LineOverride } from "@/lib/calculator40/line-overrides";
-import { STATUS_LABEL, type LinkRowFull, type LinkRowStatus, type LinkStockRow } from "@/lib/calculator40/link-rows";
+import { STATUS_LABEL, explainRow, type LinkRowFull, type LinkRowStatus, type LinkStockRow } from "@/lib/calculator40/link-rows";
 import StockDrawer from "./StockDrawer";
 
 /* ── ป้ายสถานะ 7 แบบ — อีโมจิ+คำมาคู่กันเสมอ (คำชุดเดียวกับรายงาน CSV เดิม ห้ามเปลี่ยน) ── */
 const ST: Record<LinkRowStatus, { emoji: string; label: string; tone: "red" | "amber" | "sky" | "yellow" | "violet" | "gray" | "emerald"; bar: string }> = {
-  fix: { emoji: "🔴", label: "ต้องแก้", tone: "red", bar: "border-red-500" },
-  add: { emoji: "🟠", label: "ต้องเติม", tone: "amber", bar: "border-orange-400" },
-  over: { emoji: "🔵", label: "เช็คว่าคิดเกินไหม", tone: "sky", bar: "border-sky-400" },
-  decide: { emoji: "🟡", label: "ต้องเคาะ", tone: "yellow", bar: "border-yellow-400" },
-  untested: { emoji: "🟣", label: "ยังไม่ได้ตรวจ", tone: "violet", bar: "border-violet-400" },
+  // ⚠ ป้ายต้องบอก "มันผิดยังไง" ไม่ใช่บอกแค่ระดับความด่วน (เจ้าของท้วง 1 ก.ย.69:
+  //   "แท็กที่ต้องลงมือ ที่ต้องคิด บอกตรง ๆ ไม่รู้เรื่องว่าต้องการให้ชั้นทำอะไร")
+  fix: { emoji: "🔴", label: "จำนวน/รหัสไม่ตรงกัน", tone: "red", bar: "border-red-500" },
+  add: { emoji: "🟠", label: "ใบตัดมี · คิดราคาไม่มี", tone: "amber", bar: "border-orange-400" },
+  over: { emoji: "🔵", label: "คิดราคามี · ใบตัดไม่มี", tone: "sky", bar: "border-sky-400" },
+  decide: { emoji: "🟡", label: "ยังไม่มีรหัสสโตร์", tone: "yellow", bar: "border-yellow-400" },
+  untested: { emoji: "🟣", label: "ขนาดนี้ไม่ได้ใช้", tone: "violet", bar: "border-violet-400" },
   fyi: { emoji: "⚪", label: "ดูเฉย ๆ", tone: "gray", bar: "border-gray-300" },
   pass: { emoji: "✓", label: "ผ่าน", tone: "emerald", bar: "border-emerald-400" },
 };
@@ -401,6 +403,27 @@ export default function LinkClient({
 
       {/* เลือกรุ่น + ตัวกรอง */}
       <Card className="p-3 sm:p-4">
+        {/* ⚠ ต้องบอกเสมอว่า "ตัวเลขที่เห็นมาจากบานแบบไหน ขนาดเท่าไร" (เจ้าของท้วง 1 ก.ย.69:
+            "มันไม่บอกขนาดและรูปแบบของบานที่ยกมาเป็น case study ... บางทีขนาดก็มีผลต่อสิ่งที่ใช้") */}
+        {(() => {
+          const cases = [...new Set(productRows.map((r) => r.sizeLabel).filter(Boolean))];
+          if (!cases.length) return null;
+          return (
+            <div className="mb-3 rounded-lg bg-amber-50 ring-1 ring-amber-200 px-3 py-2">
+              <div className="text-xs font-semibold text-amber-900">
+                ตัวเลขข้างล่างมาจากการลองคิดจริง {cases.length} แบบ:
+              </div>
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                {cases.map((c) => (
+                  <span key={c} className="rounded-md bg-white/80 px-2 py-0.5 text-[11px] font-mono text-amber-900 ring-1 ring-amber-200">{c}</span>
+                ))}
+              </div>
+              <div className="mt-1 text-[11px] text-amber-800">
+                แต่ละแถวบอกกำกับไว้ว่ามาจากแบบไหน — ขนาด/รูปแบบต่างกัน ของที่ใช้ก็ต่างกัน
+              </div>
+            </div>
+          );
+        })()}
         <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-2">
           <label className="block sm:col-span-2 lg:col-span-2">
             <span className="text-xs font-medium text-ink-3">รุ่น ({productList.length})</span>
@@ -493,6 +516,16 @@ export default function LinkClient({
                         </td>
                         <td className={cn(stick, "left-[150px] px-2 py-2")}>
                           <div className="text-xs leading-snug">{r.name}</div>
+                          {/* อธิบายเป็นประโยคว่าผิดตรงไหน + ให้ทำอะไร — ป้ายสีอย่างเดียวเจ้าของอ่านไม่ออกว่าต้องทำอะไร */}
+                          {r.status !== "pass" && r.status !== "fyi" && (() => {
+                            const ex = explainRow(r);
+                            return (
+                              <div className="mt-1 rounded-md bg-ink-1/[0.03] px-2 py-1 max-w-[420px]">
+                                <div className="text-[11px] leading-snug text-ink-1">{ex.problem}</div>
+                                {ex.todo && <div className="text-[11px] leading-snug text-brand-dark mt-0.5">→ {ex.todo}</div>}
+                              </div>
+                            );
+                          })()}
                           <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                             {r.calcSku || r.cutSku ? (
                               <button onClick={() => setDrawerSku(r.calcSku || r.cutSku)}
@@ -500,6 +533,12 @@ export default function LinkClient({
                                 {r.calcSku || r.cutSku}
                               </button>
                             ) : <span className="font-mono text-xs text-ink-3">—</span>}
+                            {/* บอกกำกับทุกแถวว่าตัวเลขนี้มาจากบานแบบไหน ขนาดเท่าไร */}
+                            {r.sizeLabel && (
+                              <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-mono text-amber-900 ring-1 ring-amber-200">
+                                {r.sizeLabel}
+                              </span>
+                            )}
                             {(r.override || r.cutOverride) && <Badge tone="sky">แก้แล้ว</Badge>}
                             {r.dupKeyInProduct && <span title="รหัสนี้ใช้ซ้ำหลายบรรทัดในรุ่นนี้ — ระบบแยกด้วยชื่อบรรทัดให้แล้ว แก้ได้ทีละบรรทัด"><Badge tone="gray">รหัสซ้ำ</Badge></span>}
                           </div>
