@@ -1,7 +1,7 @@
 /**
  * doc-revision — "เอกสารใบนี้อ้าง Rev เก่าหรือยัง"
  *
- * ที่มา (เจ้าของสั่ง 1 ก.ย.69 · migration 0127):
+ * ที่มา (เจ้าของสั่ง 1 ก.ย.69 · migration 0132):
  *   เดิมระบบบังคับให้ยกเลิกเอกสารเป็นทอด ๆ ก่อนแก้ใบเสนอราคา — งานจริงแก้ราคาบ่อย เลยวุ่นวายมาก
  *   ตอนนี้แก้ได้ตลอด แล้วใช้ป้ายเตือนแทน: บิล/ใบเสร็จที่ออกตอน Rev เก่า จะขึ้นว่า "เช็คยอดใหม่"
  *
@@ -35,7 +35,7 @@ const n = (v: unknown) => Number(v) || 0;
 export function revWarning(doc: RevStamped | null | undefined, currentRevNo: unknown): RevWarning {
   const to = n(currentRevNo);
   const raw = doc?.source_revision_no;
-  // ⚠ ยังไม่ได้รัน 0127 (คอลัมน์ไม่มี) หรือเอกสารเก่าที่ยังไม่ได้ backfill → ห้ามเดาว่า Rev 0
+  // ⚠ ยังไม่ได้รัน 0132 (คอลัมน์ไม่มี) หรือเอกสารเก่าที่ยังไม่ได้ backfill → ห้ามเดาว่า Rev 0
   //   ไม่งั้นบิลทั้งระบบจะขึ้นป้ายเตือนพร้อมกันทันทีที่ deploy (ตกใจกันทั้งบริษัท)
   if (raw == null) return { stale: false, acked: false, show: false, from: 0, to, text: "" };
   const from = n(raw);

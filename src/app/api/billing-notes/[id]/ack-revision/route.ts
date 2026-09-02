@@ -4,7 +4,7 @@ import { ok, err, notFound } from "@/lib/bff/response";
 
 /**
  * POST /api/billing-notes/[id]/ack-revision
- *   "รับทราบว่าใบเสนอ Rev ใหม่แล้ว — ยอดเดิมถูกแล้ว" → ป้ายเตือนหายจนกว่าจะ Rev อีกรอบ (0127)
+ *   "รับทราบว่าใบเสนอ Rev ใหม่แล้ว — ยอดเดิมถูกแล้ว" → ป้ายเตือนหายจนกว่าจะ Rev อีกรอบ (0132)
  *
  * ตั้งใจให้เป็นแค่การรับทราบ: ไม่แตะยอด ไม่แตะงวด ไม่แตะสถานะ (เจ้าของเคาะ "เตือนอย่างเดียว")
  */
@@ -31,7 +31,7 @@ export const POST = withRoute(async (_req: Request, { params }: { params: { id: 
   const { error } = await (ctx.supabase as any)
     .from("billing_notes").update({ ack_revision_no: curRev }).eq("id", bn.id);
   if (error && /ack_revision_no/i.test(error.message ?? ""))
-    return err("ยังไม่ได้รัน migration 0127 (แก้เอกสารได้ตลอด) — รันก่อนใช้งาน", 400);
+    return err("ยังไม่ได้รัน migration 0132 (แก้เอกสารได้ตลอด) — รันก่อนใช้งาน", 400);
   if (error) return err(error.message, 500);
 
   await audit({

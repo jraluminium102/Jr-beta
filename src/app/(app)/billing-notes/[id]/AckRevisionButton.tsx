@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 
 /**
- * ปุ่ม "รับทราบ · ยอดเดิมถูกแล้ว" บนแถบเตือน Rev เก่า (0127)
+ * ปุ่ม "รับทราบ · ยอดเดิมถูกแล้ว" บนแถบเตือน Rev เก่า (0132)
  *   กดแล้วป้ายหาย จนกว่าใบเสนอจะ Rev ใหม่อีกรอบ — ไม่แตะยอด/งวด/สถานะ
  */
 export default function AckRevisionButton({ id }: { id: number | string }) {

@@ -97,7 +97,7 @@ export const PATCH = withRoute(
     // Rev หลังชำระแล้ว (24 ส.ค.69) — ต้องระบุเหตุผลเสมอ (บังคับ audit trail)
     const rev = parsed.data.rev === true;
     const revReason = (parsed.data.reason ?? "").trim();
-    // 0127 — แก้ได้แม้ชำระ/มีใบเสร็จ · เก็บไว้เตือนบนหน้าจอแทนการบล็อก
+    // 0132 — แก้ได้แม้ชำระ/มีใบเสร็จ · เก็บไว้เตือนบนหน้าจอแทนการบล็อก
     const confirmBelowPaid = (body as Record<string, unknown>)?.confirm_below_paid === true;
     let warnPaidSum = 0, warnLinkedDocs = 0;
     if (rev && revReason.length < 5) {
@@ -217,7 +217,7 @@ export const PATCH = withRoute(
       const hasPaidInstallment = installments.some(
         (i) => i.status === "paid" || (Number(i.paid_amount) || 0) > 0
       );
-      // ชำระแล้ว — ไม่บล็อกแล้ว (เจ้าของสั่ง 1 ก.ย.69 · 0127 "ห้ามฟิก")
+      // ชำระแล้ว — ไม่บล็อกแล้ว (เจ้าของสั่ง 1 ก.ย.69 · 0132 "ห้ามฟิก")
       //   แต่ "เงินที่รับมาจริง" เป็นความจริงที่แก้ย้อนไม่ได้ → ถ้ายอดใหม่ต่ำกว่าเงินที่รับมาแล้ว
       //   ให้กดยืนยันอีกครั้งก่อน (confirm_below_paid) ไม่ใช่ปล่อยผ่านเงียบ ๆ
       //   ⚠ guard นี้มีทิศทางเดียว (ต่ำกว่าเท่านั้น) — ห้ามเปลี่ยนเป็น abs() (บทเรียนเก่า deposit guard)
@@ -239,7 +239,7 @@ export const PATCH = withRoute(
             .select("id", { count: "exact", head: true })
             .in("billing_installment_id", instIds),
         ]);
-        // มีใบเสร็จ/รายการเงินผูกอยู่ — แก้ได้ แต่ติดธงไว้ให้หน้าจอเตือนว่าต้องไล่เช็คเอกสารตาม (0127)
+        // มีใบเสร็จ/รายการเงินผูกอยู่ — แก้ได้ แต่ติดธงไว้ให้หน้าจอเตือนว่าต้องไล่เช็คเอกสารตาม (0132)
         if ((rcCount ?? 0) > 0 || (feCount ?? 0) > 0) warnLinkedDocs = (rcCount ?? 0) + (feCount ?? 0);
       }
     }

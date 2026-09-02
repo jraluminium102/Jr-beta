@@ -55,7 +55,7 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
   let quoteRev = 0;
   let quoteBase: { subtotal: number; discount_pct: number; vat_rate: number; wht_rate: number } | null = null;
   if (bn.quotation_id) {
-    // + revision_no สำหรับป้าย "อ้าง Rev เก่า" (0127) — เผื่อ 0093 ยังไม่รัน → ถอยไป select แบบเดิม
+    // + revision_no สำหรับป้าย "อ้าง Rev เก่า" (0132) — เผื่อ 0093 ยังไม่รัน → ถอยไป select แบบเดิม
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let q: any = null;
     const r1 = await supabase
@@ -130,7 +130,7 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
     if (rr.installment_id != null) receiptByInst.set(Number(rr.installment_id), { id: Number(rr.id), code: rr.code });
   });
 
-  // ป้ายเตือน "ใบนี้อ้าง Rev เก่า" (0127) — เตือนอย่างเดียว ไม่ล็อกอะไรทั้งสิ้น
+  // ป้ายเตือน "ใบนี้อ้าง Rev เก่า" (0132) — เตือนอย่างเดียว ไม่ล็อกอะไรทั้งสิ้น
   const rw = revWarning(bn as unknown as { source_revision_no?: number | null; ack_revision_no?: number | null }, quoteRev);
 
   return (

@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 
   const supabase = createClient();
 
-  // 1) ดึงใบเสนอราคา (+ revision_no สำหรับป้าย "อ้าง Rev ไหน" — 0127 · เผื่อ 0093 ยังไม่รัน → fallback)
+  // 1) ดึงใบเสนอราคา (+ revision_no สำหรับป้าย "อ้าง Rev ไหน" — 0132 · เผื่อ 0093 ยังไม่รัน → fallback)
   const QCOLS = "id, status, net, subtotal, discount_pct, discount_amt, discount_label, vat_rate, wht_rate, customer_snapshot, customer_id, job_id";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let q: any = null; let qErr: { message?: string } | null = null;
@@ -173,13 +173,16 @@ export async function POST(req: Request) {
 
   // has_tax_breakdown = true เฉพาะใบที่ subtotal เป็นยอดก่อน VAT จริง (hasSubtotal) → อนุญาตแก้ footer/ติ๊ก VAT ภายหลัง
   // vat_rate_set = hasSubtotal เช่นกัน — ใบที่สืบยอดก่อน VAT จากใบเสนอได้ = รู้อัตรา VAT ชัด → ใบเสร็จใช้ค่านี้ (0095)
-  // 0127 — จำว่าตอนออกบิล ใบเสนออยู่ Rev ไหน · ใบเสนอ Rev ใหม่กว่านี้เมื่อไร บิลใบนี้ขึ้นป้าย "เช็คยอดใหม่"
-  //   ใส่ในก้อน breakdown เพราะมี fallback insert แบบไม่มีคอลัมน์อยู่แล้ว (เผื่อยังไม่ได้รัน 0127)
+  // 0132 — จำว่าตอนออกบิล ใบเสนออยู่ Rev ไหน · ใบเสนอ Rev ใหม่กว่านี้เมื่อไร บิลใบนี้ขึ้นป้าย "เช็คยอดใหม่"
+  //   ใส่ในก้อน breakdown เพราะมี fallback insert แบบไม่มีคอลัมน์อยู่แล้ว (เผื่อยังไม่ได้รัน 0132)
   const bnBreakdown = { subtotal: bt.subtotal, discount_pct: bStoredPct, discount_amt: bt.discount_amt, discount_label: bDiscLabel, vat_rate: bVat, vat_amt: bt.vat_amt, wht_rate: bWht, wht_amt: bt.wht_amt, has_tax_breakdown: hasSubtotal, vat_rate_set: hasSubtotal, labor_ratio: bLaborRatio, labor_amt: bLaborAmt, source_revision_no: Number((q as { revision_no?: number }).revision_no) || 0 };
   let { data: bn, error: bnErr } = await supabase
     .from("billing_notes").insert({ ...bnBase, ...bnBreakdown }).select("id, code").single();
-  // กันพัง: ถ้า migration 0078/0079/0081/0102 (ยอดแยก/ค่าแรง) ยังไม่รัน → insert ใหม่แบบไม่มี breakdown (total ยังถูก · ใบวางบิลใช้ทุกวัน)
-  if (bnErr && /subtotal|discount_amt|discount_label|vat_amt|wht_amt|discount_pct|vat_rate|wht_rate|has_tax_breakdown|vat_rate_set|labor_ratio|labor_amt/i.test(bnErr.message ?? "")) {
+  // กันพัง: ถ้า migration 0078/0079/0081/0102/0132 (ยอดแยก/ค่าแรง/Rev) ยังไม่รัน → insert ใหม่แบบไม่มี breakdown
+  //   (total ยังถูก · ใบวางบิลใช้ทุกวัน ห้ามออกบิลไม่ได้เพราะรอ migration)
+  //   ⚠ เพิ่มชื่อคอลัมน์ใหม่ทุกครั้งที่ใส่ของเข้า bnBreakdown ไม่งั้น fallback ไม่ทำงาน = ออกบิลไม่ได้ทั้งบริษัท
+  //     (QA จับได้ 1 ก.ย.69: ใส่ source_revision_no แล้วลืมเพิ่มในนี้)
+  if (bnErr && /subtotal|discount_amt|discount_label|vat_amt|wht_amt|discount_pct|vat_rate|wht_rate|has_tax_breakdown|vat_rate_set|labor_ratio|labor_amt|source_revision_no|ack_revision_no/i.test(bnErr.message ?? "")) {
     ({ data: bn, error: bnErr } = await supabase.from("billing_notes").insert(bnBase).select("id, code").single());
   }
   if (bnErr || !bn) return fail("บันทึกใบวางบิลไม่สำเร็จ: " + (bnErr?.message ?? ""), 500);
