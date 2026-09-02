@@ -7,7 +7,7 @@
  *   ต้นเหตุ = บรรทัดที่มี "หลายรหัสสลับตามสี/สเปค" (บานพับ ดำ JR00560 / ขาว JR00561)
  *   ตัวอย่างที่ระบบลองใช้ได้สีเดียว → อีกรหัสเด้งเป็นแถวใหม่ "ชื่อซ้ำ จำนวนว่าง" ทำเจ้าของงง
  *
- * เช็ค 3 ข้อ (รันกับสูตรจริงทั้งคลัง ไม่ใช่ fixture — ต้องจับของจริงที่หลุดเข้ามาใหม่ได้)
+  * เช็ค 4 ข้อ (รันกับสูตรจริงทั้งคลัง ไม่ใช่ fixture — ต้องจับของจริงที่หลุดเข้ามาใหม่ได้)
  *   ① ไม่มีแถว "ยังไม่ได้ตรวจ" ที่ชื่อซ้ำกับแถวที่มีเลขอยู่แล้วในรุ่นเดียวกัน
  *   ② ไม่มีแถว "ไม่มีรหัสทั้ง 2 ฝั่ง" ที่ชื่อต่างกันแค่ตัวเลข ทั้งที่มาจากรูปแบบเดียวกัน
  *   ③ ชื่อที่บอกจำนวนไว้ในตัวเอง เช่น "(4 ตัว/บาน)" ต้องได้จำนวนตรงกับที่ชื่อบอก
@@ -17,6 +17,7 @@ import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
 import { CUT_SPEC_BY_ID } from "../src/lib/cutlist/products.ts";
 import PRICEBOOK from "../src/lib/calculator40/pricebook.json" with { type: "json" };
 import { buildLinkRowsWithPricebook } from "../src/lib/calculator40/link-rows.ts";
+import { computeCost } from "../src/lib/calculator40/engine.mjs";
 
 let pass = 0, fail = 0;
 const okTrue = (name, cond, detail = "") => {
@@ -92,6 +93,33 @@ console.log("\n③ ชื่อที่บอกจำนวนไว้เอ�
   const fresh = bad.filter((b) => !KNOWN.some((k) => b.startsWith(k)));
   okTrue(`ไม่มีรายการใหม่ที่ชื่อกับจำนวนขัดกัน (เจอ ${fresh.length})`, fresh.length === 0, fresh.slice(0, 8).join("\n       "));
   if (bad.length) console.log(`     (baseline เดิมที่ยังรอเจ้าของเคาะ ${bad.length - fresh.length} รายการ)`);
+}
+
+// ── ④ dropdown "รูปแบบ" ที่กดแล้วไม่มีอะไรเปลี่ยนเลย = หลอกตา ──
+//   เจ้าของจับได้ 2 ก.ย.69: "Velora เลือกรูปแบบคู่ บานพับยังใช้ 4 แทนที่จะ 8"
+//   ต้นเหตุ = ตัวเลือกนั้นไม่มีสูตรไหนอ่าน form เลย → ทุน/จำนวนเท่าเดิมเป๊ะทุกตัวเลือก
+console.log("\n④ ทุกตัวเลือกใน dropdown 'รูปแบบ' ต้องทำให้อะไรบางอย่างเปลี่ยนจริง");
+{
+  // รุ่นที่รู้อยู่แล้วว่ายังไม่แยกสูตร — รอเจ้าของเคาะว่าควรต่างกันตรงไหน (ห้ามเดาจำนวนเอง)
+  //   ไม่ปิดเทสให้ผ่านมั่ว ๆ แต่กันไม่ให้รุ่นใหม่หลุดเข้ามาเพิ่ม
+  const KNOWN = new Set(["awning", "bar_grid_z", "roof_slide", "wall_corrugated"]);
+  const dead = [];
+  for (const p of Object.values(PRODUCTS)) {
+    if (!p.forms || p.forms.length < 2) continue;
+    const d = p.defaults || { w: 150, h: 150, p: 1 };
+    const sig = new Set();
+    for (const f of p.forms) {
+      try {
+        const r = computeCost(PRICEBOOK, p, { w: d.w, h: d.h, p: d.p || 1, form: f, color: "white", colorKey: "white" });
+        sig.add(`${r.cost}|` + (r.lines || []).map((l) => `${l.name}:${l.qty}`).join(","));
+      } catch { sig.add("ERR"); }
+    }
+    if (sig.size === 1) dead.push(`${p.id} (${p.name}) → ${p.forms.join(" / ")}`);
+  }
+  const fresh = dead.filter((s) => !KNOWN.has(s.split(" ")[0]));
+  okTrue(`ไม่มีรุ่นใหม่ที่ dropdown รูปแบบไม่ทำอะไร (เจอ ${fresh.length})`, fresh.length === 0, fresh.join("\n       "));
+  okTrue("velora ไม่มี dropdown รูปแบบหลอกตาแล้ว (จำนวนบานคุมอย่างเดียว)", !(PRODUCTS.velora.forms || []).length);
+  if (dead.length) console.log(`     (baseline เดิมที่รอเจ้าของเคาะ ${dead.length} รุ่น: ${dead.map((s) => s.split(" ")[0]).join(", ")})`);
 }
 
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
