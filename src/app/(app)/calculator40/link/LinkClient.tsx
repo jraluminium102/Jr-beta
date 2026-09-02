@@ -43,9 +43,9 @@ const ST: Record<LinkRowStatus, { emoji: string; label: string; tone: "red" | "a
 };
 const STATUS_ORDER: LinkRowStatus[] = ["fix", "add", "over", "decide", "untested", "fyi"];
 const MODE_PRESETS: { key: string; label: string; statuses: LinkRowStatus[] }[] = [
-  { key: "todo", label: "ที่ต้องลงมือ 🔴🟠", statuses: ["fix", "add"] },
-  { key: "think", label: "ที่ต้องคิด 🔵🟡", statuses: ["over", "decide"] },
-  { key: "untested", label: "ยังไม่ได้ตรวจ 🟣", statuses: ["untested"] },
+  { key: "todo", label: "🔴🟠 ของไม่ตรงกัน — แก้เลย", statuses: ["fix", "add"] },
+  { key: "think", label: "🔵🟡 ต้องตัดสินใจก่อน", statuses: ["over", "decide"] },
+  { key: "untested", label: "🟣 ขนาดนี้ไม่ได้ใช้ (ลองเปลี่ยนขนาด)", statuses: ["untested"] },
   { key: "all", label: "ทั้งหมด", statuses: [] },
 ];
 const SECTION_ORDER = ["อลูมิเนียม", "กระจก", "อุปกรณ์/สิ้นเปลือง", "มีแต่ในใบตัด (อลู)", "มีแต่ในใบตัด"] as const;
@@ -251,10 +251,14 @@ export default function LinkClient({
         //   (คนละ namespace — ผูกผิดจะเขียนทับสูตรใบตัดรุ่นอื่นที่บังเอิญ id ชนกันเงียบ ๆ)
         if (!row!.cutSpecId) throw new Error("แถวนี้หาไฟล์ใบตัดของรุ่นนี้ไม่เจอ — บันทึกไม่ได้");
         const cutKey = row!.cutSku || row!.matchKey;
+        // ⚠ อลูแก้ "ความยาวตัด" (set_len) · อุปกรณ์แก้ "จำนวน" (set_qty) — อุปกรณ์ไม่ได้ตัด
+        //   (เจ้าของท้วง 1 ก.ย.69: "ทำไมอุปกรณ์ถึงขึ้นใบตัดว่าตัดเท่าไหร่ มันไม่ใช่อลู")
+        const isAluCut = row!.section === "อลูมิเนียม" || row!.section === "มีแต่ในใบตัด (อลู)";
         await api.post("/calc-overrides", {
           product_id: row!.cutSpecId, scope: "cut", match_key: cutKey,
-          match_name: row!.name || "",   // 0135 — รหัสเดียวใช้หลายบรรทัดได้ ต้องระบุชื่อกำกับ
-          set_sku: d.sku || null, set_len: d.len || null,
+          match_name: row!.name || "",   // รหัสเดียวใช้หลายบรรทัดได้ ต้องระบุชื่อกำกับ
+          set_sku: d.sku || null,
+          ...(isAluCut ? { set_len: d.len || null } : { set_qty: d.len || null }),
         });
       } else {
         // scope='calc' — รหัส/จำนวน/ราคา (แถวที่มีตัวตนฝั่งคิดราคา หรือแถวเพิ่มใหม่)
@@ -275,8 +279,10 @@ export default function LinkClient({
         //   ⚠ product_id ของฝั่งนี้ = cutSpecId (CUT_SPEC_BY_ID) ไม่ใช่ prodId (คนละ namespace เหมือนกัน)
         const cutKey = row ? (row.cutSku || row.matchKey) : "";
         if (!d.isAdd && row?.hasCutSpec && row?.cutSpecId && cutKey && d.len.trim()) {
+          // ช่องเดียวกันบนหน้าจอ แต่คนละความหมาย: อลู = ความยาวตัด · อุปกรณ์ = จำนวนที่ใบตัดเบิก
+          const isAluCut2 = row.section === "อลูมิเนียม" || row.section === "มีแต่ในใบตัด (อลู)";
           await api.post("/calc-overrides", { product_id: row.cutSpecId, scope: "cut", match_key: cutKey,
-            match_name: row.name || "", set_len: d.len });
+            match_name: row.name || "", ...(isAluCut2 ? { set_len: d.len } : { set_qty: d.len }) });
         }
       }
 
@@ -482,7 +488,7 @@ export default function LinkClient({
                 {canSeeCost && <th className="bg-brand-soft/60 px-2 pb-1.5 text-right border-b border-line">฿/หน่วย</th>}
                 {canSeeCost && <th className="bg-brand-soft/60 px-2 pb-1.5 text-right border-b border-line">รวม ฿</th>}
                 <th className={cn("bg-sky-50/60 px-2 pb-1.5 text-right border-b border-line", G.cut)}>ชิ้น</th>
-                <th className="bg-sky-50/60 px-2 pb-1.5 text-right border-b border-line">ยาว/ชิ้น (ซม.)</th>
+                <th className="bg-sky-50/60 px-2 pb-1.5 text-right border-b border-line" title="เฉพาะเส้นอลู — อุปกรณ์ไม่มีความยาวตัด">ยาว/ชิ้น (ซม.)<div className="text-[9px] font-normal text-ink-3">เฉพาะเส้นอลู</div></th>
                 <th className={cn("bg-emerald-50/60 px-2 pb-1.5 text-left border-b border-line", G.stock)}>ชื่อจริงในสโตร์</th>
                 {canSeeCost && <th className="bg-emerald-50/60 px-2 pb-1.5 text-right border-b border-line">฿/หน่วย</th>}
                 <th className="bg-emerald-50/60 px-2 pb-1.5 text-right border-b border-line">คงเหลือ</th>
@@ -656,9 +662,16 @@ export default function LinkClient({
                 {confirm.draft.qty && (
                   <tr><td className="py-1 text-ink-3">จำนวน</td><td className="py-1">{confirm.row?.override?.set_qty ?? "(สูตรเดิม)"}</td><td className="py-1">→</td><td className="py-1 font-semibold">{confirm.draft.qty}</td></tr>
                 )}
-                {confirm.draft.len && (
-                  <tr><td className="py-1 text-ink-3">ยาวตัด</td><td className="py-1">{confirm.row?.cutOverride?.set_len ?? "(สูตรเดิม)"}</td><td className="py-1">→</td><td className="py-1 font-semibold">{confirm.draft.len}</td></tr>
-                )}
+                {confirm.draft.len && (() => {
+                  // อลู = ความยาวตัด · อุปกรณ์ = จำนวน (อุปกรณ์ไม่ได้ตัด — เจ้าของท้วง 1 ก.ย.69)
+                  const aluCut = !confirm.row || confirm.row.section === "อลูมิเนียม" || confirm.row.section === "มีแต่ในใบตัด (อลู)";
+                  const cur = aluCut ? confirm.row?.cutOverride?.set_len : confirm.row?.cutOverride?.set_qty;
+                  return (
+                    <tr><td className="py-1 text-ink-3">{aluCut ? "ยาวตัด (ใบตัด)" : "จำนวน (ใบตัด)"}</td>
+                      <td className="py-1">{cur ?? "(สูตรเดิม)"}</td><td className="py-1">→</td>
+                      <td className="py-1 font-semibold">{confirm.draft.len}</td></tr>
+                  );
+                })()}
                 {confirm.draft.isAdd && (
                   <>
                     <tr><td className="py-1 text-ink-3">ชื่อรายการ</td><td colSpan={3} className="py-1 font-semibold">{confirm.draft.itemName}</td></tr>
@@ -714,6 +727,10 @@ function EditRow({
   skuDatalist: string[]; skuHit: LinkStockRow | undefined; onCancel: () => void; onConfirm: () => void; sectionLabel?: string;
 }) {
   const isAdd = !row;
+  // ⚠ อุปกรณ์ไม่ได้ "ตัด" — มันนับเป็นชิ้น/ชุด (เจ้าของท้วง 1 ก.ย.69)
+  //   ฝั่งใบตัด: เส้นอลู (profiles) มีทั้ง ยาว+จำนวน · อุปกรณ์ (hardware) มีแต่ จำนวน
+  //   ช่องแก้จึงต้องเปลี่ยนตามชนิดของแถว ไม่งั้นให้กรอก "ความยาวตัด" ของอุปกรณ์ = ไม่มีความหมาย
+  const isAluRow = !row || row.section === "อลูมิเนียม" || row.section === "มีแต่ในใบตัด (อลู)";
   // แถว "มีแต่ในใบตัด*" ไม่มีตัวตนฝั่งคิดราคา — แก้ที่นี่ลง scope='cut' เท่านั้น (ไม่มีแนวคิด "จำนวน/ราคา" ฝั่งคิดราคาให้แก้)
   const isCutOnly = !!row && (row.section === "มีแต่ในใบตัด" || row.section === "มีแต่ในใบตัด (อลู)");
   return (
