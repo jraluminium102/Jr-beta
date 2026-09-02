@@ -25,19 +25,18 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
   if (qErr || !q) return notFound("ไม่พบใบเสนอราคา");
 
   // บล็อกการถอย approved → (sent/draft) ถ้ามีบิล active
+  // ถอยสถานะทั้งที่มีใบวางบิล — ไม่บล็อกแล้ว (เจ้าของสั่ง 1 ก.ย.69 · 0132)
+  //   ใบวางบิลเป็นเอกสารของตัวเอง ไม่ได้อ่านสถานะใบเสนอมาคิดยอด ถอยสถานะจึงไม่ทำบิลเพี้ยน
+  //   คืนรายชื่อบิลที่ยังใช้งานอยู่ไปให้หน้าจอเตือนแทน
   const isRollback = q.status === "approved" && (status === "sent" || status === "draft");
+  let warnBn: string[] = [];
   if (isRollback) {
     const { data: activeBn } = await ctx.supabase
       .from("billing_notes")
       .select("id, code")
       .eq("quotation_id", qId)
-      .neq("status", "cancelled")
-      .limit(1);
-
-    if ((activeBn ?? []).length > 0) {
-      const code = (activeBn as { id: number; code: string }[])[0].code;
-      return err(`มีใบวางบิล ${code} ที่ยังใช้งานอยู่ — ต้องยกเลิกใบวางบิลก่อนถอยสถานะ`, 409);
-    }
+      .neq("status", "cancelled");
+    warnBn = ((activeBn ?? []) as { code: string }[]).map((b) => b.code);
   }
 
   const { data, error } = await ctx.supabase
@@ -57,5 +56,5 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
     newValue: { status },
   });
 
-  return ok(data);
+  return ok({ ...data, warnBillingNotes: warnBn });
 });

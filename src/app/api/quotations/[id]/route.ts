@@ -80,18 +80,18 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
   }
   if (!q) return notFound("ไม่พบใบเสนอราคา");
 
-  // 2) ตรวจ billing_note active — แก้ราคาใบที่วางบิลแล้วไม่ได้ (มติเจ้าของ: ยกเลิกบิลเดิม → แก้ → ออกบิลใหม่)
+  // 2) ใบวางบิลที่ออกไปแล้ว — ไม่บล็อกอีกต่อไป (เจ้าของสั่ง 1 ก.ย.69 · 0132)
+  //   เดิม: มีบิล active → 409 ให้ไปยกเลิกบิลก่อน = ต้องรื้อเอกสารทั้งชุดทุกครั้งที่แก้ราคา
+  //   ตอนนี้: แก้ได้เลย · ใบวางบิลเก็บยอดของตัวเอง (billing_notes.total + งวด) ไม่ได้ดึงสดจากใบเสนอ
+  //           → ยอดในบิลไม่ขยับตาม การแก้จึงไม่ทำเอกสารที่ออกไปแล้วเพี้ยน
+  //   แทนที่ด้วย: บิลที่อ้าง Rev เก่ากว่าปัจจุบันจะขึ้นป้าย "เช็คยอดใหม่" ให้คนตัดสินใจเอง
+  //   ⚠ ห้ามใส่ guard บล็อกกลับเข้ามาโดยไม่ถามเจ้าของ — นี่เป็นมติที่เคาะแล้ว
   const { data: activeBn } = await ctx.supabase
     .from("billing_notes")
     .select("id, code")
     .eq("quotation_id", qId)
-    .neq("status", "cancelled")
-    .limit(1);
-
-  if ((activeBn ?? []).length > 0) {
-    const code = (activeBn as { id: number; code: string }[])[0].code;
-    return err(`มีใบวางบิล ${code} ที่ยังใช้งานอยู่ — ยกเลิกใบวางบิลเดิมก่อน แล้วค่อยแก้ราคา/ออกใบวางบิลใหม่`, 409);
-  }
+    .neq("status", "cancelled");
+  const affectedBn = (activeBn ?? []) as { id: number; code: string }[];
 
   // 2.5) ระบบ Rev (0093) — snapshot ฉบับปัจจุบัน (หัว+รายการ+สูตร) เก็บเป็นประวัติก่อนทับ
   // บัญชีสั่ง: ใบที่ "ส่งลูกค้าแล้ว" (sent/approved) ต้อง snapshot เสมอ ไม่ว่าผู้ใช้เลือกโหมดไหน
@@ -130,7 +130,11 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
     }
   }
   let revUpdate: Record<string, unknown> = {};
-  if (revision_action === "rev" || revision_action === "rev_keep") {
+  // แก้ใบที่ "วางบิลไปแล้ว" → บังคับขึ้น Rev เสมอ แม้ผู้ใช้เลือกโหมด "ทับ" (0132)
+  //   ถ้าไม่บังคับ เลข Rev ไม่ขยับ → ใบวางบิลที่ออกไปแล้วจะไม่รู้ตัวว่ายอดต้นทางเปลี่ยน
+  //   = ป้าย "เช็คยอดใหม่" ไม่ขึ้น ซึ่งอันตรายกว่าการบล็อกเดิมอีก
+  const forceRev = affectedBn.length > 0 && revision_action !== "rev" && revision_action !== "rev_keep";
+  if (forceRev || revision_action === "rev" || revision_action === "rev_keep") {
     const curNo = Number(q.revision_no) || 0;
     const nextNo = curNo + 1;
     const label = (revision_label ?? "").trim() || `Rev${String(nextNo).padStart(2, "0")}`;
@@ -236,5 +240,9 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
     newValue: { ...money, vat_rate, discount_pct: storedPct, discount_label: discount_label ?? "", wht_rate, item_count: items.length, ...(revUpdate.revision_label ? { revision_label: revUpdate.revision_label } : {}) },
   });
 
-  return ok({ id: Number(qId), ...money });
+  // บอกหน้าจอว่ามีใบวางบิลใบไหนบ้างที่เพิ่งกลายเป็น "อ้าง Rev เก่า" — จะได้เตือนคนแก้ทันที
+  return ok({
+    id: Number(qId), ...money,
+    staleBillingNotes: affectedBn.map((b) => b.code),
+  });
 });

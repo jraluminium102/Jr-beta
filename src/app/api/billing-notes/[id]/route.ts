@@ -97,6 +97,9 @@ export const PATCH = withRoute(
     // Rev หลังชำระแล้ว (24 ส.ค.69) — ต้องระบุเหตุผลเสมอ (บังคับ audit trail)
     const rev = parsed.data.rev === true;
     const revReason = (parsed.data.reason ?? "").trim();
+    // 0132 — แก้ได้แม้ชำระ/มีใบเสร็จ · เก็บไว้เตือนบนหน้าจอแทนการบล็อก
+    const confirmBelowPaid = (body as Record<string, unknown>)?.confirm_below_paid === true;
+    let warnPaidSum = 0, warnLinkedDocs = 0;
     if (rev && revReason.length < 5) {
       return err("Rev (แก้แม้ชำระแล้ว) ต้องระบุเหตุผล อย่างน้อย 5 ตัวอักษร", 400);
     }
@@ -214,8 +217,16 @@ export const PATCH = withRoute(
       const hasPaidInstallment = installments.some(
         (i) => i.status === "paid" || (Number(i.paid_amount) || 0) > 0
       );
+      // ชำระแล้ว — ไม่บล็อกแล้ว (เจ้าของสั่ง 1 ก.ย.69 · 0132 "ห้ามฟิก")
+      //   แต่ "เงินที่รับมาจริง" เป็นความจริงที่แก้ย้อนไม่ได้ → ถ้ายอดใหม่ต่ำกว่าเงินที่รับมาแล้ว
+      //   ให้กดยืนยันอีกครั้งก่อน (confirm_below_paid) ไม่ใช่ปล่อยผ่านเงียบ ๆ
+      //   ⚠ guard นี้มีทิศทางเดียว (ต่ำกว่าเท่านั้น) — ห้ามเปลี่ยนเป็น abs() (บทเรียนเก่า deposit guard)
       if (hasPaidInstallment) {
-        return err("มีการชำระแล้ว แก้ยอดไม่ได้ ต้องยกเลิกบิลออกใหม่ (หรือใช้โหมด Rev)", 409);
+        const paidSum = installments.reduce((s2, i) => s2 + (Number(i.paid_amount) || 0), 0);
+        if (Number(newTotal) < paidSum && !confirmBelowPaid) {
+          return err(`ยอดใหม่ (${newTotal}) ต่ำกว่าเงินที่รับมาแล้ว (${paidSum}) — ถ้าตั้งใจจริง กดยืนยันอีกครั้ง`, 409);
+        }
+        warnPaidSum = paidSum;
       }
       if (instIds.length > 0) {
         const [{ count: rcCount }, { count: feCount }] = await Promise.all([
@@ -228,9 +239,8 @@ export const PATCH = withRoute(
             .select("id", { count: "exact", head: true })
             .in("billing_installment_id", instIds),
         ]);
-        if ((rcCount ?? 0) > 0 || (feCount ?? 0) > 0) {
-          return err("มีการชำระแล้ว แก้ยอดไม่ได้ ต้องยกเลิกบิลออกใหม่ (หรือใช้โหมด Rev)", 409);
-        }
+        // มีใบเสร็จ/รายการเงินผูกอยู่ — แก้ได้ แต่ติดธงไว้ให้หน้าจอเตือนว่าต้องไล่เช็คเอกสารตาม (0132)
+        if ((rcCount ?? 0) > 0 || (feCount ?? 0) > 0) warnLinkedDocs = (rcCount ?? 0) + (feCount ?? 0);
       }
     }
 
@@ -315,6 +325,7 @@ export const PATCH = withRoute(
       },
     });
 
-    return ok({ ok: true, total: newTotal, installments: items, ...(rev ? { overpaid, taxWarning } : {}) });
+    return ok({ ok: true, total: newTotal, installments: items, ...(rev ? { overpaid, taxWarning } : {}),
+      ...(warnPaidSum ? { warnPaidSum } : {}), ...(warnLinkedDocs ? { warnLinkedDocs } : {}) });
   }
 );
