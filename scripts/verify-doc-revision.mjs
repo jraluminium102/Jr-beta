@@ -1,5 +1,5 @@
 /**
- * verify-doc-revision — ป้าย "อ้าง Rev เก่า" (0132) ต้องไม่เตือนมั่ว
+ * verify-doc-revision — ป้าย "อ้าง Rev เก่า" (0133) ต้องไม่เตือนมั่ว
  *   บทเรียน: ถ้าเดาว่าไม่มีค่า = Rev 0 → บิลทั้งระบบขึ้นป้ายแดงพร้อมกันตอน deploy
  */
 import { revWarning, revBadge } from '../src/lib/doc-revision.ts';
@@ -10,7 +10,7 @@ const ok = (name, got, want) => {
   good ? pass++ : fail++;
 };
 console.log('\n═══ ป้าย Rev เก่า ═══');
-ok('ยังไม่รัน 0132 (ไม่มีคอลัมน์) → ไม่เตือน', revWarning({}, 3).show, false);
+ok('ยังไม่รัน 0133 (ไม่มีคอลัมน์) → ไม่เตือน', revWarning({}, 3).show, false);
 ok('source = null → ไม่เตือน', revWarning({ source_revision_no: null }, 3).show, false);
 ok('doc = null → ไม่เตือน', revWarning(null, 3).show, false);
 ok('Rev เท่ากัน → ไม่เตือน', revWarning({ source_revision_no: 2 }, 2).show, false);

@@ -1,0 +1,5517 @@
+{
+  "version": "ราคาประเมิน 2026 R1",
+  "source": "Data ไฟล์ราคาประเมิน (2026).xlsx",
+  "builtAt": "2026-09-02",
+  "categories": [
+    {
+      "label": "ประตู/หน้าต่าง",
+      "count": 43
+    },
+    {
+      "label": "กระจกเปลือย/ตู้",
+      "count": 1
+    },
+    {
+      "label": "หลังคา",
+      "count": 16
+    },
+    {
+      "label": "ระแนง/บังตา",
+      "count": 92
+    },
+    {
+      "label": "ผนัง/ฝ้า",
+      "count": 6
+    },
+    {
+      "label": "มุ้ง",
+      "count": 13
+    },
+    {
+      "label": "กระจก (เปลี่ยน/เพิ่ม)",
+      "count": 39
+    },
+    {
+      "label": "สี/พื้นผิว (เพิ่ม)",
+      "count": 6
+    }
+  ],
+  "products": [
+    {
+      "key": "p1",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "บานเลื่อน",
+      "brand": "SMS",
+      "min": 6500,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 2,
+          "hi": 2.3,
+          "price": 6500
+        },
+        {
+          "lo": 2.3,
+          "hi": 3.5,
+          "price": 6000
+        },
+        {
+          "lo": 3.5,
+          "hi": 4.5,
+          "price": 5700
+        },
+        {
+          "lo": 4.5,
+          "hi": 5,
+          "price": 5000
+        },
+        {
+          "lo": 5,
+          "hi": 7,
+          "price": 4700
+        },
+        {
+          "lo": 7,
+          "hi": 9,
+          "price": 4400
+        },
+        {
+          "lo": 9,
+          "hi": 12,
+          "price": 4200
+        },
+        {
+          "lo": 12,
+          "hi": null,
+          "price": 4000
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p2",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "บานเลื่อน",
+      "brand": "EURO",
+      "min": 7500,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 2,
+          "hi": 2.3,
+          "price": 7200
+        },
+        {
+          "lo": 2.3,
+          "hi": 3.5,
+          "price": 6600
+        },
+        {
+          "lo": 3.5,
+          "hi": 4.5,
+          "price": 6300
+        },
+        {
+          "lo": 4.5,
+          "hi": 5,
+          "price": 5500
+        },
+        {
+          "lo": 5,
+          "hi": 7,
+          "price": 5200
+        },
+        {
+          "lo": 7,
+          "hi": 9,
+          "price": 4900
+        },
+        {
+          "lo": 9,
+          "hi": 12,
+          "price": 4700
+        },
+        {
+          "lo": 12,
+          "hi": null,
+          "price": 4400
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p3",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "ติดตาย",
+      "brand": null,
+      "min": 5000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 0.5,
+          "hi": 1,
+          "price": 7000
+        },
+        {
+          "lo": 1,
+          "hi": 1.5,
+          "price": 6500
+        },
+        {
+          "lo": 1.5,
+          "hi": 2,
+          "price": 6000
+        },
+        {
+          "lo": 2,
+          "hi": 2.5,
+          "price": 5500
+        },
+        {
+          "lo": 2.5,
+          "hi": 3,
+          "price": 5000
+        },
+        {
+          "lo": 3,
+          "hi": 3.5,
+          "price": 4500
+        },
+        {
+          "lo": 3.5,
+          "hi": null,
+          "price": 4000
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p4",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "กระทุ้ง",
+      "brand": "EURO",
+      "min": 10000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 0.6,
+          "hi": 0.8,
+          "price": 18000
+        },
+        {
+          "lo": 0.8,
+          "hi": 1.1,
+          "price": 14400
+        },
+        {
+          "lo": 1.1,
+          "hi": 1.3,
+          "price": 12000
+        },
+        {
+          "lo": 1.3,
+          "hi": 1.6,
+          "price": 10800
+        },
+        {
+          "lo": 1.6,
+          "hi": 2,
+          "price": 9600
+        },
+        {
+          "lo": 2,
+          "hi": 2.5,
+          "price": 8400
+        },
+        {
+          "lo": 2.5,
+          "hi": 2.9,
+          "price": 7800
+        },
+        {
+          "lo": 2.9,
+          "hi": 5.5,
+          "price": 7200
+        },
+        {
+          "lo": 5.5,
+          "hi": 6,
+          "price": 6600
+        },
+        {
+          "lo": 6,
+          "hi": null,
+          "price": 6300
+        }
+      ],
+      "perPanelAdd": {
+        "label": "เพิ่มบานละ",
+        "amount": 2900
+      },
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p5",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "บานเปิด",
+      "brand": "EURO",
+      "min": 15000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 2,
+          "hi": 2.4,
+          "price": 7500
+        },
+        {
+          "lo": 2.4,
+          "hi": 3,
+          "price": 7000
+        },
+        {
+          "lo": 3,
+          "hi": 3.5,
+          "price": 7000
+        },
+        {
+          "lo": 3.5,
+          "hi": 4,
+          "price": 6500
+        },
+        {
+          "lo": 4,
+          "hi": 5,
+          "price": 6000
+        },
+        {
+          "lo": 5,
+          "hi": 6,
+          "price": 5500
+        },
+        {
+          "lo": 6,
+          "hi": null,
+          "price": 5000
+        }
+      ],
+      "perPanelAdd": {
+        "label": "เพิ่มบานละ",
+        "amount": 5000
+      },
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p6",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "panel",
+      "name": "บานเฟี้ยม",
+      "brand": null,
+      "min": null,
+      "flatRate": 15000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": "ต่อบาน",
+      "note": null
+    },
+    {
+      "key": "p7",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "บานเฟี้ยม",
+      "brand": "SMS",
+      "min": null,
+      "flatRate": 9000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p8",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "บานเฟี้ยมเสริมคานซัพพอร์ท",
+      "brand": null,
+      "min": 4000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 3.5,
+          "hi": 8,
+          "price": 1300
+        },
+        {
+          "lo": 8,
+          "hi": 10,
+          "price": 1100
+        },
+        {
+          "lo": 10,
+          "hi": 12,
+          "price": 900
+        },
+        {
+          "lo": 12,
+          "hi": null,
+          "price": 800
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p9",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "ชุดShower กั้นห้องอาบน้ำ (กระจกเทมเปอร์หนา 10 มม.)",
+      "brand": null,
+      "min": 12000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 2.4,
+          "hi": 3,
+          "price": 5500
+        },
+        {
+          "lo": 3,
+          "hi": 3.5,
+          "price": 5300
+        },
+        {
+          "lo": 3.5,
+          "hi": 4,
+          "price": 5200
+        },
+        {
+          "lo": 4,
+          "hi": 4.5,
+          "price": 5100
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p10",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "บานเปลือยติดตาย (กระจกเทมเปอร์หนา 10 มม.)",
+      "brand": null,
+      "min": 7000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 1,
+          "hi": 2,
+          "price": 7200
+        },
+        {
+          "lo": 2,
+          "hi": 3,
+          "price": 6800
+        },
+        {
+          "lo": 3,
+          "hi": 4,
+          "price": 6400
+        },
+        {
+          "lo": 4,
+          "hi": 5,
+          "price": 6000
+        },
+        {
+          "lo": 5,
+          "hi": 6,
+          "price": 5600
+        },
+        {
+          "lo": 6,
+          "hi": 7,
+          "price": 5200
+        },
+        {
+          "lo": 7,
+          "hi": 8,
+          "price": 4800
+        },
+        {
+          "lo": 8,
+          "hi": null,
+          "price": 4500
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p11",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "ประตูดัดโค้งบานคู่",
+      "brand": "SMS",
+      "min": 47000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 4,
+          "hi": 5,
+          "price": 12000
+        },
+        {
+          "lo": 5,
+          "hi": 6,
+          "price": 11500
+        },
+        {
+          "lo": 6,
+          "hi": null,
+          "price": 11000
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p12",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "ประตูดัดโค้งบานเดี่ยว",
+      "brand": "SMS",
+      "min": 32000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 2.3,
+          "hi": 2.5,
+          "price": 14000
+        },
+        {
+          "lo": 2.5,
+          "hi": null,
+          "price": 13500
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p13",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "บานติดตายโค้ง",
+      "brand": null,
+      "min": 10000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 1.8,
+          "hi": 2,
+          "price": 6500
+        },
+        {
+          "lo": 2,
+          "hi": 2.5,
+          "price": 6000
+        },
+        {
+          "lo": 2.5,
+          "hi": 3,
+          "price": 5500
+        },
+        {
+          "lo": 3,
+          "hi": 4,
+          "price": 5000
+        },
+        {
+          "lo": 4,
+          "hi": 5,
+          "price": 4500
+        },
+        {
+          "lo": 5,
+          "hi": null,
+          "price": 4000
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p14",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "บาน PC door 2บาน",
+      "brand": "SMS, ORM",
+      "min": 36000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 3,
+          "hi": 3.5,
+          "price": 11000
+        },
+        {
+          "lo": 3.5,
+          "hi": 4,
+          "price": 10000
+        },
+        {
+          "lo": 4,
+          "hi": 4.5,
+          "price": 9500
+        },
+        {
+          "lo": 4.5,
+          "hi": 5,
+          "price": 9200
+        },
+        {
+          "lo": 5,
+          "hi": null,
+          "price": 9000
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p15",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "บาน PC door 4บาน",
+      "brand": "SMS, ORM",
+      "min": null,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 4,
+          "hi": 4.5,
+          "price": 11500
+        },
+        {
+          "lo": 4.5,
+          "hi": 5,
+          "price": 11000
+        },
+        {
+          "lo": 5,
+          "hi": 6,
+          "price": 10500
+        },
+        {
+          "lo": 6,
+          "hi": 7,
+          "price": 10000
+        },
+        {
+          "lo": 7,
+          "hi": 8,
+          "price": 9500
+        },
+        {
+          "lo": 8,
+          "hi": 9,
+          "price": 9000
+        },
+        {
+          "lo": 9,
+          "hi": null,
+          "price": 8500
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p16",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "บานเลื่อนภายในรางบน",
+      "brand": "SMS, EURO",
+      "min": null,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 4,
+          "hi": 4.5,
+          "price": 4800
+        },
+        {
+          "lo": 4.5,
+          "hi": 5,
+          "price": 4500
+        },
+        {
+          "lo": 5,
+          "hi": 5.5,
+          "price": 4200
+        },
+        {
+          "lo": 5.5,
+          "hi": 6,
+          "price": 3900
+        },
+        {
+          "lo": 6,
+          "hi": null,
+          "price": 3700
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [
+        {
+          "label": "เพิ่ม 1 บาน",
+          "amount": 4000
+        },
+        {
+          "label": "เพิ่ม 2 บาน",
+          "amount": 10000
+        },
+        {
+          "label": "เพิ่ม 3 บาน",
+          "amount": 16000
+        },
+        {
+          "label": "เพิ่ม 4 บาน",
+          "amount": 22000
+        }
+      ],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p17",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "บานเลื่อนภายในรางล่าง",
+      "brand": "SMS",
+      "min": null,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 4,
+          "hi": 5,
+          "price": 3800
+        },
+        {
+          "lo": 5,
+          "hi": 5.5,
+          "price": 3500
+        },
+        {
+          "lo": 5.5,
+          "hi": 8,
+          "price": 3200
+        },
+        {
+          "lo": 8,
+          "hi": 11,
+          "price": 2900
+        },
+        {
+          "lo": 11,
+          "hi": null,
+          "price": 2600
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [
+        {
+          "label": "เพิ่ม 1 บาน",
+          "amount": 4000
+        },
+        {
+          "label": "เพิ่ม 2 บาน",
+          "amount": 10000
+        },
+        {
+          "label": "เพิ่ม 3 บาน",
+          "amount": 16000
+        },
+        {
+          "label": "เพิ่ม 4 บาน",
+          "amount": 22000
+        }
+      ],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p18",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "บานเลื่อนภายในรางล่าง",
+      "brand": "EURO",
+      "min": null,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 4,
+          "hi": 5,
+          "price": 4200
+        },
+        {
+          "lo": 5,
+          "hi": 5.5,
+          "price": 3900
+        },
+        {
+          "lo": 5.5,
+          "hi": 8,
+          "price": 3600
+        },
+        {
+          "lo": 8,
+          "hi": 11,
+          "price": 3200
+        },
+        {
+          "lo": 11,
+          "hi": null,
+          "price": 2900
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [
+        {
+          "label": "เพิ่ม 1 บาน",
+          "amount": 4400
+        },
+        {
+          "label": "เพิ่ม 2 บาน",
+          "amount": 11000
+        },
+        {
+          "label": "เพิ่ม 3 บาน",
+          "amount": 17600
+        },
+        {
+          "label": "เพิ่ม 4 บาน",
+          "amount": 24200
+        }
+      ],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p19",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "set",
+      "name": "บานยก",
+      "brand": "SMS",
+      "min": null,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 0,
+          "hi": 1.5,
+          "price": 20000
+        },
+        {
+          "lo": 1.51,
+          "hi": 2,
+          "price": 23000
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": "ต่อชุด",
+      "note": null
+    },
+    {
+      "key": "p20",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "บานหมุน",
+      "brand": "เมืองทอง",
+      "min": 26000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 2,
+          "hi": 2.5,
+          "price": 14000
+        },
+        {
+          "lo": 2.53,
+          "hi": 3,
+          "price": 13000
+        },
+        {
+          "lo": 3,
+          "hi": 3.5,
+          "price": 12000
+        },
+        {
+          "lo": 3.5,
+          "hi": 4,
+          "price": 11000
+        },
+        {
+          "lo": 4,
+          "hi": 4.5,
+          "price": 10000
+        },
+        {
+          "lo": 4.5,
+          "hi": null,
+          "price": 9000
+        }
+      ],
+      "perPanelAdd": {
+        "label": "เพิ่มบานละ",
+        "amount": 5000
+      },
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p21",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "บานเลื่อน",
+      "brand": "Aluinch",
+      "min": 12000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 2,
+          "hi": 2.3,
+          "price": 7000
+        },
+        {
+          "lo": 2.3,
+          "hi": 3.5,
+          "price": 6400
+        },
+        {
+          "lo": 3.5,
+          "hi": 4.5,
+          "price": 6100
+        },
+        {
+          "lo": 4.5,
+          "hi": 5,
+          "price": 5400
+        },
+        {
+          "lo": 5,
+          "hi": 7,
+          "price": 5100
+        },
+        {
+          "lo": 7,
+          "hi": 9,
+          "price": 4700
+        },
+        {
+          "lo": 9,
+          "hi": 12,
+          "price": 4500
+        },
+        {
+          "lo": 12,
+          "hi": 1.35,
+          "price": 4400
+        },
+        {
+          "lo": 13.5,
+          "hi": null,
+          "price": 4200
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p22",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "บานดัดโค้งสลิม",
+      "brand": null,
+      "min": 50000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 2.5,
+          "hi": 2.8,
+          "price": 20000
+        },
+        {
+          "lo": 2.8,
+          "hi": null,
+          "price": 19000
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p23",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "บานเปิด D-series",
+      "brand": "Aluinch",
+      "min": 24000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 2,
+          "hi": 2.4,
+          "price": 9500
+        },
+        {
+          "lo": 2.4,
+          "hi": 3,
+          "price": 9000
+        },
+        {
+          "lo": 3,
+          "hi": 3.5,
+          "price": 8500
+        },
+        {
+          "lo": 3.5,
+          "hi": 4,
+          "price": 8000
+        },
+        {
+          "lo": 4,
+          "hi": 5,
+          "price": 7500
+        },
+        {
+          "lo": 5,
+          "hi": 6,
+          "price": 7000
+        },
+        {
+          "lo": 6,
+          "hi": null,
+          "price": 6500
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p24",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "บานเปิด X-series",
+      "brand": "Aluinch",
+      "min": null,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 2,
+          "hi": 2.2,
+          "price": 12500
+        },
+        {
+          "lo": 2.2,
+          "hi": 2.5,
+          "price": 11500
+        },
+        {
+          "lo": 2.5,
+          "hi": 2.8,
+          "price": 10700
+        },
+        {
+          "lo": 2.8,
+          "hi": 3.2,
+          "price": 9800
+        },
+        {
+          "lo": 3.2,
+          "hi": 4,
+          "price": 9500
+        },
+        {
+          "lo": 4,
+          "hi": 4.5,
+          "price": 9000
+        },
+        {
+          "lo": 4.5,
+          "hi": 5,
+          "price": 8300
+        },
+        {
+          "lo": 5,
+          "hi": 5.5,
+          "price": 7700
+        },
+        {
+          "lo": 5.5,
+          "hi": 6,
+          "price": 7200
+        },
+        {
+          "lo": 6,
+          "hi": null,
+          "price": 6800
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p25",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "บานเปิด เฟรมสลิม",
+      "brand": "Velora",
+      "min": null,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 2,
+          "hi": 2.4,
+          "price": 8000
+        },
+        {
+          "lo": 2.4,
+          "hi": 3,
+          "price": 7500
+        },
+        {
+          "lo": 3,
+          "hi": 3.5,
+          "price": 7500
+        },
+        {
+          "lo": 3.5,
+          "hi": 4,
+          "price": 7000
+        },
+        {
+          "lo": 4,
+          "hi": 5,
+          "price": 6500
+        },
+        {
+          "lo": 5,
+          "hi": 6,
+          "price": 6000
+        },
+        {
+          "lo": 6,
+          "hi": null,
+          "price": 5500
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p26",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "บานเลื่อนภายในรางบน X-series",
+      "brand": "Aluinch",
+      "min": null,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 4,
+          "hi": 4.5,
+          "price": 7500
+        },
+        {
+          "lo": 4.5,
+          "hi": 5,
+          "price": 7200
+        },
+        {
+          "lo": 5,
+          "hi": 5.5,
+          "price": 6700
+        },
+        {
+          "lo": 5.5,
+          "hi": 7,
+          "price": 6300
+        },
+        {
+          "lo": 7,
+          "hi": 9,
+          "price": 6000
+        },
+        {
+          "lo": 9,
+          "hi": null,
+          "price": 5600
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [
+        {
+          "label": "เพิ่ม 1 บาน",
+          "amount": 4000
+        },
+        {
+          "label": "เพิ่ม 2 บาน",
+          "amount": 10000
+        },
+        {
+          "label": "เพิ่ม 3 บาน",
+          "amount": 16000
+        },
+        {
+          "label": "เพิ่ม 4 บาน",
+          "amount": 22000
+        }
+      ],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p27",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "บานเลื่อนภายในรางบน เฟรมสลิม (กระจกเทมเปอร์ใสเขียว 6 มม. + Soft Closed + สลิงดึง)",
+      "brand": "SlimLux",
+      "min": null,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 4,
+          "hi": 4.5,
+          "price": 7500
+        },
+        {
+          "lo": 4.5,
+          "hi": 5,
+          "price": 7200
+        },
+        {
+          "lo": 5,
+          "hi": 5.5,
+          "price": 6700
+        },
+        {
+          "lo": 5.5,
+          "hi": 7,
+          "price": 6300
+        },
+        {
+          "lo": 7,
+          "hi": 9,
+          "price": 6000
+        },
+        {
+          "lo": 9,
+          "hi": null,
+          "price": 5600
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [
+        {
+          "label": "เพิ่ม 1 บาน",
+          "amount": 4000
+        },
+        {
+          "label": "เพิ่ม 2 บาน",
+          "amount": 10000
+        },
+        {
+          "label": "เพิ่ม 3 บาน",
+          "amount": 16000
+        },
+        {
+          "label": "เพิ่ม 4 บาน",
+          "amount": 22000
+        }
+      ],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p28",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกเขียว/ใส 8 มม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 1200,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p29",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกเขียว/ใส 10 มม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 1200,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p30",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกเคลือบขาว 6 มม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 1800,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p31",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกยูโรเกรย์ 6 มม. (Perane)",
+      "brand": null,
+      "min": null,
+      "flatRate": 800,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p32",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกยูโรเกรย์ 8 มม. (Perane)",
+      "brand": null,
+      "min": null,
+      "flatRate": 1500,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p33",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกยูโรเกรย์ 10 มม. (Perane)",
+      "brand": null,
+      "min": null,
+      "flatRate": 1700,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p34",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกยูโรบรอนซ์ 6 มม. (Perane)",
+      "brand": null,
+      "min": null,
+      "flatRate": 1000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p35",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกยูโรบรอนซ์ 10 มม. (BSG)",
+      "brand": null,
+      "min": null,
+      "flatRate": 6400,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p36",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกreflective สีเทา(นิยม) 6 มม. (CS120, CS130, CS150)",
+      "brand": null,
+      "min": null,
+      "flatRate": 2100,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p37",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกreflective สีเขียว 6 มม.  (CS214)",
+      "brand": null,
+      "min": null,
+      "flatRate": 2400,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p38",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกreflective สีฟ้า, สีเทา(ใหม่ๆ) 6 มม. (CS514, CS140, CS148)",
+      "brand": null,
+      "min": null,
+      "flatRate": 2700,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p39",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกเทมเปอร์เขียว/ใส 6 มม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 600,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p40",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกเทมเปอร์เขียว/ใส 10 มม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 2100,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p41",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกเทมเปอร์เขียว/ใส 12 มม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 2400,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p42",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกเทมเปอร์เขียว/ใส 15 มม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 5000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p43",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกเทมเปอร์ใสพิเศษ 6 มม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 2500,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p44",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกเทมเปอร์ใสพิเศษ 10 มม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 5700,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p45",
+      "category": "ผนัง/ฝ้า",
+      "unit": "sqm",
+      "name": "กระจกเทมเปอร์ฝ้า 6 มม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 2200,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p46",
+      "category": "ผนัง/ฝ้า",
+      "unit": "sqm",
+      "name": "กระจกเทมเปอร์ฝ้า 8 มม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 3500,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p47",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกเทมเปอร์ยูโรเกรย์ 4 มม. (ISG)",
+      "brand": null,
+      "min": null,
+      "flatRate": 1300,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p48",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกเทมเปอร์ยูโรเกรย์ 5 มม. (ISG)",
+      "brand": null,
+      "min": null,
+      "flatRate": 1700,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p49",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกเทมเปอร์ยูโรเกรย์ 6 มม. (ISG)",
+      "brand": null,
+      "min": null,
+      "flatRate": 2100,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p50",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกเทมเปอร์ยูโรเกรย์ 10 มม. (BSG)",
+      "brand": null,
+      "min": null,
+      "flatRate": 4200,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p51",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกเทมเปอร์ยูโรบรอนซ์ 5 มม. (ISG)",
+      "brand": null,
+      "min": null,
+      "flatRate": 2000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p52",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกเทมเปอร์ยูโรบรอนซ์ 6 มม. (ISG)",
+      "brand": null,
+      "min": null,
+      "flatRate": 2800,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p53",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกเทมเปอร์ยูโรบรอนซ์ 10 มม. (BSG)",
+      "brand": null,
+      "min": null,
+      "flatRate": 5900,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p54",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกเทมเปอร์ reflective สีเทา(นิยม) 6 มม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 3500,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p55",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกเทมเปอร์ reflective สีเขียว 6 มม.  (CS214)",
+      "brand": null,
+      "min": null,
+      "flatRate": 4000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p56",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกเทมเปอร์ reflective สีฟ้า 6 มม.  (CS514)",
+      "brand": null,
+      "min": null,
+      "flatRate": 4400,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p57",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกลามิเนต 4+4 มม. ฟิล์มเขียว/ใส 0.38 มม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 2200,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p58",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกลามิเนต  5+5 มม. ฟิล์มเขียว/ใส 0.38 มม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 2700,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p59",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "ลามิเนตใส 4+4 มม. ฟิล์มสีต่างๆ 0.38 มม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 4200,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p60",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกลามิเนตเขียว/ใส 4+4 มม. ฟิล์มกันเสียง 0.76 มม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 5300,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p61",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกลามิเนตเขียว/ใส 4+4 มม. ฟิล์ม Solar Max(กันร้อน) 0.76 มม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 4300,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p62",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกลามิเนตเขียว/ใส 4+4 มม. ฟิล์มกันขโมย STG 1.52 มม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 5500,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p63",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกอินซูเลทเขียว/ใส หนา 6+6+6 มม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 4000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p64",
+      "category": "ผนัง/ฝ้า",
+      "unit": "sqm",
+      "name": "กระจกชาดำ/ฝ้า/ลายผ้า 5-6 มม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 500,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p65",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกเงา 5 มม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 1000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p66",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกลอนแก้ว 5 มม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 1300,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p67",
+      "category": "สี/พื้นผิว (เพิ่ม)",
+      "unit": "sqm",
+      "name": "เพิ่มสีเทาซาฮาร่า",
+      "brand": null,
+      "min": null,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 5,
+          "hi": 20,
+          "price": 540
+        },
+        {
+          "lo": 20,
+          "hi": 30,
+          "price": 520
+        },
+        {
+          "lo": 30,
+          "hi": 40,
+          "price": 480
+        },
+        {
+          "lo": 40,
+          "hi": 60,
+          "price": 440
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p68",
+      "category": "สี/พื้นผิว (เพิ่ม)",
+      "unit": "sqm",
+      "name": "เพิ่มสีลายไม้ Stock SMS",
+      "brand": null,
+      "min": 4000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 7,
+          "hi": 10,
+          "price": 850
+        },
+        {
+          "lo": 10,
+          "hi": null,
+          "price": 750
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p69",
+      "category": "สี/พื้นผิว (เพิ่ม)",
+      "unit": "sqm",
+      "name": "เพิ่มอบสีพิเศษ",
+      "brand": null,
+      "min": 10000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 7,
+          "hi": 10,
+          "price": 2200
+        },
+        {
+          "lo": 10,
+          "hi": 15,
+          "price": 2100
+        },
+        {
+          "lo": 15,
+          "hi": 20,
+          "price": 1800
+        },
+        {
+          "lo": 20,
+          "hi": null,
+          "price": 1600
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p70",
+      "category": "สี/พื้นผิว (เพิ่ม)",
+      "unit": "sqm",
+      "name": "เพิ่มอบสีลายไม้อบ Fuji",
+      "brand": null,
+      "min": 11000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 7,
+          "hi": 10,
+          "price": 2100
+        },
+        {
+          "lo": 10,
+          "hi": 15,
+          "price": 1900
+        },
+        {
+          "lo": 15,
+          "hi": 20,
+          "price": 1700
+        },
+        {
+          "lo": 20,
+          "hi": null,
+          "price": 1600
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p71",
+      "category": "สี/พื้นผิว (เพิ่ม)",
+      "unit": "sqm",
+      "name": "เพิ่มอบสีลายไม้พิเศษ",
+      "brand": null,
+      "min": 15000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 7,
+          "hi": 10,
+          "price": 2900
+        },
+        {
+          "lo": 10,
+          "hi": 15,
+          "price": 2600
+        },
+        {
+          "lo": 15,
+          "hi": 20,
+          "price": 2350
+        },
+        {
+          "lo": 20,
+          "hi": null,
+          "price": 2200
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p72",
+      "category": "สี/พื้นผิว (เพิ่ม)",
+      "unit": "sqm",
+      "name": "ชุบสีทอง ขาย 1500 บ./เส้นยาว 3 เมตร  ประตู/หน้าต่าง +20%  เผื่อถอดของไม่ครบ",
+      "brand": null,
+      "min": 16000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 2.5,
+          "hi": 3,
+          "price": 6500
+        },
+        {
+          "lo": 3,
+          "hi": 5,
+          "price": 6200
+        },
+        {
+          "lo": 5,
+          "hi": 10,
+          "price": 5900
+        },
+        {
+          "lo": 10,
+          "hi": 15,
+          "price": 5500
+        },
+        {
+          "lo": 15,
+          "hi": 20,
+          "price": 5200
+        },
+        {
+          "lo": 20,
+          "hi": 25,
+          "price": 4800
+        },
+        {
+          "lo": 25,
+          "hi": null,
+          "price": 4500
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p73",
+      "category": "หลังคา",
+      "unit": "sqm",
+      "name": "ไวนิล / ดีไลท์",
+      "brand": null,
+      "min": 28000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 5,
+          "hi": 10,
+          "price": 6500
+        },
+        {
+          "lo": 10,
+          "hi": 15,
+          "price": 6000
+        },
+        {
+          "lo": 15,
+          "hi": 30,
+          "price": 5500
+        },
+        {
+          "lo": 30,
+          "hi": null,
+          "price": 5000
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p74",
+      "category": "หลังคา",
+      "unit": "sqm",
+      "name": "เมทัลชีท EPS FOAM",
+      "brand": "EPS 1\" ท้องPVC",
+      "min": null,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 5,
+          "hi": 10,
+          "price": 6300
+        },
+        {
+          "lo": 10,
+          "hi": 15,
+          "price": 5800
+        },
+        {
+          "lo": 15,
+          "hi": 30,
+          "price": 5300
+        },
+        {
+          "lo": 30,
+          "hi": null,
+          "price": 4800
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p75",
+      "category": "หลังคา",
+      "unit": "sqm",
+      "name": "เมทัลชีท EPS FOAM",
+      "brand": "EPS 2\" ท้องPVC",
+      "min": null,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 5,
+          "hi": 10,
+          "price": 6400
+        },
+        {
+          "lo": 10,
+          "hi": 15,
+          "price": 5900
+        },
+        {
+          "lo": 15,
+          "hi": 30,
+          "price": 5400
+        },
+        {
+          "lo": 30,
+          "hi": null,
+          "price": 4900
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p76",
+      "category": "หลังคา",
+      "unit": "sqm",
+      "name": "เมทัลชีท EPS FOAM",
+      "brand": "EPS 1\" ท้องเหล็ก",
+      "min": null,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 5,
+          "hi": 10,
+          "price": 6600
+        },
+        {
+          "lo": 10,
+          "hi": 15,
+          "price": 6100
+        },
+        {
+          "lo": 15,
+          "hi": 30,
+          "price": 5600
+        },
+        {
+          "lo": 30,
+          "hi": null,
+          "price": 5100
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p77",
+      "category": "หลังคา",
+      "unit": "sqm",
+      "name": "เมทัลชีท EPS FOAM",
+      "brand": "EPS 2\" ท้องเหล็ก",
+      "min": null,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 5,
+          "hi": 10,
+          "price": 6700
+        },
+        {
+          "lo": 10,
+          "hi": 15,
+          "price": 6200
+        },
+        {
+          "lo": 15,
+          "hi": 30,
+          "price": 5700
+        },
+        {
+          "lo": 30,
+          "hi": null,
+          "price": 5200
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p78",
+      "category": "หลังคา",
+      "unit": "sqm",
+      "name": "เมทัลชีท PU FOAM",
+      "brand": "PU 1\" ท้องฟอยล์",
+      "min": null,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 5,
+          "hi": 10,
+          "price": 6300
+        },
+        {
+          "lo": 10,
+          "hi": 15,
+          "price": 5800
+        },
+        {
+          "lo": 15,
+          "hi": 30,
+          "price": 5300
+        },
+        {
+          "lo": 30,
+          "hi": null,
+          "price": 4800
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p79",
+      "category": "หลังคา",
+      "unit": "sqm",
+      "name": "เมทัลชีท PU FOAM",
+      "brand": "PU 2\" ท้องฟอยล์",
+      "min": null,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 5,
+          "hi": 10,
+          "price": 6600
+        },
+        {
+          "lo": 10,
+          "hi": 15,
+          "price": 6100
+        },
+        {
+          "lo": 15,
+          "hi": 30,
+          "price": 5600
+        },
+        {
+          "lo": 30,
+          "hi": null,
+          "price": 5100
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p80",
+      "category": "หลังคา",
+      "unit": "sqm",
+      "name": "เมทัลชีท PU FOAM",
+      "brand": "PU 1\" ท้องเหล็ก",
+      "min": null,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 5,
+          "hi": 10,
+          "price": 7300
+        },
+        {
+          "lo": 10,
+          "hi": 15,
+          "price": 6800
+        },
+        {
+          "lo": 15,
+          "hi": 30,
+          "price": 6300
+        },
+        {
+          "lo": 30,
+          "hi": null,
+          "price": 5800
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p81",
+      "category": "หลังคา",
+      "unit": "sqm",
+      "name": "เมทัลชีท PU FOAM",
+      "brand": "PU 2\" ท้องเหล็ก",
+      "min": null,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 5,
+          "hi": 10,
+          "price": 7500
+        },
+        {
+          "lo": 10,
+          "hi": 15,
+          "price": 7000
+        },
+        {
+          "lo": 15,
+          "hi": 30,
+          "price": 6500
+        },
+        {
+          "lo": 30,
+          "hi": null,
+          "price": 6000
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p82",
+      "category": "หลังคา",
+      "unit": "sqm",
+      "name": "โพลีตัน 3 มม.",
+      "brand": null,
+      "min": 30000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 5,
+          "hi": 10,
+          "price": 7500
+        },
+        {
+          "lo": 10,
+          "hi": 15,
+          "price": 6500
+        },
+        {
+          "lo": 15,
+          "hi": 30,
+          "price": 6000
+        },
+        {
+          "lo": 30,
+          "hi": null,
+          "price": 5700
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p83",
+      "category": "กระจก (เปลี่ยน/เพิ่ม)",
+      "unit": "sqm",
+      "name": "กระจกลามิเนต 5+5 มม. / 4+4 มม.",
+      "brand": null,
+      "min": 50000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 5,
+          "hi": 10,
+          "price": 11000
+        },
+        {
+          "lo": 10,
+          "hi": 15,
+          "price": 10500
+        },
+        {
+          "lo": 15,
+          "hi": null,
+          "price": 10000
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p84",
+      "category": "หลังคา",
+      "unit": "sqm",
+      "name": "ชินโคไลท์ 6 มม. รุ่น Heat Cut",
+      "brand": null,
+      "min": 50000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 5,
+          "hi": 10,
+          "price": 11000
+        },
+        {
+          "lo": 10,
+          "hi": 15,
+          "price": 10500
+        },
+        {
+          "lo": 15,
+          "hi": null,
+          "price": 10000
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": "*คำนวณระยะยื่นที่ 1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6 เมตร"
+    },
+    {
+      "key": "p85",
+      "category": "หลังคา",
+      "unit": "sqm",
+      "name": "ชินโคไลท์ 6 มม. รุ่น Nature",
+      "brand": null,
+      "min": 50000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 5,
+          "hi": 10,
+          "price": 10800
+        },
+        {
+          "lo": 10,
+          "hi": 15,
+          "price": 10200
+        },
+        {
+          "lo": 15,
+          "hi": null,
+          "price": 9800
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": "*คำนวณระยะยื่นที่ 3, 6 เมตร"
+    },
+    {
+      "key": "p86",
+      "category": "หลังคา",
+      "unit": "sqm",
+      "name": "ชินโคไลท์ 6 มม. รุ่น Superior",
+      "brand": null,
+      "min": 50000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 5,
+          "hi": 10,
+          "price": 10600
+        },
+        {
+          "lo": 10,
+          "hi": 15,
+          "price": 10000
+        },
+        {
+          "lo": 15,
+          "hi": null,
+          "price": 9600
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": "*คำนวณระยะยื่นที่ 1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6 เมตร"
+    },
+    {
+      "key": "p87",
+      "category": "หลังคา",
+      "unit": "sqm",
+      "name": "ชินโคไลท์ 4 มม. รุ่น Shade",
+      "brand": null,
+      "min": 45000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 5,
+          "hi": 10,
+          "price": 10100
+        },
+        {
+          "lo": 10,
+          "hi": 15,
+          "price": 9500
+        },
+        {
+          "lo": 15,
+          "hi": null,
+          "price": 9100
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": "*คำนวณระยะยื่นที่ 1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6 เมตร"
+    },
+    {
+      "key": "p88",
+      "category": "หลังคา",
+      "unit": "meter",
+      "name": "Option หลังคาเลื่อน +มอเตอร์ 30000 บาท   +รางน้ำ 3000 บ./ เมตร",
+      "brand": null,
+      "min": 30000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 5,
+          "hi": 10,
+          "price": 5000
+        },
+        {
+          "lo": 10,
+          "hi": 15,
+          "price": 4700
+        },
+        {
+          "lo": 15,
+          "hi": 20,
+          "price": 4400
+        },
+        {
+          "lo": 20,
+          "hi": 25,
+          "price": 4100
+        },
+        {
+          "lo": 25,
+          "hi": 30,
+          "price": 3800
+        },
+        {
+          "lo": 30,
+          "hi": null,
+          "price": 3500
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p89",
+      "category": "ผนัง/ฝ้า",
+      "unit": "sqm",
+      "name": "ฝ้าฉาบเรียบทาสีขาว (ภายใน–ภายนอก)",
+      "brand": null,
+      "min": 12000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 10,
+          "hi": 20,
+          "price": 1200
+        },
+        {
+          "lo": 20,
+          "hi": null,
+          "price": 1150
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p90",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1”x1.6”  โชว์ 1”  @ 5cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 3700,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p91",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "ฝ้าระแนงหลังคา, บังตาผนังระแนง 1”x1.6”  โชว์ 1”  @ 5cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 5300,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 300
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1000
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 1400
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 2000
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p92",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1x5 cm. โชว์ 1cm.  @ 5cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 3300,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p93",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "ฝ้าระแนงหลังคา, บังตาผนังระแนง 1x5 cm. โชว์ 1cm.  @ 5cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 5200,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 300
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 1700
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 2400
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p94",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1x5 cm. โชว์ 1cm.  @ 3cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 4300,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p95",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1x5 cm. โชว์ 1cm.  @ 3cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 6000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 400
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 2500
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 3500
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p96",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1x5 cm. โชว์ 1cm.  @ 2cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 5000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p97",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1x5 cm. โชว์ 1cm.  @ 2cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 7200,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 500
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 3300
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 4700
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p98",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1x5 cm. โชว์ 5cm.  @ 5cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 2800,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p99",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1x5 cm. โชว์ 5cm.  @ 5cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 4500,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 200
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 1100
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 1600
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p100",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1x5 cm. โชว์ 5cm.  @ 3cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 3200,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p101",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1x5 cm. โชว์ 5cm.  @ 3cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 4800,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 200
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 1400
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 2000
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p102",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1x5 cm. โชว์ 5cm.  @ 2cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 3300,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p103",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1x5 cm. โชว์ 5cm.  @ 2cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 5100,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 300
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 1700
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 2400
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p104",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x1\" โชว์ 1\"  @ 5cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 3200,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p105",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x1\" โชว์ 1\"  @ 5cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 4700,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 200
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 700
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 1000
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 1400
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p106",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x1\" โชว์ 1\"  @ 3cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 3700,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p107",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x1\" โชว์ 1\"  @ 3cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 5400,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 300
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1000
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 1300
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 1900
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p108",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x1\" โชว์ 1\"  @ 2cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 3900,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p109",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x1\" โชว์ 1\"  @ 2cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 5600,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 300
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1100
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 1500
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 2200
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p110",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x1½\" โชว์ 1\"  @ 5cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 3300,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p111",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x1½\" โชว์ 1\"  @ 5cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 5200,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 300
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 900
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 1400
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 2000
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p112",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x1½\" โชว์ 1\"  @ 3cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 4000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p113",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x1½\" โชว์ 1\"  @ 3cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 6100,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 400
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1200
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 1900
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 2800
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p114",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x1½\" โชว์ 1\"  @ 2cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 4300,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p115",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x1½\" โชว์ 1\"  @ 2cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 6500,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 400
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1400
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 2200
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 3200
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p116",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x1½\" โชว์ 1½\"  @ 5cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 3300,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p117",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x1½\" โชว์ 1½\"  @ 5cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 5200,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 300
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 900
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 1400
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 2000
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p118",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x1½\" โชว์ 1½\"  @ 3cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 3700,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p119",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x1½\" โชว์ 1½\"  @ 3cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 5600,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 300
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1000
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 1700
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 2400
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p120",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x1½\" โชว์ 1½\"  @ 2cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 3700,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p121",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x1½\" โชว์ 1½\"  @ 2cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 5600,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 300
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1000
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 1700
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 2400
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p122",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1”x1.6”  โชว์ 1”  @ 3cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 4500,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p123",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1”x1.6”  โชว์ 1”  @ 3cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 6400,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 400
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1400
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 1900
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 2800
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p124",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1”x1.6”  โชว์ 1”  @ 2cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 4800,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p125",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1”x1.6”  โชว์ 1”  @ 2cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 6900,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 500
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1600
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 2200
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 3200
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p126",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1”x1.6”  โชว์ 1.6”  @ 5cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 3200,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p127",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1”x1.6”  โชว์ 1.6”  @ 5cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 4900,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 300
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 800
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 1100
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 1600
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p128",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1”x1.6”  โชว์ 1.6”  @ 3cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 3700,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p129",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1”x1.6”  โชว์ 1.6”  @ 3cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 5300,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 300
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1000
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 1400
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 2000
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p130",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1”x1.6”  โชว์ 1.6”  @ 2cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 4000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p131",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1”x1.6”  โชว์ 1.6”  @ 2cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 5800,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 400
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1200
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 1700
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 2400
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p132",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x4\" โชว์ 1\"  @ 5cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 5500,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p133",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x4\" โชว์ 1\"  @ 5cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 8100,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 600
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 2000
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 3700
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 5300
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p134",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x4\" โชว์ 1\"  @ 3cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 7100,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p135",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x4\" โชว์ 1\"  @ 3cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 10100,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 800
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 2700
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 5200
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 7500
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p136",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x4\" โชว์ 1\"  @ 2cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 7900,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p137",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x4\" โชว์ 1\"  @ 2cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 10800,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 900
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 3100
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 5900
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 8500
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p138",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x4\" โชว์ 4\"  @ 5cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 4000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p139",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x4\" โชว์ 4\"  @ 5cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 6000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 400
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1200
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 2300
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 3200
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p140",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x4\" โชว์ 4\"  @ 3cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 4000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p141",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x4\" โชว์ 4\"  @ 3cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 6000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 400
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1200
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 2300
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 3200
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p142",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x4\" โชว์ 4\"  @ 2cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 4800,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p143",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x4\" โชว์ 4\"  @ 2cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 6900,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 500
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1600
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 3000
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 4300
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p144",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1.6\"x1.6\" โชว์ 1.6\"  @ 5cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 3900,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p145",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1.6\"x1.6\" โชว์ 1.6\"  @ 5cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 5600,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 300
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1100
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 2000
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 2800
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p146",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1.6\"x1.6\" โชว์ 1.6\"  @ 3cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 4400,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p147",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1.6\"x1.6\" โชว์ 1.6\"  @ 3cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 6400,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 400
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1400
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 2400
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 3500
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p148",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1.6\"x1.6\" โชว์ 1.6\"  @ 2cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 5000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p149",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1.6\"x1.6\" โชว์ 1.6\"  @ 2cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 7200,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 500
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1700
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 2900
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 4200
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p150",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1.6\"x4\" โชว์ 1.6\"  @ 5cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 5400,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p151",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1.6\"x4\" โชว์ 1.6\"  @ 5cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 7900,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 600
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1900
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 3300
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 4700
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p152",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1.6\"x4\" โชว์ 1.6\"  @ 3cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 6500,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p153",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1.6\"x4\" โชว์ 1.6\"  @ 3cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 9200,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 700
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 2400
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 4100
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 5900
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p154",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1.6\"x4\" โชว์ 1.6\"  @ 2cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 7300,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p155",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1.6\"x4\" โชว์ 1.6\"  @ 2cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 10600,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 800
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 2900
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 4900
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 7000
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p156",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1.6\"x4\" โชว์ 4\"  @ 5cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 4600,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p157",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1.6\"x4\" โชว์ 4\"  @ 5cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 6500,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 400
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1500
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 2500
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 3500
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p158",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1.6\"x4\" โชว์ 4\"  @ 3cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 4600,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p159",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1.6\"x4\" โชว์ 4\"  @ 3cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 6500,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 400
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1500
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 2500
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 3500
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p160",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1.6\"x4\" โชว์ 4\"  @ 2cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 5400,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p161",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1.6\"x4\" โชว์ 4\"  @ 2cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 7900,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 600
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1900
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 3300
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 4700
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p162",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 4\"x4\" โชว์ 4\"  @ 5cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 6600,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p163",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 4\"x4\" โชว์ 4\"  @ 5cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 9600,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 700
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 2500
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 3300
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 4800
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p164",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 4\"x4\" โชว์ 4\"  @ 3cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 6600,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p165",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 4\"x4\" โชว์ 4\"  @ 3cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 9600,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 700
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 2500
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 3300
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 4800
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p166",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 4\"x4\" โชว์ 4\"  @ 2cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 8300,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p167",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 4\"x4\" โชว์ 4\"  @ 2cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 12000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 900
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 3300
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 4400
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 6400
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p168",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x4\" โชว์ 4\"  แบบทึบ (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 5100,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p169",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนง 1\"x4\" โชว์ 4\"  แบบทึบ (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 6900,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 500
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1600
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 3000
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 4300
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p170",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนงสลับ 5:3 (โชว์ 1.6\" : 4\") @2cm. (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 5400,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p171",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "บังตาผนังระแนงสลับ 5:3 (โชว์ 1.6\" : 4\") @2cm. (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 7700,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 600
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1900
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 3400
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 4900
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p172",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "เกล็ด Z 1\" (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 3600,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p173",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "เกล็ด Z 1\" (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 5200,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 300
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1000
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 1500
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 2200
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p174",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "เกล็ด Z 1.6\" (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 4900,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p175",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "เกล็ด Z 1.6\" (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 6900,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 500
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1600
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 2200
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 3100
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p176",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "เกล็ด Z 4\" (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 5300,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p177",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "เกล็ด Z 4\" (รวมโครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 7700,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 500
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1800
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 2800
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 4000
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p178",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "ลูกฟูกเรียบ 1 ทาง (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 3500,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 700
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 2500
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 2500
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 3500
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p179",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "ลูกฟูกเรียบ 2 ทาง (ไม่โครง)",
+      "brand": null,
+      "min": null,
+      "flatRate": 3500,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [
+        {
+          "name": "เทาซาฮาร่า",
+          "amount": 400
+        },
+        {
+          "name": "ลายไม้ sms",
+          "amount": 1500
+        },
+        {
+          "name": "อบสีพิเศษ",
+          "amount": 1600
+        },
+        {
+          "name": "อบสีลายไม้",
+          "amount": 2200
+        }
+      ],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p180",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "คอมโพสิต 3 มม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 3300,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p181",
+      "category": "ระแนง/บังตา",
+      "unit": "sqm",
+      "name": "คอมโพสิต 4 มม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 4000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p182",
+      "category": "หลังคา",
+      "unit": "sqm",
+      "name": "Isowall สีขาว",
+      "brand": null,
+      "min": 7000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 1,
+          "hi": 1.5,
+          "price": 7000
+        },
+        {
+          "lo": 1.5,
+          "hi": 2,
+          "price": 6500
+        },
+        {
+          "lo": 2,
+          "hi": 2.5,
+          "price": 6000
+        },
+        {
+          "lo": 2.5,
+          "hi": 3,
+          "price": 5500
+        },
+        {
+          "lo": 3,
+          "hi": 3.5,
+          "price": 5000
+        },
+        {
+          "lo": 3.5,
+          "hi": null,
+          "price": 4500
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p183",
+      "category": "ผนัง/ฝ้า",
+      "unit": "sqm",
+      "name": "ผนังเบาภายนอก สมาร์ทบอร์ด 12 มม. รวมฉนวนกันร้อนกันเสียง 3\"",
+      "brand": null,
+      "min": 13500,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 3,
+          "hi": 4.5,
+          "price": 4500
+        },
+        {
+          "lo": 4.5,
+          "hi": 6,
+          "price": 4200
+        },
+        {
+          "lo": 6,
+          "hi": 7.5,
+          "price": 3900
+        },
+        {
+          "lo": 7.5,
+          "hi": null,
+          "price": 3600
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p184",
+      "category": "ผนัง/ฝ้า",
+      "unit": "sqm",
+      "name": "ผนังเบาภายใน ยิปซั่ม 12 มม. รวมฉนวนกันร้อนกันเสียง 3\"",
+      "brand": null,
+      "min": 13500,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 3,
+          "hi": 4.5,
+          "price": 4100
+        },
+        {
+          "lo": 4.5,
+          "hi": 6,
+          "price": 3800
+        },
+        {
+          "lo": 6,
+          "hi": 7.5,
+          "price": 3500
+        },
+        {
+          "lo": 7.5,
+          "hi": null,
+          "price": 3200
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p185",
+      "category": "กระจกเปลือย/ตู้",
+      "unit": "panel",
+      "name": "ฝาตู้ Future tech (สีดำ/สีขาว คิดเพิ่ม +5,500 บาท/บาน (คิดต่อชุด 2-3 บาน *ห้ามเกิน))",
+      "brand": null,
+      "min": 12500,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 0.5,
+          "hi": 1,
+          "price": 7000
+        },
+        {
+          "lo": 1,
+          "hi": 1.5,
+          "price": 8500
+        },
+        {
+          "lo": 1.5,
+          "hi": 2,
+          "price": 10000
+        },
+        {
+          "lo": 2,
+          "hi": 2.5,
+          "price": 11500
+        },
+        {
+          "lo": 2.5,
+          "hi": 3,
+          "price": 13000
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": "/บาน",
+      "note": "สีอื่นๆ ราคาเพิ่ม 1500 2000 2500 3000 3500"
+    },
+    {
+      "key": "p186",
+      "category": "มุ้ง",
+      "unit": "sqm",
+      "name": "มุ้งเฟรมเล็ก ผ้ามุ้งไฟเบอร์",
+      "brand": null,
+      "min": 1000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 0.6,
+          "hi": 0.8,
+          "price": 1800
+        },
+        {
+          "lo": 0.8,
+          "hi": 1,
+          "price": 1600
+        },
+        {
+          "lo": 1,
+          "hi": 1.5,
+          "price": 1400
+        },
+        {
+          "lo": 1.5,
+          "hi": 2.5,
+          "price": 1200
+        },
+        {
+          "lo": 2.5,
+          "hi": null,
+          "price": 1000
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p187",
+      "category": "มุ้ง",
+      "unit": "sqm",
+      "name": "มุ้งเฟรมเล็กติดตาย ผ้ามุ้งไฟเบอร์  ราคา 2,500 บาท/ตร.ม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 2500,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p188",
+      "category": "มุ้ง",
+      "unit": "sqm",
+      "name": "มุ้งบานเลื่อนเฟรมใหญ่ ผ้ามุ้งไฟเบอร์",
+      "brand": null,
+      "min": 4000,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 1,
+          "hi": 1.2,
+          "price": 4000
+        },
+        {
+          "lo": 1.2,
+          "hi": 1.5,
+          "price": 3600
+        },
+        {
+          "lo": 1.5,
+          "hi": 2,
+          "price": 3200
+        },
+        {
+          "lo": 2,
+          "hi": 5,
+          "price": 3000
+        },
+        {
+          "lo": 5,
+          "hi": null,
+          "price": 2800
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p189",
+      "category": "มุ้ง",
+      "unit": "sqm",
+      "name": "มุ้งจีบ (ผ้ามุ้งไฟเบอร์/เฟรมสีอบขาว,ดำ)  ราคา 2,500 บาท/ตร.ม.",
+      "brand": null,
+      "min": 3500,
+      "flatRate": 2500,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": "ขั้นต่ำ",
+      "note": null
+    },
+    {
+      "key": "p190",
+      "category": "มุ้ง",
+      "unit": "sqm",
+      "name": "มุ้งจีบ (ผ้ามุ้งไฟเบอร์/เฟรมสีเทาSHS,สีอื่นๆของP-net)  ราคา 2,900 บาท/ตร.ม.",
+      "brand": null,
+      "min": 4000,
+      "flatRate": 2900,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": "ขั้นต่ำ",
+      "note": null
+    },
+    {
+      "key": "p191",
+      "category": "มุ้ง",
+      "unit": "sqm",
+      "name": "มุ้งจีบ (ผ้ามุ้งไฟเบอร์/เฟรมอบสีพิเศษKL)  ราคา 3,000 บาท/ตร.ม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 3000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": "/ตร.ม.",
+      "note": null
+    },
+    {
+      "key": "p192",
+      "category": "มุ้ง",
+      "unit": "sqm",
+      "name": "มุ้งจีบ (ผ้ามุ้งไฟเบอร์/เฟรมอบสีลายไม้KL)  ราคา 3,500 บาท/ตร.ม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 3500,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": "/ตร.ม.",
+      "note": null
+    },
+    {
+      "key": "p193",
+      "category": "มุ้ง",
+      "unit": "sqm",
+      "name": "มุ้งจีบ ตีนตะขาบ (รุ่งหลังเตี้ยแบบพิเศษ) ผ้ามุ้งไฟเบอร์  ราคา 4,500 บาท/ตร.ม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 4500,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p194",
+      "category": "มุ้ง",
+      "unit": "sqm",
+      "name": "มุ้งม้วน ผ้ามุ้งไฟเบอร์  ขาย 3,000 บ./ตรม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 3000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p195",
+      "category": "มุ้ง",
+      "unit": "sqm",
+      "name": "มุ้งแม่เหล็ก พับเปิดได้ ขาย 1,500 บ./ตรม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 1500,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p196",
+      "category": "มุ้ง",
+      "unit": "sqm",
+      "name": "มุ้งนิรภัย มุ้งสแตนเลส หนา 0.8 มม. ขาย 9,000 บ./ตรม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 9000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p197",
+      "category": "มุ้ง",
+      "unit": "sqm",
+      "name": "เพิ่มมุ้งกันแมว / หมา",
+      "brand": null,
+      "min": null,
+      "flatRate": 800,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p198",
+      "category": "มุ้ง",
+      "unit": "sqm",
+      "name": "เพิ่มมุ้งสแตนเลส 0.33 มม.กันหนู",
+      "brand": null,
+      "min": null,
+      "flatRate": 1200,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p199",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "ตะแกรงเหล็กสาน ขาย 2,500 บ./ตรม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 2500,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p200",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "1-5 ม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 10700,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p201",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "5-10 ม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 10000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p202",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "10-15 ม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 9700,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p203",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "> 15 ม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 9400,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p204",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "1-5 ม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 9700,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p205",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "5-10 ม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 9000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p206",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "10-15 ม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 8700,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p207",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": ">15 ม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 8400,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p208",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "1-5 ม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 9700,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p209",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "5-10 ม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 9000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p210",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "10-15 ม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 8700,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p211",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "> 15 ม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 8400,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p212",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "1-5 ม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 7900,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": "ราวมือจับ ยู 5 หุน +500 บาท/เมตร"
+    },
+    {
+      "key": "p213",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "5-10 ม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 7200,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": "ราวมือจับ กล่อง 1”x2” +600 บาท/เมตร"
+    },
+    {
+      "key": "p214",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "10-15 ม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 7000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p215",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": ">15 ม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 6700,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p216",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "name": "ประตู Ventilation Door (YKK แบบระบายอากาศ) ขาย 17,500 บาท/ตร.ม.",
+      "brand": null,
+      "min": 30000,
+      "flatRate": 17500,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": "ขั้นต่ำ",
+      "note": null
+    }
+  ]
+}
