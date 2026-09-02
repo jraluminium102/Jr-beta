@@ -3,9 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
-import { computeTotals, baht } from "@/lib/money";
+import { computeTotals, splitCashReceived, baht } from "@/lib/money";
 import { nextDocumentCode } from "@/lib/doc-code";
 import { businessDateIssue } from "@/lib/date-guard";
+
+const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
 // POST /api/billing-notes/standalone
 // ใบวางบิล "ค่าประเมินหน้างาน" — เอกสารอิสระ (แนว A เจ้าของ+accountant เคาะ 4 ส.ค.69)
@@ -33,6 +35,7 @@ const BodySchema = z.object({
   wht_rate: z.union([z.literal(0), z.literal(3)]).optional(),
   issue_date: z.string().optional(),
   note: z.string().optional(),
+  amount_mode: z.enum(["before_vat", "gross"]).optional(), // ยอดที่กรอก = ก่อน VAT (default) หรือ รวม VAT
 });
 
 export async function POST(req: Request) {
@@ -50,11 +53,19 @@ export async function POST(req: Request) {
   const whtRate = b.wht_rate ?? 0;
 
   // money core เดียวกับทั้งระบบ — ห้ามคิด VAT/WHT เอง
-  const money = computeTotals({
-    items: [{ qty, unit_price: b.unit_price }],
-    vat_rate: vatRate, discount_pct: 0, wht_rate: whtRate,
-  });
-  if (money.net <= 0) return fail("ยอดสุทธิต้องมากกว่า 0", 400);
+  let subtotal: number, vatAmt: number, whtAmt: number, net: number;
+  if (b.amount_mode === "gross") {
+    // ยอดที่กรอก = รวม VAT แล้ว → ถอด VAT (base+vat = gross เป๊ะ) · WHT คิดจากฐานก่อน VAT · net = รวม − WHT
+    const grossTotal = round2(qty * b.unit_price);
+    const s = splitCashReceived(grossTotal, vatRate, 0);
+    subtotal = s.base; vatAmt = s.vat;
+    whtAmt = round2((subtotal * whtRate) / 100);
+    net = round2(grossTotal - whtAmt);
+  } else {
+    const m = computeTotals({ items: [{ qty, unit_price: b.unit_price }], vat_rate: vatRate, discount_pct: 0, wht_rate: whtRate });
+    subtotal = m.subtotal; vatAmt = m.vat_amt; whtAmt = m.wht_amt; net = m.net;
+  }
+  if (net <= 0) return fail("ยอดสุทธิต้องมากกว่า 0", 400);
 
   const supabase = createClient();
 
@@ -86,14 +97,14 @@ export async function POST(req: Request) {
     job_id: null,
     customer_snapshot: customerSnapshot,
     issue_date: issueDate,
-    total: money.net,
+    total: net,
     status: "unpaid",
     note: b.note ?? "",
     created_by: profile.id,
   };
   const bnBreakdown: Record<string, unknown> = {
-    subtotal: money.subtotal, discount_pct: 0, discount_amt: 0,
-    vat_rate: vatRate, vat_amt: money.vat_amt, wht_rate: whtRate, wht_amt: money.wht_amt,
+    subtotal: subtotal, discount_pct: 0, discount_amt: 0,
+    vat_rate: vatRate, vat_amt: vatAmt, wht_rate: whtRate, wht_amt: whtAmt,
     has_tax_breakdown: true, vat_rate_set: true,
   };
 
@@ -115,7 +126,7 @@ export async function POST(req: Request) {
   // งวดเดียว (ค่าประเมิน = 1 รายการ) — label ตามสไตล์งวดเดิม
   const label = qty > 1 ? `${itemName} (${qty} × ฿${baht(b.unit_price)})` : itemName;
   const { error: iErr } = await supabase.from("billing_installments").insert({
-    billing_note_id: bn.id, seq: 1, label, amount: money.net, sort_order: 0, status: "pending",
+    billing_note_id: bn.id, seq: 1, label, amount: net, sort_order: 0, status: "pending",
   });
   if (iErr) {
     // rollback หัวเอกสารถ้าสร้างงวดไม่สำเร็จ (กันเอกสารลอยไม่มีงวด)

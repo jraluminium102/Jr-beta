@@ -4,7 +4,9 @@ import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui";
 import Icon from "@/components/Icon";
-import { baht, computeTotals } from "@/lib/money";
+import { baht, splitCashReceived } from "@/lib/money";
+
+const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
 const PAYMENT_OPTIONS: { value: string; label: string }[] = [
   { value: "transfer", label: "โอนเงิน" },
@@ -48,7 +50,7 @@ export default function NewFeeClient({ initial }: { initial?: FeePrefill }) {
   const [phone, setPhone] = useState(initial?.phone ?? "");
 
   // ── รายการ ──
-  const [itemName, setItemName] = useState("ค่าประเมินหน้างาน");
+  const [itemName, setItemName] = useState("ค่าเดินทางและสำรวจหน้างาน");
   const [qty, setQty] = useState("1");
   const [unitPrice, setUnitPrice] = useState(initial?.fee ?? "");
 
@@ -65,10 +67,13 @@ export default function NewFeeClient({ initial }: { initial?: FeePrefill }) {
 
   const qtyNum = Number(qty) || 0;
   const unitPriceNum = Number(unitPrice) || 0;
-  const t = useMemo(
-    () => computeTotals({ items: [{ qty: qtyNum, unit_price: unitPriceNum }], vat_rate: vat, discount_pct: 0, wht_rate: wht }),
-    [qtyNum, unitPriceNum, vat, wht]
-  );
+  // ยอดที่กรอก = "ยอดรวม VAT แล้ว" (เจ้าของสั่ง: ติ๊ก VAT7% พิมพ์ 2000 → 2000 คือ total) → ถอด VAT ด้วย helper บัญชี
+  const t = useMemo(() => {
+    const grossTotal = round2(qtyNum * unitPriceNum);
+    const s = splitCashReceived(grossTotal, vat, 0); // base+vat = grossTotal เป๊ะ
+    const wht_amt = round2((s.base * wht) / 100);
+    return { subtotal: s.base, vat_amt: s.vat, total: round2(s.base + s.vat), wht_amt, net: round2(grossTotal - wht_amt) };
+  }, [qtyNum, unitPriceNum, vat, wht]);
 
   const customerSnapshot = {
     name: name.trim(), address, tax_id: taxId, branch: kind === "COMPANY" ? branch : "", kind,
@@ -94,10 +99,11 @@ export default function NewFeeClient({ initial }: { initial?: FeePrefill }) {
     try {
       const itemBody = {
         customer_snapshot: customerSnapshot,
-        item_name: itemName.trim() || "ค่าประเมินหน้างาน",
+        item_name: itemName.trim() || "ค่าเดินทางและสำรวจหน้างาน",
         qty: qtyNum, unit_price: unitPriceNum,
         vat_rate: vat, wht_rate: wht,
         issue_date: issueDate, note,
+        amount_mode: "gross", // ยอดที่กรอก = รวม VAT แล้ว (เจ้าของสั่ง)
       };
 
       if (mode === "bill") {
@@ -178,11 +184,12 @@ export default function NewFeeClient({ initial }: { initial?: FeePrefill }) {
                   className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none tabular-nums" />
               </label>
               <label className="block text-sm">
-                <span className="text-xs font-medium text-ink-3">ราคา/หน่วย *</span>
+                <span className="text-xs font-medium text-ink-3">ยอดเงิน (รวม VAT แล้ว) *</span>
                 <input type="number" inputMode="decimal" min={0} step="any" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)}
                   className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none tabular-nums" />
               </label>
             </div>
+            <p className="text-xs text-ink-3">ยอดที่กรอกคือยอดรวม VAT แล้ว — ระบบจะถอด VAT ให้ (เช่น ติ๊ก VAT 7% พิมพ์ 2,000 = รวม VAT 2,000)</p>
 
             <div className="grid sm:grid-cols-3 gap-3">
               <label className="flex items-center gap-1.5 text-sm cursor-pointer">
