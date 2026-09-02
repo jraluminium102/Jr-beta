@@ -1,60 +1,55 @@
-/node_modules
-/.next
-/out
-/build
-.DS_Store
+
+# ข้อมูลลูกค้าจริง (PII) — ห้าม commit ขึ้น git
+# ผลลัพธ์ PDF จาก scripts/verify-quote-print.mjs (ของชั่วคราว)
+# เก็บกวาด temp probe/verify/dump/frag (25 มิ.ย.) — กันรก git status ซ้ำ
+# เอาต์พุตทดสอบ (สร้างใหม่ได้จาก scripts/gen-quotes.mjs)
+# ไฟล์ชั่วคราว/PII — ห้าม commit
+# ไฟล์ชั่วคราว/backup กัน deploy vercel + PR บวม (24 มิ.ย.)
+# ไฟล์ชั่วคราว/ที่มาของการรวม (ไม่ต้อง commit)
+# ��ʴ���ҧ�ԧ�ͧ��ԧ (�˭� ��� commit)
 *.pem
-npm-debug.log*
+*.tmp
+*.tsbuildinfo
+.DS_Store
+.claude/
 .env
 .env*.local
 .vercel
-*.tsbuildinfo
-next-env.d.ts
-
-# ไฟล์ชั่วคราว/ที่มาของการรวม (ไม่ต้อง commit)
-/_src_quotation
-/_src_jrerp
-/_tmp_jrerp
 /.claude/settings.local.json
-
-# เอาต์พุตทดสอบ (สร้างใหม่ได้จาก scripts/gen-quotes.mjs)
-/ใบเสนอราคาทดสอบ/
-
-# ��ʴ���ҧ�ԧ�ͧ��ԧ (�˭� ��� commit)
+/.next
 /07_�鹩�Ѻ�ع_��ҧ�ԧ/
-scripts/seed_queue.sql
-scripts/seedgen.mjs
-.claude/
-
-# ข้อมูลลูกค้าจริง (PII) — ห้าม commit ขึ้น git
-supabase/scripts/import-customers.sql
-supabase/scripts/wipe-customer-data.sql
-public/review/
-
-# ไฟล์ชั่วคราว/PII — ห้าม commit
-tmp/
-
-# ไฟล์ชั่วคราว/backup กัน deploy vercel + PR บวม (24 มิ.ย.)
+/_src_jrerp
+/_src_quotation
+/_tmp_jrerp
+/build
+/node_modules
+/out
+/ใบเสนอราคาทดสอบ/
 _backups/
-public/_*
-public/drafts/
-public/DRAFT-*
-public/**/index.bak*
-public/**/index.snapshot*
+_f.txt
+audit-form-options.tsv
+docs/_*.json
+next-env.d.ts
+npm-debug.log*
+public/**/*-draft-play*
 public/**/_mirror-*
 public/**/glasshouse-preview*
-public/**/*-draft-play*
-_f.txt
-scripts/_tmp-*
-scripts/_verify-*
-
-# เก็บกวาด temp probe/verify/dump/frag (25 มิ.ย.) — กันรก git status ซ้ำ
-scripts/_*
-test/_*
-docs/_*.json
-*.tmp
-
-# ผลลัพธ์ PDF จาก scripts/verify-quote-print.mjs (ของชั่วคราว)
+public/**/index.bak*
+public/**/index.snapshot*
+public/DRAFT-*
+public/_*
+public/drafts/
+public/review/
 scratch-print/
 scratchpad/
+scripts/_*
+scripts/_tmp-*
+scripts/_verify-*
+scripts/seed_queue.sql
+scripts/seedgen.mjs
+supabase/scripts/import-customers.sql
+supabase/scripts/wipe-customer-data.sql
 sweep.mjs
+test/_*
+tmp/
+ตรวจตัวเลือกทุกบาน.xlsx
