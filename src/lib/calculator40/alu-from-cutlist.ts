@@ -23,6 +23,9 @@ import { CUT_SPEC_BY_ID } from "../cutlist/products.ts";
 
 /** รุ่นที่ "เส้นอลู" คิดจากใบตัดแล้ว — เปิดทีละรุ่น */
 export const ALU_FROM_CUTLIST: Record<string, string> = {
+  // กันสาดเพิง — เจ้าของสั่ง 2 ก.ย.69: "ในไฟล์มันมีนะ มันเขียนแผ่นหลังคา แล้วเลือกดรอปดาวด้านบน
+  //   เปลี่ยนชนิดแผ่นเอา จำนวนอยากให้อิงจากไฟล์นี้ด้วย" (JR_กันสาด.xlsx แถว "แผ่นหลังคา" · ยาว=ยื่น)
+  roof: "awning",
   roof_multi: "awning_multi",
   glasshouse: "glasshouse",
   glasshouse_multi: "glasshouse_multi",
@@ -79,7 +82,7 @@ const cleanRowName = (n: string) =>
 /** ต่อท้าย "(ทุกด้าน)" — เว้นแถวที่ใบตัดเขียนว่ารวมทุกด้านมาอยู่แล้ว (เพลทเหล็ก) */
 const allSides = (n: string) => (/ทุกด้าน/.test(n) ? n : `${n} (ทุกด้าน)`);
 /** รุ่นด้านเดียว (กลาสเฮ้าส์เพิงตรง) ไม่ต้องต่อท้าย "(ทุกด้าน)" — มีด้านเดียวอยู่แล้ว อ่านแล้วงง */
-const SINGLE_SIDE = new Set(["glasshouse"]);
+const SINGLE_SIDE = new Set(["glasshouse", "roof"]);
 
 export function cutAluLines(inp: CalcAluInput): AluLine[] | null {
   const specId = ALU_FROM_CUTLIST[inp.prodId];
