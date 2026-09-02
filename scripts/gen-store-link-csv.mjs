@@ -58,7 +58,7 @@ const LEVEL = {
   "ใบตัดไม่มีรายการนี้":  { flag:"🔵 เช็คว่าคิดเกินไหม", style:S.BLUE },
   "ใบตัดไม่ลงประเภทนี้":  { flag:"⚪ ดูเฉย ๆ",      style:S.GREY },
   "ยังไม่ผูกไฟล์":       { flag:"⚪ ยังตรวจไม่ได้", style:S.GREY },
-  "ไม่ได้ใช้ที่ขนาดนี้":   { flag:"⚪ ดูเฉย ๆ",      style:S.GREY },
+  "ยังไม่ได้ตรวจ":       { flag:"🟣 ยังไม่ได้ตรวจ", style:S.YELLOW },
 };
 const FLAG = st => (LEVEL[st]?.flag) || "";
 const STYLE = st => (LEVEL[st]?.style) ?? 0;
@@ -69,19 +69,40 @@ fs.rmSync(outDir, { recursive:true, force:true }); fs.mkdirSync(outDir, { recurs
 const safe = s => String(s).replace(/[\/:*?"<>|]/g,'-');
 const all = [];
 
+// ⚠ ต้องสุ่มหลายขนาด/หลายรูปแบบต่อรุ่น (เจ้าของท้วง 1 ก.ย.69)
+//   เดิมคิดขนาดเดียวต่อรุ่น → ของที่ใช้เฉพาะบางรูปแบบ (ชายล่างตอนไม่มีธรณี · ชนกลางตอน 2 บาน ·
+//   กล่องระแนงขนาดอื่น) ออกมาจำนวน 0 แล้วถูกติดป้าย "ไม่ต้องทำ" ทั้งที่ยังไม่เคยถูกตรวจเลย
+//   → ไล่ทุกรูปแบบ + จำนวนบานต่ำสุด/สูงสุด แล้วเก็บผลที่ "ตรวจได้จริง" ที่สุดของแต่ละรหัส
+function samplesOf(p) {
+  const d = p.defaults || { w: 150, h: 150, p: 1 };
+  const forms = (p.forms && p.forms.length ? p.forms : [p.defForm]).slice(0, 5);
+  const panels = [...new Set([d.p || 1, p.minP, p.maxP].filter((x) => Number.isFinite(x) && x > 0))].slice(0, 3);
+  const out = [];
+  for (const form of forms) for (const pn of panels) {
+    out.push({ w: d.w, h: d.h, p: pn, form, label: `${d.w}×${d.h} ${pn} บาน${form ? ` · ${form}` : ''}` });
+    if (out.length >= 12) return out;      // กันรุ่นที่มีรูปแบบเยอะจนช้า
+  }
+  return out.length ? out : [{ w: d.w, h: d.h, p: d.p || 1, form: p.defForm, label: `${d.w}×${d.h} ${d.p || 1} บาน` }];
+}
+// สถานะไหน "ตรวจได้จริง" มากกว่ากัน — เลขน้อย = ดีกว่า (ใช้ merge ผลจากหลายขนาด)
+const RANK0 = { 'ตรง':0, 'จำนวนต่าง':1, 'รหัสไม่ตรง':2, 'คิดราคาไม่มีรายการนี้':3, 'ใบตัดไม่มีรายการนี้':4,
+  'คิดราคายังไม่มีรหัส':5, 'ใบตัดไม่ให้รหัส':6, 'ใบตัดไม่ลงประเภทนี้':7, 'ยังไม่ผูกไฟล์':8, 'ยังไม่ได้ตรวจ':9 };
+
 for (const p of Object.values(PRODUCTS)) {
   if (p.id === 'sms_slide') continue;
-  const d = p.defaults || { w:150, h:150, p:1 };
-  const sz = `${d.w}×${d.h} ${d.p||1} บาน`;
+  const merged = new Map();     // คีย์ = หมวด|ชื่อ|รหัส → แถวที่สถานะดีที่สุดจากทุกขนาดที่ลอง
+  for (const SMP of samplesOf(p)) {
+  const d = SMP;
+  const sz = SMP.label;
   let calc; try {
-    calc = computeCost(PB, p, { w:d.w, h:d.h, p:d.p||1, form:p.defForm, color:'white', colorKey:'white' });
+    calc = computeCost(PB, p, { w:d.w, h:d.h, p:d.p||1, form:SMP.form, color:'white', colorKey:'white' });
   } catch { continue; }
   const sn = MAP[p.id];
   // ใช้ตัวแปลง "คิดราคา → ใบตัด" ตัวจริง (from-recipe) ก่อน — ตัวเดียวกับหน้าเทียบ
   //   ถ้าเดา input เอง (แค่ยัด W/H/N) รุ่นที่ใบตัดนับคนละฐาน (เลื่อนยูโร ฯลฯ) จะออกมาผิดเป็นกอง
   let spec = sn ? CUTP[sn] : null, co = null;
   const rec = cutInputFromRecipe({ kind:'std', prodId:p.id, w:d.w, h:d.h, p:d.p||1,
-    form:p.defForm, spec:{}, glassType:p.defGlass }, { rawCompare:true });
+    form:SMP.form || p.defForm, spec:{}, glassType:p.defGlass }, { rawCompare:true });
   if (rec && CUT_SPEC_BY_ID[rec.spec_id]) { spec = CUT_SPEC_BY_ID[rec.spec_id]; co = { ...spec.defaults, ...rec.input }; }
   else if (spec) co = { ...spec.defaults, W:d.w, H:d.h, N:d.p||1 };
   const mult = (rec && rec.multiplier) || 1;
@@ -180,14 +201,37 @@ for (const p of Object.values(PRODUCTS)) {
       n2(l.cat==='alu' ? myQty : (l.qty ?? '')), n2(l.amount ?? ''), sz,
       hit?(hit.sku||'—'):'', hit?n2(hit.qty):'', hit?(hit.unit||''):'', same, fileLabel ]);
   }
+  // ⚠ แยก 2 กรณีของ "ใบตัดมี แต่ฝั่งคิดราคาไม่โผล่":
+  //   (ก) สูตรไม่มีรหัสนี้เลย        → "คิดราคาไม่มีรายการนี้" (ต้องเติมของเข้าสูตร)
+  //   (ข) สูตรมีบรรทัดนี้ แต่คิดออก 0 → "จำนวนต่าง" (เงื่อนไขในสูตรไม่เข้า ทั้งที่ใบตัดเบิกจริง)
+  //   ถ้าเหมาเป็น (ก) ทั้งหมด จะขัดกับความจริง — validator จับได้ (เคส F7962 บานเฟี้ยมยูโร)
+  const calcAllCodes = new Set();
+  for (const it of (p.alu||[])) for (const c of skuVariants({}, { sku: it.code })) calcAllCodes.add(c);
+  for (const g of ['hardware','consum']) for (const it of (p[g]||[])) for (const c of skuVariants({}, it)) calcAllCodes.add(c);
+  const cutOnlySt = (sku) => (sku && calcAllCodes.has(String(sku).toUpperCase())) ? 'จำนวนต่าง' : 'คิดราคาไม่มีรายการนี้';
   cutList.forEach((c,ix)=>{ if(used.has(ix)) return;
-    rows.push([ FLAG("คิดราคาไม่มีรายการนี้"), p.name, 'มีแต่ในใบตัด', c.name, c.sku||'', '', '', c.unit||'', '', '', sz,
-      c.sku||'—', n2(c.qty), c.unit||'', 'คิดราคาไม่มีรายการนี้', fileLabel ]); });
+    const st = cutOnlySt(c.sku);
+    rows.push([ FLAG(st), p.name, 'มีแต่ในใบตัด', c.name, c.sku||'', '', '', c.unit||'', st==='จำนวนต่าง'?0:'', '', sz,
+      c.sku||'—', n2(c.qty), c.unit||'', st, fileLabel ]); });
   for (const [c,e] of cutProf) { if (usedProf.has(c)) continue;
-    rows.push([ FLAG("คิดราคาไม่มีรายการนี้"), p.name, 'มีแต่ในใบตัด (อลู)', e.name, e.sku||'', '', '', e.unit||'', '', '', sz,
-      e.sku, n2(e.qty), e.unit, 'คิดราคาไม่มีรายการนี้', fileLabel ]); }
-  // ⚠ ของที่สูตรมีแต่ "จำนวน = 0" ที่ขนาดตัวอย่าง (เช่น เสาเปิดกลาง ใช้เฉพาะ 2 บานขึ้นไป)
-  //   ต้องโชว์ด้วย ไม่งั้นเจ้าของไม่มีทางรู้ว่ารุ่นนี้ยังใช้รหัสอะไรอีก — "หายเงียบ" คือบั๊กที่แย่ที่สุด
+    const st = cutOnlySt(e.sku);
+    rows.push([ FLAG(st), p.name, 'มีแต่ในใบตัด (อลู)', e.name, e.sku||'', '', '', e.unit||'', st==='จำนวนต่าง'?0:'', '', sz,
+      e.sku, n2(e.qty), e.unit, st, fileLabel ]); }
+  // เก็บผลของขนาดนี้เข้ากอง merge — คีย์ตามรหัส (ไม่มีรหัสใช้ชื่อ) เก็บอันที่สถานะ "ตรวจได้จริง" สุด
+  for (const r of rows) {
+    // ⚠ คีย์ต้องเป็น "รหัส" ล้วน ห้ามเอาหมวดมาผสม — ของชิ้นเดียวกันเปลี่ยนหมวดได้ระหว่างขนาด
+    //   (ขนาดหนึ่งจำนวน 0 → ไปโผล่หมวด "มีแต่ในใบตัด" · อีกขนาดใช้จริง → หมวด "อลูมิเนียม")
+    //   ถ้าใส่หมวดในคีย์ สองแถวนี้จะไม่ merge กัน แล้วขัดกันเองในไฟล์เดียว (validator จับได้ 7 จุด)
+    const key = String(r[4] || r[11] || `ชื่อ:${r[3]}`).toUpperCase();
+    const cur = merged.get(key);
+    if (!cur || (RANK0[r[14]] ?? 99) < (RANK0[cur[14]] ?? 99)) merged.set(key, r);
+  }
+  }   // ← จบลูปขนาดตัวอย่าง
+
+  // ⚠ ของที่ "ไม่โผล่เลยสักขนาดที่ลอง" — ไม่ใช่ของไม่ต้องทำ แต่คือ "ยังไม่ได้ตรวจ" (เจ้าของท้วง 1 ก.ย.69)
+  //   เดิมติดป้าย "ไม่ต้องทำ" ทั้งที่ยังไม่เคยถูกเทียบกับใบตัดเลยแม้แต่ครั้งเดียว
+  const rows = [...merged.values()];
+  const fileLabel0 = rows[0]?.[15] ?? '';
   {
     const shown = new Set();
     for (const r of rows) for (const c of [String(r[4]||"").toUpperCase(), String(r[11]||"").toUpperCase()]) if (c) shown.add(c);
@@ -199,9 +243,9 @@ for (const p of Object.values(PRODUCTS)) {
       for (const c of codes) {
         if (!c || shown.has(c) || seenX.has(c)) continue;
         seenX.add(c);
-        rows.push([ FLAG("ไม่ได้ใช้ที่ขนาดนี้"), p.name, g==="alu"?"อลูมิเนียม (ไม่ได้ใช้)":"อุปกรณ์ (ไม่ได้ใช้)",
-          it.name, c, "", n2(it.price ?? ""), it.unit || "", 0, 0, sz, "", "", "",
-          "ไม่ได้ใช้ที่ขนาดนี้", fileLabel ]);
+        rows.push([ FLAG("ยังไม่ได้ตรวจ"), p.name, g==="alu"?"อลูมิเนียม":"อุปกรณ์/สิ้นเปลือง",
+          it.name, c, "", n2(it.price ?? ""), it.unit || "", "", "", "— ไม่โผล่ในขนาด/รูปแบบที่ลอง —", "", "", "",
+          "ยังไม่ได้ตรวจ", fileLabel0 ]);
       }
     }
   }
@@ -214,7 +258,7 @@ fs.writeFileSync(`docs/ผูกสโตร์-ทุกบาน-1ก.ย.69${
   '\ufeff' + [HEAD, ...all].map(r=>r.map(esc).join(',')).join('\r\n') + '\r\n');
 
 // ── Excel: แท็บ "สรุป" + "รวมทุกบาน" + แท็บละบาน (เจ้าของเปิด CSV ไม่ได้) ──
-const STATUS = ["ตรง","จำนวนต่าง","รหัสไม่ตรง","คิดราคายังไม่มีรหัส","ใบตัดไม่ให้รหัส","ใบตัดไม่มีรายการนี้","คิดราคาไม่มีรายการนี้","ใบตัดไม่ลงประเภทนี้","ยังไม่ผูกไฟล์","ไม่ได้ใช้ที่ขนาดนี้"];
+const STATUS = ["ตรง","จำนวนต่าง","รหัสไม่ตรง","คิดราคายังไม่มีรหัส","ใบตัดไม่ให้รหัส","ใบตัดไม่มีรายการนี้","คิดราคาไม่มีรายการนี้","ยังไม่ได้ตรวจ","ใบตัดไม่ลงประเภทนี้","ยังไม่ผูกไฟล์"];
 const prodNames = [...new Set(all.map(r=>r[1]))];
 const summary = [["รุ่น","แถวรวม", ...STATUS, "ไฟล์ตัดประกอบ"]];
 for (const n of prodNames) {
@@ -224,8 +268,8 @@ for (const n of prodNames) {
 const W = [13,22,14,34,16,11,12,10,10,12,16,16,13,13,22,26];
 const sty = rs => [0, ...rs.map(r=>STYLE(r[14]))];
 // เรียง "ต้องเช็คก่อน" ในแท็บรวมและแท็บต้องเช็ค
-const RANK = { "รหัสไม่ตรง":0, "จำนวนต่าง":1, "คิดราคาไม่มีรายการนี้":2, "ใบตัดไม่มีรายการนี้":3, "คิดราคายังไม่มีรหัส":4, "ใบตัดไม่ให้รหัส":5, "ตรง":6, "ใบตัดไม่ลงประเภทนี้":7, "ยังไม่ผูกไฟล์":8, "ไม่ได้ใช้ที่ขนาดนี้":9 };
-const todo = all.filter(r=>RANK[r[14]] <= 5)
+const RANK = { "รหัสไม่ตรง":0, "จำนวนต่าง":1, "คิดราคาไม่มีรายการนี้":2, "ใบตัดไม่มีรายการนี้":3, "คิดราคายังไม่มีรหัส":4, "ใบตัดไม่ให้รหัส":5, "ยังไม่ได้ตรวจ":6, "ตรง":7, "ใบตัดไม่ลงประเภทนี้":8, "ยังไม่ผูกไฟล์":9 };
+const todo = all.filter(r=>RANK[r[14]] <= 6)
   .sort((a,b)=> RANK[a[14]]-RANK[b[14]] || String(a[1]).localeCompare(String(b[1]),"th"));
 const sheets = [
   { name:"🔴 ต้องเช็ค", rows:[HEAD, ...todo], widths:W, rowStyles:sty(todo) },
