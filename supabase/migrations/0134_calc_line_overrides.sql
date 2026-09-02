@@ -15,11 +15,17 @@ create table if not exists public.calc_line_overrides (
   product_id   text    not null,
   scope        text    not null check (scope in ('calc', 'cut')),
   match_key    text    not null,
+  -- ชื่อบรรทัด — ต้องมีคู่กับ match_key เพราะ "รหัสเดียวถูกใช้หลายบรรทัดในรุ่นเดียวกัน" เป็นเรื่องปกติ
+  --   บานเปิดใช้ F7935 (คิ้วกระจก) 5 บรรทัด · ใบตัดชนกัน 92 กลุ่ม
+  --   ถ้าอ้างด้วยรหัสอย่างเดียว = แก้ได้แค่บรรทัดแรก และ unique จะบล็อกไม่ให้สร้างของบรรทัดที่เหลือ
+  --   ตรวจข้อมูลจริงแล้ว (รหัส + ชื่อ) ไม่ซ้ำเลยจาก 598 บรรทัดคิดราคา + 1,140 บรรทัดใบตัด
+  match_name   text    not null default '',
   -- ค่าที่ทับ (null = ไม่ทับ ใช้ของเดิม)
   set_sku      text,                      -- เปลี่ยนรหัสสโตร์/รหัสเส้น
   set_qty      text,                      -- สูตรจำนวนใหม่ (ข้อความสูตรเดียวกับในซอร์ส)
   set_len      text,                      -- สูตรความยาว/ขนาดตัดใหม่ (ฝั่งใบตัด)
   set_price    numeric(14,2),             -- ราคาสำรองใหม่
+  set_kg       numeric(10,4),             -- น้ำหนัก กก./เส้น (เฉพาะเส้นอลูที่เพิ่มเอง) — ไม่มี = ค่าอบสีคิดขาด
   -- แถวที่ "เพิ่มเอง" (ไม่มีในซอร์ส)
   is_added     boolean not null default false,
   item_name    text,
@@ -34,7 +40,7 @@ create table if not exists public.calc_line_overrides (
   --   (ต้องมี row นี้เพื่อกันสถานะ "ตรวจแล้ว" หายตอน refresh/คนอื่นเห็นความคืบหน้าด้วย)
   reviewed_at  timestamptz,
   reviewed_by  uuid references auth.users(id),
-  unique (product_id, scope, match_key)
+  unique (product_id, scope, match_key, match_name)
 );
 
 create index if not exists idx_clo_product on public.calc_line_overrides(product_id, scope);

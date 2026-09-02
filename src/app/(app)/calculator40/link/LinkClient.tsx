@@ -501,7 +501,7 @@ export default function LinkClient({
                               </button>
                             ) : <span className="font-mono text-xs text-ink-3">—</span>}
                             {(r.override || r.cutOverride) && <Badge tone="sky">แก้แล้ว</Badge>}
-                            {r.dupKeyInProduct && <span title="รหัสนี้ใช้ซ้ำหลายบรรทัดในรุ่นนี้ — แก้ได้แค่บรรทัดแรกจนกว่าจะรัน migration 0135"><Badge tone="gray">รหัสซ้ำ</Badge></span>}
+                            {r.dupKeyInProduct && <span title="รหัสนี้ใช้ซ้ำหลายบรรทัดในรุ่นนี้ — ระบบแยกด้วยชื่อบรรทัดให้แล้ว แก้ได้ทีละบรรทัด"><Badge tone="gray">รหัสซ้ำ</Badge></span>}
                           </div>
                         </td>
                         <td className={cn(num, G.calc, diff(qtyBad))}>{r.calcQty ?? "—"}</td>

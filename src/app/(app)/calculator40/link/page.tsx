@@ -9,7 +9,7 @@ import { PRODUCTS } from "@/lib/calculator40/products.mjs";
 import { CUT_SPEC_BY_ID } from "@/lib/cutlist/products";
 import { applyLineOverrides } from "@/lib/calculator40/line-overrides";
 import {
-  buildLinkRowsWithPricebook, attachStockAndOverrides, CALC_OVERRIDE_SELECT,
+  buildLinkRowsWithPricebook, attachStockAndOverrides, CALC_OVERRIDE_SELECT, CALC_OVERRIDE_SELECT_LEGACY,
   type OverrideRow, type LinkStockRow,
 } from "@/lib/calculator40/link-rows";
 import LinkClient from "./LinkClient";

@@ -17,8 +17,12 @@ import { cutInputFromRecipe } from "../cutlist/from-recipe.ts";
 import type { LineOverride } from "./line-overrides";
 
 // คอลัมน์ที่ API /api/calc-overrides ใช้อยู่แล้ว — ใช้ค่าเดียวกันทุกจุดที่ query ตาราง (route.ts + หน้านี้)
-//   ⚠ ยังไม่มี match_name/set_kg (migration 0135 รอเจ้าของรัน) — ห้ามใส่ในนี้จนกว่าจะรันแล้ว (กันพัง)
+//   match_name/set_kg มาพร้อม 0134 (ยุบ 0135 เข้าไปแล้ว) — ฝั่ง page.tsx มี fallback ถ้าคอลัมน์ยังไม่มี
 export const CALC_OVERRIDE_SELECT =
+  "id, product_id, scope, match_key, match_name, set_kg, set_sku, set_qty, set_len, set_price, is_added, item_name, unit, disabled, note, created_by, created_at, updated_at, reviewed_at, reviewed_by";
+
+/** ชุดคอลัมน์แบบเก่า (ก่อนมี match_name/set_kg) — ใช้ถอยเมื่อฐานข้อมูลยังไม่ได้อัปเดต */
+export const CALC_OVERRIDE_SELECT_LEGACY =
   "id, product_id, scope, match_key, set_sku, set_qty, set_len, set_price, is_added, item_name, unit, disabled, note, created_by, created_at, updated_at, reviewed_at, reviewed_by";
 
 export type OverrideRow = LineOverride & {
@@ -73,7 +77,7 @@ export type LinkRow = {
   /** id ของ CutSpec (คีย์ใน CUT_SPEC_BY_ID) — คนละ namespace กับ productId (PRODUCTS)
    *  ⚠ เขียน override scope='cut' ต้องส่ง product_id = ค่านี้ ไม่ใช่ productId — ไม่งั้นเขียนผิดรุ่นเงียบ ๆ (ดู line-overrides.ts) */
   cutSpecId: string | null;
-  /** รหัสนี้ถูกใช้ >1 บรรทัดในรุ่นเดียวกัน — แก้ได้แค่บรรทัดแรกจนกว่าจะรัน migration 0135 (match_name) */
+  /** รหัสนี้ถูกใช้ >1 บรรทัดในรุ่นเดียวกัน — แยกกันได้ด้วย match_name (มากับ 0134) */
   dupKeyInProduct: boolean;
 };
 
@@ -361,7 +365,13 @@ export function attachStockAndOverrides(rows: LinkRow[], stock: LinkStockRow[], 
     if (arr) arr.push(s); else bySku.set(k, [s]);
   }
   const ovByKey = new Map<string, OverrideRow>();
-  for (const o of overrides) ovByKey.set(`${o.product_id}::${o.scope}::${o.match_key}`, o);
+  // ⚠ กุญแจจริงคือ รหัส + ชื่อบรรทัด (รหัสเดียวใช้หลายบรรทัดได้) — เก็บทั้ง 2 แบบ
+  //   แถวเก่าที่ยังไม่มี match_name ผูกด้วยรหัสอย่างเดียวเหมือนเดิม (เข้ากันได้ย้อนหลัง)
+  for (const o of overrides) {
+    const nm = String((o as { match_name?: string }).match_name ?? "").trim();
+    if (nm) ovByKey.set(`${o.product_id}::${o.scope}::${o.match_key}::${nm}`, o);
+    else ovByKey.set(`${o.product_id}::${o.scope}::${o.match_key}`, o);
+  }
 
   return rows.map((r) => {
     const sku = (r.calcSku || r.cutSku || "").trim().toUpperCase();
