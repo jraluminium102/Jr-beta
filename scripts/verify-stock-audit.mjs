@@ -321,7 +321,11 @@ console.log("\n═══ ⑥ หน้าจอต่อสายครบไห
   ok("เรียงตัวที่ต้องแก้ก่อนขึ้นบนสุด (need_code มาก่อน — เจ้าของไล่เติมรหัสเอง)",
     c.includes('const ORDER: AuditStatus[] = ["need_code", "no_key", "missing"'), "");
   const cc = fs.readFileSync(path.join(ROOT, "src/components/Calculator40Client.tsx"), "utf8");
-  ok("มีทางเข้าจากหน้าคิดราคา", /calculator40\/stock-audit/.test(cc), "");
+  // 1 ก.ย.69: หน้าคิดราคาชี้ไปหน้ารวมใหม่ (/calculator40/link) แล้ว ส่วนหน้านี้เป็น "มุมเสริม"
+  //   ที่หน้ารวมลิงก์ต่อไปอีกที — ทางเข้าจึงต้องมีครบ 2 ต่อ ไม่ใช่ขาดไปเลย
+  ok("มีทางเข้าจากหน้าคิดราคา (ไปหน้ารวม)", /calculator40\/link/.test(cc), "");
+  const lc = fs.readFileSync(path.join(ROOT, "src/app/(app)/calculator40/link/LinkClient.tsx"), "utf8");
+  ok("หน้ารวมลิงก์ต่อมาที่มุมเสริมนี้ (ห้ามทำให้เข้าไม่ถึง)", /calculator40\/stock-audit/.test(lc), "");
   ok("ป้ายสถานะครบทุกแบบ (+labor 27 ส.ค. · +need_code 1 ก.ย.69)", Object.keys(STATUS_LABEL).length === 9, String(Object.keys(STATUS_LABEL).length));
   ok("ค่าตั้งต้นของหน้าคือมุม 'รายรุ่น'", c.includes('setView] = useState') && c.includes('>("product")'), "");
   ok("มีมุม 'ราคาต่อโล → ราคาต่อเส้น' ให้กด", c.includes("ราคาต่อโล → ราคาต่อเส้น") && c.includes('view === "kg"'), "");

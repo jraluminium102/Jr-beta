@@ -22,6 +22,8 @@ import { computeCost } from "@/lib/calculator40/engine.mjs";
 import { PRODUCTS, PRODUCTS_TODO } from "@/lib/calculator40/products.mjs";
 import PRICEBOOK from "@/lib/calculator40/pricebook.json";
 import { applyPriceOverride, type PriceOverride } from "@/lib/calculator40/stock-link";
+// ชั้นทับค่าสูตร (0134/หน้า /calculator40/link) — mutate PRODUCTS singleton ในที่ (ดูคอมเมนต์หัว line-overrides.ts)
+import { applyOverridesInPlace, type LineOverride } from "@/lib/calculator40/line-overrides";
 import OptionAdder from "@/components/quotation/OptionAdder";
 import DiscountLinesEditor from "@/components/quotation/DiscountLinesEditor";
 // @ts-expect-error — bootstrap เป็น ESM JS ล้วน (ก๊อปตรงจาก mockup index.html script ฝัง — ห้ามแก้กติกา)
@@ -114,7 +116,11 @@ type QuoteItem = {
 
 type CustomerOption = Pick<Customer, "id" | "name" | "job" | "phone" | "address" | "contact_person">;
 
-export default function Calculator40Client({ customers = [], priceOverride }: { customers?: CustomerOption[]; priceOverride?: PriceOverride | null }) {
+export default function Calculator40Client({ customers = [], priceOverride, lineOverrides }: { customers?: CustomerOption[]; priceOverride?: PriceOverride | null; lineOverrides?: LineOverride[] | null }) {
+  // แก้ในหน้า /calculator40/link (รหัส/จำนวน) → ต้องมีผลจริงที่นี่ ไม่ใช่ dead code
+  //   mutate PRODUCTS singleton ในที่ (เหมือน applyBootstrap ข้างบน) เพราะ PRODUCTS ถูกใช้ตรง ๆ
+  //   กระจายอยู่หลายสิบจุดทั่วไฟล์นี้ — ไล่แก้ให้ทุกจุดถือ effProducts เสี่ยงเกินไป
+  applyOverridesInPlace(PRODUCTS, lineOverrides, "calc");
   const router = useRouter();
   // ผูกลูกค้าจากทะเบียน (เฟส B)
   const [customerId, setCustomerId] = useState<number | null>(null);
@@ -951,15 +957,10 @@ export default function Calculator40Client({ customers = [], priceOverride }: { 
             className={`press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold ${adminOpen ? "text-white bg-brand shadow-brand" : "glass-soft text-ink-2"}`}>
             ⚙️ แก้ราคา
           </button>
-          {/* ตรวจว่าราคาทุกตัวผูกสโตร์ครบไหม + ขึ้นราคากิโลแล้วเด้งไหม (เจ้าของสั่ง 8 ส.ค.69) */}
-          <a href="/calculator40/stock-audit"
+          {/* รวม "ตรวจผูกสโตร์" + "เทียบกับใบตัด" เป็นหน้าเดียวแล้ว (เจ้าของสั่ง 1 ก.ย.69) — 3 ช่องความจริงในตารางเดียว */}
+          <a href="/calculator40/link"
             className="press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold glass-soft text-ink-2">
-            🔗 ตรวจผูกสโตร์
-          </a>
-          {/* เทียบทีละรหัสว่าคิดราคาขึ้นของครบเท่าใบตัดไหม (เจ้าของสั่ง 19 ส.ค.69) */}
-          <a href="/calculator40/compare"
-            className="press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold glass-soft text-ink-2">
-            🔍 เทียบกับใบตัด
+            🔗 ลิงก์ สโตร์/ใบตัด/คิดราคา
           </a>
         </div>
       </div>

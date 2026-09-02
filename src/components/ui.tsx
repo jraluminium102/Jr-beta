@@ -11,6 +11,7 @@ const TONES: Record<string, string> = {
   sky: "bg-sky-100 text-sky-800",
   gray: "bg-gray-200 text-gray-700",
   violet: "bg-violet-100 text-violet-800",
+  yellow: "bg-yellow-100 text-yellow-900",   // ป้าย "🟡 ต้องเคาะ" (หน้า /calculator40/link) — เติมคีย์ ไม่กระทบของเดิม
 };
 
 export function Badge({

@@ -4,7 +4,7 @@ export type Resource =
   | "jobs" | "jobs:finance_fields" | "production" | "installation"
   | "issues" | "finance" | "dashboard" | "settings" | "users" | "queue"
   | "designer" | "boq" | "sales_closure" | "warranties" | "stock" | "drawings"
-  | "floor_queue";
+  | "floor_queue" | "calc_overrides";
 export type Action = "read" | "write" | "void";
 
 // ตรงกับ PRD REQ-06 + RLS policies ใน 0003_rls.sql
@@ -21,6 +21,7 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     stock: ["read", "write"],
     drawings: ["read", "write"],   // สแตมป์สเปคลงแบบ (0117)
     floor_queue: ["read", "write"],   // จัดคิวงานพื้น
+    calc_overrides: ["read", "write"],   // ชั้นทับค่าสูตรคิดราคา 4.0/ใบตัด (0134)
   },
   SALES: {
     jobs: ["read", "write"], "jobs:finance_fields": ["read"],
@@ -32,6 +33,7 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     stock: ["read", "write"],
     drawings: ["read"],   // เซลล์เปิดดูแบบ+สเปคได้ (ไม่แก้)
     floor_queue: ["read"],
+    calc_overrides: ["read", "write"],   // ชั้นทับค่าสูตรคิดราคา 4.0/ใบตัด (0134)
   },
   DESIGNER: {
     jobs: ["read", "write"], production: ["read"],
@@ -42,6 +44,7 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     stock: ["read"],
     drawings: ["read", "write"],   // ดีไซเนอร์ = คนเตรียมแบบ สแตมป์สเปคลงแบบได้ (0117)
     floor_queue: ["read"],
+    calc_overrides: ["read"],   // ชั้นทับค่าสูตรคิดราคา 4.0/ใบตัด (0134) — ดูได้ แก้ไม่ได้
   },
   PRODUCTION: {
     jobs: ["read"], production: ["read", "write"], issues: ["read", "write"], dashboard: ["read"],
@@ -50,6 +53,7 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     stock: ["read", "write"],
     drawings: ["read", "write"],   // ผลิตเตรียมแบบให้ช่างได้ (0117)
     floor_queue: ["read", "write"],   // ผลิต/ออฟฟิศ จัดคิวงานพื้น
+    calc_overrides: ["read", "write"],   // ชั้นทับค่าสูตรคิดราคา 4.0/ใบตัด (0134) — คนคุมสูตรผลิต/ใบตัดจริง
   },
   INSTALLER: {
     jobs: ["read"], production: ["read"], installation: ["read", "write"],
@@ -58,6 +62,7 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     stock: ["read"],
     drawings: ["read"],   // ช่างติดตั้งเปิดดูแบบ+สเปคได้ (ไม่แก้)
     floor_queue: ["read"],
+    calc_overrides: ["read"],   // ชั้นทับค่าสูตรคิดราคา 4.0/ใบตัด (0134) — ดูได้ แก้ไม่ได้
   },
   ACCOUNTING: {
     jobs: ["read"], "jobs:finance_fields": ["read"],
@@ -67,8 +72,9 @@ const MATRIX: Record<Role, Partial<Record<Resource, Action[]>>> = {
     stock: ["read", "write"],  // บัญชี = ผู้ดูแลต้นทุน/มูลค่าคงคลัง (ตั้งราคา + รวมรายการซ้ำแบบปรับจำนวน) — canPrice ผูก ACCOUNTING อยู่แล้ว
     drawings: ["read"],   // บัญชีเปิดดูแบบ+สเปคได้ (ไม่แก้)
     floor_queue: ["read"],
+    calc_overrides: ["read", "write"],   // ชั้นทับค่าสูตรคิดราคา 4.0/ใบตัด (0134) — บัญชีดูแลต้นทุน
   },
-  VIEWER: { jobs: ["read"], dashboard: ["read"] },
+  VIEWER: { jobs: ["read"], dashboard: ["read"], calc_overrides: ["read"] },
   // ช่างผลิต — เห็นแค่ตารางผลิต กดเช็คลิสต์ (production write ไว้มาร์ค production_sets)
   CHANG: { production: ["read", "write"] },
   // สโตร์ — เห็น "แค่เรื่องสโตร์เท่านั้น" (เช็คสต๊อก/สมุดสโตร์/ใบตัด-BOQ) ไม่เห็นคิว/ใบเสนอ/ผลิต/แบบ
