@@ -102,7 +102,10 @@ console.log("\n④ ทุกตัวเลือกใน dropdown 'รูป�
 {
   // รุ่นที่รู้อยู่แล้วว่ายังไม่แยกสูตร — รอเจ้าของเคาะว่าควรต่างกันตรงไหน (ห้ามเดาจำนวนเอง)
   //   ไม่ปิดเทสให้ผ่านมั่ว ๆ แต่กันไม่ให้รุ่นใหม่หลุดเข้ามาเพิ่ม
-  const KNOWN = new Set(["awning", "bar_grid_z", "roof_slide", "wall_corrugated"]);
+  //   awning     = ใบตัด FUJI ใช้แบบตัดเดียวกันทั้ง "เปิดข้าง/กระทุ้ง" → ราคาเท่ากันถูกแล้ว (ดู audit-form-options)
+  //   bar_grid_z = รุ่นกรอกราคา/ตร.ม. เอง (sellDirect) ไม่มีสูตรทุนให้เปลี่ยน
+  //   roof_slide = อ่าน form จริงที่ railLen แต่ค่าตั้งต้น กว้าง=ยื่น=150 เลยได้เลขเท่ากันพอดี
+  const KNOWN = new Set(["awning", "bar_grid_z", "roof_slide"]);
   const dead = [];
   for (const p of Object.values(PRODUCTS)) {
     if (!p.forms || p.forms.length < 2) continue;
@@ -119,6 +122,7 @@ console.log("\n④ ทุกตัวเลือกใน dropdown 'รูป�
   const fresh = dead.filter((s) => !KNOWN.has(s.split(" ")[0]));
   okTrue(`ไม่มีรุ่นใหม่ที่ dropdown รูปแบบไม่ทำอะไร (เจอ ${fresh.length})`, fresh.length === 0, fresh.join("\n       "));
   okTrue("velora ไม่มี dropdown รูปแบบหลอกตาแล้ว (จำนวนบานคุมอย่างเดียว)", !(PRODUCTS.velora.forms || []).length);
+  okTrue("wall_corrugated ไม่มี dropdown ลูกฟูก 1/2 ทาง (ไม่มีในไฟล์ไหนเลย)", !(PRODUCTS.wall_corrugated.forms || []).length);
   if (dead.length) console.log(`     (baseline เดิมที่รอเจ้าของเคาะ ${dead.length} รุ่น: ${dead.map((s) => s.split(" ")[0]).join(", ")})`);
 }
 

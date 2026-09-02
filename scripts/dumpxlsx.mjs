@@ -71,6 +71,22 @@ export function sheetList(zip) {
 const colOf = (ref) => (ref.match(/^[A-Z]+/) || ["A"])[0];
 const rowOf = (ref) => Number((ref.match(/\d+/) || [0])[0]);
 
+/** สูตรของชีต → [{row, cells:{A:"=...",B:"=..."}}] — ค่าที่เห็นในไฟล์เป็นแค่ "ผลลัพธ์ของขนาดตัวอย่าง"
+ *  ตอนพอร์ตสูตรเข้าเว็บต้องอ่านตัวสูตร ไม่ใช่ผลลัพธ์ ไม่งั้นได้เลขตายตัวของขนาดนั้นขนาดเดียว */
+export function readFormulas(zip, path) {
+  const xml = zip.get(path)?.toString("utf8") ?? "";
+  const rows = new Map();
+  for (const m of xml.matchAll(/<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)) {
+    const ref = (m[1].match(/r="([A-Z]+\d+)"/) || [])[1];
+    const f = (String(m[2] ?? "").match(/<f[^>]*>([\s\S]*?)<\/f>/) || [])[1];
+    if (!ref || f == null || f === "") continue;
+    const r = rowOf(ref);
+    if (!rows.has(r)) rows.set(r, {});
+    rows.get(r)[colOf(ref)] = "=" + dec(f);
+  }
+  return [...rows.entries()].sort((a, b) => a[0] - b[0]).map(([row, cells]) => ({ row, cells }));
+}
+
 /** ตารางเซลล์ของชีต → [{row, cells:{A:"..",B:".."}}] */
 export function readSheet(zip, path, ss) {
   const xml = zip.get(path)?.toString("utf8") ?? "";
@@ -107,7 +123,7 @@ export function openXlsx(file) {
 // ── CLI ──
 if (import.meta.url === `file://${process.argv[1]?.replace(/\\/g, "/")}` || process.argv[1]?.endsWith("dumpxlsx.mjs")) {
   const [file, arg] = process.argv.slice(2);
-  if (!file) { console.log("ใช้: node scripts/dumpxlsx.mjs <ไฟล์.xlsx> [ชีต] [--grep คำ]"); process.exit(1); }
+  if (!file) { console.log("ใช้: node scripts/dumpxlsx.mjs <ไฟล์.xlsx> [ชีต] [--grep คำ] [--formula]"); process.exit(1); }
   const x = openXlsx(file);
   const gi = process.argv.indexOf("--grep");
   const kw = gi > 0 ? process.argv[gi + 1] : null;
@@ -116,7 +132,7 @@ if (import.meta.url === `file://${process.argv[1]?.replace(/\\/g, "/")}` || proc
   } else {
     const targets = arg && arg !== "--grep" ? x.sheets.filter((s, i) => s.name === arg || String(i) === arg) : x.sheets;
     for (const s of targets) {
-      const rows = x.read(s.path);
+      const rows = process.argv.includes("--formula") ? readFormulas(x.zip, s.path) : x.read(s.path);
       const hit = kw ? rows.filter((r) => Object.values(r.cells).some((v) => String(v).includes(kw))) : rows;
       if (!hit.length) continue;
       console.log(`\n─── ${s.name} ───`);
