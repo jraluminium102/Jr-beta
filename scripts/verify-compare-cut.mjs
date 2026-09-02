@@ -190,10 +190,13 @@ console.log("\n═══ ④ ห้ามมีสูตร/ราคาฝั�
 //   เช็คต่อไปนี้จึงต้องเปลี่ยนไปดูไฟล์ใหม่ — ถ้าเช็คไฟล์เก่าที่กลายเป็น redirect ต่อ จะฟ้องผิดตัวทุกครั้ง
 {
   const lib = fs.readFileSync(path.join(ROOT, "src/lib/calculator40/compare-cut.ts"), "utf8");
-  const cli = fs.readFileSync(path.join(ROOT, "src/app/(app)/calculator40/link/LinkClient.tsx"), "utf8");
+  const cli = fs.readFileSync(path.join(ROOT, "src/app/(app)/calculator40/compare/CompareClient.tsx"), "utf8");
   const linkRows = fs.readFileSync(path.join(ROOT, "src/lib/calculator40/link-rows.ts"), "utf8");
-  const page = fs.readFileSync(path.join(ROOT, "src/app/(app)/calculator40/link/page.tsx"), "utf8");
-  const oldPage = fs.readFileSync(path.join(ROOT, "src/app/(app)/calculator40/compare/page.tsx"), "utf8");
+  // ⚠ 2 ก.ย.69 กลับทิศ: เจ้าของไม่เอาหน้า /link (แก้สูตรจากเว็บ ต้องมี migration 0134 ที่ไม่เคยลงจริง
+  //   กดแก้ทีไรก็เด้ง "ยังไม่ได้รัน migration") → ปิด /link ให้ redirect มา /compare
+  //   หน้าที่ใช้ตรวจจริงกลับมาเป็น /compare เหมือนเดิม เช็คข้างล่างจึงต้องดูไฟล์ /compare
+  const page = fs.readFileSync(path.join(ROOT, "src/app/(app)/calculator40/compare/page.tsx"), "utf8");
+  const oldPage = fs.readFileSync(path.join(ROOT, "src/app/(app)/calculator40/link/page.tsx"), "utf8");
 
   ok("ดึงสูตรคิดราคาจาก engine.mjs", lib.includes("from \"./engine.mjs\""), "");
   ok("ดึงสูตรใบตัดจาก cutlist/engine", lib.includes("computeCutList"), "");
@@ -201,14 +204,14 @@ console.log("\n═══ ④ ห้ามมีสูตร/ราคาฝั�
   ok("ดึงรายการอุปกรณ์จากตัวเดียวกับหน้าคิดราคา", lib.includes("cutHardwareLines"), "");
   ok("ราคาสโตร์ใช้ชุดเดียวกับหน้าคิดราคา (buildPriceOverride)", page.includes("buildPriceOverride") && page.includes("applyPriceOverride"), "");
   ok("ดึงสต็อกแบบแบ่งหน้า (กัน cap 1,000 แถว)", page.includes("fetchAllPaged"), "");
-  ok("ต้องมีสิทธิ์ผ่าน RBAC calc_overrides ถึงเข้าได้", page.includes("calc_overrides") && page.includes("can("), "");
-  ok("หน้าเก่า /calculator40/compare redirect มาที่นี่ (กันบุ๊กมาร์กเจอ 404)",
-    oldPage.includes("redirect(") && oldPage.includes("/calculator40/link"), "");
+  ok("ต้องมีสิทธิ์เขียนถึงเข้าได้ (canWrite)", page.includes("canWrite"), "");
+  ok("หน้า /calculator40/link ที่ปิดไป redirect มาที่นี่ (ไม่ให้เจอปุ่มที่กดไม่ได้)",
+    oldPage.includes("redirect(") && oldPage.includes("/calculator40/compare"), "");
 
   // ตัวเลขราคาห้ามฝังในไฟล์ — ยอมเฉพาะเลขจัดหน้า/ปัดเศษ
   const litLib = [...lib.matchAll(/(?<![\w.])\d{3,}(?![\w])/g)].map((m) => m[0]).filter((x) => x !== "100" && x !== "1000");
   ok("compare-cut.ts ไม่มีเลขราคาฝังไว้", litLib.length === 0, litLib.join(","));
-  ok("ไม่ได้เขียนสูตรราคา/ค่าแรงเองในหน้าจอ (LinkClient.tsx)",
+  ok("ไม่ได้เขียนสูตรราคา/ค่าแรงเองในหน้าจอ (CompareClient.tsx)",
     !/\*\s*\(1\s*\+/.test(cli) && !cli.includes("pBase") && !cli.includes("ALUCODE"), "");
   // link-rows.ts เป็นชั้นประกอบใหม่ (แทน compare-cut.ts เดิม) — "ต้อง" เรียก computeCost/computeCutList ตรง ๆ ได้
   //   (มันคือชั้นที่ทำหน้าที่นั้นโดยตรง) ส่วน LinkClient.tsx (หน้าจอ) ไม่ควรเรียก computeCutList เอง
@@ -217,12 +220,15 @@ console.log("\n═══ ④ ห้ามมีสูตร/ราคาฝั�
     linkRows.includes("computeCost(") && linkRows.includes("cutInputFromRecipe"), "");
   ok("LinkClient.tsx ไม่เรียก computeCutList ตรง ๆ (ให้ link-rows.ts ทำแทน)",
     !cli.includes("computeCutList("), "");
-  ok("LinkClient.tsx เรียก computeCost เฉพาะพรีวิวผลกระทบทุนก่อนเซฟ (มีคอมเมนต์กำกับ)",
-    cli.includes("computeCost(") && cli.includes("พรีวิวผลกระทบทุน"), "");
+  // หน้าจอต้องไม่คิดทุนเอง — ให้ compare-cut.ts เป็นตัวเรียก engine ที่เดียว (แก้ต้นทางที่เดียวเปลี่ยนทั้งเว็บ)
+  ok("CompareClient.tsx ไม่เรียก computeCost เอง (ให้ compare-cut.ts ทำ)",
+    !cli.includes("computeCost("), "");
   ok("มีทางเข้าจากหน้าคิดราคา",
-    fs.readFileSync(path.join(ROOT, "src/components/Calculator40Client.tsx"), "utf8").includes("/calculator40/link"), "");
+    fs.readFileSync(path.join(ROOT, "src/components/Calculator40Client.tsx"), "utf8").includes("href=\"/calculator40/compare\""), "");
+  ok("มีเมนูเข้าหน้านี้",
+    fs.readFileSync(path.join(ROOT, "src/components/Shell.tsx"), "utf8").includes("/calculator40/compare"), "");
   ok("โชว์ รหัส/ชื่อ/ราคา/จำนวน ทั้งสองฝั่ง",
-    cli.includes("รหัส") && cli.includes("คิดราคา") && cli.includes("ใบตัด") && cli.includes("฿/หน่วย"), "");
+    cli.includes("รหัส") && cli.includes("คิดราคา") && cli.includes("ใบตัด") && cli.includes("ราคา/หน่วย"), "");
 }
 
 // ── เสารับแรง F7951 (บานเลื่อน FUJI/ยูโร) — สูงเกิน 2.6 ม. ต้องมี ทั้งคิดราคาและใบตัด ──

@@ -958,7 +958,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
             ⚙️ แก้ราคา
           </button>
           {/* รวม "ตรวจผูกสโตร์" + "เทียบกับใบตัด" เป็นหน้าเดียวแล้ว (เจ้าของสั่ง 1 ก.ย.69) — 3 ช่องความจริงในตารางเดียว */}
-          <a href="/calculator40/link"
+          <a href="/calculator40/compare"
             className="press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold glass-soft text-ink-2">
             🔗 ลิงก์ สโตร์/ใบตัด/คิดราคา
           </a>

@@ -61,7 +61,7 @@ export default function WeightBackfillClient({ rows, counts, stockCount }: {
         <div className="flex items-center gap-2 flex-wrap">
           <h1 className="text-lg font-bold text-brand-dark">⚖️ เติมน้ำหนักเส้นอลูเข้าสโตร์</h1>
           <Link href="/stock" className="text-xs text-brand underline">← กลับสโตร์</Link>
-          <Link href="/calculator40/link" className="text-xs text-brand underline">ตรวจผูกสโตร์</Link>
+          <Link href="/calculator40/compare" className="text-xs text-brand underline">ตรวจผูกสโตร์</Link>
           <span className="ml-auto text-xs text-ink-3">สโตร์ {stockCount.toLocaleString("th-TH")} รายการ</span>
         </div>
         <p className="mt-1 text-xs text-ink-3">

@@ -20,7 +20,7 @@ const DOC_NAV: NavItem[] = [
   { href: "/quotation-checklist", icon: "clipboard", label: "ใบเสนอ · เช็คลิสต์" },
   { href: "/calculator", icon: "calculator", label: "เครื่องคิดราคา" },
   { href: "/calculator40", icon: "calculator", label: "คิดราคา 4.0" },
-  { href: "/calculator40/link", icon: "track", label: "ลิงก์ สโตร์↔ใบตัด↔คิดราคา" },
+  { href: "/calculator40/compare", icon: "track", label: "เทียบ คิดราคา ↔ ใบตัด ↔ สโตร์" },
   { href: "/floor-works", icon: "ruler", label: "คิดราคางานพื้น" },
   { href: "/billing-notes", icon: "banknote", label: "ใบวางบิล" },
   { href: "/receipts", icon: "receipt", label: "ใบเสร็จ/กำกับภาษี" },
