@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { calcItem, usesArea, baht, type Pricebook, type Product } from "@/lib/quick-quote/engine";
+import { calcItem, usesArea, tierFor, baht, type Pricebook, type Product } from "@/lib/quick-quote/engine";
 // เครื่องคิดงานพื้น — ใช้ engine เดิม (ลอกมาตรง ๆ ตามที่เจ้าของสั่ง)
 import { planFloor, draftItems, PILE_TYPES } from "@/lib/floor-calc/engine.mjs";
 
@@ -203,6 +203,8 @@ function CalcTab({ pb, cur, setCur }: { pb: Pricebook; cur: Quote; setCur: (q: Q
   const [extraPanels, setExtraPanels] = useState("0");
   const [tieredAddLabel, setTieredAddLabel] = useState("");
   const [colorAddName, setColorAddName] = useState("");
+  // ตัวเลือกต่อบาน (กระจก/สีโครง/คาดตาราง)
+  const [glassKey, setGlassKey] = useState(""); const [frameColorKey, setFrameColorKey] = useState(""); const [gridBaht, setGridBaht] = useState("");
   const [customName, setCustomName] = useState(""); const [customPrice, setCustomPrice] = useState("");
 
   const products = useMemo(() => {
@@ -214,15 +216,27 @@ function CalcTab({ pb, cur, setCur }: { pb: Pricebook; cur: Quote; setCur: (q: Q
   const isCustom = productKey === "custom";
   const num = (v: string) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
 
+  // ตัวเลือกต่อบาน — โชว์เฉพาะบาน/หน้าต่าง/กระจกเปลือย (มีกระจก+สีโครง+คาดตาราง)
+  const glassOpts = useMemo(() => pb.products.filter((p) => p.category === "กระจก (เปลี่ยน/เพิ่ม)"), [pb]);
+  const colorOpts = useMemo(() => pb.products.filter((p) => p.category === "สี/พื้นผิว (เพิ่ม)"), [pb]);
+  const showDoorOptions = !!product && (product.category === "ประตู/หน้าต่าง" || product.category === "กระจกเปลือย/ตู้");
+
   const result = useMemo(() => {
     if (!product) return null;
+    const areaNow = num(w) * num(h);
+    const glass = showDoorOptions ? glassOpts.find((g) => g.key === glassKey) : null;
+    const color = showDoorOptions ? colorOpts.find((c) => c.key === frameColorKey) : null;
+    const frameColorRate = color ? (tierFor(color.tiers, areaNow)?.price ?? color.flatRate ?? 0) : 0;
     return calcItem(product, {
       width: num(w), height: num(h), qty: num(qty) || 1,
       extraPanels: num(extraPanels), tieredAddLabel: tieredAddLabel || null, colorAddName: colorAddName || null,
+      glassRate: glass ? glass.flatRate ?? 0 : 0,
+      frameColorRate,
+      gridBaht: showDoorOptions ? num(gridBaht) : 0,
     });
-  }, [product, w, h, qty, extraPanels, tieredAddLabel, colorAddName]);
+  }, [product, w, h, qty, extraPanels, tieredAddLabel, colorAddName, glassKey, frameColorKey, gridBaht, showDoorOptions, glassOpts, colorOpts]);
 
-  const resetInputs = () => { setW(""); setH(""); setQty("1"); setExtraPanels("0"); setTieredAddLabel(""); setColorAddName(""); setCustomName(""); setCustomPrice(""); };
+  const resetInputs = () => { setW(""); setH(""); setQty("1"); setExtraPanels("0"); setTieredAddLabel(""); setColorAddName(""); setGlassKey(""); setFrameColorKey(""); setGridBaht(""); setCustomName(""); setCustomPrice(""); };
 
   const addLine = () => {
     if (isCustom) {
@@ -242,6 +256,11 @@ function CalcTab({ pb, cur, setCur }: { pb: Pricebook; cur: Quote; setCur: (q: Q
     if (q > 1) detailParts.push(`× ${q} ชุด`);
     if (result.panelAdd) detailParts.push("+เพิ่มบาน");
     if (colorAddName) detailParts.push(`+${colorAddName}`);
+    if (showDoorOptions) {
+      const g = glassOpts.find((x) => x.key === glassKey); if (g) detailParts.push(`+${g.name.slice(0, 24)}`);
+      const c = colorOpts.find((x) => x.key === frameColorKey); if (c) detailParts.push(`+${c.name.replace(/^เพิ่ม/, "")}`);
+      if (num(gridBaht) > 0) detailParts.push("+คาดตาราง");
+    }
     const label = [product.name, product.brand].filter(Boolean).join(" · ");
     setCur({ ...cur, lines: [...cur.lines, { id: uid(), productKey: product.key, label, detail: detailParts.join(" "), qty: q, perSet: result.perSet, total: result.total }] });
     resetInputs();
@@ -304,6 +323,20 @@ function CalcTab({ pb, cur, setCur }: { pb: Pricebook; cur: Quote; setCur: (q: Q
               <SelField label="สี / พื้นผิว" value={colorAddName} onChange={setColorAddName}
                 options={[{ v: "", t: "สีมาตรฐาน" }, ...product.colorAdds.map((a) => ({ v: a.name, t: `${a.name} (+${baht(a.amount)}/ตร.ม.)` }))]} />
             )}
+
+            {/* ── ตัวเลือกต่อบาน (บาน/หน้าต่าง) — กระจก / สีโครง / คาดตาราง ── */}
+            {showDoorOptions && (
+              <div className="space-y-2 rounded-xl bg-sky-50/60 p-2.5">
+                <div className="text-[11px] font-semibold text-sky-700">ตัวเลือกต่อบาน (ถ้ามี)</div>
+                <SelField label="เปลี่ยน/เพิ่มกระจก" value={glassKey} onChange={setGlassKey}
+                  options={[{ v: "", t: "กระจกมาตรฐาน (รวมในราคาแล้ว)" }, ...glassOpts.map((g) => ({ v: g.key, t: `${g.name} (+${baht(g.flatRate ?? 0)}/ตร.ม.)` }))]} />
+                <SelField label="สีโครงอลูมิเนียม" value={frameColorKey} onChange={setFrameColorKey}
+                  options={[{ v: "", t: "อบขาว/มาตรฐาน" }, ...colorOpts.map((c) => ({ v: c.key, t: c.name.replace(/^เพิ่ม/, "") }))]} />
+                <NumField label="คาดตาราง (กรอกยอดเพิ่ม บาท)" value={gridBaht} onChange={setGridBaht} />
+                <div className="text-[10px] text-slate-400">*คาดตารางไม่มีในไฟล์ราคาประเมิน — กรอกยอดที่จะบวกเอง</div>
+              </div>
+            )}
+
             {product.note && <div className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">💡 {product.note}</div>}
             {(product.min != null || product.unitNote) && (
               <div className="text-xs text-slate-400">

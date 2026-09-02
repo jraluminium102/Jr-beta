@@ -5,7 +5,7 @@
   "categories": [
     {
       "label": "ประตู/หน้าต่าง",
-      "count": 27
+      "count": 29
     },
     {
       "label": "กระจกเปลือย/ตู้",
@@ -13,7 +13,7 @@
     },
     {
       "label": "หลังคา",
-      "count": 16
+      "count": 18
     },
     {
       "label": "ระแนง/บังตา",
@@ -1012,6 +1012,22 @@
       "category": "ประตู/หน้าต่าง",
       "unit": "sqm",
       "priceMode": "per_sqm",
+      "name": "บานเฟี้ยม X-series ขั้นต่ำ 36,000 บ./ชุด ขาย ตรม. ละ 12,000 บาท +ราคาเสริมคานเหมือน ข้อ.5",
+      "brand": null,
+      "min": 36000,
+      "flatRate": 12000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": null
+    },
+    {
+      "key": "p23",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "priceMode": "per_sqm",
       "name": "บานดัดโค้งสลิม",
       "brand": null,
       "min": 50000,
@@ -1035,7 +1051,7 @@
       "note": null
     },
     {
-      "key": "p23",
+      "key": "p24",
       "category": "ประตู/หน้าต่าง",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1087,7 +1103,7 @@
       "note": null
     },
     {
-      "key": "p24",
+      "key": "p25",
       "category": "ประตู/หน้าต่าง",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1154,7 +1170,7 @@
       "note": null
     },
     {
-      "key": "p25",
+      "key": "p26",
       "category": "ประตู/หน้าต่าง",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1206,7 +1222,7 @@
       "note": null
     },
     {
-      "key": "p26",
+      "key": "p27",
       "category": "ประตู/หน้าต่าง",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1270,7 +1286,7 @@
       "note": null
     },
     {
-      "key": "p27",
+      "key": "p28",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1334,7 +1350,7 @@
       "note": null
     },
     {
-      "key": "p28",
+      "key": "p29",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1350,7 +1366,7 @@
       "note": null
     },
     {
-      "key": "p29",
+      "key": "p30",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1366,7 +1382,7 @@
       "note": null
     },
     {
-      "key": "p30",
+      "key": "p31",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1382,7 +1398,7 @@
       "note": null
     },
     {
-      "key": "p31",
+      "key": "p32",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1398,7 +1414,7 @@
       "note": null
     },
     {
-      "key": "p32",
+      "key": "p33",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1414,7 +1430,7 @@
       "note": null
     },
     {
-      "key": "p33",
+      "key": "p34",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1430,7 +1446,7 @@
       "note": null
     },
     {
-      "key": "p34",
+      "key": "p35",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1446,7 +1462,7 @@
       "note": null
     },
     {
-      "key": "p35",
+      "key": "p36",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1462,7 +1478,7 @@
       "note": null
     },
     {
-      "key": "p36",
+      "key": "p37",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1478,7 +1494,7 @@
       "note": null
     },
     {
-      "key": "p37",
+      "key": "p38",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1494,7 +1510,7 @@
       "note": null
     },
     {
-      "key": "p38",
+      "key": "p39",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1510,7 +1526,7 @@
       "note": null
     },
     {
-      "key": "p39",
+      "key": "p40",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1526,7 +1542,7 @@
       "note": null
     },
     {
-      "key": "p40",
+      "key": "p41",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1542,7 +1558,7 @@
       "note": null
     },
     {
-      "key": "p41",
+      "key": "p42",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1558,7 +1574,7 @@
       "note": null
     },
     {
-      "key": "p42",
+      "key": "p43",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1574,7 +1590,7 @@
       "note": null
     },
     {
-      "key": "p43",
+      "key": "p44",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1590,7 +1606,7 @@
       "note": null
     },
     {
-      "key": "p44",
+      "key": "p45",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1606,7 +1622,7 @@
       "note": null
     },
     {
-      "key": "p45",
+      "key": "p46",
       "category": "ผนัง/ฝ้า",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1622,7 +1638,7 @@
       "note": null
     },
     {
-      "key": "p46",
+      "key": "p47",
       "category": "ผนัง/ฝ้า",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1638,7 +1654,7 @@
       "note": null
     },
     {
-      "key": "p47",
+      "key": "p48",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1654,7 +1670,7 @@
       "note": null
     },
     {
-      "key": "p48",
+      "key": "p49",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1670,7 +1686,7 @@
       "note": null
     },
     {
-      "key": "p49",
+      "key": "p50",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1686,7 +1702,7 @@
       "note": null
     },
     {
-      "key": "p50",
+      "key": "p51",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1702,7 +1718,7 @@
       "note": null
     },
     {
-      "key": "p51",
+      "key": "p52",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1718,7 +1734,7 @@
       "note": null
     },
     {
-      "key": "p52",
+      "key": "p53",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1734,7 +1750,7 @@
       "note": null
     },
     {
-      "key": "p53",
+      "key": "p54",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1750,7 +1766,7 @@
       "note": null
     },
     {
-      "key": "p54",
+      "key": "p55",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1766,7 +1782,7 @@
       "note": null
     },
     {
-      "key": "p55",
+      "key": "p56",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1782,7 +1798,7 @@
       "note": null
     },
     {
-      "key": "p56",
+      "key": "p57",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1798,7 +1814,7 @@
       "note": null
     },
     {
-      "key": "p57",
+      "key": "p58",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1814,7 +1830,7 @@
       "note": null
     },
     {
-      "key": "p58",
+      "key": "p59",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1830,7 +1846,7 @@
       "note": null
     },
     {
-      "key": "p59",
+      "key": "p60",
       "category": "ประตู/หน้าต่าง",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1846,7 +1862,7 @@
       "note": null
     },
     {
-      "key": "p60",
+      "key": "p61",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1862,7 +1878,7 @@
       "note": null
     },
     {
-      "key": "p61",
+      "key": "p62",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1878,7 +1894,7 @@
       "note": null
     },
     {
-      "key": "p62",
+      "key": "p63",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1894,7 +1910,7 @@
       "note": null
     },
     {
-      "key": "p63",
+      "key": "p64",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1910,7 +1926,7 @@
       "note": null
     },
     {
-      "key": "p64",
+      "key": "p65",
       "category": "ผนัง/ฝ้า",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1926,7 +1942,7 @@
       "note": null
     },
     {
-      "key": "p65",
+      "key": "p66",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1942,7 +1958,7 @@
       "note": null
     },
     {
-      "key": "p66",
+      "key": "p67",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1958,7 +1974,7 @@
       "note": null
     },
     {
-      "key": "p67",
+      "key": "p68",
       "category": "สี/พื้นผิว (เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -1995,7 +2011,7 @@
       "note": null
     },
     {
-      "key": "p68",
+      "key": "p69",
       "category": "สี/พื้นผิว (เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2022,7 +2038,7 @@
       "note": null
     },
     {
-      "key": "p69",
+      "key": "p70",
       "category": "สี/พื้นผิว (เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2059,7 +2075,7 @@
       "note": null
     },
     {
-      "key": "p70",
+      "key": "p71",
       "category": "สี/พื้นผิว (เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2096,7 +2112,7 @@
       "note": null
     },
     {
-      "key": "p71",
+      "key": "p72",
       "category": "สี/พื้นผิว (เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2133,7 +2149,7 @@
       "note": null
     },
     {
-      "key": "p72",
+      "key": "p73",
       "category": "สี/พื้นผิว (เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2185,7 +2201,7 @@
       "note": null
     },
     {
-      "key": "p73",
+      "key": "p74",
       "category": "หลังคา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2222,7 +2238,7 @@
       "note": null
     },
     {
-      "key": "p74",
+      "key": "p75",
       "category": "หลังคา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2259,7 +2275,7 @@
       "note": null
     },
     {
-      "key": "p75",
+      "key": "p76",
       "category": "หลังคา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2296,7 +2312,7 @@
       "note": null
     },
     {
-      "key": "p76",
+      "key": "p77",
       "category": "หลังคา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2333,7 +2349,7 @@
       "note": null
     },
     {
-      "key": "p77",
+      "key": "p78",
       "category": "หลังคา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2370,7 +2386,7 @@
       "note": null
     },
     {
-      "key": "p78",
+      "key": "p79",
       "category": "หลังคา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2407,7 +2423,7 @@
       "note": null
     },
     {
-      "key": "p79",
+      "key": "p80",
       "category": "หลังคา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2444,7 +2460,7 @@
       "note": null
     },
     {
-      "key": "p80",
+      "key": "p81",
       "category": "หลังคา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2481,7 +2497,7 @@
       "note": null
     },
     {
-      "key": "p81",
+      "key": "p82",
       "category": "หลังคา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2518,7 +2534,7 @@
       "note": null
     },
     {
-      "key": "p82",
+      "key": "p83",
       "category": "หลังคา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2555,7 +2571,7 @@
       "note": null
     },
     {
-      "key": "p83",
+      "key": "p84",
       "category": "กระจก (เปลี่ยน/เพิ่ม)",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2587,7 +2603,7 @@
       "note": null
     },
     {
-      "key": "p84",
+      "key": "p85",
       "category": "หลังคา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2619,7 +2635,7 @@
       "note": "*คำนวณระยะยื่นที่ 1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6 เมตร"
     },
     {
-      "key": "p85",
+      "key": "p86",
       "category": "หลังคา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2651,7 +2667,7 @@
       "note": "*คำนวณระยะยื่นที่ 3, 6 เมตร"
     },
     {
-      "key": "p86",
+      "key": "p87",
       "category": "หลังคา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2683,7 +2699,7 @@
       "note": "*คำนวณระยะยื่นที่ 1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6 เมตร"
     },
     {
-      "key": "p87",
+      "key": "p88",
       "category": "หลังคา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2715,7 +2731,71 @@
       "note": "*คำนวณระยะยื่นที่ 1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6 เมตร"
     },
     {
-      "key": "p88",
+      "key": "p89",
+      "category": "หลังคา",
+      "unit": "sqm",
+      "priceMode": "per_sqm",
+      "name": "ชินโคไลท์ 10 มม. รุ่น Prime",
+      "brand": null,
+      "min": null,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 5,
+          "hi": 10,
+          "price": 14000
+        },
+        {
+          "lo": 10,
+          "hi": 15,
+          "price": 13500
+        },
+        {
+          "lo": 15,
+          "hi": null,
+          "price": 13000
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": "*คำนวณระยะยื่นที่ 3, 6 เมตร"
+    },
+    {
+      "key": "p90",
+      "category": "หลังคา",
+      "unit": "sqm",
+      "priceMode": "per_sqm",
+      "name": "ชินโคไลท์ 10 มม. รุ่น Grang",
+      "brand": null,
+      "min": null,
+      "flatRate": null,
+      "tiers": [
+        {
+          "lo": 5,
+          "hi": 10,
+          "price": 12600
+        },
+        {
+          "lo": 10,
+          "hi": 15,
+          "price": 12000
+        },
+        {
+          "lo": 15,
+          "hi": null,
+          "price": 11600
+        }
+      ],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
+      "note": "*คำนวณระยะยื่นที่ 3, 6 เมตร"
+    },
+    {
+      "key": "p91",
       "category": "หลังคา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2762,7 +2842,7 @@
       "note": null
     },
     {
-      "key": "p89",
+      "key": "p92",
       "category": "ผนัง/ฝ้า",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2789,7 +2869,7 @@
       "note": null
     },
     {
-      "key": "p90",
+      "key": "p93",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2805,7 +2885,7 @@
       "note": null
     },
     {
-      "key": "p91",
+      "key": "p94",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2838,7 +2918,7 @@
       "note": null
     },
     {
-      "key": "p92",
+      "key": "p95",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2854,7 +2934,7 @@
       "note": null
     },
     {
-      "key": "p93",
+      "key": "p96",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2883,7 +2963,7 @@
       "note": null
     },
     {
-      "key": "p94",
+      "key": "p97",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2899,7 +2979,7 @@
       "note": null
     },
     {
-      "key": "p95",
+      "key": "p98",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2928,7 +3008,7 @@
       "note": null
     },
     {
-      "key": "p96",
+      "key": "p99",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2944,7 +3024,7 @@
       "note": null
     },
     {
-      "key": "p97",
+      "key": "p100",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2973,7 +3053,7 @@
       "note": null
     },
     {
-      "key": "p98",
+      "key": "p101",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -2989,7 +3069,7 @@
       "note": null
     },
     {
-      "key": "p99",
+      "key": "p102",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3018,7 +3098,7 @@
       "note": null
     },
     {
-      "key": "p100",
+      "key": "p103",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3034,7 +3114,7 @@
       "note": null
     },
     {
-      "key": "p101",
+      "key": "p104",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3063,7 +3143,7 @@
       "note": null
     },
     {
-      "key": "p102",
+      "key": "p105",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3079,7 +3159,7 @@
       "note": null
     },
     {
-      "key": "p103",
+      "key": "p106",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3108,7 +3188,7 @@
       "note": null
     },
     {
-      "key": "p104",
+      "key": "p107",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3124,7 +3204,7 @@
       "note": null
     },
     {
-      "key": "p105",
+      "key": "p108",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3157,7 +3237,7 @@
       "note": null
     },
     {
-      "key": "p106",
+      "key": "p109",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3173,7 +3253,7 @@
       "note": null
     },
     {
-      "key": "p107",
+      "key": "p110",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3206,7 +3286,7 @@
       "note": null
     },
     {
-      "key": "p108",
+      "key": "p111",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3222,7 +3302,7 @@
       "note": null
     },
     {
-      "key": "p109",
+      "key": "p112",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3255,7 +3335,7 @@
       "note": null
     },
     {
-      "key": "p110",
+      "key": "p113",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3271,7 +3351,7 @@
       "note": null
     },
     {
-      "key": "p111",
+      "key": "p114",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3304,7 +3384,7 @@
       "note": null
     },
     {
-      "key": "p112",
+      "key": "p115",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3320,7 +3400,7 @@
       "note": null
     },
     {
-      "key": "p113",
+      "key": "p116",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3353,7 +3433,7 @@
       "note": null
     },
     {
-      "key": "p114",
+      "key": "p117",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3369,7 +3449,7 @@
       "note": null
     },
     {
-      "key": "p115",
+      "key": "p118",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3402,7 +3482,7 @@
       "note": null
     },
     {
-      "key": "p116",
+      "key": "p119",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3418,7 +3498,7 @@
       "note": null
     },
     {
-      "key": "p117",
+      "key": "p120",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3451,7 +3531,7 @@
       "note": null
     },
     {
-      "key": "p118",
+      "key": "p121",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3467,7 +3547,7 @@
       "note": null
     },
     {
-      "key": "p119",
+      "key": "p122",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3500,7 +3580,7 @@
       "note": null
     },
     {
-      "key": "p120",
+      "key": "p123",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3516,7 +3596,7 @@
       "note": null
     },
     {
-      "key": "p121",
+      "key": "p124",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3549,7 +3629,7 @@
       "note": null
     },
     {
-      "key": "p122",
+      "key": "p125",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3565,7 +3645,7 @@
       "note": null
     },
     {
-      "key": "p123",
+      "key": "p126",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3598,7 +3678,7 @@
       "note": null
     },
     {
-      "key": "p124",
+      "key": "p127",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3614,7 +3694,7 @@
       "note": null
     },
     {
-      "key": "p125",
+      "key": "p128",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3647,7 +3727,7 @@
       "note": null
     },
     {
-      "key": "p126",
+      "key": "p129",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3663,7 +3743,7 @@
       "note": null
     },
     {
-      "key": "p127",
+      "key": "p130",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3696,7 +3776,7 @@
       "note": null
     },
     {
-      "key": "p128",
+      "key": "p131",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3712,7 +3792,7 @@
       "note": null
     },
     {
-      "key": "p129",
+      "key": "p132",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3745,7 +3825,7 @@
       "note": null
     },
     {
-      "key": "p130",
+      "key": "p133",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3761,7 +3841,7 @@
       "note": null
     },
     {
-      "key": "p131",
+      "key": "p134",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3794,7 +3874,7 @@
       "note": null
     },
     {
-      "key": "p132",
+      "key": "p135",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3810,7 +3890,7 @@
       "note": null
     },
     {
-      "key": "p133",
+      "key": "p136",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3843,7 +3923,7 @@
       "note": null
     },
     {
-      "key": "p134",
+      "key": "p137",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3859,7 +3939,7 @@
       "note": null
     },
     {
-      "key": "p135",
+      "key": "p138",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3892,7 +3972,7 @@
       "note": null
     },
     {
-      "key": "p136",
+      "key": "p139",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3908,7 +3988,7 @@
       "note": null
     },
     {
-      "key": "p137",
+      "key": "p140",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3941,7 +4021,7 @@
       "note": null
     },
     {
-      "key": "p138",
+      "key": "p141",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3957,7 +4037,7 @@
       "note": null
     },
     {
-      "key": "p139",
+      "key": "p142",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -3990,7 +4070,7 @@
       "note": null
     },
     {
-      "key": "p140",
+      "key": "p143",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4006,7 +4086,7 @@
       "note": null
     },
     {
-      "key": "p141",
+      "key": "p144",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4039,7 +4119,7 @@
       "note": null
     },
     {
-      "key": "p142",
+      "key": "p145",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4055,7 +4135,7 @@
       "note": null
     },
     {
-      "key": "p143",
+      "key": "p146",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4088,7 +4168,7 @@
       "note": null
     },
     {
-      "key": "p144",
+      "key": "p147",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4104,7 +4184,7 @@
       "note": null
     },
     {
-      "key": "p145",
+      "key": "p148",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4137,7 +4217,7 @@
       "note": null
     },
     {
-      "key": "p146",
+      "key": "p149",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4153,7 +4233,7 @@
       "note": null
     },
     {
-      "key": "p147",
+      "key": "p150",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4186,7 +4266,7 @@
       "note": null
     },
     {
-      "key": "p148",
+      "key": "p151",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4202,7 +4282,7 @@
       "note": null
     },
     {
-      "key": "p149",
+      "key": "p152",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4235,7 +4315,7 @@
       "note": null
     },
     {
-      "key": "p150",
+      "key": "p153",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4251,7 +4331,7 @@
       "note": null
     },
     {
-      "key": "p151",
+      "key": "p154",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4284,7 +4364,7 @@
       "note": null
     },
     {
-      "key": "p152",
+      "key": "p155",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4300,7 +4380,7 @@
       "note": null
     },
     {
-      "key": "p153",
+      "key": "p156",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4333,7 +4413,7 @@
       "note": null
     },
     {
-      "key": "p154",
+      "key": "p157",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4349,7 +4429,7 @@
       "note": null
     },
     {
-      "key": "p155",
+      "key": "p158",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4382,7 +4462,7 @@
       "note": null
     },
     {
-      "key": "p156",
+      "key": "p159",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4398,7 +4478,7 @@
       "note": null
     },
     {
-      "key": "p157",
+      "key": "p160",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4431,7 +4511,7 @@
       "note": null
     },
     {
-      "key": "p158",
+      "key": "p161",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4447,7 +4527,7 @@
       "note": null
     },
     {
-      "key": "p159",
+      "key": "p162",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4480,7 +4560,7 @@
       "note": null
     },
     {
-      "key": "p160",
+      "key": "p163",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4496,7 +4576,7 @@
       "note": null
     },
     {
-      "key": "p161",
+      "key": "p164",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4529,7 +4609,7 @@
       "note": null
     },
     {
-      "key": "p162",
+      "key": "p165",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4545,7 +4625,7 @@
       "note": null
     },
     {
-      "key": "p163",
+      "key": "p166",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4578,7 +4658,7 @@
       "note": null
     },
     {
-      "key": "p164",
+      "key": "p167",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4594,7 +4674,7 @@
       "note": null
     },
     {
-      "key": "p165",
+      "key": "p168",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4627,7 +4707,7 @@
       "note": null
     },
     {
-      "key": "p166",
+      "key": "p169",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4643,7 +4723,7 @@
       "note": null
     },
     {
-      "key": "p167",
+      "key": "p170",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4676,7 +4756,7 @@
       "note": null
     },
     {
-      "key": "p168",
+      "key": "p171",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4692,7 +4772,7 @@
       "note": null
     },
     {
-      "key": "p169",
+      "key": "p172",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4725,7 +4805,7 @@
       "note": null
     },
     {
-      "key": "p170",
+      "key": "p173",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4741,7 +4821,7 @@
       "note": null
     },
     {
-      "key": "p171",
+      "key": "p174",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4774,7 +4854,7 @@
       "note": null
     },
     {
-      "key": "p172",
+      "key": "p175",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4790,7 +4870,7 @@
       "note": null
     },
     {
-      "key": "p173",
+      "key": "p176",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4823,7 +4903,7 @@
       "note": null
     },
     {
-      "key": "p174",
+      "key": "p177",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4839,7 +4919,7 @@
       "note": null
     },
     {
-      "key": "p175",
+      "key": "p178",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4872,7 +4952,7 @@
       "note": null
     },
     {
-      "key": "p176",
+      "key": "p179",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4888,7 +4968,7 @@
       "note": null
     },
     {
-      "key": "p177",
+      "key": "p180",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4921,7 +5001,7 @@
       "note": null
     },
     {
-      "key": "p178",
+      "key": "p181",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4954,7 +5034,7 @@
       "note": null
     },
     {
-      "key": "p179",
+      "key": "p182",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -4987,7 +5067,7 @@
       "note": null
     },
     {
-      "key": "p180",
+      "key": "p183",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -5003,7 +5083,7 @@
       "note": null
     },
     {
-      "key": "p181",
+      "key": "p184",
       "category": "ระแนง/บังตา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -5019,7 +5099,7 @@
       "note": null
     },
     {
-      "key": "p182",
+      "key": "p185",
       "category": "หลังคา",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -5066,7 +5146,7 @@
       "note": null
     },
     {
-      "key": "p183",
+      "key": "p186",
       "category": "ผนัง/ฝ้า",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -5103,7 +5183,7 @@
       "note": null
     },
     {
-      "key": "p184",
+      "key": "p187",
       "category": "ผนัง/ฝ้า",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -5140,7 +5220,7 @@
       "note": null
     },
     {
-      "key": "p185",
+      "key": "p188",
       "category": "กระจกเปลือย/ตู้",
       "unit": "panel",
       "priceMode": "flat_by_area",
@@ -5182,7 +5262,7 @@
       "note": "สีอื่นๆ ราคาเพิ่ม 1500 2000 2500 3000 3500"
     },
     {
-      "key": "p186",
+      "key": "p189",
       "category": "มุ้ง",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -5224,7 +5304,7 @@
       "note": null
     },
     {
-      "key": "p187",
+      "key": "p190",
       "category": "มุ้ง",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -5240,7 +5320,7 @@
       "note": null
     },
     {
-      "key": "p188",
+      "key": "p191",
       "category": "มุ้ง",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -5282,7 +5362,7 @@
       "note": null
     },
     {
-      "key": "p189",
+      "key": "p192",
       "category": "มุ้ง",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -5298,7 +5378,7 @@
       "note": null
     },
     {
-      "key": "p190",
+      "key": "p193",
       "category": "มุ้ง",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -5314,7 +5394,7 @@
       "note": null
     },
     {
-      "key": "p191",
+      "key": "p194",
       "category": "มุ้ง",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -5330,7 +5410,7 @@
       "note": null
     },
     {
-      "key": "p192",
+      "key": "p195",
       "category": "มุ้ง",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -5346,7 +5426,7 @@
       "note": null
     },
     {
-      "key": "p193",
+      "key": "p196",
       "category": "มุ้ง",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -5362,7 +5442,7 @@
       "note": null
     },
     {
-      "key": "p194",
+      "key": "p197",
       "category": "มุ้ง",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -5378,7 +5458,7 @@
       "note": null
     },
     {
-      "key": "p195",
+      "key": "p198",
       "category": "มุ้ง",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -5394,7 +5474,7 @@
       "note": null
     },
     {
-      "key": "p196",
+      "key": "p199",
       "category": "มุ้ง",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -5410,7 +5490,7 @@
       "note": null
     },
     {
-      "key": "p197",
+      "key": "p200",
       "category": "มุ้ง",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -5426,7 +5506,7 @@
       "note": null
     },
     {
-      "key": "p198",
+      "key": "p201",
       "category": "มุ้ง",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -5442,7 +5522,7 @@
       "note": null
     },
     {
-      "key": "p199",
+      "key": "p202",
       "category": "ประตู/หน้าต่าง",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -5458,7 +5538,7 @@
       "note": null
     },
     {
-      "key": "p200",
+      "key": "p203",
       "category": "ประตู/หน้าต่าง",
       "unit": "sqm",
       "priceMode": "per_sqm",
@@ -5471,6 +5551,22 @@
       "tieredAdds": [],
       "colorAdds": [],
       "unitNote": "ขั้นต่ำ",
+      "note": null
+    },
+    {
+      "key": "p204",
+      "category": "ประตู/หน้าต่าง",
+      "unit": "sqm",
+      "priceMode": "per_sqm",
+      "name": "ประตู Exhido Door (YKK แบบทึบ) ขาย 20,000 บาท/ตร.ม.",
+      "brand": null,
+      "min": null,
+      "flatRate": 20000,
+      "tiers": [],
+      "perPanelAdd": null,
+      "tieredAdds": [],
+      "colorAdds": [],
+      "unitNote": null,
       "note": null
     }
   ]

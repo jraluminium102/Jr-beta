@@ -49,7 +49,11 @@ export type CalcInput = {
   qty: number;      // จำนวนชุด/จุด (คูณท้ายสุด)
   extraPanels: number;   // จำนวนบานที่เพิ่ม (perPanelAdd) หรือ index ของ tieredAdds
   tieredAddLabel: string | null;  // เลือก "เพิ่ม N บาน" (tieredAdds)
-  colorAddName: string | null;    // เลือกสี/พื้นผิว (colorAdds)
+  colorAddName: string | null;    // เลือกสี/พื้นผิว (colorAdds ของสินค้า เช่น ระแนง)
+  // ── ตัวเลือกต่อบาน (กระจก/สีโครง/คาดตาราง) — caller หาเรตมาให้ (บ./ตร.ม.) · คาดตาราง = ยอดบาทตรง ๆ
+  glassRate?: number;        // เปลี่ยนกระจก บ./ตร.ม.
+  frameColorRate?: number;   // สีโครง บ./ตร.ม.
+  gridBaht?: number;         // คาดตาราง (ยอดเพิ่มเป็นบาท · ไม่มีในไฟล์ราคา)
 };
 
 export type CalcResult = {
@@ -60,6 +64,7 @@ export type CalcResult = {
   minApplied: boolean;
   panelAdd: number;
   colorAdd: number;
+  optionAdd: number;    // กระจก+สีโครง+คาดตาราง ต่อ 1 ชุด
   perSet: number;       // รวมต่อ 1 ชุด
   total: number;        // × qty
   note: string | null;
@@ -139,7 +144,14 @@ export function calcItem(p: Product, input: CalcInput): CalcResult {
     if (c) colorAdd = p.priceMode === "per_sqm" ? r2(area * c.amount) : c.amount;
   }
 
-  const perSet = r2(base + panelAdd + colorAdd);
+  // ตัวเลือกต่อบาน — กระจก/สีโครง คิด บ./ตร.ม. × พื้นที่ (เฉพาะรายการที่กรอกพื้นที่) · คาดตาราง = บาทตรง
+  const areaForOpt = usesArea(p) ? area : 0;
+  const glassAdd = r2(areaForOpt * (input.glassRate || 0));
+  const frameColorAdd = r2(areaForOpt * (input.frameColorRate || 0));
+  const gridAdd = r2(input.gridBaht || 0);
+  const optionAdd = r2(glassAdd + frameColorAdd + gridAdd);
+
+  const perSet = r2(base + panelAdd + colorAdd + optionAdd);
   return {
     area,
     unitLabel: UNIT_LABEL[p.unit],
@@ -148,6 +160,7 @@ export function calcItem(p: Product, input: CalcInput): CalcResult {
     minApplied,
     panelAdd,
     colorAdd,
+    optionAdd,
     perSet,
     total: r2(perSet * qty),
     note: p.note,

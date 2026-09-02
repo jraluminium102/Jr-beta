@@ -50,26 +50,40 @@ function main() {
   const products = [];
   let cur = null;
   let curId = null;
-  // เรตต่อ ตร.ม. ที่ซ่อนในชื่อ เช่น "…ราคา 2,500 บาท/ตร.ม." / "ขาย 3,000 บ./ตรม."
+  // เรตต่อ ตร.ม. ที่ซ่อนในชื่อ เช่น "…ราคา 2,500 บาท/ตร.ม." / "ขาย 3,000 บ./ตรม." / "ขาย ตรม. ละ 12,000"
   const rateFromName = (name) => {
-    const m = String(name).match(/(?:ราคา|ขาย)\s*([\d,]+)\s*(?:บาท|บ\.)\s*\/?\s*(?:ตร\.?\s*ม\.?|ตรม)/);
+    const s = String(name);
+    let m = s.match(/(?:ราคา|ขาย)\s*([\d,]+)\s*(?:บาท|บ\.)\s*\/?\s*(?:ตร\.?\s*ม\.?|ตรม|ตารางเมตร)/);
+    if (m) return num(m[1]);
+    m = s.match(/(?:ตร\.?\s*ม\.?|ตรม|ตารางเมตร)\s*ละ\s*([\d,]+)/); // "ตรม. ละ 12,000"
+    if (m) return num(m[1]);
+    m = s.match(/ขั้นต่ำ[^\d]*[\d,]+[^ก]*ขาย\s*ตรม\.?\s*ละ\s*([\d,]+)/); // "ขั้นต่ำ 36,000 ... ขาย ตรม. ละ 12,000"
+    if (m) return num(m[1]);
+    return null;
+  };
+  // ขั้นต่ำ/ชุด ที่ซ่อนในชื่อ เช่น "ขั้นต่ำ 36,000 บ./ชุด"
+  const minFromName = (name) => {
+    const m = String(name).match(/ขั้นต่ำ\s*([\d,]+)/);
     return m ? num(m[1]) : null;
   };
   const finalize = () => {
     if (!cur) return;
-    if (cur.tiers.length === 0 && cur.min != null) {
+    if (cur.tiers.length === 0) {
       const nameRate = rateFromName(cur.name);
-      if (nameRate != null && /ขั้นต่ำ/.test(cur.unitNote || "")) {
+      if (cur.min != null && nameRate != null && /ขั้นต่ำ/.test(cur.unitNote || "")) {
         // F="ขั้นต่ำ" → E คือ "ขั้นต่ำ/ชุด" ส่วนเรตจริง/ตร.ม. อยู่ในชื่อ
         cur.flatRate = nameRate;
-        // min เดิม (E) เก็บไว้เป็นขั้นต่ำ
-      } else {
+      } else if (cur.min != null) {
         // ไม่มี tier → flat rate บ./ตร.ม. (ใช้ E เป็นเรต)
         cur.flatRate = nameRate ?? cur.min;
         cur.min = null;
+      } else if (nameRate != null) {
+        // หัวแถวไม่มีช่อง E แต่ราคา/ตร.ม. อยู่ในชื่อ (เช่น Exhido 20,000/ตร.ม. · บานเฟี้ยม X 12,000/ตร.ม.)
+        cur.flatRate = nameRate;
+        cur.min = minFromName(cur.name); // ขั้นต่ำ/ชุด (ถ้าเขียนไว้ในชื่อ)
       }
     }
-    // สินค้าที่ไม่มีทั้ง tier และ price → เป็นหัวข้อ/โน้ต ไม่เก็บ
+    // สินค้าที่ไม่มีทั้ง tier และ price → เป็นหัวข้อ/โน้ต/alias ไม่เก็บ (finalize ทิ้งเอง)
     if (cur.tiers.length > 0 || cur.flatRate != null) products.push(cur);
     cur = null;
   };
@@ -109,10 +123,13 @@ function main() {
       cur = { name: A, brand: B || null, min: E, tiers: [], perPanelAdd: null, tieredAdds: [], unitNote: F || null, note: "", colorAdds: [] };
       curId = id;
     } else if (A && E == null) {
-      // หัวข้อ/โน้ต/alias — ปิดสินค้าก่อนหน้า, ไม่เริ่มใหม่ (แถวพวกนี้เป็นข้อความล้วน)
+      // หัวแถวไม่มีช่อง E — อาจเป็น (ก) สินค้าที่มี tier ตามล่าง (เช่น ชินโค Prime/Grang · หัวมีแต่ G note)
+      //   (ข) สินค้าที่ราคา/ตร.ม. อยู่ในชื่อ (Exhido/บานเฟี้ยม X) (ค) หัวข้อ/โน้ต/alias
+      //   → เริ่ม "สินค้าเผื่อ" ไว้ · finalize ทิ้งเองถ้าไม่มี tier และไม่มี flatRate (โน้ต/alias หลุด)
+      const id = A + "|" + B;
       finalize();
-      curId = null;
-      continue;
+      cur = { name: A, brand: B || null, min: null, tiers: [], perPanelAdd: null, tieredAdds: [], unitNote: F || null, note: "", colorAdds: [] };
+      curId = id;
     }
 
     // add-on (G/H) ผูกกับสินค้าปัจจุบัน
