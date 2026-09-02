@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 type Sb = { from: (t: string) => any };
 
 const SELECT =
-  "id, product_id, scope, match_key, set_sku, set_qty, set_len, set_price, is_added, item_name, unit, disabled, note, created_by, created_at, updated_at, reviewed_at, reviewed_by";
+  "id, product_id, scope, match_key, match_name, set_sku, set_qty, set_len, set_price, is_added, item_name, unit, disabled, note, created_by, created_at, updated_at, reviewed_at, reviewed_by";
 
 // GET /api/calc-overrides?product_id=sms_slide — รายการ override (ไม่ระบุ product_id = ทั้งหมด)
 export const GET = withRoute(async (req: Request) => {
@@ -40,6 +40,8 @@ const upsertSchema = z
     product_id: z.string().trim().min(1, "ต้องระบุรุ่น"),
     scope: z.enum(["calc", "cut"]),
     match_key: z.string().trim().min(1, "ต้องระบุรหัส/คีย์ของบรรทัด"),
+    // ⚠ ต้องมี — รหัสเดียวถูกใช้หลายบรรทัดในรุ่นเดียวกันได้ (0135) ไม่มี = แก้ได้แค่บรรทัดแรก
+    match_name: z.string().trim().max(200).optional().default(""),
     set_sku: z.string().trim().optional().nullable(),
     set_qty: z.string().trim().optional().nullable(),
     set_len: z.string().trim().optional().nullable(),
@@ -79,12 +81,14 @@ export const POST = withRoute(async (req: Request) => {
     .eq("product_id", body.product_id)
     .eq("scope", body.scope)
     .eq("match_key", body.match_key)
+    .eq("match_name", body.match_name ?? "")
     .maybeSingle();
 
   const row = {
     product_id: body.product_id,
     scope: body.scope,
     match_key: body.match_key,
+    match_name: body.match_name ?? "",
     set_sku: body.set_sku || null,
     set_qty: body.set_qty || null,
     set_len: body.set_len || null,
@@ -132,9 +136,9 @@ export const POST = withRoute(async (req: Request) => {
       const otherOverrides = (others ?? []) as LineOverride[];
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const beforeProducts = applyLineOverrides(PRODUCTS as Record<string, any>, otherOverrides);
+      const beforeProducts = applyLineOverrides(PRODUCTS as Record<string, any>, otherOverrides, "calc");
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const afterProducts = applyLineOverrides(PRODUCTS as Record<string, any>, [...otherOverrides, saved as LineOverride]);
+      const afterProducts = applyLineOverrides(PRODUCTS as Record<string, any>, [...otherOverrides, saved as LineOverride], "calc");
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const before = Number((computeCost(pb, (beforeProducts as any)[body.product_id], {}) as any)?.cost?.total) || 0;

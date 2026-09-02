@@ -3,6 +3,7 @@ import Calculator40Client from "@/components/Calculator40Client";
 import { buildPriceOverride, type StockRow } from "@/lib/calculator40/stock-link";
 import { fetchAllPaged } from "@/lib/supabase/fetch-all";
 import type { Customer } from "@/lib/types";
+import { CALC_OVERRIDE_SELECT, type OverrideRow } from "@/lib/calculator40/link-rows";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export default async function Calculator40Page() {
   const anyDb = supabase as unknown as { from: (t: string) => any };
   // ⚠ สต็อกต้องดึงแบบแบ่งหน้า — เกิน cap 1,000 แถว/query แล้ว (สต็อก ~1,800)
   //   ดึงครั้งเดียว = รหัสอลูหลังแถว 1,000 ไม่ได้ราคาสต็อก → คิดราคาด้วย pricebook เก่าเงียบๆ
-  const [{ data }, stock] = await Promise.all([
+  const [{ data }, stock, { data: overrides }] = await Promise.all([
     supabase
       .from("customers")
       .select("id, name, job, phone, address, contact_person")
@@ -29,6 +30,8 @@ export default async function Calculator40Page() {
         .order("id", { ascending: true })
         .range(f, t),
     ),
+    // override รหัส/จำนวน/ราคา จากหน้า /calculator40/link — ต้องทับสูตรจริงที่นี่ ไม่ใช่แค่หน้าลิงก์
+    anyDb.from("calc_line_overrides").select(CALC_OVERRIDE_SELECT).eq("scope", "calc") as Promise<{ data: OverrideRow[] | null }>,
   ]);
   const priceOverride = buildPriceOverride(stock);
   return (
@@ -37,6 +40,7 @@ export default async function Calculator40Page() {
         (data ?? []) as Pick<Customer, "id" | "name" | "job" | "phone" | "address" | "contact_person">[]
       }
       priceOverride={priceOverride}
+      lineOverrides={overrides ?? []}
     />
   );
 }

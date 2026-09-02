@@ -3,7 +3,7 @@
  *   ไม่มี override = คืนของเดิมเป๊ะ (deep-equal + reference เดิม) · มี override = เปลี่ยนตามที่สั่งเท่านั้น
  *   ไม่หลุดไปรุ่นอื่น/scope อื่น · สูตรพังต้องไม่ทำทั้งระบบล่ม
  */
-import { applyLineOverrides, lineKeyOf } from "../src/lib/calculator40/line-overrides.ts";
+import { applyLineOverrides, lineKeyOf, applyOverridesInPlace } from "../src/lib/calculator40/line-overrides.ts";
 
 let pass = 0, fail = 0;
 const ok = (name, got, want) => {
@@ -21,6 +21,8 @@ function makeCalcProducts() {
   return {
     sms_fake: {
       id: "sms_fake", name: "บานเลื่อนจำลอง",
+      // ⚠ ต้องมี vars — สูตรอ้างชื่อได้เฉพาะตัวแปรที่รุ่นนั้นประกาศ (ด่านกันรันโค้ดบนเซิร์ฟเวอร์)
+      vars: { F2: "P", F3: "2" },
       alu: [
         { name: "เฟรมบน", code: "B20001", price: 1235, kg: 6.86, seg: "W", count: "1" },
         { name: "เฟรมข้าง", code: "B20003", price: 1045, kg: 5.8, seg: "H", count: "2" },
@@ -272,8 +274,8 @@ console.log("\n═══ lineKeyOf() ═══");
     "[].constructor.constructor('return 1')()", '1;globalThis.y=1', "import('fs')",
     "this.constructor.constructor('return process')()", '`${process.env.X}`'];
   let c1 = 0, c2 = 0;
-  for (const e of CSAFE) { if (isSafeCalcExpr(e)) c1++; else console.log(`  ❌ สูตรคิดราคาปกติถูกปฏิเสธ: ${e}`); }
-  for (const e of CBAD) { if (!isSafeCalcExpr(e)) c2++; else console.log(`  🔴 สูตรคิดราคาอันตรายหลุด: ${e}`); }
+  for (const e of CSAFE) { if (isSafeCalcExpr(e, ["F6", "N", "bw"])) c1++; else console.log(`  ❌ สูตรคิดราคาปกติถูกปฏิเสธ: ${e}`); }
+  for (const e of CBAD) { if (!isSafeCalcExpr(e, ["F6", "N", "bw"])) c2++; else console.log(`  🔴 สูตรคิดราคาอันตรายหลุด: ${e}`); }
   console.log(`  ${c1 === CSAFE.length ? '✅' : '❌'} สูตรคิดราคาปกติผ่านได้ ${c1}/${CSAFE.length}`);
   console.log(`  ${c2 === CBAD.length ? '✅' : '🔴'} สูตรคิดราคาอันตรายถูกบล็อก ${c2}/${CBAD.length}`);
   if (c1 === CSAFE.length) pass++; else fail++;
@@ -295,5 +297,69 @@ console.log("\n═══ ⑭ onlyScope กันหลุดข้าม scope �
   okTrue("(อ้างอิง) ไม่ระบุ scope = ยังหลุดได้ — จึงต้องระบุเสมอตอนใช้จริง",
     leaky.sms_fake.hardware[0].price === 99999);
 }
-console.log(`\n═══ สรุปรวมทั้งไฟล์ (รวมด่าน scope): ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
+// ── ⑮ applyOverridesInPlace — mutate singleton ที่ PRODUCTS/CUT_SPEC_BY_ID ถูก import ตรง ๆ ทั่วเว็บ ──
+//   (Calculator40Client.tsx/CompareClient.tsx/AuditClient.tsx ใช้ import binding ตรง ๆ เปลี่ยน effProducts
+//   ไม่ได้ทุกจุด → ต้อง mutate singleton ในที่ ดู line-overrides.ts หัวไฟล์)
+console.log("\n═══ ⑮ applyOverridesInPlace (mutate singleton) ═══");
+{
+  const p = makeCalcProducts();
+  applyOverridesInPlace(p, [
+    { product_id: "sms_fake", scope: "calc", match_key: "B20001", set_sku: "B99999" },
+  ], "calc");
+  ok("mutate เข้า object เดิมตรง ๆ (ไม่ใช่คืนสำเนาใหม่)", p.sms_fake.alu[0].code, "B99999");
+
+  // เรียกซ้ำด้วย override ชุดใหม่ (ไม่มีตัวเก่าแล้ว) — ต้อง "คืนค่าเดิม" ของบรรทัดก่อนหน้า ไม่ใช่ค้างมั่ว
+  applyOverridesInPlace(p, [
+    { product_id: "euro_fake", scope: "calc", match_key: "F7980", set_price: 9999 },
+  ], "calc");
+  okTrue("override เก่าที่หายไปจากชุดใหม่ → คืนค่า pristine กลับ (ไม่ค้าง B99999)", p.sms_fake.alu[0].code === "B20001");
+  ok("override ชุดใหม่มีผลจริง", p.euro_fake.alu[0].price, 9999);
+
+  // scope คนละอันไม่ปนกัน (ทดสอบผ่าน object คนละตัว)
+  const c = makeCutSpecs();
+  applyOverridesInPlace(c, [
+    { product_id: "sms_fake_cut", scope: "cut", match_key: "B20041", set_len: "o.W - 1" },
+  ], "cut");
+  const line = c.sms_fake_cut.profiles.find((x) => x.code === "B20041");
+  okTrue("ใช้กับ dict คนละตัว (เช่น CUT_SPEC_BY_ID) ได้เหมือนกัน", line.len({ W: 100 }) === 99);
+
+  // ไม่มี overrides เลย → ไม่ throw ไม่เปลี่ยนอะไร
+  const p2 = makeCalcProducts();
+  let threw = false;
+  try { applyOverridesInPlace(p2, [], "calc"); applyOverridesInPlace(p2, null, "calc"); } catch { threw = true; }
+  okTrue("overrides ว่าง/null ไม่ throw ไม่เปลี่ยนอะไร", !threw && p2.sms_fake.alu[0].code === "B20001");
+}
+
+
+
+// ── ⑮ ด่านที่ QA รอบ 2 เจอ (1 ก.ย.69) — ห้ามถอย ────────────────────────────
+console.log("\n═══ ⑮ ช่องโหว่ที่ QA รอบ 2 เจอ ═══");
+{
+  const { isSafeCalcExpr: safe, pristineProducts } = await import('../src/lib/calculator40/line-overrides.ts');
+  // ① ReDoS ผ่าน global ที่ไม่ได้ประกาศ — new Function ตกไปหา global เอง
+  const GLOBALS = ['RegExp(String.fromCharCode(40,97,43,41,43,36)).test("aaa!")', 'String.fromCharCode(97)',
+    'Buffer.alloc(1)', 'Array(1e9).fill(0).length', 'Date.now()', 'JSON.stringify(1)',
+    'Object.keys(spec)', 'setTimeout(1)', 'globalThis.x', 'Reflect.get(spec,"a")'];
+  let g = 0;
+  for (const e of GLOBALS) { if (!safe(e, ["F2"])) g++; else console.log(`  🔴 global หลุด: ${e}`); }
+  okTrue(`บล็อก global ที่ไม่ได้ประกาศ ${g}/${GLOBALS.length}`, g === GLOBALS.length);
+
+  // ② สูตรจริงทุกบรรทัดในระบบต้องยังผ่าน (ไม่ใช่ปลอดภัยจนใช้งานไม่ได้)
+  const { PRODUCTS: PR } = await import('../src/lib/calculator40/products.mjs');
+  let tot = 0, rej = 0;
+  for (const pd of Object.values(PR)) {
+    const vars = Object.keys(pd.vars ?? {});
+    for (const grp of ['alu', 'hardware', 'consum']) for (const it of (pd[grp] || []))
+      for (const f of ['count', 'seg']) {
+        const v = it[f];
+        if (typeof v !== 'string' || !v.trim()) continue;
+        tot++; if (!safe(v, vars)) { rej++; if (rej <= 3) console.log(`  ✗ ${pd.id} ${it.name} ${f}=${v.slice(0,50)}`); }
+      }
+  }
+  okTrue(`สูตรจริงในระบบ ${tot} สูตร ผ่านด่านครบ (ปฏิเสธ ${rej})`, rej === 0);
+
+  // ③ pristineProducts — ฐานคำนวณ "ทุนก่อนแก้" ต้องไม่ใช่ของที่ถูก mutate ไปแล้ว
+  okTrue("pristineProducts คืน target เดิมถ้ายังไม่เคย mutate", pristineProducts(PR) === PR);
+}
+console.log(`\n═══ สรุปสุดท้าย: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);
