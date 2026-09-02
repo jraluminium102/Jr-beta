@@ -1,0 +1,230 @@
+/**
+ * build-quote-pricebook — แปลง "Data ไฟล์ราคาประเมิน (2026).xlsx" → src/lib/quick-quote/pricebook.json
+ *
+ * โครงไฟล์ต้นทาง (ชีต Index): Type(A) · Brand(B) · Lower(C) · Upper(D) · Price(E) · หน่วย(F) · addLabel(G) · addAmt(H)
+ *   · แถวมี C/D = ช่วงพื้นที่ (tier) ราคา E = บ./ตร.ม.
+ *   · แถวมี A+E ไม่มี C/D = ขั้นต่ำ บ./ชุด (ขึ้นสินค้าใหม่) — หรือถ้าไม่มี tier ตามหลัง = ราคา flat บ./ตร.ม.
+ *   · identity สินค้า = A + '|' + B ; แถวไม่มี A = สืบทอดสินค้าปัจจุบัน (แถว tier ล้วน)
+ *   · G="เพิ่มบานละ" → perPanelAdd ; G="เพิ่ม N บาน" → tieredAdds ; G ขึ้นต้น * = โน้ต
+ *   · แถวมี A ไม่มี E ไม่มี C/D = หัวข้อ/โน้ต/alias → ข้าม (ไม่เป็นสินค้า)
+ *
+ * รันซ้ำได้ · เจ้าของอัปเดต xlsx แล้วรันใหม่ = ราคาใหม่ทันที
+ */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { openXlsx } from "./dumpxlsx.mjs";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(__dirname, "..");
+const SRC = path.join(ROOT, "คิดราคา3.9", "Data ไฟล์ราคาประเมิน (2026).xlsx");
+const OUT = path.join(ROOT, "src", "lib", "quick-quote", "pricebook.json");
+
+const num = (v) => {
+  if (v == null || v === "") return null;
+  const n = Number(String(v).replace(/[, ]/g, ""));
+  return Number.isFinite(n) ? n : null;
+};
+const round = (n, d = 3) => Math.round(n * 10 ** d) / 10 ** d;
+
+// ── จัดหมวดจากชื่อ (keyword) ──
+function categoryOf(name, brand) {
+  const s = (name + " " + (brand || "")).toLowerCase();
+  const has = (...kw) => kw.some((k) => s.includes(k.toLowerCase()));
+  if (has("มุ้ง")) return "มุ้ง";
+  if (has("ระแนง", "บังตา", "เกล็ด", "ลูกฟูก", "คอมโพสิต")) return "ระแนง/บังตา"; // ก่อนหลังคา (ฝ้าระแนงหลังคา = ระแนง)
+  if (has("หลังคา", "เมทัลชีท", "ชินโค", "ไวนิล", "ดีไลท์", "โพลีตัน", "isowall", "เมทัล", "eps", "pu foam", "ลามิเนต lm", "กระจกลามิเนต lm")) return "หลังคา";
+  if (has("ผนัง", "สมาร์ทบอร์ด", "ยิปซั่ม", "ฝ้า")) return "ผนัง/ฝ้า";
+  // ⚠ ก่อนหมวดกระจก: บาน/ประตูหลายตัวมี "(กระจก…)" ในชื่อ → ต้องจับเป็นบาน ไม่ใช่กระจกเปลี่ยน
+  if (has("shower", "เปลือย", "ฝาตู้", "future", "ตู้อลู")) return "กระจกเปลือย/ตู้";
+  if (has("บาน", "ประตู", "กระทุ้ง", "เฟี้ยม", "ติดตาย", "pc door", "ดัดโค้ง", "exhido", "ventilation")) return "ประตู/หน้าต่าง";
+  if (has("เพิ่มสี", "อบสี", "ชุบสี", "ลายไม้", "ซาฮาร่า")) return "สี/พื้นผิว (เพิ่ม)";
+  // กระจก (วัสดุ) — เหลือเฉพาะที่เป็นกระจกจริง (ลามิเนต/อินซูเลท/reflective ที่ไม่ใช่หลังคา/บาน)
+  if (has("กระจก", "ลามิเนต", "อินซูเลท", "reflective", "เทมเปอร์")) return "กระจก (เปลี่ยน/เพิ่ม)";
+  return "ประตู/หน้าต่าง";
+}
+
+// หน่วยพื้นที่ (ทุกอย่างในไฟล์นี้คิด บ./ตร.ม. เว้นที่ระบุ F อื่น)
+function main() {
+  const x = openXlsx(SRC);
+  const sheet = x.sheets.find((s) => s.name === "Index") || x.sheets[0];
+  const rows = x.read(sheet.path);
+
+  const products = [];
+  let cur = null;
+  let curId = null;
+  // เรตต่อ ตร.ม. ที่ซ่อนในชื่อ เช่น "…ราคา 2,500 บาท/ตร.ม." / "ขาย 3,000 บ./ตรม." / "ขาย ตรม. ละ 12,000"
+  const rateFromName = (name) => {
+    const s = String(name);
+    let m = s.match(/(?:ราคา|ขาย)\s*([\d,]+)\s*(?:บาท|บ\.)\s*\/?\s*(?:ตร\.?\s*ม\.?|ตรม|ตารางเมตร)/);
+    if (m) return num(m[1]);
+    m = s.match(/(?:ตร\.?\s*ม\.?|ตรม|ตารางเมตร)\s*ละ\s*([\d,]+)/); // "ตรม. ละ 12,000"
+    if (m) return num(m[1]);
+    m = s.match(/ขั้นต่ำ[^\d]*[\d,]+[^ก]*ขาย\s*ตรม\.?\s*ละ\s*([\d,]+)/); // "ขั้นต่ำ 36,000 ... ขาย ตรม. ละ 12,000"
+    if (m) return num(m[1]);
+    return null;
+  };
+  // ขั้นต่ำ/ชุด ที่ซ่อนในชื่อ เช่น "ขั้นต่ำ 36,000 บ./ชุด"
+  const minFromName = (name) => {
+    const m = String(name).match(/ขั้นต่ำ\s*([\d,]+)/);
+    return m ? num(m[1]) : null;
+  };
+  const finalize = () => {
+    if (!cur) return;
+    if (cur.tiers.length === 0) {
+      const nameRate = rateFromName(cur.name);
+      if (cur.min != null && nameRate != null && /ขั้นต่ำ/.test(cur.unitNote || "")) {
+        // F="ขั้นต่ำ" → E คือ "ขั้นต่ำ/ชุด" ส่วนเรตจริง/ตร.ม. อยู่ในชื่อ
+        cur.flatRate = nameRate;
+      } else if (cur.min != null) {
+        // ไม่มี tier → flat rate บ./ตร.ม. (ใช้ E เป็นเรต)
+        cur.flatRate = nameRate ?? cur.min;
+        cur.min = null;
+      } else if (nameRate != null) {
+        // หัวแถวไม่มีช่อง E แต่ราคา/ตร.ม. อยู่ในชื่อ (เช่น Exhido 20,000/ตร.ม. · บานเฟี้ยม X 12,000/ตร.ม.)
+        cur.flatRate = nameRate;
+        cur.min = minFromName(cur.name); // ขั้นต่ำ/ชุด (ถ้าเขียนไว้ในชื่อ)
+      }
+    }
+    // สินค้าที่ไม่มีทั้ง tier และ price → เป็นหัวข้อ/โน้ต/alias ไม่เก็บ (finalize ทิ้งเอง)
+    if (cur.tiers.length > 0 || cur.flatRate != null) products.push(cur);
+    cur = null;
+  };
+
+  for (const { cells: c } of rows) {
+    const A = (c.A || "").trim();
+    const B = (c.B || "").trim();
+    const C = num(c.C), D = num(c.D), E = num(c.E);
+    const F = (c.F || "").trim();
+    const G = (c.G || "").trim();
+    const H = num(c.H);
+    const hasTier = C != null || D != null;
+
+    // ข้าม header ตาราง
+    if (A === "Type" && B === "Brand") continue;
+
+    // แถวขึ้นต้น "+" = ตัวเลือกสี/พื้นผิวของสินค้าปัจจุบัน (เช่น ระแนง +เทาซาฮาร่า) ไม่ใช่สินค้าเดี่ยว
+    if (A.startsWith("+") && !hasTier) {
+      if (cur && E != null) cur.colorAdds.push({ name: A.replace(/^\+\s*/, "").trim(), amount: E });
+      continue;
+    }
+
+    if (hasTier) {
+      // แถวช่วงพื้นที่ — ถ้ามี A และ identity เปลี่ยน = สินค้าใหม่ที่ขึ้นด้วย tier เลย (เช่น PC door 4บาน)
+      const id = A ? A + "|" + B : curId;
+      if (A && id !== curId) {
+        finalize();
+        cur = { name: A, brand: B || null, min: null, tiers: [], perPanelAdd: null, tieredAdds: [], unitNote: F || null, note: "", colorAdds: [] };
+        curId = id;
+      }
+      if (!cur) continue; // tier ลอยไม่มีเจ้าของ — ข้าม
+      if (E != null) cur.tiers.push({ lo: C ?? 0, hi: D ?? null, price: E });
+    } else if (A && E != null) {
+      // แถวขึ้นสินค้าใหม่ (มีขั้นต่ำ/flat)
+      const id = A + "|" + B;
+      finalize();
+      cur = { name: A, brand: B || null, min: E, tiers: [], perPanelAdd: null, tieredAdds: [], unitNote: F || null, note: "", colorAdds: [] };
+      curId = id;
+    } else if (A && E == null) {
+      // หัวแถวไม่มีช่อง E — อาจเป็น (ก) สินค้าที่มี tier ตามล่าง (เช่น ชินโค Prime/Grang · หัวมีแต่ G note)
+      //   (ข) สินค้าที่ราคา/ตร.ม. อยู่ในชื่อ (Exhido/บานเฟี้ยม X) (ค) หัวข้อ/โน้ต/alias
+      //   → เริ่ม "สินค้าเผื่อ" ไว้ · finalize ทิ้งเองถ้าไม่มี tier และไม่มี flatRate (โน้ต/alias หลุด)
+      const id = A + "|" + B;
+      finalize();
+      cur = { name: A, brand: B || null, min: null, tiers: [], perPanelAdd: null, tieredAdds: [], unitNote: F || null, note: "", colorAdds: [] };
+      curId = id;
+    }
+
+    // add-on (G/H) ผูกกับสินค้าปัจจุบัน
+    if (cur && G) {
+      if (/^\*/.test(G)) cur.note = (cur.note ? cur.note + " " : "") + G;
+      else if (/เพิ่มบานละ/.test(G) && H != null) cur.perPanelAdd = { label: G, amount: H };
+      else if (/เพิ่ม\s*\d+\s*บาน/.test(G) && H != null) cur.tieredAdds.push({ label: G, amount: H });
+      else if (H != null) cur.tieredAdds.push({ label: G, amount: H });
+      else cur.note = (cur.note ? cur.note + " " : "") + G;
+    }
+  }
+  finalize();
+
+  // ── ประกอบผลลัพธ์ + จัดหมวด ──
+  const catOrder = ["ประตู/หน้าต่าง", "กระจกเปลือย/ตู้", "หลังคา", "ระแนง/บังตา", "ผนัง/ฝ้า", "มุ้ง", "กระจก (เปลี่ยน/เพิ่ม)", "สี/พื้นผิว (เพิ่ม)"];
+  // หน่วยคิดราคา — ดูเฉพาะคอลัมน์ F (unitNote) เท่านั้น
+  //   ⚠ ห้ามเดาจากชื่อ: ชื่อมักมีโน้ต "3000 บ./เมตร", "ขาย X/บาน" ปนอยู่ → จับผิดหน่วย
+  const unitOf = (p) => {
+    const u = p.unitNote || "";
+    if (/ต่อบาน|\/\s*บาน/.test(u)) return "panel";
+    if (/ต่อชุด|\/\s*ชุด/.test(u)) return "set";
+    return "sqm";
+  };
+  // ชื่อที่เป็น "ช่วงความยาว" ล้วน (เช่น "1-5 ม.", "> 15 ม.") = เศษของหมวดราวกันตก/บันได
+  //   ที่หัวข้อ (กระจกราวกันตก/แบบติดตั้ง) ถูกตัดทิ้ง → เหลือชื่อซ้ำไม่มีความหมาย · คัดออก
+  //   (เซลล์ใช้ "กรอกเอง" สำหรับงานราวกันตก/บันได ซึ่งพบไม่บ่อย)
+  const isLenRangeName = (n) => /^\s*[<>]?\s*\d+(\.\d+)?\s*([-–]\s*\d+(\.\d+)?)?\s*ม\.?\s*$/.test(n);
+
+  let key = 0;
+  const clean = products.filter((p) => !isLenRangeName(p.name)).map((p) => {
+    const category = categoryOf(p.name, p.brand);
+    const unit = unitOf(p);
+    // per_sqm = ราคา/ตร.ม.×พื้นที่ · flat_by_area = เลือกพื้นที่ได้ราคาต่อชุด (unit≠sqm + มี tier) · per_unit = ต่อหน่วย×จำนวน
+    const priceMode = unit === "sqm" ? "per_sqm" : (p.tiers.length > 0 ? "flat_by_area" : "per_unit");
+    const tiers = p.tiers.map((t) => ({ lo: round(t.lo), hi: t.hi == null ? null : round(t.hi), price: t.price }));
+    // dedupe tieredAdds
+    const seen = new Set();
+    const tieredAdds = p.tieredAdds.filter((a) => { const k = a.label + a.amount; if (seen.has(k)) return false; seen.add(k); return true; });
+    return {
+      key: "p" + (++key),
+      category,
+      unit,
+      priceMode,
+      name: p.name,
+      brand: p.brand,
+      min: p.min,
+      flatRate: p.flatRate ?? null,
+      tiers,
+      perPanelAdd: p.perPanelAdd,
+      tieredAdds,
+      colorAdds: p.colorAdds || [],
+      unitNote: p.unitNote,
+      note: p.note || null,
+    };
+  });
+
+  // เตือน tier เพี้ยน (hi<lo / gap / overlap) — ดักพิมพ์ผิดในไฟล์ต้นฉบับ (เช่น 1.35 ที่ควรเป็น 13.5)
+  const warns = [];
+  for (const p of clean) {
+    for (let i = 0; i < p.tiers.length; i++) {
+      const t = p.tiers[i], nx = p.tiers[i + 1];
+      if (t.hi != null && t.hi < t.lo) warns.push(`${p.name}: ช่วง ${t.lo}-${t.hi} hi<lo (พิมพ์ผิด?)`);
+      if (nx && t.hi != null && Math.abs(t.hi - nx.lo) > 0.011) warns.push(`${p.name}: ช่องว่าง/ทับ ${t.hi}→${nx.lo}`);
+    }
+  }
+
+  const categories = catOrder
+    .filter((cat) => clean.some((p) => p.category === cat))
+    .map((cat) => ({ label: cat, count: clean.filter((p) => p.category === cat).length }));
+
+  const out = {
+    version: "ราคาประเมิน 2026 R1",
+    source: "Data ไฟล์ราคาประเมิน (2026).xlsx",
+    builtAt: new Date().toISOString().slice(0, 10),
+    categories,
+    products: clean,
+  };
+  fs.mkdirSync(path.dirname(OUT), { recursive: true });
+  fs.writeFileSync(OUT, JSON.stringify(out, null, 2), "utf8");
+
+  console.log(`✓ เขียน ${OUT}`);
+  console.log(`  สินค้า ${clean.length} รายการ · ${categories.length} หมวด`);
+  for (const cat of categories) console.log(`    - ${cat.label}: ${cat.count}`);
+  if (warns.length) {
+    console.log(`\n  ⚠ tier น่าสงสัย ${warns.length} จุด (เช็คไฟล์ต้นฉบับ):`);
+    warns.forEach((w) => console.log(`    · ${w}`));
+  }
+  // verify ตัวอย่างที่รู้ค่าจาก docx
+  const smsSlide = clean.find((p) => p.name.includes("บานเลื่อน") && p.brand === "SMS");
+  const casement = clean.find((p) => p.name === "บานเปิด" && p.brand === "EURO");
+  console.log("\n  ── verify ──");
+  if (smsSlide) console.log(`  บานเลื่อน SMS: min=${smsSlide.min} tiers=${smsSlide.tiers.length} (คาด min 6500, 8 ช่วง)`);
+  if (casement) console.log(`  บานเปิด EURO: min=${casement.min} perPanelAdd=${casement.perPanelAdd?.amount} tier@2.0-2.4=${casement.tiers.find((t) => t.lo === 2)?.price} (คาด min? +บาน 5000, 7500)`);
+}
+main();
