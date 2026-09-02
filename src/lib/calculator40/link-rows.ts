@@ -174,9 +174,21 @@ const norm = (s: unknown) => String(s ?? "").replace(/[\s\-–—()"'·.]/g, "")
 const val = (f: any, o: any): any => { try { return typeof f === "function" ? f(o) : f; } catch { return ""; } };
 const n2 = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v)) ? Math.round(v * 100) / 100 : null;
 
-type Sample = { w: number; h: number; p: number; form: string; label: string };
+export type Sample = { w: number; h: number; p: number; form: string; label: string };
 // สุ่มหลายขนาด/รูปแบบต่อรุ่น (ไม่งั้นของที่ใช้เฉพาะบางรูปแบบออกมา 0 แล้วดูเหมือน "ไม่ต้องทำ")
 //   คุมจำนวนไม่ให้เกิน 6 ชุดต่อรุ่น — หน้านี้คำนวณสด SSR ทุกครั้งที่โหลด (ต่างจาก gen-store-link-csv.mjs ที่รันออฟไลน์ได้ไม่จำกัดเวลา)
+/** รูปแบบ + ช่วงจำนวนบานที่รุ่นนี้รองรับ — หน้าจอเอาไปทำ dropdown ให้ผู้ใช้เลือกขนาดเองได้ */
+export function caseOptionsOf(p: any): { forms: string[]; minP: number; maxP: number; defaults: { w: number; h: number; p: number }; defForm: string } {
+  const d = p?.defaults ?? { w: 150, h: 150, p: 1 };
+  return {
+    forms: (p?.forms && p.forms.length ? p.forms : [p?.defForm].filter(Boolean)) as string[],
+    minP: Number(p?.minP) || 1,
+    maxP: Number(p?.maxP) || Number(d.p) || 1,
+    defaults: { w: d.w, h: d.h, p: d.p || 1 },
+    defForm: p?.defForm ?? "",
+  };
+}
+
 function samplesOf(p: any): Sample[] {
   const d = p.defaults || { w: 150, h: 150, p: 1 };
   const forms: string[] = (p.forms && p.forms.length ? p.forms : [p.defForm]).slice(0, 3);
@@ -372,13 +384,13 @@ function buildProductRows(p: any, PB: any, cutSpecsById: Record<string, any>): R
  * สร้างแถวของ "ทุกรุ่น" — products ต้อง apply override (ทั้ง calc/cut) มาก่อนแล้ว
  * PB ต้องเป็น pricebook ที่ทับราคาสโตร์ไว้แล้ว (buildPriceOverride/applyPriceOverride) — ราคาชุดเดียวกับหน้าคิดราคาจริง
  */
-export function buildLinkRowsWithPricebook(products: Record<string, any>, PB: any, cutSpecsById: Record<string, any>): LinkRow[] {
+export function buildLinkRowsWithPricebook(products: Record<string, any>, PB: any, cutSpecsById: Record<string, any>, only?: { productId: string; sample: Sample } | null): LinkRow[] {
   const out: LinkRow[] = [];
   for (const p of Object.values(products) as any[]) {
     if (!p || !p.id) continue;
     if (p.id === "sms_slide") continue;   // รุ่นเก่าที่ถูกแทนแล้ว — เว้นเหมือน gen-store-link-csv.mjs
     let raw: RawRow[];
-    try { raw = buildProductRows(p, PB, cutSpecsById); } catch { continue; }
+    try { raw = buildProductRows(p, PB, cutSpecsById, only && only.productId === p.id ? only.sample : null); } catch { continue; }
     if (!raw.length) continue;
 
     // นับรหัสซ้ำในรุ่นเดียวกัน (0135 ยังไม่รัน → override แก้ได้แค่บรรทัดแรกของรหัสที่ซ้ำ)

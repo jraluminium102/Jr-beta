@@ -26,7 +26,9 @@ import { PRODUCTS } from "@/lib/calculator40/products.mjs";
 import PRICEBOOK from "@/lib/calculator40/pricebook.json";
 import { applyPriceOverride, type PriceOverride } from "@/lib/calculator40/stock-link";
 import { applyLineOverrides, isSafeCalcExpr, pristineProducts, type LineOverride } from "@/lib/calculator40/line-overrides";
-import { STATUS_LABEL, explainRow, type LinkRowFull, type LinkRowStatus, type LinkStockRow } from "@/lib/calculator40/link-rows";
+import { STATUS_LABEL, explainRow, caseOptionsOf, buildLinkRowsWithPricebook, attachStockAndOverrides,
+  type LinkRowFull, type LinkRowStatus, type LinkStockRow } from "@/lib/calculator40/link-rows";
+import { CUT_SPEC_BY_ID } from "@/lib/cutlist/products";
 import StockDrawer from "./StockDrawer";
 
 /* ── ป้ายสถานะ 7 แบบ — อีโมจิ+คำมาคู่กันเสมอ (คำชุดเดียวกับรายงาน CSV เดิม ห้ามเปลี่ยน) ── */
@@ -74,6 +76,15 @@ export default function LinkClient({
 }) {
   const router = useRouter();
   const pb = useMemo(() => applyPriceOverride(JSON.parse(JSON.stringify(PRICEBOOK)), priceOverride), [priceOverride]);
+  // override ทั้งหมดที่โหลดมากับหน้า (ทั้ง calc/cut ทุกรุ่น) — ใช้ตอนคิดแถวใหม่เองฝั่ง browser
+  const allOverrides: LineOverride[] = useMemo(() => {
+    const uniq = new Map<number, LineOverride>();
+    for (const r of rows) {
+      if (r.override) uniq.set(r.override.id, r.override);
+      if (r.cutOverride) uniq.set(r.cutOverride.id, r.cutOverride);
+    }
+    return [...uniq.values()];
+  }, [rows]);
 
   // ── ผลิตภัณฑ์ 54 รุ่น + ความคืบหน้าต่อรุ่น (จากข้อมูลทุกแถวที่เซิร์ฟเวอร์คำนวณมาให้) ──
   const productList = useMemo(() => {
@@ -89,6 +100,23 @@ export default function LinkClient({
   }, [rows]);
 
   const [prodId, setProdId] = useState<string>(() => productList.find((p) => p.urgent > 0)?.id ?? productList[0]?.id ?? "");
+
+  // ── ขนาด/รูปแบบที่ผู้ใช้กรอกเอง (เจ้าของท้วง 1 ก.ย.69: ต้องระบุเองได้ ขนาดมีผลต่อของที่ใช้) ──
+  //   ว่าง = ใช้ชุดตัวอย่างที่เซิร์ฟเวอร์สุ่มให้ (เหมือนเดิม) · กรอกแล้ว = คิดใหม่เฉพาะเคสนั้นฝั่ง browser
+  const caseOpt = useMemo(() => caseOptionsOf((PRODUCTS as Record<string, any>)[prodId]), [prodId]);
+  const [useOwnCase, setUseOwnCase] = useState(false);
+  const [cw, setCw] = useState("");
+  const [ch, setCh] = useState("");
+  const [cp, setCp] = useState("");
+  const [cform, setCform] = useState("");
+  // รีเซ็ตค่าเมื่อเปลี่ยนรุ่น (ค่าเริ่มต้น = ขนาดดีฟอลต์ของรุ่นนั้น)
+  const caseKey = `${prodId}`;
+  const [lastProd, setLastProd] = useState(caseKey);
+  if (lastProd !== caseKey) {
+    setLastProd(caseKey);
+    setCw(String(caseOpt.defaults.w)); setCh(String(caseOpt.defaults.h));
+    setCp(String(caseOpt.defaults.p)); setCform(caseOpt.defForm);
+  }
 
   // ── ตัวกรอง ──
   const [selectedStatuses, setSelectedStatuses] = useState<Set<LinkRowStatus>>(new Set());
@@ -109,7 +137,23 @@ export default function LinkClient({
   const untestedRows = rows.filter((r) => r.status === "untested").length;
 
   // ── แถวของรุ่นที่เลือกอยู่ ──
-  const productRows = useMemo(() => rows.filter((r) => r.productId === prodId), [rows, prodId]);
+  //   ถ้าผู้ใช้กรอกขนาดเอง → คิดแถวของรุ่นนี้ใหม่ทั้งชุดฝั่ง browser (ใช้ engine ตัวเดียวกับเซิร์ฟเวอร์)
+  const productRows = useMemo(() => {
+    if (!useOwnCase) return rows.filter((r) => r.productId === prodId);
+    const w = Number(cw) || caseOpt.defaults.w, h = Number(ch) || caseOpt.defaults.h;
+    const pn = Number(cp) || caseOpt.defaults.p, fm = cform || caseOpt.defForm;
+    try {
+      const effP = applyLineOverrides(pristineProducts(PRODUCTS as Record<string, any>), allOverrides, "calc");
+      const effC = applyLineOverrides(CUT_SPEC_BY_ID as Record<string, any>, allOverrides, "cut");
+      const built = buildLinkRowsWithPricebook(effP, pb, effC, {
+        productId: prodId,
+        sample: { w, h, p: pn, form: fm, label: `${w}×${h} ${pn} บาน${fm ? " · " + fm : ""}` },
+      }).filter((r) => r.productId === prodId);
+      return attachStockAndOverrides(built, stock, allOverrides).map((r) => ({ ...r }));
+    } catch {
+      return rows.filter((r) => r.productId === prodId);   // คิดไม่ออก (ขนาดแปลก) → ถอยไปใช้ของเซิร์ฟเวอร์
+    }
+  }, [rows, prodId, useOwnCase, cw, ch, cp, cform, caseOpt, pb, stock, allOverrides]);
   const stockCategories = useMemo(() => [...new Set(stock.map((s) => s.category).filter(Boolean))].sort(), [stock]);
 
   const passRows = useMemo(() => productRows.filter((r) => r.status === "pass"), [productRows]);
@@ -427,6 +471,39 @@ export default function LinkClient({
               <div className="mt-1 text-[11px] text-amber-800">
                 แต่ละแถวบอกกำกับไว้ว่ามาจากแบบไหน — ขนาด/รูปแบบต่างกัน ของที่ใช้ก็ต่างกัน
               </div>
+              {/* กรอกขนาด/รูปแบบเองได้ — ตรวจงานจริงหน้างาน ไม่ใช่แค่ขนาดที่ระบบสุ่มให้ */}
+              <div className="mt-2 pt-2 border-t border-amber-200 flex flex-wrap items-end gap-2">
+                <label className="flex items-center gap-1.5 text-xs font-semibold text-amber-900">
+                  <input type="checkbox" checked={useOwnCase} onChange={(e) => setUseOwnCase(e.target.checked)}
+                    className="w-4 h-4 accent-[#b3151d]" />
+                  กรอกขนาดเอง
+                </label>
+                <label className="block"><span className="text-[10px] text-amber-800">กว้าง (ซม.)</span>
+                  <input value={cw} onChange={(e) => setCw(e.target.value)} type="number" disabled={!useOwnCase}
+                    className="block w-20 min-h-[34px] rounded-lg bg-white/80 px-2 text-sm text-right tabular-nums ring-1 ring-amber-200 outline-none disabled:opacity-50" />
+                </label>
+                <label className="block"><span className="text-[10px] text-amber-800">สูง (ซม.)</span>
+                  <input value={ch} onChange={(e) => setCh(e.target.value)} type="number" disabled={!useOwnCase}
+                    className="block w-20 min-h-[34px] rounded-lg bg-white/80 px-2 text-sm text-right tabular-nums ring-1 ring-amber-200 outline-none disabled:opacity-50" />
+                </label>
+                <label className="block"><span className="text-[10px] text-amber-800">จำนวนบาน ({caseOpt.minP}–{caseOpt.maxP})</span>
+                  <input value={cp} onChange={(e) => setCp(e.target.value)} type="number" min={caseOpt.minP} max={caseOpt.maxP} disabled={!useOwnCase}
+                    className="block w-16 min-h-[34px] rounded-lg bg-white/80 px-2 text-sm text-right tabular-nums ring-1 ring-amber-200 outline-none disabled:opacity-50" />
+                </label>
+                {caseOpt.forms.length > 0 && (
+                  <label className="block"><span className="text-[10px] text-amber-800">รูปแบบ</span>
+                    <select value={cform} onChange={(e) => setCform(e.target.value)} disabled={!useOwnCase}
+                      className="block min-w-[150px] min-h-[34px] rounded-lg bg-white/80 px-2 text-sm ring-1 ring-amber-200 outline-none disabled:opacity-50">
+                      {caseOpt.forms.map((f) => <option key={f} value={f}>{f}</option>)}
+                    </select>
+                  </label>
+                )}
+                {useOwnCase && (
+                  <span className="text-[11px] text-amber-900 font-semibold">
+                    ← ตารางข้างล่างคิดใหม่ตามนี้แล้ว
+                  </span>
+                )}
+              </div>
             </div>
           );
         })()}
@@ -643,7 +720,8 @@ export default function LinkClient({
         ))}
         {editing && (
           <Card className="p-3 bg-amber-50/60 ring-1 ring-amber-300">
-            <MobileEditForm draft={draft} setDraft={setDraft} onCancel={cancelEdit} onConfirm={openConfirm} canSeeCost={canSeeCost} skuHit={skuHit} />
+            <MobileEditForm draft={draft} setDraft={setDraft} onCancel={cancelEdit} onConfirm={openConfirm} canSeeCost={canSeeCost} skuHit={skuHit}
+              isAluRow={!editing?.row || editing.row.section === "อลูมิเนียม" || editing.row.section === "มีแต่ในใบตัด (อลู)"} />
           </Card>
         )}
       </div>
@@ -762,8 +840,13 @@ function EditRow({
           )}
         </td>
         <td className={cn("px-2 py-2", G.cut)} colSpan={2}>
+          {/* ⚠ อุปกรณ์ไม่ได้ "ตัด" — ช่องนี้ต้องเป็นจำนวน (เจ้าของท้วง 1 ก.ย.69) */}
           <input value={draft.len} onChange={(e) => setDraft({ ...draft, len: e.target.value })}
-            className="w-full min-h-[38px] glass-soft rounded-lg px-2 text-sm text-right tabular-nums outline-none" placeholder="สูตรความยาวตัด (ซม.)" disabled={isAdd} />
+            className="w-full min-h-[38px] glass-soft rounded-lg px-2 text-sm text-right tabular-nums outline-none"
+            placeholder={isAluRow ? "สูตรความยาวตัด (ซม.)" : "สูตรจำนวนในใบตัด (ชิ้น/ชุด)"} disabled={isAdd} />
+          <div className="mt-0.5 text-[10px] leading-tight text-ink-3">
+            {isAluRow ? "ความยาวที่ต้องตัดต่อชิ้น" : "อุปกรณ์ไม่ได้ตัด — ใส่จำนวนที่ใบตัดเบิก"}
+          </div>
         </td>
         <td colSpan={canSeeCost ? 4 : 3} />
       </tr>
@@ -781,8 +864,8 @@ function EditRow({
 }
 
 function MobileEditForm({
-  draft, setDraft, onCancel, onConfirm, canSeeCost, skuHit,
-}: { draft: Draft; setDraft: (d: Draft) => void; onCancel: () => void; onConfirm: () => void; canSeeCost: boolean; skuHit?: LinkStockRow }) {
+  draft, setDraft, onCancel, onConfirm, canSeeCost, skuHit, isAluRow = true,
+}: { draft: Draft; setDraft: (d: Draft) => void; onCancel: () => void; onConfirm: () => void; canSeeCost: boolean; skuHit?: LinkStockRow; isAluRow?: boolean }) {
   return (
     <div className="space-y-2">
       {draft.isAdd && (
@@ -796,8 +879,13 @@ function MobileEditForm({
         : <p className="text-[11px] text-amber-800">⚠ ไม่มีรหัสนี้ในสโตร์</p>)}
       <input value={draft.qty} onChange={(e) => setDraft({ ...draft, qty: e.target.value })} placeholder="สูตรจำนวน"
         className="w-full min-h-[44px] glass-soft rounded-lg px-3 text-sm outline-none" />
-      <input value={draft.len} onChange={(e) => setDraft({ ...draft, len: e.target.value })} placeholder="สูตรความยาวตัด (ซม.)" disabled={draft.isAdd}
+      {/* อุปกรณ์ไม่ได้ตัด — ช่องนี้ต้องเป็นจำนวน (เจ้าของท้วง 1 ก.ย.69) */}
+      <input value={draft.len} onChange={(e) => setDraft({ ...draft, len: e.target.value })} disabled={draft.isAdd}
+        placeholder={isAluRow ? "สูตรความยาวตัด (ซม.)" : "สูตรจำนวนในใบตัด (ชิ้น/ชุด)"}
         className="w-full min-h-[44px] glass-soft rounded-lg px-3 text-sm outline-none disabled:opacity-40" />
+      <p className="text-[11px] text-ink-3 -mt-1">
+        {isAluRow ? "ความยาวที่ต้องตัดต่อชิ้น" : "อุปกรณ์ไม่ได้ตัด — ใส่จำนวนที่ใบตัดเบิก"}
+      </p>
       {draft.isAdd && canSeeCost && (
         <input value={draft.price} onChange={(e) => setDraft({ ...draft, price: e.target.value })} type="number" placeholder="ราคา/หน่วย"
           className="w-full min-h-[44px] glass-soft rounded-lg px-3 text-sm outline-none" />
