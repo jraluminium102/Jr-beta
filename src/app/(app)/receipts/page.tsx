@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile, canWrite } from "@/lib/auth";
+import { can } from "@/lib/rbac";
+import type { Role } from "@/lib/database.types";
 import { Card } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
@@ -44,6 +46,11 @@ export default async function ReceiptsPage({ searchParams }: { searchParams?: { 
           <Link href="/receipts/summary" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark border border-brand/30 bg-white/60">
             <Icon name="calendar" size={16} /> สรุปรายเดือน
           </Link>
+          {profile && can(profile.role as Role, "finance", "write") && (
+            <Link href="/receipts/new-standalone" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark border border-brand/30 bg-white/60">
+              <Icon name="plus" size={16} /> ออกใบใหม่ (ไม่ผูกงาน)
+            </Link>
+          )}
           {canWrite(profile?.role) && (
             <Link href="/receipts/new" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">
               <Icon name="plus" size={16} /> สร้างใบเสร็จ
