@@ -725,10 +725,14 @@ export function IssueReceiptButton({
         </div>
 
         <label className="block text-sm">
-          <span className="text-xs font-medium text-gray-500">รายการ (แก้ข้อความได้ · เว้นว่าง = ใช้ชื่องวดเดิม)</span>
-          <input value={itemDesc} onChange={(e) => setItemDesc(e.target.value)}
+          <span className="text-xs font-medium text-gray-500">รายการ (เลือกจากรายการ / พิมพ์เอง · เว้นว่าง = ใช้ชื่องวดเดิม)</span>
+          <input value={itemDesc} onChange={(e) => setItemDesc(e.target.value)} list="receipt-item-presets"
             placeholder="เช่น ค่างวดที่ 2 · ค่าแรงติดตั้ง (รวม VAT)"
             className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-brand" />
+          <datalist id="receipt-item-presets">
+            <option value="ค่าวัสดุกระจก อลูมิเนียม" />
+            <option value="ค่าแรงติดตั้งกระจก อลูมิเนียม" />
+          </datalist>
         </label>
         <label className="block text-sm">
           <span className="text-xs font-medium text-gray-500">หมายเหตุ (พิมพ์บนใบเสร็จ)</span>
