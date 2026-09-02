@@ -883,12 +883,15 @@ function EditRow({
  * ⚠ ผลตรวจอบเป็น JSON (scripts/audit-form-options.mjs --json) — แก้ products.mjs / ใบตัด ต้องรันใหม่
  *   verify-link-dedup ⑤ ดักให้ว่าลืมรันหรือเปล่า
  */
-type AuditItem = { id: string; product: string; specId: string; side: "cut" | "calc"; label: string; all: string[]; missing: string[]; rule: string; kind: string };
+type AuditItem = { id: string; product: string; specId: string; side: "cut" | "calc"; label: string; all: string[]; missing: string[]; rule: string; kind: string; changesBom?: boolean | null };
 
 function OptionAudit({ prodId }: { prodId: string }) {
   const [open, setOpen] = useState(false);
   const mine = useMemo(() => (AUDIT.items as AuditItem[]).filter((i) => i.id === prodId), [prodId]);
-  const gaps = mine.filter((i) => i.rule === "①");
+  // เรียง "เปลี่ยนของที่ใบตัดเบิกจริง" ขึ้นก่อน — ตัวที่เบิกของเหมือนเดิมไม่กระทบทุน รอได้
+  const gaps = mine.filter((i) => i.rule === "①")
+    .sort((a, b) => Number(b.changesBom === true) - Number(a.changesBom === true));
+  const hot = gaps.filter((i) => i.changesBom === true);
   const okOnly = mine.filter((i) => i.rule === "②");
   if (!mine.length) return null;
   return (
@@ -897,7 +900,8 @@ function OptionAudit({ prodId }: { prodId: string }) {
         <span className="text-sm font-semibold">
           {gaps.length ? "⚠️" : "✅"} ใบตัดถามอะไร · คิดราคาถามครบไหม
         </span>
-        {gaps.length > 0 && <Badge tone="amber">คิดราคายังไม่ถาม {gaps.length} เรื่อง</Badge>}
+        {hot.length > 0 && <Badge tone="red">กระทบของที่เบิก {hot.length}</Badge>}
+        {gaps.length - hot.length > 0 && <Badge tone="gray">ไม่กระทบ {gaps.length - hot.length}</Badge>}
         <span className="ml-auto text-xs text-ink-3">{open ? "ซ่อน ▲" : "ดู ▼"}</span>
       </button>
       {!open && gaps.length > 0 && (
@@ -918,6 +922,12 @@ function OptionAudit({ prodId }: { prodId: string }) {
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-xs font-semibold">{i.label}</span>
                 <Badge tone={i.kind === "ไม่มีเรื่องนี้เลย" ? "amber" : "yellow"}>{i.kind}</Badge>
+                {/* ลองคิดใบตัดทีละตัวเลือกแล้วเทียบของที่เบิก — ต่างกันจริงไหม ไม่ใช่เดา */}
+                {i.changesBom === true
+                  ? <Badge tone="red">เปลี่ยนของที่เบิก</Badge>
+                  : i.changesBom === false
+                    ? <Badge tone="gray">เบิกของเหมือนเดิม</Badge>
+                    : <Badge tone="gray">ตรวจไม่ได้</Badge>}
               </div>
               <div className="text-[11px] text-ink-2 leading-snug mt-0.5">
                 ใบตัดเลือกได้: <span className="font-mono">{i.all.join(" / ")}</span>

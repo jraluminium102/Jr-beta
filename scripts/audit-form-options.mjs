@@ -25,6 +25,7 @@ import fs from "node:fs";
 import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
 import { CUT_SPEC_BY_ID } from "../src/lib/cutlist/products.ts";
 import { cutInputFromRecipe } from "../src/lib/cutlist/from-recipe.ts";
+import { computeCutList } from "../src/lib/cutlist/engine.ts";
 
 const norm = (s) => String(s ?? "").replace(/[\s\-–—()"'·.]/g, "").toLowerCase();
 
@@ -43,7 +44,7 @@ function cutOptionsOf(p) {
   const groups = [];
   if (spec.rails?.length > 1) groups.push({ label: "ราง / คอนฟิก", choices: spec.rails });
   for (const o of spec.opts || []) if ((o.choices || []).length > 1) groups.push({ label: o.label || o.key, choices: o.choices });
-  return { specId: spec.id, specName: spec.name, groups };
+  return { specId: spec.id, specName: spec.name, groups, spec, rec };
 }
 
 /** ตัวเลือกฝั่งคิดราคาของรุ่นนี้ */
@@ -56,6 +57,28 @@ function calcOptionsOf(p) {
     groups.push({ label: so.label || so.key, choices: so.opts.map((o) => (Array.isArray(o) ? o[0] : o)) });
   }
   return groups;
+}
+
+/** ตัวเลือกนี้ "เปลี่ยนของที่ใบตัดเบิกจริง" ไหม — ลองคิดใบตัดทีละค่าแล้วเทียบ BOM
+ *  ⚠ ต้องเรียก computeCutList (engine จริง) ไม่ใช่เรียกฟังก์ชัน qty เอง
+ *    เพราะอุปกรณ์บางตัวรับ (o, ctx) เช่น สักหลาดที่อ่านความยาวโปรไฟล์อื่น — เรียกเองจะ throw
+ *    แล้วถ้า catch รวมทั้งกลุ่มจะได้ผลเท่ากันหมด = สรุปผิดว่า "ไม่กระทบ" (พลาดมาแล้วรอบหนึ่ง) */
+function changesBom(p, spec, rec, label, choices) {
+  let key = label === "ราง / คอนฟิก" ? "rail" : null;
+  if (!key) for (const o of spec.opts || []) if ((o.label || o.key) === label) key = o.key;
+  if (!key) return null;
+  const sig = (r) => JSON.stringify([
+    (r.profiles || r.rows || []).map((x) => `${x.code}|${x.len}|${x.qty}`),
+    (r.hardware || []).map((x) => `${x.sku}|${x.qty}`),
+  ]);
+  const seen = new Set();
+  let bad = 0;
+  for (const v of choices) {
+    try { seen.add(sig(computeCutList(spec, { ...(rec.input || {}), [key]: v }, rec.multiplier || 1))); }
+    catch { bad++; }
+  }
+  if (bad === choices.length) return null;      // คิดไม่ออกทุกค่า = ตอบไม่ได้ อย่าเดา
+  return seen.size > 1;
 }
 
 const items = [];
@@ -74,6 +97,7 @@ for (const p of Object.values(PRODUCTS)) {
       all: g.choices, missing,
       // ขาดทั้งกลุ่ม = คิดราคาไม่รู้จักเรื่องนี้เลย · ขาดบางตัว = มีอยู่แล้วแต่ตัวเลือกไม่ครบ
       rule: "①", kind: missing.length === g.choices.length ? "ไม่มีเรื่องนี้เลย" : "มีแล้วแต่ไม่ครบ",
+      changesBom: changesBom(p, cut.spec, cut.rec, g.label, g.choices),
     });
   }
   if (cut) for (const g of calc) {
@@ -94,9 +118,11 @@ console.log(`\nรุ่นที่ผูกใบตัดไว้และ�
 console.log(`  ① ใบตัดมี · คิดราคาไม่มี   ${one.length} กลุ่ม   ← ช่องโหว่จริง ต้องเติม`);
 console.log(`  ② คิดราคามี · ใบตัดไม่มี   ${two.length} กลุ่ม   ← ใช้ได้ ไม่ต้องกรอกในใบตัด\n`);
 
-console.log("═══ ① ใบตัดมี แต่คิดราคาไม่มี ═══");
-for (const i of one)
-  console.log(`  ${i.id.padEnd(16)} ${i.label.padEnd(24)} ${i.kind.padEnd(18)} ขาด: ${i.missing.join(" / ")}`);
+const hot = one.filter((i) => i.changesBom === true);
+console.log(`  ในนั้น "เปลี่ยนของที่ใบตัดเบิกจริง" ${hot.length} กลุ่ม — ที่เหลือเบิกของเหมือนเดิม (ใบตัดใช้บอกช่างเฉย ๆ)\n`);
+console.log("═══ ① ใบตัดมี แต่คิดราคาไม่มี — เรียงของจริงขึ้นก่อน ═══");
+for (const i of [...one].sort((a, b) => (b.changesBom === true) - (a.changesBom === true)))
+  console.log(`  ${i.changesBom === true ? "🔴 เปลี่ยนของ  " : i.changesBom === false ? "⚪ ของเหมือนเดิม" : "⚠ ตรวจไม่ได้  "} ${i.id.padEnd(14)} ${i.label.padEnd(24)} ขาด: ${i.missing.join(" / ")}`);
 
 if (process.argv.includes("--json")) {
   fs.writeFileSync("src/lib/calculator40/form-options-audit.json",
