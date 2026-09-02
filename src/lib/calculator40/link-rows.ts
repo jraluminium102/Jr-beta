@@ -79,6 +79,8 @@ export type LinkRow = {
   cutSpecId: string | null;
   /** รหัสนี้ถูกใช้ >1 บรรทัดในรุ่นเดียวกัน — แยกกันได้ด้วย match_name (มากับ 0134) */
   dupKeyInProduct: boolean;
+  /** รหัสสำรองของบรรทัดเดียวกัน (สลับตามสี/สเปค) ที่ตัวอย่างนี้ไม่ได้ใช้ — โชว์เป็นหมายเหตุ ไม่แตกแถวใหม่ */
+  altCodes: string[];
 };
 
 // ป้ายสถานะดิบ (เหมือน scripts/gen-store-link-csv.mjs LEVEL) → คีย์ป้าย 7 แบบที่ UI ใช้
@@ -171,6 +173,10 @@ function skuVariants(line: any, rawItem: any): string[] {
   return one ? [one] : [];
 }
 const norm = (s: unknown) => String(s ?? "").replace(/[\s\-–—()"'·.]/g, "").toLowerCase();
+
+/** ชื่อบรรทัดแบบ "ถอดตัวเลขออก" — ใช้รวมบรรทัดเดียวกันที่ชื่อเปลี่ยนตามขนาดตัวอย่าง
+ *  (เช่น Velora "ค่าอบสี (… × 12.92กก.)" กับ "× 19.39กก." = ของชิ้นเดียวกัน คนละขนาด) */
+const nameSkel = (s: unknown) => norm(s).replace(/[\d]+/g, "#");
 const val = (f: any, o: any): any => { try { return typeof f === "function" ? f(o) : f; } catch { return ""; } };
 const n2 = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v)) ? Math.round(v * 100) / 100 : null;
 
@@ -214,13 +220,16 @@ type RawRow = {
   /** id ของ CutSpec (คีย์ใน CUT_SPEC_BY_ID) — คนละ namespace กับ product_id ฝั่งคิดราคา (PRODUCTS)
    *  ⚠ ต้องส่งค่านี้ (ไม่ใช่ product_id ของ PRODUCTS) เวลาเขียน override scope='cut' ไม่งั้นเขียนผิดรุ่นเงียบ ๆ */
   cutSpecId: string | null;
+  /** รหัสอื่นของ "บรรทัดเดียวกัน" ที่สลับตามสี/สเปค และไม่ได้ถูกใช้ในตัวอย่างที่ลอง (โชว์เป็นหมายเหตุ ไม่แตกแถวใหม่) */
+  altCodes?: string[];
 };
 
-/** แถวของ "รุ่นเดียว" — ครบทุกบรรทัดในสูตร (มี "ยังไม่ได้ตรวจ" ต่อท้ายถ้าไม่โผล่ในตัวอย่างที่ลองเลย) */
+/** แถวของ "รุ่นเดียว"— ครบทุกบรรทัดในสูตร (มี "ยังไม่ได้ตรวจ" ต่อท้ายถ้าไม่โผล่ในตัวอย่างที่ลองเลย) */
 function buildProductRows(p: any, PB: any, cutSpecsById: Record<string, any>): RawRow[] {
   const merged = new Map<string, RawRow>();
 
   for (const SMP of samplesOf(p)) {
+    const keyOf = (code: string, name: string) => (code ? code.toUpperCase() : `ชื่อ:${name}`.toUpperCase());
     let calc: any;
     try {
       calc = computeCost(PB, p, { w: SMP.w, h: SMP.h, p: SMP.p || 1, form: SMP.form, color: "white", colorKey: "white" });
@@ -318,7 +327,7 @@ function buildProductRows(p: any, PB: any, cutSpecsById: Record<string, any>): R
         cutLenPerPiece, rawStatus, hasCutSpec: !!spec, cutSpecId: spec ? (spec as { id: string }).id : null,
       };
       void raw;
-      const key = String(row.calcSku || row.cutSku || `ชื่อ:${row.name}`).toUpperCase();
+      const key = keyOf(row.calcSku || row.cutSku, row.name);
       const cur = merged.get(key);
       if (!cur || (RANK0[row.rawStatus] ?? 99) < (RANK0[cur.rawStatus] ?? 99)) merged.set(key, row);
     }
@@ -337,7 +346,7 @@ function buildProductRows(p: any, PB: any, cutSpecsById: Record<string, any>): R
         cutSku: c.sku || "", cutQty: n2(c.qty), cutUnit: c.unit || "", cutLenPerPiece: null, rawStatus: st, hasCutSpec: true,
         cutSpecId: spec ? (spec as { id: string }).id : null,
       };
-      const key = String(row.cutSku || `ชื่อ:${row.name}`).toUpperCase();
+      const key = keyOf(row.cutSku, row.name);
       const cur = merged.get(key);
       if (!cur || (RANK0[row.rawStatus] ?? 99) < (RANK0[cur.rawStatus] ?? 99)) merged.set(key, row);
     });
@@ -350,7 +359,7 @@ function buildProductRows(p: any, PB: any, cutSpecsById: Record<string, any>): R
         cutSku: e.sku, cutQty: n2(e.qty), cutUnit: e.unit, cutLenPerPiece: e.qty > 0 ? n2(e.totalLen / e.qty) : null,
         rawStatus: st, hasCutSpec: true, cutSpecId: spec ? (spec as { id: string }).id : null,
       };
-      const key = String(row.cutSku || `ชื่อ:${row.name}`).toUpperCase();
+      const key = keyOf(row.cutSku, row.name);
       const cur = merged.get(key);
       if (!cur || (RANK0[row.rawStatus] ?? 99) < (RANK0[cur.rawStatus] ?? 99)) merged.set(key, row);
     }
@@ -358,16 +367,46 @@ function buildProductRows(p: any, PB: any, cutSpecsById: Record<string, any>): R
 
   const rows = [...merged.values()];
 
+  // ── ยุบแถว "ของชิ้นเดียวกัน แต่ชื่อมีตัวเลขของขนาดปนอยู่" (เจ้าของ 2 ก.ย.69: อย่าให้ซ้ำซ้อน) ──
+  //   เช่น Velora "ค่าอบสี (… × 12.92กก.)" กับ "× 19.39กก." = บรรทัดเดียวกัน คนละจำนวนบาน
+  //   ⚠ ยุบเฉพาะแถว "ไม่มีรหัสทั้ง 2 ฝั่ง" และมาจากตัวอย่าง "รูปแบบเดียวกัน" เท่านั้น
+  //     เพราะชื่อที่ต่างกันข้ามรูปแบบมักเป็นคนละของจริง (คอมโพสิต 3มม./4มม. · ซิปสกรีน Z100/Z120)
+  {
+    const formOf = (lbl: string) => { const i = lbl.indexOf(" · "); return i < 0 ? "" : lbl.slice(i + 3); };
+    const seen = new Map<string, RawRow>();
+    for (let i = rows.length - 1; i >= 0; i--) {
+      const r = rows[i];
+      if (r.calcSku || r.cutSku) continue;
+      const k = `${nameSkel(r.name)}|${formOf(r.sizeLabel)}`;
+      const cur = seen.get(k);
+      if (!cur) { seen.set(k, r); continue; }
+      // เก็บตัวที่สถานะ "ตรวจได้จริง" กว่า แล้วทิ้งอีกตัว
+      if ((RANK0[r.rawStatus] ?? 99) < (RANK0[cur.rawStatus] ?? 99)) {
+        rows.splice(rows.indexOf(cur), 1); seen.set(k, r);
+      } else rows.splice(i, 1);
+    }
+  }
+
   // ── ของที่ "ไม่โผล่เลยสักขนาดที่ลอง" → "ยังไม่ได้ตรวจ" (ไม่ใช่ "ไม่ต้องทำ" — เจ้าของท้วง 1 ก.ย.69) ──
   {
     const shown = new Set<string>();
     for (const r of rows) for (const c of [r.calcSku.toUpperCase(), r.cutSku.toUpperCase()]) if (c) shown.add(c);
+    // ⚠ ดักบรรทัดเดิมที่มี "หลายรหัส" (สลับตามสี/สเปค เช่น Velora บานพับ ดำ JR00560 / ขาว JR00561)
+    //   ตัวอย่างที่ลองใช้ได้สีเดียว → อีกรหัสเคยเด้งเป็นแถวใหม่ "ชื่อซ้ำ จำนวนว่าง" ทำเจ้าของงงว่าทำไมไม่ใส่จำนวนให้
+    //   (เจ้าของท้วง 2 ก.ย.69: "อย่าให้กรอกซ้ำซ้อน") → ไม่แตกแถวใหม่ แต่แปะเป็น "รหัสสำรอง" บนแถวเดิมแทน
+    const rowByName = new Map<string, RawRow>();
+    for (const r of rows) for (const nm of String(r.name).split(" + ")) {
+      const k = norm(nm.trim());
+      if (k && !rowByName.has(k)) rowByName.set(k, r);
+    }
     const seenX = new Set<string>();
     for (const g of ["alu", "hardware", "consum"]) for (const it of (p[g] || [])) {
       const codes = g === "alu" ? skuVariants({}, { sku: it.code }) : skuVariants({}, it);
       for (const c of codes) {
         if (!c || shown.has(c) || seenX.has(c)) continue;
         seenX.add(c);
+        const twin = rowByName.get(norm(String(it.name)));
+        if (twin) { (twin.altCodes ||= []).push(c); continue; }
         rows.push({
           section: g === "alu" ? "อลูมิเนียม" : "อุปกรณ์/สิ้นเปลือง", name: it.name, calcSku: c,
           calcPrice: n2(it.price), calcUnit: it.unit || "", calcQty: null, calcAmount: null,
@@ -410,6 +449,7 @@ export function buildLinkRowsWithPricebook(products: Record<string, any>, PB: an
         cutSku: r.cutSku, cutQty: r.cutQty, cutUnit: r.cutUnit, cutLenPerPiece: r.cutLenPerPiece,
         status: STATUS_MAP[r.rawStatus] ?? "fyi", sizeLabel: r.sizeLabel, hasCutSpec: r.hasCutSpec, cutSpecId: r.cutSpecId,
         dupKeyInProduct: (keyCount.get(matchKey.toUpperCase()) ?? 0) > 1,
+        altCodes: r.altCodes ?? [],
       });
     });
   }

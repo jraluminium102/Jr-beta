@@ -624,6 +624,13 @@ export default function LinkClient({
                             )}
                             {(r.override || r.cutOverride) && <Badge tone="sky">แก้แล้ว</Badge>}
                             {r.dupKeyInProduct && <span title="รหัสนี้ใช้ซ้ำหลายบรรทัดในรุ่นนี้ — ระบบแยกด้วยชื่อบรรทัดให้แล้ว แก้ได้ทีละบรรทัด"><Badge tone="gray">รหัสซ้ำ</Badge></span>}
+                            {/* บรรทัดเดียวมีหลายรหัส (สลับตามสี/สเปค) — เมื่อก่อนเด้งเป็นแถวใหม่จำนวนว่าง ทำให้ดูเหมือนระบบลืมใส่จำนวน */}
+                            {r.altCodes?.length > 0 && (
+                              <span className="rounded bg-ink-1/[0.05] px-1.5 py-0.5 text-[10px] text-ink-2"
+                                title="บรรทัดเดียวกันนี้ใช้รหัสอื่นได้ตามสี/สเปคที่เลือก — จำนวนเท่ากัน ไม่ต้องกรอกซ้ำ">
+                                รหัสตามสี/สเปค: <span className="font-mono">{r.altCodes.join(" · ")}</span>
+                              </span>
+                            )}
                           </div>
                         </td>
                         <td className={cn(num, G.calc, diff(qtyBad))}>{r.calcQty ?? "—"}</td>
