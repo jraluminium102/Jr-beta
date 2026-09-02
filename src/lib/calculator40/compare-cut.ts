@@ -14,7 +14,7 @@ import { computeCutList, type CutInput } from "../cutlist/engine.ts";
 import { CUT_SPEC_BY_ID } from "../cutlist/products.ts";
 import { cutInputFromRecipe } from "../cutlist/from-recipe.ts";
 import { cutHardwareLines, HANDLE_FIELDS, HW_FROM_CUTLIST } from "./hardware-from-cutlist.ts";
-import { cutAluLines, cutRoofConsumLines, cutUncodedLines, multiRoofArea, ALU_FROM_CUTLIST } from "./alu-from-cutlist.ts";
+import { cutAluLines, cutRoofConsumLines, cutUncodedLines, multiRoofArea, uncodedDisplayName, ALU_FROM_CUTLIST } from "./alu-from-cutlist.ts";
 import { RM } from "./products.mjs";
 import { stockColorOfCalc } from "./stock-link.ts";
 import { resolveAluColor } from "./alu-colors.ts";
@@ -52,6 +52,9 @@ export type HwRow = {
   /** ของสั่งตามงาน — ตั้งใจไม่ผูกสโตร์ ราคาอยู่ในสูตร */
   orderOnly?: boolean;
   cutQty: number; cutUnit: string;
+  /** ชื่อที่ "ไฟล์ตัดประกอบ" เขียนไว้จริง ๆ — โชว์ให้เห็นว่าของชิ้นนี้ในใบตัดเรียกว่าอะไร
+   *  ใช้ตอนไล่ผูกสโตร์: เห็นชื่อในไฟล์ + เห็นว่ามีรหัสหรือยัง จะได้รู้ว่าต้องไปผูกตัวไหน */
+  cutName?: string;
   status: "ตรง" | "จำนวนต่าง" | "มีแต่คิดราคา" | "มีแต่ใบตัด" | "ไม่มีรหัส" | "ไม่สต็อก สั่งใหม่" | "รอเติมราคา";
 };
 
@@ -269,6 +272,38 @@ export function compareCut(PB: any, inp: CompareInput) {
       cutQty: h.qty, cutUnit: h.unit, status: "มีแต่ใบตัด",
     });
   }
+  // ── แถวใบตัดที่ "ไม่มีรหัสสโตร์" ต้องขึ้นฝั่งใบตัดด้วย (เจ้าของสั่ง 2 ก.ย.69) ──
+  //   "ให้เขียนด้วยว่าในใบตัดมันเขียนว่าไร จะได้รู้ว่ามันผูกสโตร์ไหม
+  //    เพราะจุดประสงค์คือ อยากให้มันผูกสโตร์ทั้งหมด"
+  //   เดิมระบบทิ้งแถวพวกนี้ทั้งหมด (ยาง สักหลาด ราง แผ่นหลังคา) → ฝั่งใบตัดขึ้น 0
+  //   ทั้งที่ของมีอยู่จริงในไฟล์ ทำให้ดูเหมือน "ใบตัดไม่มี" ทั้งที่มี แค่ยังไม่ผูกรหัส
+  //   จับคู่กับฝั่งคิดราคาด้วยชื่อ (uncodedDisplayName แปลงชื่อไฟล์ → ชื่อที่คิดราคาเรียก)
+  //   เก็บชื่อดิบจากไฟล์ไว้ใน cutName ให้หน้าจอโชว์ว่า "ในใบตัดเขียนว่าอะไร"
+  // ⚠ เปิดเฉพาะกลุ่มหลังคา/กลาสเฮาส์ (รุ่นที่เส้นอลูมาจากใบตัดอยู่แล้ว — ตรวจชื่อสองฝั่งตรงกันแล้ว)
+  //   รุ่นอื่น (SlimLux/SMS/รางบน) ชื่อแถวใบตัดกับชื่อในสูตรยังเรียกไม่เหมือนกันอีกหลายตัว
+  //   เปิดหมดตอนนี้จะขึ้นแดงเพราะ "ชื่อไม่ตรง" ไม่ใช่ "ของไม่ตรง" → ต้องไล่ทำ mapping ทีละรุ่นก่อน
+  const showUncoded = !!ALU_FROM_CUTLIST[inp.prodId];
+  for (const r of (showUncoded ? (cut?.rows ?? []) : [])) {
+    const code = String((r as { code?: unknown }).code ?? "");
+    const qty = Number((r as { qty?: unknown }).qty) || 0;
+    if ((code && code !== "-") || qty <= 0) continue;
+    const raw = String((r as { name?: unknown }).name ?? "");
+    if (!raw) continue;
+    // ⚠ ข้าม "แผ่นหลังคา/ฝาครอบ" — สองฝั่งนับคนละหน่วยโดยธรรมชาติ เทียบเป็นตัวเลขไม่ได้
+    //   คิดราคานับ "แผ่นที่ซื้อ" (ไวนิลแผ่นยาว 7 ม. ตัดได้หลายแถบ) · ใบตัดนับ "แถบที่ต้องตัด"
+    //   ตัวอย่างจริงได้ 8 vs 38 — ไม่ใช่ของขาด แต่คนละหน่วย ถ้าเอามาเทียบจะขึ้นแดงหลอกทุกรุ่นหลังคา
+    //   (ของยังอยู่ในทุนครบทั้งสองฝั่ง — ดูบรรทัดแผ่นในตารางคิดราคาได้ตามปกติ)
+    if (/^(แผ่นหลังคา|ฝาครอบ)/.test(raw)) continue;
+    const shown = uncodedDisplayName(raw, { prodId: inp.prodId, material: String(opt.material ?? "") });
+    const key = `ไม่มีรหัส:${shown}`;
+    const e = bySku.get(key);
+    if (e) { e.cutQty = r2(e.cutQty + qty); e.cutName = e.cutName ?? raw; continue; }
+    bySku.set(key, {
+      sku: "", name: shown, calcQty: 0, calcPrice: 0, calcAmount: 0, calcUnit: "",
+      cutQty: r2(qty), cutUnit: "ชิ้น", cutName: raw, status: "มีแต่ใบตัด",
+    });
+  }
+
   const hardware: HwRow[] = [...bySku.values()].map((e) => {
     // โหมด B: รหัสที่ยังไม่มีราคา = งานรอทำ ไม่ใช่ของที่ "ไม่ตรง" → มาร์คไว้แก้ทีหลัง
     if (hwIntendCut && !calc.hwFromCutlist && (pendingSku.has(String(e.sku || "").toUpperCase()) || !e.sku))

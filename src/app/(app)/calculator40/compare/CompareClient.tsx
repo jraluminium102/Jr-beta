@@ -255,8 +255,17 @@ export default function CompareClient({ pb, stockCount }: { pb: any; stockCount:
                 <tbody>
                   {r.hardware.map((x: HwRow, i: number) => (
                     <tr key={(x.sku || x.name) + i} className="border-t border-line/60">
-                      <td className="p-2 font-mono text-xs">{x.sku || "—"}</td>
-                      <td className="text-xs">{x.name}</td>
+                      {/* ไม่มีรหัส = ยังไม่ผูกสโตร์ ขึ้นให้เห็นชัด ๆ (เป้าหมายคือผูกให้ครบทุกตัว) */}
+                      <td className="p-2 font-mono text-xs">
+                        {x.sku || <span className="font-sans text-orange-700">⚠ ยังไม่ผูกสโตร์</span>}
+                      </td>
+                      <td className="text-xs">
+                        {x.name}
+                        {/* ชื่อที่ไฟล์ตัดประกอบเขียนไว้จริง ๆ — เอาไว้ไล่หาว่าต้องผูกรหัสให้ตัวไหน */}
+                        {x.cutName && x.cutName !== x.name && (
+                          <div className="text-[11px] text-ink-3">ในใบตัดเขียนว่า “{x.cutName}”</div>
+                        )}
+                      </td>
                       <td className={cell + " text-right font-semibold"}>{x.calcQty || "—"}</td>
                       <td className={cell + " text-right font-semibold"}>{x.cutQty || "—"}</td>
                       <td className="px-2 text-xs">{x.calcUnit || x.cutUnit}</td>
