@@ -12,6 +12,8 @@ import LinkToSystemPanel, { type LinkableQuotation } from "./LinkToSystemPanel";
 import EnsureJobButton from "./EnsureJobButton";
 import { BILLING_STATUS_LABEL, type BillingNote, type BillingStatus } from "@/lib/types";
 import { can } from "@/lib/rbac";
+import { revWarning } from "@/lib/doc-revision";
+import AckRevisionButton from "./AckRevisionButton";
 import type { Role } from "@/lib/database.types";
 
 export const dynamic = "force-dynamic";
@@ -50,13 +52,26 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
 
   // ดึงใบเสนออ้างอิง — รหัส + ยอดก่อนภาษี(subtotal จริง) ใช้เป็นฐานปุ่ม "แก้ VAT/ส่วนลด"
   let refCode: string | null = null;
+  let quoteRev = 0;
   let quoteBase: { subtotal: number; discount_pct: number; vat_rate: number; wht_rate: number } | null = null;
   if (bn.quotation_id) {
-    const { data: q } = await supabase
-      .from("quotations").select("code, subtotal, discount_pct, vat_rate, wht_rate")
+    // + revision_no สำหรับป้าย "อ้าง Rev เก่า" (0127) — เผื่อ 0093 ยังไม่รัน → ถอยไป select แบบเดิม
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let q: any = null;
+    const r1 = await supabase
+      .from("quotations").select("code, subtotal, discount_pct, vat_rate, wht_rate, revision_no")
       .eq("id", bn.quotation_id)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .single<any>();
+    if (r1.error) {
+      const r2 = await supabase
+        .from("quotations").select("code, subtotal, discount_pct, vat_rate, wht_rate")
+        .eq("id", bn.quotation_id)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .single<any>();
+      q = r2.data;
+    } else q = r1.data;
+    quoteRev = Number(q?.revision_no) || 0;
     refCode = q?.code ?? null;
     if (q && Number(q.subtotal) > 0) {
       quoteBase = {
@@ -115,8 +130,22 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
     if (rr.installment_id != null) receiptByInst.set(Number(rr.installment_id), { id: Number(rr.id), code: rr.code });
   });
 
+  // ป้ายเตือน "ใบนี้อ้าง Rev เก่า" (0127) — เตือนอย่างเดียว ไม่ล็อกอะไรทั้งสิ้น
+  const rw = revWarning(bn as unknown as { source_revision_no?: number | null; ack_revision_no?: number | null }, quoteRev);
+
   return (
     <div className="space-y-5">
+      {rw.show && (
+        <div className="rounded-xl bg-amber-50 ring-1 ring-amber-300 px-4 py-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+          <span className="text-sm font-semibold text-amber-900">{rw.text}</span>
+          {refCode && (
+            <span className="text-xs text-amber-800">
+              (ใบเสนอ <span className="font-mono">{refCode}</span> ถูกแก้หลังออกบิลใบนี้ — ยอดในบิลไม่ได้เปลี่ยนตามให้)
+            </span>
+          )}
+          {writable && <AckRevisionButton id={bn.id} />}
+        </div>
+      )}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3">
           <Link href="/billing-notes" aria-label="ย้อนกลับ" className="press glass-soft w-9 h-9 rounded-xl inline-flex items-center justify-center text-brand-dark">

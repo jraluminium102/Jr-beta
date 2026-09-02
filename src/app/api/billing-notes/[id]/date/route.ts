@@ -35,19 +35,18 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
     .single<{ id: number; code: string; issue_date: string; status: string }>();
   if (e || !bn) return notFound("ไม่พบใบวางบิล");
   if (bn.status === "cancelled") return err("ใบวางบิลถูกยกเลิกแล้ว — แก้วันที่ไม่ได้", 409);
-  if (bn.status === "paid") return err("ใบวางบิลนี้ชำระครบแล้ว — แก้วันที่ไม่ได้", 409);
 
-  // มีใบเสร็จผูกอยู่ (ยังไม่ void) → ต้องจัดการใบเสร็จก่อน (กันวันที่บิล/ใบเสร็จไม่สอดคล้องกัน)
+  // ชำระแล้ว / มีใบเสร็จผูกอยู่ — ไม่บล็อกแล้ว (เจ้าของสั่ง 1 ก.ย.69 · 0127)
+  //   เดิมบังคับให้ไปจัดการใบเสร็จก่อน = ต้องรื้อเป็นทอด ๆ
+  //   ตอนนี้แก้ได้เลย แล้วคืนรายชื่อใบเสร็จที่วันที่อาจไม่สอดคล้องไปเตือนบนหน้าจอแทน
   const { data: activeRc } = await ctx.supabase
     .from("receipts")
-    .select("id, code")
+    .select("id, code, issue_date")
     .eq("billing_note_id", bn.id)
-    .eq("is_voided", false)
-    .limit(1);
-  if ((activeRc ?? []).length > 0) {
-    const rcCode = (activeRc as { id: number; code: string }[])[0].code;
-    return err(`มีใบเสร็จ ${rcCode} ผูกกับบิลนี้อยู่ — ต้องจัดการใบเสร็จก่อนจึงแก้วันที่บิลได้`, 409);
-  }
+    .eq("is_voided", false);
+  const warnReceipts = ((activeRc ?? []) as { code: string; issue_date: string }[])
+    .filter((r) => r.issue_date < newDate)     // ใบเสร็จลงวันก่อนวันบิล = ผิดลำดับ ต้องบอก
+    .map((r) => r.code);
 
   // tax-lock — กัน backdate เข้าเดือนที่ยื่นภาษีปิดแล้ว
   const lockBefore = await getTaxLockBefore();
@@ -71,7 +70,7 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
       oldValue: { code: bn.code, issue_date: bn.issue_date },
       newValue: { code: bn.code, issue_date: newDate },
     });
-    return ok({ code: bn.code, issue_date: newDate });
+    return ok({ code: bn.code, issue_date: newDate, warnReceipts });
   }
 
   // ข้ามเดือน — ออกเลขใหม่ตามเดือนของวันที่ใหม่ (เลขเดิมกลายเป็น gap — ยอมรับได้สำหรับ BL)
@@ -90,5 +89,5 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
     newValue: { code: newCode, issue_date: newDate },
   });
 
-  return ok({ code: newCode, issue_date: newDate });
+  return ok({ code: newCode, issue_date: newDate, warnReceipts });
 });
