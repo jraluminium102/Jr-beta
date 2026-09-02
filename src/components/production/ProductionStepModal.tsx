@@ -25,6 +25,8 @@ export type ProdRow = {
   producer_note?: string | null;
   cover_sheet_exists?: boolean;                                          // มีใบปะหน้าแล้วหรือยัง (0111) — ป้าย CoverSheetChip
   drawing_exists?: boolean;                                              // สแตมป์สเปคลงแบบแล้วหรือยัง (0117) — ป้าย DrawingChip
+  cover_sheet_rev_stale?: boolean;                                       // (0136) ใบเสนอถูก Rev หลังสร้างใบปะหน้า — เตือนบนชิป
+  drawing_rev_stale?: boolean;                                           // (0136) ใบเสนอถูก Rev หลังสร้าง/สแตมป์แบบ (แถวใดแถวหนึ่ง) — เตือนบนชิป
   measure_round_no?: number | null;                                      // รอบวัด (0130) — >1 = วัดซ้ำมาแล้ว
   job: {
     job_code: string; customer_name: string; customer_area: string | null; deposit_date: string | null;

@@ -6,7 +6,7 @@ import { dbError } from "@/lib/bff/db-error";
 import { can } from "@/lib/rbac";
 // generator ตัวจริง (pure JS ไม่มี type · เหมือน cover-sheets/generate) — ห้ามแก้ logic
 import { buildGroups } from "@/lib/cover-sheet/generate.mjs";
-import { pickJobQuotation } from "@/lib/cover-sheet/pick-quotation";
+import { pickJobQuotation, listJobQuotations } from "@/lib/cover-sheet/pick-quotation";
 import type { PrefillGroup } from "@/lib/job-drawings/types";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +25,13 @@ const postSchema = z.object({
   pdf_path: z.string().min(1),
   original_name: z.string().max(300).optional().default(""),
   pages: z.array(pageSchema).min(1, "ไฟล์ PDF ต้องมีอย่างน้อย 1 หน้า").max(60),
+  quotation_id: z.union([z.number(), z.string()]).nullish(), // (0136) ระบุเมื่อผู้ใช้เลือกใบเสนอ/rev เองก่อนอัปโหลด — ไม่ระบุ = auto-pick
 });
+
+// (0136) migration ยังไม่รัน (คอลัมน์ quotation_id/quotation_rev_no ยังไม่มี) — บอกเงียบ ๆ ว่าไม่ตั้งค่านี้ ไม่พังการสร้างแบบ
+function isMissingQuotationRefCol(message?: string): boolean {
+  return /quotation_rev_no|quotation_id.*does not exist|column .*job_drawings.*quotation/i.test(message ?? "");
+}
 
 // GET /api/job-drawings?job_id=... — รายการแบบที่อัปโหลดไว้ + prefill สเปคจากใบเสนอล่าสุด + สถานะงาน (มัดจำแล้วไหม)
 export const GET = withRoute(async (req: Request) => {
@@ -35,6 +41,9 @@ export const GET = withRoute(async (req: Request) => {
   const url = new URL(req.url);
   const jobId = url.searchParams.get("job_id") ?? "";
   if (!z.string().uuid().safeParse(jobId).success) return err("ระบุ job_id ให้ถูกต้อง", 422);
+  // (0136) แบบที่กำลังดูอยู่ (client ส่งมาตอนสลับแท็บ) — ใช้หา pin/rev_stale ของแถวนั้นโดยเฉพาะ (ไม่ระบุ = แถวแรก)
+  const drawingIdParam = url.searchParams.get("drawing_id");
+  const drawingIdNum = drawingIdParam != null && Number.isFinite(Number(drawingIdParam)) ? Number(drawingIdParam) : null;
 
   const [jobR, drawingsR, coverR] = await Promise.all([
     sb.from("jobs").select("job_code, customer_name, status, deposit_date, customer_area, customer_id").eq("id", jobId).maybeSingle(),
@@ -70,8 +79,15 @@ export const GET = withRoute(async (req: Request) => {
   }
   if (!address) address = String(jobRow.customer_area ?? "").trim();
 
+  // (0136) แถวแบบที่กำลังดู — ใช้ quotation_id ที่ pin ไว้ของแถวนั้น (ถ้ามี) เป็นค่าเริ่มต้นเสมอ ไม่ auto-overwrite
+  //   ไม่ระบุ drawing_id (โหลดหน้าแรก) → ใช้แถวแรก (client ก็เลือกแถวแรกเป็นค่าเริ่มต้นเหมือนกัน — ดู DrawingEditorPage)
+  type DrawingRow = { id: number; quotation_id?: number | null; quotation_rev_no?: number };
+  const drawingRows = (drawingsR.data ?? []) as DrawingRow[];
+  const activeDrawing = (drawingIdNum != null ? drawingRows.find((d) => d.id === drawingIdNum) : drawingRows[0]) ?? null;
+
   // เลือก "ใบเสนอที่ลูกค้ามัดจำจริง" (ไม่ใช่ใบล่าสุด) — กันสแตมป์สเปคผิดใบเมื่องานมีหลายใบเสนอ (แก้เดียวกับใบปะหน้า)
-  const picked = await pickJobQuotation(sb, jobId);
+  //   pin = quotation_id ที่แถวที่กำลังดูเคยเลือกไว้แล้ว (ถ้ามี) — ยังไม่เคยเลือก (แถวใหม่/ยังไม่มีแถวเลย) → auto-pick
+  const picked = await pickJobQuotation(sb, jobId, activeDrawing?.quotation_id ?? null);
   let prefill: PrefillGroup[] = [];
   if (picked) {
     const { data: items, error: itemsErr } = await sb
@@ -83,6 +99,11 @@ export const GET = withRoute(async (req: Request) => {
     prefill = buildGroups(items ?? []) as PrefillGroup[];
   }
 
+  // ดรอปดาวน์เลือกใบเสนอ/rev เอง (default = picked ด้านบน)
+  const quotations = await listJobQuotations(sb, jobId);
+  // เตือน "มี Rev" เฉพาะแบบที่มีอยู่แล้ว + เคย pin ใบไว้จริง + ใบนั้นถูก Rev ทีหลัง
+  const rev_stale = !!(activeDrawing && activeDrawing.quotation_id != null && picked && picked.revision_no > (activeDrawing.quotation_rev_no ?? 0));
+
   const job = jobR.data as { job_code: string | null; customer_name: string; status: string; deposit_date: string | null };
   return ok({
     drawings: drawingsR.data ?? [],
@@ -90,6 +111,9 @@ export const GET = withRoute(async (req: Request) => {
     coverBubbles,
     job: { ...job, deposited: !!job.deposit_date, address },
     can_write: can(ctx.role, "drawings", "write"),
+    quotations,
+    picked: picked ? { id: picked.id, code: picked.code, revision_no: picked.revision_no } : null,
+    rev_stale,
   });
 });
 
@@ -105,20 +129,28 @@ export const POST = withRoute(async (req: Request) => {
   if (!job) return err("ไม่พบงานนี้", 404);
   if (!job.deposit_date) return err("งานนี้ยังไม่มัดจำ — สแตมป์สเปคลงแบบทำได้เฉพาะงานที่มัดจำแล้ว", 403);
 
-  const { data, error } = await sb
-    .from("job_drawings")
-    .insert({
-      job_id: body.job_id,
-      title: body.title,
-      pdf_path: body.pdf_path,
-      original_name: body.original_name,
-      pages: body.pages,
-      annotations: [],
-      created_by: ctx.user.id,
-      updated_by: ctx.user.id,
-    })
-    .select("*")
-    .single();
+  // (0136) เก็บใบเสนอที่ใช้จริงตอนสร้างแบบนี้ — pin เอง (dropdown) หรือ auto-pick (ใบที่มีบิลผูก/ล่าสุด)
+  const rawPin = body.quotation_id;
+  const pinnedId = rawPin != null && rawPin !== "" && Number.isFinite(Number(rawPin)) ? Number(rawPin) : null;
+  const picked = await pickJobQuotation(sb, body.job_id, pinnedId);
+
+  const insertBase = {
+    job_id: body.job_id,
+    title: body.title,
+    pdf_path: body.pdf_path,
+    original_name: body.original_name,
+    pages: body.pages,
+    annotations: [],
+    created_by: ctx.user.id,
+    updated_by: ctx.user.id,
+  };
+  const insertWithQuote = picked ? { ...insertBase, quotation_id: picked.id, quotation_rev_no: picked.revision_no } : insertBase;
+
+  let { data, error } = await sb.from("job_drawings").insert(insertWithQuote).select("*").single();
+  if (error && isMissingQuotationRefCol(error.message)) {
+    // migration 0136 ยังไม่รัน — สร้างแบบได้ตามปกติ แค่ไม่มี quotation_id/rev_no (เตือน rev ใช้ไม่ได้จนกว่าจะรัน)
+    ({ data, error } = await sb.from("job_drawings").insert(insertBase).select("*").single());
+  }
   if (error) throw dbError(error);
   return created(data);
 });

@@ -34,8 +34,18 @@ export const EMPTY_CONTENT: CoverContent = { floorNote: "", warnings: [], left: 
 
 export type QuotationRefItem = { name: string; detail: string; group_label?: string | null; sort_order?: number };
 
+// (0136) ใบเสนอที่ผูกได้ต่องาน — สำหรับดรอปดาวน์ "เลือกใบเสนอ/rev" (ดู src/lib/cover-sheet/pick-quotation.ts)
+export type JobQuotationOption = {
+  id: number;
+  code: string;
+  revision_no: number;
+  revision_label: string | null;
+  created_at: string;
+  has_bill: boolean;
+};
+
 export type CoverSheetGetResponse = {
-  cover: { mode: CoverMode; content: CoverContent } | null;
+  cover: { mode: CoverMode; content: CoverContent; quotation_id?: number | null; quotation_rev_no?: number } | null;
   job: {
     job_code: string;
     customer_name: string;
@@ -45,6 +55,13 @@ export type CoverSheetGetResponse = {
     deposit_date?: string | null; // (job-drawings feature) เกณฑ์ "มัดจำแล้ว" — โชว์ปุ่ม "สแตมป์สเปคลงแบบ" เมื่อมีค่า
   };
   quotation: { id: number; code: string; items: QuotationRefItem[] } | null;
+  // (0136) ใบเสนอ/rev ให้เลือก + ใบที่ถูกใช้จริง (pin หรือ auto-pick) + เตือนถ้าใบเสนอถูก Rev หลังสร้างใบปะหน้านี้
+  quotations?: JobQuotationOption[];
+  picked?: { id: number; code: string; revision_no: number } | null;
+  rev_stale?: boolean;
 };
 
-export type GenerateResponse = { left: CoverLine[]; mid: CoverLine[]; right: CoverLine[]; quotation_id: number; quotation_code: string };
+export type GenerateResponse = {
+  left: CoverLine[]; mid: CoverLine[]; right: CoverLine[];
+  quotation_id: number; quotation_code: string; quotation_revision_no?: number;
+};

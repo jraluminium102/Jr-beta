@@ -2,8 +2,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { ArrowLeft, Upload, Save, Printer, Trash2, FileText, Pencil, Check, X } from "lucide-react";
+import { ArrowLeft, Upload, Save, Printer, Trash2, FileText, Pencil, Check, X, TriangleAlert } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
+import { thDate } from "@/lib/format";
 import { Spinner, EmptyState } from "@/components/ui/primitives";
 import { uploadDrawingFiles } from "@/lib/job-drawings/pdf-render";
 import { drawingPublicUrl } from "@/lib/job-drawings/storage";
@@ -49,9 +50,12 @@ export default function DrawingEditorPage({ params }: { params: { jobId: string 
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+
+  // (0136) ส่ง drawing_id ของแบบที่กำลังดู — server ใช้หา pin/rev_stale ต่อแถว (แต่ละแบบเก็บใบเสนอที่ pin ไว้ของตัวเอง)
   const { data, isLoading, error } = useQuery({
-    queryKey: ["job-drawings", jobId],
-    queryFn: () => api.get<JobDrawingsGetResponse>(`/job-drawings?job_id=${jobId}`),
+    queryKey: ["job-drawings", jobId, selectedId],
+    queryFn: () => api.get<JobDrawingsGetResponse>(`/job-drawings?job_id=${jobId}${selectedId != null ? `&drawing_id=${selectedId}` : ""}`),
   });
 
   const job = data?.data?.job ?? null;
@@ -59,8 +63,10 @@ export default function DrawingEditorPage({ params }: { params: { jobId: string 
   const coverBubbles: CoverBubble[] = data?.data?.coverBubbles ?? [];
   const canWrite = data?.data?.can_write ?? false;   // สิทธิ์แก้จริง (ADMIN/PRODUCTION/DESIGNER) — role อ่านอย่างเดียวเห็นแต่ดู/พิมพ์
   const drawings = useMemo(() => (data?.data?.drawings ?? []).map(hydrateDrawing), [data]);
-
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const quotationOptions = data?.data?.quotations ?? []; // (0136) รายการใบเสนอ/rev ให้เลือก
+  const revStale = !!data?.data?.rev_stale;               // (0136) ใบเสนอถูก Rev หลังสแตมป์สเปคแบบนี้
+  const pickedQuotationId = data?.data?.picked?.id ?? null;
+  const [changingQuote, setChangingQuote] = useState(false);
   const [annotations, setAnnotations] = useState<DrawingAnnotation[]>([]);
   const [activePage, setActivePage] = useState(0);
   const [dirty, setDirty] = useState(false);
@@ -183,6 +189,18 @@ export default function DrawingEditorPage({ params }: { params: { jobId: string 
     } finally { setSaving(false); }
   };
 
+  // (0136) สลับใบเสนอ/rev ที่ pin ไว้ของแบบที่กำลังดู — ไม่แตะ annotations เดิม แค่เปลี่ยนใบอ้างอิง (ไว้ดึง prefill/เทียบ rev)
+  const doChangeQuotation = async (newId: number) => {
+    if (!selected) return;
+    setChangingQuote(true);
+    try {
+      await api.patch(`/job-drawings/${selected.id}`, { quotation_id: newId });
+      await qc.invalidateQueries({ queryKey: ["job-drawings", jobId] });
+    } catch (e) {
+      alert(e instanceof ApiError ? e.message : "เปลี่ยนใบเสนออ้างอิงไม่สำเร็จ");
+    } finally { setChangingQuote(false); }
+  };
+
   const doUpload = async (file: File) => {
     if (!file) return;
     if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
@@ -279,6 +297,29 @@ export default function DrawingEditorPage({ params }: { params: { jobId: string 
         <EmptyState title="งานนี้ยังไม่มีแบบที่อัปโหลด" sub="กด “อัปโหลดแบบ (PDF)” ด้านบนเพื่อเริ่ม" />
       ) : (
         <>
+          {/* ⚠ (0136) ใบเสนอถูก Rev หลังสแตมป์สเปคแบบนี้ — ไม่ทับ annotations เดิม แค่เตือน */}
+          {selected && revStale && (
+            <div className="rounded-2xl bg-orange-50 border border-orange-300 text-orange-900 text-[13px] px-4 py-3 mb-3 flex items-center gap-2.5 flex-wrap">
+              <TriangleAlert size={16} className="shrink-0 text-orange-600" />
+              <span>ใบเสนอราคาที่อ้างอิงของแบบนี้ถูก <b>Rev</b> หลังสแตมป์สเปคไว้ — สเปคที่แปะไว้อาจไม่ตรงกับใบเสนอปัจจุบันแล้ว (แก้เองในแผงขวาได้ตามต้องการ)</span>
+            </div>
+          )}
+          {/* (0136) เลือกใบเสนอ/rev อ้างอิงของแบบที่กำลังดู — default = ใบที่ pin ไว้/เลือกอัตโนมัติ */}
+          {selected && quotationOptions.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap mb-3">
+              <label htmlFor="drawing-quote-select" className="text-[12px] text-white/70 shrink-0">อ้างอิงใบเสนอ/rev:</label>
+              <select id="drawing-quote-select" value={pickedQuotationId ?? ""} disabled={changingQuote || !canWrite}
+                onChange={(e) => { const v = Number(e.target.value); if (Number.isFinite(v) && v !== pickedQuotationId) doChangeQuotation(v); }}
+                className="text-[13px] rounded-lg border border-gray-300 bg-white px-2.5 py-2 text-gray-900 min-h-[38px] focus:outline-none focus:ring-2 focus:ring-sky-300 disabled:opacity-50">
+                {quotationOptions.map((q) => (
+                  <option key={q.id} value={q.id}>
+                    {q.code}{q.revision_no ? ` · Rev ${q.revision_no}` : ""}{q.revision_label ? ` (${q.revision_label})` : ""} · {thDate(q.created_at)}{q.has_bill ? " · มีบิล" : ""}
+                  </option>
+                ))}
+              </select>
+              {changingQuote && <span className="text-[12px] text-white/60">กำลังเปลี่ยน…</span>}
+            </div>
+          )}
           {/* แท็บเลือกแบบ (1 งานมีได้หลายแผ่น) */}
           {drawings.length > 1 && (
             <div className="flex items-center gap-2 flex-wrap mb-3">

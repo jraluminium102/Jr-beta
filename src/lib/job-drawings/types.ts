@@ -31,6 +31,18 @@ export type JobDrawing = {
   annotations: DrawingAnnotation[];
   created_at: string;
   updated_at: string;
+  quotation_id?: number | null;   // (0136) ใบเสนอที่ pin ไว้ตอนสร้าง/บันทึกล่าสุด
+  quotation_rev_no?: number;      // (0136) revision_no ของใบเสนอ ณ ตอนนั้น — ใช้เทียบว่าถูก Rev ทีหลังไหม
+};
+
+// (0136) ใบเสนอที่ผูกได้ต่องาน — สำหรับดรอปดาวน์ "เลือกใบเสนอ/rev" (ดู src/lib/cover-sheet/pick-quotation.ts)
+export type JobQuotationOption = {
+  id: number;
+  code: string;
+  revision_no: number;
+  revision_label: string | null;
+  created_at: string;
+  has_bill: boolean;
 };
 
 // prefill group — ตรงกับ buildGroups() ของ src/lib/cover-sheet/generate.mjs
@@ -59,6 +71,10 @@ export type JobDrawingsGetResponse = {
     address?: string;   // ที่อยู่บ้านลูกค้า (ทะเบียนลูกค้า/customer_area) — seed หัวแบบ
   };
   can_write: boolean;   // สิทธิ์แก้ (drawings:write = ADMIN/PRODUCTION/DESIGNER) — role อ่านอย่างเดียวเห็นแต่ดู/พิมพ์
+  // (0136) ใบเสนอ/rev ให้เลือก + ใบที่ถูกใช้จริงของแบบที่กำลังดู (query ?drawing_id=) + เตือนถ้าใบเสนอถูก Rev หลังสแตมป์แบบนี้
+  quotations?: JobQuotationOption[];
+  picked?: { id: number; code: string; revision_no: number } | null;
+  rev_stale?: boolean;
 };
 
 export const DEFAULT_ANNOT_SIZE = 0.02;

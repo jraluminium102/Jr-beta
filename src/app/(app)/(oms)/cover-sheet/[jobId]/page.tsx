@@ -2,8 +2,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { ArrowLeft, Zap, Save, Printer, Plus, Trash2, Highlighter, Layers, PenSquare } from "lucide-react";
+import { ArrowLeft, Zap, Save, Printer, Plus, Trash2, Highlighter, Layers, PenSquare, TriangleAlert } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
+import { thDate } from "@/lib/format";
 import { Spinner, EmptyState } from "@/components/ui/primitives";
 import { useUnsavedWarning } from "@/lib/useUnsavedWarning";
 import type {
@@ -70,12 +71,15 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
   const [generating, setGenerating] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
   const [loadedOnce, setLoadedOnce] = useState(false);
+  const [changingQuote, setChangingQuote] = useState(false); // (0136) กำลังสลับใบเสนอ/rev ที่ pin ไว้
   const [measurer, setMeasurer] = useState("");     // ตัวช่วย "วัดงาน" — ชื่อคนวัด
   const [measureDate, setMeasureDate] = useState(""); // วันวัด (YYYY-MM-DD)
 
   // เตือน "มีของยังไม่บันทึก" (เจ้าของสั่ง 25 ส.ค.69) — เทียบ 4 ตัวที่แก้ได้ (content/mode/measurer/measureDate)
   // กับ snapshot ล่าสุดที่โหลด/บันทึกแล้ว · savedRef กัน false-positive ตอนโหลดครั้งแรก
   const savedRef = useRef<string>("");
+  // (0136) true = เพิ่งกด "สร้าง/อัปเดตจากใบเสนอล่าสุด" → บันทึกครั้งถัดไปส่ง sync_rev เคลียร์ป้ายเตือน (เซฟแก้ typo เฉย ๆ ไม่เคลียร์)
+  const pulledRef = useRef(false);
   const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
@@ -107,6 +111,8 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
 
   const job = data?.data?.job ?? null;
   const quotation = data?.data?.quotation ?? null;
+  const quotationOptions = data?.data?.quotations ?? []; // (0136) รายการใบเสนอ/rev ให้เลือก
+  const revStale = !!data?.data?.rev_stale;               // (0136) ใบเสนอถูก Rev หลังสร้างใบปะหน้านี้
   const showFloorNote = !!job && job.floor_work && job.floor_work !== "none";
 
   // ── left mutations ──
@@ -149,7 +155,8 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
     if (content.left.length > 0 && !window.confirm("จะสร้างใหม่ตามโหมดนี้ — รายการ 'สั่งของเตรียมผลิต' เดิมจะถูกแทนที่ · ช่องแจ้งช่าง/ลูกค้าจะเติมจากหมายเหตุใบเสนอ (ที่พิมพ์เองไว้ไม่หาย) ต่อไหม?")) return;
     setGenerating(true);
     try {
-      const r = await api.post<GenerateResponse>(`/cover-sheets/${jobId}/generate`, { mode });
+      // ส่ง quotation_id ปัจจุบัน (ที่ pin ไว้/เลือกจากดรอปดาวน์) ไปด้วย — กันเผลอสลับไปใบอื่นตอนสร้างซ้ำ (0136)
+      const r = await api.post<GenerateResponse>(`/cover-sheets/${jobId}/generate`, { mode, quotation_id: quotationId ?? undefined });
       // แจ้งช่าง(mid)/แจ้งลูกค้า(right): เติมบรรทัดใหม่จากหมายเหตุ ต่อท้ายของที่พิมพ์เอง (dedup ตามข้อความ · ของเดิมไม่หาย)
       const mergeSide = (existing: CoverLine[], incoming?: CoverLine[]) => {
         const seen = new Set(existing.map((l) => l.text.trim()).filter(Boolean));
@@ -163,15 +170,29 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
         right: mergeSide(c.right, r.data.right),
       }));
       setQuotationId(r.data.quotation_id);
+      pulledRef.current = true; // ดึงจากใบเสนอล่าสุดแล้ว — เซฟรอบถัดไปจะเคลียร์ป้ายเตือน
     } catch (e) {
       alert(e instanceof ApiError ? e.message : "สร้างอัตโนมัติไม่สำเร็จ");
     } finally { setGenerating(false); }
   };
 
+  // (0136) สลับใบเสนอ/rev ที่ใช้อ้างอิง — pin อย่างเดียว (ไม่ส่ง content = ไม่ทับของที่ยังไม่เซฟ) แล้ว refetch โชว์รายการของใบที่เลือก
+  const doChangeQuotation = async (newId: number) => {
+    setChangingQuote(true);
+    try {
+      await api.put(`/cover-sheets/${jobId}`, { quotation_id: newId }); // pin-only · ไม่แตะ content/dirty
+      setQuotationId(newId);
+      await qc.invalidateQueries({ queryKey: ["cover-sheet", jobId] });
+    } catch (e) {
+      alert(e instanceof ApiError ? e.message : "เปลี่ยนใบเสนออ้างอิงไม่สำเร็จ");
+    } finally { setChangingQuote(false); }
+  };
+
   const doSave = async () => {
     setSaving(true);
     try {
-      await api.put(`/cover-sheets/${jobId}`, { mode, content, quotation_id: quotationId });
+      await api.put(`/cover-sheets/${jobId}`, { mode, content, quotation_id: quotationId, sync_rev: pulledRef.current });
+      pulledRef.current = false;
       setSaveMsg("บันทึกแล้ว ✓");
       savedRef.current = JSON.stringify({ mode, content, measurer, measureDate });
       setDirty(false);
@@ -272,6 +293,18 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
           </div>
 
           <div className="space-y-4">
+            {/* ⚠ (0136) ใบเสนอถูก Rev หลังสร้างใบปะหน้านี้ — ไม่ทับของที่แก้มือ แค่เตือนให้กดอัปเดตเอง */}
+            {revStale && (
+              <div className="rounded-2xl bg-orange-50 border border-orange-300 text-orange-900 text-[13px] px-4 py-3 flex items-center gap-2.5 flex-wrap">
+                <TriangleAlert size={16} className="shrink-0 text-orange-600" />
+                <span>ใบเสนอราคาที่อ้างอิงอยู่ถูก <b>Rev</b> หลังสร้างใบปะหน้านี้ — เนื้อหาด้านล่างอาจไม่ตรงกับใบเสนอปัจจุบันแล้ว</span>
+                <button type="button" onClick={doGenerate} disabled={generating}
+                  className="ml-auto shrink-0 rounded-lg bg-orange-600 text-white text-[12.5px] font-semibold px-3 py-2 min-h-[38px] disabled:opacity-40">
+                  {generating ? "กำลังดึง…" : "สร้าง/อัปเดตจากใบเสนอล่าสุด"}
+                </button>
+              </div>
+            )}
+
             {/* ─── ใบเสนอราคาอ้างอิง (ด้านบน · เต็มกว้าง · รายการเรียงหลายคอลัมน์ พับเลื่อนได้) ─── */}
             <details open className="rounded-2xl bg-white border border-black/10 shadow-sm">
               <summary className="cursor-pointer select-none text-[13px] font-bold text-gray-800 p-4 flex items-center justify-between">
@@ -279,6 +312,22 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
                 {quotation && <span className="text-[12px] tnum text-gray-400">{quotation.code}</span>}
               </summary>
               <div className="px-4 pb-4">
+                {/* (0136) เลือกใบเสนอ/rev เอง — default = ใบที่ pin ไว้/เลือกอัตโนมัติ (บิลก่อน/ล่าสุด) */}
+                {quotationOptions.length > 0 && (
+                  <div className="flex items-center gap-2 flex-wrap mb-3" onClick={(e) => e.stopPropagation()}>
+                    <label htmlFor="cover-quote-select" className="text-[12px] text-gray-500 shrink-0">อ้างอิงใบเสนอ/rev:</label>
+                    <select id="cover-quote-select" value={quotationId ?? ""} disabled={changingQuote}
+                      onChange={(e) => { const v = Number(e.target.value); if (Number.isFinite(v) && v !== quotationId) doChangeQuotation(v); }}
+                      className="text-[13px] rounded-lg border border-gray-300 bg-white px-2.5 py-2 text-gray-900 min-h-[38px] focus:outline-none focus:ring-2 focus:ring-sky-300 disabled:opacity-50">
+                      {quotationOptions.map((q) => (
+                        <option key={q.id} value={q.id}>
+                          {q.code}{q.revision_no ? ` · Rev ${q.revision_no}` : ""}{q.revision_label ? ` (${q.revision_label})` : ""} · {thDate(q.created_at)}{q.has_bill ? " · มีบิล" : ""}
+                        </option>
+                      ))}
+                    </select>
+                    {changingQuote && <span className="text-[12px] text-gray-400">กำลังเปลี่ยน…</span>}
+                  </div>
+                )}
                 {!quotation ? (
                   <div className="text-[13px] text-gray-400">งานนี้ยังไม่มีใบเสนอราคา</div>
                 ) : (

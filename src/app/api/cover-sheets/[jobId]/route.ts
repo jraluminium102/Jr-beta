@@ -3,7 +3,7 @@ import { requirePermission } from "@/lib/bff/context";
 import { withRoute } from "@/lib/bff/handler";
 import { ok, err } from "@/lib/bff/response";
 import { dbError } from "@/lib/bff/db-error";
-import { pickJobQuotation } from "@/lib/cover-sheet/pick-quotation";
+import { pickJobQuotation, listJobQuotations } from "@/lib/cover-sheet/pick-quotation";
 
 export const dynamic = "force-dynamic";
 
@@ -31,9 +31,10 @@ const contentSchema = z.object({
 });
 
 const putSchema = z.object({
-  mode: z.enum(["short", "grouped"]).default("short"),
-  content: contentSchema,
+  mode: z.enum(["short", "grouped"]).optional(),
+  content: contentSchema.optional(),   // ไม่ส่ง = โหมด pin-only (แค่เปลี่ยนใบอ้างอิง ไม่แตะเนื้อหา)
   quotation_id: z.union([z.number(), z.string()]).nullish(),
+  sync_rev: z.boolean().optional(),    // true = บันทึกนี้ "ดึงจากใบเสนอล่าสุด" → เคลียร์ป้ายเตือน (ไม่งั้นเซฟแก้ typo ป้ายไม่หาย)
 });
 
 // migration 0111 ยังไม่รัน → บอกชัดแทนโยน error ดิบ (แนวเดียวกับ job_blocker_notes 0098)
@@ -50,7 +51,7 @@ export const GET = withRoute(async (_req: Request, { params }: Params) => {
 
   const [jobR, coverR] = await Promise.all([
     sb.from("jobs").select("job_code, customer_name, floor_work, floor_note, current_stage, deposit_date").eq("id", jobId).maybeSingle(),
-    sb.from("cover_sheets").select("mode, content").eq("job_id", jobId).maybeSingle(),
+    sb.from("cover_sheets").select("mode, content, quotation_id, quotation_rev_no").eq("job_id", jobId).maybeSingle(),
   ]);
 
   if (jobR.error) throw dbError(jobR.error);
@@ -58,8 +59,11 @@ export const GET = withRoute(async (_req: Request, { params }: Params) => {
   if (coverR.error && isMissingTable(coverR.error.message)) return err(MIGRATION_HINT, 400);
   if (coverR.error) throw dbError(coverR.error);
 
-  // เลือก "ใบเสนอที่ลูกค้าตกลงจริง" = ใบที่มีใบวางบิล/มัดจำ (ไม่ใช่ใบล่าสุด) — กันดึงผิดใบเมื่องานมีหลายใบเสนอ
-  const picked = await pickJobQuotation(sb, jobId);
+  // (0136) ถ้าเคยสร้างใบปะหน้าแล้ว ยึดใบเสนอที่ pin ไว้ (quotation_id) เป็นค่าเริ่มต้นเสมอ — ไม่ auto-overwrite
+  //   ยังไม่เคยสร้าง (cover เป็น null หรือไม่มี quotation_id) → เลือกอัตโนมัติ (ใบที่มีบิลผูก/ล่าสุด — พฤติกรรมเดิม)
+  const coverRow = coverR.data as { mode: string; content: unknown; quotation_id?: number | null; quotation_rev_no?: number } | null;
+  const storedQuotationId = coverRow?.quotation_id ?? null;
+  const picked = await pickJobQuotation(sb, jobId, storedQuotationId);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let quotation: { id: number; code: string; items: any[] } | null = null;
   if (picked) {
@@ -72,10 +76,18 @@ export const GET = withRoute(async (_req: Request, { params }: Params) => {
     quotation = { id: picked.id, code: picked.code, items: items ?? [] };
   }
 
+  // ดรอปดาวน์เลือกใบเสนอ/rev เอง (default = picked ด้านบน)
+  const quotations = await listJobQuotations(sb, jobId);
+  // เตือน "มี Rev" เฉพาะตอนมีใบปะหน้าอยู่แล้ว + เคย pin ใบไว้จริง + ใบนั้นถูก Rev ทีหลัง (revision_no ปัจจุบัน > ตอนสร้าง/บันทึกล่าสุด)
+  const rev_stale = !!(coverRow && storedQuotationId != null && picked && picked.revision_no > (coverRow.quotation_rev_no ?? 0));
+
   return ok({
-    cover: coverR.data ?? null,
+    cover: coverRow,
     job: jobR.data,
     quotation,
+    quotations,
+    picked: picked ? { id: picked.id, code: picked.code, revision_no: picked.revision_no } : null,
+    rev_stale,
   });
 });
 
@@ -90,23 +102,60 @@ export const PUT = withRoute(async (req: Request, { params }: Params) => {
   if (jobErr) throw dbError(jobErr);
   if (!job) return err("ไม่พบงานนี้", 404);
 
+  // แถวเดิม (ถ้ามี) — select("*") กัน 0136 ยังไม่รัน (quotation_rev_no อาจไม่มี · ระบุชื่อจะพังทั้ง query)
+  const { data: existingCover } = await sb.from("cover_sheets").select("*").eq("job_id", jobId).maybeSingle();
+  const stored = existingCover as { quotation_id?: number | null; quotation_rev_no?: number } | null;
+  const missingRevCol = (m?: string) => /quotation_rev_no/i.test(m ?? "");
+
+  // ใบที่จะ pin: ส่ง quotation_id ชัดเจน → ใช้ตัวนั้น (null/"" = ยกเลิก pin กลับอัตโนมัติ) · ไม่ส่ง → คง pin เดิม
+  let pinnedId: number | null;
+  if (body.quotation_id !== undefined) {
+    const qid = body.quotation_id !== null && body.quotation_id !== "" ? Number(body.quotation_id) : NaN;
+    pinnedId = Number.isFinite(qid) ? qid : null;
+  } else {
+    pinnedId = stored?.quotation_id ?? null;
+  }
+  const picked = await pickJobQuotation(sb, jobId, pinnedId);
+
+  // ── โหมด pin-only (ไม่ส่ง content) = แค่เปลี่ยนใบอ้างอิงจากดรอปดาวน์ → อัปเดตแค่ quotation_id/rev_no ไม่แตะเนื้อหาที่ยังไม่เซฟ ──
+  if (body.content === undefined) {
+    if (!stored) return err("ยังไม่มีใบปะหน้า — สร้างก่อนจึงเปลี่ยนใบอ้างอิงได้", 400);
+    const upd: Record<string, unknown> = { updated_by: ctx.user.id, updated_at: new Date().toISOString(), quotation_id: picked?.id ?? null, quotation_rev_no: picked?.revision_no ?? 0 };
+    let { error: uErr } = await sb.from("cover_sheets").update(upd).eq("job_id", jobId);
+    if (uErr && missingRevCol(uErr.message)) { // 0136 ยังไม่รัน → ถอย ไม่เขียน rev_no (pin ยังทำงานผ่าน quotation_id ของ 0111)
+      const { quotation_rev_no: _r, ...updNoRev } = upd; void _r;
+      ({ error: uErr } = await sb.from("cover_sheets").update(updNoRev).eq("job_id", jobId));
+    }
+    if (uErr) throw dbError(uErr);
+    return ok({ ok: true, quotation_id: picked?.id ?? null, quotation_rev_no: picked?.revision_no ?? 0 });
+  }
+
+  // ── โหมดบันทึกเนื้อหา ── rev_no: เคลียร์ป้ายเตือนเฉพาะ (ก) ดึงล่าสุด sync_rev (ข) เปลี่ยน pin (ค) แถวใหม่/ยังไม่เคยตั้ง
+  //   เซฟแก้ typo เฉย ๆ (pin เดิม · ไม่ sync) → คง rev_no เดิม ป้ายเตือนไม่หาย (กันเผลอปิดเตือนโดยไม่ได้ดึง rev ใหม่)
+  const pinChanged = (pinnedId ?? null) !== (stored?.quotation_id ?? null);
+  let revNo = stored?.quotation_rev_no ?? 0;
+  if (picked && (body.sync_rev || pinChanged || !stored || stored.quotation_rev_no == null)) revNo = picked.revision_no;
+
   const payload: Record<string, unknown> = {
     job_id: jobId,
-    mode: body.mode,
+    mode: body.mode ?? "short",
     content: body.content,
     updated_by: ctx.user.id,
     updated_at: new Date().toISOString(),
+    quotation_id: picked?.id ?? null,
+    quotation_rev_no: revNo,
   };
-  if (body.quotation_id !== undefined && body.quotation_id !== null && body.quotation_id !== "") {
-    const qid = Number(body.quotation_id);
-    if (Number.isFinite(qid)) payload.quotation_id = qid; // กัน NaN ลง bigint column
-  }
 
-  const { data, error } = await sb
+  let { data, error } = await sb
     .from("cover_sheets")
     .upsert(payload, { onConflict: "job_id" })
-    .select("id, job_id, quotation_id, mode, content, updated_at")
+    .select("id, job_id, quotation_id, quotation_rev_no, mode, content, updated_at")
     .maybeSingle();
+  if (error && missingRevCol(error.message)) { // 0136 ยังไม่รัน → ถอย ไม่เขียน/ไม่ select rev_no (ยอด/เนื้อหายังถูก)
+    const { quotation_rev_no: _r, ...payloadNoRev } = payload; void _r;
+    ({ data, error } = await sb.from("cover_sheets").upsert(payloadNoRev, { onConflict: "job_id" })
+      .select("id, job_id, quotation_id, mode, content, updated_at").maybeSingle());
+  }
   if (error) {
     if (isMissingTable(error.message)) return err(MIGRATION_HINT, 400);
     throw dbError(error);
