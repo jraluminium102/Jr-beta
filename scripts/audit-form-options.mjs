@@ -1,205 +1,105 @@
 /**
- * audit-form-options — ตรวจ "ทุกตัวเลือกที่เว็บให้กด" ตามกฎ 3 ข้อของเจ้าของ (2 ก.ย.69)
+ * audit-form-options — เทียบ "ตัวเลือก" ระหว่าง ใบตัด ↔ คิดราคา 4.0 ทีละรุ่น
  *
- *   ① มีในไฟล์ตัดประกอบ · ไม่มีในไฟล์คิดราคา  → ดึงของจากใบตัดมาใส่คิดราคา
- *   ② ไม่มีในไฟล์ตัดประกอบ · มีในไฟล์คิดราคา  → ใช้ได้ ไม่ต้องไปกรอกอะไรในใบตัด
- *   ③ ไม่มีทั้งคู่                              → ไม่ต้องสะเออะให้เลือก (เอาตัวเลือกออก)
+ * ── คิดใหม่ทำใหม่ (เจ้าของ 2 ก.ย.69: "ตอนนี้มันมั่วมากๆๆๆ ... แก้ทั้งวันแล้วยังไม่ได้ตรวจเลย") ──
+ * เวอร์ชันแรกผิดวิธีตั้งแต่ต้น: ไปไล่ค้น "ข้อความ" ในไฟล์ .xlsx
+ *   → คำสั้นชนคำอื่น · ป้ายเว็บเขียนไม่เหมือนไฟล์ · ต้องมานั่งเดา alias ไม่จบ
+ *   → และที่แย่ที่สุด: มันตอบได้แค่ "ของที่เว็บมี อยู่ในไฟล์ไหม"
+ *     ไม่เคยถามกลับด้านเลยว่า "ของที่ใบตัดมี เว็บมีให้เลือกครบไหม" ซึ่งคือกฎ ① ทั้งข้อ
+ *     (เจ้าของจับได้เอง: บานเลื่อนรางบน ใบตัดมี อิสระ/ลากจูง/เปิดคู่กลาง แต่คิดราคามีแค่ "เลื่อนซ้อน")
  *
- * ── รอบแรกตรวจไม่ครบ เจ้าของสั่งตรวจซ้ำ "ให้แน่ชัดว่าตรงตามเงื่อนไข ไม่นอกเหนือ" — อุดแล้ว 3 รู ──
- *   รูที่ 1  ตรวจแต่ dropdown "รูปแบบ" (forms) — ยังมี dropdown อื่นที่กดได้อีกเพียบ (specOpts)
- *            เช่น ธรณี · แป · สีอุปกรณ์ · ชนิดแผ่น · ราง — กฎ ③ ต้องคุมพวกนี้ด้วย
- *   รูที่ 2  ข้ามตัวที่ "เว็บใช้ค่าอยู่แล้ว" ไปเลย — ผิด เพราะถ้าเว็บคิดเงินจากตัวเลือกที่ไม่มีในไฟล์ไหนเลย
- *            = คิดเลขเอาเอง ยิ่งอันตรายกว่าปุ่มที่กดแล้วไม่มีอะไรเกิด → ต้องตรวจไฟล์ทุกตัวเลือก
- *   รูที่ 3  คำสั้น ๆ ("นอน" "ตั้ง" "มี") ชนคำอื่นในไฟล์ได้ ("แนวนอน" "ติดตั้ง" "มีธรณี")
- *            → แยกเป็นกลุ่ม "ต้องดูด้วยตา" ไม่เหมาโมเมว่าเจอ
+ * วิธีใหม่ — ไม่ยุ่งกับ .xlsx เลย เทียบของในระบบกับของในระบบ
+ *   ฝั่งใบตัด   = CUT_SPEC_BY_ID (ใบตัดที่พอร์ตจากไฟล์ตัดประกอบเข้าโค้ดแล้ว) — rails + opts[].choices
+ *   ฝั่งคิดราคา = PRODUCTS — forms + materials + specOpts[].opts
+ *   จับคู่รุ่นด้วย cutInputFromRecipe (ตัวเดียวกับที่ใบตัดจริงใช้) ไม่ใช่เดาจากชื่อ
+ * ได้ผลแน่นอน ไม่มี false positive จากการค้นข้อความ และตอบกฎ ① ได้จริง
  *
- * วิธีตรวจ (ไม่เดาจากความจำ — ค้นในไฟล์จริงเสมอ)
- *   ฝั่งใบตัด   = ทุกไฟล์ .xlsx ใน "ตัดประกอบ อัพเดท 30-7-2026"   (ค่าเซลล์ + ตัวสูตร)
- *   ฝั่งคิดราคา = "ถอดทุน_รวมทั้งหมด v20.xlsx" ทุกชีต (ค่าเซลล์ + ตัวสูตร) + pricebook.json
+ *   ① ใบตัดมี · คิดราคาไม่มี  → ต้องเพิ่มในคิดราคา   (ช่องโหว่จริง)
+ *   ② คิดราคามี · ใบตัดไม่มี  → ใช้ได้ ไม่ต้องกรอกในใบตัด
+ *   ③ ไม่มีทั้งคู่             → ไม่ต้องให้เลือก (ไม่โผล่ในรายงานนี้ เพราะไม่มีในระบบอยู่แล้ว)
  *
- * รัน: node scripts/audit-form-options.mjs [--csv] [--all]
+ * รัน: node scripts/audit-form-options.mjs [--json]
+ *   --json = อบผลลง src/lib/calculator40/form-options-audit.json ให้หน้าเว็บอ่าน
  */
 import fs from "node:fs";
-import path from "node:path";
 import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
-import PRICEBOOK from "../src/lib/calculator40/pricebook.json" with { type: "json" };
-import { computeCost } from "../src/lib/calculator40/engine.mjs";
-import { openXlsx, readFormulas } from "./dumpxlsx.mjs";
-import { writeXlsx, sheetName, S } from "./xlsxwrite.mjs";
+import { CUT_SPEC_BY_ID } from "../src/lib/cutlist/products.ts";
+import { cutInputFromRecipe } from "../src/lib/cutlist/from-recipe.ts";
 
-const ROOT = path.resolve(process.cwd());
-const CUT_DIR = path.join(ROOT, "ตัดประกอบ อัพเดท 30-7-2026");
-// ฝั่ง "ไฟล์คิดราคา" มี 3 แหล่ง ไม่ใช่แค่ถอดทุน — ตกแหล่งไหนไปจะสรุปผิดว่า "คิดเอาเอง"
-//   (เจอตอนตรวจซ้ำ: ฉนวน rockwool 3" ไม่มีในถอดทุน แต่อยู่ในชีต "ราคางานเสริม" ของราคาอัปเดตล่าสุด)
-const COST_XLSX = [path.join(ROOT, "ถอดทุน_รวมทั้งหมด v20.xlsx"), path.join(ROOT, "ราคาอัพเดทล่าสุด.xlsx")];
+const norm = (s) => String(s ?? "").replace(/[\s\-–—()"'·.]/g, "").toLowerCase();
 
-const blobOf = (file) => {
-  const x = openXlsx(file);
-  const parts = [];
-  for (const s of x.sheets) {
-    parts.push(s.name);
-    for (const r of x.read(s.path)) parts.push(Object.values(r.cells).join(" "));
-    // ⚠ ต้องเก็บ "ตัวสูตร" ด้วย — ตัวเลือกหลายอันโผล่แค่ข้างใน IF(...) ไม่ได้เป็นค่าในเซลล์ไหนเลย
-    //   (หลังคาเลื่อน "เลื่อนเปิดกลาง" อยู่ใน =IF(B3="เลื่อนเปิดกลาง",…) อย่างเดียว)
-    for (const r of readFormulas(x.zip, s.path)) parts.push(Object.values(r.cells).join(" "));
-  }
-  return parts.join("\n");
-};
-
-process.stdout.write("อ่านไฟล์ใบตัด... ");
-const CUT_BLOBS = fs.existsSync(CUT_DIR)
-  ? fs.readdirSync(CUT_DIR).filter((f) => f.endsWith(".xlsx") && !f.startsWith("~$"))
-      .map((f) => ({ name: f, text: blobOf(path.join(CUT_DIR, f)) }))
-  : [];
-console.log(`${CUT_BLOBS.length} ไฟล์`);
-process.stdout.write("อ่านไฟล์คิดราคา (ถอดทุน + pricebook)... ");
-const COST_TEXT = COST_XLSX.filter((f) => fs.existsSync(f)).map(blobOf).join("\n") + "\n" + JSON.stringify(PRICEBOOK);
-console.log("เสร็จ\n");
-
-const squash = (s) => String(s).replace(/\s+/g, "");
-const CUT_SQ = CUT_BLOBS.map((b) => ({ name: b.name, text: squash(b.text) }));
-const COST_SQ = squash(COST_TEXT);
-
-/** ป้ายบนเว็บกับคำในไฟล์เขียนคนละแบบ — ต้องแปลงก่อนค้น ไม่งั้นสรุปผิดว่า "ไม่มีในไฟล์"
- *  ตรวจของจริงมาแล้วทั้ง 2 เคส:
- *    เฟี้ยม "4บาน: รวบเปิดซ้าย (4-0)" → ใบตัดเขียนเป็นรหัสคอนฟิก "4L0R"
- *    กระทุ้ง "เปิดล่าง"              → ใบตัด FUJI เขียน "กระทุ้ง" (ชีต "บานเปิด" หัวข้อ ⑤ = เปิดข้าง/กระทุ้ง) */
-function aliasesOf(word) {
-  const out = [word];
-  const m = /\((\d+)\s*-\s*(\d+)\)\s*$/.exec(String(word));
-  if (m) {
-    const [L, R] = [Number(m[1]), Number(m[2])];
-    out.push(`${L}L${R}R`);
-    // ใบตัดเฟี้ยมตั้งชื่อชีตเป็น 240_4Panel(4L) / (L) เวลารวบไปข้างเดียว (ไม่เขียน 4L0R)
-    if (R === 0) out.push(`Panel(${L}L)`, `${L}Panel(L)`);
-    if (L === 0) out.push(`Panel(${R}R)`, `${R}Panel(R)`);
-  }
-  if (/^เปิดล่าง$/.test(String(word).trim())) out.push("กระทุ้ง");
-  return out;
-}
-const inCut = (w) => CUT_SQ.filter((b) => aliasesOf(w).some((a) => b.text.includes(squash(a)))).map((b) => b.name);
-const inCost = (w) => aliasesOf(w).some((a) => COST_SQ.includes(squash(a)));
-
-/** คำสั้น/ตัวเลขล้วน = เสี่ยงชนคำอื่นในไฟล์ → อย่าเชื่อผลค้นดื้อ ๆ */
-const isAmbiguous = (w) => squash(w).length < 6 || /^[\d.\s+-]+$/.test(String(w));
-
-/** เจ้าของยืนยันเอง 2 ก.ย.69: "อยู่ในคิดราคา นานแล้ว"
- *  = งานที่ไม่ใช่บานอลู ราคาไม่ได้มาจาก 2 ไฟล์ที่สคริปต์นี้อ่าน (ฝ้า/ผนัง/มุ้ง/ซิปสกรีน)
- *  → เข้ากฎ ② มีในคิดราคา ไม่มีในใบตัด = ใช้ได้ ไม่ต้องไปกรอกอะไรในใบตัด
- *  ⚠ ลิสต์นี้คือ "คำยืนยันของเจ้าของ" ไม่ใช่ผลค้นไฟล์ — เพิ่มได้เฉพาะเมื่อเจ้าของบอกเองเท่านั้น */
-const OWNER_OK = new Set(["ceil_gypsum", "wall_smartboard", "wall_composite", "screen", "screen_big", "zipscreen", "bar_openclose"]);
-
-/** สูตรของรุ่นนี้อ้างถึงตัวเลือกนั้นไหม (form หรือ spec.<key>) */
-function srcOf(p) {
-  return JSON.stringify([p.vars, p.alu, p.hardware, p.consum, p.glass, p.addons,
-    p.areaExpr, p.sellRate, p.sellInstallRate, p.materials, p.sheetColors]);
-}
-/** เว็บ "ใช้" ตัวเลือกนี้จริงไหม — ต้องเช็ค 2 ทาง ทางเดียวไม่พอ
- *   ก) ค้นคำในตัวสูตรตรง ๆ (จับกรณีที่ค่าตั้งต้นบังเอิญทำให้ผลเท่ากัน เช่น หลังคาเลื่อน กว้าง=ยื่น=150)
- *   ข) ลองคิดราคาจริงทีละตัวเลือกแล้วเทียบผล (จับกรณีที่สูตรอ่านค่าผ่านทางอ้อม เช่น ตารางราคา/addons
- *      — ซิปสกรีน Z100/Z120 ไม่มีคำว่า form ในสูตร แต่เปลี่ยนแล้วราคาขยับจริง) */
-const priceSig = (p, over) => {
+/** ตัวเลือกฝั่งใบตัดของรุ่นนี้ (ถ้าผูกใบตัดไว้) */
+function cutOptionsOf(p) {
   const d = p.defaults || { w: 150, h: 150, p: 1 };
-  const spec = {};
-  for (const so of p.specOpts || []) if (so.def !== undefined) spec[so.key] = Array.isArray(so.def) ? so.def[0] : so.def;
+  let rec;
   try {
-    const r = computeCost(PRICEBOOK, p, {
-      w: d.w, h: d.h, p: d.p || 1, form: p.defForm, color: "white", colorKey: "white",
-      ...over, spec: { ...spec, ...(over.spec || {}) },
-    });
-    return `${r.cost}|` + (r.lines || []).map((l) => `${l.name}:${l.qty}`).join(",");
-  } catch { return "ERR"; }
-};
-const varies = (p, overs) => new Set(overs.map((o) => priceSig(p, o))).size > 1;
+    rec = cutInputFromRecipe(
+      { kind: "std", prodId: p.id, w: d.w, h: d.h, p: d.p || 1, form: p.defForm, spec: {}, glassType: p.defGlass },
+      { rawCompare: true },
+    );
+  } catch { return null; }
+  const spec = rec && CUT_SPEC_BY_ID[rec.spec_id];
+  if (!spec) return null;
+  const groups = [];
+  if (spec.rails?.length > 1) groups.push({ label: "ราง / คอนฟิก", choices: spec.rails });
+  for (const o of spec.opts || []) if ((o.choices || []).length > 1) groups.push({ label: o.label || o.key, choices: o.choices });
+  return { specId: spec.id, specName: spec.name, groups };
+}
 
-const usesForm = (p) => /\bform\b/.test(srcOf(p)) || varies(p, (p.forms || []).map((f) => ({ form: f })));
-const usesSpec = (p, so) => new RegExp(`spec\\s*[.\\[]\\s*['"]?${so.key}\\b`).test(srcOf(p))
-  || varies(p, so.opts.map((o) => ({ spec: { [so.key]: Array.isArray(o) ? o[0] : o } })));
+/** ตัวเลือกฝั่งคิดราคาของรุ่นนี้ */
+function calcOptionsOf(p) {
+  const groups = [];
+  if ((p.forms || []).length > 1) groups.push({ label: "รูปแบบ", choices: p.forms });
+  if ((p.materials || []).length > 1) groups.push({ label: p.materialLabel || "วัสดุ", choices: p.materials });
+  for (const so of p.specOpts || []) {
+    if (so.type === "number" || !Array.isArray(so.opts) || so.opts.length < 2) continue;
+    groups.push({ label: so.label || so.key, choices: so.opts.map((o) => (Array.isArray(o) ? o[0] : o)) });
+  }
+  return groups;
+}
 
-// ── รวบรวม "ทุกตัวเลือกที่เว็บให้กด" ──
 const items = [];
 for (const p of Object.values(PRODUCTS)) {
   if (!p || !p.id) continue;
-  for (const f of p.forms || [])
-    items.push({ id: p.id, name: p.name, group: "รูปแบบ", key: "form", opt: f, used: usesForm(p) || !!p.sellDirect });
-  for (const so of p.specOpts || []) {
-    if (so.type === "number" || !Array.isArray(so.opts)) continue;   // ช่องกรอกตัวเลข ไม่ใช่ dropdown ให้เลือก
-    for (const o of so.opts) {
-      const label = Array.isArray(o) ? o[0] : o;                     // บางอันเป็น [value, label]
-      items.push({ id: p.id, name: p.name, group: so.label || so.key, key: so.key, opt: String(label), used: usesSpec(p, so) || !!p.sellDirect });
-    }
+  const cut = cutOptionsOf(p);
+  const calc = calcOptionsOf(p);
+  const calcAll = new Set(calc.flatMap((g) => g.choices).map(norm));
+  const cutAll = new Set((cut?.groups ?? []).flatMap((g) => g.choices).map(norm));
+
+  for (const g of cut?.groups ?? []) {
+    const missing = g.choices.filter((c) => c && !calcAll.has(norm(c)));
+    if (!missing.length) continue;
+    items.push({
+      id: p.id, product: p.name, specId: cut.specId, side: "cut", label: g.label,
+      all: g.choices, missing,
+      // ขาดทั้งกลุ่ม = คิดราคาไม่รู้จักเรื่องนี้เลย · ขาดบางตัว = มีอยู่แล้วแต่ตัวเลือกไม่ครบ
+      rule: "①", kind: missing.length === g.choices.length ? "ไม่มีเรื่องนี้เลย" : "มีแล้วแต่ไม่ครบ",
+    });
+  }
+  if (cut) for (const g of calc) {
+    const missing = g.choices.filter((c) => c && !cutAll.has(norm(c)));
+    if (missing.length !== g.choices.length) continue;   // สนใจเฉพาะกลุ่มที่ใบตัดไม่รู้จักทั้งกลุ่ม
+    items.push({
+      id: p.id, product: p.name, specId: cut.specId, side: "calc", label: g.label,
+      all: g.choices, missing, rule: "②", kind: "ใบตัดไม่ต้องกรอก",
+    });
   }
 }
 
-// ── ตัดสินทีละตัวเลือก (ตรวจไฟล์ "ทุกตัว" ไม่ข้ามตัวที่เว็บใช้แล้ว) ──
-for (const it of items) {
-  it.cut = inCut(it.opt);
-  it.cost = inCost(it.opt);
-  it.amb = isAmbiguous(it.opt);
-  const found = it.cut.length || it.cost;
-  it.ownerOk = OWNER_OK.has(it.id) && !found && it.used;
-  it.bucket = it.ownerOk ? "OWNER"
-    : found && !it.amb ? "OK"
-    : found && it.amb ? "EYE_SHORT"
-    : it.used ? "EYE_USED"
-    : "RULE3";
-  it.rule = it.ownerOk ? "②" : it.cut.length && !it.cost ? "①" : !it.cut.length && it.cost ? "②" : it.cut.length ? "①②" : "③";
-}
-
 // ── รายงาน ──
-const N = (b) => items.filter((x) => x.bucket === b);
-console.log(`ตรวจ ${new Set(items.map((i) => i.id)).size} รุ่น · ${items.length} ตัวเลือก`);
-console.log(`  (dropdown รูปแบบ ${items.filter((i) => i.key === "form").length} · dropdown อื่น ${items.filter((i) => i.key !== "form").length})\n`);
-console.log(`  ✅ เจอในไฟล์ ชัดเจน                      ${N("OK").length}`);
-console.log(`  ⚠  เจอในไฟล์ แต่คำสั้น อาจชนคำอื่น       ${N("EYE_SHORT").length}   ← ต้องดูด้วยตา`);
-console.log(`  🔶 ไม่เจอในไฟล์ แต่เว็บคิดเงินจากมัน     ${N("EYE_USED").length}   ← ต้องดูด้วยตา (ไฟล์อาจเขียนคนละคำ)`);
-console.log(`  ❌ ไม่เจอในไฟล์ + เว็บไม่ได้ใช้ → กฎ ③   ${N("RULE3").length}`);
+const one = items.filter((i) => i.rule === "①");
+const two = items.filter((i) => i.rule === "②");
+const linked = new Set(items.map((i) => i.id));
+console.log(`\nรุ่นที่ผูกใบตัดไว้และมีเรื่องต้องดู: ${linked.size}`);
+console.log(`  ① ใบตัดมี · คิดราคาไม่มี   ${one.length} กลุ่ม   ← ช่องโหว่จริง ต้องเติม`);
+console.log(`  ② คิดราคามี · ใบตัดไม่มี   ${two.length} กลุ่ม   ← ใช้ได้ ไม่ต้องกรอกในใบตัด\n`);
 
-const show = (b, head) => {
-  const list = N(b);
-  if (!list.length) return;
-  console.log(`\n═══ ${head} — ${list.length} ═══`);
-  for (const r of list)
-    console.log(`  ${r.id.padEnd(17)} ${String(r.group).padEnd(14)} ${r.opt.padEnd(26)} ${r.cut.length ? "ใบตัด " + r.cut.length + " ไฟล์" : ""}${r.cost ? " · คิดราคา ✓" : ""}`);
-};
-show("RULE3", "❌ กฎ ③ ไม่มีในไฟล์ไหนเลย + เว็บไม่ได้ใช้ → เอาตัวเลือกออก");
-show("EYE_USED", "🔶 เว็บคิดเงินจากตัวเลือกนี้ แต่ค้นชื่อในไฟล์ไม่เจอ → เช็คว่าไฟล์เขียนคนละคำ หรือคิดเอาเอง");
-if (process.argv.includes("--all")) show("EYE_SHORT", "⚠ คำสั้น อาจชนคำอื่นในไฟล์");
+console.log("═══ ① ใบตัดมี แต่คิดราคาไม่มี ═══");
+for (const i of one)
+  console.log(`  ${i.id.padEnd(16)} ${i.label.padEnd(24)} ${i.kind.padEnd(18)} ขาด: ${i.missing.join(" / ")}`);
 
-// ── สแนปช็อตให้หน้าเว็บอ่าน ──
-//   เจ้าของสั่ง 2 ก.ย.69: "แก้ในเว็บเลย ชั้นเลิกดู excel คุณแล้ว เสียเวลา"
-//   เว็บบน Vercel เปิดไฟล์ .xlsx ตอนรันไม่ได้ (ไฟล์อยู่แต่ในเครื่อง) → ต้องอบผลไว้เป็น JSON แล้ว commit
-//   รันสคริปต์นี้ใหม่ทุกครั้งที่ไฟล์ตัดประกอบ/ถอดทุน หรือ products.mjs เปลี่ยน
-if (process.argv.includes("--json") || process.argv.includes("--xlsx")) {
-  const out = {
-    generatedAt: new Date().toISOString().slice(0, 10),
-    sources: { cutFiles: CUT_BLOBS.length, costFiles: COST_XLSX.filter((f) => fs.existsSync(f)).map((f) => path.basename(f)) },
-    items: items.map((r) => ({
-      id: r.id, product: r.name, group: r.group, opt: r.opt,
-      cut: r.cut, cost: !!r.cost, used: !!r.used, rule: r.rule, bucket: r.bucket,
-    })),
-  };
-  fs.writeFileSync("src/lib/calculator40/form-options-audit.json", JSON.stringify(out, null, 1), "utf8");
+if (process.argv.includes("--json")) {
+  fs.writeFileSync("src/lib/calculator40/form-options-audit.json",
+    JSON.stringify({ generatedAt: new Date().toISOString().slice(0, 10), items }, null, 1), "utf8");
   console.log("\nเขียน src/lib/calculator40/form-options-audit.json แล้ว (หน้าเว็บอ่านไฟล์นี้)");
-}
-
-if (process.argv.includes("--csv") || process.argv.includes("--xlsx")) {
-  const HEAD = ["รุ่น", "ชื่อรุ่น", "กลุ่มตัวเลือก", "ตัวเลือก", "อยู่ในใบตัด", "อยู่ในคิดราคา", "เว็บใช้", "กฎ", "ผลตรวจ"];
-  const LABEL = { OWNER: "✅ เจ้าของยืนยัน อยู่ในคิดราคานานแล้ว", OK: "✅ เจอในไฟล์", EYE_SHORT: "⚠ คำสั้น ดูด้วยตา", EYE_USED: "🔶 ไม่เจอ แต่เว็บใช้", RULE3: "❌ กฎ ③ เอาออก" };
-  const ORDER = { RULE3: 0, EYE_USED: 1, EYE_SHORT: 2, OK: 3, OWNER: 4 };
-  const sorted = [...items].sort((a, b) => (ORDER[a.bucket] - ORDER[b.bucket]) || a.id.localeCompare(b.id));
-  const line = (r) => [r.id, r.name, r.group, r.opt, r.cut.join(" · "), r.cost ? "มี" : "", r.used ? "ใช้" : "", r.rule, LABEL[r.bucket]];
-
-  fs.writeFileSync("audit-form-options.tsv", "﻿" + [HEAD.join("\t"), ...sorted.map((r) => line(r).join("\t"))].join("\n"), "utf8");
-  console.log("\nเขียน audit-form-options.tsv แล้ว");
-
-  // เจ้าของเปิด csv ใน Excel ไม่ได้ (บอกไว้ 30 ส.ค.) → ออกเป็น .xlsx ระบายสีตามผลตรวจให้เลย
-  const TONE = { RULE3: S.RED, EYE_USED: S.ORANGE, EYE_SHORT: S.YELLOW, OK: S.GREEN, OWNER: S.GREEN };
-  const rows = [HEAD, ...sorted.map(line)];
-  const rowStyles = [S.HEAD, ...sorted.map((r) => TONE[r.bucket])];
-  writeXlsx("ตรวจตัวเลือกทุกบาน.xlsx", [{
-    name: sheetName("ตัวเลือกทั้งหมด"), rows, rowStyles,
-    widths: [16, 34, 26, 30, 40, 12, 8, 6, 20],
-  }]);
-  console.log("เขียน ตรวจตัวเลือกทุกบาน.xlsx แล้ว (แดง=ต้องเอาออก · ส้ม=ดูด้วยตา · เหลือง=คำสั้น · เขียว=ผ่าน)");
 }

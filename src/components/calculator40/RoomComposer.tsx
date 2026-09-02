@@ -370,7 +370,8 @@ function ColsEditor({
               className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 text-xs font-semibold outline-none">
               {PANE_TYPES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
             </select>
-            {(prod?.forms?.length ?? 0) > 0 && (
+            {/* ตัวเลือกเดียว = ไม่ต้องโชว์ (ดู Calculator40Client) */}
+            {(prod?.forms?.length ?? 0) > 1 && (
               <select value={sel.form || prod.defForm}
                 onChange={(e) => onPatchPane(sel.key, { form: e.target.value, n: snapPanes(prod, e.target.value, sel.n || 1) })}
                 className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 text-xs font-semibold outline-none" title="รูปแบบการเปิด (เหมือน G1)">

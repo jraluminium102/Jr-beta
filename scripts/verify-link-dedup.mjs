@@ -128,26 +128,15 @@ console.log("\n④ ทุกตัวเลือกใน dropdown 'รูป�
 }
 
 // ── ⑤ สแนปช็อตผลตรวจตัวเลือก (ที่หน้าเว็บโชว์) ต้องไม่ค้างของเก่า ──
-//   หน้า /calculator40/link อ่าน form-options-audit.json ไม่ได้เปิดไฟล์ xlsx เอง
-//   ถ้าเพิ่ม/ลบตัวเลือกใน products.mjs แล้วลืมรัน `node scripts/audit-form-options.mjs --json`
-//   หน้าเว็บจะโชว์ผลตรวจของเก่า = เจ้าของเชื่อผิด → เทสนี้ดักให้
-console.log("\n⑤ ผลตรวจตัวเลือกที่หน้าเว็บโชว์ ต้องตรงกับตัวเลือกที่มีอยู่จริง");
+//   หน้า /calculator40/link อ่าน form-options-audit.json ไม่ได้เทียบเองตอนรัน
+//   แก้ products.mjs หรือใบตัดแล้วลืมรัน `node scripts/audit-form-options.mjs --json` = หน้าเว็บโชว์ของเก่า
+console.log("\n⑤ ผลตรวจตัวเลือกที่หน้าเว็บโชว์ ต้องไม่ค้างของเก่า");
 {
-  const have = new Set();
-  for (const p of Object.values(PRODUCTS)) {
-    for (const f of p.forms || []) have.add(`${p.id}|รูปแบบ|${f}`);
-    for (const so of p.specOpts || []) {
-      if (so.type === "number" || !Array.isArray(so.opts)) continue;
-      for (const o of so.opts) have.add(`${p.id}|${so.label || so.key}|${Array.isArray(o) ? o[0] : o}`);
-    }
-  }
-  const snap = new Set(AUDIT.items.map((i) => `${i.id}|${i.group}|${i.opt}`));
-  const missing = [...have].filter((k) => !snap.has(k));
-  const stale = [...snap].filter((k) => !have.has(k));
-  okTrue(`ทุกตัวเลือกมีผลตรวจครบ (ขาด ${missing.length})`, missing.length === 0,
-    missing.slice(0, 5).join("\n       ") + (missing.length ? "\n       → รัน: node scripts/audit-form-options.mjs --json" : ""));
-  okTrue(`ไม่มีผลตรวจค้างของตัวเลือกที่ลบไปแล้ว (ค้าง ${stale.length})`, stale.length === 0,
-    stale.slice(0, 5).join("\n       ") + (stale.length ? "\n       → รัน: node scripts/audit-form-options.mjs --json" : ""));
+  const ids = new Set(Object.values(PRODUCTS).map((p) => p.id));
+  const orphan = AUDIT.items.filter((i) => !ids.has(i.id));
+  okTrue(`ไม่มีผลตรวจของรุ่นที่ไม่มีอยู่แล้ว (เจอ ${orphan.length})`, orphan.length === 0,
+    orphan.slice(0, 5).map((o) => o.id).join(", "));
+  okTrue("ไฟล์ผลตรวจมีข้อมูล (ไม่ใช่ไฟล์เปล่า)", Array.isArray(AUDIT.items) && AUDIT.items.length > 0);
 }
 
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);

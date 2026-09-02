@@ -491,7 +491,7 @@ export default function LinkClient({
                   <input value={cp} onChange={(e) => setCp(e.target.value)} type="number" min={caseOpt.minP} max={caseOpt.maxP} disabled={!useOwnCase}
                     className="block w-16 min-h-[34px] rounded-lg bg-white/80 px-2 text-sm text-right tabular-nums ring-1 ring-amber-200 outline-none disabled:opacity-50" />
                 </label>
-                {caseOpt.forms.length > 0 && (
+                {caseOpt.forms.length > 1 && (
                   <label className="block"><span className="text-[10px] text-amber-800">รูปแบบ</span>
                     <select value={cform} onChange={(e) => setCform(e.target.value)} disabled={!useOwnCase}
                       className="block min-w-[150px] min-h-[34px] rounded-lg bg-white/80 px-2 text-sm ring-1 ring-amber-200 outline-none disabled:opacity-50">
@@ -873,78 +873,69 @@ function EditRow({
 }
 
 /**
- * ตรวจ "ตัวเลือกที่หน้าคิดราคาให้กด" ของรุ่นที่เลือกอยู่ ตามกฎ 3 ข้อของเจ้าของ (2 ก.ย.69)
- *   ① มีในใบตัด ไม่มีในคิดราคา → ดึงมาใส่คิดราคา
- *   ② ไม่มีในใบตัด มีในคิดราคา → ใช้ได้ ไม่ต้องกรอกในใบตัด
- *   ③ ไม่มีทั้งคู่              → ไม่ต้องให้เลือก
- * ⚠ ผลตรวจอบไว้เป็น JSON (scripts/audit-form-options.mjs --json) เพราะเว็บบน Vercel เปิดไฟล์ xlsx ตอนรันไม่ได้
- *   ไฟล์ตัดประกอบ/ถอดทุน หรือ products.mjs เปลี่ยน → ต้องรันสคริปต์ใหม่ ไม่งั้นหน้านี้โชว์ของเก่า
- * เจ้าของสั่ง "แก้ในเว็บเลย ชั้นเลิกดู excel คุณแล้ว เสียเวลา" → ย้ายรายงานมาไว้ตรงนี้แทนการส่งไฟล์
+ * "ใบตัดถามอะไร คิดราคาถามครบไหม" — ของรุ่นที่เลือกอยู่
+ *
+ * เจ้าของ 2 ก.ย.69: "เราจะเช็คยังไงว่า ตัดประกอบ / รหัสตรงสโตร์ / คิดราคาใช้เหมือนตัดประกอบ"
+ *   ตารางข้างล่างตอบ 2 ข้อแรกอยู่แล้ว (วัสดุทีละบรรทัด + รหัสสโตร์)
+ *   ที่ยังไม่มีใครตอบคือข้อ 3 — "ใบตัดให้เลือกอะไรได้บ้าง แล้วคิดราคาให้เลือกครบไหม"
+ *   ถ้าใบตัดถามว่าใช้มือจับ Align หรือเมโทร แต่คิดราคาไม่ถาม = คิดราคาตรึงยี่ห้อเดียวตลอด ทุนเพี้ยนได้
+ *
+ * ⚠ ผลตรวจอบเป็น JSON (scripts/audit-form-options.mjs --json) — แก้ products.mjs / ใบตัด ต้องรันใหม่
+ *   verify-link-dedup ⑤ ดักให้ว่าลืมรันหรือเปล่า
  */
-const AUDIT_TONE: Record<string, { tone: "red" | "amber" | "yellow" | "emerald"; label: string; why: string }> = {
-  RULE3: { tone: "red", label: "ไม่มีในไฟล์ไหนเลย", why: "กฎ ③ — ไม่ควรมีให้เลือก ถ้าจะใช้ต้องเพิ่มในไฟล์ก่อน" },
-  EYE_USED: { tone: "amber", label: "ค้นในไฟล์ไม่เจอ แต่เว็บคิดเงินให้", why: "ไฟล์อาจเขียนคนละคำ หรือคิดเอาเอง — ต้องยืนยัน" },
-  EYE_SHORT: { tone: "yellow", label: "เจอในไฟล์ (คำสั้น)", why: "คำสั้นอาจไปตรงกับคำอื่นในไฟล์ — ดูให้ชัวร์อีกที" },
-  OK: { tone: "emerald", label: "เจอในไฟล์", why: "" },
-  OWNER: { tone: "emerald", label: "เจ้าของยืนยัน", why: "อยู่ในคิดราคามานานแล้ว ราคาไม่ได้มาจาก 2 ไฟล์นี้" },
-};
+type AuditItem = { id: string; product: string; specId: string; side: "cut" | "calc"; label: string; all: string[]; missing: string[]; rule: string; kind: string };
 
 function OptionAudit({ prodId }: { prodId: string }) {
   const [open, setOpen] = useState(false);
-  const mine = useMemo(
-    () => (AUDIT.items as { id: string; group: string; opt: string; cut: string[]; cost: boolean; rule: string; bucket: string }[])
-      .filter((i) => i.id === prodId),
-    [prodId],
-  );
+  const mine = useMemo(() => (AUDIT.items as AuditItem[]).filter((i) => i.id === prodId), [prodId]);
+  const gaps = mine.filter((i) => i.rule === "①");
+  const okOnly = mine.filter((i) => i.rule === "②");
   if (!mine.length) return null;
-  const need = mine.filter((i) => i.bucket === "RULE3" || i.bucket === "EYE_USED");
-  const byGroup = new Map<string, typeof mine>();
-  for (const i of mine) {
-    if (!byGroup.has(i.group)) byGroup.set(i.group, []);
-    byGroup.get(i.group)!.push(i);
-  }
   return (
-    <div className={cn("mt-2 rounded-xl ring-1 p-2.5", need.length ? "bg-red-50/70 ring-red-200" : "bg-emerald-50/60 ring-emerald-200")}>
+    <div className={cn("mt-2 rounded-xl ring-1 p-2.5", gaps.length ? "bg-amber-50/70 ring-amber-300" : "bg-emerald-50/60 ring-emerald-200")}>
       <button onClick={() => setOpen((v) => !v)} className="press w-full flex items-center gap-2 text-left">
-        <span className="text-sm font-semibold">{need.length ? "⚠️" : "✅"} ตัวเลือกที่หน้าคิดราคาให้กด ({mine.length})</span>
-        {need.length > 0 && <Badge tone="red">ต้องเคาะ {need.length}</Badge>}
+        <span className="text-sm font-semibold">
+          {gaps.length ? "⚠️" : "✅"} ใบตัดถามอะไร · คิดราคาถามครบไหม
+        </span>
+        {gaps.length > 0 && <Badge tone="amber">คิดราคายังไม่ถาม {gaps.length} เรื่อง</Badge>}
         <span className="ml-auto text-xs text-ink-3">{open ? "ซ่อน ▲" : "ดู ▼"}</span>
       </button>
-      {!open && need.length > 0 && (
-        <div className="mt-1 text-[11px] leading-snug text-red-900">
-          {need.map((i) => `${i.group}: ${i.opt}`).join(" · ")}
+      {!open && gaps.length > 0 && (
+        <div className="mt-1 text-[11px] leading-snug text-amber-900">
+          {gaps.map((i) => i.label).join(" · ")}
         </div>
       )}
       {open && (
-        <div className="mt-2 space-y-2">
-          {[...byGroup.entries()].map(([g, list]) => (
-            <div key={g}>
-              <div className="text-[11px] font-semibold text-ink-2">{g}</div>
-              <div className="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-1">
-                {list.map((i) => {
-                  const t = AUDIT_TONE[i.bucket] ?? AUDIT_TONE.OK;
-                  return (
-                    <div key={i.group + i.opt} className="rounded-lg bg-white/70 px-2 py-1.5 ring-1 ring-line/60">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-xs">{i.opt}</span>
-                        <Badge tone={t.tone}>{t.label}</Badge>
-                      </div>
-                      {t.why && <div className="text-[11px] text-ink-3 leading-snug mt-0.5">{t.why}</div>}
-                      {(i.cut.length > 0 || i.cost) && (
-                        <div className="text-[10px] text-ink-3 mt-0.5">
-                          {i.cut.length > 0 && `ใบตัด: ${i.cut.join(" · ")}`}
-                          {i.cut.length > 0 && i.cost && " · "}
-                          {i.cost && "อยู่ในไฟล์คิดราคา"}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+        <div className="mt-2 space-y-1.5">
+          {gaps.length > 0 && (
+            <div className="text-[11px] text-amber-900 leading-snug">
+              ใบตัดให้ช่างเลือกเรื่องพวกนี้ได้ แต่หน้าคิดราคาไม่ได้ถาม —
+              แปลว่าคิดราคาตรึงไว้แบบเดียว ถ้าหน้างานเลือกอีกแบบ ทุนจะไม่ตรงกับของที่เบิกจริง
+            </div>
+          )}
+          {gaps.map((i) => (
+            <div key={i.side + i.label} className="rounded-lg bg-white/70 px-2 py-1.5 ring-1 ring-line/60">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-xs font-semibold">{i.label}</span>
+                <Badge tone={i.kind === "ไม่มีเรื่องนี้เลย" ? "amber" : "yellow"}>{i.kind}</Badge>
               </div>
+              <div className="text-[11px] text-ink-2 leading-snug mt-0.5">
+                ใบตัดเลือกได้: <span className="font-mono">{i.all.join(" / ")}</span>
+              </div>
+              {i.kind === "มีแล้วแต่ไม่ครบ" && (
+                <div className="text-[11px] text-amber-800 leading-snug">
+                  คิดราคายังขาด: <span className="font-mono">{i.missing.join(" / ")}</span>
+                </div>
+              )}
             </div>
           ))}
+          {okOnly.length > 0 && (
+            <div className="text-[11px] text-ink-3 leading-snug pt-1">
+              ✅ คิดราคามีแต่ใบตัดไม่ต้องกรอก ({okOnly.length}): {okOnly.map((i) => i.label).join(" · ")}
+            </div>
+          )}
           <div className="text-[10px] text-ink-3">
-            ตรวจจากไฟล์จริงเมื่อ {AUDIT.generatedAt} · ใบตัด {AUDIT.sources.cutFiles} ไฟล์ + {AUDIT.sources.costFiles.join(" · ")}
+            เทียบใบตัด <span className="font-mono">{mine[0].specId}</span> กับสูตรคิดราคาโดยตรง · ตรวจเมื่อ {AUDIT.generatedAt}
           </div>
         </div>
       )}

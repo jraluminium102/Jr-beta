@@ -187,7 +187,10 @@ export type Sample = { w: number; h: number; p: number; form: string; label: str
 export function caseOptionsOf(p: any): { forms: string[]; minP: number; maxP: number; defaults: { w: number; h: number; p: number }; defForm: string } {
   const d = p?.defaults ?? { w: 150, h: 150, p: 1 };
   return {
-    forms: (p?.forms && p.forms.length ? p.forms : [p?.defForm].filter(Boolean)) as string[],
+    // ⚠ ห้ามถอยไปใช้ defForm เมื่อรุ่นนั้นไม่มี forms — เจ้าของท้วง 2 ก.ย.69:
+    //   "Velora มีให้กรอกจำนวนบาน 1–2 แต่รูปแบบมีแค่ 'เดี่ยว' จะสื่ออะไร งง"
+    //   Velora ถูกเอา dropdown ออกไปแล้ว (forms: []) แต่ defForm ยังค้างอยู่ เลยโผล่เป็นตัวเลือกเดียวกดไม่ได้
+    forms: (p?.forms ?? []) as string[],
     minP: Number(p?.minP) || 1,
     maxP: Number(p?.maxP) || Number(d.p) || 1,
     defaults: { w: d.w, h: d.h, p: d.p || 1 },
@@ -198,10 +201,13 @@ export function caseOptionsOf(p: any): { forms: string[]; minP: number; maxP: nu
 function samplesOf(p: any): Sample[] {
   const d = p.defaults || { w: 150, h: 150, p: 1 };
   const forms: string[] = (p.forms && p.forms.length ? p.forms : [p.defForm]).slice(0, 3);
+  // รุ่นที่ไม่มี dropdown รูปแบบ ยังต้องส่ง defForm เข้า engine (สูตรบางตัวอ่าน) แต่ "ห้ามโชว์ในป้าย"
+  //   ไม่งั้นป้ายเขียนว่า "220×200 2 บาน · เดี่ยว" ทั้งที่หน้าเว็บไม่มีให้เลือกเดี่ยว/คู่แล้ว = ทำคนอ่านงง
+  const showForm = !!(p.forms && p.forms.length);
   const panels = [...new Set([d.p || 1, p.minP, p.maxP].filter((x: any) => Number.isFinite(x) && x > 0))].slice(0, 2) as number[];
   const out: Sample[] = [];
   for (const form of forms) for (const pn of panels) {
-    out.push({ w: d.w, h: d.h, p: pn, form, label: `${d.w}×${d.h} ${pn} บาน${form ? ` · ${form}` : ""}` });
+    out.push({ w: d.w, h: d.h, p: pn, form, label: `${d.w}×${d.h} ${pn} บาน${showForm && form ? ` · ${form}` : ""}` });
     if (out.length >= 6) return out;
   }
   return out.length ? out : [{ w: d.w, h: d.h, p: d.p || 1, form: p.defForm, label: `${d.w}×${d.h} ${d.p || 1} บาน` }];

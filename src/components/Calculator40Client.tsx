@@ -1163,7 +1163,8 @@ export default function Calculator40Client({ customers = [], priceOverride, line
               )}
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm mt-3">
-                {prod.forms?.length > 0 && !prod.composite && (
+                {/* ตัวเลือกเดียว = กดไม่ได้ ไม่ต้องโชว์ (เจ้าของท้วง 2 ก.ย.69 "จะสื่ออะไร งง") — แพตเทิร์นเดียวกับ SubPanesSection */}
+                {prod.forms?.length > 1 && !prod.composite && (
                   <Select label="รูปแบบ" value={form} onChange={setForm} opts={prod.forms} />
                 )}
                 {/* คำอธิบายรูปแบบ (เช่น เปิดคู่กลาง = เลื่อน N−2 + ติดตาย 2) — ให้คนคิดราคาเข้าใจว่านับยังไง */}
