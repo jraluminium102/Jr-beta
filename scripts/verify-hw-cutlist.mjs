@@ -45,10 +45,16 @@ console.log("\n═══ ① รายการอุปกรณ์ต้อง
   ok("ทุกบรรทัดมีรหัสสโตร์ (ไม่มีตัวไหนผูกไม่ติด)", ls.every((l) => /^JR\d+$/.test(l.sku)), ls.filter((l) => !l.sku).map((l) => l.name).join(","));
   ok("ซิลิโคน = JR00504 (เจ้าของให้)", skuOf(ls, "ซิลิโคน") === "JR00504", skuOf(ls, "ซิลิโคน"));
   ok("ล้อ 27 = 2 ลูก/บาน × 3 บาน", qtyOf(ls, "ล้อ 27") === 6, String(qtyOf(ls, "ล้อ 27")));
+  // รุ่นที่ยังไม่ได้เปิดต้องคืน null (ผู้เรียกใช้รายการเดิมในสูตร) — ใช้รุ่นที่ยังไม่มีสูตรใบตัดเป็นตัวทดสอบ
+  //   ⚠ อย่าใช้ velora/slimlux/gate ฯลฯ เป็นตัวทดสอบอีก — เปิดครบแล้ว 2 ก.ย.69
   ok("รุ่นที่ยังไม่เปิด ยังใช้รายการเดิมในสูตร (คืน null)",
-    cutHardwareLines({ prodId: "velora", ...BASE_IN, cut: DEF_CUT }) === null, "");
-  ok("เปิดทีละรุ่น — SMS + ยูโร (FUJI) + บานเฟี้ยม SMS + PC Door (24 ส.ค.69)",
-    JSON.stringify([...HW_FROM_CUTLIST].sort()) === JSON.stringify(["euro_slide", "folding", "pcdoor", "sms_slide"]), [...HW_FROM_CUTLIST].join(","));
+    cutHardwareLines({ prodId: "roof", ...BASE_IN, cut: DEF_CUT }) === null, "");
+  // เจ้าของเคาะ 2 ก.ย.69: เปิดทุกรุ่นที่ผูกใบตัดได้ (เดิม 4 → 10)
+  //   ปลอดภัยเพราะ engine กันไว้ — รหัสไหนไม่มีราคาสโตร์ จะไม่ใช้ทั้งชุด กลับไปใช้ราคาเดิม ไม่ตกเงียบ ๆ
+  ok("เปิดครบทุกรุ่นที่ผูกใบตัดได้ (10 รุ่น)",
+    JSON.stringify([...HW_FROM_CUTLIST].sort()) === JSON.stringify(
+      ["euro_slide", "fixed", "fold_euro", "fold_lift", "folding", "gate", "pcdoor", "slimlux", "sms_slide", "velora"]),
+    [...HW_FROM_CUTLIST].sort().join(","));
 }
 
 console.log("\n═══ ② มือจับ: ยี่ห้อ × สี × ชนิด → รหัสสโตร์ถูกตัว (เจ้าของไล่เช็คมาแล้ว) ═══");
