@@ -13,6 +13,8 @@ const TONE = {
   "ตรง": "emerald", "จำนวนต่าง": "red", "มีแต่คิดราคา": "amber", "มีแต่ใบตัด": "red", "ไม่มีรหัส": "gray",
   // ของสั่งตามงาน = ตั้งใจไม่ผูกสโตร์ ราคาอยู่ในสูตร → เขียว ไม่ใช่ปัญหา
   "ไม่สต็อก สั่งใหม่": "emerald",
+  // มาร์คไว้แก้ทีหลัง — ไม่ใช่ของผิด แค่ยังไม่ได้เติมราคาในสโตร์ (เจ้าของจะให้คนอื่นทำ)
+  "รอเติมราคา": "yellow",
 } as const;
 
 const n1 = (n: number) => Number(n).toLocaleString("th-TH", { maximumFractionDigits: 1 });
@@ -66,7 +68,10 @@ export default function CompareClient({ pb, stockCount }: { pb: any; stockCount:
 
   // "ไม่ตรง" = จำนวนไม่เท่ากันจริง ๆ เท่านั้น · "ไม่มีรหัส"/"ไม่สต็อก สั่งใหม่" = ตั้งใจ ไม่ใช่ของพัง
   //   (นับเหมือน scripts/sweep-compare.mjs — เดิมนับเทา/เขียวเป็นไม่ตรงด้วย เลยขึ้นแดงทั้งที่ของตรงหมด)
+  // "รอเติมราคา" = งานที่มาร์คไว้ทำทีหลัง (เจ้าของ 2 ก.ย.69 "ตัวไม่มีราคา เรามาร์คไว้แก้ทีหลังได้")
+  //   ไม่นับเป็น "ไม่ตรง" ไม่งั้นราคาที่ยังไม่เติมจะกลบการตรวจเรื่องอื่นจนใช้ตรวจไม่ได้
   const isBad = (s: string) => s === "จำนวนต่าง" || s === "มีแต่ใบตัด" || s === "มีแต่คิดราคา";
+  const pending = (r?.hardware ?? []).filter((x: HwRow) => x.status === "รอเติมราคา").length;
   const aluBad = (r?.alu ?? []).filter((x: AluRow) => isBad(x.status)).length;
   const hwBad = (r?.hardware ?? []).filter((x: HwRow) => isBad(x.status)).length;
   const noCode = [...(r?.alu ?? []), ...(r?.hardware ?? [])].filter((x) => x.status === "ไม่มีรหัส").length;
@@ -140,20 +145,25 @@ export default function CompareClient({ pb, stockCount }: { pb: any; stockCount:
               <Badge tone={aluBad + hwBad === 0 ? "emerald" : "red"}>
                 {aluBad + hwBad === 0 ? "✓ ตรงกันทุกรายการ" : `ไม่ตรง ${aluBad + hwBad} รายการ`}
               </Badge>
+              {pending > 0 && <Badge tone="yellow">รอเติมราคา {pending} รายการ</Badge>}
               {noCode > 0 && <Badge tone="gray">ยังไม่ผูกรหัสสโตร์ {noCode} รายการ</Badge>}
               <Badge tone="gray">สูตรใบตัด: {r.cutSpecName || "—"}</Badge>
               <Badge tone="gray">
                 เรตอลู {r.aluRate.brand} {baht(r.aluRate.rate)} ฿/กก.
                 {r.aluRate.mult !== 1 && ` · ตัวคูณ ${r.aluRate.mult}`}
               </Badge>
-              <Badge tone={r.hwFromCutlist ? "emerald" : "amber"}>
-                {r.hwFromCutlist ? "อุปกรณ์คิดจากใบตัดแล้ว" : "อุปกรณ์ยังใช้รายการเดิมในสูตร"}
+              {/* 3 สถานะ ไม่ใช่ 2 — "ตั้งให้ใช้ใบตัดแล้วแต่รอราคา" ต่างจาก "ไม่ได้ตั้งเลย" คนละงานกัน */}
+              <Badge tone={r.hwFromCutlist ? "emerald" : r.hwPendingPrice ? "yellow" : "amber"}>
+                {r.hwFromCutlist ? "อุปกรณ์คิดจากใบตัดแล้ว"
+                  : r.hwPendingPrice ? "ตั้งให้ใช้ใบตัดแล้ว — รอเติมราคา"
+                    : "อุปกรณ์ยังใช้รายการเดิมในสูตร"}
               </Badge>
             </div>
             {r.note && <p className="mt-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">{r.note}</p>}
             {r.hwMissing?.length > 0 && (
               <p className="mt-2 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                ⚠ ยังไม่มีราคา {r.hwMissing.length} รหัส (สโตร์และไฟล์ถอดทุนไม่มีทั้งคู่) → ค่าของยังใช้ราคาเดิมในสูตร:
+                ⚠ ตารางข้างล่างคือ <b>รายการที่จะคิดจริงเมื่อเติมราคาครบ</b> — ตอนนี้ยังคิดเงินด้วยสูตรเก่าอยู่
+                <br />ยังไม่มีราคา {r.hwMissing.length} รหัส (สโตร์และไฟล์ถอดทุนไม่มีทั้งคู่):
                 <span className="font-mono"> {r.hwMissing.map((m: any) => m.sku || m.name).join(" · ")}</span>
               </p>
             )}

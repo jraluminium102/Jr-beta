@@ -24,6 +24,12 @@ import { buildPriceOverride, applyPriceOverride, isAluCode } from "../src/lib/ca
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PB = JSON.parse(fs.readFileSync(path.join(ROOT, "src/lib/calculator40/pricebook.json"), "utf8"));
+
+// ⚠ เครื่องที่รันเทสไม่มีราคาสโตร์ (ราคาอยู่ใน DB) → รุ่นที่ตั้งให้ "ค่าของมาจากใบตัด" จะเข้าโหมด
+//   "รอเติมราคา" ทุกครั้ง ซึ่งเป็นคนละสภาพกับของจริงบนเว็บที่ราคาครบแล้ว
+//   เทสส่วนใหญ่ต้องการวัด "จำนวนตรงกันไหม" → ใช้ PB_OK ที่จำลองว่ามีราคาครบ
+//   ยกเว้นชุด ④ก ที่ตั้งใจวัดโหมด "รอเติมราคา" → ใช้ PB ตัวเปล่าตามเดิม
+const PB_OK = { ...PB, SKUPRICE: new Proxy(PB.SKUPRICE ?? {}, { get: (t, k) => (typeof k === "string" && k ? (t[k] ?? 1) : t[k]) }) };
 let pass = 0, fail = 0;
 const ok = (name, cond, extra = "") => { cond ? pass++ : fail++; console.log(`${cond ? "✅" : "❌"} ${name}${cond ? "" : "  " + extra}`); };
 
@@ -99,7 +105,7 @@ console.log("\n═══ ③ จับ 'ไม่ตรงกัน' ได้�
 {
   const r = compareCut(PB, IN);
   const all = [...r.alu, ...r.hardware];
-  ok("มีคอลัมน์สถานะครบทุกแถว", all.every((x) => ["ตรง", "จำนวนต่าง", "มีแต่คิดราคา", "มีแต่ใบตัด", "ไม่มีรหัส"].includes(x.status)), "");
+  ok("มีคอลัมน์สถานะครบทุกแถว", all.every((x) => ["ตรง", "จำนวนต่าง", "มีแต่คิดราคา", "มีแต่ใบตัด", "ไม่มีรหัส", "ไม่สต็อก สั่งใหม่", "รอเติมราคา"].includes(x.status)), "");
   // ⚠ เดิมเทสนี้ยัดรุ่นปลอมเข้า PRODUCTS แล้วเรียก compareCut — แต่ compare-cut โหลด products.mjs
   //   คนละ instance กับเทส (ผ่าน tsx) การยัดเลยไม่ถึง = เทสเช็คลม ขึ้นแดงค้างมาตลอด
   //   แก้ 1 ก.ย.69: เรียก statusOf ตรง ๆ ครบทุกกรณี (โค้ดโปรดักชันไม่ได้พัง — เอนจินออกบรรทัดถูกอยู่แล้ว)
@@ -194,11 +200,17 @@ console.log("\n═══ ④ก หน้าเทียบต้องไม่
   const P = PRODUCTS.folding, d = P.defaults;
   const r = compareCut(PB, { prodId: "folding", w: d.w, h: d.h, p: d.p || 2, form: P.defForm, spec: {}, cut: {} });
   ok("บานเฟี้ยม: engine ถอยไปใช้สูตรเก่า (ไม่มีราคาสโตร์ในเครื่องเทส)", r.hwFromCutlist === false, String(r.hwFromCutlist));
-  const bad = r.hardware.filter((h) => h.status !== "ตรง").length;
-  ok("ตอนถอย หน้าเทียบต้องฟ้องไม่ตรง (ห้ามเขียวหลอก)", bad > 0, `ไม่ตรง ${bad} แถว`);
-  ok("ต้องโชว์ของที่ 'คิดเงินจริง' ไม่ใช่ของจากใบตัด",
-    r.hardware.some((h) => /อุปกรณ์เฟี้ยม/.test(String(h.name))), r.hardware.map((h) => h.name).join(" · "));
-  ok("บอกเหตุผลที่ถอย (รหัสไหนยังไม่มีราคา)", (r.hwMissing?.length ?? 0) > 0, String(r.hwMissing?.length));
+  ok("รู้ตัวว่า 'ตั้งให้ใช้ใบตัดแล้ว แต่รอราคา'", r.hwPendingPrice === true, String(r.hwPendingPrice));
+  ok("บอกเหตุผล (รหัสไหนยังไม่มีราคา)", (r.hwMissing?.length ?? 0) > 0, String(r.hwMissing?.length));
+  // ตารางต้องเป็น "ของที่จะคิดจริงเมื่อเติมราคาครบ" = รายการจากใบตัด ไม่ใช่ก้อนรวมของสูตรเก่า
+  ok("โชว์รายการจากใบตัด (ไม่ใช่ก้อนรวม 'อุปกรณ์เฟี้ยม (ชุด)')",
+    r.hardware.some((h) => h.sku === "JR00563") && !r.hardware.some((h) => /^อุปกรณ์เฟี้ยม/.test(String(h.name))),
+    r.hardware.map((h) => h.name).join(" · "));
+  // ⚠ หัวใจกันบั๊กเดิม: รหัสที่ยังไม่มีราคา ห้ามขึ้น "ตรง" เด็ดขาด (เดิมขึ้นตรงหมดเพราะเทียบตัวเองกับตัวเอง)
+  const pendSku = new Set((r.hwMissing ?? []).map((m) => String(m.sku || "").toUpperCase()));
+  const lying = r.hardware.filter((h) => pendSku.has(String(h.sku || "").toUpperCase()) && h.status === "ตรง");
+  ok("รหัสที่ยังไม่มีราคา ต้องขึ้น 'รอเติมราคา' ห้ามขึ้น 'ตรง'", lying.length === 0, lying.map((h) => h.sku).join(","));
+  ok("มีแถวที่มาร์กว่ารอเติมราคา", r.hardware.some((h) => h.status === "รอเติมราคา"), "");
 }
 
 console.log("\n═══ ④ ห้ามมีสูตร/ราคาฝังในหน้านี้ (กันอัปเดตแยกกัน) ═══");
@@ -400,7 +412,7 @@ console.log("\n═══ ยูโร (FUJI) — ค่าของอุปก�
 console.log("\n═══ SlimLux — คิดราคา ↔ ใบตัด ═══");
 {
   const at = (w, h, p, form, slxhandle = "X-J", slxhwcolor = "ขาว") =>
-    compareCut(PB, { prodId: "slimlux", w, h, p, form, spec: { slxhandle, slxhwcolor } });
+    compareCut(PB_OK, { prodId: "slimlux", w, h, p, form, spec: { slxhandle, slxhwcolor } });
   const CASES = [[300, 240, 3, "อิสระ", "X-J"], [200, 200, 2, "อิสระ", "X-J"],
     [400, 240, 4, "ลากจูง", "X-J"], [500, 240, 4, "เปิดคู่กลาง", "มือจับล็อค (มาตรฐาน)"],
     [300, 240, 3, "อิสระ", "มือจับล็อค (มาตรฐาน)"], [300, 240, 3, "อิสระ", "ลูกค้าเตรียมเอง"]];
@@ -419,7 +431,7 @@ console.log("\n═══ SlimLux — คิดราคา ↔ ใบตัด �
   ok("เลือกมือจับล็อค → มีมือจับล็อค · ไม่มีเสา X-J", pcs(lk, "JR02890") === 0 && hw(lk, "JR00366") > 0, "");
   ok("สีมือจับล็อค ดำ → JR00367", hw(at(300, 240, 3, "อิสระ", "มือจับล็อค (มาตรฐาน)", "ดำ"), "JR00367") > 0, "");
   // สีนอกจากขาว/ดำ → เสา X-J ใช้ตัวมิว JR02891 (สีดิบ) แล้วบวกค่าอบ
-  const gray = compareCut(PB, { prodId: "slimlux", w: 300, h: 240, p: 3, form: "อิสระ", color: "sahara", spec: { slxhandle: "X-J" } });
+  const gray = compareCut(PB_OK, { prodId: "slimlux", w: 300, h: 240, p: 3, form: "อิสระ", color: "sahara", spec: { slxhandle: "X-J" } });
   ok("สีเทาซาฮาร่า → เสา X-J ใช้มิว JR02891", (gray.alu.find((a) => a.code === "JR02891")?.calcPieces ?? 0) > 0, "");
   // ตัวเลือกบนหน้าเทียบต้องเป็นของรุ่นนั้นจริง ๆ — เจ้าของเจอ 21 ส.ค.69: เปิด SlimLux แล้วมี "ล็อค+ดัมมี่" ของ SMS โผล่
   {

@@ -44,7 +44,7 @@ export type AluRow = {
   /** ของสั่งตามงาน — ตั้งใจไม่ผูกสโตร์ ราคาอยู่ในสูตร */
   orderOnly?: boolean;
   cutBars: number; cutTotalLenCm: number; cutStockLen: number; cutPieces: number;
-  status: "ตรง" | "จำนวนต่าง" | "มีแต่คิดราคา" | "มีแต่ใบตัด" | "ไม่มีรหัส" | "ไม่สต็อก สั่งใหม่";
+  status: "ตรง" | "จำนวนต่าง" | "มีแต่คิดราคา" | "มีแต่ใบตัด" | "ไม่มีรหัส" | "ไม่สต็อก สั่งใหม่" | "รอเติมราคา";
 };
 export type HwRow = {
   sku: string; name: string;
@@ -52,7 +52,7 @@ export type HwRow = {
   /** ของสั่งตามงาน — ตั้งใจไม่ผูกสโตร์ ราคาอยู่ในสูตร */
   orderOnly?: boolean;
   cutQty: number; cutUnit: string;
-  status: "ตรง" | "จำนวนต่าง" | "มีแต่คิดราคา" | "มีแต่ใบตัด" | "ไม่มีรหัส" | "ไม่สต็อก สั่งใหม่";
+  status: "ตรง" | "จำนวนต่าง" | "มีแต่คิดราคา" | "มีแต่ใบตัด" | "ไม่มีรหัส" | "ไม่สต็อก สั่งใหม่" | "รอเติมราคา";
 };
 
 const r2 = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
@@ -230,8 +230,19 @@ export function compareCut(PB: any, inp: CompareInput) {
   const engHw = (calc.lines ?? []).filter((l: any) => l.cat === "hardware" || l.cat === "consum");
   const engBySku = new Map<string, any>();
   for (const l of engHw) if (l.sku) engBySku.set(String(l.sku).toUpperCase(), l);
-  const calcHw = (hwl?.length && calc.hwFromCutlist)
-    ? hwl.map((h) => {
+  // ── 3 โหมด (เจ้าของ 2 ก.ย.69: "ตัวไม่มีราคา เรามาร์คไว้แก้ทีหลังได้ ... หน้าเว็บมันยังไม่ตรง ตรวจไม่ได้") ──
+  //   ปัญหา: "ราคายังไม่เติม" ไปกลบการตรวจเรื่องอื่นจนหน้าเว็บใช้ตรวจไม่ได้เลย
+  //   แยกให้ชัด — "จำนวน/รายการตรงไหม" กับ "ราคาครบไหม" เป็นคนละเรื่อง ห้ามปนกัน
+  //
+  //   โหมด A  engine ใช้ใบตัดจริง (hwFromCutlist)      → แถว = ใบตัด · ต้นทางเดียว ไม่มีอะไรให้ขัดกัน
+  //   โหมด B  ตั้งให้ใช้ใบตัดแล้ว แต่ถอย (ราคาไม่ครบ)  → แถว = ใบตัด (ของที่ "จะ" คิดเมื่อเติมราคาครบ)
+  //             รหัสที่ยังไม่มีราคา ติดป้าย "รอเติมราคา" = มาร์คไว้ทำทีหลัง ไม่นับเป็น "ไม่ตรง"
+  //             ส่วนเงินที่คิดจริงตอนนี้ยังเป็นสูตรเก่า — บอกไว้ที่แบนเนอร์ ไม่ซ่อน
+  //   โหมด C  รุ่นสูตรล้วน (ไม่ได้ตั้งให้ใช้ใบตัด)      → เทียบจำนวนจริง สูตร vs ใบตัด (ของเดิม)
+  const hwIntendCut = !!(hwl?.length && HW_FROM_CUTLIST.has(inp.prodId));
+  const pendingSku = new Set((calc.hwMissing ?? []).map((m: any) => String(m.sku || "").toUpperCase()));
+  const calcHw = hwIntendCut
+    ? hwl!.map((h) => {
       const eng = engBySku.get(String(h.sku || "").toUpperCase());
       const unitPrice = Number(eng?.unitPrice) || 0;
       return { sku: h.sku, name: h.name, qty: h.qty, unit: h.unit, unitPrice, amount: r2(unitPrice * h.qty) };
@@ -258,7 +269,12 @@ export function compareCut(PB: any, inp: CompareInput) {
       cutQty: h.qty, cutUnit: h.unit, status: "มีแต่ใบตัด",
     });
   }
-  const hardware: HwRow[] = [...bySku.values()].map((e) => ({ ...e, status: statusOf(e.calcQty, e.cutQty, !!e.sku, e.orderOnly) }));
+  const hardware: HwRow[] = [...bySku.values()].map((e) => {
+    // โหมด B: รหัสที่ยังไม่มีราคา = งานรอทำ ไม่ใช่ของที่ "ไม่ตรง" → มาร์คไว้แก้ทีหลัง
+    if (hwIntendCut && !calc.hwFromCutlist && (pendingSku.has(String(e.sku || "").toUpperCase()) || !e.sku))
+      return { ...e, status: "รอเติมราคา" as HwRow["status"] };
+    return { ...e, status: statusOf(e.calcQty, e.cutQty, !!e.sku, e.orderOnly) };
+  });
 
   // ── ③ เรตอลู ฿/กก. ที่ใช้จริง ────────────────────────────────────────
   const brand = prod.brand || "SMS";
@@ -288,6 +304,10 @@ export function compareCut(PB: any, inp: CompareInput) {
       laborProd: calc.labor?.prod ?? 0, laborInstall: calc.labor?.install ?? 0,
     },
     hwFromCutlist: !!calc.hwFromCutlist,
+    /** ตั้งให้ "ค่าของมาจากใบตัด" ไว้แล้ว (ต่างจาก hwFromCutlist ที่บอกว่า "ใช้ได้จริงตอนนี้ไหม") */
+    hwIntendCut,
+    /** ตั้งไว้แล้วแต่ยังถอยไปคิดเงินด้วยสูตรเก่า เพราะราคายังไม่ครบ — หน้าจอต้องบอกให้ชัด */
+    hwPendingPrice: hwIntendCut && !calc.hwFromCutlist,
     hwMissing: calc.hwMissing ?? [],
     hwFileFallback: calc.hwFileFallback ?? [],
     cutRows: cut?.rows ?? [],
