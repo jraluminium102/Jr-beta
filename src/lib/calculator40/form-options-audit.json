@@ -1,0 +1,5968 @@
+{
+ "generatedAt": "2026-09-02",
+ "sources": {
+  "cutFiles": 28,
+  "costFiles": [
+   "ถอดทุน_รวมทั้งหมด v20.xlsx",
+   "ราคาอัพเดทล่าสุด.xlsx"
+  ]
+ },
+ "items": [
+  {
+   "id": "sms_slide",
+   "product": "บานเลื่อน SMS",
+   "group": "รูปแบบ",
+   "opt": "อิสระ",
+   "cut": [
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "sms_slide",
+   "product": "บานเลื่อน SMS",
+   "group": "รูปแบบ",
+   "opt": "สลับ",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "sms_slide",
+   "product": "บานเลื่อน SMS",
+   "group": "รูปแบบ",
+   "opt": "ลากจูง",
+   "cut": [
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "sms_slide",
+   "product": "บานเลื่อน SMS",
+   "group": "รูปแบบ",
+   "opt": "เปิดคู่กลาง",
+   "cut": [
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "sms_slide",
+   "product": "บานเลื่อน SMS",
+   "group": "ราง",
+   "opt": "รางกันน้ำ",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "sms_slide",
+   "product": "บานเลื่อน SMS",
+   "group": "ราง",
+   "opt": "รางเตี้ย (งานใน)",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "euro_slide",
+   "product": "บานเลื่อน ยูโร",
+   "group": "รูปแบบ",
+   "opt": "อิสระ",
+   "cut": [
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "euro_slide",
+   "product": "บานเลื่อน ยูโร",
+   "group": "รูปแบบ",
+   "opt": "สลับ",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "euro_slide",
+   "product": "บานเลื่อน ยูโร",
+   "group": "รูปแบบ",
+   "opt": "ลากจูง",
+   "cut": [
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "euro_slide",
+   "product": "บานเลื่อน ยูโร",
+   "group": "รูปแบบ",
+   "opt": "เปิดคู่กลาง",
+   "cut": [
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "euro_slide",
+   "product": "บานเลื่อน ยูโร",
+   "group": "ราง",
+   "opt": "รางกันน้ำ",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "euro_slide",
+   "product": "บานเลื่อน ยูโร",
+   "group": "ราง",
+   "opt": "รางเตี้ย (งานใน)",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "slimlux",
+   "product": "บานเลื่อนเฟรมบาง SlimLux",
+   "group": "รูปแบบ",
+   "opt": "อิสระ",
+   "cut": [
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "slimlux",
+   "product": "บานเลื่อนเฟรมบาง SlimLux",
+   "group": "รูปแบบ",
+   "opt": "ลากจูง",
+   "cut": [
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "slimlux",
+   "product": "บานเลื่อนเฟรมบาง SlimLux",
+   "group": "รูปแบบ",
+   "opt": "เปิดคู่กลาง",
+   "cut": [
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "slimlux",
+   "product": "บานเลื่อนเฟรมบาง SlimLux",
+   "group": "มือจับ",
+   "opt": "มือจับล็อค (มาตรฐาน)",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "slimlux",
+   "product": "บานเลื่อนเฟรมบาง SlimLux",
+   "group": "มือจับ",
+   "opt": "X-J",
+   "cut": [
+    "JR_SlimLux_บานเลื่อน.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "slimlux",
+   "product": "บานเลื่อนเฟรมบาง SlimLux",
+   "group": "มือจับ",
+   "opt": "ลูกค้าเตรียมเอง",
+   "cut": [],
+   "cost": true,
+   "used": true,
+   "rule": "②",
+   "bucket": "OK"
+  },
+  {
+   "id": "slimlux",
+   "product": "บานเลื่อนเฟรมบาง SlimLux",
+   "group": "สีมือจับ",
+   "opt": "ขาว",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "slimlux",
+   "product": "บานเลื่อนเฟรมบาง SlimLux",
+   "group": "สีมือจับ",
+   "opt": "ดำ",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "open_door",
+   "product": "บานเปิด",
+   "group": "รูปแบบ",
+   "opt": "มีธรณี",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "open_door",
+   "product": "บานเปิด",
+   "group": "รูปแบบ",
+   "opt": "ไม่มีธรณี",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_บานโซลิด_3.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "open_door",
+   "product": "บานเปิด",
+   "group": "ใช้เป็น",
+   "opt": "ประตู",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "open_door",
+   "product": "บานเปิด",
+   "group": "ใช้เป็น",
+   "opt": "หน้าต่าง",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "บานยกฟูจิ.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "open_door",
+   "product": "บานเปิด",
+   "group": "กรอบบาน",
+   "opt": "10 ซม. (F7864)",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "open_door",
+   "product": "บานเปิด",
+   "group": "กรอบบาน",
+   "opt": "8 ซม. (F7943)",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "open_door",
+   "product": "บานเปิด",
+   "group": "ช่องแสงข้าง (กี่ข้าง)",
+   "opt": "0",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_กลาสเฮ้าส์.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "open_door",
+   "product": "บานเปิด",
+   "group": "ช่องแสงข้าง (กี่ข้าง)",
+   "opt": "1",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_กลาสเฮ้าส์.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "open_door",
+   "product": "บานเปิด",
+   "group": "ช่องแสงข้าง (กี่ข้าง)",
+   "opt": "2",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_กลาสเฮ้าส์.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "open_door",
+   "product": "บานเปิด",
+   "group": "มุ้ง (กรอบ FUJI)",
+   "opt": "ไม่มี",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "open_door",
+   "product": "บานเปิด",
+   "group": "มุ้ง (กรอบ FUJI)",
+   "opt": "มี",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "awning",
+   "product": "บานกระทุ้ง",
+   "group": "รูปแบบ",
+   "opt": "เปิดล่าง",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "awning",
+   "product": "บานกระทุ้ง",
+   "group": "รูปแบบ",
+   "opt": "เปิดข้าง",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "folding",
+   "product": "บานเฟี้ยม",
+   "group": "รูปแบบ",
+   "opt": "2บาน: รวบเปิดซ้าย (2-0)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "folding",
+   "product": "บานเฟี้ยม",
+   "group": "รูปแบบ",
+   "opt": "2บาน: รวบเปิดขวา (0-2)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "folding",
+   "product": "บานเฟี้ยม",
+   "group": "รูปแบบ",
+   "opt": "2บาน: เปิดกลาง (1-1)",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "folding",
+   "product": "บานเฟี้ยม",
+   "group": "รูปแบบ",
+   "opt": "3บาน: รวบเปิดซ้าย (3-0)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "folding",
+   "product": "บานเฟี้ยม",
+   "group": "รูปแบบ",
+   "opt": "3บาน: รวบเปิดขวา (0-3)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "folding",
+   "product": "บานเฟี้ยม",
+   "group": "รูปแบบ",
+   "opt": "3บาน: เปิดกลาง (2-1)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "folding",
+   "product": "บานเฟี้ยม",
+   "group": "รูปแบบ",
+   "opt": "4บาน: รวบเปิดซ้าย (4-0)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "folding",
+   "product": "บานเฟี้ยม",
+   "group": "รูปแบบ",
+   "opt": "4บาน: รวบเปิดขวา (0-4)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "folding",
+   "product": "บานเฟี้ยม",
+   "group": "รูปแบบ",
+   "opt": "4บาน: เปิดกลาง (2-2)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "folding",
+   "product": "บานเฟี้ยม",
+   "group": "รูปแบบ",
+   "opt": "5บาน: รวบเปิดซ้าย (5-0)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "folding",
+   "product": "บานเฟี้ยม",
+   "group": "รูปแบบ",
+   "opt": "5บาน: รวบเปิดขวา (0-5)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "folding",
+   "product": "บานเฟี้ยม",
+   "group": "รูปแบบ",
+   "opt": "5บาน: เปิดกลาง (3-2)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "folding",
+   "product": "บานเฟี้ยม",
+   "group": "รูปแบบ",
+   "opt": "6บาน: รวบเปิดซ้าย (6-0)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "folding",
+   "product": "บานเฟี้ยม",
+   "group": "รูปแบบ",
+   "opt": "6บาน: รวบเปิดขวา (0-6)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "folding",
+   "product": "บานเฟี้ยม",
+   "group": "รูปแบบ",
+   "opt": "6บาน: เปิดกลาง (3-3)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "folding",
+   "product": "บานเฟี้ยม",
+   "group": "ทิศเปิด",
+   "opt": "เปิดขวา",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "folding",
+   "product": "บานเฟี้ยม",
+   "group": "ทิศเปิด",
+   "opt": "เปิดซ้าย",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "folding",
+   "product": "บานเฟี้ยม",
+   "group": "ทิศเปิด",
+   "opt": "แยกกลาง",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "folding",
+   "product": "บานเฟี้ยม",
+   "group": "ธรณีเฟี้ยม",
+   "opt": "ธรณีกันน้ำ",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "folding",
+   "product": "บานเฟี้ยม",
+   "group": "ธรณีเฟี้ยม",
+   "opt": "ธรณีหลังเต่า",
+   "cut": [],
+   "cost": true,
+   "used": false,
+   "rule": "②",
+   "bucket": "OK"
+  },
+  {
+   "id": "folding",
+   "product": "บานเฟี้ยม",
+   "group": "ธรณีเฟี้ยม",
+   "opt": "รางยู",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "fixed",
+   "product": "บานติดตาย",
+   "group": "รูปแบบ",
+   "opt": "กระจกล้วน",
+   "cut": [],
+   "cost": true,
+   "used": false,
+   "rule": "②",
+   "bucket": "OK"
+  },
+  {
+   "id": "topslide",
+   "product": "บานเลื่อนรางบน",
+   "group": "รูปแบบ",
+   "opt": "เลื่อนซ้อน",
+   "cut": [],
+   "cost": true,
+   "used": false,
+   "rule": "②",
+   "bucket": "OK"
+  },
+  {
+   "id": "eseries",
+   "product": "บานเลื่อน E-series",
+   "group": "รูปแบบ",
+   "opt": "อิสระ",
+   "cut": [
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "eseries",
+   "product": "บานเลื่อน E-series",
+   "group": "รูปแบบ",
+   "opt": "สลับ",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "eseries",
+   "product": "บานเลื่อน E-series",
+   "group": "รูปแบบ",
+   "opt": "ลากจูง",
+   "cut": [
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "eseries",
+   "product": "บานเลื่อน E-series",
+   "group": "รูปแบบ",
+   "opt": "เปิดคู่กลาง",
+   "cut": [
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "eseries",
+   "product": "บานเลื่อน E-series",
+   "group": "ราง",
+   "opt": "รางกันน้ำ",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "eseries",
+   "product": "บานเลื่อน E-series",
+   "group": "ราง",
+   "opt": "รางเตี้ย (งานใน)",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "velora",
+   "product": "Velora บานเปิด",
+   "group": "สีอุปกรณ์",
+   "opt": "ขาว",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "velora",
+   "product": "Velora บานเปิด",
+   "group": "สีอุปกรณ์",
+   "opt": "ดำ",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "pcdoor",
+   "product": "ประตูบานเปิด PC Door",
+   "group": "รูปแบบ",
+   "opt": "แบ่ง 2",
+   "cut": [
+    "JR_PCDoor.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "pcdoor",
+   "product": "ประตูบานเปิด PC Door",
+   "group": "รูปแบบ",
+   "opt": "แบ่ง 4",
+   "cut": [
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "pcdoor",
+   "product": "ประตูบานเปิด PC Door",
+   "group": "ธรณี",
+   "opt": "มีธรณี",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "pcdoor",
+   "product": "ประตูบานเปิด PC Door",
+   "group": "ธรณี",
+   "opt": "ไม่มีธรณี",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_บานโซลิด_3.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "pcdoor",
+   "product": "ประตูบานเปิด PC Door",
+   "group": "ล้อ + ซอฟต์โคลส",
+   "opt": "ใส่",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "บานยกฟูจิ.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "pcdoor",
+   "product": "ประตูบานเปิด PC Door",
+   "group": "ล้อ + ซอฟต์โคลส",
+   "opt": "ไม่ใส่",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานโซลิด_3.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "banyok",
+   "product": "บานยก",
+   "group": "รูปแบบ",
+   "opt": "เดี่ยว",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "banyok",
+   "product": "บานยก",
+   "group": "รูปแบบ",
+   "opt": "ถ่วง",
+   "cut": [],
+   "cost": true,
+   "used": true,
+   "rule": "②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "banyok",
+   "product": "บานยก",
+   "group": "ลักษณะการยก",
+   "opt": "ยกบานบน",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "banyok",
+   "product": "บานยก",
+   "group": "ลักษณะการยก",
+   "opt": "ยกบานบน-ล่างสลับ",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "fold_euro",
+   "product": "บานเฟี้ยม ยูโร",
+   "group": "รูปแบบ",
+   "opt": "2บาน: รวบเปิดซ้าย (2-0)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "fold_euro",
+   "product": "บานเฟี้ยม ยูโร",
+   "group": "รูปแบบ",
+   "opt": "2บาน: รวบเปิดขวา (0-2)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "fold_euro",
+   "product": "บานเฟี้ยม ยูโร",
+   "group": "รูปแบบ",
+   "opt": "2บาน: เปิดกลาง (1-1)",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "fold_euro",
+   "product": "บานเฟี้ยม ยูโร",
+   "group": "รูปแบบ",
+   "opt": "3บาน: รวบเปิดซ้าย (3-0)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "fold_euro",
+   "product": "บานเฟี้ยม ยูโร",
+   "group": "รูปแบบ",
+   "opt": "3บาน: รวบเปิดขวา (0-3)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "fold_euro",
+   "product": "บานเฟี้ยม ยูโร",
+   "group": "รูปแบบ",
+   "opt": "3บาน: เปิดกลาง (2-1)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "fold_euro",
+   "product": "บานเฟี้ยม ยูโร",
+   "group": "รูปแบบ",
+   "opt": "4บาน: รวบเปิดซ้าย (4-0)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "fold_euro",
+   "product": "บานเฟี้ยม ยูโร",
+   "group": "รูปแบบ",
+   "opt": "4บาน: รวบเปิดขวา (0-4)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "fold_euro",
+   "product": "บานเฟี้ยม ยูโร",
+   "group": "รูปแบบ",
+   "opt": "4บาน: เปิดกลาง (2-2)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "fold_euro",
+   "product": "บานเฟี้ยม ยูโร",
+   "group": "รูปแบบ",
+   "opt": "5บาน: รวบเปิดซ้าย (5-0)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "fold_euro",
+   "product": "บานเฟี้ยม ยูโร",
+   "group": "รูปแบบ",
+   "opt": "5บาน: รวบเปิดขวา (0-5)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "fold_euro",
+   "product": "บานเฟี้ยม ยูโร",
+   "group": "รูปแบบ",
+   "opt": "5บาน: เปิดกลาง (3-2)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "fold_euro",
+   "product": "บานเฟี้ยม ยูโร",
+   "group": "รูปแบบ",
+   "opt": "6บาน: รวบเปิดซ้าย (6-0)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "fold_euro",
+   "product": "บานเฟี้ยม ยูโร",
+   "group": "รูปแบบ",
+   "opt": "6บาน: รวบเปิดขวา (0-6)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "fold_euro",
+   "product": "บานเฟี้ยม ยูโร",
+   "group": "รูปแบบ",
+   "opt": "6บาน: เปิดกลาง (3-3)",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "fold_euro",
+   "product": "บานเฟี้ยม ยูโร",
+   "group": "ทิศเปิด",
+   "opt": "เปิดขวา",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "fold_euro",
+   "product": "บานเฟี้ยม ยูโร",
+   "group": "ทิศเปิด",
+   "opt": "เปิดซ้าย",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "fold_euro",
+   "product": "บานเฟี้ยม ยูโร",
+   "group": "ทิศเปิด",
+   "opt": "แยกกลาง",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "fold_euro",
+   "product": "บานเฟี้ยม ยูโร",
+   "group": "ธรณีเฟี้ยม",
+   "opt": "ธรณีกันน้ำ (ปกติ)",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "fold_euro",
+   "product": "บานเฟี้ยม ยูโร",
+   "group": "ธรณีเฟี้ยม",
+   "opt": "รางยู",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "banklet",
+   "product": "บานเกล็ด",
+   "group": "รูปแบบ",
+   "opt": "นอน",
+   "cut": [
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "curve_fixed",
+   "product": "บานติดตายดัดโค้ง",
+   "group": "รูปแบบ",
+   "opt": "กระจกล้วน",
+   "cut": [],
+   "cost": true,
+   "used": false,
+   "rule": "②",
+   "bucket": "OK"
+  },
+  {
+   "id": "curve_open",
+   "product": "บานเปิดดัดโค้ง",
+   "group": "รูปแบบ",
+   "opt": "ดัดโค้ง",
+   "cut": [],
+   "cost": true,
+   "used": false,
+   "rule": "②",
+   "bucket": "OK"
+  },
+  {
+   "id": "louver",
+   "product": "ระแนงบังตา",
+   "group": "รูปแบบ",
+   "opt": "นอน",
+   "cut": [
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver",
+   "product": "ระแนงบังตา",
+   "group": "รูปแบบ",
+   "opt": "ตั้ง",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_กลาสเฮ้าส์.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver",
+   "product": "ระแนงบังตา",
+   "group": "กล่องระแนง",
+   "opt": "1x5",
+   "cut": [],
+   "cost": true,
+   "used": true,
+   "rule": "②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver",
+   "product": "ระแนงบังตา",
+   "group": "กล่องระแนง",
+   "opt": "1x1",
+   "cut": [],
+   "cost": true,
+   "used": true,
+   "rule": "②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver",
+   "product": "ระแนงบังตา",
+   "group": "กล่องระแนง",
+   "opt": "1x1.5",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "louver",
+   "product": "ระแนงบังตา",
+   "group": "กล่องระแนง",
+   "opt": "1x1.6",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "louver",
+   "product": "ระแนงบังตา",
+   "group": "กล่องระแนง",
+   "opt": "1x4",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "louver",
+   "product": "ระแนงบังตา",
+   "group": "กล่องระแนง",
+   "opt": "1.6x1.6",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "louver",
+   "product": "ระแนงบังตา",
+   "group": "กล่องระแนง",
+   "opt": "1.6x4",
+   "cut": [],
+   "cost": true,
+   "used": true,
+   "rule": "②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver",
+   "product": "ระแนงบังตา",
+   "group": "ด้านโชว์ (หน้ากว้างที่หันออก)",
+   "opt": "1",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_กลาสเฮ้าส์.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver",
+   "product": "ระแนงบังตา",
+   "group": "ด้านโชว์ (หน้ากว้างที่หันออก)",
+   "opt": "5",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_กลาสเฮ้าส์.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver",
+   "product": "ระแนงบังตา",
+   "group": "ด้านโชว์ (หน้ากว้างที่หันออก)",
+   "opt": "2.54",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver",
+   "product": "ระแนงบังตา",
+   "group": "ด้านโชว์ (หน้ากว้างที่หันออก)",
+   "opt": "3.81",
+   "cut": [
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver",
+   "product": "ระแนงบังตา",
+   "group": "ด้านโชว์ (หน้ากว้างที่หันออก)",
+   "opt": "4.06",
+   "cut": [
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_ประตูรั้ว.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver",
+   "product": "ระแนงบังตา",
+   "group": "ด้านโชว์ (หน้ากว้างที่หันออก)",
+   "opt": "10.16",
+   "cut": [
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_ประตูรั้ว.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver",
+   "product": "ระแนงบังตา",
+   "group": "โครงดาม",
+   "opt": "ไม่รวมโครง",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "louver",
+   "product": "ระแนงบังตา",
+   "group": "โครงดาม",
+   "opt": "รวมโครง",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "louver",
+   "product": "ระแนงบังตา",
+   "group": "รูปแบบ",
+   "opt": "ติดตาย",
+   "cut": [
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_บานติดตาย.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "louver",
+   "product": "ระแนงบังตา",
+   "group": "รูปแบบ",
+   "opt": "บานเลื่อน",
+   "cut": [
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "louver",
+   "product": "ระแนงบังตา",
+   "group": "รูปแบบ",
+   "opt": "บานเฟี้ยม",
+   "cut": [
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "louver",
+   "product": "ระแนงบังตา",
+   "group": "รูปแบบ",
+   "opt": "บานเปิด",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "louver",
+   "product": "ระแนงบังตา",
+   "group": "ทิศเปิด (ถ้าเลื่อน/เฟี้ยม/เปิด)",
+   "opt": "เปิดซ้าย",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "louver",
+   "product": "ระแนงบังตา",
+   "group": "ทิศเปิด (ถ้าเลื่อน/เฟี้ยม/เปิด)",
+   "opt": "เปิดขวา",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "louver",
+   "product": "ระแนงบังตา",
+   "group": "ทิศเปิด (ถ้าเลื่อน/เฟี้ยม/เปิด)",
+   "opt": "แยกกลาง",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "รูปแบบ",
+   "opt": "ตั้ง",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_กลาสเฮ้าส์.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "รูปแบบ",
+   "opt": "นอน",
+   "cut": [
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "แบบประกอบ",
+   "opt": "ยัดใน",
+   "cut": [
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_กลาสเฮ้าส์.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "แบบประกอบ",
+   "opt": "แปะนอก",
+   "cut": [
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "ชนิดใบ",
+   "opt": "ระแนง",
+   "cut": [
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_ประตูรั้ว.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "ชนิดใบ",
+   "opt": "ระแนงสลับ",
+   "cut": [
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_ประตูรั้ว.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "ด้านโชว์ระแนง (A)",
+   "opt": "1",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_กลาสเฮ้าส์.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "ด้านโชว์ระแนง (A)",
+   "opt": "5",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_กลาสเฮ้าส์.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "ด้านโชว์ระแนง (A)",
+   "opt": "2.54",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "ด้านโชว์ระแนง (A)",
+   "opt": "3.81",
+   "cut": [
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "ด้านโชว์ระแนง (A)",
+   "opt": "4.06",
+   "cut": [
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_ประตูรั้ว.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "ด้านโชว์ระแนง (A)",
+   "opt": "10.16",
+   "cut": [
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_ประตูรั้ว.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "[สลับ] กล่อง B",
+   "opt": "1x1",
+   "cut": [],
+   "cost": true,
+   "used": true,
+   "rule": "②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "[สลับ] กล่อง B",
+   "opt": "1x1.5",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "[สลับ] กล่อง B",
+   "opt": "1x1.6",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "[สลับ] กล่อง B",
+   "opt": "1x4",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "[สลับ] กล่อง B",
+   "opt": "1x5",
+   "cut": [],
+   "cost": true,
+   "used": true,
+   "rule": "②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "[สลับ] กล่อง B",
+   "opt": "1.6x1.6",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "[สลับ] กล่อง B",
+   "opt": "1.6x4",
+   "cut": [],
+   "cost": true,
+   "used": true,
+   "rule": "②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "[สลับ] ด้านโชว์ B",
+   "opt": "1",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_กลาสเฮ้าส์.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "[สลับ] ด้านโชว์ B",
+   "opt": "5",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_กลาสเฮ้าส์.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "[สลับ] ด้านโชว์ B",
+   "opt": "2.54",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "[สลับ] ด้านโชว์ B",
+   "opt": "3.81",
+   "cut": [
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "[สลับ] ด้านโชว์ B",
+   "opt": "4.06",
+   "cut": [
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_ประตูรั้ว.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "[สลับ] ด้านโชว์ B",
+   "opt": "10.16",
+   "cut": [
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_ประตูรั้ว.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "ระบบขับเคลื่อน",
+   "opt": "มอเตอร์อัตโนมัติ",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "ระบบขับเคลื่อน",
+   "opt": "มือผลัก (ไม่มีมอเตอร์)",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "ราง",
+   "opt": "รางใหม่",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "gate",
+   "product": "ประตูรั้วบานเลื่อน",
+   "group": "ราง",
+   "opt": "ใช้รางเดิม",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "รูปแบบ",
+   "opt": "นอน",
+   "cut": [
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "กล่อง A",
+   "opt": "1x5",
+   "cut": [],
+   "cost": true,
+   "used": true,
+   "rule": "②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "กล่อง A",
+   "opt": "1x1",
+   "cut": [],
+   "cost": true,
+   "used": true,
+   "rule": "②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "กล่อง A",
+   "opt": "1x1.5",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "กล่อง A",
+   "opt": "1x1.6",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "กล่อง A",
+   "opt": "1x4",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "กล่อง A",
+   "opt": "1.6x1.6",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "กล่อง A",
+   "opt": "1.6x4",
+   "cut": [],
+   "cost": true,
+   "used": true,
+   "rule": "②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "ด้านโชว์ A",
+   "opt": "1",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_กลาสเฮ้าส์.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "ด้านโชว์ A",
+   "opt": "5",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_กลาสเฮ้าส์.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "ด้านโชว์ A",
+   "opt": "2.54",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "ด้านโชว์ A",
+   "opt": "3.81",
+   "cut": [
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "ด้านโชว์ A",
+   "opt": "4.06",
+   "cut": [
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_ประตูรั้ว.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "ด้านโชว์ A",
+   "opt": "10.16",
+   "cut": [
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_ประตูรั้ว.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "กล่อง B",
+   "opt": "1x5",
+   "cut": [],
+   "cost": true,
+   "used": true,
+   "rule": "②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "กล่อง B",
+   "opt": "1x1",
+   "cut": [],
+   "cost": true,
+   "used": true,
+   "rule": "②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "กล่อง B",
+   "opt": "1x1.5",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "กล่อง B",
+   "opt": "1x1.6",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "กล่อง B",
+   "opt": "1x4",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "กล่อง B",
+   "opt": "1.6x1.6",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "กล่อง B",
+   "opt": "1.6x4",
+   "cut": [],
+   "cost": true,
+   "used": true,
+   "rule": "②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "ด้านโชว์ B",
+   "opt": "1",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_กลาสเฮ้าส์.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "ด้านโชว์ B",
+   "opt": "5",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_กลาสเฮ้าส์.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "ด้านโชว์ B",
+   "opt": "2.54",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "ด้านโชว์ B",
+   "opt": "3.81",
+   "cut": [
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "ด้านโชว์ B",
+   "opt": "4.06",
+   "cut": [
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_ประตูรั้ว.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "ด้านโชว์ B",
+   "opt": "10.16",
+   "cut": [
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_ประตูรั้ว.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "โครงดาม",
+   "opt": "ไม่รวมโครง",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "louver_slip",
+   "product": "ระแนงสลับ (คละกล่อง 2 แบบ)",
+   "group": "โครงดาม",
+   "opt": "รวมโครง",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "louver_rotate",
+   "product": "ระแนงปรับหมุนได้",
+   "group": "รูปแบบ",
+   "opt": "นอน",
+   "cut": [
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "louver_rotate",
+   "product": "ระแนงปรับหมุนได้",
+   "group": "รูปแบบ",
+   "opt": "ตั้ง",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_กลาสเฮ้าส์.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "handrail",
+   "product": "ราวกันตก/ราวบันได กระจก",
+   "group": "รูปแบบ",
+   "opt": "มาตรฐาน",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "handrail",
+   "product": "ราวกันตก/ราวบันได กระจก",
+   "group": "ความหนากระจก",
+   "opt": "เทมเปอร์ใส 10มม.",
+   "cut": [],
+   "cost": true,
+   "used": false,
+   "rule": "②",
+   "bucket": "OK"
+  },
+  {
+   "id": "handrail",
+   "product": "ราวกันตก/ราวบันได กระจก",
+   "group": "ความหนากระจก",
+   "opt": "เทมเปอร์ใส 12มม.",
+   "cut": [],
+   "cost": true,
+   "used": false,
+   "rule": "②",
+   "bucket": "OK"
+  },
+  {
+   "id": "aluwave",
+   "product": "อลูลูกฟูกทึบ / คอมโพสิต",
+   "group": "รูปแบบ",
+   "opt": "มาตรฐาน",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "bar_grid_z",
+   "product": "ระแนงบานเกล็ดอลู (ลูกฟูกเรียบ 2 หน้า · ข้อ 38.1)",
+   "group": "รูปแบบ",
+   "opt": "นอน",
+   "cut": [
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "bar_grid_z",
+   "product": "ระแนงบานเกล็ดอลู (ลูกฟูกเรียบ 2 หน้า · ข้อ 38.1)",
+   "group": "รูปแบบ",
+   "opt": "ตั้ง",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_กลาสเฮ้าส์.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "bar_grid_z",
+   "product": "ระแนงบานเกล็ดอลู (ลูกฟูกเรียบ 2 หน้า · ข้อ 38.1)",
+   "group": "ชนิดแผ่น",
+   "opt": "ลูกฟูก",
+   "cut": [
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_บานโซลิด_3.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "bar_grid_z",
+   "product": "ระแนงบานเกล็ดอลู (ลูกฟูกเรียบ 2 หน้า · ข้อ 38.1)",
+   "group": "ชนิดแผ่น",
+   "opt": "กระจก",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "bar_slide",
+   "product": "ระแนงเลื่อน (ลูกฟูกเรียบ 2 ทาง · ข้อ 38.2)",
+   "group": "รูปแบบ",
+   "opt": "ภายนอก",
+   "cut": [],
+   "cost": true,
+   "used": true,
+   "rule": "②",
+   "bucket": "OK"
+  },
+  {
+   "id": "bar_slide",
+   "product": "ระแนงเลื่อน (ลูกฟูกเรียบ 2 ทาง · ข้อ 38.2)",
+   "group": "รูปแบบ",
+   "opt": "ภายใน",
+   "cut": [
+    "JR_FUJI_บานเลื่อน.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "bar_openclose",
+   "product": "ระแนงหมุนเปิด-ปิด (กล่อง 1\"x4\" โชว์ 4\" · ข้อ 38.3)",
+   "group": "รูปแบบ",
+   "opt": "เปิด-ปิด",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "②",
+   "bucket": "OWNER"
+  },
+  {
+   "id": "roof",
+   "product": "หลังคา",
+   "group": "รูปแบบ",
+   "opt": "หลังคาเพิง",
+   "cut": [],
+   "cost": true,
+   "used": false,
+   "rule": "②",
+   "bucket": "OK"
+  },
+  {
+   "id": "roof",
+   "product": "หลังคา",
+   "group": "แป",
+   "opt": "แปเดี่ยว",
+   "cut": [
+    "JR_กันสาด.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "roof",
+   "product": "หลังคา",
+   "group": "แป",
+   "opt": "แปคู่",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "roof",
+   "product": "หลังคา",
+   "group": "โครงหลังคา",
+   "opt": "โครงอลูมิเนียม",
+   "cut": [],
+   "cost": true,
+   "used": false,
+   "rule": "②",
+   "bucket": "OK"
+  },
+  {
+   "id": "roof",
+   "product": "หลังคา",
+   "group": "โครงหลังคา",
+   "opt": "โครงเหล็กชุบซิงค์",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "roof",
+   "product": "หลังคา",
+   "group": "ชนิดฟิล์ม (ถ้ากระจกลามิเนต)",
+   "opt": "—",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_กลาสเฮ้าส์.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "roof",
+   "product": "หลังคา",
+   "group": "ชนิดฟิล์ม (ถ้ากระจกลามิเนต)",
+   "opt": "ใส",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "บานยกฟูจิ.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "roof",
+   "product": "หลังคา",
+   "group": "ชนิดฟิล์ม (ถ้ากระจกลามิเนต)",
+   "opt": "เขียว",
+   "cut": [
+    "JR_PCDoor.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "roof",
+   "product": "หลังคา",
+   "group": "ชนิดฟิล์ม (ถ้ากระจกลามิเนต)",
+   "opt": "กันร้อน",
+   "cut": [],
+   "cost": true,
+   "used": false,
+   "rule": "②",
+   "bucket": "OK"
+  },
+  {
+   "id": "roof",
+   "product": "หลังคา",
+   "group": "ระบบระบายน้ำ",
+   "opt": "ท่อ PVC (ดำ)",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "roof",
+   "product": "หลังคา",
+   "group": "ระบบระบายน้ำ",
+   "opt": "ท่อ PVC (เทา)",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "roof",
+   "product": "หลังคา",
+   "group": "ระบบระบายน้ำ",
+   "opt": "ท่อ PVC (ขาว)",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "roof",
+   "product": "หลังคา",
+   "group": "ระบบระบายน้ำ",
+   "opt": "โซ่ทิวลิป (ขาว)",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "roof",
+   "product": "หลังคา",
+   "group": "ระบบระบายน้ำ",
+   "opt": "โซ่ทิวลิป (น้ำตาล)",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "roof",
+   "product": "หลังคา",
+   "group": "ระบบระบายน้ำ",
+   "opt": "โซ่โลตัส (ขาว)",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "roof",
+   "product": "หลังคา",
+   "group": "ระบบระบายน้ำ",
+   "opt": "โซ่โลตัส (น้ำตาล)",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "roof",
+   "product": "หลังคา",
+   "group": "ยืนยันตัวอย่าง (สีพิเศษ/สีชุบ)",
+   "opt": "—",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_กลาสเฮ้าส์.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานติดตาย.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานระแนง.xlsx",
+    "JR_บานระแนง_v2.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "roof",
+   "product": "หลังคา",
+   "group": "ยืนยันตัวอย่าง (สีพิเศษ/สีชุบ)",
+   "opt": "ลูกค้าเห็นตัวอย่างจริง + ถ่ายรูปยืนยัน",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "roof",
+   "product": "หลังคา",
+   "group": "ตะแกรงกันใบไม้ (ในรางน้ำ)",
+   "opt": "มี · รวมในราคา",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "roof",
+   "product": "หลังคา",
+   "group": "ตะแกรงกันใบไม้ (ในรางน้ำ)",
+   "opt": "ไม่ใส่",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานโซลิด_3.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "roof",
+   "product": "หลังคา",
+   "group": "เพลทเหล็กรับล่าง",
+   "opt": "มี · รวมในราคา",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "roof",
+   "product": "หลังคา",
+   "group": "เพลทเหล็กรับล่าง",
+   "opt": "ไม่ใส่",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานโซลิด_3.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "roof",
+   "product": "หลังคา",
+   "group": "เหล็กดึงด้านบน",
+   "opt": "มี · รวมในราคา",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "roof",
+   "product": "หลังคา",
+   "group": "เหล็กดึงด้านบน",
+   "opt": "ไม่ใส่",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานโซลิด_3.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "roof_gable",
+   "product": "หลังคาจั่ว",
+   "group": "รูปแบบ",
+   "opt": "หลังคาจั่ว",
+   "cut": [
+    "JR_กันสาด.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "roof_gable",
+   "product": "หลังคาจั่ว",
+   "group": "แป",
+   "opt": "แปเดี่ยว",
+   "cut": [
+    "JR_กันสาด.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "roof_gable",
+   "product": "หลังคาจั่ว",
+   "group": "แป",
+   "opt": "แปคู่",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "roof_gable",
+   "product": "หลังคาจั่ว",
+   "group": "ปลายหลังคา",
+   "opt": "รางน้ำ",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "roof_gable",
+   "product": "หลังคาจั่ว",
+   "group": "ปลายหลังคา",
+   "opt": "ปล่อยปลาย",
+   "cut": [
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "roof_slide",
+   "product": "หลังคาเลื่อน (เปิด-ปิดได้)",
+   "group": "รูปแบบ",
+   "opt": "เลื่อนยื่น",
+   "cut": [],
+   "cost": true,
+   "used": true,
+   "rule": "②",
+   "bucket": "OK"
+  },
+  {
+   "id": "roof_slide",
+   "product": "หลังคาเลื่อน (เปิด-ปิดได้)",
+   "group": "รูปแบบ",
+   "opt": "เลื่อนข้าง",
+   "cut": [],
+   "cost": true,
+   "used": true,
+   "rule": "②",
+   "bucket": "OK"
+  },
+  {
+   "id": "roof_slide",
+   "product": "หลังคาเลื่อน (เปิด-ปิดได้)",
+   "group": "รูปแบบ",
+   "opt": "เลื่อนเปิดกลาง",
+   "cut": [],
+   "cost": true,
+   "used": true,
+   "rule": "②",
+   "bucket": "OK"
+  },
+  {
+   "id": "roof_slide",
+   "product": "หลังคาเลื่อน (เปิด-ปิดได้)",
+   "group": "แป",
+   "opt": "แปเดี่ยว",
+   "cut": [
+    "JR_กันสาด.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "roof_slide",
+   "product": "หลังคาเลื่อน (เปิด-ปิดได้)",
+   "group": "แป",
+   "opt": "แปคู่",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "roof_multi",
+   "product": "กันสาดหลายด้าน",
+   "group": "รูปแบบ",
+   "opt": "กันสาดหลายด้าน",
+   "cut": [
+    "JR_กันสาดหลายด้าน.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "roof_multi",
+   "product": "กันสาดหลายด้าน",
+   "group": "ปลายหลังคา",
+   "opt": "รางน้ำ",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "roof_multi",
+   "product": "กันสาดหลายด้าน",
+   "group": "ปลายหลังคา",
+   "opt": "ปิดปลาย",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "roof_multi",
+   "product": "กันสาดหลายด้าน",
+   "group": "ปลายหลังคา",
+   "opt": "ยื่นปลาย",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "roof_multi",
+   "product": "กันสาดหลายด้าน",
+   "group": "แป",
+   "opt": "แปคู่",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "roof_multi",
+   "product": "กันสาดหลายด้าน",
+   "group": "แป",
+   "opt": "แปเดี่ยว",
+   "cut": [
+    "JR_กันสาด.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "roof_multi",
+   "product": "กันสาดหลายด้าน",
+   "group": "รอยต่อ ด้าน 1 → 2",
+   "opt": "นูน",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "บานยกฟูจิ.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "roof_multi",
+   "product": "กันสาดหลายด้าน",
+   "group": "รอยต่อ ด้าน 1 → 2",
+   "opt": "เว้า",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "roof_multi",
+   "product": "กันสาดหลายด้าน",
+   "group": "รอยต่อ ด้าน 1 → 2",
+   "opt": "ชนผนัง",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "roof_multi",
+   "product": "กันสาดหลายด้าน",
+   "group": "รอยต่อ ด้าน 2 → 3",
+   "opt": "นูน",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "บานยกฟูจิ.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "roof_multi",
+   "product": "กันสาดหลายด้าน",
+   "group": "รอยต่อ ด้าน 2 → 3",
+   "opt": "เว้า",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "roof_multi",
+   "product": "กันสาดหลายด้าน",
+   "group": "รอยต่อ ด้าน 2 → 3",
+   "opt": "ชนผนัง",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "roof_multi",
+   "product": "กันสาดหลายด้าน",
+   "group": "รอยต่อ ด้าน 3 → 4",
+   "opt": "นูน",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "บานยกฟูจิ.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "roof_multi",
+   "product": "กันสาดหลายด้าน",
+   "group": "รอยต่อ ด้าน 3 → 4",
+   "opt": "เว้า",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "roof_multi",
+   "product": "กันสาดหลายด้าน",
+   "group": "รอยต่อ ด้าน 3 → 4",
+   "opt": "ชนผนัง",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "roof_multi",
+   "product": "กันสาดหลายด้าน",
+   "group": "รอยต่อ ด้าน 4 → 5",
+   "opt": "นูน",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "บานยกฟูจิ.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "roof_multi",
+   "product": "กันสาดหลายด้าน",
+   "group": "รอยต่อ ด้าน 4 → 5",
+   "opt": "เว้า",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "roof_multi",
+   "product": "กันสาดหลายด้าน",
+   "group": "รอยต่อ ด้าน 4 → 5",
+   "opt": "ชนผนัง",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "roof_multi",
+   "product": "กันสาดหลายด้าน",
+   "group": "รอยต่อ ด้าน 5 → 6",
+   "opt": "นูน",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "บานยกฟูจิ.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "roof_multi",
+   "product": "กันสาดหลายด้าน",
+   "group": "รอยต่อ ด้าน 5 → 6",
+   "opt": "เว้า",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "roof_multi",
+   "product": "กันสาดหลายด้าน",
+   "group": "รอยต่อ ด้าน 5 → 6",
+   "opt": "ชนผนัง",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "glasshouse_multi",
+   "product": "กลาสเฮ้าส์หลายด้าน",
+   "group": "รูปแบบ",
+   "opt": "กลาสเฮ้าส์หลายด้าน",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "glasshouse_multi",
+   "product": "กลาสเฮ้าส์หลายด้าน",
+   "group": "ปลายหลังคา",
+   "opt": "รางน้ำ",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "glasshouse_multi",
+   "product": "กลาสเฮ้าส์หลายด้าน",
+   "group": "ปลายหลังคา",
+   "opt": "ปิดปลาย",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "glasshouse_multi",
+   "product": "กลาสเฮ้าส์หลายด้าน",
+   "group": "ปลายหลังคา",
+   "opt": "ยื่นปลาย",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "glasshouse_multi",
+   "product": "กลาสเฮ้าส์หลายด้าน",
+   "group": "แป",
+   "opt": "แปคู่",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "glasshouse_multi",
+   "product": "กลาสเฮ้าส์หลายด้าน",
+   "group": "แป",
+   "opt": "แปเดี่ยว",
+   "cut": [
+    "JR_กันสาด.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "glasshouse_multi",
+   "product": "กลาสเฮ้าส์หลายด้าน",
+   "group": "รอยต่อ ด้าน 1 → 2",
+   "opt": "นูน",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "บานยกฟูจิ.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "glasshouse_multi",
+   "product": "กลาสเฮ้าส์หลายด้าน",
+   "group": "รอยต่อ ด้าน 1 → 2",
+   "opt": "เว้า",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "glasshouse_multi",
+   "product": "กลาสเฮ้าส์หลายด้าน",
+   "group": "รอยต่อ ด้าน 1 → 2",
+   "opt": "ชนผนัง",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "glasshouse_multi",
+   "product": "กลาสเฮ้าส์หลายด้าน",
+   "group": "รอยต่อ ด้าน 2 → 3",
+   "opt": "นูน",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "บานยกฟูจิ.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "glasshouse_multi",
+   "product": "กลาสเฮ้าส์หลายด้าน",
+   "group": "รอยต่อ ด้าน 2 → 3",
+   "opt": "เว้า",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "glasshouse_multi",
+   "product": "กลาสเฮ้าส์หลายด้าน",
+   "group": "รอยต่อ ด้าน 2 → 3",
+   "opt": "ชนผนัง",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "glasshouse_multi",
+   "product": "กลาสเฮ้าส์หลายด้าน",
+   "group": "รอยต่อ ด้าน 3 → 4",
+   "opt": "นูน",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "บานยกฟูจิ.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "glasshouse_multi",
+   "product": "กลาสเฮ้าส์หลายด้าน",
+   "group": "รอยต่อ ด้าน 3 → 4",
+   "opt": "เว้า",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "glasshouse_multi",
+   "product": "กลาสเฮ้าส์หลายด้าน",
+   "group": "รอยต่อ ด้าน 3 → 4",
+   "opt": "ชนผนัง",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "glasshouse_multi",
+   "product": "กลาสเฮ้าส์หลายด้าน",
+   "group": "รอยต่อ ด้าน 4 → 5",
+   "opt": "นูน",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "บานยกฟูจิ.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "glasshouse_multi",
+   "product": "กลาสเฮ้าส์หลายด้าน",
+   "group": "รอยต่อ ด้าน 4 → 5",
+   "opt": "เว้า",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "glasshouse_multi",
+   "product": "กลาสเฮ้าส์หลายด้าน",
+   "group": "รอยต่อ ด้าน 4 → 5",
+   "opt": "ชนผนัง",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "glasshouse_multi",
+   "product": "กลาสเฮ้าส์หลายด้าน",
+   "group": "รอยต่อ ด้าน 5 → 6",
+   "opt": "นูน",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "บานยกฟูจิ.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "glasshouse_multi",
+   "product": "กลาสเฮ้าส์หลายด้าน",
+   "group": "รอยต่อ ด้าน 5 → 6",
+   "opt": "เว้า",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "glasshouse_multi",
+   "product": "กลาสเฮ้าส์หลายด้าน",
+   "group": "รอยต่อ ด้าน 5 → 6",
+   "opt": "ชนผนัง",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "glasshouse",
+   "product": "กลาสเฮ้าส์ (เพิงตรง)",
+   "group": "รูปแบบ",
+   "opt": "กลาสเฮ้าส์",
+   "cut": [
+    "JR_กลาสเฮ้าส์.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "gable_multi",
+   "product": "จั่วหลายด้าน",
+   "group": "รูปแบบ",
+   "opt": "จั่วหลายด้าน",
+   "cut": [
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "gable_multi",
+   "product": "จั่วหลายด้าน",
+   "group": "แป",
+   "opt": "แปคู่",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gable_multi",
+   "product": "จั่วหลายด้าน",
+   "group": "แป",
+   "opt": "แปเดี่ยว",
+   "cut": [
+    "JR_กันสาด.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "gable_multi",
+   "product": "จั่วหลายด้าน",
+   "group": "รอยต่อ ด้าน 1 → 2",
+   "opt": "นูน",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "บานยกฟูจิ.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gable_multi",
+   "product": "จั่วหลายด้าน",
+   "group": "รอยต่อ ด้าน 1 → 2",
+   "opt": "เว้า",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gable_multi",
+   "product": "จั่วหลายด้าน",
+   "group": "รอยต่อ ด้าน 1 → 2",
+   "opt": "ติดบ้าน",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "gable_multi",
+   "product": "จั่วหลายด้าน",
+   "group": "รอยต่อ ด้าน 2 → 3",
+   "opt": "นูน",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "บานยกฟูจิ.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gable_multi",
+   "product": "จั่วหลายด้าน",
+   "group": "รอยต่อ ด้าน 2 → 3",
+   "opt": "เว้า",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gable_multi",
+   "product": "จั่วหลายด้าน",
+   "group": "รอยต่อ ด้าน 2 → 3",
+   "opt": "ติดบ้าน",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "gable_multi",
+   "product": "จั่วหลายด้าน",
+   "group": "รอยต่อ ด้าน 3 → 4",
+   "opt": "นูน",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "บานยกฟูจิ.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gable_multi",
+   "product": "จั่วหลายด้าน",
+   "group": "รอยต่อ ด้าน 3 → 4",
+   "opt": "เว้า",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gable_multi",
+   "product": "จั่วหลายด้าน",
+   "group": "รอยต่อ ด้าน 3 → 4",
+   "opt": "ติดบ้าน",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "gable_multi",
+   "product": "จั่วหลายด้าน",
+   "group": "รอยต่อ ด้าน 4 → 5",
+   "opt": "นูน",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "บานยกฟูจิ.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gable_multi",
+   "product": "จั่วหลายด้าน",
+   "group": "รอยต่อ ด้าน 4 → 5",
+   "opt": "เว้า",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gable_multi",
+   "product": "จั่วหลายด้าน",
+   "group": "รอยต่อ ด้าน 4 → 5",
+   "opt": "ติดบ้าน",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "gable_multi",
+   "product": "จั่วหลายด้าน",
+   "group": "รอยต่อ ด้าน 5 → 6",
+   "opt": "นูน",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "บานยกฟูจิ.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gable_multi",
+   "product": "จั่วหลายด้าน",
+   "group": "รอยต่อ ด้าน 5 → 6",
+   "opt": "เว้า",
+   "cut": [
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_จั่วหลายด้าน.xlsx"
+   ],
+   "cost": false,
+   "used": false,
+   "rule": "①",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "gable_multi",
+   "product": "จั่วหลายด้าน",
+   "group": "รอยต่อ ด้าน 5 → 6",
+   "opt": "ติดบ้าน",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "ceil_gypsum",
+   "product": "ฝ้ายิปซัม (ฉาบเรียบ ทาสีขาว)",
+   "group": "รูปแบบ",
+   "opt": "ไม่ใส่ฉนวน",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "②",
+   "bucket": "OWNER"
+  },
+  {
+   "id": "ceil_gypsum",
+   "product": "ฝ้ายิปซัม (ฉาบเรียบ ทาสีขาว)",
+   "group": "รูปแบบ",
+   "opt": "ใส่ฉนวน rockwool 3\"",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "②",
+   "bucket": "OWNER"
+  },
+  {
+   "id": "ceil_gypsum",
+   "product": "ฝ้ายิปซัม (ฉาบเรียบ ทาสีขาว)",
+   "group": "ผิว/ทาสี",
+   "opt": "ทาสีขาว",
+   "cut": [],
+   "cost": true,
+   "used": false,
+   "rule": "②",
+   "bucket": "OK"
+  },
+  {
+   "id": "ceil_gypsum",
+   "product": "ฝ้ายิปซัม (ฉาบเรียบ ทาสีขาว)",
+   "group": "ผิว/ทาสี",
+   "opt": "รองพื้นสีขาว",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "ceil_gypsum",
+   "product": "ฝ้ายิปซัม (ฉาบเรียบ ทาสีขาว)",
+   "group": "ผิว/ทาสี",
+   "opt": "ไม่ทาสี",
+   "cut": [],
+   "cost": true,
+   "used": false,
+   "rule": "②",
+   "bucket": "OK"
+  },
+  {
+   "id": "ceil_gypsum",
+   "product": "ฝ้ายิปซัม (ฉาบเรียบ ทาสีขาว)",
+   "group": "แนวฝ้า",
+   "opt": "ฝ้าตรง",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "ceil_gypsum",
+   "product": "ฝ้ายิปซัม (ฉาบเรียบ ทาสีขาว)",
+   "group": "แนวฝ้า",
+   "opt": "ฝ้าเฉียงตามหลังคา",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "ceil_gypsum",
+   "product": "ฝ้ายิปซัม (ฉาบเรียบ ทาสีขาว)",
+   "group": "โครงฝ้า",
+   "opt": "อลูมิเนียม",
+   "cut": [
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "ceil_gypsum",
+   "product": "ฝ้ายิปซัม (ฉาบเรียบ ทาสีขาว)",
+   "group": "โครงฝ้า",
+   "opt": "เหล็กชุบซิงค์ (ไร้สนิม)",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "wall_smartboard",
+   "product": "ผนังสมาร์ทบอร์ด 12มม. (2 หน้า)",
+   "group": "รูปแบบ",
+   "opt": "ใส่ฉนวน 3\"",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "②",
+   "bucket": "OWNER"
+  },
+  {
+   "id": "wall_smartboard",
+   "product": "ผนังสมาร์ทบอร์ด 12มม. (2 หน้า)",
+   "group": "รูปแบบ",
+   "opt": "ไม่ใส่ฉนวน",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "②",
+   "bucket": "OWNER"
+  },
+  {
+   "id": "wall_smartboard",
+   "product": "ผนังสมาร์ทบอร์ด 12มม. (2 หน้า)",
+   "group": "ความหนา",
+   "opt": "12มม.",
+   "cut": [],
+   "cost": true,
+   "used": false,
+   "rule": "②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "wall_smartboard",
+   "product": "ผนังสมาร์ทบอร์ด 12มม. (2 หน้า)",
+   "group": "ความหนา",
+   "opt": "20มม. (รอทุนแผ่นมด)",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "wall_smartboard",
+   "product": "ผนังสมาร์ทบอร์ด 12มม. (2 หน้า)",
+   "group": "ทาสี",
+   "opt": "ทาสีขาว",
+   "cut": [],
+   "cost": true,
+   "used": false,
+   "rule": "②",
+   "bucket": "OK"
+  },
+  {
+   "id": "wall_smartboard",
+   "product": "ผนังสมาร์ทบอร์ด 12มม. (2 หน้า)",
+   "group": "ทาสี",
+   "opt": "รองพื้นสีขาว",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "wall_smartboard",
+   "product": "ผนังสมาร์ทบอร์ด 12มม. (2 หน้า)",
+   "group": "ทาสี",
+   "opt": "ไม่ทาสี",
+   "cut": [],
+   "cost": true,
+   "used": false,
+   "rule": "②",
+   "bucket": "OK"
+  },
+  {
+   "id": "wall_smartboard",
+   "product": "ผนังสมาร์ทบอร์ด 12มม. (2 หน้า)",
+   "group": "ทาสี",
+   "opt": "ระบุสีเอง",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "wall_smartboard",
+   "product": "ผนังสมาร์ทบอร์ด 12มม. (2 หน้า)",
+   "group": "โครงผนัง",
+   "opt": "อลูมิเนียม",
+   "cut": [
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "wall_smartboard",
+   "product": "ผนังสมาร์ทบอร์ด 12มม. (2 หน้า)",
+   "group": "โครงผนัง",
+   "opt": "เหล็กชุบซิงค์ (ไร้สนิม)",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "wall_isowall",
+   "product": "ผนังไอโซวอล 100มม.",
+   "group": "รูปแบบ",
+   "opt": "มาตรฐาน",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "wall_corrugated",
+   "product": "ผนังอลูลูกฟูก (รวมโครง)",
+   "group": "โครงผนัง",
+   "opt": "อลูมิเนียม",
+   "cut": [
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "wall_corrugated",
+   "product": "ผนังอลูลูกฟูก (รวมโครง)",
+   "group": "โครงผนัง",
+   "opt": "เหล็กชุบซิงค์ (ไร้สนิม)",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "wall_composite",
+   "product": "ผนังคอมโพสิต (รวมโครง)",
+   "group": "รูปแบบ",
+   "opt": "คอมโพสิต 3มม.",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "②",
+   "bucket": "OWNER"
+  },
+  {
+   "id": "wall_composite",
+   "product": "ผนังคอมโพสิต (รวมโครง)",
+   "group": "รูปแบบ",
+   "opt": "คอมโพสิต 4มม.",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "②",
+   "bucket": "OWNER"
+  },
+  {
+   "id": "wall_composite",
+   "product": "ผนังคอมโพสิต (รวมโครง)",
+   "group": "โครงผนัง",
+   "opt": "อลูมิเนียม",
+   "cut": [
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "wall_composite",
+   "product": "ผนังคอมโพสิต (รวมโครง)",
+   "group": "โครงผนัง",
+   "opt": "เหล็กชุบซิงค์ (ไร้สนิม)",
+   "cut": [],
+   "cost": false,
+   "used": false,
+   "rule": "③",
+   "bucket": "RULE3"
+  },
+  {
+   "id": "ceil_ranae_1x5",
+   "product": "ฝ้าระแนงอลู 1×5 ซม. (โชว์ 1 เว้น 5)",
+   "group": "รูปแบบ",
+   "opt": "มาตรฐาน",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "ceil_ranae_1x5",
+   "product": "ฝ้าระแนงอลู 1×5 ซม. (โชว์ 1 เว้น 5)",
+   "group": "โครงดาม",
+   "opt": "ไม่รวมโครง",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "ceil_ranae_1x5",
+   "product": "ฝ้าระแนงอลู 1×5 ซม. (โชว์ 1 เว้น 5)",
+   "group": "โครงดาม",
+   "opt": "รวมโครง",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "ceil_ranae_16_5",
+   "product": "ฝ้าระแนงอลู 1.6\" (โชว์ 1\" เว้น 5)",
+   "group": "รูปแบบ",
+   "opt": "มาตรฐาน",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "ceil_ranae_16_5",
+   "product": "ฝ้าระแนงอลู 1.6\" (โชว์ 1\" เว้น 5)",
+   "group": "โครงดาม",
+   "opt": "ไม่รวมโครง",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "ceil_ranae_16_5",
+   "product": "ฝ้าระแนงอลู 1.6\" (โชว์ 1\" เว้น 5)",
+   "group": "โครงดาม",
+   "opt": "รวมโครง",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "ceil_ranae_16_2",
+   "product": "ฝ้าระแนงอลู 1.6\" (โชว์ 1\" เว้น 2)",
+   "group": "รูปแบบ",
+   "opt": "มาตรฐาน",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "ceil_ranae_16_2",
+   "product": "ฝ้าระแนงอลู 1.6\" (โชว์ 1\" เว้น 2)",
+   "group": "โครงดาม",
+   "opt": "ไม่รวมโครง",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "ceil_ranae_16_2",
+   "product": "ฝ้าระแนงอลู 1.6\" (โชว์ 1\" เว้น 2)",
+   "group": "โครงดาม",
+   "opt": "รวมโครง",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "③",
+   "bucket": "EYE_USED"
+  },
+  {
+   "id": "ceil_wood",
+   "product": "ฝ้าไม้เทียม / ฝ้าอลู",
+   "group": "รูปแบบ",
+   "opt": "มาตรฐาน",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "screen",
+   "product": "มุ้งเฟรมเล็ก",
+   "group": "รูปแบบ",
+   "opt": "อิสระ",
+   "cut": [
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "screen",
+   "product": "มุ้งเฟรมเล็ก",
+   "group": "รูปแบบ",
+   "opt": "อิสระ2บาน",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "②",
+   "bucket": "OWNER"
+  },
+  {
+   "id": "screen",
+   "product": "มุ้งเฟรมเล็ก",
+   "group": "สีผ้ามุ้ง",
+   "opt": "ดำ",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "screen",
+   "product": "มุ้งเฟรมเล็ก",
+   "group": "สีผ้ามุ้ง",
+   "opt": "เทา",
+   "cut": [
+    "JR_บานยก_ฟูจิ.xlsx",
+    "บานยกฟูจิ.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "screen",
+   "product": "มุ้งเฟรมเล็ก",
+   "group": "สีผ้ามุ้ง",
+   "opt": "ขาว",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "screen",
+   "product": "มุ้งเฟรมเล็ก",
+   "group": "สีผ้ามุ้ง",
+   "opt": "เงิน",
+   "cut": [
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "screen_big",
+   "product": "มุ้งเฟรมใหญ่",
+   "group": "รูปแบบ",
+   "opt": "อิสระ",
+   "cut": [
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "screen_big",
+   "product": "มุ้งเฟรมใหญ่",
+   "group": "รูปแบบ",
+   "opt": "อิสระ2บาน",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "②",
+   "bucket": "OWNER"
+  },
+  {
+   "id": "screen_big",
+   "product": "มุ้งเฟรมใหญ่",
+   "group": "สีผ้ามุ้ง",
+   "opt": "ดำ",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "screen_big",
+   "product": "มุ้งเฟรมใหญ่",
+   "group": "สีผ้ามุ้ง",
+   "opt": "เทา",
+   "cut": [
+    "JR_บานยก_ฟูจิ.xlsx",
+    "บานยกฟูจิ.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "screen_big",
+   "product": "มุ้งเฟรมใหญ่",
+   "group": "สีผ้ามุ้ง",
+   "opt": "ขาว",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "screen_big",
+   "product": "มุ้งเฟรมใหญ่",
+   "group": "สีผ้ามุ้ง",
+   "opt": "เงิน",
+   "cut": [
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "screen_ready",
+   "product": "มุ้งจีบ / ม้วน / รังผึ้ง",
+   "group": "รูปแบบ",
+   "opt": "อิสระ",
+   "cut": [
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "screen_ready",
+   "product": "มุ้งจีบ / ม้วน / รังผึ้ง",
+   "group": "สีผ้ามุ้ง",
+   "opt": "ดำ",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "screen_ready",
+   "product": "มุ้งจีบ / ม้วน / รังผึ้ง",
+   "group": "สีผ้ามุ้ง",
+   "opt": "เทา",
+   "cut": [
+    "JR_บานยก_ฟูจิ.xlsx",
+    "บานยกฟูจิ.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "screen_ready",
+   "product": "มุ้งจีบ / ม้วน / รังผึ้ง",
+   "group": "สีผ้ามุ้ง",
+   "opt": "ขาว",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "screen_ready",
+   "product": "มุ้งจีบ / ม้วน / รังผึ้ง",
+   "group": "สีผ้ามุ้ง",
+   "opt": "เงิน",
+   "cut": [
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "cabinet",
+   "product": "ตู้อลูมิเนียม",
+   "group": "รูปแบบ",
+   "opt": "บานเลื่อน",
+   "cut": [
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "cabinet",
+   "product": "ตู้อลูมิเนียม",
+   "group": "รูปแบบ",
+   "opt": "บานเปิด",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "cabinet_face",
+   "product": "ฝาตู้ Future Tech (เฉพาะบานหน้า)",
+   "group": "รูปแบบ",
+   "opt": "บานเลื่อน",
+   "cut": [
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_ประตูรั้ว.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "cabinet_face",
+   "product": "ฝาตู้ Future Tech (เฉพาะบานหน้า)",
+   "group": "รูปแบบ",
+   "opt": "บานเปิด",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_Velora_บานเปิด.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "room",
+   "product": "ห้องกระจก (ประกอบ)",
+   "group": "รูปแบบ",
+   "opt": "มาตรฐาน",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "shower",
+   "product": "ห้องอาบน้ำ Shower (กระจกเทมเปอร์)",
+   "group": "รูปแบบ",
+   "opt": "บานตาย",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_บานเลื่อน_พื้นฐาน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "shower",
+   "product": "ห้องอาบน้ำ Shower (กระจกเทมเปอร์)",
+   "group": "รูปแบบ",
+   "opt": "บานตาย+บานเปิด",
+   "cut": [],
+   "cost": true,
+   "used": true,
+   "rule": "②",
+   "bucket": "OK"
+  },
+  {
+   "id": "shower",
+   "product": "ห้องอาบน้ำ Shower (กระจกเทมเปอร์)",
+   "group": "รูปแบบ",
+   "opt": "บานตาย+บานเลื่อน",
+   "cut": [],
+   "cost": true,
+   "used": true,
+   "rule": "②",
+   "bucket": "OK"
+  },
+  {
+   "id": "shower",
+   "product": "ห้องอาบน้ำ Shower (กระจกเทมเปอร์)",
+   "group": "ราวกลมด้านบน",
+   "opt": "มี",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "shower",
+   "product": "ห้องอาบน้ำ Shower (กระจกเทมเปอร์)",
+   "group": "ราวกลมด้านบน",
+   "opt": "ไม่มี",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน.xlsx",
+    "JR_กลาสเฮ้าส์หลายด้าน_ตัวอย่าง.xlsx",
+    "JR_กันสาด.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_กันสาดหลายด้าน.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "frameless_door",
+   "product": "บานเปลือย (ติดตาย/สวิง/เลื่อน)",
+   "group": "รูปแบบ",
+   "opt": "มาตรฐาน",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "pivot",
+   "product": "บานหมุน (Pivot)",
+   "group": "รูปแบบ",
+   "opt": "มีธรณี",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "pivot",
+   "product": "บานหมุน (Pivot)",
+   "group": "รูปแบบ",
+   "opt": "ไม่มีธรณี",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_บานโซลิด_3.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "fold_lift",
+   "product": "บานเฟี้ยมยก",
+   "group": "รูปแบบ",
+   "opt": "มาตรฐาน",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "bansolid",
+   "product": "บานโซลิด",
+   "group": "รูปแบบ",
+   "opt": "มีธรณี",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "bansolid",
+   "product": "บานโซลิด",
+   "group": "รูปแบบ",
+   "opt": "ไม่มีธรณี",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_บานโซลิด_3.xlsx"
+   ],
+   "cost": false,
+   "used": true,
+   "rule": "①",
+   "bucket": "OK"
+  },
+  {
+   "id": "ykk",
+   "product": "บานสำเร็จ YKK",
+   "group": "รูปแบบ",
+   "opt": "มาตรฐาน",
+   "cut": [
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "บานเฟี้ยมsms.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "zipscreen",
+   "product": "ม่านซิป (Zip Screen กันลม)",
+   "group": "รูปแบบ",
+   "opt": "อัตโนมัติ",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SlimLux_บานเลื่อน.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_จั่วหลายด้าน.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานเปิดครอบวงกบไม้.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": true,
+   "rule": "①②",
+   "bucket": "OK"
+  },
+  {
+   "id": "zipscreen",
+   "product": "ม่านซิป (Zip Screen กันลม)",
+   "group": "รูปแบบ",
+   "opt": "Z100",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "②",
+   "bucket": "OWNER"
+  },
+  {
+   "id": "zipscreen",
+   "product": "ม่านซิป (Zip Screen กันลม)",
+   "group": "รูปแบบ",
+   "opt": "Z120",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "②",
+   "bucket": "OWNER"
+  },
+  {
+   "id": "zipscreen",
+   "product": "ม่านซิป (Zip Screen กันลม)",
+   "group": "รูปแบบ",
+   "opt": "Double 2 ชั้น",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "②",
+   "bucket": "OWNER"
+  },
+  {
+   "id": "zipscreen",
+   "product": "ม่านซิป (Zip Screen กันลม)",
+   "group": "รูปแบบ",
+   "opt": "Ultra Wide",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "②",
+   "bucket": "OWNER"
+  },
+  {
+   "id": "zipscreen",
+   "product": "ม่านซิป (Zip Screen กันลม)",
+   "group": "รูปแบบ",
+   "opt": "Skylight 100",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "②",
+   "bucket": "OWNER"
+  },
+  {
+   "id": "zipscreen",
+   "product": "ม่านซิป (Zip Screen กันลม)",
+   "group": "รูปแบบ",
+   "opt": "Skylight 120",
+   "cut": [],
+   "cost": false,
+   "used": true,
+   "rule": "②",
+   "bucket": "OWNER"
+  },
+  {
+   "id": "zipscreen",
+   "product": "ม่านซิป (Zip Screen กันลม)",
+   "group": "สีกล่อง/ราง/โครง",
+   "opt": "ขาว",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "zipscreen",
+   "product": "ม่านซิป (Zip Screen กันลม)",
+   "group": "สีกล่อง/ราง/โครง",
+   "opt": "ดำ",
+   "cut": [
+    "JR_FUJI_บานเปิดบานกระทุ้ง_1.xlsx",
+    "JR_FUJI_บานเลื่อน.xlsx",
+    "JR_PCDoor.xlsx",
+    "JR_SMS_เลื่อนอิสระ_รวม.xlsx",
+    "JR_กันสาด_L.xlsx",
+    "JR_บานยก_ฟูจิ.xlsx",
+    "JR_บานโซลิด_3.xlsx",
+    "JR_รางบนเฟรมปกติ_1.xlsx",
+    "JR_เฟี้ยม_SMS_รวม.xlsx",
+    "JR_เฟี้ยมยก.xlsx",
+    "JR_เฟี้ยมยูโร.xlsx",
+    "บานยกฟูจิ.xlsx",
+    "บานเฟี้ยมsms.xlsx",
+    "บานเฟี้ยมยูโร.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "zipscreen",
+   "product": "ม่านซิป (Zip Screen กันลม)",
+   "group": "สีกล่อง/ราง/โครง",
+   "opt": "เทา",
+   "cut": [
+    "JR_บานยก_ฟูจิ.xlsx",
+    "บานยกฟูจิ.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "EYE_SHORT"
+  },
+  {
+   "id": "zipscreen",
+   "product": "ม่านซิป (Zip Screen กันลม)",
+   "group": "สีกล่อง/ราง/โครง",
+   "opt": "ลายไม้",
+   "cut": [
+    "JR_บานยก_ฟูจิ.xlsx",
+    "บานยกฟูจิ.xlsx"
+   ],
+   "cost": true,
+   "used": false,
+   "rule": "①②",
+   "bucket": "OK"
+  }
+ ]
+}

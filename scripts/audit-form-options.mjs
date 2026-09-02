@@ -83,6 +83,12 @@ const inCost = (w) => aliasesOf(w).some((a) => COST_SQ.includes(squash(a)));
 /** คำสั้น/ตัวเลขล้วน = เสี่ยงชนคำอื่นในไฟล์ → อย่าเชื่อผลค้นดื้อ ๆ */
 const isAmbiguous = (w) => squash(w).length < 6 || /^[\d.\s+-]+$/.test(String(w));
 
+/** เจ้าของยืนยันเอง 2 ก.ย.69: "อยู่ในคิดราคา นานแล้ว"
+ *  = งานที่ไม่ใช่บานอลู ราคาไม่ได้มาจาก 2 ไฟล์ที่สคริปต์นี้อ่าน (ฝ้า/ผนัง/มุ้ง/ซิปสกรีน)
+ *  → เข้ากฎ ② มีในคิดราคา ไม่มีในใบตัด = ใช้ได้ ไม่ต้องไปกรอกอะไรในใบตัด
+ *  ⚠ ลิสต์นี้คือ "คำยืนยันของเจ้าของ" ไม่ใช่ผลค้นไฟล์ — เพิ่มได้เฉพาะเมื่อเจ้าของบอกเองเท่านั้น */
+const OWNER_OK = new Set(["ceil_gypsum", "wall_smartboard", "wall_composite", "screen", "screen_big", "zipscreen", "bar_openclose"]);
+
 /** สูตรของรุ่นนี้อ้างถึงตัวเลือกนั้นไหม (form หรือ spec.<key>) */
 function srcOf(p) {
   return JSON.stringify([p.vars, p.alu, p.hardware, p.consum, p.glass, p.addons,
@@ -131,11 +137,13 @@ for (const it of items) {
   it.cost = inCost(it.opt);
   it.amb = isAmbiguous(it.opt);
   const found = it.cut.length || it.cost;
-  it.bucket = found && !it.amb ? "OK"
+  it.ownerOk = OWNER_OK.has(it.id) && !found && it.used;
+  it.bucket = it.ownerOk ? "OWNER"
+    : found && !it.amb ? "OK"
     : found && it.amb ? "EYE_SHORT"
     : it.used ? "EYE_USED"
     : "RULE3";
-  it.rule = it.cut.length && !it.cost ? "①" : !it.cut.length && it.cost ? "②" : it.cut.length ? "①②" : "③";
+  it.rule = it.ownerOk ? "②" : it.cut.length && !it.cost ? "①" : !it.cut.length && it.cost ? "②" : it.cut.length ? "①②" : "③";
 }
 
 // ── รายงาน ──
@@ -158,10 +166,27 @@ show("RULE3", "❌ กฎ ③ ไม่มีในไฟล์ไหนเล�
 show("EYE_USED", "🔶 เว็บคิดเงินจากตัวเลือกนี้ แต่ค้นชื่อในไฟล์ไม่เจอ → เช็คว่าไฟล์เขียนคนละคำ หรือคิดเอาเอง");
 if (process.argv.includes("--all")) show("EYE_SHORT", "⚠ คำสั้น อาจชนคำอื่นในไฟล์");
 
+// ── สแนปช็อตให้หน้าเว็บอ่าน ──
+//   เจ้าของสั่ง 2 ก.ย.69: "แก้ในเว็บเลย ชั้นเลิกดู excel คุณแล้ว เสียเวลา"
+//   เว็บบน Vercel เปิดไฟล์ .xlsx ตอนรันไม่ได้ (ไฟล์อยู่แต่ในเครื่อง) → ต้องอบผลไว้เป็น JSON แล้ว commit
+//   รันสคริปต์นี้ใหม่ทุกครั้งที่ไฟล์ตัดประกอบ/ถอดทุน หรือ products.mjs เปลี่ยน
+if (process.argv.includes("--json") || process.argv.includes("--xlsx")) {
+  const out = {
+    generatedAt: new Date().toISOString().slice(0, 10),
+    sources: { cutFiles: CUT_BLOBS.length, costFiles: COST_XLSX.filter((f) => fs.existsSync(f)).map((f) => path.basename(f)) },
+    items: items.map((r) => ({
+      id: r.id, product: r.name, group: r.group, opt: r.opt,
+      cut: r.cut, cost: !!r.cost, used: !!r.used, rule: r.rule, bucket: r.bucket,
+    })),
+  };
+  fs.writeFileSync("src/lib/calculator40/form-options-audit.json", JSON.stringify(out, null, 1), "utf8");
+  console.log("\nเขียน src/lib/calculator40/form-options-audit.json แล้ว (หน้าเว็บอ่านไฟล์นี้)");
+}
+
 if (process.argv.includes("--csv") || process.argv.includes("--xlsx")) {
   const HEAD = ["รุ่น", "ชื่อรุ่น", "กลุ่มตัวเลือก", "ตัวเลือก", "อยู่ในใบตัด", "อยู่ในคิดราคา", "เว็บใช้", "กฎ", "ผลตรวจ"];
-  const LABEL = { OK: "✅ เจอในไฟล์", EYE_SHORT: "⚠ คำสั้น ดูด้วยตา", EYE_USED: "🔶 ไม่เจอ แต่เว็บใช้", RULE3: "❌ กฎ ③ เอาออก" };
-  const ORDER = { RULE3: 0, EYE_USED: 1, EYE_SHORT: 2, OK: 3 };
+  const LABEL = { OWNER: "✅ เจ้าของยืนยัน อยู่ในคิดราคานานแล้ว", OK: "✅ เจอในไฟล์", EYE_SHORT: "⚠ คำสั้น ดูด้วยตา", EYE_USED: "🔶 ไม่เจอ แต่เว็บใช้", RULE3: "❌ กฎ ③ เอาออก" };
+  const ORDER = { RULE3: 0, EYE_USED: 1, EYE_SHORT: 2, OK: 3, OWNER: 4 };
   const sorted = [...items].sort((a, b) => (ORDER[a.bucket] - ORDER[b.bucket]) || a.id.localeCompare(b.id));
   const line = (r) => [r.id, r.name, r.group, r.opt, r.cut.join(" · "), r.cost ? "มี" : "", r.used ? "ใช้" : "", r.rule, LABEL[r.bucket]];
 
@@ -169,7 +194,7 @@ if (process.argv.includes("--csv") || process.argv.includes("--xlsx")) {
   console.log("\nเขียน audit-form-options.tsv แล้ว");
 
   // เจ้าของเปิด csv ใน Excel ไม่ได้ (บอกไว้ 30 ส.ค.) → ออกเป็น .xlsx ระบายสีตามผลตรวจให้เลย
-  const TONE = { RULE3: S.RED, EYE_USED: S.ORANGE, EYE_SHORT: S.YELLOW, OK: S.GREEN };
+  const TONE = { RULE3: S.RED, EYE_USED: S.ORANGE, EYE_SHORT: S.YELLOW, OK: S.GREEN, OWNER: S.GREEN };
   const rows = [HEAD, ...sorted.map(line)];
   const rowStyles = [S.HEAD, ...sorted.map((r) => TONE[r.bucket])];
   writeXlsx("ตรวจตัวเลือกทุกบาน.xlsx", [{

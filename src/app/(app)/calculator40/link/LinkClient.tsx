@@ -24,6 +24,7 @@ import { api, ApiError } from "@/lib/api";
 import { computeCost } from "@/lib/calculator40/engine.mjs";
 import { PRODUCTS } from "@/lib/calculator40/products.mjs";
 import PRICEBOOK from "@/lib/calculator40/pricebook.json";
+import AUDIT from "@/lib/calculator40/form-options-audit.json";
 import { applyPriceOverride, type PriceOverride } from "@/lib/calculator40/stock-link";
 import { applyLineOverrides, isSafeCalcExpr, pristineProducts, type LineOverride } from "@/lib/calculator40/line-overrides";
 import { STATUS_LABEL, explainRow, caseOptionsOf, buildLinkRowsWithPricebook, attachStockAndOverrides,
@@ -507,6 +508,7 @@ export default function LinkClient({
             </div>
           );
         })()}
+        <OptionAudit prodId={prodId} />
         <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-2">
           <label className="block sm:col-span-2 lg:col-span-2">
             <span className="text-xs font-medium text-ink-3">รุ่น ({productList.length})</span>
@@ -867,6 +869,86 @@ function EditRow({
       </tr>
       <datalist id="stock-skus">{skuDatalist.map((s) => <option key={s} value={s} />)}</datalist>
     </>
+  );
+}
+
+/**
+ * ตรวจ "ตัวเลือกที่หน้าคิดราคาให้กด" ของรุ่นที่เลือกอยู่ ตามกฎ 3 ข้อของเจ้าของ (2 ก.ย.69)
+ *   ① มีในใบตัด ไม่มีในคิดราคา → ดึงมาใส่คิดราคา
+ *   ② ไม่มีในใบตัด มีในคิดราคา → ใช้ได้ ไม่ต้องกรอกในใบตัด
+ *   ③ ไม่มีทั้งคู่              → ไม่ต้องให้เลือก
+ * ⚠ ผลตรวจอบไว้เป็น JSON (scripts/audit-form-options.mjs --json) เพราะเว็บบน Vercel เปิดไฟล์ xlsx ตอนรันไม่ได้
+ *   ไฟล์ตัดประกอบ/ถอดทุน หรือ products.mjs เปลี่ยน → ต้องรันสคริปต์ใหม่ ไม่งั้นหน้านี้โชว์ของเก่า
+ * เจ้าของสั่ง "แก้ในเว็บเลย ชั้นเลิกดู excel คุณแล้ว เสียเวลา" → ย้ายรายงานมาไว้ตรงนี้แทนการส่งไฟล์
+ */
+const AUDIT_TONE: Record<string, { tone: "red" | "amber" | "yellow" | "emerald"; label: string; why: string }> = {
+  RULE3: { tone: "red", label: "ไม่มีในไฟล์ไหนเลย", why: "กฎ ③ — ไม่ควรมีให้เลือก ถ้าจะใช้ต้องเพิ่มในไฟล์ก่อน" },
+  EYE_USED: { tone: "amber", label: "ค้นในไฟล์ไม่เจอ แต่เว็บคิดเงินให้", why: "ไฟล์อาจเขียนคนละคำ หรือคิดเอาเอง — ต้องยืนยัน" },
+  EYE_SHORT: { tone: "yellow", label: "เจอในไฟล์ (คำสั้น)", why: "คำสั้นอาจไปตรงกับคำอื่นในไฟล์ — ดูให้ชัวร์อีกที" },
+  OK: { tone: "emerald", label: "เจอในไฟล์", why: "" },
+  OWNER: { tone: "emerald", label: "เจ้าของยืนยัน", why: "อยู่ในคิดราคามานานแล้ว ราคาไม่ได้มาจาก 2 ไฟล์นี้" },
+};
+
+function OptionAudit({ prodId }: { prodId: string }) {
+  const [open, setOpen] = useState(false);
+  const mine = useMemo(
+    () => (AUDIT.items as { id: string; group: string; opt: string; cut: string[]; cost: boolean; rule: string; bucket: string }[])
+      .filter((i) => i.id === prodId),
+    [prodId],
+  );
+  if (!mine.length) return null;
+  const need = mine.filter((i) => i.bucket === "RULE3" || i.bucket === "EYE_USED");
+  const byGroup = new Map<string, typeof mine>();
+  for (const i of mine) {
+    if (!byGroup.has(i.group)) byGroup.set(i.group, []);
+    byGroup.get(i.group)!.push(i);
+  }
+  return (
+    <div className={cn("mt-2 rounded-xl ring-1 p-2.5", need.length ? "bg-red-50/70 ring-red-200" : "bg-emerald-50/60 ring-emerald-200")}>
+      <button onClick={() => setOpen((v) => !v)} className="press w-full flex items-center gap-2 text-left">
+        <span className="text-sm font-semibold">{need.length ? "⚠️" : "✅"} ตัวเลือกที่หน้าคิดราคาให้กด ({mine.length})</span>
+        {need.length > 0 && <Badge tone="red">ต้องเคาะ {need.length}</Badge>}
+        <span className="ml-auto text-xs text-ink-3">{open ? "ซ่อน ▲" : "ดู ▼"}</span>
+      </button>
+      {!open && need.length > 0 && (
+        <div className="mt-1 text-[11px] leading-snug text-red-900">
+          {need.map((i) => `${i.group}: ${i.opt}`).join(" · ")}
+        </div>
+      )}
+      {open && (
+        <div className="mt-2 space-y-2">
+          {[...byGroup.entries()].map(([g, list]) => (
+            <div key={g}>
+              <div className="text-[11px] font-semibold text-ink-2">{g}</div>
+              <div className="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-1">
+                {list.map((i) => {
+                  const t = AUDIT_TONE[i.bucket] ?? AUDIT_TONE.OK;
+                  return (
+                    <div key={i.group + i.opt} className="rounded-lg bg-white/70 px-2 py-1.5 ring-1 ring-line/60">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-xs">{i.opt}</span>
+                        <Badge tone={t.tone}>{t.label}</Badge>
+                      </div>
+                      {t.why && <div className="text-[11px] text-ink-3 leading-snug mt-0.5">{t.why}</div>}
+                      {(i.cut.length > 0 || i.cost) && (
+                        <div className="text-[10px] text-ink-3 mt-0.5">
+                          {i.cut.length > 0 && `ใบตัด: ${i.cut.join(" · ")}`}
+                          {i.cut.length > 0 && i.cost && " · "}
+                          {i.cost && "อยู่ในไฟล์คิดราคา"}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+          <div className="text-[10px] text-ink-3">
+            ตรวจจากไฟล์จริงเมื่อ {AUDIT.generatedAt} · ใบตัด {AUDIT.sources.cutFiles} ไฟล์ + {AUDIT.sources.costFiles.join(" · ")}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

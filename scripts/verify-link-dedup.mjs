@@ -18,6 +18,7 @@ import { CUT_SPEC_BY_ID } from "../src/lib/cutlist/products.ts";
 import PRICEBOOK from "../src/lib/calculator40/pricebook.json" with { type: "json" };
 import { buildLinkRowsWithPricebook } from "../src/lib/calculator40/link-rows.ts";
 import { computeCost } from "../src/lib/calculator40/engine.mjs";
+import AUDIT from "../src/lib/calculator40/form-options-audit.json" with { type: "json" };
 
 let pass = 0, fail = 0;
 const okTrue = (name, cond, detail = "") => {
@@ -124,6 +125,29 @@ console.log("\n④ ทุกตัวเลือกใน dropdown 'รูป�
   okTrue("velora ไม่มี dropdown รูปแบบหลอกตาแล้ว (จำนวนบานคุมอย่างเดียว)", !(PRODUCTS.velora.forms || []).length);
   okTrue("wall_corrugated ไม่มี dropdown ลูกฟูก 1/2 ทาง (ไม่มีในไฟล์ไหนเลย)", !(PRODUCTS.wall_corrugated.forms || []).length);
   if (dead.length) console.log(`     (baseline เดิมที่รอเจ้าของเคาะ ${dead.length} รุ่น: ${dead.map((s) => s.split(" ")[0]).join(", ")})`);
+}
+
+// ── ⑤ สแนปช็อตผลตรวจตัวเลือก (ที่หน้าเว็บโชว์) ต้องไม่ค้างของเก่า ──
+//   หน้า /calculator40/link อ่าน form-options-audit.json ไม่ได้เปิดไฟล์ xlsx เอง
+//   ถ้าเพิ่ม/ลบตัวเลือกใน products.mjs แล้วลืมรัน `node scripts/audit-form-options.mjs --json`
+//   หน้าเว็บจะโชว์ผลตรวจของเก่า = เจ้าของเชื่อผิด → เทสนี้ดักให้
+console.log("\n⑤ ผลตรวจตัวเลือกที่หน้าเว็บโชว์ ต้องตรงกับตัวเลือกที่มีอยู่จริง");
+{
+  const have = new Set();
+  for (const p of Object.values(PRODUCTS)) {
+    for (const f of p.forms || []) have.add(`${p.id}|รูปแบบ|${f}`);
+    for (const so of p.specOpts || []) {
+      if (so.type === "number" || !Array.isArray(so.opts)) continue;
+      for (const o of so.opts) have.add(`${p.id}|${so.label || so.key}|${Array.isArray(o) ? o[0] : o}`);
+    }
+  }
+  const snap = new Set(AUDIT.items.map((i) => `${i.id}|${i.group}|${i.opt}`));
+  const missing = [...have].filter((k) => !snap.has(k));
+  const stale = [...snap].filter((k) => !have.has(k));
+  okTrue(`ทุกตัวเลือกมีผลตรวจครบ (ขาด ${missing.length})`, missing.length === 0,
+    missing.slice(0, 5).join("\n       ") + (missing.length ? "\n       → รัน: node scripts/audit-form-options.mjs --json" : ""));
+  okTrue(`ไม่มีผลตรวจค้างของตัวเลือกที่ลบไปแล้ว (ค้าง ${stale.length})`, stale.length === 0,
+    stale.slice(0, 5).join("\n       ") + (stale.length ? "\n       → รัน: node scripts/audit-form-options.mjs --json" : ""));
 }
 
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
