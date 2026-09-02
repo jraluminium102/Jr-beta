@@ -115,17 +115,21 @@ export function cutAluLines(inp: CalcAluInput): AluLine[] | null {
 }
 
 /** ราคาสำรองต่อหน่วย ของแถวใบตัดที่ "ไม่มีรหัสสโตร์" (เหล็ก/ราง) — ตรงกับสูตรหลังคาเดี่ยวที่ใช้อยู่ */
-const NO_CODE_PRICE: { match: RegExp; price: number; unit: string; as?: string }[] = [
+const NO_CODE_PRICE: { match: RegExp; price: number; unit: string; as?: string; box?: string }[] = [
   { match: /^ฉาก 6 หุน/, price: 140, unit: "เส้น" },
   { match: /^แซด 4/, price: 140, unit: "เส้น" },
   { match: /^กล่องเหล็ก/, price: 110, unit: "เส้น" },
   { match: /^เพลทเหล็ก/, price: 15, unit: "แผ่น" },
   // รางน้ำอลู 2,273/เส้น ตามชีตถอดทุน v9 — เดิมใส่ 393 = ราคากล่อง 1×1½ ที่อยู่บรรทัดข้าง ๆ (คนละของ)
-  { match: /^(รางน้ำอลู|ราง\/เชิงชาย)/, price: 2273, unit: "เส้น" },
+  // ⚠ box 'กล่อง|4' = ผูกเข้าสโตร์ "กล่องเปิด 4" รางน้ำอลูมิเนียม" (JR02987/02997/02998 · 3 สี)
+  //   เจ้าของสั่ง 2 ก.ย.69 "กลาสเฮาส์ทุกตัว รางน้ำอลู ขอบต่ำ ... ใช้สินค้าในสโตร์ชื่อ กล่องเปิด 4" ... จับแมชเลย"
+  //   ผูกแล้ว = ราคาตามสโตร์ (แก้ราคาที่สโตร์ ทุนขยับตาม) · เลข 2273 เหลือเป็นราคาสำรองตอนสโตร์ยังไม่ตั้งราคา
+  //   หลังคาเดี่ยว (products.mjs) ผูก box ตัวนี้อยู่ก่อนแล้ว — ตรงนี้คือทำให้ฝั่งที่ดึงจากใบตัดผูกเหมือนกัน
+  { match: /^(รางน้ำอลู|ราง\/เชิงชาย)/, price: 2273, unit: "เส้น", box: "กล่อง|4" },
   // กลาสเฮ้าส์เพิงตรง — ไฟล์ตัดเขียน "ราง (เท่ากว้าง) · ขอบต่ำ"
   //   "(เท่ากว้าง)" = บอกความยาว (ยาวเท่าความกว้างงาน) ไม่ใช่ชื่อของ (เจ้าของอธิบาย 28 ส.ค.69)
   //   วัสดุ = รางน้ำอลู ราคาเดียวกับหลังคา 2,273/เส้น (ชีตถอดทุน v9) — เจ้าของยืนยันแล้ว 28 ส.ค.69
-  { match: /^ราง \(เท่ากว้าง\)/, price: 2273, unit: "เส้น", as: "รางน้ำอลู ขอบต่ำ (ยาวเท่าความกว้าง)" },
+  { match: /^ราง \(เท่ากว้าง\)/, price: 2273, unit: "เส้น", as: "รางน้ำอลู ขอบต่ำ (ยาวเท่าความกว้าง)", box: "กล่อง|4" },
 ];
 
 /**
@@ -194,7 +198,9 @@ const MH_W: Record<string, number> = {
   "ไวนิล": 25, "ดีไลท์": 100, "เมทัลชีท": 34, "โพลีตัน": 122, "ชินโคร์ HC": 138, "ชินโคร์ Sup": 138,
 };
 
-export type ConsumLine = { name: string; price: number; ref?: string; unit: string; count: number };
+export type ConsumLine = { name: string; price: number; ref?: string; unit: string; count: number;
+  /** คีย์กล่องอลู (เช่น "กล่อง|4") → engine ไปหาราคาจากสโตร์ให้เอง (boxPrice) · ไม่เจอ = ใช้ price สำรอง */
+  box?: string };
 
 /**
  * บรรทัด "แผ่นมุง + เหล็ก + ราง" จากแถวใบตัดที่ไม่มีรหัสสโตร์
@@ -219,11 +225,13 @@ export function cutRoofConsumLines(
   const sideTag = SINGLE_SIDE.has(inp.prodId) ? (n: string) => n : allSides;
   let flatAreaDone = false;   // กระจกคิดพื้นที่รวมครั้งเดียว ไม่ใช่ต่อด้าน
   const out: ConsumLine[] = [];
-  const bump = (name: string, price: number, ref: string | undefined, unit: string, count: number) => {
+  // box = คีย์กล่องอลูในสโตร์ (เช่น "กล่อง|4") — ต้องส่งต่อออกไปด้วย ไม่งั้นแถวที่ผูกสโตร์ไว้
+  //   จะกลายเป็นราคาสำรองในสูตรตลอด แก้ราคาที่สโตร์แล้วทุนไม่ขยับ (เจ้าของสั่งผูกราง 2 ก.ย.69)
+  const bump = (name: string, price: number, ref: string | undefined, unit: string, count: number, box?: string) => {
     if (!(count > 0)) return;
     const hit = out.find((x) => x.name === name);
     if (hit) hit.count = Math.round((hit.count + count) * 100) / 100;
-    else out.push({ name, price, ref, unit, count: Math.round(count * 100) / 100 });
+    else out.push({ name, price, ref, unit, count: Math.round(count * 100) / 100, ...(box ? { box } : {}) });
   };
 
   for (const r of rows) {
@@ -271,7 +279,7 @@ export function cutRoofConsumLines(
       //   เดิมนับ r.qty ตรง ๆ → กลาสเฮ้าส์กว้าง 8 ม. คิดรางแค่ 1 เส้น ทั้งที่ต้องใช้ 2 (ขาดไป 2,273)
       //   ชิ้นสั้นกว่าเส้น (ปกติ) ได้ 1 เส้น/ชิ้นเหมือนเดิม → ตัวเลขรุ่นที่ใช้อยู่ไม่ขยับ
       const perPiece = hit.unit === "เส้น" ? Math.max(1, Math.ceil(r.len / 600)) : 1;
-      bump(sideTag(hit.as ?? cleanRowName(nm)), hit.price, undefined, hit.unit, r.qty * perPiece);
+      bump(sideTag(hit.as ?? cleanRowName(nm)), hit.price, undefined, hit.unit, r.qty * perPiece, hit.box);
     }
   }
   return out.length ? out : null;

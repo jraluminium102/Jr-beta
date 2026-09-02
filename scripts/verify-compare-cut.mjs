@@ -213,6 +213,25 @@ console.log("\n═══ ④ก หน้าเทียบต้องไม่
   ok("มีแถวที่มาร์กว่ารอเติมราคา", r.hardware.some((h) => h.status === "รอเติมราคา"), "");
 }
 
+// ── รางน้ำอลูต้องผูกสโตร์ "กล่องเปิด 4 รางน้ำอลูมิเนียม" (เจ้าของสั่ง 2 ก.ย.69) ──
+//   "กลาสเฮาส์ทุกตัว รางน้ำอลู ขอบต่ำ (ยาวเท่าความกว้าง) ใช้สินค้าในสโตร์ชื่อ กล่องเปิด 4" ... จับแมชเลย"
+//   วัดแบบ end-to-end: ตั้งราคากล่อง|4 ในสโตร์แล้วทุนต้องขยับตาม (ไม่ใช่แค่มีฟิลด์ box ติดมา)
+//   ⚠ PB.BOXPRICE[key] เป็นออบเจกต์แยกสี ไม่ใช่ตัวเลข — ใส่เป็นตัวเลขแล้วเทสจะผ่านแบบหลอก (พลาดมาแล้ว)
+console.log("\n═══ ④ข รางน้ำอลู ผูกสโตร์ 'กล่องเปิด 4\"' — แก้ราคาที่สโตร์แล้วทุนต้องขยับ ═══");
+{
+  const PB_BOX = JSON.parse(JSON.stringify(PB));
+  PB_BOX.BOXPRICE = { ...(PB_BOX.BOXPRICE ?? {}), "กล่อง|4": { "มิว": 9999, "อบขาว": 9999, "ดำ": 9999 } };
+  for (const id of ["glasshouse", "glasshouse_multi", "roof_multi", "gable_multi", "roof"]) {
+    const P = PRODUCTS[id];
+    if (!P) { ok(`${id}: มีรุ่นในระบบ`, false, ""); continue; }
+    const d = P.defaults ?? { w: 400, h: 300, p: 1 };
+    const IN2 = { prodId: id, w: d.w, h: d.h, p: d.p || 1, form: P.defForm, spec: {}, cut: {}, material: P.defMaterial };
+    const base = compareCut(PB, IN2)?.totals?.costTotal;
+    const hi = compareCut(PB_BOX, IN2)?.totals?.costTotal;
+    ok(`${id}: ตั้งราคากล่อง 4" ในสโตร์ → ทุนขยับตาม`, hi > base, `${base} → ${hi}`);
+  }
+}
+
 console.log("\n═══ ④ ห้ามมีสูตร/ราคาฝังในหน้านี้ (กันอัปเดตแยกกัน) ═══");
 // ⚠ 1 ก.ย.69: /calculator40/compare ยุบรวมเข้า /calculator40/link แล้ว (SPEC-หน้าลิงก์รวม)
 //   compare/page.tsx ตอนนี้ "แค่ redirect" — ตรรกะจริง (buildPriceOverride/fetchAllPaged/RBAC) ย้ายไปอยู่ที่
