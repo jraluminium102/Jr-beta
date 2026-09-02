@@ -12,11 +12,17 @@ export type Tier = { lo: number; hi: number | null; price: number };
 export type Add = { label: string; amount: number };
 export type ColorAdd = { name: string; amount: number };
 export type Unit = "sqm" | "panel" | "set" | "meter";
+// วิธีคิดราคา:
+//   per_sqm      = ราคา บ./ตร.ม. × พื้นที่ (ส่วนใหญ่)
+//   flat_by_area = เลือกพื้นที่ → ได้ "ราคาต่อชุด" คงที่ตามช่วง (ไม่คูณพื้นที่ · เช่น บานยก/ฝาตู้)
+//   per_unit     = ราคาต่อหน่วย × จำนวน (เช่น บานเฟี้ยม บ./บาน)
+export type PriceMode = "per_sqm" | "flat_by_area" | "per_unit";
 
 export type Product = {
   key: string;
   category: string;
   unit: Unit;
+  priceMode: PriceMode;
   name: string;
   brand: string | null;
   min: number | null;
@@ -61,15 +67,20 @@ export type CalcResult = {
 
 const r2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
-/** หาช่วงราคาจากพื้นที่ (lo ≤ area < hi) · เกินช่วงสุดท้าย = ใช้ราคาช่วงสุดท้าย · ต่ำกว่าช่วงแรก = ใช้ช่วงแรก */
+/**
+ * หาช่วงราคาจากพื้นที่ (lo ≤ area < hi)
+ *   ถ้า area ตกในช่องว่างระหว่างช่วง / เกิน / ต่ำกว่าตาราง → ใช้ช่วงที่ lo ไม่เกิน area และ lo มากสุด
+ *   (= ช่วงใกล้เคียงด้านล่าง) · ถ้าต่ำกว่าทุกช่วง = ช่วงแรก
+ * ⚠ ห้ามคืน tiers[last] แบบตายตัว — ตารางจริงมี gap (เช่น บานหมุน 2.5–2.53) จะได้ราคาช่วงถูกสุดผิด ๆ
+ */
 export function tierFor(tiers: Tier[], area: number): Tier | null {
   if (!tiers.length) return null;
   for (const t of tiers) {
     if (area >= t.lo && (t.hi == null || area < t.hi)) return t;
   }
-  // ต่ำกว่าช่วงแรก → ช่วงแรก · สูงกว่าทั้งหมด → ช่วงสุดท้าย
-  if (area < tiers[0].lo) return tiers[0];
-  return tiers[tiers.length - 1];
+  let best: Tier | null = null;
+  for (const t of tiers) if (t.lo <= area && (!best || t.lo > best.lo)) best = t;
+  return best ?? tiers[0];
 }
 
 export const UNIT_LABEL: Record<Unit, string> = {
@@ -79,23 +90,36 @@ export const UNIT_LABEL: Record<Unit, string> = {
   meter: "เมตร",
 };
 
+/** true = รายการนี้กรอกพื้นที่ (กว้าง×สูง) · false = กรอกจำนวนหน่วย */
+export function usesArea(p: Product): boolean {
+  return p.priceMode === "per_sqm" || p.priceMode === "flat_by_area";
+}
+
 /** คิดราคา 1 รายการ */
 export function calcItem(p: Product, input: CalcInput): CalcResult {
   const qty = Math.max(1, input.qty || 1);
   let area: number;
   let rate = 0;
+  let base = 0;
 
-  if (p.unit === "sqm") {
+  if (p.priceMode === "per_sqm") {
     area = r2(Math.max(0, input.width || 0) * Math.max(0, input.height || 0));
     const tier = tierFor(p.tiers, area);
     rate = tier ? tier.price : p.flatRate ?? 0;
+    base = r2(area * rate);
+  } else if (p.priceMode === "flat_by_area") {
+    // เลือกพื้นที่ → ได้ราคาต่อชุดคงที่ (ไม่คูณพื้นที่)
+    area = r2(Math.max(0, input.width || 0) * Math.max(0, input.height || 0));
+    const tier = tierFor(p.tiers, area);
+    rate = tier ? tier.price : p.flatRate ?? p.min ?? 0;
+    base = rate;
   } else {
-    // panel/set/meter — width = จำนวนหน่วย
+    // per_unit — width = จำนวนหน่วย (บาน/ชุด/เมตร)
     area = Math.max(0, input.width || 0);
     rate = p.flatRate ?? p.min ?? (p.tiers[0]?.price ?? 0);
+    base = r2(area * rate);
   }
 
-  let base = r2(area * rate);
   let minApplied = false;
   if (p.min != null && base < p.min) { base = p.min; minApplied = true; }
 
@@ -112,7 +136,7 @@ export function calcItem(p: Product, input: CalcInput): CalcResult {
   let colorAdd = 0;
   if (p.colorAdds.length && input.colorAddName) {
     const c = p.colorAdds.find((x) => x.name === input.colorAddName);
-    if (c) colorAdd = p.unit === "sqm" ? r2(area * c.amount) : c.amount;
+    if (c) colorAdd = p.priceMode === "per_sqm" ? r2(area * c.amount) : c.amount;
   }
 
   const perSet = r2(base + panelAdd + colorAdd);

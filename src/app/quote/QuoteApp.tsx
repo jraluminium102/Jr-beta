@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { calcItem, baht, type Pricebook, type Product } from "@/lib/quick-quote/engine";
+import { calcItem, usesArea, baht, type Pricebook, type Product } from "@/lib/quick-quote/engine";
 // เครื่องคิดงานพื้น — ใช้ engine เดิม (ลอกมาตรง ๆ ตามที่เจ้าของสั่ง)
 import { planFloor, draftItems, PILE_TYPES } from "@/lib/floor-calc/engine.mjs";
 
@@ -115,35 +115,42 @@ function PinGate({ onUnlock }: { onUnlock: (pb: Pricebook) => void }) {
 // ─────────────── Header + Tabs + Bars ───────────────
 function Header({ cur, pb, onRefreshPrices }: { cur: Quote; pb: Pricebook; onRefreshPrices: (p: Pricebook) => void }) {
   const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);   // แถวใส่รหัสอัปเดตราคา (inline · ไม่ใช้ prompt เพราะ LINE in-app บล็อกได้)
+  const [pin, setPin] = useState("");
+  const [msg, setMsg] = useState<string | null>(null);
   const refresh = async () => {
-    // ดึงราคาล่าสุด (ถ้าเจ้าของอัปเดตไฟล์) — ต้องรหัส แต่เครื่องนี้ปลดแล้ว จึงถามรหัสซ้ำ
-    const pin = prompt("อัปเดตราคาล่าสุด — ใส่รหัสผ่านอีกครั้ง");
     if (!pin) return;
-    setBusy(true);
+    setBusy(true); setMsg(null);
     try {
       const res = await fetch("/api/quick-quote/unlock", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pin }) });
       const j = await res.json();
-      if (res.ok) { onRefreshPrices(j.pricebook); alert("อัปเดตราคาแล้ว: " + j.pricebook.version); }
-      else alert(j?.error || "อัปเดตไม่ได้");
-    } finally { setBusy(false); }
+      if (res.ok) { onRefreshPrices(j.pricebook); setMsg("อัปเดตแล้ว ✓"); setOpen(false); setPin(""); }
+      else setMsg(j?.error || "อัปเดตไม่ได้");
+    } catch { setMsg("เชื่อมต่อไม่ได้"); }
+    finally { setBusy(false); }
   };
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-2xl items-center justify-between px-3 py-2.5">
         <div>
           <div className="text-[15px] font-bold leading-tight text-slate-800">JR Aluminium</div>
-          <div className="text-[11px] text-slate-400">คิดราคาประเมิน · {pb.version}</div>
-        </div>
-        <div className="flex items-center gap-3">
-          <button onClick={refresh} disabled={busy} className="text-[11px] text-sky-600 underline underline-offset-2 disabled:opacity-50">
-            {busy ? "…" : "อัปเดตราคา"}
+          <button onClick={() => { setOpen((v) => !v); setMsg(null); }} className="text-[11px] text-slate-400 underline decoration-dotted underline-offset-2">
+            คิดราคาประเมิน · {pb.version} · อัปเดตราคา
           </button>
-          <div className="text-right">
-            <div className="text-[10px] uppercase tracking-wide text-slate-400">รวม</div>
-            <div className="text-lg font-bold tabular-nums text-slate-900">฿{baht(grandOf(cur))}</div>
-          </div>
+        </div>
+        <div className="text-right">
+          <div className="text-[10px] uppercase tracking-wide text-slate-400">รวม</div>
+          <div className="text-lg font-bold tabular-nums text-slate-900">฿{baht(grandOf(cur))}</div>
         </div>
       </div>
+      {open && (
+        <div className="mx-auto flex max-w-2xl items-center gap-2 border-t border-slate-100 px-3 py-2">
+          <input type="password" value={pin} onChange={(e) => setPin(e.target.value)} onKeyDown={(e) => e.key === "Enter" && refresh()}
+            placeholder="ใส่รหัสเพื่อดึงราคาล่าสุด" className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-sky-400" />
+          <button onClick={refresh} disabled={busy || pin.length < 3} className="rounded-lg bg-sky-500 px-4 py-2 text-sm font-medium text-white disabled:opacity-40">{busy ? "…" : "ตกลง"}</button>
+          {msg && <span className="text-xs text-slate-500">{msg}</span>}
+        </div>
+      )}
     </header>
   );
 }
@@ -225,9 +232,12 @@ function CalcTab({ pb, cur, setCur }: { pb: Pricebook; cur: Quote; setCur: (q: Q
       resetInputs(); return;
     }
     if (!product || !result || result.total <= 0) return;
+    // ต้องกรอกขนาด/จำนวนก่อน (กันกดเผลอได้ราคาขั้นต่ำเข้าใบทั้งที่ยังไม่วัด)
+    if (usesArea(product)) { if (num(w) <= 0 || num(h) <= 0) { alert("กรอกกว้าง × สูง ก่อน"); return; } }
+    else if (num(w) <= 0) { alert("กรอกจำนวนก่อน"); return; }
     const q = num(qty) || 1;
     const detailParts: string[] = [];
-    if (product.unit === "sqm") detailParts.push(`${w || "?"}×${h || "?"} ม. (${result.area} ตร.ม.)`);
+    if (usesArea(product)) detailParts.push(`${w || "?"}×${h || "?"} ม. (${result.area} ตร.ม.)`);
     else detailParts.push(`${w || "?"} ${result.unitLabel}`);
     if (q > 1) detailParts.push(`× ${q} ชุด`);
     if (result.panelAdd) detailParts.push("+เพิ่มบาน");
@@ -257,7 +267,7 @@ function CalcTab({ pb, cur, setCur }: { pb: Pricebook; cur: Quote; setCur: (q: Q
           </div>
         )}
 
-        <select value={productKey} onChange={(e) => { setProductKey(e.target.value); setTieredAddLabel(""); setColorAddName(""); }}
+        <select value={productKey} onChange={(e) => { setProductKey(e.target.value); resetInputs(); }}
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-sky-400">
           <option value="">— เลือกสินค้า ({products.length}) —</option>
           <option value="custom">✎ กรอกเอง (รายการอื่น)</option>
@@ -273,7 +283,7 @@ function CalcTab({ pb, cur, setCur }: { pb: Pricebook; cur: Quote; setCur: (q: Q
 
         {product && (
           <div className="mt-3 space-y-3">
-            {product.unit === "sqm" ? (
+            {usesArea(product) ? (
               <div className="grid grid-cols-2 gap-2">
                 <NumField label="กว้าง (ม.)" value={w} onChange={setW} />
                 <NumField label="สูง (ม.)" value={h} onChange={setH} />
@@ -281,6 +291,7 @@ function CalcTab({ pb, cur, setCur }: { pb: Pricebook; cur: Quote; setCur: (q: Q
             ) : (
               <NumField label={`จำนวน (${product.unit === "panel" ? "บาน" : product.unit === "meter" ? "เมตร" : "ชุด"})`} value={w} onChange={setW} />
             )}
+            {product.priceMode === "flat_by_area" && <div className="-mt-1 text-[11px] text-slate-400">ราคาต่อชุดตามช่วงพื้นที่ (ไม่คูณพื้นที่)</div>}
             <div className="grid grid-cols-2 gap-2">
               <NumField label="จำนวนชุด/จุด" value={qty} onChange={setQty} />
               {product.perPanelAdd && <NumField label={`เพิ่มบาน (+${baht(product.perPanelAdd.amount)}/บาน)`} value={extraPanels} onChange={setExtraPanels} />}

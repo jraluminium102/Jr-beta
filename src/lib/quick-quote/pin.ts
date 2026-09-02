@@ -3,7 +3,7 @@ import { createServiceClient } from "@/lib/supabase/admin";
 /**
  * รหัสผ่านหน้าคิดราคาประเมิน (public · เซลล์ใส่ครั้งเดียวจำในเครื่อง)
  * ลำดับ: env QUICK_QUOTE_PIN → app_config key=quote_pin → "" (ยังไม่ตั้ง = ล็อกไว้)
- * ตั้งผ่าน SQL ได้ (migration 0133) ไม่ต้องยุ่ง Vercel env — เจ้าของเปลี่ยนเองได้ทุกเมื่อ
+ * ตั้งผ่าน SQL ได้ (migration 0132) ไม่ต้องยุ่ง Vercel env — เจ้าของเปลี่ยนเองได้ทุกเมื่อ
  */
 export async function getQuotePin(): Promise<string> {
   const env = process.env.QUICK_QUOTE_PIN;

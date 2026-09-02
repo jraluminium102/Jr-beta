@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
   const expected = await getQuotePin();
   if (!expected) {
-    return Response.json({ error: "ยังไม่ได้ตั้งรหัสผ่าน — รัน migration 0133 หรือ set app_config quote_pin ก่อน" }, { status: 503 });
+    return Response.json({ error: "ยังไม่ได้ตั้งรหัสผ่าน — รัน migration 0132 หรือ set app_config quote_pin ก่อน" }, { status: 503 });
   }
   let pin = "";
   try {

@@ -128,18 +128,25 @@ function main() {
 
   // ── ประกอบผลลัพธ์ + จัดหมวด ──
   const catOrder = ["ประตู/หน้าต่าง", "กระจกเปลือย/ตู้", "หลังคา", "ระแนง/บังตา", "ผนัง/ฝ้า", "มุ้ง", "กระจก (เปลี่ยน/เพิ่ม)", "สี/พื้นผิว (เพิ่ม)"];
-  // หน่วยคิดราคา: ปกติ ตร.ม. · บางรายการเป็น ต่อบาน/ชุด/เมตร
+  // หน่วยคิดราคา — ดูเฉพาะคอลัมน์ F (unitNote) เท่านั้น
+  //   ⚠ ห้ามเดาจากชื่อ: ชื่อมักมีโน้ต "3000 บ./เมตร", "ขาย X/บาน" ปนอยู่ → จับผิดหน่วย
   const unitOf = (p) => {
-    const u = p.unitNote || "", n = p.name;
-    if (/ต่อบาน|\/\s*บาน/.test(u) || /บ\.\/บาน|บาท\/บาน/.test(n)) return "panel";
+    const u = p.unitNote || "";
+    if (/ต่อบาน|\/\s*บาน/.test(u)) return "panel";
     if (/ต่อชุด|\/\s*ชุด/.test(u)) return "set";
-    if (/\/\s*เมตร|บ\.\/เมตร|บาท\/เมตร/.test(n)) return "meter";
     return "sqm";
   };
+  // ชื่อที่เป็น "ช่วงความยาว" ล้วน (เช่น "1-5 ม.", "> 15 ม.") = เศษของหมวดราวกันตก/บันได
+  //   ที่หัวข้อ (กระจกราวกันตก/แบบติดตั้ง) ถูกตัดทิ้ง → เหลือชื่อซ้ำไม่มีความหมาย · คัดออก
+  //   (เซลล์ใช้ "กรอกเอง" สำหรับงานราวกันตก/บันได ซึ่งพบไม่บ่อย)
+  const isLenRangeName = (n) => /^\s*[<>]?\s*\d+(\.\d+)?\s*([-–]\s*\d+(\.\d+)?)?\s*ม\.?\s*$/.test(n);
+
   let key = 0;
-  const clean = products.map((p) => {
+  const clean = products.filter((p) => !isLenRangeName(p.name)).map((p) => {
     const category = categoryOf(p.name, p.brand);
     const unit = unitOf(p);
+    // per_sqm = ราคา/ตร.ม.×พื้นที่ · flat_by_area = เลือกพื้นที่ได้ราคาต่อชุด (unit≠sqm + มี tier) · per_unit = ต่อหน่วย×จำนวน
+    const priceMode = unit === "sqm" ? "per_sqm" : (p.tiers.length > 0 ? "flat_by_area" : "per_unit");
     const tiers = p.tiers.map((t) => ({ lo: round(t.lo), hi: t.hi == null ? null : round(t.hi), price: t.price }));
     // dedupe tieredAdds
     const seen = new Set();
@@ -148,6 +155,7 @@ function main() {
       key: "p" + (++key),
       category,
       unit,
+      priceMode,
       name: p.name,
       brand: p.brand,
       min: p.min,
@@ -160,6 +168,16 @@ function main() {
       note: p.note || null,
     };
   });
+
+  // เตือน tier เพี้ยน (hi<lo / gap / overlap) — ดักพิมพ์ผิดในไฟล์ต้นฉบับ (เช่น 1.35 ที่ควรเป็น 13.5)
+  const warns = [];
+  for (const p of clean) {
+    for (let i = 0; i < p.tiers.length; i++) {
+      const t = p.tiers[i], nx = p.tiers[i + 1];
+      if (t.hi != null && t.hi < t.lo) warns.push(`${p.name}: ช่วง ${t.lo}-${t.hi} hi<lo (พิมพ์ผิด?)`);
+      if (nx && t.hi != null && Math.abs(t.hi - nx.lo) > 0.011) warns.push(`${p.name}: ช่องว่าง/ทับ ${t.hi}→${nx.lo}`);
+    }
+  }
 
   const categories = catOrder
     .filter((cat) => clean.some((p) => p.category === cat))
@@ -178,6 +196,10 @@ function main() {
   console.log(`✓ เขียน ${OUT}`);
   console.log(`  สินค้า ${clean.length} รายการ · ${categories.length} หมวด`);
   for (const cat of categories) console.log(`    - ${cat.label}: ${cat.count}`);
+  if (warns.length) {
+    console.log(`\n  ⚠ tier น่าสงสัย ${warns.length} จุด (เช็คไฟล์ต้นฉบับ):`);
+    warns.forEach((w) => console.log(`    · ${w}`));
+  }
   // verify ตัวอย่างที่รู้ค่าจาก docx
   const smsSlide = clean.find((p) => p.name.includes("บานเลื่อน") && p.brand === "SMS");
   const casement = clean.find((p) => p.name === "บานเปิด" && p.brand === "EURO");
