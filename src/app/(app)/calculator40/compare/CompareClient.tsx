@@ -239,6 +239,38 @@ export default function CompareClient({ pb, stockCount }: { pb: any; stockCount:
             </div>
           </Card>
 
+          {/* ②ก มอเตอร์ / ชุดออโต้ ที่รุ่นนี้เลือกได้ (ชีต "ราคาออโต้" ในไฟล์ถอดทุน)
+              เจ้าของสั่ง 3 ก.ย.69 "ให้ขึ้นตามประเภทบาน ห้ามขึ้นมั่ว" — ตารางนี้คือที่ไว้ตรวจ
+              รุ่นที่ไม่มีมอเตอร์ในชีต จะไม่ขึ้นการ์ดนี้เลย */}
+          {(r.autoSets?.length ?? 0) > 0 && (
+            <Card className="p-5">
+              <h2 className="font-bold text-brand-dark mb-1">⚙️ มอเตอร์ / ชุดออโต้ ของรุ่นนี้</h2>
+              <p className="text-xs text-ink-3 mb-2">
+                ตรงตามชีต &ldquo;ราคาออโต้&rdquo; ในไฟล์ถอดทุน — ราคาที่โชว์คือ <b>ทุน</b> (ราคาขาย = ทุน × กำไร%)
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left bg-brand-soft text-brand-dark">
+                      <th className="p-2 rounded-l-lg">หมวดในชีต</th><th>รายการ</th>
+                      <th className="text-right">ทุน (บาท)</th><th className="p-2 rounded-r-lg">เงื่อนไข</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {r.autoSets.map((m: { group: string; label: string; cost: number; note: string }, i: number) => (
+                      <tr key={m.group + m.label + i} className="border-t border-line/60">
+                        <td className="p-2 text-xs text-ink-3">{m.group}</td>
+                        <td className="text-xs">{m.label}</td>
+                        <td className={cell + " text-right"}>{n1(m.cost)}</td>
+                        <td className="p-2 text-xs text-ink-3">{m.note}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )}
+
           {/* ② อุปกรณ์ */}
           <Card className="p-5">
             <h2 className="font-bold text-brand-dark mb-2">② อุปกรณ์/สิ้นเปลือง — ของที่คิดเงิน = ของที่ช่างเบิกไหม</h2>

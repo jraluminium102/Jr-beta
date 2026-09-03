@@ -153,7 +153,8 @@ export const PRODUCTS = {
     saleName: 'ประตูบานเลื่อน{form} รางล่าง (รุ่นกันน้ำ)',
     icon: '🪟', defForm: 'อิสระ', forms: ['อิสระ', 'สลับ', 'ลากจูง', 'เปิดคู่กลาง'],
     specOpts: [{ key: 'bottomrail', label: 'ราง', opts: ['รางกันน้ำ', 'รางเตี้ย (งานใน)'], def: 'รางกันน้ำ' }], // R3.9 label-only · รางเตี้ย=งานในระบุในใบ
-    addons: ['mosquito', 'cmech', 'stainless', 'digihandle', 'frame_wrap', 'drop_floor', 'demolish'],   // ห้องกระจก G6 พาริตี้ (2ก.ค.) — มุ้ง/มือจับ/ครอบวงกบ/ดรอปพื้น/รื้อของเดิม (engine computeAddon รองรับอยู่แล้ว)
+    addons: ['slide_auto', 'mosquito', 'cmech', 'stainless', 'digihandle', 'frame_wrap', 'drop_floor', 'demolish'],
+    autoBrands: ['evecca', 'changsaek'],   // ห้องกระจก G6 พาริตี้ (2ก.ค.) — มุ้ง/มือจับ/ครอบวงกบ/ดรอปพื้น/รื้อของเดิม (engine computeAddon รองรับอยู่แล้ว)
     defaults: { w: 600, h: 300, p: 3 }, defGlass: 'เขียว 6มม.', minP: 2, maxP: 6,
     // เจ้าของยืนยัน 21 ส.ค.69: เปิดคู่กลาง มีแค่ 4 บาน กับ 6 บาน · ทั้งสองแบบมีบานติดตาย 2 บาน (ริมซ้าย+ริมขวา)
     formRules: { 'เปิดคู่กลาง': { panes: [4, 6], note: 'เปิดคู่กลาง = บานเลื่อนแยกออกกลาง + บานติดตาย 2 บาน (ริมซ้าย 1 · ริมขวา 1) → 4 บาน = เลื่อน 2 + ติดตาย 2 · 6 บาน = เลื่อน 4 + ติดตาย 2 (ทำได้เฉพาะ 4 กับ 6 บาน)' } },
@@ -200,7 +201,8 @@ export const PRODUCTS = {
     id: 'euro_slide', aluWaste: true, group: 1, name: 'บานเลื่อน ยูโร', brand: 'EURO', laborKey: 'บานเลื่อน ยูโร',
     icon: '🪟', defForm: 'อิสระ', forms: ['อิสระ', 'สลับ', 'ลากจูง', 'เปิดคู่กลาง'],
     specOpts: [{ key: 'bottomrail', label: 'ราง', opts: ['รางกันน้ำ', 'รางเตี้ย (งานใน)'], def: 'รางกันน้ำ' }], // R3.9 label-only · รางเตี้ย=งานในระบุในใบ
-    addons: ['mosquito', 'cmech', 'stainless', 'digihandle', 'frame_wrap', 'drop_floor', 'demolish'],   // ห้องกระจก G6 พาริตี้ (2ก.ค.)
+    addons: ['slide_auto', 'mosquito', 'cmech', 'stainless', 'digihandle', 'frame_wrap', 'drop_floor', 'demolish'],
+    autoBrands: ['evecca', 'changsaek'],   // ห้องกระจก G6 พาริตี้ (2ก.ค.)
     defaults: { w: 600, h: 300, p: 3 }, defGlass: 'เขียว 6มม.', minP: 2, maxP: 6,
     // MULTI = ใช้เฟรม 2 ชุดต่อกัน (ชีต 'เลื่อน4 (2)' / 'เลื่อน5') — เฉพาะอิสระ/สลับ 4-5 บาน
     //   เปิดคู่กลาง 4/6 บาน ใช้เฟรมชุดเดียว (ชีต 'เลื่อนแบ่ง4' / 'เลื่อนแบ่ง6-กลาง')
@@ -304,7 +306,8 @@ export const PRODUCTS = {
   slimlux: {
     id: 'slimlux', aluWaste: true, group: 1, name: 'บานเลื่อนเฟรมบาง SlimLux', brand: 'SLIMLUX', laborKey: 'SlimLux',
     icon: '🪟', defForm: 'อิสระ', forms: ['อิสระ', 'ลากจูง', 'เปิดคู่กลาง'],
-    addons: ['demolish'],   // เจ้าของเคาะ 21 ส.ค.69: สลิมเอาแค่รื้อของเดิม (ไม่มีมุ้ง/ครอบวงกบ)   // LUT รองรับ ลากจูง(3-5)/เปิดคู่กลาง(4,6) — ไม่มีสลับ
+    addons: ['slide_auto', 'demolish'],
+    autoBrands: ['slimlux'],   // เจ้าของเคาะ 21 ส.ค.69: สลิมเอาแค่รื้อของเดิม (ไม่มีมุ้ง/ครอบวงกบ)   // LUT รองรับ ลากจูง(3-5)/เปิดคู่กลาง(4,6) — ไม่มีสลับ
     specOpts: [
       { key: 'slxhandle', label: 'มือจับ', opts: ['มือจับล็อค (มาตรฐาน)', 'X-J', 'ลูกค้าเตรียมเอง'], def: 'มือจับล็อค (มาตรฐาน)' },
       { key: 'slxhwcolor', label: 'สีมือจับ', opts: ['ขาว', 'ดำ'], def: 'ขาว' },
@@ -795,6 +798,7 @@ export const PRODUCTS = {
     // ค่าดำเนินการ 30% ตามช่อง 'ค่าดำเนินการ %' ท้ายชีต v20 (บวกทับราคาขายอีกชั้น)
     id: 'banyok', aluWaste: true, opCostPct: 30, group: 1, name: 'บานยก', brand: 'EURO', laborKey: 'บานยก (เซมิ)',
     icon: '🪟', defForm: 'เดี่ยว', forms: ['เดี่ยว', 'ถ่วง'],
+    addons: ['motor'],
     defaults: { w: 100, h: 150, p: 1 }, defGlass: 'เขียว 6มม.', minP: 1, maxP: 1,   // 1 ชุด = 2 บานเสมอ (ไฟล์ล็อกไว้)
     specOpts: [{ key: 'liftmode', label: 'ลักษณะการยก', opts: ['ยกบานบน', 'ยกบานบน-ล่างสลับ'], def: 'ยกบานบน' }], // R3.9 o-liftmode · label พิมพ์ลงใบ
     vars: {
@@ -908,6 +912,7 @@ export const PRODUCTS = {
   banklet: {
     id: 'banklet', group: 1, name: 'บานเกล็ด', brand: 'MTONG', laborKey: 'บานเกล็ด',
     icon: '🪟', defForm: 'นอน', forms: ['นอน'], stockLen: 6.0,
+    addons: ['banklet_motor'],
     defaults: { w: 300, h: 150, p: 2 }, defGlass: null, minP: 1, maxP: 6,
     vars: {
       AA: '[29.5,38.4,47.3,56.2,65.1,74,82.9,91.8,100.7,109.6,118.5,127.4,136.3,145.2,154.1,163,171.9,180.8,189.7,198.6,207.5,216.4,225.3,234.2,243.1,252,260.9,269.8,278.7,287.6,296.5,305.4,314.3]',
@@ -1080,7 +1085,7 @@ export const PRODUCTS = {
       { name: 'เดินไฟ (เหมา)', orderOnly: true, price: 2000, ref: 'MOTOR.ประตูรั้ว เดินไฟ', unit: 'ชุด', count: "spec.gwire==='มี'?1:0" },
     ],
     consum: [],
-    addons: ['gate_curve', 'gate_motor', 'gate_wire'],
+    addons: ['gate_curve', 'gate_motor'],
     specOpts: [
       { key: 'gfit', label: 'แบบประกอบ', opts: ['ยัดใน', 'แปะนอก'], def: 'ยัดใน', priced: true },   // แปะนอก = +ฉากข้อ 2" · ใบระแนงยาวขึ้น
       { key: 'gslat', label: 'ชนิดใบ', opts: ['ระแนง', 'ระแนงสลับ'], def: 'ระแนง', priced: true },
@@ -1170,6 +1175,8 @@ export const PRODUCTS = {
     icon: '🌀', defForm: 'นอน', forms: ['นอน', 'ตั้ง'], stockLen: 6.0,
     defaults: { w: 200, h: 240, p: 1 }, defGlass: null, minP: 1, maxP: 1,
     addons: ['mosquito', 'frame_wrap'],   // มุ้งติดระแนง + ครอบวงกบ
+    // ชีต "คิดทุน ระแนงหมุน" B13 "ชุดมอเตอร์ → เอา/ไม่เอา" (ค่าตั้งต้นในไฟล์ = เอา)
+    specOpts: [{ key: 'rnMotor', label: 'ชุดมอเตอร์', opts: ['เอา', 'ไม่เอา'], def: 'เอา', priced: true }],
     vars: {
       // v20.1 (3 ก.ย.69): กล่องระแนง 1"×4" โชว์ 4" (10.16 ซม.) · ช่องห่างบังคับ 0.2 · ยาว/ใบปัดขึ้นตัวหาร 600
       LONGR: "(function(){var v=(form==='นอน' ? (W*100) : (H*100)),V=[50,60,75,100,120,150,200,300,600];for(var i=0;i<V.length;i++){if(V[i]>=v)return V[i];}return v;})()",
@@ -1184,7 +1191,8 @@ export const PRODUCTS = {
     consum: [
       { box: 'กล่อง|1X4', name: 'ใบระแนง (กล่อง 1"×4" โชว์ 4")', price: 905, unit: 'เส้น', count: 'NLINE', mult: true },
       { box: 'กล่อง|4X4', name: 'เพลาหมุน กล่อง 4"×4"', price: 2208, unit: 'เส้น', count: 'NSHAFT', mult: true },
-      { name: 'มอเตอร์ระแนงหมุน', price: 1800, ref: 'MOTOR.ระแนงหมุน', unit: 'ตัว', count: '1' },
+      // ชีต B13 เลือกได้ "เอา/ไม่เอา" (ค่าตั้งต้นในไฟล์ = เอา) — เดิมเว็บบังคับมีเสมอ
+      { name: 'มอเตอร์ระแนงหมุน', price: 1800, ref: 'MOTOR.ระแนงหมุน', unit: 'ตัว', count: "spec.rnMotor==='ไม่เอา' ? 0 : 1" },
       { orderOnly: true, name: 'อุปกรณ์หมุน+จุดหมุน', price: 1, unit: 'ชุด', count: "Math.round(200*(W*100)/100) + Math.round(160*NLEAF)" },
     ],
     note: 'ระแนงปรับหมุนได้ + มอเตอร์ default · กล่องเมืองทอง stock 6ม. · ค่าแรงใช้เรต "ระแนง" กลาง (ชีตจริง 965 vs 900 ต่าง ~312฿ เช็คซ้ำ) · โครงดาม/ต่อ/สีพิเศษ ยังไม่ทำ',
@@ -1261,6 +1269,7 @@ export const PRODUCTS = {
     defForm: 'ภายนอก', forms: ['ภายนอก', 'ภายใน'],
     defaults: { w: 300, h: 240, p: 2 }, defGlass: null, minP: 1, maxP: 6,
     addons: ['slide_auto', 'mosquito', 'frame_wrap', 'demolish'],
+    autoBrands: ['evecca', 'changsaek'],
     vars: {
       F2: "material==='อิสระ'?P:(material==='ลากจูง'?P-1:P-2)",
       F3: "material==='ลากจูง'?1:2",
@@ -2231,7 +2240,7 @@ export const PRODUCTS = {
     // poolBars: แยกรายท่อนแล้วต้องรวมยาวต่อรหัสก่อนหารเส้น — เท่ากับสูตรเดิมที่รวมยาวไว้ก้อนเดียว (ทุนไม่ขยับ)
     id: 'fold_lift', partsLinked: true, poolBars: true, group: 1, name: 'บานเฟี้ยมยก', brand: 'EURO', laborKey: 'บานเฟี้ยมยก',
     icon: '🚪', defForm: 'มาตรฐาน', forms: ['มาตรฐาน'],
-    addons: ['mosquito', 'frame_wrap', 'demolish'],
+    addons: ['motor', 'mosquito', 'frame_wrap', 'demolish'],
     defaults: { w: 200, h: 120, p: 2 }, defGlass: 'เขียว 6มม.', minP: 2, maxP: 8,
     vars: {},
     alu: [

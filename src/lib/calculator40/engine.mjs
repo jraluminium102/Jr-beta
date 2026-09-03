@@ -673,7 +673,8 @@ export function computeCost(PB, prod, opt) {
         addonTotal += r.amount;
         if (r.cost != null) addonCostExplicit += r.cost;     // ทุนจริง (มอเตอร์ ฯลฯ)
         else addonSellImplicit += r.amount;                  // R3.9 → ÷2
-        lines.push({ cat: 'addon', name: r.label, qty: r.qty || 1, unit: r.unit || '', unitPrice: r.unitPrice || r.amount, amount: round2(r.amount) });
+        // cost = ทุนจริงของชุดออโต้ (ชีตราคาออโต้) — ติดไปกับบรรทัดด้วย ให้หน้าจอ/เทสตรวจได้ว่าตรงไฟล์
+        lines.push({ cat: 'addon', name: r.label, qty: r.qty || 1, unit: r.unit || '', unitPrice: r.unitPrice || r.amount, amount: round2(r.amount), ...(r.cost != null ? { cost: round2(r.cost) } : {}) });
       }
     }
   }
@@ -719,8 +720,76 @@ export function computeCost(PB, prod, opt) {
 // ราคาจาก PB section (แอดมินแก้ได้) — ref="STEEL.box1" → PB.STEEL.box1 · ไม่มี = null (ใช้ price เดิม fallback)
 function refPrice(PB, ref) { const i = ref.indexOf('.'); if (i < 0) return null; const sec = PB[ref.slice(0, i)]; if (!sec) return null; const v = sec[ref.slice(i + 1)]; return (typeof v === 'number') ? v : null; }
 // ราคาขายมอเตอร์/ออโต้ — ขาย = max(ceil100(ทุน×2.5), floor) · ตัวมอเตอร์ floor=6,000 (เซอร์วิสแพง) · อะไหล่ floor=0 (พี่เคาะ 30มิ.ย.)
+// ⚠ เลิกใช้กับชุดออโต้แล้ว (เหลือไว้เผื่อของเก่า) — ชีตถอดทุนเขียนกำกับหัวบล็อกว่า
+//   "— ชุด auto (ออปชั่น) — บวกเข้าทุน × กำไร%" คือ เอาทุนบวกเข้าค่าของ แล้วคูณกำไร% ปกติ
+//   ไม่ใช่ ×2.5 ขั้นต่ำ 6,000 (กติกาเก่า R3.9) — เจ้าของยืนยัน 3 ก.ย.69 "ราคาเป็นราคาทุน ใส่ไปเลย ค่าของสุดท้ายเรา ×2"
 function motorSell(cost, floor = 6000) { return Math.max(ceil100((+cost || 0) * 2.5), floor); }
+/** ราคาขายชุดออโต้/มอเตอร์ = ทุน × (1 + กำไร%) ตามชีต "— ชุด auto (ออปชั่น) — บวกเข้าทุน × กำไร%" */
+function autoSell(cost, ctx) {
+  const pct = Number(ctx && ctx.opt && ctx.opt.profitPct);
+  return ceil100((+cost || 0) * (1 + (Number.isFinite(pct) ? pct : 100) / 100));
+}
 function motorCost(PB, key, fallback) { const v = PB && PB.MOTOR && PB.MOTOR[key]; return (typeof v === 'number') ? v : fallback; }
+/**
+ * มอเตอร์ / ชุดออโต้ ที่แต่ละรุ่นเลือกได้ — ตรงกับชีต "ราคาออโต้" ในไฟล์ถอดทุน (หมวดใครหมวดมัน)
+ * ใช้โชว์บนหน้าเทียบ เพื่อตรวจว่า "ขึ้นตามประเภทบาน ไม่ขึ้นมั่ว" (เจ้าของสั่ง 3 ก.ย.69)
+ * ⚠ ราคาทุกตัว = ทุน (ตามชีต) · ราคาขาย = ทุน × กำไร% เหมือนค่าของอื่น
+ */
+export function autoSetsFor(PB, prod) {
+  if (!prod) return [];
+  const C = (k, fb) => motorCost(PB, k, fb);
+  const ads = prod.addons || [], out = [];
+  const row = (group, label, cost, note) => out.push({ group, label, cost: round2(cost), note: note || '' });
+  if (ads.includes('motor')) {
+    const ship = C('บานยก ค่าส่ง', 1700);
+    row('บานยก / เฟี้ยมยก', 'ยก 80 กก.', C('บานยก ยก80', 4500) + ship, 'รวมค่าส่ง 1,700');
+    row('บานยก / เฟี้ยมยก', 'ยก 300 กก.', C('บานยก ยก300', 12500) + ship, 'รวมค่าส่ง 1,700');
+  }
+  if (ads.includes('slide_motor')) {
+    const ship = C('หลังคาเลื่อน ค่าส่ง', 1700);
+    for (const [k, key, fb] of [['80', 'หลังคาเลื่อน ยก80', 4500], ['300', 'หลังคาเลื่อน ยก300', 12500], ['1500', 'หลังคาเลื่อน ยก1500', 13325]])
+      row('หลังคาเลื่อน', 'ยก ' + k + ' กก.', C(key, fb) + ship, 'รวมค่าส่ง 1,700' + (k === '1500' ? ' · รวมฟันเฟือง+เซนเซอร์อัตโนมัติ' : ''));
+    row('หลังคาเลื่อน', 'ฟันเฟือง (เฉพาะ 1500)', C('ฟันเฟือง/ม.', 340), 'บาท/ม. × ระยะเลื่อน');
+    row('หลังคาเลื่อน', 'เซนเซอร์กันฝน', C('เซนเซอร์กันฝน', 1100), 'บังคับมีกับ 1500 กก.');
+  }
+  if (ads.includes('banklet_motor')) row('บานเกล็ด 38.1', 'มอเตอร์บานเกล็ด', C('บานเกล็ด', 1800), 'ไม่มีค่าส่ง');
+  if (ads.includes('awn_auto')) {
+    for (const [l, k, fb] of [['โช็ค เปิด 50', 'กระทุ้ง โช้ค50', 3575], ['โช็ค เปิด 80', 'กระทุ้ง โช้ค80', 3725], ['โซ่เดี่ยว 50', 'กระทุ้ง โซ่เดี่ยว50', 1900], ['โซ่คู่ 50', 'กระทุ้ง โซ่คู่50', 2600]])
+      row('บานกระทุ้ง', l, C(k, fb), '× จำนวนบาน + ค่าส่ง 1,700 ครั้งเดียว');
+    row('บานกระทุ้ง', 'อุปกรณ์พิเศษ (โช็ค 2 ตัว)', C('กระทุ้ง อุปกรณ์พิเศษ', 600), 'บวกเมื่อใช้โช็ค ≥ 2 บาน');
+  }
+  if (ads.includes('slide_auto')) {
+    const br = Array.isArray(prod.autoBrands) ? prod.autoBrands : ['evecca', 'changsaek', 'slimlux'];
+    if (br.includes('evecca')) {
+      row('เลื่อน SMS/ยูโร', 'Evecca (จีน)', C('เลื่อน Evecca', 13480) + C('เลื่อน Evecca ค่าส่ง', 1700), 'รวมค่าส่ง 1,700 · 1 บาน');
+      row('เลื่อน SMS/ยูโร', 'สายพาน Evecca', C('เลื่อน Evecca สายพาน/ม.', 75), 'บาท/ม. = กว้าง×2');
+      row('เลื่อน SMS/ยูโร', 'ออป Smart lock', C('เลื่อน Evecca Smart lock', 6500), 'ออปชั่น');
+    }
+    if (br.includes('changsaek')) {
+      row('เลื่อน SMS/ยูโร', 'ช่างแซก', C('เลื่อน ช่างแซก', 8000), 'ไม่มีค่าส่ง · ทั้งก้อน × จำนวนบาน สูงสุด 3');
+      row('เลื่อน SMS/ยูโร', 'เซฟตี้ตาแมว', C('เลื่อน ช่างแซก ตาแมว', 1000), 'บังคับคู่ช่างแซก');
+      row('เลื่อน SMS/ยูโร', 'ราง ช่างแซก', C('เลื่อน ช่างแซก ราง/ม.', 950), 'บาท/ม. = กว้างช่อง');
+      row('เลื่อน SMS/ยูโร', 'ออป Touch Switch', C('เลื่อน ช่างแซก Touch', 1000), 'ออปชั่น');
+      row('เลื่อน SMS/ยูโร', 'ออป Infrared', C('เลื่อน ช่างแซก Infrared', 9000), 'ออปชั่น');
+    }
+    if (br.includes('slimlux')) {
+      row('SlimLux', 'ชุด SlimLux (บานแรก)', C('เลื่อน SlimLux ชุดแรก', 6900), 'สูตรในชีตไม่บวกค่าส่ง');
+      row('SlimLux', 'บานเพิ่ม', C('เลื่อน SlimLux บานเพิ่ม', 2250), 'บาท/บานเพิ่ม');
+      row('SlimLux', 'ราง SlimLux', C('เลื่อน SlimLux ราง/ม.', 1100), 'บาท/ม. = กว้าง × จำนวนบาน');
+      row('SlimLux', 'ออป สแกนหน้า', C('เลื่อน SlimLux สแกนหน้า', 2750), 'บังคับเลือก 1 ใน 2');
+      row('SlimLux', 'ออป Touch Switch', C('เลื่อน SlimLux Touch', 100), 'บังคับเลือก 1 ใน 2');
+    }
+  }
+  if (ads.includes('gate_motor')) {
+    row('ประตูรั้ว', 'มอเตอร์ประตูรั้ว', C('ประตูรั้ว', 10000), '1 ตัวรวมในชุดแล้ว · เลือกเพิ่มได้');
+    row('ประตูรั้ว', 'รีโมทประตูรั้ว', 500, 'บาท/ตัว — กรอกจำนวนในช่องรีโมท');
+    row('ประตูรั้ว', 'เดินไฟ (เหมา)', C('ประตูรั้ว เดินไฟ', 2000), 'บาท/ชุด — เลือกในช่อง "เดินไฟ"');
+  }
+  if ((prod.consum || []).some((c) => c.name === 'มอเตอร์ระแนงหมุน'))
+    row('ระแนงหมุน', 'มอเตอร์ระแนงหมุน', C('ระแนงหมุน', 1800), 'รวมส่งแล้ว · ปิดได้ที่ช่อง "ชุดมอเตอร์"');
+  return out;
+}
+
 // ตารางราคามือจับ (แหล่งเดียว · ใช้ทั้ง engine คิดเงิน + UI โชว์ป้าย · แก้ที่เดียวตรงกัน)
 export const CMECH_TIERS = {
   embed_door_normal: { p: 1050, l: 'ฝัง ประตู สีปกติ' }, embed_door_special: { p: 1470, l: 'ฝัง ประตู ชุบพิเศษ' },
@@ -835,12 +904,14 @@ export function computeAddon(id, sel, ctx) {
     const n = (ctx.opt && ctx.opt.handleQty > 0) ? Math.round(ctx.opt.handleQty) : 1;   // จำนวนชุด (เจ้าของเคาะ 24ส.ค.69) — default 1 = พฤติกรรมเดิม
     return { label: 'มือจับสแตนเลส ' + t.l + (n > 1 ? ' × ' + n + ' ชุด' : '') + ' (R3.9)', qty: n, unit: 'ชุด', unitPrice: t.p, amount: t.p * n };
   }
-  if (id === 'motor') {                 // มอเตอร์บานยก (ทุนราคาออโต้ 80=4,500/300=12,500 · ขาย=max(ทุน×2.5,6,000))
-    const cmap = { '80': motorCost(ctx.PB, 'บานยก ยก80', 4500), '300': motorCost(ctx.PB, 'บานยก ยก300', 12500) };
+  if (id === 'motor') {                 // มอเตอร์บานยก / เฟี้ยมยก — ชีต "คิดทุน บานยก" D51 = ราคา + ค่าส่ง
+    //   ยก 80 กก. = 4,500 + 1,700 = 6,200 · ยก 300 กก. = 12,500 + 1,700 = 14,200 (เจ้าของยืนยันเลข 3 ก.ย.69)
+    const ship = motorCost(ctx.PB, 'บานยก ค่าส่ง', 1700);
+    const cmap = { '80': motorCost(ctx.PB, 'บานยก ยก80', 4500) + ship, '300': motorCost(ctx.PB, 'บานยก ยก300', 12500) + ship };
     const cost = cmap[sel]; if (cost == null) return null;
     if (sel === '80' && ctx.area > 3.5) return { cat: 'warn', label: '⚠️ มอเตอร์ 80 กก. ใช้ได้ ≤3.5 ตร.ม. (พื้นที่ ' + round2(ctx.area) + ') — เปลี่ยนเป็น 300 กก.', amount: 0 };
-    const sell = motorSell(cost);
-    return { label: 'มอเตอร์บานยก ' + sel + ' กก.', qty: 1, unit: 'ชุด', unitPrice: sell, amount: sell, cost };
+    const sell = autoSell(cost, ctx);
+    return { label: 'ชุดออโต้บานยก ' + sel + ' กก. (รวมค่าส่ง)', qty: 1, unit: 'ชุด', unitPrice: sell, amount: sell, cost };
   }
   if (id === 'slide_motor') {           // มอเตอร์หลังคาเลื่อน (80/300/1500 + ฟันเฟือง + เซนเซอร์) · ขาย ×2.5/6,000
     const s = (sel && typeof sel === 'object') ? sel : { kw: '1500' };
@@ -851,45 +922,62 @@ export function computeAddon(id, sel, ctx) {
     const ship = motorCost(ctx.PB, 'หลังคาเลื่อน ค่าส่ง', 1700);
     const mcost = cmap[kw] == null ? null : cmap[kw] + ship;
     if (mcost == null) return null;
-    const out = [{ label: 'มอเตอร์หลังคาเลื่อน ยก ' + kw + ' กก.', qty: 1, unit: 'ชุด', unitPrice: motorSell(mcost), amount: motorSell(mcost), cost: mcost }];
+    const out = [{ label: 'มอเตอร์หลังคาเลื่อน ยก ' + kw + ' กก. (รวมค่าส่ง)', qty: 1, unit: 'ชุด', unitPrice: autoSell(mcost, ctx), amount: autoSell(mcost, ctx), cost: mcost }];
     if (kw === '1500') {                 // ฟันเฟือง + เซนเซอร์ เฉพาะ 1500 กก.
       const gl = +s.gearLen || 0;
-      if (gl > 0) { const gc = motorCost(ctx.PB, 'ฟันเฟือง/ม.', 340) * gl; const gs = motorSell(gc, 0); out.push({ label: 'ฟันเฟือง (ระยะยื่น ' + gl + ' ม.)', qty: gl, unit: 'ม.', unitPrice: round2(gs / gl), amount: gs, cost: gc }); }
+      if (gl > 0) { const gc = motorCost(ctx.PB, 'ฟันเฟือง/ม.', 340) * gl; const gs = autoSell(gc, ctx); out.push({ label: 'ฟันเฟือง (ระยะยื่น ' + gl + ' ม.)', qty: gl, unit: 'ม.', unitPrice: round2(gs / gl), amount: gs, cost: gc }); }
       // v20.1 (3 ก.ย.69): "เซนเซอร์กันฝน · 1500 กก. บังคับมีเสมอ" — ไม่ใช่ออปชั่นแล้ว
-      if (true) { const sc = motorCost(ctx.PB, 'เซนเซอร์กันฝน', 1100); const ss = motorSell(sc, 0); out.push({ label: 'เซนเซอร์กันฝน (ออโต้)', qty: 1, unit: 'ชุด', unitPrice: ss, amount: ss, cost: sc }); }
+      if (true) { const sc = motorCost(ctx.PB, 'เซนเซอร์กันฝน', 1100); const ss = autoSell(sc, ctx); out.push({ label: 'เซนเซอร์กันฝน (ออโต้)', qty: 1, unit: 'ชุด', unitPrice: ss, amount: ss, cost: sc }); }
     }
     return out;
   }
-  if (id === 'banklet_motor') {         // มอเตอร์บานเกล็ด (ทุน 1,800 · ขาย max(×2.5,6,000)=6,000)
+  if (id === 'banklet_motor') {         // มอเตอร์บานเกล็ด 38.1 — ชีตราคาออโต้ 1,800 "ไม่มีค่าส่ง"
     if (sel !== 'yes') return null;
     const cost = motorCost(ctx.PB, 'บานเกล็ด', 1800);
-    return { label: 'มอเตอร์บานเกล็ด', qty: 1, unit: 'ชุด', unitPrice: motorSell(cost), amount: motorSell(cost), cost };
+    return { label: 'มอเตอร์บานเกล็ด', qty: 1, unit: 'ชุด', unitPrice: autoSell(cost, ctx), amount: autoSell(cost, ctx), cost };
   }
   if (id === 'awn_auto') {              // ชุดออโต้บานกระทุ้ง (โช้ค50/80 · โซ่เดี่ยว/คู่) × จำนวนบาน · ขาย ×2.5/6,000
     const map = { choke50: ['โช้คเปิด 50', 'กระทุ้ง โช้ค50', 3575], choke80: ['โช้คเปิด 80', 'กระทุ้ง โช้ค80', 3725], chain1: ['โซ่เดี่ยว 50', 'กระทุ้ง โซ่เดี่ยว50', 1900], chain2: ['โซ่คู่ 50', 'กระทุ้ง โซ่คู่50', 2600] };
     const m = map[sel]; if (!m) return null;
-    const cost = motorCost(ctx.PB, m[1], m[2]);
-    const n = ctx.P || 1, each = motorSell(cost);
-    return { label: 'ชุดออโต้กระทุ้ง ' + m[0] + (n > 1 ? ' ×' + n + ' บาน' : ''), qty: n, unit: 'ชุด', unitPrice: each, amount: each * n, cost: cost * n };
+    const each = motorCost(ctx.PB, m[1], m[2]);
+    const n = ctx.P || 1;
+    // ค่าส่งคิดครั้งเดียวต่องาน (ไม่ใช่ต่อบาน) ตามสูตร D54 — เดิมเว็บตกค่าส่งไปทั้งก้อน
+    const cost = each * n + motorCost(ctx.PB, 'กระทุ้ง ค่าส่ง', 1700);
+    const sell = autoSell(cost, ctx);
+    const out = [{ label: 'ชุดออโต้กระทุ้ง ' + m[0] + (n > 1 ? ' ×' + n + ' บาน' : '') + ' (รวมค่าส่ง)', qty: n, unit: 'ชุด', unitPrice: round2(sell / n), amount: sell, cost }];
+    // "2 ตัว→+อุปกรณ์พิเศษ" — เฉพาะโช็ค (โซ่ไม่มี) ตามสูตรในชีต
+    if (n >= 2 && (sel === 'choke50' || sel === 'choke80')) {
+      const xc = motorCost(ctx.PB, 'กระทุ้ง อุปกรณ์พิเศษ', 600), xs = autoSell(xc, ctx);
+      out.push({ label: 'อุปกรณ์พิเศษ (โช็ค 2 ตัว)', qty: 1, unit: 'ชุด', unitPrice: xs, amount: xs, cost: xc });
+    }
+    return out;
   }
-  if (id === 'slide_auto') {            // ชุดออโต้บานเลื่อน G1 — Evecca / ช่างแซก / SlimLux + อะไหล่ · ขาย ×2.5 (มอเตอร์ floor 6,000)
+  if (id === 'slide_auto') {            // ชุดออโต้บานเลื่อน — Evecca / ช่างแซก / SlimLux (ชีต "คิดทุน SMS" D57 · "คิดทุน SlimLux" D58)
     const s = (sel && typeof sel === 'object') ? sel : null;
     const brand = s && s.brand; if (!brand || brand === 'none') return null;
     const W = ctx.W || 0, P = ctx.P || 1, out = [];
     const C = (k, fb) => motorCost(ctx.PB, k, fb);
-    const acc = (label, cost, qty, unit) => { const sl = motorSell(cost, 0); out.push({ label, qty: qty || 1, unit: unit || 'ชุด', unitPrice: round2(sl / (qty || 1)), amount: sl, cost }); };
+    const acc = (label, cost, qty, unit) => { const sl = autoSell(cost, ctx); out.push({ label, qty: qty || 1, unit: unit || 'ชุด', unitPrice: round2(sl / (qty || 1)), amount: sl, cost }); };
+    // ช่างแซก: สูตร D57 คูณทั้งก้อน × MIN(จำนวนบาน, 3) · รูปแบบ "เปิดคู่กลาง" = 1 ชุด
+    const csMul = (String((ctx.opt && ctx.opt.form) || '').includes('เปิดคู่กลาง')) ? 1 : Math.max(1, Math.min(P, 3));
+    const csTag = csMul > 1 ? ' ×' + csMul + ' ชุด' : '';
     if (brand === 'evecca') {
-      const mc = C('เลื่อน Evecca', 13480); out.push({ label: 'ชุดออโต้เลื่อน Evecca (จีน)', qty: 1, unit: 'ชุด', unitPrice: motorSell(mc), amount: motorSell(mc), cost: mc });
+      // Evecca: ทุน = ตัวชุด + สายพาน(กว้าง×2 ม.) + ค่าส่ง + Smart lock(ถ้าเลือก) — สูตร D57 ในชีต
+      const mc = C('เลื่อน Evecca', 13480) + C('เลื่อน Evecca ค่าส่ง', 1700);
+      out.push({ label: 'ชุดออโต้เลื่อน Evecca (จีน · รวมค่าส่ง)', qty: 1, unit: 'ชุด', unitPrice: autoSell(mc, ctx), amount: autoSell(mc, ctx), cost: mc });
       const beltLen = W * 2; if (beltLen > 0) acc('สายพาน Evecca (' + round2(beltLen) + ' ม.)', C('เลื่อน Evecca สายพาน/ม.', 75) * beltLen, round2(beltLen), 'ม.');
       if (s.smartlock) acc('Smart lock', C('เลื่อน Evecca Smart lock', 6500));
     } else if (brand === 'changsaek') {
-      const mc = C('เลื่อน ช่างแซก', 8000); out.push({ label: 'ชุดออโต้เลื่อน ช่างแซก', qty: 1, unit: 'ชุด', unitPrice: motorSell(mc), amount: motorSell(mc), cost: mc });
-      acc('เซฟตี้ตาแมว (บังคับ)', C('เลื่อน ช่างแซก ตาแมว', 1000));
-      if (W > 0) acc('ราง ช่างแซก (' + round2(W) + ' ม.)', C('เลื่อน ช่างแซก ราง/ม.', 950) * W, round2(W), 'ม.');
-      if (s.touch) acc('Touch Switch', C('เลื่อน ช่างแซก Touch', 1000));
-      if (s.infrared) acc('Infrared', C('เลื่อน ช่างแซก Infrared', 9000));
+      // ช่างแซก: ทั้งก้อน (ชุด+ตาแมว+ราง+ออป) × จำนวนบาน สูงสุด 3 · "เปิดคู่กลาง" = 1 ชุด (สูตร D57)
+      const mc = C('เลื่อน ช่างแซก', 8000) * csMul;
+      out.push({ label: 'ชุดออโต้เลื่อน ช่างแซก' + csTag, qty: csMul, unit: 'ชุด', unitPrice: round2(autoSell(mc, ctx) / csMul), amount: autoSell(mc, ctx), cost: mc });
+      acc('เซฟตี้ตาแมว (บังคับ)' + csTag, C('เลื่อน ช่างแซก ตาแมว', 1000) * csMul, csMul);
+      if (W > 0) acc('ราง ช่างแซก (' + round2(W) + ' ม.)' + csTag, C('เลื่อน ช่างแซก ราง/ม.', 950) * W * csMul, round2(W * csMul), 'ม.');
+      if (s.touch) acc('Touch Switch' + csTag, C('เลื่อน ช่างแซก Touch', 1000) * csMul, csMul);
+      if (s.infrared) acc('Infrared' + csTag, C('เลื่อน ช่างแซก Infrared', 9000) * csMul, csMul);
     } else if (brand === 'slimlux') {
-      const mc = C('เลื่อน SlimLux ชุดแรก', 6900); out.push({ label: 'ชุดออโต้เลื่อน SlimLux (บานแรก)', qty: 1, unit: 'ชุด', unitPrice: motorSell(mc), amount: motorSell(mc), cost: mc });
+      // ⚠ ชีตราคาออโต้มีค่าส่ง SlimLux 1,700 แต่สูตร D58 ในชีต "คิดทุน SlimLux" ไม่บวก — ยึดสูตร (แจ้งเจ้าของแล้ว)
+      const mc = C('เลื่อน SlimLux ชุดแรก', 6900); out.push({ label: 'ชุดออโต้เลื่อน SlimLux (บานแรก)', qty: 1, unit: 'ชุด', unitPrice: autoSell(mc, ctx), amount: autoSell(mc, ctx), cost: mc });
       if (P > 1) acc('SlimLux บานเพิ่ม ×' + (P - 1), C('เลื่อน SlimLux บานเพิ่ม', 2250) * (P - 1), P - 1, 'บาน');
       if (W > 0) acc('ราง SlimLux (' + round2(W * P) + ' ม.)', C('เลื่อน SlimLux ราง/ม.', 1100) * W * P, round2(W * P), 'ม.');
       if (s.scan) acc('สแกนหน้า', C('เลื่อน SlimLux สแกนหน้า', 2750));
@@ -950,10 +1038,10 @@ export function computeAddon(id, sel, ctx) {
     const leaves = Math.ceil(W / 0.75);
     return { label: 'บานโค้ง (R3.9 ' + ADDON_FLAT.gate_curve.toLocaleString() + '/บาน · รางโค้งรอเคาะ R3.9/matrix)', qty: leaves, unit: 'บาน', unitPrice: ADDON_FLAT.gate_curve, amount: ADDON_FLAT.gate_curve * leaves };
   }
-  if (id === 'gate_motor') {            // มอเตอร์ประตูรั้ว เพิ่ม (นอกเหนือ 1 ตัวในชุด) — ขายตามสูตรมอเตอร์ max(ทุน×2.5,6000)
+  if (id === 'gate_motor') {            // มอเตอร์ประตูรั้ว เพิ่ม (นอกเหนือ 1 ตัวในชุด) — ชีตราคาออโต้ 10,000/ชุด ไม่มีค่าส่ง
     const n = +sel || 0; if (n <= 0) return null;
     const cost = motorCost(ctx.PB, 'ประตูรั้ว', 10000);   // ชีตราคาออโต้ = 10,000 (เว็บเคยค้าง 16,000)
-    const each = motorSell(cost);
+    const each = autoSell(cost, ctx);
     return { label: 'มอเตอร์ประตูรั้ว เพิ่ม', qty: n, unit: 'ตัว', unitPrice: each, amount: n * each, cost: n * cost };
   }
   if (id === 'gate_wire') {             // ค่าเดินสายไฟ/ระบบไฟ ประตูรั้ว · กรอกราคาเอง (X)

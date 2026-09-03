@@ -278,9 +278,9 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
   }
   if (ad === "motor") {
     return (
-      <Field label="มอเตอร์บานยก">
+      <Field label="ชุดออโต้บานยก / เฟี้ยมยก" hint="(ราคาออโต้ = ทุน รวมค่าส่ง · ขายคูณกำไร%)">
         <ChipRow
-          items={[{ val: "none", label: "ไม่มี" }, { val: "80", label: "80 กก. (+11,300)" }, { val: "300", label: "300 กก. (+31,300)" }]}
+          items={[{ val: "none", label: "ไม่มี" }, { val: "80", label: "ยก 80 กก. (ทุน 6,200)" }, { val: "300", label: "ยก 300 กก. (ทุน 14,200)" }]}
           value={A.motor || "none"}
           onChange={(v) => set("motor", v)}
         />
@@ -323,29 +323,36 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
   }
   if (ad === "awn_auto") {
     return (
-      <Field label="ชุดออโต้บานกระทุ้ง" hint="(× จำนวนบาน)">
+      <Field label="ชุดออโต้บานกระทุ้ง" hint="(× จำนวนบาน + ค่าส่ง 1,700 ครั้งเดียว)">
         <ChipRow
           items={[{ val: "none", label: "ไม่มี" }, { val: "choke50", label: "โช้คเปิด 50" }, { val: "choke80", label: "โช้คเปิด 80" }, { val: "chain1", label: "โซ่เดี่ยว 50" }, { val: "chain2", label: "โซ่คู่ 50" }]}
           value={A.awn_auto || "none"}
           onChange={(v) => set("awn_auto", v)}
         />
+        {(A.awn_auto === "choke50" || A.awn_auto === "choke80") && (movePanes || 0) >= 2 && (
+          <p className="text-[11px] text-ink-3 mt-1.5">+ อุปกรณ์พิเศษ (โช็ค 2 ตัว) ทุน 600 — ระบบบวกให้แล้ว</p>
+        )}
       </Field>
     );
   }
   if (ad === "banklet_motor") {
     return (
-      <Field label="มอเตอร์บานเกล็ด">
-        <ChipRow items={[{ val: "none", label: "ไม่มี" }, { val: "yes", label: "มีมอเตอร์ (+6,000)" }]} value={A.banklet_motor || "none"} onChange={(v) => set("banklet_motor", v)} />
+      <Field label="มอเตอร์บานเกล็ด" hint="(ทุน 1,800 · ไม่มีค่าส่ง)">
+        <ChipRow items={[{ val: "none", label: "ไม่มี" }, { val: "yes", label: "มีมอเตอร์ (ทุน 1,800)" }]} value={A.banklet_motor || "none"} onChange={(v) => set("banklet_motor", v)} />
       </Field>
     );
   }
   if (ad === "slide_auto") {
     const sa = (A.slide_auto && typeof A.slide_auto === "object") ? A.slide_auto : { brand: "none" };
+    // ยี่ห้อที่รุ่นนี้เลือกได้จริง — ชีตราคาออโต้แยกหมวด "เลื่อน SMS/ยูโร" กับ "SlimLux"
+    //   ไม่กำหนดไว้ = โชว์ทั้งหมด (ของเดิม) · เจ้าของสั่ง 3 ก.ย.69 "ให้ขึ้นตามประเภทบาน ห้ามขึ้นมั่ว"
+    const BRAND_CHIPS: Record<string, string> = { evecca: "Evecca (จีน)", changsaek: "ช่างแซก", slimlux: "SlimLux" };
+    const brands: string[] = Array.isArray(prod?.autoBrands) ? prod.autoBrands : Object.keys(BRAND_CHIPS);
     return (
-      <Field label="ชุดมอเตอร์บานเลื่อน (ออโต้)" hint="(มีผลกับราคา)">
+      <Field label="ชุดมอเตอร์บานเลื่อน (ออโต้)" hint="(ราคาออโต้ = ทุน · ขายคูณกำไร%)">
         <div className="space-y-2">
           <ChipRow
-            items={[{ val: "none", label: "ไม่มี (มือเลื่อน)" }, { val: "evecca", label: "Evecca (จีน)" }, { val: "changsaek", label: "ช่างแซก" }, { val: "slimlux", label: "SlimLux" }]}
+            items={[{ val: "none", label: "ไม่มี (มือเลื่อน)" }, ...brands.map((b) => ({ val: b, label: BRAND_CHIPS[b] || b }))]}
             value={sa.brand || "none"}
             onChange={(v) => setObj("slide_auto", { brand: v })}
           />

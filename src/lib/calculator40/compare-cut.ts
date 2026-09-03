@@ -8,7 +8,7 @@
  *   แก้สูตรที่ต้นทางที่เดียว หน้านี้เปลี่ยนตามทันที · ห้ามคำนวณอะไรใหม่ในไฟล์นี้เด็ดขาด
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { computeCost } from "./engine.mjs";
+import { computeCost, autoSetsFor } from "./engine.mjs";
 import { PRODUCTS } from "./products.mjs";
 import { computeCutList, type CutInput } from "../cutlist/engine.ts";
 import { CUT_SPEC_BY_ID } from "../cutlist/products.ts";
@@ -332,6 +332,8 @@ export function compareCut(PB: any, inp: CompareInput) {
 
   return {
     ok: !!cut,
+    // มอเตอร์/ชุดออโต้ที่รุ่นนี้เลือกได้ (ตามชีต "ราคาออโต้") — ไว้ตรวจว่าขึ้นตรงหมวด ไม่ขึ้นมั่ว
+    autoSets: autoSetsFor(PB, prod) as { group: string; label: string; cost: number; note: string }[],
     cutSpecId: map?.spec_id ?? "",
     cutSpecName: spec?.name ?? "",
     note: cut ? "" : whyNoCut(inp.prodId, inp.form || prod.defForm, inp.p),
