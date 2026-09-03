@@ -590,9 +590,9 @@ for (const [id, prod] of Object.entries(PRODUCTS)) {
 console.log(`  ✅ ${sweepPass} รุ่นคิดออกราคาได้สมเหตุผล · ❌ ${sweepFail} พัง`);
 
 
-// ── ⑥ ชินโคร์ไลท์ 4 รุ่น + รางหลังคาเลื่อน ต้องผูกตารางราคากลาง (28 ส.ค.69) ──────────
-//    เดิม 4 บรรทัดชินโคร์ตรึง price 0 ทั้งชุด ทั้งที่ Shade/Prime มีราคาในไฟล์ v9 อยู่แล้ว
-//    = เลือก 2 รุ่นนี้แล้วทุนแผ่นมุงเป็นศูนย์ ใบเสนอถูกกว่าความจริงมาก
+// ── ⑥ วัสดุมุง = ชีต "ราคาหลังคา" v20.1 เป๊ะ + ผูกตารางราคากลาง ──────────────
+//    เจ้าของสั่ง 3 ก.ย.69 "เอาทุกอย่างอ้างอิงตามไฟล์ล่าสุด อะไรที่ไฟล์ล่าสุดไม่มีก็ไม่ต้องมี"
+//    ⚠ ห้ามเพิ่มวัสดุมุงที่ไม่มีในชีต — ถ้าจะเพิ่ม ต้องเพิ่มในไฟล์ถอดทุนก่อน
 console.log("");
 console.log("═══ ⑥ ชินโคร์/รางหลังคาเลื่อน ผูกตารางราคากลาง ═══");
 {
@@ -600,8 +600,8 @@ console.log("═══ ⑥ ชินโคร์/รางหลังคาเ�
   const okb = (label, cond, extra = "") => check(label + (cond ? "" : " [" + extra + "]"), cond ? 1 : 0, 1, 0);
   const roof = PRODUCTS.roof;
   // ^ ไม่นับ "ฝาครอบชินโคร์ Prime" (บรรทัดใหม่ v20.1 3 ก.ย.69) — ตรวจเฉพาะแผ่น 4 รุ่น
-  const shin = (roof.consum || []).filter((c) => /^ชินโคร์ (Nature|Shade|Prime|Grand)/.test(c.name));
-  okb("ชินโคร์ 4 รุ่นผูก ROOFMAT ครบ", shin.length === 4 && shin.every((c) => /^ROOFMAT\./.test(String(c.ref || ""))),
+  const shin = (roof.consum || []).filter((c) => /^ชินโคร์ (Shade|Prime)/.test(c.name));
+  okb("ชินโคร์ไลท์ 2 รุ่นในไฟล์ (Shade/Prime) ผูก ROOFMAT ครบ", shin.length === 2 && shin.every((c) => /^ROOFMAT\./.test(String(c.ref || ""))),
     shin.map((c) => c.name + ":" + (c.ref || "-")).join(" · "));
   const shade = shin.find((c) => /Shade/.test(c.name)), prime = shin.find((c) => /Prime/.test(c.name));
   okb("Shade 4มม ราคา 1,050 (ไฟล์ v9)", shade?.price === 1050, String(shade?.price));
@@ -612,17 +612,39 @@ console.log("═══ ⑥ ชินโคร์/รางหลังคาเ�
     const sheet = r.lines.filter((l) => /ชินโคร์/.test(l.name)).reduce((a, l) => a + l.amount, 0);
     okb(`${m} คิดทุนแผ่นมุงจริง (≥${min})`, sheet >= min, String(Math.round(sheet)));
   }
-  // Nature/Grand — เจ้าของให้ราคา 28 ส.ค.69 (Nature จากตารางราคาแผ่น · Grand เท่า Prime)
-  okb("Nature 6มม ราคา 1,944.44/ตร.ม. (ตารางแผ่น 16,100 ÷ 1.38×6)",
-    Math.abs((shin.find((c) => /Nature/.test(c.name))?.price ?? 0) - 1944.44) < 0.01,
-    String(shin.find((c) => /Nature/.test(c.name))?.price));
-  okb("Grand 10มม ราคาเท่า Prime (4,348)", shin.find((c) => /Grand/.test(c.name))?.price === 4348,
-    String(shin.find((c) => /Grand/.test(c.name))?.price));
-  for (const [m, min] of [["ชินโคร์ Nature 6มม", 20000], ["ชินโคร์ Grand 10มม", 50000]]) {
+  // Nature/Grand ถอดออก 3 ก.ย.69 — ไฟล์ v20.1 ไม่มี → ต้องไม่โผล่ในตัวเลือก/ตารางราคาอีก
+  for (const m of ["ชินโคร์ Nature 6มม", "ชินโคร์ Grand 10มม"]) {
+    okb(`${m} ถูกถอดออกจากตัวเลือกวัสดุมุง (ไฟล์ v20.1 ไม่มี)`, !roof.materials.includes(m), roof.materials.join(","));
+    okb(`${m} ไม่เหลือในตารางราคากลาง ROOFMAT`, !(PB.ROOFMAT || {})[m], String((PB.ROOFMAT || {})[m]));
+    // ใบเสนอเก่าที่บันทึกชื่อนี้ไว้ ต้องขึ้นเตือน ไม่ใช่ทุนแผ่นหาย 0 เงียบ ๆ
     const r = computeCost(PB, roof, { w: 400, h: 300, p: 1, form: "เพิง", material: m });
-    const sheet = r.lines.filter((l) => /ชินโคร์/.test(l.name)).reduce((a, l) => a + l.amount, 0);
-    okb(`${m} คิดทุนแผ่นมุงจริง (≥${min})`, sheet >= min, String(Math.round(sheet)));
-    okb(`${m} ไม่ขึ้นเตือนราคา 0 แล้ว`, !(r.hwMissing || []).some((x) => x.name === m), JSON.stringify(r.hwMissing));
+    okb(`${m} (ใบเสนอเก่า) ขึ้นเตือน "ไม่มีในไฟล์ล่าสุด"`,
+      (r.hwMissing || []).some((x) => /ไม่มีในไฟล์ถอดทุนล่าสุด/.test(String(x.name))), JSON.stringify(r.hwMissing));
+  }
+  // วัสดุมุงทั้ง 3 รุ่นหลังคา = 12 ชนิดตามชีต "ราคาหลังคา" v20.1 เป๊ะ ทุกชนิดมีราคาในตารางกลาง
+  const MAT_FILE = ["ไวนิล", "ดีไลท์", "โพลีตัน", "ชินโคร์ HC", "ชินโคร์ Sup", "ชินโคร์ Shade 4มม", "ชินโคร์ Prime 10มม",
+    "เมทัลชีท EPS 2 นิ้ว เหล็ก", "เมทัลชีท EPS 2 นิ้ว PVC", "เมทัลชีท EPS 1 นิ้ว PVC", "กระจก 4+4", "กระจก 5+5"];
+  for (const id of ["roof", "roof_gable", "roof_slide"])
+    okb(`${id} วัสดุมุง 12 ชนิดตรงชีตราคาหลังคา v20.1`,
+      JSON.stringify(PRODUCTS[id].materials) === JSON.stringify(MAT_FILE), PRODUCTS[id].materials.join(","));
+  for (const m of MAT_FILE) {
+    const r = computeCost(PB, roof, { w: 400, h: 300, p: 1, form: "เพิง", material: m });
+    // หาชื่อบรรทัดแผ่นของวัสดุนี้จากนิยาม consum (บรรทัดที่ ref = ROOFMAT.<วัสดุ>) แล้วหายอดในผลลัพธ์
+    const defName = (roof.consum || []).find((c) => c.ref === "ROOFMAT." + m)?.name;
+    const sheet = r.lines.filter((l) => l.name === defName).reduce((a, l) => a + l.amount, 0);
+    okb(`${m} คิดทุนแผ่นมุงจริง (ไม่ใช่ 0)`, sheet > 0, String(Math.round(sheet)));
+    okb(`${m} ไม่ขึ้นเตือนวัสดุหาย`, !(r.hwMissing || []).some((x) => /ไม่มีในไฟล์ถอดทุนล่าสุด/.test(String(x.name))), "");
+  }
+  // ชื่อเมทัลชีทเก่าที่แค่ "เปลี่ยนชื่อ" ต้องยังคิดราคาได้ (materialAlias) ไม่ใช่ทุนหาย
+  for (const [old_, now] of [['เมทัล 1" PVC', "เมทัลชีท EPS 1 นิ้ว PVC"], ['เมทัล 2" PVC', "เมทัลชีท EPS 2 นิ้ว PVC"], ['เมทัล 2" เหล็ก-EPS', "เมทัลชีท EPS 2 นิ้ว เหล็ก"]]) {
+    const a = computeCost(PB, roof, { w: 400, h: 300, p: 1, form: "เพิง", material: old_ }).cost.total;
+    const b = computeCost(PB, roof, { w: 400, h: 300, p: 1, form: "เพิง", material: now }).cost.total;
+    okb(`ใบเสนอเก่า "${old_}" คิดเท่า "${now}" (materialAlias)`, Math.round(a) === Math.round(b) && a > 0, `${Math.round(a)} vs ${Math.round(b)}`);
+  }
+  // รางน้ำสแตนเลส M/L มีในชีต v20.1 → ต้องผูกตารางราคากลาง ไม่ใช่ฝังเลขในโค้ด
+  for (const [name, price] of [["รางน้ำสแตนเลส M", 990], ["รางน้ำสแตนเลส L", 1035]]) {
+    const c = (roof.consum || []).find((x) => x.name === name);
+    okb(`${name} ผูก ROOFMAT (${price})`, c?.ref === "ROOFMAT." + name && (PB.ROOFMAT || {})[name] === price, `${c?.ref} / ${(PB.ROOFMAT || {})[name]}`);
   }
   const rail = (PRODUCTS.roof_slide.consum || []).find((c) => c.name === "ราง (2 ฝั่ง)");
   okb("รางหลังคาเลื่อนผูก ROOFMAT", String(rail?.ref) === "ROOFMAT.รางหลังคาเลื่อน", String(rail?.ref));
@@ -686,13 +708,13 @@ console.log("═══ ⑧ ref → รหัสสโตร์ (REFSKU) ══�
   const stock = [
     { name: "ไวนิล", sku: "JR00134", unit_cost: 1540 },
     { name: "ฝาครอบไวนิล", sku: "JR00138", unit_cost: 245 },
-    { name: "ชินโคร์ Nature 6มม", sku: "JR00150", unit_cost: 0 },     // ยังไม่ตั้งราคา — รหัสต้องติดอยู่ดี
+    { name: "ชินโคร์ Shade 4มม", sku: "JR00150", unit_cost: 0 },     // ยังไม่ตั้งราคา — รหัสต้องติดอยู่ดี
     { name: "เขียว 6มม.", sku: "JR00900", unit_cost: 300 },
   ];
   const ov = buildPriceOverride(stock, PB);
   okb("เก็บรหัสวัสดุมุงได้", ov.REFSKU["ROOFMAT.ไวนิล"] === "JR00134", JSON.stringify(ov.REFSKU));
   okb("เก็บรหัสฝาครอบได้", ov.REFSKU["ROOFMAT.ฝาครอบไวนิล"] === "JR00138", "");
-  okb("ของราคา 0 ก็ต้องเก็บรหัส", ov.REFSKU["ROOFMAT.ชินโคร์ Nature 6มม"] === "JR00150", "");
+  okb("ของราคา 0 ก็ต้องเก็บรหัส", ov.REFSKU["ROOFMAT.ชินโคร์ Shade 4มม"] === "JR00150", "");
   okb("กระจกก็เก็บรหัส", ov.REFSKU["GLASS.เขียว 6มม."] === "JR00900", "");
 
   const PB3 = applyPriceOverride(JSON.parse(JSON.stringify(PB)), ov);

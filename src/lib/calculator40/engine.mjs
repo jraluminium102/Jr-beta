@@ -151,6 +151,11 @@ export function computeCost(PB, prod, opt) {
   // ⚠ กันคิดต่ำกว่าจริงเงียบ ๆ — เก็บทุกบรรทัดที่ราคาออกมา 0 (สโตร์ยังไม่ตั้งราคา + สูตรไม่มีราคาสำรอง)
   //   ใช้ทั้งฝั่งอลูและฝั่งอุปกรณ์ · หน้าจอเอาไปขึ้นเตือนว่าต้องไปตั้งราคารหัสไหนบ้าง
   const hwMissing = [];
+  // วัสดุมุงที่บันทึกไว้ในใบเสนอเก่า แต่ไฟล์ถอดทุนล่าสุดไม่มีแล้ว (และไม่ใช่แค่เปลี่ยนชื่อ ดู materialAlias)
+  //   บรรทัดแผ่นทุกบรรทัดจะไม่เข้าเงื่อนไข → ทุนแผ่นหายทั้งก้อนแบบเงียบ ๆ (เคยเจอจริง −54,442)
+  //   → ขึ้นเตือนบนหน้าจอให้เลือกวัสดุใหม่ (3 ก.ย.69 ตัด Nature/Grand + เมทัล PU ตามไฟล์ v20.1)
+  if (material && Array.isArray(prod.materials) && prod.materials.length && !prod.materials.includes(material))
+    hwMissing.push({ sku: '', name: `วัสดุ "${materialRaw}" ไม่มีในไฟล์ถอดทุนล่าสุดแล้ว — เลือกวัสดุใหม่` });
   const noteMissing = (it, count) => {
     if (!(count > 0) || !it.sku) return;
     const sku = String(it.sku).toUpperCase();
@@ -329,6 +334,8 @@ export function computeCost(PB, prod, opt) {
       // ไม่ push บรรทัดกระจก — คำอธิบายไปอยู่ที่ "รายละเอียดงาน" (glassLine) · ราคาแฝงในราคาสินค้า (เหมือนกระจก)
     } else {
       const gp = PB.GLASS[glassType] ?? 0;
+      // กระจกที่ไฟล์ถอดทุนล่าสุดไม่มีแล้ว (ใบเสนอเก่าเลือกไว้) → เตือน ไม่ใช่คิดเป็น 0 เงียบ ๆ
+      if (!(gp > 0) && glassArea > 0) hwMissing.push({ sku: '', name: `กระจก "${glassType}" ไม่มีในไฟล์ถอดทุนล่าสุดแล้ว — เลือกกระจกใหม่` });
       glassCost = glassArea * gp;
       lines.push({ cat: 'glass', name: 'กระจก ' + glassType, qty: round2(glassArea), unit: 'ตร.ม.', unitPrice: gp, amount: round2(glassCost) });
     }

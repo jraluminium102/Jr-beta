@@ -64,17 +64,14 @@ export const RM = {
   'กระจก 4+4': { p: 732, u: 'ตร.ม.' }, 'กระจก 5+5': { p: 915, u: 'ตร.ม.' },
   // ฝาครอบชินโคร์ Prime (ใหม่ v20.1): เส้น 6 ม. ตัดแบ่งได้ · 1 จุดต่อ 1 แป (รอยต่อ + ริม 2 ข้าง)
   'ฝาครอบชินโคร์ Prime': { p: 1350, u: 'เส้น' },
-  // ชินโคร์ไลท์ 4 รุ่นเพิ่ม — Shade/Prime ราคาจากชีต "ราคาวัสดุ" ไฟล์ v9 (แถว 24/25)
-  //   Nature 6มม / Grand 10มม ไม่มีในไฟล์ถอดทุนเลย → ตั้ง 0 ไว้ก่อน แต่ผูก ref แล้ว
-  //   กรอกราคาที่ตารางราคากลาง ROOFMAT แล้วราคาเด้งทันที ไม่ต้องแก้โค้ด
-  // Nature 6มม — ตารางราคาแผ่นที่เจ้าของส่ง 28 ส.ค.69 (กว้าง 1.38 ม. รหัสสี 001)
-  //   ยาว 3ม. 8,050 · 4ม. 10,750 · 5ม. 13,450 · 6ม. 16,100
-  //   คิดเป็น ฿/ตร.ม. = 1,944.44 (3ม./6ม.) · 1,947.46 (4ม.) · 1,949.28 (5ม.) — ต่างกันสูงสุด 0.25%
-  //   ใช้ 1,944.44 = เรตของแผ่น 3ม./6ม. ซึ่งเป็นค่าที่ซ้ำมากที่สุดในตาราง
-  'ชินโคร์ Nature 6มม': { p: 1944.44, u: 'ตร.ม.' }, 'ชินโคร์ Shade 4มม': { p: 1050, u: 'ตร.ม.' },
-  // Grand 10มม — เจ้าของยืนยัน 28 ส.ค.69 ว่าราคาเท่า Prime
-  'ชินโคร์ Prime 10มม': { p: 4348, u: 'ตร.ม.' }, 'ชินโคร์ Grand 10มม': { p: 4348, u: 'ตร.ม.' },
-  'รางหลังคาเลื่อน': { p: 4080, u: 'เส้น' },   // ชีต "ราคาวัสดุ" v9 แถว 26
+  // ชินโคร์ไลท์ Shade/Prime — ชีต "ราคาหลังคา" v20.1 แถว 14/15
+  //   ⚠ Nature 6มม / Grand 10มม ถอดออก 3 ก.ย.69 — ไฟล์ถอดทุน v20.1 ไม่มีทั้งคู่
+  //     (เจ้าของสั่ง "เอาทุกอย่างอ้างอิงตามไฟล์ล่าสุด อะไรที่ไฟล์ล่าสุดไม่มีก็ไม่ต้องมี")
+  'ชินโคร์ Shade 4มม': { p: 1050, u: 'ตร.ม.' },
+  'ชินโคร์ Prime 10มม': { p: 4348, u: 'ตร.ม.' },
+  'รางหลังคาเลื่อน': { p: 4080, u: 'เส้น' },   // ชีต "ราคาหลังคา" v20.1 แถว 16
+  // ปลายหลังคา / รางน้ำ (ชีต "ราคาหลังคา" v20.1 แถว 21-22) — สแตนเลส ไม่คูณตัวคูณอลู
+  'รางน้ำสแตนเลส M': { p: 990, u: 'ม.' }, 'รางน้ำสแตนเลส L': { p: 1035, u: 'ม.' },
 };
 // ROOF_BUF = buf_roof ในไฟล์ถอดทุน (อัปเดตราคาอลู!B23 = 1.2) "เผื่อเศษแผ่นหลังคา ตัดเสีย/ซ้อนแผ่น 20% ใช้กับแผ่นหลังคาทุกชนิด"
 //   ชีต E8 คูณตัวนี้ทับราคาแผ่นทุกชนิด (ไม่คูณฝาครอบ) — เว็บไม่เคยคูณ → ขาด 20% มาตลอด (อิง v20.1 3 ก.ย.69)
@@ -1079,6 +1076,8 @@ export const PRODUCTS = {
       { name: 'ล้อไกด์ประคองหลัง', sku: 'JR02943', price: 30, unit: 'ตัว', count: '4' },
       { name: 'มอเตอร์', orderOnly: true, price: 10000, ref: 'MOTOR.ประตูรั้ว', unit: 'ตัว', count: "(spec && spec.drive && spec.drive.indexOf('มือผลัก') >= 0) ? 0 : 1" },
       { name: 'รีโมท', orderOnly: true, price: 500, unit: 'ตัว', count: 'Math.max(0, Math.round(+spec.gremote || 0))' },
+      // เหมา 2,000/ชุด · ค่าตั้งต้นในไฟล์ = ไม่มี
+      { name: 'เดินไฟ (เหมา)', orderOnly: true, price: 2000, ref: 'MOTOR.ประตูรั้ว เดินไฟ', unit: 'ชุด', count: "spec.gwire==='มี'?1:0" },
     ],
     consum: [],
     addons: ['gate_curve', 'gate_motor', 'gate_wire'],
@@ -1098,6 +1097,7 @@ export const PRODUCTS = {
       { key: 'gbRun', label: '[สลับ] B กี่ท่อน/ชุด', type: 'number', def: '5', step: 1 },
       { key: 'drive', label: 'ระบบขับเคลื่อน', opts: ['มอเตอร์อัตโนมัติ', 'มือผลัก (ไม่มีมอเตอร์)'], def: 'มอเตอร์อัตโนมัติ', priced: true },
       { key: 'gremote', label: 'รีโมท (จำนวน)', type: 'number', def: '0', step: 1 },
+      { key: 'gwire', label: 'เดินไฟ (เหมา)', opts: ['ไม่มี', 'มี'], def: 'ไม่มี', priced: true },
       { key: 'gaterail', label: 'ราง', opts: ['รางใหม่', 'ใช้รางเดิม'], def: 'รางใหม่', priced: true },
       { key: 'gaterailLen', label: 'ความยาวราง (ซม.)', type: 'number', def: '', step: 10, placeholder: 'ว่าง = กว้าง×2−50' },   // v20.1 B9 กรอกเอง
     ],
@@ -1337,7 +1337,6 @@ export const PRODUCTS = {
       'โพลีตัน': [{ n: 'Clear 101 ใส (แสง 83%)', dot: 'rgba(150,200,240,.7)' }, { n: 'Opal 103 ขาวขุ่น (20%)', dot: '#f3f4f6' }, { n: 'Bronze 107 ชาใส (30%)', dot: '#b45309' }, { n: 'Green 109 เขียวใส (45%)', dot: '#166534' }, { n: 'Australian Grey 108 (40%)', dot: '#6b7280' }, { n: 'Silver 501 ซิลเวอร์ (4.8%)', dot: '#9ca3af' }, { n: 'Bronze Metallic 503 (1%)', dot: '#92400e' }, { n: 'Green Metallic 504 (13.9%)', dot: '#166534' }],
       'ชินโคร์ HC': [{ n: 'Modern Grey HC-N828', dot: '#6b7280' }, { n: 'Royal Blue HC-B703', dot: '#1d4ed8' }, { n: 'Classic Brown HC-570', dot: '#92400e' }, { n: 'Noble Green HC-N590', dot: '#166534' }],
       'ชินโคร์ Sup': [{ n: 'SP-NB00 ขาวขุ่น', dot: '#e5e7eb' }, { n: 'SP-NB30 Foggy Brown', dot: '#78350f' }, { n: 'SP-B857 Marine Blue', dot: '#1e3a8a' }, { n: 'SP-NC95 Light Brown', dot: '#b45309' }],
-      'ชินโคร์ Nature 6มม': [{ n: 'NT-001 ใส', dot: '#bfdbfe' }, { n: 'NT-332 เทาอ่อน', dot: '#9ca3af' }],
       'ชินโคร์ Shade 4มม': [{ n: 'Shade-430S Pearl White', dot: '#f9fafb' }],
       'ชินโคร์ Prime 10มม': [{ n: 'Prime 562 Brownish Green', dot: '#3d6b4f' }],
       'เมทัลชีท EPS 2 นิ้ว เหล็ก': 'METAL', 'เมทัลชีท EPS 2 นิ้ว PVC': 'METAL', 'เมทัลชีท EPS 1 นิ้ว PVC': 'METAL',
@@ -1345,18 +1344,17 @@ export const PRODUCTS = {
     sheetColorSets: { METAL: SC_METAL },
     // วัสดุมุง (ตรงชีต "คิดทุน หลังคา" B2 · ราคา ราคาวัสดุ D14–D23)
     materialLabel: 'วัสดุมุง',
-    // 14 ชนิด = 12 ในไฟล์ v20.1 + ชินโคร์ Nature/Grand ที่เจ้าของให้ราคาเอง 28 ส.ค.69 (ไฟล์ยังไม่มี)
-    //   เมทัลชีท 8 แบบเดิม (PVC/เหล็ก-EPS/ฟอยล์-PU/เหล็ก-PU × 1"/2") ไม่มีในไฟล์ใหม่แล้ว → เหลือ 3 (ดู materialAlias)
-    materials: ['ไวนิล', 'ดีไลท์', 'โพลีตัน', 'ชินโคร์ HC', 'ชินโคร์ Sup',
-      'ชินโคร์ Nature 6มม', 'ชินโคร์ Shade 4มม', 'ชินโคร์ Prime 10มม', 'ชินโคร์ Grand 10มม',
-      'เมทัลชีท EPS 2 นิ้ว เหล็ก', 'เมทัลชีท EPS 2 นิ้ว PVC', 'เมทัลชีท EPS 1 นิ้ว PVC',
-      'กระจก 4+4', 'กระจก 5+5'],
+    // วัสดุมุง 12 ชนิด = ชีต "ราคาหลังคา" v20.1 เป๊ะ (เจ้าของสั่ง 3 ก.ย.69 "อะไรที่ไฟล์ล่าสุดไม่มีก็ไม่ต้องมี")
+    //   ถอดออก: ชินโคร์ Nature 6มม · Grand 10มม · เมทัลชีท 8 แบบเดิม (เหลือ 3 ตามไฟล์ ดู materialAlias)
+    materials: ['ไวนิล', 'ดีไลท์', 'โพลีตัน', 'ชินโคร์ HC', 'ชินโคร์ Sup', 'ชินโคร์ Shade 4มม', 'ชินโคร์ Prime 10มม',
+      'เมทัลชีท EPS 2 นิ้ว เหล็ก', 'เมทัลชีท EPS 2 นิ้ว PVC', 'เมทัลชีท EPS 1 นิ้ว PVC', 'กระจก 4+4', 'กระจก 5+5'],
     materialAlias: {
-      'เมทัล 1" PVC': 'เมทัลชีท EPS 1 นิ้ว PVC', 'เมทัล 2" PVC': 'เมทัลชีท EPS 2 นิ้ว PVC',
-      'เมทัล 1" เหล็ก-EPS': 'เมทัลชีท EPS 2 นิ้ว เหล็ก', 'เมทัล 2" เหล็ก-EPS': 'เมทัลชีท EPS 2 นิ้ว เหล็ก',
-      'เมทัล 1" ฟอยล์-PU': 'เมทัลชีท EPS 2 นิ้ว เหล็ก', 'เมทัล 2" ฟอยล์-PU': 'เมทัลชีท EPS 2 นิ้ว เหล็ก',
-      'เมทัล 1" เหล็ก-PU': 'เมทัลชีท EPS 2 นิ้ว เหล็ก', 'เมทัล 2" เหล็ก-PU': 'เมทัลชีท EPS 2 นิ้ว เหล็ก',
-      'เมทัลชีท': 'เมทัลชีท EPS 2 นิ้ว เหล็ก',
+      // ชื่อเก่า → ชื่อใหม่: ใส่ได้เฉพาะคู่ที่เป็น "ของชิ้นเดียวกัน เปลี่ยนชื่อ" เท่านั้น
+      //   ที่ไฟล์ v20.1 ไม่มีของเทียบ (PU · 1" เหล็ก-EPS · Nature · Grand) ไม่แมป — ปล่อยขึ้นเตือน "ไม่มีในไฟล์ล่าสุด"
+      //   ห้ามแมปมั่วเพื่อให้มีราคา (เจ้าของสั่ง 3 ก.ย.69 "อย่าให้ข้อมูลเก่าใหม่ตีกัน")
+      'เมทัล 1" PVC': 'เมทัลชีท EPS 1 นิ้ว PVC',
+      'เมทัล 2" PVC': 'เมทัลชีท EPS 2 นิ้ว PVC',
+      'เมทัล 2" เหล็ก-EPS': 'เมทัลชีท EPS 2 นิ้ว เหล็ก',
     },
     defMaterial: 'ไวนิล',
     vars: {
@@ -1415,8 +1413,8 @@ export const PRODUCTS = {
       // ── ปลายหลังคา (v20.1 ชีต "คิดทุน หลังคา" D9) — ค่าตั้งต้น รางน้ำอลู (เท่าของเดิม anchor ไม่ขยับ) ──
       { box: 'กล่อง|4', name: 'รางน้ำอลู', price: 'CF*2273', unit: 'เส้น', count: "(!spec.roofend||spec.roofend==='รางน้ำอลู'||spec.roofend==='รางน้ำ')?nGutter:0" },
       { box: 'กล่อง|1X4', name: 'ปิดปลาย (กล่อง 1"×4")', price: 'CF*905', unit: 'เส้น', count: "spec.roofend==='ปิดปลาย'?nGutter:0" },
-      { orderOnly: true, name: 'รางน้ำสแตนเลส M', price: 990, unit: 'ม.', count: "spec.roofend==='รางน้ำสแตน M'?Wc/100:0" },   // สแตนเลส — ไม่คูณตัวคูณอลู
-      { orderOnly: true, name: 'รางน้ำสแตนเลส L', price: 1035, unit: 'ม.', count: "spec.roofend==='รางน้ำสแตน L'?Wc/100:0" },
+      { ...rm('รางน้ำสแตนเลส M', 'รางน้ำสแตนเลส M', "spec.roofend==='รางน้ำสแตน M'?Wc/100:0"), orderOnly: true },   // สแตนเลส — ไม่คูณตัวคูณอลู
+      { ...rm('รางน้ำสแตนเลส L', 'รางน้ำสแตนเลส L', "spec.roofend==='รางน้ำสแตน L'?Wc/100:0"), orderOnly: true },
       // ── แผ่นมุง + ฝาครอบ ตามวัสดุที่เลือก (สูตร E8/E9 ชีตหลัก) ──
       // ⚠ ไวนิลขายเป็นแผ่นยาว 7 ม. เอามาตัดแบ่งเอง (เจ้าของยืนยัน 27 ส.ค.69) — 1 แผ่นได้หลายแถบ
       //   เดิมนับ 1 แถบ = 1 แผ่น → คิดเงินเกินหลายเท่า (400×200 คิด 16 แผ่น ทั้งที่ซื้อจริง 6)
@@ -1434,19 +1432,12 @@ export const PRODUCTS = {
       // ชินโคร์ไลท์ทุกรุ่น: เลือกความยาวแผ่น 3/4/5/6 ม. ที่คุ้มสุด (บล็อก J2-J8 ใหม่ใน v20.1) · Prime เฉพาะ 3/6
       rmS('ชินโคร์ HC', 'ชินโคร์ไลท์ Heat Cut', "material==='ชินโคร์ HC'?SCL:0"),
       rmS('ชินโคร์ Sup', 'ชินโคร์ไลท์ Superior', "material==='ชินโคร์ Sup'?SCL:0"),
-      rmS('ชินโคร์ Nature 6มม', 'ชินโคร์ Nature 6มม', "material==='ชินโคร์ Nature 6มม'?SCL:0"),
       rmS('ชินโคร์ Shade 4มม', 'ชินโคร์ Shade 4มม', "material==='ชินโคร์ Shade 4มม'?SCL:0"),
       rmS('ชินโคร์ Prime 10มม', 'ชินโคร์ Prime 10มม', "material==='ชินโคร์ Prime 10มม'?SCL:0"),
-      rmS('ชินโคร์ Grand 10มม', 'ชินโคร์ Grand 10มม', "material==='ชินโคร์ Grand 10มม'?SCL:0"),
       // ฝาครอบชินโคร์ Prime (ใหม่ v20.1): 1 จุด/แป (=จันทัน E2) · เส้น 6 ม. ตัดได้ INT(600/ยื่น) ท่อน
       rm('ฝาครอบชินโคร์ Prime', 'ฝาครอบชินโคร์ Prime', "material==='ชินโคร์ Prime 10มม'?Math.ceil(E2/Math.max(1,Math.trunc(600/Dc))):0"),
-      // ── ชินโคร์ไลท์ 4 รุ่นเพิ่ม — ผูกตารางราคากลาง ROOFMAT แล้ว (28 ส.ค.69)
-      //   ⚠ เดิมตรึง price 0 ทั้ง 4 บรรทัด ทั้งที่ Shade (1,050) กับ Prime (4,348) มีราคาในไฟล์ v9 อยู่แล้ว
-      //     = เลือก 2 รุ่นนี้แล้วทุนแผ่นมุงเป็นศูนย์ ใบเสนอถูกกว่าความจริงมาก (12 ตร.ม. Prime หายไป ~52,000)
-      //   Nature 6มม / Grand 10มม ยังไม่มีราคาในไฟล์ไหนเลย → รอเจ้าของกรอกที่ ROOFMAT
-      // (ชินโคร์ 4 รุ่นย้ายไปรวมในบล็อกด้านบน — ใช้ SCL ตัวเดียวกัน)
-      // ── เมทัลชีท 8 ชนิด (ทุนวัสดุจริง/ตร.ม. หลังคา จาก PDF ทุนเมทัลชีท · โครง=ร่วมกับไวนิล) ──
-      // เมทัลชีท 3 ชนิด (v20.1): นับแถบ CEILING(กว้าง/34) × (0.34 × ยื่น) = ตร.ม. ที่ซื้อจริง (E8) — เดิมคิด area ตรง ๆ
+      // (ชินโคร์ไลท์ Shade/Prime รวมอยู่ในบล็อกแผ่นด้านบนแล้ว — ใช้ SCL ตัวเดียวกัน)
+      // ── เมทัลชีท 3 ชนิด ตามชีต "ราคาหลังคา" v20.1 (โครง/แป = ร่วมกับหลังคาปกติ) ──
       rmS('เมทัลชีท EPS 2 นิ้ว เหล็ก', 'แผ่นเมทัลชีท EPS 2 นิ้ว เหล็ก', "material==='เมทัลชีท EPS 2 นิ้ว เหล็ก'?Math.ceil(Wc/34)*(0.34*Dc/100):0"),
       rmS('เมทัลชีท EPS 2 นิ้ว PVC', 'แผ่นเมทัลชีท EPS 2 นิ้ว PVC', "material==='เมทัลชีท EPS 2 นิ้ว PVC'?Math.ceil(Wc/34)*(0.34*Dc/100):0"),
       rmS('เมทัลชีท EPS 1 นิ้ว PVC', 'แผ่นเมทัลชีท EPS 1 นิ้ว PVC', "material==='เมทัลชีท EPS 1 นิ้ว PVC'?Math.ceil(Wc/34)*(0.34*Dc/100):0"),
@@ -1462,16 +1453,18 @@ export const PRODUCTS = {
     id: 'roof_gable', group: 3, name: 'หลังคาจั่ว', brand: 'MTONG', laborKey: 'หลังคาจั่ว', roofShape: true, pickerHide: true,
     icon: '🏠', defForm: 'หลังคาจั่ว', forms: ['หลังคาจั่ว'],
     addons: ['roof_pole', 'truss_beam', 'roof_eave', 'gutter', 'chain_drain', 'pipe_cover', 'gutter_cover', 'beam_cover', 'hide_slope', 'roof_sealer', 'roof_film', 'roof_2nd', 'ceil_under', 'demolish'],  // ของเสริมหลังคา (ชุดเดียวกับ roof)
-    // วัสดุมุง 8 ชนิด (ตรงชีต "คิดทุน หลังคาจั่ว" E6 · เมทัลชีท=1 ชนิด 2200 ตามชีต · ไวนิล=anchor 50936)
+    // วัสดุมุง 12 ชนิด = ชีต "ราคาหลังคา" v20.1 เป๊ะ (สูตรนับตามชีต "คิดทุน หลังคาจั่ว" E6 ×2 ด้าน)
     materialLabel: 'วัสดุมุง',
     materialAlias: {
-      'เมทัล 1" PVC': 'เมทัลชีท EPS 1 นิ้ว PVC', 'เมทัล 2" PVC': 'เมทัลชีท EPS 2 นิ้ว PVC',
-      'เมทัล 1" เหล็ก-EPS': 'เมทัลชีท EPS 2 นิ้ว เหล็ก', 'เมทัล 2" เหล็ก-EPS': 'เมทัลชีท EPS 2 นิ้ว เหล็ก',
-      'เมทัล 1" ฟอยล์-PU': 'เมทัลชีท EPS 2 นิ้ว เหล็ก', 'เมทัล 2" ฟอยล์-PU': 'เมทัลชีท EPS 2 นิ้ว เหล็ก',
-      'เมทัล 1" เหล็ก-PU': 'เมทัลชีท EPS 2 นิ้ว เหล็ก', 'เมทัล 2" เหล็ก-PU': 'เมทัลชีท EPS 2 นิ้ว เหล็ก',
-      'เมทัลชีท': 'เมทัลชีท EPS 2 นิ้ว เหล็ก',
+      // ชื่อเก่า → ชื่อใหม่: ใส่ได้เฉพาะคู่ที่เป็น "ของชิ้นเดียวกัน เปลี่ยนชื่อ" เท่านั้น
+      //   ที่ไฟล์ v20.1 ไม่มีของเทียบ (PU · 1" เหล็ก-EPS · Nature · Grand) ไม่แมป — ปล่อยขึ้นเตือน "ไม่มีในไฟล์ล่าสุด"
+      //   ห้ามแมปมั่วเพื่อให้มีราคา (เจ้าของสั่ง 3 ก.ย.69 "อย่าให้ข้อมูลเก่าใหม่ตีกัน")
+      'เมทัล 1" PVC': 'เมทัลชีท EPS 1 นิ้ว PVC',
+      'เมทัล 2" PVC': 'เมทัลชีท EPS 2 นิ้ว PVC',
+      'เมทัล 2" เหล็ก-EPS': 'เมทัลชีท EPS 2 นิ้ว เหล็ก',
     },
-    materials: ['ไวนิล', 'ดีไลท์', 'โพลีตัน', 'ชินโคร์ HC', 'ชินโคร์ Sup', 'ชินโคร์ Nature 6มม', 'ชินโคร์ Shade 4มม', 'ชินโคร์ Prime 10มม', 'ชินโคร์ Grand 10มม', 'เมทัลชีท EPS 2 นิ้ว เหล็ก', 'เมทัลชีท EPS 2 นิ้ว PVC', 'เมทัลชีท EPS 1 นิ้ว PVC', 'กระจก 4+4', 'กระจก 5+5'],
+    materials: ['ไวนิล', 'ดีไลท์', 'โพลีตัน', 'ชินโคร์ HC', 'ชินโคร์ Sup', 'ชินโคร์ Shade 4มม', 'ชินโคร์ Prime 10มม',
+      'เมทัลชีท EPS 2 นิ้ว เหล็ก', 'เมทัลชีท EPS 2 นิ้ว PVC', 'เมทัลชีท EPS 1 นิ้ว PVC', 'กระจก 4+4', 'กระจก 5+5'],
     defMaterial: 'ไวนิล',
     sheetColors: {
       'ไวนิล': SC_VINYL,
@@ -1542,10 +1535,8 @@ export const PRODUCTS = {
       rm('ครอบโพลีตัน', 'ตัวครอบโพลีตัน (2 ด้าน)', "material==='โพลีตัน'?2*Math.ceil(E3/Math.max(1,Math.trunc(600/E2))):0"),
       rmS('ชินโคร์ HC', 'ชินโคร์ไลท์ Heat Cut (2 ด้าน)', "material==='ชินโคร์ HC'?SCLG:0"),
       rmS('ชินโคร์ Sup', 'ชินโคร์ไลท์ Superior (2 ด้าน)', "material==='ชินโคร์ Sup'?SCLG:0"),
-      rmS('ชินโคร์ Nature 6มม', 'ชินโคร์ Nature 6มม (2 ด้าน)', "material==='ชินโคร์ Nature 6มม'?SCLG:0"),
       rmS('ชินโคร์ Shade 4มม', 'ชินโคร์ Shade 4มม (2 ด้าน)', "material==='ชินโคร์ Shade 4มม'?SCLG:0"),
       rmS('ชินโคร์ Prime 10มม', 'ชินโคร์ Prime 10มม (2 ด้าน)', "material==='ชินโคร์ Prime 10มม'?SCLG:0"),
-      rmS('ชินโคร์ Grand 10มม', 'ชินโคร์ Grand 10มม (2 ด้าน)', "material==='ชินโคร์ Grand 10มม'?SCLG:0"),
       rm('ฝาครอบชินโคร์ Prime', 'ฝาครอบชินโคร์ Prime (2 ด้าน)', "material==='ชินโคร์ Prime 10มม'?2*Math.ceil(E3/Math.max(1,Math.trunc(600/E2))):0"),
       rmS('เมทัลชีท EPS 2 นิ้ว เหล็ก', 'แผ่นเมทัลชีท EPS 2 นิ้ว เหล็ก (2 ด้าน)', "material==='เมทัลชีท EPS 2 นิ้ว เหล็ก'?2*Math.ceil(Dc/34)*(0.34*E2/100):0"),
       rmS('เมทัลชีท EPS 2 นิ้ว PVC', 'แผ่นเมทัลชีท EPS 2 นิ้ว PVC (2 ด้าน)', "material==='เมทัลชีท EPS 2 นิ้ว PVC'?2*Math.ceil(Dc/34)*(0.34*E2/100):0"),
@@ -1560,16 +1551,18 @@ export const PRODUCTS = {
     id: 'roof_slide', group: 3, name: 'หลังคาเลื่อน (เปิด-ปิดได้)', brand: 'MTONG', roofShape: true, pickerHide: true,
     icon: '🏠', defForm: 'เลื่อนยื่น', forms: ['เลื่อนยื่น', 'เลื่อนข้าง', 'เลื่อนเปิดกลาง'], // มด หลังคาเลื่อน B3 (3 ทิศ · label · ไม่กระทบ BOM)
     addons: ['slide_motor', 'roof_pole', 'truss_beam', 'roof_eave', 'gutter', 'chain_drain', 'pipe_cover', 'gutter_cover', 'beam_cover', 'roof_sealer', 'demolish'],  // มอเตอร์(เลือก 80/300/1500) + ของเสริมหลังคา
-    // วัสดุมุง 8 ชนิด (ตรงชีต "คิดทุน หลังคาเลื่อน" H7/J7 · ทั้งติดตาย+เลื่อน · ไวนิล=anchor 88836)
+    // วัสดุมุง 12 ชนิด = ชีต "ราคาหลังคา" v20.1 เป๊ะ (สูตรนับตามชีต "คิดทุน หลังคาเลื่อน" H7/J7 ติดตาย+เลื่อน)
     materialLabel: 'วัสดุมุง',
     materialAlias: {
-      'เมทัล 1" PVC': 'เมทัลชีท EPS 1 นิ้ว PVC', 'เมทัล 2" PVC': 'เมทัลชีท EPS 2 นิ้ว PVC',
-      'เมทัล 1" เหล็ก-EPS': 'เมทัลชีท EPS 2 นิ้ว เหล็ก', 'เมทัล 2" เหล็ก-EPS': 'เมทัลชีท EPS 2 นิ้ว เหล็ก',
-      'เมทัล 1" ฟอยล์-PU': 'เมทัลชีท EPS 2 นิ้ว เหล็ก', 'เมทัล 2" ฟอยล์-PU': 'เมทัลชีท EPS 2 นิ้ว เหล็ก',
-      'เมทัล 1" เหล็ก-PU': 'เมทัลชีท EPS 2 นิ้ว เหล็ก', 'เมทัล 2" เหล็ก-PU': 'เมทัลชีท EPS 2 นิ้ว เหล็ก',
-      'เมทัลชีท': 'เมทัลชีท EPS 2 นิ้ว เหล็ก',
+      // ชื่อเก่า → ชื่อใหม่: ใส่ได้เฉพาะคู่ที่เป็น "ของชิ้นเดียวกัน เปลี่ยนชื่อ" เท่านั้น
+      //   ที่ไฟล์ v20.1 ไม่มีของเทียบ (PU · 1" เหล็ก-EPS · Nature · Grand) ไม่แมป — ปล่อยขึ้นเตือน "ไม่มีในไฟล์ล่าสุด"
+      //   ห้ามแมปมั่วเพื่อให้มีราคา (เจ้าของสั่ง 3 ก.ย.69 "อย่าให้ข้อมูลเก่าใหม่ตีกัน")
+      'เมทัล 1" PVC': 'เมทัลชีท EPS 1 นิ้ว PVC',
+      'เมทัล 2" PVC': 'เมทัลชีท EPS 2 นิ้ว PVC',
+      'เมทัล 2" เหล็ก-EPS': 'เมทัลชีท EPS 2 นิ้ว เหล็ก',
     },
-    materials: ['ไวนิล', 'ดีไลท์', 'โพลีตัน', 'ชินโคร์ HC', 'ชินโคร์ Sup', 'ชินโคร์ Nature 6มม', 'ชินโคร์ Shade 4มม', 'ชินโคร์ Prime 10มม', 'ชินโคร์ Grand 10มม', 'เมทัลชีท EPS 2 นิ้ว เหล็ก', 'เมทัลชีท EPS 2 นิ้ว PVC', 'เมทัลชีท EPS 1 นิ้ว PVC', 'กระจก 4+4', 'กระจก 5+5'],
+    materials: ['ไวนิล', 'ดีไลท์', 'โพลีตัน', 'ชินโคร์ HC', 'ชินโคร์ Sup', 'ชินโคร์ Shade 4มม', 'ชินโคร์ Prime 10มม',
+      'เมทัลชีท EPS 2 นิ้ว เหล็ก', 'เมทัลชีท EPS 2 นิ้ว PVC', 'เมทัลชีท EPS 1 นิ้ว PVC', 'กระจก 4+4', 'กระจก 5+5'],
     defMaterial: 'ไวนิล',
     sheetColors: {
       'ไวนิล': SC_VINYL,
@@ -1632,10 +1625,8 @@ export const PRODUCTS = {
       rm('ครอบโพลีตัน', 'ตัวครอบโพลีตัน (ติดตาย)', "material==='โพลีตัน'?Math.ceil(fJ/Math.max(1,Math.trunc(600/Hcm))):0"),
       rmS('ชินโคร์ HC', 'ชินโคร์ Heat Cut (ติดตาย)', "material==='ชินโคร์ HC'?SCLF:0"),
       rmS('ชินโคร์ Sup', 'ชินโคร์ Superior (ติดตาย)', "material==='ชินโคร์ Sup'?SCLF:0"),
-      rmS('ชินโคร์ Nature 6มม', 'ชินโคร์ Nature 6มม (ติดตาย)', "material==='ชินโคร์ Nature 6มม'?SCLF:0"),
       rmS('ชินโคร์ Shade 4มม', 'ชินโคร์ Shade 4มม (ติดตาย)', "material==='ชินโคร์ Shade 4มม'?SCLF:0"),
       rmS('ชินโคร์ Prime 10มม', 'ชินโคร์ Prime 10มม (ติดตาย)', "material==='ชินโคร์ Prime 10มม'?SCLF:0"),
-      rmS('ชินโคร์ Grand 10มม', 'ชินโคร์ Grand 10มม (ติดตาย)', "material==='ชินโคร์ Grand 10มม'?SCLF:0"),
       rm('ฝาครอบชินโคร์ Prime', 'ฝาครอบชินโคร์ Prime (ติดตาย)', "material==='ชินโคร์ Prime 10มม'?Math.ceil(fJ/Math.max(1,Math.trunc(600/Hcm))):0"),
       rmS('เมทัลชีท EPS 2 นิ้ว เหล็ก', 'แผ่นเมทัลชีท EPS 2 นิ้ว เหล็ก (ติดตาย)', "material==='เมทัลชีท EPS 2 นิ้ว เหล็ก'?Math.ceil(Wcm/34)*(0.34*Hcm/100):0"),
       rmS('เมทัลชีท EPS 2 นิ้ว PVC', 'แผ่นเมทัลชีท EPS 2 นิ้ว PVC (ติดตาย)', "material==='เมทัลชีท EPS 2 นิ้ว PVC'?Math.ceil(Wcm/34)*(0.34*Hcm/100):0"),
@@ -1658,10 +1649,8 @@ export const PRODUCTS = {
       rm('ครอบโพลีตัน', 'ตัวครอบโพลีตัน (เลื่อน)', "material==='โพลีตัน'?P*Math.ceil(sJ/Math.max(1,Math.trunc(600/SH))):0"),
       rmS('ชินโคร์ HC', 'ชินโคร์ Heat Cut (เลื่อน)', "material==='ชินโคร์ HC'?P*SCLS:0"),
       rmS('ชินโคร์ Sup', 'ชินโคร์ Superior (เลื่อน)', "material==='ชินโคร์ Sup'?P*SCLS:0"),
-      rmS('ชินโคร์ Nature 6มม', 'ชินโคร์ Nature 6มม (เลื่อน)', "material==='ชินโคร์ Nature 6มม'?P*SCLS:0"),
       rmS('ชินโคร์ Shade 4มม', 'ชินโคร์ Shade 4มม (เลื่อน)', "material==='ชินโคร์ Shade 4มม'?P*SCLS:0"),
       rmS('ชินโคร์ Prime 10มม', 'ชินโคร์ Prime 10มม (เลื่อน)', "material==='ชินโคร์ Prime 10มม'?P*SCLS:0"),
-      rmS('ชินโคร์ Grand 10มม', 'ชินโคร์ Grand 10มม (เลื่อน)', "material==='ชินโคร์ Grand 10มม'?P*SCLS:0"),
       rm('ฝาครอบชินโคร์ Prime', 'ฝาครอบชินโคร์ Prime (เลื่อน)', "material==='ชินโคร์ Prime 10มม'?P*Math.ceil(sJ/Math.max(1,Math.trunc(600/SH))):0"),
       rmS('เมทัลชีท EPS 2 นิ้ว เหล็ก', 'แผ่นเมทัลชีท EPS 2 นิ้ว เหล็ก (เลื่อน)', "material==='เมทัลชีท EPS 2 นิ้ว เหล็ก'?P*Math.ceil(SW/34)*(0.34*SH/100):0"),
       rmS('เมทัลชีท EPS 2 นิ้ว PVC', 'แผ่นเมทัลชีท EPS 2 นิ้ว PVC (เลื่อน)', "material==='เมทัลชีท EPS 2 นิ้ว PVC'?P*Math.ceil(SW/34)*(0.34*SH/100):0"),
@@ -1683,7 +1672,7 @@ export const PRODUCTS = {
     icon: '🏠', defForm: 'กันสาดหลายด้าน', forms: ['กันสาดหลายด้าน'],
     addons: MULTI_ADDONS,
     materialLabel: 'วัสดุมุง',
-    materials: MULTI_MATERIALS, defMaterial: 'ไวนิล', sheetColors: MULTI_SHEET_COLORS,
+    materials: MULTI_MATERIALS, materialAlias: MULTI_MATERIAL_ALIAS, defMaterial: 'ไวนิล', sheetColors: MULTI_SHEET_COLORS,
     defaults: { w: 400, h: 200, p: 1 }, defGlass: null, minP: 1, maxP: 1,
     specOpts: [
       { key: 'hiH', label: 'สูงฝั่งสูง ชนบ้าน (ซม.)', type: 'number', def: '270', step: 5 },
@@ -1705,7 +1694,7 @@ export const PRODUCTS = {
     icon: '🏠', defForm: 'กลาสเฮ้าส์หลายด้าน', forms: ['กลาสเฮ้าส์หลายด้าน'],
     addons: MULTI_ADDONS,
     materialLabel: 'วัสดุมุง',
-    materials: MULTI_MATERIALS, defMaterial: 'ไวนิล', sheetColors: MULTI_SHEET_COLORS,
+    materials: MULTI_MATERIALS, materialAlias: MULTI_MATERIAL_ALIAS, defMaterial: 'ไวนิล', sheetColors: MULTI_SHEET_COLORS,
     defaults: { w: 400, h: 200, p: 1 }, defGlass: null, minP: 1, maxP: 1,
     specOpts: [
       { key: 'hiH', label: 'สูงฝั่งสูง ชนบ้าน (ซม.)', type: 'number', def: '270', step: 5 },
@@ -1730,7 +1719,7 @@ export const PRODUCTS = {
     icon: '🏠', defForm: 'กลาสเฮ้าส์', forms: ['กลาสเฮ้าส์'],
     addons: MULTI_ADDONS,
     materialLabel: 'วัสดุมุง',
-    materials: MULTI_MATERIALS, defMaterial: 'ไวนิล', sheetColors: MULTI_SHEET_COLORS,
+    materials: MULTI_MATERIALS, materialAlias: MULTI_MATERIAL_ALIAS, defMaterial: 'ไวนิล', sheetColors: MULTI_SHEET_COLORS,
     defaults: { w: 400, h: 300, p: 1 }, defGlass: null, minP: 1, maxP: 1,
     specOpts: [
       { key: 'hiH', label: 'สูงฝั่งสูง ชนบ้าน (ซม.)', type: 'number', def: '270', step: 5 },
@@ -1748,7 +1737,7 @@ export const PRODUCTS = {
     icon: '🏠', defForm: 'จั่วหลายด้าน', forms: ['จั่วหลายด้าน'],
     addons: MULTI_ADDONS,
     materialLabel: 'วัสดุมุง',
-    materials: MULTI_MATERIALS, defMaterial: 'ไวนิล', sheetColors: MULTI_SHEET_COLORS,
+    materials: MULTI_MATERIALS, materialAlias: MULTI_MATERIAL_ALIAS, defMaterial: 'ไวนิล', sheetColors: MULTI_SHEET_COLORS,
     defaults: { w: 400, h: 200, p: 1 }, defGlass: null, minP: 1, maxP: 1,
     specOpts: [
       { key: 'ridge', label: 'สูงสัน (ซม.)', type: 'number', def: '150', step: 5 },
