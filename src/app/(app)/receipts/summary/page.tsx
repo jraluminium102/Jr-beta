@@ -48,7 +48,9 @@ export default async function ReceiptSummaryPage({
     .select("id, code, customer_snapshot, issue_date, amount, vat_amt, net, payment_method, is_voided")
     .gte("issue_date", start)
     .lt("issue_date", nextStart)
-    .order("issue_date", { ascending: true })
+    // เรียงตามเลขที่ (รันนัมเบอร์) จากน้อยไปมาก — ให้ "ลำดับ 1 ขึ้นก่อน" ตรงลำดับรันเอกสารจริง
+    //   (เดิมเรียง issue_date ก่อน → ใบ backdate เลขสูงแทรกก่อนใบเลขต่ำที่ออกวันหลัง = ลำดับเลขที่สลับ)
+    //   code = INV<พ.ศ.><เดือน><run4> zero-pad → เรียง string = เรียงรันนัมเบอร์ (ทั้งเดือนพรีฟิกซ์เดียวกัน)
     .order("code", { ascending: true });
 
   const rows = (data ?? []) as {
