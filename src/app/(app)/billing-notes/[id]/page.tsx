@@ -116,7 +116,10 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
   //  - รู้ชัดว่า No-VAT เมื่อบิลมียอดแยกจริง (has_tax_breakdown) หรือแก้ footer แล้ว และ vat_rate = 0
   //  - ใบเก่า/ใบ import ที่ไม่มียอดแยก (vat_rate=0 แต่ยอดอาจรวม VAT อยู่) → ไม่ถือเป็น No-VAT ยังออกใบเสร็จได้ตามเดิม
   // ⚠ สูตรเดียวกับ POST /api/receipts + หน้าสร้างใบเสร็จ (money.ts) — ห้ามคิดเองซ้ำ ไม่งั้นใบเสร็จไม่ตรงใบที่ส่งลูกค้า
-  const noVatBill = isNoVatBill(bnAny as BillVatSource);
+  //   (เจ้าของสั่ง 3 ก.ย.69) กฎร้าน: บิลไม่มี VAT (vat_rate 0/ไม่ตั้ง) = No-VAT → รับชำระแค่ "ติ๊กชำระ" ไม่เด้งใบเสร็จ
+  //   ครอบคลุมบิลเก่า/ไม่มี vat_rate_set ด้วย (เดิม isNoVatBill เข้มเกิน ต้องมี flag → บิล No-VAT ของคุณปัณณพรหลุดไปโชว์ปุ่มออกใบเสร็จ)
+  //   *เฉพาะการตัดสินโชว์ปุ่มบนหน้านี้ — ถ้ากดออกใบเสร็จเองยังคิด VAT ตามจริงฝั่ง server เหมือนเดิม
+  const noVatBill = isNoVatBill(bnAny as BillVatSource) || (Number(bnAny.vat_rate) || 0) <= 0;
 
   // ใบเสร็จที่ผูกกับแต่ละงวด (ไม่นับใบที่ void) — โชว์ลิงก์ "ดูใบเสร็จ"
   const { data: rcs } = await supabase

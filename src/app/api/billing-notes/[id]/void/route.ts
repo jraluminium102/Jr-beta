@@ -6,7 +6,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 const VoidSchema = z.object({
   reason: z.string().min(1, "ต้องระบุเหตุผล"),
-  cascade: z.boolean().optional().default(false),
+  // (เจ้าของสั่ง 3 ก.ย.69 · free-space) default = true — ยกเลิกบิลจัดการใบเสร็จที่ผูกให้ในตัว (atomic RPC 0123)
+  //   เลิกบล็อก "ต้อง void ใบเสร็จก่อน" · บิลไม่มีใบเสร็จ = cascade ไม่ทำอะไรเพิ่ม (เหมือนเดิม) · ส่ง cascade:false เองถ้าอยากได้ทางเดิม
+  cascade: z.boolean().optional().default(true),
 });
 
 // error code จาก RPC void_billing_note_cascade → ข้อความไทย
