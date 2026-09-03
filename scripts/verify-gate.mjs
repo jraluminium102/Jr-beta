@@ -17,6 +17,9 @@ import { computeCost } from "../src/lib/calculator40/engine.mjs";
 import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
 
 const PB = JSON.parse(fs.readFileSync("src/lib/calculator40/pricebook.json", "utf8"));
+// ⑦ ใช้หน้าเทียบ: สภาพแวดล้อมเทสไม่มีราคาสโตร์ → engine ถอยไปสูตรเก่า+ติดป้าย "รอเติมราคา" (โปรดักชันมีราคา)
+//   จำลองว่าสโตร์มีราคาทุกรหัส เหมือน sweep-compare (3 ก.ย.69)
+PB.SKUPRICE = new Proxy(PB.SKUPRICE ?? {}, { get: (t, k) => (typeof k === "string" && k ? (t[k] ?? 1) : t[k]) });
 const SPEC = CUT_SPEC_BY_ID.gate_slide;
 let pass = 0, fail = 0;
 const ok = (label, cond, got = "") => {
@@ -147,7 +150,8 @@ console.log("\n═══ ⑥ กฎที่ต้องไม่พัง ═�
   // มือผลัก = ตัดมอเตอร์ 16,000
   const push = computeCost(PB, PRODUCTS.gate, { w: 350, h: 180, p: 1, form: "ตั้ง", material: "1x1.6", color: "white", colorKey: "white", spec: { drive: "มือผลัก (ไม่มีมอเตอร์)" }, addons: {} });
   const moto = computeCost(PB, PRODUCTS.gate, { w: 350, h: 180, p: 1, form: "ตั้ง", material: "1x1.6", color: "white", colorKey: "white", spec: {}, addons: {} });
-  ok("มือผลัก = ตัดมอเตอร์ 16,000", Math.round(moto.cost.total - push.cost.total) === 16000, String(Math.round(moto.cost.total - push.cost.total)));
+  // v20.1 (3 ก.ย.69): ชีตราคาออโต้ มอเตอร์ประตูรั้ว = 10,000 (เว็บเคยค้าง 16,000)
+  ok("มือผลัก = ตัดมอเตอร์ 10,000", Math.round(moto.cost.total - push.cost.total) === 10000, String(Math.round(moto.cost.total - push.cost.total)));
   // รีโมท 2 ตัว = +1,000
   const rem = computeCost(PB, PRODUCTS.gate, { w: 350, h: 180, p: 1, form: "ตั้ง", material: "1x1.6", color: "white", colorKey: "white", spec: { gremote: "2" }, addons: {} });
   ok("รีโมท 2 ตัว = +1,000 (ของใหม่ ตามไฟล์ ⑤)", Math.round(rem.cost.total - moto.cost.total) === 1000, String(Math.round(rem.cost.total - moto.cost.total)));

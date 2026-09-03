@@ -96,7 +96,11 @@ export function computeCost(PB, prod, opt) {
   let area = W * H;   // let — หลังคาหลายด้านทับด้วย opt.areaOverride ด้านล่าง (พื้นที่ = ผลรวมทุกด้าน)
   const color = opt.color ?? 'white';
   const colorDisp = opt.colorName || colorLabel(color);      // ชื่อสีเฉพาะ (display) — ราคามาจาก bake key เท่านั้น
-  const material = opt.material ?? prod.defMaterial ?? null;  // วัสดุมุงหลังคา (รุ่นที่มีตัวเลือก)
+  // วัสดุมุงหลังคา (รุ่นที่มีตัวเลือก)
+  //   prod.materialAlias = ชื่อเก่า → ชื่อใหม่ (ไฟล์ถอดทุน v20.1 จัดกลุ่มเมทัลชีทใหม่ 3 ก.ย.69)
+  //   ใบเสนอเก่าที่บันทึก material ชื่อเดิมไว้ ต้องยังคิดราคาได้ ไม่ใช่ตกไปเป็น 0 เงียบ ๆ
+  const materialRaw = opt.material ?? prod.defMaterial ?? null;
+  const material = (materialRaw && prod.materialAlias && prod.materialAlias[materialRaw]) ? prod.materialAlias[materialRaw] : materialRaw;
   const glassType = opt.glassType ?? prod.defGlass ?? 'เขียว 6มม.';
   // ── กำไรแยก 3 ส่วน (ไฟล์ถอดทุน v9 บล็อก "⚙ ตั้งค่ากำไร" ท้ายชีตคิดทุนทุกใบ) ──
   //   ค่าวัสดุ · ค่าผลิต · ค่าติดตั้ง ตั้ง % แยกกันได้ · ค่าตั้งต้นต่อรุ่นอยู่ใน PB.PROFIT
@@ -352,27 +356,42 @@ export function computeCost(PB, prod, opt) {
   // ⚠ กันคิดต่ำกว่าจริงเงียบ ๆ — รหัสไหนยังไม่ตั้งราคาในสโตร์ ค่าของบรรทัดนั้นจะเป็น 0
   //   ถ้ามีแม้แต่ตัวเดียว → ไม่ใช้รายการจากใบตัดทั้งชุด กลับไปใช้ราคาเดิมในสูตร (ราคาไม่ตก)
   //   แล้วรายงาน hwMissing ให้หน้าจอเตือนว่าต้องไปตั้งราคารหัสไหนบ้าง
+  // ราคาตามสูตรของรุ่น (ราคาตั้ง → PARTS override → ตารางกลาง PB.ref → ตัวคูณอลู)
+  const formulaHwPrice = (it) => {
+    let price = pPrice(it.name, typeof it.price === 'number' ? it.price : val(it.price));
+    if (it.ref) { const rp = refPrice(PB, it.ref); if (rp != null) price = rp; }
+    if (it.mult) price *= mult;
+    return price;
+  };
+  // ของสั่งตามงานในใบตัด (noStock + ไม่มีรหัสสโตร์ เช่น มอเตอร์/รีโมท ประตูรั้ว) ไม่มีราคาสโตร์โดยธรรมชาติ
+  //   ราคาอยู่ในสูตรของรุ่น (orderOnly บรรทัดชื่อเดียวกัน) → ดึงจากตรงนั้น ไม่นับเป็น "ขาดราคา"
+  //   ⚠ เดิมนับเป็นขาดราคา → engine ถอยไปสูตรเก่าทั้งชุดตลอด = ประตูรั้วไม่เคยใช้ใบตัดจริงเลย (verify-gate ⑦ จับได้ 3 ก.ย.69)
+  const orderOnlyFormula = (it) => (it.noStock && !it.sku) ? (prod.hardware || []).find((h) => h.orderOnly && h.name === it.name) : null;
+  const cutHwPrice = (it) => { const f = orderOnlyFormula(it); return f ? formulaHwPrice(f) : hwPrice(it); };
   for (const it of (rawHwLines || [])) {
-    if ((Number(it.qty) || 0) > 0 && !(hwPrice(it) > 0)) hwMissing.push({ sku: String(it.sku || ''), name: it.name });
+    if ((Number(it.qty) || 0) > 0 && !(cutHwPrice(it) > 0)) hwMissing.push({ sku: String(it.sku || ''), name: it.name });
   }
   const hwLines = rawHwLines && !hwMissing.length ? rawHwLines : null;
   let hwCost = 0;
   for (const it of (hwLines || [])) {
     const count = Number(it.qty) || 0;
     if (count <= 0) continue;
-    const price = hwPrice(it);
+    const price = cutHwPrice(it);
     const amount = count * price;
     hwCost += amount;
     lines.push({ cat: 'hardware', name: it.name, sku: String(it.sku || '').toUpperCase(),
       qty: round2(count), unit: it.unit || 'ชิ้น', unitPrice: round2(price), amount: round2(amount),
-      fromFile: hwFromFile(it) });
+      fromFile: hwFromFile(it), orderOnly: !!orderOnlyFormula(it) });
   }
-  for (const it of (hwLines ? [] : prod.hardware || [])) {
+  // โหมดใบตัด: ของสั่งตามงาน (orderOnly) ที่ใบตัดไม่มีแถวชื่อเดียวกัน ต้องยังคิดเงินตามสูตร (กฎเจ้าของ 2 ก.ย.69
+  //   "ไม่มีในไฟล์ตัดประกอบ มีในคิดราคา = ก็ขึ้น") — เช่น เหล็กยัดเสา 4"×4" ประตูรั้ว · ที่ชื่อตรงกับใบตัดคิดไปแล้วข้างบน
+  const hwFormulaSrc = hwLines
+    ? (prod.hardware || []).filter((h) => h.orderOnly && !hwLines.some((c) => c.name === h.name))
+    : (prod.hardware || []);
+  for (const it of hwFormulaSrc) {
     const count = val(it.count);
     if (count <= 0) continue;
-    let price = pPrice(it.name, typeof it.price === 'number' ? it.price : val(it.price));   // รองรับ price เป็นสูตร + PARTS override (partsLinked)
-    if (it.ref) { const rp = refPrice(PB, it.ref); if (rp != null) price = rp; }   // ราคาจาก PB (แอดมินแก้ได้ · ไม่มี=ใช้ price เดิม)
-    if (it.mult) price *= mult;   // กล่อง/โครง/เสา อลูเมืองทอง (รั้ว) → ขยับตามราคาอลู/กก. (mult=ปัจจุบัน/ตั้งต้น · ตั้งต้น=1)
+    let price = formulaHwPrice(it);   // ราคาตั้ง (สูตร/PARTS override) → ตารางกลาง PB.ref → ตัวคูณอลู (mult)
     const hwSku = skuOf(it);
     // per = สโตร์ตั้งราคาเป็นแพ็ค แต่สูตรนับเป็นหน่วยย่อย (เช่น สักหลาดม้วนละ 250 ม.)
     const spRaw = skuPrice(hwSku);
@@ -398,6 +417,10 @@ export function computeCost(PB, prod, opt) {
     const cspRaw = skuPrice(cSku);
     const csp = cspRaw != null ? cspRaw / (Number(it.per) || 1) : boxPrice(it);
     if (csp != null) unitPrice = csp;   // มีราคาในสโตร์ → ใช้ของสโตร์ (÷ per ถ้าสโตร์ขายเป็นแพ็ค)
+    // it.buf = ตัวคูณเผื่อเศษ (แผ่นหลังคา 1.2 = buf_roof ในไฟล์ถอดทุน "เผื่อเศษแผ่นหลังคา ตัดเสีย/ซ้อนแผ่น 20%")
+    //   ชีต E8 คูณ buf_roof ทับราคาแผ่น (รวมราคาจากสโตร์ด้วย) → ต้องคูณหลังจากทับราคาสโตร์แล้ว
+    //   ⚠ เว็บไม่เคยคูณตัวนี้เลย (v20 ก็มี) → ทุนแผ่นทุกหลังคาขาด 20% มาตลอด (เจ้าของสั่งอิง v20.1 3 ก.ย.69)
+    if (it.buf > 0) unitPrice *= it.buf;
     noteMissing({ ...it, sku: cSku }, count);
     if (!(unitPrice > 0) && !it.orderOnly && !it.labor) noteMissing({ sku: cSku || it.ref || it.name, name: it.name, price: 0 }, count);
     const amount = count * unitPrice;
@@ -825,7 +848,8 @@ export function computeAddon(id, sel, ctx) {
     if (kw === '1500') {                 // ฟันเฟือง + เซนเซอร์ เฉพาะ 1500 กก.
       const gl = +s.gearLen || 0;
       if (gl > 0) { const gc = motorCost(ctx.PB, 'ฟันเฟือง/ม.', 340) * gl; const gs = motorSell(gc, 0); out.push({ label: 'ฟันเฟือง (ระยะยื่น ' + gl + ' ม.)', qty: gl, unit: 'ม.', unitPrice: round2(gs / gl), amount: gs, cost: gc }); }
-      if (s.sensor) { const sc = motorCost(ctx.PB, 'เซนเซอร์กันฝน', 1100); const ss = motorSell(sc, 0); out.push({ label: 'เซนเซอร์กันฝน (ออโต้)', qty: 1, unit: 'ชุด', unitPrice: ss, amount: ss, cost: sc }); }
+      // v20.1 (3 ก.ย.69): "เซนเซอร์กันฝน · 1500 กก. บังคับมีเสมอ" — ไม่ใช่ออปชั่นแล้ว
+      if (true) { const sc = motorCost(ctx.PB, 'เซนเซอร์กันฝน', 1100); const ss = motorSell(sc, 0); out.push({ label: 'เซนเซอร์กันฝน (ออโต้)', qty: 1, unit: 'ชุด', unitPrice: ss, amount: ss, cost: sc }); }
     }
     return out;
   }
@@ -921,7 +945,7 @@ export function computeAddon(id, sel, ctx) {
   }
   if (id === 'gate_motor') {            // มอเตอร์ประตูรั้ว เพิ่ม (นอกเหนือ 1 ตัวในชุด) — ขายตามสูตรมอเตอร์ max(ทุน×2.5,6000)
     const n = +sel || 0; if (n <= 0) return null;
-    const cost = motorCost(ctx.PB, 'ประตูรั้ว', 16000);
+    const cost = motorCost(ctx.PB, 'ประตูรั้ว', 10000);   // ชีตราคาออโต้ = 10,000 (เว็บเคยค้าง 16,000)
     const each = motorSell(cost);
     return { label: 'มอเตอร์ประตูรั้ว เพิ่ม', qty: n, unit: 'ตัว', unitPrice: each, amount: n * each, cost: n * cost };
   }

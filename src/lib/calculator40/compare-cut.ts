@@ -233,6 +233,9 @@ export function compareCut(PB: any, inp: CompareInput) {
   const engHw = (calc.lines ?? []).filter((l: any) => l.cat === "hardware" || l.cat === "consum");
   const engBySku = new Map<string, any>();
   for (const l of engHw) if (l.sku) engBySku.set(String(l.sku).toUpperCase(), l);
+  // ของสั่งตามงานไม่มีรหัส (มอเตอร์/รีโมท) → จับคู่ด้วยชื่อ
+  const engByName = new Map<string, any>();
+  for (const l of engHw) if (!l.sku) engByName.set(String(l.name), l);
   // ── 3 โหมด (เจ้าของ 2 ก.ย.69: "ตัวไม่มีราคา เรามาร์คไว้แก้ทีหลังได้ ... หน้าเว็บมันยังไม่ตรง ตรวจไม่ได้") ──
   //   ปัญหา: "ราคายังไม่เติม" ไปกลบการตรวจเรื่องอื่นจนหน้าเว็บใช้ตรวจไม่ได้เลย
   //   แยกให้ชัด — "จำนวน/รายการตรงไหม" กับ "ราคาครบไหม" เป็นคนละเรื่อง ห้ามปนกัน
@@ -244,12 +247,15 @@ export function compareCut(PB: any, inp: CompareInput) {
   //   โหมด C  รุ่นสูตรล้วน (ไม่ได้ตั้งให้ใช้ใบตัด)      → เทียบจำนวนจริง สูตร vs ใบตัด (ของเดิม)
   const hwIntendCut = !!(hwl?.length && HW_FROM_CUTLIST.has(inp.prodId));
   const pendingSku = new Set((calc.hwMissing ?? []).map((m: any) => String(m.sku || "").toUpperCase()));
+  // ของสั่งตามงานที่ engine คิดตามสูตร (orderOnly) แต่ใบตัดไม่มีแถวชื่อนั้น → ต้องโชว์ฝั่งคิดราคาด้วย (เหล็กยัดเสา)
+  const engOrderOnlyExtra = engHw.filter((l: any) => l.orderOnly && !hwl?.some((h) => h.name === l.name));
   const calcHw = hwIntendCut
-    ? hwl!.map((h) => {
-      const eng = engBySku.get(String(h.sku || "").toUpperCase());
+    ? [...engOrderOnlyExtra, ...hwl!.map((h) => {
+      const eng = h.sku ? engBySku.get(String(h.sku).toUpperCase()) : engByName.get(String(h.name));
       const unitPrice = Number(eng?.unitPrice) || 0;
-      return { sku: h.sku, name: h.name, qty: h.qty, unit: h.unit, unitPrice, amount: r2(unitPrice * h.qty) };
-    })
+      // noStock ในใบตัด = ของสั่งตามงาน → สถานะ "ไม่สต็อก สั่งใหม่" (ไม่ใช่ "ไม่มีรหัส"/"รอเติมราคา")
+      return { sku: h.sku, name: h.name, qty: h.qty, unit: h.unit, unitPrice, amount: r2(unitPrice * h.qty), orderOnly: !!((h as { noStock?: boolean }).noStock && !h.sku) };   // noStock+มีรหัส (สักหลาด JR00776) = ไม่ตัดสต็อกแต่มีในสโตร์ ไม่ใช่ของสั่ง
+    })]
     : engHw;
   const bySku = new Map<string, HwRow>();
   for (const l of calcHw) {
@@ -309,7 +315,8 @@ export function compareCut(PB: any, inp: CompareInput) {
 
   const hardware: HwRow[] = [...bySku.values()].map((e) => {
     // โหมด B: รหัสที่ยังไม่มีราคา = งานรอทำ ไม่ใช่ของที่ "ไม่ตรง" → มาร์คไว้แก้ทีหลัง
-    if (hwIntendCut && !calc.hwFromCutlist && (pendingSku.has(String(e.sku || "").toUpperCase()) || !e.sku))
+    // ของสั่งตามงาน ("ไม่สต็อก สั่งใหม่") ไม่มีราคาสโตร์โดยธรรมชาติ → ไม่ใช่ "รอเติมราคา" (verify-gate ⑦ จับได้ 3 ก.ย.69)
+    if (hwIntendCut && !calc.hwFromCutlist && !e.orderOnly && (pendingSku.has(String(e.sku || "").toUpperCase()) || !e.sku))
       return { ...e, status: "รอเติมราคา" as HwRow["status"] };
     return { ...e, status: statusOf(e.calcQty, e.cutQty, !!e.sku, e.orderOnly) };
   });

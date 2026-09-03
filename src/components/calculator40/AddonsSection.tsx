@@ -887,8 +887,9 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
               <Field label="ฟันเฟือง — ระยะยื่น (ม.)" hint="· 340/ม. · เว้น 0 = ไม่มี">
                 <NumberInput value={sm.gearLen || 0} onChange={(v) => setObj("slide_motor", { gearLen: v })} placeholder="0" step={0.1} />
               </Field>
-              <Field label="เซนเซอร์กันฝน">
-                <ChipRow items={[{ val: "no", label: "ไม่มี" }, { val: "yes", label: "มี (+1,100 ทุน)" }]} value={sm.sensor ? "yes" : "no"} onChange={(v) => setObj("slide_motor", { sensor: v === "yes" })} />
+              {/* v20.1 (3 ก.ย.69): "เซนเซอร์กันฝน · 1500 กก. บังคับมีเสมอ" — ระบบบวกให้เอง เลือกไม่ได้แล้ว */}
+              <Field label="เซนเซอร์กันฝน" hint="บังคับมีกับมอเตอร์ 1,500 กก. (+1,100 ทุน · ระบบบวกให้)">
+                <ChipRow items={[{ val: "yes", label: "มี (บังคับ)" }]} value={sm.sensor ? "yes" : "no"} onChange={(v) => setObj("slide_motor", { sensor: v === "yes" })} />
               </Field>
             </>
           )}
