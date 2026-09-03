@@ -225,7 +225,8 @@ console.log("\n═══ ④ข รางน้ำอลู ผูกสโต�
     const P = PRODUCTS[id];
     if (!P) { ok(`${id}: มีรุ่นในระบบ`, false, ""); continue; }
     const d = P.defaults ?? { w: 400, h: 300, p: 1 };
-    const IN2 = { prodId: id, w: d.w, h: d.h, p: d.p || 1, form: P.defForm, spec: {}, cut: {}, material: P.defMaterial };
+    // หลังคาเดี่ยว: ค่าตั้งต้นปลายหลังคาในไฟล์ = 'ยื่นปลาย' (ไม่มีราง) → ต้องเลือกรางน้ำอลูก่อน ถึงจะมีบรรทัดกล่อง 4 ให้ทดสอบ
+    const IN2 = { prodId: id, w: d.w, h: d.h, p: d.p || 1, form: P.defForm, spec: id === 'roof' ? { roofend: 'รางน้ำอลู' } : {}, cut: {}, material: P.defMaterial };
     const base = compareCut(PB, IN2)?.totals?.costTotal;
     const hi = compareCut(PB_BOX, IN2)?.totals?.costTotal;
     ok(`${id}: ตั้งราคากล่อง 4" ในสโตร์ → ทุนขยับตาม`, hi > base, `${base} → ${hi}`);
