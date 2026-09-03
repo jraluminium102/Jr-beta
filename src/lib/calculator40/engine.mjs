@@ -444,7 +444,9 @@ export function computeCost(PB, prod, opt) {
   const costTotal = aluCost + bakeCost + openOven + glassCost + hwCost + consumCost + frameColorCost;
 
   // (4) ค่าแรง = ฐาน + เรต × ตร.ม.  (บางรุ่นคิดต่อบาน → ×จำนวนบาน)
-  const L = PB.LABOR[prod.laborKey] || { pBase: 0, pRate: 0, iBase: 0, iRate: 0 };
+  // พื้นที่ 0 = ยังไม่กรอกขนาด (หลังคาหลายด้านที่ยังไม่ใส่ด้าน) → ค่าแรงต้องเป็น 0
+  //   ตาราง v20.1 มี "ค่าแรงฐาน" ทุกรุ่น ถ้าไม่กัน จะโชว์ค่าแรงลอย ๆ ทั้งที่ยังไม่มีงาน (QA 27 ส.ค.69)
+  const L = (area > 0 ? PB.LABOR[prod.laborKey] : null) || { pBase: 0, pRate: 0, iBase: 0, iRate: 0 };
   let laborProd, laborInstall;
   // laborShow = ตัวเลขดิบของสูตรค่าแรง — หน้าจอเอาไปกาง "วิธีคิด" ให้ผู้ใช้เห็น (ไม่ได้ใช้คำนวณ)
   let laborShow = { mode: 'rate', mult: 1, pBase: 0, pRate: 0, iBase: 0, iRate: 0 };

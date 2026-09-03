@@ -140,76 +140,76 @@
   },
   "LABOR": {
     "บานเลื่อน SMS": {
-      "pBase": 437.5,
-      "pRate": 29.16,
-      "iBase": 568.75,
-      "iRate": 29.16
+      "pBase": 787.5,
+      "pRate": 43.3125,
+      "iBase": 1225,
+      "iRate": 29.750000000000004
     },
     "บานเลื่อน ยูโร": {
-      "pBase": 612.5,
-      "pRate": 43.75,
-      "iBase": 700,
-      "iRate": 50.14
+      "pBase": 787.5,
+      "pRate": 49.875,
+      "iBase": 1050,
+      "iRate": 38.5
     },
     "SlimLux": {
-      "pBase": 1041.25,
-      "pRate": 58.36,
-      "iBase": 700,
-      "iRate": 58.36
+      "pBase": 918.75,
+      "pRate": 59.0625,
+      "iBase": 1837.5,
+      "iRate": 65.625
     },
     "Velora": {
-      "pBase": 371,
-      "pRate": 29.16,
-      "iBase": 525,
-      "iRate": 29.16
+      "pBase": 700,
+      "pRate": 43.75,
+      "iBase": 1050,
+      "iRate": 43.75
     },
     "บานเปิด (ยูโร)": {
-      "pBase": 525,
-      "pRate": 24.59,
-      "iBase": 686,
-      "iRate": 47.43
+      "pBase": 787.5,
+      "pRate": 32.8125,
+      "iBase": 1225,
+      "iRate": 43.75
     },
     "บานหมุน": {
-      "pBase": 700,
-      "pRate": 36.46,
-      "iBase": 1400,
-      "iRate": 72.92
+      "pBase": 1050,
+      "pRate": 35.4375,
+      "iBase": 2450,
+      "iRate": 82.6875
     },
     "บานโซลิด": {
-      "pBase": 1487.5,
-      "pRate": 51.04,
-      "iBase": 2100,
-      "iRate": 65.63
+      "pBase": 1312.5,
+      "pRate": 68.25,
+      "iBase": 1225,
+      "iRate": 40.25
     },
     "บานเปลือย": {
       "pBase": 0,
       "pRate": 0,
-      "iBase": 0,
-      "iRate": 280
+      "iBase": 3675,
+      "iRate": 0
     },
     "บานเฟี้ยมยก": {
-      "pBase": 2450,
-      "pRate": 72.92,
-      "iBase": 1400,
-      "iRate": 43.75
+      "pBase": 3062.5,
+      "pRate": 63.4375,
+      "iBase": 2450,
+      "iRate": 55.125
     },
     "บานระแนงเลื่อน": {
-      "pBase": 2100,
-      "pRate": 58.33,
-      "iBase": 1400,
-      "iRate": 58.33
+      "pBase": 1750,
+      "pRate": 109.375,
+      "iBase": 1225,
+      "iRate": 43.75
     },
     "บานกระทุ้ง (ยูโร)": {
-      "pBase": 525,
-      "pRate": 58.36,
-      "iBase": 371.88,
-      "iRate": 58.36
+      "pBase": 787.5,
+      "pRate": 35.4375,
+      "iBase": 743.75,
+      "iRate": 45.5
     },
     "บานเฟี้ยม (sms)": {
-      "pBase": 1050,
-      "pRate": 87.5,
-      "iBase": 1225,
-      "iRate": 87.5
+      "pBase": 525,
+      "pRate": 0,
+      "iBase": 525,
+      "iRate": 0
     },
     "บานยก (เซมิ)": {
       "pBase": 2100,
@@ -218,100 +218,100 @@
       "iRate": 39.8125
     },
     "หลังคา": {
-      "pBase": 0,
-      "pRate": 597,
-      "iBase": 0,
-      "iRate": 852
+      "pBase": 3500,
+      "pRate": 118.125,
+      "iBase": 10500,
+      "iRate": 122.50000000000001
     },
     "บานติดตาย": {
-      "pBase": 350,
-      "pRate": 21.88,
-      "iBase": 700,
-      "iRate": 43.75
+      "pBase": 787.5,
+      "pRate": 64.96875,
+      "iBase": 1225,
+      "iRate": 101.0625
     },
     "ตายดัดโค้ง": {
-      "pBase": 700,
-      "pRate": 21.88,
-      "iBase": 1400,
-      "iRate": 43.75
+      "pBase": 1050,
+      "pRate": 52.5,
+      "iBase": 2450,
+      "iRate": 137.8125
     },
     "PC Door": {
       "pBase": 1225,
-      "pRate": 29.16,
-      "iBase": 2100,
-      "iRate": 65.63
+      "pRate": 35,
+      "iBase": 1400,
+      "iRate": 52.5
     },
     "บานเฟี้ยมยูโร": {
-      "pBase": 1575,
-      "pRate": 51.04,
-      "iBase": 4900,
-      "iRate": 175
+      "pBase": 525,
+      "pRate": 0,
+      "iBase": 525,
+      "iRate": 0
     },
     "มุ้งเฟรมเล็ก": {
-      "pBase": 262.5,
-      "pRate": 14.59,
+      "pBase": 240,
+      "pRate": 60,
       "iBase": 175,
-      "iRate": 7.29
+      "iRate": 45
     },
     "หลังคาจั่ว": {
-      "pBase": 0,
-      "pRate": 707,
-      "iBase": 0,
-      "iRate": 982
+      "pBase": 4375,
+      "pRate": 159.6875,
+      "iBase": 11375,
+      "iRate": 113.75
     },
     "หลังคาเลื่อน": {
-      "pBase": 0,
-      "pRate": 804,
-      "iBase": 0,
-      "iRate": 1530
+      "pBase": 3500,
+      "pRate": 113.75,
+      "iBase": 8400,
+      "iRate": 143.5
     },
     "บานเลื่อนรางบน": {
-      "pBase": 700,
-      "pRate": 29.16,
-      "iBase": 1400,
-      "iRate": 58.33
+      "pBase": 918.75,
+      "pRate": 32.8125,
+      "iBase": 1837.5,
+      "iRate": 65.625
     },
     "ระแนง": {
-      "pBase": 0,
-      "pRate": 300,
-      "iBase": 0,
-      "iRate": 600
+      "pBase": 1750,
+      "pRate": 75.25,
+      "iBase": 3500,
+      "iRate": 101.5
     },
     "ระแนงหมุน": {
-      "pBase": 0,
-      "pRate": 385,
-      "iBase": 0,
-      "iRate": 580
+      "pBase": 1443.75,
+      "pRate": 98.4375,
+      "iBase": 3500,
+      "iRate": 133
     },
     "ประตูรั้ว": {
-      "pBase": 0,
-      "pRate": 560,
-      "iBase": 0,
-      "iRate": 1120
+      "pBase": 1837.5,
+      "pRate": 108.9375,
+      "iBase": 10500,
+      "iRate": 118.125
     },
     "มุ้งเฟรมใหญ่": {
-      "pBase": 140,
+      "pBase": 280,
       "pRate": 0,
-      "iBase": 44,
+      "iBase": 110,
       "iRate": 0
     },
     "มุ้งนิรภัย": {
-      "pBase": 88,
+      "pBase": 176,
       "pRate": 0,
-      "iBase": 44,
+      "iBase": 110,
       "iRate": 0
     },
     "บานเกล็ด": {
-      "pBase": 0,
-      "pRate": 196,
-      "iBase": 0,
-      "iRate": 196
+      "pBase": 262.5,
+      "pRate": 39.375,
+      "iBase": 875,
+      "iRate": 52.5
     },
     "เปิดดัดโค้ง": {
       "pBase": 0,
-      "pRate": 90,
-      "iBase": 690,
-      "iRate": 47
+      "pRate": 52.5,
+      "iBase": 1225,
+      "iRate": 17.5
     },
     "หลังคาจั่ว (เรตล้วน)": {
       "pBase": 0,
@@ -324,6 +324,96 @@
       "pRate": 0,
       "iBase": 0,
       "iRate": 0
+    },
+    "บานตู้ Futuretech": {
+      "pBase": 306.25,
+      "pRate": 31.0625,
+      "iBase": 1225,
+      "iRate": 24.500000000000004
+    },
+    "มุ้งจีบ": {
+      "pBase": 0,
+      "pRate": 0,
+      "iBase": 875,
+      "iRate": 0
+    },
+    "มุ้งม้วน ขาว/ดำ/น้ำตาล": {
+      "pBase": 0,
+      "pRate": 0,
+      "iBase": 875,
+      "iRate": 0
+    },
+    "มุ้งม้วน ซาฮาร่า": {
+      "pBase": 0,
+      "pRate": 0,
+      "iBase": 875,
+      "iRate": 0
+    },
+    "มุ้งม้วน ลายไม้สักทอง": {
+      "pBase": 0,
+      "pRate": 0,
+      "iBase": 875,
+      "iRate": 0
+    },
+    "มุ้งม้วน ไลท์โอ๊ค": {
+      "pBase": 0,
+      "pRate": 0,
+      "iBase": 875,
+      "iRate": 0
+    },
+    "มุ้งจีบนิรภัย ≤3ม. ขาว/ดำ": {
+      "pBase": 0,
+      "pRate": 0,
+      "iBase": 875,
+      "iRate": 89.99999999999999
+    },
+    "มุ้งจีบนิรภัย ≤3ม. ซาฮาร่า": {
+      "pBase": 0,
+      "pRate": 0,
+      "iBase": 875,
+      "iRate": 89.99999999999999
+    },
+    "มุ้งจีบนิรภัย ≤3ม. สักทอง": {
+      "pBase": 0,
+      "pRate": 0,
+      "iBase": 875,
+      "iRate": 89.99999999999999
+    },
+    "มุ้งจีบนิรภัย >3ม. ขาว/ดำ": {
+      "pBase": 0,
+      "pRate": 0,
+      "iBase": 875,
+      "iRate": 89.99999999999999
+    },
+    "มุ้งจีบนิรภัย >3ม. ซาฮาร่า": {
+      "pBase": 0,
+      "pRate": 0,
+      "iBase": 875,
+      "iRate": 89.99999999999999
+    },
+    "มุ้งจีบนิรภัย >3ม. สักทอง": {
+      "pBase": 0,
+      "pRate": 0,
+      "iBase": 875,
+      "iRate": 89.99999999999999
+    },
+    "ระแนงสลับ": {
+      "pBase": 1575,
+      "pRate": 107.625,
+      "iBase": 3500,
+      "iRate": 73.5
+    },
+    "ราวกันตก": {
+      "pBase": 525,
+      "pRate": 35.4375,
+      "iBase": 2143.75,
+      "iRate": 82.6875
+    },
+    "ชุด Shower": {
+      "pBase": 0,
+      "pRate": 0,
+      "iBase": 1225,
+      "iRate": 58.33625
     }
   },
   "EXTRA": {
