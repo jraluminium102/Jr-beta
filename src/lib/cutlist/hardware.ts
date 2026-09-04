@@ -133,8 +133,8 @@ export function smsSlideHardware(
 export const HANDLE_OPTS_LR = [
   { key: "handleBrand", label: "ยี่ห้อมือจับ", choices: HANDLE_BRANDS },
   { key: "handleColor", label: "สีมือจับ", choices: HANDLE_COLORS },
-  { key: "handleL", label: "มือจับ ซ้าย", choices: HANDLE_TYPES },
-  { key: "handleR", label: "มือจับ ขวา", choices: HANDLE_TYPES },
+  { key: "handleL", label: "มือจับ บานหลัก", choices: HANDLE_TYPES },
+  { key: "handleR", label: "มือจับ บานรอง", choices: HANDLE_TYPES },
 ] as const;
 export const HANDLE_OPTS_L = [
   { key: "handleBrand", label: "ยี่ห้อมือจับ", choices: HANDLE_BRANDS },

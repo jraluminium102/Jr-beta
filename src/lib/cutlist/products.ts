@@ -87,6 +87,17 @@ const isPlug = (rail: string) => rail === "3รางเสียบ"; // 3ร�
  *   (เจ้าของเจอเองจากหน้าเทียบ 19 ส.ค.69: 600×300 → B20010 "มีแต่คิดราคา" · B20009 "จำนวนต่าง")
  *   ติ๊กเองยังได้ = บังคับเปิด · สูงเกิน 240 = เปิดให้อัตโนมัติ ปิดไม่ได้ (ตรงกับสูตรคิดราคา)
  */
+/**
+ * SlimLux ทิศทางเลื่อน → กล่องสั้น (บานกลาง) อยู่ด้านไหน
+ *   ค่าใหม่: "มือจับขวา เลื่อนเปิดซ้าย" = กล่องสั้นด้านซ้าย (ตรงกับค่าเดิม "ซ้าย")
+ *   ยังรับค่าเดิม ซ้าย/ขวา อยู่ — ใบตัดที่บันทึกไว้ก่อนหน้าไม่พัง
+ */
+export const sBoxLeft = (o: CutInput) => {
+  const v = String(o.boxSide ?? "");
+  if (v.includes("เปิดซ้าย")) return true;
+  if (v.includes("เปิดขวา")) return false;
+  return v === "ซ้าย";
+};
 export const honkOf = (o: CutInput) => !!o.honk || Number(o.H) > 240;
 // มือจับเริ่มต้น (บานเลื่อน/ประตู) — ตรง default ในไฟล์ Excel
 const HANDLE_DEF_LR = { handleBrand: "Align", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค", handleR: "ล็อค+ดัมมี่" };
@@ -100,8 +111,8 @@ const meshCountOf = (o: CutInput) => Math.max(1, Math.round(o.meshCount ?? 1));
 const MESH_OPTS = [
   { key: "mesh", label: "มุ้ง", choices: ["ไม่มี", "เฟรมเล็ก", "เฟรมใหญ่"] },
   { key: "meshHandleBrand", label: "ยี่ห้อมือจับมุ้ง", choices: HANDLE_BRANDS },
-  { key: "meshHandleL", label: "มือจับมุ้ง ซ้าย", choices: HANDLE_TYPES },
-  { key: "meshHandleR", label: "มือจับมุ้ง ขวา", choices: HANDLE_TYPES },
+  { key: "meshHandleL", label: "มือจับมุ้ง บานหลัก", choices: HANDLE_TYPES },
+  { key: "meshHandleR", label: "มือจับมุ้ง บานรอง", choices: HANDLE_TYPES },
 ] as const;
 const MESH_DEF = { mesh: "ไม่มี", meshHandleBrand: "เมโทร", meshHandleL: "กุญแจ+ล็อค", meshHandleR: "ล็อค+ดัมมี่" };
 
@@ -252,10 +263,10 @@ export const SLIMLUX_SLIDE: CutSpec = {
     { key: "beam", label: "คาน (กล่อง)", choices: ["1×2", "2×2", "1×4", "2×4", "1×4+1×1.6", "2×4+4×4", "4×4"] },
     { key: "handle", label: "มือจับ", choices: ["X-J", "มือจับล็อค", "ไม่มี", "อื่นๆ"] },
     { key: "handleColor", label: "สีมือจับล็อค", choices: ["ขาว", "ดำ"] },
-    { key: "boxSide", label: "กล่องสั้น (บานกลาง) ด้าน", choices: ["ซ้าย", "ขวา"] },
+    { key: "boxSide", label: "ทิศทางเลื่อน", choices: ["มือจับขวา เลื่อนเปิดซ้าย", "มือจับซ้าย เลื่อนเปิดขวา"] },
     { key: "receiverBox", label: "กล่องเสารับบาน", choices: RECEIVER_BOX_CHOICES },
   ],
-  defaults: { W: 300, H: 240, N: 3, rail: "", honk: false, fit: "ยัดในช่อง", sashMode: "อิสระ", beam: "1×4", handle: "X-J", handleColor: "ขาว", boxSide: "ซ้าย", receiverBox: "1×3" },
+  defaults: { W: 300, H: 240, N: 3, rail: "", honk: false, fit: "ยัดในช่อง", sashMode: "อิสระ", beam: "1×4", handle: "X-J", handleColor: "ขาว", boxSide: "มือจับขวา เลื่อนเปิดซ้าย", receiverBox: "1×3" },
   profiles: [
     // คาน: รหัสต้องเป็นรูปแบบสต็อกจริง กล่อง 1"x4" (เดิมออก "กล่อง 1×4" → จับสต็อกไม่ติด โชว์ไม่มีในสต็อก)
     // คานผสม (1×4+1×1.6 / 2×4+4×4) = 2 กล่องตัดยาวเท่ากัน → แตกเป็น 2 โปรไฟล์ (ตัวเสริมอยู่บรรทัดถัดไป)
@@ -288,8 +299,8 @@ export const SLIMLUX_SLIDE: CutSpec = {
   // ⑥ อุปกรณ์ SlimLux (มี SKU · กล่อง+ล้อ) — กล่องยาว หัว/ท้าย · กล่องสั้น บานกลางเลือกด้าน · ล้อล่าง 2/บานเลื่อน
   hardware: [
     { name: "กล่องยาว (หัว+ท้ายบาน)", sku: "JR00573", qty: (o) => (o.N <= 1 ? 1 : 2), unit: "กล่อง", note: "บานแรก+บานสุดท้าย" },
-    { name: "กล่องสั้น ซ้าย (บานกลาง)", sku: "JR00575", qty: (o) => (o.boxSide === "ซ้าย" ? Math.max(o.N - 2, 0) : 0), unit: "กล่อง" },
-    { name: "กล่องสั้น ขวา (บานกลาง)", sku: "JR00574", qty: (o) => (o.boxSide === "ขวา" ? Math.max(o.N - 2, 0) : 0), unit: "กล่อง" },
+    { name: "กล่องสั้น ซ้าย (บานกลาง)", sku: "JR00575", qty: (o) => (sBoxLeft(o) ? Math.max(o.N - 2, 0) : 0), unit: "กล่อง" },
+    { name: "กล่องสั้น ขวา (บานกลาง)", sku: "JR00574", qty: (o) => (!sBoxLeft(o) ? Math.max(o.N - 2, 0) : 0), unit: "กล่อง" },
     { name: "ล้อล่าง", sku: "JR00572", qty: (o) => 2 * (o.N - slimDead(o.sashMode)), unit: "ตัว", note: "บานเลื่อนละ 2 ตัว" },
     // มือจับล็อค — คนละรหัสตามสี (เจ้าของให้รหัส 20 ส.ค.69) · X-J เป็นเส้นอลู อยู่ในบล็อกโปรไฟล์
     { name: (o) => `มือจับล็อค สลิม (${o.handleColor === "ดำ" ? "ดำ" : "ขาว"})`,

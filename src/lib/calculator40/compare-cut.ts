@@ -231,6 +231,13 @@ export function compareCut(PB: any, inp: CompareInput) {
   //   ตอนนั้นสองฝั่งเป็นชุดเดียวกันโดยธรรมชาติ เขียวจึงเป็นเขียวที่จริง
   //   (ปัญหาเดิม 21 ส.ค.69 ที่ขึ้น "มีแต่ใบตัด" ทั้งแผง จะไม่กลับมา เพราะตอนนั้น hwFromCutlist=true อยู่แล้ว)
   const engHw = (calc.lines ?? []).filter((l: any) => l.cat === "hardware" || l.cat === "consum");
+  /** รหัสสโตร์ของบรรทัดที่ผูกด้วย "คีย์กล่อง" (กล่อง|4 ฯลฯ) ตามสีที่เลือก */
+  const boxSkuOf = (l: any) => {
+    const b = String(l?.box ?? ""); if (!b) return "";
+    const tbl = (PB.BOXSKU || {})[b] || {};
+    const c = stockColorOfCalc(inp.color || "white");
+    return String(tbl[c] || tbl["อบขาว"] || Object.values(tbl)[0] || "");
+  };
   const engBySku = new Map<string, any>();
   for (const l of engHw) if (l.sku) engBySku.set(String(l.sku).toUpperCase(), l);
   // ของสั่งตามงานไม่มีรหัส (มอเตอร์/รีโมท) → จับคู่ด้วยชื่อ
@@ -262,7 +269,8 @@ export function compareCut(PB: any, inp: CompareInput) {
     const sku = String(l.sku || "");
     const key = sku || `ไม่มีรหัส:${l.name}`;
     const e = bySku.get(key) ?? {
-      sku, name: l.name, calcQty: 0, calcPrice: l.unitPrice, calcAmount: 0, calcUnit: l.unit || "",
+      // ไม่มีรหัสตรง ๆ แต่ผูก "คีย์กล่อง" ไว้ (รางน้ำอลู = กล่องเปิด 4") → โชว์รหัสสโตร์ตามสีที่เลือก
+      sku: sku || boxSkuOf(l), name: l.name, calcQty: 0, calcPrice: l.unitPrice, calcAmount: 0, calcUnit: l.unit || "",
       orderOnly: !!(l as { orderOnly?: boolean }).orderOnly,
       cutQty: 0, cutUnit: "", status: "ตรง" as HwRow["status"],
     };
@@ -305,7 +313,10 @@ export function compareCut(PB: any, inp: CompareInput) {
     if (/^(แผ่นหลังคา|ฝาครอบ)/.test(raw)) continue;
     const shown = uncodedDisplayName(raw, { prodId: inp.prodId, material: String(opt.material ?? "") });
     const key = `ไม่มีรหัส:${shown}`;
-    const e = bySku.get(key);
+    //   ⚠ ฝั่งคิดราคาอาจได้รหัสสโตร์มาแล้ว (บรรทัดผูก "คีย์กล่อง" เช่น รางน้ำอลู = กล่องเปิด 4")
+    //     คีย์เลยเป็นรหัส ไม่ใช่ "ไม่มีรหัส:ชื่อ" → ต้องหาโดยชื่อด้วย ไม่งั้นแตกเป็น 2 แถว
+    //     (เจ้าของท้วง 3 ก.ย.69: "รางน้ำมีบอกอยู่นะ รหัส JR02987 อบขาว JR02997 ดำ JR02998 เทาซาฮาร่า")
+    const e = bySku.get(key) ?? [...bySku.values()].find((x) => x.name === shown && x.calcQty > 0);
     if (e) { e.cutQty = r2(e.cutQty + qty); e.cutName = e.cutName ?? raw; continue; }
     bySku.set(key, {
       sku: "", name: shown, calcQty: 0, calcPrice: 0, calcAmount: 0, calcUnit: "",

@@ -438,7 +438,9 @@ export function computeCost(PB, prod, opt) {
     if (!(unitPrice > 0) && !it.orderOnly && !it.labor) noteMissing({ sku: cSku || it.ref || it.name, name: it.name, price: 0 }, count);
     const amount = count * unitPrice;
     consumCost += amount;
-    lines.push({ cat: 'consum', name: it.name, sku: cSku, qty: round2(count), unit: it.unit || '', unitPrice: round2(unitPrice), amount: round2(amount) });
+    lines.push({ cat: 'consum', name: it.name, sku: cSku, qty: round2(count), unit: it.unit || '', unitPrice: round2(unitPrice), amount: round2(amount),
+      // box = คีย์กล่องอลูในสโตร์ (เช่น "กล่อง|4" = กล่องเปิด 4" รางน้ำอลูมิเนียม) — หน้าเทียบใช้หารหัสจริงต่อสี
+      ...(it.box ? { box: it.box } : {}) });
   }
 
   // สีโครงพิเศษ — ค่าสีเพิ่ม/ตร.ม. (per-item · เฉพาะรุ่น showColor เช่น หลังคา · X รอราคา · ไม่ sync ทั้งใบ)
