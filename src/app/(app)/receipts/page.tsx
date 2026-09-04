@@ -23,7 +23,9 @@ export default async function ReceiptsPage({ searchParams }: { searchParams?: { 
   let rq = supabase
     .from("receipts")
     .select("id, code, customer_snapshot, issue_date, net, payment_method, is_voided")
-    .order("created_at", { ascending: false });
+    // เรียงตามเลขที่ (รันนัมเบอร์) จากมากไปน้อย — เดือนล่าสุด + เลขใหม่สุดขึ้นก่อน
+    //   (เดิมเรียง created_at → ใบ backdate/ยกเลิกที่สร้างทีหลังลอยขึ้นบน เลขสลับ) · code = INV<พ.ศ.><เดือน><run4>
+    .order("code", { ascending: false });
   if (cutoff) rq = rq.gte("issue_date", cutoff);
   const { data } = await rq;
 
