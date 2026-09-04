@@ -289,7 +289,9 @@ export default function CompareClient({ pb, stockCount }: { pb: any; stockCount:
                     <tr key={(x.sku || x.name) + i} className="border-t border-line/60">
                       {/* ไม่มีรหัส = ยังไม่ผูกสโตร์ ขึ้นให้เห็นชัด ๆ (เป้าหมายคือผูกให้ครบทุกตัว) */}
                       <td className="p-2 font-mono text-xs">
-                        {x.sku || <span className="font-sans text-orange-700">⚠ ยังไม่ผูกสโตร์</span>}
+                        {x.sku || (x.orderOnly
+                          ? <span className="font-sans text-ink-3">ของสั่งตามงาน (ไม่สต็อก)</span>
+                          : <span className="font-sans text-orange-700">⚠ ยังไม่ผูกสโตร์</span>)}
                       </td>
                       <td className="text-xs">
                         {x.name}

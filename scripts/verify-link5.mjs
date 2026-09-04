@@ -75,7 +75,9 @@ console.log('\n═══ ③ PC Door — รหัส + อุปกรณ์ผ
   const P = PRODUCTS.pcdoor;
   const codes = P.alu.map((a) => String(a.code || ''));
   ok('ใช้ F7938B/F7945C ตามที่มีในสโตร์ (เจ้าของยืนยัน)', codes.includes('F7938B') && codes.includes('F7945C'));
-  for (const c of ['F7859', 'F7938B', 'F7960', 'F7863', 'F7864', 'F7935', 'F7945C'])
+  // F7935 (คิ้วกระจก) ถอดออก 3 ก.ย.69 — เจ้าของสั่ง "PC Door คิ้วกระจกไม่ใช้"
+  //   B20051 เสาตั้ง · B20054 เสานอน = รหัสใหม่ที่เจ้าของให้มา
+  for (const c of ['F7859', 'F7938B', 'F7960', 'F7863', 'F7864', 'F7945C', 'B20051', 'B20054'])
     ok(`ใช้รหัส ${c}`, codes.includes(c));
   for (const [name, sku] of [['บานพับ', 'JR00473'], ['ล้อรางบน', 'JR00544'], ['มือจับ Align', 'JR00378'], ['กลอน', 'JR00630'], ['น็อตเฟรม', 'JR00864']]) {
     const h = P.hardware.find((x) => x.name.includes(name));

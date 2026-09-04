@@ -100,6 +100,8 @@ function whyNoCut(prodId: string, form: string, panels: number): string {
       return `บานเลื่อน ${panels} บาน รับเฉพาะงานนอก (รางกันน้ำ) — งานใน (รางเตี้ย) เจ้าของตัดออก เพราะต้องสั่งโปรไฟล์เพิ่มเยอะ`;
     return `ไฟล์ตัดประกอบ FUJI มี 2 · 3 · 4 · 5 บาน — ตอนนี้เลือก ${panels} บาน`;
   }
+  if (prodId === "sms_slide" && form === "เปิดคู่กลาง")
+    return `ไฟล์ตัดประกอบ SMS มีชีตเปิดคู่กลางเฉพาะ 4 บาน (สูตรตรึง 4 บาน ไม่มีช่องจำนวนบาน) — ตอนนี้เลือก ${panels} บาน`;
   return "รุ่น/รูปแบบนี้ยังไม่มีสูตรใบตัดในระบบ — ต้องกรอกใบตัดเอง";
 }
 
@@ -299,7 +301,7 @@ export function compareCut(PB: any, inp: CompareInput) {
   //   topslide เปิดเพิ่ม 2 ก.ย.69 — ไล่ชื่อสองฝั่งแล้ว ตรงกัน 3 ใน 4 · ที่เหลือแมปด้วย CUT_NAME_ALIAS
   //   pcdoor ยังไม่เปิด: ใบตัดมีแถวไม่มีรหัสอีก 5 ตัว (รางบน/เสารับ/ชนกลาง/กรอบบานเลื่อน)
   //     ที่ยังหาคู่ฝั่งคิดราคาไม่เจอ — เปิดแล้วจะขึ้นแดงเพราะยังไม่ได้ไล่ ไม่ใช่เพราะของผิด
-  const showUncoded = !!ALU_FROM_CUTLIST[inp.prodId] || inp.prodId === "topslide";
+  const showUncoded = !!ALU_FROM_CUTLIST[inp.prodId] || inp.prodId === "topslide" || inp.prodId === "pcdoor";   // pcdoor เปิด 3 ก.ย.69 (ไล่ชื่อสองฝั่งตรงกันแล้ว)
   for (const r of (showUncoded ? (cut?.rows ?? []) : [])) {
     const code = String((r as { code?: unknown }).code ?? "");
     const qty = Number((r as { qty?: unknown }).qty) || 0;
