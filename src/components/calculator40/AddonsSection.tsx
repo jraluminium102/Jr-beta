@@ -43,7 +43,7 @@ const OPENING_ADDONS = ["closer", "thresh", "hide_track", "inner_track", "motor"
 const HANDLE_ADDONS = ["cmech", "stainless", "digihandle"];
 const SCREEN_ADDONS = ["mosquito", "roof_zip", "door_zip", "zip_motor", "zip_noremote", "zip_smart", "zip_remote"];
 const MAIN_EXTRA_ADDONS = ["grid", "solid_panel", "elec", "shower_corner", "shower_hw"];
-const AUTO_ADDONS = ["slide_motor", "slide_auto", "awn_auto", "banklet_motor"];
+const AUTO_ADDONS = ["slide_motor", "slide_auto", "awn_auto", "banklet_motor", "rain_sensor"];
 const HANDLE_LABELS: Record<string, string> = { cmech: "Cmech", stainless: "สแตนเลสอร่าม", digihandle: "ดิจิตอล" };
 
 function addonsIn(prodAddons: string[], ids: string[]) {
@@ -882,24 +882,40 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
   // (cmech, stainless, digihandle, closer, thresh, hide_track, inner_track, motor, awn_tt, awn_brace,
   //  slide_auto, awn_auto, banklet_motor, grid, solid_panel, soft_close, sling, u_track, beam_support, hide_beam, drop_floor)
   // ครอบคลุมด้วย branch ด้านบนแล้วถ้ามีการเปิดใช้ในอนาคต — ที่เหลือ (slide_motor) เขียนแยกด้านล่าง
+  if (ad === "rain_sensor") {
+    return (
+      <Field label="เซนเซอร์กันฝน" hint="(ออโต้ปิดเองเมื่อฝนตก · ทุน 1,100)">
+        <ChipRow
+          items={[{ val: "none", label: "ไม่มี" }, { val: "yes", label: "มี (+1,100 ทุน)" }]}
+          value={A.rain_sensor || "none"}
+          onChange={(v) => set("rain_sensor", v)}
+        />
+      </Field>
+    );
+  }
   if (ad === "slide_motor") {
-    const sm = (A.slide_motor && typeof A.slide_motor === "object") ? A.slide_motor : { kw: "1500" };
-    const kw = sm.kw || "1500";
+    const sm = (A.slide_motor && typeof A.slide_motor === "object") ? A.slide_motor : {};
+    const kw = sm.kw || "none";   // ไม่เลือก = ไม่มีมอเตอร์ (ตรงกับ engine)
     return (
       <Field label="มอเตอร์หลังคาเลื่อน" hint="(มีผลกับราคา)">
         <div className="space-y-2">
-          <ChipRow items={[{ val: "1500", label: "ยก 1,500 กก." }, { val: "300", label: "ยก 300 กก." }, { val: "80", label: "ยก 80 กก." }]} value={kw} onChange={(v) => setObj("slide_motor", { kw: v })} />
+          <ChipRow items={[{ val: "none", label: "ไม่มี" }, { val: "1500", label: "ยก 1,500 กก." }, { val: "300", label: "ยก 300 กก." }, { val: "80", label: "ยก 80 กก." }]} value={kw} onChange={(v) => setObj("slide_motor", { kw: v })} />
+          {kw !== "none" && (<>
+          {/* เซนเซอร์กันฝน — เจ้าของสั่ง 4 ก.ย.69 "เป็นออปชั่นให้เลือก" (เดิมบังคับติดเฉพาะ 1500 กก.)
+              ยังติ๊กมาให้เองเมื่อเลือก 1,500 กก. ตามที่ไฟล์ v20.1 เขียนไว้ แต่กดเอาออกได้ */}
+          <Field label="เซนเซอร์กันฝน" hint="(ออโต้ปิดเองเมื่อฝนตก · ทุน 1,100)">
+            <ChipRow
+              items={[{ val: "no", label: "ไม่มี" }, { val: "yes", label: "มี (+1,100 ทุน)" }]}
+              value={(sm.sensor === undefined || sm.sensor === null ? kw === "1500" : !!sm.sensor) ? "yes" : "no"}
+              onChange={(v) => setObj("slide_motor", { sensor: v === "yes" })}
+            />
+          </Field>
           {kw === "1500" && (
-            <>
-              <Field label="ฟันเฟือง — ระยะยื่น (ม.)" hint="· 340/ม. · เว้น 0 = ไม่มี">
-                <NumberInput value={sm.gearLen || 0} onChange={(v) => setObj("slide_motor", { gearLen: v })} placeholder="0" step={0.1} />
-              </Field>
-              {/* v20.1 (3 ก.ย.69): "เซนเซอร์กันฝน · 1500 กก. บังคับมีเสมอ" — ระบบบวกให้เอง เลือกไม่ได้แล้ว */}
-              <Field label="เซนเซอร์กันฝน" hint="บังคับมีกับมอเตอร์ 1,500 กก. (+1,100 ทุน · ระบบบวกให้)">
-                <ChipRow items={[{ val: "yes", label: "มี (บังคับ)" }]} value={sm.sensor ? "yes" : "no"} onChange={(v) => setObj("slide_motor", { sensor: v === "yes" })} />
-              </Field>
-            </>
+            <Field label="ฟันเฟือง — ระยะยื่น (ม.)" hint="· 340/ม. · เว้น 0 = ไม่มี">
+              <NumberInput value={sm.gearLen || 0} onChange={(v) => setObj("slide_motor", { gearLen: v })} placeholder="0" step={0.1} />
+            </Field>
           )}
+          </>)}
         </div>
       </Field>
     );

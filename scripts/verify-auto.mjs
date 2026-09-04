@@ -101,7 +101,9 @@ console.log("\n═══ ③ ขายชุดออโต้ = ทุน × �
 // ── ④ ขึ้นถูกหมวด — ห้ามขึ้นมั่ว ──────────────────────────────────
 console.log("\n═══ ④ มอเตอร์ขึ้นตามประเภทบาน (ห้ามขึ้นมั่ว) ═══");
 {
-  const groups = (id) => [...new Set(autoSetsFor(PB, PRODUCTS[id]).map((m) => m.group))].join(",");
+  // "ออปชั่นร่วม" = เซนเซอร์กันฝน (เจ้าของสั่ง 4 ก.ย.69 ให้เลือกได้ทุกมอเตอร์ ยกเว้น SlimLux)
+  //   ไม่ใช่หมวดมอเตอร์ของรุ่น → ตัดออกก่อนเทียบ แต่มีเทสของตัวเองด้านล่าง
+  const groups = (id) => [...new Set(autoSetsFor(PB, PRODUCTS[id]).map((m) => m.group))].filter((g) => g !== "ออปชั่นร่วม").join(",");
   const EXPECT = {
     banyok: "บานยก / เฟี้ยมยก", fold_lift: "บานยก / เฟี้ยมยก",
     roof_slide: "หลังคาเลื่อน", banklet: "บานเกล็ด 38.1", awning: "บานกระทุ้ง",
@@ -110,12 +112,23 @@ console.log("\n═══ ④ มอเตอร์ขึ้นตามประ
   };
   for (const [id, g] of Object.entries(EXPECT)) ok(`${id} → หมวด "${g}"`, groups(id) === g, groups(id) || "(ว่าง)");
   // รุ่นที่ชีตไม่มีมอเตอร์ ต้องไม่มีให้เลือกเลย
-  for (const id of ["fixed", "open_door", "folding", "pcdoor", "velora", "shower", "roof", "louver", "handrail"])
+  //   4 ก.ย.69: roof/roof_gable/roof_multi ออกจากรายการนี้ — เจ้าของสั่ง "ไม่มีมอเตอร์ให้เลือกในหลังคา" ให้ใส่เข้าไป
+  for (const id of ["fixed", "open_door", "folding", "pcdoor", "velora", "shower", "louver", "handrail"])
     ok(`${id} ไม่มีมอเตอร์ให้เลือก (ชีตไม่มี)`, autoSetsFor(PB, PRODUCTS[id]).length === 0, groups(id));
   // ยี่ห้อชุดเลื่อนต้องไม่ข้ามรุ่น
   ok("SMS ไม่มี SlimLux ให้เลือก", !autoSetsFor(PB, PRODUCTS.sms_slide).some((m) => m.group === "SlimLux"));
   ok("SlimLux ไม่มี Evecca/ช่างแซก ให้เลือก", !autoSetsFor(PB, PRODUCTS.slimlux).some((m) => m.group === "เลื่อน SMS/ยูโร"));
   ok("ประตูรั้วไม่มีชุดเลื่อน SMS", !autoSetsFor(PB, PRODUCTS.gate).some((m) => /เลื่อน|SlimLux/.test(m.group)));
+  // ── เซนเซอร์กันฝน (เจ้าของสั่ง 4 ก.ย.69 "เพิ่มเป็นออปชั่นให้เลือก ทุกมอเตอร์ ยกเว้น SlimLux") ──
+  const hasSensor = (id) => (PRODUCTS[id].addons || []).includes("rain_sensor")
+    || (PRODUCTS[id].addons || []).includes("slide_motor");   // ชุดหลังคาเลื่อนมีเซนเซอร์ในตัวเลือกอยู่แล้ว
+  for (const id of ["banyok", "fold_lift", "banklet", "gate", "awning", "sms_slide", "euro_slide", "bar_slide",
+                    "zipscreen", "roof", "roof_gable", "roof_multi", "roof_slide"])
+    ok(`${id} เลือกเซนเซอร์กันฝนได้`, hasSensor(id), JSON.stringify(PRODUCTS[id].addons));
+  ok("SlimLux ต้องไม่มีเซนเซอร์กันฝน (เจ้าของสั่งยกเว้น)", !hasSensor("slimlux"), JSON.stringify(PRODUCTS.slimlux.addons));
+  ok("หลังคา (เพิง/จั่ว/หลายด้าน) เลือกมอเตอร์ได้แล้ว",
+    ["roof", "roof_gable", "roof_multi"].every((id) => (PRODUCTS[id].addons || []).includes("slide_motor")));
+  ok("เซนเซอร์กันฝนคิดทุน 1,100 ตามชีต", (PB.MOTOR["เซนเซอร์กันฝน"] ?? 0) === 1100, String(PB.MOTOR["เซนเซอร์กันฝน"]));
 }
 
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);

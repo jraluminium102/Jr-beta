@@ -689,7 +689,7 @@ export function computeCost(PB, prod, opt) {
   let addonTotal = 0, addonCostExplicit = 0, addonSellImplicit = 0;
   let fixedSellTotal = 0, fixedSellCost = 0;   // มอเตอร์ขายฟิก (ไม่ผ่านสูตรกำไร)
   for (const ad of (prod.addons || [])) {
-    const rr = computeAddon(ad, selAddons[ad], { W, H, P, area, opt, PB });
+    const rr = computeAddon(ad, selAddons[ad], { W, H, P, area, opt, PB, prodId: prod.id });
     if (!rr) continue;
     for (const r of (Array.isArray(rr) ? rr : [rr])) {
       if (!r) continue;
@@ -841,6 +841,7 @@ export function autoSetsFor(PB, prod) {
     row('หลังคาเลื่อน', 'ฟันเฟือง (เฉพาะ 1500)', C('ฟันเฟือง/ม.', 340), 'บาท/ม. × ระยะเลื่อน');
     row('หลังคาเลื่อน', 'เซนเซอร์กันฝน', C('เซนเซอร์กันฝน', 1100), 'บังคับมีกับ 1500 กก.');
   }
+  if (ads.includes('rain_sensor')) row('ออปชั่นร่วม', 'เซนเซอร์กันฝน', C('เซนเซอร์กันฝน', 1100), 'เลือกได้ทุกมอเตอร์ (ยกเว้น SlimLux)');
   if (ads.includes('banklet_motor')) row('บานเกล็ด 38.1', 'มอเตอร์บานเกล็ด', C('บานเกล็ด', 1800), 'ไม่มีค่าส่ง');
   if (ads.includes('awn_auto')) {
     for (const [l, k, fb] of [['โช็ค เปิด 50', 'กระทุ้ง โช้ค50', 3575], ['โช็ค เปิด 80', 'กระทุ้ง โช้ค80', 3725], ['โซ่เดี่ยว 50', 'กระทุ้ง โซ่เดี่ยว50', 1900], ['โซ่คู่ 50', 'กระทุ้ง โซ่คู่50', 2600]])
@@ -1003,8 +1004,10 @@ export function computeAddon(id, sel, ctx) {
     return { label: 'ชุดออโต้บานยก ' + sel + ' กก. (รวมค่าส่ง)', qty: 1, unit: 'ชุด', unitPrice: sell, amount: sell, cost };
   }
   if (id === 'slide_motor') {           // มอเตอร์หลังคาเลื่อน (80/300/1500 + ฟันเฟือง + เซนเซอร์) · ขาย ×2.5/6,000
-    const s = (sel && typeof sel === 'object') ? sel : { kw: '1500' };
-    const kw = String(s.kw || '1500');
+    const s = (sel && typeof sel === 'object') ? sel : (sel ? { kw: String(sel) } : {});
+    //   ไม่เลือก = ไม่มีมอเตอร์ (computeAddon กันไว้ตั้งแต่ต้นทางแล้วว่า sel ว่าง = null)
+    const kw = String(s.kw || 'none');
+    if (kw === 'none') return null;
     const cmap = { '80': motorCost(ctx.PB, 'หลังคาเลื่อน ยก80', 4500), '300': motorCost(ctx.PB, 'หลังคาเลื่อน ยก300', 12500), '1500': motorCost(ctx.PB, 'หลังคาเลื่อน ยก1500', 13325) };
     // ทุนมอเตอร์ = ราคา + ค่าส่ง (ชีตถอดทุน D13 บวก 2 คอลัมน์ · เจ้าของเคาะ 27 ส.ค.69 "เอาตามชีท")
     //   เดิมคิดแต่ราคา ตกค่าส่งไป → 80 กก. คิด 4,500 ทั้งที่ชีตคิด 6,200
@@ -1012,13 +1015,26 @@ export function computeAddon(id, sel, ctx) {
     const mcost = cmap[kw] == null ? null : cmap[kw] + ship;
     if (mcost == null) return null;
     const out = [{ label: 'มอเตอร์หลังคาเลื่อน ยก ' + kw + ' กก. (รวมค่าส่ง)', qty: 1, unit: 'ชุด', unitPrice: autoSell(mcost, ctx), amount: autoSell(mcost, ctx), cost: mcost }];
-    if (kw === '1500') {                 // ฟันเฟือง + เซนเซอร์ เฉพาะ 1500 กก.
+    if (kw === '1500') {                 // ฟันเฟือง เฉพาะ 1500 กก.
       const gl = +s.gearLen || 0;
       if (gl > 0) { const gc = motorCost(ctx.PB, 'ฟันเฟือง/ม.', 340) * gl; const gs = autoSell(gc, ctx); out.push({ label: 'ฟันเฟือง (ระยะยื่น ' + gl + ' ม.)', qty: gl, unit: 'ม.', unitPrice: round2(gs / gl), amount: gs, cost: gc }); }
-      // v20.1 (3 ก.ย.69): "เซนเซอร์กันฝน · 1500 กก. บังคับมีเสมอ" — ไม่ใช่ออปชั่นแล้ว
-      if (true) { const sc = motorCost(ctx.PB, 'เซนเซอร์กันฝน', 1100); const ss = autoSell(sc, ctx); out.push({ label: 'เซนเซอร์กันฝน (ออโต้)', qty: 1, unit: 'ชุด', unitPrice: ss, amount: ss, cost: sc }); }
+    }
+    // เซนเซอร์กันฝน — เจ้าของสั่ง 4 ก.ย.69 "เป็นออปชั่นให้เลือก" (เดิมบังคับติดกับ 1500 กก.)
+    //   ยังติ๊กไว้ให้เองเมื่อเลือก 1500 กก. ตามที่ไฟล์ v20.1 เขียน แต่เอาออกได้
+    const wantSensor = (s.sensor === undefined || s.sensor === null) ? (kw === '1500') : !!s.sensor;
+    if (wantSensor) {
+      const sc = motorCost(ctx.PB, 'เซนเซอร์กันฝน', 1100); const ss = autoSell(sc, ctx);
+      out.push({ label: 'เซนเซอร์กันฝน (ออโต้)', qty: 1, unit: 'ชุด', unitPrice: ss, amount: ss, cost: sc });
     }
     return out;
+  }
+  // เซนเซอร์กันฝน — ออปชั่นแยกของรุ่นที่มอเตอร์ไม่ใช่ชุดหลังคาเลื่อน (เจ้าของสั่ง 4 ก.ย.69
+  //   "เพิ่มเซนเซอร์กันฝนเป็นออปชั่นให้เลือก ทุกมอเตอร์ ยกเว้น SlimLux")
+  if (id === 'rain_sensor') {
+    if (sel !== 'yes') return null;
+    const cost = motorCost(ctx.PB, 'เซนเซอร์กันฝน', 1100);
+    const sell = autoSell(cost, ctx);
+    return { label: 'เซนเซอร์กันฝน (ออโต้)', qty: 1, unit: 'ชุด', unitPrice: sell, amount: sell, cost };
   }
   if (id === 'banklet_motor') {         // มอเตอร์บานเกล็ด 38.1 — ชีตราคาออโต้ 1,800 "ไม่มีค่าส่ง"
     if (sel !== 'yes') return null;
