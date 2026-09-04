@@ -1121,7 +1121,8 @@ export const PRODUCTS = {
   },
 
   louver_slip: {
-    id: 'louver_slip', group: 2, name: 'ระแนงสลับ (คละกล่อง 2 แบบ)', brand: 'MTONG', laborKey: 'ระแนง', ranaeDisc: true,
+    // ค่าแรง: ชีต "คิดทุน ระแนงสลับ" B13/B14 เปิดชื่อว่า VLOOKUP("ระแนงสลับ") ไม่ใช่ "ระแนง" (แก้ 4 ก.ย.69 ตอนไล่ตรวจค่าแรงทุกรุ่น)
+    id: 'louver_slip', group: 2, name: 'ระแนงสลับ (คละกล่อง 2 แบบ)', brand: 'MTONG', laborKey: 'ระแนงสลับ', ranaeDisc: true,
     showColor: true, outdoor: true,   // งานนอก → ตัดสีชุบ (label-only)
     icon: '🪵', defForm: 'นอน', forms: ['นอน'], stockLen: 6.0,
     defaults: { w: 400, h: 200, p: 1 }, defGlass: null, minP: 1, maxP: 1,
