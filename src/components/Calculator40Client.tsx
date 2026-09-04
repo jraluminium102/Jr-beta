@@ -175,6 +175,9 @@ export default function Calculator40Client({ customers = [], priceOverride, line
   const [profit, setProfit] = useState("100");        // กำไรค่าวัสดุ % (ชื่อเดิม — เก็บลงสูตรของข้อ)
   const [profitProd, setProfitProd] = useState("100"); // กำไรค่าผลิต %
   const [profitInst, setProfitInst] = useState("200"); // กำไรค่าติดตั้ง %
+  // โหมดกำไร: ค่าตั้งต้น = "ตามไฟล์ถอดทุน" (เป้ากำไรสุทธิ + ค่าดำเนินการ 30% · สูตรเดียวกับ Excel)
+  //   กดแก้ % เอง = สลับเป็นโหมดกรอกเอง (ของเดิม) · เจ้าของสั่ง 3 ก.ย.69 "เอาตามไฟล์ ทำทั้งหมด"
+  const [profitManual, setProfitManual] = useState(false);
   // ค่าแรงที่คิดลงใบเสนอ: "all" = ผลิต+ติดตั้ง (ค่ามาตรฐาน) · "mfg" = ค่าแรงผลิตอย่างเดียว (ขายส่ง JR ไม่ไปติดตั้ง)
   const [laborMode, setLaborMode] = useState<"all" | "mfg">("all");
   // ประตู/หน้าต่าง ที่จะเขียนลงใบเสนอ (เจ้าของสั่ง 7 ส.ค.69 ให้มีทุกชุดที่เป็นบาน ไม่ใช่แค่ห้องกระจก)
@@ -440,6 +443,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
         colorKey: color,                       // คีย์สีจริง → ราคาเส้นแยกสีจากไฟล์ถอดทุน (ALUCOLOR_KEY)
         profitPct,
         profitMat: profitPct, profitProd: pProd, profitInst: pInst,
+        profitManual,   // false = ใช้เป้ากำไรจากไฟล์ (PB.SELL) · true = ใช้ % ที่กรอกเอง
         spec: specForCalc,
         addons,
       };
@@ -1148,17 +1152,17 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                       <Field label={`จำนวนบาน${prod.minP ? ` (${prod.minP}–${prod.maxP})` : ""}`} value={p} onChange={setP} />
                     )
                   ) : <div />}
-                  <Field label="กำไร ค่าของ %" value={profit} onChange={setProfit} />
-                  <Field label="กำไร ค่าผลิต %" value={profitProd} onChange={setProfitProd} />
-                  <Field label="กำไร ค่าติดตั้ง %" value={profitInst} onChange={setProfitInst} />
+                  <Field label="กำไร ค่าของ %" value={profit} onChange={(v: string) => { setProfit(v); setProfitManual(true); }} />
+                  <Field label="กำไร ค่าผลิต %" value={profitProd} onChange={(v: string) => { setProfitProd(v); setProfitManual(true); }} />
+                  <Field label="กำไร ค่าติดตั้ง %" value={profitInst} onChange={(v: string) => { setProfitInst(v); setProfitManual(true); }} />
                 </div>
               )}
               {/* ห้องกระจก (G6) — ไม่มีกว้าง/สูง/บานระดับห้อง (กำหนดต่อบาน/ต่อด้านใน RoomComposer) แต่ยังต้องมีกำไร% + สี/กระจกหลัก (ทุกบานในห้องใช้ร่วมกัน) */}
               {prod.composite && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mt-4">
-                  <Field label="กำไร ค่าของ %" value={profit} onChange={setProfit} />
-                  <Field label="กำไร ค่าผลิต %" value={profitProd} onChange={setProfitProd} />
-                  <Field label="กำไร ค่าติดตั้ง %" value={profitInst} onChange={setProfitInst} />
+                  <Field label="กำไร ค่าของ %" value={profit} onChange={(v: string) => { setProfit(v); setProfitManual(true); }} />
+                  <Field label="กำไร ค่าผลิต %" value={profitProd} onChange={(v: string) => { setProfitProd(v); setProfitManual(true); }} />
+                  <Field label="กำไร ค่าติดตั้ง %" value={profitInst} onChange={(v: string) => { setProfitInst(v); setProfitManual(true); }} />
                 </div>
               )}
 

@@ -146,6 +146,10 @@ export function computeCost(PB, prod, opt) {
   }
   const val = (expr) => ev.compile(expr)(scope);
 
+  // ตารางสูตรราคาขายของรุ่นนี้ (มาจากไฟล์ถอดทุน — ดู scripts/extract-sell-model.mjs)
+  //   opt.profitManual = true → ผู้ใช้กดปรับกำไรเอง ให้ใช้ % ที่กรอก (ของเดิม) ไม่ใช้เป้าจากไฟล์
+   const SELLM = (opt.profitManual ? null : (PB.SELL && PB.SELL.products && PB.SELL.products[prod.id])) || null;
+  let sellPct = null, sellAdj = null, sellTarget = null;
   const stockLen = prod.stockLen ?? STOCK_LEN;
   const lines = [];
   // ⚠ กันคิดต่ำกว่าจริงเงียบ ๆ — เก็บทุกบรรทัดที่ราคาออกมา 0 (สโตร์ยังไม่ตั้งราคา + สูตรไม่มีราคาสำรอง)
@@ -631,6 +635,18 @@ export function computeCost(PB, prod, opt) {
     lines.push({ cat: 'consum', name: sdName + (material ? ' ' + material : '') + hNote + (minHit ? ' (ขั้นต่ำ)' : ''), qty: round2(aSell), unit: 'ตร.ม.', unitPrice: rate, amount: round2(matBase) });
     if (rnDisc > 0) lines.push({ cat: 'discount', name: 'ส่วนลดปริมาณ ' + Math.round((area > 30 ? 15 : area > 20 ? 11 : area > 15 ? 8 : 5)) + '% (พื้นที่ ' + round2(area) + ' ตร.ม.)', qty: 1, unit: '', unitPrice: -rnDisc, amount: -rnDisc });
     if (irate > 0) lines.push({ cat: 'labor', name: 'ค่าแรงติดตั้ง', qty: round2(aSell), unit: 'ตร.ม.', unitPrice: irate, amount: round2(aSell * irate) });
+  } else if (SELLM) {
+    // ── สูตรราคาขายตามไฟล์ถอดทุน v20.1 (เป้ากำไรสุทธิ + ค่าดำเนินการ 30%) ──
+    //   เจ้าของสั่ง 3 ก.ย.69 "เอาตามไฟล์ ทำทั้งหมด" · ยันด้วยชุด ส่งต่อ-เว็บ (tests.json)
+    const target = SELLM.shape === 'single' ? roofTargetOf(SELLM, material, prod.id) : SELLM.target;
+    const ratios = (SELLM.shape === 'single' && /^กระจก/.test(String(material || '')) && SELLM.ratioMaterialGlass)
+      ? [SELLM.ratioMaterialGlass, SELLM.ratios[1], SELLM.ratios[2]] : SELLM.ratios;
+    const S = sellFromTarget({
+      mat: costTotal, labProd: laborProd, labInst: laborInstall,
+      target, ratios, overheadPct: SELLM.overheadPct, shape: SELLM.shape,
+    });
+    sellBeforeLabor = S.beforeLabor; sellMfgOnly = S.mfgOnly; sellWithInstall = S.withInstall;
+    sellPct = S.pct; sellAdj = S.adj; sellTarget = target;
   } else {
     sellBeforeLabor = ceil100(costTotal * (1 + pctMat / 100));
     sellMfgOnly = sellBeforeLabor + ceil100(laborProd * (1 + pctProd / 100));
@@ -665,6 +681,7 @@ export function computeCost(PB, prod, opt) {
   // r.cost (ถ้ามี) = ทุนจริง (มอเตอร์/ออโต้ ถอดจาก "ราคาออโต้") → ไม่ใช่ ÷2 · ไม่มี = R3.9 ทุน≈ขาย÷2
   const selAddons = opt.addons || {};
   let addonTotal = 0, addonCostExplicit = 0, addonSellImplicit = 0;
+  let fixedSellTotal = 0, fixedSellCost = 0;   // มอเตอร์ขายฟิก (ไม่ผ่านสูตรกำไร)
   for (const ad of (prod.addons || [])) {
     const rr = computeAddon(ad, selAddons[ad], { W, H, P, area, opt, PB });
     if (!rr) continue;
@@ -672,6 +689,9 @@ export function computeCost(PB, prod, opt) {
       if (!r) continue;
       if (r.cat === 'warn') { lines.push({ cat: 'warn', name: r.label, amount: 0 }); continue; }   // คำเตือน (เช่น มอเตอร์เกินพื้นที่) — โชว์ ไม่บวกเงิน
       if (r.amount > 0) {
+        // fixedSell = ชีตเขียน "ขายฟิก ไม่ผ่านกำไร" (มอเตอร์หลังคาเลื่อน / ประตูรั้ว / เดินไฟ)
+        //   ทุนเข้า "ทุนรวม" ตามปกติ แต่ไม่เข้าฐานคิดกำไร · ราคาขายบวกทับตอนท้าย
+        if (r.fixedSell) { fixedSellTotal += r.amount; fixedSellCost += (r.cost || 0); lines.push({ cat: 'addon', name: r.label, qty: r.qty || 1, unit: r.unit || '', unitPrice: r.unitPrice || r.amount, amount: round2(r.amount), ...(r.cost != null ? { cost: round2(r.cost) } : {}), fixedSell: true }); continue; }
         addonTotal += r.amount;
         if (r.cost != null) addonCostExplicit += r.cost;     // ทุนจริง (มอเตอร์ ฯลฯ)
         else addonSellImplicit += r.amount;                  // R3.9 → ÷2
@@ -686,13 +706,26 @@ export function computeCost(PB, prod, opt) {
   // #1 แผ่นคอมโพสิต/ลูกฟูก แทนกระจก (sell-based) — บวกเข้ายอดขาย + ถอดทุนที่ markup กลาง (เหมือน add-on R3.9)
   if (panelSell > 0) { addonTotal += panelSell; addonSellImplicit += panelSell; }
   if (addonTotal > 0) { sellBeforeLabor += addonTotal; sellMfgOnly += addonTotal; sellWithInstall += addonTotal; }
+  // ราคาตายตัวไซซ์เล็ก (ชีตเขียน "ราคาขาย/ชุด — ถ้าพื้นที่ < N ตร.ม.") — ทับราคาที่คำนวณได้
+  if (SELLM && SELLM.small && area > 0 && area < SELLM.small.maxArea && sellWithInstall > 0) {
+    const k = SELLM.small.price / sellWithInstall;
+    sellWithInstall = SELLM.small.price;
+    sellMfgOnly = ceil100(sellMfgOnly * k); sellBeforeLabor = ceil100(sellBeforeLabor * k);
+  }
+  // ราคาขายขั้นต่ำ/ชุด (ชีต Shower แถว 54) — บานตาย 14,000 · มีบานเปิด/เลื่อน 15,000
+  if (SELLM && SELLM.floor) {
+    const min = /บานเปิด|บานเลื่อน/.test(String(form || '')) ? SELLM.floor.withDoor : SELLM.floor.base;
+    if (sellWithInstall < min) { sellMfgOnly = ceil100(sellMfgOnly * (min / Math.max(1, sellWithInstall))); sellWithInstall = min; }
+  }
+  // มอเตอร์ขายฟิก — บวกท้ายสุด ไม่ผ่านกำไร (ชีต "★ ราคาขาย ... + IF(เลื่อน, ค่ามอเตอร์ขาย, 0)")
+  if (fixedSellTotal > 0) { sellMfgOnly += fixedSellTotal; sellWithInstall += fixedSellTotal; }
   // ราคาขายส่ง (ผลิตอย่างเดียว ไม่ไปติดตั้ง) — ลดจากยอดรวมอีก % ตามนโยบายขายส่ง (เจ้าของสั่ง 7 ส.ค.69)
   //   คิดจากยอด "ขายผลิตอย่างเดียว" ที่รวมของเสริมแล้ว → ราคาที่ลูกค้าเห็น = ราคาผลิต − 10%
   //   ⚠ sellMfgOnly ตัวเดิมต้องคงไว้เป็นค่าตามชีตคิดทุน (ด่าน verify-r40 เทียบตัวนี้) — ส่วนลดเป็นชั้นนโยบาย แยกกัน
   const wsPct = PB.WHOLESALE_DISCOUNT_PCT != null ? Number(PB.WHOLESALE_DISCOUNT_PCT) : 0;
   const sellMfgOnlyNet = wsPct > 0 ? ceil100(sellMfgOnly * (1 - wsPct / 100)) : sellMfgOnly;
   // ทุนออปชั่น = ทุนจริง(มอเตอร์) + ถอดทุนจากราคาขาย R3.9 ตาม markup กลาง (÷(1+กำไร%) · เดิม ÷2 ตายตัว=ผูก 100% · แก้ 1ก.ค. ให้ขยับ markup ไม่เพี้ยน) · ที่ 100% = เท่าเดิม
-  const addonCost = round2(addonCostExplicit + addonSellImplicit / (1 + (profitPct || 100) / 100));
+  const addonCost = round2(addonCostExplicit + fixedSellCost + addonSellImplicit / (1 + (profitPct || 100) / 100));
   const costBase = sellCostOverride != null ? sellCostOverride : costTotal;
   const costTotalOut = round2(costBase + addonCost);
   return {
@@ -703,7 +736,9 @@ export function computeCost(PB, prod, opt) {
     },
     profit: round2(sellWithInstall - costTotalOut),  // กำไร (ขาย − ทุน)
     glassArea: round2(glassArea), aluKg: round2(aluKg),
-    profit3: { mat: pctMat, prod: pctProd, inst: pctInst },   // % ที่ใช้จริง (หน้าจอเอาไปโชว์/แก้)
+    profit3: sellPct || { mat: pctMat, prod: pctProd, inst: pctInst },   // % ที่ใช้จริง (หน้าจอเอาไปโชว์/แก้)
+    // สูตรราคาขายตามไฟล์: เป้ากำไรสุทธิ + ตัวปรับอัตโนมัติ + ค่าดำเนินการ (null = รุ่นที่ยังใช้สูตรเดิม)
+    sellModel: SELLM ? { target: sellTarget, adj: sellAdj, overheadPct: SELLM.overheadPct, shape: SELLM.shape, small: SELLM.small || null, fixedSell: fixedSellTotal || 0 } : null,
     // อุปกรณ์จากใบตัด: ใช้จริงไหม + รหัสไหนยังไม่ตั้งราคาในสโตร์ (หน้าจอเอาไปเตือน)
     hwFromCutlist: !!hwLines, hwMissing,
     aluFromCutlist: !!(opt.aluLines && opt.aluLines.length),
@@ -731,6 +766,52 @@ function autoSell(cost, ctx) {
   const pct = Number(ctx && ctx.opt && ctx.opt.profitPct);
   return ceil100((+cost || 0) * (1 + (Number.isFinite(pct) ? pct : 100) / 100));
 }
+/**
+ * ราคาขายตามไฟล์ถอดทุน v20.1 — บล็อกท้ายชีตคิดทุนทุกรุ่น
+ * ─────────────────────────────────────────────────────────────────────────────
+ *   🎯 กำไรสุทธิที่ต้องการ %  = เป้าหมาย (หลังหักค่าดำเนินการแล้ว)
+ *   สัดส่วนกำไร วัสดุ·ผลิต·ติดตั้ง = ratio ล็อกไว้ต่อรุ่น
+ *   ตัวปรับอัตโนมัติ (adj) = แก้ย้อนจากเป้าหมาย → กำไร 3 ก้อนเปลี่ยนตามขนาดงาน (ตรึงเป็นค่าคงที่ไม่ได้)
+ *   ค่าดำเนินการ % (30) = บวกทับราคาขาย · ในไฟล์เขียน "ราคาขาย × 30 ÷ 130"
+ *
+ * 2 ทรงสูตร
+ *   bucket = ชีตบาน — ปัดร้อยทีละก้อน (วัสดุ+ผลิต) → ×(1+ค่าดำเนินการ) · ติดตั้งคิดแยกแล้วบวก
+ *   single = ชีตหลังคา — รวมก้อนเดียวแล้วค่อย ×(1+ค่าดำเนินการ) · วัสดุใช้ adj ตรง ๆ ไม่ปัด %
+ */
+export function sellFromTarget({ mat, labProd, labInst, target, ratios, overheadPct = 30, shape = 'bucket' }) {
+  const oh = Number(overheadPct) || 0, BASE = 100 / (100 + oh);
+  const [rM, rP, rI] = ratios;
+  const total = mat + labProd + labInst;
+  const denom = (mat * rM + labProd * rP + labInst * rI) * (1 + oh / 100);
+  const div = BASE - (Number(target) || 0) / 100;
+  //  เป้ากำไรสูงกว่าเพดาน (BASE) = สูตรระเบิด → กันไว้ ใช้ adj = 1 (เท่ากับ ratio ล้วน)
+  const adj = (div > 0 && denom > 0) ? (total / div) / denom : 1;
+  const pM = Math.round((rM * adj - 1) * 100), pP = Math.round((rP * adj - 1) * 100), pI = Math.round((rI * adj - 1) * 100);
+  if (shape === 'single') {
+    // ชีตหลังคา D25: ROUNDUP(ROUNDUP(วัสดุ×ratio×adj + ผลิต×(1+%) + ติดตั้ง×(1+%)) × (1+ค่าดำเนินการ))
+    const inner = ceil100(mat * rM * adj + labProd * (1 + pP / 100) + labInst * (1 + pI / 100));
+    const mfg = ceil100(ceil100(mat * rM * adj + labProd * (1 + pP / 100)) * (1 + oh / 100));
+    return { beforeLabor: ceil100(ceil100(mat * rM * adj) * (1 + oh / 100)), mfgOnly: mfg, withInstall: ceil100(inner * (1 + oh / 100)), pct: { mat: pM, prod: pP, inst: pI }, adj };
+  }
+  const matSell = ceil100(mat * (1 + pM / 100));
+  const makePart = ceil100(matSell + ceil100(labProd * (1 + pP / 100)));
+  const withOverhead = ceil100(makePart * (1 + oh / 100));
+  const installPart = ceil100(ceil100(labInst * (1 + pI / 100)) * (1 + oh / 100));
+  return { beforeLabor: ceil100(matSell * (1 + oh / 100)), mfgOnly: withOverhead, withInstall: withOverhead + installPart, pct: { mat: pM, prod: pP, inst: pI }, adj };
+}
+
+/** เป้ากำไรหลังคา — เลือกตามวัสดุก่อน แล้วค่อยทรง (ชีต B63-B67 · E66/E67 สำหรับทรงเลื่อน) */
+export function roofTargetOf(SM, material, prodId) {
+  const t = SM.targets || {};
+  const m = String(material || '');
+  const sliding = prodId === 'roof_slide';
+  const gable = prodId === 'roof_gable' || prodId === 'gable_multi';
+  if (/^กระจก/.test(m)) return sliding ? t.glassSlide : t.glass;
+  if (m.startsWith('เมทัลชีท')) return sliding ? t.metalSlide : t.metal;
+  if (sliding) return t.slide;
+  return gable ? t.gable : t.lean;
+}
+
 function motorCost(PB, key, fallback) { const v = PB && PB.MOTOR && PB.MOTOR[key]; return (typeof v === 'number') ? v : fallback; }
 /**
  * มอเตอร์ / ชุดออโต้ ที่แต่ละรุ่นเลือกได้ — ตรงกับชีต "ราคาออโต้" ในไฟล์ถอดทุน (หมวดใครหมวดมัน)

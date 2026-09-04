@@ -3504,5 +3504,481 @@
       "prod": 50,
       "inst": 100
     }
+  },
+  "SELL": {
+    "_meta": {
+      "source": "ถอดทุน_รวมทั้งหมด v20.1.xlsx",
+      "generated": "2026-09-04",
+      "note": "สร้างด้วย scripts/extract-sell-model.mjs — ห้ามแก้ด้วยมือ"
+    },
+    "overheadPct": 30,
+    "roundTo": 100,
+    "products": {
+      "sms_slide": {
+        "sheet": "คิดทุน SMS",
+        "target": 40,
+        "ratios": [
+          1.723,
+          1.723,
+          1.7
+        ],
+        "overheadPct": 30,
+        "shape": "bucket",
+        "small": {
+          "maxArea": 2,
+          "price": 15000
+        }
+      },
+      "euro_slide": {
+        "sheet": "คิดทุน ยูโร",
+        "target": 30,
+        "ratios": [
+          1.551,
+          1.723,
+          2.154
+        ],
+        "overheadPct": 30,
+        "shape": "bucket",
+        "small": {
+          "maxArea": 2,
+          "price": 18000
+        }
+      },
+      "slimlux": {
+        "sheet": "คิดทุน SlimLux",
+        "target": 30,
+        "ratios": [
+          1.895,
+          1.723,
+          2.154
+        ],
+        "overheadPct": 30,
+        "shape": "bucket"
+      },
+      "eseries": {
+        "sheet": "คิดทุน E-series",
+        "target": 30,
+        "ratios": [
+          1.723,
+          1.723,
+          2.154
+        ],
+        "overheadPct": 30,
+        "shape": "bucket",
+        "small": {
+          "maxArea": 2,
+          "price": 18000
+        }
+      },
+      "topslide": {
+        "sheet": "คิดทุน บานเลื่อนรางบน",
+        "target": 30,
+        "ratios": [
+          1.723,
+          1.723,
+          2.154
+        ],
+        "overheadPct": 30,
+        "shape": "bucket"
+      },
+      "bar_slide": {
+        "sheet": "คิดทุน บานระแนงเลื่อน",
+        "target": 30,
+        "ratios": [
+          1.723,
+          1.723,
+          2.154
+        ],
+        "overheadPct": 30,
+        "shape": "bucket"
+      },
+      "velora": {
+        "sheet": "คิดทุน Velora",
+        "target": 35,
+        "ratios": [
+          1.895,
+          1.723,
+          2.154
+        ],
+        "overheadPct": 30,
+        "shape": "bucket"
+      },
+      "open_door": {
+        "sheet": "คิดทุน บานเปิด",
+        "target": 30,
+        "ratios": [
+          1.723,
+          1.723,
+          2.154
+        ],
+        "overheadPct": 30,
+        "shape": "bucket"
+      },
+      "pivot": {
+        "sheet": "คิดทุน บานหมุน",
+        "target": 35,
+        "ratios": [
+          1.723,
+          1.723,
+          2.154
+        ],
+        "overheadPct": 30,
+        "shape": "bucket"
+      },
+      "bansolid": {
+        "sheet": "คิดทุน บานโซลิด",
+        "target": 35.15,
+        "ratios": [
+          1.723,
+          1.723,
+          1.8926
+        ],
+        "overheadPct": 30,
+        "shape": "bucket"
+      },
+      "pcdoor": {
+        "sheet": "คิดทุน PC Door",
+        "target": 35,
+        "ratios": [
+          1.895,
+          1.723,
+          2.154
+        ],
+        "overheadPct": 30,
+        "shape": "bucket"
+      },
+      "awning": {
+        "sheet": "คิดทุน กระทุ้ง",
+        "target": 35,
+        "ratios": [
+          1.539,
+          1.539,
+          2.308
+        ],
+        "overheadPct": 30,
+        "shape": "bucket"
+      },
+      "banyok": {
+        "sheet": "คิดทุน บานยก",
+        "target": 40,
+        "ratios": [
+          1.539,
+          1.539,
+          1.924
+        ],
+        "overheadPct": 30,
+        "shape": "bucket"
+      },
+      "banklet": {
+        "sheet": "คิดทุน บานเกล็ด",
+        "target": 30,
+        "ratios": [
+          1.723,
+          1.723,
+          2.154
+        ],
+        "overheadPct": 30,
+        "shape": "bucket"
+      },
+      "folding": {
+        "sheet": "คิดทุน เฟี้ยม",
+        "target": 30,
+        "ratios": [
+          1.723,
+          1.723,
+          2.154
+        ],
+        "overheadPct": 30,
+        "shape": "bucket"
+      },
+      "fold_euro": {
+        "sheet": "คิดทุน เฟี้ยมยูโร",
+        "target": 35,
+        "ratios": [
+          1.723,
+          1.723,
+          2.154
+        ],
+        "overheadPct": 30,
+        "shape": "bucket"
+      },
+      "fold_lift": {
+        "sheet": "คิดทุน เฟี้ยมยก",
+        "target": 40,
+        "ratios": [
+          1.723,
+          1.723,
+          2.154
+        ],
+        "overheadPct": 30,
+        "shape": "bucket"
+      },
+      "fixed": {
+        "sheet": "คิดทุน ติดตาย",
+        "target": 30,
+        "ratios": [
+          1.895,
+          1.723,
+          2.154
+        ],
+        "overheadPct": 30,
+        "shape": "bucket"
+      },
+      "curve_fixed": {
+        "sheet": "คิดทุน ตายดัดโค้ง",
+        "target": 35,
+        "ratios": [
+          1.539,
+          1.539,
+          1.924
+        ],
+        "overheadPct": 30,
+        "shape": "bucket"
+      },
+      "curve_open": {
+        "sheet": "คิดทุน เปิดดัดโค้ง",
+        "target": 35,
+        "ratios": [
+          1.723,
+          1.723,
+          2.154
+        ],
+        "overheadPct": 30,
+        "shape": "bucket"
+      },
+      "louver": {
+        "sheet": "คิดทุน ระแนง",
+        "target": 35,
+        "ratios": [
+          1.622,
+          1.431,
+          1.431
+        ],
+        "overheadPct": 30,
+        "shape": "bucket"
+      },
+      "louver_slip": {
+        "sheet": "คิดทุน ระแนงสลับ",
+        "target": 35,
+        "ratios": [
+          1.65,
+          1.5,
+          1.4
+        ],
+        "overheadPct": 30,
+        "shape": "bucket"
+      },
+      "louver_rotate": {
+        "sheet": "คิดทุน ระแนงหมุน",
+        "target": 25,
+        "ratios": [
+          1.5,
+          1.5,
+          1.4
+        ],
+        "overheadPct": 30,
+        "shape": "bucket"
+      },
+      "gate": {
+        "sheet": "คิดทุน ประตูรั้ว",
+        "target": 35,
+        "ratios": [
+          1.622,
+          1.431,
+          1.431
+        ],
+        "overheadPct": 30,
+        "shape": "bucket"
+      },
+      "shower": {
+        "sheet": "คิดทุน ชุด Shower",
+        "target": 40,
+        "ratios": [
+          1.539,
+          1.539,
+          1.924
+        ],
+        "overheadPct": 30,
+        "shape": "bucket",
+        "floor": {
+          "base": 14000,
+          "withDoor": 15000,
+          "note": "ชีต คิดทุน ชุด Shower แถว 54 — บานตาย 14,000 · บานเปิด/บานเลื่อน 15,000"
+        }
+      },
+      "handrail": {
+        "sheet": "คิดทุน ราวกันตก",
+        "target": 55,
+        "ratios": [
+          1.539,
+          1.539,
+          2.308
+        ],
+        "overheadPct": 30,
+        "shape": "bucket"
+      },
+      "cabinet_face": {
+        "sheet": "คิดทุน บานตู้ Futuretech",
+        "target": 50,
+        "ratios": [
+          1.539,
+          1.539,
+          1.924
+        ],
+        "overheadPct": 30,
+        "shape": "bucket"
+      },
+      "roof": {
+        "sheet": "คิดทุน หลังคา (รวม)",
+        "shape": "single",
+        "overheadPct": 30,
+        "targets": {
+          "lean": 20,
+          "slide": 25,
+          "gable": 25,
+          "glass": 45,
+          "glassSlide": 25,
+          "metal": 30,
+          "metalSlide": 25
+        },
+        "ratios": [
+          1.465,
+          1.292,
+          1.292
+        ],
+        "ratioMaterialGlass": 1.895
+      },
+      "roof_gable": {
+        "sheet": "คิดทุน หลังคา (รวม)",
+        "shape": "single",
+        "overheadPct": 30,
+        "targets": {
+          "lean": 20,
+          "slide": 25,
+          "gable": 25,
+          "glass": 45,
+          "glassSlide": 25,
+          "metal": 30,
+          "metalSlide": 25
+        },
+        "ratios": [
+          1.465,
+          1.292,
+          1.292
+        ],
+        "ratioMaterialGlass": 1.895
+      },
+      "roof_slide": {
+        "sheet": "คิดทุน หลังคา (รวม)",
+        "shape": "single",
+        "overheadPct": 30,
+        "targets": {
+          "lean": 20,
+          "slide": 25,
+          "gable": 25,
+          "glass": 45,
+          "glassSlide": 25,
+          "metal": 30,
+          "metalSlide": 25
+        },
+        "ratios": [
+          1.465,
+          1.292,
+          1.292
+        ],
+        "ratioMaterialGlass": 1.895
+      },
+      "roof_multi": {
+        "sheet": "คิดทุน หลังคา (รวม)",
+        "shape": "single",
+        "overheadPct": 30,
+        "targets": {
+          "lean": 20,
+          "slide": 25,
+          "gable": 25,
+          "glass": 45,
+          "glassSlide": 25,
+          "metal": 30,
+          "metalSlide": 25
+        },
+        "ratios": [
+          1.465,
+          1.292,
+          1.292
+        ],
+        "ratioMaterialGlass": 1.895
+      },
+      "gable_multi": {
+        "sheet": "คิดทุน หลังคา (รวม)",
+        "shape": "single",
+        "overheadPct": 30,
+        "targets": {
+          "lean": 20,
+          "slide": 25,
+          "gable": 25,
+          "glass": 45,
+          "glassSlide": 25,
+          "metal": 30,
+          "metalSlide": 25
+        },
+        "ratios": [
+          1.465,
+          1.292,
+          1.292
+        ],
+        "ratioMaterialGlass": 1.895
+      },
+      "glasshouse": {
+        "sheet": "คิดทุน หลังคา (รวม)",
+        "shape": "single",
+        "overheadPct": 30,
+        "targets": {
+          "lean": 20,
+          "slide": 25,
+          "gable": 25,
+          "glass": 45,
+          "glassSlide": 25,
+          "metal": 30,
+          "metalSlide": 25
+        },
+        "ratios": [
+          1.465,
+          1.292,
+          1.292
+        ],
+        "ratioMaterialGlass": 1.895
+      },
+      "glasshouse_multi": {
+        "sheet": "คิดทุน หลังคา (รวม)",
+        "shape": "single",
+        "overheadPct": 30,
+        "targets": {
+          "lean": 20,
+          "slide": 25,
+          "gable": 25,
+          "glass": 45,
+          "glassSlide": 25,
+          "metal": 30,
+          "metalSlide": 25
+        },
+        "ratios": [
+          1.465,
+          1.292,
+          1.292
+        ],
+        "ratioMaterialGlass": 1.895
+      }
+    },
+    "motorSell": {
+      "roof_slide": {
+        "first": 35000,
+        "next": 25000,
+        "sensor": 2000
+      },
+      "gate": {
+        "motor": 30000,
+        "wire": 2000
+      }
+    }
   }
 }

@@ -80,6 +80,33 @@ const LABOR_SRC = {
   "หลังคาเลื่อน": { hp: 20, jp: 0.65, np: 2, hi: 24, ki: 0.41, ni: 4, rate: 87.5 },
 };
 /** แปลงแถวในชีต "ค่าแรง" → บาท {pBase,pRate,iBase,iRate} (สูตรเดียวกับ B–E ในชีต) */
+/**
+ * ราคาขายตามบล็อกท้ายชีตคิดทุน (ไฟล์ v20.1) — เขียนใหม่ในเทส ไม่ import จาก engine
+ *   เป้ากำไรสุทธิ % + สัดส่วนกำไร 3 ตัว → ตัวปรับอัตโนมัติ → กำไร 3 ก้อน → ปัดร้อย → + ค่าดำเนินการ 30%
+ */
+function sheetSell({ mat, labProd, labInst, target, ratios, overheadPct = 30, shape = 'bucket' }) {
+  const oh = overheadPct, BASE = 100 / (100 + oh);
+  const [rM, rP, rI] = ratios;
+  const adj = ((mat + labProd + labInst) / (BASE - target / 100)) / ((mat * rM + labProd * rP + labInst * rI) * (1 + oh / 100));
+  const pM = Math.round((rM * adj - 1) * 100), pP = Math.round((rP * adj - 1) * 100), pI = Math.round((rI * adj - 1) * 100);
+  if (shape === 'single') {
+    const mfg = ceil100(ceil100(mat * rM * adj + labProd * (1 + pP / 100)) * (1 + oh / 100));
+    const all = ceil100(ceil100(mat * rM * adj + labProd * (1 + pP / 100) + labInst * (1 + pI / 100)) * (1 + oh / 100));
+    return { mfgOnly: mfg, withInstall: all };
+  }
+  const makePart = ceil100(ceil100(mat * (1 + pM / 100)) + ceil100(labProd * (1 + pP / 100)));
+  const withOverhead = ceil100(makePart * (1 + oh / 100));
+  const installPart = ceil100(ceil100(labInst * (1 + pI / 100)) * (1 + oh / 100));
+  return { mfgOnly: withOverhead, withInstall: withOverhead + installPart };
+}
+/** เป้ากำไรหลังคา — วัสดุมาก่อนทรง (ชีต B63-B67) */
+function roofTarget(SM, material, id) {
+  const t = SM.targets, sliding = id === 'roof_slide', gable = id === 'roof_gable' || id === 'gable_multi';
+  if (/^กระจก/.test(String(material || ''))) return sliding ? t.glassSlide : t.glass;
+  if (String(material || '').startsWith('เมทัลชีท')) return sliding ? t.metalSlide : t.metal;
+  return sliding ? t.slide : (gable ? t.gable : t.lean);
+}
+
 function laborFromSheet(s) {
   if (s.baht) return { pBase: s.baht[0], pRate: s.baht[1], iBase: s.baht[2], iRate: s.baht[3] };
   // ⚠ ห้ามปัดทศนิยม — เอนจินใช้ค่าเต็มจากตาราง (เช่น SlimLux ติดตั้ง/ตร.ม. = 65.625)
@@ -238,11 +265,27 @@ for (const a of ANCHORS) {
   const wInst = Math.max(0, L.iBase + L.iRate * area * rateOn) * lp;
   // กำไรแยก 3 ส่วน ตามบล็อก "⚙ ตั้งค่ากำไร" ท้ายชีตคิดทุน (ไฟล์ v9)
   //   ปัดร้อย "ทีละก้อน" — วัสดุ / ค่าแรงผลิต / ค่าแรงติดตั้ง (ตรวจตรงเป๊ะกับชีต SMS + ยูโร)
-  const DP = PB.PROFIT[a.id] ?? PB.PROFIT.__default;
-  const pM = a.in.profitPct ?? DP.mat, pP = a.in.profitPct ?? DP.prod, pI = a.in.profitPct ?? DP.inst;
-  const wantMat = ceil100(a.cost * (1 + pM / 100));
-  const wantMfg = wantMat + ceil100(wProd * (1 + pP / 100));
-  const wantInst = wantMfg + ceil100(wInst * (1 + pI / 100));
+  // ราคาขาย = สูตรในไฟล์ (เป้ากำไรสุทธิ + ค่าดำเนินการ 30%) · รุ่นที่ยังไม่มีในตาราง = สูตรกำไรคงที่เดิม
+  const SM = (PB.SELL && PB.SELL.products && PB.SELL.products[a.id]) || null;
+  let wantMfg, wantInst;
+  if (SM) {
+    const mat0 = a.in.material ?? prod.defMaterial;
+    const target = SM.shape === 'single' ? roofTarget(SM, mat0, a.id) : SM.target;
+    const ratios = (SM.shape === 'single' && /^กระจก/.test(String(mat0 || '')) && SM.ratioMaterialGlass)
+      ? [SM.ratioMaterialGlass, SM.ratios[1], SM.ratios[2]] : SM.ratios;
+    let S = sheetSell({ mat: a.cost, labProd: wProd, labInst: wInst, target, ratios, overheadPct: SM.overheadPct, shape: SM.shape });
+    wantMfg = S.mfgOnly; wantInst = S.withInstall;
+    const areaNow = (a.in.w * a.in.h) / 10000;
+    if (SM.small && areaNow > 0 && areaNow < SM.small.maxArea && wantInst > 0) {
+      wantMfg = ceil100(wantMfg * (SM.small.price / wantInst)); wantInst = SM.small.price;
+    }
+  } else {
+    const DP = PB.PROFIT[a.id] ?? PB.PROFIT.__default;
+    const pM = a.in.profitPct ?? DP.mat, pP = a.in.profitPct ?? DP.prod, pI = a.in.profitPct ?? DP.inst;
+    const wantMat = ceil100(a.cost * (1 + pM / 100));
+    wantMfg = wantMat + ceil100(wProd * (1 + pP / 100));
+    wantInst = wantMfg + ceil100(wInst * (1 + pI / 100));
+  }
   check(`ค่าแรงผลิต (${shape})`, r.labor.prod, Math.round(wProd * 100) / 100, 1);
   check('ค่าแรงติดตั้ง', r.labor.install, Math.round(wInst * 100) / 100, 1);
   check('ขายผลิตอย่างเดียว (ตามชีต)', r.sell.mfgOnly, wantMfg, 1);
@@ -271,7 +314,8 @@ console.log('▶ จำนวนบานมากขึ้นแพงขึ้
 }
 console.log('▶ กำไร 100% = ceil100(ทุน×2):');
 {
-  const r = computeCost(PB, PRODUCTS.sms_slide, { w: 600, h: 300, p: 3, form: 'อิสระ', profitPct: 100 });
+  // โหมดปรับกำไรเอง (profitManual) — โหมดปกติใช้เป้ากำไรจากไฟล์
+  const r = computeCost(PB, PRODUCTS.sms_slide, { w: 600, h: 300, p: 3, form: 'อิสระ', profitPct: 100, profitManual: true });
   check('ขายก่อนค่าแรง', r.sell.beforeLabor, Math.ceil(r.cost.total * 2 / 100) * 100, 0);
 }
 
@@ -436,10 +480,12 @@ console.log('\n═══ ②g ราคาเส้นแยกสีจริ�
   check('ลายไม้สักทอง ≠ มะฮอกกานี (แยกราคาได้แล้ว)', maho > teak ? 1 : 0, 1, 0);
   // 3 ก.ย.69 ทุกตัว +3,200 = ค่าแรง SMS ตามไฟล์ v20.1 (ผลิต 787.5+43.31 · ติดตั้ง 1,225+29.75)
   //   เดิมเป็นค่าแรงจากไฟล์ ถอดทุน_รวมทั้งหมด.xlsx ตัวแรก · ทุนวัสดุไม่ขยับ (ด่านทุนอยู่ ANCHORS)
-  check('SMS ลายไม้สักทอง', teak, 61100, 1);
-  check('SMS มะฮอกกานี', maho, 70400, 1);
-  check('SMS เทาซาฮาร่า', sell('sahara', 'sahara'), 48500, 1);
-  check('SMS สีขาว', sell('white', 'white'), 46400, 1);
+  // 3 ก.ย.69 ใช้สูตรราคาขายตามไฟล์ (เป้ากำไรสุทธิ SMS 40% + ค่าดำเนินการ 30%) แทนกำไรคงที่ 100/100/200
+  //   ทุนวัสดุไม่ขยับ (ด่านทุนอยู่ ANCHORS) — ชุดนี้ตรวจว่า "สีต่างกัน ราคาต้องต่างกัน" เป็นหลัก
+  check('SMS ลายไม้สักทอง', teak, 80300, 1);
+  check('SMS มะฮอกกานี', maho, 93000, 1);
+  check('SMS เทาซาฮาร่า', sell('sahara', 'sahara'), 63600, 1);
+  check('SMS สีขาว', sell('white', 'white'), 60700, 1);
 
   const az = computeCost(PB, PRODUCTS.sms_slide, { w: 600, h: 300, p: 3, form: 'อิสระ', color: 'special', colorKey: 'aztec' });
   check('Aztec: ค่าเปิดตู้อบยังคิดอยู่ (คงที่ ไม่ผูก กก.)', az.cost.openOven, PB.BAKE_OPEN_OVEN, 0.01);
@@ -491,8 +537,10 @@ console.log("\n═══ ②h กำไรแยก 3 ส่วน — ค่า
   check("ทวนสูตรกับชีต ยูโร: ผลิต+ติดตั้ง", eMfg + ceil100(1602.4 * 3), 67100, 0);
 
   // engine ต้องคิดแบบเดียวกัน + ปรับ % แยกส่วนได้จริง
+  // บล็อกนี้ทดสอบ "โหมดปรับกำไรเอง" (ผู้ใช้กดแก้ % ในหน้าจอ) → ต้องส่ง profitManual
+  //   โหมดปกติใช้เป้ากำไรจากไฟล์ (PB.SELL) แทน — ทดสอบที่ ANCHORS ด้านบนแล้ว
   const run = (o) => computeCost(PB, PRODUCTS.sms_slide,
-    { w: 600, h: 300, p: 3, form: "อิสระ", color: "white", colorKey: "white", ...o });
+    { w: 600, h: 300, p: 3, form: "อิสระ", color: "white", colorKey: "white", profitManual: true, ...o });
   const base = run({});
   check("engine ใช้ค่าตั้งต้นของรุ่น (100/100/200)", base.profit3.inst, 200, 0);
   check("ขายวัสดุ = ปัดร้อย(ทุน × 2)", base.sell.beforeLabor, ceil100(base.cost.total * 2), 1);
