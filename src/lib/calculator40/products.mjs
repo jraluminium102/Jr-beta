@@ -806,27 +806,33 @@ export const PRODUCTS = {
       DW: "form==='ถ่วง'?0:1",   // แบบถ่วง = ใช้กล่องถ่วง ไม่ใช้สปริง/ตะขอ/กิ๊ป (ไฟล์ B23-B27)
     },
     alu: [
-      { code: 'B28015', name: 'กล่องร่องมีสกรู', price: 995, kg: 6.573, seg: 'W', count: '1' },
+      // 4 ก.ย.69 ยึดใบตัด FUJI HUNG (เจ้าของสั่ง "บานยก เอาตามใบตัด"):
+      //   B28015 = เสาเสริมเฟรมข้าง 2 ท่อน ตามความสูง (ไฟล์ v20 เขียน 1 ท่อน = กว้าง — ผิด)
+      { code: 'B28015', name: 'เสาเสริมเฟรมข้าง (JAMB)', price: 995, kg: 6.573, seg: 'H', count: '2' },
       { code: 'B28009', name: 'เฟรมบน', price: 1000, kg: 5.741, seg: 'W', count: '1' },
       { code: 'B28010', name: 'อแดปเตอร์บน', price: 395, kg: 2.24, seg: 'W', count: '1' },
       { code: 'B28014', name: 'เฟรมล่าง', price: 840, kg: 4.71, seg: 'W', count: '1' },
-      { code: 'B28012', name: 'อแดปเตอร์รูสกรู', price: 60, kg: 0.326, seg: 'W', count: '1' },
+      // B28012 = คิ้วยึดเสาเกี่ยว 2 ท่อน (ไฟล์ v20 เขียน 1 ท่อน)
+      { code: 'B28012', name: 'คิ้วยึดเสาเกี่ยว (ADAPTOR)', price: 60, kg: 0.326, seg: 'W', count: '2' },
       // รอบบาน × 2 บาน — ไฟล์: ((2*(กว้าง+สูง/2))*2/640)*เผื่อเศษ
-      { code: 'B28011', name: 'กรอบบาน (รอบบาน × 2 บาน)', price: 600, kg: 3.379, seg: '2*(W+H/2)', count: '2' },
+      //   B28011 แตกเป็น 2 บรรทัดตามใบตัด (แนวนอน 4 ท่อน + แนวตั้ง 4 ท่อน) — ยาวรวมเท่าเดิม ทุนไม่ขยับ
+      { code: 'B28011', name: 'กรอบบาน แนวนอน (SASH↔)', price: 600, kg: 3.379, seg: 'W', count: '4' },
+      { code: 'B28011', name: 'กรอบบาน แนวตั้ง (SASH↕)', price: 600, kg: 3.379, seg: 'H/2', count: '4' },
       { code: 'B28013', name: 'เสาเกี่ยว/ตบเกี่ยว (แนวนอน 2 ท่อน)', price: 195, kg: 1.094, seg: 'W', count: '2' },
       { code: 'B10004', name: 'รางข้าง/เฟรมข้าง (2 ท่อน สูงเท่าช่อง)', price: 1175, kg: 6.355, seg: 'H', count: '2' },
     ],
     glass: 'W*H',
+    // อุปกรณ์บานยกทั้งชุด = ของสั่งตามงาน ไม่สต็อก (เจ้าของสั่ง 4 ก.ย.69) → ไม่ต้องผูกรหัสสโตร์
     hardware: [
-      { name: 'กล่องอุปกรณ์', needCode: true, price: 1350, unit: 'ชุด', count: "form==='ถ่วง'?0:1" },
-      { name: 'กล่องอุปกรณ์ (ถ่วง)', needCode: true, price: 2520, unit: 'ชุด', count: "form==='ถ่วง'?1:0" },
-      { name: 'มือจับ', needCode: true, price: 60, unit: 'ตัว', count: '1' },
-      { name: 'ล๊อคกลาง', needCode: true, price: 70, unit: 'ตัว', count: '1' },
-      { name: 'คอยสปริง', needCode: true, price: 160, unit: 'ตัว', count: '2*DW' },
-      { name: 'ฝาปิดฝุ่น', needCode: true, price: 10, unit: 'ตัว', count: '2*DW' },
-      { name: 'ตลับตะขอเกี่ยว', needCode: true, price: 130, unit: 'ตัว', count: '4*DW' },
-      { name: 'กิ๊ปล็อค', needCode: true, price: 20, unit: 'ตัว', count: '4*DW' },
-      { name: 'กล่องใส่สปริง', needCode: true, price: 30, unit: 'ตัว', count: '2*DW' },
+      { name: 'กล่องอุปกรณ์', orderOnly: true, price: 1350, unit: 'ชุด', count: "form==='ถ่วง'?0:1" },
+      { name: 'กล่องอุปกรณ์ (ถ่วง)', orderOnly: true, price: 2520, unit: 'ชุด', count: "form==='ถ่วง'?1:0" },
+      { name: 'มือจับ', orderOnly: true, price: 60, unit: 'ตัว', count: '1' },
+      { name: 'ล๊อคกลาง', orderOnly: true, price: 70, unit: 'ตัว', count: '1' },
+      { name: 'คอยสปริง', orderOnly: true, price: 160, unit: 'ตัว', count: '2*DW' },
+      { name: 'ฝาปิดฝุ่น', orderOnly: true, price: 10, unit: 'ตัว', count: '2*DW' },
+      { name: 'ตลับตะขอเกี่ยว', orderOnly: true, price: 130, unit: 'ตัว', count: '4*DW' },
+      { name: 'กิ๊ปล็อค', orderOnly: true, price: 20, unit: 'ตัว', count: '4*DW' },
+      { name: 'กล่องใส่สปริง', orderOnly: true, price: 30, unit: 'ตัว', count: '2*DW' },
     ],
     consum: [
       SILICONE,
@@ -2232,7 +2238,10 @@ export const PRODUCTS = {
     hardware: [
       { name: 'จุดหมุน (2 ตัว/บาน)', sku: 'JR00269', price: 450, unit: 'ชุด', count: '2*P' },
       { name: 'มือจับ+ล็อค ใบหลัก', sku: 'JR00233', price: 1045, unit: 'ชุด', count: '1' },
-      { name: 'ชุดกลอน ใบลอง', sku: 'JR00195', price: 450, unit: 'ชุด', count: 'Math.max(P-1,0)' },
+      // 4 ก.ย.69 เจ้าของสั่ง: ใช้ CDQ JR00596 + ปลายกลอน JR00598 แทน "ชุดกลอน ใบลอง JR00195" (รหัสเก่าถูกลบทิ้ง)
+      //   ราคารวมเท่าเดิม 450 (ปลายกลอนรวมอยู่ใน CDQ แล้ว เหมือนบานเปิด)
+      { name: 'CDQ บานเปิด (บานลอง)', sku: 'JR00596', price: 450, unit: 'ตัว', count: 'Math.max(P-1,0)' },
+      { name: 'ปลายกลอน (บานลอง)', sku: 'JR00598', price: 0, unit: 'ตัว', count: 'Math.max(P-1,0)' },
       { name: 'น็อตเฟรม', sku: 'JR00212', price: 1, unit: 'ตัว', count: 'S?8:6' },
     ],
     consum: [
@@ -2312,7 +2321,10 @@ export const PRODUCTS = {
       { name: 'แผ่นรับล็อค', sku: 'JR00562', price: 62, unit: 'ชุด', count: '1' },
       { name: 'สปิงก็อท', sku: 'JR00592', price: 29, unit: 'ตัว', count: '4*P' },        // ใบตัดมี คิดราคาเดิมไม่มี
       { name: 'ฉากประคองมุม', sku: 'JR00267', price: 1.5, unit: 'ตัว', count: '8*P' },   // ใบตัดมี คิดราคาเดิมไม่มี
-      { name: 'ชุดกลอน ใบลอง', sku: 'JR00195', price: 450, unit: 'ชุด', count: 'Math.max(P-1,0)' },
+      // 4 ก.ย.69 เจ้าของสั่ง: ใช้ CDQ JR00596 + ปลายกลอน JR00598 แทน "ชุดกลอน ใบลอง JR00195" (รหัสเก่าถูกลบทิ้ง)
+      //   ราคารวมเท่าเดิม 450 (ปลายกลอนรวมอยู่ใน CDQ แล้ว เหมือนบานเปิด)
+      { name: 'CDQ บานเปิด (บานลอง)', sku: 'JR00596', price: 450, unit: 'ตัว', count: 'Math.max(P-1,0)' },
+      { name: 'ปลายกลอน (บานลอง)', sku: 'JR00598', price: 0, unit: 'ตัว', count: 'Math.max(P-1,0)' },
       { name: 'น็อตเฟรม 1"', sku: 'JR00864', price: 1, unit: 'ตัว', count: 'S?8:6' },
       // ลูกฟูก2ทาง 2 ฝั่ง (SlimLux ตัดไม่ต่อ) — จำนวนเส้น 6ม. ตามการตัด · Excel R24
       { name: 'ลูกฟูก2ทาง 2 ฝั่ง', sku: 'JR00249', price: 432, unit: 'เส้น', count: 'Math.ceil( Math.ceil((W*100/P)/10) * P * 2 / Math.max(1, Math.trunc(600/Math.max(1,H*100))) )' },

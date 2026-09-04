@@ -31,19 +31,28 @@ export function cutInputFromRecipe(recipe: any, opts?: { rawCompare?: boolean })
   const N = Math.max(1, Number(recipe.p) || 1);
   if (W <= 0 || H <= 0) return null;
 
+  // ── มุ้งบวกบาน: ฝั่งคิดราคาเก็บไว้ใน addons (mosquito = none/small/big/pleat/honey/roll) ──
+  //   เดิมไม่ได้ส่งต่อเลย → ใบตัดที่ออกให้ช่าง "ไม่มีเส้นมุ้ง" ทั้งที่ลูกค้าสั่งมุ้ง (เจ้าของท้วง 3 ก.ย.69)
+  //   เฟรมเล็ก/เฟรมใหญ่ = มุ้งที่ต้องตัดเส้นเอง → ส่งเข้าใบตัด
+  //   จีบ/รังผึ้ง/ม้วน = ของสำเร็จรูป สั่งมาทั้งชุด ไม่มีอะไรต้องตัด → ไม่ส่ง
+  const mq = String(recipe.addons?.mosquito ?? "none");
+  const meshKind = mq === "small" ? "เฟรมเล็ก" : mq === "big" ? "เฟรมใหญ่" : "ไม่มี";
+  const meshCount = Math.max(1, Number(recipe.addons?.mqPanels) || 1);
+
   let m: RecipeCutMap | null = null;
   switch (String(recipe.prodId)) {
     case "sms_slide": {
       // ราง: คิดราคาใช้ "รางกันน้ำ/รางเตี้ย (งานใน)" → ใบตัดใช้ "3รางเสียบ/รางเตี้ย7มม"
       const rail = recipe.spec?.bottomrail === "รางเตี้ย (งานใน)" ? "รางเตี้ย7มม" : "3รางเสียบ";
       const form = String(recipe.form ?? "");
-      if (form === "ลากจูง") m = { spec_id: "sms_slide_tow", input: { W, H, N, rail, honk: false } };
+      const mesh = { mesh: meshKind, meshCount };
+      if (form === "ลากจูง") m = { spec_id: "sms_slide_tow", input: { W, H, N, rail, honk: false, ...mesh } };
       else if (form === "เปิดคู่กลาง") {
         // สูตรใบตัด Excel เปิดคู่กลาง = คงที่ 4 บานเท่านั้น (QA HIGH: N อื่นคำนวณผิดเงียบ)
         // N ≠ 4 → ไม่ map (เข้า skipped ให้ผู้ใช้กรอกมือ) — ห้ามฝืนคิดผิด
-        m = N === 4 ? { spec_id: "sms_slide_center", input: { W, H, N: 4, rail, honk: false } } : null;
+        m = N === 4 ? { spec_id: "sms_slide_center", input: { W, H, N: 4, rail, honk: false, ...mesh } } : null;
       }
-      else m = { spec_id: "sms_slide_free", input: { W, H, N, rail, honk: false } }; // อิสระ/สลับ
+      else m = { spec_id: "sms_slide_free", input: { W, H, N, rail, honk: false, ...mesh } }; // อิสระ/สลับ
       break;
     }
     case "euro_slide": {
@@ -63,7 +72,9 @@ export function cutInputFromRecipe(recipe: any, opts?: { rawCompare?: boolean })
         //   ไฟล์มีชีต "เลื่อนสลับ2ราง" (F7977/F7979) ด้วย — ไม่เอาเข้าระบบ กันเลือกผิด
         // 4-5 บาน = เฟรม 2 ชุดต่อกัน (ชีต "เลื่อน4 (2)" / "เลื่อน5") — งานนอกเท่านั้น
         //   งานใน 4/5 บาน = เจ้าของตัดออก ไม่รับงาน (ต้องสั่งโปรไฟล์เพิ่มเยอะเกิน)
-        if (N === 2 || N === 3) m = { spec_id: "fuji_slide", input: { W, H, N, rail: `${N}ราง`, work, glass: glassMm(recipe.glassType), honk: false } };
+        // มุ้ง: ไฟล์มีชีตมุ้งเฉพาะ "สลับ 2 บาน" (นอก/ใน) → 3 บานขึ้นไปไม่ส่งมุ้ง (ไม่มีสูตร ห้ามเดา)
+        if (N === 2 || N === 3) m = { spec_id: "fuji_slide", input: { W, H, N, rail: `${N}ราง`, work, glass: glassMm(recipe.glassType), honk: false,
+          mesh: (N === 2 && meshKind !== "ไม่มี") ? "มี" : "ไม่มี" } };
         else if ((N === 4 || N === 5) && work === "ภายนอก") m = { spec_id: "fuji_slide_multi", input: { W, H, N, glass: glassMm(recipe.glassType) } };
         else m = null;
       }
