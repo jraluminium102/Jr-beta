@@ -123,7 +123,10 @@ export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverrid
   const aluByBrand: Record<string, number> = {};
   // อลูรายเส้น: รหัสเดียวมีหลายแถว (แยกสี) → ราคาตัวตั้ง = แถว "อบขาว" ก่อน (ราคาฐานดิบ — ค่าสีคิดแยกใน engine เป็นค่าอบ/กก.)
   // ไม่มีอบขาว = ค่าต่ำสุด (ผลตรวจบัญชี: ถ้าใช้ max จะหยิบแถวสีพิเศษที่รวมค่าเคลือบแล้ว → engine บวกค่าอบซ้ำ = คิดเกิน)
-  const aluByCode: Record<string, { white: number; min: number }> = {};
+  //   colored = ราคาต่ำสุดเฉพาะแถวที่ระบุสี · min = ทุกแถว (รวมแถวที่ไม่ระบุสี)
+  //   ⚠ แถวไม่ระบุสีมักเป็นแถว "ราคา BOM" ที่สร้างไว้ทีหลัง (เช่น migration 0083 supplier='ถอดทุน R4.0')
+  //     ถ้าปล่อยให้แข่งราคาด้วย จะกดราคาเส้นจริงลงเงียบ ๆ (เจอจริง F7935: เส้นจริง 570 → แถว BOM 385)
+  const aluByCode: Record<string, { white: number; min: number; colored: number }> = {};
   for (const r of rows || []) {
     const name = (r.name || "").trim();
     const sku = (r.sku || "").trim();
@@ -170,8 +173,9 @@ export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverrid
       const skuCode = sku ? normCode(sku) : "";
       const codes = [skuCode, ...nameCodes].filter((c) => c && aluCodes.has(c));
       for (const code of [...new Set(codes)]) {
-        const e = aluByCode[code] || (aluByCode[code] = { white: 0, min: 0 });
+        const e = aluByCode[code] || (aluByCode[code] = { white: 0, min: 0, colored: 0 });
         e.min = e.min > 0 ? Math.min(e.min, cost) : cost;
+        if (rowColor(r)) e.colored = e.colored > 0 ? Math.min(e.colored, cost) : cost;
         // ⚠ สีต้องอ่านจาก "ช่องสี" ก่อน แล้วค่อยดูในชื่อ — ใช้ rowColor() ตัวเดียวกับที่อื่น
         //   บั๊กเดิม: เช็คแค่ชื่อ (name.includes("อบขาว")) แต่สโตร์เก็บสีไว้ในช่อง color
         //   → หาแถวอบขาวไม่เจอ เลยตกไปใช้ "ราคาต่ำสุด" ของรหัสนั้น (คนละแถวกับที่หน้าตรวจโชว์)
@@ -192,7 +196,8 @@ export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverrid
     }
   }
   for (const b in aluByBrand) ov.ALU[b] = aluByBrand[b];
-  for (const c in aluByCode) ov.ALUCODE[c] = aluByCode[c].white || aluByCode[c].min;
+  //   ลำดับ: อบขาว → ถูกสุดในบรรดา "แถวที่มีสี" → ถูกสุดทุกแถว (ใช้ตอนไม่มีแถวมีสีเลย)
+  for (const c in aluByCode) ov.ALUCODE[c] = aluByCode[c].white || aluByCode[c].colored || aluByCode[c].min;
   return ov;
 }
 

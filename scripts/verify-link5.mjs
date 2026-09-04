@@ -160,6 +160,14 @@ console.log('\n═══ ⑥ แถวซ้ำที่รหัสอยู่
   // แถวจริงที่ "ชื่อขึ้นต้นด้วยรหัส แต่ช่อง sku สั้นกว่า" ต้องยังผูกได้ (F7938B ในชื่อ · sku F7938)
   const ov2 = buildPriceOverride([{ name: 'F7938B-เฟรมบานกระทุ้ง-อบขาว', sku: 'F7938', unit_cost: 1400, color: 'อบขาว' }], PB);
   ok('ชื่อขึ้นต้นด้วยรหัส (F7938B) ยังอ่านรหัสจากชื่อได้', ov2.ALUCODE?.F7938B === 1400, String(ov2.ALUCODE?.F7938B));
+  // แถว BOM ที่ ชื่อขึ้นต้นด้วยรหัส (เช่น 'F7935 คิ้วกระจก' จาก migration 0083) ห้ามกดราคาเส้นจริงลง
+  //   ราคาเส้น = อบขาว → ถูกสุดในบรรดาแถวที่มีสี → ค่อยตกมาแถวไม่มีสี (ใช้ตอนไม่มีเส้นจริงเลย)
+  {
+    const realOnly = [{ name: 'F7935-คิ้วกรอบบาน-ลายไม้สักทอง', sku: 'F7935', unit_cost: 570, color: 'ลายไม้สักทอง' }];
+    const bom = { name: 'F7935 คิ้วกระจก', sku: '', unit_cost: 385, color: '' };
+    ok('แถว BOM ไม่กดราคาเส้นจริง (570 ไม่ใช่ 385)', buildPriceOverride([...realOnly, bom], PB).ALUCODE?.F7935 === 570, String(buildPriceOverride([...realOnly, bom], PB).ALUCODE?.F7935));
+    ok('ไม่มีเส้นจริงเลย → ยังใช้ราคา BOM ได้ (385)', buildPriceOverride([bom], PB).ALUCODE?.F7935 === 385, String(buildPriceOverride([bom], PB).ALUCODE?.F7935));
+  }
   // แถว migration 0083 ยังผูกราคาผ่าน PARTS (ชื่อ) ได้ตามเดิม
   const ov3 = buildPriceOverride([{ name: 'วงกบ 3 ด้าน F7859', sku: '', unit_cost: 1100, color: '' }], PB);
   ok('แถว PARTS (ชื่อ) ยังผูกราคาได้เหมือนเดิม', ov3.PARTS?.['วงกบ 3 ด้าน F7859'] === 1100, String(ov3.PARTS?.['วงกบ 3 ด้าน F7859']));
