@@ -301,7 +301,8 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
                             <Icon name="check" size={13} /> ชำระแล้ว
                           </span>
                         ) : (
-                          <IssueReceiptButton billingNoteId={bn.id} installmentId={it.id!} amount={it.amount} />
+                          <IssueReceiptButton billingNoteId={bn.id} installmentId={it.id!} amount={it.amount}
+                            defaultVat={Number(bnAny.vat_rate) || 0} defaultWht={Number(bnAny.wht_rate) || 0} />
                         )
                       ) : (
                         // ยังไม่จ่าย → บันทึกชำระอย่างเดียว (ออกใบเสร็จงวดยังไม่จ่ายไม่ได้)

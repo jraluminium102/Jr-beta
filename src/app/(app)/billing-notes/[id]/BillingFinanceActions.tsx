@@ -2,7 +2,7 @@
 
 import { useState, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { baht, computeTotals } from "@/lib/money";
+import { baht, computeTotals, splitCashReceived } from "@/lib/money";
 import Icon from "@/components/Icon";
 import DateField from "@/components/ui/DateField";
 
@@ -630,8 +630,8 @@ const RECEIPT_PAY_METHODS = [
 ];
 
 export function IssueReceiptButton({
-  billingNoteId, installmentId, amount,
-}: { billingNoteId: number; installmentId: number; amount: number }) {
+  billingNoteId, installmentId, amount, defaultVat = 7, defaultWht = 0,
+}: { billingNoteId: number; installmentId: number; amount: number; defaultVat?: number; defaultWht?: number }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -641,6 +641,10 @@ export function IssueReceiptButton({
   const [itemDesc, setItemDesc] = useState("");
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
+  // (เจ้าของสั่ง 3 ก.ย.69) เลือก VAT/WHT ที่จะโชว์บนใบเสร็จได้ (default = ของบิล) — ถอดจากยอดที่รวม VAT มาแล้ว
+  const [vat, setVat] = useState<0 | 7>(defaultVat === 0 ? 0 : 7);
+  const [wht, setWht] = useState<0 | 3>(defaultWht === 3 ? 3 : 0);
+  const t = splitCashReceived(Number(amt) || 0, vat, wht); // { base, vat, wht, gross } — พรีวิวยอดแยกบนใบเสร็จ
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -659,6 +663,8 @@ export function IssueReceiptButton({
         issue_date: date,
         item_desc: itemDesc,
         note,
+        vat_rate: vat,
+        wht_rate: wht,
       }),
     });
     const json = await res.json().catch(() => null);
@@ -699,7 +705,7 @@ export function IssueReceiptButton({
         </div>
 
         <div className="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2.5">
-          ออกใบเสร็จ = รับชำระ + ปิดงวดนี้ + ออกใบกำกับภาษีในคราวเดียว · VAT คิดตามงานอัตโนมัติ
+          ออกใบเสร็จ = รับชำระ + ปิดงวดนี้ + ออกใบกำกับภาษีในคราวเดียว · ยอดที่กรอกเป็น <b>ยอดรวม VAT แล้ว</b> ระบบถอด VAT ให้
         </div>
 
         <label className="block text-sm">
@@ -708,6 +714,25 @@ export function IssueReceiptButton({
             onChange={(e) => setAmt(e.target.value)}
             className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-right tabular-nums outline-none focus-visible:ring-2 focus-visible:ring-brand" />
         </label>
+
+        {/* (เจ้าของสั่ง 3 ก.ย.69) เลือก VAT/WHT ที่จะโชว์บนใบเสร็จ + พรีวิวยอดแยก (ถอดจากยอดรวม VAT) */}
+        <div className="rounded-xl border border-gray-200 p-3 space-y-2">
+          <div className="flex items-center gap-4 text-sm">
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" checked={vat === 7} onChange={(e) => setVat(e.target.checked ? 7 : 0)} /> ภาษีมูลค่าเพิ่ม 7%
+            </label>
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" checked={wht === 3} onChange={(e) => setWht(e.target.checked ? 3 : 0)} /> หัก ณ ที่จ่าย 3%
+            </label>
+          </div>
+          <div className="space-y-0.5 text-xs text-gray-500 border-t border-gray-100 pt-2">
+            <div className="flex justify-between"><span>ยอดก่อน VAT</span><span className="tabular-nums">{baht(t.base)}</span></div>
+            <div className="flex justify-between"><span>VAT {vat}%</span><span className="tabular-nums">{baht(t.vat)}</span></div>
+            <div className="flex justify-between font-semibold text-gray-700"><span>รวมทั้งสิ้น</span><span className="tabular-nums">฿{baht(t.gross)}</span></div>
+            {wht > 0 && <div className="flex justify-between text-red-600"><span>หัก ณ ที่จ่าย {wht}%</span><span className="tabular-nums">-{baht(t.wht)}</span></div>}
+            {wht > 0 && <div className="flex justify-between font-semibold text-gray-700"><span>เงินสดรับสุทธิ</span><span className="tabular-nums">฿{baht((Number(amt) || 0))}</span></div>}
+          </div>
+        </div>
 
         <div className="grid grid-cols-2 gap-2">
           <label className="block text-sm">

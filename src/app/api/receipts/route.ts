@@ -125,9 +125,12 @@ export async function POST(req: Request) {
     base_amt = bookedTax.base; vat_amt = bookedTax.vat; wht_amt = bookedTax.wht;
     wht_rate = bookedTax.wht_rate; vatRateUsed = bookedTax.vat_rate;
   } else {
-    // งวด booked ที่ยอดรับไม่ตรงเป๊ะ → ยังใช้ "อัตราของงวด" (งวดค่าของ wht=0 จะไม่หัก) · งวดเก่า → อัตราของใบ
-    wht_rate = instBookedRates ? instBookedRates.wht_rate : (Number(bn.wht_rate) || 0);
-    const effVat = instBookedRates ? instBookedRates.vat_rate : vat_rate;
+    // (เจ้าของสั่ง 3 ก.ย.69) ให้ผู้ออกใบเลือก VAT/WHT ของใบเสร็จได้ (default = ของงวด/ใบ) — ถอดจากยอดที่ "รวม VAT มาแล้ว"
+    //   ส่ง vat_rate/wht_rate มา = ใช้ตามนั้น · ไม่ส่ง = อัตราของงวด(booked)/ของใบเหมือนเดิม
+    const clientVat = (body.vat_rate === 0 || body.vat_rate === 7) ? body.vat_rate : null;
+    const clientWht = [0, 1, 2, 3, 5].includes(Number(body.wht_rate)) ? Number(body.wht_rate) : null;
+    wht_rate = clientWht != null ? clientWht : (instBookedRates ? instBookedRates.wht_rate : (Number(bn.wht_rate) || 0));
+    const effVat = clientVat != null ? clientVat : (instBookedRates ? instBookedRates.vat_rate : vat_rate);
     const split = splitCashReceived(amount, effVat, wht_rate);
     vat_amt = split.vat; base_amt = split.base; wht_amt = split.wht; vatRateUsed = effVat;
   }
