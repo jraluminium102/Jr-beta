@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Icon from "@/components/Icon";
 import DateField from "@/components/ui/DateField";
 
-// แก้วันที่ออกใบเสร็จ/ใบกำกับภาษี — เดือนเดิมเท่านั้น (ข้ามเดือน = server reject ให้ void+ออกใหม่)
+// แก้วันที่ออกใบเสร็จ/ใบกำกับภาษี — แก้ได้เลย เก็บเลขที่เดิม (ข้ามเดือนได้ · ใบย้ายไปเดือนใหม่ในรายงานเอง · เจ้าของสั่ง 3 ก.ย.69)
 export default function EditReceiptDateButton({
   receiptId, currentDate, currentCode,
 }: { receiptId: number; currentDate: string; currentCode: string }) {
@@ -24,10 +24,6 @@ export default function EditReceiptDateButton({
     e.preventDefault();
     if (!date) { setError("กรุณาเลือกวันที่"); return; }
     if (!reason.trim()) { setError("ต้องระบุเหตุผลการแก้ไข"); return; }
-    if (crossMonth) {
-      setError("ใบกำกับภาษีเปลี่ยนเดือน/เลขไม่ได้ — ต้องยกเลิกใบนี้แล้วออกใหม่ (ปุ่มยกเลิก + ออกใหม่)");
-      return;
-    }
     setBusy(true);
     setError("");
     const res = await fetch(`/api/receipts/${receiptId}/date`, {
@@ -67,7 +63,7 @@ export default function EditReceiptDateButton({
         </div>
 
         <p className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-          ใบกำกับภาษี — แก้วันที่ได้เฉพาะ<b>เดือนเดิม</b> (เลขที่ {currentCode}) เท่านั้น · ข้ามเดือนต้องยกเลิกแล้วออกใหม่
+          แก้วันที่ได้เลย · <b>เลขที่ {currentCode} คงเดิม</b> (ไม่ต้องยกเลิก/ออกใหม่) · ถ้าเปลี่ยนเดือน ใบจะย้ายไปเดือนใหม่ในรายงานภาษีขายเอง
         </p>
 
         <label className="block text-sm">
@@ -77,8 +73,8 @@ export default function EditReceiptDateButton({
         </label>
 
         {crossMonth && (
-          <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">
-            ⚠ วันที่นี้อยู่คนละเดือนกับเลขเอกสาร — บันทึกไม่ได้ ต้อง <b>ยกเลิกใบนี้แล้วออกใหม่</b> แทน
+          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
+            ℹ วันที่ใหม่อยู่คนละเดือนกับเลขเอกสาร — บันทึกได้ปกติ (เลขที่คงเดิม) · ใบนี้จะย้ายไปอยู่ในรายงานภาษีขายเดือนใหม่
           </p>
         )}
 
@@ -100,7 +96,7 @@ export default function EditReceiptDateButton({
             className="press flex-1 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-700 hover:bg-gray-50 min-h-[44px] focus:outline-none focus-visible:ring-2">
             ยกเลิก
           </button>
-          <button type="submit" disabled={busy || !date || !reason.trim() || crossMonth}
+          <button type="submit" disabled={busy || !date || !reason.trim()}
             className="press flex-1 bg-brand text-white rounded-xl py-2.5 text-sm font-semibold shadow-brand disabled:opacity-50 min-h-[44px] flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2">
             {busy && <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />}
             บันทึก

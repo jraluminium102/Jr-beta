@@ -4,12 +4,12 @@ import { withRoute, audit } from "@/lib/bff/handler";
 import { ok, err, notFound } from "@/lib/bff/response";
 import { businessDateIssue } from "@/lib/date-guard";
 import { getTaxLockBefore } from "@/lib/doc-cutoff";
-import { parseCodeMonth, beMonthOf } from "@/lib/doc-code";
 
 // PATCH /api/receipts/[id]/date — แก้วันที่ออกใบเสร็จ/ใบกำกับภาษี
-//   INV = เอกสารภาษี (accountant, ก.ค.69) — วันที่ = tax point · เลขห้ามเปลี่ยนหลังออก
-//   แก้ได้เฉพาะ "เดือนเดิม" (เดือนที่เลขนี้ถูกนับจริง — parse จาก code) เท่านั้น
-//   ข้ามเดือน → reject เสมอ (ต้องยกเลิกใบนี้แล้วออกใหม่ — ปุ่มยกเลิก + ออกใหม่)
+//   วันที่ = tax point · แก้ได้เลย "เก็บเลขที่เดิม" ไม่ต้องยกเลิก+ออกใหม่ (เจ้าของสั่ง 3 ก.ย.69 · free-space)
+//   เดิม: ข้ามเดือน → บล็อกให้ยกเลิก+ออกใหม่ → ใบเดิมถูกยกเลิก รายการหายจากรายงานเดือนนั้น (ปัญหาสิ้นเดือน)
+//   ตอนนี้: เปลี่ยนวันข้ามเดือนได้ (เลขเดิมคงไว้ · รายงานยึด issue_date ใบจะย้ายไปเดือนที่ถูกเอง)
+//   ⚠ ยังกันไว้ 2 อย่าง (กฎภาษี ไม่ใช่เวิร์กโฟลว์): tax-lock (ย้อนเข้าเดือนยื่นภาษีปิดแล้ว) + วันอนาคต
 //   บังคับ reason ทุกครั้ง (เอกสารภาษีแก้ย้อนหลัง ต้องมีเหตุผลไว้ตรวจสอบ)
 const PatchSchema = z.object({
   issue_date: z.string(),
@@ -43,23 +43,12 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
 
   if (newDate === rc.issue_date) return ok({ issue_date: rc.issue_date });
 
-  // เดือน/ปีของเลขที่ออกจริง — parse จาก code (แหล่งจริง) · parse ไม่ได้ (code รูปแบบเก่า) → fallback issue_date เดิม
-  const codeMonth = parseCodeMonth(rc.code) ?? beMonthOf(rc.issue_date);
-  const newMonth = beMonthOf(newDate);
-  const sameMonth = codeMonth.yearBe === newMonth.yearBe && codeMonth.month === newMonth.month;
-
-  if (!sameMonth) {
-    return err(
-      "ใบกำกับภาษีเปลี่ยนเดือน/เลขไม่ได้ — ต้องยกเลิกใบนี้แล้วออกใหม่ (ปุ่มยกเลิก + ออกใหม่)",
-      409
-    );
-  }
-
+  // เปลี่ยนวันข้ามเดือนได้แล้ว — เก็บเลขที่เดิม (ไม่ยกเลิก/ไม่ renumber) · รายงานภาษีขายยึด issue_date ใบจึงย้ายเดือนเอง
+  //   (ถ้าเจ้าของอยากให้เลขตรงเดือนใหม่ด้วย = ต้องออกใบใหม่ ซึ่งเจ้าของบอกไม่ต้องการ)
   const { error: uErr } = await ctx.supabase.from("receipts").update({ issue_date: newDate }).eq("id", rc.id);
   if (uErr) return err(uErr.message, 500);
 
-  // sync วันที่ finance ledger ให้ตรงวันรับเงินจริง (same-month → VAT period ไม่ขยับ · แค่กัน ledger เหลื่อมวัน)
-  //   best-effort: ไม่ให้ล้มการแก้วันที่ (ซึ่งสำเร็จแล้ว) ถ้า sync พลาด
+  // sync วันที่ finance ledger ให้ตรงวันรับเงินจริง · best-effort: ไม่ให้ล้มการแก้วันที่ (ซึ่งสำเร็จแล้ว) ถ้า sync พลาด
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = ctx.supabase as any;
   await sb.from("finance_entries").update({ payment_date: newDate }).eq("receipt_id", rc.id).eq("is_voided", false);
