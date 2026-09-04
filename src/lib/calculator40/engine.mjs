@@ -641,11 +641,13 @@ export function computeCost(PB, prod, opt) {
     const target = SELLM.shape === 'single' ? roofTargetOf(SELLM, material, prod.id) : SELLM.target;
     const ratios = (SELLM.shape === 'single' && /^กระจก/.test(String(material || '')) && SELLM.ratioMaterialGlass)
       ? [SELLM.ratioMaterialGlass, SELLM.ratios[1], SELLM.ratios[2]] : SELLM.ratios;
+    // perLeaf = ชีตคิดราคา "ต่อบาน" (หารก่อนปัดร้อย) แล้วค่อยคูณจำนวนบานเป็นราคารวม — บานตู้ Futuretech
+    const nLeaf = SELLM.perLeaf ? Math.max(1, P) : 1;
     const S = sellFromTarget({
-      mat: costTotal, labProd: laborProd, labInst: laborInstall,
+      mat: costTotal / nLeaf, labProd: laborProd / nLeaf, labInst: laborInstall / nLeaf,
       target, ratios, overheadPct: SELLM.overheadPct, shape: SELLM.shape,
     });
-    sellBeforeLabor = S.beforeLabor; sellMfgOnly = S.mfgOnly; sellWithInstall = S.withInstall;
+    sellBeforeLabor = S.beforeLabor * nLeaf; sellMfgOnly = S.mfgOnly * nLeaf; sellWithInstall = S.withInstall * nLeaf;
     sellPct = S.pct; sellAdj = S.adj; sellTarget = target;
   } else {
     sellBeforeLabor = ceil100(costTotal * (1 + pctMat / 100));

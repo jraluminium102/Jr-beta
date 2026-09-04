@@ -32,7 +32,7 @@ const KNOWN = {
   "Sliding door — E-series": "ชีต E-series คิดค่าอบสี ×1.5 แยกนอกสูตรกำไร (README §2.5) — ยังไม่พอร์ต",
   "Casement — curved": "ชีตบวกค่าดัดโค้งหลังคิดกำไร — ยังไม่พอร์ต",
   "Louvre screen — alternating": "ชีตระแนงสลับปัดร้อยคนละจังหวะ (ต่าง ~100) — รอไล่สูตร ★ ในชีต",
-  "Cabinet door — Futuretech": "ชีตคิดต่อบานแล้วคูณจำนวนบาน — ยังไม่พอร์ต",
+  "Cabinet door — Futuretech": "คิดต่อบานแล้วคูณ พอร์ตแล้ว — เหลือ 2 เคสต่าง ~100 (ปัดร้อยคนละจังหวะ)",
   "Bi-fold": "ชุดข้อมูล v20 ไม่มีค่าแรง (costMake/costInstall = 0) → เทียบราคาขายไม่ได้",
   "Louvre screen": "ชุดข้อมูล v20 ไม่มีค่าแรง → เทียบราคาขายไม่ได้",
   "Louvre screen — rotating": "ชุดข้อมูล v20 ไม่มีค่าแรง → เทียบราคาขายไม่ได้",
@@ -66,8 +66,9 @@ for (const c of T.cases) {
   const id = NAME2ID[c.product]; if (!id) continue;
   const SM = PB.SELL?.products?.[id]; if (!SM) continue;
   const area = (c.inputs.width_cm * c.inputs.height_cm) / 10000;
+  const nLeaf = SM.perLeaf ? Math.max(1, c.inputs.panels || 1) : 1;   // ชีตบานตู้ให้ราคา "ต่อบาน"
   let got = sellFromTarget({
-    mat: e.costMaterial, labProd: e.costMake, labInst: e.costInstall,
+    mat: e.costMaterial / nLeaf, labProd: e.costMake / nLeaf, labInst: e.costInstall / nLeaf,
     target: e.targetNetPct ?? SM.target, ratios: SM.ratios, overheadPct: SM.overheadPct, shape: SM.shape,
   }).withInstall;
   if (SM.small && area > 0 && area < SM.small.maxArea) got = SM.small.price;
