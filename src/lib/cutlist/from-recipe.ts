@@ -183,7 +183,9 @@ export function cutInputFromRecipe(recipe: any, opts?: { rawCompare?: boolean })
         W, H: 0, N: 1, P: H, deg: 7,
         // ค่าตั้งต้นต้องตรงกับ specOpts.batten ของรุ่น roof (= แปเดี่ยว) ไม่งั้นหน้าเทียบเพี้ยนตอนยังไม่ได้เลือก
         sheet, purlin: sp.batten === "แปคู่" ? "แปคู่" : "แปเดี่ยว",
-        roofEnd: "รางน้ำ", rakeTotal: 0,
+        // ปลายหลังคาตามที่เลือกในคิดราคา (ค่าตั้งต้นในไฟล์ = ยื่นปลาย ทุน 0)
+        //   เดิมตรึง "รางน้ำ" → ใบตัดมีรางน้ำเสมอ แต่คิดราคาไม่มี = หน้าเทียบขึ้นแดงลอย ๆ
+        roofEnd: (() => { const e = String(recipe.spec?.roofend ?? "ยื่นปลาย"); return e === "รางน้ำอลู" ? "รางน้ำ" : (e === "ปิดปลาย" ? "ปิดปลาย" : "ยื่นปลาย"); })(), rakeTotal: 0,
       } };
       break;
     }

@@ -301,7 +301,8 @@ export function compareCut(PB: any, inp: CompareInput) {
   //   topslide เปิดเพิ่ม 2 ก.ย.69 — ไล่ชื่อสองฝั่งแล้ว ตรงกัน 3 ใน 4 · ที่เหลือแมปด้วย CUT_NAME_ALIAS
   //   pcdoor ยังไม่เปิด: ใบตัดมีแถวไม่มีรหัสอีก 5 ตัว (รางบน/เสารับ/ชนกลาง/กรอบบานเลื่อน)
   //     ที่ยังหาคู่ฝั่งคิดราคาไม่เจอ — เปิดแล้วจะขึ้นแดงเพราะยังไม่ได้ไล่ ไม่ใช่เพราะของผิด
-  const showUncoded = !!ALU_FROM_CUTLIST[inp.prodId] || inp.prodId === "topslide" || inp.prodId === "pcdoor";   // pcdoor เปิด 3 ก.ย.69 (ไล่ชื่อสองฝั่งตรงกันแล้ว)
+  const showUncoded = !!ALU_FROM_CUTLIST[inp.prodId] || inp.prodId === "topslide" || inp.prodId === "pcdoor"
+    || inp.prodId === "roof" || inp.prodId === "roof_gable";   // หลังคาเดี่ยว/จั่ว เปิด 3 ก.ย.69 (เจ้าของท้วง "รางน้ำอลูในใบตัดมีนะ")   // pcdoor เปิด 3 ก.ย.69 (ไล่ชื่อสองฝั่งตรงกันแล้ว)
   for (const r of (showUncoded ? (cut?.rows ?? []) : [])) {
     const code = String((r as { code?: unknown }).code ?? "");
     const qty = Number((r as { qty?: unknown }).qty) || 0;
