@@ -309,7 +309,9 @@ export function computeCost(PB, prod, opt) {
       lenM: round2(seg * count), pieces: count, orderOnly: !!it.orderOnly,
       // ไฟล์ถอดทุนเขียนบางบรรทัดเป็น "จำนวนเส้นเต็ม" ไม่ใช่จำนวนชิ้น (seg = ความยาวเส้นพอดี)
       //   บรรทัดพวกนี้เอาไปเทียบ "ชิ้น" กับใบตัดไม่ได้ — หน้าเทียบจะขึ้นว่า 'นับคนละหน่วย'
-      barCounted: Math.abs(seg - stockLen) < 1e-9 });
+      //   it.lenTotal = ไฟล์เขียนบรรทัดนี้เป็น "ความยาวรวมทุกท่อน" (เช่น วงกบ 3 ด้าน = W+2H) count = 1
+      //     ใบตัดแตกเป็นหลายท่อน → เทียบ "ชิ้น" ไม่ได้ ต้องเทียบจำนวนเส้น (เงินเท่ากัน)
+      barCounted: Math.abs(seg - stockLen) < 1e-9 || !!it.lenTotal });
   }
   // ค่าอบสี (อลูเท่านั้น)
   let bakeCost = 0, openOven = 0;

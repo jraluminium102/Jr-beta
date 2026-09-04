@@ -125,6 +125,18 @@ export function cutInputFromRecipe(recipe: any, opts?: { rawCompare?: boolean })
       m = { spec_id: "velora_swing", input: { W: N > 1 ? Math.round((W / N) * 10) / 10 : W, H, N: 1, rail: "ยัดในช่อง" }, multiplier: N };
       break;
     }
+    case "bansolid": {
+      // บานโซลิด — ใบตัด solid_door (แม่-ลูก/เท่ากัน) · คิดราคาแบ่งบาน "เท่ากัน" ทุกบรรทัด (สูตรใช้ W/P)
+      //   จึงส่ง doorSplit=เท่ากัน + บานแม่ = W/N ให้สองฝั่งวัดของชิ้นเดียวกัน (ไม่ใช่ค่าตั้งต้น 80 ในใบตัด)
+      //   ตัวเลือกที่คิดราคาไม่มี (สีอุปกรณ์/ตลับกุญแจ/ทิศเปิด/มือจับ) เลือกได้ที่ฝั่งใบตัดในหน้าเทียบ
+      m = { spec_id: "solid_door", input: {
+        W, H, N,
+        sill: String(recipe.form ?? "") === "ไม่มีธรณี" ? "ไม่มี" : "มี",
+        doorSplit: "เท่ากัน",
+        motherW: Math.round((W / Math.max(1, N)) * 10) / 10,
+      } };
+      break;
+    }
     case "pcdoor": {
       const split = String(recipe.form ?? "") === "แบ่ง 4" ? "แบ่ง 4" : "แบ่ง 2";
       const sill = recipe.spec?.pcsill === "ไม่มีธรณี" ? "ไม่มีธรณี" : "มีธรณี";

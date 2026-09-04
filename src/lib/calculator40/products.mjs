@@ -2216,12 +2216,13 @@ export const PRODUCTS = {
     defaults: { w: 150, h: 200, p: 1 }, defGlass: 'เขียว 6มม.', minP: 1, maxP: 2,
     vars: { S: "form==='มีธรณี'?1:0" },
     alu: [
-      { name: 'วงกบ 3 ด้าน F7859', code: 'F7859', price: 1100, kg: 6.11111, seg: 'W+2*H', count: '1' },
+      // lenTotal = ไฟล์เขียนเป็นความยาวรวม (บน + ข้าง 2) ไม่ใช่จำนวนชิ้น → หน้าเทียบใช้ "จำนวนเส้น" วัด
+      { name: 'วงกบ 3 ด้าน F7859', code: 'F7859', price: 1100, kg: 6.11111, seg: 'W+2*H', count: '1', lenTotal: true },
       { name: 'ธรณี F7938B', code: 'F7938B', price: 1400, kg: 7.77778, seg: 'W', count: 'S' },
       { name: 'ตบธรณี F7960', code: 'F7960', price: 575, kg: 3.19444, seg: 'W', count: 'S' },
       { name: 'เสริมใต้บาน F7863', code: 'F7863', price: 435, kg: 2.41667, seg: 'W', count: '1-S' },
-      { name: 'กรอบประตู 7864', code: 'F7864', price: 1995, kg: 11.08333, seg: '2*P*H+2*W', count: '1' },   // รหัส F7864 (เจ้าของยืนยัน 10 ก.ค.69)
-      { name: 'คิ้ว F7935', code: 'F7935', price: 360, kg: 2, seg: '2*P*H+2*W', count: '1' },
+      { name: 'กรอบประตู 7864', code: 'F7864', price: 1995, kg: 11.08333, seg: '2*P*H+2*W', count: '1', lenTotal: true },   // ชื่อเป็นคีย์ผูกราคา PB.PARTS ห้ามเปลี่ยน   // รหัส F7864 (เจ้าของยืนยัน 10 ก.ค.69)
+      { name: 'คิ้ว F7935', code: 'F7935', price: 360, kg: 2, seg: '2*P*H+2*W', count: '1', lenTotal: true },
       { name: 'เปิดกลาง F7945c', code: 'F7945C', price: 775, kg: 4.30556, seg: 'H', count: 'P>1?1:0' },
     ],
     glass: 'W*H',
@@ -2287,12 +2288,12 @@ export const PRODUCTS = {
     defaults: { w: 150, h: 200, p: 1 }, defGlass: null, minP: 1, maxP: 2,
     vars: { S: "form==='มีธรณี'?1:0", HG: '(H>3||(W/P)>1.2)?5:4' },
     alu: [
-      { name: 'วงกบ 3 ด้าน F7859', code: 'F7859', price: 1100, kg: 6.11111, seg: 'W+2*H', count: '1' },
+      { name: 'วงกบ 3 ด้าน F7859', code: 'F7859', price: 1100, kg: 6.11111, seg: 'W+2*H', count: '1', lenTotal: true },   // ไฟล์เขียนเป็นความยาวรวม (บน+ข้าง 2) ไม่ใช่ชิ้น
       { name: 'ธรณี F7938B', code: 'F7938B', price: 1400, kg: 7.77778, seg: 'W', count: 'S' },
       { name: 'ตบธรณี F7960', code: 'F7960', price: 575, kg: 3.19444, seg: 'W', count: 'S' },
       { name: 'เสริมใต้บาน F7863', code: 'F7863', price: 435, kg: 2.41667, seg: 'W', count: '1-S' },
-      { name: 'กรอบประตู 7864', code: 'F7864', price: 1995, kg: 11.08333, seg: '2*P*H+2*W', count: '1' },   // รหัส F7864 (เจ้าของยืนยัน 10 ก.ค.69)
-      { name: 'คิ้ว F7935', code: 'F7935', price: 360, kg: 2, seg: '2*P*H+2*W', count: '1' },
+      { name: 'กรอบประตู 7864', code: 'F7864', price: 1995, kg: 11.08333, seg: '2*P*H+2*W', count: '1', lenTotal: true },   // รหัส F7864 (เจ้าของยืนยัน 10 ก.ค.69)
+      { name: 'คิ้ว F7935', code: 'F7935', price: 360, kg: 2, seg: '2*P*H+2*W', count: '1', lenTotal: true },
       { name: 'เปิดกลาง F7945c', code: 'F7945C', price: 775, kg: 4.30556, seg: 'H', count: 'P>1?1:0' },
     ],
     glass: null,
@@ -2318,7 +2319,8 @@ export const PRODUCTS = {
     consum: [
       // ใบตัดแยก ยางกรอบบาน / ยางวงกบ คนละบรรทัด — รหัสเดียวกัน JR00771 (ยาง epdm sponge)
       { name: 'ยางกรอบบาน', sku: 'JR00771', price: 11, unit: 'ม.', count: 'Math.round(2*(W+H)*P)' },
-      { name: 'ยางวงกบ', sku: 'JR00771', price: 11, unit: 'ม.', count: 'Math.round(W+2*H)' },
+      // ใบตัดคิด: มีธรณี = วนรอบวงกบ 2×(กว้าง+สูง) · ไม่มีธรณี = กว้าง + 2×สูง (ยึดใบตัด)
+      { name: 'ยางวงกบ', sku: 'JR00771', price: 11, unit: 'ม.', count: 'Math.round(S ? 2*(W+H) : (W+2*H))' },
       SILICONE,
     ],
   },
