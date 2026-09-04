@@ -33,7 +33,20 @@ select c.id, c.name, c.code_any, c.qty_on_hand
 from coded c
 join real_codes rc on rc.code = upper(c.code_any)
 where c.supplier = 'ถอดทุน R4.0'
-  and c.code_any is not null;
+  and c.code_any is not null
+
+union
+
+-- แถวที่เขียนรหัสแบบไม่มีตัวอักษรนำ (บานโซลิด: 'กรอบประตู 7864' = F7864 ที่สโตร์มี 7 สี)
+--   เจ้าของสั่งเพิ่ม 3 ก.ย.69 "solid door อัพเข้าด้วย"
+--   ⚠ ตัวนี้ไม่เคยไปกดราคาเส้นจริง (ไม่มีตัวอักษรนำ ระบบเลยไม่นับเป็นรหัสอลู) — ลบเพื่อความสะอาดอย่างเดียว
+--   ไม่รวม 'HD-1180 ก้านสไลด์' เพราะ HD = รหัสผู้ผลิตอุปกรณ์ ไม่ใช่เส้นอลู และระบบใช้ชื่อนี้ผูกราคาอยู่
+select c2.id, c2.name, 'F7864' as code_any, c2.qty_on_hand
+from public.stock_items c2
+where c2.supplier = 'ถอดทุน R4.0'
+  and c2.name = 'กรอบประตู 7864'
+  and exists (select 1 from public.stock_items s2
+              where s2.name like 'F7864%' and coalesce(s2.supplier, '') <> 'ถอดทุน R4.0');
 
 -- แยกตัวที่ลบได้จริง: ยอด 0 · ไม่มีความเคลื่อนไหว · ไม่มีใบตัด/BOQ อ้างถึง
 create temp table _dup_deletable on commit drop as
