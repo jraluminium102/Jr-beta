@@ -55,7 +55,7 @@ export default async function ScheduleCalendarPage({ searchParams }: { searchPar
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: floors } = await (sb as any)
     .from("floor_queue_entries")
-    .select("id, customer_name, duration_note, extra_note, scheduled_date, start_time, bucket, job:job_id(job_code, customer_name)")
+    .select("id, customer_name, work_desc, duration_note, extra_note, scheduled_date, start_time, bucket, job:job_id(job_code, customer_name)")
     .eq("bucket", "scheduled")
     .gte("scheduled_date", start)
     .lt("scheduled_date", nextStart);
@@ -72,7 +72,8 @@ export default async function ScheduleCalendarPage({ searchParams }: { searchPar
       date: String(p.measure_scheduled),
       time: normTime(p.measure_time as string),
       title: job?.customer_name || "-",
-      sub: [job?.customer_area || "", measurer ? `ผู้วัด: ${measurer}` : ""].filter(Boolean).join(" · "),
+      line2: measurer ? `ช่างวัด: ${measurer}` : "",   // โชว์บนนัดเลย — รู้คิวใคร
+      sub: [job?.customer_area || "", measurer ? `ช่างวัด: ${measurer}` : ""].filter(Boolean).join(" · "),
       done: p.status === "MEASURED",
       href: "/measure-schedule",
     });
@@ -80,13 +81,15 @@ export default async function ScheduleCalendarPage({ searchParams }: { searchPar
 
   for (const f of (floors ?? []) as Record<string, unknown>[]) {
     const job = f.job as { customer_name?: string } | null;
+    const workDesc = String(f.work_desc || "").trim();
     items.push({
       id: `f${f.id}`,
       type: "floor",
       date: String(f.scheduled_date),
       time: normTime(f.start_time as string),
       title: (f.customer_name as string) || job?.customer_name || "-",
-      sub: [f.duration_note as string, f.extra_note as string].filter(Boolean).join(" · "),
+      line2: workDesc || String(f.duration_note || "").trim(),   // ไปทำอะไร (สั้น ๆ)
+      sub: [workDesc, f.duration_note as string, f.extra_note as string].filter(Boolean).join(" · "),
       done: false,
       href: "/floor-queue",
     });

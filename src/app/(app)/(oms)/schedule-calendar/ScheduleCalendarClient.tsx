@@ -10,7 +10,8 @@ export type CalItem = {
   date: string;      // YYYY-MM-DD
   time: string;      // HH:MM หรือ ""
   title: string;     // ชื่อลูกค้า
-  sub: string;       // รายละเอียดย่อ (เขต/ผู้วัด/ระยะเวลา)
+  line2: string;     // บรรทัด 2 บนนัด — measure=ช่างวัด, floor=ไปทำอะไร
+  sub: string;       // รายละเอียดเต็ม (เขต/ช่างวัด/ระยะเวลา) โชว์ใน modal
   done: boolean;     // วัดแล้ว (MEASURED)
   href: string;      // กดแล้วไปหน้าต้นทาง
 };
@@ -21,8 +22,8 @@ const pad2 = (n: number) => String(n).padStart(2, "0");
 
 // สี/ป้ายต่อชนิดนัด
 const TYPE = {
-  measure: { label: "นัดวัดจริง", dot: "#0ea5e9", chip: "bg-sky-50 text-sky-800 border-sky-200", head: "bg-sky-500" },
-  floor: { label: "จัดคิวงานพื้น", dot: "#d97706", chip: "bg-amber-50 text-amber-800 border-amber-200", head: "bg-amber-500" },
+  measure: { label: "นัดวัดจริง", dot: "#0284c7", chip: "bg-sky-100 text-sky-900 border-sky-300", sub: "text-sky-700", head: "bg-sky-500" },
+  floor: { label: "จัดคิวงานพื้น", dot: "#b45309", chip: "bg-amber-100 text-amber-900 border-amber-300", sub: "text-amber-800", head: "bg-amber-500" },
 } as const;
 
 export default function ScheduleCalendarClient({
@@ -110,7 +111,7 @@ export default function ScheduleCalendarClient({
           </div>
           <div className="grid grid-cols-7 gap-px bg-gray-200 border-x border-b border-gray-200 rounded-b-lg overflow-hidden">
             {cells.map((d, idx) => {
-              if (d === null) return <div key={idx} className="bg-gray-50 min-h-[104px]" />;
+              if (d === null) return <div key={idx} className="bg-gray-50 min-h-[136px]" />;
               const key = dateKeyOf(d);
               const list = byDate[key] ?? [];
               const isToday = key === todayIso;
@@ -118,18 +119,19 @@ export default function ScheduleCalendarClient({
               const shown = list.slice(0, 3);
               const more = list.length - shown.length;
               return (
-                <div key={idx} className={`bg-white min-h-[104px] p-1.5 flex flex-col gap-1 ${isToday ? "ring-2 ring-inset ring-brand" : ""}`}>
-                  <div className={`text-xs font-semibold tabular-nums ${isToday ? "text-brand-dark" : dow >= 5 ? "text-rose-400" : "text-ink-3"}`}>
+                <div key={idx} className={`bg-white min-h-[136px] p-1.5 flex flex-col gap-1 ${isToday ? "ring-2 ring-inset ring-brand" : ""}`}>
+                  <div className={`text-xs font-bold tabular-nums ${isToday ? "text-brand-dark" : dow >= 5 ? "text-rose-500" : "text-ink-2"}`}>
                     {isToday ? <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-brand text-white">{d}</span> : d}
                   </div>
                   {shown.map((it) => (
                     <Link key={it.id} href={it.href} title={`${it.time ? it.time + " น. · " : ""}${it.title}${it.sub ? " · " + it.sub : ""}`}
-                      className={`block rounded border px-1.5 py-1 text-[11px] leading-tight ${TYPE[it.type].chip} ${it.done ? "opacity-55" : ""} hover:brightness-95`}>
+                      className={`block rounded-md border px-1.5 py-1 text-xs leading-snug ${TYPE[it.type].chip} ${it.done ? "opacity-60" : ""} hover:brightness-95`}>
                       <div className="flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: TYPE[it.type].dot }} />
-                        {it.time && <span className="tabular-nums font-semibold shrink-0">{it.time}</span>}
-                        <span className="truncate">{it.title}{it.done ? " ✓" : ""}</span>
+                        {it.time && <span className="tabular-nums font-bold shrink-0">{it.time}</span>}
+                        <span className="truncate font-semibold">{it.title}{it.done ? " ✓" : ""}</span>
                       </div>
+                      {it.line2 && <div className={`truncate ml-2.5 text-[11px] ${TYPE[it.type].sub}`}>{it.line2}</div>}
                     </Link>
                   ))}
                   {more > 0 && (
