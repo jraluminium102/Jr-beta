@@ -37,6 +37,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     ["address", 500, "ที่อยู่"], ["tax_id", 40, "เลขผู้เสียภาษี"], ["branch", 80, "สาขา"],
     ["postal_code", 10, "รหัสไปรษณีย์"], ["contact_person", 120, "ผู้ติดต่อ"], ["phone", 40, "เบอร์โทร"],
     ["line_id", 120, "ชื่อ/ไอดีที่ใช้ติดต่อ"],
+    // ชื่อแยกตามประเภท (บุคคล/นิติบุคคล) — snapshot เท่านั้น ไม่ propagate ทะเบียน (registry = name ที่ใช้จริง)
+    ["name_individual", 200, "ชื่อลูกค้า"], ["name_company", 200, "ชื่อบริษัท"],
   ] as [string, number, string][]) {
     const errMsg = setStr(key, max, label);
     if (errMsg) return fail(errMsg);

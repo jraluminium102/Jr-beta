@@ -10,9 +10,19 @@ export type HeaderSnapshot = {
   name?: string; address?: string; tax_id?: string; branch?: string;
   kind?: string; postal_code?: string; contact_person?: string; phone?: string;
   line_id?: string; contact_channel?: string;   // (0122) ชื่อ/handle + ช่องทาง (LINE/FB/IG)
+  name_individual?: string; name_company?: string;   // ชื่อแยกตามประเภท — สลับแท็บแล้วชื่อไม่ทับกัน
 };
 
 const F = (v: unknown) => String(v ?? "");
+
+// ชื่อเริ่มต้นแยกตามประเภท: ใช้ค่าที่เคยเก็บแยกไว้ก่อน · ถ้าไม่มี (ใบเก่ามีชื่อเดียว) → ยัดชื่อเดิมเข้าประเภทที่ตรงกับ kind
+function initNames(c: HeaderSnapshot): { indiv: string; company: string } {
+  const k = c.kind === "COMPANY" ? "COMPANY" : "INDIVIDUAL";
+  return {
+    indiv: F(c.name_individual) || (k === "INDIVIDUAL" ? F(c.name) : ""),
+    company: F(c.name_company) || (k === "COMPANY" ? F(c.name) : ""),
+  };
+}
 
 export default function CustomerHeaderEditButton({
   quotationId,
@@ -27,7 +37,8 @@ export default function CustomerHeaderEditButton({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [kind, setKind] = useState<"INDIVIDUAL" | "COMPANY">(current.kind === "COMPANY" ? "COMPANY" : "INDIVIDUAL");
-  const [name, setName] = useState(F(current.name));
+  const [nameIndiv, setNameIndiv] = useState(initNames(current).indiv);
+  const [nameCompany, setNameCompany] = useState(initNames(current).company);
   const [address, setAddress] = useState(F(current.address));
   const [postal, setPostal] = useState(F(current.postal_code));
   const [taxId, setTaxId] = useState(F(current.tax_id));
@@ -42,7 +53,9 @@ export default function CustomerHeaderEditButton({
 
   function start() {
     setKind(current.kind === "COMPANY" ? "COMPANY" : "INDIVIDUAL");
-    setName(F(current.name)); setAddress(F(current.address)); setPostal(F(current.postal_code));
+    const n = initNames(current);
+    setNameIndiv(n.indiv); setNameCompany(n.company);
+    setAddress(F(current.address)); setPostal(F(current.postal_code));
     setTaxId(F(current.tax_id)); setBranch(F(current.branch) || "สำนักงานใหญ่");
     setContact(F(current.contact_person)); setPhone(F(current.phone));
     setLineId(F(current.line_id)); setChannel(F(current.contact_channel) || "LINE");
@@ -51,14 +64,17 @@ export default function CustomerHeaderEditButton({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    const trimmedName = name.trim();
-    if (!trimmedName) { setError("กรุณากรอกชื่อลูกค้า"); return; }
+    // ชื่อที่พิมพ์ลงเอกสาร = ชื่อของประเภทที่เลือกอยู่ · เก็บทั้ง 2 ชื่อไว้จำแยกกัน
+    const effName = (kind === "COMPANY" ? nameCompany : nameIndiv).trim();
+    if (!effName) { setError(kind === "COMPANY" ? "กรุณากรอกชื่อบริษัท" : "กรุณากรอกชื่อลูกค้า"); return; }
     setBusy(true); setError("");
     const res = await fetch(`/api/quotations/${quotationId}/header`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name: trimmedName,
+        name: effName,
+        name_individual: nameIndiv.trim(),
+        name_company: nameCompany.trim(),
         address: address.trim(),
         tax_id: taxId.trim(),
         branch: kind === "COMPANY" ? branch.trim() : "",
@@ -121,8 +137,13 @@ export default function CustomerHeaderEditButton({
 
         <label className={lbl}>
           <span className={cap}>{kind === "COMPANY" ? "ชื่อบริษัท" : "ชื่อลูกค้า"}</span>
+          {/* ผูกชื่อตามประเภทที่เลือก — สลับแท็บแล้วชื่ออีกประเภทไม่หาย */}
           {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)} autoFocus maxLength={200} className={inp} />
+          <input type="text"
+            value={kind === "COMPANY" ? nameCompany : nameIndiv}
+            onChange={(e) => (kind === "COMPANY" ? setNameCompany(e.target.value) : setNameIndiv(e.target.value))}
+            autoFocus maxLength={200} className={inp}
+            placeholder={kind === "COMPANY" ? "ชื่อนิติบุคคล เช่น บริษัท ... จำกัด" : "ชื่อ-สกุล ลูกค้า"} />
         </label>
 
         {kind === "COMPANY" && (
