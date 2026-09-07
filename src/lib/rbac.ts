@@ -98,12 +98,13 @@ export function menusFor(role: Role): string[] {
   // issues + sales_closure ยุบเข้า followup แล้ว — ไม่ปรากฏในเมนูแยก
   // prodqueue (/production-schedule) เอาออกจากเมนูออฟฟิศแล้ว (เจ้าของสั่ง 23 ก.ค.69) — เข้าผ่านปุ่ม "เปิดตารางผลิตช่าง" ในหน้าผลิต (ลิงก์ช่าง)
   //   route ยังอยู่ (ลิงก์ช่าง /chang เรนเดอร์ component ตัวเดียวกัน · CHANG role ยังเด้งเข้าได้) — แค่ไม่โชว์ในเมนู
-  const all = ["dashboard", "followup", "production", "measure_schedule", "floor_queue", "designer", "installation", "finance", "settings"];
+  const all = ["dashboard", "followup", "production", "measure_schedule", "floor_queue", "schedule_cal", "designer", "installation", "finance", "settings"];
   const map: Record<string, Resource> = {
     dashboard: "dashboard", followup: "jobs", production: "production",
     prodqueue: "production",
     measure_schedule: "production",
     floor_queue: "floor_queue",   // จัดคิวงานพื้น — resource แยก (write = ADMIN/PRODUCTION · ไม่ให้ CHANG เขียนผ่าน production)
+    schedule_cal: "production",    // ปฏิทินนัด (วัดจริง+งานพื้น) — ดูอย่างเดียว · ผูกสิทธิ์ production read
     designer: "designer", installation: "installation",
     finance: "finance", settings: "settings",
   };
