@@ -8,7 +8,9 @@
 -- ปลอดภัย: ยังคุมด้วย ยอด 0 · ไม่เคยเคลื่อนไหว · ไม่เคยเข้าใบตัด/BOQ เหมือนเดิม
 -- ⚠ ห้ามใช้ temp table (หน้า SQL ของ Supabase รันทีละคำสั่งแยก transaction)
 
--- ① แถวซ้ำเป๊ะ (ชื่อ+รหัสเหมือนกัน) — เก็บตัวที่ id น้อยสุดไว้ 1 ตัว ลบที่เหลือ
+-- ① แถวซ้ำเป๊ะ — เก็บตัวที่ id น้อยสุดไว้ 1 ตัว ลบที่เหลือ
+--   ⚠ ต้องเทียบ 'สี' ด้วย (เจ้าของท้วง 4 ก.ย.69: 'มันมีตัวสีขาว สีดำอะ')
+--   ชื่อ+รหัสเหมือนกันแต่คนละสี = คนละของ ห้ามลบ — กฎเดิมของระบบ: สีอ่านจาก stock_items.color เสมอ
 delete from public.stock_items s
 where s.supplier = 'ถอดทุน R4.0'
   and coalesce(s.qty_on_hand, 0) = 0
@@ -19,6 +21,7 @@ where s.supplier = 'ถอดทุน R4.0'
     where k.id < s.id
       and btrim(k.name) = btrim(s.name)
       and coalesce(k.sku, '') = coalesce(s.sku, '')
+      and coalesce(k.color, '') = coalesce(s.color, '')
   );
 
 -- ② แถวที่ไม่มีสูตรไหนอ้างถึงเลย (ตรวจทีละตัวกับ products.mjs + ใบตัด + PB.PARTS แล้ว)
