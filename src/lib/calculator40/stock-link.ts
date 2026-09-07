@@ -45,12 +45,21 @@ for (const p of Object.values(PRODUCTS as Record<string, any>))
   for (const g of ["hardware", "consum"] as const)
     for (const it of (p?.[g] || [])) if (it.sku) for (const c of codesIn(it.sku)) hwSkus.add(normCode(c));
 
-// ชื่อบรรทัดในสูตรที่ "ผูกสโตร์ด้วยชื่อ" (ไม่มีรหัสในสูตร เช่น HD-640 บานพับล้อบน)
-//   287 บรรทัดในระบบยังผูกแบบนี้อยู่ — ถ้าไม่นับ แท็ก "ใช้คิดราคา" จะไม่ขึ้นทั้งที่ใช้จริง
+// ชื่อบรรทัดในสูตรที่ "ดึงราคาจากสโตร์ด้วยชื่อได้จริง"
+//   ⚠ ต้องเป็นชื่อที่อยู่ในตารางราคา (PARTS/GLASS/ROOFMAT/MOTOR/EXTRA) เท่านั้น
+//   บรรทัดที่ชื่อไม่อยู่ในตารางราคา = ใช้ราคาในสูตรเอง สโตร์ไม่เกี่ยว → ห้ามติดแท็ก
+//   (4 ก.ย.69 เคยนับทุกชื่อ 375 บรรทัด ทำให้แท็กเกินความจริง — ของจริงผูกได้ 30)
+const priceKeyNames = new Set<string>([
+  ...Object.keys(PB.PARTS || {}), ...Object.keys(PB.GLASS || {}), ...Object.keys(PB.ROOFMAT || {}),
+  ...Object.keys(PB.MOTOR || {}), ...Object.keys(PB.EXTRA || {}),
+]);
 const hwNames = new Set<string>();
 for (const p of Object.values(PRODUCTS as Record<string, any>))
   for (const g of ["alu", "hardware", "consum"] as const)
-    for (const it of (p?.[g] || [])) if (it.name && !it.sku) hwNames.add(String(it.name).trim());
+    for (const it of (p?.[g] || [])) {
+      const nm = String(it.name || "").trim();
+      if (nm && !it.sku && priceKeyNames.has(nm)) hwNames.add(nm);
+    }
 
 // sku นี้ผูกรายเส้นกับสูตร 4.0 ไหม (ใช้แสดงคำอธิบายหน้าสต็อก)
 export const isAluCode = (sku?: string | null) => !!sku && aluCodes.has(normCode(sku));
@@ -146,6 +155,7 @@ export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverrid
   //   ⚠ แถวไม่ระบุสีมักเป็นแถว "ราคา BOM" ที่สร้างไว้ทีหลัง (เช่น migration 0083 supplier='ถอดทุน R4.0')
   //     ถ้าปล่อยให้แข่งราคาด้วย จะกดราคาเส้นจริงลงเงียบ ๆ (เจอจริง F7935: เส้นจริง 570 → แถว BOM 385)
   const aluByCode: Record<string, { white: number; min: number; colored: number }> = {};
+  const partsFromOwner: Record<string, boolean> = {};   // ชื่อนี้ราคามาจากแถวที่ตั้งใจให้ผูกหรือเปล่า
   for (const r of rows || []) {
     const name = (r.name || "").trim();
     const sku = (r.sku || "").trim();
@@ -175,7 +185,17 @@ export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverrid
       else if (name && pb.MOTOR && name in pb.MOTOR) ov.MOTOR[name] = cost;
       else if (sku && pb.STEEL && sku in pb.STEEL) ov.STEEL[sku] = cost;
       else if (name && pb.EXTRA && name in pb.EXTRA) ov.EXTRA[name] = cost;
-      else if (name && pb.PARTS && name in pb.PARTS) ov.PARTS[name] = cost;   // อุปกรณ์/โปรไฟล์ ถอดทุน 4.0
+      else if (name && pb.PARTS && name in pb.PARTS) {
+        // ⚠ ผูกด้วย "ชื่อ" = ใครตั้งชื่อของใหม่ให้ตรงกันเป๊ะ ก็แย่งเป็นแหล่งราคาได้ (เจ้าของท้วง 4 ก.ย.69)
+        //   กติกา: แถวที่สร้างไว้เพื่อการนี้ (supplier = 'ถอดทุน R4.0') ชนะเสมอ
+        //          ถ้าเป็นชั้นเดียวกัน เอาราคาต่ำสุด (กติกาเดียวกับอลูรายเส้น)
+        const owner = String(r.supplier || "").trim() === "ถอดทุน R4.0";
+        const had = name in ov.PARTS;
+        if (!had || (owner && !partsFromOwner[name]) || (owner === !!partsFromOwner[name] && cost < ov.PARTS[name])) {
+          ov.PARTS[name] = cost;
+          partsFromOwner[name] = owner;
+        }
+      }
       // อลูรายเส้นด้วยรหัส (ไม่ else — แถวเดียวเป็นได้ทั้ง PARTS(ชื่อ) และ ALUCODE(รหัส))
       //   ── รหัสอาจอยู่ใน "ชื่อ" ไม่ใช่ช่อง sku (เจ้าของยืนยัน 21 ส.ค.69) ──────────────
       //   สโตร์บางแถวตั้งชื่อ "F7938B-เฟรมบานกระทุ้ง" แต่ช่อง sku เขียนสั้นกว่า (F7938)
