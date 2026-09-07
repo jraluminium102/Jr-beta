@@ -11,6 +11,7 @@
 import { PRODUCTS } from "./products.mjs";
 import { computeCost } from "./engine.mjs";
 import { FAMILIES, familyCodeSets } from "../cutlist/family-codes.ts";
+import { ALU_FROM_CUTLIST } from "./alu-from-cutlist.ts";
 
 export type AuditStockRow = {
   id?: number; name?: string | null; sku?: string | null; color?: string | null;
@@ -330,8 +331,24 @@ export type ProductAudit = {
   aluOrderOnly?: string[];                                    // ของสั่งตามงาน (ตั้งใจไม่ผูก)
   hwTotal: number; hwLinked: number;
   moved: boolean | null; price: number;                      // ผลทดสอบเด้ง
-  status: "ครบ" | "บางส่วน" | "ไม่ผูกเลย" | "ไม่มีรายการวัสดุ";
+  status: "ครบ" | "บางส่วน" | "ไม่ผูกเลย" | "ดึงจากใบตัด" | "ไม่มีรายการวัสดุ";
+  why: string;   // รุ่นที่ไม่มีบรรทัดในตารางนี้ — บอกเหตุผลว่าไปดูที่ไหน (ไม่ใช่ปล่อยว่าง)
 };
+
+/**
+ * ทำไมรุ่นนี้ไม่มีบรรทัดวัสดุในมุม "คิดราคา — รายรุ่น"
+ * เจ้าของท้วง 4 ก.ย.69: "กดดูอุปกรณ์ของแต่ละบานไม่ขึ้นอะไรเลย เหมือนไม่ได้ผูก เป็นหลายบาน"
+ *   ของจริงคือรุ่นพวกนี้ไม่ได้เก็บรายการวัสดุไว้ในสูตร (ดึงจากใบตัด / คิดราคาเหมา)
+ *   ตารางนี้อ่านเฉพาะรายการในสูตร เลยว่าง — ต้องบอกเหตุผลให้เห็น ไม่ใช่ปล่อยว่างให้เข้าใจผิด
+ */
+function whyNoRows(p: Record<string, unknown>): string {
+  if (ALU_FROM_CUTLIST[String(p.id)]) return "ดึงเส้นอลูจากใบตัด — ดูที่แท็บ ✂️ ใบตัด — รายรุ่น";
+  if (p.composite) return "ห้องกระจก ประกอบจากบานย่อย — ดูรายการวัสดุที่รุ่นของแต่ละบาน";
+  if (p.sellZip) return "คิดจากตารางม่านซิป (ผ้า + มอเตอร์ + รีโมท) ไม่มีรายการวัสดุรายชิ้น";
+  if (p.sellCabinet) return "คิดจากตารางตู้ (บานหน้า + ผนังตู้) ไม่มีรายการวัสดุรายชิ้น";
+  if (p.sellDirect) return "ราคาเหมา R3.9 — ยังไม่ได้ถอดทุนรายชิ้น";
+  return "สูตรรุ่นนี้ยังไม่มีรายการวัสดุ";
+}
 
 const GROUP_LABEL: Record<number, string> = {
   1: "บาน", 2: "ระแนง/รั้ว", 3: "หลังคา/ผนัง/ฝ้า", 4: "ตู้", 5: "มุ้ง", 6: "ห้องกระจก", 7: "ม่านซิป",
@@ -359,10 +376,12 @@ export function auditByProduct(rows: AuditRow[], bump: BumpRow[]): ProductAudit[
       aluOrderOnly: alu.filter((r) => r.status === "order_only").map((r) => r.item),
       hwTotal: hw.length, hwLinked,
       moved: b ? b.moved : null, price: b?.before ?? 0,
-      status: total === 0 ? "ไม่มีรายการวัสดุ" : ok === 0 ? "ไม่ผูกเลย" : ok === total ? "ครบ" : "บางส่วน",
+      status: total > 0 ? (ok === 0 ? "ไม่ผูกเลย" : ok === total ? "ครบ" : "บางส่วน")
+        : ALU_FROM_CUTLIST[p.id] ? "ดึงจากใบตัด" : "ไม่มีรายการวัสดุ",
+      why: total === 0 ? whyNoRows(p) : "",
     });
   }
-  const rank = { "ไม่ผูกเลย": 0, "บางส่วน": 1, "ไม่มีรายการวัสดุ": 2, "ครบ": 3 } as const;
+  const rank = { "ไม่ผูกเลย": 0, "บางส่วน": 1, "ไม่มีรายการวัสดุ": 2, "ดึงจากใบตัด": 3, "ครบ": 4 } as const;
   return out.sort((a, b) => rank[a.status] - rank[b.status] || a.group - b.group || a.name.localeCompare(b.name, "th"));
 }
 

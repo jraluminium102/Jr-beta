@@ -18,7 +18,7 @@ const KG_TONE: Record<KgStatus, "emerald" | "amber" | "red" | "gray"> = {
 };
 
 const P_TONE: Record<ProductAudit["status"], "emerald" | "amber" | "red" | "gray"> = {
-  "ครบ": "emerald", "บางส่วน": "amber", "ไม่ผูกเลย": "red", "ไม่มีรายการวัสดุ": "gray",
+  "ครบ": "emerald", "บางส่วน": "amber", "ไม่ผูกเลย": "red", "ดึงจากใบตัด": "gray", "ไม่มีรายการวัสดุ": "gray",
 };
 
 const FCODE_TONE: Record<FamilyCodeStatus, "emerald" | "amber" | "red" | "gray"> = {
@@ -179,7 +179,11 @@ export default function AuditClient({ rows, products, bump, kgRows, boxRows, box
                       </td>
                       <td className="text-center">{p.moved == null ? "—" : p.moved ? "✅" : <span className="text-red-700 font-semibold">❌ ไม่เด้ง</span>}</td>
                       <td><Badge tone={P_TONE[p.status]}>{p.status}</Badge></td>
-                      <td className="p-2 text-xs text-ink-3">{p.aluNoCode.join(" · ")}</td>
+                      {/* รุ่นที่ไม่มีบรรทัดในตารางนี้ ต้องบอกเหตุผล ไม่ใช่ปล่อยช่องว่าง
+                          (เจ้าของท้วง 4 ก.ย.69 "กดดูแล้วไม่ขึ้นอะไรเลย เหมือนไม่ได้ผูก") */}
+                      <td className="p-2 text-xs text-ink-3">
+                        {p.aluTotal + p.hwTotal === 0 ? <span className="italic">{p.why}</span> : p.aluNoCode.join(" · ")}
+                      </td>
                     </tr>
                   ))}
               </tbody>

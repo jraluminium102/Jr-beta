@@ -487,7 +487,7 @@ export const PRODUCTS = {
       { name: 'รับล็อคลูกเบี้ยว', sku: 'JR00483', price: 0, unit: 'ตัว', count: 'WIN?2*P:0' },
       // ▸ ใช้ร่วมกันทั้งสองชุด
       { name: 'สปิงก็อท', sku: 'JR00592', price: 0, unit: 'ตัว', count: '4*P' },
-      { name: 'ฉากประคองมุม', sku: 'JR00267', price: 0, unit: 'ตัว', count: '8*P' },
+      { name: 'ฉากประคองมุม', sku: 'JR00480', price: 0, unit: 'ตัว', count: '8*P' },
       { name: 'น็อตเฟรม 1"', sku: 'JR00864', price: 1, unit: 'ตัว', count: 'WIN?8:(S?8:6)' },
     ],
     consum: [
@@ -528,7 +528,7 @@ export const PRODUCTS = {
       //   = ชีตถอดทุน "คิดทุน กระทุ้ง" แถว 22/23/25/29/28 → ทุนลด 320-634/ชุด (ดู verify-r40 anchor)
       //   ห้ามใส่กลับโดยไม่ถามเจ้าของ · บานกระทุ้งยึด "ใบตัด" เป็นตัวตั้ง
       { name: 'สปิงก็อท', sku: 'JR00592', price: 12, unit: 'ตัว', count: '4*P' },
-      { name: 'ฉากประคองมุม', sku: 'JR00267', price: 1.5, unit: 'ตัว', count: '8*P' },   // ใบตัดมี ชีตถอดทุนไม่มี → ยึดใบตัด
+      { name: 'ฉากประคองมุม', sku: 'JR00480', price: 1.5, unit: 'ตัว', count: '8*P' },   // ใบตัดมี ชีตถอดทุนไม่มี → ยึดใบตัด
       { name: 'น็อตเฟรม 1"', sku: 'JR00864', price: 1, unit: 'ตัว', count: '8' },
     ],
     consum: [
@@ -2154,7 +2154,7 @@ export const PRODUCTS = {
       { name: 'เสามือจับ อบขาว/ดำ', sku: 'JR00230', price: 1500, unit: 'เส้น6ม', count: "material==='สีดำ'?(H*100/600)*P:0" },
       { name: 'เสามือจับ สีชุบ', sku: 'JR00199', price: 1015, unit: 'เส้น6ม', count: "material==='สีทอง'?(H*100/600)*P:0" },
       { name: 'บานพับ (4ชิ้น/บาน)', needCode: true, price: 80, unit: 'ถุง', count: "form==='บานเปิด'?P:0" },
-      { name: 'ฉากประกอบมุม', sku: 'JR00200', price: 12, unit: 'ชิ้น', count: '4*P' },
+      { name: 'ฉากประกอบมุม', sku: 'JR00480', price: 12, unit: 'ชิ้น', count: '4*P' },
       { name: 'สกรู (8/บาน)', sku: 'JR00224', price: 0.5, unit: 'ตัว', count: '8*P' },
       { name: 'ชุดล้อ (4ล้อ)', sku: 'JR00214', price: 100, unit: 'ชุด', count: "form==='บานเลื่อน'?P:0" },
       { name: 'รางยู', sku: 'JR00270', price: 180, unit: 'เส้น6ม', count: "form==='บานเลื่อน'?(2*(W/P)/6)*P:0" },
@@ -2332,7 +2332,7 @@ export const PRODUCTS = {
       { name: 'ไส้กุญแจ', sku: 'JR00499', price: 400, unit: 'ตัว', count: '1' },
       { name: 'แผ่นรับล็อค', sku: 'JR00562', price: 62, unit: 'ชุด', count: '1' },
       { name: 'สปิงก็อท', sku: 'JR00592', price: 29, unit: 'ตัว', count: '4*P' },        // ใบตัดมี คิดราคาเดิมไม่มี
-      { name: 'ฉากประคองมุม', sku: 'JR00267', price: 1.5, unit: 'ตัว', count: '8*P' },   // ใบตัดมี คิดราคาเดิมไม่มี
+      { name: 'ฉากประคองมุม', sku: 'JR00480', price: 1.5, unit: 'ตัว', count: '8*P' },   // ใบตัดมี คิดราคาเดิมไม่มี
       // 4 ก.ย.69 เจ้าของสั่ง: ใช้ CDQ JR00596 + ปลายกลอน JR00598 แทน "ชุดกลอน ใบลอง JR00195" (รหัสเก่าถูกลบทิ้ง)
       //   ราคารวมเท่าเดิม 450 (ปลายกลอนรวมอยู่ใน CDQ แล้ว เหมือนบานเปิด)
       { name: 'CDQ บานเปิด (บานลอง)', sku: 'JR00596', price: 450, unit: 'ตัว', count: 'Math.max(P-1,0)' },
