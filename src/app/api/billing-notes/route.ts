@@ -83,16 +83,35 @@ export async function POST(req: Request) {
   // ไม่คิดซ้ำ: base = subtotal (ยอดก่อนภาษี) ไม่ใช่ net · computeTotals แหล่งเดียวกับใบเสนอ (บัญชีคุม)
   // กันคิด VAT ซ้ำ (บัญชีเตือน): ใบเสนอ import เก่าไม่มี subtotal → net เป็นยอด "หลัง VAT/WHT" แล้ว
   //   ถ้าเอา net เป็น base แล้วคิด vat 7% อีก = คิดภาษีซ้ำ ยอดเกินจริง → ถือ net เป็นยอดล้วน บังคับ vat/wht/disc = 0
-  const hasSubtotal = Number(q.subtotal) > 0;
-  const bSubtotal = hasSubtotal ? Number(q.subtotal) : (Number(q.net) || 0);
-  const bDisc = hasSubtotal ? (body.discount_pct != null ? Number(body.discount_pct) : (Number(q.discount_pct) || 0)) : 0;
-  // สืบ "จำนวนเงินส่วนลด" จากใบเสนอตรง ๆ (ตัวตั้งจริง) กัน drift · body override ได้ · ไม่มี = คิดจาก %
-  const bDiscAmt = hasSubtotal
-    ? (body.discount_amt != null ? Number(body.discount_amt) : (q.discount_amt != null ? Number(q.discount_amt) : undefined))
-    : 0;
+  const subtotalCol = Number(q.subtotal) || 0;
+  const qVat = Number(q.vat_rate) || 0;
+  const qWht = Number(q.wht_rate) || 0;
+  const hasSubtotal = subtotalCol > 0;   // ใช้ gate ค่าแรง (labor แยกได้เฉพาะใบที่รู้ยอดก่อน VAT ชัด)
+  let bSubtotal: number, bVat: number, bWht: number, bDisc: number;
+  let bDiscAmt: number | undefined;
+  if (hasSubtotal) {
+    // ปกติ — ใบเสนอเก็บยอดก่อน VAT (subtotal) ครบ
+    bSubtotal = subtotalCol;
+    bVat = body.vat_rate != null ? Number(body.vat_rate) : qVat;
+    bWht = body.wht_rate != null ? Number(body.wht_rate) : qWht;
+    bDisc = body.discount_pct != null ? Number(body.discount_pct) : (Number(q.discount_pct) || 0);
+    // สืบ "จำนวนเงินส่วนลด" จากใบเสนอตรง ๆ (ตัวตั้งจริง) กัน drift · body override ได้ · ไม่มี = คิดจาก %
+    bDiscAmt = body.discount_amt != null ? Number(body.discount_amt) : (q.discount_amt != null ? Number(q.discount_amt) : undefined);
+  } else if ((qVat > 0 || qWht > 0) && Number(q.net) > 0) {
+    // 🔧 subtotal ว่างแต่ใบเสนอมี VAT/WHT → ถอดภาษีออกจาก net ได้ยอดก่อน VAT
+    //   กันบัค "ใบเสนอมี VAT แต่บิล/ใบเสร็จกลายเป็นไม่มี VAT" (เดิม subtotal=0 → บังคับ vat/wht/disc=0)
+    //   ส่วนลดฝังใน net แล้ว → base นี้คือยอดหลังส่วนลด ตั้ง disc=0 กันหักซ้ำ · คิด VAT กลับได้ net เดิมเป๊ะ
+    const factor = 1 + qVat / 100 - qWht / 100;
+    bSubtotal = factor > 0 ? (Number(q.net) || 0) / factor : (Number(q.net) || 0);
+    bVat = body.vat_rate != null ? Number(body.vat_rate) : qVat;
+    bWht = body.wht_rate != null ? Number(body.wht_rate) : qWht;
+    bDisc = 0; bDiscAmt = undefined;
+  } else {
+    // legacy จริง — ไม่มีทั้ง subtotal และ VAT → ถือ net เป็นยอดล้วน ไม่คิด VAT ซ้ำ
+    bSubtotal = Number(q.net) || 0;
+    bVat = 0; bWht = 0; bDisc = 0; bDiscAmt = undefined;
+  }
   const bDiscLabel = String(body.discount_label ?? (q as { discount_label?: string }).discount_label ?? "").slice(0, 120);
-  const bVat = hasSubtotal ? (body.vat_rate != null ? Number(body.vat_rate) : (Number(q.vat_rate) || 0)) : 0;
-  const bWht = hasSubtotal ? (body.wht_rate != null ? Number(body.wht_rate) : (Number(q.wht_rate) || 0)) : 0;
   if (bDisc < 0 || bDisc > 100) return fail("ส่วนลดต้องอยู่ 0–100%");
   // ค่าแรง (17 ก.ค.69) — หัก ณ ที่จ่ายเฉพาะค่าแรง · กรอกได้บาท(authoritative)หรือ% · เฉพาะใบที่รู้ยอดก่อน VAT ชัด
   const bLaborAmount = hasSubtotal && body.labor_amount != null && body.labor_amount !== "" ? Number(body.labor_amount) : undefined;
