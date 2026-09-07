@@ -157,6 +157,13 @@ export default function Calculator40Client({ customers = [], priceOverride, line
   const [cutSel, setCutSel] = useState<Record<string, string>>(
     Object.fromEntries(HANDLE_FIELDS.map((f) => [f.key, f.def])));
   const [showCost, setShowCost] = useState(false);   // โหมดดูทุน/กำไร
+  // แถบราคาติดล่างจอ — เปิด/ปิดได้ · จำค่าไว้ในเครื่อง (ปิดแล้วเข้ามาใหม่ยังปิดอยู่)
+  //   localStorage อ่านไม่ได้ในบางเคส (โหมดส่วนตัว/บล็อกคุกกี้) → ต้อง try/catch และมีค่าตั้งต้นเสมอ
+  const [stickyOpen, setStickyOpen] = useState(true);
+  const stickyRef = useRef<HTMLDivElement>(null);
+  const [stickyH, setStickyH] = useState(0);   // ความสูงจริงของแถบ → เอาไปกันที่ด้านล่างหน้า
+  useEffect(() => { try { if (localStorage.getItem("calc40:sticky") === "0") setStickyOpen(false); } catch { /* อ่านไม่ได้ = ใช้ค่าตั้งต้น */ } }, []);
+  const toggleSticky = (v: boolean) => { setStickyOpen(v); try { localStorage.setItem("calc40:sticky", v ? "1" : "0"); } catch { /* เขียนไม่ได้ก็ไม่เป็นไร */ } };
   const [adminOpen, setAdminOpen] = useState(false); // แผงแก้ราคา
   const [linesOpen, setLinesOpen] = useState(false);
   const [howOpen, setHowOpen] = useState<string | null>(null);   // กางวิธีคิดก้อนไหนอยู่ (ค่าของ/ค่าผลิต/ค่าติดตั้ง)
@@ -546,6 +553,27 @@ export default function Calculator40Client({ customers = [], priceOverride, line
   }, [pb, prod, w, h, p, form, color, glassType, material, spec, profit, profitProd, profitInst, addons, fixedPanes, kind, faceColorCode, depth, shelves, cabSides, sheetColor, roofSegs, subs, roomTotals, laborMode, cutSel]);
 
   const ok = result && !("error" in result);
+  // ราคาที่ "กำลังเลือกอยู่" — ต้องเป็นสูตรเดียวกับตอนกดเพิ่มเข้ารายการ (pushQuoteItem)
+  //   ขายส่ง (ผลิตอย่างเดียว) ใช้ยอดหลังลด mfgOnlyNet · รวมบานย่อย (ผสมบาน/หลังคาหลายช่วง) ด้วย
+  const stickyPrice = ok
+    ? (laborMode === "mfg" ? (result as any).sell.mfgOnlyNet : (result as any).sell.withInstall) + (((result as any).subSell) || 0)
+    : 0;
+  const sizeLabel = [
+    (Number(w) || 0) > 0 && (Number(h) || 0) > 0 ? `${w}×${h} ซม.` : "",
+    (Number(p) || 0) > 1 ? `${p} บาน` : "",
+  ].filter(Boolean).join(" · ");
+  // วัดความสูงแถบจริงทุกครั้งที่เนื้อหา/ขนาดจอเปลี่ยน — เดาเป็น h-24 ไม่พอ
+  //   (เปิดดูทุน + มีรายการในใบ + จอแคบ → ข้อความตกบรรทัดที่ 3 แถบสูงขึ้น แล้วไปบังปุ่มล่างสุด)
+  useEffect(() => {
+    const el = stickyRef.current;
+    if (!el) { setStickyH(0); return; }
+    const measure = () => setStickyH(el.offsetHeight);
+    measure();
+    if (typeof ResizeObserver === "undefined") return;   // เบราว์เซอร์เก่า = ใช้ค่าที่วัดครั้งเดียว
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [stickyOpen, ok, stickyPrice, showCost, quote.length, laborMode]);
   // ── ประตู/หน้าต่าง (เจ้าของสั่ง 7 ส.ค.69 ให้มีทุกชุดที่เป็นบาน) ─────────────
   //   โชว์เฉพาะกลุ่มบาน (G1) ที่ไม่ใช่กระจกติดตายเสมอ · ห้องกระจกมีตัวเลือกของตัวเองต่อบานอยู่แล้ว
   const paneKindOn = !!prod && prod.group === 1 && !prod.composite && !isFixedPane(prod.id) && !noKindPrefix(prod.id);
@@ -2036,6 +2064,57 @@ export default function Calculator40Client({ customers = [], priceOverride, line
           </div>
           <p className="text-[11px] text-ink-3 mt-2">* ร่างสำหรับคิดราคาหน้างาน — ออกใบเสนอราคาจริง (มีเลขเอกสาร/หัวบิล) ที่เมนูใบเสนอราคา</p>
         </Card>
+      )}
+
+      {/* ══ แถบราคาติดล่างจอ (sticky) — เห็นราคาที่กำลังเลือกอยู่ตลอด ไม่ต้องเลื่อนหา ══
+          เจ้าของสั่ง 4 ก.ย.69 "อยากมี sticky ราคาปัจจุบันที่เลือก ๆ อยู่ · กดปิดได้ กดดูได้"
+          · ขึ้นเฉพาะตอนคิดราคาออกแล้วจริง (มีรุ่น + ไม่ error + ราคา > 0)
+          · ตัวเลขใช้สูตรเดียวกับตอนกด "เพิ่มเข้ารายการ" เป๊ะ ๆ — ไม่งั้นเห็นเลขนึง กดได้อีกเลข
+          · ซ่อนตอนพิมพ์ (print:hidden) และมีตัวเว้นที่ด้านล่าง กันบังปุ่มบรรทัดสุดท้าย */}
+      {ok && stickyPrice > 0 && (
+        <>
+          <div aria-hidden className="print:hidden" style={{ height: stickyH || (stickyOpen ? 96 : 56) }} />
+          <div ref={stickyRef} className="fixed inset-x-0 bottom-0 z-40 print:hidden pointer-events-none">
+            <div className="mx-auto max-w-5xl px-3 pb-3">
+              {stickyOpen ? (
+                <div className="pointer-events-auto rounded-2xl border border-brand/20 bg-white/90 backdrop-blur-md shadow-[0_-4px_24px_rgba(0,0,0,0.10)] px-4 py-2.5">
+                  <div className="flex items-center gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[11px] text-ink-3 truncate">
+                        {prod?.name}{sizeLabel && !prod?.composite ? " · " + sizeLabel : ""}
+                        <span className="ml-1.5 text-ink-3/80">({laborMode === "mfg" ? "ผลิตอย่างเดียว" : "ผลิต+ติดตั้ง"})</span>
+                      </div>
+                      <div className="flex items-baseline gap-2 flex-wrap">
+                        <span className="text-2xl font-bold text-brand-dark tabular-nums leading-tight">฿{baht(stickyPrice)}</span>
+                        <span className="text-[11px] text-ink-3">/ ชุด</span>
+                        {/* ห้องกระจก (G6) ไม่มีทุนรายตัว (cost.total = 0) → ไม่โชว์ กันขึ้นกำไร = ราคาเต็ม */}
+                        {showCost && result.cost.total > 0 && (
+                          <span className="text-[11px] text-ink-3 tabular-nums">
+                            · ทุน ฿{baht(result.cost.total)} · กำไร ฿{baht(stickyPrice - result.cost.total)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {quote.length > 0 && (
+                      <div className="text-right shrink-0 border-l border-black/10 pl-3">
+                        <div className="text-[11px] text-ink-3">รวมในใบ ({quote.length})</div>
+                        <div className="text-sm font-bold text-ink-1 tabular-nums">฿{baht(grandTotal)}</div>
+                      </div>
+                    )}
+                    <button type="button" onClick={() => toggleSticky(false)} aria-label="ปิดแถบราคา"
+                      className="press shrink-0 min-w-[44px] min-h-[44px] rounded-lg glass-soft text-ink-2 font-bold leading-none">✕</button>
+                  </div>
+                </div>
+              ) : (
+                <button type="button" onClick={() => toggleSticky(true)} aria-label="ดูราคาปัจจุบัน"
+                  className="press pointer-events-auto mx-auto flex items-center gap-2 rounded-full border border-brand/20 bg-white/90 backdrop-blur-md shadow-lg px-4 py-2">
+                  <span className="text-sm font-bold text-brand-dark tabular-nums">฿{baht(stickyPrice)}</span>
+                  <span className="text-[11px] text-ink-3">ดูราคา ▲</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
