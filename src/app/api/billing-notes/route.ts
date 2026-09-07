@@ -101,10 +101,11 @@ export async function POST(req: Request) {
     // 🔧 subtotal ว่างแต่ใบเสนอมี VAT/WHT → ถอดภาษีออกจาก net ได้ยอดก่อน VAT
     //   กันบัค "ใบเสนอมี VAT แต่บิล/ใบเสร็จกลายเป็นไม่มี VAT" (เดิม subtotal=0 → บังคับ vat/wht/disc=0)
     //   ส่วนลดฝังใน net แล้ว → base นี้คือยอดหลังส่วนลด ตั้ง disc=0 กันหักซ้ำ · คิด VAT กลับได้ net เดิมเป๊ะ
-    const factor = 1 + qVat / 100 - qWht / 100;
-    bSubtotal = factor > 0 ? (Number(q.net) || 0) / factor : (Number(q.net) || 0);
+    //   factor ต้องใช้อัตราเดียวกับ bVat/bWht ที่คิดจริง (ถ้า body override) ไม่งั้นถอดด้วยอัตราเก่า = net เพี้ยน
     bVat = body.vat_rate != null ? Number(body.vat_rate) : qVat;
     bWht = body.wht_rate != null ? Number(body.wht_rate) : qWht;
+    const factor = 1 + bVat / 100 - bWht / 100;
+    bSubtotal = factor > 0 ? (Number(q.net) || 0) / factor : (Number(q.net) || 0);
     bDisc = 0; bDiscAmt = undefined;
   } else {
     // legacy จริง — ไม่มีทั้ง subtotal และ VAT → ถือ net เป็นยอดล้วน ไม่คิด VAT ซ้ำ
