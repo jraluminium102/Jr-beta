@@ -73,7 +73,7 @@ export default function ScheduleCalendarClient({
   const dateKeyOf = (d: number) => `${year}-${pad2(month0 + 1)}-${pad2(d)}`;
 
   return (
-    <div className="space-y-4">
+    <div className="bg-white rounded-2xl p-4 md:p-5 shadow-sm space-y-4">
       {/* หัวข้อ + นำทางเดือน */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <h1 className="text-xl font-bold text-brand-dark flex items-center gap-2.5">
