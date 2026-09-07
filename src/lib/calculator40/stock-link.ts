@@ -13,6 +13,7 @@
 import PRICEBOOK from "./pricebook.json" with { type: "json" };
 import { PRODUCTS } from "./products.mjs";
 import { buildBoxPrices, buildBoxSkus, type BoxPrices } from "./box-link.ts";
+import { calcHwSkusViaCutlist } from "./hardware-from-cutlist.ts";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const PB: any = PRICEBOOK;
@@ -38,10 +39,23 @@ const codesIn = (code: string): string[] => {
 for (const p of Object.values(PRODUCTS as Record<string, any>))
   for (const a of (p?.alu || [])) if (a.code) for (const c of codesIn(a.code)) aluCodes.add(normCode(c));
 
+// รหัสอุปกรณ์ที่เขียนไว้ในสูตรตรง ๆ (hardware/consum ของทุกรุ่น · sku เป็นสูตรได้)
+const hwSkus = new Set<string>();
+for (const p of Object.values(PRODUCTS as Record<string, any>))
+  for (const g of ["hardware", "consum"] as const)
+    for (const it of (p?.[g] || [])) if (it.sku) for (const c of codesIn(it.sku)) hwSkus.add(normCode(c));
+
+// ชื่อบรรทัดในสูตรที่ "ผูกสโตร์ด้วยชื่อ" (ไม่มีรหัสในสูตร เช่น HD-640 บานพับล้อบน)
+//   287 บรรทัดในระบบยังผูกแบบนี้อยู่ — ถ้าไม่นับ แท็ก "ใช้คิดราคา" จะไม่ขึ้นทั้งที่ใช้จริง
+const hwNames = new Set<string>();
+for (const p of Object.values(PRODUCTS as Record<string, any>))
+  for (const g of ["alu", "hardware", "consum"] as const)
+    for (const it of (p?.[g] || [])) if (it.name && !it.sku) hwNames.add(String(it.name).trim());
+
 // sku นี้ผูกรายเส้นกับสูตร 4.0 ไหม (ใช้แสดงคำอธิบายหน้าสต็อก)
 export const isAluCode = (sku?: string | null) => !!sku && aluCodes.has(normCode(sku));
 
-export type CalcSection = "กระจก" | "หลังคา/ผนัง" | "มอเตอร์/ออโต้" | "เหล็ก" | "งานเสริม" | "อลูมิเนียม" | "ถอดทุน 4.0";
+export type CalcSection = "อุปกรณ์" | "กระจก" | "หลังคา/ผนัง" | "มอเตอร์/ออโต้" | "เหล็ก" | "งานเสริม" | "อลูมิเนียม" | "ถอดทุน 4.0";
 
 type LinkInput = {
   name?: string | null;
@@ -61,6 +75,11 @@ export function calcLink(item: LinkInput): { linked: boolean; section?: CalcSect
   if (name && extraNames.has(name)) return { linked: true, section: "งานเสริม" };
   if (name && partNames.has(name)) return { linked: true, section: "ถอดทุน 4.0" };
   if (sku && aluCodes.has(normCode(sku))) return { linked: true, section: "อลูมิเนียม" };   // ผูกรายเส้นด้วยรหัส
+  // อุปกรณ์ที่คิดราคาผูกด้วยรหัสตรง ๆ ในสูตร (JR#####) — เดิมไม่มีเซ็ตนี้ แท็กเลยไม่ขึ้น
+  if (sku && hwSkus.has(normCode(sku))) return { linked: true, section: "อุปกรณ์" };
+  // อุปกรณ์ที่คิดราคา "ดึงจากใบตัด" มาคิดเงิน (10 รุ่นใน HW_FROM_CUTLIST เช่น เฟี้ยม SMS)
+  if (sku && calcHwSkusViaCutlist().has(normCode(sku))) return { linked: true, section: "อุปกรณ์" };
+  if (name && hwNames.has(name)) return { linked: true, section: "อุปกรณ์" };   // ผูกด้วยชื่อ (HD-xxx ฯลฯ)
   if (item.is_weight_based && item.supplier && aluBrands.has(item.supplier))
     return { linked: true, section: "อลูมิเนียม" };
   return { linked: false };

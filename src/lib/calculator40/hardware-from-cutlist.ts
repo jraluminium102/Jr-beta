@@ -16,6 +16,8 @@ import { computeCutList, type CutInput } from "../cutlist/engine.ts";
 import { CUT_SPEC_BY_ID } from "../cutlist/products.ts";
 import { cutInputFromRecipe } from "../cutlist/from-recipe.ts";
 import { HANDLE_BRANDS, HANDLE_COLORS, HANDLE_TYPES } from "../cutlist/hardware.ts";
+import { collectCodesForSpec } from "../cutlist/codes.ts";
+import { PRODUCTS } from "./products.mjs";
 
 /**
  * รุ่นที่ "ค่าของ" คิดจากใบตัด — เจ้าของเคาะ 2 ก.ย.69 ให้เปิด "ทุกรุ่นที่ผูกใบตัดได้"
@@ -62,6 +64,33 @@ export type CalcHwInput = {
  * รายการอุปกรณ์ + รหัสสโตร์ + จำนวน ของรุ่นนี้ที่ขนาด/รูปแบบนี้ (ชุดเดียวกับที่ช่างเบิก)
  * คืน null = รุ่นนี้ยังไม่เปิด หรือแมปเข้าใบตัดไม่ได้ → ผู้เรียกใช้รายการเดิมในสูตร
  */
+/**
+ * รหัสอุปกรณ์ทั้งหมดที่ "คิดราคา 4.0 ใช้จริงผ่านใบตัด"
+ * เจ้าของท้วง 4 ก.ย.69: อุปกรณ์บานเฟี้ยม SMS ในสโตร์ติดแท็กแค่ "ใช้ในใบตัด" ไม่มี "ใช้คิดราคา"
+ *   ทั้งที่ 10 รุ่นใน HW_FROM_CUTLIST ดึงรายการอุปกรณ์ (และราคา) จากใบตัดมาคิดเงินตรง ๆ
+ *   เดิมแท็กดูแค่สูตรใน products.mjs เลยมองไม่เห็นรหัสกลุ่มนี้
+ * ไล่ทุกรูปแบบ/จำนวนบาน เพื่อให้ครอบรหัสที่เปลี่ยนตามตัวเลือก (สี/ยี่ห้อมือจับ/รูปแบบพับ)
+ */
+let calcViaCutCache: Set<string> | null = null;
+export function calcHwSkusViaCutlist(): Set<string> {
+  if (calcViaCutCache) return calcViaCutCache;
+  const set = new Set<string>();
+  for (const id of HW_FROM_CUTLIST) {
+    const p = (PRODUCTS as Record<string, { forms?: string[]; defForm?: string; defaults?: { w?: number; h?: number; p?: number } }>)[id];
+    if (!p) continue;
+    const forms = p.forms?.length ? p.forms : [p.defForm ?? ""];
+    const d = p.defaults ?? {};
+    for (const form of forms) for (const n of [1, 2, 3, 4, 5, 6]) {
+      let map = null;
+      try { map = cutInputFromRecipe({ kind: "std", prodId: id, w: d.w ?? 300, h: d.h ?? 240, p: n, form, spec: {} }); } catch { continue; }
+      const spec = map && CUT_SPEC_BY_ID[map.spec_id];
+      if (spec) for (const c of collectCodesForSpec(spec)) set.add(c);
+    }
+  }
+  calcViaCutCache = set;
+  return set;
+}
+
 export function cutHardwareLines(inp: CalcHwInput): HwLine[] | null {
   if (!HW_FROM_CUTLIST.has(inp.prodId)) return null;
   const map = cutInputFromRecipe({
