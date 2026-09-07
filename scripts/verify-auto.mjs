@@ -14,6 +14,8 @@
 import fs from "node:fs";
 import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
 import { computeCost, autoSetsFor } from "../src/lib/calculator40/engine.mjs";
+import { applyBootstrap } from "../src/lib/calculator40/bootstrap.mjs";
+const R39DATA = JSON.parse(fs.readFileSync("src/lib/calculator40/r39-data.json", "utf8"));
 
 const PB = JSON.parse(fs.readFileSync("src/lib/calculator40/pricebook.json", "utf8"));
 let pass = 0, fail = 0;
@@ -117,6 +119,17 @@ console.log("\n═══ ④ มอเตอร์ขึ้นตามประ
     ok(`${id} ไม่มีมอเตอร์ให้เลือก (ชีตไม่มี)`, autoSetsFor(PB, PRODUCTS[id]).length === 0, groups(id));
   // ยี่ห้อชุดเลื่อนต้องไม่ข้ามรุ่น
   ok("SMS ไม่มี SlimLux ให้เลือก", !autoSetsFor(PB, PRODUCTS.sms_slide).some((m) => m.group === "SlimLux"));
+  // ── SlimLux ต้องไม่ไปโผล่ในรุ่นอื่น รวมรุ่น R3.9 ที่ bootstrap สร้างให้ตอนรันจริง ──
+  //   (เจ้าของท้วง 4 ก.ย.69 "บานเลื่อนรางบน เอาช้อยมอเตอร์ SlimLux ออก" — bootstrap ใส่ slide_auto
+  //    ให้ทุกรุ่นที่ชื่อมีคำว่า "เลื่อน" โดยไม่จำกัดยี่ห้อ → UI โชว์ครบ 3 ยี่ห้อ)
+  {
+    const P2 = JSON.parse(JSON.stringify(PRODUCTS, (k, v) => (typeof v === "function" ? undefined : v)));
+    applyBootstrap(P2, R39DATA);
+    const bad = Object.entries(P2).filter(([id, p]) => (p.addons || []).includes("slide_auto")
+      && (!Array.isArray(p.autoBrands) || (p.autoBrands.includes("slimlux") && id !== "slimlux")));
+    ok("ทุกรุ่นที่มีชุดออโต้เลื่อน ต้องจำกัดยี่ห้อ + SlimLux เฉพาะรุ่น SlimLux",
+      bad.length === 0, bad.map(([id, p]) => id + ":" + JSON.stringify(p.autoBrands ?? null)).slice(0, 6).join(" · "));
+  }
   ok("SlimLux ไม่มี Evecca/ช่างแซก ให้เลือก", !autoSetsFor(PB, PRODUCTS.slimlux).some((m) => m.group === "เลื่อน SMS/ยูโร"));
   ok("ประตูรั้วไม่มีชุดเลื่อน SMS", !autoSetsFor(PB, PRODUCTS.gate).some((m) => /เลื่อน|SlimLux/.test(m.group)));
   // ── เซนเซอร์กันฝน (เจ้าของสั่ง 4 ก.ย.69 "เพิ่มเป็นออปชั่นให้เลือก ทุกมอเตอร์ ยกเว้น SlimLux") ──
@@ -156,6 +169,39 @@ console.log("\n═══ ④ มอเตอร์ขึ้นตามประ
     sensorLines("roof", { slide_motor: { kw: "none" }, rain_sensor: "yes" }) === 0);
   ok("ประตูรั้ว/ม่านซิป: มอเตอร์อยู่ในชุดเสมอ → เลือกเซนเซอร์ได้เลย",
     sensorLines("gate", { rain_sensor: "yes" }) === 1 && sensorLines("zipscreen", { rain_sensor: "yes" }) === 1);
+  // ── มอเตอร์หลังคาเลื่อน: ราคาขายตายตัวตามไฟล์ ไม่ผ่านกำไร (ชีต "คิดทุน หลังคาเลื่อน" แถว 49-51 + หมายเหตุแถว 60) ──
+  //   เจ้าของท้วง 4 ก.ย.69 "กด +- กำไรแล้วราคาดิ้น" — ของถูกคือนิ่งทุกกำไร% และนิ่งทุกขนาดยก
+  {
+    const mo = (o) => (computeCost(PB, PRODUCTS.roof_slide, { w: 400, h: 250, p: 1, glassType: "เขียว 6มม.", ...o }).lines || [])
+      .filter((l) => /มอเตอร์หลังคาเลื่อน|เซนเซอร์กันฝน/.test(l.name || ""));
+    const at = (pp, kw, count) => mo({ profitPct: pp, addons: { slide_motor: { kw, count } } });
+    const amt = (rows, re) => (rows.find((l) => re.test(l.name)) || {}).amount ?? 0;
+    for (const pp of [50, 80, 100, 150, 200])
+      ok(`หลังคาเลื่อน กำไร ${pp}% → มอเตอร์ยังขาย 35,000 (ไม่ผ่านกำไร)`, amt(at(pp, "1500"), /มอเตอร์/) === 35000, String(amt(at(pp, "1500"), /มอเตอร์/)));
+    for (const kw of ["80", "300", "1500"])
+      ok(`หลังคาเลื่อน ยก ${kw} กก. → ขาย 35,000 เท่ากันทุกขนาด (ตามไฟล์)`, amt(at(100, kw), /มอเตอร์/) === 35000);
+    ok("หลังคาเลื่อน 2 ตัว → 35,000 + 25,000", amt(at(100, "300", 2), /มอเตอร์/) === 60000, String(amt(at(100, "300", 2), /มอเตอร์/)));
+    ok("หลังคาเลื่อน 3 ตัว → 35,000 + 25,000×2", amt(at(100, "300", 3), /มอเตอร์/) === 85000);
+    ok("เซนเซอร์กันฝน (หลังคา) ขาย 2,000 ตายตัว", amt(at(100, "1500"), /เซนเซอร์/) === 2000);
+    // ทุนต้องเข้าทุนรวมตามปกติ และต้องนิ่งเมื่อเปลี่ยนกำไร
+    const cost = (pp) => computeCost(PB, PRODUCTS.roof_slide, { w: 400, h: 250, p: 1, glassType: "เขียว 6มม.", profitPct: pp, addons: { slide_motor: { kw: "1500" } } }).cost.total;
+    ok("ทุนมอเตอร์ยังเข้าทุนรวม (ไม่ใช่ขายฟรี)", cost(100) > computeCost(PB, PRODUCTS.roof_slide, { w: 400, h: 250, p: 1, glassType: "เขียว 6มม.", addons: {} }).cost.total);
+    ok("กด +/- กำไร ทุนรวมต้องไม่ดิ้น", cost(50) === cost(200), cost(50) + " vs " + cost(200));
+    // ป้ายกำกับระบบสั่งงาน (เจ้าของสั่งให้เขียนลงใบเสนอ)
+    const names = (id, o) => (computeCost(PB, PRODUCTS[id], { w: 300, h: 240, p: 2, glassType: "เขียว 6มม.", ...o }).lines || []).map((l) => l.name || "").join(" | ");
+    ok("Evecca เขียนระบบสั่งงาน รีโมท+จอควบคุม+สมาร์ทโฮม",
+      names("sms_slide", { addons: { slide_auto: { brand: "evecca" } } }).includes("ระบบสั่งงาน: รีโมท + จอควบคุม + สมาร์ทโฮม"));
+    ok("บานกระทุ้ง เขียนระบบสั่งงาน รีโมท",
+      /ระบบสั่งงาน: รีโมท/.test(names("awning", { addons: { awn_auto: "choke50" } })));
+    ok("หลังคาเลื่อน เขียนระบบสั่งงาน รีโมท", /ระบบสั่งงาน: รีโมท/.test(names("roof_slide", { addons: { slide_motor: { kw: "1500" } } })));
+    ok("มอเตอร์หลังคาเลื่อนไม่มีคำว่า 'ยก' ในชื่อแล้ว", !/มอเตอร์หลังคาเลื่อน ยก/.test(names("roof_slide", { addons: { slide_motor: { kw: "1500" } } })));
+    // SlimLux เลือกระบบสั่งงานได้ 2 อย่างพร้อมกัน
+    const sl = (o) => names("slimlux", { addons: { slide_auto: { brand: "slimlux", ...o } } });
+    ok("SlimLux เลือกทัชสวิช + สแกนหน้า พร้อมกันได้", /สแกนหน้า/.test(sl({ touch: true, scan: true })) && /Touch Switch/.test(sl({ touch: true, scan: true })));
+    ok("SlimLux เลือกสแกนหน้าอย่างเดียวได้", /สแกนหน้า/.test(sl({ scan: true })) && !/Touch Switch/.test(sl({ scan: true })));
+    ok("SlimLux ไม่เลือกอะไร = ได้ทัชสวิชตามเดิม", /Touch Switch/.test(sl({})));
+  }
+
   // ── รุ่นที่ "มีมอเตอร์ในชุด" แต่เลือกแบบไม่ใช้มอเตอร์ได้ ต้องไม่มีของต่อพ่วงเหลือค้าง ──
   const lineNames = (id, o) => (computeCost(PB, PRODUCTS[id], { w: 400, h: 180, p: 1, ...o }).lines || []).map((l) => l.name || "");
   {

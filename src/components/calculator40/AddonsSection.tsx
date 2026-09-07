@@ -388,7 +388,7 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
               <Field label="Smart lock">
                 <ChipRow items={[{ val: "no", label: "ไม่มี" }, { val: "yes", label: "มี (Smart lock)" }]} value={sa.smartlock ? "yes" : "no"} onChange={(v) => setObj("slide_auto", { smartlock: v === "yes" })} />
               </Field>
-              <p className="text-[11px] text-ink-3">+ สายพานตามความกว้าง × 2 (อัตโนมัติ)</p>
+              <p className="text-[11px] text-ink-3">+ สายพานตามความกว้าง × 2 (อัตโนมัติ) · ระบบสั่งงาน: รีโมท + จอควบคุม + สมาร์ทโฮม</p>
             </>
           )}
           {sa.brand === "changsaek" && (
@@ -406,11 +406,12 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
           {sa.brand === "slimlux" && (
             <>
               <p className="text-[11px] text-ink-3">+ ราง/ม. × จำนวนบาน + บานเพิ่ม (อัตโนมัติ)</p>
-              <Field label="ระบบสั่งงาน" hint="(บังคับเลือก)">
+              {/* เจ้าของสั่ง 4 ก.ย.69: เลือกได้ทั้งทัชสวิชและสแกนหน้า (เดิมบังคับ 1 ใน 2) */}
+              <Field label="ระบบสั่งงาน" hint="(เลือกได้ทั้งสองอย่าง)">
                 <ChipRow
-                  items={[{ val: "touch", label: "Touch Switch (+100)" }, { val: "scan", label: "สแกนหน้า (+2,750)" }]}
-                  value={sa.scan ? "scan" : "touch"}
-                  onChange={(v) => setObj("slide_auto", { scan: v === "scan" })}
+                  items={[{ val: "touch", label: "ทัชสวิช (+100)" }, { val: "scan", label: "สแกนหน้า (+2,750)" }, { val: "both", label: "ทัชสวิช + สแกนหน้า" }]}
+                  value={sa.scan && sa.touch ? "both" : sa.scan ? "scan" : "touch"}
+                  onChange={(v) => setObj("slide_auto", { scan: v === "scan" || v === "both", touch: v === "touch" || v === "both" })}
                 />
               </Field>
             </>
@@ -926,15 +927,20 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
     const sm = (A.slide_motor && typeof A.slide_motor === "object") ? A.slide_motor : {};
     const kw = sm.kw || "none";   // ไม่เลือก = ไม่มีมอเตอร์ (ตรงกับ engine)
     return (
-      <Field label="มอเตอร์หลังคาเลื่อน" hint="(มีผลกับราคา)">
+      <Field label="มอเตอร์หลังคาเลื่อน" hint="(ระบบสั่งงาน: รีโมท · ราคาขายตายตัวตามไฟล์ ไม่คูณกำไร)">
         <div className="space-y-2">
-          <ChipRow items={[{ val: "none", label: "ไม่มี" }, { val: "1500", label: "ยก 1,500 กก." }, { val: "300", label: "ยก 300 กก." }, { val: "80", label: "ยก 80 กก." }]} value={kw} onChange={(v) => setObj("slide_motor", { kw: v })} />
+          <ChipRow items={[{ val: "none", label: "ไม่มี" }, { val: "1500", label: "1,500 กก." }, { val: "300", label: "300 กก." }, { val: "80", label: "80 กก." }]} value={kw} onChange={(v) => setObj("slide_motor", { kw: v })} />
+          {kw !== "none" && (
+            <Field label="จำนวนมอเตอร์ (ตัว)" hint="· ตัวแรก 35,000 · ตัวถัดไป 25,000/ตัว (ราคาขายตายตัว ไม่คูณกำไร)">
+              <NumberInput value={sm.count || 1} onChange={(v) => setObj("slide_motor", { count: Math.max(1, Math.round(v)) })} placeholder="1" />
+            </Field>
+          )}
           {kw !== "none" && (<>
           {/* เซนเซอร์กันฝน — เจ้าของสั่ง 4 ก.ย.69 "เป็นออปชั่นให้เลือก" (เดิมบังคับติดเฉพาะ 1500 กก.)
               ยังติ๊กมาให้เองเมื่อเลือก 1,500 กก. ตามที่ไฟล์ v20.1 เขียนไว้ แต่กดเอาออกได้ */}
-          <Field label="เซนเซอร์กันฝน" hint="(ออโต้ปิดเองเมื่อฝนตก · ทุน 1,100)">
+          <Field label="เซนเซอร์กันฝน" hint="(ออโต้ปิดเองเมื่อฝนตก · ขาย 2,000 ตายตัว)">
             <ChipRow
-              items={[{ val: "no", label: "ไม่มี" }, { val: "yes", label: "มี (+1,100 ทุน)" }]}
+              items={[{ val: "no", label: "ไม่มี" }, { val: "yes", label: "มี (+2,000)" }]}
               value={(sm.sensor === undefined || sm.sensor === null ? kw === "1500" : !!sm.sensor) ? "yes" : "no"}
               onChange={(v) => setObj("slide_motor", { sensor: v === "yes" })}
             />

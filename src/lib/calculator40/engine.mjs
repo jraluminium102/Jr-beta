@@ -1025,19 +1025,28 @@ export function computeAddon(id, sel, ctx) {
     const sell = autoSell(cost, ctx);
     return { label: 'ชุดออโต้บานยก ' + sel + ' กก. (รวมค่าส่ง)', qty: 1, unit: 'ชุด', unitPrice: sell, amount: sell, cost };
   }
-  if (id === 'slide_motor') {           // มอเตอร์หลังคาเลื่อน (80/300/1500 + ฟันเฟือง + เซนเซอร์) · ขาย ×2.5/6,000
+  if (id === 'slide_motor') {           // มอเตอร์หลังคาเลื่อน — ชีต "คิดทุน หลังคาเลื่อน" แถว 44-52
+    // 💲 ราคาขายมอเตอร์/เซนเซอร์ = "ราคาขายตรง ไม่ผ่านกำไร" (ชีตแถว 49-51 + หมายเหตุแถว 60)
+    //   ทุนยังเข้า "ทุนรวม" ตามปกติ แต่ไม่เข้าฐานคิดกำไร → กด +/- กำไร ราคามอเตอร์ต้องนิ่ง
+    //   (เจ้าของท้วง 4 ก.ย.69 "คูณกำไรมันไม่ล็อคต้นทุน กด +- กำไรแล้วราคาทุนดิ้น")
+    //   ตัวแรก 35,000 · ตัวถัดไป 25,000/ตัว · เซนเซอร์ 2,000 — ราคาเดียวทุกขนาดยก
     const s = (sel && typeof sel === 'object') ? sel : (sel ? { kw: String(sel) } : {});
     //   ไม่เลือก = ไม่มีมอเตอร์ (computeAddon กันไว้ตั้งแต่ต้นทางแล้วว่า sel ว่าง = null)
     const kw = String(s.kw || 'none');
     if (kw === 'none') return null;
+    const n = Math.max(1, Math.round(+s.count || 1));   // จำนวนมอเตอร์ (ชีต "คิดทุน หลังคาเลื่อน" ช่อง H19)
     const cmap = { '80': motorCost(ctx.PB, 'หลังคาเลื่อน ยก80', 4500), '300': motorCost(ctx.PB, 'หลังคาเลื่อน ยก300', 12500), '1500': motorCost(ctx.PB, 'หลังคาเลื่อน ยก1500', 13325) };
-    // ทุนมอเตอร์ = ราคา + ค่าส่ง (ชีตถอดทุน D13 บวก 2 คอลัมน์ · เจ้าของเคาะ 27 ส.ค.69 "เอาตามชีท")
-    //   เดิมคิดแต่ราคา ตกค่าส่งไป → 80 กก. คิด 4,500 ทั้งที่ชีตคิด 6,200
+    // ทุนมอเตอร์ = ราคา + ค่าส่ง (ชีตถอดทุน D13 บวก 2 คอลัมน์ · เจ้าของเคาะ 27 ส.ค.69)
     const ship = motorCost(ctx.PB, 'หลังคาเลื่อน ค่าส่ง', 1700);
     const mcost = cmap[kw] == null ? null : cmap[kw] + ship;
     if (mcost == null) return null;
-    const out = [{ label: 'มอเตอร์หลังคาเลื่อน ยก ' + kw + ' กก. (รวมค่าส่ง)', qty: 1, unit: 'ชุด', unitPrice: autoSell(mcost, ctx), amount: autoSell(mcost, ctx), cost: mcost }];
-    if (kw === '1500') {                 // ฟันเฟือง เฉพาะ 1500 กก.
+    const MS = (ctx.PB.SELL && ctx.PB.SELL.motorSell && ctx.PB.SELL.motorSell.roof_slide) || { first: 35000, next: 25000, sensor: 2000 };
+    const mSell = MS.first + MS.next * (n - 1);
+    const out = [{
+      label: 'มอเตอร์หลังคาเลื่อน ' + kw + ' กก. (รวมค่าส่ง · ระบบสั่งงาน: รีโมท)' + (n > 1 ? ' ×' + n + ' ตัว' : ''),
+      qty: n, unit: 'ชุด', unitPrice: round2(mSell / n), amount: mSell, cost: round2(mcost * n), fixedSell: true,
+    }];
+    if (kw === '1500') {                 // ฟันเฟือง เฉพาะ 1500 กก. (ทุนปกติ ผ่านกำไร — ชีตแถว 52)
       const gl = +s.gearLen || 0;
       if (gl > 0) { const gc = motorCost(ctx.PB, 'ฟันเฟือง/ม.', 340) * gl; const gs = autoSell(gc, ctx); out.push({ label: 'ฟันเฟือง (ระยะยื่น ' + gl + ' ม.)', qty: gl, unit: 'ม.', unitPrice: round2(gs / gl), amount: gs, cost: gc }); }
     }
@@ -1045,8 +1054,8 @@ export function computeAddon(id, sel, ctx) {
     //   ยังติ๊กไว้ให้เองเมื่อเลือก 1500 กก. ตามที่ไฟล์ v20.1 เขียน แต่เอาออกได้
     const wantSensor = (s.sensor === undefined || s.sensor === null) ? (kw === '1500') : !!s.sensor;
     if (wantSensor) {
-      const sc = motorCost(ctx.PB, 'เซนเซอร์กันฝน', 1100); const ss = autoSell(sc, ctx);
-      out.push({ label: 'เซนเซอร์กันฝน (ออโต้)', qty: 1, unit: 'ชุด', unitPrice: ss, amount: ss, cost: sc });
+      const sc = motorCost(ctx.PB, 'เซนเซอร์กันฝน', 1100);
+      out.push({ label: 'เซนเซอร์กันฝน (ออโต้)', qty: 1, unit: 'ชุด', unitPrice: MS.sensor, amount: MS.sensor, cost: sc, fixedSell: true });
     }
     return out;
   }
@@ -1074,7 +1083,7 @@ export function computeAddon(id, sel, ctx) {
     // ค่าส่งคิดครั้งเดียวต่องาน (ไม่ใช่ต่อบาน) ตามสูตร D54 — เดิมเว็บตกค่าส่งไปทั้งก้อน
     const cost = each * n + motorCost(ctx.PB, 'กระทุ้ง ค่าส่ง', 1700);
     const sell = autoSell(cost, ctx);
-    const out = [{ label: 'ชุดออโต้กระทุ้ง ' + m[0] + (n > 1 ? ' ×' + n + ' บาน' : '') + ' (รวมค่าส่ง)', qty: n, unit: 'ชุด', unitPrice: round2(sell / n), amount: sell, cost }];
+    const out = [{ label: 'ชุดออโต้กระทุ้ง ' + m[0] + (n > 1 ? ' ×' + n + ' บาน' : '') + ' (รวมค่าส่ง · ระบบสั่งงาน: รีโมท)', qty: n, unit: 'ชุด', unitPrice: round2(sell / n), amount: sell, cost }];
     // "2 ตัว→+อุปกรณ์พิเศษ" — เฉพาะโช็ค (โซ่ไม่มี) ตามสูตรในชีต
     if (n >= 2 && (sel === 'choke50' || sel === 'choke80')) {
       const xc = motorCost(ctx.PB, 'กระทุ้ง อุปกรณ์พิเศษ', 600), xs = autoSell(xc, ctx);
@@ -1094,7 +1103,7 @@ export function computeAddon(id, sel, ctx) {
     if (brand === 'evecca') {
       // Evecca: ทุน = ตัวชุด + สายพาน(กว้าง×2 ม.) + ค่าส่ง + Smart lock(ถ้าเลือก) — สูตร D57 ในชีต
       const mc = C('เลื่อน Evecca', 13480) + C('เลื่อน Evecca ค่าส่ง', 1700);
-      out.push({ label: 'ชุดออโต้เลื่อน Evecca (จีน · รวมค่าส่ง)', qty: 1, unit: 'ชุด', unitPrice: autoSell(mc, ctx), amount: autoSell(mc, ctx), cost: mc });
+      out.push({ label: 'ชุดออโต้เลื่อน Evecca (จีน · รวมค่าส่ง) · ระบบสั่งงาน: รีโมท + จอควบคุม + สมาร์ทโฮม', qty: 1, unit: 'ชุด', unitPrice: autoSell(mc, ctx), amount: autoSell(mc, ctx), cost: mc });
       const beltLen = W * 2; if (beltLen > 0) acc('สายพาน Evecca (' + round2(beltLen) + ' ม.)', C('เลื่อน Evecca สายพาน/ม.', 75) * beltLen, round2(beltLen), 'ม.');
       if (s.smartlock) acc('Smart lock', C('เลื่อน Evecca Smart lock', 6500));
     } else if (brand === 'changsaek') {
@@ -1110,8 +1119,10 @@ export function computeAddon(id, sel, ctx) {
       const mc = C('เลื่อน SlimLux ชุดแรก', 6900); out.push({ label: 'ชุดออโต้เลื่อน SlimLux (บานแรก)', qty: 1, unit: 'ชุด', unitPrice: autoSell(mc, ctx), amount: autoSell(mc, ctx), cost: mc });
       if (P > 1) acc('SlimLux บานเพิ่ม ×' + (P - 1), C('เลื่อน SlimLux บานเพิ่ม', 2250) * (P - 1), P - 1, 'บาน');
       if (W > 0) acc('ราง SlimLux (' + round2(W * P) + ' ม.)', C('เลื่อน SlimLux ราง/ม.', 1100) * W * P, round2(W * P), 'ม.');
-      if (s.scan) acc('สแกนหน้า', C('เลื่อน SlimLux สแกนหน้า', 2750));
-      else acc('Touch Switch', C('เลื่อน SlimLux Touch', 100));   // บังคับเลือก 1 ใน 2
+      // ระบบสั่งงาน: เจ้าของสั่ง 4 ก.ย.69 "เลือกได้สองอย่าง ทั้งทัชสวิชและสแกนหน้า" (เดิมบังคับ 1 ใน 2)
+      //   ไม่เลือกเลย = ยังคิด Touch Switch ให้ (ของเดิมในชีตต้องมีระบบสั่งงานอย่างน้อย 1)
+      if (s.scan) acc('สแกนหน้า (ระบบสั่งงาน)', C('เลื่อน SlimLux สแกนหน้า', 2750));
+      if (s.touch || !s.scan) acc('Touch Switch (ระบบสั่งงาน)', C('เลื่อน SlimLux Touch', 100));
     } else return null;
     return out;
   }

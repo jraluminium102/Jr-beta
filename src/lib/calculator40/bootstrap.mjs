@@ -81,7 +81,9 @@ export function applyBootstrap(PRODUCTS, R39DATA) {
       if (/เลื่อน|เปิด|ประตู|PC/i.test(nm)) ads.push('stainless');                          // มือจับสแตนเลส
       if (/บานยก/.test(nm)) ads.push('motor');                                              // มอเตอร์บานยก
       if (/เกล็ด/.test(nm)) ads.push('banklet_motor');                                      // มอเตอร์บานเกล็ด (1,800→6,000)
-      if (/เลื่อน/.test(nm)) ads.push('slide_auto');                                        // ชุดออโต้บานเลื่อน Evecca/ช่างแซก/SlimLux (×2.5/6,000)
+      // ⚠ ต้องกำหนดยี่ห้อด้วยเสมอ ไม่งั้น UI โชว์ครบ 3 ยี่ห้อ → SlimLux ไปโผล่ในรุ่นที่ใช้ไม่ได้
+      //   (เจ้าของท้วง 4 ก.ย.69 "บานเลื่อนรางบน เอาช้อยมอเตอร์ SlimLux ออก")
+      if (/เลื่อน/.test(nm)) { ads.push('slide_auto'); p.autoBrands = /SlimLux/i.test(nm) ? ['slimlux'] : ['evecca', 'changsaek']; }                                        // ชุดออโต้บานเลื่อน Evecca/ช่างแซก/SlimLux (×2.5/6,000)
       if (/กระทุ้ง/.test(nm)) ads.push('awn_tt', 'awn_brace', 'awn_auto');                    // กระทุ้ง tilt&turn + แขนค้ำ + ชุดออโต้ (โช้ค/โซ่)
       if (/เฟี้ยม/.test(nm)) ads.push('hide_track');                                        // ซ่อนราง เฟี้ยม
       if (/SlimLux|รางบน|เลื่อนซ้อน/i.test(nm)) ads.push('inner_track');                     // ซ่อนราง +5,000 (เลื่อนภายในรางบน R3.9:2000)
