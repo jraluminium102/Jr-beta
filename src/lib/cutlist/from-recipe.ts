@@ -37,7 +37,9 @@ export function cutInputFromRecipe(recipe: any, opts?: { rawCompare?: boolean })
   //   จีบ/รังผึ้ง/ม้วน = ของสำเร็จรูป สั่งมาทั้งชุด ไม่มีอะไรต้องตัด → ไม่ส่ง
   const mq = String(recipe.addons?.mosquito ?? "none");
   const meshKind = mq === "small" ? "เฟรมเล็ก" : mq === "big" ? "เฟรมใหญ่" : "ไม่มี";
-  const meshCount = Math.max(1, Number(recipe.addons?.mqPanels) || 1);
+  //   จำนวนมุ้ง: ต้องใช้กติกาเดียวกับตอนคิดเงิน (mosquito.mjs) = ช่องกรอกเอง ถ้าไม่กรอก = จำนวนบานที่เลื่อน/เปิดได้
+  //   ⚠ เดิมใส่ 1 ตายตัว → ใบเสนอคิดเงินมุ้ง 2 บาน แต่ใบตัดทำให้บานเดียว (ของขาดหน้างาน)
+  const meshCount = Math.max(1, Number(recipe.addons?.mqPanels) || (N - (Number(recipe.fixedPanes) || 0)));
 
   let m: RecipeCutMap | null = null;
   switch (String(recipe.prodId)) {
@@ -73,8 +75,10 @@ export function cutInputFromRecipe(recipe: any, opts?: { rawCompare?: boolean })
         // 4-5 บาน = เฟรม 2 ชุดต่อกัน (ชีต "เลื่อน4 (2)" / "เลื่อน5") — งานนอกเท่านั้น
         //   งานใน 4/5 บาน = เจ้าของตัดออก ไม่รับงาน (ต้องสั่งโปรไฟล์เพิ่มเยอะเกิน)
         // มุ้ง: ไฟล์มีชีตมุ้งเฉพาะ "สลับ 2 บาน" (นอก/ใน) → 3 บานขึ้นไปไม่ส่งมุ้ง (ไม่มีสูตร ห้ามเดา)
+        //   มุ้ง: ไฟล์มีชีตมุ้งเฉพาะ "สลับ 2 บาน" — ส่งเจตนาเข้าไปทุกกรณี แล้วให้สูตรตัดเป็นคนบอกเอง
+  //   (3 ราง จะไม่มีเส้นมุ้ง แต่ขึ้นแถวเตือนบนใบตัดให้ช่างเห็น — ห้ามหายเงียบ)
         if (N === 2 || N === 3) m = { spec_id: "fuji_slide", input: { W, H, N, rail: `${N}ราง`, work, glass: glassMm(recipe.glassType), honk: false,
-          mesh: (N === 2 && meshKind !== "ไม่มี") ? "มี" : "ไม่มี" } };
+          mesh: meshKind !== "ไม่มี" ? "มี" : "ไม่มี" } };
         else if ((N === 4 || N === 5) && work === "ภายนอก") m = { spec_id: "fuji_slide_multi", input: { W, H, N, glass: glassMm(recipe.glassType) } };
         else m = null;
       }

@@ -39,12 +39,36 @@ const GRID_RATE_BY_BAKE: Record<string, number> = { white: 200, sahara: 200, woo
 const gridRateFor = (bake: string) => GRID_RATE_BY_BAKE[bake] || 200;
 
 // ── กลุ่มออปชั่นเสริม → จัดเข้าหมวด (แค่จัดหน้า ไม่กระทบราคา/engine) — ตรง app.js OPENING/HANDLE/SCREEN/MAIN_EXTRA/AUTO_ADDONS ──
-const OPENING_ADDONS = ["closer", "thresh", "hide_track", "inner_track", "motor", "awn_tt", "awn_brace"];
+const OPENING_ADDONS = ["closer", "thresh", "hide_track", "inner_track", "awn_tt", "awn_brace"];
 const HANDLE_ADDONS = ["cmech", "stainless", "digihandle"];
 const SCREEN_ADDONS = ["mosquito", "roof_zip", "door_zip", "zip_motor", "zip_noremote", "zip_smart", "zip_remote"];
 const MAIN_EXTRA_ADDONS = ["grid", "solid_panel", "elec", "shower_corner", "shower_hw"];
-const AUTO_ADDONS = ["slide_motor", "slide_auto", "awn_auto", "banklet_motor", "rain_sensor"];
+// ⚙️ มอเตอร์ทุกตัวต้องอยู่หมวดเดียวกับของต่อพ่วง (เซนเซอร์กันฝน) และเรียง "มอเตอร์ก่อน" เสมอ
+//   ลำดับในหมวดวิ่งตาม prod.addons → products.mjs ต้องประกาศ rain_sensor ไว้ "หลัง" มอเตอร์ของรุ่นนั้น
+//   (4 ก.ย.69: ย้าย motor ออกจากหมวด "ชนิดการเปิด" มาที่นี่ — เดิมมอเตอร์บานยกอยู่คนละหมวดกับเซนเซอร์ของมันเอง)
+const AUTO_ADDONS = ["motor", "slide_motor", "slide_auto", "awn_auto", "banklet_motor", "gate_motor", "rain_sensor"];
 const HANDLE_LABELS: Record<string, string> = { cmech: "Cmech", stainless: "สแตนเลสอร่าม", digihandle: "ดิจิตอล" };
+
+/**
+ * รุ่นนี้ "มีมอเตอร์อยู่จริง" หรือยัง — ของต่อพ่วงมอเตอร์ (เซนเซอร์กันฝน) ถึงจะโผล่
+ * ⚠ ต้องตรงกับ motorPicked() ใน engine.mjs (แก้ที่ไหนต้องแก้คู่กัน) ไม่งั้น UI กับราคาจะเห็นไม่ตรงกัน
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function motorPicked(prod: any, A: AddonsMap, area = 0, spec: any = {}): boolean {
+  const ads: string[] = prod?.addons || [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const v = (k: string): any => (A as any)[k];
+  // ประตูรั้ว/ม่านซิป มีมอเตอร์อยู่ในชุด — ยกเว้นเลือกแบบที่ไม่ใช้มอเตอร์
+  if (ads.includes("gate_motor")) return !String(spec?.drive || "").includes("มือผลัก");
+  if (ads.includes("zip_motor")) return String(v("zip_motor") || "") !== "manual";
+  // ยก 80 กก. เกิน 3.5 ตร.ม. = engine ปฏิเสธ (ขึ้นคำเตือนแทนมอเตอร์) → ยังไม่ถือว่ามีมอเตอร์
+  if (ads.includes("motor")) return !!v("motor") && v("motor") !== "none" && !(v("motor") === "80" && area > 3.5);
+  if (ads.includes("banklet_motor")) return v("banklet_motor") === "yes";
+  if (ads.includes("awn_auto")) return !!v("awn_auto") && v("awn_auto") !== "none";
+  if (ads.includes("slide_auto")) return !!(v("slide_auto")?.brand && v("slide_auto").brand !== "none");
+  if (ads.includes("slide_motor")) return !!(v("slide_motor")?.kw && v("slide_motor").kw !== "none");
+  return false;
+}
 
 function addonsIn(prodAddons: string[], ids: string[]) {
   return prodAddons.filter((a) => ids.includes(a));
@@ -105,8 +129,11 @@ function SectionHeader({ icon, label }: { icon: string; label: string }) {
 }
 
 /* ── field ต่อ addon 1 ตัว — ตรง app.js renderAddonField เป๊ะทีละ branch ── */
-function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, form }: {
+function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, form, spec }: {
   ad: string; prod: any; addons: AddonsMap; setAddons: (fn: (a: AddonsMap) => AddonsMap) => void; area: number; W: number; movePanes: number; color: string; form: string;
+  // สเปกของบาน (เช่น ประตูรั้ว drive = มือผลัก/มอเตอร์) — บางออปชั่นต้องดูก่อนว่าควรโผล่ไหม
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  spec?: any;
 }) {
   const A = addons;
   const set = (k: string, v: any) => setAddons((old) => ({ ...old, [k]: v }));
@@ -638,6 +665,7 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
     );
   }
   if (ad === "gate_motor") {
+    if (String(spec?.drive || "").includes("มือผลัก")) return null;   // มือผลัก = ไม่มีมอเตอร์ในชุด → เพิ่มมอเตอร์ไม่ได้
     return (
       <Field label="มอเตอร์เพิ่ม" hint="(ชุดรวม 1 ตัวแล้ว · เพิ่ม ×16,000)">
         <NumberInput value={A.gate_motor || 0} onChange={(v) => set("gate_motor", Math.max(0, Math.round(v)))} placeholder="จำนวนเพิ่ม" />
@@ -883,6 +911,7 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
   //  slide_auto, awn_auto, banklet_motor, grid, solid_panel, soft_close, sling, u_track, beam_support, hide_beam, drop_floor)
   // ครอบคลุมด้วย branch ด้านบนแล้วถ้ามีการเปิดใช้ในอนาคต — ที่เหลือ (slide_motor) เขียนแยกด้านล่าง
   if (ad === "rain_sensor") {
+    if (!motorPicked(prod, A, area, spec)) return null;   // ยังไม่ได้เลือกมอเตอร์ = ยังไม่มีอะไรให้ต่อเซนเซอร์
     return (
       <Field label="เซนเซอร์กันฝน" hint="(ออโต้ปิดเองเมื่อฝนตก · ทุน 1,100)">
         <ChipRow
@@ -1020,8 +1049,10 @@ function fmtNum(n: number) {
 }
 
 /* ── ส่วนหลัก ── */
-export default function AddonsSection({ prod, addons, setAddons, area, W, movePanes, color, form }: {
+export default function AddonsSection({ prod, addons, setAddons, area, W, movePanes, color, form, spec }: {
   prod: any; addons: AddonsMap; setAddons: (fn: (a: AddonsMap) => AddonsMap) => void; area: number; W: number; movePanes?: number; color?: string; form?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  spec?: any;
 }) {
   const list: string[] = prod?.addons || [];
   if (!list.length) return null;
@@ -1051,7 +1082,7 @@ export default function AddonsSection({ prod, addons, setAddons, area, W, movePa
         <div key={g.label} className="space-y-2.5">
           <SectionHeader icon={g.icon} label={g.label} />
           {g.ids.map((ad) => (
-            <AddonField key={ad} ad={ad} prod={prod} addons={addons} setAddons={setAddons} area={area} W={W} movePanes={movePanes ?? 1} color={color ?? "white"} form={form ?? ""} />
+            <AddonField key={ad} ad={ad} prod={prod} addons={addons} setAddons={setAddons} spec={spec} area={area} W={W} movePanes={movePanes ?? 1} color={color ?? "white"} form={form ?? ""} />
           ))}
         </div>
       ))}

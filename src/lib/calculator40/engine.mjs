@@ -688,9 +688,13 @@ export function computeCost(PB, prod, opt) {
   const selAddons = opt.addons || {};
   let addonTotal = 0, addonCostExplicit = 0, addonSellImplicit = 0;
   let fixedSellTotal = 0, fixedSellCost = 0;   // มอเตอร์ขายฟิก (ไม่ผ่านสูตรกำไร)
+  //   ctx ก้อนเดียวตลอดลูป — ออปชั่นทีหลังต้องรู้ว่าออปชั่นก่อนหน้าขึ้นบรรทัดจริงไปแล้วหรือยัง
+  const addonCtx = { W, H, P, area, opt, PB, prodId: prod.id, prodAddons: prod.addons || [], motorAdded: false };
   for (const ad of (prod.addons || [])) {
-    const rr = computeAddon(ad, selAddons[ad], { W, H, P, area, opt, PB, prodId: prod.id });
+    const rr = computeAddon(ad, selAddons[ad], addonCtx);
     if (!rr) continue;
+    if (MOTOR_ADDON_IDS.includes(ad) && (Array.isArray(rr) ? rr : [rr]).some((r) => r && r.cat !== 'warn' && r.amount > 0))
+      addonCtx.motorAdded = true;
     for (const r of (Array.isArray(rr) ? rr : [rr])) {
       if (!r) continue;
       if (r.cat === 'warn') { lines.push({ cat: 'warn', name: r.label, amount: 0 }); continue; }   // คำเตือน (เช่น มอเตอร์เกินพื้นที่) — โชว์ ไม่บวกเงิน
@@ -818,6 +822,24 @@ export function roofTargetOf(SM, material, prodId) {
   return gable ? t.gable : t.lean;
 }
 
+/**
+ * รุ่นนี้ "มีมอเตอร์อยู่จริง" หรือยัง — ใช้ตัดสินว่าโชว์/คิดเงินของต่อพ่วงมอเตอร์ได้ไหม
+ * ต้องตรงกับ motorPicked() ใน AddonsSection.tsx (แก้ที่ไหนต้องแก้คู่กัน)
+ *   ประตูรั้ว/ม่านซิป = มอเตอร์อยู่ในชุดเสมอ (gate_motor = ตัวเพิ่ม · zip_motor = เลือกรุ่นมอเตอร์)
+ */
+export const MOTOR_ADDON_IDS = ['motor', 'slide_motor', 'slide_auto', 'awn_auto', 'banklet_motor', 'gate_motor', 'zip_motor'];
+export function motorPicked(ctx) {
+  const ads = ctx.prodAddons || [], A = (ctx.opt && ctx.opt.addons) || {}, spec = (ctx.opt && ctx.opt.spec) || {};
+  // ประตูรั้ว: มอเตอร์อยู่ในชุดเสมอ "ยกเว้นเลือกแบบมือผลัก" (BOM ตัดมอเตอร์ออกเมื่อ drive = มือผลัก)
+  if (ads.includes('gate_motor')) return !String(spec.drive || '').includes('มือผลัก');
+  // ม่านซิป: มอเตอร์อยู่ในชุดเสมอ ยกเว้นเลือก "มือดึงล้วน" (manual)
+  if (ads.includes('zip_motor')) return String((ctx.opt && ctx.opt.motor) || A.zip_motor || '') !== 'manual';
+  // ⚠ ต้องเป็น "ขึ้นบรรทัดมอเตอร์จริงแล้ว" ไม่ใช่แค่ผู้ใช้ติ๊กไว้
+  //   เช่น เลือกยก 80 กก. กับงานเกิน 3.5 ตร.ม. → engine ขึ้นคำเตือนแทน ไม่มีมอเตอร์จริง
+  //   ⇒ ของต่อพ่วงต้องหายตามไปด้วย ไม่ใช่ลอยอยู่คนเดียวในใบเสนอ
+  //   (ทำได้เพราะ addons ของทุกรุ่นเรียง "มอเตอร์ก่อน ของต่อพ่วงทีหลัง" เสมอ — ดู products.mjs)
+  return !!ctx.motorAdded;
+}
 function motorCost(PB, key, fallback) { const v = PB && PB.MOTOR && PB.MOTOR[key]; return (typeof v === 'number') ? v : fallback; }
 /**
  * มอเตอร์ / ชุดออโต้ ที่แต่ละรุ่นเลือกได้ — ตรงกับชีต "ราคาออโต้" ในไฟล์ถอดทุน (หมวดใครหมวดมัน)
@@ -1032,6 +1054,9 @@ export function computeAddon(id, sel, ctx) {
   //   "เพิ่มเซนเซอร์กันฝนเป็นออปชั่นให้เลือก ทุกมอเตอร์ ยกเว้น SlimLux")
   if (id === 'rain_sensor') {
     if (sel !== 'yes') return null;
+    // ⚠ เซนเซอร์เป็นของต่อพ่วงมอเตอร์ — ไม่มีมอเตอร์ = ไม่มีเซนเซอร์
+    //   กันเคส "เคยติ๊กเซนเซอร์ไว้ แล้วมาถอดมอเตอร์ทีหลัง" → ค่าเซนเซอร์ค้างอยู่ในใบเสนอเงียบ ๆ
+    if (!motorPicked(ctx)) return null;
     const cost = motorCost(ctx.PB, 'เซนเซอร์กันฝน', 1100);
     const sell = autoSell(cost, ctx);
     return { label: 'เซนเซอร์กันฝน (ออโต้)', qty: 1, unit: 'ชุด', unitPrice: sell, amount: sell, cost };
@@ -1145,6 +1170,8 @@ export function computeAddon(id, sel, ctx) {
   }
   if (id === 'gate_motor') {            // มอเตอร์ประตูรั้ว เพิ่ม (นอกเหนือ 1 ตัวในชุด) — ชีตราคาออโต้ 10,000/ชุด ไม่มีค่าส่ง
     const n = +sel || 0; if (n <= 0) return null;
+    // ประตูรั้วแบบมือผลัก = ไม่มีมอเตอร์ในชุดอยู่แล้ว (BOM ตัดออก) → "มอเตอร์เพิ่ม" ก็ไม่ควรมี
+    if (String((ctx.opt && ctx.opt.spec && ctx.opt.spec.drive) || '').includes('มือผลัก')) return null;
     const cost = motorCost(ctx.PB, 'ประตูรั้ว', 10000);   // ชีตราคาออโต้ = 10,000 (เว็บเคยค้าง 16,000)
     const each = autoSell(cost, ctx);
     return { label: 'มอเตอร์ประตูรั้ว เพิ่ม', qty: n, unit: 'ตัว', unitPrice: each, amount: n * each, cost: n * cost };

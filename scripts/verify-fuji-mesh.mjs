@@ -7,6 +7,7 @@
  */
 import { CUT_SPEC_BY_ID } from "../src/lib/cutlist/products.ts";
 import { computeCutList } from "../src/lib/cutlist/engine.ts";
+import { cutInputFromRecipe } from "../src/lib/cutlist/from-recipe.ts";
 
 const spec = CUT_SPEC_BY_ID["fuji_slide"];
 let ok = 0, bad = 0;
@@ -69,6 +70,24 @@ console.log("═══ 3 ราง: ไฟล์ไม่มีชีตมุ�
   const has = r.rows.some((x) => /มุ้ง/.test(x.name) && x.qty > 0);
   check("3 ราง เลือกมุ้งแล้วต้องไม่มีเส้นมุ้ง", has ? 1 : 0, 0);
   check("3 ราง เสายังเป็น 6 (2×3 บาน)", r.rows.filter((x) => x.name === "เสา").reduce((s, x) => s + x.qty, 0), 6);
+}
+
+// ── มุ้งต้องไม่ "หายเงียบ" และจำนวนมุ้งต้องตรงกับตอนคิดเงิน ──
+console.log("═══ มุ้งต้องไม่หายเงียบ + จำนวนตรงกับใบเสนอ ═══");
+{
+  const warnRows = (o) => computeCutList(spec, { ...spec.defaults, W: 350, H: 240, work: "ภายนอก", glass: 6, ...o })
+    .hardware.filter((h) => /⚠/.test(h.name) && h.qty > 0).length;
+  check("3 ราง + สั่งมุ้ง → ขึ้นแถวเตือนบนใบตัด (ไม่หายเงียบ)", warnRows({ N: 3, rail: "3ราง", mesh: "มี" }), 1);
+  check("2 ราง + มุ้ง → ไม่มีแถวเตือน (มีสูตรอยู่แล้ว)", warnRows({ N: 2, rail: "2ราง", mesh: "มี" }), 0);
+  check("3 ราง ไม่สั่งมุ้ง → ไม่มีแถวเตือน", warnRows({ N: 3, rail: "3ราง", mesh: "ไม่มี" }), 0);
+  // จำนวนมุ้งจากใบเสนอ = จำนวนบานที่เลื่อนได้ (บานติดตายไม่นับ) — กติกาเดียวกับตอนคิดเงิน
+  const inp = (p, fixedPanes, addons) => cutInputFromRecipe({
+    v: 1, kind: "std", prodId: "sms_slide", form: "สลับ", w: 350, h: 240, p, fixedPanes,
+    glassType: "เขียว 6มม.", addons: { mosquito: "small", ...addons },
+  }).input;
+  check("SMS 4 บาน ไม่มีบานติดตาย → มุ้ง 4", inp(4, 0).meshCount, 4);
+  check("SMS 4 บาน ติดตาย 2 → มุ้ง 2", inp(4, 2).meshCount, 2);
+  check("SMS กรอกจำนวนมุ้งเอง = ใช้ตามที่กรอก", inp(4, 0, { mqPanels: 1 }).meshCount, 1);
 }
 
 console.log("\n═══ สรุป: ✅ " + ok + " ผ่าน · ❌ " + bad + " ไม่ผ่าน ═══");

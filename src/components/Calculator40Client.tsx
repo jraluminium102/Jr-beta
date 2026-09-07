@@ -1374,6 +1374,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                   prod={prod}
                   addons={addons}
                   setAddons={setAddons}
+                  spec={spec}
                   area={(Number(w) || prod.defaults?.w || 200) / 100 * (Number(h) || prod.defaults?.h || 200) / 100}
                   W={(Number(w) || prod.defaults?.w || 200) / 100}
                   movePanes={movePanes}

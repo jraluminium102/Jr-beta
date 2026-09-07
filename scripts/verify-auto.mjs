@@ -129,6 +129,42 @@ console.log("\n═══ ④ มอเตอร์ขึ้นตามประ
   ok("หลังคา (เพิง/จั่ว/หลายด้าน) เลือกมอเตอร์ได้แล้ว",
     ["roof", "roof_gable", "roof_multi"].every((id) => (PRODUCTS[id].addons || []).includes("slide_motor")));
   ok("เซนเซอร์กันฝนคิดทุน 1,100 ตามชีต", (PB.MOTOR["เซนเซอร์กันฝน"] ?? 0) === 1100, String(PB.MOTOR["เซนเซอร์กันฝน"]));
+
+  // ── ของต่อพ่วงมอเตอร์ต้อง "ห้อยกับมอเตอร์" จริง (เจ้าของท้วง 4 ก.ย.69) ──
+  //   ① ลำดับ: มอเตอร์ต้องมาก่อนเซนเซอร์เสมอ (ลำดับบนหน้าจอวิ่งตาม prod.addons ในหมวดเดียวกัน)
+  //   ② ไม่เลือกมอเตอร์ = ห้ามคิดเงินเซนเซอร์ แม้ค่าจะค้างอยู่ในสูตรเดิม
+  //   ③ มอเตอร์ที่ engine ปฏิเสธ (ยก 80 กก. เกินพื้นที่) ก็ไม่นับว่ามีมอเตอร์
+  const MOTOR_IDS = ["motor", "slide_motor", "slide_auto", "awn_auto", "banklet_motor", "gate_motor", "zip_motor"];
+  for (const [id, p] of Object.entries(PRODUCTS)) {
+    const ads = p.addons || [];
+    if (!ads.includes("rain_sensor")) continue;
+    const iS = ads.indexOf("rain_sensor");
+    const iM = Math.min(...MOTOR_IDS.map((m) => { const k = ads.indexOf(m); return k < 0 ? 99 : k; }));
+    ok(`${id}: มอเตอร์มาก่อนเซนเซอร์`, iM < iS, JSON.stringify(ads));
+  }
+  const sensorLines = (id, addons, w = 300, h = 240) =>
+    (computeCost(PB, PRODUCTS[id], { w, h, p: 2, glassType: "เขียว 6มม.", addons }).lines || [])
+      .filter((l) => /เซนเซอร์กันฝน/.test(l.name || "")).length;
+  for (const id of ["banyok", "fold_lift", "banklet", "awning", "sms_slide", "euro_slide", "bar_slide"])
+    ok(`${id}: ไม่เลือกมอเตอร์ = ไม่คิดเงินเซนเซอร์`, sensorLines(id, { rain_sensor: "yes" }) === 0);
+  ok("banyok: เลือกมอเตอร์แล้วเซนเซอร์คิดเงินได้", sensorLines("banyok", { motor: "300", rain_sensor: "yes" }) === 1);
+  ok("banyok: มอเตอร์ 80 กก. เกินพื้นที่ (โดนปฏิเสธ) = ไม่คิดเงินเซนเซอร์",
+    sensorLines("banyok", { motor: "80", rain_sensor: "yes" }) === 0);
+  ok("banyok: มอเตอร์ 80 กก. ในพื้นที่ที่ใช้ได้ = คิดเงินเซนเซอร์ได้",
+    sensorLines("banyok", { motor: "80", rain_sensor: "yes" }, 150, 100) === 1);
+  ok("หลังคา: ไม่เลือกมอเตอร์ = ไม่มีทั้งมอเตอร์และเซนเซอร์",
+    sensorLines("roof", { slide_motor: { kw: "none" }, rain_sensor: "yes" }) === 0);
+  ok("ประตูรั้ว/ม่านซิป: มอเตอร์อยู่ในชุดเสมอ → เลือกเซนเซอร์ได้เลย",
+    sensorLines("gate", { rain_sensor: "yes" }) === 1 && sensorLines("zipscreen", { rain_sensor: "yes" }) === 1);
+  // ── รุ่นที่ "มีมอเตอร์ในชุด" แต่เลือกแบบไม่ใช้มอเตอร์ได้ ต้องไม่มีของต่อพ่วงเหลือค้าง ──
+  const lineNames = (id, o) => (computeCost(PB, PRODUCTS[id], { w: 400, h: 180, p: 1, ...o }).lines || []).map((l) => l.name || "");
+  {
+    const g = lineNames("gate", { spec: { drive: "มือผลัก" }, addons: { rain_sensor: "yes", gate_motor: 2 } });
+    ok("ประตูรั้วมือผลัก: ไม่มีมอเตอร์ในชุด → ไม่มีเซนเซอร์", !g.some((n) => /เซนเซอร์กันฝน/.test(n)), g.join(" | "));
+    ok("ประตูรั้วมือผลัก: เพิ่มมอเตอร์ไม่ได้", !g.some((n) => /มอเตอร์/.test(n)), g.join(" | "));
+    const z = lineNames("zipscreen", { w: 300, h: 240, motor: "manual", addons: { rain_sensor: "yes" } });
+    ok("ม่านซิปมือดึงล้วน: ไม่มีเซนเซอร์", !z.some((n) => /เซนเซอร์กันฝน/.test(n)), z.join(" | "));
+  }
 }
 
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
