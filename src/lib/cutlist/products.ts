@@ -753,7 +753,7 @@ export const FUJI_SLIDE: CutSpec = {
     { name: "⚠ มุ้ง 3 ราง — ไฟล์ตัดประกอบไม่มีสูตร ต้องคิดเส้นมุ้งเอง", unit: "รายการ", noStock: true,
       note: "ไฟล์ JR_FUJI_บานเลื่อน มีชีตมุ้งเฉพาะเลื่อนสลับ 2 บาน (นอก/ใน)",
       qty: (o) => (String((o as unknown as { mesh?: string }).mesh ?? "ไม่มี") !== "ไม่มี" && frc(o).p !== 2 ? 1 : 0) },
-    { name: "ล้อ-15x20x230", sku: "JR00577", qty: (o) => 2 * frc(o).p, unit: "ตัว" },
+    { name: "ล้อ 24", sku: "JR00586", qty: (o) => 2 * frc(o).p, unit: "ตัว" },
     ...handleHardware("LR"),
     { name: "สปิงก็อท", sku: "JR00592", qty: (o) => 4 * frc(o).p, unit: "ตัว" },
     { name: "ฉากประกอบมุม", sku: "JR00480", qty: (o) => 12 * frc(o).p, unit: "ตัว" },
@@ -814,7 +814,7 @@ export const FUJI_SLIDE_CENTER: CutSpec = {
     { name: "ตบกันสาด", code: "F7992", len: (o) => o.W, qty: (o) => (fIn(o) ? 0 : 1) },
   ],
   hardware: [
-    { name: "ล้อ-15x20x230", sku: "JR00577", qty: (o) => 2 * o.N, unit: "ตัว" },
+    { name: "ล้อ 24", sku: "JR00586", qty: (o) => 2 * o.N, unit: "ตัว" },
     ...handleHardware("LR"),
     { name: "สปิงก็อท", sku: "JR00592", qty: (o) => 4 * o.N, unit: "ตัว" },
     { name: "ฉากประกอบมุม", sku: "JR00480", qty: (o) => 12 * o.N, unit: "ตัว" },
@@ -869,7 +869,7 @@ export const FUJI_SLIDE_MULTI: CutSpec = {
     { name: "ราง", code: "F7994", len: (o) => o.W - 4.2, qty: (o) => fm(o).rail, stockLens: [500] },
   ],
   hardware: [
-    { name: "ล้อ-15x20x230", sku: "JR00577", qty: (o) => 2 * o.N, unit: "ตัว" },
+    { name: "ล้อ 24", sku: "JR00586", qty: (o) => 2 * o.N, unit: "ตัว" },
     ...handleHardware("LR"),
     { name: "สปิงก็อท", sku: "JR00592", qty: (o) => 4 * o.N, unit: "ตัว" },
     { name: "ฉากประกอบมุม", sku: "JR00480", qty: (o) => 12 * o.N, unit: "ตัว" },

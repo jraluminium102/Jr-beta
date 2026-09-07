@@ -141,7 +141,8 @@ function check(label, res, want) {
     { nameHas: "แผ่นรับล็อค", sku: "JR00562", qty: 1 },
     { nameHas: "CDQ", sku: "JR00596", qty: 1 },
     { nameHas: "น็อตเฟรม", sku: "JR00864", qty: 8 },
-    { nameHas: "ยางกรอบบาน", sku: "JR00771", qty: 13.6 },
+    // 4 ก.ย.69: เจ้าของเคาะ "บานโซลิด เอาตามคิดราคา" → ยางกรอบบาน = วนรอบช่องเต็ม × จำนวนบาน (เดิมวนรอบใบจริง 13.6)
+    { nameHas: "ยางกรอบบาน", sku: "JR00771", qty: 16 },
     { nameHas: "ยางวงกบ", sku: "JR00771", qty: 8 },
   ]);
   // ดัมมี่+ดัมมี่/Cmech ต้องไม่โผล่ที่ default
@@ -215,7 +216,7 @@ function check(label, res, want) {
   const res = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1);
   console.log("FUJI เลื่อนสลับ (2ราง):");
   check("FUJI", res, [
-    { nameHas: "ล้อ-15x20x230", sku: "JR00577", qty: 4 },
+    { nameHas: "ล้อ 24", sku: "JR00586", qty: 4 },
     { nameHas: "มือจับ กุญแจ", sku: "JR00368", qty: 1 },
     { nameHas: "มือจับ ล็อค", sku: "JR00369", qty: 2 },
     { nameHas: "แกนมือจับ A", sku: "JR00478", qty: 4 },

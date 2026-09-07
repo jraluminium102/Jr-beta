@@ -319,7 +319,7 @@ console.log("\n═══ เสารับแรง F7951 สูงเกิน
 console.log("\n═══ ยูโร (FUJI) — ค่าของอุปกรณ์ต้องมาจากใบตัด ═══");
 {
   // จำลองว่าสโตร์ตั้งราคาอุปกรณ์ครบแล้ว (ไม่ครบ = engine ถอยไปใช้รายการเดิมในสูตรโดยตั้งใจ)
-  const SIM = { JR00577: 40, JR00592: 12, JR00480: 2, JR00589: 5, JR00485: 5, JR00794: 375, JR00504: 90, JR00864: 1,
+  const SIM = { JR00586: 40, JR00592: 12, JR00480: 2, JR00589: 5, JR00485: 5, JR00794: 375, JR00504: 90, JR00864: 1,
     JR00368: 520, JR00369: 480, JR00370: 300, JR00377: 99, JR00378: 99, JR00379: 62, JR00475: 20, JR00476: 15, JR00477: 25, JR00478: 60, JR00479: 60 };
   const PBs = { ...PB, SKUPRICE: { ...(PB.SKUPRICE || {}), ...SIM } };
   const at = (form, p, bottomrail, handleBrand) => compareCut(PBs, { prodId: "euro_slide", w: 600, h: 300, p, form, spec: { bottomrail }, ...(handleBrand ? { cut: { handleBrand } } : {}) });

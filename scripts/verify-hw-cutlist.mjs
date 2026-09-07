@@ -218,5 +218,47 @@ console.log("\n═══ ⑤ หน้าจอต่อสายครบไห
   ok("ใบตัด SMS มีซิลิโคนแล้ว (เดิมไม่มี ทั้งที่คิดราคาคิดอยู่)", cut.includes('sku: "JR00504"'), "");
 }
 
+// ═══ ⑤ รหัสอุปกรณ์ต้อง "ตัวเดียวกัน" ทั้งคิดราคาและใบตัด + ห้ามใช้รหัสที่เจ้าของเลิกใช้ ═══
+//   ทำไมต้องมี: ฝั่งคิดราคาพอร์ตจากชีตถอดทุน · ฝั่งใบตัดพอร์ตจากไฟล์ตัดประกอบ
+//   สองไฟล์เขียนรหัสคนละตัว = เว็บผูกคนละตัว และไม่มีอะไรจับ เพราะปกติค่าของดึงจากใบตัด
+//   อยู่แล้ว (HW_FROM_CUTLIST) — สูตรฝั่งคิดราคาเป็น "ตัวสำรอง" ที่หลุดได้เงียบ ๆ
+//   เจ้าของเจอเอง 4 ก.ย.69: SMS คิดราคาผูก JR00228 แต่ใบตัดผูก JR00576
+{
+  const { CUT_SPEC_BY_ID } = await import("../src/lib/cutlist/products.ts");
+  // รหัสที่เจ้าของสั่งเลิกใช้/ลบออกจากสโตร์ — ห้ามเหลือในสูตรไหนทั้งสองระบบ
+  const RETIRED = {
+    JR00228: "ล้อ 27 ตัวเก่า — เจ้าของลบออกจากสโตร์ 4 ก.ย.69 (ใช้ JR00576 แทน)",
+    JR00577: "ล้อ-15x20x230 — ยูโรเปลี่ยนไปใช้ JR00586 ล้อ 24 (4 ก.ย.69)",
+    JR00195: "ชุดกลอนใบลอง — เปลี่ยนเป็น CDQ JR00596 + ปลายกลอน JR00598 (4 ก.ย.69)",
+  };
+  const calcSkus = new Map();
+  for (const [id, p] of Object.entries(PRODUCTS))
+    for (const g of ["alu", "hardware", "consum"])
+      for (const it of (p[g] || [])) if (typeof it?.sku === "string" && it.sku)
+        calcSkus.set(it.sku, [...(calcSkus.get(it.sku) || []), id]);
+  const cutSkus = new Map();
+  for (const [id, spec] of Object.entries(CUT_SPEC_BY_ID))
+    for (const h of (spec.hardware || [])) {
+      const sk = typeof h.sku === "function" ? h.sku(spec.defaults || {}) : h.sku;
+      if (typeof sk === "string" && sk) cutSkus.set(sk, [...(cutSkus.get(sk) || []), id]);
+    }
+  for (const [sku, why] of Object.entries(RETIRED)) {
+    const hitC = calcSkus.get(sku) || [], hitK = cutSkus.get(sku) || [];
+    ok("รหัสเลิกใช้ " + sku + " ต้องไม่เหลือในสูตรแล้ว — " + why,
+      hitC.length === 0 && hitK.length === 0, "คิดราคา: " + (hitC.join(",") || "-") + " · ใบตัด: " + (hitK.join(",") || "-"));
+  }
+  // ล้อบานเลื่อน: คิดราคา ↔ ใบตัด ต้องรหัสเดียวกัน (เจ้าของสั่ง "ผูกตัวเดียวกัน")
+  const calcWheel = (id) => ((PRODUCTS[id].hardware || []).find((h) => /^ล้อ/.test(h.name || "")) || {}).sku;
+  const cutWheel = (id) => {
+    const spec = CUT_SPEC_BY_ID[id];
+    const h = (spec.hardware || []).find((x) => /^ล้อ/.test(typeof x.name === "function" ? x.name(spec.defaults || {}) : x.name || ""));
+    return h && (typeof h.sku === "function" ? h.sku(spec.defaults || {}) : h.sku);
+  };
+  for (const [prod, spec, want] of [["sms_slide", "sms_slide_free", "JR00576"], ["euro_slide", "fuji_slide", "JR00586"]])
+    ok(prod + ": ล้อคิดราคา = ล้อใบตัด = " + want,
+      calcWheel(prod) === want && cutWheel(spec) === want, "คิดราคา " + calcWheel(prod) + " · ใบตัด " + cutWheel(spec));
+  ok("ระแนงเลื่อนใช้ล้อตัวเดียวกับ SMS (JR00576)", calcWheel("bar_slide") === "JR00576", String(calcWheel("bar_slide")));
+}
+
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);

@@ -216,11 +216,11 @@ console.log("\n═══ 12) ทุนขยับตรงกับที่ค
 
   const prodId = "sms_slide";
   const before = computeCost(PB, PRODUCTS[prodId], {});
-  const wheelLine = PRODUCTS[prodId].hardware.find((h) => h.sku === "JR00228");
+  const wheelLine = PRODUCTS[prodId].hardware.find((h) => h.sku === "JR00576");
   okTrue("มีบรรทัดล้อ 27 จริงในสูตร sms_slide (กันเทสพังเงียบถ้าสูตรเปลี่ยนชื่อ/รหัส)", !!wheelLine);
 
   const overridden = applyLineOverrides(PRODUCTS, [
-    { product_id: prodId, scope: "calc", match_key: "JR00228", set_price: wheelLine.price + 1000 },
+    { product_id: prodId, scope: "calc", match_key: "JR00576", set_price: wheelLine.price + 1000 },
   ]);
   const after = computeCost(PB, overridden[prodId], {});
 
