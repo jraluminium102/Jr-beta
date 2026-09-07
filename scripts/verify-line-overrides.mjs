@@ -31,7 +31,7 @@ function makeCalcProducts() {
         { name: "ล้อ 27", sku: "JR00228", price: 80, unit: "ลูก", count: "2*F2" },
       ],
       consum: [
-        { name: "น็อต", sku: "JR00226", price: 1, unit: "ตัว", count: "8+4*P" },
+        { name: "น็อต 1\"", sku: "JR00864", price: 1, unit: "ตัว", count: "8+4*P" },
       ],
     },
     euro_fake: {

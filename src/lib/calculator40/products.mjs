@@ -193,8 +193,11 @@ export const PRODUCTS = {
       { name: 'ชุดล็อค', sku: 'JR00246', price: 189, unit: 'ชุด', count: 'F4' },
     ],
     consum: [
-      { name: 'สักหลาด', sku: 'JR00242', price: 1.5, unit: 'ม.', count: '6*H+9*W+2*(F5+F6)*H' },
-      { name: 'น็อต', sku: 'JR00226', price: 1, unit: 'ตัว', count: '8+4*P' },
+      // 4 ก.ย.69 เจ้าของเคาะ: ย้ายมาใช้รหัสเดียวกับใบตัด แล้วลบรหัสเก่าทิ้งจากสโตร์
+      //   สักหลาด JR00242 → JR00794 (สโตร์ขายเป็นม้วน 250 ม. → per: 250 ให้หารเป็นราคา/เมตร)
+      //   น็อต JR00226 → JR00864 (น็อต 1" — บานโซลิดย้ายไปตั้งแต่ 1 ก.ย.69)
+      { name: 'สักหลาด 5×3', sku: 'JR00794', per: 250, price: 1.5, unit: 'ม.', count: '6*H+9*W+2*(F5+F6)*H' },
+      { name: 'น็อต 1"', sku: 'JR00864', price: 1, unit: 'ตัว', count: '8+4*P' },
       SILICONE,
     ],
   },
@@ -677,8 +680,8 @@ export const PRODUCTS = {
       { name: 'ล็อคก้นหอย', sku: 'JR00456', price: 100, unit: 'ตัว', count: '2' },
     ],
     consum: [
-      { name: 'สักหลาด', sku: 'JR00242', price: 1.5, unit: 'ม.', count: '6*H+9*W+2*(F3+F4)*H' },
-      { name: 'น็อต', sku: 'JR00226', price: 1, unit: 'ตัว', count: '8+4*P' },
+      { name: 'สักหลาด 5×3', sku: 'JR00794', per: 250, price: 1.5, unit: 'ม.', count: '6*H+9*W+2*(F3+F4)*H' },
+      { name: 'น็อต 1"', sku: 'JR00864', price: 1, unit: 'ตัว', count: '8+4*P' },
       SILICONE,
     ],
     note: 'รางล่างดีฟอลต์ภายนอก · ออปชั่นรางใน/มุ้ง ยังไม่ทำ',
@@ -781,7 +784,7 @@ export const PRODUCTS = {
       // ชีตรวม "กลอนบานลอง ฿450" = กลอน JR00630 + ปลายกลอน JR00598 → ลงที่กลอนก้อนเดียว ยอดเท่าไฟล์
       { name: 'กลอนบานลอง (รวมปลายกลอน)', sku: 'JR00630', price: 450, unit: 'ชุด', count: '1' },
       { name: 'น็อตเฟรม', sku: 'JR00864', price: 1, unit: 'ตัว', count: 'SILL?8:6' },
-      { name: 'ยาง', sku: 'JR00244', price: 11, unit: 'ม.', count: 'Math.round(2*(W+H)*P)' },
+      { name: 'ยาง (epdm sponge)', sku: 'JR00771', price: 11, unit: 'ม.', count: 'Math.round(2*(W+H)*P)' },
     ],
     consum: [
       { name: 'ซิลิโคน ใน+นอก', sku: 'JR00504', price: 90, unit: 'หลอด', count: 'Math.ceil(2*(W+H)*2/12.5)' },
@@ -1311,12 +1314,12 @@ export const PRODUCTS = {
       { name: 'ล้อ 27 (16x27x190)', sku: 'JR00576', price: 80, unit: 'ตัว', count: '2*F2' },
       { name: 'มือจับ Align (2/บาน)', sku: 'JR00378', price: 99, unit: 'ตัว', count: '2*F3' },
       { name: 'ชุดล็อค', sku: 'JR00246', price: 189, unit: 'ชุด', count: 'F4' },
-      { name: 'น็อต', sku: 'JR00226', price: 1, unit: 'ตัว', count: '8+4*P' },
+      { name: 'น็อต 1"', sku: 'JR00864', price: 1, unit: 'ตัว', count: '8+4*P' },
       { name: 'ล้อลูกฟูก (=จำนวนลูกฟูก)', sku: 'JR00209', price: 7, unit: 'ตัว', count: 'Math.ceil(W*100/10)' },
       { box: 'กล่อง|1X1', name: 'ดาม กล่อง1×1 (นอก+ใน กลาง)', price: 310, unit: 'เส้น6ม', count: '2*W*100/600' },
     ],
     consum: [
-      { name: 'สักหลาด', sku: 'JR00242', price: 1.5, unit: 'ม.', count: '6*H+9*W+2*(F5+F6)*H' },
+      { name: 'สักหลาด 5×3', sku: 'JR00794', per: 250, price: 1.5, unit: 'ม.', count: '6*H+9*W+2*(F5+F6)*H' },
       { name: 'ซิลิโคน', sku: 'JR00221', price: 90, unit: 'หลอด', count: 'Math.ceil(2*(W+H)*2/12.5)' },
     ],
     note: '⚠ สีพิเศษ(ซาฮาร่า/อบพิเศษ/ลายไม้) ยังคิดฐานอบขาว/ดำ · ถอดทุน R4.0 (SMS+ลูกฟูก2ทาง) · form=รางล่าง · โหมด=material · auto=ออปชั่น',
@@ -2254,7 +2257,7 @@ export const PRODUCTS = {
       { name: 'น็อตเฟรม', sku: 'JR00212', price: 1, unit: 'ตัว', count: 'S?8:6' },
     ],
     consum: [
-      { name: 'ยาง', sku: 'JR00244', price: 11, unit: 'ม.', count: 'Math.round(2*(W+H)*P)' },
+      { name: 'ยาง (epdm sponge)', sku: 'JR00771', price: 11, unit: 'ม.', count: 'Math.round(2*(W+H)*P)' },
       SILICONE,
     ],
   },
