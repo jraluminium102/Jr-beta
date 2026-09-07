@@ -81,13 +81,30 @@ export default async function BillingPrintPage({
         const def = footerSnapshot(Number(sel.base_amt) || 0, 0, Number(sel.vat_rate) || 0, Number(sel.wht_rate) || 0);
         return { apiUrl: `/api/billing-installments/${selected!.id!}`, suffix: " (งวดนี้)", def, current: ov, real: false, editable: true };
       }
-      if (Number(b.subtotal) <= 0 && !ov) return null;
+      if (Number(b.subtotal) <= 0 && !ov) {
+        // 🔧 บิลก่อน fix VAT — subtotal ไม่ถูกเก็บ แต่ vat_rate>0 (ยอดงวดรวม VAT แล้ว)
+        //   ถอด VAT/WHT ออกจากยอดงวดมาโชว์ breakdown (display-only ไม่แตะข้อมูล) · ไม่มี VAT = คงเดิม (ไม่โชว์ footer)
+        const amt = Number(selected!.amount) || 0;
+        const factor = 1 + vr / 100 - wr / 100;
+        if ((vr > 0 || wr > 0) && amt > 0 && factor > 0) {
+          const def = footerSnapshot(round2(amt / factor), 0, vr, wr);
+          return { apiUrl: `/api/billing-installments/${selected!.id!}`, suffix: " (งวดนี้)", def, current: ov, real: false, editable: true };
+        }
+        return null;
+      }
       // งวดเก่า (ไม่ booked) — ส่วนลด/ภาษีต่องวด = ทั้งใบ × สัดส่วนงวด (บัญชีสั่ง) → ผลรวมทุกงวด = เต็มใบ
       const def = footerSnapshot((Number(b.subtotal) || 0) * ratio, dp, vr, wr, dAmt != null ? round2(dAmt * ratio) : undefined);
       return { apiUrl: `/api/billing-installments/${selected!.id!}`, suffix: " (งวดนี้)", def, current: ov, real: false, editable: true };
     }
     // ทั้งใบ = แก้ยอดจริง (real): กรอก รวมเป็นเงิน/ส่วนลด/VAT/หัก → คิด total ใหม่ + แตกงวดใหม่ (บิลที่ยังไม่จ่าย)
-    const subW = Number(b.subtotal) || Number(bn.total) || 0;
+    let subW = Number(b.subtotal) || 0;
+    let derivedBase = false;
+    if (subW <= 0 && (vr > 0 || wr > 0) && Number(bn.total) > 0) {
+      // 🔧 บิลก่อน fix VAT (subtotal ว่าง) แต่มี VAT/WHT → ถอดออกจากยอดรวมทั้งใบมาโชว์ (ส่วนลดฝังใน total แล้ว → disc=0)
+      const factor = 1 + vr / 100 - wr / 100;
+      if (factor > 0) { subW = round2((Number(bn.total) || 0) / factor); derivedBase = true; }
+    }
+    if (subW <= 0) subW = Number(bn.total) || 0;
     if (subW <= 0) return null;
     // WHT ที่ book ต่องวด (บิลค่าแรง): bn.wht_amt=0 แต่มี "งวดค่าแรง" ถือ WHT ไว้ (base_amt+wht_rate)
     //   → รวมขึ้นมาโชว์ท้ายใบ ไม่งั้น footer ทั้งใบ "ซ่อน" WHT ทำให้ gross−WHT ≠ ยอดล่าง (บัญชี must-fix)
@@ -111,8 +128,8 @@ export default async function BillingPrintPage({
       };
       return { apiUrl: `/api/billing-notes/${bn.id}`, suffix: "", def, current: null, real: false, editable: false };
     }
-    const def = footerSnapshot(subW, dp, vr, wr, dAmt);
-    return { apiUrl: `/api/billing-notes/${bn.id}`, suffix: "", def, current: null, real: true, editable: true };
+    const def = footerSnapshot(subW, derivedBase ? 0 : dp, vr, wr, derivedBase ? undefined : dAmt);
+    return { apiUrl: `/api/billing-notes/${bn.id}`, suffix: "", def, current: null, real: !derivedBase, editable: !derivedBase };
   })();
 
   // WHT ที่มีผลจริงบนใบ (งวดเดียว = ของงวด · ทั้งใบ = รวม) → คุมป้ายบรรทัดล่าง + หมายเหตุ
