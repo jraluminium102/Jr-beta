@@ -80,8 +80,8 @@ export default async function QuotationDetail({ params }: { params: { id: string
               <Icon name="banknote" size={16} /> สร้างใบวางบิล
             </Link>
           )}
-          {/* ปุ่มแก้ไขใบเสนอ — โชว์เฉพาะเมื่อไม่มีบิล active (วางบิลแล้ว = ยกเลิกบิลเดิมก่อน แล้วแก้/ออกบิลใหม่) */}
-          {writable && !hasActiveBilling && q.status !== "cancelled" && (
+          {/* ปุ่มแก้ไขใบเสนอ — แก้ได้เสมอ (free-space) แม้วางบิลแล้ว · คนจัดการเอง ไม่บังคับยกเลิกบิลก่อน */}
+          {writable && q.status !== "cancelled" && (
             <>
               {/* แก้ในเครื่องคิดราคา 4.0 (0093) — โหลดใบ+สูตรกลับเข้าเครื่องคิด แก้ขนาด/option แล้วบันทึกกลับใบเดิม */}
               <Link href={`/calculator40?edit=${q.id}`}
@@ -110,9 +110,9 @@ export default async function QuotationDetail({ params }: { params: { id: string
       </div>
 
       {hasActiveBilling && activeBillingCode && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-3 text-sm text-amber-800">
-          มีใบวางบิล <b className="font-mono">{activeBillingCode}</b> ที่ใช้งานอยู่ —
-          ต้องยกเลิกใบวางบิลก่อนจึงจะแก้ไขหรือถอยสถานะใบเสนอได้
+        <div className="bg-sky-50 border border-sky-200 rounded-2xl px-5 py-3 text-sm text-sky-800">
+          ใบเสนอนี้มีใบวางบิล <b className="font-mono">{activeBillingCode}</b> อยู่ —
+          แก้ใบเสนอได้เลย แต่แก้แล้วยอด/รายการในใบวางบิลจะไม่ตามให้อัตโนมัติ ตรวจ/แก้ใบวางบิลเองด้วย
         </div>
       )}
 

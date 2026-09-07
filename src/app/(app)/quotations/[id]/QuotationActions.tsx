@@ -14,11 +14,10 @@ const NEXT: Record<QuotationStatus, { to: QuotationStatus; label: string }[]> = 
 export default function QuotationActions({
   id,
   status,
-  hasActiveBilling,
 }: {
   id: number;
   status: QuotationStatus;
-  /** มีใบวางบิล active อยู่ = บล็อก rollback */
+  /** (เลิกใช้แล้ว) เดิมใช้บล็อก rollback เมื่อมีบิล — free-space ไม่บล็อกแล้ว */
   hasActiveBilling?: boolean;
 }) {
   const router = useRouter();
@@ -28,13 +27,7 @@ export default function QuotationActions({
 
   async function change(to: QuotationStatus) {
     if (to === "cancelled" && !confirm("ยืนยันยกเลิกใบเสนอราคานี้?")) return;
-
-    // ถ้า approved → sent/draft และมีบิล active → แจ้งแทนที่จะ call API
-    const isRollback = status === "approved" && (to === "sent" || to === "draft");
-    if (isRollback && hasActiveBilling) {
-      alert("มีใบวางบิลที่ยังใช้งานอยู่ — ต้องยกเลิกใบวางบิลก่อนถอยสถานะ");
-      return;
-    }
+    // free-space: ถอยสถานะได้เสมอแม้มีบิล active (ไม่บังคับยกเลิกบิลก่อน) — คนจัดการเอง
 
     setBusy(true);
     const res = await fetch(`/api/quotations/${id}/status`, {
