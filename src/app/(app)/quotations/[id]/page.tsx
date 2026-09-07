@@ -75,13 +75,14 @@ export default async function QuotationDetail({ params }: { params: { id: string
           <Link href={`/quotations/${q.id}/print`} className="press inline-flex items-center gap-1.5 glass-soft rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark">
             <Icon name="printer" size={16} /> พิมพ์ / PDF
           </Link>
-          {q.status === "approved" && writable && !hasActiveBilling && (
+          {/* สร้างใบวางบิล — วางได้จากทุกสถานะ (ยกเว้น cancelled) ไม่ต้องเลื่อนเป็น approved ก่อน · สร้างบิลจะ auto-approve ให้เอง */}
+          {writable && !hasActiveBilling && q.status !== "cancelled" && (
             <Link href={`/billing-notes/new?quotation=${q.id}`} className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">
               <Icon name="banknote" size={16} /> สร้างใบวางบิล
             </Link>
           )}
-          {/* ปุ่มแก้ไขใบเสนอ — แก้ได้เสมอ (free-space) แม้วางบิลแล้ว · คนจัดการเอง ไม่บังคับยกเลิกบิลก่อน */}
-          {writable && q.status !== "cancelled" && (
+          {/* ปุ่มแก้/Rev — กดได้อิสระทุกใบทุกสถานะ (free-space) ไม่ต้องถอยสถานะ/ยกเลิกบิลก่อน · คนจัดการเอง */}
+          {writable && (
             <>
               {/* แก้ในเครื่องคิดราคา 4.0 (0093) — โหลดใบ+สูตรกลับเข้าเครื่องคิด แก้ขนาด/option แล้วบันทึกกลับใบเดิม */}
               <Link href={`/calculator40?edit=${q.id}`}
