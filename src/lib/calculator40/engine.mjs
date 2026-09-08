@@ -454,7 +454,8 @@ export function computeCost(PB, prod, opt) {
     lines.push({ cat: 'hardware', name: it.name, sku: hwSku, qty: round2(count), unit: it.unit || 'ชิ้น', unitPrice: price, amount: round2(amount), orderOnly: !!it.orderOnly });
   }
   let consumCost = 0;
-  const sheetNoKg = [];   // แผ่นมุงที่ยังไม่รู้น้ำหนัก (ROOFMAT ในไฟล์มีแต่ราคา ไม่มี กก./ตร.ม.)
+  const sheetNoKg = [];   // ของที่ยังไม่รู้น้ำหนัก (ไฟล์มีแต่ราคา ไม่มี กก.)
+  let boxKgAll = 0, boxKgMoving = 0;   // น้ำหนักโครงกล่อง/ฉาก/แซด/เหล็ก (แยกส่วนที่เคลื่อนที่)
   // opt.consumLines = แผ่นมุง/เหล็ก/ราง ที่ผู้เรียกคิดมาจากใบตัดแล้ว (หลังคาหลายด้าน) — ทับ prod.consum
   const CONSUM = (opt.consumLines && opt.consumLines.length) ? opt.consumLines : (hwLines ? [] : prod.consum || []);
   for (const it of CONSUM) {
@@ -482,8 +483,23 @@ export function computeCost(PB, prod, opt) {
       continue;
     }
     consumCost += amount;
-    // แผ่นมุงหลังคา — ไฟล์ถอดทุนยังไม่มีน้ำหนัก/ตร.ม. → เก็บชื่อไว้เตือน (ห้ามเดาน้ำหนักเอง)
-    if (String(it.ref || '').startsWith('ROOFMAT.') && !sheetNoKg.includes(it.name)) sheetNoKg.push(it.name);
+    // โครงกล่อง/ฉาก/แซด/เหล็ก — น้ำหนักต่อเส้นอยู่ใน PB.BOX_KG (ยังไม่มีข้อมูล = เตือน ห้ามเดา)
+    //   แผ่นมุงไม่คิดตรงนี้ (หน่วยเป็น แผ่น/เส้น/ม. คนละอย่าง) — คิดจากพื้นที่ปูจริงที่ prod.weightSpec แทน
+    // ⚠ นับเฉพาะรุ่นที่ประกาศ weightSpec ไว้ (ตอนนี้ = หลังคาเลื่อน) — ไม่ใช่ทุกรุ่นที่มีบรรทัดกล่อง
+    //   ถ้าไม่ล็อกไว้ พอเจ้าของเติม BOX_KG วันหน้า น้ำหนักจะแอบไปโผล่ที่ roof/roof_gable/glasshouse
+    //   (เช่น "รางน้ำอลู" ใช้ box 'กล่อง|4' เหมือนกัน) แล้วเลือกมอเตอร์เพี้ยนเงียบ ๆ — QA จับ 8 ก.ย.69
+    //   ราง (2 ฝั่ง) ของหลังคาเลื่อนไม่นับเป็นน้ำหนักที่มอเตอร์ลาก เพราะรางยึดติดกับโครง ไม่ได้เลื่อนไปด้วย
+    const bxKey = prod.weightSpec ? (it.box || (String(it.ref || '').startsWith('STEEL.') ? it.ref : '')) : '';
+    if (bxKey && !String(it.ref || '').startsWith('ROOFMAT.')) {
+      const bkg = (PB.BOX_KG || {})[bxKey];
+      if (bkg > 0) {
+        boxKgAll += bkg * count;
+        if (prod.weightSpec && prod.weightSpec.movingConsum && String(it.name || '').includes(prod.weightSpec.movingConsum)) boxKgMoving += bkg * count;
+      } else {
+        const tag = 'โครง "' + bxKey + '" ยังไม่มีน้ำหนัก/เส้น';
+        if (!sheetNoKg.includes(tag)) sheetNoKg.push(tag);
+      }
+    }
     lines.push({ cat: 'consum', name: it.name, sku: cSku, qty: round2(count), unit: it.unit || '', unitPrice: round2(unitPrice), amount: round2(amount),
       // box = คีย์กล่องอลูในสโตร์ (เช่น "กล่อง|4" = กล่องเปิด 4" รางน้ำอลูมิเนียม) — หน้าเทียบใช้หารหัสจริงต่อสี
       ...(it.box ? { box: it.box } : {}) });
@@ -741,16 +757,32 @@ export function computeCost(PB, prod, opt) {
   //   ⚠ แผ่นมุงหลังคา (ชินโคร์/ไวนิล/โพลี/เมทัลชีท) ไฟล์ยังไม่มีน้ำหนัก → ยังไม่นับ ต้องเตือน
   const gMM = isPanelGlass ? 0 : glassMM(glassType);
   const glassKg = gMM > 0 ? glassArea * gMM * GLASS_KG_PER_M2_MM : 0;
-  const weightTotal = aluKgReal + glassKg;
+  // แผ่นมุงหลังคา — พื้นที่ที่ปูจริง × กก./ตร.ม. (เจ้าของให้เลข 8 ก.ย.69 · เมทัลชีทยังไม่ให้ = ไม่คิด เตือนแทน)
+  const WS = prod.weightSpec || null;
+  let sheetKg = 0, sheetKgMoving = 0;
+  if (WS) {
+    const kgm2 = (PB.ROOFMAT_KG || {})[material];
+    if (kgm2 > 0) {
+      sheetKg = (val(WS.sheetArea) || 0) * kgm2;
+      sheetKgMoving = WS.movingSheetArea ? (val(WS.movingSheetArea) || 0) * kgm2 : sheetKg;
+    } else if (material) {
+      sheetNoKg.unshift('แผ่นมุง "' + material + '" ยังไม่มีน้ำหนัก/ตร.ม. ในไฟล์');
+    }
+  }
+  const weightTotal = aluKgReal + glassKg + sheetKg + boxKgAll;
   const weight = {
-    alu: round2(aluKgReal), glass: round2(glassKg), glassMM: gMM,
+    alu: round2(aluKgReal), glass: round2(glassKg), glassMM: gMM, sheet: round2(sheetKg), box: round2(boxKgAll),
     total: round2(weightTotal), panels: P || 1, perPanel: round2(weightTotal / Math.max(1, P || 1)),
+    // น้ำหนักที่มอเตอร์ต้องลากจริง (หลังคาเลื่อน = เฉพาะส่วนเลื่อน ไม่ใช่ทั้งผืน) · รุ่นอื่น = ทั้งชุด
+    load: WS ? round2(sheetKgMoving + boxKgMoving) : round2(weightTotal),
+    // เผื่อความปลอดภัย — ใช้ได้ไม่เกิน % นี้ของพิกัดมอเตอร์ (เจ้าของสั่ง 8 ก.ย.69 "เผื่อ")
+    loadPct: Number(PB.MOTOR_LOAD_PCT) > 0 ? Number(PB.MOTOR_LOAD_PCT) : 80,
     // สิ่งที่ยังไม่ได้นับ — หน้าจอต้องบอกให้เห็น ไม่ใช่เงียบ
     missing: [
       ...(gMM === 0 && glassArea > 0 && !isPanelGlass ? ['กระจก "' + glassType + '" อ่านความหนาไม่ออก'] : []),
       // แผ่นแทนกระจก (คอมโพสิต/ลูกฟูก/เกล็ด Z) — ไฟล์ถอดทุนมีแต่ราคา ไม่มีน้ำหนัก/ตร.ม. เหมือนแผ่นมุงหลังคา
       ...(isPanelGlass && glassArea > 0 ? ['แผ่น "' + glassType + '" ยังไม่มีน้ำหนัก/ตร.ม. ในไฟล์'] : []),
-      ...sheetNoKg.map((x) => 'แผ่นมุง "' + x + '" ยังไม่มีน้ำหนัก/ตร.ม. ในไฟล์'),
+      ...sheetNoKg,   // ข้อความเต็มมาแล้วจากจุดที่เจอ (แผ่นมุง / โครงกล่อง / เหล็ก)
       ...(kgMissing.length ? ['เส้นอลูไม่มี กก./เส้น ' + kgMissing.length + ' บรรทัด'] : []),
     ],
   };
@@ -922,10 +954,12 @@ export function pickMotorByWeight(weightOrCtx, sizes) {
   const w = (weightOrCtx && (weightOrCtx.weight || (weightOrCtx.total != null ? weightOrCtx : null))) || null;
   if (!w) return { warn: '⚠️ เลือกมอเตอร์อัตโนมัติไม่ได้ — ยังไม่มีข้อมูลน้ำหนัก' };
   if (w.missing && w.missing.length) return { warn: '⚠️ เลือกมอเตอร์อัตโนมัติไม่ได้ — น้ำหนักยังไม่ครบ: ' + w.missing.join(' · ') };
-  const kg = w.total;
+  const kg = w.load != null ? w.load : w.total;
   if (!(kg > 0)) return { warn: '⚠️ เลือกมอเตอร์อัตโนมัติไม่ได้ — คำนวณน้ำหนักได้ 0 กก.' };
-  for (const sz of sizes) if (kg <= Number(sz)) return { kw: String(sz), kg: round2(kg) };
-  return { warn: '⚠️ น้ำหนักรวม ' + round2(kg) + ' กก. เกินมอเตอร์ตัวใหญ่สุด (' + sizes[sizes.length - 1] + ' กก.) — แบ่งบานหรือเลือกมอเตอร์เอง' };
+  // เผื่อความปลอดภัย — เจ้าของสั่ง 8 ก.ย.69 "เผื่อ" · ใช้ได้ไม่เกิน MOTOR_LOAD_PCT% ของพิกัด
+  const pct = (w.loadPct > 0 ? w.loadPct : 80) / 100;
+  for (const sz of sizes) if (kg <= Number(sz) * pct) return { kw: String(sz), kg: round2(kg), pct: Math.round(pct * 100) };
+  return { warn: '⚠️ น้ำหนักที่ต้องยก ' + round2(kg) + ' กก. เกินมอเตอร์ตัวใหญ่สุด (' + sizes[sizes.length - 1] + ' กก. × เผื่อ ' + Math.round(pct * 100) + '% = ' + round2(sizes[sizes.length - 1] * pct) + ' กก.) — แบ่งบานหรือเลือกมอเตอร์เอง' };
 }
 /**
  * รุ่นนี้ "ได้มอเตอร์จริง" ไหม เมื่อเลือกขนาดเป็น sel — ใช้ร่วมกัน UI กับ engine (ห้ามเขียนซ้ำ)
@@ -936,8 +970,9 @@ export function motorSizeOk(sel, weight, sizes) {
   const s = String(sel || '');
   if (!s || s === 'none') return false;
   if (s === 'auto') return !pickMotorByWeight(weight, sizes).warn;
-  const w = weight && !(weight.missing || []).length ? weight.total : 0;
-  return !(w > 0 && w > Number(s));
+  const w = weight && !(weight.missing || []).length ? (weight.load != null ? weight.load : weight.total) : 0;
+  const pct = (weight && weight.loadPct > 0 ? weight.loadPct : 80) / 100;
+  return !(w > 0 && w > Number(s) * pct);
 }
 
 function motorFixSell(PB, key, fallback) { const v = PB && PB.MOTORSELL && PB.MOTORSELL[key]; return (typeof v === 'number') ? v : fallback; }
@@ -1129,9 +1164,9 @@ export function computeAddon(id, sel, ctx) {
     }
     const cost = cmap[sel]; if (cost == null) return null;
     // เลือกเองแล้วน้ำหนักเกินพิกัด = ต้องเตือน (ใช้น้ำหนักจริงถ้าคิดได้ · คิดไม่ได้ถอยไปใช้พื้นที่แบบเดิม)
-    const wKg = ctx.weight && !(ctx.weight.missing || []).length ? ctx.weight.total : 0;
+    const wKg = ctx.weight && !(ctx.weight.missing || []).length ? (ctx.weight.load != null ? ctx.weight.load : ctx.weight.total) : 0;
     if (!autoKg && !motorSizeOk(sel, ctx.weight, [80, 300]) && wKg > 0)
-      return { cat: 'warn', label: '⚠️ มอเตอร์ ' + sel + ' กก. รับไม่ไหว — น้ำหนักบานรวม ' + round2(wKg) + ' กก. (อลู ' + ctx.weight.alu + ' + กระจก ' + ctx.weight.glass + ')', amount: 0 };
+      return { cat: 'warn', label: '⚠️ มอเตอร์ ' + sel + ' กก. รับไม่ไหว — น้ำหนักที่ต้องยก ' + round2(wKg) + ' กก. (อลู ' + ctx.weight.alu + ' + กระจก ' + ctx.weight.glass + ') · เผื่อ ' + ctx.weight.loadPct + '% แล้วรับได้ ' + round2(Number(sel) * ctx.weight.loadPct / 100) + ' กก.', amount: 0 };
     if (!autoKg && !(wKg > 0) && sel === '80' && ctx.area > 3.5) return { cat: 'warn', label: '⚠️ มอเตอร์ 80 กก. ใช้ได้ ≤3.5 ตร.ม. (พื้นที่ ' + round2(ctx.area) + ') — เปลี่ยนเป็น 300 กก.', amount: 0 };
     const sell = motorFixSell(ctx.PB, 'บานยก ยก' + sel, autoSell(cost, ctx));   // ยก80 = 25,000 · ยก300 = 35,000
     return { label: 'ชุดออโต้บานยก ' + sel + ' กก. (รวมค่าส่ง)' + (autoKg ? ' · เลือกอัตโนมัติจากน้ำหนักบาน ' + autoKg + ' กก.' : ''), qty: 1, unit: 'ชุด', unitPrice: sell, amount: sell, cost, fixedSell: true };

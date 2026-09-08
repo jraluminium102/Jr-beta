@@ -1678,10 +1678,15 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                       <div className="col-span-2 rounded-2xl px-5 py-3 bg-sky-50 border border-sky-200 text-sm">
                         <span className="font-semibold text-sky-900">⚖️ น้ำหนักบาน {baht(wt.total)} กก.</span>
                         <span className="text-sky-800/80 text-xs">
-                          {" · อลู "}{baht(wt.alu)}{" + กระจก "}{baht(wt.glass)}
-                          {wt.glassMM > 0 ? " (" + wt.glassMM + " มม.)" : ""}
+                          {" · อลู "}{baht(wt.alu)}
+                          {wt.glass > 0 ? " + กระจก " + baht(wt.glass) + (wt.glassMM > 0 ? " (" + wt.glassMM + " มม.)" : "") : ""}
+                          {wt.sheet > 0 ? " + แผ่นมุง " + baht(wt.sheet) : ""}
+                          {wt.box > 0 ? " + โครง " + baht(wt.box) : ""}
                           {wt.panels > 1 ? " · เฉลี่ยบานละ " + baht(wt.perPanel) + " กก." : ""}
                         </span>
+                        {wt.load != null && Math.abs(wt.load - wt.total) > 0.01 && (
+                          <p className="text-[11px] text-sky-800/80 mt-0.5">มอเตอร์ต้องลากเฉพาะส่วนที่เลื่อน {baht(wt.load)} กก. (ส่วนติดตายไม่นับ)</p>
+                        )}
                         {(wt.missing || []).length > 0 && (
                           <p className="text-[11px] text-amber-800 mt-1">⚠️ ยังไม่ได้นับ: {wt.missing.join(" · ")} — เลือกมอเตอร์อัตโนมัติไม่ได้จนกว่าจะครบ</p>
                         )}

@@ -137,12 +137,12 @@ function MotorAutoNote({ sel, weight, sizes }: { sel: any; weight: any; sizes: n
   if (String(sel || "") !== "auto") {
     // เลือกขนาดเองแล้วน้ำหนักเกินพิกัด — เตือนให้เห็นตั้งแต่ตอนกด ไม่ต้องรอไปเห็นในบิล
     if (!sel || sel === "none" || motorSizeOk(sel, weight, sizes)) return null;
-    return <p className="text-[11px] text-amber-700 mt-1.5">⚠️ มอเตอร์ {String(sel)} กก. รับไม่ไหว — น้ำหนักบานรวม {weight?.total} กก.</p>;
+    return <p className="text-[11px] text-amber-700 mt-1.5">⚠️ มอเตอร์ {String(sel)} กก. รับไม่ไหว — น้ำหนักที่ต้องยก {weight?.load ?? weight?.total} กก. (เผื่อ {weight?.loadPct ?? 80}% แล้วรับได้ {Math.round(Number(sel) * (weight?.loadPct ?? 80)) / 100} กก.)</p>;
   }
   const pick = pickMotorByWeight(weight, sizes);
   return pick.warn
     ? <p className="text-[11px] text-amber-700 mt-1.5">{pick.warn}</p>
-    : <p className="text-[11px] text-sky-700 mt-1.5">⚖️ น้ำหนักบานรวม {pick.kg} กก. → เลือก {pick.kw} กก. ให้อัตโนมัติ</p>;
+    : <p className="text-[11px] text-sky-700 mt-1.5">⚖️ น้ำหนักที่ต้องยก {pick.kg} กก. (เผื่อ {pick.pct}%) → เลือก {pick.kw} กก. ให้อัตโนมัติ</p>;
 }
 
 function SectionHeader({ icon, label }: { icon: string; label: string }) {

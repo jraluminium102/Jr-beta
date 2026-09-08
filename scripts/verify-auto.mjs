@@ -13,7 +13,7 @@
  */
 import fs from "node:fs";
 import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
-import { computeCost, autoSetsFor, motorSizeOk } from "../src/lib/calculator40/engine.mjs";
+import { computeCost, autoSetsFor, motorSizeOk, pickMotorByWeight } from "../src/lib/calculator40/engine.mjs";
 import { applyBootstrap } from "../src/lib/calculator40/bootstrap.mjs";
 const R39DATA = JSON.parse(fs.readFileSync("src/lib/calculator40/r39-data.json", "utf8"));
 
@@ -266,9 +266,34 @@ console.log("\n═══ ⑧ น้ำหนักบาน → เลือก�
   ok("auto สำเร็จ: UI เห็นตรงกับ engine", motorSizeOk("auto", okW.weight, [80, 300]) === true);
   ok("เลือก 80 เองแต่เกินพิกัด: UI เห็นตรงกับ engine (ไม่ถือว่ามีมอเตอร์)", motorSizeOk("80", big.weight, [80, 300]) === false);
 
-  // หลังคาเลื่อน: แผ่นมุงยังไม่มีน้ำหนักในไฟล์ → ห้ามเดา
+  // เผื่อความปลอดภัย 80% ของพิกัด (เจ้าของสั่ง 8 ก.ย.69 "เผื่อ")
+  const mid = W("banyok", { w: 180, h: 180, p: 1, addons: { motor: "auto" } });
+  ok("บาน " + mid.weight.total + " กก. เกิน 80% ของ 80 (=64) → ขยับขึ้น 300", /บานยก 300 กก/.test(mline(mid).name || ""), mline(mid).name || warn(mid));
+  ok("เลือก 80 เองตอนน้ำหนัก 65.94 → เตือน (เผื่อแล้วรับได้ 64)", /รับไม่ไหว/.test(warn(W("banyok", { w: 180, h: 180, p: 1, addons: { motor: "80" } }))));
+  ok("ป้ายบอก % เผื่อด้วย", pickMotorByWeight(small.weight, [80, 300]).pct === 80, String(pickMotorByWeight(small.weight, [80, 300]).pct));
+
+  // แผ่นมุงหลังคา — เจ้าของให้น้ำหนัก 7 ตัว 8 ก.ย.69 (เมทัลชีทขอติดไว้ก่อน)
+  const rv = W("roof_slide", { w: 400, h: 250, p: 1, material: "ไวนิล", addons: { slide_motor: { kw: "auto" } } });
+  ok("หลังคาไวนิล: คิดน้ำหนักแผ่นได้ (7 กก./ตร.ม.)", rv.weight.sheet > 0, String(rv.weight.sheet));
+  ok("หลังคาเลื่อน: 'น้ำหนักที่ต้องยก' = เฉพาะส่วนเลื่อน ไม่ใช่ทั้งผืน", rv.weight.load > 0 && rv.weight.load < rv.weight.total, rv.weight.load + " / " + rv.weight.total);
+  const mt = W("roof_slide", { w: 400, h: 250, p: 1, material: "เมทัลชีท EPS 2 นิ้ว PVC", addons: { slide_motor: { kw: "auto" } } });
+  ok("เมทัลชีท: ยังไม่มีน้ำหนัก → เตือนให้เลือกมอเตอร์เอง", (mt.weight.missing || []).some((m) => /เมทัลชีท/.test(m)), JSON.stringify(mt.weight.missing).slice(0, 90));
+  ok("หลังคา: บอกด้วยว่าโครงกล่องยังไม่มีน้ำหนัก", (rv.weight.missing || []).some((m) => /โครง/.test(m)), JSON.stringify(rv.weight.missing).slice(0, 90));
+
+  // 🐞 QA 8 ก.ย.69 — น้ำหนักโครงกล่องต้องนับเฉพาะรุ่นที่ประกาศ weightSpec
+  //   ไม่งั้นวันที่เจ้าของเติม BOX_KG น้ำหนักจะแอบไปโผล่ที่หลังคาทรงอื่น (รางน้ำอลูใช้ box เดียวกัน)
+  {
+    const PB2 = JSON.parse(JSON.stringify(PB));
+    PB2.BOX_KG = { "กล่อง|4": 5, "กล่อง|1.6X4": 6 };
+    const box = (id) => computeCost(PB2, PRODUCTS[id], { w: 400, h: 250, p: 1, glassType: "เขียว 6มม.", material: "ไวนิล" }).weight.box;
+    ok("เติม BOX_KG แล้ว: หลังคาเลื่อนนับน้ำหนักโครงได้", box("roof_slide") > 0, String(box("roof_slide")));
+    for (const id of ["roof", "roof_gable", "glasshouse"])
+      ok("เติม BOX_KG แล้ว: " + id + " ต้องไม่นับตาม (ไม่มี weightSpec)", box(id) === 0, String(box(id)));
+  }
+
+  // หลังคาเลื่อน: โครงกล่องยังไม่มีน้ำหนักในไฟล์ → ห้ามเดา
   const rs = W("roof_slide", { w: 400, h: 250, p: 1, addons: { slide_motor: { kw: "auto" } } });
-  ok("หลังคาเลื่อน: ไม่มีน้ำหนักแผ่นมุง → ไม่เลือกให้ ขึ้นเตือนแทน", /น้ำหนักยังไม่ครบ/.test(warn(rs)), warn(rs));
+  ok("หลังคาเลื่อน: น้ำหนักไม่ครบ → ไม่เลือกให้ ขึ้นเตือนแทน", /น้ำหนักยังไม่ครบ/.test(warn(rs)), warn(rs));
   ok("หลังคาเลื่อน: เลือกขนาดเองยังใช้ได้ตามปกติ", (W("roof_slide", { w: 400, h: 250, p: 1, addons: { slide_motor: { kw: "300" } } }).lines || []).some((l) => /มอเตอร์หลังคาเลื่อน 300/.test(l.name || "")));
 }
 
