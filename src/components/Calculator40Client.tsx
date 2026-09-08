@@ -1521,7 +1521,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-sm font-semibold text-brand-dark">แยกเป็น 3 ก้อน</span>
                       <span className="text-[11px] text-ink-3">กดปุ่มปรับกำไรได้ทีละก้อน</span>
-                      <button type="button" onClick={() => { const d = defProfit(prod?.id ?? ""); setProfit(String(d.mat)); setProfitProd(String(d.prod)); setProfitInst(String(d.inst)); }}
+                      <button type="button" onClick={() => { const d = defProfit(prod?.id ?? ""); setProfit(String(d.mat)); setProfitProd(String(d.prod)); setProfitInst(String(d.inst)); setProfitManual(false); }}
                         className="press ml-auto text-[11px] font-semibold text-ink-2 glass-soft rounded-lg px-2 py-1">
                         คืนค่าตามไฟล์
                       </button>
@@ -1531,7 +1531,12 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                         ["ค่าของ", showCost ? result.cost.total : null, profit, setProfit, result.sell.beforeLabor],
                         ["ค่าผลิต", showCost ? result.labor.prod : null, profitProd, setProfitProd, result.sell.mfgOnly - result.sell.beforeLabor],
                         ["ค่าติดตั้ง", showCost ? result.labor.install : null, profitInst, setProfitInst, result.sell.withInstall - result.sell.mfgOnly],
-                      ] as [string, number | null, string, (v: string) => void, number][]).map(([label, cost, pct, setPct, sell]) => (
+                      ] as [string, number | null, string, (v: string) => void, number][]).map(([label, cost, pct, setPctRaw, sell]) => {
+                      // ⚠ แก้ 5 ก.ย.69 (เจ้าของเจอเอง): กดเพิ่ม/ลดกำไรแล้วราคาไม่ขยับ
+                      //   เพราะค่าตั้งต้นใช้ "เป้ากำไรจากไฟล์" (profitManual = false) ซึ่งไม่สนช่อง %
+                      //   แต่ไม่มีที่ไหนสลับเป็นโหมดกรอกเองเลย → ช่อง % กับปุ่ม +/- เป็นของตายมาตลอด
+                      const setPct = (v: string) => { setProfitManual(true); setPctRaw(v); };
+                      return (
                         <div key={label} className={"rounded-xl border px-3 py-2 " + (howOpen === label ? "border-brand bg-brand/5" : "border-line bg-ground/40")}>
                           <div className="text-[11px] font-medium text-ink-3">{label}</div>
                           {cost != null && <div className="text-xs text-ink-3 tabular-nums">ทุน ฿{baht(cost)}</div>}
@@ -1553,7 +1558,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                             {howOpen === label ? "ซ่อนวิธีคิด ▲" : "ดูวิธีคิด ▼"}
                           </button>
                         </div>
-                      ))}
+                      ); })}
                     </div>
 
                     {/* ── กางวิธีคิดทีละก้อน (เจ้าของสั่ง 20 ส.ค.69) ────────────────────────
