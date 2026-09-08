@@ -1725,9 +1725,11 @@ export default function Calculator40Client({ customers = [], priceOverride, line
 
               {/* สรุปของเสริม + คำเตือนจาก addon (cat:'warn' เช่น มอเตอร์ 80 เกินพื้นที่) */}
               {!prod.composite && ok && (() => {
-                const addonLines = result.lines.filter((l: any) => l.cat === "addon");
+                // มอเตอร์ที่ฝังในสูตรบาน (ประตูรั้ว/ระแนงหมุน) เป็น cat "hardware" แต่ขายฟิก — ต้องโชว์ในกล่องนี้ด้วย
+                const addonLines = result.lines.filter((l: any) => l.cat === "addon" || (l.cat !== "addon" && l.fixedSell));
                 const warnLines = result.lines.filter((l: any) => l.cat === "warn");
-                const addonSum = addonLines.reduce((s: number, l: any) => s + (l.amount || 0), 0);
+                const aSell = (l: any) => (l.sellFixed != null ? l.sellFixed : l.amount) || 0;
+                const addonSum = addonLines.reduce((s: number, l: any) => s + aSell(l), 0);
                 return (
                   <>
                     {addonLines.length > 0 && (
@@ -1744,7 +1746,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                               </span>
                               <span className="shrink-0 tabular-nums">
                                 {showCost && l.cost != null && <span className="text-emerald-700/70">ทุน ฿{baht(l.cost)} · </span>}
-                                ฿{baht(l.amount || 0)}
+                                ฿{baht(aSell(l))}
                               </span>
                             </li>
                           ))}

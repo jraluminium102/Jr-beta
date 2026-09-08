@@ -386,6 +386,10 @@ export function computeCost(PB, prod, opt) {
   }
   const hwLines = rawHwLines && !hwMissing.length ? rawHwLines : null;
   let hwCost = 0;
+  // มอเตอร์ที่ฝังอยู่ในสูตรบาน (ประตูรั้ว 1 ตัวในชุด · ระแนงหมุน) — ขายฟิกตามชีตราคาออโต้
+  //   เจ้าของเคาะ 5 ก.ย.69 "ตัวแรกให้ขาย 25,000 ฟิก · ระแนงหมุน 12,000"
+  //   ทำแบบเดียวกับมอเตอร์ที่เป็นออปชั่น: ทุนยังเข้าทุนรวม แต่ไม่เข้าฐานคิดกำไร
+  let bomFixSell = 0, bomFixCost = 0;
   for (const it of (hwLines || [])) {
     const count = Number(it.qty) || 0;
     if (count <= 0) continue;
@@ -414,6 +418,13 @@ export function computeCost(PB, prod, opt) {
     // ราคาออกมา 0 ทั้งที่ไม่ได้ตั้งใจ (ตารางราคากลางยังว่าง) → ต้องเตือน ไม่ใช่คิดเป็นศูนย์เงียบ ๆ
     if (!(price > 0) && !it.orderOnly && !it.labor) noteMissing({ sku: hwSku || it.ref || it.name, name: it.name, price: 0 }, count);
     const amount = count * price;
+    // มอเตอร์ขายฟิก: ทุนไม่เข้า hwCost (= ไม่เข้าฐานคิดกำไร) แต่ไปเข้าทุนรวมทางช่อง fixedSellCost
+    const mSell = it.motorSellKey ? motorFixSell(PB, it.motorSellKey, 0) : 0;
+    if (mSell > 0 && count > 0) {
+      bomFixSell += mSell * count; bomFixCost += amount;
+      lines.push({ cat: 'hardware', name: it.name, sku: hwSku, qty: round2(count), unit: it.unit || 'ชิ้น', unitPrice: price, amount: round2(amount), cost: round2(amount), sellFixed: round2(mSell * count), fixedSell: true, orderOnly: !!it.orderOnly });
+      continue;
+    }
     hwCost += amount;
     lines.push({ cat: 'hardware', name: it.name, sku: hwSku, qty: round2(count), unit: it.unit || 'ชิ้น', unitPrice: price, amount: round2(amount), orderOnly: !!it.orderOnly });
   }
@@ -437,6 +448,13 @@ export function computeCost(PB, prod, opt) {
     noteMissing({ ...it, sku: cSku }, count);
     if (!(unitPrice > 0) && !it.orderOnly && !it.labor) noteMissing({ sku: cSku || it.ref || it.name, name: it.name, price: 0 }, count);
     const amount = count * unitPrice;
+    // มอเตอร์ขายฟิก (ระแนงหมุน) — ทุนไม่เข้า consumCost = ไม่เข้าฐานคิดกำไร แต่ยังเข้าทุนรวมทาง fixedSellCost
+    const cSell = it.motorSellKey ? motorFixSell(PB, it.motorSellKey, 0) : 0;
+    if (cSell > 0 && count > 0) {
+      bomFixSell += cSell * count; bomFixCost += amount;
+      lines.push({ cat: 'consum', name: it.name, sku: cSku, qty: round2(count), unit: it.unit || '', unitPrice: round2(unitPrice), amount: round2(amount), cost: round2(amount), sellFixed: round2(cSell * count), fixedSell: true, ...(it.box ? { box: it.box } : {}) });
+      continue;
+    }
     consumCost += amount;
     lines.push({ cat: 'consum', name: it.name, sku: cSku, qty: round2(count), unit: it.unit || '', unitPrice: round2(unitPrice), amount: round2(amount),
       // box = คีย์กล่องอลูในสโตร์ (เช่น "กล่อง|4" = กล่องเปิด 4" รางน้ำอลูมิเนียม) — หน้าเทียบใช้หารหัสจริงต่อสี
@@ -687,7 +705,7 @@ export function computeCost(PB, prod, opt) {
   // r.cost (ถ้ามี) = ทุนจริง (มอเตอร์/ออโต้ ถอดจาก "ราคาออโต้") → ไม่ใช่ ÷2 · ไม่มี = R3.9 ทุน≈ขาย÷2
   const selAddons = opt.addons || {};
   let addonTotal = 0, addonCostExplicit = 0, addonSellImplicit = 0;
-  let fixedSellTotal = 0, fixedSellCost = 0;   // มอเตอร์ขายฟิก (ไม่ผ่านสูตรกำไร)
+  let fixedSellTotal = bomFixSell, fixedSellCost = bomFixCost;   // มอเตอร์ขายฟิก (ไม่ผ่านสูตรกำไร) — เริ่มจากตัวที่ฝังในสูตรบาน
   //   ctx ก้อนเดียวตลอดลูป — ออปชั่นทีหลังต้องรู้ว่าออปชั่นก่อนหน้าขึ้นบรรทัดจริงไปแล้วหรือยัง
   const addonCtx = { W, H, P, area, opt, PB, prodId: prod.id, prodAddons: prod.addons || [], motorAdded: false };
   for (const ad of (prod.addons || [])) {

@@ -1095,7 +1095,8 @@ export const PRODUCTS = {
       { name: 'เหล็กยัดเสา 4"×4"', orderOnly: true, price: 860, unit: 'ชิ้น', count: '1' },
       { name: 'ล้อวิ่ง 3"', sku: 'JR02942', price: 299, unit: 'ตัว', count: 'Math.max(2, Math.ceil((W*100)/200))' },   // v20.1: 1 ล้อ/200 ซม. ขั้นต่ำ 2
       { name: 'ล้อไกด์ประคองหลัง', sku: 'JR02943', price: 30, unit: 'ตัว', count: '4' },
-      { name: 'มอเตอร์', orderOnly: true, price: 10000, ref: 'MOTOR.ประตูรั้ว', unit: 'ตัว', count: "(spec && spec.drive && spec.drive.indexOf('มือผลัก') >= 0) ? 0 : 1" },
+      // motorSellKey = ขายฟิกตามชีตราคาออโต้ ไม่ผ่านกำไร (เจ้าของเคาะ 5 ก.ย.69 "ตัวแรกก็ขาย 25,000 ฟิก")
+      { name: 'มอเตอร์', orderOnly: true, price: 10000, ref: 'MOTOR.ประตูรั้ว', motorSellKey: 'ประตูรั้ว', unit: 'ตัว', count: "(spec && spec.drive && spec.drive.indexOf('มือผลัก') >= 0) ? 0 : 1" },
       { name: 'รีโมท', orderOnly: true, price: 500, unit: 'ตัว', count: 'Math.max(0, Math.round(+spec.gremote || 0))' },
       // เหมา 2,000/ชุด · ค่าตั้งต้นในไฟล์ = ไม่มี
       { name: 'เดินไฟ (เหมา)', orderOnly: true, price: 2000, ref: 'MOTOR.ประตูรั้ว เดินไฟ', unit: 'ชุด', count: "spec.gwire==='มี'?1:0" },
@@ -1209,7 +1210,8 @@ export const PRODUCTS = {
       { box: 'กล่อง|1X4', name: 'ใบระแนง (กล่อง 1"×4" โชว์ 4")', price: 905, unit: 'เส้น', count: 'NLINE', mult: true },
       { box: 'กล่อง|4X4', name: 'เพลาหมุน กล่อง 4"×4"', price: 2208, unit: 'เส้น', count: 'NSHAFT', mult: true },
       // ชีต B13 เลือกได้ "เอา/ไม่เอา" (ค่าตั้งต้นในไฟล์ = เอา) — เดิมเว็บบังคับมีเสมอ
-      { name: 'มอเตอร์ระแนงหมุน', price: 1800, ref: 'MOTOR.ระแนงหมุน', unit: 'ตัว', count: "spec.rnMotor==='ไม่เอา' ? 0 : 1" },
+      // ขายฟิก 12,000 ตามชีตราคาออโต้ ไม่ผ่านกำไร (เจ้าของเคาะ 5 ก.ย.69)
+      { name: 'มอเตอร์ระแนงหมุน', price: 1800, ref: 'MOTOR.ระแนงหมุน', motorSellKey: 'ระแนงหมุน', unit: 'ตัว', count: "spec.rnMotor==='ไม่เอา' ? 0 : 1" },
       { orderOnly: true, name: 'อุปกรณ์หมุน+จุดหมุน', price: 1, unit: 'ชุด', count: "Math.round(200*(W*100)/100) + Math.round(160*NLEAF)" },
     ],
     note: 'ระแนงปรับหมุนได้ + มอเตอร์ default · กล่องเมืองทอง stock 6ม. · ค่าแรงใช้เรต "ระแนง" กลาง (ชีตจริง 965 vs 900 ต่าง ~312฿ เช็คซ้ำ) · โครงดาม/ต่อ/สีพิเศษ ยังไม่ทำ',

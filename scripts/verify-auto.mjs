@@ -217,5 +217,29 @@ console.log("\n═══ ④ มอเตอร์ขึ้นตามประ
   }
 }
 
+// ── ⑦ มอเตอร์ที่ฝังอยู่ในสูตรบาน (ไม่ใช่ออปชั่น) ก็ต้องขายฟิก ───────────
+//   เจ้าของเคาะ 5 ก.ย.69: ประตูรั้วตัวแรก 25,000 · ระแนงหมุน 12,000
+console.log("\n═══ ⑦ มอเตอร์ในสูตรบาน — ขายฟิก ทุนยังอยู่ในทุนรวม ═══");
+{
+  const R = (id, o) => computeCost(PB, PRODUCTS[id], { w: 300, h: 200, p: 2, glassType: "เขียว 6มม.", ...o });
+  const fx = (r, re) => (r.lines || []).find((l) => l.fixedSell && re.test(l.name || "")) || {};
+
+  const g = R("gate", {});
+  ok("ประตูรั้ว มอเตอร์ในชุด ขาย 25,000 ฟิก", fx(g, /^มอเตอร์$/).sellFixed === 25000, String(fx(g, /^มอเตอร์$/).sellFixed));
+  ok("ประตูรั้ว มอเตอร์ในชุด ยังโชว์ทุน 10,000", fx(g, /^มอเตอร์$/).cost === 10000, String(fx(g, /^มอเตอร์$/).cost));
+  const gManual = R("gate", { spec: { drive: "มือผลัก (ไม่มีมอเตอร์)" } });
+  ok("ประตูรั้วมือผลัก: ทุนรวมต่างกัน = ทุนมอเตอร์ 10,000", Math.round(g.cost.total - gManual.cost.total) === 10000, String(Math.round(g.cost.total - gManual.cost.total)));
+  ok("ประตูรั้วมือผลัก: ขายต่างกัน = 25,000", Math.round(g.sell.withInstall - gManual.sell.withInstall) === 25000, String(Math.round(g.sell.withInstall - gManual.sell.withInstall)));
+  const gp = (pp) => R("gate", { profitPct: pp, profitManual: true });
+  ok("ประตูรั้ว: กด +/- กำไร ทุนรวมไม่ดิ้น", Math.round(gp(50).cost.total) === Math.round(gp(200).cost.total));
+
+  const lv = R("louver_rotate", {});
+  ok("ระแนงหมุน มอเตอร์ขาย 12,000 ฟิก", fx(lv, /มอเตอร์ระแนงหมุน/).sellFixed === 12000, String(fx(lv, /มอเตอร์ระแนงหมุน/).sellFixed));
+  ok("ระแนงหมุน มอเตอร์ยังโชว์ทุน 1,800", fx(lv, /มอเตอร์ระแนงหมุน/).cost === 1800, String(fx(lv, /มอเตอร์ระแนงหมุน/).cost));
+  const lvNo = R("louver_rotate", { spec: { rnMotor: "ไม่เอา" } });
+  ok("ระแนงหมุน ไม่เอามอเตอร์: ทุนหาย 1,800", Math.round(lv.cost.total - lvNo.cost.total) === 1800, String(Math.round(lv.cost.total - lvNo.cost.total)));
+  ok("ระแนงหมุน ไม่เอามอเตอร์: ขายหาย 12,000", Math.round(lv.sell.withInstall - lvNo.sell.withInstall) === 12000, String(Math.round(lv.sell.withInstall - lvNo.sell.withInstall)));
+}
+
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);
