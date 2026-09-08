@@ -32,6 +32,19 @@ export default function PrintFooterEditor({
   const [vatOn, setVatOn] = useState(base.vat_rate > 0);
   const [wr, setWr] = useState(base.wht_rate || 0);
 
+  // โหมดแก้มือ (Canva) — พิมพ์ทุกยอดเอง ไม่คิดใหม่ ไม่บล็อก · เฉพาะ footer ต่องวด (display-only · endpoint installments) เท่านั้น
+  const canManual = !real && apiUrl.includes("billing-installments");
+  const [manual, setManual] = useState(false);
+  const [mSub, setMSub] = useState(String(base.subtotal || ""));
+  const [mDisc, setMDisc] = useState(String(base.discount_amt || ""));
+  const [mVatRate, setMVatRate] = useState(String(base.vat_rate || 7));
+  const [mVat, setMVat] = useState(String(base.vat_amt || ""));
+  const [mWhtRate, setMWhtRate] = useState(String(base.wht_rate || 0));
+  const [mWht, setMWht] = useState(String(base.wht_amt || ""));
+  const [mNet, setMNet] = useState(String(base.net || ""));
+  // ยอดสุทธิที่ "ถ้าคิดตามปกติ" = sub − ส่วนลด + VAT − หัก (ปุ่มเติมให้ · แก้ทับได้)
+  const mNetAuto = () => Math.round(((Math.max(0, Number(mSub) || 0) - (Number(mDisc) || 0) + (Number(mVat) || 0) - (Number(mWht) || 0)) + Number.EPSILON) * 100) / 100;
+
   const n = (v: string) => Math.max(0, Number(v) || 0);
   const cellL = "pr-10 py-0.5 text-gray-500 text-left";
   const cellR = "text-right tabular-nums";
@@ -59,6 +72,65 @@ export default function PrintFooterEditor({
       else setErr(j?.error || "บันทึกไม่สำเร็จ");
     } catch { setErr("เชื่อมต่อไม่ได้ ลองใหม่อีกครั้ง"); }
     finally { setBusy(false); }
+  }
+
+  // บันทึกโหมดแก้มือ — เก็บยอดดิบตามที่พิมพ์ (ไม่คิดใหม่ ไม่บล็อก)
+  async function saveManual() {
+    setBusy(true); setErr(null);
+    try {
+      const res = await fetch(apiUrl, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ footer_manual: {
+          subtotal: n(mSub), discount_pct: 0, discount_amt: n(mDisc),
+          vat_rate: n(mVat) > 0 ? Math.max(0, Number(mVatRate) || 0) : 0, vat_amt: n(mVat),
+          wht_rate: n(mWht) > 0 ? Math.max(0, Number(mWhtRate) || 0) : 0, wht_amt: n(mWht),
+          net: n(mNet),
+        } }),
+      });
+      const j = await res.json().catch(() => null);
+      if (res.ok) { setEditing(false); router.refresh(); }
+      else setErr(j?.error || "บันทึกไม่สำเร็จ");
+    } catch { setErr("เชื่อมต่อไม่ได้ ลองใหม่อีกครั้ง"); }
+    finally { setBusy(false); }
+  }
+
+  // ── โหมดแก้มือ (พิมพ์ทุกยอดเอง) ──
+  if (editing && manual) {
+    const mInp = "w-28 border border-gray-300 rounded px-1.5 py-1 text-right outline-none tabular-nums focus-visible:ring-2 focus-visible:ring-brand";
+    const rate = "w-12 border border-gray-300 rounded px-1 py-1 text-right outline-none tabular-nums";
+    return (
+      <>
+        <tr><td className={cellL}>รวมเป็นเงิน{suffix}</td><td className={cellR}>
+          <input type="number" step="0.01" value={mSub} onChange={(e) => setMSub(e.target.value)} className={mInp} aria-label="รวมเป็นเงิน" /></td></tr>
+        <tr><td className={cellL}>ส่วนลด (บาท)</td><td className={`${cellR} text-red-700`}>
+          <input type="number" step="0.01" value={mDisc} onChange={(e) => setMDisc(e.target.value)} className={mInp} aria-label="ส่วนลด บาท" /></td></tr>
+        <tr><td className={cellL}><span className="inline-flex items-center gap-1">ภาษีมูลค่าเพิ่ม
+          <input type="number" step="any" value={mVatRate} onChange={(e) => setMVatRate(e.target.value)} className={rate} aria-label="อัตรา VAT %" />%</span></td>
+          <td className={cellR}><input type="number" step="0.01" value={mVat} onChange={(e) => setMVat(e.target.value)} className={mInp} aria-label="ยอด VAT" /></td></tr>
+        <tr><td className={cellL}><span className="inline-flex items-center gap-1">หักภาษี ณ ที่จ่าย
+          <input type="number" step="any" value={mWhtRate} onChange={(e) => setMWhtRate(e.target.value)} className={rate} aria-label="อัตราหัก ณ ที่จ่าย %" />%</span></td>
+          <td className={`${cellR} text-red-700`}><input type="number" step="0.01" value={mWht} onChange={(e) => setMWht(e.target.value)} className={mInp} aria-label="ยอดหัก ณ ที่จ่าย" /></td></tr>
+        <tr className="font-semibold"><td className={cellL}>
+          <span className="inline-flex items-center gap-1.5">ยอดสุทธิ (พิมพ์บนเอกสาร)
+            <button type="button" onClick={() => setMNet(String(mNetAuto()))} className="no-print text-[10px] px-1.5 py-0.5 rounded border border-gray-300 text-gray-500 hover:bg-gray-50" title="เติมยอดที่คิดตามปกติ (แก้ทับได้)">= คิดให้</button>
+          </span></td>
+          <td className={cellR}><input type="number" step="0.01" value={mNet} onChange={(e) => setMNet(e.target.value)} className={mInp} aria-label="ยอดสุทธิ" /></td></tr>
+        <tr className="no-print"><td colSpan={2} className="pt-2">
+          {err && <div className="mb-2 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">{err}</div>}
+          <div className="flex items-center justify-between gap-2">
+            <button type="button" onClick={() => setManual(false)} className="text-xs px-2.5 py-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50">↩ กลับโหมดคิดอัตโนมัติ</button>
+            <span className="flex gap-2">
+              <button type="button" disabled={busy} onClick={() => save(null)} className="text-xs px-2.5 py-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50" title="ล้างค่าที่แก้มือ กลับค่าตั้งต้น">ล้างค่า</button>
+              <button type="button" disabled={busy} onClick={() => { setEditing(false); setErr(null); }} className="text-xs px-2.5 py-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50">ยกเลิก</button>
+              <button type="button" disabled={busy} onClick={saveManual}
+                className="text-xs px-3 py-1.5 rounded-lg bg-brand text-white font-semibold shadow-brand disabled:opacity-50 inline-flex items-center gap-1.5">
+                {busy && <span className="w-3 h-3 rounded-full border-2 border-white/40 border-t-white animate-spin" />}บันทึก (แก้มือ)</button>
+            </span>
+          </div>
+          <div className="mt-1.5 text-[11px] text-gray-500">พิมพ์ยอดเองทุกช่อง — เอกสารจะพิมพ์ตามนี้เป๊ะ (ไม่คิดใหม่ ไม่เตือน) · เป็นการแก้ที่โชว์บนเอกสารเท่านั้น</div>
+        </td></tr>
+      </>
+    );
   }
 
   if (editing) {
@@ -97,6 +169,10 @@ export default function PrintFooterEditor({
           <div className="flex items-center justify-between gap-2">
             <span className="text-sm">ยอดสุทธิ <b className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(t.net)}</b></span>
             <span className="flex gap-2">
+              {canManual && (
+                <button type="button" disabled={busy} onClick={() => setManual(true)}
+                  className="text-xs px-2.5 py-1.5 rounded-lg border border-brand/40 text-brand-dark hover:bg-brand/5 font-medium" title="พิมพ์ยอดทุกช่องเอง (VAT/ยอดรวม) ไม่คิดให้">✎ แก้มือ</button>
+              )}
               {!real && (
                 <button type="button" disabled={busy} onClick={() => save(null)}
                   className="text-xs px-2.5 py-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50" title="ล้างค่าที่แก้ กลับค่าตั้งต้น">ค่าตั้งต้น</button>
@@ -110,7 +186,7 @@ export default function PrintFooterEditor({
               </button>
             </span>
           </div>
-          {real && <div className="mt-1.5 text-[11px] text-gray-500">แก้แล้วยอดรวมทั้งใบ + งวดชำระจะคิดใหม่ทันที · บิลที่จ่ายแล้ว/มีใบเสร็จจะแก้ไม่ได้ (ต้องยกเลิกออกใหม่)</div>}
+          {real && <div className="mt-1.5 text-[11px] text-gray-500">แก้แล้วยอดรวมทั้งใบ + งวดชำระจะคิดใหม่ทันที (เก็บเลขบิลเดิม ไม่ต้องยกเลิก)</div>}
           {!real && <div className="mt-1.5 text-[11px] text-gray-500">บันทึก = ภาษีของ &quot;งวดนี้&quot; จะถูกใช้จริงตอนออกใบเสร็จ (ยอดงวดเปลี่ยนตาม) · แก้หัก ณ ที่จ่ายเป็น &quot;ไม่หัก&quot; แล้วบันทึก = เอา WHT ออกจากงวดนี้ · งวดที่รับชำระแล้ว/มีใบเสร็จจะแก้ไม่ได้</div>}
         </td></tr>
       </>
@@ -123,7 +199,7 @@ export default function PrintFooterEditor({
     <>
       <FooterDisplayRows v={v} suffix={suffix} />
       <tr className="no-print"><td colSpan={2} className="text-right pt-1">
-        <button type="button" onClick={() => setEditing(true)} className="text-xs text-brand-dark/70 hover:text-brand-dark inline-flex items-center gap-1">
+        <button type="button" onClick={() => { setManual(false); setEditing(true); }} className="text-xs text-brand-dark/70 hover:text-brand-dark inline-flex items-center gap-1">
           ✎ แก้ footer{current ? " (แก้แล้ว)" : ""}
         </button>
       </td></tr>

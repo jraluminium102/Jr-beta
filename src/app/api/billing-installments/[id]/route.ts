@@ -79,6 +79,29 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     });
   }
 
+  // โหมด manual = พิมพ์ทุกยอดเอง (Canva) — เก็บ footer_override "ดิบ" ตามที่พิมพ์ ไม่คิดใหม่ ไม่บล็อก ไม่เตือน
+  //   display-only เท่านั้น (ไม่แตะ installments.amount / finance_entries) → ปลอดภัย แค่เปลี่ยนสิ่งที่พิมพ์บนเอกสาร
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if ("footer_manual" in (body as any)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const m = (body as any).footer_manual;
+    const num = (v: unknown) => Math.round((Number(v) || 0) * 100) / 100;
+    const fo = m == null ? null : {
+      subtotal: num(m.subtotal), discount_pct: Number(m.discount_pct) || 0, discount_amt: num(m.discount_amt),
+      vat_rate: Number(m.vat_rate) || 0, vat_amt: num(m.vat_amt),
+      wht_rate: Number(m.wht_rate) || 0, wht_amt: num(m.wht_amt),
+      net: num(m.net),
+    };
+    const { error: mErr } = await supabase
+      .from("billing_installments")
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .update({ footer_override: fo } as any)
+      .eq("id", Number(params.id));
+    if (mErr && /footer_override/i.test(mErr.message ?? "")) return fail("ยังไม่ได้รัน migration 0084 (footer ต่องวด) — รันก่อนใช้งาน", 400);
+    if (mErr) return fail(mErr.message, 500);
+    return ok({ ok: true, footer_override: fo });
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const update: Record<string, any> = {};
   const hasFooter = "footer_override" in body;

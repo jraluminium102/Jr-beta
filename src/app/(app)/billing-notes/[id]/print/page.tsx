@@ -61,9 +61,7 @@ export default async function BillingPrintPage({
   const instFooter = isSingle ? validFooter(selected!.footer_override) : null;
   const effTotal = isSingle ? (instFooter ? Number(instFooter.net) || 0 : grandTotal) : billTotal;
   const effRemaining = round2(effTotal - totalPaid);
-  const overpaid = effRemaining < -0.01;                                          // คงเหลือติดลบ (รับเกิน)
-  // เตือน (งวดแยก): net ที่แก้ footer ต่องวด ≠ ยอดงวดจริง → ตารางกับท้ายใบไม่ตรง
-  const instMismatch = isSingle && !!instFooter && Math.abs(effTotal - (Number(selected!.amount) || 0)) > 0.01;
+  const overpaid = effRemaining < -0.01;                                          // คงเหลือติดลบ (รับเกิน) — ใช้ทำเลขแดงเฉย ๆ ไม่เตือน
 
   // footer แก้ inline บน PDF (เครื่องคิดจริง) — คิด def/current ครั้งเดียว ใช้ทั้งต้นฉบับ (แก้ได้) + สำเนา (อ่านอย่างเดียว)
   const footer: FooterProps = (() => {
@@ -90,7 +88,9 @@ export default async function BillingPrintPage({
           const def = footerSnapshot(round2(amt / factor), 0, vr, wr);
           return { apiUrl: `/api/billing-installments/${selected!.id!}`, suffix: " (งวดนี้)", def, current: ov, real: false, editable: true };
         }
-        return null;
+        // ไม่มี VAT ก็ยังให้แก้มือได้เสมอ — ตั้งฐาน = ยอดงวด (กด "แก้มือ" เพิ่ม VAT/ยอดเองได้)
+        const def = footerSnapshot(amt, 0, 0, 0);
+        return { apiUrl: `/api/billing-installments/${selected!.id!}`, suffix: " (งวดนี้)", def, current: ov, real: false, editable: true };
       }
       // งวดเก่า (ไม่ booked) — ส่วนลด/ภาษีต่องวด = ทั้งใบ × สัดส่วนงวด (บัญชีสั่ง) → ผลรวมทุกงวด = เต็มใบ
       const def = footerSnapshot((Number(b.subtotal) || 0) * ratio, dp, vr, wr, dAmt != null ? round2(dAmt * ratio) : undefined);
@@ -134,10 +134,6 @@ export default async function BillingPrintPage({
 
   // WHT ที่มีผลจริงบนใบ (งวดเดียว = ของงวด · ทั้งใบ = รวม) → คุมป้ายบรรทัดล่าง + หมายเหตุ
   const effWht = footer ? Number((footer.current ?? footer.def).wht_amt) || 0 : 0;
-  // guard บัญชี: footer ทั้งใบต้อง imply net (sub−disc+vat−wht) = ยอดล่าง (bn.total) — ไม่งั้นยอด book เพี้ยน
-  //   เดิม WHT ต่องวด "ซ่อน" เงียบ ๆ (gross−WHT ≠ ยอดล่าง) กว่าจะเจอต้องบวกเอง → โชว์แถบเตือน (ไม่พิมพ์ลงเอกสาร)
-  const fdef = footer && !isSingle ? (footer.current ?? footer.def) : null;
-  const footerTieOff = !!fdef && Math.abs(round2(fdef.subtotal - fdef.discount_amt + fdef.vat_amt - fdef.wht_amt) - effTotal) > 0.01;
   const paymentText = ((bn as { payment_note?: string | null }).payment_note ?? "").trim();
   const cellL = "pr-10 py-0.5 text-gray-500 text-left";
   const cellR = "text-right tabular-nums";
@@ -264,15 +260,7 @@ export default async function BillingPrintPage({
         <BillingPrintControls />
       </div>
 
-      {/* เตือนเจ้าหน้าที่ (ไม่พิมพ์ลงเอกสาร) — footer แก้มือทำให้ยอดไม่สอดคล้อง (บัญชีสั่งให้เตือน) */}
-      {(instMismatch || overpaid || footerTieOff) && (
-        <div className="no-print mx-auto mt-3 max-w-[210mm] rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm text-amber-900">
-          <b>⚠ ตรวจ footer ก่อนส่งลูกค้า</b>
-          {instMismatch && <div className="text-xs mt-0.5">ยอดสุทธิที่แก้ footer งวดนี้ (฿{baht(effTotal)}) ไม่ตรงยอดงวดจริง (฿{baht(Number(selected!.amount) || 0)}) — ตารางงวดกับยอดท้ายใบไม่ตรงกัน กด &quot;✎ แก้ footer → ค่าตั้งต้น&quot; เพื่อกลับยอดจริง</div>}
-          {overpaid && <div className="text-xs mt-0.5">ยอดสุทธิต่ำกว่ายอดรับชำระแล้ว → คงเหลือติดลบ (เหมือนรับเงินเกิน) โปรดตรวจสอบ</div>}
-          {footerTieOff && fdef && <div className="text-xs mt-0.5">ยอดท้ายใบไม่ผูกกัน: (รวมเป็นเงิน − ส่วนลด + VAT − หัก ณ ที่จ่าย) = ฿{baht(round2(fdef.subtotal - fdef.discount_amt + fdef.vat_amt - fdef.wht_amt))} แต่ยอดชำระสุทธิ = ฿{baht(effTotal)} — ยอด book ในระบบอาจเพี้ยน โปรดตรวจก่อนส่งลูกค้า</div>}
-        </div>
-      )}
+      {/* (เอาแถบเตือน "ยอดไม่ตรง" ออก — เจ้าของสั่ง: free-space แบบ FlowAccount พิมพ์ยอดเองได้ ไม่ต้องเตือน) */}
 
       {/* ต้นฉบับ (แก้ inline ได้) + สำเนา (อ่านอย่างเดียว) — บนจอโชว์คู่เป็นพรีวิว · ป้าย "สำเนา" คั่นบนจอ */}
       {Doc("ต้นฉบับ", "bn-orig", true)}
