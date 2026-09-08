@@ -99,13 +99,7 @@ export default function NewBillingClient({
     setErr("");
     if (!quotationId) { setErr("ต้องเลือกใบเสนอราคา"); return; }
 
-    // confirm ก่อนสร้างถ้าใบเสนอยังไม่ approved (auto-approve ย้อนกลับยาก)
-    if (selected && selected.status !== "approved") {
-      const ok = window.confirm(
-        "การสร้างบิลจะอนุมัติใบเสนอนี้อัตโนมัติและย้อนกลับยาก ยืนยัน?"
-      );
-      if (!ok) return;
-    }
+    // free-space: ไม่ถามยืนยัน — สร้างบิล = auto-approve ใบเสนอ (Rev/แก้ทีหลังได้อิสระ ไม่ต้องถอยสถานะ)
 
     busyRef.current = true;
     setBusy(true);
