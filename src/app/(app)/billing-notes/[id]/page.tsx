@@ -106,6 +106,17 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
   // ค่าเริ่มต้นในฟอร์มแก้: ถ้าบิลเคยแก้ footer แล้ว (มี breakdown จริง) ใช้ค่าบิล · ไม่งั้นใช้ค่าจากใบเสนอ
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const bnAny = bn as any;
+  // 🔧 ใบเสนอไม่มี subtotal (บิลก่อน fix VAT) → เดิม quoteBase=null → ปุ่ม "แก้ VAT/ส่วนลด" หายทั้งปุ่ม
+  //   = แก้ VAT ในที่ไม่ได้ ต้องยกเลิกสร้างใหม่ (เลขรันใหม่) · สร้างฐานจากตัวบิลเองแทน ให้แก้ในที่ได้ เก็บเลขเดิม
+  if (!quoteBase) {
+    const vr = Number(bnAny.vat_rate) || 0, wr = Number(bnAny.wht_rate) || 0;
+    let sub = Number(bnAny.subtotal) || 0;
+    if (sub <= 0) {
+      const f = 1 + vr / 100 - wr / 100;
+      sub = f > 0 ? Math.round(((Number(bn.total) || 0) / f) * 100) / 100 : (Number(bn.total) || 0);
+    }
+    if (sub > 0) quoteBase = { subtotal: sub, discount_pct: Number(bnAny.discount_pct) || 0, vat_rate: vr, wht_rate: wr };
+  }
   const editDefaults = quoteBase && Number(bnAny.has_tax_breakdown)
     ? { discount_pct: Number(bnAny.discount_pct) || 0, vat_rate: Number(bnAny.vat_rate) || 0, wht_rate: Number(bnAny.wht_rate) || 0 }
     : quoteBase
