@@ -63,7 +63,8 @@ export default async function ReceiptSummaryPage({
   const live = rows.filter((r) => !r.is_voided);
   const sumNet = live.reduce((s, r) => s + Number(r.net || 0), 0);
   const sumVat = live.reduce((s, r) => s + Number(r.vat_amt || 0), 0);
-  const sumBase = sumNet - sumVat;
+  // ฐานภาษีขาย = ยอดรวม VAT (amount) − VAT · ห้ามใช้ net−vat (พอมีหัก ณ ที่จ่าย net<amount → ฐานขาด กระทบ ภ.พ.30)
+  const sumBase = live.reduce((s, r) => s + (Number(r.amount || 0) - Number(r.vat_amt || 0)), 0);
   const monthLabel = `${THAI_MONTH[m0]} ${y + 543}`;
 
   return (
@@ -116,7 +117,7 @@ export default async function ReceiptSummaryPage({
             {rows.length === 0 ? (
               <tr><td colSpan={8} className="p-6 text-center text-gray-400 border border-gray-200">— ไม่มีใบเสร็จในเดือนนี้ —</td></tr>
             ) : rows.map((r, i) => {
-              const base = Number(r.net || 0) - Number(r.vat_amt || 0);
+              const base = Number(r.amount || 0) - Number(r.vat_amt || 0);   // ฐาน = ยอดรวม VAT − VAT (ไม่ใช่ net−vat · กันฐานขาดเมื่อมีหัก ณ ที่จ่าย)
               const vd = r.is_voided;
               return (
                 <tr key={r.id} style={vd ? { color: "#9ca3af", textDecoration: "line-through" } : undefined}>
