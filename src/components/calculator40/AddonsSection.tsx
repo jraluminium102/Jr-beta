@@ -23,7 +23,7 @@ import { MOSQ_CHIPS, mosqVariants } from "@/lib/calculator40/mosquito.mjs";
 // @ts-expect-error — products เป็น ESM JS ล้วน (ใช้ดึง screen_ready.materials สำหรับรุ่นย่อยมุ้ง)
 import { PRODUCTS } from "@/lib/calculator40/products.mjs";
 // @ts-expect-error — engine เป็น ESM JS ล้วน (ตาราง CMECH_TIERS/STAINLESS_TIERS/ADDON_FLAT/CEIL_RATE แหล่งเดียวกับที่ computeAddon ใช้คิดเงิน — import ตรง กันป้าย/ราคาหลุดกัน)
-import { CMECH_TIERS, STAINLESS_TIERS, ADDON_FLAT as ADDON_FLAT_RAW, CEIL_RATE as CEIL_RATE_RAW, zRate as zRateFn } from "@/lib/calculator40/engine.mjs";
+import { CMECH_TIERS, STAINLESS_TIERS, ADDON_FLAT as ADDON_FLAT_RAW, CEIL_RATE as CEIL_RATE_RAW, zRate as zRateFn, motorSizeOk, pickMotorByWeight } from "@/lib/calculator40/engine.mjs";
 const ADDON_FLAT: Record<string, number> = ADDON_FLAT_RAW;
 const CEIL_RATE: Record<string, number> = CEIL_RATE_RAW;
 // @ts-expect-error — r39-data เป็นไฟล์ข้อมูล .json (DIGI = ตารางมือจับดิจิตอล ราคา/ชื่อรุ่น)
@@ -54,7 +54,7 @@ const HANDLE_LABELS: Record<string, string> = { cmech: "Cmech", stainless: "ส�
  * ⚠ ต้องตรงกับ motorPicked() ใน engine.mjs (แก้ที่ไหนต้องแก้คู่กัน) ไม่งั้น UI กับราคาจะเห็นไม่ตรงกัน
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function motorPicked(prod: any, A: AddonsMap, area = 0, spec: any = {}): boolean {
+function motorPicked(prod: any, A: AddonsMap, area = 0, spec: any = {}, weight: any = null): boolean {
   const ads: string[] = prod?.addons || [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const v = (k: string): any => (A as any)[k];
@@ -62,11 +62,15 @@ function motorPicked(prod: any, A: AddonsMap, area = 0, spec: any = {}): boolean
   if (ads.includes("gate_motor")) return !String(spec?.drive || "").includes("มือผลัก");
   if (ads.includes("zip_motor")) return String(v("zip_motor") || "") !== "manual";
   // ยก 80 กก. เกิน 3.5 ตร.ม. = engine ปฏิเสธ (ขึ้นคำเตือนแทนมอเตอร์) → ยังไม่ถือว่ามีมอเตอร์
-  if (ads.includes("motor")) return !!v("motor") && v("motor") !== "none" && !(v("motor") === "80" && area > 3.5);
+  // "auto" = ต้องคิดน้ำหนักได้ครบ + มีขนาดที่รับไหว ไม่งั้น engine ขึ้นคำเตือนแทนมอเตอร์ (เซนเซอร์ต้องไม่โผล่)
+  if (ads.includes("motor")) {
+    if (!motorSizeOk(v("motor"), weight, [80, 300])) return false;
+    return !(v("motor") === "80" && !weight && area > 3.5);   // ยังไม่มีน้ำหนัก = ถอยไปใช้กฎพื้นที่เดิม
+  }
   if (ads.includes("banklet_motor")) return v("banklet_motor") === "yes";
   if (ads.includes("awn_auto")) return !!v("awn_auto") && v("awn_auto") !== "none";
   if (ads.includes("slide_auto")) return !!(v("slide_auto")?.brand && v("slide_auto").brand !== "none");
-  if (ads.includes("slide_motor")) return !!(v("slide_motor")?.kw && v("slide_motor").kw !== "none");
+  if (ads.includes("slide_motor")) return motorSizeOk(v("slide_motor")?.kw, weight, [80, 300, 1500]);
   return false;
 }
 
@@ -124,13 +128,33 @@ function NumberInput({ value, onChange, placeholder, step }: { value: number | s
     />
   );
 }
+/**
+ * ป้ายใต้ปุ่มมอเตอร์ — บอกว่าอัตโนมัติเลือกอะไรให้ หรือทำไมเลือกไม่ได้
+ *   ต้องมี ไม่งั้นกด "อัตโนมัติ" แล้วมอเตอร์ไม่ขึ้น ผู้ใช้ไม่รู้ว่าเพราะอะไร (QA จับ 8 ก.ย.69)
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function MotorAutoNote({ sel, weight, sizes }: { sel: any; weight: any; sizes: number[] }) {
+  if (String(sel || "") !== "auto") {
+    // เลือกขนาดเองแล้วน้ำหนักเกินพิกัด — เตือนให้เห็นตั้งแต่ตอนกด ไม่ต้องรอไปเห็นในบิล
+    if (!sel || sel === "none" || motorSizeOk(sel, weight, sizes)) return null;
+    return <p className="text-[11px] text-amber-700 mt-1.5">⚠️ มอเตอร์ {String(sel)} กก. รับไม่ไหว — น้ำหนักบานรวม {weight?.total} กก.</p>;
+  }
+  const pick = pickMotorByWeight(weight, sizes);
+  return pick.warn
+    ? <p className="text-[11px] text-amber-700 mt-1.5">{pick.warn}</p>
+    : <p className="text-[11px] text-sky-700 mt-1.5">⚖️ น้ำหนักบานรวม {pick.kg} กก. → เลือก {pick.kw} กก. ให้อัตโนมัติ</p>;
+}
+
 function SectionHeader({ icon, label }: { icon: string; label: string }) {
   return <div className="text-xs font-bold text-brand-dark mt-1 flex items-center gap-1.5">{icon} {label}</div>;
 }
 
 /* ── field ต่อ addon 1 ตัว — ตรง app.js renderAddonField เป๊ะทีละ branch ── */
-function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, form, spec }: {
+function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, form, spec, weight }: {
   ad: string; prod: any; addons: AddonsMap; setAddons: (fn: (a: AddonsMap) => AddonsMap) => void; area: number; W: number; movePanes: number; color: string; form: string;
+  // น้ำหนักบานที่เอนจินคิดให้ (result.weight) — ใช้ตัดสินว่ามอเตอร์ "อัตโนมัติ" เลือกได้จริงไหม
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  weight?: any;
   // สเปกของบาน (เช่น ประตูรั้ว drive = มือผลัก/มอเตอร์) — บางออปชั่นต้องดูก่อนว่าควรโผล่ไหม
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   spec?: any;
@@ -305,15 +329,18 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
   }
   if (ad === "motor") {
     return (
-      <Field label="ชุดออโต้บานยก / เฟี้ยมยก" hint="(ราคาออโต้ = ทุน รวมค่าส่ง · ขายคูณกำไร%)">
+      <Field label="ชุดออโต้บานยก / เฟี้ยมยก" hint="(80/300 = น้ำหนักที่มอเตอร์รับได้ · ราคาขายฟิกตามไฟล์)">
+        {/* "อัตโนมัติ" = เว็บคิดน้ำหนักบาน (อลูตามยาวตัดจริง + กระจกตามความหนา) แล้วเลือกขนาดให้เอง
+            เจ้าของสั่ง 8 ก.ย.69 · น้ำหนักไม่ครบ (เส้นไม่มี กก./เส้น) = ขึ้นเตือน ไม่เดา */}
         <ChipRow
-          items={[{ val: "none", label: "ไม่มี" }, { val: "80", label: "ยก 80 กก. (ทุน 6,200)" }, { val: "300", label: "ยก 300 กก. (ทุน 14,200)" }]}
+          items={[{ val: "none", label: "ไม่มี" }, { val: "auto", label: "⚖️ อัตโนมัติ (ตามน้ำหนักบาน)" }, { val: "80", label: "ยก 80 กก. (ทุน 6,200)" }, { val: "300", label: "ยก 300 กก. (ทุน 14,200)" }]}
           value={A.motor || "none"}
           onChange={(v) => set("motor", v)}
         />
-        {A.motor === "80" && area > 3.5 && (
+        {A.motor === "80" && !weight && area > 3.5 && (
           <p className="text-[11px] text-amber-700 mt-1.5">มอเตอร์ 80 กก. ใช้ได้ ≤3.5 ตร.ม. (พื้นที่ {fmtNum(area)}) — เปลี่ยนเป็น 300 กก.</p>
         )}
+        <MotorAutoNote sel={A.motor} weight={weight} sizes={[80, 300]} />
       </Field>
     );
   }
@@ -912,7 +939,7 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
   //  slide_auto, awn_auto, banklet_motor, grid, solid_panel, soft_close, sling, u_track, beam_support, hide_beam, drop_floor)
   // ครอบคลุมด้วย branch ด้านบนแล้วถ้ามีการเปิดใช้ในอนาคต — ที่เหลือ (slide_motor) เขียนแยกด้านล่าง
   if (ad === "rain_sensor") {
-    if (!motorPicked(prod, A, area, spec)) return null;   // ยังไม่ได้เลือกมอเตอร์ = ยังไม่มีอะไรให้ต่อเซนเซอร์
+    if (!motorPicked(prod, A, area, spec, weight)) return null;   // ยังไม่ได้เลือกมอเตอร์/เลือกไม่สำเร็จ = ไม่มีอะไรให้ต่อเซนเซอร์
     return (
       <Field label="เซนเซอร์กันฝน" hint="(ออโต้ปิดเองเมื่อฝนตก · ทุน 1,100)">
         <ChipRow
@@ -929,7 +956,8 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
     return (
       <Field label="มอเตอร์หลังคาเลื่อน" hint="(ระบบสั่งงาน: รีโมท · ราคาขายตายตัวตามไฟล์ ไม่คูณกำไร)">
         <div className="space-y-2">
-          <ChipRow items={[{ val: "none", label: "ไม่มี" }, { val: "1500", label: "1,500 กก." }, { val: "300", label: "300 กก." }, { val: "80", label: "80 กก." }]} value={kw} onChange={(v) => setObj("slide_motor", { kw: v })} />
+          <ChipRow items={[{ val: "none", label: "ไม่มี" }, { val: "auto", label: "⚖️ อัตโนมัติ (ตามน้ำหนัก)" }, { val: "1500", label: "1,500 กก." }, { val: "300", label: "300 กก." }, { val: "80", label: "80 กก." }]} value={kw} onChange={(v) => setObj("slide_motor", { kw: v })} />
+          <MotorAutoNote sel={kw} weight={weight} sizes={[80, 300, 1500]} />
           {kw !== "none" && (
             <Field label="จำนวนมอเตอร์ (ตัว)" hint="· ตัวแรก 35,000 · ตัวถัดไป 25,000/ตัว (ราคาขายตายตัว ไม่คูณกำไร)">
               <NumberInput value={sm.count || 1} onChange={(v) => setObj("slide_motor", { count: Math.max(1, Math.round(v)) })} placeholder="1" />
@@ -1055,10 +1083,13 @@ function fmtNum(n: number) {
 }
 
 /* ── ส่วนหลัก ── */
-export default function AddonsSection({ prod, addons, setAddons, area, W, movePanes, color, form, spec }: {
+export default function AddonsSection({ prod, addons, setAddons, area, W, movePanes, color, form, spec, weight }: {
   prod: any; addons: AddonsMap; setAddons: (fn: (a: AddonsMap) => AddonsMap) => void; area: number; W: number; movePanes?: number; color?: string; form?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   spec?: any;
+  // น้ำหนักบานจากเอนจิน (result.weight) — มอเตอร์ "อัตโนมัติ" ใช้ตัดสินขนาด
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  weight?: any;
 }) {
   const list: string[] = prod?.addons || [];
   if (!list.length) return null;
@@ -1088,7 +1119,7 @@ export default function AddonsSection({ prod, addons, setAddons, area, W, movePa
         <div key={g.label} className="space-y-2.5">
           <SectionHeader icon={g.icon} label={g.label} />
           {g.ids.map((ad) => (
-            <AddonField key={ad} ad={ad} prod={prod} addons={addons} setAddons={setAddons} spec={spec} area={area} W={W} movePanes={movePanes ?? 1} color={color ?? "white"} form={form ?? ""} />
+            <AddonField key={ad} ad={ad} prod={prod} addons={addons} setAddons={setAddons} spec={spec} area={area} W={W} movePanes={movePanes ?? 1} color={color ?? "white"} form={form ?? ""} weight={weight} />
           ))}
         </div>
       ))}

@@ -13,7 +13,7 @@
  */
 import fs from "node:fs";
 import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
-import { computeCost, autoSetsFor } from "../src/lib/calculator40/engine.mjs";
+import { computeCost, autoSetsFor, motorSizeOk } from "../src/lib/calculator40/engine.mjs";
 import { applyBootstrap } from "../src/lib/calculator40/bootstrap.mjs";
 const R39DATA = JSON.parse(fs.readFileSync("src/lib/calculator40/r39-data.json", "utf8"));
 
@@ -180,9 +180,9 @@ console.log("\n═══ ④ มอเตอร์ขึ้นตามประ
     const at = (pp, kw, count) => mo({ profitPct: pp, addons: { slide_motor: { kw, count } } });
     const amt = (rows, re) => (rows.find((l) => re.test(l.name)) || {}).amount ?? 0;
     for (const pp of [50, 80, 100, 150, 200])
-      ok(`หลังคาเลื่อน กำไร ${pp}% → มอเตอร์ยังขาย 45,000 (ไม่ผ่านกำไร)`, amt(at(pp, "1500"), /มอเตอร์/) === 45000, String(amt(at(pp, "1500"), /มอเตอร์/)));
+      ok(`หลังคาเลื่อน กำไร ${pp}% → มอเตอร์ยังขาย 50,000 (ไม่ผ่านกำไร)`, amt(at(pp, "1500"), /มอเตอร์/) === 50000, String(amt(at(pp, "1500"), /มอเตอร์/)));
     // ขายขั้นต่ำแยกตามขนาดยก (ชีตราคาออโต้: 80 = 30,000 · 300 = 40,000 · 1500 = 45,000)
-    for (const [kw, want] of [["80", 30000], ["300", 40000], ["1500", 45000]])
+    for (const [kw, want] of [["80", 30000], ["300", 40000], ["1500", 50000]])
       ok(`หลังคาเลื่อน ยก ${kw} กก. → ขาย ${want.toLocaleString()}`, amt(at(100, kw), /มอเตอร์/) === want, String(amt(at(100, kw), /มอเตอร์/)));
     ok("หลังคาเลื่อน 2 ตัว → 40,000 + 25,000", amt(at(100, "300", 2), /มอเตอร์/) === 65000, String(amt(at(100, "300", 2), /มอเตอร์/)));
     ok("หลังคาเลื่อน 3 ตัว → 40,000 + 25,000×2", amt(at(100, "300", 3), /มอเตอร์/) === 90000);
@@ -215,6 +215,61 @@ console.log("\n═══ ④ มอเตอร์ขึ้นตามประ
     const z = lineNames("zipscreen", { w: 300, h: 240, motor: "manual", addons: { rain_sensor: "yes" } });
     ok("ม่านซิปมือดึงล้วน: ไม่มีเซนเซอร์", !z.some((n) => /เซนเซอร์กันฝน/.test(n)), z.join(" | "));
   }
+}
+
+// ── ⑧ น้ำหนักบาน + เลือกมอเตอร์อัตโนมัติ ─────────────────────────────
+//   เจ้าของสั่ง 8 ก.ย.69 "คำนวณ นน.บาน แล้วให้เว็บเลือกออโต้ให้ได้ไหม"
+//   น้ำหนัก = อลู(ยาวตัดจริง × กก./เส้น ÷ ความยาวเส้น) + กระจก(พื้นที่ × ความหนา × 2.5)
+console.log("\n═══ ⑧ น้ำหนักบาน → เลือกขนาดมอเตอร์เอง ═══");
+{
+  const W = (id, o) => computeCost(PB, PRODUCTS[id], { glassType: "เขียว 6มม.", ...o });
+  const mline = (r) => (r.lines || []).find((l) => /ออโต้บานยก|มอเตอร์หลังคาเลื่อน/.test(l.name || "")) || {};
+  const warn = (r) => (r.lines || []).filter((l) => l.cat === "warn").map((l) => l.name).join(" | ");
+
+  // กระจกเขียว 6 มม. 1 ตร.ม. = 15 กก. เป๊ะ (2.5 × 6)
+  const g1 = W("fixed", { w: 100, h: 100, p: 1 });
+  ok("กระจก 6 มม. 1 ตร.ม. = 15 กก.", g1.weight.glass === 15, String(g1.weight.glass));
+  const g2 = W("fixed", { w: 100, h: 100, p: 1, glassType: "ลามิเนต 5+5 ฟิล์ม 0.38" });
+  ok("ลามิเนต 5+5 = กระจก 10 มม. → 25 กก.", g2.weight.glass === 25 && g2.weight.glassMM === 10, g2.weight.glass + " / " + g2.weight.glassMM);
+  const g3 = W("fixed", { w: 100, h: 100, p: 1, glassType: "อินซูเลท 6+6+6มม." });
+  ok("อินซูเลท 6+6+6 = เนื้อกระจก 12 มม. (ไม่นับช่องอากาศ)", g3.weight.glassMM === 12, String(g3.weight.glassMM));
+
+  // น้ำหนักต้องนิ่งเมื่อเปลี่ยนกำไร (เป็นสเปค ไม่ใช่ราคา)
+  ok("น้ำหนักไม่ขยับตามกำไร", W("banyok", { w: 200, h: 200, p: 1, profitPct: 50 }).weight.total === W("banyok", { w: 200, h: 200, p: 1, profitPct: 200 }).weight.total);
+
+  // เลือกอัตโนมัติ
+  const small = W("banyok", { w: 150, h: 150, p: 1, addons: { motor: "auto" } });
+  ok("บานยกเล็ก (" + small.weight.total + " กก.) → เลือก 80 กก.", /บานยก 80 กก/.test(mline(small).name || ""), mline(small).name || warn(small));
+  const big = W("banyok", { w: 300, h: 250, p: 1, addons: { motor: "auto" } });
+  ok("บานยกใหญ่ (" + big.weight.total + " กก.) → เลือก 300 กก.", /บานยก 300 กก/.test(mline(big).name || ""), mline(big).name || warn(big));
+  ok("เลือกอัตโนมัติแล้วบอกน้ำหนักที่ใช้ตัดสินใจด้วย", /เลือกอัตโนมัติจากน้ำหนักบาน/.test(mline(big).name || ""), mline(big).name || "");
+
+  // เลือกเองแล้วเกินพิกัด = เตือน ไม่คิดเงิน
+  const over = W("banyok", { w: 300, h: 250, p: 1, addons: { motor: "80" } });
+  ok("เลือก 80 กก. เองแต่บานหนักเกิน → เตือน ไม่คิดเงิน", !mline(over).amount && /รับไม่ไหว/.test(warn(over)), warn(over));
+
+  // หนักเกินตัวใหญ่สุด = เตือน ไม่เดา
+  const huge = W("fold_lift", { w: 700, h: 280, p: 6, addons: { motor: "auto" } });
+  ok("หนักเกิน 300 กก. → เตือน ไม่เลือกให้มั่ว", /เกินมอเตอร์ตัวใหญ่สุด/.test(warn(huge)), warn(huge));
+
+  // 🐞 QA 8 ก.ย.69 #1 — แผ่นแทนกระจก (คอมโพสิต/ลูกฟูก/เกล็ด Z) ไฟล์ไม่มีน้ำหนัก → ต้องเตือน ไม่ใช่นับ 0 เงียบ
+  const pan = W("banyok", { w: 200, h: 250, p: 1, glassType: "แผ่นคอมโพสิต", addons: { motor: "auto" } });
+  ok("แผ่นคอมโพสิต: ขึ้นเตือนว่ายังไม่มีน้ำหนัก", (pan.weight.missing || []).some((m) => /แผ่นคอมโพสิต/.test(m)), JSON.stringify(pan.weight.missing));
+  ok("แผ่นคอมโพสิต: ไม่เลือกมอเตอร์ให้มั่ว", !mline(pan).amount && /น้ำหนักยังไม่ครบ/.test(warn(pan)), warn(pan));
+
+  // 🐞 QA 8 ก.ย.69 #2 — auto เลือกไม่สำเร็จ = ไม่มีมอเตอร์ → เซนเซอร์กันฝนต้องไม่โผล่ทั้ง engine และ UI
+  const noW = W("banyok", { w: 200, h: 200, p: 1, glassType: "กระจกเงาทอง", addons: { motor: "auto", rain_sensor: "yes" } });
+  ok("auto ล้มเหลว: ไม่มีบรรทัดเซนเซอร์กันฝน (engine)", !(noW.lines || []).some((l) => l.cat === "addon" && /เซนเซอร์กันฝน/.test(l.name || "")), warn(noW));
+  ok("auto ล้มเหลว: UI ก็ต้องไม่โชว์เซนเซอร์ (motorSizeOk เดียวกัน)", motorSizeOk("auto", noW.weight, [80, 300]) === false);
+  const okW = W("banyok", { w: 200, h: 200, p: 1, addons: { motor: "auto", rain_sensor: "yes" } });
+  ok("auto สำเร็จ: เซนเซอร์กันฝนขึ้นตามปกติ", (okW.lines || []).some((l) => l.cat === "addon" && /เซนเซอร์กันฝน/.test(l.name || "")));
+  ok("auto สำเร็จ: UI เห็นตรงกับ engine", motorSizeOk("auto", okW.weight, [80, 300]) === true);
+  ok("เลือก 80 เองแต่เกินพิกัด: UI เห็นตรงกับ engine (ไม่ถือว่ามีมอเตอร์)", motorSizeOk("80", big.weight, [80, 300]) === false);
+
+  // หลังคาเลื่อน: แผ่นมุงยังไม่มีน้ำหนักในไฟล์ → ห้ามเดา
+  const rs = W("roof_slide", { w: 400, h: 250, p: 1, addons: { slide_motor: { kw: "auto" } } });
+  ok("หลังคาเลื่อน: ไม่มีน้ำหนักแผ่นมุง → ไม่เลือกให้ ขึ้นเตือนแทน", /น้ำหนักยังไม่ครบ/.test(warn(rs)), warn(rs));
+  ok("หลังคาเลื่อน: เลือกขนาดเองยังใช้ได้ตามปกติ", (W("roof_slide", { w: 400, h: 250, p: 1, addons: { slide_motor: { kw: "300" } } }).lines || []).some((l) => /มอเตอร์หลังคาเลื่อน 300/.test(l.name || "")));
 }
 
 // ── ⑦ มอเตอร์ที่ฝังอยู่ในสูตรบาน (ไม่ใช่ออปชั่น) ก็ต้องขายฟิก ───────────

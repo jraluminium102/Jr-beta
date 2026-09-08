@@ -1402,6 +1402,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                   prod={prod}
                   addons={addons}
                   setAddons={setAddons}
+                  weight={(result as any)?.weight}
                   spec={spec}
                   area={(Number(w) || prod.defaults?.w || 200) / 100 * (Number(h) || prod.defaults?.h || 200) / 100}
                   W={(Number(w) || prod.defaults?.w || 200) / 100}
@@ -1668,6 +1669,25 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                         : "ใบเสนอจะคิดค่าแรงผลิต + ติดตั้ง (ค่ามาตรฐาน)"}
                     </p>
                   </div>
+                  {/* น้ำหนักบาน — อลูคิดจากความยาวที่ตัดจริง × กก./เส้นในไฟล์ถอดทุน · กระจก = พื้นที่ × ความหนา × 2.5
+                      ใช้เลือกขนาดมอเตอร์ (80/300/1500 = น้ำหนักที่รับได้) และให้เจ้าของตรวจกับของจริงได้
+                      โชว์ทุกคน ไม่ผูกปุ่ม 💰 ดูทุน/กำไร เพราะเป็นสเปคของงาน ไม่ใช่ตัวเลขต้นทุน */}
+                  {ok && (result as any).weight && (((result as any).weight.total > 0) || ((result as any).weight.missing || []).length > 0) && (() => {
+                    const wt = (result as any).weight;
+                    return (
+                      <div className="col-span-2 rounded-2xl px-5 py-3 bg-sky-50 border border-sky-200 text-sm">
+                        <span className="font-semibold text-sky-900">⚖️ น้ำหนักบาน {baht(wt.total)} กก.</span>
+                        <span className="text-sky-800/80 text-xs">
+                          {" · อลู "}{baht(wt.alu)}{" + กระจก "}{baht(wt.glass)}
+                          {wt.glassMM > 0 ? " (" + wt.glassMM + " มม.)" : ""}
+                          {wt.panels > 1 ? " · เฉลี่ยบานละ " + baht(wt.perPanel) + " กก." : ""}
+                        </span>
+                        {(wt.missing || []).length > 0 && (
+                          <p className="text-[11px] text-amber-800 mt-1">⚠️ ยังไม่ได้นับ: {wt.missing.join(" · ")} — เลือกมอเตอร์อัตโนมัติไม่ได้จนกว่าจะครบ</p>
+                        )}
+                      </div>
+                    );
+                  })()}
                   {showCost && (
                     <div className="col-span-2 rounded-2xl px-5 py-4 bg-amber-50 border border-amber-200">
                       <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">

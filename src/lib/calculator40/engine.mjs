@@ -9,6 +9,23 @@
 //   • ขายผลิต+ติดตั้ง   = ขายผลิต + ceil100(ค่าแรงติดตั้ง×(1+กำไรติดตั้ง%))
 // ──────────────────────────────────────────────────────────────────────────────
 
+/**
+ * ความหนากระจกจริง (มม.) จากชื่อชนิด — ใช้คิดน้ำหนักบาน
+ *   ลามิเนต "5+5" = กระจก 10 มม. (ฟิล์ม PVB บางกว่า 1 มม. ตัดทิ้ง)
+ *   อินซูเลท "6+6+6" = กระจก 6 + อากาศ 6 + กระจก 6 → เนื้อกระจก 12 มม.
+ *   อ่านไม่ออก = 0 (ให้ขึ้นเตือน ดีกว่าเดาแล้วน้ำหนักเพี้ยน)
+ */
+export function glassMM(type) {
+  const t = String(type || '');
+  if (/อินซูเลท/.test(t)) { const m = t.match(/(\d+)\s*\+\s*(\d+)\s*\+\s*(\d+)/); return m ? (+m[1] + +m[3]) : 0; }
+  const p = t.match(/(\d+)\s*\+\s*(\d+)/);
+  if (p) return +p[1] + +p[2];
+  const m = t.match(/(\d+(?:\.\d+)?)\s*มม/);
+  return m ? +m[1] : 0;
+}
+/** กระจกหนัก 2.5 กก. ต่อ 1 ตร.ม. ต่อความหนา 1 มม. (ความหนาแน่นกระจก 2,500 กก./ลบ.ม.) */
+export const GLASS_KG_PER_M2_MM = 2.5;
+
 export const STOCK_LEN = 6.4; // ความยาวเส้นอลู stock มาตรฐาน (ม.) — บางรุ่นใช้ 6.0 (ตั้ง prod.stockLen)
 
 export function ceil100(x) { return Math.ceil(x / 100) * 100; }
@@ -214,6 +231,9 @@ export function computeCost(PB, prod, opt) {
   };
 
   let aluCost = 0, aluKg = 0, aluBarsAll = 0;
+  // น้ำหนักอลูจริง = ความยาวที่ตัดจริง × (กก./เส้น ÷ ความยาวเส้น) — ไม่ใช่ aluKg ข้างบน
+  //   (aluKg ใช้คิดค่าอบสี นับเฉพาะเส้นที่ยังไม่รวมราคาสี และนับเป็น "เส้นที่ซื้อ" = มากกว่าของจริง)
+  let aluKgReal = 0; const kgMissing = [];
 
   // ราคาต่อชิ้นจาก PB.PARTS (เฉพาะสินค้าติดธง partsLinked = รุ่นถอดทุนใหม่ · แก้ราคาที่ stock แล้วเปลี่ยนตาม)
   // ตั้งต้น PARTS = ราคาเดิมใน BOM → behavior-preserving (verify 63/63 คงเดิม) · รุ่นเดิม (ไม่ติดธง) ใช้ it.price ปกติ
@@ -300,9 +320,14 @@ export function computeCost(PB, prod, opt) {
     aluCost += amount;
     // เส้นที่ราคารวมสีแล้ว หรือเป็นเส้นสีเงินไม่อบสี → ไม่เข้ากองคิดค่าอบ
     if (!(colorPrice > 0) && !boxColorDone && !noColor) aluKg += bars * (it.kg || 0);
+    // น้ำหนักจริงของท่อนที่ตัด (ไว้เลือกมอเตอร์ตามน้ำหนักบาน)
+    const barLen = Number(it.stockLen) || stockLen;
+    const kgPerM = (Number(it.kg) || 0) > 0 && barLen > 0 ? (Number(it.kg) / barLen) : 0;
+    const kgLine = kgPerM * seg * count;
+    if (kgPerM > 0) aluKgReal += kgLine; else if (seg * count > 0) kgMissing.push(it.name);
     aluBarsAll += bars;   // นับทุกเส้น (รวมเส้นที่ราคารวมสีมาแล้ว) — ใช้ตัดสินค่าเปิดตู้อบ
     // code/kg ติดมากับบรรทัดด้วย — หน้าเทียบ "คิดราคา ↔ ใบตัด" ใช้จับคู่รหัส + คิด ฿/กก. (ไม่กระทบตัวเลขใด ๆ)
-    lines.push({ cat: 'alu', name: it.name + (colorPrice > 0 ? ' (' + colorDisp + ')' : ''), code: code || '', kg: it.kg || 0,
+    lines.push({ cat: 'alu', name: it.name + (colorPrice > 0 ? ' (' + colorDisp + ')' : ''), code: code || '', kg: it.kg || 0, kgLine: round2(kgLine),
       qty: bars, unit: 'เส้น', unitPrice: round2(price * m), amount: round2(amount),
       // ความยาวที่ต้องตัดจริง + จำนวนชิ้น — หน้าเทียบ "คิดราคา ↔ ใบตัด" ใช้ตัวนี้เทียบ
       //   (เทียบ "จำนวนเส้น" ตรง ๆ ไม่ได้แล้ว: คิดราคานับแบบไฟล์ ÷6.4+เศษ · ใบตัดนับเส้นเต็ม)
@@ -429,6 +454,7 @@ export function computeCost(PB, prod, opt) {
     lines.push({ cat: 'hardware', name: it.name, sku: hwSku, qty: round2(count), unit: it.unit || 'ชิ้น', unitPrice: price, amount: round2(amount), orderOnly: !!it.orderOnly });
   }
   let consumCost = 0;
+  const sheetNoKg = [];   // แผ่นมุงที่ยังไม่รู้น้ำหนัก (ROOFMAT ในไฟล์มีแต่ราคา ไม่มี กก./ตร.ม.)
   // opt.consumLines = แผ่นมุง/เหล็ก/ราง ที่ผู้เรียกคิดมาจากใบตัดแล้ว (หลังคาหลายด้าน) — ทับ prod.consum
   const CONSUM = (opt.consumLines && opt.consumLines.length) ? opt.consumLines : (hwLines ? [] : prod.consum || []);
   for (const it of CONSUM) {
@@ -456,6 +482,8 @@ export function computeCost(PB, prod, opt) {
       continue;
     }
     consumCost += amount;
+    // แผ่นมุงหลังคา — ไฟล์ถอดทุนยังไม่มีน้ำหนัก/ตร.ม. → เก็บชื่อไว้เตือน (ห้ามเดาน้ำหนักเอง)
+    if (String(it.ref || '').startsWith('ROOFMAT.') && !sheetNoKg.includes(it.name)) sheetNoKg.push(it.name);
     lines.push({ cat: 'consum', name: it.name, sku: cSku, qty: round2(count), unit: it.unit || '', unitPrice: round2(unitPrice), amount: round2(amount),
       // box = คีย์กล่องอลูในสโตร์ (เช่น "กล่อง|4" = กล่องเปิด 4" รางน้ำอลูมิเนียม) — หน้าเทียบใช้หารหัสจริงต่อสี
       ...(it.box ? { box: it.box } : {}) });
@@ -707,7 +735,26 @@ export function computeCost(PB, prod, opt) {
   let addonTotal = 0, addonCostExplicit = 0, addonSellImplicit = 0;
   let fixedSellTotal = bomFixSell, fixedSellCost = bomFixCost;   // มอเตอร์ขายฟิก (ไม่ผ่านสูตรกำไร) — เริ่มจากตัวที่ฝังในสูตรบาน
   //   ctx ก้อนเดียวตลอดลูป — ออปชั่นทีหลังต้องรู้ว่าออปชั่นก่อนหน้าขึ้นบรรทัดจริงไปแล้วหรือยัง
-  const addonCtx = { W, H, P, area, opt, PB, prodId: prod.id, prodAddons: prod.addons || [], motorAdded: false };
+  // ── น้ำหนักบาน (ไว้ให้มอเตอร์เลือกขนาดเองตามน้ำหนัก) ──────────────────
+  //   อลู = ความยาวตัดจริง × กก./ม. (จากคอลัมน์ กก./เส้น ในไฟล์ถอดทุน)
+  //   กระจก = พื้นที่ × ความหนา × 2.5 กก./ตร.ม./มม.
+  //   ⚠ แผ่นมุงหลังคา (ชินโคร์/ไวนิล/โพลี/เมทัลชีท) ไฟล์ยังไม่มีน้ำหนัก → ยังไม่นับ ต้องเตือน
+  const gMM = isPanelGlass ? 0 : glassMM(glassType);
+  const glassKg = gMM > 0 ? glassArea * gMM * GLASS_KG_PER_M2_MM : 0;
+  const weightTotal = aluKgReal + glassKg;
+  const weight = {
+    alu: round2(aluKgReal), glass: round2(glassKg), glassMM: gMM,
+    total: round2(weightTotal), panels: P || 1, perPanel: round2(weightTotal / Math.max(1, P || 1)),
+    // สิ่งที่ยังไม่ได้นับ — หน้าจอต้องบอกให้เห็น ไม่ใช่เงียบ
+    missing: [
+      ...(gMM === 0 && glassArea > 0 && !isPanelGlass ? ['กระจก "' + glassType + '" อ่านความหนาไม่ออก'] : []),
+      // แผ่นแทนกระจก (คอมโพสิต/ลูกฟูก/เกล็ด Z) — ไฟล์ถอดทุนมีแต่ราคา ไม่มีน้ำหนัก/ตร.ม. เหมือนแผ่นมุงหลังคา
+      ...(isPanelGlass && glassArea > 0 ? ['แผ่น "' + glassType + '" ยังไม่มีน้ำหนัก/ตร.ม. ในไฟล์'] : []),
+      ...sheetNoKg.map((x) => 'แผ่นมุง "' + x + '" ยังไม่มีน้ำหนัก/ตร.ม. ในไฟล์'),
+      ...(kgMissing.length ? ['เส้นอลูไม่มี กก./เส้น ' + kgMissing.length + ' บรรทัด'] : []),
+    ],
+  };
+  const addonCtx = { W, H, P, area, opt, PB, prodId: prod.id, prodAddons: prod.addons || [], motorAdded: false, weight };
   for (const ad of (prod.addons || [])) {
     const rr = computeAddon(ad, selAddons[ad], addonCtx);
     if (!rr) continue;
@@ -763,7 +810,7 @@ export function computeCost(PB, prod, opt) {
       hardware: round2(hwCost), consum: round2(consumCost + addonCost), total: costTotalOut,
     },
     profit: round2(sellWithInstall - costTotalOut),  // กำไร (ขาย − ทุน)
-    glassArea: round2(glassArea), aluKg: round2(aluKg),
+    glassArea: round2(glassArea), aluKg: round2(aluKg), weight,
     profit3: sellPct || { mat: pctMat, prod: pctProd, inst: pctInst },   // % ที่ใช้จริง (หน้าจอเอาไปโชว์/แก้)
     // สูตรราคาขายตามไฟล์: เป้ากำไรสุทธิ + ตัวปรับอัตโนมัติ + ค่าดำเนินการ (null = รุ่นที่ยังใช้สูตรเดิม)
     sellModel: SELLM ? { target: sellTarget, adj: sellAdj, overheadPct: SELLM.overheadPct, shape: SELLM.shape, small: SELLM.small || null, fixedSell: fixedSellTotal || 0 } : null,
@@ -865,6 +912,34 @@ function motorCost(PB, key, fallback) { const v = PB && PB.MOTOR && PB.MOTOR[key
  *   ⇒ ทุกบรรทัดมอเตอร์เป็น fixedSell: ทุนยังโชว์และเข้า "ทุนรวม" แต่ไม่เข้าฐานคิดกำไร
  *     ราคาขาย = เลขในตารางตรง ๆ (ช่างแซก/SlimLux = สูตรตัวคูณ) กด +/- กำไร ราคามอเตอร์นิ่ง
  */
+/**
+ * เลือกขนาดมอเตอร์ตามน้ำหนักที่ต้องยก — 80/300/1500 ในไฟล์คือ "น้ำหนักที่รับได้ (กก.)"
+ *   ยึดน้ำหนัก "ทั้งชุด" ไม่ใช่ต่อบาน เพราะมอเตอร์ยกทั้งชุดพร้อมกัน (เฟี้ยมยกพับซ้อนแล้วยกทีเดียว)
+ *   เทียบกับกฎเดิมในเว็บ "80 กก. ใช้ได้ ≤3.5 ตร.ม." → กระจก 6 มม. 3.5 ตร.ม. = 52.5 กก. + อลู ≈ 70 กก. (สอดคล้องกัน)
+ * คืน { kw, kg } · เลือกไม่ได้คืน { warn } — ห้ามเดาเมื่อน้ำหนักยังไม่ครบ
+ */
+export function pickMotorByWeight(weightOrCtx, sizes) {
+  const w = (weightOrCtx && (weightOrCtx.weight || (weightOrCtx.total != null ? weightOrCtx : null))) || null;
+  if (!w) return { warn: '⚠️ เลือกมอเตอร์อัตโนมัติไม่ได้ — ยังไม่มีข้อมูลน้ำหนัก' };
+  if (w.missing && w.missing.length) return { warn: '⚠️ เลือกมอเตอร์อัตโนมัติไม่ได้ — น้ำหนักยังไม่ครบ: ' + w.missing.join(' · ') };
+  const kg = w.total;
+  if (!(kg > 0)) return { warn: '⚠️ เลือกมอเตอร์อัตโนมัติไม่ได้ — คำนวณน้ำหนักได้ 0 กก.' };
+  for (const sz of sizes) if (kg <= Number(sz)) return { kw: String(sz), kg: round2(kg) };
+  return { warn: '⚠️ น้ำหนักรวม ' + round2(kg) + ' กก. เกินมอเตอร์ตัวใหญ่สุด (' + sizes[sizes.length - 1] + ' กก.) — แบ่งบานหรือเลือกมอเตอร์เอง' };
+}
+/**
+ * รุ่นนี้ "ได้มอเตอร์จริง" ไหม เมื่อเลือกขนาดเป็น sel — ใช้ร่วมกัน UI กับ engine (ห้ามเขียนซ้ำ)
+ *   auto = คิดน้ำหนักได้ครบและมีขนาดที่รับไหว · เลือกเอง = น้ำหนัก (ถ้ารู้) ต้องไม่เกินพิกัด
+ *   ⚠ ถ้า UI กับ engine เห็นไม่ตรงกัน = เซนเซอร์กันฝนโผล่ให้ติ๊ก แต่ราคาหายเงียบ (QA จับได้ 8 ก.ย.69)
+ */
+export function motorSizeOk(sel, weight, sizes) {
+  const s = String(sel || '');
+  if (!s || s === 'none') return false;
+  if (s === 'auto') return !pickMotorByWeight(weight, sizes).warn;
+  const w = weight && !(weight.missing || []).length ? weight.total : 0;
+  return !(w > 0 && w > Number(s));
+}
+
 function motorFixSell(PB, key, fallback) { const v = PB && PB.MOTORSELL && PB.MOTORSELL[key]; return (typeof v === 'number') ? v : fallback; }
 /**
  * มอเตอร์ / ชุดออโต้ ที่แต่ละรุ่นเลือกได้ — ตรงกับชีต "ราคาออโต้" ในไฟล์ถอดทุน (หมวดใครหมวดมัน)
@@ -1045,10 +1120,21 @@ export function computeAddon(id, sel, ctx) {
     //   ยก 80 กก. = 4,500 + 1,700 = 6,200 · ยก 300 กก. = 12,500 + 1,700 = 14,200 (เจ้าของยืนยันเลข 3 ก.ย.69)
     const ship = motorCost(ctx.PB, 'บานยก ค่าส่ง', 1700);
     const cmap = { '80': motorCost(ctx.PB, 'บานยก ยก80', 4500) + ship, '300': motorCost(ctx.PB, 'บานยก ยก300', 12500) + ship };
+    // "auto" = เว็บคิดน้ำหนักบานแล้วเลือกขนาดให้เอง (เจ้าของสั่ง 8 ก.ย.69)
+    let autoKg = 0;
+    if (sel === 'auto') {
+      const pick = pickMotorByWeight(ctx, [80, 300]);
+      if (pick.warn) return { cat: 'warn', label: pick.warn, amount: 0 };
+      sel = pick.kw; autoKg = pick.kg;
+    }
     const cost = cmap[sel]; if (cost == null) return null;
-    if (sel === '80' && ctx.area > 3.5) return { cat: 'warn', label: '⚠️ มอเตอร์ 80 กก. ใช้ได้ ≤3.5 ตร.ม. (พื้นที่ ' + round2(ctx.area) + ') — เปลี่ยนเป็น 300 กก.', amount: 0 };
+    // เลือกเองแล้วน้ำหนักเกินพิกัด = ต้องเตือน (ใช้น้ำหนักจริงถ้าคิดได้ · คิดไม่ได้ถอยไปใช้พื้นที่แบบเดิม)
+    const wKg = ctx.weight && !(ctx.weight.missing || []).length ? ctx.weight.total : 0;
+    if (!autoKg && !motorSizeOk(sel, ctx.weight, [80, 300]) && wKg > 0)
+      return { cat: 'warn', label: '⚠️ มอเตอร์ ' + sel + ' กก. รับไม่ไหว — น้ำหนักบานรวม ' + round2(wKg) + ' กก. (อลู ' + ctx.weight.alu + ' + กระจก ' + ctx.weight.glass + ')', amount: 0 };
+    if (!autoKg && !(wKg > 0) && sel === '80' && ctx.area > 3.5) return { cat: 'warn', label: '⚠️ มอเตอร์ 80 กก. ใช้ได้ ≤3.5 ตร.ม. (พื้นที่ ' + round2(ctx.area) + ') — เปลี่ยนเป็น 300 กก.', amount: 0 };
     const sell = motorFixSell(ctx.PB, 'บานยก ยก' + sel, autoSell(cost, ctx));   // ยก80 = 25,000 · ยก300 = 35,000
-    return { label: 'ชุดออโต้บานยก ' + sel + ' กก. (รวมค่าส่ง)', qty: 1, unit: 'ชุด', unitPrice: sell, amount: sell, cost, fixedSell: true };
+    return { label: 'ชุดออโต้บานยก ' + sel + ' กก. (รวมค่าส่ง)' + (autoKg ? ' · เลือกอัตโนมัติจากน้ำหนักบาน ' + autoKg + ' กก.' : ''), qty: 1, unit: 'ชุด', unitPrice: sell, amount: sell, cost, fixedSell: true };
   }
   if (id === 'slide_motor') {           // มอเตอร์หลังคาเลื่อน — ชีต "คิดทุน หลังคาเลื่อน" แถว 44-52
     // 💲 ราคาขายมอเตอร์/เซนเซอร์ = "ราคาขายตรง ไม่ผ่านกำไร" (ชีตแถว 49-51 + หมายเหตุแถว 60)
@@ -1057,8 +1143,14 @@ export function computeAddon(id, sel, ctx) {
     //   ตัวแรก 35,000 · ตัวถัดไป 25,000/ตัว · เซนเซอร์ 2,000 — ราคาเดียวทุกขนาดยก
     const s = (sel && typeof sel === 'object') ? sel : (sel ? { kw: String(sel) } : {});
     //   ไม่เลือก = ไม่มีมอเตอร์ (computeAddon กันไว้ตั้งแต่ต้นทางแล้วว่า sel ว่าง = null)
-    const kw = String(s.kw || 'none');
+    let kw = String(s.kw || 'none');
     if (kw === 'none') return null;
+    let autoKg = 0;
+    if (kw === 'auto') {
+      const pick = pickMotorByWeight(ctx, [80, 300, 1500]);
+      if (pick.warn) return { cat: 'warn', label: pick.warn, amount: 0 };
+      kw = pick.kw; autoKg = pick.kg;
+    }
     const n = Math.max(1, Math.round(+s.count || 1));   // จำนวนมอเตอร์ (ชีต "คิดทุน หลังคาเลื่อน" ช่อง H19)
     const cmap = { '80': motorCost(ctx.PB, 'หลังคาเลื่อน ยก80', 4500), '300': motorCost(ctx.PB, 'หลังคาเลื่อน ยก300', 12500), '1500': motorCost(ctx.PB, 'หลังคาเลื่อน ยก1500', 13325) };
     // ทุนมอเตอร์ = ราคา + ค่าส่ง (ชีตถอดทุน D13 บวก 2 คอลัมน์ · เจ้าของเคาะ 27 ส.ค.69)
@@ -1070,7 +1162,7 @@ export function computeAddon(id, sel, ctx) {
     const MS = { sensor: motorFixSell(ctx.PB, 'เซนเซอร์กันฝน', 2000) };
     const mSell = motorFixSell(ctx.PB, 'หลังคาเลื่อน ' + kw, 35000) + motorFixSell(ctx.PB, 'หลังคาเลื่อน ตัวถัดไป', 25000) * (n - 1);
     const out = [{
-      label: 'มอเตอร์หลังคาเลื่อน ' + kw + ' กก. (รวมค่าส่ง · ระบบสั่งงาน: รีโมท)' + (n > 1 ? ' ×' + n + ' ตัว' : ''),
+      label: 'มอเตอร์หลังคาเลื่อน ' + kw + ' กก. (รวมค่าส่ง · ระบบสั่งงาน: รีโมท)' + (n > 1 ? ' ×' + n + ' ตัว' : '') + (autoKg ? ' · เลือกอัตโนมัติจากน้ำหนัก ' + autoKg + ' กก.' : ''),
       qty: n, unit: 'ชุด', unitPrice: round2(mSell / n), amount: mSell, cost: round2(mcost * n), fixedSell: true,
     }];
     if (kw === '1500') {                 // ฟันเฟือง เฉพาะ 1500 กก. (ทุนปกติ ผ่านกำไร — ชีตแถว 52)
