@@ -1731,8 +1731,27 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                 return (
                   <>
                     {addonLines.length > 0 && (
-                      <div className="mt-3 rounded-xl px-4 py-2.5 bg-emerald-50 border border-emerald-200 text-sm text-emerald-800 flex items-center justify-between">
-                        <span>ของเสริม +฿{baht(addonSum)} ({addonLines.length} รายการ)</span>
+                      <div className="mt-3 rounded-xl px-4 py-2.5 bg-emerald-50 border border-emerald-200 text-sm text-emerald-800">
+                        <div className="font-semibold">ของเสริม +฿{baht(addonSum)} ({addonLines.length} รายการ)</div>
+                        {/* รายการทีละบรรทัด + ทุน (เจ้าของสั่ง 5 ก.ย.69 "มอเตอร์อยากให้แสดงราคาทุนด้วย แค่ไม่เอามาคิด")
+                            📌 = ราคาขายฟิกตามชีต "ราคาออโต้" ช่องขายขั้นต่ำ — กด +/- กำไร ราคาไม่ขยับ */}
+                        <ul className="mt-1.5 space-y-0.5">
+                          {addonLines.map((l: any, i: number) => (
+                            <li key={i} className="flex items-baseline justify-between gap-3 text-[13px]">
+                              <span className="min-w-0">
+                                {l.fixedSell && <span title="ราคาขายฟิกตามไฟล์ ไม่ผ่านกำไร">📌 </span>}
+                                {l.name}
+                              </span>
+                              <span className="shrink-0 tabular-nums">
+                                {showCost && l.cost != null && <span className="text-emerald-700/70">ทุน ฿{baht(l.cost)} · </span>}
+                                ฿{baht(l.amount || 0)}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                        {addonLines.some((l: any) => l.fixedSell) && (
+                          <div className="mt-1 text-[11px] text-emerald-700/80">📌 = ราคาขายตามไฟล์ (ชีตราคาออโต้ · ขายขั้นต่ำ) คิดแยกจากกำไรรวม — ทุนยังนับใน &quot;ทุนรวม&quot; ตามปกติ</div>
+                        )}
                       </div>
                     )}
                     {warnLines.map((l: any, i: number) => (
