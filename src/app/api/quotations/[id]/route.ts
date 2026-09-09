@@ -6,6 +6,7 @@ import { computeTotals, sumDiscountLines } from "@/lib/money";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { fail, UNAUTHORIZED } from "@/lib/bff";
+import { regenSetsFromQuotation, jobHasAutoSets } from "@/lib/production/regen-sets";
 
 // GET /api/quotations/[id]  → ใบเสนอ + รายการ
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
@@ -226,6 +227,19 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
       ({ error: insErr } = await ctx.supabase.from("quotation_items").insert(noRecipe));
     }
     if (insErr) throw new Error("บันทึกรายการใหม่ไม่สำเร็จ: " + insErr.message);
+  }
+
+  // 5.5) Rev หลังมัดจำ → ดึงใบเสนอใหม่ทั้งหมดเข้าผลิต/ติดตั้งอัตโนมัติ (เจ้าของเคาะ: auto ทุกครั้งที่ Rev แทนที่ทั้งหมด)
+  //   เฉพาะเมื่อ "ขึ้น Rev จริง" (revision_no ขยับ) + งานเคยดึงชุดจากใบเสนอเข้าผลิตแล้ว (อยู่ในผลิต)
+  //   replace = ลบชุด auto แล้วดึงใหม่จาก Rev ล่าสุด (คงชุดที่เพิ่มมือ) · best-effort ไม่ให้ล้ม Rev
+  const bumpedRev = (revUpdate as { revision_no?: number }).revision_no != null;
+  const jobIdForSets = (fullQ as { job_id?: string | null } | null)?.job_id ?? null;
+  if (bumpedRev && jobIdForSets) {
+    try {
+      if (await jobHasAutoSets(sbRpc, jobIdForSets)) {
+        await regenSetsFromQuotation(sbRpc, jobIdForSets, ctx.user.id, { replace: true });
+      }
+    } catch (e) { console.error("[rev-regen-sets]", e); }
   }
 
   // 6) audit — เก็บ oldValue (ยอดเดิม) ด้วย เพื่อตรวจย้อนหลังได้แม้ไม่ได้ snapshot (บัญชีสั่ง)
