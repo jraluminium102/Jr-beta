@@ -46,7 +46,7 @@ function NumCell({ value, onChange, dash = false }: {
   return (
     <input
       autoFocus
-      defaultValue={empty ? "" : String(value)}
+      value={empty ? "" : String(value)}
       onChange={(e) => onChange(e.target.value)}
       onBlur={() => setEditing(false)}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === "Escape") (e.target as HTMLInputElement).blur(); }}
