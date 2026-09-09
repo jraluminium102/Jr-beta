@@ -410,6 +410,24 @@ console.log("\n═══ ⑩ ปรับกำไรค่าของต่อ
     ok("ดันกำไรค่าของแล้วราคารวมขยับจริง", hi.sell.withInstall > withM.sell.withInstall);
   }
 
+  // 🐞 เจ้าของเจอเอง 9 ก.ย.69 — "% ที่โชว์" ต้องเป็นตัวคูณที่ใช้จริง เอาไปคิดเงินซ้ำได้ตรง
+  //   เดิมหน้าจอโชว์ 100% ตายตัว (PB.PROFIT สูตรเก่า) แต่ราคาคูณ 113% → กด +/- แล้วราคาตกทันที
+  {
+    const chk = (id, o) => {
+      const r = R(id, o);
+      const want = Math.ceil(r.cost.total * (1 + r.profit3.mat / 100) / 100) * 100;   // ค่าของก่อนค่าดำเนินการ
+      const got = Math.round(r.sell.beforeLabor / (1 + 30 / 100) / 100) * 100;
+      ok(id + " " + (o.w || 200) + "×" + (o.h || 200) + ": ค่าของ = ทุน × (1 + % ที่โชว์)", Math.abs(want - got) <= 100, want + " vs " + got + " (%=" + r.profit3.mat + ")");
+    };
+    for (const [id, o] of [["sms_slide", { w: 300, h: 250, p: 2, form: "อิสระ" }], ["open_door", {}], ["awning", {}],
+      ["banyok", {}], ["fold_euro", {}], ["curve_fixed", {}], ["fixed", {}], ["bansolid", {}]]) chk(id, o);
+    // % ที่โชว์ต้องรวม matAdjPct แล้ว (ไม่ใช่ตัวคูณดิบจากไฟล์)
+    const on = R("sms_slide", { w: 300, h: 250, p: 2, form: "อิสระ" });
+    const off = computeCost(zero("sms_slide"), PRODUCTS.sms_slide, { w: 300, h: 250, p: 2, glassType: "เขียว 6มม.", form: "อิสระ" });
+    ok("SMS: % ที่โชว์รวมตัวปรับ +2% แล้ว", on.profit3.mat > off.profit3.mat, on.profit3.mat + " vs " + off.profit3.mat);
+    ok("SMS: ค่าแรง % ไม่ขยับตาม", on.profit3.prod === off.profit3.prod && on.profit3.inst === off.profit3.inst);
+  }
+
   // ⑥ รุ่นที่ไม่ได้ตั้ง matAdjPct ต้องไม่ขยับ (behaviour-preserving)
   for (const id of ["fixed", "bansolid", "curve_open"]) {
     const on = R(id, {}), off = R(id, {}, zero(id));

@@ -91,13 +91,15 @@ function sheetSell({ mat, labProd, labInst, target, ratios, overheadPct = 30, sh
   const mk = 1 + (Number(matAdjPct) || 0) / 100;
   const [rM, rP, rI] = ratios;
   const adj = ((mat + labProd + labInst) / (BASE - target / 100)) / ((mat * rM + labProd * rP + labInst * rI) * (1 + oh / 100));
-  const pM = Math.round((rM * adj - 1) * 100), pP = Math.round((rP * adj - 1) * 100), pI = Math.round((rI * adj - 1) * 100);
+  const pP = Math.round((rP * adj - 1) * 100), pI = Math.round((rI * adj - 1) * 100);
+  // กำไรค่าของที่ใช้จริง = ตัวคูณจากไฟล์ × matAdjPct ปัดเป็น % เต็ม (ตัวเดียวกับที่โชว์บนหน้าจอ)
+  const pM = Math.round(((1 + (rM * adj - 1)) * mk - 1) * 100);
   if (shape === 'single') {
     const mfg = ceil100(ceil100(mat * rM * adj * mk + labProd * (1 + pP / 100)) * (1 + oh / 100));
     const all = ceil100(ceil100(mat * rM * adj * mk + labProd * (1 + pP / 100) + labInst * (1 + pI / 100)) * (1 + oh / 100));
     return { mfgOnly: mfg, withInstall: all };
   }
-  const makePart = ceil100(ceil100(mat * (1 + pM / 100) * mk) + ceil100(labProd * (1 + pP / 100)));
+  const makePart = ceil100(ceil100(mat * (1 + pM / 100)) + ceil100(labProd * (1 + pP / 100)));
   const withOverhead = ceil100(makePart * (1 + oh / 100));
   const installPart = ceil100(ceil100(labInst * (1 + pI / 100)) * (1 + oh / 100));
   return { mfgOnly: withOverhead, withInstall: withOverhead + installPart };
@@ -492,8 +494,8 @@ console.log('\n═══ ②g ราคาเส้นแยกสีจริ�
   // 3 ก.ย.69 ใช้สูตรราคาขายตามไฟล์ (เป้ากำไรสุทธิ SMS 40% + ค่าดำเนินการ 30%) แทนกำไรคงที่ 100/100/200
   //   ทุนวัสดุไม่ขยับ (ด่านทุนอยู่ ANCHORS) — ชุดนี้ตรวจว่า "สีต่างกัน ราคาต้องต่างกัน" เป็นหลัก
   // ↓ ขยับ +2% ตาม matAdjPct ของ SMS (เจ้าของเคาะ 9 ก.ย.69 ให้ราคาขายไปชน ★ R4.1) — ทุนไม่เปลี่ยน
-  check('SMS ลายไม้สักทอง', teak, 81800, 1);
-  check('SMS มะฮอกกานี', maho, 94600, 1);
+  check('SMS ลายไม้สักทอง', teak, 82000, 1);
+  check('SMS มะฮอกกานี', maho, 95000, 1);
   check('SMS เทาซาฮาร่า', sell('sahara', 'sahara'), 64600, 1);
   check('SMS สีขาว', sell('white', 'white'), 61800, 1);
 
@@ -638,7 +640,10 @@ console.log('\n═══ ③ สวิตช์ค่าแรงในหน้
   has('การ์ดราคาโชว์ราคาขายส่งหลังลด', /baht\(result\.sell\.mfgOnlyNet\)/);
   has('ยอดรวม (มีรายการเสริม) ใช้ราคาหลังลด', /laborMode === "mfg" \? result\.sell\.mfgOnlyNet : result\.sell\.withInstall\) \+ \(\(result as any\)\.subSell/);
   has('เลือก "ผลิตอย่างเดียว" แล้วเขียนกำกับลงใบว่าไม่รวมติดตั้ง', /laborMode === "mfg"\)\s*jobLines\.push\("- ราคานี้ไม่รวมค่าติดตั้ง/);
-  has('บันทึกลงสูตร (recipe) เพื่อกลับมาแก้ข้อได้', /profit, profitProd, profitInst, laborMode,/);
+  has('บันทึกลงสูตร (recipe) เพื่อกลับมาแก้ข้อได้', /profit, profitProd, profitInst, profitManual, laborMode,/);
+  // โหมดกำไร (กด % เอง) ต้องถูกเก็บ+คืน ไม่งั้นเปิดกลับมาแก้แล้วราคาเด้งไปใช้สูตรไฟล์ (QA จับ 9 ก.ย.69)
+  has('สูตรเก็บโหมดกำไรเอง (profitManual)', /color, glassType, profit, profitManual, g6HideSidePrice/);
+  has('เปิดข้อกลับมาแก้ คืนโหมดกำไรเดิม', /setProfitManual\(r\.profitManual === true\);/);
   has('มีช่องกรอกกำไรแยก 3 ส่วนบนหน้าจอ', /กำไร ค่าของ %[\s\S]*กำไร ค่าผลิต %[\s\S]*กำไร ค่าติดตั้ง %/);
   has('เปลี่ยนรุ่นแล้วตั้งกำไรตั้งต้นของรุ่นนั้นให้', /setProfitProd\(String\(dp\.prod\)\)/);
   // กางวิธีคิดทีละก้อน (เจ้าของสั่ง 20 ส.ค.69) — ค่าของกางรายการ+รหัสสโตร์ · ค่าแรงกางสูตร

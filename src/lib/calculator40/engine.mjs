@@ -904,14 +904,17 @@ export function sellFromTarget({ mat, labProd, labInst, target, ratios, overhead
   const div = BASE - (Number(target) || 0) / 100;
   //  เป้ากำไรสูงกว่าเพดาน (BASE) = สูตรระเบิด → กันไว้ ใช้ adj = 1 (เท่ากับ ratio ล้วน)
   const adj = (div > 0 && denom > 0) ? (total / div) / denom : 1;
-  const pM = Math.round((rM * adj - 1) * 100), pP = Math.round((rP * adj - 1) * 100), pI = Math.round((rI * adj - 1) * 100);
+  const pP = Math.round((rP * adj - 1) * 100), pI = Math.round((rI * adj - 1) * 100);
+  // กำไรค่าของที่ใช้จริง = ตัวคูณจากไฟล์ × ตัวปรับของรุ่น (matAdjPct) — ปัดเป็น % เต็มแล้วใช้ตัวนี้คิดเงิน
+  //   ต้องเป็นตัวเดียวกับที่โชว์บนหน้าจอ ไม่งั้นเลขที่เห็นกับราคาที่ได้ไม่ตรงกัน
+  const pM = Math.round(((1 + (rM * adj - 1)) * mk - 1) * 100);
   if (shape === 'single') {
     // ชีตหลังคา D25: ROUNDUP(ROUNDUP(วัสดุ×ratio×adj + ผลิต×(1+%) + ติดตั้ง×(1+%)) × (1+ค่าดำเนินการ))
     const inner = ceil100(mat * rM * adj * mk + labProd * (1 + pP / 100) + labInst * (1 + pI / 100));
     const mfg = ceil100(ceil100(mat * rM * adj * mk + labProd * (1 + pP / 100)) * (1 + oh / 100));
     return { beforeLabor: ceil100(ceil100(mat * rM * adj * mk) * (1 + oh / 100)), mfgOnly: mfg, withInstall: ceil100(inner * (1 + oh / 100)), pct: { mat: pM, prod: pP, inst: pI }, adj };
   }
-  const matSell = ceil100(mat * (1 + pM / 100) * mk);
+  const matSell = ceil100(mat * (1 + pM / 100));
   const makePart = ceil100(matSell + ceil100(labProd * (1 + pP / 100)));
   const withOverhead = ceil100(makePart * (1 + oh / 100));
   const installPart = ceil100(ceil100(labInst * (1 + pI / 100)) * (1 + oh / 100));

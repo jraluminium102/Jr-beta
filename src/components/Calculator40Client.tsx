@@ -552,6 +552,20 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     }
   }, [pb, prod, w, h, p, form, color, glassType, material, spec, profit, profitProd, profitInst, addons, fixedPanes, kind, faceColorCode, depth, shelves, cabSides, sheetColor, roofSegs, subs, roomTotals, laborMode, cutSel]);
 
+  /**
+   * % กำไรที่ "ใช้จริง" ตอนนี้ — โหมดตามไฟล์ใช้ตัวคูณที่เอนจินคิดได้ (result.profit3)
+   *   ⚠ เจ้าของเจอเอง 9 ก.ย.69: หน้าจอโชว์ 100% ตายตัว (จาก PB.PROFIT ของสูตรเก่า)
+   *     ทั้งที่ราคาจริงคูณ 113% → เลขที่เห็นไม่ตรงกับราคา และพอกด +/- มันเด้งจาก 100
+   *     ทำให้ราคาตกทันที ("ต้องเปลี่ยนตัวคูณด้วยสิ ไม่ใช่ตั้ง 100% พื้นฐาน")
+   *   โหมดกรอกเอง = ใช้ค่าที่พิมพ์ตามปกติ
+   */
+  const shownPct = (() => {
+    const p3 = (result as any)?.profit3;
+    if (profitManual || !p3) return { mat: profit, prod: profitProd, inst: profitInst };
+    return { mat: String(p3.mat ?? profit), prod: String(p3.prod ?? profitProd), inst: String(p3.inst ?? profitInst) };
+  })();
+
+
   const ok = result && !("error" in result);
   // ราคาที่ "กำลังเลือกอยู่" — ต้องเป็นสูตรเดียวกับตอนกดเพิ่มเข้ารายการ (pushQuoteItem)
   //   ขายส่ง (ผลิตอย่างเดียว) ใช้ยอดหลังลด mfgOnlyNet · รวมบานย่อย (ผสมบาน/หลังคาหลายช่วง) ด้วย
@@ -589,14 +603,14 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     if (prod.composite) {
       return {
         v: 1, kind: "room", prodId: prod.id, group: prod.group,
-        color, glassType, profit, g6HideSidePrice,
+        color, glassType, profit, profitManual, g6HideSidePrice,
         room: roomStateRef.current ?? null, // state ทั้งห้อง (ด้าน/ช่อง/บาน/หลังคา/ฝ้า/พื้น ฯลฯ) จาก RoomComposer
       };
     }
     return {
       v: 1, kind: "std", prodId: prod.id, group: prod.group,
       w, h, p, form, color, glassType, material,
-      spec, addons, fixedPanes, profit, profitProd, profitInst, laborMode, useSel, sillSel, cutSel,
+      spec, addons, fixedPanes, profit, profitProd, profitInst, profitManual, laborMode, useSel, sillSel, cutSel,
       kindOpts: kind, faceColorCode, depth, shelves, cabSides, sheetColor, roofSegs, subs,
     };
   }
@@ -751,6 +765,9 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     // ใบเก่าไม่มี 2 ช่องนี้ → ใช้กำไรเดิมทั้งก้อน (ผลเท่าของเดิมเป๊ะ)
     setProfitProd(String(r.profitProd ?? r.profit ?? "100"));
     setProfitInst(String(r.profitInst ?? r.profit ?? "200"));
+    // โหมดกำไร: ข้อที่ตั้ง % เองต้องกลับมาเป็น % เดิม ไม่ใช่เด้งไปใช้สูตรไฟล์
+    //   ใบเก่าที่ยังไม่มีฟิลด์นี้ = false (โหมดตามไฟล์) เท่าพฤติกรรมเดิมเป๊ะ
+    setProfitManual(r.profitManual === true);
     setLaborMode(r.laborMode === "mfg" ? "mfg" : "all");   // ใบเก่าไม่มีฟิลด์นี้ = คิดค่าแรงรวม (ค่าเดิมของระบบ)
     setUseSel(r.useSel === "door" || r.useSel === "window" ? r.useSel : "auto");  // ใบเก่า = ให้ระบบเดาเหมือนเดิม
     setSillSel(typeof r.sillSel === "string" ? r.sillSel : "");
@@ -1180,17 +1197,17 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                       <Field label={`จำนวนบาน${prod.minP ? ` (${prod.minP}–${prod.maxP})` : ""}`} value={p} onChange={setP} />
                     )
                   ) : <div />}
-                  <Field label="กำไร ค่าของ %" value={profit} onChange={(v: string) => { setProfit(v); setProfitManual(true); }} />
-                  <Field label="กำไร ค่าผลิต %" value={profitProd} onChange={(v: string) => { setProfitProd(v); setProfitManual(true); }} />
-                  <Field label="กำไร ค่าติดตั้ง %" value={profitInst} onChange={(v: string) => { setProfitInst(v); setProfitManual(true); }} />
+                  <Field label="กำไร ค่าของ %" value={shownPct.mat} onChange={(v: string) => { setProfit(v); setProfitManual(true); }} />
+                  <Field label="กำไร ค่าผลิต %" value={shownPct.prod} onChange={(v: string) => { setProfitProd(v); setProfitManual(true); }} />
+                  <Field label="กำไร ค่าติดตั้ง %" value={shownPct.inst} onChange={(v: string) => { setProfitInst(v); setProfitManual(true); }} />
                 </div>
               )}
               {/* ห้องกระจก (G6) — ไม่มีกว้าง/สูง/บานระดับห้อง (กำหนดต่อบาน/ต่อด้านใน RoomComposer) แต่ยังต้องมีกำไร% + สี/กระจกหลัก (ทุกบานในห้องใช้ร่วมกัน) */}
               {prod.composite && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mt-4">
-                  <Field label="กำไร ค่าของ %" value={profit} onChange={(v: string) => { setProfit(v); setProfitManual(true); }} />
-                  <Field label="กำไร ค่าผลิต %" value={profitProd} onChange={(v: string) => { setProfitProd(v); setProfitManual(true); }} />
-                  <Field label="กำไร ค่าติดตั้ง %" value={profitInst} onChange={(v: string) => { setProfitInst(v); setProfitManual(true); }} />
+                  <Field label="กำไร ค่าของ %" value={shownPct.mat} onChange={(v: string) => { setProfit(v); setProfitManual(true); }} />
+                  <Field label="กำไร ค่าผลิต %" value={shownPct.prod} onChange={(v: string) => { setProfitProd(v); setProfitManual(true); }} />
+                  <Field label="กำไร ค่าติดตั้ง %" value={shownPct.inst} onChange={(v: string) => { setProfitInst(v); setProfitManual(true); }} />
                 </div>
               )}
 
@@ -1534,13 +1551,14 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       {([
-                        ["ค่าของ", showCost ? result.cost.total : null, profit, setProfit, result.sell.beforeLabor],
-                        ["ค่าผลิต", showCost ? result.labor.prod : null, profitProd, setProfitProd, result.sell.mfgOnly - result.sell.beforeLabor],
-                        ["ค่าติดตั้ง", showCost ? result.labor.install : null, profitInst, setProfitInst, result.sell.withInstall - result.sell.mfgOnly],
+                        ["ค่าของ", showCost ? result.cost.total : null, shownPct.mat, setProfit, result.sell.beforeLabor],
+                        ["ค่าผลิต", showCost ? result.labor.prod : null, shownPct.prod, setProfitProd, result.sell.mfgOnly - result.sell.beforeLabor],
+                        ["ค่าติดตั้ง", showCost ? result.labor.install : null, shownPct.inst, setProfitInst, result.sell.withInstall - result.sell.mfgOnly],
                       ] as [string, number | null, string, (v: string) => void, number][]).map(([label, cost, pct, setPctRaw, sell]) => {
                       // ⚠ แก้ 5 ก.ย.69 (เจ้าของเจอเอง): กดเพิ่ม/ลดกำไรแล้วราคาไม่ขยับ
                       //   เพราะค่าตั้งต้นใช้ "เป้ากำไรจากไฟล์" (profitManual = false) ซึ่งไม่สนช่อง %
                       //   แต่ไม่มีที่ไหนสลับเป็นโหมดกรอกเองเลย → ช่อง % กับปุ่ม +/- เป็นของตายมาตลอด
+                      //   กดครั้งแรกต้องเด้งจาก "ตัวคูณที่เห็นอยู่" (= ที่ใช้จริง) ไม่ใช่จาก 100 ที่ค้างใน state
                       const setPct = (v: string) => { setProfitManual(true); setPctRaw(v); };
                       return (
                         <div key={label} className={"rounded-xl border px-3 py-2 " + (howOpen === label ? "border-brand bg-brand/5" : "border-line bg-ground/40")}>
