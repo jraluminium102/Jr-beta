@@ -25,6 +25,8 @@ const Schema = z.object({
   day_no: z.number().int().positive().nullable().optional(),
   day_total: z.number().int().positive().nullable().optional(),
   note: z.string().optional().default(""),
+  production_set_id: z.number().int().positive().nullable().optional(),   // ลงคิวรายชุด (null = ทั้งงาน)
+  set_label: z.string().trim().max(200).optional().default(""),
 }).refine((d) => d.job_id || (d.custom_title && d.custom_title.length > 0), {
   message: "ต้องระบุงานในระบบ หรือชื่องานพิเศษ (คิวนอกระบบ)",
 });
@@ -57,8 +59,14 @@ export const POST = withRoute(async (req: Request) => {
     day_no: dates.length > 1 ? i + 1 : (p.data.day_no ?? null),
     day_total: dates.length > 1 ? dates.length : (p.data.day_total ?? null),
     note: p.data.note ?? "", created_by: ctx.user.id,
+    production_set_id: p.data.production_set_id ?? null, set_label: p.data.set_label ?? "",
   }));
-  const { data, error } = await sb.from("install_assignments").insert(rows).select("*");
+  let { data, error } = await sb.from("install_assignments").insert(rows).select("*");
+  // กันพัง: 0147 (ลงคิวรายชุด) ยังไม่รัน → insert ซ้ำแบบตัด production_set_id/set_label ออก (ลงทั้งงานได้เหมือนเดิม)
+  if (error && /production_set_id|set_label/i.test(error.message ?? "")) {
+    const plain = rows.map(({ production_set_id: _s, set_label: _l, ...r }) => r);
+    ({ data, error } = await sb.from("install_assignments").insert(plain).select("*"));
+  }
   if (error && /lead_name/i.test(error.message ?? "")) return err("ยังไม่ได้รัน migration 0089 — รันก่อนใช้งาน", 400);
   if (error && /custom_title|job_id.*null|ia_job_or_title/i.test(error.message ?? "")) return err("ยังไม่ได้รัน migration 0100 (คิวนอกระบบ) — รันก่อนใช้งาน", 400);
   if (error) return err(error.message, 500);

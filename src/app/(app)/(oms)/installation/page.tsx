@@ -54,14 +54,17 @@ type Plan = {
   ready: { id: string; job_id: string; jobs: Record<string, unknown>; install_scheduled?: string | null }[];
   booked?: Booked[]; // "จองจากผลิต" — วันติดตั้งที่ตั้งตอนผลิต ยังไม่ลงคิวจริง (0021/adhoc)
   producing?: Producing[]; // "ยังผลิตไม่เสร็จ" — จองคิวติดตั้งล่วงหน้าได้
+  readySets?: ReadySet[]; // ชุดที่ยังไม่ลงคิว (รายข้อ)
+  readyToClose?: { job_id: string; customer_name: string; job_code: string | null; customer_area: string | null }[]; // ติดตั้งครบทุกชุด รอปิดงาน
 };
+type ReadySet = { id: number; job_id: string; set_label: string; hold?: string; customer_name: string; job_code: string | null; customer_area: string | null };
 const prodStatusLabel = (s: string) => (s === "MANUFACTURING" ? "กำลังผลิต" : s === "QUEUED" ? "รอลงผลิต" : s);
 
 export default function InstallationPage() {
   const [tab, setTab] = useState<"cal" | "crew" | "tmr" | "status">("cal");
   const [month, setMonth] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const [detail, setDetail] = useState<InstallAssignment | null>(null);
-  const [addAt, setAddAt] = useState<{ date: string; job_id?: string; custom_title?: string } | null>(null);
+  const [addAt, setAddAt] = useState<{ date: string; job_id?: string; custom_title?: string; production_set_id?: number; set_label?: string } | null>(null);
   const [openInst, setOpenInst] = useState<InstRow | null>(null);
   const [prebook, setPrebook] = useState<Producing | null>(null);   // งานยังผลิตไม่เสร็จ ที่กำลังจองวันล่วงหน้า
   const [readyPick, setReadyPick] = useState<{ job_id: string; name: string } | null>(null); // เลือกทำอะไรกับชิปพร้อมติดตั้ง
@@ -93,6 +96,10 @@ export default function InstallationPage() {
   // ชิป "รอจัดคิว" = งานพร้อมติดตั้งที่ยังไม่ตั้งวัน (ที่ตั้งวันแล้วโผล่เป็นการ์ด "จองจากผลิต" บนวันนั้น)
   const ready = useMemo(() => readyAll.filter((r) => !r.install_scheduled), [readyAll]);
   const producing = useMemo(() => plan?.producing ?? [], [plan]);
+  // ชุดที่ยังไม่ลงคิว → "รอลง (รายชุด)" (เจ้าของสั่ง: ลงคิวรายข้อได้ · ข้ออื่นขึ้นรอลง)
+  const readySets = useMemo(() => plan?.readySets ?? [], [plan]);
+  // งานที่ติดตั้งครบทุกชุดแล้ว รอปิดงาน (แก้ปัญหา per-set ล้วนแล้วปิดงานไม่ได้)
+  const readyToClose = useMemo(() => plan?.readyToClose ?? [], [plan]);
   // "จองจากผลิต" ต่อวัน — โชว์การ์ดบนปฏิทิน (informational · กดลงคิวจริงได้)
   const bookedByDate = useMemo(() => {
     const m = new Map<string, Booked[]>();
@@ -259,6 +266,42 @@ export default function InstallationPage() {
             </div>
           </div>
 
+          {/* รอลง (รายชุด/รายข้อ) — เลือกลงคิวติดตั้งเฉพาะชุดได้ · ข้อที่ลงแล้วขึ้นเป็นการ์ดในปฏิทิน (เจ้าของสั่ง) */}
+          {readySets.length > 0 && (
+            <div className="glass-card rounded-2xl p-3 mb-3" style={{ background: "rgba(56,189,248,.08)", border: "1px solid rgba(56,189,248,.25)" }}>
+              <div className="text-xs mb-2" style={{ color: "#7dd3fc" }}>รอลง (รายชุด) · {readySets.length} ชุด — แตะเพื่อลงคิวเฉพาะชุดนั้น</div>
+              <div className="flex gap-2 flex-wrap">
+                {readySets.map((s) => (
+                  <button key={s.id} disabled={!canWrite}
+                    onClick={() => setAddAt({ date: today, job_id: s.job_id, production_set_id: s.id, set_label: s.set_label })}
+                    title={s.hold ? `HOLD: ${s.hold}` : undefined}
+                    className="text-xs px-2.5 py-1.5 rounded-lg text-white disabled:opacity-50 flex items-center gap-1.5"
+                    style={{ background: "rgba(56,189,248,.14)", border: "1px solid rgba(56,189,248,.4)" }}>
+                    <b>{s.customer_name}</b> · {s.set_label}
+                    {s.hold && <span style={{ color: "#fca5a5" }}>⏸</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ติดตั้งครบทุกชุดแล้ว รอปิดงาน — กดจบงาน (per-set ครบแล้วต้องมีทางปิดงาน) */}
+          {readyToClose.length > 0 && (
+            <div className="glass-card rounded-2xl p-3 mb-3" style={{ background: "rgba(16,185,129,.10)", border: "1px solid rgba(16,185,129,.3)" }}>
+              <div className="text-xs mb-2" style={{ color: "#6ee7b7" }}>✓ ติดตั้งครบทุกชุดแล้ว · {readyToClose.length} งาน — แตะเพื่อ<b className="text-emerald-200">จบงาน</b></div>
+              <div className="flex gap-2 flex-wrap">
+                {readyToClose.map((r) => (
+                  <button key={r.job_id} disabled={!canWrite}
+                    onClick={() => completeJob(r.job_id, r.customer_name || jobName({ job_code: r.job_code ?? undefined }))}
+                    className="text-xs px-2.5 py-1.5 rounded-lg text-white disabled:opacity-50 flex items-center gap-1.5"
+                    style={{ background: "rgba(16,185,129,.18)", border: "1px solid rgba(16,185,129,.45)" }}>
+                    ✓ <b>{r.customer_name}</b>{r.customer_area ? ` · ${r.customer_area}` : ""}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* งานยังผลิตไม่เสร็จ (กำลังผลิต/รอลงผลิต) — จองคิวติดตั้งล่วงหน้าได้ · เจ้าของสั่ง 23 ก.ค.69 */}
           <div className="rounded-2xl p-3 mb-3" style={{ background: "rgba(245,158,11,.12)", border: "1px solid rgba(245,158,11,.35)" }}>
             <div className="text-xs mb-2 font-medium" style={{ color: "#fcd34d" }}>
@@ -326,7 +369,7 @@ export default function InstallationPage() {
                               <button key={a.id} onClick={() => setDetail(a)}
                                 className="w-full text-left rounded-md px-1.5 py-1 leading-snug"
                                 style={{ background: c.bg, border: `0.5px solid ${a.note ? "rgba(239,159,39,.6)" : c.border}` }}>
-                                <div className="text-[13px] font-semibold" style={{ color: "#fff" }}>{a.custom_title ? "⚑ " : ""}{nameOf(a)}{a.note ? " ⚠" : ""}</div>
+                                <div className="text-[13px] font-semibold" style={{ color: "#fff" }}>{a.custom_title ? "⚑ " : ""}{nameOf(a)}{(a as { set_label?: string }).set_label ? ` · ${(a as { set_label?: string }).set_label}` : ""}{a.note ? " ⚠" : ""}</div>
                                 <div className="text-[11.5px] truncate" style={{ color: c.text }}>
                                   {leadOf(a) || "— ยังไม่จัดช่าง"}{a.day_no && a.day_total ? ` · วัน ${a.day_no}/${a.day_total}` : ""}
                                 </div>
@@ -467,9 +510,10 @@ export default function InstallationPage() {
 // ── modal ลงคิวติดตั้ง (เลือกช่วงวันได้ — งานหลายวันสร้างวันละแถวอัตโนมัติ) ──
 function AddAssignModal({ ready, initial, busy, leaderOptions, onClose, onSave }: {
   ready: { job_id: string; jobs: Record<string, unknown> }[];
-  initial: { date: string; job_id?: string; custom_title?: string }; busy: boolean; leaderOptions: string[];
+  initial: { date: string; job_id?: string; custom_title?: string; production_set_id?: number; set_label?: string }; busy: boolean; leaderOptions: string[];
   onClose: () => void; onSave: (b: Record<string, unknown>) => void;
 }) {
+  const perSet = initial.production_set_id != null;   // ลงคิวเฉพาะชุด (จากปุ่ม "รอลง รายชุด")
   const [jobId, setJobId] = useState(initial.job_id || ready[0]?.job_id || "");
   const [date, setDate] = useState(initial.date);
   const [dateTo, setDateTo] = useState(initial.date);
@@ -500,10 +544,15 @@ function AddAssignModal({ ready, initial, busy, leaderOptions, onClose, onSave }
       ) : (
         <>
           <label className="lbl">งาน (พร้อมติดตั้ง)</label>
-          <select value={jobId} onChange={(e) => setJobId(e.target.value)} className="inp">
+          <select value={jobId} onChange={(e) => setJobId(e.target.value)} className="inp" disabled={perSet}>
             {ready.map((r) => <option key={r.job_id} value={r.job_id}>{jobName(r.jobs)} {jobArea(r.jobs) ? `· ${jobArea(r.jobs)}` : ""}</option>)}
             {ready.length === 0 && <option value="">— ไม่มีงานรอจัดคิว —</option>}
           </select>
+          {perSet && (
+            <div className="text-[12px] mt-1.5 rounded-lg px-2.5 py-1.5" style={{ background: "rgba(56,189,248,.16)", color: "#bae6fd" }}>
+              ลงคิวเฉพาะชุด: <b>{initial.set_label}</b> (ข้ออื่นของงานนี้ยังอยู่ในรายการรอลง)
+            </div>
+          )}
         </>
       )}
       <div className="grid grid-cols-2 gap-2">
@@ -522,7 +571,8 @@ function AddAssignModal({ ready, initial, busy, leaderOptions, onClose, onSave }
       <button disabled={busy || (outSystem ? !customTitle.trim() : !jobId)}
         onClick={() => onSave(outSystem
           ? { custom_title: customTitle.trim(), date, date_to: nDays > 1 ? dateTo : undefined, lead_name: lead.trim(), note }
-          : { job_id: jobId, date, date_to: nDays > 1 ? dateTo : undefined, lead_name: lead.trim(), note })}
+          : { job_id: jobId, date, date_to: nDays > 1 ? dateTo : undefined, lead_name: lead.trim(), note,
+              ...(perSet ? { production_set_id: initial.production_set_id, set_label: initial.set_label } : {}) })}
         className="w-full mt-3 py-2.5 rounded-xl bg-white/16 text-white font-medium disabled:opacity-50">
         ลงคิว{outSystem ? "นอกระบบ" : ""}{nDays > 1 ? ` ${nDays} วัน` : ""}
       </button>
@@ -563,14 +613,24 @@ function DetailDrawer({ a, busy, leaderOptions, onClose, onPatch, onDelete, onCo
   const [note, setNote] = useState(a.note || "");
   return (
     <Modal title={nameOf(a)} onClose={onClose}>
-      {/* ✓ ติดตั้งเสร็จแล้ว → ปิดงานเลย (เฉพาะงานในระบบ · คิวนอกระบบไม่มีปุ่มนี้) */}
-      {a.job_id && (
-        <button disabled={busy}
-          onClick={() => { if (window.confirm(`ยืนยันว่าติดตั้ง "${nameOf(a)}" เสร็จแล้ว?\nงานนี้จะถูกปิดเป็น "จบงาน"`)) onComplete(a.id); }}
-          className="w-full mb-3 py-3 rounded-xl bg-emerald-500/90 text-white text-sm font-bold inline-flex items-center justify-center gap-1.5 disabled:opacity-50">
-          ✓ ติดตั้งเสร็จแล้ว (จบงาน)
-        </button>
-      )}
+      {/* ✓ ติดตั้งเสร็จแล้ว — per-set = ปิดแค่ชุด · ทั้งงาน = ปิดงาน (เฉพาะงานในระบบ) */}
+      {a.job_id && (() => {
+        const setId = (a as { production_set_id?: number }).production_set_id;
+        const setLabel = (a as { set_label?: string }).set_label;
+        const perSet = setId != null;
+        return (
+          <button disabled={busy}
+            onClick={() => {
+              const msg = perSet
+                ? `ยืนยันว่าติดตั้งชุด "${setLabel || ""}" เสร็จแล้ว?\n(ชุดอื่นของงานนี้ยังต้องติดตั้งต่อ · ทั้งงานจะปิดเมื่อครบทุกชุด)`
+                : `ยืนยันว่าติดตั้ง "${nameOf(a)}" เสร็จแล้ว?\nงานนี้จะถูกปิดเป็น "จบงาน"`;
+              if (window.confirm(msg)) onComplete(a.id);
+            }}
+            className="w-full mb-3 py-3 rounded-xl bg-emerald-500/90 text-white text-sm font-bold inline-flex items-center justify-center gap-1.5 disabled:opacity-50">
+            {perSet ? `✓ ติดตั้งชุดนี้เสร็จ${setLabel ? ` (${setLabel})` : ""}` : "✓ ติดตั้งเสร็จแล้ว (จบงาน)"}
+          </button>
+        );
+      })()}
       {/* ไปจัดทีมของวันนี้ (จัดรายละเอียดช่าง/สถานที่ต่อ) */}
       <button onClick={onGoCrew}
         className="w-full mb-3 py-2.5 rounded-xl bg-sky-500/25 text-sky-100 border border-sky-400/30 text-sm font-medium inline-flex items-center justify-center gap-1.5">
