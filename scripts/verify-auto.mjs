@@ -464,6 +464,57 @@ console.log("\n═══ ⑩ ปรับกำไรค่าของต่อ
   }
 }
 
+// ── ⑫ ก้อนราคาขาย 3 ก้อนบนจอ — ค่าแรงต้องตรงสูตรเป๊ะ ค่าของรับเศษ ────────────
+//   กฎเจ้าของ 9 ก.ย.69 "+/- กำไรจากต้นทุนสินค้า ไม่ต้องไปยุ่งกับค่าแรง
+//     ค่าแรงอิงตามไฟล์ตารางราคาขาย R4.1 เป๊ะ ๆ สูตรมันควรสูตรเดียวกัน"
+//   เดิมจอเอา mfgOnly − beforeLabor มาลบกันตรง ๆ → ค่าแรงเพี้ยนจาก % ของตัวเอง
+//     บานทั่วไป −100 · หลังคาถึง −300 (เจ้าของ + QA จับ 9 ก.ย.69)
+console.log("\n═══ ⑫ 3 ก้อนราคาขาย — ค่าแรงตรงสูตร · รวมแล้วเท่าราคาขายจริง ═══");
+{
+  const c1 = (x) => Math.ceil(x / 100) * 100;
+  const CASES = [
+    ["sms_slide", { w: 300, h: 250, p: 2, form: "อิสระ" }], ["sms_slide", { w: 600, h: 300, p: 3, form: "อิสระ" }],
+    ["open_door", { w: 150, h: 200, p: 1 }], ["pivot", {}], ["awning", { w: 120, h: 120, p: 1 }],
+    ["banyok", {}], ["fold_euro", {}], ["fold_lift", {}], ["curve_fixed", { w: 100, h: 50, p: 1 }],
+    ["fixed", {}], ["bansolid", {}], ["velora", {}], ["pcdoor", {}], ["banklet", {}], ["gate", {}],
+    ["roof", { w: 300, h: 200, p: 1, material: "ไวนิล" }],
+    ["roof_gable", { w: 800, h: 600, p: 1, material: "กระจก 5+5" }],
+    ["roof_slide", { w: 400, h: 250, p: 1, material: "ไวนิล" }],
+    ["louver", { w: 200, h: 240, p: 1 }], ["shower", {}], ["handrail", {}],
+  ];
+  let bad = 0;
+  for (const [id, o] of CASES) {
+    const r = computeCost(PB, PRODUCTS[id], { w: 200, h: 200, p: 1, glassType: "เขียว 6มม.", ...o });
+    const P = r.sell.parts; if (!P) continue;
+    const wantProd = c1(c1(r.labor.prod * (1 + r.profit3.prod / 100)) * 1.3);
+    const wantInst = c1(c1(r.labor.install * (1 + r.profit3.inst / 100)) * 1.3);
+    if (P.prod !== wantProd || P.inst !== wantInst || Math.abs(P.mat + P.prod + P.inst - r.sell.withInstall) > 0.01) {
+      bad++; console.log("     ✗", id, JSON.stringify(P), "want prod", wantProd, "inst", wantInst, "sum vs", r.sell.withInstall);
+    }
+  }
+  ok("ค่าแรงผลิต/ติดตั้ง ตรงสูตรของตัวเองทุกรุ่น (" + CASES.length + " เคส)", bad === 0, bad + " เคสเพี้ยน");
+  ok("3 ก้อนบวกกันได้เท่าราคาขายจริงเสมอ", bad === 0);
+
+  // ก้อนค่าแรงต้องนิ่งเมื่อขยับกำไรค่าของ (กฎ "ไม่ยุ่งกับค่าแรง")
+  const pbHi = JSON.parse(JSON.stringify(PB)); pbHi.SELL.products.sms_slide.matAdjPct = 40;
+  const lo = computeCost(PB, PRODUCTS.sms_slide, { w: 300, h: 250, p: 2, glassType: "เขียว 6มม.", form: "อิสระ" });
+  const hi = computeCost(pbHi, PRODUCTS.sms_slide, { w: 300, h: 250, p: 2, glassType: "เขียว 6มม.", form: "อิสระ" });
+  ok("ดันกำไรค่าของ: ก้อนค่าแรงผลิตไม่ขยับ", lo.sell.parts.prod === hi.sell.parts.prod, lo.sell.parts.prod + " vs " + hi.sell.parts.prod);
+  ok("ดันกำไรค่าของ: ก้อนค่าแรงติดตั้งไม่ขยับ", lo.sell.parts.inst === hi.sell.parts.inst, lo.sell.parts.inst + " vs " + hi.sell.parts.inst);
+  ok("ดันกำไรค่าของ: ก้อนค่าของขยับจริง", hi.sell.parts.mat > lo.sell.parts.mat);
+
+  // มอเตอร์ขายฟิกต้องลงที่ก้อนค่าของ ไม่ใช่ค่าแรง
+  const noM = computeCost(PB, PRODUCTS.banyok, { w: 200, h: 200, p: 1, glassType: "เขียว 6มม." });
+  const wM = computeCost(PB, PRODUCTS.banyok, { w: 200, h: 200, p: 1, glassType: "เขียว 6มม.", addons: { motor: "auto" } });
+  ok("ใส่มอเตอร์: ก้อนค่าแรงไม่ขยับ", noM.sell.parts.prod === wM.sell.parts.prod && noM.sell.parts.inst === wM.sell.parts.inst);
+  ok("ใส่มอเตอร์: 3 ก้อนยังรวมได้เท่าราคาขาย", Math.abs(wM.sell.parts.mat + wM.sell.parts.prod + wM.sell.parts.inst - wM.sell.withInstall) < 0.01);
+
+  // จอต้องอ่านจาก sell.parts ไม่ใช่ลบกันเอง
+  const src = fs.readFileSync("src/components/Calculator40Client.tsx", "utf8");
+  ok("การ์ดกำไรอ่านก้อนจาก sell.parts", /\["ค่าผลิต",[^\]]*sellParts\.prod\]/.test(src) && /\["ค่าติดตั้ง",[^\]]*sellParts\.inst\]/.test(src));
+  ok("ไม่เหลือการลบ mfgOnly − beforeLabor ในการ์ดกำไร", !/setProfitProd, result\.sell\.mfgOnly - result\.sell\.beforeLabor/.test(src));
+}
+
 // ── ⑪ บานติดตายดัดโค้ง — กล่องเปิด+ตบปิดเปิด คิดตามยาวจริง ไม่ใช่ซื้อเต็มเส้น ──────
 //   ไฟล์ ถอดทุน v20.1 ชีต "คิดทุน ตายดัดโค้ง" D14 = (กว้าง/600) × buf_scrap 1.3 × (1267+582)
 //   เดิมเว็บ ceil(กว้าง/600) × 1849 → กว้าง 1 ม. คิด 1,849 แทน 400.62 → ทุนเกิน 50% (QA จับ 9 ก.ย.69)

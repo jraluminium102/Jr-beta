@@ -167,6 +167,8 @@ export function computeCost(PB, prod, opt) {
   //   opt.profitManual = true → ผู้ใช้กดปรับกำไรเอง ให้ใช้ % ที่กรอก (ของเดิม) ไม่ใช้เป้าจากไฟล์
    const SELLM = (opt.profitManual ? null : (PB.SELL && PB.SELL.products && PB.SELL.products[prod.id])) || null;
   let sellPct = null, sellAdj = null, sellTarget = null;
+  // 3 ก้อนราคาขายสำหรับ "แสดงผล" — ค่าแรงตรงสูตรเป๊ะ · ค่าของรับเศษปัดร้อย (กฎเจ้าของ 9 ก.ย.69)
+  let sellParts_ = null;
   const stockLen = prod.stockLen ?? STOCK_LEN;
   const lines = [];
   // ⚠ กันคิดต่ำกว่าจริงเงียบ ๆ — เก็บทุกบรรทัดที่ราคาออกมา 0 (สโตร์ยังไม่ตั้งราคา + สูตรไม่มีราคาสำรอง)
@@ -719,10 +721,12 @@ export function computeCost(PB, prod, opt) {
     });
     sellBeforeLabor = S.beforeLabor * nLeaf; sellMfgOnly = S.mfgOnly * nLeaf; sellWithInstall = S.withInstall * nLeaf;
     sellPct = S.pct; sellAdj = S.adj; sellTarget = target;
+    if (S.parts) sellParts_ = { mat: round2(S.parts.mat * nLeaf), prod: round2(S.parts.prod * nLeaf), inst: round2(S.parts.inst * nLeaf) };
   } else {
     sellBeforeLabor = ceil100(costTotal * (1 + pctMat / 100));
     sellMfgOnly = sellBeforeLabor + ceil100(laborProd * (1 + pctProd / 100));
     sellWithInstall = sellMfgOnly + ceil100(laborInstall * (1 + pctInst / 100));
+    sellParts_ = { mat: sellBeforeLabor, prod: sellMfgOnly - sellBeforeLabor, inst: sellWithInstall - sellMfgOnly };
     // ค่าดำเนินการ % — ไฟล์ถอดทุน v20 บวกทับราคาขายอีกชั้น (ช่อง "ค่าดำเนินการ %" ท้ายชีต)
     //   สูตรในไฟล์: ขายผลิต = ปัดร้อย( (ขายวัสดุ + ขายค่าแรงผลิต) × (1+op%) )
     //               ขาย+ติดตั้ง = ขายผลิต + ปัดร้อย( ขายค่าแรงติดตั้ง × (1+op%) )
@@ -830,6 +834,9 @@ export function computeCost(PB, prod, opt) {
   }
   // มอเตอร์ขายฟิก — บวกท้ายสุด ไม่ผ่านกำไร (ชีต "★ ราคาขาย ... + IF(เลื่อน, ค่ามอเตอร์ขาย, 0)")
   if (fixedSellTotal > 0) { sellMfgOnly += fixedSellTotal; sellWithInstall += fixedSellTotal; }
+  // ก้อนแสดงผล: ทุกอย่างที่มาทีหลัง (ของเสริม/ราคาตายตัว/ขั้นต่ำ/มอเตอร์) ลงที่ก้อน "ค่าของ"
+  //   ค่าแรง 2 ก้อนต้องนิ่งตามสูตรไฟล์เสมอ — ยอดรวม 3 ก้อนยังเท่าราคาขายจริงทุกบาท
+  if (sellParts_) sellParts_ = { ...sellParts_, mat: round2(sellWithInstall - sellParts_.prod - sellParts_.inst) };
   // ราคาขายส่ง (ผลิตอย่างเดียว ไม่ไปติดตั้ง) — ลดจากยอดรวมอีก % ตามนโยบายขายส่ง (เจ้าของสั่ง 7 ส.ค.69)
   //   คิดจากยอด "ขายผลิตอย่างเดียว" ที่รวมของเสริมแล้ว → ราคาที่ลูกค้าเห็น = ราคาผลิต − 10%
   //   ⚠ sellMfgOnly ตัวเดิมต้องคงไว้เป็นค่าตามชีตคิดทุน (ด่าน verify-r40 เทียบตัวนี้) — ส่วนลดเป็นชั้นนโยบาย แยกกัน
@@ -860,7 +867,9 @@ export function computeCost(PB, prod, opt) {
     labor: { prod: round2(laborProd), install: round2(laborInstall) },
     laborCalc: { ...laborShow, key: prod.laborKey || '', area: round2(area), panels: P },
     // mfgOnly = ตามสูตรชีตคิดทุน (อย่าเอาไปโชว์/ขึ้นใบตรง ๆ) · mfgOnlyNet = ราคาขายส่งจริงหลังลด wholesalePct
-    sell: { beforeLabor: sellBeforeLabor, mfgOnly: sellMfgOnly, mfgOnlyNet: sellMfgOnlyNet, withInstall: sellWithInstall, wholesalePct: wsPct },
+    sell: { beforeLabor: sellBeforeLabor, mfgOnly: sellMfgOnly, mfgOnlyNet: sellMfgOnlyNet, withInstall: sellWithInstall, wholesalePct: wsPct,
+      // 3 ก้อนสำหรับแสดงผล — ค่าแรงตรงสูตรเป๊ะ · ค่าของรับเศษปัดร้อย (ดู sellParts)
+      parts: sellParts_ },
     lines,
   };
 }
@@ -895,6 +904,19 @@ function autoSell(cost, ctx) {
  *   ให้ปรับ % กำไรค่าของ" · เก็บใน PB.SELL.products[id].matAdjPct
  *   ⚠ ไม่แตะสูตร v20.1 เดิม — verify-sell เรียก sellFromTarget ตรง ๆ ไม่ส่งค่านี้ จึงยังคุมสูตรฐานอยู่
  */
+/**
+ * แยกราคาขายเป็น 3 ก้อนสำหรับ "แสดงผล" — ค่าแรงคิดด้วยสูตรของตัวเองเป๊ะ ค่าของรับเศษ
+ *   กฎเจ้าของ: ปรับกำไรได้เฉพาะค่าของ · ค่าแรงต้องตรงไฟล์ · ใช้สูตรเดียวกันทุกก้อน
+ *   (สูตรในไฟล์ปัดร้อย "ก้อนวัสดุ+ผลิต" รวมกันก่อนคูณค่าดำเนินการ → เอามาลบกันตรง ๆ
+ *    จะได้ค่าแรงเพี้ยนจาก % ของตัวเอง 100-300 บาท · เจ้าของเจอเอง 9 ก.ย.69)
+ *   ทั้ง 3 ก้อนยังบวกกันได้เท่าราคาขายจริงเสมอ
+ */
+function sellParts(total, labProd, labInst, pP, pI, oh) {
+  const prod = ceil100(ceil100(labProd * (1 + pP / 100)) * (1 + oh / 100));
+  const inst = ceil100(ceil100(labInst * (1 + pI / 100)) * (1 + oh / 100));
+  return { mat: round2(total - prod - inst), prod, inst };
+}
+
 export function sellFromTarget({ mat, labProd, labInst, target, ratios, overheadPct = 30, shape = 'bucket', matAdjPct = 0 }) {
   const mk = 1 + (Number(matAdjPct) || 0) / 100;
   const oh = Number(overheadPct) || 0, BASE = 100 / (100 + oh);
@@ -912,13 +934,17 @@ export function sellFromTarget({ mat, labProd, labInst, target, ratios, overhead
     // ชีตหลังคา D25: ROUNDUP(ROUNDUP(วัสดุ×ratio×adj + ผลิต×(1+%) + ติดตั้ง×(1+%)) × (1+ค่าดำเนินการ))
     const inner = ceil100(mat * rM * adj * mk + labProd * (1 + pP / 100) + labInst * (1 + pI / 100));
     const mfg = ceil100(ceil100(mat * rM * adj * mk + labProd * (1 + pP / 100)) * (1 + oh / 100));
-    return { beforeLabor: ceil100(ceil100(mat * rM * adj * mk) * (1 + oh / 100)), mfgOnly: mfg, withInstall: ceil100(inner * (1 + oh / 100)), pct: { mat: pM, prod: pP, inst: pI }, adj };
+    const allS = ceil100(inner * (1 + oh / 100));
+    return { beforeLabor: ceil100(ceil100(mat * rM * adj * mk) * (1 + oh / 100)), mfgOnly: mfg, withInstall: allS,
+      parts: sellParts(allS, labProd, labInst, pP, pI, oh), pct: { mat: pM, prod: pP, inst: pI }, adj };
   }
   const matSell = ceil100(mat * (1 + pM / 100));
   const makePart = ceil100(matSell + ceil100(labProd * (1 + pP / 100)));
   const withOverhead = ceil100(makePart * (1 + oh / 100));
   const installPart = ceil100(ceil100(labInst * (1 + pI / 100)) * (1 + oh / 100));
-  return { beforeLabor: ceil100(matSell * (1 + oh / 100)), mfgOnly: withOverhead, withInstall: withOverhead + installPart, pct: { mat: pM, prod: pP, inst: pI }, adj };
+  const all = withOverhead + installPart;
+  return { beforeLabor: ceil100(matSell * (1 + oh / 100)), mfgOnly: withOverhead, withInstall: all,
+    parts: sellParts(all, labProd, labInst, pP, pI, oh), pct: { mat: pM, prod: pP, inst: pI }, adj };
 }
 
 /** เป้ากำไรหลังคา — เลือกตามวัสดุก่อน แล้วค่อยทรง (ชีต B63-B67 · E66/E67 สำหรับทรงเลื่อน) */

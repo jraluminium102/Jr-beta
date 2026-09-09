@@ -565,6 +565,14 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     return { mat: String(p3.mat ?? profit), prod: String(p3.prod ?? profitProd), inst: String(p3.inst ?? profitInst) };
   })();
 
+  /** 3 ก้อนราคาขายสำหรับแสดงผล — ไม่มีในผลลัพธ์ (รุ่นเก่า/ห้องกระจก) = ถอยไปลบกันแบบเดิม */
+  const sellParts = (() => {
+    const p = (result as any)?.sell?.parts;
+    if (p) return p;
+    const s = (result as any)?.sell;
+    return s ? { mat: s.beforeLabor, prod: s.mfgOnly - s.beforeLabor, inst: s.withInstall - s.mfgOnly } : { mat: 0, prod: 0, inst: 0 };
+  })();
+
   /**
    * สลับเข้าโหมดกรอกเอง — ต้องคัดลอกตัวคูณที่กำลังโชว์อยู่ลง state ทั้ง 3 ช่องก่อน
    *   🐞 เจ้าของเจอเอง 9 ก.ย.69 "กดเปลี่ยน % ช่องติดตั้ง ช่องอื่นดันเปลี่ยนตาม"
@@ -1565,9 +1573,14 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       {([
-                        ["ค่าของ", showCost ? result.cost.total : null, shownPct.mat, setProfit, result.sell.beforeLabor],
-                        ["ค่าผลิต", showCost ? result.labor.prod : null, shownPct.prod, setProfitProd, result.sell.mfgOnly - result.sell.beforeLabor],
-                        ["ค่าติดตั้ง", showCost ? result.labor.install : null, shownPct.inst, setProfitInst, result.sell.withInstall - result.sell.mfgOnly],
+                        // 💡 ก้อนราคาขายมาจาก result.sell.parts — ค่าแรง 2 ก้อนคิดด้วยสูตรของตัวเองเป๊ะ
+                        //    (ทุนค่าแรง × (1+%) ปัดร้อย × ค่าดำเนินการ ปัดร้อย) · เศษจากการปัดร้อยของสูตรไฟล์
+                        //    ไปกองที่ "ค่าของ" ซึ่งเป็นก้อนเดียวที่ปรับกำไรได้ (กฎเจ้าของ 9 ก.ย.69
+                        //    "+/- กำไรจากต้นทุนสินค้า ไม่ต้องไปยุ่งกับค่าแรง · ค่าแรงอิงไฟล์เป๊ะ ๆ")
+                        //    เดิมเอา mfgOnly − beforeLabor มาลบกันตรง ๆ → ค่าแรงเพี้ยน 100-300 บาท
+                        ["ค่าของ", showCost ? result.cost.total : null, shownPct.mat, setProfit, sellParts.mat],
+                        ["ค่าผลิต", showCost ? result.labor.prod : null, shownPct.prod, setProfitProd, sellParts.prod],
+                        ["ค่าติดตั้ง", showCost ? result.labor.install : null, shownPct.inst, setProfitInst, sellParts.inst],
                       ] as [string, number | null, string, (v: string) => void, number][]).map(([label, cost, pct, setPctRaw, sell]) => {
                       // ⚠ แก้ 5 ก.ย.69 (เจ้าของเจอเอง): กดเพิ่ม/ลดกำไรแล้วราคาไม่ขยับ
                       //   เพราะค่าตั้งต้นใช้ "เป้ากำไรจากไฟล์" (profitManual = false) ซึ่งไม่สนช่อง %
