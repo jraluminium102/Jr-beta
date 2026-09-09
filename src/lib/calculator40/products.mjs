@@ -1642,13 +1642,14 @@ export const PRODUCTS = {
     glass: null,
     hardware: [],
     consum: [
-      { box: 'กล่อง|1.6X4', name: 'จันทัน 1.6×4 (ติดตาย)', price: 'CF*1220', unit: 'เส้น', count: 'fJ*Math.ceil(Hcm/600)' },
+      // kgLen = ยาวตัดจริงรวม (ม.) ใช้คิดน้ำหนักเท่านั้น ไม่กระทบราคา (ราคายังนับเป็นเส้นเหมือนเดิม)
+      { box: 'กล่อง|1.6X4', name: 'จันทัน 1.6×4 (ติดตาย)', price: 'CF*1220', unit: 'เส้น', count: 'fJ*Math.ceil(Hcm/600)', kgLen: 'fJ*Hcm/100' },
       // แปเดี่ยว = กล่อง 1.6×1.6 (770) · แปคู่ = กล่อง 1×1½ (393) — คนละรหัสสโตร์ เลยกางเป็น 2 บรรทัด (ยอดรวมเท่าเดิม)
-      { box: 'กล่อง|1.6X1.6', name: 'แป กล่อง (ติดตาย) — เดี่ยว', price: 'CF*770', unit: 'เส้น', count: "spec.batten==='แปคู่' ? 0 : (Math.ceil(Hcm/50)+1)*Math.ceil(Wcm/600)" },
-      { box: 'กล่อง|1X1.5', name: 'แป กล่อง (ติดตาย) — คู่', price: 'CF*393', unit: 'เส้น', count: "spec.batten==='แปคู่' ? (Math.ceil(Hcm/50)+1)*Math.ceil(Wcm/600) : 0" },
-      { box: 'ฉาก|6หุน', name: 'ฉาก 6 หุน (ติดตาย)', price: 'CF*140', unit: 'เส้น', count: 'Math.ceil(Wcm/600)' },
-      { box: 'ตัวZ|4', name: 'แซด 4" (ติดตาย)', price: 'CF*140', unit: 'เส้น', count: 'Math.ceil(Wcm/600)' },
-      { name: 'กล่องเหล็ก 1×1 (ติดตาย)', price: 110, ref: 'STEEL.box1', unit: 'เส้น', count: 'fJ*Math.ceil(Hcm/600)' },
+      { box: 'กล่อง|1.6X1.6', name: 'แป กล่อง (ติดตาย) — เดี่ยว', price: 'CF*770', unit: 'เส้น', count: "spec.batten==='แปคู่' ? 0 : (Math.ceil(Hcm/50)+1)*Math.ceil(Wcm/600)", kgLen: "spec.batten==='แปคู่' ? 0 : (Math.ceil(Hcm/50)+1)*Wcm/100" },
+      { box: 'กล่อง|1X1.5', name: 'แป กล่อง (ติดตาย) — คู่', price: 'CF*393', unit: 'เส้น', count: "spec.batten==='แปคู่' ? (Math.ceil(Hcm/50)+1)*Math.ceil(Wcm/600) : 0", kgLen: "spec.batten==='แปคู่' ? (Math.ceil(Hcm/50)+1)*Wcm/100 : 0" },
+      { box: 'ฉาก|6หุน', name: 'ฉาก 6 หุน (ติดตาย)', price: 'CF*140', unit: 'เส้น', count: 'Math.ceil(Wcm/600)', kgLen: 'Wcm/100' },
+      { box: 'ตัวZ|4', name: 'แซด 4" (ติดตาย)', price: 'CF*140', unit: 'เส้น', count: 'Math.ceil(Wcm/600)', kgLen: 'Wcm/100' },
+      { name: 'กล่องเหล็ก 1×1 (ติดตาย)', price: 110, ref: 'STEEL.box1', unit: 'เส้น', count: 'fJ*Math.ceil(Hcm/600)', kgLen: 'fJ*Hcm/100' },
       { name: 'เพลทเหล็ก (ติดตาย)', price: 15, ref: 'STEEL.plate', unit: 'แผ่น', count: '2*fJ' },
       // แผ่นมุงส่วนติดตาย ตามวัสดุ (ชีต H7/H8 · B6=Wcm C6=Hcm) · ไวนิล=anchor
       // ── อิง v20.1 ชีต "คิดทุน หลังคาเลื่อน" H7/H8 (ติดตาย) — 3 ก.ย.69 ──
@@ -1667,12 +1668,12 @@ export const PRODUCTS = {
       rmS('เมทัลชีท EPS 1 นิ้ว PVC', 'แผ่นเมทัลชีท EPS 1 นิ้ว PVC (ติดตาย)', "material==='เมทัลชีท EPS 1 นิ้ว PVC'?Math.ceil(Wcm/34)*(0.34*Hcm/100):0"),
       rmS('กระจก 4+4', 'กระจก 4+4 (ติดตาย)', "material==='กระจก 4+4'?fArea:0"),
       rmS('กระจก 5+5', 'กระจก 5+5 (ติดตาย)', "material==='กระจก 5+5'?fArea:0"),
-      { box: 'กล่อง|1.6X4', name: 'จันทัน 1.6×4 (เลื่อน)', price: 'CF*1220', unit: 'เส้น', count: 'P*(sJ*Math.ceil(SH/600))' },
-      { box: 'กล่อง|1.6X1.6', name: 'แป กล่อง (เลื่อน) — เดี่ยว', price: 'CF*770', unit: 'เส้น', count: "spec.batten==='แปคู่' ? 0 : P*((Math.ceil(SH/50)+1)*Math.ceil(SW/600))" },
-      { box: 'กล่อง|1X1.5', name: 'แป กล่อง (เลื่อน) — คู่', price: 'CF*393', unit: 'เส้น', count: "spec.batten==='แปคู่' ? P*((Math.ceil(SH/50)+1)*Math.ceil(SW/600)) : 0" },
-      { box: 'ฉาก|6หุน', name: 'ฉาก 6 หุน (เลื่อน)', price: 'CF*140', unit: 'เส้น', count: 'P*Math.ceil(SW/600)' },
-      { box: 'ตัวZ|4', name: 'แซด 4" (เลื่อน)', price: 'CF*140', unit: 'เส้น', count: 'P*Math.ceil(SW/600)' },
-      { name: 'กล่องเหล็ก 1×1 (เลื่อน)', price: 110, ref: 'STEEL.box1', unit: 'เส้น', count: 'P*(sJ*Math.ceil(SH/600))' },
+      { box: 'กล่อง|1.6X4', name: 'จันทัน 1.6×4 (เลื่อน)', price: 'CF*1220', unit: 'เส้น', count: 'P*(sJ*Math.ceil(SH/600))', kgLen: 'P*sJ*SH/100' },
+      { box: 'กล่อง|1.6X1.6', name: 'แป กล่อง (เลื่อน) — เดี่ยว', price: 'CF*770', unit: 'เส้น', count: "spec.batten==='แปคู่' ? 0 : P*((Math.ceil(SH/50)+1)*Math.ceil(SW/600))", kgLen: "spec.batten==='แปคู่' ? 0 : P*(Math.ceil(SH/50)+1)*SW/100" },
+      { box: 'กล่อง|1X1.5', name: 'แป กล่อง (เลื่อน) — คู่', price: 'CF*393', unit: 'เส้น', count: "spec.batten==='แปคู่' ? P*((Math.ceil(SH/50)+1)*Math.ceil(SW/600)) : 0", kgLen: "spec.batten==='แปคู่' ? P*(Math.ceil(SH/50)+1)*SW/100 : 0" },
+      { box: 'ฉาก|6หุน', name: 'ฉาก 6 หุน (เลื่อน)', price: 'CF*140', unit: 'เส้น', count: 'P*Math.ceil(SW/600)', kgLen: 'P*SW/100' },
+      { box: 'ตัวZ|4', name: 'แซด 4" (เลื่อน)', price: 'CF*140', unit: 'เส้น', count: 'P*Math.ceil(SW/600)', kgLen: 'P*SW/100' },
+      { name: 'กล่องเหล็ก 1×1 (เลื่อน)', price: 110, ref: 'STEEL.box1', unit: 'เส้น', count: 'P*(sJ*Math.ceil(SH/600))', kgLen: 'P*sJ*SH/100' },
       { name: 'เพลทเหล็ก (เลื่อน)', price: 15, ref: 'STEEL.plate', unit: 'แผ่น', count: 'P*(2*sJ)' },
       // แผ่นมุงส่วนเลื่อน ตามวัสดุ ×P บาน (ชีต J7/J8 · B7=SW=150 C7=SH=150 · J6=3) · ไวนิล=anchor
       // ── อิง v20.1 J7/J8 (ส่วนเลื่อน ×P บาน) ──

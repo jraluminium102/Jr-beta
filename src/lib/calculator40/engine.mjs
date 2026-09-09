@@ -493,8 +493,12 @@ export function computeCost(PB, prod, opt) {
     if (bxKey && !String(it.ref || '').startsWith('ROOFMAT.')) {
       const bkg = (PB.BOX_KG || {})[bxKey];
       if (bkg > 0) {
-        boxKgAll += bkg * count;
-        if (prod.weightSpec && prod.weightSpec.movingConsum && String(it.name || '').includes(prod.weightSpec.movingConsum)) boxKgMoving += bkg * count;
+        // BOX_KG = กก./เส้น 6 ม. · มี kgLen (ยาวตัดจริง ม.) ให้คิดตามยาวจริง ไม่ใช่ตามเส้นที่ซื้อ
+        //   ไม่งั้นจันทันบานเลื่อนยาว 1.5 ม. จะถูกนับเป็น 6 ม. → หนักเกินจริง 4 เท่า
+        const bLen = it.kgLen ? (val(it.kgLen) || 0) : 0;
+        const bWeight = bLen > 0 ? (bkg / 6) * bLen : bkg * count;
+        boxKgAll += bWeight;
+        if (prod.weightSpec && prod.weightSpec.movingConsum && String(it.name || '').includes(prod.weightSpec.movingConsum)) boxKgMoving += bWeight;
       } else {
         const tag = 'โครง "' + bxKey + '" ยังไม่มีน้ำหนัก/เส้น';
         if (!sheetNoKg.includes(tag)) sheetNoKg.push(tag);
