@@ -91,33 +91,22 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   //    kind/branch/postal_code เป็น snapshot-only (customers ไม่มีคอลัมน์ · billing_profiles ต่างหาก)
   let propagated = false;
   if (saveToRegistry && customerId) {
-    const REGISTRY_KEYS = ["address", "tax_id", "phone", "contact_person", "line_id", "contact_channel"];
+    // ⚠ กฎเหล็ก: หัวเอกสาร "ห้าม" แตะชื่อทะเบียน (customers.name) เด็ดขาด
+    //   ชื่อลูกค้าคุมจาก "คิวประเมิน (ชื่อลูกค้า *)" / ทะเบียนเท่านั้น = ชื่อที่โชว์ในผลิต/ติดตั้ง
+    //   เดิมดันชื่อ(นามออกบิล/บริษัท)เข้าทะเบียน → ทริกเกอร์ tg_sync_customer_name ทับ jobs/queue/สแนปช็อต
+    //     = ผลิตโชว์ชื่อบริษัท + ชื่อคนเดิมหาย (เจ้าของย้ำหลายรอบ) · ชื่อบนเอกสาร = นามใบนั้น เก็บใน snapshot พอ
+    const REGISTRY_KEYS = ["address", "tax_id", "phone", "contact_person", "line_id", "contact_channel"];  // ไม่รวม name โดยเจตนา
     const regPatch: Record<string, string> = {};
     for (const k of REGISTRY_KEYS) if (snapPatch[k] !== undefined) regPatch[k] = snapPatch[k];
-    // ⚠ ชื่อทะเบียนลูกค้า = "ชื่อบุคคลจริง" เสมอ · ห้ามเอาชื่อบริษัท(นิติบุคคล)ไปทับทะเบียน
-    //   เพราะผลิต/ติดตั้งอ่าน customers.name → ต้องได้ชื่อคน แม้เอกสารออกในนามบริษัท (เจ้าของย้ำหลายรอบ)
-    const kindNow = String(snapPatch.kind ?? (snap.kind ?? "")).toUpperCase();
-    const regName = kindNow === "COMPANY"
-      ? String(snapPatch.name_individual ?? "").trim()          // นิติบุคคล: ทะเบียน = ชื่อบุคคล (ถ้ากรอก) · ไม่มี = ไม่แตะ
-      : (snapPatch.name !== undefined ? snapPatch.name : "");   // บุคคลธรรมดา: ชื่อ = คนอยู่แล้ว
-    if (regName) regPatch.name = regName;
     if (Object.keys(regPatch).length > 0) {
       let { error: cErr } = await supabase.from("customers").update(regPatch).eq("id", customerId);
-      // กันพัง: ถ้าทะเบียนไม่มีบางคอลัมน์ → ลองใหม่เฉพาะ name/address (ชุดพื้นฐานที่มีแน่)
+      // กันพัง: ถ้าทะเบียนไม่มีบางคอลัมน์ → ลองใหม่เฉพาะ address (ชุดพื้นฐานที่มีแน่ · ไม่แตะ name)
       if (cErr && /column|does not exist|schema cache/i.test(cErr.message ?? "")) {
-        const basic: Record<string, string> = {};
-        for (const k of ["name", "address"]) if (regPatch[k] !== undefined) basic[k] = regPatch[k];
-        if (Object.keys(basic).length > 0) ({ error: cErr } = await supabase.from("customers").update(basic).eq("id", customerId));
+        if (regPatch.address !== undefined) ({ error: cErr } = await supabase.from("customers").update({ address: regPatch.address }).eq("id", customerId));
         else cErr = null;
       }
       if (cErr) return fail("บันทึกทะเบียนไม่สำเร็จ: " + cErr.message, 500);
       propagated = true;
-      if (regPatch.name && regPatch.name !== oldName) {
-        await audit({
-          userId: profile.id, action: "CUSTOMER_RENAME", table: "customers",
-          recordId: String(customerId), oldValue: { name: oldName }, newValue: { name: regPatch.name },
-        });
-      }
     }
   }
 
