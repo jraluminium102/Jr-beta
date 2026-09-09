@@ -3741,8 +3741,7 @@
           1.924
         ],
         "overheadPct": 30,
-        "shape": "bucket",
-        "matAdjPct": -8
+        "shape": "bucket"
       },
       "curve_open": {
         "sheet": "คิดทุน เปิดดัดโค้ง",

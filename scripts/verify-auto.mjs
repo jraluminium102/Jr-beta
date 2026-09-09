@@ -369,7 +369,7 @@ console.log("\n═══ ⑨ มอเตอร์บานกระทุ้ง
 //   และกด +/- กำไรเองต้องยังสั่งราคาได้จริง (ทับค่าจากไฟล์)
 console.log("\n═══ ⑩ ปรับกำไรค่าของต่อรุ่น (matAdjPct) ═══");
 {
-  const ADJ = { sms_slide: 2, open_door: 5, pivot: 4, awning: 8, banyok: -3, fold_euro: -8, fold_lift: 3, curve_fixed: -8 };
+  const ADJ = { sms_slide: 2, open_door: 5, pivot: 4, awning: 8, banyok: -3, fold_euro: -8, fold_lift: 3 };
   const R = (id, o, pb) => computeCost(pb || PB, PRODUCTS[id], { w: 200, h: 200, p: 1, glassType: "เขียว 6มม.", ...o });
   const zero = (id) => { const p = JSON.parse(JSON.stringify(PB)); delete p.SELL.products[id].matAdjPct; return p; };
 
@@ -421,6 +421,8 @@ console.log("\n═══ ⑩ ปรับกำไรค่าของต่อ
     };
     for (const [id, o] of [["sms_slide", { w: 300, h: 250, p: 2, form: "อิสระ" }], ["open_door", {}], ["awning", {}],
       ["banyok", {}], ["fold_euro", {}], ["curve_fixed", {}], ["fixed", {}], ["bansolid", {}]]) chk(id, o);
+    // curve_fixed ต้องไม่มีตัวปรับแล้ว (ทุนตรงไฟล์เองหลังแก้สูตรกล่องเปิด)
+    ok("ตายดัดโค้ง: ไม่ต้องปรับกำไรค่าของแล้ว", PB.SELL.products.curve_fixed.matAdjPct == null, String(PB.SELL.products.curve_fixed.matAdjPct));
     // % ที่โชว์ต้องรวม matAdjPct แล้ว (ไม่ใช่ตัวคูณดิบจากไฟล์)
     const on = R("sms_slide", { w: 300, h: 250, p: 2, form: "อิสระ" });
     const off = computeCost(zero("sms_slide"), PRODUCTS.sms_slide, { w: 300, h: 250, p: 2, glassType: "เขียว 6มม.", form: "อิสระ" });
@@ -428,11 +430,57 @@ console.log("\n═══ ⑩ ปรับกำไรค่าของต่อ
     ok("SMS: ค่าแรง % ไม่ขยับตาม", on.profit3.prod === off.profit3.prod && on.profit3.inst === off.profit3.inst);
   }
 
+  // 🐞 เจ้าของเจอเอง 9 ก.ย.69 "กดเปลี่ยน % ช่องติดตั้ง ช่องอื่นดันเปลี่ยนตาม"
+  //   สาเหตุ: state ค้างค่าเก่า (100/100/200) พอสลับเป็นโหมดกรอกเอง จอเลิกอ่านตัวคูณจริง
+  //   กันซ้ำ 2 ชั้น — ① ซอร์สต้องสลับโหมดผ่าน seedManual() ที่เดียว ② เอนจินต้องแยก 3 ก้อนจริง
+  {
+    const src = fs.readFileSync("src/components/Calculator40Client.tsx", "utf8");
+    // ทุกจุดที่สลับเป็นโหมดกรอกเอง ต้องเรียก seedManual() — ห้ามเรียก setProfitManual(true) ลอย ๆ
+    const bare = (src.match(/setProfitManual\(true\)/g) || []).length;
+    ok("สลับโหมดกรอกเองผ่าน seedManual() ที่เดียว (กัน 3 ช่องกระโดด)", bare === 1, "setProfitManual(true) โผล่ " + bare + " จุด (ต้อง 1 = ในตัว seedManual เอง)");
+    ok("seedManual คัดลอกตัวคูณที่โชว์อยู่ครบ 3 ช่องก่อนสลับโหมด",
+      /function seedManual\(\) \{[\s\S]{0,220}setProfit\(shownPct\.mat\);[\s\S]{0,80}setProfitProd\(shownPct\.prod\);[\s\S]{0,80}setProfitInst\(shownPct\.inst\);/.test(src));
+    ok("ช่อง % ทุกจุดอ่านจาก shownPct (ไม่ใช่ state ดิบ)",
+      !/value=\{profit\}|value=\{profitProd\}|value=\{profitInst\}/.test(src), "");
+
+    // เอนจิน: โหมดกรอกเอง 3 ก้อนต้องเป็นอิสระต่อกันจริง — ขยับติดตั้งอย่างเดียว ของ/ผลิต ต้องนิ่ง
+    const M = (pm, pp, pi) => computeCost(PB, PRODUCTS.sms_slide,
+      { w: 300, h: 250, p: 2, glassType: "เขียว 6มม.", form: "อิสระ", profitManual: true, profitMat: pm, profitProd: pp, profitInst: pi });
+    const base = M(113, 109, 106), onlyInst = M(113, 109, 150);
+    ok("ขยับ % ติดตั้งอย่างเดียว: ค่าของไม่ขยับ", base.sell.beforeLabor === onlyInst.sell.beforeLabor, base.sell.beforeLabor + " vs " + onlyInst.sell.beforeLabor);
+    ok("ขยับ % ติดตั้งอย่างเดียว: ค่าผลิตไม่ขยับ",
+      (base.sell.mfgOnly - base.sell.beforeLabor) === (onlyInst.sell.mfgOnly - onlyInst.sell.beforeLabor));
+    ok("ขยับ % ติดตั้งอย่างเดียว: ค่าติดตั้งขยับจริง",
+      (onlyInst.sell.withInstall - onlyInst.sell.mfgOnly) > (base.sell.withInstall - base.sell.mfgOnly));
+    const onlyMat = M(150, 109, 106);
+    ok("ขยับ % ค่าของอย่างเดียว: ค่าติดตั้งไม่ขยับ",
+      (base.sell.withInstall - base.sell.mfgOnly) === (onlyMat.sell.withInstall - onlyMat.sell.mfgOnly));
+  }
+
   // ⑥ รุ่นที่ไม่ได้ตั้ง matAdjPct ต้องไม่ขยับ (behaviour-preserving)
-  for (const id of ["fixed", "bansolid", "curve_open"]) {
+  for (const id of ["fixed", "bansolid", "curve_open", "curve_fixed"]) {
     const on = R(id, {}), off = R(id, {}, zero(id));
     ok(id + ": ไม่ได้ตั้งค่า → ราคาเท่าเดิมเป๊ะ", on.sell.withInstall === off.sell.withInstall, on.sell.withInstall + " vs " + off.sell.withInstall);
   }
+}
+
+// ── ⑪ บานติดตายดัดโค้ง — กล่องเปิด+ตบปิดเปิด คิดตามยาวจริง ไม่ใช่ซื้อเต็มเส้น ──────
+//   ไฟล์ ถอดทุน v20.1 ชีต "คิดทุน ตายดัดโค้ง" D14 = (กว้าง/600) × buf_scrap 1.3 × (1267+582)
+//   เดิมเว็บ ceil(กว้าง/600) × 1849 → กว้าง 1 ม. คิด 1,849 แทน 400.62 → ทุนเกิน 50% (QA จับ 9 ก.ย.69)
+console.log("\n═══ ⑪ บานติดตายดัดโค้ง — ทุนต้องตรงไฟล์ ═══");
+{
+  const r = computeCost(PB, PRODUCTS.curve_fixed, { w: 100, h: 50, p: 1, glassType: "เขียว 6มม." });
+  const box = (r.lines || []).find((l) => /กล่องเปิด/.test(l.name || "")) || {};
+  ok("กล่องเปิด+ตบปิดเปิด = 400.62 (ไม่ใช่ 1,849 เต็มเส้น)", Math.abs((box.amount || 0) - 400.62) < 0.5, String(box.amount));
+  ok("ทุนรวม = 2,800 ตรงไฟล์ D15", r.cost.total === 2800, String(r.cost.total));
+  ok("ค่าแรงผลิต 1,076 ตรงไฟล์ D21", Math.round(r.labor.prod) === 1076, String(r.labor.prod));
+  ok("ค่าแรงติดตั้ง 2,519 ตรงไฟล์ D22", Math.round(r.labor.install) === 2519, String(r.labor.install));
+  ok("ขายผลิต+ติดตั้ง = 15,400 ตรงไฟล์ D24", r.sell.withInstall === 15400, String(r.sell.withInstall));
+  ok("% กำไร 67/67/109 ตรงบล็อก ⚙ ในไฟล์", r.profit3.mat === 67 && r.profit3.prod === 67 && r.profit3.inst === 109, JSON.stringify(r.profit3));
+  // กว้างขึ้นเป็น 2 เท่า ทุนกล่องต้องขึ้นเป็น 2 เท่า (ไม่ใช่กระโดดทีละเส้น)
+  const r2 = computeCost(PB, PRODUCTS.curve_fixed, { w: 200, h: 50, p: 1, glassType: "เขียว 6มม." });
+  const box2 = (r2.lines || []).find((l) => /กล่องเปิด/.test(l.name || "")) || {};
+  ok("กว้าง 2 เท่า → ทุนกล่อง 2 เท่า (ไม่กระโดดเป็นเส้น)", Math.abs((box2.amount || 0) - (box.amount || 0) * 2) < 0.5, box.amount + " → " + box2.amount);
 }
 
 // ── ⑦ มอเตอร์ที่ฝังอยู่ในสูตรบาน (ไม่ใช่ออปชั่น) ก็ต้องขายฟิก ───────────

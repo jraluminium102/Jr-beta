@@ -565,6 +565,20 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     return { mat: String(p3.mat ?? profit), prod: String(p3.prod ?? profitProd), inst: String(p3.inst ?? profitInst) };
   })();
 
+  /**
+   * สลับเข้าโหมดกรอกเอง — ต้องคัดลอกตัวคูณที่กำลังโชว์อยู่ลง state ทั้ง 3 ช่องก่อน
+   *   🐞 เจ้าของเจอเอง 9 ก.ย.69 "กดเปลี่ยน % ช่องติดตั้ง ช่องอื่นดันเปลี่ยนตาม"
+   *     เพราะ state ยังค้างค่าเก่า (100/100/200 จากสูตรกำไรคงที่) พอสลับเป็นกรอกเอง
+   *     จอเลิกอ่าน profit3 แล้วไปอ่าน state → อีก 2 ช่องกระโดดจาก 113/109 กลับเป็น 100/100
+   *   ต้อง seed ก่อนเสมอ แล้วค่อยเซตช่องที่ผู้ใช้แก้ทับ (React batch ให้ ลำดับถูก)
+   */
+  function seedManual() {
+    if (profitManual) return;
+    setProfit(shownPct.mat); setProfitProd(shownPct.prod); setProfitInst(shownPct.inst);
+    setProfitManual(true);
+  }
+
+
 
   const ok = result && !("error" in result);
   // ราคาที่ "กำลังเลือกอยู่" — ต้องเป็นสูตรเดียวกับตอนกดเพิ่มเข้ารายการ (pushQuoteItem)
@@ -1197,17 +1211,17 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                       <Field label={`จำนวนบาน${prod.minP ? ` (${prod.minP}–${prod.maxP})` : ""}`} value={p} onChange={setP} />
                     )
                   ) : <div />}
-                  <Field label="กำไร ค่าของ %" value={shownPct.mat} onChange={(v: string) => { setProfit(v); setProfitManual(true); }} />
-                  <Field label="กำไร ค่าผลิต %" value={shownPct.prod} onChange={(v: string) => { setProfitProd(v); setProfitManual(true); }} />
-                  <Field label="กำไร ค่าติดตั้ง %" value={shownPct.inst} onChange={(v: string) => { setProfitInst(v); setProfitManual(true); }} />
+                  <Field label="กำไร ค่าของ %" value={shownPct.mat} onChange={(v: string) => { seedManual(); setProfit(v); }} />
+                  <Field label="กำไร ค่าผลิต %" value={shownPct.prod} onChange={(v: string) => { seedManual(); setProfitProd(v); }} />
+                  <Field label="กำไร ค่าติดตั้ง %" value={shownPct.inst} onChange={(v: string) => { seedManual(); setProfitInst(v); }} />
                 </div>
               )}
               {/* ห้องกระจก (G6) — ไม่มีกว้าง/สูง/บานระดับห้อง (กำหนดต่อบาน/ต่อด้านใน RoomComposer) แต่ยังต้องมีกำไร% + สี/กระจกหลัก (ทุกบานในห้องใช้ร่วมกัน) */}
               {prod.composite && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mt-4">
-                  <Field label="กำไร ค่าของ %" value={shownPct.mat} onChange={(v: string) => { setProfit(v); setProfitManual(true); }} />
-                  <Field label="กำไร ค่าผลิต %" value={shownPct.prod} onChange={(v: string) => { setProfitProd(v); setProfitManual(true); }} />
-                  <Field label="กำไร ค่าติดตั้ง %" value={shownPct.inst} onChange={(v: string) => { setProfitInst(v); setProfitManual(true); }} />
+                  <Field label="กำไร ค่าของ %" value={shownPct.mat} onChange={(v: string) => { seedManual(); setProfit(v); }} />
+                  <Field label="กำไร ค่าผลิต %" value={shownPct.prod} onChange={(v: string) => { seedManual(); setProfitProd(v); }} />
+                  <Field label="กำไร ค่าติดตั้ง %" value={shownPct.inst} onChange={(v: string) => { seedManual(); setProfitInst(v); }} />
                 </div>
               )}
 
@@ -1559,7 +1573,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                       //   เพราะค่าตั้งต้นใช้ "เป้ากำไรจากไฟล์" (profitManual = false) ซึ่งไม่สนช่อง %
                       //   แต่ไม่มีที่ไหนสลับเป็นโหมดกรอกเองเลย → ช่อง % กับปุ่ม +/- เป็นของตายมาตลอด
                       //   กดครั้งแรกต้องเด้งจาก "ตัวคูณที่เห็นอยู่" (= ที่ใช้จริง) ไม่ใช่จาก 100 ที่ค้างใน state
-                      const setPct = (v: string) => { setProfitManual(true); setPctRaw(v); };
+                      const setPct = (v: string) => { seedManual(); setPctRaw(v); };
                       return (
                         <div key={label} className={"rounded-xl border px-3 py-2 " + (howOpen === label ? "border-brand bg-brand/5" : "border-line bg-ground/40")}>
                           <div className="text-[11px] font-medium text-ink-3">{label}</div>
