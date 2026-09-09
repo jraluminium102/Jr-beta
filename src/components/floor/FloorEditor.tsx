@@ -69,6 +69,7 @@ export default function FloorEditor({
   const [cPhone, setCPhone] = useState(initial?.customer_snapshot?.phone ?? "");
   const [issueDate, setIssueDate] = useState(initial?.issue_date ?? todayISO());
   const [note, setNote] = useState(initial?.note ?? "");
+  const [discount, setDiscount] = useState<number | string>(Number(initial?.discount) || 0);
 
   const [items, setItems] = useState<Item[]>(
     (initial?.floor_quotation_items ?? [])
@@ -135,6 +136,7 @@ export default function FloorEditor({
       job_id: jobId || null,
       issue_date: issueDate,
       note,
+      discount: Math.max(0, Number(discount) || 0),
       calc: {
         width: num(width), length: num(length), pile_key: pileKey,
         rows_w: plan.rowsW, rows_l: plan.rowsL, piles: effectivePiles,
@@ -378,6 +380,8 @@ export default function FloorEditor({
               note={note}
               items={items}
               onItems={setItems}
+              discount={Number(discount) || 0}
+              onDiscount={setDiscount}
               onCustomer={(p) => { if (p.name !== undefined) setCName(p.name); if (p.address !== undefined) setCAddr(p.address); }}
               onNote={setNote}
             />

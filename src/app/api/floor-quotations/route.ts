@@ -66,6 +66,7 @@ export async function POST(req: Request) {
 
   const clean = normalizeItems(items);
   const total = sumItems(clean);
+  const discount = Math.min(Math.max(0, Number(body?.discount) || 0), total);   // 0..total
 
   const { data: head, error: hErr } = await supabase
     .from("floor_quotations")
@@ -82,6 +83,7 @@ export async function POST(req: Request) {
       issue_date: issueDate,
       calc: body?.calc ?? {},
       total,
+      discount,
       note: String(body?.note ?? "").trim(),
       created_by: profile.id,
     })

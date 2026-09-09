@@ -79,6 +79,7 @@ export default async function FloorPrintPage({
           contractor={q.contractor ?? {}}
           note={q.note}
           items={items}
+          discount={Number(q.discount) || 0}
         />
       </div>
     </div>

@@ -87,7 +87,7 @@ function GrowText({ value, onChange, placeholder, className, style }: {
 
 export function FloorQuoteSheet({
   customer, issueDate, revLabel, contractor, note, items, editable = false,
-  onItems, onCustomer, onNote,
+  onItems, onCustomer, onNote, discount = 0, onDiscount,
 }: {
   customer: { name?: string; address?: string; phone?: string };
   issueDate: string;
@@ -99,6 +99,8 @@ export function FloorQuoteSheet({
   onItems?: (items: Item[]) => void;
   onCustomer?: (patch: { name?: string; address?: string }) => void;
   onNote?: (v: string) => void;
+  discount?: number;
+  onDiscount?: (v: number | string) => void;
 }) {
   /**
    * ⚠ ต้องพก __idx (ตำแหน่งจริงใน items) ติดไปกับทุกแถว
@@ -283,9 +285,29 @@ export function FloorQuoteSheet({
                 <td className="text-right tabular-nums">{baht(g.subtotal)} บาท</td>
               </tr>
             ))}
+            {(editable || num(discount) > 0) && (
+              <>
+                <tr>
+                  <td className="pr-8 py-0.5 text-right" style={{ color: "#6b7280" }}>รวมเป็นเงิน</td>
+                  <td className="text-right tabular-nums">{baht(total)} บาท</td>
+                </tr>
+                <tr>
+                  <td className="pr-8 py-0.5 text-right" style={{ color: "#6b7280" }}>ส่วนลด</td>
+                  <td className="text-right tabular-nums" style={{ color: "#b91c1c" }}>
+                    {editable ? (
+                      <span className="inline-flex items-center gap-1 justify-end">-
+                        <input value={num(discount) === 0 ? "" : String(discount)} inputMode="decimal"
+                          onChange={(e) => onDiscount?.(e.target.value === "" ? 0 : e.target.value)}
+                          placeholder="0" className="w-24 bg-amber-50 outline-none rounded px-1 text-right tabular-nums" /> บาท
+                      </span>
+                    ) : `-${baht(num(discount))} บาท`}
+                  </td>
+                </tr>
+              </>
+            )}
             <tr className="font-bold" style={{ color: "#a8425a", fontSize: 14 }}>
               <td className="pr-8 py-1 text-right border-t">ยอดโดยรวมสุทธิ</td>
-              <td className="text-right tabular-nums border-t">{baht(total)} บาท</td>
+              <td className="text-right tabular-nums border-t">{baht(Math.max(0, total - num(discount)))} บาท</td>
             </tr>
           </tbody>
         </table>

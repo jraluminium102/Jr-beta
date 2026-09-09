@@ -70,6 +70,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (body?.note !== undefined) patch.note = String(body.note).trim();
   if (body?.job_id !== undefined) patch.job_id = body.job_id || null;
   if (body?.customer_id !== undefined) patch.customer_id = body.customer_id || null;
+  if (body?.discount !== undefined) patch.discount = Math.max(0, Number(body.discount) || 0);
 
   // ── รายการ: ส่งมา = แทนที่ทั้งชุด + นับ Rev ขึ้น 1 ──
   //    เจ้าของสั่ง 6 ส.ค.69: rev = "จำนวนครั้งที่แก้" → ชื่อไฟล์ต่อท้าย rev1, rev2, ...
