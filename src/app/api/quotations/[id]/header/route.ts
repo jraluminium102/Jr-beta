@@ -91,9 +91,16 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   //    kind/branch/postal_code เป็น snapshot-only (customers ไม่มีคอลัมน์ · billing_profiles ต่างหาก)
   let propagated = false;
   if (saveToRegistry && customerId) {
-    const REGISTRY_KEYS = ["name", "address", "tax_id", "phone", "contact_person", "line_id", "contact_channel"];
+    const REGISTRY_KEYS = ["address", "tax_id", "phone", "contact_person", "line_id", "contact_channel"];
     const regPatch: Record<string, string> = {};
     for (const k of REGISTRY_KEYS) if (snapPatch[k] !== undefined) regPatch[k] = snapPatch[k];
+    // ⚠ ชื่อทะเบียนลูกค้า = "ชื่อบุคคลจริง" เสมอ · ห้ามเอาชื่อบริษัท(นิติบุคคล)ไปทับทะเบียน
+    //   เพราะผลิต/ติดตั้งอ่าน customers.name → ต้องได้ชื่อคน แม้เอกสารออกในนามบริษัท (เจ้าของย้ำหลายรอบ)
+    const kindNow = String(snapPatch.kind ?? (snap.kind ?? "")).toUpperCase();
+    const regName = kindNow === "COMPANY"
+      ? String(snapPatch.name_individual ?? "").trim()          // นิติบุคคล: ทะเบียน = ชื่อบุคคล (ถ้ากรอก) · ไม่มี = ไม่แตะ
+      : (snapPatch.name !== undefined ? snapPatch.name : "");   // บุคคลธรรมดา: ชื่อ = คนอยู่แล้ว
+    if (regName) regPatch.name = regName;
     if (Object.keys(regPatch).length > 0) {
       let { error: cErr } = await supabase.from("customers").update(regPatch).eq("id", customerId);
       // กันพัง: ถ้าทะเบียนไม่มีบางคอลัมน์ → ลองใหม่เฉพาะ name/address (ชุดพื้นฐานที่มีแน่)
@@ -105,10 +112,10 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       }
       if (cErr) return fail("บันทึกทะเบียนไม่สำเร็จ: " + cErr.message, 500);
       propagated = true;
-      if (snapPatch.name && snapPatch.name !== oldName) {
+      if (regPatch.name && regPatch.name !== oldName) {
         await audit({
           userId: profile.id, action: "CUSTOMER_RENAME", table: "customers",
-          recordId: String(customerId), oldValue: { name: oldName }, newValue: { name: snapPatch.name },
+          recordId: String(customerId), oldValue: { name: oldName }, newValue: { name: regPatch.name },
         });
       }
     }

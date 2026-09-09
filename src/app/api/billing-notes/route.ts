@@ -89,6 +89,9 @@ export async function POST(req: Request) {
   const hasSubtotal = subtotalCol > 0;   // ใช้ gate ค่าแรง (labor แยกได้เฉพาะใบที่รู้ยอดก่อน VAT ชัด)
   let bSubtotal: number, bVat: number, bWht: number, bDisc: number;
   let bDiscAmt: number | undefined;
+  // breakdownKnown = "รู้ยอดก่อน VAT + อัตรา VAT ชัด" → คุม has_tax_breakdown + vat_rate_set (ใบเสร็จใช้ VAT ของใบ ไม่ fallback งาน)
+  //   ต้องรวมเคส reconstructed ด้วย ไม่งั้นบิลจากใบเสนอ subtotal ว่าง → vat_rate_set=false → ใบเสร็จ VAT หาย
+  let breakdownKnown = false;
   if (hasSubtotal) {
     // ปกติ — ใบเสนอเก็บยอดก่อน VAT (subtotal) ครบ
     bSubtotal = subtotalCol;
@@ -97,6 +100,7 @@ export async function POST(req: Request) {
     bDisc = body.discount_pct != null ? Number(body.discount_pct) : (Number(q.discount_pct) || 0);
     // สืบ "จำนวนเงินส่วนลด" จากใบเสนอตรง ๆ (ตัวตั้งจริง) กัน drift · body override ได้ · ไม่มี = คิดจาก %
     bDiscAmt = body.discount_amt != null ? Number(body.discount_amt) : (q.discount_amt != null ? Number(q.discount_amt) : undefined);
+    breakdownKnown = true;
   } else if ((qVat > 0 || qWht > 0) && Number(q.net) > 0) {
     // 🔧 subtotal ว่างแต่ใบเสนอมี VAT/WHT → ถอดภาษีออกจาก net ได้ยอดก่อน VAT
     //   กันบัค "ใบเสนอมี VAT แต่บิล/ใบเสร็จกลายเป็นไม่มี VAT" (เดิม subtotal=0 → บังคับ vat/wht/disc=0)
@@ -107,6 +111,7 @@ export async function POST(req: Request) {
     const factor = 1 + bVat / 100 - bWht / 100;
     bSubtotal = factor > 0 ? (Number(q.net) || 0) / factor : (Number(q.net) || 0);
     bDisc = 0; bDiscAmt = undefined;
+    breakdownKnown = bVat > 0 || bWht > 0;   // reconstruct ได้ + มี VAT/WHT = ยืนยันอัตรา → ใบเสร็จใช้ค่านี้
   } else {
     // legacy จริง — ไม่มีทั้ง subtotal และ VAT → ถือ net เป็นยอดล้วน ไม่คิด VAT ซ้ำ
     bSubtotal = Number(q.net) || 0;
@@ -194,11 +199,11 @@ export async function POST(req: Request) {
   const bLaborAmt = useLaborPlan ? bt.labor_amt : null;
   const bLaborRatio = useLaborPlan && bt.after_discount > 0 ? Math.round((bt.labor_amt / bt.after_discount) * 10000) / 100 : null;
 
-  // has_tax_breakdown = true เฉพาะใบที่ subtotal เป็นยอดก่อน VAT จริง (hasSubtotal) → อนุญาตแก้ footer/ติ๊ก VAT ภายหลัง
-  // vat_rate_set = hasSubtotal เช่นกัน — ใบที่สืบยอดก่อน VAT จากใบเสนอได้ = รู้อัตรา VAT ชัด → ใบเสร็จใช้ค่านี้ (0095)
+  // has_tax_breakdown / vat_rate_set = breakdownKnown (รวม reconstructed) → ใบเสร็จใช้ VAT ของใบนี้ ไม่ fallback jobs.vat_rate (0095)
+  //   🔧 เดิมผูกกับ hasSubtotal เท่านั้น → บิลจากใบเสนอ subtotal ว่าง (แต่มี VAT) → vat_rate_set=false → ใบเสร็จ VAT หาย
   // 0133 — จำว่าตอนออกบิล ใบเสนออยู่ Rev ไหน · ใบเสนอ Rev ใหม่กว่านี้เมื่อไร บิลใบนี้ขึ้นป้าย "เช็คยอดใหม่"
   //   ใส่ในก้อน breakdown เพราะมี fallback insert แบบไม่มีคอลัมน์อยู่แล้ว (เผื่อยังไม่ได้รัน 0133)
-  const bnBreakdown = { subtotal: bt.subtotal, discount_pct: bStoredPct, discount_amt: bt.discount_amt, discount_label: bDiscLabel, vat_rate: bVat, vat_amt: bt.vat_amt, wht_rate: bWht, wht_amt: bt.wht_amt, has_tax_breakdown: hasSubtotal, vat_rate_set: hasSubtotal, labor_ratio: bLaborRatio, labor_amt: bLaborAmt, source_revision_no: Number((q as { revision_no?: number }).revision_no) || 0 };
+  const bnBreakdown = { subtotal: bt.subtotal, discount_pct: bStoredPct, discount_amt: bt.discount_amt, discount_label: bDiscLabel, vat_rate: bVat, vat_amt: bt.vat_amt, wht_rate: bWht, wht_amt: bt.wht_amt, has_tax_breakdown: breakdownKnown, vat_rate_set: breakdownKnown, labor_ratio: bLaborRatio, labor_amt: bLaborAmt, source_revision_no: Number((q as { revision_no?: number }).revision_no) || 0 };
   let { data: bn, error: bnErr } = await supabase
     .from("billing_notes").insert({ ...bnBase, ...bnBreakdown }).select("id, code").single();
   // กันพัง: ถ้า migration 0078/0079/0081/0102/0133 (ยอดแยก/ค่าแรง/Rev) ยังไม่รัน → insert ใหม่แบบไม่มี breakdown
