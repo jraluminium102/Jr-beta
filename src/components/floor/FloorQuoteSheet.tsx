@@ -158,6 +158,10 @@ export function FloorQuoteSheet({
    */
   const renameGroup = (idxs: number[], to: string) =>
     onItems?.(items.map((it, k) => (idxs.includes(k) ? { ...it, group_label: to } : it)));
+  // ลบทั้งหมวด (หัวข้อ + ทุกบรรทัดในหมวด) — ใช้ลบหมวดที่นำเข้ามาผิด/ไม่ต้องการ
+  const deleteGroup = (idxs: number[]) => onItems?.(items.filter((_, k) => !idxs.includes(k)));
+  // ลบเฉพาะหัวข้อ (เคลียร์ชื่อหมวด · คงรายการไว้ ไม่มีหัวข้อ)
+  const clearGroupLabel = (idxs: number[]) => onItems?.(items.map((it, k) => (idxs.includes(k) ? { ...it, group_label: "" } : it)));
 
   const Ctl = ({ i }: { i: number }) => (
     <td className="p-0 border-0 no-print whitespace-nowrap align-top" style={{ width: 1 }}>
@@ -234,6 +238,8 @@ export function FloorQuoteSheet({
                 td={td} txtIn={txtIn} idxOf={idxOf} patch={patch} Ctl={Ctl}
                 onRename={(to: string) => renameGroup(idxs, to)}
                 onAddRow={() => addRow(g.label, lastIdx)}
+                onDeleteGroup={() => { if (confirm(`ลบทั้งหมวด “${g.label || "(ไม่มีชื่อ)"}” และรายการในหมวด ${g.items.length} บรรทัด?`)) deleteGroup(idxs); }}
+                onClearLabel={() => clearGroupLabel(idxs)}
               />
             );
           })}
@@ -305,7 +311,7 @@ export function FloorQuoteSheet({
 
 /** 1 หมวด = หัวข้อหมวด (ถ้ามี) + รายการ (เลขเริ่ม 1 ใหม่ทุกหมวด) + ยอดรวมหมวด */
 function FloorGroupRows({
-  g, gi, multi, editable, td, txtIn, idxOf, patch, Ctl, onRename, onAddRow,
+  g, gi, multi, editable, td, txtIn, idxOf, patch, Ctl, onRename, onAddRow, onDeleteGroup, onClearLabel,
 }: {
   g: { label: string; items: Item[]; subtotal: number };
   gi: number;
@@ -318,6 +324,8 @@ function FloorGroupRows({
   Ctl: (p: { i: number }) => JSX.Element;
   onRename: (to: string) => void;
   onAddRow: () => void;
+  onDeleteGroup: () => void;
+  onClearLabel: () => void;
 }) {
   const span = editable ? 10 : 9;
   return (
@@ -327,9 +335,17 @@ function FloorGroupRows({
           <td colSpan={span} className="border border-gray-400 px-1.5 py-1 font-bold"
             style={{ background: "#fdf3f5", color: "#a8425a" }}>
             {editable ? (
-              <input value={g.label} onChange={(e) => onRename(e.target.value)}
-                placeholder={`(ชื่อหมวด — เว้นว่างได้)`}
-                className={`${txtIn} font-bold`} style={{ color: "#a8425a" }} />
+              <span className="flex items-center gap-1">
+                <input value={g.label} onChange={(e) => onRename(e.target.value)}
+                  placeholder={`(ชื่อหมวด — เว้นว่างได้)`}
+                  className={`${txtIn} font-bold flex-1`} style={{ color: "#a8425a" }} />
+                <span className="no-print flex gap-0.5 shrink-0">
+                  <button type="button" onClick={onClearLabel} title="ลบหัวข้อ (คงรายการไว้)"
+                    className="press px-1.5 text-[11px] text-gray-500 hover:text-gray-800 leading-none">ลบหัวข้อ</button>
+                  <button type="button" onClick={onDeleteGroup} title="ลบทั้งหมวด (หัวข้อ + รายการในหมวด)"
+                    className="press px-1.5 text-[11px] text-red-600 hover:text-red-800 leading-none">ลบหมวด ✕</button>
+                </span>
+              </span>
             ) : g.label}
           </td>
         </tr>
