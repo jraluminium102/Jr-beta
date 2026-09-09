@@ -178,9 +178,10 @@ console.log("\n═══ ④b ราคาสำรองจากไฟล์�
   ok("ตั้งราคาในสโตร์ → ใช้ราคาสโตร์ ไม่ใช่ราคาไฟล์", r2.lines.find((l) => l.name.startsWith("ล้อ 27")).unitPrice === 95, "");
   ok("บรรทัดที่ย้ายไปใช้ราคาสโตร์แล้ว ต้องหลุดจากรายการ 'ราคาไฟล์'",
     r2.hwFileFallback.length === 5 && !r2.hwFileFallback.some((m) => m.sku === "JR00576"), String(r2.hwFileFallback.length));
-  // ราคาขายฐาน SMS = 60,700 (3 ก.ย.69 ใช้สูตรราคาขายตามไฟล์ เป้ากำไร 40% + ค่าดำเนินการ 30%)
+  // ราคาขายฐาน SMS = 61,800 (สูตรราคาขายตามไฟล์ เป้ากำไร 40% + ค่าดำเนินการ 30%
+  //   + ปรับกำไรค่าของ +2% ที่เจ้าของเคาะ 9 ก.ย.69 ให้ไปชน ★ ตารางราคาขาย R4.1 — เดิม 60,700)
   ok("ราคาไฟล์อุปกรณ์ไม่ไปแตะฝั่งอลู (ไม่มี hardwareLines = เท่าราคาฐาน)",
-    computeCost(BASE, PRODUCTS.sms_slide, { ...BASE_IN }).sell.withInstall === 60700, "");
+    computeCost(BASE, PRODUCTS.sms_slide, { ...BASE_IN }).sell.withInstall === 61800, "");
 }
 
 console.log("\n═══ ④c เฟรมล่างรางเตี้ย = B20047 ไม่ใช่ B20046 (ชนกลาง) ═══");

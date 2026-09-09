@@ -3528,7 +3528,8 @@
         "small": {
           "maxArea": 2,
           "price": 15000
-        }
+        },
+        "matAdjPct": 2
       },
       "euro_slide": {
         "sheet": "คิดทุน ยูโร",
@@ -3613,7 +3614,8 @@
           2.154
         ],
         "overheadPct": 30,
-        "shape": "bucket"
+        "shape": "bucket",
+        "matAdjPct": 5
       },
       "pivot": {
         "sheet": "คิดทุน บานหมุน",
@@ -3624,7 +3626,8 @@
           2.154
         ],
         "overheadPct": 30,
-        "shape": "bucket"
+        "shape": "bucket",
+        "matAdjPct": 4
       },
       "bansolid": {
         "sheet": "คิดทุน บานโซลิด",
@@ -3657,7 +3660,8 @@
           2.308
         ],
         "overheadPct": 30,
-        "shape": "bucket"
+        "shape": "bucket",
+        "matAdjPct": 8
       },
       "banyok": {
         "sheet": "คิดทุน บานยก",
@@ -3668,7 +3672,8 @@
           1.924
         ],
         "overheadPct": 30,
-        "shape": "bucket"
+        "shape": "bucket",
+        "matAdjPct": -3
       },
       "banklet": {
         "sheet": "คิดทุน บานเกล็ด",
@@ -3701,7 +3706,8 @@
           2.154
         ],
         "overheadPct": 30,
-        "shape": "bucket"
+        "shape": "bucket",
+        "matAdjPct": -8
       },
       "fold_lift": {
         "sheet": "คิดทุน เฟี้ยมยก",
@@ -3712,7 +3718,8 @@
           2.154
         ],
         "overheadPct": 30,
-        "shape": "bucket"
+        "shape": "bucket",
+        "matAdjPct": 3
       },
       "fixed": {
         "sheet": "คิดทุน ติดตาย",
@@ -3734,7 +3741,8 @@
           1.924
         ],
         "overheadPct": 30,
-        "shape": "bucket"
+        "shape": "bucket",
+        "matAdjPct": -8
       },
       "curve_open": {
         "sheet": "คิดทุน เปิดดัดโค้ง",

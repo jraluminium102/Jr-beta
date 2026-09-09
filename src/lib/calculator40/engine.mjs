@@ -715,7 +715,7 @@ export function computeCost(PB, prod, opt) {
     const nLeaf = SELLM.perLeaf ? Math.max(1, P) : 1;
     const S = sellFromTarget({
       mat: costTotal / nLeaf, labProd: laborProd / nLeaf, labInst: laborInstall / nLeaf,
-      target, ratios, overheadPct: SELLM.overheadPct, shape: SELLM.shape,
+      target, ratios, overheadPct: SELLM.overheadPct, shape: SELLM.shape, matAdjPct: SELLM.matAdjPct,
     });
     sellBeforeLabor = S.beforeLabor * nLeaf; sellMfgOnly = S.mfgOnly * nLeaf; sellWithInstall = S.withInstall * nLeaf;
     sellPct = S.pct; sellAdj = S.adj; sellTarget = target;
@@ -889,7 +889,14 @@ function autoSell(cost, ctx) {
  *   bucket = ชีตบาน — ปัดร้อยทีละก้อน (วัสดุ+ผลิต) → ×(1+ค่าดำเนินการ) · ติดตั้งคิดแยกแล้วบวก
  *   single = ชีตหลังคา — รวมก้อนเดียวแล้วค่อย ×(1+ค่าดำเนินการ) · วัสดุใช้ adj ตรง ๆ ไม่ปัด %
  */
-export function sellFromTarget({ mat, labProd, labInst, target, ratios, overheadPct = 30, shape = 'bucket' }) {
+/**
+ * matAdjPct = "ปรับกำไรค่าของ %" ต่อรุ่น — ชั้นบาง ๆ ทับเฉพาะฝั่งวัสดุ (ค่าแรงไม่ขยับ)
+ *   เจ้าของสั่ง 9 ก.ย.69 หลังเทียบกับ ★ ตารางราคาขาย R4.1 ว่า "ทุนใกล้แล้ว แต่ราคาขายยังไม่ใกล้
+ *   ให้ปรับ % กำไรค่าของ" · เก็บใน PB.SELL.products[id].matAdjPct
+ *   ⚠ ไม่แตะสูตร v20.1 เดิม — verify-sell เรียก sellFromTarget ตรง ๆ ไม่ส่งค่านี้ จึงยังคุมสูตรฐานอยู่
+ */
+export function sellFromTarget({ mat, labProd, labInst, target, ratios, overheadPct = 30, shape = 'bucket', matAdjPct = 0 }) {
+  const mk = 1 + (Number(matAdjPct) || 0) / 100;
   const oh = Number(overheadPct) || 0, BASE = 100 / (100 + oh);
   const [rM, rP, rI] = ratios;
   const total = mat + labProd + labInst;
@@ -900,11 +907,11 @@ export function sellFromTarget({ mat, labProd, labInst, target, ratios, overhead
   const pM = Math.round((rM * adj - 1) * 100), pP = Math.round((rP * adj - 1) * 100), pI = Math.round((rI * adj - 1) * 100);
   if (shape === 'single') {
     // ชีตหลังคา D25: ROUNDUP(ROUNDUP(วัสดุ×ratio×adj + ผลิต×(1+%) + ติดตั้ง×(1+%)) × (1+ค่าดำเนินการ))
-    const inner = ceil100(mat * rM * adj + labProd * (1 + pP / 100) + labInst * (1 + pI / 100));
-    const mfg = ceil100(ceil100(mat * rM * adj + labProd * (1 + pP / 100)) * (1 + oh / 100));
-    return { beforeLabor: ceil100(ceil100(mat * rM * adj) * (1 + oh / 100)), mfgOnly: mfg, withInstall: ceil100(inner * (1 + oh / 100)), pct: { mat: pM, prod: pP, inst: pI }, adj };
+    const inner = ceil100(mat * rM * adj * mk + labProd * (1 + pP / 100) + labInst * (1 + pI / 100));
+    const mfg = ceil100(ceil100(mat * rM * adj * mk + labProd * (1 + pP / 100)) * (1 + oh / 100));
+    return { beforeLabor: ceil100(ceil100(mat * rM * adj * mk) * (1 + oh / 100)), mfgOnly: mfg, withInstall: ceil100(inner * (1 + oh / 100)), pct: { mat: pM, prod: pP, inst: pI }, adj };
   }
-  const matSell = ceil100(mat * (1 + pM / 100));
+  const matSell = ceil100(mat * (1 + pM / 100) * mk);
   const makePart = ceil100(matSell + ceil100(labProd * (1 + pP / 100)));
   const withOverhead = ceil100(makePart * (1 + oh / 100));
   const installPart = ceil100(ceil100(labInst * (1 + pI / 100)) * (1 + oh / 100));

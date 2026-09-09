@@ -364,6 +364,59 @@ console.log("\n═══ ⑨ มอเตอร์บานกระทุ้ง
   ok("ขนาดไม่เข้าเกณฑ์: ไม่มีเซนเซอร์กันฝนตามมา", !(noM.lines || []).some((l) => l.cat === "addon" && /เซนเซอร์กันฝน/.test(l.name || "")));
 }
 
+// ── ⑩ ปรับกำไรค่าของ (matAdjPct) — เจ้าของเคาะ 9 ก.ย.69 ให้ปรับ 8 รุ่นเข้าหา ★ R4.1 ─────
+//   ต้องแตะเฉพาะฝั่ง "ค่าของ" · ค่าแรงล็อก · มอเตอร์ขายฟิกต้องไม่ถูกคูณตาม
+//   และกด +/- กำไรเองต้องยังสั่งราคาได้จริง (ทับค่าจากไฟล์)
+console.log("\n═══ ⑩ ปรับกำไรค่าของต่อรุ่น (matAdjPct) ═══");
+{
+  const ADJ = { sms_slide: 2, open_door: 5, pivot: 4, awning: 8, banyok: -3, fold_euro: -8, fold_lift: 3, curve_fixed: -8 };
+  const R = (id, o, pb) => computeCost(pb || PB, PRODUCTS[id], { w: 200, h: 200, p: 1, glassType: "เขียว 6มม.", ...o });
+  const zero = (id) => { const p = JSON.parse(JSON.stringify(PB)); delete p.SELL.products[id].matAdjPct; return p; };
+
+  for (const [id, want] of Object.entries(ADJ))
+    ok("ตั้ง matAdjPct " + id + " = " + want, (PB.SELL.products[id] || {}).matAdjPct === want, String((PB.SELL.products[id] || {}).matAdjPct));
+
+  for (const [id, want] of Object.entries(ADJ)) {
+    const on = R(id, {}), off = R(id, {}, zero(id));
+    // ① ทุนต้องไม่ขยับเลย (ปรับกำไร ไม่ใช่ปรับทุน)
+    ok(id + ": ทุนไม่ขยับ", on.cost.total === off.cost.total, on.cost.total + " vs " + off.cost.total);
+    // ② ค่าของฝั่งขายต้องขยับไปทางที่สั่ง
+    const d = on.sell.beforeLabor - off.sell.beforeLabor;
+    ok(id + ": ค่าของขาย" + (want > 0 ? "เพิ่ม" : "ลด") + "จริง", want > 0 ? d > 0 : d < 0, String(d));
+    // ③ ค่าแรงฝั่งขายต้องนิ่ง (ส่วนต่างขายรวม = ส่วนต่างค่าของ ผ่านค่าดำเนินการ)
+    const labOn = on.sell.withInstall - on.sell.mfgOnly, labOff = off.sell.withInstall - off.sell.mfgOnly;
+    ok(id + ": ค่าแรงติดตั้ง (ขาย) ไม่ขยับ", labOn === labOff, labOn + " vs " + labOff);
+    ok(id + ": ค่าแรง (ทุน) ไม่ขยับ", on.labor.prod === off.labor.prod && on.labor.install === off.labor.install);
+  }
+
+  // ④ กด +/- กำไรเอง (profitManual) ต้องสั่งราคาได้จริง — ทับค่าจากไฟล์
+  for (const id of ["sms_slide", "awning", "banyok"]) {
+    const m = (pp) => R(id, { profitManual: true, profitPct: pp, profitProdPct: 100, profitInstPct: 100 }).sell.withInstall;
+    ok(id + ": กดกำไรเอง 50% ≠ 200% (ราคาขยับจริง)", m(50) < m(200), m(50) + " → " + m(200));
+    ok(id + ": โหมดกรอกเอง ไม่ถูก matAdjPct แทรก", m(100) === computeCost(zero(id), PRODUCTS[id], { w: 200, h: 200, p: 1, glassType: "เขียว 6มม.", profitManual: true, profitPct: 100, profitProdPct: 100, profitInstPct: 100 }).sell.withInstall);
+  }
+
+  // ⑤ ไม่ตีกับมอเตอร์ — มอเตอร์ขายฟิก ต้องไม่ถูกคูณด้วย matAdjPct
+  {
+    const noM = R("banyok", {}), withM = R("banyok", { addons: { motor: "auto" } });
+    const mLine = (withM.lines || []).find((l) => /ออโต้บานยก/.test(l.name || "")) || {};
+    ok("บานยก: ส่วนต่างขาย = ราคามอเตอร์เป๊ะ (ไม่โดนคูณกำไรค่าของ)",
+      withM.sell.withInstall - noM.sell.withInstall === mLine.amount, (withM.sell.withInstall - noM.sell.withInstall) + " vs " + mLine.amount);
+    // เปลี่ยน matAdjPct แล้วราคามอเตอร์ต้องนิ่ง
+    const pbHi = JSON.parse(JSON.stringify(PB)); pbHi.SELL.products.banyok.matAdjPct = 50;
+    const hi = computeCost(pbHi, PRODUCTS.banyok, { w: 200, h: 200, p: 1, glassType: "เขียว 6มม.", addons: { motor: "auto" } });
+    const mHi = (hi.lines || []).find((l) => /ออโต้บานยก/.test(l.name || "")) || {};
+    ok("ดันกำไรค่าของเป็น 50% ราคามอเตอร์ยังนิ่ง", mHi.amount === mLine.amount, mHi.amount + " vs " + mLine.amount);
+    ok("ดันกำไรค่าของแล้วราคารวมขยับจริง", hi.sell.withInstall > withM.sell.withInstall);
+  }
+
+  // ⑥ รุ่นที่ไม่ได้ตั้ง matAdjPct ต้องไม่ขยับ (behaviour-preserving)
+  for (const id of ["fixed", "bansolid", "curve_open"]) {
+    const on = R(id, {}), off = R(id, {}, zero(id));
+    ok(id + ": ไม่ได้ตั้งค่า → ราคาเท่าเดิมเป๊ะ", on.sell.withInstall === off.sell.withInstall, on.sell.withInstall + " vs " + off.sell.withInstall);
+  }
+}
+
 // ── ⑦ มอเตอร์ที่ฝังอยู่ในสูตรบาน (ไม่ใช่ออปชั่น) ก็ต้องขายฟิก ───────────
 //   เจ้าของเคาะ 5 ก.ย.69: ประตูรั้วตัวแรก 25,000 · ระแนงหมุน 12,000
 console.log("\n═══ ⑦ มอเตอร์ในสูตรบาน — ขายฟิก ทุนยังอยู่ในทุนรวม ═══");

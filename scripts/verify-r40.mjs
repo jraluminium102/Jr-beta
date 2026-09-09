@@ -83,18 +83,21 @@ const LABOR_SRC = {
 /**
  * ราคาขายตามบล็อกท้ายชีตคิดทุน (ไฟล์ v20.1) — เขียนใหม่ในเทส ไม่ import จาก engine
  *   เป้ากำไรสุทธิ % + สัดส่วนกำไร 3 ตัว → ตัวปรับอัตโนมัติ → กำไร 3 ก้อน → ปัดร้อย → + ค่าดำเนินการ 30%
+ *   matAdjPct = ปรับ % กำไร "เฉพาะฝั่งค่าของ" ต่อรุ่น (เจ้าของเคาะ 9 ก.ย.69 ให้ไปชน ★ ตารางราคาขาย R4.1)
+ *     คูณทับเฉพาะก้อนวัสดุ — ค่าแรงผลิต/ติดตั้งไม่ขยับ
  */
-function sheetSell({ mat, labProd, labInst, target, ratios, overheadPct = 30, shape = 'bucket' }) {
+function sheetSell({ mat, labProd, labInst, target, ratios, overheadPct = 30, shape = 'bucket', matAdjPct = 0 }) {
   const oh = overheadPct, BASE = 100 / (100 + oh);
+  const mk = 1 + (Number(matAdjPct) || 0) / 100;
   const [rM, rP, rI] = ratios;
   const adj = ((mat + labProd + labInst) / (BASE - target / 100)) / ((mat * rM + labProd * rP + labInst * rI) * (1 + oh / 100));
   const pM = Math.round((rM * adj - 1) * 100), pP = Math.round((rP * adj - 1) * 100), pI = Math.round((rI * adj - 1) * 100);
   if (shape === 'single') {
-    const mfg = ceil100(ceil100(mat * rM * adj + labProd * (1 + pP / 100)) * (1 + oh / 100));
-    const all = ceil100(ceil100(mat * rM * adj + labProd * (1 + pP / 100) + labInst * (1 + pI / 100)) * (1 + oh / 100));
+    const mfg = ceil100(ceil100(mat * rM * adj * mk + labProd * (1 + pP / 100)) * (1 + oh / 100));
+    const all = ceil100(ceil100(mat * rM * adj * mk + labProd * (1 + pP / 100) + labInst * (1 + pI / 100)) * (1 + oh / 100));
     return { mfgOnly: mfg, withInstall: all };
   }
-  const makePart = ceil100(ceil100(mat * (1 + pM / 100)) + ceil100(labProd * (1 + pP / 100)));
+  const makePart = ceil100(ceil100(mat * (1 + pM / 100) * mk) + ceil100(labProd * (1 + pP / 100)));
   const withOverhead = ceil100(makePart * (1 + oh / 100));
   const installPart = ceil100(ceil100(labInst * (1 + pI / 100)) * (1 + oh / 100));
   return { mfgOnly: withOverhead, withInstall: withOverhead + installPart };
@@ -277,7 +280,9 @@ for (const a of ANCHORS) {
     const target = SM.shape === 'single' ? roofTarget(SM, mat0, a.id) : SM.target;
     const ratios = (SM.shape === 'single' && /^กระจก/.test(String(mat0 || '')) && SM.ratioMaterialGlass)
       ? [SM.ratioMaterialGlass, SM.ratios[1], SM.ratios[2]] : SM.ratios;
-    let S = sheetSell({ mat: a.cost, labProd: wProd, labInst: wInst, target, ratios, overheadPct: SM.overheadPct, shape: SM.shape });
+    // matAdjPct = ปรับ % กำไรค่าของต่อรุ่น (เจ้าของเคาะ 9 ก.ย.69 หลังเทียบ ★ ตารางราคาขาย R4.1)
+    //   ด่านนี้ตรวจว่า "เอนจินคิดตรงสูตร" — ค่าที่เจ้าของตั้ง ต้องเข้าสูตรฝั่งคาดหวังด้วย
+    let S = sheetSell({ mat: a.cost, labProd: wProd, labInst: wInst, target, ratios, overheadPct: SM.overheadPct, shape: SM.shape, matAdjPct: SM.matAdjPct });
     wantMfg = S.mfgOnly; wantInst = S.withInstall;
     const areaNow = (a.in.w * a.in.h) / 10000;
     if (SM.small && areaNow > 0 && areaNow < SM.small.maxArea && wantInst > 0) {
@@ -486,10 +491,11 @@ console.log('\n═══ ②g ราคาเส้นแยกสีจริ�
   //   เดิมเป็นค่าแรงจากไฟล์ ถอดทุน_รวมทั้งหมด.xlsx ตัวแรก · ทุนวัสดุไม่ขยับ (ด่านทุนอยู่ ANCHORS)
   // 3 ก.ย.69 ใช้สูตรราคาขายตามไฟล์ (เป้ากำไรสุทธิ SMS 40% + ค่าดำเนินการ 30%) แทนกำไรคงที่ 100/100/200
   //   ทุนวัสดุไม่ขยับ (ด่านทุนอยู่ ANCHORS) — ชุดนี้ตรวจว่า "สีต่างกัน ราคาต้องต่างกัน" เป็นหลัก
-  check('SMS ลายไม้สักทอง', teak, 80300, 1);
-  check('SMS มะฮอกกานี', maho, 93000, 1);
-  check('SMS เทาซาฮาร่า', sell('sahara', 'sahara'), 63600, 1);
-  check('SMS สีขาว', sell('white', 'white'), 60700, 1);
+  // ↓ ขยับ +2% ตาม matAdjPct ของ SMS (เจ้าของเคาะ 9 ก.ย.69 ให้ราคาขายไปชน ★ R4.1) — ทุนไม่เปลี่ยน
+  check('SMS ลายไม้สักทอง', teak, 81800, 1);
+  check('SMS มะฮอกกานี', maho, 94600, 1);
+  check('SMS เทาซาฮาร่า', sell('sahara', 'sahara'), 64600, 1);
+  check('SMS สีขาว', sell('white', 'white'), 61800, 1);
 
   const az = computeCost(PB, PRODUCTS.sms_slide, { w: 600, h: 300, p: 3, form: 'อิสระ', color: 'special', colorKey: 'aztec' });
   check('Aztec: ค่าเปิดตู้อบยังคิดอยู่ (คงที่ ไม่ผูก กก.)', az.cost.openOven, PB.BAKE_OPEN_OVEN, 0.01);
