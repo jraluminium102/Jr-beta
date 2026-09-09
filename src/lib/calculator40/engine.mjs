@@ -970,6 +970,37 @@ export function pickMotorByWeight(weightOrCtx, sizes) {
  *   auto = คิดน้ำหนักได้ครบและมีขนาดที่รับไหว · เลือกเอง = น้ำหนัก (ถ้ารู้) ต้องไม่เกินพิกัด
  *   ⚠ ถ้า UI กับ engine เห็นไม่ตรงกัน = เซนเซอร์กันฝนโผล่ให้ติ๊ก แต่ราคาหายเงียบ (QA จับได้ 8 ก.ย.69)
  */
+/**
+ * มอเตอร์บานกระทุ้ง — เลือกรุ่นตาม "กว้าง × ยื่น" ต่อ 1 บาน (เจ้าของให้ตาราง 9 ก.ย.69)
+ *   กว้าง/บาน = กว้างรวม ÷ จำนวนบาน · ยื่น = ความสูงบาน (ระยะที่โช้ค/โซ่ต้องดัน)
+ *   sel = 'auto' → ไล่ตาม PB.AWN_MOTOR_ORDER เลือกตัวแรกที่ขนาดเข้าเกณฑ์
+ *   ขนาดไม่เข้าเกณฑ์ = คืน warn พร้อมบอกว่ารุ่นไหนใช้ได้ (ห้ามคิดเงินให้เงียบ ๆ)
+ *   คืน { key, model, pw, ph, auto } · ไม่ได้เลือก = {} · เลือกไม่ได้ = { warn }
+ */
+export function awnMotorPick(sel, W, H, P, PB) {
+  const s = String(sel || '');
+  if (!s || s === 'none') return {};
+  const T = (PB && PB.AWN_MOTOR) || {};
+  const order = (PB && PB.AWN_MOTOR_ORDER) || Object.keys(T);
+  const pw = round2((Number(W) || 0) * 100 / Math.max(1, Number(P) || 1));
+  const ph = round2((Number(H) || 0) * 100);
+  const fits = (m) => m && pw >= m.min[0] && pw <= m.max[0] && ph >= m.min[1] && ph <= m.max[1];
+  const sizeTxt = (m) => m.min[0] + '×' + m.min[1] + ' ถึง ' + m.max[0] + '×' + m.max[1] + ' ซม.';
+  if (s === 'auto') {
+    for (const k of order) if (fits(T[k])) return { key: k, model: T[k], pw, ph, auto: true };
+    return { warn: '⚠️ บาน ' + pw + '×' + ph + ' ซม. (กว้าง×ยื่น ต่อบาน) ไม่มีรุ่นไหนทำได้ — '
+      + order.map((k) => T[k] && T[k].label + ' ' + sizeTxt(T[k])).filter(Boolean).join(' · ') };
+  }
+  const m = T[s];
+  if (!m) return {};
+  if (!fits(m)) {
+    const okList = order.filter((k) => fits(T[k])).map((k) => T[k].label);
+    return { warn: '⚠️ ' + m.label + ' ทำได้ ' + sizeTxt(m) + ' — บานนี้ ' + pw + '×' + ph + ' ซม. (กว้าง×ยื่น ต่อบาน)'
+      + (okList.length ? ' · ใช้ได้: ' + okList.join(', ') : ' · ไม่มีรุ่นไหนทำได้ ต้องแบ่งบาน') };
+  }
+  return { key: s, model: m, pw, ph, auto: false };
+}
+
 export function motorSizeOk(sel, weight, sizes) {
   const s = String(sel || '');
   if (!s || s === 'none') return false;
@@ -1234,19 +1265,29 @@ export function computeAddon(id, sel, ctx) {
     const sell = motorFixSell(ctx.PB, 'บานเกล็ด', autoSell(cost, ctx));           // ขายขั้นต่ำ 12,000
     return { label: 'มอเตอร์บานเกล็ด', qty: 1, unit: 'ชุด', unitPrice: sell, amount: sell, cost, fixedSell: true };
   }
-  if (id === 'awn_auto') {              // ชุดออโต้บานกระทุ้ง (โช้ค50/80 · โซ่เดี่ยว/คู่) × จำนวนบาน · ขาย ×2.5/6,000
-    const map = { choke50: ['โช้คเปิด 50', 'กระทุ้ง โช้ค50', 3575], choke80: ['โช้คเปิด 80', 'กระทุ้ง โช้ค80', 3725], chain1: ['โซ่เดี่ยว 50', 'กระทุ้ง โซ่เดี่ยว50', 1900], chain2: ['โซ่คู่ 50', 'กระทุ้ง โซ่คู่50', 2600] };
-    const m = map[sel]; if (!m) return null;
-    const each = motorCost(ctx.PB, m[1], m[2]);
+  if (id === 'awn_auto') {              // ชุดออโต้บานกระทุ้ง — เจ้าของอัปเดตรุ่น/ขนาดที่ทำได้ 9 ก.ย.69
+    const p = awnMotorPick(sel, ctx.W, ctx.H, ctx.P, ctx.PB);
+    if (p.warn) return { cat: 'warn', label: p.warn, amount: 0 };
+    if (!p.key) return null;
+    const M = p.model;
+    const each = motorCost(ctx.PB, M.costKey, 0);
     const n = ctx.P || 1;
     // ค่าส่งคิดครั้งเดียวต่องาน (ไม่ใช่ต่อบาน) ตามสูตร D54 — เดิมเว็บตกค่าส่งไปทั้งก้อน
     const cost = each * n + motorCost(ctx.PB, 'กระทุ้ง ค่าส่ง', 1700);
-    // ขายขั้นต่ำต่อ 1 ชุด × จำนวนบาน (โช้ค50 20,000 · โช้ค80 22,000 · โซ่เดี่ยว 18,000 · โซ่คู่ 22,000)
-    const eachSell = motorFixSell(ctx.PB, m[1], 0);
+    // ขายขั้นต่ำต่อ 1 ชุด × จำนวนบาน (ฟิกตามไฟล์ ไม่ผ่านกำไร)
+    const eachSell = Number(M.sell) > 0 ? Number(M.sell) : 0;
     const sell = eachSell > 0 ? eachSell * n : autoSell(cost, ctx);
-    const out = [{ label: 'ชุดออโต้กระทุ้ง ' + m[0] + (n > 1 ? ' ×' + n + ' บาน' : '') + ' (รวมค่าส่ง · ระบบสั่งงาน: รีโมท)', qty: n, unit: 'ชุด', unitPrice: round2(sell / n), amount: sell, cost, fixedSell: eachSell > 0 }];
+    const out = [{
+      label: 'ชุดออโต้กระทุ้ง ' + M.label + (n > 1 ? ' ×' + n + ' บาน' : '') + ' (รวมค่าส่ง · ระบบสั่งงาน: รีโมท)'
+        + (p.auto ? ' · เลือกอัตโนมัติจากขนาดบาน ' + p.pw + '×' + p.ph + ' ซม.' : ''),
+      qty: n, unit: 'ชุด', unitPrice: round2(sell / n), amount: sell, cost, fixedSell: eachSell > 0,
+    }];
+    // ทุนยังไม่มีในไฟล์ (รุ่นใหม่ที่ชีตราคาออโต้ยังไม่ได้เติม) — ราคาขายฟิกอยู่แล้ว แต่ทุนรวมจะขาด ต้องเตือน
+    //   ⓘ โช้ค 30: เจ้าของเคาะ 9 ก.ย.69 "ตั้งทุนเท่า 50" (3,575) → ไม่เข้าเงื่อนไขนี้แล้ว
+    //     เป็นทุนที่เจ้าของสั่งให้ใช้ ไม่ใช่ค่าที่ระบบยืมมาเอง
+    if (!(each > 0)) out.push({ cat: 'warn', label: '⚠️ ' + M.label + ' — ยังไม่มีราคาทุนในไฟล์ (ชีตราคาออโต้) · ราคาขายถูกต้อง แต่ "ทุนรวม" จะขาดไป', amount: 0 });
     // "2 ตัว→+อุปกรณ์พิเศษ" — เฉพาะโช็ค (โซ่ไม่มี) ตามสูตรในชีต
-    if (n >= 2 && (sel === 'choke50' || sel === 'choke80')) {
+    if (n >= 2 && String(p.key).startsWith('choke')) {
       const xc = motorCost(ctx.PB, 'กระทุ้ง อุปกรณ์พิเศษ', 600), xs = autoSell(xc, ctx);
       out.push({ label: 'อุปกรณ์พิเศษ (โช็ค 2 ตัว)', qty: 1, unit: 'ชุด', unitPrice: xs, amount: xs, cost: xc });
     }

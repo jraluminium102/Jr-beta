@@ -523,6 +523,8 @@ function ColsEditor({
               setAddons={(fn) => onPatchPane(sel.key, { addons: fn(sel.addons || {}) })}
               area={(sel.w || 1) * (sel.h || 1)}
               W={sel.w || 1}
+              // ขนาดบานจริง — มอเตอร์กระทุ้งเลือกรุ่นตาม กว้าง×ยื่น ต่อบาน (ไม่ส่ง = หน้าจอเห็น 0×0 เตือนผิดตลอด)
+              size={{ W: sel.w || 1, H: sel.h || 1, P: sel.n || 1 }}
               movePanes={movePanes}
               color={resolveAluColor(sel.colorIdx || color).bake}
               form={sel.form || prod.defForm}
@@ -990,6 +992,7 @@ export default function RoomComposer({
                       setAddons={(fn) => patchWall(i, { addons: fn(s.addons || {}) })}
                       area={(s.aw || 3) * (s.ah || 2.6)}
                       W={s.aw || 3}
+                      size={{ W: s.aw || 3, H: s.ah || 2.6, P: 1 }}
                       movePanes={1}
                       color={resolveAluColor(mainColor).bake}
                       form={prod.defForm}
@@ -1158,6 +1161,7 @@ export default function RoomComposer({
                   setAddons={setRoofAddons}
                   area={roofArea}
                   W={Number(roofW) || 4}
+                  size={{ W: Number(roofW) || 4, H: roofArea / Math.max(0.01, Number(roofW) || 4), P: roofProd.defaults?.p ?? 1 }}
                   movePanes={roofProd.defaults?.p ?? 1}
                   color={resolveAluColor(mainColor).bake}
                   form={roofProd.defForm}

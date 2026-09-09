@@ -1406,6 +1406,11 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                   spec={spec}
                   area={(Number(w) || prod.defaults?.w || 200) / 100 * (Number(h) || prod.defaults?.h || 200) / 100}
                   W={(Number(w) || prod.defaults?.w || 200) / 100}
+                  size={{
+                    W: (Number(w) || prod.defaults?.w || 200) / 100,
+                    H: (Number(h) || prod.defaults?.h || 200) / 100,
+                    P: Number(p) || prod.defaults?.p || 1,
+                  }}
                   movePanes={movePanes}
                   color={resolveAluColor(color).bake}
                   form={form || prod.defForm}
