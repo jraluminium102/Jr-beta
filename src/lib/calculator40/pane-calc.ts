@@ -96,7 +96,7 @@ export const paneCut = (pane: Pane): Record<string, string> => {
  * @returns amount = ราคาขายรวมติดตั้ง · mosqLabel = ข้อความมุ้งที่ขึ้นใบ · r = ผลเต็มจาก engine
  */
 /** กำไร 3 ก้อน + โหมด — ห้องกระจก G6 ต้องส่งมาครบ ไม่งั้นช่อง % บนจอเป็นของตาย */
-export type PaneProfit = { manual?: boolean; mat?: number; prod?: number; inst?: number };
+export type PaneProfit = { manual?: boolean; edit?: { mat?: boolean; prod?: boolean; inst?: boolean } | null; mat?: number; prod?: number; inst?: number };
 
 export function panePrice(
   pane: Pane, pb: any, roomColor: string, roomGlass: string, profitPct: number, movePanesOverride?: number,
@@ -117,8 +117,10 @@ export function panePrice(
     profitPct, installProfitPct: profitPct, addons: pane.addons || {},
     // กำไร 3 ก้อนแยก + โหมดกรอกเอง — ไม่ส่งมา = ใช้สูตรตามไฟล์เหมือนเดิมเป๊ะ
     //   (เจ้าของจับได้ 10 ก.ย.69 "ช่องกำไรค่าผลิต/ค่าติดตั้ง ไม่มีผลกับราคาเลย")
-    ...(profitOpt && profitOpt.manual ? {
-      profitManual: true,
+    // R4.1: แก้ทีละก้อน (edit) — ก้อนที่ไม่ได้แตะยังตามตาราง · ใบเก่า (manual ล้วน) = ทั้ง 3 ก้อนตาม % ที่กรอก
+    ...(profitOpt && profitOpt.edit ? { profitEdit: profitOpt.edit } : {}),
+    ...(profitOpt && (profitOpt.manual || profitOpt.edit) ? {
+      profitManual: !!profitOpt.manual,
       profitMat: profitOpt.mat ?? profitPct,
       profitProd: profitOpt.prod ?? profitPct,
       profitInst: profitOpt.inst ?? profitPct,

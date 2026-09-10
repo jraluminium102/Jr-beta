@@ -240,11 +240,11 @@ const ANCHORS150 = [
   { id: 'banyok', in: { p: 1, form: 'เดี่ยว' }, cost: 6419.59 },   // ขนาดดีฟอลต์ 100×150 (ยึดใบตัด 4 ก.ย.69)
   { id: 'fixed', in: { p: 1, form: 'กระจกล้วน' }, cost: 4004 },
   { id: 'topslide', in: { p: 2, form: 'เลื่อนซ้อน' }, cost: 12897 },
-  // ⚠ 9 ก.ย.69: ไฟล์ขัดกันเอง 2 ชีต — ยึด "ชีตคิดทุน" (ชีตคำนวณจริง) ไม่ใช่ "บันทึกราคาขึ้น" (สมุดบันทึก)
-  //   ชีต "คิดทุน ตายดัดโค้ง" D14 = (กว้าง/600) × buf_scrap 1.3 × 1849  → @150×150 = 3,900
-  //   ชีต "บันทึกราคาขึ้น" แถว 28 ยังเขียน 5,100 = ค่าเก่าตอนสูตรยังปัดขึ้นเต็มเส้น (ceil(150/600)=1 เส้น)
-  //   พิสูจน์: สูตรเก่าที่ 150×150 ได้ 5,081 → ปัดร้อย 5,100 ตรงกับสมุดบันทึกเป๊ะ = สมุดยังไม่อัปเดต
-  //   ⏳ รอเจ้าของยืนยันว่าจะอัปเดตสมุดบันทึกตามชีตคิดทุน
+  // ⚠ 9 ก.ย.69: ไฟล์ขัดกันเอง 2 ชีต — ยึด "ชีตคิดทุน" (ชีตคำนวณจริง) ไม่ใช่ "บันทึกราคาขึ้น" (สมุดบันทึก)
+  //   ชีต "คิดทุน ตายดัดโค้ง" D14 = (กว้าง/600) × buf_scrap 1.3 × 1849  → @150×150 = 3,900
+  //   ชีต "บันทึกราคาขึ้น" แถว 28 ยังเขียน 5,100 = ค่าเก่าตอนสูตรยังปัดขึ้นเต็มเส้น (ceil(150/600)=1 เส้น)
+  //   พิสูจน์: สูตรเก่าที่ 150×150 ได้ 5,081 → ปัดร้อย 5,100 ตรงกับสมุดบันทึกเป๊ะ = สมุดยังไม่อัปเดต
+  //   ⏳ รอเจ้าของยืนยันว่าจะอัปเดตสมุดบันทึกตามชีตคิดทุน
   { id: 'curve_fixed', in: { p: 1, form: 'กระจกล้วน' }, cost: 3900 },
 ];
 
@@ -284,7 +284,38 @@ for (const a of ANCHORS) {
   // ราคาขาย = สูตรในไฟล์ (เป้ากำไรสุทธิ + ค่าดำเนินการ 30%) · รุ่นที่ยังไม่มีในตาราง = สูตรกำไรคงที่เดิม
   const SM = (PB.SELL && PB.SELL.products && PB.SELL.products[a.id]) || null;
   let wantMfg, wantInst;
-  if (SM) {
+  // R4.1 (เจ้าของเคาะ 10 ก.ย.69): ค่าแรงขาย = ★ ตาราง R4.1 · ค่าของ = ทุน × (1 + % ตั้งต้น) · ยอดรวมปัดร้อยทีเดียว
+  //   คิดคาดหวังเองจาก PB.R41 (ไม่เรียกตัวช่วยในเอนจิน) — เลือกแถวอ้างอิง: แบบย่อยเดียวกัน → ทุนใกล้สุด → พื้นที่ → จำนวนบาน
+  const R41_ALIAS = { roof_multi: 'roof', glasshouse: 'roof', glasshouse_multi: 'roof', gable_multi: 'roof_gable' };
+  const rk = R41_ALIAS[a.id] || a.id;
+  const R41L = PB.R41 && PB.R41.labor && PB.R41.labor[rk];
+  if (R41L) {
+    const mat0 = a.in.material ?? prod.defMaterial, spec0 = a.in.spec || {}, form0 = a.in.form ?? prod.defForm;
+    const vk = ['roof', 'roof_gable', 'roof_slide', 'frameless_door'].includes(rk) ? String(mat0 || '')
+      : rk === 'louver' ? String(spec0.rnBox || '') : rk === 'gate' ? String(spec0.gslat || 'ระแนง') : rk === 'shower' ? String(form0 || '') : '';
+    const areaNow = r.input.area, pNow = a.in.p || 1;
+    const SR = (PB.SELL && PB.SELL.products && PB.SELL.products[a.id]) || {};
+    const small = !!(SR.small && areaNow > 0 && areaNow < SR.small.maxArea);
+    const lab = (cK, sK, cost) => {
+      if (!(cost > 0)) return 0;
+      let pool = R41L.filter((n) => n[cK] > 0);
+      const v = pool.filter((n) => (n.vk || '') === vk); if (v.length) pool = v;
+      const sm = pool.filter((n) => !!n.small === small); if (sm.length) pool = sm;
+      const d = (n) => (Math.abs(n[cK] - cost) > 1 ? Math.abs(n[cK] - cost) : 0);
+      pool.sort((x, y) => (d(x) - d(y)) || (Math.abs(x.w * x.h / 1e4 - areaNow) - Math.abs(y.w * y.h / 1e4 - areaNow)) || (Math.abs((x.p || 1) - pNow) - Math.abs((y.p || 1) - pNow)));
+      const n = pool[0];
+      return Math.abs(n[cK] - cost) <= 1 ? n[sK] : Math.round(cost * n[sK] / n[cK]);
+    };
+    const M = PB.R41.matPct && PB.R41.matPct[rk];
+    const m = M == null ? 100 : typeof M === 'number' ? M : (vk && M[vk] != null ? M[vk] : (M._ ?? 100));
+    const matRaw = a.cost * (1 + m / 100), lp = lab('cP', 'sP', wProd), li = lab('cI', 'sI', wInst);
+    wantMfg = ceil100(matRaw + lp); wantInst = ceil100(matRaw + lp + li);
+    if (small && wantInst > 0) { wantMfg = ceil100(wantMfg * (SR.small.price / wantInst)); wantInst = SR.small.price; }
+    if (SR.floor) {
+      const min = /บานเปิด|บานเลื่อน/.test(String(form0 || '')) ? SR.floor.withDoor : SR.floor.base;
+      if (wantInst < min) { wantMfg = ceil100(wantMfg * (min / Math.max(1, wantInst))); wantInst = min; }
+    }
+  } else if (SM) {
     const mat0 = a.in.material ?? prod.defMaterial;
     const target = SM.shape === 'single' ? roofTarget(SM, mat0, a.id) : SM.target;
     const ratios = (SM.shape === 'single' && /^กระจก/.test(String(mat0 || '')) && SM.ratioMaterialGlass)
@@ -487,8 +518,8 @@ console.log('\n═══ ②g ราคาเส้นแยกสีจริ�
   check('ฐานขาว B20001 = 6.25 กก. × 187', PB.ALUCODE?.B20001, 6.25 * 187, 0.05);
   check('ฐานขาว B20003 = 4.833 กก. × 187', PB.ALUCODE?.B20003, 4.833 * 187, 0.05);
   check('ฐานขาว B20041 = 11.5 กก. × 187', PB.ALUCODE?.B20041, 11.5 * 187, 0.05);
-  // 10 ก.ย.69: +white +black — SlimLux ราคาเส้นในสูตรเป็น "สีมิว" ยังไม่อบสี
-  //   เจ้าของเคาะให้ อบขาว/ดำ/เทาซาฮาร่า ใช้ราคาตามไฟล์ → ต้องมีคีย์ white/black เพิ่ม
+  // 10 ก.ย.69: +white +black — SlimLux ราคาเส้นในสูตรเป็น "สีมิว" ยังไม่อบสี
+  //   เจ้าของเคาะให้ อบขาว/ดำ/เทาซาฮาร่า ใช้ราคาตามไฟล์ → ต้องมีคีย์ white/black เพิ่ม
   check('ครบ 8 สี (+white/black จาก SlimLux)', Object.keys(PB.ALUCOLOR_KEY ?? {}).length, 8, 0);
   check('ไม่ดึงระบบราคาประเมิน — SlimLux WM-K04 ต้องไม่โผล่', PB.ALUCOLOR_KEY?.sahara?.['WM-K04'] == null ? 1 : 0, 1, 0);
   check('ไม่ดึง E-series — E-03 ต้องไม่โผล่', PB.ALUCOLOR_KEY?.sahara?.['E-03'] == null ? 1 : 0, 1, 0);
@@ -503,16 +534,22 @@ console.log('\n═══ ②g ราคาเส้นแยกสีจริ�
   // 3 ก.ย.69 ใช้สูตรราคาขายตามไฟล์ (เป้ากำไรสุทธิ SMS 40% + ค่าดำเนินการ 30%) แทนกำไรคงที่ 100/100/200
   //   ทุนวัสดุไม่ขยับ (ด่านทุนอยู่ ANCHORS) — ชุดนี้ตรวจว่า "สีต่างกัน ราคาต้องต่างกัน" เป็นหลัก
   // ↓ ขยับ +2% ตาม matAdjPct ของ SMS (เจ้าของเคาะ 9 ก.ย.69 ให้ราคาขายไปชน ★ R4.1) — ทุนไม่เปลี่ยน
-  check('SMS ลายไม้สักทอง', teak, 82400, 1);
-  check('SMS มะฮอกกานี', maho, 95400, 1);
-  check('SMS เทาซาฮาร่า', sell('sahara', 'sahara'), 64900, 1);
-  check('SMS สีขาว', sell('white', 'white'), 61900, 1);
+  // R4.1 (10 ก.ย.69): ราคาขาย = ทุน × (1 + % ค่าของ) + ค่าแรงตามตาราง
+  //   → ส่วนต่างราคาระหว่างสี = ส่วนต่างทุน × (1 + %) (±ปัดร้อย) · ค่าแรงขายต้องเท่ากันทุกสี
+  //   ไม่ตรึงยอดขาย (เปลี่ยนตาม % ตั้งต้นที่จูนกับตาราง) — ทุนต่อสีตรึงไว้ที่ ANCHORS_COLOR แล้ว
+  const full = (key, bake) => computeCost(PB, PRODUCTS.sms_slide, { w: 600, h: 300, p: 3, form: 'อิสระ', color: bake, colorKey: key });
+  const W0 = full('white', 'white'), m0 = PB.R41.matPct.sms_slide._;
+  for (const [lbl, key, bake] of [['SMS ลายไม้สักทอง', 'wood_teak', 'woodStock'], ['SMS มะฮอกกานี', 'wood_maho', 'woodStock'], ['SMS เทาซาฮาร่า', 'sahara', 'sahara']]) {
+    const c = full(key, bake);
+    check(lbl + ': ส่วนต่างจากสีขาว = ส่วนต่างทุน × (1+%)', c.sell.withInstall - W0.sell.withInstall, (c.cost.total - W0.cost.total) * (1 + m0 / 100), 100);
+    check(lbl + ': ค่าแรงขายเท่าสีขาว', c.sell.parts.prod + c.sell.parts.inst, W0.sell.parts.prod + W0.sell.parts.inst, 0);
+  }
 
   const az = computeCost(PB, PRODUCTS.sms_slide, { w: 600, h: 300, p: 3, form: 'อิสระ', color: 'special', colorKey: 'aztec' });
   check('Aztec: ค่าเปิดตู้อบยังคิดอยู่ (คงที่ ไม่ผูก กก.)', az.cost.openOven, PB.BAKE_OPEN_OVEN, 0.01);
   check('Aztec: ไม่คิดค่าอบซ้ำ (ราคาสีรวมค่าอบแล้ว)', az.cost.bake, 0, 0.01);
-  // 10 ก.ย.69: +7 รหัส SlimLux (XSW/OPK) — เดิมมีแต่ใต้รหัส WM-K* ที่เว็บไม่ได้ใช้
-  //   (เจ้าของเตือนเอง "รหัสโปรไฟล์ในเว็บขึ้นต้น XSW ไม่ใช่ WM ระวังจับกันผิดตัว")
+  // 10 ก.ย.69: +7 รหัส SlimLux (XSW/OPK) — เดิมมีแต่ใต้รหัส WM-K* ที่เว็บไม่ได้ใช้
+  //   (เจ้าของเตือนเอง "รหัสโปรไฟล์ในเว็บขึ้นต้น XSW ไม่ใช่ WM ระวังจับกันผิดตัว")
   check("น้ำหนัก กก./เส้น (ชีตน้ำหนักโปรไฟล์ = ชั่งจริง)", Object.keys(PB.ALUWEIGHT ?? {}).length, 137, 0);
   check("น้ำหนัก B20001 = 6.25 กก./เส้น (ไม่ใช่ 6.016 ที่เป็นราคา÷187)", PB.ALUWEIGHT?.B20001, 6.25, 0.001);
   // ── 3 รหัสที่น้ำหนักในชีตไม่ใช่ของชั่งจริง → ถอดจาก "ราคาลายไม้สักทอง" ที่เจ้าของแจ้ง 19 ส.ค.69
@@ -567,10 +604,11 @@ console.log("\n═══ ②h กำไรแยก 3 ส่วน — ค่า
   const base = run({});
   check("engine ใช้ค่าตั้งต้นของรุ่น (100/100/200)", base.profit3.inst, 200, 0);
   check("ขายวัสดุ = ปัดร้อย(ทุน × 2)", base.sell.beforeLabor, ceil100(base.cost.total * 2), 1);
-  check("ผลิตอย่างเดียว = ขายวัสดุ + ปัดร้อย(ค่าแรงผลิต × 2)",
-    base.sell.mfgOnly, base.sell.beforeLabor + ceil100(base.labor.prod * 2), 1);
-  check("ผลิต+ติดตั้ง = ผลิตอย่างเดียว + ปัดร้อย(ค่าแรงติดตั้ง × 3)",
-    base.sell.withInstall, base.sell.mfgOnly + ceil100(base.labor.install * 3), 1);
+  // R4.1: กรอกเองทั้ง 3 ก้อน = ทุนแต่ละก้อน × (1+%) แล้วปัดร้อย "ทีเดียว" (ค่าแรงไม่ปัดแยก — ไม่งั้นเศษไหลเข้าค่าแรง)
+  check("ผลิตอย่างเดียว = ปัดร้อย(ทุน × 2 + ค่าแรงผลิต × 2)",
+    base.sell.mfgOnly, ceil100(base.cost.total * 2 + Math.round(base.labor.prod * 2)), 1);
+  check("ผลิต+ติดตั้ง = ปัดร้อย(ทุน × 2 + ค่าแรงผลิต × 2 + ค่าแรงติดตั้ง × 3)",
+    base.sell.withInstall, ceil100(base.cost.total * 2 + Math.round(base.labor.prod * 2) + Math.round(base.labor.install * 3)), 1);
   // แยกส่วนได้จริง — ขยับทีละตัวต้องกระทบเฉพาะก้อนนั้น
   const upMat = run({ profitMat: 200 });
   check("ขึ้นกำไรค่าของ → ขายวัสดุขยับ", upMat.sell.beforeLabor > base.sell.beforeLabor ? 1 : 0, 1, 0);
@@ -651,7 +689,7 @@ console.log('\n═══ ③ สวิตช์ค่าแรงในหน้
   has('การ์ดราคาโชว์ราคาขายส่งหลังลด', /baht\(result\.sell\.mfgOnlyNet\)/);
   has('ยอดรวม (มีรายการเสริม) ใช้ราคาหลังลด', /laborMode === "mfg" \? result\.sell\.mfgOnlyNet : result\.sell\.withInstall\) \+ \(\(result as any\)\.subSell/);
   has('เลือก "ผลิตอย่างเดียว" แล้วเขียนกำกับลงใบว่าไม่รวมติดตั้ง', /laborMode === "mfg"\)\s*jobLines\.push\("- ราคานี้ไม่รวมค่าติดตั้ง/);
-  has('บันทึกลงสูตร (recipe) เพื่อกลับมาแก้ข้อได้', /profit, profitProd, profitInst, profitManual, laborMode,/);
+  has('บันทึกลงสูตร (recipe) เพื่อกลับมาแก้ข้อได้', /profit, profitProd, profitInst, profitManual, profitEdit, laborMode,/);
   // โหมดกำไร (กด % เอง) ต้องถูกเก็บ+คืน ไม่งั้นเปิดกลับมาแก้แล้วราคาเด้งไปใช้สูตรไฟล์ (QA จับ 9 ก.ย.69)
   has('สูตรเก็บโหมดกำไรเอง (profitManual)', /color, glassType, profit, profitManual, g6HideSidePrice/);
   has('เปิดข้อกลับมาแก้ คืนโหมดกำไรเดิม', /setProfitManual\(r\.profitManual === true\);/);

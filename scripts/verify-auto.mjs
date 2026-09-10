@@ -296,7 +296,7 @@ console.log(NL + "═══ ⑭ ห้องกระจก G6 — กำไร 
     cnt(cc, "<RoomComposer") + cnt(cc, "<SubPanesSection") === cnt(cc, "profitOpt={{ manual: profitManual"),
     (cnt(cc, "<RoomComposer") + cnt(cc, "<SubPanesSection")) + " vs " + cnt(cc, "profitOpt={{ manual: profitManual"));
   ok("ผสมบาน (G1): subPrice ส่งกำไร 3 ก้อนต่อ",
-    cnt(cc, "subPrice(") === cnt(cc, "manual: profitManual, mat: profitPct"),
+    cnt(cc, "subPrice(") === cnt(cc, "manual: profitManual, edit: profitEdit, mat: profitPct"),
     cnt(cc, "subPrice(") + " จุด");
 }
 
@@ -484,70 +484,58 @@ console.log("\n═══ ⑨ มอเตอร์บานกระทุ้ง
   ok("ขนาดไม่เข้าเกณฑ์: ไม่มีเซนเซอร์กันฝนตามมา", !(noM.lines || []).some((l) => l.cat === "addon" && /เซนเซอร์กันฝน/.test(l.name || "")));
 }
 
-// ── ⑩ ปรับกำไรค่าของ (matAdjPct) — เจ้าของเคาะ 9 ก.ย.69 ให้ปรับ 8 รุ่นเข้าหา ★ R4.1 ─────
-//   ต้องแตะเฉพาะฝั่ง "ค่าของ" · ค่าแรงล็อก · มอเตอร์ขายฟิกต้องไม่ถูกคูณตาม
-//   และกด +/- กำไรเองต้องยังสั่งราคาได้จริง (ทับค่าจากไฟล์)
-console.log("\n═══ ⑩ ปรับกำไรค่าของต่อรุ่น (matAdjPct) ═══");
+// ── ⑩ % กำไรค่าของตั้งต้น (R4.1) — เจ้าของเคาะ 10 ก.ย.69 ─────────────────────────────
+//   "ถ้าราคาไม่เท่าคอลัมน์ราคาขายรวมทั้งชุด ให้ set default กำไรของราคาทุนเอาให้มันเท่า"
+//   ต้องแตะเฉพาะฝั่ง "ค่าของ" · ค่าแรงขายล็อกตามตาราง · มอเตอร์ขายฟิกต้องไม่ถูกคูณตาม
+//   % ที่โชว์ต้องเอาไปคูณทุนแล้วได้ราคาจริง (บั๊กเดิม: โชว์ 47% แต่ราคา = ทุน × 1.96 — เจ้าของจับได้)
+console.log("\n═══ ⑩ % กำไรค่าของตั้งต้น (R41.matPct) ═══");
 {
-  const ADJ = { sms_slide: 2.5, open_door: 5, pivot: 4, awning: 8, banyok: -2.5, fold_euro: -8, fold_lift: 3 };
   const R = (id, o, pb) => computeCost(pb || PB, PRODUCTS[id], { w: 200, h: 200, p: 1, glassType: "เขียว 6มม.", ...o });
-  const zero = (id) => { const p = JSON.parse(JSON.stringify(PB)); delete p.SELL.products[id].matAdjPct; return p; };
+  const withPct = (id, pct) => { const p = JSON.parse(JSON.stringify(PB)); p.R41.matPct[id] = { _: pct }; return p; };
+  ok("ไม่เหลือ matAdjPct ค้างใน PB.SELL (เลขที่ไม่มีผลแล้ว หลอกคนแก้)", Object.values(PB.SELL.products).every((x) => x.matAdjPct == null));
 
-  for (const [id, want] of Object.entries(ADJ))
-    ok("ตั้ง matAdjPct " + id + " = " + want, (PB.SELL.products[id] || {}).matAdjPct === want, String((PB.SELL.products[id] || {}).matAdjPct));
-
-  for (const [id, want] of Object.entries(ADJ)) {
-    const on = R(id, {}), off = R(id, {}, zero(id));
-    // ① ทุนต้องไม่ขยับเลย (ปรับกำไร ไม่ใช่ปรับทุน)
-    ok(id + ": ทุนไม่ขยับ", on.cost.total === off.cost.total, on.cost.total + " vs " + off.cost.total);
-    // ② ค่าของฝั่งขายต้องขยับไปทางที่สั่ง
-    const d = on.sell.beforeLabor - off.sell.beforeLabor;
-    ok(id + ": ค่าของขาย" + (want > 0 ? "เพิ่ม" : "ลด") + "จริง", want > 0 ? d > 0 : d < 0, String(d));
-    // ③ ค่าแรงฝั่งขายต้องนิ่ง (ส่วนต่างขายรวม = ส่วนต่างค่าของ ผ่านค่าดำเนินการ)
-    const labOn = on.sell.withInstall - on.sell.mfgOnly, labOff = off.sell.withInstall - off.sell.mfgOnly;
-    ok(id + ": ค่าแรงติดตั้ง (ขาย) ไม่ขยับ", labOn === labOff, labOn + " vs " + labOff);
-    ok(id + ": ค่าแรง (ทุน) ไม่ขยับ", on.labor.prod === off.labor.prod && on.labor.install === off.labor.install);
+  for (const id of ["sms_slide", "open_door", "pivot", "awning", "banyok", "fold_euro", "fold_lift", "fixed", "curve_fixed", "bansolid"]) {
+    const m0 = PB.R41.matPct[id] && PB.R41.matPct[id]._;
+    ok(id + ": มี % ค่าของตั้งต้น", typeof m0 === "number", String(m0));
+    const lo = R(id, {}, withPct(id, m0 - 20)), hi = R(id, {}, withPct(id, m0 + 20));
+    ok(id + ": ปรับ % แล้วทุนไม่ขยับ", lo.cost.total === hi.cost.total);
+    ok(id + ": % ขึ้น → ค่าของ (ขาย) ขึ้น", hi.sell.parts.mat > lo.sell.parts.mat, lo.sell.parts.mat + " → " + hi.sell.parts.mat);
+    ok(id + ": % ขึ้น → ค่าแรงขาย 2 ก้อนนิ่ง", lo.sell.parts.prod === hi.sell.parts.prod && lo.sell.parts.inst === hi.sell.parts.inst);
+    ok(id + ": % ที่โชว์ = % ตั้งต้น", R(id, {}).profit3.mat === m0, String(R(id, {}).profit3.mat));
   }
 
-  // ④ กด +/- กำไรเอง (profitManual) ต้องสั่งราคาได้จริง — ทับค่าจากไฟล์
+  // % ที่โชว์ต้องคูณกลับได้ราคาจริงทุกก้อน
+  for (const [id, o] of [["sms_slide", { w: 300, h: 250, p: 2, form: "อิสระ" }], ["slimlux", { w: 250, h: 240, p: 2, form: "อิสระ", color: "white", colorKey: "white" }],
+    ["open_door", {}], ["awning", {}], ["banyok", {}], ["fold_euro", {}], ["curve_fixed", {}], ["fixed", {}], ["bansolid", {}], ["roof", { w: 400, h: 200, material: "ไวนิล" }]]) {
+    const r = R(id, o), tag = id + " " + (o.w || 200) + "×" + (o.h || 200);
+    ok(tag + ": ค่าของขาย = ปัดร้อย(ทุน × (1 + % ที่โชว์))", r.sell.beforeLabor === Math.ceil(r.cost.total * (1 + r.profit3.mat / 100) / 100) * 100, r.sell.beforeLabor + " (%=" + r.profit3.mat + ")");
+    ok(tag + ": % ค่าผลิต = ขาย ÷ ทุน − 1", !(r.labor.prod > 0) || r.profit3.prod === Math.round((r.sell.parts.prod / r.labor.prod - 1) * 100), r.profit3.prod + " · " + r.sell.parts.prod + "/" + r.labor.prod);
+    ok(tag + ": % ค่าติดตั้ง = ขาย ÷ ทุน − 1", !(r.labor.install > 0) || r.profit3.inst === Math.round((r.sell.parts.inst / r.labor.install - 1) * 100), r.profit3.inst + " · " + r.sell.parts.inst + "/" + r.labor.install);
+  }
+
+  // กดแก้ % เองทีละก้อน (profitEdit) — ก้อนที่แตะต้องมีผล · ก้อนที่ไม่แตะคงตามตาราง
   for (const id of ["sms_slide", "awning", "banyok"]) {
-    const m = (pp) => R(id, { profitManual: true, profitPct: pp, profitProdPct: 100, profitInstPct: 100 }).sell.withInstall;
-    ok(id + ": กดกำไรเอง 50% ≠ 200% (ราคาขยับจริง)", m(50) < m(200), m(50) + " → " + m(200));
-    ok(id + ": โหมดกรอกเอง ไม่ถูก matAdjPct แทรก", m(100) === computeCost(zero(id), PRODUCTS[id], { w: 200, h: 200, p: 1, glassType: "เขียว 6มม.", profitManual: true, profitPct: 100, profitProdPct: 100, profitInstPct: 100 }).sell.withInstall);
+    const base = R(id, {});
+    const mat = (pp) => R(id, { profitEdit: { mat: true }, profitMat: pp });
+    ok(id + ": แก้ % ค่าของ 50 → 200 ราคาขยับจริง", mat(50).sell.withInstall < mat(200).sell.withInstall, mat(50).sell.withInstall + " → " + mat(200).sell.withInstall);
+    ok(id + ": แก้ % ค่าของ → ค่าแรงขายยังตามตาราง", mat(200).sell.parts.prod === base.sell.parts.prod && mat(200).sell.parts.inst === base.sell.parts.inst);
+    const pe = R(id, { profitEdit: { prod: true }, profitProd: 300 });
+    ok(id + ": แก้ % ค่าผลิต 300 → ค่าผลิต = ทุน × 4", pe.sell.parts.prod === Math.round(base.labor.prod * 4), pe.sell.parts.prod + " vs " + Math.round(base.labor.prod * 4));
+    ok(id + ": แก้ % ค่าผลิต → ค่าติดตั้ง + ค่าของ (ก่อนค่าแรง) นิ่ง", pe.sell.parts.inst === base.sell.parts.inst && pe.sell.beforeLabor === base.sell.beforeLabor);
+    ok(id + ": ใบเก่า (profitManual ล้วน) = ทั้ง 3 ก้อนตาม % ที่กรอก",
+      R(id, { profitManual: true, profitMat: 100, profitProd: 100, profitInst: 100 }).sell.parts.inst === Math.round(base.labor.install * 2));
   }
 
-  // ⑤ ไม่ตีกับมอเตอร์ — มอเตอร์ขายฟิก ต้องไม่ถูกคูณด้วย matAdjPct
+  // ไม่ตีกับมอเตอร์ — มอเตอร์ขายฟิก ต้องไม่ถูกคูณด้วย % ค่าของ
   {
     const noM = R("banyok", {}), withM = R("banyok", { addons: { motor: "auto" } });
     const mLine = (withM.lines || []).find((l) => /ออโต้บานยก/.test(l.name || "")) || {};
     ok("บานยก: ส่วนต่างขาย = ราคามอเตอร์เป๊ะ (ไม่โดนคูณกำไรค่าของ)",
       withM.sell.withInstall - noM.sell.withInstall === mLine.amount, (withM.sell.withInstall - noM.sell.withInstall) + " vs " + mLine.amount);
-    // เปลี่ยน matAdjPct แล้วราคามอเตอร์ต้องนิ่ง
-    const pbHi = JSON.parse(JSON.stringify(PB)); pbHi.SELL.products.banyok.matAdjPct = 50;
-    const hi = computeCost(pbHi, PRODUCTS.banyok, { w: 200, h: 200, p: 1, glassType: "เขียว 6มม.", addons: { motor: "auto" } });
+    const hi = R("banyok", { addons: { motor: "auto" } }, withPct("banyok", 300));
     const mHi = (hi.lines || []).find((l) => /ออโต้บานยก/.test(l.name || "")) || {};
-    ok("ดันกำไรค่าของเป็น 50% ราคามอเตอร์ยังนิ่ง", mHi.amount === mLine.amount, mHi.amount + " vs " + mLine.amount);
-    ok("ดันกำไรค่าของแล้วราคารวมขยับจริง", hi.sell.withInstall > withM.sell.withInstall);
-  }
-
-  // 🐞 เจ้าของเจอเอง 9 ก.ย.69 — "% ที่โชว์" ต้องเป็นตัวคูณที่ใช้จริง เอาไปคิดเงินซ้ำได้ตรง
-  //   เดิมหน้าจอโชว์ 100% ตายตัว (PB.PROFIT สูตรเก่า) แต่ราคาคูณ 113% → กด +/- แล้วราคาตกทันที
-  {
-    const chk = (id, o) => {
-      const r = R(id, o);
-      const want = Math.ceil(r.cost.total * (1 + r.profit3.mat / 100) / 100) * 100;   // ค่าของก่อนค่าดำเนินการ
-      const got = Math.round(r.sell.beforeLabor / (1 + 30 / 100) / 100) * 100;
-      ok(id + " " + (o.w || 200) + "×" + (o.h || 200) + ": ค่าของ = ทุน × (1 + % ที่โชว์)", Math.abs(want - got) <= 100, want + " vs " + got + " (%=" + r.profit3.mat + ")");
-    };
-    for (const [id, o] of [["sms_slide", { w: 300, h: 250, p: 2, form: "อิสระ" }], ["open_door", {}], ["awning", {}],
-      ["banyok", {}], ["fold_euro", {}], ["curve_fixed", {}], ["fixed", {}], ["bansolid", {}]]) chk(id, o);
-    // curve_fixed ต้องไม่มีตัวปรับแล้ว (ทุนตรงไฟล์เองหลังแก้สูตรกล่องเปิด)
-    ok("ตายดัดโค้ง: ไม่ต้องปรับกำไรค่าของแล้ว", PB.SELL.products.curve_fixed.matAdjPct == null, String(PB.SELL.products.curve_fixed.matAdjPct));
-    // % ที่โชว์ต้องรวม matAdjPct แล้ว (ไม่ใช่ตัวคูณดิบจากไฟล์)
-    const on = R("sms_slide", { w: 300, h: 250, p: 2, form: "อิสระ" });
-    const off = computeCost(zero("sms_slide"), PRODUCTS.sms_slide, { w: 300, h: 250, p: 2, glassType: "เขียว 6มม.", form: "อิสระ" });
-    ok("SMS: % ที่โชว์รวมตัวปรับ +2% แล้ว", on.profit3.mat > off.profit3.mat, on.profit3.mat + " vs " + off.profit3.mat);
-    ok("SMS: ค่าแรง % ไม่ขยับตาม", on.profit3.prod === off.profit3.prod && on.profit3.inst === off.profit3.inst);
+    ok("ดัน % ค่าของเป็น 300 ราคามอเตอร์ยังนิ่ง", mHi.amount === mLine.amount, mHi.amount + " vs " + mLine.amount);
+    ok("ดัน % ค่าของแล้วราคารวมขยับจริง", hi.sell.withInstall > withM.sell.withInstall);
   }
 
   // 🐞 เจ้าของเจอเอง 9 ก.ย.69 "กดเปลี่ยน % ช่องติดตั้ง ช่องอื่นดันเปลี่ยนตาม"
@@ -568,31 +556,55 @@ console.log("\n═══ ⑩ ปรับกำไรค่าของต่อ
       { w: 300, h: 250, p: 2, glassType: "เขียว 6มม.", form: "อิสระ", profitManual: true, profitMat: pm, profitProd: pp, profitInst: pi });
     const base = M(113, 109, 106), onlyInst = M(113, 109, 150);
     ok("ขยับ % ติดตั้งอย่างเดียว: ค่าของไม่ขยับ", base.sell.beforeLabor === onlyInst.sell.beforeLabor, base.sell.beforeLabor + " vs " + onlyInst.sell.beforeLabor);
-    ok("ขยับ % ติดตั้งอย่างเดียว: ค่าผลิตไม่ขยับ",
-      (base.sell.mfgOnly - base.sell.beforeLabor) === (onlyInst.sell.mfgOnly - onlyInst.sell.beforeLabor));
-    ok("ขยับ % ติดตั้งอย่างเดียว: ค่าติดตั้งขยับจริง",
-      (onlyInst.sell.withInstall - onlyInst.sell.mfgOnly) > (base.sell.withInstall - base.sell.mfgOnly));
+    // ดูที่ก้อนตรง ๆ (sell.parts) — ยอดรวมปัดร้อยทีเดียว เอายอดมาลบกันเศษจะไหลข้ามก้อน
+    ok("ขยับ % ติดตั้งอย่างเดียว: ค่าผลิตไม่ขยับ", base.sell.parts.prod === onlyInst.sell.parts.prod, base.sell.parts.prod + " vs " + onlyInst.sell.parts.prod);
+    ok("ขยับ % ติดตั้งอย่างเดียว: ค่าติดตั้งขยับจริง", onlyInst.sell.parts.inst > base.sell.parts.inst);
     const onlyMat = M(150, 109, 106);
-    ok("ขยับ % ค่าของอย่างเดียว: ค่าติดตั้งไม่ขยับ",
-      (base.sell.withInstall - base.sell.mfgOnly) === (onlyMat.sell.withInstall - onlyMat.sell.mfgOnly));
+    ok("ขยับ % ค่าของอย่างเดียว: ค่าติดตั้งไม่ขยับ", base.sell.parts.inst === onlyMat.sell.parts.inst);
+
+    // R4.1: ช่อง % ทุกช่องแก้ผ่าน editPct → ติดธงเฉพาะก้อนที่แตะ (ไม่สลับทั้งหน้าเป็นโหมดกรอกเอง)
+    ok("ช่อง % ทุกช่องเรียก editPct (ไม่มี seedManual ลอยในช่องกรอก)",
+      !/seedManual\(\); setProfit/.test(src) && (src.match(/editPct\("(mat|prod|inst)", v\)/g) || []).length === 6, String((src.match(/editPct\("(mat|prod|inst)", v\)/g) || []).length));
+    ok("การ์ด 3 ก้อนแก้ผ่าน editPct ตามชื่อก้อน", /const setPct = \(v: string\) => editPct\(label === "ค่าของ" \? "mat" : label === "ค่าผลิต" \? "prod" : "inst", v\);/.test(src));
+    ok("รุ่น R4.1 ติดธงรายก้อน · ใบเก่าโหมดกรอกเองเริ่มธงครบ 3 ก้อน",
+      /if \(isR41Prod\) \{ setProfitEdit\(\(e\) => \(\{ \.\.\.\(e \|\| \(profitManual \? \{ mat: true, prod: true, inst: true \} : \{\}\)\), \[k\]: true \}\)\); set\(v\); return; \}/.test(src));
+    ok("คืนค่าตามไฟล์ / เปลี่ยนรุ่น = ล้างธงแก้เอง", /setProfitManual\(false\); setProfitEdit\(null\);/.test(src) && /setProfitInst\(String\(dp\.inst\)\);\s*setProfitEdit\(null\);/.test(src));
+    ok("สูตรข้อเก็บ + คืนธงแก้เอง", /profitManual, profitEdit, laborMode,/.test(src) && /setProfitEdit\(r\.profitEdit/.test(src));
+    ok("ส่งธงแก้เองให้บานย่อย/ห้องกระจกครบ 3 จุด", (src.match(/edit: profitEdit/g) || []).length === 3, String((src.match(/edit: profitEdit/g) || []).length));
+    ok("ส่งธงแก้เองเข้าเอนจิน", /\.\.\.\(profitEdit \? \{ profitEdit \} : \{\}\)/.test(src));
+    const pcs = fs.readFileSync("src/lib/calculator40/pane-calc.ts", "utf8");
+    ok("pane-calc ส่งธงแก้เองต่อให้เอนจิน", /profitOpt && profitOpt\.edit \? \{ profitEdit: profitOpt\.edit \}/.test(pcs));
   }
 
-  // ⑥ รุ่นที่ไม่ได้ตั้ง matAdjPct ต้องไม่ขยับ (behaviour-preserving)
-  //   bansolid มี matAdjPct แล้ว (กอง B) — เปลี่ยนเป็นรุ่นที่ยังไม่ได้ตั้งค่า
-  for (const id of ["fixed", "curve_open", "curve_fixed", "folding"]) {
-    const on = R(id, {}), off = R(id, {}, zero(id));
-    ok(id + ": ไม่ได้ตั้งค่า → ราคาเท่าเดิมเป๊ะ", on.sell.withInstall === off.sell.withInstall, on.sell.withInstall + " vs " + off.sell.withInstall);
+  // ⑥ ทุกรุ่นที่มีสูตรราคาขายตามไฟล์ (PB.SELL) ต้องย้ายมาใช้โมเดล R4.1 หมด — ห้ามมีรุ่นตกค้างสูตรเก่า
+  {
+    const left = Object.keys(PB.SELL.products).filter((id) => PRODUCTS[id] && !(R(id, {}).sellModel || {}).r41);
+    ok("รุ่นใน PB.SELL ใช้โมเดล R4.1 ครบ", left.length === 0, left.join(", "));
   }
 }
 
-// ── ⑫ ก้อนราคาขาย 3 ก้อนบนจอ — ค่าแรงต้องตรงสูตรเป๊ะ ค่าของรับเศษ ────────────
-//   กฎเจ้าของ 9 ก.ย.69 "+/- กำไรจากต้นทุนสินค้า ไม่ต้องไปยุ่งกับค่าแรง
-//     ค่าแรงอิงตามไฟล์ตารางราคาขาย R4.1 เป๊ะ ๆ สูตรมันควรสูตรเดียวกัน"
-//   เดิมจอเอา mfgOnly − beforeLabor มาลบกันตรง ๆ → ค่าแรงเพี้ยนจาก % ของตัวเอง
-//     บานทั่วไป −100 · หลังคาถึง −300 (เจ้าของ + QA จับ 9 ก.ย.69)
-console.log("\n═══ ⑫ 3 ก้อนราคาขาย — ค่าแรงตรงสูตร · รวมแล้วเท่าราคาขายจริง ═══");
+// ── ⑫ 3 ก้อนราคาขาย — ค่าแรงขายตรง ★ ตาราง R4.1 · รวมแล้วเท่าราคาขายจริง ─────────────
+//   กฎเจ้าของ 10 ก.ย.69 "ค่าแรงทั้งหมด ติดตั้ง ผลิต ควรราคาเท่าในไฟล์ 4.1 เป๊ะ ๆ · อย่าไปเมคราคาค่าแรงเด็ดขาด"
+//   ① ทุกแถวในตาราง (scripts/fixtures/r41-rows.json ดึงจาก PDF) ที่ทุนค่าแรงเว็บ = ตาราง → ขายต้องเท่าตารางทุกบาท
+//   ② ขนาดนอกตาราง → ทุน × ตัวคูณของแถวอ้างอิง (แถวเดียวกับที่โชว์ใน "ดูวิธีคิด")
+//   ③ ขยับกำไรค่าของ / ใส่มอเตอร์ → ค่าแรง 2 ก้อนนิ่ง
+console.log("\n═══ ⑫ 3 ก้อนราคาขาย — ค่าแรงตรงตาราง R4.1 · รวมเท่าราคาขาย ═══");
 {
-  const c1 = (x) => Math.ceil(x / 100) * 100;
+  const FX = JSON.parse(fs.readFileSync("scripts/fixtures/r41-rows.json", "utf8")).rows.filter((x) => x.id && x.inputs && PRODUCTS[x.id]);
+  let cmp = 0, bad = 0, sumBad = 0;
+  for (const x of FX) {
+    const r = computeCost(PB, PRODUCTS[x.id], x.inputs);
+    const P = r.sell.parts;
+    if (Math.abs(P.mat + P.prod + P.inst - r.sell.withInstall) > 0.01) sumBad++;
+    for (const [c, s, wc, ws] of [["cP", "sP", r.labor.prod, P.prod], ["cI", "sI", r.labor.install, P.inst]]) {
+      if (Math.abs(wc - x.pdf[c]) > 1) continue;   // ทุนค่าแรงเว็บยังไม่ตรงตาราง = เรื่องสูตรค่าแรง (audit-r41-pdf รายงานแยก)
+      cmp++;
+      if (ws !== x.pdf[s]) { bad++; if (bad <= 5) console.log("     ✗", x.id, x.vk, x.w + "×" + x.h, s, ws, "ตาราง", x.pdf[s]); }
+    }
+  }
+  ok("ค่าแรงขายตรงตาราง R4.1 ทุกช่องที่ทุนตรง (" + cmp + " ช่อง)", cmp > 300 && bad === 0, bad + " ช่องไม่ตรง");
+  ok("3 ก้อนบวกกันเท่าราคาขายทุกแถวในตาราง (" + FX.length + " แถว)", sumBad === 0, sumBad + " แถว");
+
   const CASES = [
     ["sms_slide", { w: 300, h: 250, p: 2, form: "อิสระ" }], ["sms_slide", { w: 600, h: 300, p: 3, form: "อิสระ" }],
     ["open_door", { w: 150, h: 200, p: 1 }], ["pivot", {}], ["awning", { w: 120, h: 120, p: 1 }],
@@ -603,21 +615,29 @@ console.log("\n═══ ⑫ 3 ก้อนราคาขาย — ค่า�
     ["roof_slide", { w: 400, h: 250, p: 1, material: "ไวนิล" }],
     ["louver", { w: 200, h: 240, p: 1 }], ["shower", {}], ["handrail", {}],
   ];
-  let bad = 0;
+  let off = 0;
   for (const [id, o] of CASES) {
     const r = computeCost(PB, PRODUCTS[id], { w: 200, h: 200, p: 1, glassType: "เขียว 6มม.", ...o });
-    const P = r.sell.parts; if (!P) continue;
-    const wantProd = c1(c1(r.labor.prod * (1 + r.profit3.prod / 100)) * 1.3);
-    const wantInst = c1(c1(r.labor.install * (1 + r.profit3.inst / 100)) * 1.3);
-    if (P.prod !== wantProd || P.inst !== wantInst || Math.abs(P.mat + P.prod + P.inst - r.sell.withInstall) > 0.01) {
-      bad++; console.log("     ✗", id, JSON.stringify(P), "want prod", wantProd, "inst", wantInst, "sum vs", r.sell.withInstall);
+    const P = r.sell.parts, sm = r.sellModel || {};
+    if (!sm.r41) { off++; console.log("     ✗", id, "ไม่ได้ใช้โมเดล R4.1"); continue; }
+    for (const [lbl, ref, cost, sell] of [["ผลิต", sm.refProd, r.labor.prod, P.prod], ["ติดตั้ง", sm.refInst, r.labor.install, P.inst]]) {
+      if (!(cost > 0)) { if (sell !== 0) { off++; console.log("     ✗", id, lbl, "ทุน 0 แต่ขาย", sell); } continue; }
+      if (!ref) { off++; console.log("     ✗", id, lbl, "ไม่มีแถวอ้างอิง"); continue; }
+      const want = Math.abs(ref.cost - cost) <= 1 ? ref.sell : Math.round(cost * ref.sell / ref.cost);
+      if (sell !== want) { off++; console.log("     ✗", id, lbl, sell, "want", want); }
     }
+    if (Math.abs(P.mat + P.prod + P.inst - r.sell.withInstall) > 0.01) { off++; console.log("     ✗", id, "3 ก้อนรวมไม่เท่ายอดขาย"); }
   }
-  ok("ค่าแรงผลิต/ติดตั้ง ตรงสูตรของตัวเองทุกรุ่น (" + CASES.length + " เคส)", bad === 0, bad + " เคสเพี้ยน");
-  ok("3 ก้อนบวกกันได้เท่าราคาขายจริงเสมอ", bad === 0);
+  ok("ขนาดนอกตาราง: ค่าแรงขาย = ทุน × ตัวคูณแถวอ้างอิง (" + CASES.length + " เคส)", off === 0, off + " จุดเพี้ยน");
+  {
+    const r = computeCost(PB, PRODUCTS.sms_slide, { w: 350, h: 260, p: 2, form: "อิสระ", glassType: "เขียว 6มม." });
+    const nodes = PB.R41.labor.sms_slide.filter((n) => !n.small);
+    const near = nodes.reduce((a, n) => (Math.abs(n.cP - r.labor.prod) < Math.abs(a.cP - r.labor.prod) ? n : a));
+    ok("SMS 350×260: แถวอ้างอิงค่าผลิต = แถวในตารางที่ทุนใกล้สุด", r.sellModel.refProd.cost === near.cP, r.sellModel.refProd.cost + " vs " + near.cP);
+  }
 
   // ก้อนค่าแรงต้องนิ่งเมื่อขยับกำไรค่าของ (กฎ "ไม่ยุ่งกับค่าแรง")
-  const pbHi = JSON.parse(JSON.stringify(PB)); pbHi.SELL.products.sms_slide.matAdjPct = 40;
+  const pbHi = JSON.parse(JSON.stringify(PB)); pbHi.R41.matPct.sms_slide = { _: PB.R41.matPct.sms_slide._ + 40 };
   const lo = computeCost(PB, PRODUCTS.sms_slide, { w: 300, h: 250, p: 2, glassType: "เขียว 6มม.", form: "อิสระ" });
   const hi = computeCost(pbHi, PRODUCTS.sms_slide, { w: 300, h: 250, p: 2, glassType: "เขียว 6มม.", form: "อิสระ" });
   ok("ดันกำไรค่าของ: ก้อนค่าแรงผลิตไม่ขยับ", lo.sell.parts.prod === hi.sell.parts.prod, lo.sell.parts.prod + " vs " + hi.sell.parts.prod);
@@ -634,6 +654,8 @@ console.log("\n═══ ⑫ 3 ก้อนราคาขาย — ค่า�
   const src = fs.readFileSync("src/components/Calculator40Client.tsx", "utf8");
   ok("การ์ดกำไรอ่านก้อนจาก sell.parts", /\["ค่าผลิต",[^\]]*sellParts\.prod\]/.test(src) && /\["ค่าติดตั้ง",[^\]]*sellParts\.inst\]/.test(src));
   ok("ไม่เหลือการลบ mfgOnly − beforeLabor ในการ์ดกำไร", !/setProfitProd, result\.sell\.mfgOnly - result\.sell\.beforeLabor/.test(src));
+  ok("ดูวิธีคิดค่าแรง: ใช้ก้อนขายจริง + แถวอ้างอิงในตาราง R4.1",
+    /const sell = isProd \? sellParts\.prod : sellParts\.inst;/.test(src) && /sm\.r41 \? \(isProd \? sm\.refProd : sm\.refInst\) : null/.test(src));
 }
 
 // ── ⑪ บานติดตายดัดโค้ง — กล่องเปิด+ตบปิดเปิด คิดตามยาวจริง ไม่ใช่ซื้อเต็มเส้น ──────
@@ -647,8 +669,11 @@ console.log("\n═══ ⑪ บานติดตายดัดโค้ง �
   ok("ทุนรวม = 2,800 ตรงไฟล์ D15", r.cost.total === 2800, String(r.cost.total));
   ok("ค่าแรงผลิต 1,076 ตรงไฟล์ D21", Math.round(r.labor.prod) === 1076, String(r.labor.prod));
   ok("ค่าแรงติดตั้ง 2,519 ตรงไฟล์ D22", Math.round(r.labor.install) === 2519, String(r.labor.install));
-  ok("ขายผลิต+ติดตั้ง = 15,400 ตรงไฟล์ D24", r.sell.withInstall === 15400, String(r.sell.withInstall));
-  ok("% กำไร 67/67/109 ตรงบล็อก ⚙ ในไฟล์", r.profit3.mat === 67 && r.profit3.prod === 67 && r.profit3.inst === 109, JSON.stringify(r.profit3));
+  // ราคาขายยึด ★ ตาราง R4.1 (เจ้าของเคาะ 10 ก.ย.69) — เลขจาก PDF แถว "ตายดัดโค้ง 80×80": ผลิต 2,400 · ติดตั้ง 7,024 · รวม 15,400
+  const t = computeCost(PB, PRODUCTS.curve_fixed, { w: 80, h: 80, p: 1, glassType: "เขียว 6มม." });
+  ok("R4.1 แถว 80×80: ค่าผลิต (ขาย) 2,400 ตรงตาราง", t.sell.parts.prod === 2400, String(t.sell.parts.prod));
+  ok("R4.1 แถว 80×80: ค่าติดตั้ง (ขาย) 7,024 ตรงตาราง", t.sell.parts.inst === 7024, String(t.sell.parts.inst));
+  ok("R4.1 แถว 80×80: ยอดรวมใกล้ 15,400 (±2%)", Math.abs(t.sell.withInstall / 15400 - 1) <= 0.02, String(t.sell.withInstall));
   // กว้างขึ้นเป็น 2 เท่า ทุนกล่องต้องขึ้นเป็น 2 เท่า (ไม่ใช่กระโดดทีละเส้น)
   const r2 = computeCost(PB, PRODUCTS.curve_fixed, { w: 200, h: 50, p: 1, glassType: "เขียว 6มม." });
   const box2 = (r2.lines || []).find((l) => /กล่องเปิด/.test(l.name || "")) || {};

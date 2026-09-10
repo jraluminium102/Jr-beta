@@ -17,7 +17,7 @@ import { useUnsavedWarning } from "@/lib/useUnsavedWarning";
 const r2 = (n: unknown) => Math.round((Number(n) || 0) * 100) / 100;
 import type { Customer } from "@/lib/types";
 // @ts-expect-error — engine เป็น ESM JS ล้วน (คงไฟล์เดิมเป๊ะเพื่อ parity 63/63)
-import { computeCost } from "@/lib/calculator40/engine.mjs";
+import { computeCost, r41Nodes } from "@/lib/calculator40/engine.mjs";
 // @ts-expect-error — products เป็น ESM JS ล้วน
 import { PRODUCTS, PRODUCTS_TODO } from "@/lib/calculator40/products.mjs";
 import PRICEBOOK from "@/lib/calculator40/pricebook.json";
@@ -185,6 +185,9 @@ export default function Calculator40Client({ customers = [], priceOverride, line
   // โหมดกำไร: ค่าตั้งต้น = "ตามไฟล์ถอดทุน" (เป้ากำไรสุทธิ + ค่าดำเนินการ 30% · สูตรเดียวกับ Excel)
   //   กดแก้ % เอง = สลับเป็นโหมดกรอกเอง (ของเดิม) · เจ้าของสั่ง 3 ก.ย.69 "เอาตามไฟล์ ทำทั้งหมด"
   const [profitManual, setProfitManual] = useState(false);
+  // R4.1 (เจ้าของเคาะ 10 ก.ย.69): ก้อนไหนผู้ใช้กดแก้ % เอง — null = ยังไม่แตะ → ทั้ง 3 ก้อนตามตาราง R4.1
+  //   แก้ก้อนเดียว ก้อนอื่นต้องนิ่ง (กติกา "+/- กำไรค่าของ ไม่ยุ่งกับค่าแรง")
+  const [profitEdit, setProfitEdit] = useState<{ mat?: boolean; prod?: boolean; inst?: boolean } | null>(null);
   // ค่าแรงที่คิดลงใบเสนอ: "all" = ผลิต+ติดตั้ง (ค่ามาตรฐาน) · "mfg" = ค่าแรงผลิตอย่างเดียว (ขายส่ง JR ไม่ไปติดตั้ง)
   const [laborMode, setLaborMode] = useState<"all" | "mfg">("all");
   // ประตู/หน้าต่าง ที่จะเขียนลงใบเสนอ (เจ้าของสั่ง 7 ส.ค.69 ให้มีทุกชุดที่เป็นบาน ไม่ใช่แค่ห้องกระจก)
@@ -326,6 +329,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     setProdId(x.id);
     const dp = defProfit(x.id);
     setProfit(String(dp.mat)); setProfitProd(String(dp.prod)); setProfitInst(String(dp.inst));
+    setProfitEdit(null);
     setW(String(x.defaults?.w ?? 200));
     setH(String(x.defaults?.h ?? 200));
     setP(String(x.defaults?.p ?? 1));
@@ -451,6 +455,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
         profitPct,
         profitMat: profitPct, profitProd: pProd, profitInst: pInst,
         profitManual,   // false = ใช้เป้ากำไรจากไฟล์ (PB.SELL) · true = ใช้ % ที่กรอกเอง
+        ...(profitEdit ? { profitEdit } : {}),   // R4.1: แก้ทีละก้อน (ไม่ส่ง = ใบเก่า/ไม่ได้แตะ)
         spec: specForCalc,
         addons,
       };
@@ -517,7 +522,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
       if (subs.length) {
         subs.forEach((s) => {
           // กำไร 3 ก้อน + โหมดกรอกเอง — ชุดเดียวกับบานหลัก (เดิมส่งแต่ profitPct ตัวเดียว)
-          const amt = subPrice(s, pb, color, glassType, profitPct, { manual: profitManual, mat: profitPct, prod: pProd, inst: pInst });
+          const amt = subPrice(s, pb, color, glassType, profitPct, { manual: profitManual, edit: profitEdit, mat: profitPct, prod: pProd, inst: pInst });
           if (amt <= 0) return;
           sl.push({ desc: subDesc(s), amt });
           sSell += amt;
@@ -560,8 +565,13 @@ export default function Calculator40Client({ customers = [], priceOverride, line
    *     ทำให้ราคาตกทันที ("ต้องเปลี่ยนตัวคูณด้วยสิ ไม่ใช่ตั้ง 100% พื้นฐาน")
    *   โหมดกรอกเอง = ใช้ค่าที่พิมพ์ตามปกติ
    */
+  // รุ่นที่อยู่ในตาราง R4.1 → % ทุกช่อง = ตัวคูณจริง (ทุน × (1+%) = ราคาขายที่เห็น) · ช่องที่กำลังพิมพ์โชว์ตามที่พิมพ์
+  const isR41Prod = !!(prod && r41Nodes(pb, prod.id));
   const shownPct = (() => {
     const p3 = (result as any)?.profit3;
+    if (isR41Prod && p3 && (result as any)?.sellModel?.r41) return {
+      mat: profitEdit?.mat ? profit : String(p3.mat), prod: profitEdit?.prod ? profitProd : String(p3.prod), inst: profitEdit?.inst ? profitInst : String(p3.inst),
+    };
     if (profitManual || !p3) return { mat: profit, prod: profitProd, inst: profitInst };
     return { mat: String(p3.mat ?? profit), prod: String(p3.prod ?? profitProd), inst: String(p3.inst ?? profitInst) };
   })();
@@ -581,6 +591,15 @@ export default function Calculator40Client({ customers = [], priceOverride, line
    *     จอเลิกอ่าน profit3 แล้วไปอ่าน state → อีก 2 ช่องกระโดดจาก 113/109 กลับเป็น 100/100
    *   ต้อง seed ก่อนเสมอ แล้วค่อยเซตช่องที่ผู้ใช้แก้ทับ (React batch ให้ ลำดับถูก)
    */
+  /** แก้ % ก้อนเดียว — รุ่น R4.1 ติดธงเฉพาะก้อนนั้น · รุ่นเก่ายังสลับโหมดกรอกเองผ่าน seedManual() */
+  function editPct(k: "mat" | "prod" | "inst", v: string) {
+    const set = k === "mat" ? setProfit : k === "prod" ? setProfitProd : setProfitInst;
+    // ใบเก่าโหมดกรอกเอง (profitManual · ยังไม่มีธง) = ทั้ง 3 ก้อนเป็น % ที่กรอกไว้แล้ว → เริ่มธงจากครบ 3 ก้อน
+    //   ไม่งั้นแก้ช่องเดียว อีก 2 ช่องเด้งกลับไปค่าตามตารางเงียบ ๆ (ราคาเปลี่ยนโดยผู้ใช้ไม่ได้แตะ)
+    if (isR41Prod) { setProfitEdit((e) => ({ ...(e || (profitManual ? { mat: true, prod: true, inst: true } : {})), [k]: true })); set(v); return; }
+    seedManual(); set(v);
+  }
+
   function seedManual() {
     if (profitManual) return;
     setProfit(shownPct.mat); setProfitProd(shownPct.prod); setProfitInst(shownPct.inst);
@@ -633,7 +652,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     return {
       v: 1, kind: "std", prodId: prod.id, group: prod.group,
       w, h, p, form, color, glassType, material,
-      spec, addons, fixedPanes, profit, profitProd, profitInst, profitManual, laborMode, useSel, sillSel, cutSel,
+      spec, addons, fixedPanes, profit, profitProd, profitInst, profitManual, profitEdit, laborMode, useSel, sillSel, cutSel,
       kindOpts: kind, faceColorCode, depth, shelves, cabSides, sheetColor, roofSegs, subs,
     };
   }
@@ -791,6 +810,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     // โหมดกำไร: ข้อที่ตั้ง % เองต้องกลับมาเป็น % เดิม ไม่ใช่เด้งไปใช้สูตรไฟล์
     //   ใบเก่าที่ยังไม่มีฟิลด์นี้ = false (โหมดตามไฟล์) เท่าพฤติกรรมเดิมเป๊ะ
     setProfitManual(r.profitManual === true);
+    setProfitEdit(r.profitEdit && typeof r.profitEdit === "object" ? r.profitEdit : null);   // ใบก่อน R4.1 ไม่มีฟิลด์นี้ = ไม่ได้แตะ
     setLaborMode(r.laborMode === "mfg" ? "mfg" : "all");   // ใบเก่าไม่มีฟิลด์นี้ = คิดค่าแรงรวม (ค่าเดิมของระบบ)
     setUseSel(r.useSel === "door" || r.useSel === "window" ? r.useSel : "auto");  // ใบเก่า = ให้ระบบเดาเหมือนเดิม
     setSillSel(typeof r.sillSel === "string" ? r.sillSel : "");
@@ -1220,17 +1240,17 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                       <Field label={`จำนวนบาน${prod.minP ? ` (${prod.minP}–${prod.maxP})` : ""}`} value={p} onChange={setP} />
                     )
                   ) : <div />}
-                  <Field label="กำไร ค่าของ %" value={shownPct.mat} onChange={(v: string) => { seedManual(); setProfit(v); }} />
-                  <Field label="กำไร ค่าผลิต %" value={shownPct.prod} onChange={(v: string) => { seedManual(); setProfitProd(v); }} />
-                  <Field label="กำไร ค่าติดตั้ง %" value={shownPct.inst} onChange={(v: string) => { seedManual(); setProfitInst(v); }} />
+                  <Field label="กำไร ค่าของ %" value={shownPct.mat} onChange={(v: string) => editPct("mat", v)} />
+                  <Field label="กำไร ค่าผลิต %" value={shownPct.prod} onChange={(v: string) => editPct("prod", v)} />
+                  <Field label="กำไร ค่าติดตั้ง %" value={shownPct.inst} onChange={(v: string) => editPct("inst", v)} />
                 </div>
               )}
               {/* ห้องกระจก (G6) — ไม่มีกว้าง/สูง/บานระดับห้อง (กำหนดต่อบาน/ต่อด้านใน RoomComposer) แต่ยังต้องมีกำไร% + สี/กระจกหลัก (ทุกบานในห้องใช้ร่วมกัน) */}
               {prod.composite && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mt-4">
-                  <Field label="กำไร ค่าของ %" value={shownPct.mat} onChange={(v: string) => { seedManual(); setProfit(v); }} />
-                  <Field label="กำไร ค่าผลิต %" value={shownPct.prod} onChange={(v: string) => { seedManual(); setProfitProd(v); }} />
-                  <Field label="กำไร ค่าติดตั้ง %" value={shownPct.inst} onChange={(v: string) => { seedManual(); setProfitInst(v); }} />
+                  <Field label="กำไร ค่าของ %" value={shownPct.mat} onChange={(v: string) => editPct("mat", v)} />
+                  <Field label="กำไร ค่าผลิต %" value={shownPct.prod} onChange={(v: string) => editPct("prod", v)} />
+                  <Field label="กำไร ค่าติดตั้ง %" value={shownPct.inst} onChange={(v: string) => editPct("inst", v)} />
                 </div>
               )}
 
@@ -1467,7 +1487,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                   profitPct={Number(profit) || 100}
                   // กำไร 3 ก้อน + โหมดกรอกเอง — เดิมส่งแต่ profitPct ตัวเดียว ช่องค่าผลิต/ค่าติดตั้งเลยกดแล้วราคาไม่ขยับ
                   //   (เจ้าของจับได้ 10 ก.ย.69 · หน้าจอมี 3 ช่องแต่มีผลจริงช่องเดียว)
-                  profitOpt={{ manual: profitManual, mat: Number(shownPct.mat) || 100, prod: Number(shownPct.prod) || 100, inst: Number(shownPct.inst) || 200 }}
+                  profitOpt={{ manual: profitManual, edit: profitEdit, mat: Number(shownPct.mat) || 100, prod: Number(shownPct.prod) || 100, inst: Number(shownPct.inst) || 200 }}
                   initial={roomInitial}
                   onTotal={(t) => { setRoomTotals(t); roomStateRef.current = (t as any).state ?? roomStateRef.current; }}
                 />
@@ -1532,7 +1552,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                   profitPct={Number(profit) || 100}
                   // กำไร 3 ก้อน + โหมดกรอกเอง — เดิมส่งแต่ profitPct ตัวเดียว ช่องค่าผลิต/ค่าติดตั้งเลยกดแล้วราคาไม่ขยับ
                   //   (เจ้าของจับได้ 10 ก.ย.69 · หน้าจอมี 3 ช่องแต่มีผลจริงช่องเดียว)
-                  profitOpt={{ manual: profitManual, mat: Number(shownPct.mat) || 100, prod: Number(shownPct.prod) || 100, inst: Number(shownPct.inst) || 200 }}
+                  profitOpt={{ manual: profitManual, edit: profitEdit, mat: Number(shownPct.mat) || 100, prod: Number(shownPct.prod) || 100, inst: Number(shownPct.inst) || 200 }}
                 />
               )}
 
@@ -1573,7 +1593,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-sm font-semibold text-brand-dark">แยกเป็น 3 ก้อน</span>
                       <span className="text-[11px] text-ink-3">กดปุ่มปรับกำไรได้ทีละก้อน</span>
-                      <button type="button" onClick={() => { const d = defProfit(prod?.id ?? ""); setProfit(String(d.mat)); setProfitProd(String(d.prod)); setProfitInst(String(d.inst)); setProfitManual(false); }}
+                      <button type="button" onClick={() => { const d = defProfit(prod?.id ?? ""); setProfit(String(d.mat)); setProfitProd(String(d.prod)); setProfitInst(String(d.inst)); setProfitManual(false); setProfitEdit(null); }}
                         className="press ml-auto text-[11px] font-semibold text-ink-2 glass-soft rounded-lg px-2 py-1">
                         คืนค่าตามไฟล์
                       </button>
@@ -1593,7 +1613,8 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                       //   เพราะค่าตั้งต้นใช้ "เป้ากำไรจากไฟล์" (profitManual = false) ซึ่งไม่สนช่อง %
                       //   แต่ไม่มีที่ไหนสลับเป็นโหมดกรอกเองเลย → ช่อง % กับปุ่ม +/- เป็นของตายมาตลอด
                       //   กดครั้งแรกต้องเด้งจาก "ตัวคูณที่เห็นอยู่" (= ที่ใช้จริง) ไม่ใช่จาก 100 ที่ค้างใน state
-                      const setPct = (v: string) => { seedManual(); setPctRaw(v); };
+                      const setPct = (v: string) => editPct(label === "ค่าของ" ? "mat" : label === "ค่าผลิต" ? "prod" : "inst", v);
+                      void setPctRaw;
                       return (
                         <div key={label} className={"rounded-xl border px-3 py-2 " + (howOpen === label ? "border-brand bg-brand/5" : "border-line bg-ground/40")}>
                           <div className="text-[11px] font-medium text-ink-3">{label}</div>
@@ -1678,8 +1699,10 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                       const base = isProd ? lc.pBase : lc.iBase;
                       const rate = isProd ? lc.pRate : lc.iRate;
                       const raw = isProd ? result.labor.prod : result.labor.install;
-                      const pct = Number(isProd ? profitProd : profitInst) || 0;
-                      const sell = isProd ? result.sell.mfgOnly - result.sell.beforeLabor : result.sell.withInstall - result.sell.mfgOnly;
+                      const pct = Number(isProd ? shownPct.prod : shownPct.inst) || 0;
+                      const sell = isProd ? sellParts.prod : sellParts.inst;
+                      const sm = (result as any).sellModel || {};
+                      const ref = sm.r41 ? (isProd ? sm.refProd : sm.refInst) : null;   // จุดอ้างอิงในตาราง R4.1
                       const unit = lc.mode === "perLeaf" ? "ใบ" : "บาน";
                       return (
                         <div className="mt-2 rounded-xl border border-line bg-white/70 p-3 text-xs text-ink-2 space-y-1">
@@ -1696,9 +1719,19 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                               {lc.mode !== "perLeaf" && lc.mult > 1 ? ` × ${lc.mult} บาน` : ""} = <b>฿{baht(raw)}</b>
                             </div>
                           )}
-                          <div className="tabular-nums">
-                            บวกกำไร {pct}% → ปัดขึ้นหลักร้อย = <b className="text-brand-dark">฿{baht(sell)}</b>
-                          </div>
+                          {ref ? (
+                            <div className="tabular-nums">
+                              ราคาขายตาม ★ ตาราง R4.1 — แถว {ref.w}×{ref.h}{ref.p > 1 ? ` ${ref.p} บาน` : ""}{ref.vk ? ` · ${ref.vk}` : ""}: ทุน ฿{baht(ref.cost)} → ขาย ฿{baht(ref.sell)}
+                              {Math.abs(ref.cost - raw) <= 1
+                                ? <> (ขนาดตรงตาราง) = <b className="text-brand-dark">฿{baht(sell)}</b></>
+                                : <> → ตัวคูณ ×{(ref.sell / ref.cost).toFixed(3)} × ทุน ฿{baht(raw)} = <b className="text-brand-dark">฿{baht(sell)}</b></>}
+                              <span className="text-ink-3"> (กำไร {pct}%)</span>
+                            </div>
+                          ) : (
+                            <div className="tabular-nums">
+                              บวกกำไร {pct}% = <b className="text-brand-dark">฿{baht(sell)}</b>
+                            </div>
+                          )}
                           <p className="text-[11px] text-ink-3">
                             แก้ค่าแรงต้องแก้ในไฟล์ถอดทุน ชีต &quot;ค่าแรง&quot; แล้วซิงก์เข้าระบบ — แก้ในหน้านี้ไม่ได้ (กันตัวเลขหลุดจากไฟล์)
                           </p>

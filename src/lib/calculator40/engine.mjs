@@ -165,7 +165,21 @@ export function computeCost(PB, prod, opt) {
 
   // ตารางสูตรราคาขายของรุ่นนี้ (มาจากไฟล์ถอดทุน — ดู scripts/extract-sell-model.mjs)
   //   opt.profitManual = true → ผู้ใช้กดปรับกำไรเอง ให้ใช้ % ที่กรอก (ของเดิม) ไม่ใช้เป้าจากไฟล์
-   const SELLM = (opt.profitManual ? null : (PB.SELL && PB.SELL.products && PB.SELL.products[prod.id])) || null;
+  const SELL_RAW = (PB.SELL && PB.SELL.products && PB.SELL.products[prod.id]) || null;
+  // ── R4.1 (เจ้าของเคาะ 10 ก.ย.69) — รุ่นที่มีใน ★ ตารางราคาขาย R4.1 ใช้โมเดลนี้แทนสูตรเป้ากำไร ──
+  //   ค่าผลิต/ค่าติดตั้ง (ขาย) = ช่อง "ขาย" ในตาราง R4.1 เป๊ะ · ขนาดที่ไม่มีในตาราง = ตัวคูณของขนาดใกล้สุด
+  //   ค่าของ (ขาย) = ทุน × (1 + % ตั้งต้นของรุ่น) · % ตั้งต้นจูนให้ยอดรวมชน "ราคาขาย รวมทั้งชุด"
+  //   ยอดรวมปัดขึ้นหลักร้อย — เศษปัดลงที่ค่าของ (ค่าแรงห้ามขยับ)
+  //   กด +/- ทีละก้อน (opt.profitEdit) → เฉพาะก้อนนั้นใช้ % ที่กรอก · ก้อนที่ไม่ได้แตะคงตามตาราง
+  //   % ทุกช่อง = ตัวที่เอาทุนคูณแล้วได้ราคาขายที่เห็นจริง (รวมค่าดำเนินการแล้ว ไม่มีชั้นซ่อน)
+  //     🐞 เดิมโชว์ 47% แต่ราคา 2,500 จากทุน 1,273 (เจ้าของจับได้ 10 ก.ย.69 "คูณกำไรผิด งง")
+  const R41N = r41Nodes(PB, prod.id);
+  const r41Edit = opt.profitEdit
+    ? { mat: !!opt.profitEdit.mat, prod: !!opt.profitEdit.prod, inst: !!opt.profitEdit.inst }
+    : (opt.profitManual ? { mat: true, prod: true, inst: true } : { mat: false, prod: false, inst: false });
+  const r41AnyEdit = r41Edit.mat || r41Edit.prod || r41Edit.inst;
+  let r41Info = null;
+  const SELLM = (R41N || opt.profitManual) ? null : SELL_RAW;
   let sellPct = null, sellAdj = null, sellTarget = null;
   // 3 ก้อนราคาขายสำหรับ "แสดงผล" — ค่าแรงตรงสูตรเป๊ะ · ค่าของรับเศษปัดร้อย (กฎเจ้าของ 9 ก.ย.69)
   let sellParts_ = null;
@@ -710,6 +724,26 @@ export function computeCost(PB, prod, opt) {
     lines.push({ cat: 'consum', name: sdName + (material ? ' ' + material : '') + hNote + (minHit ? ' (ขั้นต่ำ)' : ''), qty: round2(aSell), unit: 'ตร.ม.', unitPrice: rate, amount: round2(matBase) });
     if (rnDisc > 0) lines.push({ cat: 'discount', name: 'ส่วนลดปริมาณ ' + Math.round((area > 30 ? 15 : area > 20 ? 11 : area > 15 ? 8 : 5)) + '% (พื้นที่ ' + round2(area) + ' ตร.ม.)', qty: 1, unit: '', unitPrice: -rnDisc, amount: -rnDisc });
     if (irate > 0) lines.push({ cat: 'labor', name: 'ค่าแรงติดตั้ง', qty: round2(aSell), unit: 'ตร.ม.', unitPrice: irate, amount: round2(aSell * irate) });
+  } else if (R41N) {
+    const vk = r41VariantKey(prod, material, opt.spec || {}, form);
+    const small = !r41AnyEdit && !!(SELL_RAW && SELL_RAW.small && area > 0 && area < SELL_RAW.small.maxArea);
+    const nP = r41Pick(R41N, vk, small, 'cP', laborProd, area, P), nI = r41Pick(R41N, vk, small, 'cI', laborInstall, area, P);
+    const eff = (sell, cost) => (cost > 0 ? Math.round((sell / cost - 1) * 100) : 0);
+    // ก้อนที่ตารางไม่มีจุดอ้างอิง (ตาราง "—" แต่เว็บมีทุน) — ห้ามเดาเงียบ ใช้ % ที่ช่องบอก + ขึ้นเตือน
+    const noNode = (cost, node) => cost > 0 && !node;
+    const labP = (r41Edit.prod || noNode(laborProd, nP)) ? Math.round(laborProd * (1 + pctProd / 100)) : r41Sell(nP, 'cP', 'sP', laborProd);
+    const labI = (r41Edit.inst || noNode(laborInstall, nI)) ? Math.round(laborInstall * (1 + pctInst / 100)) : r41Sell(nI, 'cI', 'sI', laborInstall);
+    if (!r41Edit.prod && noNode(laborProd, nP)) lines.push({ cat: 'warn', name: '⚠️ ค่าผลิตรุ่นนี้ไม่มีในตาราง R4.1 — ใช้กำไร ' + pctProd + '% แทน', amount: 0 });
+    if (!r41Edit.inst && noNode(laborInstall, nI)) lines.push({ cat: 'warn', name: '⚠️ ค่าติดตั้งรุ่นนี้ไม่มีในตาราง R4.1 — ใช้กำไร ' + pctInst + '% แทน', amount: 0 });
+    const mPct = r41Edit.mat ? pctMat : r41MatPct(PB, prod.id, vk);
+    const matRaw = costTotal * (1 + mPct / 100);
+    sellBeforeLabor = ceil100(matRaw);
+    sellMfgOnly = ceil100(matRaw + labP);
+    sellWithInstall = ceil100(matRaw + labP + labI);
+    sellParts_ = { mat: 0, prod: labP, inst: labI };   // ค่าของเติมทีหลัง = ยอดรวม − ค่าแรง 2 ก้อน
+    sellPct = { mat: mPct, prod: r41Edit.prod ? pctProd : eff(labP, laborProd), inst: r41Edit.inst ? pctInst : eff(labI, laborInstall) };
+    const ref = (n, c, sk) => (n ? { w: n.w, h: n.h, p: n.p, vk: n.vk, cost: n[c], sell: n[sk] } : null);
+    r41Info = { vk, small, matPct: mPct, edit: r41Edit, refProd: r41Edit.prod ? null : ref(nP, 'cP', 'sP'), refInst: r41Edit.inst ? null : ref(nI, 'cI', 'sI') };
   } else if (SELLM) {
     // ── สูตรราคาขายตามไฟล์ถอดทุน v20.1 (เป้ากำไรสุทธิ + ค่าดำเนินการ 30%) ──
     //   เจ้าของสั่ง 3 ก.ย.69 "เอาตามไฟล์ ทำทั้งหมด" · ยันด้วยชุด ส่งต่อ-เว็บ (tests.json)
@@ -825,14 +859,15 @@ export function computeCost(PB, prod, opt) {
   if (panelSell > 0) { addonTotal += panelSell; addonSellImplicit += panelSell; }
   if (addonTotal > 0) { sellBeforeLabor += addonTotal; sellMfgOnly += addonTotal; sellWithInstall += addonTotal; }
   // ราคาตายตัวไซซ์เล็ก (ชีตเขียน "ราคาขาย/ชุด — ถ้าพื้นที่ < N ตร.ม.") — ทับราคาที่คำนวณได้
-  if (SELLM && SELLM.small && area > 0 && area < SELLM.small.maxArea && sellWithInstall > 0) {
-    const k = SELLM.small.price / sellWithInstall;
-    sellWithInstall = SELLM.small.price;
+  const SMF = R41N ? (r41AnyEdit ? null : SELL_RAW) : SELLM;
+  if (SMF && SMF.small && area > 0 && area < SMF.small.maxArea && sellWithInstall > 0) {
+    const k = SMF.small.price / sellWithInstall;
+    sellWithInstall = SMF.small.price;
     sellMfgOnly = ceil100(sellMfgOnly * k); sellBeforeLabor = ceil100(sellBeforeLabor * k);
   }
   // ราคาขายขั้นต่ำ/ชุด (ชีต Shower แถว 54) — บานตาย 14,000 · มีบานเปิด/เลื่อน 15,000
-  if (SELLM && SELLM.floor) {
-    const min = /บานเปิด|บานเลื่อน/.test(String(form || '')) ? SELLM.floor.withDoor : SELLM.floor.base;
+  if (SMF && SMF.floor) {
+    const min = /บานเปิด|บานเลื่อน/.test(String(form || '')) ? SMF.floor.withDoor : SMF.floor.base;
     if (sellWithInstall < min) { sellMfgOnly = ceil100(sellMfgOnly * (min / Math.max(1, sellWithInstall))); sellWithInstall = min; }
   }
   // มอเตอร์ขายฟิก — บวกท้ายสุด ไม่ผ่านกำไร (ชีต "★ ราคาขาย ... + IF(เลื่อน, ค่ามอเตอร์ขาย, 0)")
@@ -859,7 +894,8 @@ export function computeCost(PB, prod, opt) {
     glassArea: round2(glassArea), aluKg: round2(aluKg), weight,
     profit3: sellPct || { mat: pctMat, prod: pctProd, inst: pctInst },   // % ที่ใช้จริง (หน้าจอเอาไปโชว์/แก้)
     // สูตรราคาขายตามไฟล์: เป้ากำไรสุทธิ + ตัวปรับอัตโนมัติ + ค่าดำเนินการ (null = รุ่นที่ยังใช้สูตรเดิม)
-    sellModel: SELLM ? { target: sellTarget, adj: sellAdj, overheadPct: SELLM.overheadPct, shape: SELLM.shape, small: SELLM.small || null, fixedSell: fixedSellTotal || 0 } : null,
+    sellModel: r41Info ? { r41: true, ...r41Info, small: (SELL_RAW && SELL_RAW.small) || null, fixedSell: fixedSellTotal || 0 }
+      : SELLM ? { target: sellTarget, adj: sellAdj, overheadPct: SELLM.overheadPct, shape: SELLM.shape, small: SELLM.small || null, fixedSell: fixedSellTotal || 0 } : null,
     // อุปกรณ์จากใบตัด: ใช้จริงไหม + รหัสไหนยังไม่ตั้งราคาในสโตร์ (หน้าจอเอาไปเตือน)
     hwFromCutlist: !!hwLines, hwMissing,
     aluFromCutlist: !!(opt.aluLines && opt.aluLines.length),
@@ -920,6 +956,59 @@ function sellParts(total, labProd, labInst, pP, pI, oh) {
   return { mat: round2(total - prod - inst), prod, inst };
 }
 
+// ── ตาราง R4.1 ──────────────────────────────────────────────────────────────
+//   ข้อมูลอยู่ใน PB.R41 (สร้างด้วย scripts/gen-r41-table.mjs จาก PDF ของเจ้าของ)
+//   หลังคาหลายด้าน/กลาสเฮ้าส์ = โครงเดียวกับหลังคาเพิง/จั่ว → ใช้จุดอ้างอิงของรุ่นแม่
+const R41_ALIAS = { roof_multi: 'roof', glasshouse: 'roof', glasshouse_multi: 'roof', gable_multi: 'roof_gable' };
+export function r41Key(id) { return R41_ALIAS[id] || id; }
+export function r41Nodes(PB, id) {
+  const L = PB && PB.R41 && PB.R41.labor;
+  const n = L && L[r41Key(id)];
+  return n && n.length ? n : null;
+}
+/** ตัวแยกแบบย่อยในตาราง — แบบที่ค่าแรงขาย/กำไรค่าของต่างกันจริงในตาราง */
+export function r41VariantKey(prod, material, spec, form) {
+  const id = r41Key(prod.id);
+  if (id === 'roof' || id === 'roof_gable' || id === 'roof_slide' || id === 'frameless_door') return String(material || '');
+  if (id === 'louver') return String((spec && spec.rnBox) || '');
+  if (id === 'gate') return String((spec && spec.gslat) || 'ระแนง');
+  if (id === 'shower') return String(form || '');
+  return '';
+}
+/**
+ * จุดอ้างอิงที่ใกล้สุด — แบบย่อยเดียวกันก่อน · ไซซ์เล็ก (ราคาตายตัว) แยกกอง
+ *   เทียบด้วยทุนค่าแรงก้อนนั้น · ทุนเท่ากัน (ค่าแรงเหมาต่อชุด เช่น บานเปลือยติดตั้ง 3,675 ทุกขนาด)
+ *   → เลือกแถวที่พื้นที่ใกล้สุด แล้วค่อยจำนวนบาน (ตารางขายไม่เท่ากันแม้ทุนเท่ากัน)
+ */
+function r41Pick(nodes, vk, small, cKey, cost, area, panels) {
+  if (!(cost > 0)) return null;
+  let pool = nodes.filter((n) => (n[cKey] || 0) > 0);
+  if (!pool.length) return null;
+  const sameVk = pool.filter((n) => (n.vk || '') === vk); if (sameVk.length) pool = sameVk;
+  const sameSmall = pool.filter((n) => !!n.small === !!small); if (sameSmall.length) pool = sameSmall;
+  const key = (n) => [Math.abs(n[cKey] - cost) > 1 ? Math.abs(n[cKey] - cost) : 0,
+    Math.abs((n.w * n.h) / 10000 - (Number(area) || 0)), Math.abs((n.p || 1) - (Number(panels) || 1))];
+  let best = pool[0], bk = key(best);
+  for (const n of pool) {
+    const k = key(n);
+    if (k[0] < bk[0] || (k[0] === bk[0] && (k[1] < bk[1] - 1e-9 || (Math.abs(k[1] - bk[1]) <= 1e-9 && k[2] < bk[2])))) { best = n; bk = k; }
+  }
+  return best;
+}
+/** ขนาดตรงตาราง (ทุนต่างไม่เกิน 1 บาท) = เลขในตารางเป๊ะ · ไม่ตรง = ทุน × ตัวคูณของจุดอ้างอิง */
+function r41Sell(node, cKey, sKey, cost) {
+  if (!(cost > 0) || !node) return 0;
+  if (Math.abs(node[cKey] - cost) <= 1) return node[sKey];
+  return Math.round(cost * node[sKey] / node[cKey]);
+}
+/** % กำไรค่าของตั้งต้น — ตั้งต่อรุ่น ("_") และแยกแบบย่อยได้ (หลังคาแต่ละวัสดุ) */
+export function r41MatPct(PB, id, vk) {
+  const M = PB && PB.R41 && PB.R41.matPct && PB.R41.matPct[r41Key(id)];
+  if (M == null) return 100;
+  if (typeof M === 'number') return M;
+  if (vk && M[vk] != null) return M[vk];
+  return M._ != null ? M._ : 100;
+}
 export function sellFromTarget({ mat, labProd, labInst, target, ratios, overheadPct = 30, shape = 'bucket', matAdjPct = 0 }) {
   const mk = 1 + (Number(matAdjPct) || 0) / 100;
   const oh = Number(overheadPct) || 0, BASE = 100 / (100 + oh);
