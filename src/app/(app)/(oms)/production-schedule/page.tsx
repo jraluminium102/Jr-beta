@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Printer } from "lucide-react";
+import { Printer, RefreshCw } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { PROD_STATUS } from "@/lib/constants";
 import { Chip, Spinner, EmptyState } from "@/components/ui/primitives";
@@ -137,7 +137,7 @@ export const dayColorOf = (dateKey: string) =>
   (!dateKey || dateKey === "zzz") ? null : DAY_COLOR[new Date(dateKey + "T00:00:00").getDay()];
 
 export default function ProductionSchedulePage() {
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ["production-schedule"],
     queryFn: () => api.get<SchedRow[]>("/production-schedule"),
   });
@@ -402,6 +402,14 @@ export default function ProductionSchedulePage() {
           <option value="">ช่างทั้งหมด</option>
           {producerList.map((name) => (<option key={name} value={name}>{name}</option>))}
         </select>
+
+        {/* รีเฟรช — ดึงข้อมูลใหม่โดยไม่ต้องรีโหลดทั้งหน้า (ช่างเห็นด้วย เจ้าของสั่ง) */}
+        <button onClick={() => refetch()} disabled={isFetching} aria-label="รีเฟรช"
+          title="รีเฟรชข้อมูลตารางผลิต"
+          className="focusable inline-flex items-center gap-1.5 rounded-[10px] px-3.5 py-2 text-sm font-semibold min-h-[34px] border disabled:opacity-60"
+          style={{ background: "#fff", color: IOS.ink, borderColor: IOS.line }}>
+          <RefreshCw size={16} className={isFetching ? "animate-spin" : ""} /> รีเฟรช
+        </button>
 
         {canWrite && (
           <button onClick={() => setAddOpen(true)} className="focusable inline-flex items-center gap-1.5 rounded-[10px] px-3.5 py-2 text-sm font-semibold min-h-[34px] text-white" style={{ background: IOS.blue }}>
