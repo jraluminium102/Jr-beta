@@ -964,7 +964,7 @@ export function roofTargetOf(SM, material, prodId) {
  * ต้องตรงกับ motorPicked() ใน AddonsSection.tsx (แก้ที่ไหนต้องแก้คู่กัน)
  *   ประตูรั้ว/ม่านซิป = มอเตอร์อยู่ในชุดเสมอ (gate_motor = ตัวเพิ่ม · zip_motor = เลือกรุ่นมอเตอร์)
  */
-export const MOTOR_ADDON_IDS = ['motor', 'slide_motor', 'slide_auto', 'awn_auto', 'banklet_motor', 'gate_motor', 'zip_motor'];
+export const MOTOR_ADDON_IDS = ['motor', 'slide_motor', 'slide_auto', 'awn_auto', 'banklet_motor', 'gate_motor', 'zip_motor', 'velora_motor'];
 export function motorPicked(ctx) {
   const ads = ctx.prodAddons || [], A = (ctx.opt && ctx.opt.addons) || {}, spec = (ctx.opt && ctx.opt.spec) || {};
   // ประตูรั้ว: มอเตอร์อยู่ในชุดเสมอ "ยกเว้นเลือกแบบมือผลัก" (BOM ตัดมอเตอร์ออกเมื่อ drive = มือผลัก)
@@ -1071,6 +1071,11 @@ export function autoSetsFor(PB, prod) {
   }
   if (ads.includes('rain_sensor')) row('ออปชั่นร่วม', 'เซนเซอร์กันฝน', C('เซนเซอร์กันฝน', 1100), 'เลือกได้ทุกมอเตอร์ (ยกเว้น SlimLux)');
   if (ads.includes('banklet_motor')) row('บานเกล็ด 38.1', 'มอเตอร์บานเกล็ด', C('บานเกล็ด', 1800), 'ไม่มีค่าส่ง');
+  if (ads.includes('velora_motor')) {
+    row('Velora บานเปิดสลิม', 'มอเตอร์ Kuangdi', C('Velora Kuangdi', 6800), 'บาท/บาน + ค่าส่ง 1,700 ครั้งเดียว · ขาย 20,000/บาน');
+    row('Velora บานเปิดสลิม', 'สแกนหน้า (ระบบสั่งงาน)', C('Velora สแกนหน้า', 2750), 'เลือก 1 ใน 2');
+    row('Velora บานเปิดสลิม', 'Touch Switch (ระบบสั่งงาน)', C('Velora Touch', 100), 'เลือก 1 ใน 2');
+  }
   if (ads.includes('awn_auto')) {
     for (const [l, k, fb] of [['โช็ค เปิด 50', 'กระทุ้ง โช้ค50', 3575], ['โช็ค เปิด 80', 'กระทุ้ง โช้ค80', 3725], ['โซ่เดี่ยว 50', 'กระทุ้ง โซ่เดี่ยว50', 1900], ['โซ่คู่ 50', 'กระทุ้ง โซ่คู่50', 2600]])
       row('บานกระทุ้ง', l, C(k, fb), '× จำนวนบาน + ค่าส่ง 1,700 ครั้งเดียว');
@@ -1301,6 +1306,25 @@ export function computeAddon(id, sel, ctx) {
     const sell = motorFixSell(ctx.PB, 'บานเกล็ด', autoSell(cost, ctx));           // ขายขั้นต่ำ 12,000
     return { label: 'มอเตอร์บานเกล็ด', qty: 1, unit: 'ชุด', unitPrice: sell, amount: sell, cost, fixedSell: true };
   }
+  if (id === 'velora_motor') {          // มอเตอร์ Velora บานเปิดสลิม (Kuangdi) — ชีตราคาออโต้ แถว 34-36
+    //   ทุน 6,800 บาท/บาน + ค่าส่ง 1,700 ครั้งเดียวต่องาน (แบบเดียวกับชุดออโต้กระทุ้ง)
+    //   ขายขั้นต่ำ 20,000/บาน (ไฟล์เขียน "1บานขายขั้นต่ำ 20,000 2บานขายขั้นต่ำ 40,000")
+    const s = (sel && typeof sel === 'object') ? sel : (sel === 'yes' ? {} : null);
+    if (!s) return null;
+    const n = Math.max(1, ctx.P || 1);
+    const cost = motorCost(ctx.PB, 'Velora Kuangdi', 6800) * n + motorCost(ctx.PB, 'Velora ค่าส่ง', 1700);
+    const each = motorFixSell(ctx.PB, 'Velora บานเปิดสลิม', 0);
+    const sell = each > 0 ? each * n : autoSell(cost, ctx);
+    const out = [{
+      label: 'ชุดออโต้ Velora (Kuangdi)' + (n > 1 ? ' ×' + n + ' บาน' : '') + ' (รวมค่าส่ง)',
+      qty: n, unit: 'ชุด', unitPrice: round2(sell / n), amount: sell, cost, fixedSell: each > 0,
+    }];
+    // ระบบสั่งงาน: ไฟล์เขียน "บังคับเลือก 1" — เจ้าของยืนยัน 10 ก.ย.69 (ชุดเดียวกับ SlimLux)
+    const acc = (label, c) => { const sl = autoSell(c, ctx); out.push({ label, qty: 1, unit: 'ชุด', unitPrice: sl, amount: sl, cost: c }); };
+    if (s.scan) acc('สแกนหน้า (ระบบสั่งงาน)', motorCost(ctx.PB, 'Velora สแกนหน้า', 2750));
+    else acc('Touch Switch (ระบบสั่งงาน)', motorCost(ctx.PB, 'Velora Touch', 100));
+    return out;
+  }
   if (id === 'awn_auto') {              // ชุดออโต้บานกระทุ้ง — เจ้าของอัปเดตรุ่น/ขนาดที่ทำได้ 9 ก.ย.69
     const p = awnMotorPick(sel, ctx.W, ctx.H, ctx.P, ctx.PB);
     if (p.warn) return { cat: 'warn', label: p.warn, amount: 0 };
@@ -1370,10 +1394,11 @@ export function computeAddon(id, sel, ctx) {
       out.push({ label: 'ชุดออโต้เลื่อน SlimLux (บานแรก)', qty: 1, unit: 'ชุด', unitPrice: slSell, amount: slSell, cost: mc, ...(mul > 0 ? { fixedSell: true } : {}) });
       if (P > 1) acc('SlimLux บานเพิ่ม ×' + (P - 1), C('เลื่อน SlimLux บานเพิ่ม', 2250) * (P - 1), P - 1, 'บาน');
       if (W > 0) acc('ราง SlimLux (' + round2(W * P) + ' ม.)', C('เลื่อน SlimLux ราง/ม.', 1100) * W * P, round2(W * P), 'ม.');
-      // ระบบสั่งงาน: เจ้าของสั่ง 4 ก.ย.69 "เลือกได้สองอย่าง ทั้งทัชสวิชและสแกนหน้า" (เดิมบังคับ 1 ใน 2)
-      //   ไม่เลือกเลย = ยังคิด Touch Switch ให้ (ของเดิมในชีตต้องมีระบบสั่งงานอย่างน้อย 1)
+      // ระบบสั่งงาน: ไฟล์เขียน "บังคับเลือก 1" — เจ้าของยืนยัน 10 ก.ย.69
+      //   (กลับคำสั่ง 4 ก.ย.69 ที่เคยให้เลือกได้ทั้งสอง — กลับมาตามไฟล์)
+      //   ใบเก่าที่ติ๊กไว้ทั้งคู่ → สแกนหน้าชนะ (ตัวที่แพงกว่า = ของที่ตั้งใจเลือก)
       if (s.scan) acc('สแกนหน้า (ระบบสั่งงาน)', C('เลื่อน SlimLux สแกนหน้า', 2750));
-      if (s.touch || !s.scan) acc('Touch Switch (ระบบสั่งงาน)', C('เลื่อน SlimLux Touch', 100));
+      else acc('Touch Switch (ระบบสั่งงาน)', C('เลื่อน SlimLux Touch', 100));
     } else return null;
     return out;
   }

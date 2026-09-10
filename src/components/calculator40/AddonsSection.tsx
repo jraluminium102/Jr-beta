@@ -47,7 +47,7 @@ const MAIN_EXTRA_ADDONS = ["grid", "solid_panel", "elec", "shower_corner", "show
 // ⚙️ มอเตอร์ทุกตัวต้องอยู่หมวดเดียวกับของต่อพ่วง (เซนเซอร์กันฝน) และเรียง "มอเตอร์ก่อน" เสมอ
 //   ลำดับในหมวดวิ่งตาม prod.addons → products.mjs ต้องประกาศ rain_sensor ไว้ "หลัง" มอเตอร์ของรุ่นนั้น
 //   (4 ก.ย.69: ย้าย motor ออกจากหมวด "ชนิดการเปิด" มาที่นี่ — เดิมมอเตอร์บานยกอยู่คนละหมวดกับเซนเซอร์ของมันเอง)
-const AUTO_ADDONS = ["motor", "slide_motor", "slide_auto", "awn_auto", "banklet_motor", "gate_motor", "rain_sensor"];
+const AUTO_ADDONS = ["motor", "slide_motor", "slide_auto", "awn_auto", "banklet_motor", "gate_motor", "velora_motor", "rain_sensor"];
 const HANDLE_LABELS: Record<string, string> = { cmech: "Cmech", stainless: "สแตนเลสอร่าม", digihandle: "ดิจิตอล" };
 
 /**
@@ -68,6 +68,8 @@ function motorPicked(prod: any, A: AddonsMap, area = 0, spec: any = {}, weight: 
     if (!motorSizeOk(v("motor"), weight, [80, 300])) return false;
     return !(v("motor") === "80" && !weight && area > 3.5);   // ยังไม่มีน้ำหนัก = ถอยไปใช้กฎพื้นที่เดิม
   }
+  // Velora บานเปิดสลิม — ติ๊กมอเตอร์แล้วถือว่ามี (ไม่มีเงื่อนไขขนาด/น้ำหนัก)
+  if (ads.includes("velora_motor")) { const v2 = v("velora_motor"); return !!v2 && v2 !== "none"; }
   if (ads.includes("banklet_motor")) return v("banklet_motor") === "yes";
   // บานกระทุ้ง: ขนาดบานต้องอยู่ในช่วงที่รุ่นนั้นทำได้ ไม่งั้น engine ขึ้นคำเตือนแทนมอเตอร์
   if (ads.includes("awn_auto")) {
@@ -421,6 +423,27 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
       </Field>
     );
   }
+  if (ad === "velora_motor") {
+    const vm = (A.velora_motor && typeof A.velora_motor === "object") ? A.velora_motor : (A.velora_motor === "yes" ? {} : null);
+    const on = !!vm;
+    return (
+      <Field label="ชุดออโต้ Velora (Kuangdi)" hint="(ทุน 6,800/บาน + ค่าส่ง 1,700 ครั้งเดียว · ขาย 20,000/บาน ตามไฟล์)">
+        <div className="space-y-2">
+          <ChipRow items={[{ val: "none", label: "ไม่มี" }, { val: "yes", label: "มีมอเตอร์" }]}
+            value={on ? "yes" : "none"}
+            onChange={(v) => set("velora_motor", v === "yes" ? {} : "none")} />
+          {on && (
+            /* ไฟล์เขียน "บังคับเลือก 1" — เจ้าของยืนยัน 10 ก.ย.69 (ชุดเดียวกับ SlimLux) */
+            <Field label="ระบบสั่งงาน" hint="(บังคับเลือก 1 อย่าง)">
+              <ChipRow items={[{ val: "touch", label: "ทัชสวิช (+100)" }, { val: "scan", label: "สแกนหน้า (+2,750)" }]}
+                value={vm.scan ? "scan" : "touch"}
+                onChange={(v) => set("velora_motor", { ...vm, scan: v === "scan", touch: v === "touch" })} />
+            </Field>
+          )}
+        </div>
+      </Field>
+    );
+  }
   if (ad === "banklet_motor") {
     return (
       <Field label="มอเตอร์บานเกล็ด" hint="(ทุน 1,800 · ไม่มีค่าส่ง)">
@@ -465,12 +488,12 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
           {sa.brand === "slimlux" && (
             <>
               <p className="text-[11px] text-ink-3">+ ราง/ม. × จำนวนบาน + บานเพิ่ม (อัตโนมัติ)</p>
-              {/* เจ้าของสั่ง 4 ก.ย.69: เลือกได้ทั้งทัชสวิชและสแกนหน้า (เดิมบังคับ 1 ใน 2) */}
-              <Field label="ระบบสั่งงาน" hint="(เลือกได้ทั้งสองอย่าง)">
+              {/* ไฟล์เขียน "บังคับเลือก 1" — เจ้าของยืนยัน 10 ก.ย.69 (กลับคำสั่ง 4 ก.ย. ที่ให้เลือกทั้งสอง) */}
+              <Field label="ระบบสั่งงาน" hint="(บังคับเลือก 1 อย่าง)">
                 <ChipRow
-                  items={[{ val: "touch", label: "ทัชสวิช (+100)" }, { val: "scan", label: "สแกนหน้า (+2,750)" }, { val: "both", label: "ทัชสวิช + สแกนหน้า" }]}
-                  value={sa.scan && sa.touch ? "both" : sa.scan ? "scan" : "touch"}
-                  onChange={(v) => setObj("slide_auto", { scan: v === "scan" || v === "both", touch: v === "touch" || v === "both" })}
+                  items={[{ val: "touch", label: "ทัชสวิช (+100)" }, { val: "scan", label: "สแกนหน้า (+2,750)" }]}
+                  value={sa.scan ? "scan" : "touch"}
+                  onChange={(v) => setObj("slide_auto", { scan: v === "scan", touch: v === "touch" })}
                 />
               </Field>
             </>

@@ -13,7 +13,7 @@
  */
 import fs from "node:fs";
 import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
-import { computeCost, autoSetsFor, motorSizeOk, pickMotorByWeight } from "../src/lib/calculator40/engine.mjs";
+import { computeCost, autoSetsFor, motorSizeOk, pickMotorByWeight, MOTOR_ADDON_IDS } from "../src/lib/calculator40/engine.mjs";
 import { applyBootstrap } from "../src/lib/calculator40/bootstrap.mjs";
 const R39DATA = JSON.parse(fs.readFileSync("src/lib/calculator40/r39-data.json", "utf8"));
 
@@ -118,7 +118,8 @@ console.log("\n═══ ④ มอเตอร์ขึ้นตามประ
   for (const [id, g] of Object.entries(EXPECT)) ok(`${id} → หมวด "${g}"`, groups(id) === g, groups(id) || "(ว่าง)");
   // รุ่นที่ชีตไม่มีมอเตอร์ ต้องไม่มีให้เลือกเลย
   //   4 ก.ย.69: roof/roof_gable/roof_multi ออกจากรายการนี้ — เจ้าของสั่ง "ไม่มีมอเตอร์ให้เลือกในหลังคา" ให้ใส่เข้าไป
-  for (const id of ["fixed", "open_door", "folding", "pcdoor", "velora", "shower", "louver", "handrail"])
+  //   10 ก.ย.69: velora ออกจากรายการนี้ — เจ้าของเพิ่มมอเตอร์ Kuangdi ลงชีต "ราคาออโต้" แถว 34-36 เอง
+  for (const id of ["fixed", "open_door", "folding", "pcdoor", "shower", "louver", "handrail"])
     ok(`${id} ไม่มีมอเตอร์ให้เลือก (ชีตไม่มี)`, autoSetsFor(PB, PRODUCTS[id]).length === 0, groups(id));
   // ยี่ห้อชุดเลื่อนต้องไม่ข้ามรุ่น
   ok("SMS ไม่มี SlimLux ให้เลือก", !autoSetsFor(PB, PRODUCTS.sms_slide).some((m) => m.group === "SlimLux"));
@@ -150,7 +151,8 @@ console.log("\n═══ ④ มอเตอร์ขึ้นตามประ
   //   ① ลำดับ: มอเตอร์ต้องมาก่อนเซนเซอร์เสมอ (ลำดับบนหน้าจอวิ่งตาม prod.addons ในหมวดเดียวกัน)
   //   ② ไม่เลือกมอเตอร์ = ห้ามคิดเงินเซนเซอร์ แม้ค่าจะค้างอยู่ในสูตรเดิม
   //   ③ มอเตอร์ที่ engine ปฏิเสธ (ยก 80 กก. เกินพื้นที่) ก็ไม่นับว่ามีมอเตอร์
-  const MOTOR_IDS = ["motor", "slide_motor", "slide_auto", "awn_auto", "banklet_motor", "gate_motor", "zip_motor"];
+  //   ดึงจากเอนจินตรง ๆ (เคยลอกไว้ พอเพิ่ม velora_motor เทสเลยแดงทั้งที่เรียงถูก)
+  const MOTOR_IDS = MOTOR_ADDON_IDS;
   for (const [id, p] of Object.entries(PRODUCTS)) {
     const ads = p.addons || [];
     if (!ads.includes("rain_sensor")) continue;
@@ -199,11 +201,15 @@ console.log("\n═══ ④ มอเตอร์ขึ้นตามประ
       /ระบบสั่งงาน: รีโมท/.test(names("awning", { w: 240, h: 120, p: 2, addons: { awn_auto: "choke50" } })));
     ok("หลังคาเลื่อน เขียนระบบสั่งงาน รีโมท", /ระบบสั่งงาน: รีโมท/.test(names("roof_slide", { addons: { slide_motor: { kw: "1500" } } })));
     ok("มอเตอร์หลังคาเลื่อนไม่มีคำว่า 'ยก' ในชื่อแล้ว", !/มอเตอร์หลังคาเลื่อน ยก/.test(names("roof_slide", { addons: { slide_motor: { kw: "1500" } } })));
-    // SlimLux เลือกระบบสั่งงานได้ 2 อย่างพร้อมกัน
+    // ระบบสั่งงาน SlimLux — ไฟล์เขียน "บังคับเลือก 1" · เจ้าของยืนยัน 10 ก.ย.69
+    //   (กลับคำสั่ง 4 ก.ย.69 ที่เคยให้เลือกทั้งสอง — กลับมาตามไฟล์)
     const sl = (o) => names("slimlux", { addons: { slide_auto: { brand: "slimlux", ...o } } });
-    ok("SlimLux เลือกทัชสวิช + สแกนหน้า พร้อมกันได้", /สแกนหน้า/.test(sl({ touch: true, scan: true })) && /Touch Switch/.test(sl({ touch: true, scan: true })));
-    ok("SlimLux เลือกสแกนหน้าอย่างเดียวได้", /สแกนหน้า/.test(sl({ scan: true })) && !/Touch Switch/.test(sl({ scan: true })));
-    ok("SlimLux ไม่เลือกอะไร = ได้ทัชสวิชตามเดิม", /Touch Switch/.test(sl({})));
+    const one = (t) => (/สแกนหน้า/.test(t) ? 1 : 0) + (/Touch Switch/.test(t) ? 1 : 0);
+    ok("SlimLux: ติ๊กทั้งคู่ → ได้อย่างเดียว (สแกนหน้าชนะ)",
+      one(sl({ touch: true, scan: true })) === 1 && /สแกนหน้า/.test(sl({ touch: true, scan: true })));
+    ok("SlimLux: สแกนหน้าอย่างเดียว", one(sl({ scan: true })) === 1 && /สแกนหน้า/.test(sl({ scan: true })));
+    ok("SlimLux: ทัชสวิชอย่างเดียว", one(sl({ touch: true })) === 1 && /Touch Switch/.test(sl({ touch: true })));
+    ok("SlimLux: ไม่เลือกอะไร = ได้ทัชสวิช", one(sl({})) === 1 && /Touch Switch/.test(sl({})));
   }
 
   // ── รุ่นที่ "มีมอเตอร์ในชุด" แต่เลือกแบบไม่ใช้มอเตอร์ได้ ต้องไม่มีของต่อพ่วงเหลือค้าง ──
@@ -215,6 +221,43 @@ console.log("\n═══ ④ มอเตอร์ขึ้นตามประ
     const z = lineNames("zipscreen", { w: 300, h: 240, motor: "manual", addons: { rain_sensor: "yes" } });
     ok("ม่านซิปมือดึงล้วน: ไม่มีเซนเซอร์", !z.some((n) => /เซนเซอร์กันฝน/.test(n)), z.join(" | "));
   }
+}
+
+// ── ⑬ มอเตอร์ Velora บานเปิดสลิม (Kuangdi) — ชีตราคาออโต้ แถว 34-36 ──
+//   เจ้าของเพิ่มลงไฟล์เอง 10 ก.ย.69 → ทุน 6,800/บาน + ค่าส่ง 1,700 · ขายขั้นต่ำ 20,000/บาน
+console.log("\n═══ ⑬ มอเตอร์ Velora (Kuangdi) ═══");
+{
+  const V = (o) => computeCost(PB, PRODUCTS.velora, { w: 220, h: 200, glassType: "เทมเปอร์ใส 6มม.", ...o });
+  const ln = (r, re) => (r.lines || []).find((l) => re.test(l.name || "")) || {};
+
+  ok("ราคาตรงไฟล์: ทุน 6,800/บาน", PB.MOTOR["Velora Kuangdi"] === 6800, String(PB.MOTOR["Velora Kuangdi"]));
+  ok("ราคาตรงไฟล์: ค่าส่ง 1,700", PB.MOTOR["Velora ค่าส่ง"] === 1700);
+  ok("ราคาตรงไฟล์: ขายขั้นต่ำ 20,000/บาน", PB.MOTORSELL["Velora บานเปิดสลิม"] === 20000);
+
+  const m1 = V({ p: 1, addons: { velora_motor: {} } }), m2 = V({ p: 2, addons: { velora_motor: {} } });
+  ok("1 บาน → ขาย 20,000 (ไฟล์)", ln(m1, /ชุดออโต้ Velora/).amount === 20000, String(ln(m1, /Velora/).amount));
+  ok("2 บาน → ขาย 40,000 (ไฟล์)", ln(m2, /ชุดออโต้ Velora/).amount === 40000, String(ln(m2, /Velora/).amount));
+  ok("ทุน 1 บาน = 8,500 (6,800 + ค่าส่ง)", ln(m1, /ชุดออโต้ Velora/).cost === 8500, String(ln(m1, /Velora/).cost));
+  ok("ทุน 2 บาน = 15,300 (ค่าส่งครั้งเดียว)", ln(m2, /ชุดออโต้ Velora/).cost === 15300, String(ln(m2, /Velora/).cost));
+  ok("มอเตอร์ขายฟิก ไม่ผ่านกำไร", ln(m2, /ชุดออโต้ Velora/).fixedSell === true);
+
+  ok("ไม่เลือกระบบสั่งงาน = ได้ทัชสวิช", !!ln(m1, /Touch Switch/).amount);
+  const sc = V({ p: 2, addons: { velora_motor: { scan: true } } });
+  ok("เลือกสแกนหน้า → ไม่ได้ทัชสวิชซ้ำ", !!ln(sc, /สแกนหน้า/).amount && !ln(sc, /Touch Switch/).amount);
+  const both = V({ p: 2, addons: { velora_motor: { scan: true, touch: true } } });
+  ok("ติ๊กทั้งคู่ → ได้อย่างเดียว (บังคับเลือก 1 ตามไฟล์)", !!ln(both, /สแกนหน้า/).amount && !ln(both, /Touch Switch/).amount);
+
+  // ออปชั่นลูก: เซนเซอร์ต้องมีมอเตอร์ก่อน
+  const noM = V({ p: 1, addons: { rain_sensor: "yes" } });
+  ok("ไม่มีมอเตอร์ → ไม่มีเซนเซอร์กันฝน", !(noM.lines || []).some((l) => l.cat === "addon" && /เซนเซอร์/.test(l.name || "")));
+  const wS = V({ p: 1, addons: { velora_motor: {}, rain_sensor: "yes" } });
+  ok("มีมอเตอร์ → เซนเซอร์ขึ้นได้ 2,000", ln(wS, /เซนเซอร์/).amount === 2000);
+  ok("มอเตอร์มาก่อนเซนเซอร์ในรายการออปชั่น",
+    PRODUCTS.velora.addons.indexOf("velora_motor") < PRODUCTS.velora.addons.indexOf("rain_sensor"));
+
+  // ไม่ไปโดนรุ่นอื่น (เคยแก้ผิดไปลง pcdoor มาก่อน)
+  ok("PC Door ไม่มีมอเตอร์ Velora ติดไป", !PRODUCTS.pcdoor.addons.includes("velora_motor"), JSON.stringify(PRODUCTS.pcdoor.addons));
+  ok("PC Door ออปชั่นครบเหมือนเดิม", PRODUCTS.pcdoor.addons.includes("digihandle") && PRODUCTS.pcdoor.addons.length === 7);
 }
 
 // ── ⑧ น้ำหนักบาน + เลือกมอเตอร์อัตโนมัติ ─────────────────────────────
