@@ -224,6 +224,30 @@ console.log("\n═══ ④ มอเตอร์ขึ้นตามประ
   }
 }
 
+// ── ⑮ SlimLux — ราคาเส้นตามสี (เจ้าของเคาะ 10 ก.ย.69) ──────────────
+//   ราคาในสูตรเดิม = สีมิว (ยังไม่อบสี) → อบขาว/อบดำ/เทาซาฮาร่า ใช้ราคาตามไฟล์
+//   ⚠ รหัสเว็บ/สโตร์ขึ้นต้น XSW/OPK — ไฟล์เขียน WM-K* (คนละชุด) จับคู่ด้วยน้ำหนัก
+console.log(NL + "═══ ⑮ SlimLux — ราคาเส้นตามสี ═══");
+{
+  const BAKED = { "OPK-A201-40": 1233.8, "OPK-A202-40": 775, "OPK-A203-40": 429, "OPK-A204-40": 454,
+    "XSW40008": 1414.8, "XSW400013": 132.2, "XSW400023": 223.12 };
+  for (const key of ["white", "black", "sahara"])
+    for (const [code, want] of Object.entries(BAKED))
+      ok("ราคาอบ " + key + " " + code + " = " + want, (PB.ALUCOLOR_KEY[key] || {})[code] === want, String((PB.ALUCOLOR_KEY[key] || {})[code]));
+  const S = (ck, bake) => computeCost(PB, PRODUCTS.slimlux,
+    { w: 200, h: 240, p: 2, form: "อิสระ", glassType: "เทมเปอร์ 6มม.", color: bake, colorKey: ck, spec: { slHandle: "มือจับล็อค" } });
+  const wh = S("white", "white"), sp = S("special", "special");
+  ok("อบขาว: ใช้ราคาไฟล์ ไม่บวกค่าอบซ้ำ", wh.cost.bake === 0, String(wh.cost.bake));
+  ok("อบขาว: ทุนสูงกว่าเดิม (เดิมคิดราคามิว)", wh.cost.total > 9000, String(wh.cost.total));
+  ok("สีอื่น (อบพิเศษ): ยังคิดค่าอบตามปกติ", sp.cost.bake > 0, String(sp.cost.bake));
+  ok("สีอบพิเศษแพงกว่าอบขาว", sp.cost.total > wh.cost.total);
+  // น้ำหนักต้องตรงกับที่ไฟล์เขียน (จับคู่ WM ↔ XSW ด้วยน้ำหนัก)
+  for (const [xsw, wm] of [["OPK-A201-40", "WM-K04"], ["OPK-A202-40", "WM-K01"], ["OPK-A203-40", "WM-K02"],
+    ["OPK-A204-40", "WM-K03"], ["XSW40008", "WM-K15"], ["XSW400013", "WM-K20"]])
+    ok("น้ำหนัก " + xsw + " = " + wm, Math.abs(PB.ALUWEIGHT[xsw] - PB.ALUWEIGHT[wm]) < 0.02,
+      PB.ALUWEIGHT[xsw] + " vs " + PB.ALUWEIGHT[wm]);
+}
+
 // ── ⑭ ห้องกระจก G6 — ช่องกำไรค่าผลิต/ค่าติดตั้ง ต้องมีผลจริง ────
 //   เจ้าของจับได้ 10 ก.ย.69 "ลากยังไงราคาก็ไม่ขยับ" — RoomComposer ส่งแต่ profitPct ตัวเดียว
 //   และไม่เคยส่ง profitManual → ทุกบานใช้สูตรตามไฟล์เสมอ ช่อง % เป็นของตาย
