@@ -474,6 +474,21 @@ function check(label, res, want) {
   if (!gTow || gTow.qty !== 1) { fails++; console.log(`  ✗ ไกด์ดำ (ลากจูง) want qty=1 got ${JSON.stringify(gTow)}`); } else console.log("  ✓ ไกด์ดำ ลากจูง qty=1");
 }
 
+// ── บานโซลิด 1 ชั้น (เจ้าของเคาะ 10 ก.ย.69) — ลูกฟูกฝั่งเดียว · เส้นคาดยัง 2 ฝั่ง ──
+{
+  const spec = CUT_SPEC_BY_ID["solid_door"];
+  console.log("บานโซลิด 1 ชั้น:");
+  const two = computeCutList(spec, { ...spec.defaults }, 1), one = computeCutList(spec, { ...spec.defaults, solidLayer: "โซลิด 1 ชั้น" }, 1);
+  const r = (res, re) => res.rows.filter((x) => re.test(x.name));
+  const corr2 = r(two, /^ลูกฟูก/), corr1 = r(one, /^ลูกฟูก/);
+  const sum = (rows) => rows.reduce((a, x) => a + x.qty, 0);
+  if (spec.defaults.solidLayer !== "โซลิด 2 ชั้น") { fails++; console.log("  ✗ ค่าตั้งต้นต้องเป็น โซลิด 2 ชั้น"); } else console.log("  ✓ ค่าตั้งต้น โซลิด 2 ชั้น");
+  if (sum(corr1) * 2 !== sum(corr2) || sum(corr1) === 0) { fails++; console.log(`  ✗ ลูกฟูก 1 ชั้น ต้องครึ่งหนึ่ง got ${sum(corr1)} vs ${sum(corr2)}`); } else console.log(`  ✓ ลูกฟูก 1 ชั้น ${sum(corr1)} ชิ้น = ครึ่งของ 2 ชั้น ${sum(corr2)}`);
+  if (!corr1.every((x) => x.name.includes("(1ฝั่ง)")) || !corr2.every((x) => x.name.includes("(2ฝั่ง)"))) { fails++; console.log("  ✗ ชื่อแถวลูกฟูกต้องบอก 1ฝั่ง/2ฝั่ง ตามแบบ"); } else console.log("  ✓ ชื่อแถวลูกฟูกบอก 1ฝั่ง/2ฝั่ง ตามแบบ");
+  if (sum(r(one, /^เส้นคาด/)) !== sum(r(two, /^เส้นคาด/))) { fails++; console.log("  ✗ เส้นคาดต้องเท่ากันทั้ง 2 แบบ"); } else console.log("  ✓ เส้นคาดเท่ากันทั้ง 2 แบบ (2 ฝั่ง)");
+  if (JSON.stringify(one.hardware) !== JSON.stringify(two.hardware)) { fails++; console.log("  ✗ อุปกรณ์ต้องเท่ากันทั้ง 2 แบบ"); } else console.log("  ✓ อุปกรณ์เท่ากันทั้ง 2 แบบ");
+}
+
 // ── G) บานโซลิด — Cmech แยก 2 sub-choice + ตลับ/ไส้/รับล็อค=0 เมื่อ Digital lock/ไม่ใส่ ──
 {
   const spec = CUT_SPEC_BY_ID["solid_door"];

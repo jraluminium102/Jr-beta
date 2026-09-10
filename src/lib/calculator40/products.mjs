@@ -2320,10 +2320,13 @@ export const PRODUCTS = {
     // ถอดทุน BOM R4.0 (ชีต "คิดทุน บานโซลิด") — บานเปิด + ลูกฟูก2ทาง 2 ฝั่ง + เส้นคาดตาราง 2 ฝั่ง (ไม่มีกระจก)
     // ลูกฟูก/คาดตาราง = SlimLux (mult_slim=1) · ราคาสีอบขาว/ดำ ลูกฟูก 432 · คาดตาราง 140 (แปรตามสีทีหลัง)
     id: 'bansolid', partsLinked: true, group: 1, name: 'บานโซลิด', brand: 'EURO', laborKey: 'บานโซลิด',
+    // แบบโซลิด (ชีตคิดทุน B10 · เจ้าของเคาะ 10 ก.ย.69): โซลิด 1 ชั้น = ลูกฟูกฝั่งเดียว · โซลิด 2 ชั้น = ลูกฟูก 2 ฝั่ง
+    //   ต่างกันแค่จำนวนลูกฟูก — เส้นคาดตาราง 2 ฝั่งเท่ากันทั้ง 2 แบบ (ตามสูตรทุน · ตาราง R4.1 ทุนต่าง = ลูกฟูกครึ่งหนึ่งพอดี)
+    specOpts: [{ key: 'solidLayer', label: 'แบบโซลิด', opts: ['โซลิด 2 ชั้น', 'โซลิด 1 ชั้น'], def: 'โซลิด 2 ชั้น', priced: true }],
     icon: '🚪', defForm: 'มีธรณี', forms: ['มีธรณี', 'ไม่มีธรณี'],
     addons: ['stainless', 'frame_wrap', 'demolish'],
     defaults: { w: 150, h: 200, p: 1 }, defGlass: null, minP: 1, maxP: 2,
-    vars: { S: "form==='มีธรณี'?1:0", HG: '(H>3||(W/P)>1.2)?5:4' },
+    vars: { S: "form==='มีธรณี'?1:0", HG: '(H>3||(W/P)>1.2)?5:4', SIDES: "spec.solidLayer==='โซลิด 1 ชั้น'?1:2" },
     alu: [
       { name: 'วงกบ 3 ด้าน F7859', code: 'F7859', price: 1100, kg: 6.11111, seg: 'W+2*H', count: '1', lenTotal: true },   // ไฟล์เขียนเป็นความยาวรวม (บน+ข้าง 2) ไม่ใช่ชิ้น
       { name: 'ธรณี F7938B', code: 'F7938B', price: 1400, kg: 7.77778, seg: 'W', count: 'S' },
@@ -2352,7 +2355,8 @@ export const PRODUCTS = {
       { name: 'ปลายกลอน (บานลอง)', sku: 'JR00598', price: 0, unit: 'ตัว', count: 'Math.max(P-1,0)' },
       { name: 'น็อตเฟรม 1"', sku: 'JR00864', price: 1, unit: 'ตัว', count: 'S?8:6' },
       // ลูกฟูก2ทาง 2 ฝั่ง (SlimLux ตัดไม่ต่อ) — จำนวนเส้น 6ม. ตามการตัด · Excel R24
-      { name: 'ลูกฟูก2ทาง 2 ฝั่ง', sku: 'JR00249', price: 432, unit: 'เส้น', count: 'Math.ceil( Math.ceil((W*100/P)/10) * P * 2 / Math.max(1, Math.trunc(600/Math.max(1,H*100))) )' },
+      // ⚠ ชื่อบรรทัดห้ามเปลี่ยน (ใช้เป็นคีย์ราคา PB + แถวสโตร์ 0083) — จำนวนตามแบบโซลิด (SIDES = 1 หรือ 2 ฝั่ง · ชีต B24)
+      { name: 'ลูกฟูก2ทาง 2 ฝั่ง', sku: 'JR00249', price: 432, unit: 'เส้น', count: 'Math.ceil( Math.ceil((W*100/P)/10) * P * SIDES / Math.max(1, Math.trunc(600/Math.max(1,H*100))) )' },
       // เส้นคาดตาราง แนวตั้ง 2 ฝั่ง — Excel R33 (เส้นกว้าง1.8 ช่อง2 เว้นข้าง10)
       { name: 'เส้นคาดตาราง 2 ฝั่ง', sku: 'JR00263', price: 140, unit: 'เส้น', count: 'Math.ceil( (Math.trunc(Math.max(0, (W*100/P-20))/3.6)+1) * P * 2 / Math.max(1, Math.trunc(600/Math.max(1,H*100))) )' },
     ],

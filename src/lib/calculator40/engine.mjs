@@ -973,6 +973,7 @@ export function r41VariantKey(prod, material, spec, form) {
   if (id === 'louver') return String((spec && spec.rnBox) || '');
   if (id === 'gate') return String((spec && spec.gslat) || 'ระแนง');
   if (id === 'shower') return String(form || '');
+  if (id === 'bansolid') return String((spec && spec.solidLayer) || 'โซลิด 2 ชั้น');
   return '';
 }
 /**

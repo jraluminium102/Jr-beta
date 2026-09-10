@@ -2079,7 +2079,7 @@
   {
    "head": "บานโซลิด2",
    "id": "bansolid",
-   "vk": "",
+   "vk": "โซลิด 2 ชั้น",
    "w": 80,
    "h": 200,
    "p": 1,
@@ -2091,6 +2091,9 @@
     "h": 200,
     "p": 1,
     "form": "มีธรณี",
+    "spec": {
+     "solidLayer": "โซลิด 2 ชั้น"
+    },
     "color": "white",
     "colorKey": "white"
    },
@@ -2108,7 +2111,7 @@
   {
    "head": "บานโซลิด2",
    "id": "bansolid",
-   "vk": "",
+   "vk": "โซลิด 2 ชั้น",
    "w": 90,
    "h": 240,
    "p": 1,
@@ -2120,6 +2123,9 @@
     "h": 240,
     "p": 1,
     "form": "มีธรณี",
+    "spec": {
+     "solidLayer": "โซลิด 2 ชั้น"
+    },
     "color": "white",
     "colorKey": "white"
    },
@@ -2137,7 +2143,7 @@
   {
    "head": "บานโซลิด2",
    "id": "bansolid",
-   "vk": "",
+   "vk": "โซลิด 2 ชั้น",
    "w": 120,
    "h": 280,
    "p": 1,
@@ -2149,6 +2155,9 @@
     "h": 280,
     "p": 1,
     "form": "มีธรณี",
+    "spec": {
+     "solidLayer": "โซลิด 2 ชั้น"
+    },
     "color": "white",
     "colorKey": "white"
    },
@@ -2165,15 +2174,25 @@
   },
   {
    "head": "บานโซลิด1",
-   "id": null,
-   "vk": "",
+   "id": "bansolid",
+   "vk": "โซลิด 1 ชั้น",
    "w": 80,
    "h": 200,
    "p": 1,
    "small": false,
    "target": 35,
-   "note": "เว็บยังไม่มีตัวเลือกโซลิด 1 ชั้น",
-   "inputs": null,
+   "note": "",
+   "inputs": {
+    "w": 80,
+    "h": 200,
+    "p": 1,
+    "form": "มีธรณี",
+    "spec": {
+     "solidLayer": "โซลิด 1 ชั้น"
+    },
+    "color": "white",
+    "colorKey": "white"
+   },
    "pdf": {
     "cM": 10533,
     "sM": 24960,
@@ -2187,15 +2206,25 @@
   },
   {
    "head": "บานโซลิด1",
-   "id": null,
-   "vk": "",
+   "id": "bansolid",
+   "vk": "โซลิด 1 ชั้น",
    "w": 90,
    "h": 240,
    "p": 1,
    "small": false,
    "target": 35,
-   "note": "เว็บยังไม่มีตัวเลือกโซลิด 1 ชั้น",
-   "inputs": null,
+   "note": "",
+   "inputs": {
+    "w": 90,
+    "h": 240,
+    "p": 1,
+    "form": "มีธรณี",
+    "spec": {
+     "solidLayer": "โซลิด 1 ชั้น"
+    },
+    "color": "white",
+    "colorKey": "white"
+   },
    "pdf": {
     "cM": 15163,
     "sM": 36140,
@@ -2209,15 +2238,25 @@
   },
   {
    "head": "บานโซลิด1",
-   "id": null,
-   "vk": "",
+   "id": "bansolid",
+   "vk": "โซลิด 1 ชั้น",
    "w": 120,
    "h": 280,
    "p": 1,
    "small": false,
    "target": 35,
-   "note": "เว็บยังไม่มีตัวเลือกโซลิด 1 ชั้น",
-   "inputs": null,
+   "note": "",
+   "inputs": {
+    "w": 120,
+    "h": 280,
+    "p": 1,
+    "form": "มีธรณี",
+    "spec": {
+     "solidLayer": "โซลิด 1 ชั้น"
+    },
+    "color": "white",
+    "colorKey": "white"
+   },
    "pdf": {
     "cM": 17931,
     "sM": 42770,

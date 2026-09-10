@@ -41,6 +41,7 @@ export type CutInput = {
   sill?: string;     // ธรณี — PC/วงกบไม้: "มีธรณี"|"ไม่มีธรณี" · โซลิด: "มี"|"ไม่มี"
   doorSplit?: string;// แบ่งบาน — โซลิด: "แม่-ลูก"|"เท่ากัน" · วงกบไม้: "แม่ลูก"|"เท่ากัน"
   motherW?: number;  // บานแม่ กว้าง (ซม.) เมื่อแบ่งแม่-ลูก
+  solidLayer?: string; // โซลิด: "โซลิด 2 ชั้น" (ลูกฟูก 2 ฝั่ง) | "โซลิด 1 ชั้น" (ลูกฟูกฝั่งเดียว)
   // ประตูรั้ว (gate) + บานระแนง
   slatDir?: string;  // แนวระแนง/เกล็ด "ตั้ง" | "นอน"
   slatType?: string; // ชนิดใบ "ระแนง" | "ระแนงสลับ"
@@ -126,7 +127,7 @@ export type CutOpt = { key: string; label: string; choices?: string[]; type?: "n
 
 // โปรไฟล์ 1 เส้นในใบตัด — code/len/qty เป็นฟังก์ชันของอินพุต (พอร์ตสูตร Excel)
 export type CutProfile = {
-  name: string;
+  name: string | ((o: CutInput) => string);    // ฟังก์ชันได้ — ชื่อที่เปลี่ยนตามตัวเลือก (ลูกฟูก 1/2 ฝั่ง)
   code: string | ((o: CutInput) => string);   // รหัสอลู B#### (ผูกสต็อก) · "-" = ไม่มีรหัส
   len: (o: CutInput) => number;                // ยาวตัด (ซม.)
   qty: (o: CutInput) => number;                // จำนวนเส้น
@@ -221,7 +222,7 @@ export function computeCutList(spec: CutSpec, input: Partial<CutInput>, sets = 1
     // เส้นระดับบรรทัด (โชว์): ใช้เส้นสั้นสุดที่ตัดได้ ของโปรไฟล์นี้
     const rowStock = stockLens.filter((b) => b >= len).sort((a, b) => a - b)[0] ?? Math.max(...stockLens);
     const bars = qty > 0 && len > 0 ? (spec.packBars ? packBars(Array(qty).fill(len), rowStock) : ceil((len * qty) / rowStock)) : 0;
-    return { row: { name: p.name, code, len, qty, bars, stockLen: rowStock, note: p.note } as CutRow, stockLens };
+    return { row: { name: typeof p.name === "function" ? p.name(o) : p.name, code, len, qty, bars, stockLen: rowStock, note: p.note } as CutRow, stockLens };
   });
   const rows = meta.map((m) => m.row);
   // สรุปเส้นต่อรหัส — รวมยาว + ชิ้นยาวสุด + ตัวเลือกเส้น ต่อรหัส แล้วเลือกเส้นคุ้มสุด (nesting ต่อรหัส)

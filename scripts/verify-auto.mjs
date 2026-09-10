@@ -495,7 +495,9 @@ console.log("\n═══ ⑩ % กำไรค่าของตั้งต้�
   ok("ไม่เหลือ matAdjPct ค้างใน PB.SELL (เลขที่ไม่มีผลแล้ว หลอกคนแก้)", Object.values(PB.SELL.products).every((x) => x.matAdjPct == null));
 
   for (const id of ["sms_slide", "open_door", "pivot", "awning", "banyok", "fold_euro", "fold_lift", "fixed", "curve_fixed", "bansolid"]) {
-    const m0 = PB.R41.matPct[id] && PB.R41.matPct[id]._;
+    // % ตั้งต้นตามแบบย่อยของค่าตั้งต้นรุ่น (บานโซลิดแยก 1/2 ชั้น) — ไม่มีแบบย่อย = ค่าทั้งรุ่น
+    const vk0 = (R(id, {}).sellModel || {}).vk, M0 = PB.R41.matPct[id] || {};
+    const m0 = vk0 && M0[vk0] != null ? M0[vk0] : M0._;
     ok(id + ": มี % ค่าของตั้งต้น", typeof m0 === "number", String(m0));
     const lo = R(id, {}, withPct(id, m0 - 20)), hi = R(id, {}, withPct(id, m0 + 20));
     ok(id + ": ปรับ % แล้วทุนไม่ขยับ", lo.cost.total === hi.cost.total);
@@ -656,6 +658,36 @@ console.log("\n═══ ⑫ 3 ก้อนราคาขาย — ค่า�
   ok("ไม่เหลือการลบ mfgOnly − beforeLabor ในการ์ดกำไร", !/setProfitProd, result\.sell\.mfgOnly - result\.sell\.beforeLabor/.test(src));
   ok("ดูวิธีคิดค่าแรง: ใช้ก้อนขายจริง + แถวอ้างอิงในตาราง R4.1",
     /const sell = isProd \? sellParts\.prod : sellParts\.inst;/.test(src) && /sm\.r41 \? \(isProd \? sm\.refProd : sm\.refInst\) : null/.test(src));
+}
+
+// ── ⑰ บานโซลิด 1 ชั้น / 2 ชั้น (เจ้าของเคาะ 10 ก.ย.69) ───────────────────────────
+//   ชีตคิดทุน B10: โซลิด 1 ชั้น = ลูกฟูกฝั่งเดียว · เส้นคาดตาราง 2 ฝั่งเท่าเดิม (เจ้าของเลือกตามสูตรทุน)
+//   ด่านไม่พึ่งเลขเอนจิน: ทุนต่างของ 2 แบบ ต้องเท่าส่วนต่างในตาราง R4.1 (PDF) ทุกขนาด
+console.log("\n═══ ⑰ บานโซลิด 1 ชั้น / 2 ชั้น ═══");
+{
+  const S = (o) => computeCost(PB, PRODUCTS.bansolid, { p: 1, form: "มีธรณี", color: "white", colorKey: "white", ...o });
+  const line = (r, re) => (r.lines || []).find((l) => re.test(l.name || "")) || {};
+  ok("บานโซลิดมีตัวเลือก แบบโซลิด 1/2 ชั้น (ค่าตั้งต้น 2 ชั้น)", (PRODUCTS.bansolid.specOpts || []).some((o) => o.key === "solidLayer" && o.def === "โซลิด 2 ชั้น" && o.opts.includes("โซลิด 1 ชั้น")));
+  const FXS = JSON.parse(fs.readFileSync("scripts/fixtures/r41-rows.json", "utf8")).rows.filter((x) => x.id === "bansolid");
+  for (const [w, h] of [[80, 200], [90, 240], [120, 280]]) {
+    const two = S({ w, h, spec: { solidLayer: "โซลิด 2 ชั้น" } }), one = S({ w, h, spec: { solidLayer: "โซลิด 1 ชั้น" } });
+    const t2 = FXS.find((x) => x.vk === "โซลิด 2 ชั้น" && x.w === w && x.h === h), t1 = FXS.find((x) => x.vk === "โซลิด 1 ชั้น" && x.w === w && x.h === h);
+    ok(w + "×" + h + ": ตาราง R4.1 มีทั้ง 2 แบบ", !!(t1 && t2));
+    if (!(t1 && t2)) continue;
+    const dWeb = two.cost.total - one.cost.total, dPdf = t2.pdf.cM - t1.pdf.cM;
+    ok(w + "×" + h + ": ทุน 2 ชั้น − 1 ชั้น = ส่วนต่างในตาราง (" + dPdf + ")", Math.abs(dWeb - dPdf) <= 1, String(Math.round(dWeb)));
+    // สูตรชีตคิดทุน B24 (P=1): ROUNDUP(ROUNDUP(กว้าง/10) × ฝั่ง / INT(600/สูง)) — ปัดขึ้นทั้งก้อน ไม่ใช่ครึ่งหนึ่งเป๊ะ (90×240: 5 กับ 9)
+    const corr = (sides) => Math.ceil(Math.ceil(w / 10) * sides / Math.max(1, Math.trunc(600 / h)));
+    ok(w + "×" + h + ": ลูกฟูกตามสูตรชีต B24 (1 ชั้น " + corr(1) + " · 2 ชั้น " + corr(2) + " เส้น)",
+      line(one, /ลูกฟูก/).qty === corr(1) && line(two, /ลูกฟูก/).qty === corr(2), line(one, /ลูกฟูก/).qty + " / " + line(two, /ลูกฟูก/).qty);
+    ok(w + "×" + h + ": เส้นคาดตารางเท่ากัน 2 ฝั่ง", line(one, /เส้นคาด/).qty === line(two, /เส้นคาด/).qty);
+    ok(w + "×" + h + ": ค่าแรงทุนเท่ากันทั้ง 2 แบบ", one.labor.prod === two.labor.prod && one.labor.install === two.labor.install);
+    ok(w + "×" + h + ": 1 ชั้น ใช้แถวอ้างอิง/% ของ 1 ชั้น", one.sellModel.vk === "โซลิด 1 ชั้น" && one.sellModel.refInst && one.sellModel.refInst.vk === "โซลิด 1 ชั้น");
+  }
+  ok("ไม่เลือก = 2 ชั้น (ใบเก่า)", S({ w: 90, h: 240 }).cost.total === S({ w: 90, h: 240, spec: { solidLayer: "โซลิด 2 ชั้น" } }).cost.total);
+  // ใบตัดต้องได้ตัวเลือกไปด้วย — ส่งผ่าน from-recipe
+  const fr = fs.readFileSync("src/lib/cutlist/from-recipe.ts", "utf8");
+  ok("ใบตัด: ส่งแบบโซลิดจากคิดราคาไปใบตัด", /solidLayer: recipe\.spec\?\.solidLayer === "โซลิด 1 ชั้น" \? "โซลิด 1 ชั้น" : "โซลิด 2 ชั้น"/.test(fr));
 }
 
 // ── ⑪ บานติดตายดัดโค้ง — กล่องเปิด+ตบปิดเปิด คิดตามยาวจริง ไม่ใช่ซื้อเต็มเส้น ──────

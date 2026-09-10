@@ -292,7 +292,7 @@ for (const a of ANCHORS) {
   if (R41L) {
     const mat0 = a.in.material ?? prod.defMaterial, spec0 = a.in.spec || {}, form0 = a.in.form ?? prod.defForm;
     const vk = ['roof', 'roof_gable', 'roof_slide', 'frameless_door'].includes(rk) ? String(mat0 || '')
-      : rk === 'louver' ? String(spec0.rnBox || '') : rk === 'gate' ? String(spec0.gslat || 'ระแนง') : rk === 'shower' ? String(form0 || '') : '';
+      : rk === 'louver' ? String(spec0.rnBox || '') : rk === 'gate' ? String(spec0.gslat || 'ระแนง') : rk === 'shower' ? String(form0 || '') : rk === 'bansolid' ? String(spec0.solidLayer || 'โซลิด 2 ชั้น') : '';
     const areaNow = r.input.area, pNow = a.in.p || 1;
     const SR = (PB.SELL && PB.SELL.products && PB.SELL.products[a.id]) || {};
     const small = !!(SR.small && areaNow > 0 && areaNow < SR.small.maxArea);

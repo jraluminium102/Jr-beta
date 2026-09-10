@@ -1214,9 +1214,12 @@ const sCorrC = (o: CutInput) => (sChild(o) > 0 ? Math.ceil(sChild(o) / 10) : 0);
 const sHasSill = (o: CutInput) => o.sill === "มี";
 // ตลับกุญแจ/ไส้กุญแจ/แผ่นรับล็อค ผูกกับมือจับใบแม่เท่านั้น — Digital lock/ไม่ใส่ = ไม่มีตลับกลไก
 const sMotherLockGate = (o: CutInput) => o.motherHandle !== "Digital lock" && o.motherHandle !== "ไม่ใส่";
+// แบบโซลิด (เจ้าของเคาะ 10 ก.ย.69 · ชีตคิดทุน B10): 1 ชั้น = ลูกฟูกฝั่งเดียว · เส้นคาดยัง 2 ฝั่งทั้ง 2 แบบ
+const sSides = (o: CutInput) => (o.solidLayer === "โซลิด 1 ชั้น" ? 1 : 2);
 export const SOLID_DOOR: CutSpec = {
   id: "solid_door", name: "บานโซลิด (เปิดทึบ+ลูกฟูก · แม่-ลูก)", stockLen: 600, rails: [],
   opts: [
+    { key: "solidLayer", label: "แบบโซลิด", choices: ["โซลิด 2 ชั้น", "โซลิด 1 ชั้น"] },
     { key: "sill", label: "ธรณี", choices: ["มี", "ไม่มี"] },
     { key: "doorSplit", label: "แบ่งบาน", choices: ["แม่-ลูก", "เท่ากัน"] },
     { key: "motherW", label: "บานแม่ กว้าง (ซม.)", type: "number" },
@@ -1227,7 +1230,7 @@ export const SOLID_DOOR: CutSpec = {
     { key: "motherHandle", label: "มือจับใบแม่", choices: ["คิงโบ ล็อค+กุญแจ", "คิงโบ ดัมมี่+ดัมมี่", "Cmech ล็อค+กุญแจ", "Cmech ดัมมี่+ดัมมี่", "Digital lock", "ไม่ใส่", "อื่นๆ"] },
     { key: "childHandle", label: "มือจับใบลูก", choices: ["ไม่ใส่", "คิงโบ ล็อค+กุญแจ", "คิงโบ ดัมมี่+ดัมมี่", "Cmech ล็อค+กุญแจ", "Cmech ดัมมี่+ดัมมี่", "อื่นๆ"] },
   ],
-  defaults: { W: 120, H: 279, N: 2, rail: "", honk: false, sill: "มี", doorSplit: "แม่-ลูก", motherW: 80, hwColor: "ขาว", lockType: "ล็อคปกติ", openDir: "เปิดออก", motherHandle: "คิงโบ ล็อค+กุญแจ", childHandle: "ไม่ใส่" },
+  defaults: { W: 120, H: 279, N: 2, rail: "", honk: false, sill: "มี", doorSplit: "แม่-ลูก", motherW: 80, hwColor: "ขาว", lockType: "ล็อคปกติ", openDir: "เปิดออก", motherHandle: "คิงโบ ล็อค+กุญแจ", childHandle: "ไม่ใส่", solidLayer: "โซลิด 2 ชั้น" },
   profiles: [
     { name: "วงกบบน F7859", code: "F7859", len: (o) => o.W - 5, qty: () => 1 },
     { name: "วงกบข้าง F7859", code: "F7859", len: (o) => o.H, qty: () => 2 },
@@ -1242,8 +1245,8 @@ export const SOLID_DOOR: CutSpec = {
     { name: "กรอบนอน บานลูก F7864", code: "F7864", len: (o) => (sChild(o) > 0 ? sChild(o) - (o.N === 1 ? 3.7 : 1.95) : 0), qty: (o) => 2 * sChildN(o) },
     { name: "คิ้วนอน บานแม่ F7935", code: "F7935", len: (o) => sMother(o) - (o.N === 1 ? 19.7 : 17.95), qty: () => 2 },
     { name: "คิ้วนอน บานลูก F7935", code: "F7935", len: (o) => (sChild(o) > 0 ? sChild(o) - (o.N === 1 ? 19.7 : 17.95) : 0), qty: (o) => 2 * sChildN(o) },
-    { name: "ลูกฟูก บานแม่ (2ฝั่ง)", code: "-", len: sFrameH, qty: (o) => sCorrM(o) * 2 },
-    { name: "ลูกฟูก บานลูก (2ฝั่ง)", code: "-", len: sFrameH, qty: (o) => sCorrC(o) * 2 * sChildN(o) },
+    { name: (o) => "ลูกฟูก บานแม่ (" + sSides(o) + "ฝั่ง)", code: "-", len: sFrameH, qty: (o) => sCorrM(o) * sSides(o) },
+    { name: (o) => "ลูกฟูก บานลูก (" + sSides(o) + "ฝั่ง)", code: "-", len: sFrameH, qty: (o) => sCorrC(o) * sSides(o) * sChildN(o) },
     { name: "เส้นคาด บานแม่ (2ฝั่ง)", code: "-", len: sFrameH, qty: (o) => sBattenM(o) * 2 },
     { name: "เส้นคาด บานลูก (2ฝั่ง)", code: "-", len: sFrameH, qty: (o) => sBattenC(o) * 2 * sChildN(o) },
   ],

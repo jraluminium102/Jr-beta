@@ -149,6 +149,7 @@ export function cutInputFromRecipe(recipe: any, opts?: { rawCompare?: boolean })
         sill: String(recipe.form ?? "") === "ไม่มีธรณี" ? "ไม่มี" : "มี",
         doorSplit: "เท่ากัน",
         motherW: Math.round((W / Math.max(1, N)) * 10) / 10,
+        solidLayer: recipe.spec?.solidLayer === "โซลิด 1 ชั้น" ? "โซลิด 1 ชั้น" : "โซลิด 2 ชั้น",   // ใบเก่าไม่มี = 2 ชั้น (แบบเดียวที่เคยมี)
       } };
       break;
     }
