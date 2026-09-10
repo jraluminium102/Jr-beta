@@ -4134,7 +4134,8 @@
     "material": "ไวนิล",
     "spec": {
      "ridge": 100,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4167,7 +4168,8 @@
     "material": "ไวนิล",
     "spec": {
      "ridge": 150,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4200,7 +4202,8 @@
     "material": "ไวนิล",
     "spec": {
      "ridge": 250,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4233,7 +4236,8 @@
     "material": "ดีไลท์",
     "spec": {
      "ridge": 100,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4266,7 +4270,8 @@
     "material": "ดีไลท์",
     "spec": {
      "ridge": 150,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4299,7 +4304,8 @@
     "material": "ดีไลท์",
     "spec": {
      "ridge": 250,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4332,7 +4338,8 @@
     "material": "โพลีตัน",
     "spec": {
      "ridge": 100,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4365,7 +4372,8 @@
     "material": "โพลีตัน",
     "spec": {
      "ridge": 150,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4398,7 +4406,8 @@
     "material": "โพลีตัน",
     "spec": {
      "ridge": 250,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4431,7 +4440,8 @@
     "material": "เมทัลชีท EPS 1 นิ้ว PVC",
     "spec": {
      "ridge": 100,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4464,7 +4474,8 @@
     "material": "เมทัลชีท EPS 1 นิ้ว PVC",
     "spec": {
      "ridge": 150,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4497,7 +4508,8 @@
     "material": "เมทัลชีท EPS 1 นิ้ว PVC",
     "spec": {
      "ridge": 250,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4530,7 +4542,8 @@
     "material": "เมทัลชีท EPS 2 นิ้ว PVC",
     "spec": {
      "ridge": 100,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4563,7 +4576,8 @@
     "material": "เมทัลชีท EPS 2 นิ้ว PVC",
     "spec": {
      "ridge": 150,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4596,7 +4610,8 @@
     "material": "เมทัลชีท EPS 2 นิ้ว PVC",
     "spec": {
      "ridge": 250,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4629,7 +4644,8 @@
     "material": "เมทัลชีท EPS 2 นิ้ว เหล็ก",
     "spec": {
      "ridge": 100,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4662,7 +4678,8 @@
     "material": "เมทัลชีท EPS 2 นิ้ว เหล็ก",
     "spec": {
      "ridge": 150,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4695,7 +4712,8 @@
     "material": "เมทัลชีท EPS 2 นิ้ว เหล็ก",
     "spec": {
      "ridge": 250,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4728,7 +4746,8 @@
     "material": "ชินโคร์ Shade 4มม",
     "spec": {
      "ridge": 100,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4761,7 +4780,8 @@
     "material": "ชินโคร์ Shade 4มม",
     "spec": {
      "ridge": 150,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4794,7 +4814,8 @@
     "material": "ชินโคร์ Shade 4มม",
     "spec": {
      "ridge": 250,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4827,7 +4848,8 @@
     "material": "ชินโคร์ Sup",
     "spec": {
      "ridge": 100,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4860,7 +4882,8 @@
     "material": "ชินโคร์ Sup",
     "spec": {
      "ridge": 150,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4893,7 +4916,8 @@
     "material": "ชินโคร์ Sup",
     "spec": {
      "ridge": 250,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4926,7 +4950,8 @@
     "material": "ชินโคร์ HC",
     "spec": {
      "ridge": 100,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4959,7 +4984,8 @@
     "material": "ชินโคร์ HC",
     "spec": {
      "ridge": 150,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -4992,7 +5018,8 @@
     "material": "ชินโคร์ HC",
     "spec": {
      "ridge": 250,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -5025,7 +5052,8 @@
     "material": "ชินโคร์ Prime 10มม",
     "spec": {
      "ridge": 100,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -5058,7 +5086,8 @@
     "material": "ชินโคร์ Prime 10มม",
     "spec": {
      "ridge": 150,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -5091,7 +5120,8 @@
     "material": "ชินโคร์ Prime 10มม",
     "spec": {
      "ridge": 250,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -5124,7 +5154,8 @@
     "material": "กระจก 4+4",
     "spec": {
      "ridge": 100,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -5157,7 +5188,8 @@
     "material": "กระจก 4+4",
     "spec": {
      "ridge": 150,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -5190,7 +5222,8 @@
     "material": "กระจก 4+4",
     "spec": {
      "ridge": 250,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -5223,7 +5256,8 @@
     "material": "กระจก 5+5",
     "spec": {
      "ridge": 100,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -5256,7 +5290,8 @@
     "material": "กระจก 5+5",
     "spec": {
      "ridge": 150,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"
@@ -5289,7 +5324,8 @@
     "material": "กระจก 5+5",
     "spec": {
      "ridge": 250,
-     "roofend": "รางน้ำ"
+     "batten": "แปเดี่ยว",
+     "roofend": "ปล่อยปลาย"
     },
     "color": "white",
     "colorKey": "white"

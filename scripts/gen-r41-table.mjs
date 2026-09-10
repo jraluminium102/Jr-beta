@@ -125,7 +125,7 @@ for (const r of rows) {
       const s = SLIDE[key];
       if (s) inputs = { w: s[1], h: s[2], p: 2, material: vk, spec: { slidew: s[0] / 2, slideh: s[2] }, addons: { slide_motor: { kw: "80" } } };
       else note = "ไม่รู้สัดส่วนเลื่อน/ติดตาย ของขนาดนี้";
-    } else inputs = { w: W, h: H, p: 1, material: vk, spec: id === "roof_gable" ? { ridge: RIDGE[key], roofend: "รางน้ำ" } : {} };
+    } else inputs = { w: W, h: H, p: 1, material: vk, spec: id === "roof_gable" ? { ridge: RIDGE[key], batten: "แปเดี่ยว", roofend: "ปล่อยปลาย" } : {} };   // ค่าตั้งต้นชีต "คิดทุน หลังคาจั่ว" (แปเดี่ยว · ยื่นปลาย)
   } else if (HEAD[h]) {
     const [hid, hvk, extra, hnote] = HEAD[h];
     id = hid; vk = hvk || ""; note = hnote || "";

@@ -690,7 +690,9 @@ export const PRODUCTS = {
 
   velora: {
     // millBar = ซื้อเส้นมาสีมิว → สีอบขาว/ดำ ต้องคิดค่าเปิดตู้อบด้วย (เจ้าของเคาะ 10 ก.ย.69)
-    id: 'velora', group: 1, millBar: true, name: 'Velora บานเปิด', brand: 'VELORA', laborKey: 'Velora',
+    // aluWaste (10 ก.ย.69 เจ้าของให้รีเช็คทุนที่ต่างไฟล์): ชีต "คิดทุน Velora" B15/B16 = ยาวตัด ÷ 600 × buf_scrap 1.3
+    //   เดิมเว็บนับซื้อเต็มเส้น → ทุนเกินไฟล์ 12–32% · เปิดแล้ว 220×200 = 8,151.57 ตรงชีต D24 เป๊ะ
+    id: 'velora', aluWaste: true, group: 1, millBar: true, name: 'Velora บานเปิด', brand: 'VELORA', laborKey: 'Velora',
     // rawAlu: ชีต "คิดทุน Velora" = "อลูดิบ+อบสีแยก" → ราคาเส้น 768/720 ยังไม่รวมอบ
     //   สีขาว/ดำ ต้องบวกค่าอบเรตเทา 100/กก. ด้วย (ตรงสูตร C15/C16 ในชีต) — เดิมเว็บคิด 0 = ทุนขาด 935/ชุด @150×150
     // ⚠ เอา dropdown "เดี่ยว/คู่" ออก (เจ้าของจับได้ 2 ก.ย.69: "เลือกรูปแบบคู่ บานพับยังใช้ 4 แทนที่จะ 8")
@@ -1289,7 +1291,8 @@ export const PRODUCTS = {
   bar_slide: {
     // ถอดทุน BOM R4.0 (ชีต "คิดทุน บานระแนงเลื่อน") — SMS + ลูกฟูก2ทางแทนกระจก + ล้อ + ดามกล่อง
     // form = รางล่าง (ภายใน/ภายนอก) · material = โหมด (อิสระ/ลากจูง/เปิดคู่กลาง) → F2-F6 · auto = addon slide_auto เดิม
-    id: 'bar_slide', partsLinked: true, group: 2, subcat: 'ระแนง', name: 'ระแนงเลื่อน (ลูกฟูกเรียบ 2 ทาง · ข้อ 38.2)', brand: 'SMS', laborKey: 'บานระแนงเลื่อน',
+    // aluWaste (10 ก.ย.69): ชีต "คิดทุน บานระแนงเลื่อน" B11–B18 = ยาว ÷ 6.4 × buf_scrap 1.3 (เดิมเว็บซื้อเต็มเส้น · 100×100 ทุนเกินไฟล์ 106%)
+    id: 'bar_slide', aluWaste: true, partsLinked: true, group: 2, subcat: 'ระแนง', name: 'ระแนงเลื่อน (ลูกฟูกเรียบ 2 ทาง · ข้อ 38.2)', brand: 'SMS', laborKey: 'บานระแนงเลื่อน',
     showColor: true, outdoor: true, icon: '▤',
     materialLabel: 'โหมด', materials: ['อิสระ', 'ลากจูง', 'เปิดคู่กลาง'], defMaterial: 'อิสระ',
     defForm: 'ภายนอก', forms: ['ภายนอก', 'ภายใน'],
@@ -1313,7 +1316,8 @@ export const PRODUCTS = {
       { name: 'เสาเกี่ยวรับแรง B20010', code: 'B20010', price: 1235, kg: 0, seg: 'H', count: 'H>2.4?F6:0' },
       { name: 'ขวางบน/ล่าง B20054', code: 'B20054', price: 1060, kg: 0, seg: 'W/P', count: '2*P' },
       { name: 'ตบปิดเฟรม B20019', code: 'B20019', price: 175, kg: 0, seg: 'H', count: '4' },
-      { name: 'ตบราง (ภายนอก) B20050', code: 'B20050', price: 150, kg: 0, seg: 'W', count: "form==='ภายนอก'?F2:0" },
+      // ตบราง ชีต B19 = ROUNDUP(จำนวนราง ÷ ท่อนต่อเส้น) นับเต็มเส้น ไม่เผื่อเศษ → noWaste
+      { name: 'ตบราง (ภายนอก) B20050', code: 'B20050', price: 150, kg: 0, seg: 'W', count: "form==='ภายนอก'?F2:0", noWaste: true },
     ],
     glass: null,
     hardware: [
