@@ -41,6 +41,12 @@ const NO_PRODUCT = {
   "Smartboard floor": "เว็บยังไม่มีรุ่นพื้นสมาร์ทบอร์ด",
 };
 
+// คีย์สีจริง (ต่างจาก "หมวดค่าอบ") — ต้องส่ง colorKey ด้วย ไม่งั้นราคาเส้นแยกสีไม่ทำงาน
+//   (10 ก.ย.69: SlimLux ราคาสีอบอยู่ใน ALUCOLOR_KEY — ไม่ส่ง colorKey = คิดราคามิว ทุนต่ำกว่าจริง)
+const COLORKEY_BY_LABEL = {
+  "สีอบขาว/ดำ": "white", "อบขาว/ดำ": "white", "เทาซาฮาร่า": "sahara", "สีดำซาฮาร่า": "sahara_black",
+  "แอทแทคเกรย์": "aztec", "ลายไม้สักทอง": "wood_teak", "ลายไม้มะฮอกกานี": "wood_maho", "ลายไม้ไวท์โอ๊ค": "wood_whiteoak",
+};
 const COLOR_BY_LABEL = {
   "สีอบขาว/ดำ": "white", "อบขาว/ดำ": "white", "เทาซาฮาร่า": "sahara", "สีดำซาฮาร่า": "sahara",
   "แอทแทคเกรย์": "sahara", "ลายไม้สักทอง": "woodStock", "ลายไม้มะฮอกกานี": "woodStock", "ลายไม้ไวท์โอ๊ค": "woodStock",
@@ -63,10 +69,12 @@ function argsFor(prod, inputs) {
     if (!out.material && mats.includes(v)) out.material = v;
     if (!out.glassType && glassNames.has(v)) out.glassType = v;
     if (!out.color && COLOR_BY_LABEL[v]) out.color = COLOR_BY_LABEL[v];
+    if (!out.colorKey && COLORKEY_BY_LABEL[v]) out.colorKey = COLORKEY_BY_LABEL[v];
   }
   out.form ??= prod.defForm ?? forms[0] ?? "";
   out.glassType ??= prod.defGlass ?? undefined;
   out.color ??= "white";
+  out.colorKey ??= "white";
   out.material ??= prod.defMaterial;
   return out;
 }

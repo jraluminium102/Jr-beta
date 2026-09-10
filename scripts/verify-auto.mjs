@@ -489,7 +489,7 @@ console.log("\n═══ ⑨ มอเตอร์บานกระทุ้ง
 //   และกด +/- กำไรเองต้องยังสั่งราคาได้จริง (ทับค่าจากไฟล์)
 console.log("\n═══ ⑩ ปรับกำไรค่าของต่อรุ่น (matAdjPct) ═══");
 {
-  const ADJ = { sms_slide: 2, open_door: 5, pivot: 4, awning: 8, banyok: -3, fold_euro: -8, fold_lift: 3 };
+  const ADJ = { sms_slide: 2.5, open_door: 5, pivot: 4, awning: 8, banyok: -2.5, fold_euro: -8, fold_lift: 3 };
   const R = (id, o, pb) => computeCost(pb || PB, PRODUCTS[id], { w: 200, h: 200, p: 1, glassType: "เขียว 6มม.", ...o });
   const zero = (id) => { const p = JSON.parse(JSON.stringify(PB)); delete p.SELL.products[id].matAdjPct; return p; };
 
@@ -578,7 +578,8 @@ console.log("\n═══ ⑩ ปรับกำไรค่าของต่อ
   }
 
   // ⑥ รุ่นที่ไม่ได้ตั้ง matAdjPct ต้องไม่ขยับ (behaviour-preserving)
-  for (const id of ["fixed", "bansolid", "curve_open", "curve_fixed"]) {
+  //   bansolid มี matAdjPct แล้ว (กอง B) — เปลี่ยนเป็นรุ่นที่ยังไม่ได้ตั้งค่า
+  for (const id of ["fixed", "curve_open", "curve_fixed", "folding"]) {
     const on = R(id, {}), off = R(id, {}, zero(id));
     ok(id + ": ไม่ได้ตั้งค่า → ราคาเท่าเดิมเป๊ะ", on.sell.withInstall === off.sell.withInstall, on.sell.withInstall + " vs " + off.sell.withInstall);
   }

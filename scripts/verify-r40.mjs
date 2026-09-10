@@ -503,10 +503,10 @@ console.log('\n═══ ②g ราคาเส้นแยกสีจริ�
   // 3 ก.ย.69 ใช้สูตรราคาขายตามไฟล์ (เป้ากำไรสุทธิ SMS 40% + ค่าดำเนินการ 30%) แทนกำไรคงที่ 100/100/200
   //   ทุนวัสดุไม่ขยับ (ด่านทุนอยู่ ANCHORS) — ชุดนี้ตรวจว่า "สีต่างกัน ราคาต้องต่างกัน" เป็นหลัก
   // ↓ ขยับ +2% ตาม matAdjPct ของ SMS (เจ้าของเคาะ 9 ก.ย.69 ให้ราคาขายไปชน ★ R4.1) — ทุนไม่เปลี่ยน
-  check('SMS ลายไม้สักทอง', teak, 82000, 1);
-  check('SMS มะฮอกกานี', maho, 95000, 1);
-  check('SMS เทาซาฮาร่า', sell('sahara', 'sahara'), 64600, 1);
-  check('SMS สีขาว', sell('white', 'white'), 61800, 1);
+  check('SMS ลายไม้สักทอง', teak, 82400, 1);
+  check('SMS มะฮอกกานี', maho, 95400, 1);
+  check('SMS เทาซาฮาร่า', sell('sahara', 'sahara'), 64900, 1);
+  check('SMS สีขาว', sell('white', 'white'), 61900, 1);
 
   const az = computeCost(PB, PRODUCTS.sms_slide, { w: 600, h: 300, p: 3, form: 'อิสระ', color: 'special', colorKey: 'aztec' });
   check('Aztec: ค่าเปิดตู้อบยังคิดอยู่ (คงที่ ไม่ผูก กก.)', az.cost.openOven, PB.BAKE_OPEN_OVEN, 0.01);
