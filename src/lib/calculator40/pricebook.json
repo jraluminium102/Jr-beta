@@ -3559,7 +3559,8 @@
           2.154
         ],
         "overheadPct": 30,
-        "shape": "bucket"
+        "shape": "bucket",
+        "matAdjPct": 79.4
       },
       "eseries": {
         "sheet": "คิดทุน E-series",
@@ -3574,7 +3575,8 @@
         "small": {
           "maxArea": 2,
           "price": 18000
-        }
+        },
+        "matAdjPct": 36.8
       },
       "topslide": {
         "sheet": "คิดทุน บานเลื่อนรางบน",
@@ -3585,7 +3587,8 @@
           2.154
         ],
         "overheadPct": 30,
-        "shape": "bucket"
+        "shape": "bucket",
+        "matAdjPct": 2.4
       },
       "bar_slide": {
         "sheet": "คิดทุน บานระแนงเลื่อน",
@@ -3607,7 +3610,8 @@
           2.154
         ],
         "overheadPct": 30,
-        "shape": "bucket"
+        "shape": "bucket",
+        "matAdjPct": 15.1
       },
       "open_door": {
         "sheet": "คิดทุน บานเปิด",
@@ -3653,7 +3657,8 @@
           2.154
         ],
         "overheadPct": 30,
-        "shape": "bucket"
+        "shape": "bucket",
+        "matAdjPct": 18
       },
       "awning": {
         "sheet": "คิดทุน กระทุ้ง",
@@ -3688,7 +3693,8 @@
           2.154
         ],
         "overheadPct": 30,
-        "shape": "bucket"
+        "shape": "bucket",
+        "matAdjPct": 17.1
       },
       "folding": {
         "sheet": "คิดทุน เฟี้ยม",
@@ -3767,7 +3773,8 @@
           1.431
         ],
         "overheadPct": 30,
-        "shape": "bucket"
+        "shape": "bucket",
+        "matAdjPct": 52.1
       },
       "louver_slip": {
         "sheet": "คิดทุน ระแนงสลับ",
@@ -3789,7 +3796,8 @@
           1.4
         ],
         "overheadPct": 30,
-        "shape": "bucket"
+        "shape": "bucket",
+        "matAdjPct": -20.6
       },
       "gate": {
         "sheet": "คิดทุน ประตูรั้ว",
@@ -3800,7 +3808,8 @@
           1.431
         ],
         "overheadPct": 30,
-        "shape": "bucket"
+        "shape": "bucket",
+        "matAdjPct": 33
       },
       "shower": {
         "sheet": "คิดทุน ชุด Shower",

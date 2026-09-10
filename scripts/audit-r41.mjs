@@ -140,6 +140,99 @@ for (const c of T.cases) {
 
 const n = (x) => Math.round(x).toLocaleString("th-TH");
 
+// ลำดับตามตารางในไฟล์ ★ ตารางราคาขาย R4.1 (เจ้าของสั่งให้เรียงแบบเดียวกับไฟล์)
+const ORDER = [
+  "Sliding door — SMS", "Sliding door — Euro", "Sliding door — E-series", "Sliding door — top hung (Hafele)",
+  "Sliding door — SlimLux", "Sliding louvre panel",
+  "Casement — standard", "Pivot door", "PC Door", "Casement — Velora", "Solid panel door",
+  "Awning window", "Lift-up window", "Glass louvre",
+  "Bi-fold", "Bi-fold — Euro", "Bi-fold — lift up",
+  "Fixed lite", "Fixed — curved", "Casement — curved",
+  "หลังคา เพิง", "หลังคา จั่ว", "หลังคา เลื่อน",
+  "Louvre screen", "Louvre screen — alternating", "Louvre screen — rotating", "Sliding gate",
+  "Smartboard wall", "Isowall wall", "Gypsum ceiling", "Fibre-cement ceiling",
+  "Cabinet door — Futuretech", "Shower enclosure", "Balustrade",
+];
+const TH = {
+  "Sliding door — SMS": "บานเลื่อน SMS", "Sliding door — Euro": "บานเลื่อน ยูโร", "Sliding door — E-series": "บานเลื่อน E-series",
+  "Sliding door — top hung (Hafele)": "บานเลื่อนรางบน", "Sliding door — SlimLux": "บานเลื่อน SlimLux", "Sliding louvre panel": "บานระแนงเลื่อน",
+  "Casement — standard": "บานเปิด", "Pivot door": "บานหมุน", "PC Door": "PC Door", "Casement — Velora": "Velora", "Solid panel door": "บานโซลิด",
+  "Awning window": "บานกระทุ้ง", "Lift-up window": "บานยก", "Glass louvre": "บานเกล็ด",
+  "Bi-fold": "เฟี้ยม", "Bi-fold — Euro": "เฟี้ยมยูโร", "Bi-fold — lift up": "เฟี้ยมยก",
+  "Fixed lite": "ติดตาย", "Fixed — curved": "ตายดัดโค้ง", "Casement — curved": "เปิดดัดโค้ง",
+  "Louvre screen": "ระแนง", "Louvre screen — alternating": "ระแนงสลับ", "Louvre screen — rotating": "ระแนงหมุน", "Sliding gate": "ประตูรั้ว",
+  "Smartboard wall": "ผนังสมาร์ทบอร์ด", "Isowall wall": "ผนังไอโซวอล", "Gypsum ceiling": "ฝ้ายิปซัม", "Fibre-cement ceiling": "ฝ้าไม้เทียม",
+  "Cabinet door — Futuretech": "บานตู้ Futuretech", "Shower enclosure": "ชุด Shower", "Balustrade": "ราวกันตก",
+};
+const ordIdx = (p) => { const i = ORDER.indexOf(p); return i < 0 ? 999 : i; };
+
+if (process.argv.includes("--sum")) {
+  rows.sort((x, y) => ordIdx(x.product) - ordIdx(y.product));
+  const g = new Map();
+  for (const r of rows) {
+    const k = TH[r.product] ?? r.product;
+    const o = g.get(k) ?? { mat: 0, matPct: 0, lab: 0, sell: 0, sellPct: 0, noLab: 0, noSell: 0, n: 0, matSell: 0, needMatSell: 0 };
+    o.n++;
+    const dm = r.matWeb - r.matFile;
+    if (Math.abs(dm) > Math.abs(o.mat)) { o.mat = dm; o.matPct = r.matFile > 0 ? dm / r.matFile * 100 : 0; }
+    const noLab = !(r.prodFile > 0) && !(r.instFile > 0);
+    if (noLab) o.noLab++;
+    else for (const d of [r.prodWeb - r.prodFile, r.instWeb - r.instFile]) if (Math.abs(d) > Math.abs(o.lab)) o.lab = d;
+    if (!(r.sellFile > 0)) o.noSell++;
+    else {
+      const ds = r.sellWeb - r.sellFile;
+      if (Math.abs(ds) > Math.abs(o.sell)) { o.sell = ds; o.sellPct = ds / r.sellFile * 100; }
+      o.matSell += r.matSell; o.needMatSell += Math.max(0, r.sellFile - (r.sellWeb - r.matSell));
+    }
+    g.set(k, o);
+  }
+  // --adj = พิมพ์ "% กำไรค่าของที่ต้องปรับ" ทุกรุ่น ไม่สนว่าทุนจะหลุดเกณฑ์หรือไม่
+  //   ใช้กับกอง B ที่เจ้าของเคาะว่า "ราคาอลูเอาตามเว็บ กำไรเพิ่มเอา" (9 ก.ย.69)
+  if (process.argv.includes("--adj")) {
+    for (const [k, o] of g) {
+      const adj = o.matSell > 0 ? (o.needMatSell / o.matSell - 1) * 100 : 0;
+      console.log("ADJ	" + k + "	" + adj.toFixed(1));
+    }
+    process.exit(0);
+  }
+  const sign = (x) => (x > 0 ? "+" : "") + Math.round(x).toLocaleString("th-TH");
+  console.log("| รุ่น | ค่าของ ต่างมากสุด | ค่าแรง ต่างมากสุด | ราคาขาย ต่างมากสุด | ต้องทำอะไร |");
+  console.log("|---|---|---|---|---|");
+  for (const [k, o] of g) {
+    const adj = o.matSell > 0 ? (o.needMatSell / o.matSell - 1) * 100 : 0;
+    let todo;
+    // เจ้าของเคาะ 9 ก.ย.69 "ราคาอลูเอาตามเว็บ กำไรเพิ่มเอา"
+    //   → ทุนต่างได้ ตัดสินที่ "ราคาขายตรงไหม" เป็นหลัก
+    //   ใช้ "เคสที่ต่างมากสุด" ไม่ใช่ค่าเฉลี่ย — ตัวปรับกำไรมีตัวเดียวต่อรุ่น
+    //   แต่ส่วนต่างของทุนไม่เท่ากันทุกขนาด → บางขนาดยังหลุดได้
+    const matBad = Math.abs(o.mat) > TOL_MAT, labBad = Math.abs(o.lab) > TOL_LAB;
+    const sellOk = Math.abs(o.sellPct) <= 5;   // ราคาขายเคสแย่สุดต่างไม่เกิน 5%
+    if (o.noSell === o.n || o.noLab === o.n) todo = "⚪ ข้อมูลไม่ครบ เทียบไม่ได้";
+    else if (sellOk) todo = matBad ? "✅ ราคาขายตรง (ทุนต่าง ชดเชยด้วยกำไรแล้ว)" : "✅ ไม่ต้องแก้";
+    else if (Math.abs(adj) >= 1) todo = "🔧 ปรับกำไรค่าของ " + (adj > 0 ? "+" : "") + adj.toFixed(0) + "%";
+    else if (matBad) todo = "❌ ทุนกระจายไม่เท่ากันตามขนาด (กำไรตัวเดียวคุมไม่หมด)";
+    else if (labBad) todo = "❌ แก้ค่าแรง";
+    else todo = "⚠️ ต่างตามขนาด (เคสแย่สุด " + (o.sellPct>0?"+":"") + o.sellPct.toFixed(0) + "%)";
+    console.log("| " + k + " | " + sign(o.mat) + " (" + (o.matPct >= 0 ? "+" : "") + o.matPct.toFixed(0) + "%) | "
+      + (o.noLab === o.n ? "ไฟล์ไม่มีค่าแรง" : sign(o.lab)) + " | "
+      + (o.noSell === o.n ? "—" : sign(o.sell) + " (" + (o.sellPct >= 0 ? "+" : "") + o.sellPct.toFixed(0) + "%)") + " | " + todo + " |");
+  }
+  process.exit(0);
+}
+
+if (process.argv.includes("--table")) {
+  const d = (a2, b2) => { const x = Math.round(a2 - b2); return (x > 0 ? "+" : "") + x.toLocaleString("th-TH"); };
+  rows.sort((x, y) => ordIdx(x.product) - ordIdx(y.product));
+  console.log("| รุ่น | ขนาด (ซม.) | บาน | ค่าของ เว็บ | ค่าของ ไฟล์ | ต่าง | ผลิต เว็บ | ผลิต ไฟล์ | ติดตั้ง เว็บ | ติดตั้ง ไฟล์ | ขาย เว็บ | ขาย ไฟล์ | ต่าง |");
+  console.log("|---|---|---|---|---|---|---|---|---|---|---|---|---|");
+  for (const r of rows)
+    console.log("| " + (TH[r.product] ?? r.product) + " | " + r.size + " | " + r.p + " | "
+      + n(r.matWeb) + " | " + n(r.matFile) + " | " + d(r.matWeb, r.matFile) + " | "
+      + n(r.prodWeb) + " | " + n(r.prodFile) + " | " + n(r.instWeb) + " | " + n(r.instFile) + " | "
+      + n(r.sellWeb) + " | " + n(r.sellFile) + " | " + (r.sellFile > 0 ? d(r.sellWeb, r.sellFile) : "—") + " |");
+  process.exit(0);
+}
+
 if (process.argv.includes("--rows")) {
   console.log("รุ่น | ขนาด | บาน | ค่าของ เว็บ/ไฟล์ | ผลิต เว็บ/ไฟล์ | ติดตั้ง เว็บ/ไฟล์ | ขาย เว็บ/ไฟล์");
   for (const r of rows)

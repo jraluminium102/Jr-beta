@@ -12,6 +12,7 @@
  *   ④ ขึ้นถูกหมวด — รุ่นที่ชีตไม่มีมอเตอร์ ต้องไม่มีให้เลือก
  */
 import fs from "node:fs";
+const NL = "\n";   // ขึ้นบรรทัดใหม่ (เลี่ยงพิมพ์ escape ตรง ๆ ในสคริปต์แก้ไฟล์)
 import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
 import { computeCost, autoSetsFor, motorSizeOk, pickMotorByWeight, MOTOR_ADDON_IDS } from "../src/lib/calculator40/engine.mjs";
 import { applyBootstrap } from "../src/lib/calculator40/bootstrap.mjs";
@@ -221,6 +222,45 @@ console.log("\n═══ ④ มอเตอร์ขึ้นตามประ
     const z = lineNames("zipscreen", { w: 300, h: 240, motor: "manual", addons: { rain_sensor: "yes" } });
     ok("ม่านซิปมือดึงล้วน: ไม่มีเซนเซอร์", !z.some((n) => /เซนเซอร์กันฝน/.test(n)), z.join(" | "));
   }
+}
+
+// ── ⑭ ห้องกระจก G6 — ช่องกำไรค่าผลิต/ค่าติดตั้ง ต้องมีผลจริง ────
+//   เจ้าของจับได้ 10 ก.ย.69 "ลากยังไงราคาก็ไม่ขยับ" — RoomComposer ส่งแต่ profitPct ตัวเดียว
+//   และไม่เคยส่ง profitManual → ทุกบานใช้สูตรตามไฟล์เสมอ ช่อง % เป็นของตาย
+console.log(NL + "═══ ⑭ ห้องกระจก G6 — กำไร 3 ก้อนต้องมีผล ═══");
+{
+  const M = (mat, prod, inst) => computeCost(PB, PRODUCTS.fixed,
+    { w: 150, h: 200, p: 1, glassType: "เขียว 6มม.", profitManual: true, profitMat: mat, profitProd: prod, profitInst: inst });
+  const base = M(100, 100, 200);
+  ok("ขยับ % ค่าผลิต → ก้อนค่าผลิตขยับ", M(100, 300, 200).sell.parts.prod > base.sell.parts.prod);
+  ok("ขยับ % ค่าผลิต → ก้อนค่าติดตั้งนิ่ง", M(100, 300, 200).sell.parts.inst === base.sell.parts.inst);
+  ok("ขยับ % ค่าติดตั้ง → ก้อนค่าติดตั้งขยับ", M(100, 100, 500).sell.parts.inst > base.sell.parts.inst);
+  ok("ขยับ % ค่าติดตั้ง → ก้อนค่าผลิตนิ่ง", M(100, 100, 500).sell.parts.prod === base.sell.parts.prod);
+
+  // ซอร์ส: นับจำนวนครั้งด้วย split (ไม่ใช้ regex — อ่านง่ายกว่า/พังยากกว่า)
+  const cnt = (t, k) => t.split(k).length - 1;
+  const rc = fs.readFileSync("src/components/calculator40/RoomComposer.tsx", "utf8");
+  ok("RoomComposer: ทุก computeCost ส่งกำไร 3 ก้อน",
+    cnt(rc, "computeCost(") > 0 && cnt(rc, "profitManual: true") >= cnt(rc, "computeCost("),
+    "computeCost " + cnt(rc, "computeCost(") + " จุด · ส่งกำไร " + cnt(rc, "profitManual: true"));
+  // นับเป็นรายบรรทัด — ทุกบรรทัดที่เรียก panePrice ต้องมีกำไรต่อท้ายอาร์กิวเมนต์
+  {
+    const pp = rc.split(NL).filter((l) => l.includes("panePrice("));
+    ok("RoomComposer: panePrice ทุกจุดส่งกำไรต่อ",
+      pp.length > 0 && pp.every((l) => l.includes(", pf)") || l.includes(", profitOpt)")),
+      pp.length + " จุด · ส่งต่อ " + pp.filter((l) => l.includes(", pf)") || l.includes(", profitOpt)")).length);
+  }
+  ok("RoomComposer: ส่ง profitOpt ต่อให้คอมโพเนนต์ลูกครบ",
+    cnt(rc, "profitPct={profitPct}") === cnt(rc, "profitOpt={profitOpt}"),
+    cnt(rc, "profitPct={profitPct}") + " vs " + cnt(rc, "profitOpt={profitOpt}"));
+  const cc = fs.readFileSync("src/components/Calculator40Client.tsx", "utf8");
+  // ทั้งห้องกระจก (G6) และผสมบาน (G1) ต้องได้กำไร 3 ก้อน — บั๊กเดียวกัน
+  ok("หน้าคิดราคา: ส่งกำไร 3 ก้อนให้ห้องกระจก + ผสมบานครบ",
+    cnt(cc, "<RoomComposer") + cnt(cc, "<SubPanesSection") === cnt(cc, "profitOpt={{ manual: profitManual"),
+    (cnt(cc, "<RoomComposer") + cnt(cc, "<SubPanesSection")) + " vs " + cnt(cc, "profitOpt={{ manual: profitManual"));
+  ok("ผสมบาน (G1): subPrice ส่งกำไร 3 ก้อนต่อ",
+    cnt(cc, "subPrice(") === cnt(cc, "manual: profitManual, mat: profitPct"),
+    cnt(cc, "subPrice(") + " จุด");
 }
 
 // ── ⑬ มอเตอร์ Velora บานเปิดสลิม (Kuangdi) — ชีตราคาออโต้ แถว 34-36 ──

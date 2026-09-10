@@ -11,7 +11,7 @@
  *   fprice override > computeCost(รุ่นจริง, w,h,n, form, สี/กระจกตามบานหลัก) + extra (มุ้ง/วัสดุ/คาดตาราง แบบ flat legacy)
  * ผลรวม subSell/subCost คำนวณใน Calculator40Client.tsx (เหมือน roofSegs) แล้วบวกเข้า sell ตอนขึ้นใบ
  */
-import { panePrice } from "@/lib/calculator40/pane-calc";
+import { panePrice, type PaneProfit } from "@/lib/calculator40/pane-calc";
 // @ts-expect-error — products เป็น ESM JS ล้วน
 import { PRODUCTS } from "@/lib/calculator40/products.mjs";
 
@@ -46,7 +46,7 @@ function fmtBaht(n: number) {
 }
 
 // ราคาบานย่อย — ตรง app.js subPrice() เป๊ะ (ตัดทางที่ไม่รองรับในเวอร์ชัน simplified: s.opt popup ออก เหลือ legacy mat/gridmark)
-export function subPrice(s: SubPane, pb: any, mainColor: string, mainGlass: string, profitPct: number): number {
+export function subPrice(s: SubPane, pb: any, mainColor: string, mainGlass: string, profitPct: number, profitOpt?: PaneProfit): number {
   if (s.pid === "_custom") return +s.price! || 0;
   const sp = (PRODUCTS as any)[s.pid];
   if (!sp) return 0;
@@ -59,7 +59,7 @@ export function subPrice(s: SubPane, pb: any, mainColor: string, mainGlass: stri
   //   ⚠ mainColor = "คีย์สี" (white/sahara/wood_teak) ไม่ใช่หมวดค่าอบ — pane-calc แปลงเอง
   //      เดิมการ์ดในหน้าจอส่งคีย์สี แต่ตอนลงใบเสนอส่งหมวดค่าอบ = ตัวเลขสองที่ไม่ตรงกัน
   else base = panePrice({ key: 0, typeKey: s.pid, w: s.w || 1, h: s.h || 1, n: s.n || 1, form: sForm, addons: {} },
-    pb, mainColor, mainGlass, profitPct).amount;
+    pb, mainColor, mainGlass, profitPct, undefined, profitOpt).amount;
   let extra = 0;
   if (s.mat === "frame" || s.mat === "pleat") extra += 3000;
   else if (s.mat === "solid") extra += Math.ceil(((s.w || 1) * (s.h || 1) * 3500) / 100) * 100;
@@ -107,13 +107,15 @@ function Stepper({ value, onChange, min = 0, max = 20 }: { value: number; onChan
   );
 }
 
-export default function SubPanesSection({ subs, setSubs, pb, mainColor, mainGlass, profitPct }: {
+export default function SubPanesSection({ subs, setSubs, pb, mainColor, mainGlass, profitPct, profitOpt }: {
   subs: SubPane[];
   setSubs: (fn: (s: SubPane[]) => SubPane[]) => void;
   pb: any;
   mainColor: string;
   mainGlass: string;
   profitPct: number;
+  /** กำไร 3 ก้อนแยก + โหมดกรอกเอง (เดิมส่งแต่ profitPct ตัวเดียว — ช่องค่าผลิต/ติดตั้งจึงไม่มีผล) */
+  profitOpt?: PaneProfit;
 }) {
   function addSub(pid: string, label: string, w: number, h: number, key: number) {
     if (pid === "_custom") {
@@ -154,7 +156,7 @@ export default function SubPanesSection({ subs, setSubs, pb, mainColor, mainGlas
 
       {subs.map((s) => {
         const isCustom = s.pid === "_custom";
-        const price = subPrice(s, pb, mainColor, mainGlass, profitPct);
+        const price = subPrice(s, pb, mainColor, mainGlass, profitPct, profitOpt);
         return (
           <div key={s.key} className="rounded-xl border border-black/5 bg-white/60 p-3 space-y-2">
             <div className="flex items-center gap-2 flex-wrap">

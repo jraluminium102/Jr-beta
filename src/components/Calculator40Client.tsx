@@ -516,7 +516,8 @@ export default function Calculator40Client({ customers = [], priceOverride, line
       // ── ผสมบาน (G1) — คิดราคาตามชนิดจริง (สี/กระจกตามบานหลัก) ตรง app.js calc() บรรทัด 236-245 ──
       if (subs.length) {
         subs.forEach((s) => {
-          const amt = subPrice(s, pb, color, glassType, profitPct);
+          // กำไร 3 ก้อน + โหมดกรอกเอง — ชุดเดียวกับบานหลัก (เดิมส่งแต่ profitPct ตัวเดียว)
+          const amt = subPrice(s, pb, color, glassType, profitPct, { manual: profitManual, mat: profitPct, prod: pProd, inst: pInst });
           if (amt <= 0) return;
           sl.push({ desc: subDesc(s), amt });
           sSell += amt;
@@ -1464,6 +1465,9 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                   mainColor={color}
                   mainGlass={glassType}
                   profitPct={Number(profit) || 100}
+                  // กำไร 3 ก้อน + โหมดกรอกเอง — เดิมส่งแต่ profitPct ตัวเดียว ช่องค่าผลิต/ค่าติดตั้งเลยกดแล้วราคาไม่ขยับ
+                  //   (เจ้าของจับได้ 10 ก.ย.69 · หน้าจอมี 3 ช่องแต่มีผลจริงช่องเดียว)
+                  profitOpt={{ manual: profitManual, mat: Number(shownPct.mat) || 100, prod: Number(shownPct.prod) || 100, inst: Number(shownPct.inst) || 200 }}
                   initial={roomInitial}
                   onTotal={(t) => { setRoomTotals(t); roomStateRef.current = (t as any).state ?? roomStateRef.current; }}
                 />
@@ -1526,6 +1530,9 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                   mainColor={color}
                   mainGlass={glassType}
                   profitPct={Number(profit) || 100}
+                  // กำไร 3 ก้อน + โหมดกรอกเอง — เดิมส่งแต่ profitPct ตัวเดียว ช่องค่าผลิต/ค่าติดตั้งเลยกดแล้วราคาไม่ขยับ
+                  //   (เจ้าของจับได้ 10 ก.ย.69 · หน้าจอมี 3 ช่องแต่มีผลจริงช่องเดียว)
+                  profitOpt={{ manual: profitManual, mat: Number(shownPct.mat) || 100, prod: Number(shownPct.prod) || 100, inst: Number(shownPct.inst) || 200 }}
                 />
               )}
 

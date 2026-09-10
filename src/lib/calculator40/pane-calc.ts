@@ -95,8 +95,12 @@ export const paneCut = (pane: Pane): Record<string, string> => {
  * ราคาต่อบาน (ขายรวมติดตั้ง) — ชุด opt เดียวกับหน้า G1
  * @returns amount = ราคาขายรวมติดตั้ง · mosqLabel = ข้อความมุ้งที่ขึ้นใบ · r = ผลเต็มจาก engine
  */
+/** กำไร 3 ก้อน + โหมด — ห้องกระจก G6 ต้องส่งมาครบ ไม่งั้นช่อง % บนจอเป็นของตาย */
+export type PaneProfit = { manual?: boolean; mat?: number; prod?: number; inst?: number };
+
 export function panePrice(
-  pane: Pane, pb: any, roomColor: string, roomGlass: string, profitPct: number, movePanesOverride?: number
+  pane: Pane, pb: any, roomColor: string, roomGlass: string, profitPct: number, movePanesOverride?: number,
+  profitOpt?: PaneProfit,
 ): { amount: number; mosqLabel?: string; r?: any } {
   // รุ่นนอกลิสต์ (เช่น บานย่อยในชุดผสมบาน) → ใช้ตัวจาก PRODUCTS ตรง ๆ ห้ามคืน 0 เงียบ ๆ
   const prod = PANE_BY_KEY[pane.typeKey] || (PRODUCTS as any)[pane.typeKey];
@@ -111,6 +115,15 @@ export function panePrice(
     stockColor: stockColorOfCalc(pane.colorIdx || roomColor),   // ราคาเส้นตามสีจริงในสโตร์
     colorKey: pane.colorIdx || roomColor,                        // ราคาเส้นแยกสีจากไฟล์ถอดทุน
     profitPct, installProfitPct: profitPct, addons: pane.addons || {},
+    // กำไร 3 ก้อนแยก + โหมดกรอกเอง — ไม่ส่งมา = ใช้สูตรตามไฟล์เหมือนเดิมเป๊ะ
+    //   (เจ้าของจับได้ 10 ก.ย.69 "ช่องกำไรค่าผลิต/ค่าติดตั้ง ไม่มีผลกับราคาเลย")
+    ...(profitOpt && profitOpt.manual ? {
+      profitManual: true,
+      profitMat: profitOpt.mat ?? profitPct,
+      profitProd: profitOpt.prod ?? profitPct,
+      profitInst: profitOpt.inst ?? profitPct,
+      installProfitPct: profitOpt.inst ?? profitPct,
+    } : {}),
     spec: paneSpec(prod, pane),                                  // ราง/มือจับ ฯลฯ — ชุดเดียวกับ G1
     // finRate เป็นราคาขาย → ÷(1+กำไร%) เป็นทุน แล้วเอนจิน ×(1+กำไร%) กลับ (ไม่ขึ้นกับกำไร%)
     frameColorRate: prod.showColor ? ((SHEET_FIN[rc.bake] || 0) / (1 + (profitPct || 100) / 100)) : 0,

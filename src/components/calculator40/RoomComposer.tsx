@@ -33,7 +33,7 @@ import { groupGlass, allGlassKeys } from "@/lib/calculator40/glass-cats";
 import { computeCost, ceil100, CEIL_RATE } from "@/lib/calculator40/engine.mjs";
 import { stockColorOfCalc } from "@/lib/calculator40/stock-link";
 // บานในห้องกระจก: ชนิดบาน + ราคาต่อบาน + ค่าตั้งต้น spec — ก้อนเดียวกับหน้า G1
-import { PANE_TYPES, PANE_BY_KEY, SHEET_FIN, panePrice, paneSpec, paneCut, type Pane } from "@/lib/calculator40/pane-calc";
+import { PANE_TYPES, PANE_BY_KEY, SHEET_FIN, panePrice, paneSpec, paneCut, type Pane, type PaneProfit } from "@/lib/calculator40/pane-calc";
 // กติกาจำนวนบานต่อรูปแบบ (เปิดคู่กลาง = 4/6) — ก้อนเดียวกับหน้า G1
 import { formRule, formNote, allowedPanes, snapPanes } from "@/lib/calculator40/form-rules";
 // อุปกรณ์ "ค่าของ" ดึงจากใบตัดชุดเดียวกับหน้า G1 — บานในห้องกระจกต้องคิดเท่ากันเป๊ะ (เจ้าของสั่ง 21 ส.ค.69)
@@ -150,7 +150,7 @@ function paneAreaSum(s: Side): number {
 // ไอโซวอลทับพื้นที่ที่เป็นประตู/หน้าต่างไปแล้ว (เจ้าของย้ำ "คิดเต็มไม่ได้" 5ส.ค.69)
 // วิธี: คิดต้นทุนผนังเต็ม (BOM จริงรวมโครง/PERIM) แล้วสเกลลงตามสัดส่วนพื้นที่สุทธิ/พื้นที่เต็ม — เป็น app-layer
 // approximation (ไม่แตะ engine) ที่สเกล "รวมโครง" ไปด้วย ไม่ใช่แค่แผ่นบอร์ด แต่เจ้าของรับได้ (ระบุชัดในคอมเมนต์)
-function wallPrice(s: Extract<Side, { kind: "wall" }>, pb: any, profitPct: number): number {
+function wallPrice(s: Extract<Side, { kind: "wall" }>, pb: any, profitPct: number, pf?: PaneProfit): number {
   const fullArea = (s.aw || 3) * (s.ah || 2.6);
   const paneArea = paneAreaSum(s);
   const netArea = Math.max(0, fullArea - paneArea); // clamp ≥0 กันบานใหญ่กว่าผนัง
@@ -159,21 +159,22 @@ function wallPrice(s: Extract<Side, { kind: "wall" }>, pb: any, profitPct: numbe
   if (!prod) return 0;
   const r: any = computeCost(pb, prod, {
     w: (s.aw || 3) * 100, h: (s.ah || 2.6) * 100, p: 1, form: prod.defForm, profitPct, installProfitPct: profitPct, addons: s.addons || {},
+    ...(pf && pf.manual ? { profitManual: true, profitMat: pf.mat ?? profitPct, profitProd: pf.prod ?? profitPct, profitInst: pf.inst ?? profitPct, installProfitPct: pf.inst ?? profitPct } : {}),
   });
   const fullCost = r.sell.withInstall;
   if (fullArea <= 0) return 0;
   return Math.round(fullCost * netArea / fullArea);
 }
 
-function sideTotal(s: Side, pb: any, color: string, glassType: string, profitPct: number): number {
+function sideTotal(s: Side, pb: any, color: string, glassType: string, profitPct: number, pf?: PaneProfit): number {
   // ราคาบาน (ประตู/หน้าต่าง) ในด้านนี้ — glass ใช้ cols เดิม · wall/open ก็คิดจาก cols เหมือนกัน (0 ถ้าไม่มีบาน)
-  const paneCost = sidePanes(s).reduce((a, p) => a + panePrice(p, pb, color, glassType, profitPct).amount, 0);
-  if (s.kind === "wall") return wallPrice(s, pb, profitPct) + paneCost; // ผนัง(สุทธิหักช่องบาน) + บานที่เจาะ
+  const paneCost = sidePanes(s).reduce((a, p) => a + panePrice(p, pb, color, glassType, profitPct, undefined, pf).amount, 0);
+  if (s.kind === "wall") return wallPrice(s, pb, profitPct, pf) + paneCost; // ผนัง(สุทธิหักช่องบาน) + บานที่เจาะ
   return paneCost; // glass = Σบาน · open = Σบาน (ไม่มีบาน = 0, เปิดโล่งจริง)
 }
 
 // ฝ้า — ใช้ ceil_* product จริง (w/h = กว้าง/ยาวห้องจริง ซม. ตรง PERIM_VARS ของ products.mjs) หรือ flat CEIL_RATE ถ้าไม่มี product ตรง
-function ceilPrice(typeKey: string, w: number, l: number, insul: boolean, pb: any, profitPct: number): number {
+function ceilPrice(typeKey: string, w: number, l: number, insul: boolean, pb: any, profitPct: number, pf?: PaneProfit): number {
   const area = w * l;
   if (area <= 0) return 0;
   const t = CEIL_TYPES.find((x) => x.key === typeKey);
@@ -181,7 +182,8 @@ function ceilPrice(typeKey: string, w: number, l: number, insul: boolean, pb: an
     const prod = (PRODUCTS as any)[t.r4id];
     const form = insul && prod.forms?.includes('ใส่ฉนวน rockwool 3"') ? 'ใส่ฉนวน rockwool 3"' : prod.defForm;
     const material = t.key === "wood" ? "ไม้ทิพย์|สีพื้น" : undefined;
-    const r: any = computeCost(pb, prod, { w: w * 100, h: l * 100, p: 1, form, material, profitPct, installProfitPct: profitPct, addons: {} });
+    const r: any = computeCost(pb, prod, { w: w * 100, h: l * 100, p: 1, form, material, profitPct, installProfitPct: profitPct, addons: {},
+      ...(pf && pf.manual ? { profitManual: true, profitMat: pf.mat ?? profitPct, profitProd: pf.prod ?? profitPct, profitInst: pf.inst ?? profitPct, installProfitPct: pf.inst ?? profitPct } : {}) });
     return r.sell.withInstall;
   }
   // ไม่มี R4.0 product ตรง → flat CEIL_RATE (engine.mjs, แหล่งเดียวกับเครื่องเดิม + G3) — ติดป้าย (R3.9)
@@ -280,7 +282,7 @@ function WallElevation({
 //   รูปด้าน 2 มิติ (ช่องซ้าย→ขวา · ในช่องซ้อนบน→ล่าง) + แถบจัดเรียง ◀▶▲▼＋บน/ล่าง/ช่อง + การ์ดตั้งค่าบานที่เลือกเต็ม (พาริตี้ R3.9 G6R)
 //   cols=[] ใช้ได้ (เช่น เปิดโล่งที่ยังไม่ใส่บาน) — ปุ่ม ＋ช่อง ยังโชว์ให้เริ่มใส่บานแรกได้เสมอ
 function ColsEditor({
-  cols, selKey, onSelect, cardRefs, pb, color, glassFallback, profitPct,
+  cols, selKey, onSelect, cardRefs, pb, color, glassFallback, profitPct, profitOpt,
   onPatchPane, onRemovePane, onAddColumn, onAddPiece, onMoveCol, onMovePc,
 }: {
   cols: Col[];
@@ -291,6 +293,7 @@ function ColsEditor({
   color: string;
   glassFallback: string;
   profitPct: number;
+  profitOpt?: PaneProfit;
   onPatchPane: (key: number, p: Partial<Pane>) => void;
   onRemovePane: (key: number) => void;
   onAddColumn: () => void;
@@ -306,7 +309,7 @@ function ColsEditor({
   const totalW = cols.reduce((a, c) => a + Math.max(0.3, ...c.pcs.map((p) => p.w || 0)), 0);
   const arrCls = "press min-h-[32px] min-w-[34px] px-2 rounded-lg text-xs font-bold glass-soft text-ink-2 hover:bg-white/80";
   const prod = sel ? PANE_BY_KEY[sel.typeKey] : null;
-  const { amount: price, mosqLabel } = sel ? panePrice(sel, pb, color, glassFallback, profitPct) : { amount: 0, mosqLabel: undefined as string | undefined };
+  const { amount: price, mosqLabel } = sel ? panePrice(sel, pb, color, glassFallback, profitPct, undefined, profitOpt) : { amount: 0, mosqLabel: undefined as string | undefined };
   const movePanes = sel ? Math.max(1, (sel.n || 1) - (sel.fixedPanes || 0)) : 1;
   const glassKeys = allGlassKeys(pb);
 
@@ -537,12 +540,15 @@ function ColsEditor({
 }
 
 export default function RoomComposer({
-  pb, mainColor, mainGlass, profitPct, onTotal, initial,
+  pb, mainColor, mainGlass, profitPct, profitOpt, onTotal, initial,
 }: {
   pb: any;
   mainColor: string;
   mainGlass: string;
   profitPct: number;
+  /** กำไร 3 ก้อนแยก + โหมดกรอกเอง — ก่อนหน้านี้ส่งแต่ profitPct ตัวเดียว
+   *  ช่อง "กำไรค่าผลิต/ค่าติดตั้ง" เลยกดแล้วราคาไม่ขยับ (เจ้าของจับได้ 10 ก.ย.69) */
+  profitOpt?: PaneProfit;
   onTotal?: (t: RoomTotals) => void;
   initial?: any; // state ที่บันทึกไว้ (0093) — ตั้งต้นทุกช่องตามสูตรเดิม (parent remount ด้วย key ตอนโหลด)
 }) {
@@ -625,7 +631,7 @@ export default function RoomComposer({
   function sideGlass(i: number) { return sideColorOvr[i]?.glass || mainGlass; }
 
   const sideTotals = useMemo(
-    () => sides.map((s, i) => sideTotal(s, pb, sideColor(i), sideGlass(i), profitPct)),
+    () => sides.map((s, i) => sideTotal(s, pb, sideColor(i), sideGlass(i), profitPct, profitOpt)),
     [sides, pb, sideColorOvr, mainColor, mainGlass, profitPct]
   );
 
@@ -644,6 +650,7 @@ export default function RoomComposer({
     const pnl = prod.defaults?.p ?? 1;
     const rOpt: any = {
       w: w * 100, h: l * 100, p: pnl, form: prod.defForm, material: roofMaterial, profitPct, installProfitPct: profitPct, addons: roofAddons,
+      ...(profitOpt && profitOpt.manual ? { profitManual: true, profitMat: profitOpt.mat ?? profitPct, profitProd: profitOpt.prod ?? profitPct, profitInst: profitOpt.inst ?? profitPct, installProfitPct: profitOpt.inst ?? profitPct } : {}),
     };
     // ม่านซิปบนหลังคา (Skylight) — คิดจากรุ่นม่านซิปจริง ส่งเข้า opt.roofZipR4 (แบบ mosquito)
     const rzR4 = computeRoofZipR4(roofAddons, { wCm: w * 100, hCm: l * 100 }, pb, profitPct);
@@ -654,7 +661,8 @@ export default function RoomComposer({
     if (roofIsAwning) roofSegs.forEach((sg) => {
       const sw = (Number(sg.w) || 0) * 100, sh = (Number(sg.l) || 0) * 100;
       if (!(sw > 0 && sh > 0)) return;
-      const sr: any = computeCost(pb, prod, { w: sw, h: sh, p: 1, form: prod.defForm, material: roofMaterial, profitPct, installProfitPct: profitPct, addons: {} });
+      const sr: any = computeCost(pb, prod, { w: sw, h: sh, p: 1, form: prod.defForm, material: roofMaterial, profitPct, installProfitPct: profitPct, addons: {},
+        ...(profitOpt && profitOpt.manual ? { profitManual: true, profitMat: profitOpt.mat ?? profitPct, profitProd: profitOpt.prod ?? profitPct, profitInst: profitOpt.inst ?? profitPct, installProfitPct: profitOpt.inst ?? profitPct } : {}) });
       t += sr.sell.withInstall;
     });
     return t;
@@ -662,7 +670,7 @@ export default function RoomComposer({
 
   const ceilTotal = useMemo(() => {
     if (!ceilOn) return 0;
-    return ceilPrice(ceilType, Number(ceilW) || 0, Number(ceilL) || 0, ceilInsul, pb, profitPct);
+    return ceilPrice(ceilType, Number(ceilW) || 0, Number(ceilL) || 0, ceilInsul, pb, profitPct, profitOpt);
   }, [ceilOn, ceilType, ceilW, ceilL, ceilInsul, pb, profitPct]);
 
   const floorTotal = useMemo(() => {
@@ -936,6 +944,7 @@ export default function RoomComposer({
                   color={sideColor(i)}
                   glassFallback={sideGlass(i)}
                   profitPct={profitPct}
+                  profitOpt={profitOpt}
                   onPatchPane={(key, p) => patchPane(i, key, p)}
                   onRemovePane={(key) => removePane(i, key)}
                   onAddColumn={() => addColumn(i)}
@@ -968,7 +977,7 @@ export default function RoomComposer({
                     <input type="number" step={0.1} value={s.ah || ""} onChange={(e) => patchWall(i, { ah: +e.target.value || 0 })}
                       className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-20 outline-none tabular-nums" />
                     <span className="text-ink-3">ม.</span>
-                    <span className="ml-2 font-semibold text-brand-dark tabular-nums">{fmtBaht(wallPrice(s, pb, profitPct))}</span>
+                    <span className="ml-2 font-semibold text-brand-dark tabular-nums">{fmtBaht(wallPrice(s, pb, profitPct, profitOpt))}</span>
                   </div>
                   {/* รูปด้านผนัง — วาดประตู/หน้าต่างเจาะในผนัง (ลายทแยง) + ป้ายชนิดผนัง + พื้นที่สุทธิ (หักช่องบาน) */}
                   <WallElevation
@@ -1013,6 +1022,7 @@ export default function RoomComposer({
                       color={sideColor(i)}
                       glassFallback={sideGlass(i)}
                       profitPct={profitPct}
+                      profitOpt={profitOpt}
                       onPatchPane={(key, p) => patchPane(i, key, p)}
                       onRemovePane={(key) => removePane(i, key)}
                       onAddColumn={() => addColumn(i)}
@@ -1041,6 +1051,7 @@ export default function RoomComposer({
                     color={sideColor(i)}
                     glassFallback={sideGlass(i)}
                     profitPct={profitPct}
+                    profitOpt={profitOpt}
                     onPatchPane={(key, p) => patchPane(i, key, p)}
                     onRemovePane={(key) => removePane(i, key)}
                     onAddColumn={() => addColumn(i)}
