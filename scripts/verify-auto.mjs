@@ -246,6 +246,19 @@ console.log(NL + "═══ ⑮ SlimLux — ราคาเส้นตามส
     ["OPK-A204-40", "WM-K03"], ["XSW40008", "WM-K15"], ["XSW400013", "WM-K20"]])
     ok("น้ำหนัก " + xsw + " = " + wm, Math.abs(PB.ALUWEIGHT[xsw] - PB.ALUWEIGHT[wm]) < 0.02,
       PB.ALUWEIGHT[xsw] + " vs " + PB.ALUWEIGHT[wm]);
+
+  // ค่าเปิดตู้อบ — เจ้าของเคาะ 10 ก.ย.69 "บวกสีขาวดำด้วย เฉพาะ SlimLux Velora
+  //   เพราะเราซื้อมาเป็นสีมิว" → prod.millBar
+  const oven = (id, ck, bk, o) => computeCost(PB, PRODUCTS[id],
+    { w: 200, h: 240, p: 2, glassType: "เทมเปอร์ 6มม.", color: bk, colorKey: ck, ...(o || {}) }).cost.openOven;
+  ok("SlimLux อบขาว: คิดค่าเปิดตู้อบ 2,000", oven("slimlux", "white", "white", { form: "อิสระ" }) === 2000);
+  ok("SlimLux อบดำ: คิดค่าเปิดตู้อบ 2,000", oven("slimlux", "black", "white", { form: "อิสระ" }) === 2000);
+  ok("Velora อบขาว: คิดค่าเปิดตู้อบ 2,000", oven("velora", "white", "white") === 2000);
+  ok("SlimLux อบพิเศษ: ยังคิดเหมือนเดิม", oven("slimlux", "special", "special", { form: "อิสระ" }) === 2000);
+  // รุ่นอื่นซื้อเส้นอบขาวมาแล้ว — ห้ามโดนด้วย
+  for (const id of ["sms_slide", "euro_slide", "open_door", "fixed", "banyok"])
+    ok(id + " อบขาว: ไม่คิดค่าเปิดตู้อบ", oven(id, "white", "white", { form: PRODUCTS[id].defForm }) === 0,
+      String(oven(id, "white", "white", { form: PRODUCTS[id].defForm })));
 }
 
 // ── ⑭ ห้องกระจก G6 — ช่องกำไรค่าผลิต/ค่าติดตั้ง ต้องมีผลจริง ────

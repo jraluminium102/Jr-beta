@@ -348,7 +348,10 @@ export function computeCost(PB, prod, opt) {
   }
   // ค่าเปิดตู้อบ = คงที่ต่องาน "ไม่ขึ้นตาม กก." (ไฟล์ถอดทุน ชีต อัปเดตราคาอลู)
   //   ⚠ ต้องคิดแม้ทุกเส้นได้ราคารวมสีจากไฟล์/สโตร์มาแล้ว (aluKg = 0) ไม่งั้นตกค่าเปิดตู้อบ 2,000 เงียบ ๆ
-  if ((color === 'special' || color === 'woodSpecial') && aluBarsAll > 0) {
+  //   prod.millBar = ซื้อเส้นมาเป็น "สีมิว" → สีอบขาว/ดำ ก็ต้องเข้าตู้อบเหมือนกัน
+  //     (เจ้าของเคาะ 10 ก.ย.69 "ค่าเปิดตู้อบบวกสีขาวดำด้วย เฉพาะ SlimLux Velora เพราะเราซื้อมาเป็นสีมิว")
+  //     รุ่นอื่นซื้อเส้นอบขาวมาเลย ไม่ต้องเปิดตู้
+  if ((color === 'special' || color === 'woodSpecial' || (prod.millBar && color === 'white')) && aluBarsAll > 0) {
     openOven = PB.BAKE_OPEN_OVEN || 0;
     if (openOven) lines.push({ cat: 'bake', name: 'ค่าเปิดตู้อบ', qty: 1, unit: 'งาน', unitPrice: openOven, amount: openOven });
   }

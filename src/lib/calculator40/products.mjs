@@ -309,7 +309,8 @@ export const PRODUCTS = {
   },
 
   slimlux: {
-    id: 'slimlux', aluWaste: true, group: 1, name: 'บานเลื่อนเฟรมบาง SlimLux', brand: 'SLIMLUX', laborKey: 'SlimLux',
+    // millBar = ซื้อเส้นมาสีมิว → สีอบขาว/ดำ ต้องคิดค่าเปิดตู้อบด้วย (เจ้าของเคาะ 10 ก.ย.69)
+    id: 'slimlux', aluWaste: true, millBar: true, group: 1, name: 'บานเลื่อนเฟรมบาง SlimLux', brand: 'SLIMLUX', laborKey: 'SlimLux',
     icon: '🪟', defForm: 'อิสระ', forms: ['อิสระ', 'ลากจูง', 'เปิดคู่กลาง'],
     addons: ['slide_auto', 'demolish'],
     autoBrands: ['slimlux'],   // เจ้าของเคาะ 21 ส.ค.69: สลิมเอาแค่รื้อของเดิม (ไม่มีมุ้ง/ครอบวงกบ)   // LUT รองรับ ลากจูง(3-5)/เปิดคู่กลาง(4,6) — ไม่มีสลับ
@@ -688,7 +689,8 @@ export const PRODUCTS = {
   },
 
   velora: {
-    id: 'velora', group: 1, name: 'Velora บานเปิด', brand: 'VELORA', laborKey: 'Velora',
+    // millBar = ซื้อเส้นมาสีมิว → สีอบขาว/ดำ ต้องคิดค่าเปิดตู้อบด้วย (เจ้าของเคาะ 10 ก.ย.69)
+    id: 'velora', group: 1, millBar: true, name: 'Velora บานเปิด', brand: 'VELORA', laborKey: 'Velora',
     // rawAlu: ชีต "คิดทุน Velora" = "อลูดิบ+อบสีแยก" → ราคาเส้น 768/720 ยังไม่รวมอบ
     //   สีขาว/ดำ ต้องบวกค่าอบเรตเทา 100/กก. ด้วย (ตรงสูตร C15/C16 ในชีต) — เดิมเว็บคิด 0 = ทุนขาด 935/ชุด @150×150
     // ⚠ เอา dropdown "เดี่ยว/คู่" ออก (เจ้าของจับได้ 2 ก.ย.69: "เลือกรูปแบบคู่ บานพับยังใช้ 4 แทนที่จะ 8")
