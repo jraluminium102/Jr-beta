@@ -77,7 +77,7 @@ export const GET = withRoute(async (req: Request) => {
 
   const [jobs, fin, issues, quotations, qitems, queueRows, salesRows, custRows] = await Promise.all([
     fetchAllPaged<any>((f, t) => sb.from("jobs")
-      .select("id, job_code, status, current_stage, net_amount, total_amount, deposit_date, assess_date, quote_sent_date, design_state, design_start, design_end, design_due_date, on_hold, customer_area, customer_id, customer_name, channel, estimator_id, estimator:estimator_id(full_name), designer_ref, designer_lookup:designer_ref(name), queue_entry_id")
+      .select("id, job_code, status, current_stage, net_amount, total_amount, deposit_date, assess_date, quote_sent_date, design_state, design_start, design_end, design_due_date, on_hold, customer_area, customer_id, customer_name, channel, external_intake, estimator_id, estimator:estimator_id(full_name), designer_ref, designer_lookup:designer_ref(name), queue_entry_id")
       .order("id", { ascending: true }).range(f, t)),
     fetchAllPaged<any>((f, t) => sb.from("finance_entries")
       .select("amount, payment_date").eq("is_voided", false)
@@ -152,7 +152,8 @@ export const GET = withRoute(async (req: Request) => {
       ?? "";
   };
 
-  const inJobs = J.filter((j: any) => inRange(j.assess_date) && j.status !== "CANCELLED");
+  // ตัดงานลัดคิววัดนอกระบบ (external_intake 0148) ออกจาก cohort ประเมิน — ไม่ใช่การประเมินในระบบจริง (กัน close-rate เฟ้อทั้งตัวตั้ง/ตัวหาร)
+  const inJobs = J.filter((j: any) => inRange(j.assess_date) && j.status !== "CANCELLED" && !j.external_intake);
   const wonJobs = inJobs.filter(isWon);
   // งานที่ "มัดจำในช่วงนี้" (อิงวันมัดจำจริง — ไม่สนว่าเข้าประเมินเดือนไหน)
   const depositedInRange = J.filter((j: any) => inRange(j.deposit_date) && j.status !== "CANCELLED");

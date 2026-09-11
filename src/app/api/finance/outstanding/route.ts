@@ -16,7 +16,7 @@ export const GET = withRoute(async () => {
   const { data, error } = await ctx.supabase
     .from("jobs")
     .select(`
-      id, job_code, customer_name, total_amount, status,
+      id, job_code, customer_name, total_amount, status, external_intake,
       billing_notes!billing_notes_job_id_fkey(
         id, total, status,
         billing_installments(
@@ -43,6 +43,7 @@ export const GET = withRoute(async () => {
     customer_name: string;
     total_amount: number | null;
     status: string;
+    external_intake?: boolean | null;
     billing_notes: BnRow[];
     finance_entries: FeRow[];
   };
@@ -85,7 +86,9 @@ export const GET = withRoute(async () => {
 
       // ยังกรอกยอดไม่ครบ/คำนวณค้างรับไม่ได้ → อย่าตัดทิ้งเงียบ (กันลูกหนี้หาย) ครอบ 2 ร่อง:
       //  (1) total ว่าง + ไม่มีบิล   (2) ฐานยอด ≤ 0 ทั้งที่รับเงินมาแล้ว (เปิดบิล total=0 + มีมัดจำ)
-      const needsAmount = (j.total_amount == null && activeBns.length === 0) || (base <= 0 && paid > 0);
+      // ธง external_intake (0148): งานลัดคิววัดลูกค้านอกระบบยังไม่มีดีล/เงิน — อย่านับเป็นลูกหนี้ผีที่ต้อง "กรอกยอด"
+      //   (พอมีบิลจริงภายหลัง activeBns>0 → clause แรกเป็น false เอง logic เดิมคิดค้างรับถูกต้อง ธงไม่กระทบ)
+      const needsAmount = (j.total_amount == null && activeBns.length === 0 && !j.external_intake) || (base <= 0 && paid > 0);
       const outstanding = needsAmount ? 0 : round2(base - paid);
 
       return {

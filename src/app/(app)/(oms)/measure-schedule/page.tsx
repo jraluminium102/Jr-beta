@@ -584,6 +584,8 @@ export default function MeasureSchedulePage() {
   // ตั้ง/แก้นัดในหน้านี้ (modal) — entry ที่กำลังตั้งนัด
   const [booking, setBooking] = useState<MeasureEntry | null>(null);
   const onBook = useCallback((e: MeasureEntry) => setBooking(e), []);
+  // เพิ่มลูกค้านอกระบบเข้าคิววัดตรง ๆ (modal)
+  const [showAdd, setShowAdd] = useState(false);
 
   // distinct ช่างจาก scheduled + unscheduled
   const allMeasurers = useMemo(() => {
@@ -711,6 +713,15 @@ export default function MeasureSchedulePage() {
             <Icon name="refresh" size={15} className={isFetching ? "animate-spin" : ""} />
             รีเฟรช
           </button>
+          {canWrite && (
+            <button
+              onClick={() => setShowAdd(true)}
+              className="focusable pressable inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-emerald-500/30 hover:bg-emerald-500/45 border border-emerald-300/35 text-emerald-50 text-sm font-semibold min-h-[44px]"
+              title="เพิ่มลูกค้านอกระบบเข้าคิววัดหน้างานตรง ๆ"
+            >
+              <Icon name="plus" size={15} /> เพิ่มลูกค้านอกระบบ
+            </button>
+          )}
         </div>
       </div>
 
@@ -975,6 +986,118 @@ export default function MeasureSchedulePage() {
           onSaved={() => { setBooking(null); refetch(); }}
         />
       )}
+
+      {/* เพิ่มลูกค้านอกระบบเข้าคิววัดตรง ๆ */}
+      {showAdd && (
+        <AddExternalModal
+          measurers={allMeasurers}
+          onClose={() => setShowAdd(false)}
+          onSaved={() => { setShowAdd(false); refetch(); }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── เพิ่มลูกค้านอกระบบเข้าคิววัด ─────────────────────────────────────────────
+// สร้างลูกค้า+งาน+คิววัด (PENDING_MEASURE) รวดเดียว แล้วไหลเข้าระบบต่อได้ (โลจิคเดียวกับใบเสนอนอกระบบ)
+function AddExternalModal({ measurers, onClose, onSaved }: {
+  measurers: string[];
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [measurer, setMeasurer] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  const save = async () => {
+    if (!name.trim()) { setErr("ต้องกรอกชื่อลูกค้า"); return; }
+    setBusy(true); setErr("");
+    try {
+      await api.post("/measure-schedule/external", {
+        name: name.trim(),
+        phone: phone.trim(),
+        address: address.trim(),
+        measure_scheduled: date || null,
+        measure_time: time || null,
+        measurer_name: measurer.trim() || null,
+      });
+      onSaved();
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "บันทึกไม่สำเร็จ");
+      setBusy(false);
+    }
+  };
+
+  const inputCls = "focusable w-full glass-card rounded-xl px-3 py-2.5 text-sm text-white outline-none min-h-[48px] placeholder-white/35";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+      <div className="absolute inset-0 bg-black/55" onClick={onClose} />
+      <div className="relative w-full max-w-md glass rounded-2xl p-5 fade-in max-h-[92vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-bold text-white flex items-center gap-2"><Icon name="plus" size={16} /> เพิ่มลูกค้านอกระบบ</h3>
+          <button onClick={onClose} aria-label="ปิด" className="text-white/60 hover:text-white"><Icon name="close" size={18} /></button>
+        </div>
+        <p className="text-[12px] mb-4" style={{ color: "var(--t-low)" }}>
+          เข้าคิววัดหน้างานทันที · ชื่อลูกค้า = ชื่อที่จะโชว์ในผลิต/ติดตั้ง (ชื่อคนจริง) · ออกเอกสารในนามบริษัทค่อยตั้งตอนวางบิล
+        </p>
+
+        <label className="block mb-3">
+          <span className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>ชื่อลูกค้า *</span>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="เช่น คุณสมชาย" aria-label="ชื่อลูกค้า" className={inputCls} autoFocus />
+        </label>
+        <div className="flex gap-2 mb-3">
+          <label className="flex-1 min-w-0">
+            <span className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>เบอร์โทร</span>
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" placeholder="08x-xxx-xxxx" aria-label="เบอร์โทร" className={inputCls} />
+          </label>
+          <label className="flex-1 min-w-0">
+            <span className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>พื้นที่/ที่อยู่</span>
+            <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="เช่น บางนา" aria-label="พื้นที่หรือที่อยู่" className={inputCls} />
+          </label>
+        </div>
+
+        <div className="rounded-xl border border-white/10 bg-white/5 p-3 mb-4">
+          <div className="text-[11px] font-semibold mb-2 text-white/80">นัดวัด (ไม่บังคับ — เว้นว่าง = ไปอยู่ "รอนัด")</div>
+          <div className="flex gap-2 mb-3">
+            <label className="flex-1 min-w-0">
+              <span className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>วันที่นัด</span>
+              <DateField value={date} onChange={setDate} aria-label="วันที่นัดวัด" className={inputCls} />
+            </label>
+            <label className="w-28 shrink-0">
+              <span className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>เวลา</span>
+              <input type="time" step={60} value={time} onChange={(e) => setTime(e.target.value.slice(0, 5))} aria-label="เวลานัดวัด"
+                className={`${inputCls} tnum [&::-webkit-calendar-picker-indicator]:invert`} />
+            </label>
+          </div>
+          <label className="block">
+            <span className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>ช่างที่วัด</span>
+            <input list="add-ext-measurers" value={measurer} onChange={(e) => setMeasurer(e.target.value)}
+              placeholder="เช่น เป, เนียน" aria-label="ช่างที่วัด" className={inputCls} />
+            <datalist id="add-ext-measurers">
+              {measurers.map((m) => <option key={m} value={m} />)}
+              <option value="เป" /><option value="เนียน" />
+            </datalist>
+          </label>
+        </div>
+
+        {err && <p role="alert" className="mb-3 text-sm text-rose-200 bg-rose-500/15 rounded-lg px-3 py-2">{err}</p>}
+
+        <div className="flex gap-2">
+          <button onClick={save} disabled={busy || !name.trim()}
+            className="focusable pressable flex-1 rounded-xl py-2.5 text-sm font-semibold text-[#1F4E78] bg-white hover:bg-white/90 disabled:opacity-60 min-h-[48px]">
+            {busy ? "กำลังเพิ่ม…" : "เพิ่มเข้าคิววัด"}
+          </button>
+          <button onClick={onClose} disabled={busy}
+            className="focusable pressable glass-card border border-white/15 rounded-xl px-5 py-2.5 text-sm text-white/80 min-h-[48px]">ยกเลิก</button>
+        </div>
+      </div>
     </div>
   );
 }
