@@ -110,12 +110,19 @@ export function computeCost(PB, prod, opt) {
   //   E-series (เจ้าของ 11 ก.ย.69 "ไม่ได้มีของในสโตร์ ไม่สต็อค สั่งใหม่ เอามาแค่ข้อมูลวัสดุ ราคาตามไฟล์")
   //   ALU = เรตต่อโลจากสโตร์ (ตัวคูณแบรนด์) → ตรึงเท่าเรตตั้งต้นในไฟล์ ไม่งั้นแก้ราคาอลู SMS ในสโตร์แล้ว E-series ขยับตาม (QA จับ 11 ก.ย.69)
   if (prod && prod.noStore) PB = { ...PB, SKUPRICE: {}, ALUCODE: {}, ALUCODE_FROM_STOCK: {}, ALUCOLOR_STOCK: {}, BOXPRICE: {}, BOXSKU: {}, ALU: { ...(PB.ALU || {}), ...(PB.ALU_BASE || {}) } };
+  // มะฮอกกานี/ไวท์โอ๊ค มีแค่ บานเปิดยูโร · บานเลื่อนยูโร · บานโซลิด · PC Door (prod.woodEuro — เจ้าของ 11 ก.ย.69)
+  //   รุ่นอื่นเอาตัวเลือกออกแล้ว · ใบเสนอเก่าที่เคยเลือกไว้ → คิดเป็น "ลายไม้อบพิเศษ" (แพงกว่า) ไม่ใช่ราคาลายไม้สต็อก
+  if (prod && !prod.woodEuro && (opt.colorKey === 'wood_maho' || opt.colorKey === 'wood_whiteoak'))
+    opt = { ...opt, colorKey: 'wood_special', color: 'woodSpecial', stockColor: '' };
   const W = (opt.w ?? prod.defaults.w) / 100;   // ม.
   const H = (opt.h ?? prod.defaults.h) / 100;   // ม.
   const P = opt.p ?? prod.defaults.p ?? 1;
   const form = opt.form ?? prod.defForm ?? 'std';
   let area = W * H;   // let — หลังคาหลายด้านทับด้วย opt.areaOverride ด้านล่าง (พื้นที่ = ผลรวมทุกด้าน)
-  const color = opt.color ?? 'white';
+  // Aztec gray = สีสต็อกของโปรไฟล์ยูโร (ชีตราคาสี v20.1 คอลัมน์ "แอทแทคเกรย์" ≈ เทา × 1.02) — ไม่ใช่สีอบพิเศษ
+  //   เจ้าของ 11 ก.ย.69: ขาว=ดำ ถูกสุด < เทา=ดำซาฮาร่า ≤ แอทแทค < ลายไม้สักทอง
+  //   → เส้นที่ไม่มีราคาสี คิดค่าอบเรตเทา · ไม่เปิดตู้อบ · ใบเสนอเก่าส่ง color 'special' มากับ colorKey 'aztec' → แปลงที่นี่ที่เดียว
+  const color = (opt.colorKey === 'aztec' && (opt.color ?? 'special') === 'special') ? 'sahara' : (opt.color ?? 'white');
   const colorDisp = opt.colorName || colorLabel(color);      // ชื่อสีเฉพาะ (display) — ราคามาจาก bake key เท่านั้น
   // วัสดุมุงหลังคา (รุ่นที่มีตัวเลือก)
   //   prod.materialAlias = ชื่อเก่า → ชื่อใหม่ (ไฟล์ถอดทุน v20.1 จัดกลุ่มเมทัลชีทใหม่ 3 ก.ย.69)
@@ -151,6 +158,23 @@ export function computeCost(PB, prod, opt) {
     const bk = ck ? (bm[ck] ?? bm._default) : (bm[color] ?? bm._default);
     if (bk != null && PB.BAKE[bk] != null) bakeRate = PB.BAKE[bk];
   }
+  // ── หาราคาสี: สีที่ "ราคาเท่ากัน" (เจ้าของ 11 ก.ย.69) ── ดำ = อบขาว · ดำซาฮาร่า = เทาซาฮาร่า (ไฟล์คอลัมน์ "ขาว/ดำ" ราคาเดียว)
+  //   ใช้เฉพาะตอนหาราคาเส้น/กล่อง · รหัสสโตร์ที่หักสต็อก ยังใช้สีจริง (opt.stockColor / CKEY เดิม)
+  //   prod.greyRatio = รุ่นซื้อเส้นมิวมาอบเอง (SlimLux/Velora/E-series) — ชีตคิดค่าอบ ขาว/ดำ/เทา เรตเดียวกัน = ราคาเท่ากัน
+  //     เจ้าของ: "เทาต้องแพงกว่าขาว" + เลือก "สัดส่วนเทา÷ขาว แบบเส้นอื่น" → เทาคิดแบบขาวทั้งหมด แล้วบวกส่วนต่างท้ายกองอลู
+  const greyUp = !!(prod.greyRatio && (opt.colorKey === 'sahara' || opt.colorKey === 'sahara_black'));
+  const priceKey = greyUp ? 'white' : (({ black: 'white', sahara_black: 'sahara' })[opt.colorKey] ?? opt.colorKey);
+  const priceStock = greyUp ? 'อบขาว' : (({ 'ดำ': 'อบขาว', 'ดำซาฮาร่า': 'เทาซาฮาร่า' })[opt.stockColor] ?? opt.stockColor);
+  const priceColor = greyUp ? 'white' : color;   // หมวดสีสำหรับตารางราคาสีเดิม (PB.ALUCOLOR) + ตัวคูณสีกล่อง
+  // ตัวคูณสีกล่อง/ฉาก (อลูเมืองทอง ไม่มีรหัสโปรไฟล์) — ชีตประตูรั้ว/ระแนง/ระแนงหมุน/รางบน: mult + rate_สี/192
+  //   PB.BOX_CF = ค่าตั้งต้น (เลขเดียวกับ CF_EXPR ในสูตร) · prod.boxCF / it.cf = ชีตรุ่นนั้นเขียนเลขเอง (ติดตาย เทา 1612/1240)
+  const cfOf = (it, k) => { const f = Number(({ ...(PB.BOX_CF || {}), ...(prod.boxCF || {}), ...(it.cf || {}) })[k]); return f > 0 ? f : 1; };
+  const boxCF = (it) => cfOf(it, priceColor);
+  // ราคาในสูตรที่เป็น "ตัวเลขล้วน" ของกล่อง/ฉาก = ราคาขาวในชีต → ไม่มีราคาสโตร์ ก็คูณสีตามไฟล์เหมือนกัน
+  //   (ไม่งั้นเครื่องที่ไม่มีสโตร์/หน้าทดสอบ ประตูรั้ว/หลังคา/ราวกันตก ทุกสีราคาเท่ากัน)
+  //   สูตรที่เป็นนิพจน์ (CF*905 / BOXP) คิดสีมาในตัวแล้ว ห้ามคูณซ้ำ · รุ่นอบเอง (bakeByKey) และเส้นที่มีน้ำหนัก ใช้ค่าอบ×กก.
+  const formulaCF = (it) => (priceColor !== 'white' && !prod.bakeByKey && !((Number(it.kg) || 0) > 0)
+    && (it.cf || (it.box && typeof it.price === 'number'))) ? boxCF(it) : 1;
 
   // เตรียม scope + evaluator
   const varDefs = prod.vars || {};
@@ -251,10 +275,23 @@ export function computeCost(PB, prod, opt) {
     if (!key || !PB.BOXPRICE) return null;
     const b = PB.BOXPRICE[key];
     if (!b) return null;
-    const c = opt.stockColor || '';
-    if (c && b[c] > 0) { boxColorDone = !/มิว/.test(c); return b[c]; }
-    for (const alt of ['มิว', 'อบขาว']) if (b[alt] > 0) return b[alt];
-    return null;
+    const white = b['อบขาว'] > 0 ? b['อบขาว'] : null, mill = b['มิว'] > 0 ? b['มิว'] : null;
+    // รุ่นซื้อเส้นมิวมาอบเอง (bakeByKey) → กล่องก็ ราคาดิบ + ค่าอบ×กก. ตามชีต (ไม่ใช้ราคาสีสำเร็จ)
+    if (prod.bakeByKey) return mill ?? white;
+    if (priceColor === 'white') { if (white != null) { boxColorDone = true; return white; } return mill; }
+    const base = white ?? mill;
+    // ราคาสีในสโตร์ใช้ได้เมื่อ "แพงกว่าขาว" เท่านั้น — สโตร์ตั้งกล่องทุกสีเท่าราคาขาวไว้ (กล่อง 1×4 = 905 ทุกสี)
+    //   หยิบมาตรง ๆ = เทาเท่าขาว ผิดลำดับราคาที่เจ้าของกำหนด (11 ก.ย.69)
+    const c = priceStock || '';
+    // ลายไม้ต้องแพงกว่าเทาด้วย — สโตร์ตั้งกล่องลายไม้ไว้ ×1.14 (1.6×4 = 1,394) แต่ชีตคิดเทา ×1.52 → หยิบของสโตร์ = ลายไม้ถูกกว่าเทา
+    const floor = (priceColor === 'woodStock' && base != null)
+      ? Math.max(base, b['เทาซาฮาร่า'] > base + 0.5 ? b['เทาซาฮาร่า'] : base * cfOf(it, 'sahara')) : base;
+    if (c && b[c] > 0 && (floor == null || b[c] > floor + 0.5)) { boxColorDone = true; return b[c]; }
+    if (base == null) return null;
+    // ไม่มีราคาสีจริง: มีน้ำหนัก → ราคาดิบ + ค่าอบ×กก. (ทางเดิม) · ไม่มีน้ำหนัก → ราคาขาว × ตัวคูณสีกล่องตามไฟล์
+    if ((Number(it.kg) || 0) > 0) return mill ?? white;
+    boxColorDone = true;
+    return round2(base * boxCF(it));
   };
 
   let aluCost = 0, aluKg = 0, aluBarsAll = 0;
@@ -319,21 +356,36 @@ export function computeCost(PB, prod, opt) {
     // ลำดับราคาเส้น: ① สีจริงจากสโตร์ (สโตร์เป็นตัวตั้ง — เจ้าของสั่ง 8 ส.ค.69)
     //                ② ตารางราคาสีในไฟล์  ③ ราคาขาว + ค่าอบ×กก. (ทางสุดท้าย)
     //   opt.stockColor = ชื่อสีในสโตร์ของสีที่ลูกค้าเลือก (แอปส่งมาให้ · "" = สีนั้นไม่มีในสโตร์)
-    const stockColorPrice = (!noColor && code && opt.stockColor && PB.ALUCOLOR_STOCK && PB.ALUCOLOR_STOCK[opt.stockColor])
-      ? PB.ALUCOLOR_STOCK[opt.stockColor][code] : null;
-    // ② ราคาแยก "สีจริง" จากไฟล์ถอดทุน v9 (ALUCOLOR_KEY[คีย์สี][รหัส]) — เจ้าของเคาะ 19 ส.ค.69 ให้ยึดไฟล์
+    const sColor = (k) => (!noColor && code && k && PB.ALUCOLOR_STOCK && PB.ALUCOLOR_STOCK[k]) ? PB.ALUCOLOR_STOCK[k][code] : null;
+    // ราคาขาวของเส้นนี้ (หลังคูณ mult) — ใช้ตัดสินว่า "ราคาสี" ใช้ได้ไหม
+    const basePrice = (code && PB.ALUCODE && PB.ALUCODE[code] > 0) ? PB.ALUCODE[code] : pPrice(it.name, it.price);
+    const baseFromStock = !!(code && PB.ALUCODE_FROM_STOCK && PB.ALUCODE_FROM_STOCK[code] && PB.ALUCODE[code] > 0);
+    const whiteStock = sColor('อบขาว');
+    const whiteRef = whiteStock > 0 ? whiteStock : (Number(basePrice) || 0) * (baseFromStock ? 1 : mult);
+    // ราคาสี (ที่ไม่ใช่ขาว) ต้อง "แพงกว่าขาว" ถึงจะใช้ ไม่งั้นข้ามไปแหล่งถัดไป (เจ้าของ 11 ก.ย.69 ลำดับราคาสี)
+    //   เคสจริง: ไฟล์ F7855 ลายไม้ 1,190 < ขาว 1,300 · สโตร์ตั้งราคาสีเท่าขาวไว้หลายแถว
+    const isWhite = priceColor === 'white';
+    const okColor = (p, m) => p > 0 && (isWhite || p * m > whiteRef + 0.5);
+    const stockColorPrice0 = sColor(priceStock);
+    const stockColorPrice = okColor(stockColorPrice0, 1) ? stockColorPrice0 : null;
+    // ② ราคาแยก "สีจริง" จากไฟล์ถอดทุน (ALUCOLOR_KEY[คีย์สี][รหัส]) — ชีตราคาสี v20.1 (อัปเดต 11 ก.ย.69 · เดิม v9)
     //    ไฟล์แยก 6 สีจริง (เทาซาฮาร่า/ดำซาฮาร่า/แอทแทคเกรย์/ลายไม้สักทอง/มะฮอกกานี/ไวท์โอ๊ค)
     //    ละเอียดกว่าตารางเดิมที่แยกแค่ "หมวดค่าอบ" → ลายไม้ 3 สี เคยใช้ราคาเดียวกันหมด
-    const fileColorPrice = (!noColor && code && opt.colorKey && PB.ALUCOLOR_KEY && PB.ALUCOLOR_KEY[opt.colorKey])
-      ? PB.ALUCOLOR_KEY[opt.colorKey][code] : null;
+    const fileColorPrice0 = (!noColor && code && priceKey && PB.ALUCOLOR_KEY && PB.ALUCOLOR_KEY[priceKey])
+      ? PB.ALUCOLOR_KEY[priceKey][code] : null;
+    const fileColorPrice = okColor(fileColorPrice0, mult) ? fileColorPrice0 : null;
+    const legacyColorPrice = (!noColor && code && PB.ALUCOLOR && PB.ALUCOLOR[priceColor]) ? PB.ALUCOLOR[priceColor][code] : null;
     const colorPrice = stockColorPrice > 0 ? stockColorPrice
       : fileColorPrice > 0 ? fileColorPrice
-      : (!noColor && code && PB.ALUCOLOR && PB.ALUCOLOR[color]) ? PB.ALUCOLOR[color][code] : null;
+      : okColor(legacyColorPrice, mult) ? legacyColorPrice : null;
     const bxp = boxPrice(it);   // กล่อง/ฉาก ผูกด้วยชื่อ+ขนาด+สี (สโตร์เป็นตัวตั้ง)
+    // สีตามชีตรุ่นนั้น (prod.boxCF / it.cf) — ใช้เมื่อไม่มีราคาสโตร์และไม่มีราคาสี (ติดตาย: สโตร์กล่อง 1.6×3 ราคา 0 · 9014 ไม่มีในสโตร์)
+    const cfPrice = (bxp == null && !(colorPrice > 0) && formulaCF(it) !== 1)
+      ? Math.round((Number(basePrice) || 0) * formulaCF(it)) : null;
     const price = bxp != null ? bxp
       : colorPrice > 0 ? colorPrice
-      : (code && PB.ALUCODE && PB.ALUCODE[code] > 0) ? PB.ALUCODE[code]
-      : pPrice(it.name, it.price);
+      : cfPrice != null ? cfPrice
+      : basePrice;
     // ⚠ ห้ามคูณ mult ทับ "ราคาที่มาจากสโตร์" — สโตร์คิด ราคา/เส้น = น้ำหนัก × เรตต่อโล ปัจจุบัน ให้แล้ว
     //   mult (= เรตต่อโลปัจจุบัน ÷ เรตตั้งต้น) มีไว้ขยับ "ราคาฝังในไฟล์" ที่ยังผูกสโตร์ไม่ได้เท่านั้น
     //   ถ้าคูณทั้งคู่ = ขึ้นเรตต่อโล 7% แล้วราคาเด้ง 14% (คิดซ้ำสองต่อ)
@@ -346,7 +398,7 @@ export function computeCost(PB, prod, opt) {
     const amount = bars * price * m;
     aluCost += amount;
     // เส้นที่ราคารวมสีแล้ว หรือเป็นเส้นสีเงินไม่อบสี → ไม่เข้ากองคิดค่าอบ
-    if (!(colorPrice > 0) && !boxColorDone && !noColor) aluKg += bars * (it.kg || 0);
+    if (!(colorPrice > 0) && cfPrice == null && !boxColorDone && !noColor) aluKg += bars * (it.kg || 0);
     // น้ำหนักจริงของท่อนที่ตัด (ไว้เลือกมอเตอร์ตามน้ำหนักบาน)
     const barLen = Number(it.stockLen) || stockLen;
     const kgPerM = (Number(it.kg) || 0) > 0 && barLen > 0 ? (Number(it.kg) / barLen) : 0;
@@ -354,7 +406,7 @@ export function computeCost(PB, prod, opt) {
     if (kgPerM > 0) aluKgReal += kgLine; else if (seg * count > 0) kgMissing.push(it.name);
     aluBarsAll += bars;   // นับทุกเส้น (รวมเส้นที่ราคารวมสีมาแล้ว) — ใช้ตัดสินค่าเปิดตู้อบ
     // code/kg ติดมากับบรรทัดด้วย — หน้าเทียบ "คิดราคา ↔ ใบตัด" ใช้จับคู่รหัส + คิด ฿/กก. (ไม่กระทบตัวเลขใด ๆ)
-    lines.push({ cat: 'alu', name: it.name + (colorPrice > 0 ? ' (' + colorDisp + ')' : ''), code: code || '', kg: it.kg || 0, kgLine: round2(kgLine),
+    lines.push({ cat: 'alu', name: it.name + (colorPrice > 0 || cfPrice != null ? ' (' + colorDisp + ')' : ''), code: code || '', kg: it.kg || 0, kgLine: round2(kgLine),
       qty: bars, unit: 'เส้น', unitPrice: round2(price * m), amount: round2(amount),
       // ความยาวที่ต้องตัดจริง + จำนวนชิ้น — หน้าเทียบ "คิดราคา ↔ ใบตัด" ใช้ตัวนี้เทียบ
       //   (เทียบ "จำนวนเส้น" ตรง ๆ ไม่ได้แล้ว: คิดราคานับแบบไฟล์ ÷6.4+เศษ · ใบตัดนับเส้นเต็ม)
@@ -370,6 +422,15 @@ export function computeCost(PB, prod, opt) {
   if (bakeRate > 0 && aluKg > 0) {
     bakeCost = bakeRate * aluKg;
     lines.push({ cat: 'bake', name: 'ค่าอบสี (' + colorDisp + ' ' + bakeRate + '/กก. × ' + round2(aluKg) + 'กก.)', qty: round2(aluKg), unit: 'กก.', unitPrice: bakeRate, amount: round2(bakeCost) });
+  }
+  // ส่วนต่างสีเทา รุ่นซื้อเส้นมิวมาอบเอง (prod.greyRatio) — ชีตคิดทุนคิด ขาว/ดำ/เทา เรตอบเดียวกัน = ราคาเท่ากัน
+  //   เจ้าของ 11 ก.ย.69 "เทาต้องแพงกว่าขาว" → เลือกสัดส่วน เทา÷ขาว เฉลี่ยของเส้นรหัส B/F ในชีตราคาสี v20.1 (PB.GREY_RATIO)
+  //   คิดบน ค่าเส้น+ค่าอบ ของงานนี้ · ไม่รวมค่าเปิดตู้อบ (คงที่ทุกสีอยู่แล้ว)
+  const greyRatio = Number(PB.GREY_RATIO && PB.GREY_RATIO.ratio) || 0;
+  if (greyUp && greyRatio > 1 && aluCost + bakeCost > 0) {
+    const greyCost = (aluCost + bakeCost) * (greyRatio - 1);
+    bakeCost += greyCost;
+    lines.push({ cat: 'bake', name: 'ส่วนต่างสีเทา (ค่าเส้น+ค่าอบ × ' + round2((greyRatio - 1) * 100) + '% ตามสัดส่วนเทา÷ขาว ไฟล์ v20.1)', qty: 1, unit: 'งาน', unitPrice: round2(greyCost), amount: round2(greyCost) });
   }
   // ค่าเปิดตู้อบ = คงที่ต่องาน "ไม่ขึ้นตาม กก." (ไฟล์ถอดทุน ชีต อัปเดตราคาอลู)
   //   ⚠ ต้องคิดแม้ทุกเส้นได้ราคารวมสีจากไฟล์/สโตร์มาแล้ว (aluKg = 0) ไม่งั้นตกค่าเปิดตู้อบ 2,000 เงียบ ๆ
@@ -470,6 +531,7 @@ export function computeCost(PB, prod, opt) {
     const spRaw = skuPrice(hwSku);
     const sp = spRaw != null ? spRaw / (Number(it.per) || 1) : boxPrice(it);
     if (sp != null) price = sp;   // มีราคาในสโตร์ → ใช้ของสโตร์ (สโตร์เป็นตัวตั้ง)
+    else if (formulaCF(it) !== 1) price = round2(price * formulaCF(it));   // กล่อง/ฉาก ราคาสูตร → คูณสีตามไฟล์
     noteMissing({ ...it, sku: hwSku }, count);
     // ราคาออกมา 0 ทั้งที่ไม่ได้ตั้งใจ (ตารางราคากลางยังว่าง) → ต้องเตือน ไม่ใช่คิดเป็นศูนย์เงียบ ๆ
     if (!(price > 0) && !it.orderOnly && !it.labor) noteMissing({ sku: hwSku || it.ref || it.name, name: it.name, price: 0 }, count);
@@ -499,6 +561,7 @@ export function computeCost(PB, prod, opt) {
     const cspRaw = skuPrice(cSku);
     const csp = cspRaw != null ? cspRaw / (Number(it.per) || 1) : boxPrice(it);
     if (csp != null) unitPrice = csp;   // มีราคาในสโตร์ → ใช้ของสโตร์ (÷ per ถ้าสโตร์ขายเป็นแพ็ค)
+    else if (formulaCF(it) !== 1) unitPrice = round2(unitPrice * formulaCF(it));   // กล่อง/ฉาก ราคาสูตร → คูณสีตามไฟล์
     // it.buf = ตัวคูณเผื่อเศษ (แผ่นหลังคา 1.2 = buf_roof ในไฟล์ถอดทุน "เผื่อเศษแผ่นหลังคา ตัดเสีย/ซ้อนแผ่น 20%")
     //   ชีต E8 คูณ buf_roof ทับราคาแผ่น (รวมราคาจากสโตร์ด้วย) → ต้องคูณหลังจากทับราคาสโตร์แล้ว
     //   ⚠ เว็บไม่เคยคูณตัวนี้เลย (v20 ก็มี) → ทุนแผ่นทุกหลังคาขาด 20% มาตลอด (เจ้าของสั่งอิง v20.1 3 ก.ย.69)

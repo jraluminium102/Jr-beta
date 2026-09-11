@@ -1282,8 +1282,11 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                     onChange={setSillSel} opts={SILL_OPTS}
                   />
                 )}
+                {/* ใบเก่าที่เลือกสีที่รุ่นนี้ไม่มีแล้ว (เช่น มะฮอกกานีบนบานกระทุ้ง) → โชว์ค่าเดิม + บอกวิธีคิด ไม่ให้ช่องขึ้นสีอื่นหลอกตา */}
                 <Select label="สีอลูมิเนียม" value={color} onChange={setColor}
-                  opts={aluColorKeysFor(prod?.id)} labels={ALU_COLOR_LABEL} />
+                  opts={aluColorKeysFor(prod?.id).includes(color) ? aluColorKeysFor(prod?.id) : [...aluColorKeysFor(prod?.id), color]}
+                  labels={aluColorKeysFor(prod?.id).includes(color) ? ALU_COLOR_LABEL : { ...ALU_COLOR_LABEL,
+                    [color]: (ALU_COLOR_LABEL[color] ?? color) + (color === "wood_maho" || color === "wood_whiteoak" ? " (รุ่นนี้ไม่มีแล้ว · คิดเป็นลายไม้อบพิเศษ)" : " (รุ่นนี้ไม่มีสีนี้)") }} />
                 {(prod.defGlass || prod.composite) && (
                   <GlassSelect label="กระจก (ทั้งห้อง)" value={glassType} onChange={setGlassType} opts={glassKeys} />
                 )}

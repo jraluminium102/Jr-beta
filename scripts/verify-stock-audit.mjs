@@ -136,7 +136,8 @@ console.log("\n═══ ⑤c ราคาเส้นแยกสี ต้อ�
 
   const w = run("white", "white"), bk = run("black", "white"), sh = run("sahara", "sahara"), wd = run("wood_teak", "woodStock");
   ok("สีขาว → ใช้ราคาสโตร์แถวอบขาว", priceOf(w, "เฟรมบน") === 1125 && priceOf(w, "เฟรมข้าง") === 870, "");
-  ok("สีดำ → ใช้ราคาสโตร์แถวดำ (แยกจากขาวได้)", priceOf(bk, "เฟรมข้าง") === 900, String(priceOf(bk, "เฟรมข้าง")));
+  // เจ้าของ 11 ก.ย.69: ดำ ราคาเท่าอบขาว (ไฟล์คอลัมน์ "ขาว/ดำ") — สโตร์ยังเก็บแยกได้ (หักสต็อกแยกสี) แต่คิดราคาใช้แถวอบขาว
+  ok("สีดำ → คิดราคาเท่าอบขาว (870 ไม่ใช่แถวดำ 900)", priceOf(bk, "เฟรมข้าง") === 870, String(priceOf(bk, "เฟรมข้าง")));
   ok("เทาซาฮาร่า → ใช้ราคาสโตร์แถวเทา", priceOf(sh, "เฟรมบน") === 1225 && priceOf(sh, "เฟรมข้าง") === 950, "");
   ok("ลายไม้ → ใช้ราคาสโตร์แถวลายไม้", priceOf(wd, "เฟรมบน") === 1825, String(priceOf(wd, "เฟรมบน")));
   ok("⚠ ห้ามบวกค่าอบซ้ำ เมื่อราคาสโตร์รวมสีแล้ว", sh.cost.bake === 0 && wd.cost.bake === 0, `${sh.cost.bake}/${wd.cost.bake}`);
@@ -281,15 +282,18 @@ console.log("\n═══ ⑤h กล่อง/ฉาก ผูกด้วยช
   ok("ราคา 0 = ยังไม่ตั้ง ไม่เก็บ", !(BOX["กล่อง|1.6X3"]?.["มิว"] > 0), "");
 
   const pb2 = applyPriceOverride(JSON.parse(JSON.stringify(PB)), buildPriceOverride(stock, PB));
-  const run = (stockColor) => computeCost(pb2, PRODUCTS.fixed,
-    { w: 150, h: 200, p: 1, form: "กระจกล้วน", color: "white", colorKey: "white", stockColor });
+  // ส่งหมวดสี + คีย์สี + ชื่อสีสโตร์ ชุดเดียวกับหน้าจอจริง (Calculator40Client) — เดิมส่ง color white ทุกสี
+  const BK = { white: "white", black: "white", sahara: "sahara", wood_teak: "woodStock" };
+  const run = (key) => computeCost(pb2, PRODUCTS.fixed,
+    { w: 150, h: 200, p: 1, form: "กระจกล้วน", color: BK[key], colorKey: key, stockColor: stockColorOfCalc(key) });
   // ชื่อบรรทัดเปลี่ยนเป็น "กล่อง 1.6×3 — ตั้ง/นอน" (แยกท่อนตามใบตัด 21 ส.ค.69)
   const px = (r) => r.lines.find((l) => String(l.name).includes("กล่อง 1.6×3"))?.unitPrice;
-  ok("สีขาว → ใช้ราคากล่องสีขาวจากสโตร์", px(run("อบขาว")) === 1300, String(px(run("อบขาว"))));
-  ok("สีดำ → ใช้ราคากล่องสีดำ", px(run("ดำ")) === 1350, String(px(run("ดำ"))));
-  ok("เทาซาฮาร่า → ใช้ราคากล่องสีเทา", px(run("เทาซาฮาร่า")) === 1480, String(px(run("เทาซาฮาร่า"))));
-  ok("สีที่สโตร์ยังไม่มี → ถอยไปสีมิว/อบขาว ไม่ใช่ 0", px(run("ไวท์โอ็ค")) === 1300, String(px(run("ไวท์โอ็ค"))));
-  ok("เปลี่ยนสีแล้วทุนต่างกันจริง", run("เทาซาฮาร่า").cost.total > run("อบขาว").cost.total, "");
+  ok("สีขาว → ใช้ราคากล่องสีขาวจากสโตร์", px(run("white")) === 1300, String(px(run("white"))));
+  // เจ้าของ 11 ก.ย.69: ดำ = ราคาอบขาว · เทาต้องแพงกว่าขาว
+  ok("สีดำ → ราคาเท่ากล่องอบขาว (ไม่ใช่แถวดำ 1350)", px(run("black")) === 1300, String(px(run("black"))));
+  ok("เทาซาฮาร่า → ใช้ราคากล่องสีเทา (แพงกว่าขาว = ราคาสีจริง)", px(run("sahara")) === 1480, String(px(run("sahara"))));
+  ok("สีที่สโตร์ยังไม่มี (ลายไม้) → ราคาขาว × 1.6 ตามชีตติดตาย (ไม่ใช่ 0 · ไม่ใช่ราคาขาว)", px(run("wood_teak")) === 2080, String(px(run("wood_teak"))));
+  ok("เปลี่ยนสีแล้วทุนต่างกันจริง", run("sahara").cost.total > run("white").cost.total, "");
   // สโตร์ไม่มีเลย → ต้องใช้ราคาในสูตร ไม่ใช่ 0
   const noStock = computeCost(PB, PRODUCTS.fixed,
     { w: 150, h: 200, p: 1, form: "กระจกล้วน", color: "white", colorKey: "white", stockColor: "อบขาว" });

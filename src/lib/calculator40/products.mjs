@@ -27,6 +27,11 @@ const SLIDE_VARS = {
 };
 // ── ค่าคงที่ที่ใช้ซ้ำหลายรุ่น (รวมไว้ที่เดียว · แก้ครั้งเดียวมีผลทุกรุ่น) ──
 const CF_EXPR = "mult*((({white:1,sahara:1.5208,woodStock:1.5859,special:1.9010,woodSpecial:1.9896})[color])||1)";   // ปัจจัยสีกล่อง (R3.9)
+// รุ่นซื้อเส้นมิวมาอบเอง — ชีตคิดทุน SlimLux C12 / Velora C15 / E-series C13 (v20.1):
+//   ขาว/ดำ/เทา → rate_grey · สีอบพิเศษ → rate_special · สีอื่น (ลายไม้) → rate_woodbake · ค่าเปิดตู้อบทุกสี
+const BAKE_MILL = { white: 'sahara', black: 'sahara', sahara: 'sahara', sahara_black: 'sahara', special: 'special', _default: 'woodSpecial' };
+// ติดตาย โปรไฟล์ 9014 — ชีต "คิดทุน ติดตาย" E3: เทา 550 (ขาว 380) · ลายไม้ stock ×1.6 · อบพิเศษ ×(1+rate/192)
+const CF_9014 = { sahara: 550 / 380, woodStock: 1.6, special: 1 + 173 / 192, woodSpecial: 1 + 190 / 192 };
 // จำนวนบานล็อกตามชื่อรูปแบบของบานเฟี้ยม ("3บาน: เปิดกลาง (2-1)" → 3 บานเท่านั้น)
 //   เจ้าของสั่ง 21 ส.ค.69 ให้ยึดใบตัด — ใบตัดคิดจาก config พับ ถ้าจำนวนบานไม่ตรงชื่อ = คนละงาน
 // ตารางจำนวน เสา/เสากุญแจ/มือจับ/บังใบ ของบานเฟี้ยม SMS 240 — ลอกจาก SMS240_CFG ในใบตัด
@@ -203,7 +208,7 @@ export const PRODUCTS = {
   },
 
   euro_slide: {
-    id: 'euro_slide', aluWaste: true, group: 1, name: 'บานเลื่อน ยูโร', brand: 'EURO', laborKey: 'บานเลื่อน ยูโร',
+    id: 'euro_slide', woodEuro: true, aluWaste: true, group: 1, name: 'บานเลื่อน ยูโร', brand: 'EURO', laborKey: 'บานเลื่อน ยูโร',
     icon: '🪟', defForm: 'อิสระ', forms: ['อิสระ', 'สลับ', 'ลากจูง', 'เปิดคู่กลาง'],
     specOpts: [{ key: 'bottomrail', label: 'ราง', opts: ['รางกันน้ำ', 'รางเตี้ย (งานใน)'], def: 'รางกันน้ำ' }], // R3.9 label-only · รางเตี้ย=งานในระบุในใบ
     addons: ['slide_auto', 'rain_sensor', 'mosquito', 'cmech', 'stainless', 'digihandle', 'frame_wrap', 'drop_floor', 'demolish'],
@@ -310,7 +315,8 @@ export const PRODUCTS = {
 
   slimlux: {
     // millBar = ซื้อเส้นมาสีมิว → สีอบขาว/ดำ ต้องคิดค่าเปิดตู้อบด้วย (เจ้าของเคาะ 10 ก.ย.69)
-    id: 'slimlux', aluWaste: true, millBar: true, group: 1, name: 'บานเลื่อนเฟรมบาง SlimLux', brand: 'SLIMLUX', laborKey: 'SlimLux',
+    // bakeByKey + ovenAlways ตามชีต "คิดทุน SlimLux" (ค่าอบทุกสี · ตู้อบ B31 = 1 ทุกงาน) · greyRatio = เทาแพงกว่าขาว (เจ้าของ 11 ก.ย.69)
+    id: 'slimlux', aluWaste: true, millBar: true, ovenAlways: true, bakeByKey: BAKE_MILL, greyRatio: true, group: 1, name: 'บานเลื่อนเฟรมบาง SlimLux', brand: 'SLIMLUX', laborKey: 'SlimLux',
     icon: '🪟', defForm: 'อิสระ', forms: ['อิสระ', 'ลากจูง', 'เปิดคู่กลาง'],
     addons: ['slide_auto', 'demolish'],
     autoBrands: ['slimlux'],   // เจ้าของเคาะ 21 ส.ค.69: สลิมเอาแค่รื้อของเดิม (ไม่มีมุ้ง/ครอบวงกบ)   // LUT รองรับ ลากจูง(3-5)/เปิดคู่กลาง(4,6) — ไม่มีสลับ
@@ -370,7 +376,7 @@ export const PRODUCTS = {
   },
 
   open_door: {
-    id: 'open_door', aluWaste: true, group: 1, name: 'บานเปิด', brand: 'EURO', laborKey: 'บานเปิด (ยูโร)',
+    id: 'open_door', woodEuro: true, aluWaste: true, group: 1, name: 'บานเปิด', brand: 'EURO', laborKey: 'บานเปิด (ยูโร)',
     icon: '🚪', defForm: 'มีธรณี', forms: ['มีธรณี', 'ไม่มีธรณี'],
     addons: ['thresh', 'closer', 'mosquito', 'cmech', 'stainless', 'digihandle', 'frame_wrap', 'drop_floor', 'demolish'],   // ห้องกระจก G6 พาริตี้ (2ก.ค.) — ธรณีหลังเต่า/โช้คอัพ/มือจับ/มุ้ง
     defaults: { w: 150, h: 200, p: 1 }, defGlass: 'เขียว 6มม.', minP: 1, maxP: 4,
@@ -596,6 +602,9 @@ export const PRODUCTS = {
 
   fixed: {
     id: 'fixed', group: 1, name: 'บานติดตาย', brand: 'MTONG', laborKey: 'บานติดตาย',
+    // สีตามชีต "คิดทุน ติดตาย" E2: กล่อง 1.6×3 เทา 1612 (ขาว 1240) · ลายไม้ stock ×1.6 · อบพิเศษ ×(1+rate/192)
+    //   ใช้เมื่อสโตร์ไม่มีราคาสีจริง (เจ้าของ 11 ก.ย.69: เทาต้องแพงกว่าขาว)
+    boxCF: { sahara: 1612 / 1240, woodStock: 1.6, special: 1 + 173 / 192, woodSpecial: 1 + 190 / 192 },
     icon: '🟦', defForm: 'กระจกล้วน', forms: ['กระจกล้วน'], stockLen: 6.0,
     addons: ['frame_wrap', 'demolish'],   // ห้องกระจก G6 พาริตี้ (2ก.ค.) — ติดตาย: ครอบวงกบ/รื้อของเดิม เท่านั้น (ไม่มีมือจับ/ล็อค/มุ้ง)
     defaults: { w: 150, h: 200, p: 1 }, defGlass: 'เขียว 6มม.', minP: 1, maxP: 6,
@@ -604,8 +613,8 @@ export const PRODUCTS = {
       //   ใส่ code เพิ่มเพื่อให้หน้าเทียบจับคู่กับใบตัดได้ (ราคายังมาจาก box = ชื่อ+ขนาด+สี เหมือนเดิม)
       { box: 'กล่อง|1.6X3', code: 'กล่อง 1.6"x3"', name: 'กล่อง 1.6×3 — ตั้ง', price: 1240, kg: 0, seg: 'H', count: 'P+1' },
       { box: 'กล่อง|1.6X3', code: 'กล่อง 1.6"x3"', name: 'กล่อง 1.6×3 — นอน', price: 1240, kg: 0, seg: 'W-0.09', count: '2*P' },
-      { name: '9014 คัลเทิลวอล — ตั้ง', code: '9014', price: 380, kg: 0, seg: 'H', count: 'P+1' },
-      { name: '9014 คัลเทิลวอล — นอน', code: '9014', price: 380, kg: 0, seg: 'W-0.09', count: '2*P' },
+      { name: '9014 คัลเทิลวอล — ตั้ง', code: '9014', price: 380, kg: 0, cf: CF_9014, seg: 'H', count: 'P+1' },
+      { name: '9014 คัลเทิลวอล — นอน', code: '9014', price: 380, kg: 0, cf: CF_9014, seg: 'W-0.09', count: '2*P' },
     ],
     glass: 'W*H',
     hardware: [
@@ -658,7 +667,7 @@ export const PRODUCTS = {
     //     เรต: เทาซาฮาร่า/ดำซาฮาร่า 100 · สีอบพิเศษ 173 · สีอื่นทั้งหมด (แอทแทค/ลายไม้) = ลายไม้อบพิเศษ 190
     //     ค่าเปิดตู้อบ B28 = 1 ทุกงานทุกสี · 600×300 3 บาน อบขาว = 32,125.92 ตรงชีต D29
     id: 'eseries', aluWaste: true, noStore: true, ovenAlways: true,
-    bakeByKey: { white: 'sahara', black: 'sahara', sahara: 'sahara', sahara_black: 'sahara', special: 'special', _default: 'woodSpecial' },
+    bakeByKey: BAKE_MILL, greyRatio: true,
     group: 1, name: 'บานเลื่อน E-series', brand: 'SMS', laborKey: 'บานเลื่อน SMS',
     icon: '🪟', defForm: 'อิสระ', forms: ['อิสระ', 'สลับ', 'ลากจูง', 'เปิดคู่กลาง'],
     specOpts: [{ key: 'bottomrail', label: 'ราง', opts: ['รางกันน้ำ', 'รางเตี้ย (งานใน)'], def: 'รางกันน้ำ' }], // R3.9 label-only · รางเตี้ย=งานในระบุในใบ
@@ -700,7 +709,8 @@ export const PRODUCTS = {
     // millBar = ซื้อเส้นมาสีมิว → สีอบขาว/ดำ ต้องคิดค่าเปิดตู้อบด้วย (เจ้าของเคาะ 10 ก.ย.69)
     // aluWaste (10 ก.ย.69 เจ้าของให้รีเช็คทุนที่ต่างไฟล์): ชีต "คิดทุน Velora" B15/B16 = ยาวตัด ÷ 600 × buf_scrap 1.3
     //   เดิมเว็บนับซื้อเต็มเส้น → ทุนเกินไฟล์ 12–32% · เปิดแล้ว 220×200 = 8,151.57 ตรงชีต D24 เป๊ะ
-    id: 'velora', aluWaste: true, group: 1, millBar: true, name: 'Velora บานเปิด', brand: 'VELORA', laborKey: 'Velora',
+    // bakeByKey + ovenAlways ตามชีต "คิดทุน Velora" C15 (ลายไม้ = rate_woodbake · ตู้อบ B17 = 1 ทุกงาน) · greyRatio = เทาแพงกว่าขาว
+    id: 'velora', aluWaste: true, group: 1, millBar: true, ovenAlways: true, bakeByKey: BAKE_MILL, greyRatio: true, name: 'Velora บานเปิด', brand: 'VELORA', laborKey: 'Velora',
     // rawAlu: ชีต "คิดทุน Velora" = "อลูดิบ+อบสีแยก" → ราคาเส้น 768/720 ยังไม่รวมอบ
     //   สีขาว/ดำ ต้องบวกค่าอบเรตเทา 100/กก. ด้วย (ตรงสูตร C15/C16 ในชีต) — เดิมเว็บคิด 0 = ทุนขาด 935/ชุด @150×150
     // ⚠ เอา dropdown "เดี่ยว/คู่" ออก (เจ้าของจับได้ 2 ก.ย.69: "เลือกรูปแบบคู่ บานพับยังใช้ 4 แทนที่จะ 8")
@@ -744,7 +754,7 @@ export const PRODUCTS = {
   },
 
   pcdoor: {
-    id: 'pcdoor', aluWaste: true, group: 1, name: 'ประตูบานเปิด PC Door', brand: 'EURO', laborKey: 'PC Door',
+    id: 'pcdoor', woodEuro: true, aluWaste: true, group: 1, name: 'ประตูบานเปิด PC Door', brand: 'EURO', laborKey: 'PC Door',
     icon: '🚪', defForm: 'แบ่ง 2', forms: ['แบ่ง 2', 'แบ่ง 4'],
     specOpts: [ // มด dropdown: ธรณี (B8) + ล้อ/ซอฟต์โคลส (B10) — default = มีธรณี+ใส่ (เท่าเดิม · verify anchor ไม่ขยับ)
       { key: 'pcsill', label: 'ธรณี', opts: ['มีธรณี', 'ไม่มีธรณี'], def: 'มีธรณี' },
@@ -1239,7 +1249,11 @@ export const PRODUCTS = {
     // ถอดทุน BOM R4.0 (ชีต "คิดทุน ราวกันตก") — คิดตามความยาว · ยูเหล็ก+เพลท+ครอบอลู เสมอ
     // + หมุดจับ (ระบบหมุด) หรือ เสา (ระบบเสาตั้ง) · กระจก area · ค่าแรงแบน 1575 (พับในทุน) · เส้น 6ม.=600ซม.
     // W(กว้าง)=ความยาวราว(ซม.) · H=สูง · P=จำนวนช่อง(เสา) · เศษเส้นคิดตามสัดส่วน (ตรง Excel /600)
-    id: 'handrail', partsLinked: true, group: 2, name: 'ราวกันตก/ราวบันได กระจก', brand: '-', laborKey: 'ราวกันตก (ในวัสดุ)',
+    // boxCF: ชีต "คิดทุน ราวกันตก" H7 มีแค่ 2 ขั้น — ดำ/เทาซาฮาร่า 652 · สีอื่น 598
+    //   ดำ = ขาว ตามกติกาเจ้าของ 11 ก.ย.69 · ลายไม้/สีอบพิเศษ "ตั้งใจ" ไม่ใช้ 598 ของชีต (จะถูกกว่าเทา ผิดลำดับที่เจ้าของกำหนด)
+    //   → ใช้ตัวคูณกล่องกลาง PB.BOX_CF (ลายไม้ ×1.5859 · อบพิเศษ ×1.901 ตามชีตประตูรั้ว/ระแนง) · QA ท้วง 11 ก.ย.69 = ตั้งใจ ไม่ใช่บั๊ก
+    id: 'handrail', boxCF: { sahara: 652 / 598 },
+    partsLinked: true, group: 2, name: 'ราวกันตก/ราวบันได กระจก', brand: '-', laborKey: 'ราวกันตก (ในวัสดุ)',
     showColor: true,   // กล่องสี 13 สี (อลูราวจับ/เสา · label-only)
     icon: '🛡️', cascade: true,
     materialLabel: 'ทรง · ระบบยึด', cascadeLabels: ['ทรง', 'ระบบยึด'],
@@ -2331,7 +2345,7 @@ export const PRODUCTS = {
   bansolid: {
     // ถอดทุน BOM R4.0 (ชีต "คิดทุน บานโซลิด") — บานเปิด + ลูกฟูก2ทาง 2 ฝั่ง + เส้นคาดตาราง 2 ฝั่ง (ไม่มีกระจก)
     // ลูกฟูก/คาดตาราง = SlimLux (mult_slim=1) · ราคาสีอบขาว/ดำ ลูกฟูก 432 · คาดตาราง 140 (แปรตามสีทีหลัง)
-    id: 'bansolid', partsLinked: true, group: 1, name: 'บานโซลิด', brand: 'EURO', laborKey: 'บานโซลิด',
+    id: 'bansolid', woodEuro: true, partsLinked: true, group: 1, name: 'บานโซลิด', brand: 'EURO', laborKey: 'บานโซลิด',
     // แบบโซลิด (ชีตคิดทุน B10 · เจ้าของเคาะ 10 ก.ย.69): โซลิด 1 ชั้น = ลูกฟูกฝั่งเดียว · โซลิด 2 ชั้น = ลูกฟูก 2 ฝั่ง
     //   ต่างกันแค่จำนวนลูกฟูก — เส้นคาดตาราง 2 ฝั่งเท่ากันทั้ง 2 แบบ (ตามสูตรทุน · ตาราง R4.1 ทุนต่าง = ลูกฟูกครึ่งหนึ่งพอดี)
     specOpts: [{ key: 'solidLayer', label: 'แบบโซลิด', opts: ['โซลิด 2 ชั้น', 'โซลิด 1 ชั้น'], def: 'โซลิด 2 ชั้น', priced: true }],

@@ -25,7 +25,7 @@ export default async function Calculator40Page() {
     fetchAllPaged<StockRow>((f, t) =>
       anyDb
         .from("stock_items")
-        .select("name, sku, supplier, is_weight_based, unit_cost, price_per_kg")
+        .select("name, sku, color, supplier, is_weight_based, unit_cost, price_per_kg")   // color = ราคาเส้นแยกสีจริง (ไม่มี = ทุกสีราคาเดียว)
         .eq("is_active", true)
         .order("id", { ascending: true })
         .range(f, t),

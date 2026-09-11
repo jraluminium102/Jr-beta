@@ -154,7 +154,7 @@ export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverrid
   //   colored = ราคาต่ำสุดเฉพาะแถวที่ระบุสี · min = ทุกแถว (รวมแถวที่ไม่ระบุสี)
   //   ⚠ แถวไม่ระบุสีมักเป็นแถว "ราคา BOM" ที่สร้างไว้ทีหลัง (เช่น migration 0083 supplier='ถอดทุน R4.0')
   //     ถ้าปล่อยให้แข่งราคาด้วย จะกดราคาเส้นจริงลงเงียบ ๆ (เจอจริง F7935: เส้นจริง 570 → แถว BOM 385)
-  const aluByCode: Record<string, { white: number; min: number; colored: number }> = {};
+  const aluByCode: Record<string, { white: number; black: number; mill: number; min: number; colored: number }> = {};
   const partsFromOwner: Record<string, boolean> = {};   // ชื่อนี้ราคามาจากแถวที่ตั้งใจให้ผูกหรือเปล่า
   for (const r of rows || []) {
     const name = (r.name || "").trim();
@@ -212,14 +212,16 @@ export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverrid
       const skuCode = sku ? normCode(sku) : "";
       const codes = [skuCode, ...nameCodes].filter((c) => c && aluCodes.has(c));
       for (const code of [...new Set(codes)]) {
-        const e = aluByCode[code] || (aluByCode[code] = { white: 0, min: 0, colored: 0 });
+        const e = aluByCode[code] || (aluByCode[code] = { white: 0, black: 0, mill: 0, min: 0, colored: 0 });
         e.min = e.min > 0 ? Math.min(e.min, cost) : cost;
         if (rowColor(r)) e.colored = e.colored > 0 ? Math.min(e.colored, cost) : cost;
         // ⚠ สีต้องอ่านจาก "ช่องสี" ก่อน แล้วค่อยดูในชื่อ — ใช้ rowColor() ตัวเดียวกับที่อื่น
         //   บั๊กเดิม: เช็คแค่ชื่อ (name.includes("อบขาว")) แต่สโตร์เก็บสีไว้ในช่อง color
         //   → หาแถวอบขาวไม่เจอ เลยตกไปใช้ "ราคาต่ำสุด" ของรหัสนั้น (คนละแถวกับที่หน้าตรวจโชว์)
         //   = หน้าตรวจขึ้น "ผูกแล้ว แต่ราคาไม่ตรง" ทั้งที่ผูกอยู่ (เจ้าของเจอเอง 19 ส.ค.69)
-        if (rowColor(r) === "อบขาว" || name.includes("อบขาว")) e.white = Math.max(e.white, cost);
+        if (rowColor(r) === "อบขาว" || rowColor(r) === "ขาว" || name.includes("อบขาว")) e.white = Math.max(e.white, cost);   // "ขาว" = ชื่อสีแถวมือจับ X-J
+        if (rowColor(r) === "ดำ") e.black = Math.max(e.black, cost);
+        if (rowColor(r) === "มิว") e.mill = Math.max(e.mill, cost);   // รุ่นซื้อเส้นมิวมาอบเอง (Velora) — ราคาดิบคือราคาฐาน   // ดำ = ราคาเดียวกับขาวในไฟล์ (คอลัมน์ "ขาว/ดำ")
         // เก็บราคา "ทุกสี" ไว้ด้วย (รหัสเดียวกันหลายแถว = คนละสี) — สีเดียวกันซ้ำหลายแถว เอาถูกสุด
         const rc = rowColor(r);
         if (rc) {
@@ -235,8 +237,15 @@ export function buildPriceOverride(rows: StockRow[], pb: any = PB): PriceOverrid
     }
   }
   for (const b in aluByBrand) ov.ALU[b] = aluByBrand[b];
-  //   ลำดับ: อบขาว → ถูกสุดในบรรดา "แถวที่มีสี" → ถูกสุดทุกแถว (ใช้ตอนไม่มีแถวมีสีเลย)
-  for (const c in aluByCode) ov.ALUCODE[c] = aluByCode[c].white || aluByCode[c].colored || aluByCode[c].min;
+  //   ลำดับ: อบขาว → ดำ → มิว (เส้นดิบ) → ถูกสุดทุกแถว (เฉพาะรหัสที่ "ไม่มีแถวระบุสีที่ตั้งราคาแล้วเลย")
+  //   ⚠ ห้ามหยิบราคาแถวสีอื่นมาเป็นราคาขาว (เจ้าของ 11 ก.ย.69 "ลายไม้สักทองถูกกว่าเทา")
+  //     F7864 ขาว/ดำ/เทา ราคา 0 แต่สักทอง 3,170 → เดิมเอา 3,170 เป็นราคาขาว แล้วเทาบวกค่าอบทับอีก = เทาแพงกว่าสักทอง
+  //     ไม่มีราคาขาว/ดำ → ไม่ตั้ง ALUCODE จากสโตร์ (engine ใช้ราคาในไฟล์/สูตรแทน)
+  for (const c in aluByCode) {
+    const e = aluByCode[c];
+    const v = e.white || e.black || e.mill || (e.colored > 0 ? 0 : e.min);
+    if (v > 0) ov.ALUCODE[c] = v;
+  }
   return ov;
 }
 

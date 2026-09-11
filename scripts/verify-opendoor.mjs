@@ -105,9 +105,12 @@ console.log('\n═══ ⑤ กรอบบาน 8 ซม. (F7943) เที�
   // น้ำหนักคนละค่า → ค่าอบต้องต่างกันด้วย (F7864 11.328 · F7943 7.546 กก./เส้น)
   {
     const opt = (frame) => ({ w: 90, h: 200, p: 1, form: "มีธรณี", color: "sahara", colorKey: "sahara", glassType: "เขียว 6มม.", spec: { odkind: "ประตู", odframe: frame } });
-    const k10 = computeCost(PB, P, opt("10 ซม. (F7864)")).cost.bake;
-    const k8 = computeCost(PB, P, opt("8 ซม. (F7943)")).cost.bake;
-    ok("สีเทา: กรอบ 8 ซม. ค่าอบน้อยกว่า 10 ซม. (เบากว่า)", k8 < k10 && k8 > 0, k8 + " vs " + k10);
+    // 11 ก.ย.69: ชีตราคาสี v20.1 มีราคาเทา F7864 = 2,310 แล้ว → กรอบ 10 ซม. ใช้ราคาสีสำเร็จ ไม่คิดค่าอบ
+    //   F7943 (8 ซม.) ไฟล์เขียนรหัส F7943B → ยังไม่มีราคาสี → ขาว + ค่าอบตามน้ำหนักจริง (F7943 7.546 กก./เส้น)
+    const r10 = computeCost(PB, P, opt("10 ซม. (F7864)")), r8 = computeCost(PB, P, opt("8 ซม. (F7943)"));
+    const post10 = (r10.lines.find((l) => /^เสา \(กรอบบาน/.test(l.name)) || {}).unitPrice;
+    ok("สีเทา: เสา 10 ซม. (F7864) ใช้ราคาสีไฟล์ 2,310", post10 === 2310, String(post10));
+    ok("สีเทา: กรอบ 8 ซม. ไม่มีราคาสี → คิดค่าอบตามน้ำหนัก", r8.cost.bake > r10.cost.bake && r8.cost.bake > 0, r8.cost.bake + " vs " + r10.cost.bake);
   }
 }
 

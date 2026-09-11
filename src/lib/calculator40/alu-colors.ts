@@ -11,7 +11,8 @@ export const ALU_COLORS: AluColor[] = [
   { key: "black", label: "อบดำ", bake: "white" },
   { key: "sahara", label: "เทาซาฮาร่า", bake: "sahara" },
   { key: "sahara_black", label: "ดำซาฮาร่า", bake: "sahara" },
-  { key: "aztec", label: "Aztec Gray", bake: "special", note: "Aztec — L=สต็อก · M/S=อบพิเศษ (ราคา R3.9 อ้างอิงอบพิเศษ · รอถอดทุน 4.0)" },
+  // Aztec = สีสต็อกโปรไฟล์ยูโร (ชีตราคาสี v20.1 มีราคาทุกรหัส F) — ไม่มีราคาสีคิดค่าอบเรตเทา ไม่เปิดตู้อบ (เจ้าของ 11 ก.ย.69)
+  { key: "aztec", label: "Aztec Gray", bake: "sahara" },
   { key: "wood_teak", label: "ลายไม้ สักทอง", bake: "woodStock" },
   { key: "wood_maho", label: "ลายไม้ มะฮอกกานี", bake: "woodStock" },
   { key: "wood_whiteoak", label: "ลายไม้ ไวท์โอ๊ค", bake: "woodStock" },
@@ -38,14 +39,24 @@ export const ALU_COLOR_KEYS: string[] = ALU_COLORS.map((c) => c.key);
 //   ⚠ ไฟล์ถอดทุนใส่ราคา 3 สีนี้ให้ทุกรหัส (คิดจาก ขาว + ค่าอบ×กก.) — แต่ของจริงสั่งได้แค่รุ่นพวกนี้
 //     ถ้าไม่กรอง เซลล์จะเลือกสีที่โรงงานทำไม่ได้ แล้วเสนอราคาออกไปแล้ว
 export const SPECIAL_COLOR_KEYS = ["aztec", "wood_maho", "wood_whiteoak"] as const;
-//   เจ้าของยืนยันเพิ่ม 19 ส.ค.69: กระทุ้ง · PC Door · บานหมุน · เฟี้ยมยก · บานโซลิด ก็มี
+//   เจ้าของยืนยันเพิ่ม 19 ส.ค.69: กระทุ้ง · PC Door · บานหมุน · เฟี้ยมยก · บานโซลิด ก็มี (ใช้กับ Aztec gray)
 export const SPECIAL_COLOR_PRODUCTS = new Set([
   "open_door", "euro_slide", "fold_euro",
   "awning", "pcdoor", "pivot", "fold_lift", "bansolid",
 ]);
+// ── มะฮอกกานี / ไวท์โอ๊ค แคบกว่านั้นอีก (เจ้าของ 11 ก.ย.69) ─────────────────────
+//   มีแค่ บานเปิดยูโร · บานเลื่อนยูโร · บานโซลิด (1 และ 2 ชั้น) · PC Door
+//   รุ่นอื่น "เอาตัวเลือกออก" — ลูกค้าอยากได้ลายนี้ให้เลือก "ลายไม้อบพิเศษ" (แพงกว่า)
+//   ⚠ ต้องตรงกับธง prod.woodEuro ใน products.mjs (engine ใช้ธงนั้นคิดใบเก่าเป็นลายไม้อบพิเศษ · verify-auto ⑳ ตรวจ)
+export const WOOD_EURO_KEYS = ["wood_maho", "wood_whiteoak"] as const;
+export const WOOD_EURO_PRODUCTS = new Set(["open_door", "euro_slide", "bansolid", "pcdoor"]);
 
-/** สีที่รุ่นนี้เลือกได้จริง — รุ่นที่ไม่ได้อยู่ในรายการ ตัด 3 สีพิเศษออก */
+/** สีที่รุ่นนี้เลือกได้จริง — Aztec เฉพาะรุ่นยูโร · มะฮอกกานี/ไวท์โอ๊ค เฉพาะ 4 รุ่น */
 export function aluColorKeysFor(prodId?: string | null): string[] {
-  if (prodId && SPECIAL_COLOR_PRODUCTS.has(prodId)) return ALU_COLOR_KEYS;
-  return ALU_COLOR_KEYS.filter((k) => !(SPECIAL_COLOR_KEYS as readonly string[]).includes(k));
+  const id = prodId ?? "";
+  return ALU_COLOR_KEYS.filter((k) => {
+    if ((WOOD_EURO_KEYS as readonly string[]).includes(k)) return WOOD_EURO_PRODUCTS.has(id);
+    if ((SPECIAL_COLOR_KEYS as readonly string[]).includes(k)) return SPECIAL_COLOR_PRODUCTS.has(id);
+    return true;
+  });
 }

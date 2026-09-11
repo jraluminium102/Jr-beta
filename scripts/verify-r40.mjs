@@ -137,7 +137,9 @@ const ANCHORS = [
   //    ตัวยึดที่ตรวจเลขได้เองอยู่ที่ ②g (ราคาขาว = กก. × 187)
   { id: 'sms_slide', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 18924.11 },
   { id: 'euro_slide', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 32996.23 },   // +134 จากชีต: เจ้าของเคาะ 21 ส.ค.69 (ฉากประกอบมุม 8→12/บาน · ยาง+วาวรูน้ำ อันละ ฿5)
-  { id: 'slimlux', in: { w: 200, h: 200, p: 2, form: 'อิสระ' }, cost: 9555.67 },   // +2,000 ค่าเปิดตู้อบ (10 ก.ย.69) — ซื้อเส้นมาสีมิว สีอบขาว/ดำ ก็ต้องเข้าตู้ (prod.millBar)   // +165.42: กล่อง 4 หุน เคยคิดฟรี (฿0) — เจ้าของให้ราคา ฿210/เส้น 21 ส.ค.69
+  // 11 ก.ย.69 +2,517.81 = ค่าอบเรตเทา 100/กก. ทุกเส้น (ชีต "คิดทุน SlimLux" C12–C20: ราคาดิบ + rate_grey×กก. สำหรับขาว/ดำ/เทา)
+  //   ไม่ส่งคีย์สี = ไม่ใช้ตารางราคาอบสำเร็จ 7 รหัส → ทุกเส้นเป็น ราคาดิบ + ค่าอบ (หน้าจอจริงส่งคีย์สีเสมอ ดู verify-auto ⑮)
+  { id: 'slimlux', in: { w: 200, h: 200, p: 2, form: 'อิสระ' }, cost: 12073.48 },   // +2,000 ค่าเปิดตู้อบ (10 ก.ย.69) — ซื้อเส้นมาสีมิว สีอบขาว/ดำ ก็ต้องเข้าตู้ (prod.millBar)   // +165.42: กล่อง 4 หุน เคยคิดฟรี (฿0) — เจ้าของให้ราคา ฿210/เส้น 21 ส.ค.69
   { id: 'open_door', in: { w: 150, h: 200, p: 1, form: 'มีธรณี' }, cost: 7868.02 },   // +38: ธรณีใช้ราคาไฟล์ F7938(B) 1530 แทนราคาสำรอง 1400 (pricebook คีย์ตาม sku สโตร์)   // รื้อตามไฟล์ตัดประกอบ + ใส่ราคาอุปกรณ์ตามชีตถอดทุน v9 (ค่าอุปกรณ์ = 1,638 ตรงไฟล์เป๊ะ)
   //   ต่างจากไฟล์ 27 บาท = ค่าหักลบอลูตามไฟล์ตัดประกอบ (ชีตคิดทุนไม่หัก) — ตั้งใจต่าง
   // +252 (27 ส.ค.69): ผูกรหัสสโตร์ชุดอุปกรณ์หน้าต่างทั้งชุด ตามที่เจ้าของไล่เช็ค
@@ -171,7 +173,8 @@ const ANCHORS = [
 
   // ── รุ่นใหม่ (Wave 1+2) — subagent self-verify diff≈0 ──
   { id: 'eseries', in: { w: 600, h: 300, p: 3, form: 'อิสระ' }, cost: 32125.92 },   // 11 ก.ย.69 = ชีต "คิดทุน E-series" D29 (อบทุกสี + ค่าเปิดตู้อบ)
-  { id: 'velora', in: { w: 220, h: 200, p: 1, form: 'เดี่ยว', color: 'sahara', glassType: 'เทมเปอร์ใส 6มม.' }, cost: 6151.57 },   // 10 ก.ย.69 นับเส้นแบบไฟล์ (aluWaste) · สีขาว 220×200 = 8,151.57 ตรงชีต (verify-auto ⑱)
+  // 11 ก.ย.69 เทา = ขาวเป๊ะตามชีต (C15 rate_grey ทั้งคู่ · ตู้อบ B17 = 1 ทุกสี) — ส่วนต่างเทาของหน้าจอมาจาก greyRatio (ต้องส่งคีย์สี)
+  { id: 'velora', in: { w: 220, h: 200, p: 1, form: 'เดี่ยว', color: 'sahara', glassType: 'เทมเปอร์ใส 6มม.' }, cost: 8151.57 },   // 10 ก.ย.69 นับเส้นแบบไฟล์ (aluWaste) · สีขาว 220×200 = 8,151.57 ตรงชีต (verify-auto ⑱)
   //   3 ก.ย.69 −2,102 = ถอดคิ้วกระจก F7935 4 บรรทัด (เจ้าของสั่ง "PC Door คิ้วกระจกไม่ใช้")
   { id: 'pcdoor', in: { w: 150, h: 200, p: 2, form: 'แบ่ง 2' }, cost: 9312.14 },   // 24 ส.ค.69 ยึดใบตัด: +คาน 1"×4 +ชนกลาง B20046 (ของจริงที่ไม่เคยคิดเงิน) · กรอบ/คิ้ว แตกรายท่อนตามกระดานคำนวณ (หักเผื่อประกอบจริง → สั้นกว่าสูตรรวม 2PH+2W เดิมเล็กน้อย)
   // ⚠ เดิม 7,962 = ค่าจากไฟล์ v9 ที่ปัดขึ้นเต็มเส้นทุกบรรทัด · v20 เปลี่ยนเป็นยาวจริง÷6.4×1.3 → 4,297.55
@@ -233,7 +236,7 @@ const ANCHORS150 = [
   { id: 'euro_slide', in: { p: 2, form: 'อิสระ' }, cost: 8491.93 },   // +36 จากชีต (ฉาก 12/บาน + ยาง/วาวรูน้ำ ฿5) — เจ้าของเคาะ 21 ส.ค.69
   { id: 'eseries', in: { p: 2, form: 'อิสระ' }, cost: 12134.07 },   // 11 ก.ย.69 อบทุกสี + ค่าเปิดตู้อบ (เดิม 7,060.06)
   { id: 'velora', in: { p: 2, form: 'เดี่ยว', color: 'white' }, cost: 8493.95 },   // 10 ก.ย.69 aluWaste (เดิม 9,045.15 ซื้อเต็มเส้น)   // +2,000 ค่าเปิดตู้อบ (10 ก.ย.69) — ซื้อเส้นมาสีมิว สีอบขาว/ดำ ก็ต้องเข้าตู้ (prod.millBar)   // ใบตัด: 1 บาน = 1 ชุดวงกบ (ไม่ใช้วงกบร่วม) — เจ้าของสั่งยึดใบตัด 21 ส.ค.69      // สีขาว = ต้องมีค่าอบเรตเทา (rawAlu)
-  { id: 'velora', in: { p: 2, form: 'เดี่ยว', color: 'sahara' }, cost: 6493.95 },     // เทา = เท่ากันเป๊ะตามสูตรชีต
+  { id: 'velora', in: { p: 2, form: 'เดี่ยว', color: 'sahara' }, cost: 8493.95 },     // เทา = เท่ากันเป๊ะตามสูตรชีต
   { id: 'open_door', in: { p: 2, form: 'มีธรณี' }, cost: 9624.99 },   // F7938 ราคาไฟล์ 1530
   { id: 'pcdoor', in: { p: 1, form: 'แบ่ง 2', spec: { pcsill: 'มีธรณี', pcsoft: 'ใส่' } }, cost: 6973.11 },   // 24 ส.ค.69: +คาน +ชนกลาง B20046 · กรอบ/คิ้วแตกรายท่อนตามใบตัด
   { id: 'awning', in: { p: 1, form: 'อิสระ' }, cost: 5305.39 },   // −364: ถอด 5 รายการที่ใบตัดไม่มี (เจ้าของเคาะ 1 ก.ย.69)
@@ -442,10 +445,11 @@ for (const [id, form] of [['sms_slide', 'อิสระ'], ['euro_slide', 'อ�
 //                + Σ บาร์×กก.×ค่าอบ สำหรับเส้นที่ชีตไม่ได้ VLOOKUP (เช่น F7863/F7864 ของบานเปิด)
 console.log('\n═══ ②d ราคาตามสี (เทาซาฮาร่า / ลายไม้สต็อค) ═══');
 const ANCHORS_COLOR = [
-  // SMS ขยับ −285 ทุกสีเท่ากัน (ฐานขาวเปลี่ยน · ตารางราคาสีเท่าเดิม) — ยึดชีตราคาสี v9
-  ['sms_slide', { w: 150, h: 150, p: 2, form: 'อิสระ' }, { white: 5414.95, sahara: 5723.42, woodStock: 7560.96 }],
-  ['euro_slide', { w: 150, h: 150, p: 2, form: 'อิสระ' }, { white: 8491.93, sahara: 8923.34, woodStock: 11177.57 }],   // +36 ทุกสี · +324 ชิ้นส่วนมือจับ (1 ก.ย.69) — ของที่เพิ่มไม่ขึ้นกับสี
-  ['open_door', { w: 150, h: 150, p: 2, form: 'มีธรณี' }, { white: 9624.99, sahara: 11924.07, woodStock: 13191.78 }],   // sahara ลด: ธรณีใช้ราคาสีสำเร็จจากไฟล์ (1635) แทน ขาว+ค่าอบ
+  // 11 ก.ย.69 ยึดชีตราคาสี v20.1 (เดิม v9) — ตรวจรายบรรทัดแล้ว ทุกเส้นที่มีราคาสีในไฟล์ใช้ราคานั้นตรง ๆ
+  //   ยกเว้น: ไฟล์ราคาสี ≤ ราคาขาวของเส้นนั้น → ไม่ใช้ (ขาว + ค่าอบ) เช่น F7935 เทา 405 < ขาว 453.3 · F7994 สีเงินราคาเดียว
+  ['sms_slide', { w: 150, h: 150, p: 2, form: 'อิสระ' }, { white: 5414.95, sahara: 5707.73, woodStock: 7535.85 }],
+  ['euro_slide', { w: 150, h: 150, p: 2, form: 'อิสระ' }, { white: 8491.93, sahara: 9457.82, woodStock: 11830.73 }],   // +36 ทุกสี · +324 ชิ้นส่วนมือจับ (1 ก.ย.69) — ของที่เพิ่มไม่ขึ้นกับสี
+  ['open_door', { w: 150, h: 150, p: 2, form: 'มีธรณี' }, { white: 9624.99, sahara: 10741.71, woodStock: 13177.78 }],   // sahara ลด: ธรณีใช้ราคาสีสำเร็จจากไฟล์ (1635) แทน ขาว+ค่าอบ
 ];
 for (const [id, inp, want] of ANCHORS_COLOR) {
   const prod = PRODUCTS[id];
@@ -502,15 +506,20 @@ console.log('\n═══ ②f F7994 ตบรางล้อ สีเงิน 
 
 // ── ③ สวิตช์ "คิดค่าแรงแบบไหน" ในหน้าคิดราคา — ราคาที่ขึ้นใบต้องเปลี่ยนตามจริง ──
 //   เคยพลาดมาแล้ว: ทำปุ่มสวย ๆ แต่ลืมต่อสาย → กดแล้วราคาไม่ขยับ · ตรงนี้อ่านซอร์สจริง
-// ── ②g ราคาแยกสีจริงจากไฟล์ v9 (ALUCOLOR_KEY) — เจ้าของเคาะ 19 ส.ค.69 "เอา" ──
-//   ค่าตรึงจากชีต "ราคาสี" v9 บล็อก "ปัจจุบัน" (คอลัมน์ L–R) · ห้ามคิดสดจาก PB (ลบตารางแล้วต้องแดง)
-console.log('\n═══ ②g ราคาเส้นแยกสีจริง 6 สี (ไฟล์ v9 ชีตราคาสี) ═══');
+// ── ②g ราคาแยกสีจริงจากไฟล์ (ALUCOLOR_KEY) — เจ้าของเคาะ 19 ส.ค.69 "เอา" · อัปเดตเป็น v20.1 11 ก.ย.69 ──
+//   ค่าตรึงจากชีต "ราคาสี" v20.1 บล็อก "ตอนนี้" (คอลัมน์ M–S) · ห้ามคิดสดจาก PB (ลบตารางแล้วต้องแดง)
+//   SMS (รหัส B) ไฟล์ไม่มีช่อง แอทแทค/มะฮอกกานี/ไวท์โอ๊ค (สีเฉพาะยูโร) → ต้องไม่มีในตาราง
+console.log('\n═══ ②g ราคาเส้นแยกสีจริง 6 สี (ไฟล์ v20.1 ชีตราคาสี) ═══');
 {
   const WANT = {
-    B20001: { sahara: 1272.6, sahara_black: 1272.6, aztec: 2250.2, wood_teak: 1896, wood_maho: 2356.2, wood_whiteoak: 2356.2 },
-    B20003: { sahara: 986.9, sahara_black: 986.9, aztec: 1740, wood_teak: 1449.2, wood_maho: 1822.1, wood_whiteoak: 1822.1 },
-    B20041: { sahara: 2342.7, wood_teak: 3557.2 },
+    B20001: { sahara: 1375, sahara_black: 1375, wood_teak: 2050 },
+    B20003: { sahara: 1080, sahara_black: 1080, wood_teak: 1585 },
+    B20041: { sahara: 2255, wood_teak: 3424 },
+    F7859: { sahara: 1285, sahara_black: 1285, aztec: 1315, wood_teak: 1970, wood_maho: 1815, wood_whiteoak: 1815 },
+    F7864: { sahara: 2310, aztec: 2355, wood_teak: 3170, wood_maho: 3260 },   // สักทอง: ชีตราคาสีว่าง → ชีตคิดทุนบานเปิด/PC Door เขียน 3170
   };
+  for (const col of ['aztec', 'wood_maho', 'wood_whiteoak'])
+    check('B20001 ' + col + ' ต้องไม่มี (สีเฉพาะยูโร)', PB.ALUCOLOR_KEY?.[col]?.B20001 == null ? 1 : 0, 1, 0);
   for (const [code, m] of Object.entries(WANT))
     for (const [col, px] of Object.entries(m))
       check(code + ' ' + col, PB.ALUCOLOR_KEY?.[col]?.[code], px, 0.01);
@@ -527,7 +536,9 @@ console.log('\n═══ ②g ราคาเส้นแยกสีจริ�
 
   const sell = (key, bake) => computeCost(PB, PRODUCTS.sms_slide,
     { w: 600, h: 300, p: 3, form: 'อิสระ', color: bake, colorKey: key }).sell.withInstall;
-  const teak = sell('wood_teak', 'woodStock'), maho = sell('wood_maho', 'woodStock');
+  // มะฮอกกานีมีแค่ 4 รุ่นยูโร (11 ก.ย.69) → เทียบบนบานเลื่อนยูโร
+  const EUs = (key, bake) => computeCost(PB, PRODUCTS.euro_slide, { w: 600, h: 300, p: 3, form: 'อิสระ', color: bake, colorKey: key }).sell.withInstall;
+  const teak = EUs('wood_teak', 'woodStock'), maho = EUs('wood_maho', 'woodStock');
   check('ลายไม้สักทอง ≠ มะฮอกกานี (แยกราคาได้แล้ว)', maho > teak ? 1 : 0, 1, 0);
   // 3 ก.ย.69 ทุกตัว +3,200 = ค่าแรง SMS ตามไฟล์ v20.1 (ผลิต 787.5+43.31 · ติดตั้ง 1,225+29.75)
   //   เดิมเป็นค่าแรงจากไฟล์ ถอดทุน_รวมทั้งหมด.xlsx ตัวแรก · ทุนวัสดุไม่ขยับ (ด่านทุนอยู่ ANCHORS)
@@ -539,15 +550,20 @@ console.log('\n═══ ②g ราคาเส้นแยกสีจริ�
   //   ไม่ตรึงยอดขาย (เปลี่ยนตาม % ตั้งต้นที่จูนกับตาราง) — ทุนต่อสีตรึงไว้ที่ ANCHORS_COLOR แล้ว
   const full = (key, bake) => computeCost(PB, PRODUCTS.sms_slide, { w: 600, h: 300, p: 3, form: 'อิสระ', color: bake, colorKey: key });
   const W0 = full('white', 'white'), m0 = PB.R41.matPct.sms_slide._;
-  for (const [lbl, key, bake] of [['SMS ลายไม้สักทอง', 'wood_teak', 'woodStock'], ['SMS มะฮอกกานี', 'wood_maho', 'woodStock'], ['SMS เทาซาฮาร่า', 'sahara', 'sahara']]) {
+  for (const [lbl, key, bake] of [['SMS ลายไม้สักทอง', 'wood_teak', 'woodStock'], ['SMS ลายไม้อบพิเศษ', 'wood_special', 'woodSpecial'], ['SMS เทาซาฮาร่า', 'sahara', 'sahara']]) {
     const c = full(key, bake);
     check(lbl + ': ส่วนต่างจากสีขาว = ส่วนต่างทุน × (1+%)', c.sell.withInstall - W0.sell.withInstall, (c.cost.total - W0.cost.total) * (1 + m0 / 100), 100);
     check(lbl + ': ค่าแรงขายเท่าสีขาว', c.sell.parts.prod + c.sell.parts.inst, W0.sell.parts.prod + W0.sell.parts.inst, 0);
   }
 
-  const az = computeCost(PB, PRODUCTS.sms_slide, { w: 600, h: 300, p: 3, form: 'อิสระ', color: 'special', colorKey: 'aztec' });
-  check('Aztec: ค่าเปิดตู้อบยังคิดอยู่ (คงที่ ไม่ผูก กก.)', az.cost.openOven, PB.BAKE_OPEN_OVEN, 0.01);
-  check('Aztec: ไม่คิดค่าอบซ้ำ (ราคาสีรวมค่าอบแล้ว)', az.cost.bake, 0, 0.01);
+  // Aztec = สีสต็อกยูโร (ไฟล์ v20.1 มีราคาทุกรหัส F) — ไม่เปิดตู้อบ · ราคาอยู่ระหว่างเทากับลายไม้ (เจ้าของ 11 ก.ย.69)
+  //   ใบเสนอเก่าส่ง color 'special' มาพร้อม colorKey 'aztec' → engine แปลงเอง ต้องได้เท่าใบใหม่
+  const EU = (key, bake) => computeCost(PB, PRODUCTS.euro_slide, { w: 600, h: 300, p: 3, form: 'อิสระ', color: bake, colorKey: key });
+  const az = EU('aztec', 'special'), azNew = EU('aztec', 'sahara'), gy = EU('sahara', 'sahara'), tk = EU('wood_teak', 'woodStock');
+  check('Aztec: ไม่เปิดตู้อบ (สีสต็อก ไม่ใช่อบพิเศษ)', az.cost.openOven, 0, 0.01);
+  check('Aztec: ใบเก่า (special) = ใบใหม่ (sahara)', az.cost.total, azNew.cost.total, 0.01);
+  check('Aztec: ไม่ถูกกว่าเทา', az.cost.total >= gy.cost.total ? 1 : 0, 1, 0);
+  check('Aztec: ถูกกว่าลายไม้สักทอง', az.cost.total < tk.cost.total ? 1 : 0, 1, 0);
   // 10 ก.ย.69: +7 รหัส SlimLux (XSW/OPK) — เดิมมีแต่ใต้รหัส WM-K* ที่เว็บไม่ได้ใช้
   //   (เจ้าของเตือนเอง "รหัสโปรไฟล์ในเว็บขึ้นต้น XSW ไม่ใช่ WM ระวังจับกันผิดตัว")
   check("น้ำหนัก กก./เส้น (ชีตน้ำหนักโปรไฟล์ = ชั่งจริง)", Object.keys(PB.ALUWEIGHT ?? {}).length, 137, 0);
@@ -630,27 +646,30 @@ console.log("\n═══ ②h กำไรแยก 3 ส่วน — ค่า
 //   ถ้ายังเอา กก. ของกล่องไปเข้ากองค่าอบ = คิดค่าอบซ้ำ (หลักเดียวกับ Aztec ที่ ②e)
 console.log('\n═══ ②j กล่อง/ฉาก ราคาตามสีจากสโตร์ — ไม่คิดค่าอบซ้ำ ═══');
 {
-  const OPT = { w: 300, h: 240, p: 3, form: 'อิสระ', color: 'sahara', colorKey: 'sahara', glassType: 'เทมเปอร์ 6มม.' };
-  const base = computeCost(PB, PRODUCTS.slimlux, OPT);
-  const beam = PRODUCTS.slimlux.alu.find((a) => a.box === 'กล่อง|1X4');
-  const beamKg = barsNeeded(3, 1, 6.4, true) * beam.kg;      // คาน seg=W=3 ม. × 1 ท่อน
-  // ① สโตร์มีกล่องสีเทา → ค่าอบต้องหายไปเท่ากับ กก.ของคาน × เรตเทา
-  const withColor = JSON.parse(JSON.stringify(PB));
-  withColor.BOXPRICE = { 'กล่อง|1X4': { 'เทาซาฮาร่า': 2000 } };
-  const r1 = computeCost(withColor, PRODUCTS.slimlux, { ...OPT, stockColor: 'เทาซาฮาร่า' });
-  check('กล่องสีเทาจากสโตร์ → กก. เข้ากองค่าอบน้อยลงเท่าคาน', r1.aluKg, base.aluKg - beamKg, 0.02);
+  // 11 ก.ย.69: รุ่นอบเอง (SlimLux) คิดกล่อง = ราคาดิบ + ค่าอบ×กก. เสมอ (ชีต C19/C20) → ทดสอบกับ PC Door (คาน 1"×4" มีน้ำหนัก)
+  const PD = PRODUCTS.pcdoor;
+  const OPT = { w: 150, h: 200, p: 2, form: PD.defForm, color: 'sahara', colorKey: 'sahara', glassType: PD.defGlass, stockColor: 'เทาซาฮาร่า' };
+  const beam = PD.alu.find((a) => a.box === 'กล่อง|1X4');
+  const pbWith = (b) => { const x = JSON.parse(JSON.stringify(PB)); x.BOXPRICE = { 'กล่อง|1X4': b }; return x; };
+  const beamOf = (r) => r.lines.find((l) => l.name.startsWith(beam.name));
+  // ① สโตร์ตั้งกล่องสีเทา "เท่าขาว" (ก๊อปราคา = ยังไม่ใช่ราคาสีจริง) → ราคาขาว + ค่าอบเรตเทา×กก. (เทาต้องแพงกว่าขาว)
+  const base = computeCost(pbWith({ 'อบขาว': 905, 'เทาซาฮาร่า': 905 }), PD, OPT);
+  const beamKg = beamOf(base).qty * beam.kg;
+  check('กล่องเทาราคาเท่าขาว → ไม่นับเป็นราคาสี (ราคาขาว)', beamOf(base).unitPrice, 905, 0.01);
+  check('กล่องเทาราคาเท่าขาว → คานยังอยู่ในกองค่าอบ', beamKg > 0 && base.aluKg >= beamKg - 0.02 ? 1 : 0, 1, 0);
+  // ② สโตร์มีราคาสีเทาจริง (แพงกว่าขาว) → ใช้ราคานั้น · กก.ของคานออกจากกองค่าอบ (ไม่คิดซ้ำ)
+  const r1 = computeCost(pbWith({ 'อบขาว': 905, 'เทาซาฮาร่า': 2000 }), PD, OPT);
+  check('กล่องสีเทาจริงจากสโตร์ → กก. เข้ากองค่าอบน้อยลงเท่าคาน', r1.aluKg, base.aluKg - beamKg, 0.02);
   check('ค่าอบลดลงตาม (ไม่คิดซ้ำ)', r1.cost.bake, base.cost.bake - beamKg * PB.BAKE.sahara, 1);
-  check('ราคากล่องใช้ของสโตร์', r1.lines.find((l) => l.name.startsWith(beam.name)).unitPrice, 2000, 0.01);
-  // ② สโตร์มีแค่ "มิว" (สีดิบ) → ตกมาใช้ราคามิว แต่ยังต้องอบ → กองค่าอบเท่าเดิม
-  const rawOnly = JSON.parse(JSON.stringify(PB));
-  rawOnly.BOXPRICE = { 'กล่อง|1X4': { 'มิว': 1200 } };
-  const r2 = computeCost(rawOnly, PRODUCTS.slimlux, { ...OPT, stockColor: 'เทาซาฮาร่า' });
+  check('ราคากล่องใช้ของสโตร์', beamOf(r1).unitPrice, 2000, 0.01);
+  // ③ สโตร์มีแค่ "มิว" (สีดิบ) → ราคามิว แต่ยังต้องอบ → กองค่าอบเท่ากรณี ①
+  const r2 = computeCost(pbWith({ 'มิว': 1200 }), PD, OPT);
   check('กล่องมิว (สีดิบ) → ยังคิดค่าอบเต็ม', r2.aluKg, base.aluKg, 0.02);
-  check('ราคากล่องมิวมาจากสโตร์', r2.lines.find((l) => l.name.startsWith(beam.name)).unitPrice, 1200, 0.01);
-  // ③ กล่องที่สโตร์ยังไม่มีราคา = ต้องไม่พลอยหลุดจากกองค่าอบ
-  const r3 = computeCost(withColor, PRODUCTS.slimlux, { ...OPT, stockColor: 'เทาซาฮาร่า' });
-  const post = PRODUCTS.slimlux.alu.find((a) => a.box === 'กล่อง|1X3');
-  check('กล่อง 1x3 ที่ไม่มีราคาสี ยังอยู่ในกองค่าอบ', r3.aluKg > barsNeeded(2.375, 2, 6.4, true) * post.kg ? 1 : 0, 1, 0);
+  check('ราคากล่องมิวมาจากสโตร์', beamOf(r2).unitPrice, 1200, 0.01);
+  // ④ รุ่นอบเอง (SlimLux) — ราคาสีกล่องในสโตร์ไม่ใช้ · ราคาดิบ + ค่าอบ×กก. ตามชีต
+  const sl = computeCost(pbWith({ 'อบขาว': 905, 'ลายไม้สักทอง': 3000 }), PRODUCTS.slimlux,
+    { w: 300, h: 240, p: 3, form: 'อิสระ', color: 'woodStock', colorKey: 'wood_teak', stockColor: 'ลายไม้สักทอง', glassType: 'เทมเปอร์ 6มม.' });
+  check('SlimLux: กล่องใช้ราคาดิบ ไม่ใช้ราคาสีสำเร็จ', sl.lines.find((l) => l.name.startsWith('คาน')).unitPrice, 905, 0.01);
   // สีที่ชื่อมีเว้นวรรค (Aztec gray) ต้องจับคู่ได้ ไม่ตกไปใช้ราคามิว/ขาว (เจอจริง 21 ส.ค.69)
   const bpA = buildBoxPrices([{ name: 'กล่อง 4 หุน-Aztec gray', unit_cost: 400 }, { name: 'กล่อง 4 หุน-มิว', unit_cost: 300 }]);
   check('Aztec gray: กล่องใช้ราคาสีตัวเอง (ไม่ตกไปมิว)', boxPriceOf(bpA, 'กล่อง|4หุน', stockColorOfCalc('aztec')), 400, 0.01);
@@ -658,18 +677,24 @@ console.log('\n═══ ②j กล่อง/ฉาก ราคาตามส
 }
 
 // ── ②i สีพิเศษ 3 สี เลือกได้เฉพาะรุ่นยูโร/Fuji (เจ้าของยืนยัน 19 ส.ค.69) ──
-//   Aztec gray · มะฮอกกานี · ไวท์โอ๊ค = อบพิเศษ ทำได้เฉพาะโปรไฟล์รหัส F####
+//   Aztec gray · มะฮอกกานี · ไวท์โอ๊ค ทำได้เฉพาะโปรไฟล์รหัส F#### · 11 ก.ย.69 มะฮอกกานี/ไวท์โอ๊ค แคบลงเหลือ 4 รุ่น
 //   รุ่นที่ทำได้: บานเปิด · บานเลื่อน ยูโร · บานเฟี้ยมยูโร เท่านั้น
 //   ⚠ ไฟล์ถอดทุนใส่ราคา 3 สีนี้ให้ทุกรหัส (ขาว+ค่าอบ) — ถ้าไม่กรอง เซลล์จะเสนอสีที่ทำไม่ได้
 console.log("\n═══ ②i สีพิเศษ (Aztec/มะฮอกกานี/ไวท์โอ๊ค) เลือกได้เฉพาะรุ่นยูโร ═══");
 {
   const has = (id, k) => aluColorKeysFor(id).includes(k);
-  for (const id of ["open_door", "euro_slide", "fold_euro", "awning", "pcdoor", "pivot", "fold_lift", "bansolid"])
-    for (const k of ["aztec", "wood_maho", "wood_whiteoak"])
-      check(`${id} เลือก ${k} ได้`, has(id, k) ? 1 : 0, 1, 0);
+  const EURO8 = ["open_door", "euro_slide", "fold_euro", "awning", "pcdoor", "pivot", "fold_lift", "bansolid"];
+  // Aztec gray — ครบ 8 รุ่นยูโร (19 ส.ค.69)
+  for (const id of EURO8) check(`${id} เลือก aztec ได้`, has(id, "aztec") ? 1 : 0, 1, 0);
+  // มะฮอกกานี/ไวท์โอ๊ค — แค่ บานเปิดยูโร · บานเลื่อนยูโร · บานโซลิด · PC Door (เจ้าของ 11 ก.ย.69 "นอกนั้นเอาออก คิดเป็นลายไม้อบพิเศษ")
+  for (const id of EURO8) for (const k of ["wood_maho", "wood_whiteoak"]) {
+    const want = ["open_door", "euro_slide", "bansolid", "pcdoor"].includes(id);
+    check(`${id} ${want ? "เลือก" : "ต้องเลือกไม่ได้"} ${k}`, has(id, k) ? 1 : 0, want ? 1 : 0, 0);
+  }
   for (const id of ["sms_slide", "slimlux", "velora", "fixed", "banyok", "eseries", "roof", "folding", "topslide"])
     for (const k of ["aztec", "wood_maho", "wood_whiteoak"])
       check(`${id} ต้องเลือก ${k} ไม่ได้`, has(id, k) ? 0 : 1, 1, 0);
+  check("กระทุ้งเห็น 11 สี (มี Aztec · ไม่มีมะฮอกกานี/ไวท์โอ๊ค)", aluColorKeysFor("awning").length, ALU_COLOR_KEYS.length - 2, 0);
   // สีปกติต้องยังเลือกได้ครบทุกรุ่น
   for (const k of ["white", "black", "sahara", "wood_teak", "special"])
     check(`ทุกรุ่นยังเลือก ${k} ได้`, aluColorKeysFor("sms_slide").includes(k) ? 1 : 0, 1, 0);

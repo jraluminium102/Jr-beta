@@ -167,7 +167,8 @@ console.log('\n═══ ⑥ แถวซ้ำที่รหัสอยู่
   {
     const realOnly = [{ name: 'F7935-คิ้วกรอบบาน-ลายไม้สักทอง', sku: 'F7935', unit_cost: 570, color: 'ลายไม้สักทอง' }];
     const bom = { name: 'F7935 คิ้วกระจก', sku: '', unit_cost: 385, color: '' };
-    ok('แถว BOM ไม่กดราคาเส้นจริง (570 ไม่ใช่ 385)', buildPriceOverride([...realOnly, bom], PB).ALUCODE?.F7935 === 570, String(buildPriceOverride([...realOnly, bom], PB).ALUCODE?.F7935));
+    // 11 ก.ย.69: สโตร์มีแค่แถวลายไม้ → ห้ามเอา 570 (ราคาลายไม้) เป็นราคาขาว และห้ามตกไปใช้แถว BOM 385 → ไม่ตั้ง ALUCODE (ใช้ราคาไฟล์)
+    ok('แถว BOM ไม่กดราคาเส้นจริง · ราคาลายไม้ไม่กลายเป็นราคาขาว', buildPriceOverride([...realOnly, bom], PB).ALUCODE?.F7935 == null, String(buildPriceOverride([...realOnly, bom], PB).ALUCODE?.F7935));
     ok('ไม่มีเส้นจริงเลย → ยังใช้ราคา BOM ได้ (385)', buildPriceOverride([bom], PB).ALUCODE?.F7935 === 385, String(buildPriceOverride([bom], PB).ALUCODE?.F7935));
   }
   // แถว migration 0083 ยังผูกราคาผ่าน PARTS (ชื่อ) ได้ตามเดิม

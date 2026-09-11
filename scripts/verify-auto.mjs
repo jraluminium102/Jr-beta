@@ -237,7 +237,10 @@ console.log(NL + "═══ ⑮ SlimLux — ราคาเส้นตามส
   const S = (ck, bake) => computeCost(PB, PRODUCTS.slimlux,
     { w: 200, h: 240, p: 2, form: "อิสระ", glassType: "เทมเปอร์ 6มม.", color: bake, colorKey: ck, spec: { slHandle: "มือจับล็อค" } });
   const wh = S("white", "white"), sp = S("special", "special");
-  ok("อบขาว: ใช้ราคาไฟล์ ไม่บวกค่าอบซ้ำ", wh.cost.bake === 0, String(wh.cost.bake));
+  // 11 ก.ย.69: ชีต "คิดทุน SlimLux" C12–C20 บวกค่าอบเรตเทาทุกเส้น (ขาว/ดำ/เทา) — เส้นที่ใช้ราคาอบสำเร็จจากไฟล์ (7 รหัส) ไม่บวกซ้ำ
+  //   เส้นดิบที่ไม่มีราคาอบ (กล่อง/ฉาก/บังใบ) → ค่าอบ 100/กก. × กก.ของเส้นพวกนั้น
+  const rawKg = (wh.lines || []).filter((l) => l.cat === "alu" && !/\(อบขาว/.test(l.name)).reduce((s, l) => s + l.qty * (l.kg || 0), 0);
+  ok("อบขาว: เส้นราคาไฟล์ไม่บวกค่าอบซ้ำ · เส้นดิบบวกเรตเทา 100/กก.", rawKg > 0 && Math.abs(wh.cost.bake - 100 * rawKg) <= 1, wh.cost.bake + " vs " + (100 * rawKg).toFixed(2));
   ok("อบขาว: ทุนสูงกว่าเดิม (เดิมคิดราคามิว)", wh.cost.total > 9000, String(wh.cost.total));
   ok("สีอื่น (อบพิเศษ): ยังคิดค่าอบตามปกติ", sp.cost.bake > 0, String(sp.cost.bake));
   ok("สีอบพิเศษแพงกว่าอบขาว", sp.cost.total > wh.cost.total);
@@ -718,10 +721,17 @@ console.log("\n═══ ⑲ E-series — อบทุกสี · ราคา�
   ok("อบขาว 600×300 3 บาน = ชีต D29 32,125.92", Math.abs(white.cost.total - 32125.92) <= 0.5, String(white.cost.total));
   ok("อบขาว: ค่าอบ 8,489.83 (เรตเทา 100 ตามชีต H6)", Math.abs(white.cost.bake - 8489.83) <= 0.5, String(white.cost.bake));
   const kg = 8489.83 / 100;
+  const bakeLine = (r) => ((r.lines || []).find((l) => /^ค่าอบสี/.test(l.name || "")) || {}).amount || 0;
   ok("ค่าเปิดตู้อบ 2,000 ทุกสี (ชีต B28)", Object.keys(BAKE_OF).every((k) => E(k).cost.openOven === 2000));
   for (const [k, rate] of [["black", 100], ["sahara", 100], ["sahara_black", 100], ["special", 173], ["aztec", 190], ["wood_teak", 190], ["wood_special", 190]]) {
     const r = E(k);
-    ok("สี " + k + ": ค่าอบเรต " + rate + "/กก. ตามชีต", Math.abs(r.cost.bake - rate * kg) <= 1, r.cost.bake + " vs " + (rate * kg).toFixed(2));
+    ok("สี " + k + ": ค่าอบเรต " + rate + "/กก. ตามชีต", Math.abs(bakeLine(r) - rate * kg) <= 1, bakeLine(r) + " vs " + (rate * kg).toFixed(2));
+  }
+  // เทา = ขาว × สัดส่วน เทา÷ขาว ไฟล์ v20.1 (เจ้าของ 11 ก.ย.69 "เทาต้องแพงกว่าขาว") — ส่วนต่างคิดบน ค่าเส้น+ค่าอบ ไม่รวมค่าเปิดตู้อบ
+  ok("สัดส่วน เทา÷ขาว = 1.073 (เฉลี่ย 109 รหัส B/F ชีตราคาสี v20.1)", PB.GREY_RATIO && PB.GREY_RATIO.ratio === 1.073, JSON.stringify(PB.GREY_RATIO));
+  for (const k of ["sahara", "sahara_black"]) {
+    const g = E(k), want = (white.cost.alu + white.cost.bake) * (PB.GREY_RATIO.ratio - 1);
+    ok("สี " + k + ": แพงกว่าขาว = (ค่าเส้น+ค่าอบ) × 7.3%", Math.abs(g.cost.total - white.cost.total - want) <= 1, (g.cost.total - white.cost.total).toFixed(2) + " vs " + want.toFixed(2));
   }
   // ราคาสโตร์ห้ามทับ — ใส่ราคาปลอมทุกช่องที่มาจากสโตร์ ทุนต้องเท่าเดิมเป๊ะ
   const pbS = JSON.parse(JSON.stringify(PB));
@@ -741,6 +751,117 @@ console.log("\n═══ ⑲ E-series — อบทุกสี · ราคา�
   const smsBase = computeCost(PB, PRODUCTS.sms_slide, { w: 300, h: 250, p: 2, form: "อิสระ", glassType: "เขียว 6มม." });
   ok("รุ่นอื่น (SMS) ยังดึงราคาสโตร์ได้ตามปกติ", sms.cost.total !== smsBase.cost.total);
   ok("ไม่มีราคาสี E-series ในตารางไฟล์ (คิด ขาว + ค่าอบ ล้วน)", !Object.values(PB.ALUCOLOR_KEY || {}).some((t) => t && t["E-01"] != null) && !Object.values(PB.ALUCOLOR || {}).some((t) => t && t["E-01"] != null));
+}
+
+// ── ⑳ ลำดับราคาสี (เจ้าของ 11 ก.ย.69) ─────────────────────────────
+//   "อบขาว ดำ ถูกสุด → เทาซาฮาร่า ดำซาฮาร่า → เอสเทคเกรย์ (มีแค่ยูโร) → ไม้สักทอง · มะฮอกกานี/ไวท์โอ๊ค มีแค่ยูโร"
+//   ① ทุกรุ่นที่เลือกสีได้ ขนาดตั้งต้น (ราคาไฟล์ ไม่มีสโตร์)  ② สโตร์จำลองเคสที่เคยพังจริง
+console.log("\n═══ ⑳ ลำดับราคาสี — ขาว=ดำ < เทา=ดำซาฮาร่า ≤ แอทแทค < ลายไม้ ═══");
+{
+  const fsx = await import("node:fs");
+  const BAKE = { white: "white", black: "white", sahara: "sahara", sahara_black: "sahara", aztec: "sahara", wood_teak: "woodStock", wood_maho: "woodStock", wood_whiteoak: "woodStock" };
+  const EURO_ONLY = ["aztec", "wood_maho", "wood_whiteoak"];
+  const colorsSrc = fsx.readFileSync(new URL("../src/lib/calculator40/alu-colors.ts", import.meta.url), "utf8");
+  const special = new Set([...((/SPECIAL_COLOR_PRODUCTS = new Set\(\[([\s\S]*?)\]\)/.exec(colorsSrc) || [])[1] || "").matchAll(/"([a-z_]+)"/g)].map((m) => m[1]));
+  ok("อ่านรายชื่อรุ่นยูโรที่มีสีพิเศษได้", special.has("open_door") && special.has("bansolid"), [...special].join(","));
+  const woodEuro = new Set([...((/WOOD_EURO_PRODUCTS = new Set\(\[([\s\S]*?)\]\)/.exec(colorsSrc) || [])[1] || "").matchAll(/"([a-z_]+)"/g)].map((m) => m[1]));
+  // เจ้าของ 11 ก.ย.69: มะฮอกกานี/ไวท์โอ๊ค มีแค่ บานเปิดยูโร · บานเลื่อนยูโร · บานโซลิด · PC Door
+  ok("มะฮอกกานี/ไวท์โอ๊ค เลือกได้ 4 รุ่นเท่านั้น", [...woodEuro].sort().join(",") === "bansolid,euro_slide,open_door,pcdoor", [...woodEuro].join(","));
+  ok("ธง woodEuro ในสูตร = รายชื่อใน alu-colors", Object.values(PRODUCTS).filter((p) => p.woodEuro).map((p) => p.id).sort().join(",") === [...woodEuro].sort().join(","),
+    Object.values(PRODUCTS).filter((p) => p.woodEuro).map((p) => p.id).join(","));
+  // สีพิมพ์ลงใบอย่างเดียว (ไฟล์ไม่มีสูตรสี) — ผนังลูกฟูก/ผนังคอมโพสิต/ตู้
+  const LABEL_ONLY = new Set(["wall_corrugated", "wall_composite", "cabinet"]);
+  // ราวกันตก: ชีต H7 คิดสีเฉพาะ "กล่องอลู 1×1.6" (ระบบเสาตั้ง) · ระบบยูเหล็ก+ครอบอลู (ค่าตั้งต้น) ไฟล์ไม่มีส่วนต่างสี
+  const OVR = { handrail: { material: "เฉียง|เสาตั้ง+ราวจับอลู" } };
+  const order = (id, c) => {
+    const bad = [];
+    if (Math.abs(c.white - c.black) > 0.5) bad.push("ขาว≠ดำ");
+    if (Math.abs(c.sahara - c.sahara_black) > 0.5) bad.push("เทา≠ดำซาฮาร่า");
+    if (!(c.sahara > c.white + 0.5)) bad.push("เทาไม่แพงกว่าขาว");
+    if (c.wood_teak != null && !(c.wood_teak > c.sahara + 0.5)) bad.push("สักทองไม่แพงกว่าเทา");
+    if (c.aztec != null && !(c.aztec >= c.sahara - 0.5 && c.aztec < c.wood_teak)) bad.push("แอทแทคไม่อยู่ระหว่างเทากับสักทอง");
+    for (const k of ["wood_maho", "wood_whiteoak"]) if (c[k] != null && !(c[k] > c.sahara + 0.5)) bad.push(k + " ไม่แพงกว่าเทา");
+    return bad;
+  };
+  const costs = (pb, p, extra = (k) => ({})) => {
+    const base = { w: p.defaults?.w ?? 200, h: p.defaults?.h ?? 200, p: p.defaults?.p ?? 1, form: p.defForm ?? (p.forms || [])[0] ?? "" };
+    if (p.defMaterial) base.material = p.defMaterial;
+    if (p.defGlass) base.glassType = p.defGlass;
+    const c = {};
+    for (const k of Object.keys(BAKE)) {
+      if (k === "aztec" ? !special.has(p.id) : (EURO_ONLY.includes(k) && !woodEuro.has(p.id))) continue;
+      try { const x = computeCost(pb, p, { ...base, color: BAKE[k], colorKey: k, ...extra(k) }); if (!x.error) c[k] = x.cost.total; } catch { /* รุ่นที่คิดขนาดตั้งต้นไม่ได้ */ }
+    }
+    return c;
+  };
+  const round = (c) => JSON.stringify(Object.fromEntries(Object.entries(c).map(([k, v]) => [k, Math.round(v)])));
+  let checked = 0;
+  for (const p of Object.values(PRODUCTS)) {
+    if (p.composite || p.sellDirect || p.sellZip || LABEL_ONLY.has(p.id)) continue;
+    if (!(p.alu || []).length && !p.showColor) continue;
+    const c = costs(PB, p, () => OVR[p.id] || {});
+    if (c.white == null || c.sahara == null) continue;
+    checked++;
+    const bad = order(p.id, c);
+    ok(p.id + ": ลำดับราคาสี (ราคาไฟล์)", bad.length === 0, bad.join(", ") + " " + round(c));
+  }
+  ok("ตรวจครบทุกรุ่นที่เลือกสีได้ (≥ 25 รุ่น)", checked >= 25, String(checked));
+  // ใบเก่าที่เลือกมะฮอกกานี/ไวท์โอ๊ค ในรุ่นที่เอาตัวเลือกออกแล้ว → คิดเท่าลายไม้อบพิเศษ (แพงกว่าสักทอง)
+  for (const id of ["awning", "pivot", "fold_euro", "fold_lift", "sms_slide"]) {
+    const p = PRODUCTS[id];
+    const base = { w: p.defaults?.w ?? 200, h: p.defaults?.h ?? 200, p: p.defaults?.p ?? 1, form: p.defForm ?? (p.forms || [])[0] ?? "", ...(p.defGlass ? { glassType: p.defGlass } : {}) };
+    for (const k of ["wood_maho", "wood_whiteoak"]) {
+      const old = computeCost(PB, p, { ...base, color: "woodStock", colorKey: k, stockColor: k === "wood_maho" ? "มะฮอกกานี" : "ไวท์โอ็ค" }).cost.total;
+      const ws = computeCost(PB, p, { ...base, color: "woodSpecial", colorKey: "wood_special" }).cost.total;
+      const tk = computeCost(PB, p, { ...base, color: "woodStock", colorKey: "wood_teak" }).cost.total;
+      ok(id + ": ใบเก่า " + k + " = ลายไม้อบพิเศษ (แพงกว่าสักทอง)", Math.abs(old - ws) < 0.01 && ws > tk, old + " / " + ws + " / สักทอง " + tk);
+    }
+  }
+  for (const id of ["open_door", "euro_slide", "bansolid", "pcdoor"]) {
+    const p = PRODUCTS[id];
+    const base = { w: p.defaults?.w ?? 200, h: p.defaults?.h ?? 200, p: p.defaults?.p ?? 1, form: p.defForm ?? (p.forms || [])[0] ?? "", ...(p.defGlass ? { glassType: p.defGlass } : {}) };
+    const m = computeCost(PB, p, { ...base, color: "woodStock", colorKey: "wood_maho" }).cost.total;
+    const ws = computeCost(PB, p, { ...base, color: "woodSpecial", colorKey: "wood_special" }).cost.total;
+    ok(id + ": มะฮอกกานี ใช้ราคาลายไม้สต็อกของตัวเอง (ไม่ใช่อบพิเศษ)", Math.abs(m - ws) > 1, m + " vs " + ws);
+  }
+
+  // ② สโตร์จำลอง — ต้องใช้ Node ที่อ่าน TypeScript ได้ (stock-link.ts)
+  const SL = await import("../src/lib/calculator40/stock-link.ts").catch((e) => ({ err: e }));
+  if (SL.err) ok("โหลด stock-link.ts ได้", false, String(SL.err.message || SL.err).slice(0, 160));
+  else {
+    // เคสจริง F7864: ขาว/ดำ/เทา ราคา 0 · สักทอง 3,170 → เดิมเอา 3,170 เป็นราคาขาว = เทาแพงกว่าสักทอง
+    const rows = [
+      { name: "F7864-เสาบานเปิด 10 ซม.", sku: "F7864", color: "อบขาว", unit_cost: 0 },
+      { name: "F7864-เสาบานเปิด 10 ซม.", sku: "F7864", color: "ดำ", unit_cost: 0 },
+      { name: "F7864-เสาบานเปิด 10 ซม.", sku: "F7864", color: "เทาซาฮาร่า", unit_cost: 0 },
+      { name: "F7864-เสาบานเปิด 10 ซม.-ลายไม้สักทอง", sku: "F7864", color: "", unit_cost: 3170 },
+      { name: "JR02885-วงกบ Velora", sku: "JR02885", color: "มิว", unit_cost: 1500 },
+    ];
+    const ov = SL.buildPriceOverride(rows, PB);
+    ok("สโตร์: ขาว/ดำ/เทา ราคา 0 แต่สักทอง 3,170 → ห้ามเอาเป็นราคาขาว", !(ov.ALUCODE.F7864 > 0), String(ov.ALUCODE.F7864));
+    ok("สโตร์: เส้นดิบ (มิว 1,500) ยังเป็นราคาฐานได้", ov.ALUCODE.JR02885 === 1500, String(ov.ALUCODE.JR02885));
+    const pbA = SL.applyPriceOverride(JSON.parse(JSON.stringify(PB)), ov);
+    const cA = costs(pbA, PRODUCTS.open_door, (k) => ({ stockColor: SL.stockColorOfCalc(k) }));
+    ok("สโตร์ F7864: บานเปิด ลำดับราคาสีถูก", order("open_door", cA).length === 0, order("open_door", cA).join(", ") + " " + round(cA));
+    // กล่องเมืองทอง: สโตร์ตั้งทุกสีเท่าราคาขาว (ก๊อป) · ลายไม้บางขนาดถูกกว่าตัวคูณเทาในไฟล์
+    const boxRows = [];
+    for (const [nm, px, teak] of [["กล่อง 2\"x4\"", 1540, 1600], ["กล่อง 1\"x4\"", 905, 905], ["กล่อง 1.6\"x4\"", 1220, 1394], ["กล่อง 4\"x4\"", 2210, 3223.35], ["กล่อง 1\"x1.6\"", 485, 683]]) {
+      for (const col of ["มิว", "อบขาว", "ดำ", "เทาซาฮาร่า", "Aztec gray"]) boxRows.push({ name: nm + "-" + col, unit_cost: px });
+      boxRows.push({ name: nm + "-ลายไม้สักทอง", unit_cost: teak });
+    }
+    const pbB = SL.applyPriceOverride(JSON.parse(JSON.stringify(PB)), SL.buildPriceOverride(boxRows, PB));
+    ok("สโตร์กล่องจำลองอ่านได้", !!(pbB.BOXPRICE && pbB.BOXPRICE["กล่อง|2X4"] && pbB.BOXPRICE["กล่อง|2X4"]["เทาซาฮาร่า"] === 1540), JSON.stringify(pbB.BOXPRICE && pbB.BOXPRICE["กล่อง|2X4"]));
+    for (const id of ["gate", "roof", "louver_rotate", "handrail", "fixed", "slimlux", "pcdoor"]) {
+      const c = costs(pbB, PRODUCTS[id], (k) => ({ stockColor: SL.stockColorOfCalc(k), ...(OVR[id] || {}) }));
+      const bad = order(id, c);
+      ok("สโตร์กล่องราคาเท่าขาว: " + id + " ลำดับราคาสีถูก", bad.length === 0, bad.join(", ") + " " + round(c));
+    }
+  }
+  // ตัวคูณสีกล่องใน pricebook ต้องเท่ากับ CF_EXPR ในสูตร (แหล่งเดียวกัน)
+  const prodSrc = fsx.readFileSync(new URL("../src/lib/calculator40/products.mjs", import.meta.url), "utf8");
+  const cfm = /const CF_EXPR = "mult\*\(\(\((\{[^}]*\})\)/.exec(prodSrc);
+  const cfObj = cfm ? Function("return " + cfm[1])() : null;
+  ok("PB.BOX_CF = CF_EXPR ในสูตร", !!cfObj && ["white", "sahara", "woodStock", "special", "woodSpecial"].every((k) => Math.abs(cfObj[k] - PB.BOX_CF[k]) < 1e-9), JSON.stringify(cfObj));
 }
 
 // ── ⑪ บานติดตายดัดโค้ง — กล่องเปิด+ตบปิดเปิด คิดตามยาวจริง ไม่ใช่ซื้อเต็มเส้น ──────

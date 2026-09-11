@@ -120,7 +120,7 @@ export const POST = withRoute(async (req: Request) => {
       const stock = await fetchAllPaged<StockRow>((f, t) =>
         sb
           .from("stock_items")
-          .select("name, sku, supplier, is_weight_based, unit_cost, price_per_kg")
+          .select("name, sku, color, supplier, is_weight_based, unit_cost, price_per_kg")
           .eq("is_active", true)
           .order("id", { ascending: true })
           .range(f, t),
