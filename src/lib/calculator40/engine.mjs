@@ -110,10 +110,12 @@ export function computeCost(PB, prod, opt) {
   //   E-series (เจ้าของ 11 ก.ย.69 "ไม่ได้มีของในสโตร์ ไม่สต็อค สั่งใหม่ เอามาแค่ข้อมูลวัสดุ ราคาตามไฟล์")
   //   ALU = เรตต่อโลจากสโตร์ (ตัวคูณแบรนด์) → ตรึงเท่าเรตตั้งต้นในไฟล์ ไม่งั้นแก้ราคาอลู SMS ในสโตร์แล้ว E-series ขยับตาม (QA จับ 11 ก.ย.69)
   if (prod && prod.noStore) PB = { ...PB, SKUPRICE: {}, ALUCODE: {}, ALUCODE_FROM_STOCK: {}, ALUCOLOR_STOCK: {}, BOXPRICE: {}, BOXSKU: {}, ALU: { ...(PB.ALU || {}), ...(PB.ALU_BASE || {}) } };
-  // มะฮอกกานี/ไวท์โอ๊ค มีแค่ บานเปิดยูโร · บานเลื่อนยูโร · บานโซลิด · PC Door (prod.woodEuro — เจ้าของ 11 ก.ย.69)
-  //   รุ่นอื่นเอาตัวเลือกออกแล้ว · ใบเสนอเก่าที่เคยเลือกไว้ → คิดเป็น "ลายไม้อบพิเศษ" (แพงกว่า) ไม่ใช่ราคาลายไม้สต็อก
-  if (prod && !prod.woodEuro && (opt.colorKey === 'wood_maho' || opt.colorKey === 'wood_whiteoak'))
-    opt = { ...opt, colorKey: 'wood_special', color: 'woodSpecial', stockColor: '' };
+  // Aztec gray / มะฮอกกานี / ไวท์โอ๊ค มีแค่ บานเปิดยูโร · บานเลื่อนยูโร · บานโซลิด · PC Door (prod.euroColors — เจ้าของ 11 ก.ย.69)
+  //   รุ่นอื่นเอาตัวเลือกออกแล้ว · ใบเสนอเก่าที่เคยเลือกไว้ → Aztec คิดเป็น "สีอบพิเศษ" · มะฮอกกานี/ไวท์โอ๊ค คิดเป็น "ลายไม้อบพิเศษ"
+  if (prod && !prod.euroColors) {
+    if (opt.colorKey === 'wood_maho' || opt.colorKey === 'wood_whiteoak') opt = { ...opt, colorKey: 'wood_special', color: 'woodSpecial', stockColor: '' };
+    else if (opt.colorKey === 'aztec') opt = { ...opt, colorKey: 'special', color: 'special', stockColor: '' };
+  }
   const W = (opt.w ?? prod.defaults.w) / 100;   // ม.
   const H = (opt.h ?? prod.defaults.h) / 100;   // ม.
   const P = opt.p ?? prod.defaults.p ?? 1;

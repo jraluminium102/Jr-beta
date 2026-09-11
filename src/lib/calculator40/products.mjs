@@ -208,7 +208,7 @@ export const PRODUCTS = {
   },
 
   euro_slide: {
-    id: 'euro_slide', woodEuro: true, aluWaste: true, group: 1, name: 'บานเลื่อน ยูโร', brand: 'EURO', laborKey: 'บานเลื่อน ยูโร',
+    id: 'euro_slide', euroColors: true, aluWaste: true, group: 1, name: 'บานเลื่อน ยูโร', brand: 'EURO', laborKey: 'บานเลื่อน ยูโร',
     icon: '🪟', defForm: 'อิสระ', forms: ['อิสระ', 'สลับ', 'ลากจูง', 'เปิดคู่กลาง'],
     specOpts: [{ key: 'bottomrail', label: 'ราง', opts: ['รางกันน้ำ', 'รางเตี้ย (งานใน)'], def: 'รางกันน้ำ' }], // R3.9 label-only · รางเตี้ย=งานในระบุในใบ
     addons: ['slide_auto', 'rain_sensor', 'mosquito', 'cmech', 'stainless', 'digihandle', 'frame_wrap', 'drop_floor', 'demolish'],
@@ -376,7 +376,7 @@ export const PRODUCTS = {
   },
 
   open_door: {
-    id: 'open_door', woodEuro: true, aluWaste: true, group: 1, name: 'บานเปิด', brand: 'EURO', laborKey: 'บานเปิด (ยูโร)',
+    id: 'open_door', euroColors: true, aluWaste: true, group: 1, name: 'บานเปิด', brand: 'EURO', laborKey: 'บานเปิด (ยูโร)',
     icon: '🚪', defForm: 'มีธรณี', forms: ['มีธรณี', 'ไม่มีธรณี'],
     addons: ['thresh', 'closer', 'mosquito', 'cmech', 'stainless', 'digihandle', 'frame_wrap', 'drop_floor', 'demolish'],   // ห้องกระจก G6 พาริตี้ (2ก.ค.) — ธรณีหลังเต่า/โช้คอัพ/มือจับ/มุ้ง
     defaults: { w: 150, h: 200, p: 1 }, defGlass: 'เขียว 6มม.', minP: 1, maxP: 4,
@@ -754,7 +754,7 @@ export const PRODUCTS = {
   },
 
   pcdoor: {
-    id: 'pcdoor', woodEuro: true, aluWaste: true, group: 1, name: 'ประตูบานเปิด PC Door', brand: 'EURO', laborKey: 'PC Door',
+    id: 'pcdoor', euroColors: true, aluWaste: true, group: 1, name: 'ประตูบานเปิด PC Door', brand: 'EURO', laborKey: 'PC Door',
     icon: '🚪', defForm: 'แบ่ง 2', forms: ['แบ่ง 2', 'แบ่ง 4'],
     specOpts: [ // มด dropdown: ธรณี (B8) + ล้อ/ซอฟต์โคลส (B10) — default = มีธรณี+ใส่ (เท่าเดิม · verify anchor ไม่ขยับ)
       { key: 'pcsill', label: 'ธรณี', opts: ['มีธรณี', 'ไม่มีธรณี'], def: 'มีธรณี' },
@@ -2345,7 +2345,7 @@ export const PRODUCTS = {
   bansolid: {
     // ถอดทุน BOM R4.0 (ชีต "คิดทุน บานโซลิด") — บานเปิด + ลูกฟูก2ทาง 2 ฝั่ง + เส้นคาดตาราง 2 ฝั่ง (ไม่มีกระจก)
     // ลูกฟูก/คาดตาราง = SlimLux (mult_slim=1) · ราคาสีอบขาว/ดำ ลูกฟูก 432 · คาดตาราง 140 (แปรตามสีทีหลัง)
-    id: 'bansolid', woodEuro: true, partsLinked: true, group: 1, name: 'บานโซลิด', brand: 'EURO', laborKey: 'บานโซลิด',
+    id: 'bansolid', euroColors: true, partsLinked: true, group: 1, name: 'บานโซลิด', brand: 'EURO', laborKey: 'บานโซลิด',
     // แบบโซลิด (ชีตคิดทุน B10 · เจ้าของเคาะ 10 ก.ย.69): โซลิด 1 ชั้น = ลูกฟูกฝั่งเดียว · โซลิด 2 ชั้น = ลูกฟูก 2 ฝั่ง
     //   ต่างกันแค่จำนวนลูกฟูก — เส้นคาดตาราง 2 ฝั่งเท่ากันทั้ง 2 แบบ (ตามสูตรทุน · ตาราง R4.1 ทุนต่าง = ลูกฟูกครึ่งหนึ่งพอดี)
     specOpts: [{ key: 'solidLayer', label: 'แบบโซลิด', opts: ['โซลิด 2 ชั้น', 'โซลิด 1 ชั้น'], def: 'โซลิด 2 ชั้น', priced: true }],

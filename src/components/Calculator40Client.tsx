@@ -37,7 +37,7 @@ import { isFixedPane, paneUseOf, quoteProductName, paneSill, SILL_OPTS, sillIsFo
 import { computeRoofZipR4 } from "@/lib/calculator40/roof-zip.mjs";
 import { withUniversalAddons } from "@/lib/calculator40/universal-addons";
 import AddonsSection from "@/components/calculator40/AddonsSection";
-import { ALU_COLOR_LABEL, resolveAluColor, aluColorKeysFor } from "@/lib/calculator40/alu-colors";
+import { ALU_COLOR_LABEL, resolveAluColor, aluColorKeysFor, allowedColorFor } from "@/lib/calculator40/alu-colors";
 // กติกาจำนวนบานต่อรูปแบบ (เปิดคู่กลาง = 4/6 + คำอธิบายบนหน้าจอ) — ใช้ร่วมกับห้องกระจก
 import { formRule, formNote, allowedPanes, snapPanes } from "@/lib/calculator40/form-rules";
 // ชื่อสีในสโตร์ของสีที่เลือก — ส่งเข้า engine เพื่อหยิบ "ราคาเส้นตามสีจริงในสโตร์"
@@ -567,6 +567,14 @@ export default function Calculator40Client({ customers = [], priceOverride, line
    */
   // รุ่นที่อยู่ในตาราง R4.1 → % ทุกช่อง = ตัวคูณจริง (ทุน × (1+%) = ราคาขายที่เห็น) · ช่องที่กำลังพิมพ์โชว์ตามที่พิมพ์
   const isR41Prod = !!(prod && r41Nodes(pb, prod.id));
+  // Aztec/มะฮอกกานี/ไวท์โอ๊ค มีแค่ 4 รุ่น (เจ้าของ 11 ก.ย.69 "บานที่ไม่มีไม่ต้องใส่มาในช้อยส์สี")
+  //   ใบเก่า/เปลี่ยนรุ่นแล้วสีค้างเป็นสีที่รุ่นนี้ไม่มี → เปลี่ยนเป็นสีที่คิดแทน (สีอบพิเศษ / ลายไม้อบพิเศษ) ช่องสีจะไม่ขึ้นค่าหลอกตา
+  useEffect(() => {
+    if (!prod) return;
+    const ok = allowedColorFor(prod.id, color);
+    if (ok !== color) setColor(ok);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prod?.id, color]);
   const shownPct = (() => {
     const p3 = (result as any)?.profit3;
     if (isR41Prod && p3 && (result as any)?.sellModel?.r41) return {
@@ -1282,11 +1290,8 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                     onChange={setSillSel} opts={SILL_OPTS}
                   />
                 )}
-                {/* ใบเก่าที่เลือกสีที่รุ่นนี้ไม่มีแล้ว (เช่น มะฮอกกานีบนบานกระทุ้ง) → โชว์ค่าเดิม + บอกวิธีคิด ไม่ให้ช่องขึ้นสีอื่นหลอกตา */}
                 <Select label="สีอลูมิเนียม" value={color} onChange={setColor}
-                  opts={aluColorKeysFor(prod?.id).includes(color) ? aluColorKeysFor(prod?.id) : [...aluColorKeysFor(prod?.id), color]}
-                  labels={aluColorKeysFor(prod?.id).includes(color) ? ALU_COLOR_LABEL : { ...ALU_COLOR_LABEL,
-                    [color]: (ALU_COLOR_LABEL[color] ?? color) + (color === "wood_maho" || color === "wood_whiteoak" ? " (รุ่นนี้ไม่มีแล้ว · คิดเป็นลายไม้อบพิเศษ)" : " (รุ่นนี้ไม่มีสีนี้)") }} />
+                  opts={aluColorKeysFor(prod?.id)} labels={ALU_COLOR_LABEL} />
                 {(prod.defGlass || prod.composite) && (
                   <GlassSelect label="กระจก (ทั้งห้อง)" value={glassType} onChange={setGlassType} opts={glassKeys} />
                 )}

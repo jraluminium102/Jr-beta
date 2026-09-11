@@ -684,17 +684,16 @@ console.log("\n═══ ②i สีพิเศษ (Aztec/มะฮอกกา
 {
   const has = (id, k) => aluColorKeysFor(id).includes(k);
   const EURO8 = ["open_door", "euro_slide", "fold_euro", "awning", "pcdoor", "pivot", "fold_lift", "bansolid"];
-  // Aztec gray — ครบ 8 รุ่นยูโร (19 ส.ค.69)
-  for (const id of EURO8) check(`${id} เลือก aztec ได้`, has(id, "aztec") ? 1 : 0, 1, 0);
-  // มะฮอกกานี/ไวท์โอ๊ค — แค่ บานเปิดยูโร · บานเลื่อนยูโร · บานโซลิด · PC Door (เจ้าของ 11 ก.ย.69 "นอกนั้นเอาออก คิดเป็นลายไม้อบพิเศษ")
-  for (const id of EURO8) for (const k of ["wood_maho", "wood_whiteoak"]) {
+  // 11 ก.ย.69: Aztec / มะฮอกกานี / ไวท์โอ๊ค มีแค่ บานเปิดยูโร · บานเลื่อนยูโร · บานโซลิด · PC Door
+  //   เจ้าของ "นอกเหนือจากบานที่กำหนดว่ามีสีนี้ บานที่ไม่มีไม่ต้องใส่มาในช้อยส์สี เอาออกไปเลย"
+  for (const id of EURO8) for (const k of ["aztec", "wood_maho", "wood_whiteoak"]) {
     const want = ["open_door", "euro_slide", "bansolid", "pcdoor"].includes(id);
     check(`${id} ${want ? "เลือก" : "ต้องเลือกไม่ได้"} ${k}`, has(id, k) ? 1 : 0, want ? 1 : 0, 0);
   }
   for (const id of ["sms_slide", "slimlux", "velora", "fixed", "banyok", "eseries", "roof", "folding", "topslide"])
     for (const k of ["aztec", "wood_maho", "wood_whiteoak"])
       check(`${id} ต้องเลือก ${k} ไม่ได้`, has(id, k) ? 0 : 1, 1, 0);
-  check("กระทุ้งเห็น 11 สี (มี Aztec · ไม่มีมะฮอกกานี/ไวท์โอ๊ค)", aluColorKeysFor("awning").length, ALU_COLOR_KEYS.length - 2, 0);
+  check("กระทุ้งเห็น 10 สี (ไม่มี 3 สีพิเศษ)", aluColorKeysFor("awning").length, ALU_COLOR_KEYS.length - 3, 0);
   // สีปกติต้องยังเลือกได้ครบทุกรุ่น
   for (const k of ["white", "black", "sahara", "wood_teak", "special"])
     check(`ทุกรุ่นยังเลือก ${k} ได้`, aluColorKeysFor("sms_slide").includes(k) ? 1 : 0, 1, 0);

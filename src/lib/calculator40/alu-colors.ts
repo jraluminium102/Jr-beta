@@ -39,24 +39,21 @@ export const ALU_COLOR_KEYS: string[] = ALU_COLORS.map((c) => c.key);
 //   ⚠ ไฟล์ถอดทุนใส่ราคา 3 สีนี้ให้ทุกรหัส (คิดจาก ขาว + ค่าอบ×กก.) — แต่ของจริงสั่งได้แค่รุ่นพวกนี้
 //     ถ้าไม่กรอง เซลล์จะเลือกสีที่โรงงานทำไม่ได้ แล้วเสนอราคาออกไปแล้ว
 export const SPECIAL_COLOR_KEYS = ["aztec", "wood_maho", "wood_whiteoak"] as const;
-//   เจ้าของยืนยันเพิ่ม 19 ส.ค.69: กระทุ้ง · PC Door · บานหมุน · เฟี้ยมยก · บานโซลิด ก็มี (ใช้กับ Aztec gray)
-export const SPECIAL_COLOR_PRODUCTS = new Set([
-  "open_door", "euro_slide", "fold_euro",
-  "awning", "pcdoor", "pivot", "fold_lift", "bansolid",
-]);
-// ── มะฮอกกานี / ไวท์โอ๊ค แคบกว่านั้นอีก (เจ้าของ 11 ก.ย.69) ─────────────────────
-//   มีแค่ บานเปิดยูโร · บานเลื่อนยูโร · บานโซลิด (1 และ 2 ชั้น) · PC Door
-//   รุ่นอื่น "เอาตัวเลือกออก" — ลูกค้าอยากได้ลายนี้ให้เลือก "ลายไม้อบพิเศษ" (แพงกว่า)
-//   ⚠ ต้องตรงกับธง prod.woodEuro ใน products.mjs (engine ใช้ธงนั้นคิดใบเก่าเป็นลายไม้อบพิเศษ · verify-auto ⑳ ตรวจ)
-export const WOOD_EURO_KEYS = ["wood_maho", "wood_whiteoak"] as const;
-export const WOOD_EURO_PRODUCTS = new Set(["open_door", "euro_slide", "bansolid", "pcdoor"]);
+// ── 3 สีนี้มีแค่ 4 รุ่น (เจ้าของ 11 ก.ย.69 "นอกเหนือจากบานที่กำหนดว่ามีสีนี้ บานที่ไม่มีไม่ต้องใส่มาในช้อยส์สี เอาออกไปเลย") ──
+//   บานเปิดยูโร · บานเลื่อนยูโร · บานโซลิด (1 และ 2 ชั้น) · PC Door
+//   (19 ส.ค.69 เคยเปิด Aztec ให้ กระทุ้ง/บานหมุน/เฟี้ยมยูโร/เฟี้ยมยก ด้วย — ยกเลิกแล้ว)
+//   รุ่นอื่นลูกค้าอยากได้ = สีอบพิเศษ / ลายไม้อบพิเศษ (แพงกว่า)
+//   ⚠ ต้องตรงกับธง prod.euroColors ใน products.mjs (engine ใช้คิดใบเก่า · verify-auto ⑳ ตรวจ)
+export const SPECIAL_COLOR_PRODUCTS = new Set(["open_door", "euro_slide", "bansolid", "pcdoor"]);
 
-/** สีที่รุ่นนี้เลือกได้จริง — Aztec เฉพาะรุ่นยูโร · มะฮอกกานี/ไวท์โอ๊ค เฉพาะ 4 รุ่น */
+/** สีที่รุ่นนี้เลือกได้จริง — Aztec/มะฮอกกานี/ไวท์โอ๊ค เฉพาะ 4 รุ่น */
 export function aluColorKeysFor(prodId?: string | null): string[] {
-  const id = prodId ?? "";
-  return ALU_COLOR_KEYS.filter((k) => {
-    if ((WOOD_EURO_KEYS as readonly string[]).includes(k)) return WOOD_EURO_PRODUCTS.has(id);
-    if ((SPECIAL_COLOR_KEYS as readonly string[]).includes(k)) return SPECIAL_COLOR_PRODUCTS.has(id);
-    return true;
-  });
+  if (prodId && SPECIAL_COLOR_PRODUCTS.has(prodId)) return ALU_COLOR_KEYS;
+  return ALU_COLOR_KEYS.filter((k) => !(SPECIAL_COLOR_KEYS as readonly string[]).includes(k));
+}
+
+/** สีของใบเก่าที่รุ่นนี้ไม่มีแล้ว → สีที่คิดแทน (Aztec → สีอบพิเศษ · มะฮอกกานี/ไวท์โอ๊ค → ลายไม้อบพิเศษ) · สีอื่นคืนค่าเดิม */
+export function allowedColorFor(prodId: string | null | undefined, key: string): string {
+  if (!(SPECIAL_COLOR_KEYS as readonly string[]).includes(key) || (prodId && SPECIAL_COLOR_PRODUCTS.has(prodId))) return key;
+  return key === "aztec" ? "special" : "wood_special";
 }
