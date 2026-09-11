@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
@@ -1014,13 +1014,45 @@ function AddExternalModal({ measurers, onClose, onSaved }: {
   const [measurer, setMeasurer] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  // กันเพิ่มซ้ำ: ค้นลูกค้าที่มีอยู่ตามชื่อ → เตือน + ให้เลือก "ใช้คนเดิม"
+  type Match = { id: number; name: string; phone: string | null; address: string | null };
+  const [chosen, setChosen] = useState<Match | null>(null);
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [checking, setChecking] = useState(false);
+
+  useEffect(() => {
+    if (chosen) { setMatches([]); return; }
+    const q = name.trim();
+    if (q.length < 2) { setMatches([]); return; }
+    let alive = true;
+    setChecking(true);
+    const t = setTimeout(async () => {
+      try {
+        const r = await api.get<Match[]>(`/customers?q=${encodeURIComponent(q)}`);
+        if (!alive) return;
+        const ql = q.toLowerCase();
+        setMatches((r.data ?? []).filter((c) => String(c.name ?? "").toLowerCase().includes(ql)).slice(0, 5));
+      } catch { if (alive) setMatches([]); }
+      finally { if (alive) setChecking(false); }
+    }, 350);
+    return () => { alive = false; clearTimeout(t); };
+  }, [name, chosen]);
+
+  const pickExisting = (c: Match) => {
+    setChosen(c);
+    setName(c.name);
+    if (c.phone && !phone.trim()) setPhone(c.phone);
+    if (c.address && !address.trim()) setAddress(c.address);
+    setMatches([]);
+  };
 
   const save = async () => {
     if (!name.trim()) { setErr("ต้องกรอกชื่อลูกค้า"); return; }
     setBusy(true); setErr("");
     try {
       await api.post("/measure-schedule/external", {
-        name: name.trim(),
+        ...(chosen ? { customer_id: chosen.id } : {}),
+        name: (chosen?.name ?? name).trim(),
         phone: phone.trim(),
         address: address.trim(),
         measure_scheduled: date || null,
@@ -1048,10 +1080,48 @@ function AddExternalModal({ measurers, onClose, onSaved }: {
           เข้าคิววัดหน้างานทันที · ชื่อลูกค้า = ชื่อที่จะโชว์ในผลิต/ติดตั้ง (ชื่อคนจริง) · ออกเอกสารในนามบริษัทค่อยตั้งตอนวางบิล
         </p>
 
-        <label className="block mb-3">
+        <label className="block mb-2">
           <span className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>ชื่อลูกค้า *</span>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="เช่น คุณสมชาย" aria-label="ชื่อลูกค้า" className={inputCls} autoFocus />
+          <input value={name} onChange={(e) => { setName(e.target.value); if (chosen) setChosen(null); }} placeholder="เช่น คุณสมชาย" aria-label="ชื่อลูกค้า" className={inputCls} autoFocus />
         </label>
+
+        {/* เลือกใช้ลูกค้าเดิมแล้ว → chip เขียว */}
+        {chosen && (
+          <div className="mb-3 flex items-center justify-between gap-2 rounded-xl bg-emerald-500/15 border border-emerald-300/30 px-3 py-2">
+            <span className="text-[12px] text-emerald-50 min-w-0">
+              <span className="font-semibold">ใช้ลูกค้าเดิม:</span> {chosen.name}
+              {chosen.phone && <span className="text-emerald-200/80"> · {chosen.phone}</span>}
+            </span>
+            <button onClick={() => setChosen(null)} className="shrink-0 text-[12px] text-emerald-100 underline underline-offset-2">เปลี่ยน</button>
+          </div>
+        )}
+
+        {/* เจอชื่อคล้ายในระบบ → เตือน (ไม่บล็อก) ให้เลือกคนเดิม กันเพิ่มซ้ำ */}
+        {!chosen && matches.length > 0 && (
+          <div className="mb-3 rounded-xl bg-amber-500/12 border border-amber-300/30 p-2.5">
+            <div className="text-[12px] text-amber-100 mb-1.5 flex items-center gap-1">
+              <Icon name="warn" size={12} /> มีลูกค้าชื่อคล้ายกันในระบบแล้ว — ใช้คนเดิมไหม? (กันเพิ่มซ้ำ)
+            </div>
+            <div className="flex flex-col gap-1">
+              {matches.map((c) => (
+                <button key={c.id} onClick={() => pickExisting(c)}
+                  className="focusable pressable w-full text-left rounded-lg bg-white/8 hover:bg-white/15 border border-white/12 px-2.5 py-2 min-h-[40px]">
+                  <span className="text-[13px] text-white font-medium">{c.name}</span>
+                  {(c.phone || c.address) && (
+                    <span className="block text-[11px] text-white/55 truncate">
+                      {[c.phone, c.address].filter(Boolean).join(" · ")}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+            <div className="text-[11px] text-white/45 mt-1.5">หรือกรอกต่อเพื่อ “เพิ่มเป็นลูกค้าใหม่”</div>
+          </div>
+        )}
+        {!chosen && checking && matches.length === 0 && name.trim().length >= 2 && (
+          <div className="mb-3 text-[11px] text-white/40">กำลังเช็คชื่อซ้ำ…</div>
+        )}
+
         <div className="flex gap-2 mb-3">
           <label className="flex-1 min-w-0">
             <span className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>เบอร์โทร</span>
@@ -1092,7 +1162,7 @@ function AddExternalModal({ measurers, onClose, onSaved }: {
         <div className="flex gap-2">
           <button onClick={save} disabled={busy || !name.trim()}
             className="focusable pressable flex-1 rounded-xl py-2.5 text-sm font-semibold text-[#1F4E78] bg-white hover:bg-white/90 disabled:opacity-60 min-h-[48px]">
-            {busy ? "กำลังเพิ่ม…" : "เพิ่มเข้าคิววัด"}
+            {busy ? "กำลังเพิ่ม…" : chosen ? "ลงคิววัด (ลูกค้าเดิม)" : "เพิ่มเข้าคิววัด"}
           </button>
           <button onClick={onClose} disabled={busy}
             className="focusable pressable glass-card border border-white/15 rounded-xl px-5 py-2.5 text-sm text-white/80 min-h-[48px]">ยกเลิก</button>

@@ -31,24 +31,34 @@ export const POST = withRoute(async (req: Request) => {
   const measureTime = String(body.measure_time ?? "").trim();          // HH:MM
   const measurerName = String(body.measurer_name ?? "").trim();
 
+  // เลือก "ใช้ลูกค้าเดิม" (customer_id) → ไม่สร้างใหม่ กันซ้ำ · ถ้าไม่ส่งมา = สร้างลูกค้าใหม่
+  const existingId = body.customer_id != null && String(body.customer_id).trim() !== "" ? Number(body.customer_id) : null;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = createServiceClient() as any;
 
-  // 1) สร้างลูกค้าเข้าทะเบียน (เดียวกับใบเสนอนอกระบบ)
-  const { data: cust, error: cErr } = await sb
-    .from("customers")
-    .insert({
-      name,
-      job,
-      address,
-      phone,
-      tax_id,
-      contact_channel: "OTHER",
-      created_by: ctx.user.id,
-    })
-    .select("id")
-    .single();
-  if (cErr || !cust) return err("สร้างลูกค้าใหม่ไม่สำเร็จ: " + (cErr?.message ?? ""), 500);
+  // 1) ลูกค้า: ใช้เดิม (customer_id) หรือสร้างใหม่ (เดียวกับใบเสนอนอกระบบ)
+  let custId: number;
+  let custName = name;
+  let custArea = address;
+  let custTel = phone;
+  if (existingId != null && !Number.isNaN(existingId)) {
+    const { data: ex } = await sb.from("customers").select("id, name, address, phone").eq("id", existingId).maybeSingle();
+    if (!ex) return err("ไม่พบลูกค้าที่เลือก", 404);
+    custId = ex.id;
+    // ชื่อในผลิต/ติดตั้ง = ชื่อในทะเบียนเสมอ (กฎเหล็ก) · ที่อยู่/เบอร์ เอาที่กรอกก่อน ไม่งั้นจากทะเบียน
+    custName = String(ex.name ?? "").trim() || name;
+    custArea = address || String(ex.address ?? "").trim();
+    custTel = phone || String(ex.phone ?? "").trim();
+  } else {
+    const { data: cust, error: cErr } = await sb
+      .from("customers")
+      .insert({ name, job, address, phone, tax_id, contact_channel: "OTHER", created_by: ctx.user.id })
+      .select("id")
+      .single();
+    if (cErr || !cust) return err("สร้างลูกค้าใหม่ไม่สำเร็จ: " + (cErr?.message ?? ""), 500);
+    custId = cust.id;
+  }
 
   const today = new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10); // วันนี้ (UTC+7)
 
@@ -57,10 +67,10 @@ export const POST = withRoute(async (req: Request) => {
   const { data: newJob, error: jErr } = await sb
     .from("jobs")
     .insert({
-      customer_name: name,           // กฎเหล็ก: ชื่อคนจริง = ชื่อในผลิต/ติดตั้ง
-      customer_id: cust.id,
-      ...(address ? { customer_area: address } : {}),
-      ...(phone ? { customer_tel: phone } : {}),
+      customer_name: custName,       // กฎเหล็ก: ชื่อคนจริง = ชื่อในผลิต/ติดตั้ง
+      customer_id: custId,
+      ...(custArea ? { customer_area: custArea } : {}),
+      ...(custTel ? { customer_tel: custTel } : {}),
       channel: "OTHER",
       assess_date: today,
       status: "DEPOSITED",
@@ -104,7 +114,7 @@ export const POST = withRoute(async (req: Request) => {
     action: "measure-schedule/external-add",
     table: "jobs",
     recordId: String(newJob.id),
-    newValue: { customer_id: cust.id, customer_name: name, measure_scheduled: measureDate || null, by: ctx.user.email },
+    newValue: { customer_id: custId, customer_name: custName, reused_customer: existingId != null, measure_scheduled: measureDate || null, by: ctx.user.email },
   });
 
   return ok({ job_id: newJob.id, production_id: prodId });
