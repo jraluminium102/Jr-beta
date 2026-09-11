@@ -706,6 +706,43 @@ console.log("\n═══ ⑱ นับเส้นอลูแบบไฟล์
     ok("บานระแนงเลื่อน 600×300 3 บาน: " + lbl + " = " + want + " เส้น", Math.abs(q(b, re) - want) < 0.001, String(q(b, re)));
 }
 
+// ── ⑲ E-series — เส้นสีมิว อบทุกสี · ราคาตามไฟล์เท่านั้น ไม่ดึงสโตร์ (เจ้าของ 11 ก.ย.69) ─────────
+//   เลขอ้างอิงจากชีต "คิดทุน E-series" v20.1: D29 ทุนรวม 32,125.92 (600×300 3 บาน อบขาว)
+//   ค่าอบ = ทุนรวม − (อลู 15,281.69 + กระจก 4,910.4 + อุปกรณ์ 1,010 + สิ้นเปลือง 434 + ค่าเปิดตู้อบ 2,000) = 8,489.83
+//   เรตค่าอบจากชีต "อัปเดตราคาอลู": เทา 100 · อบพิเศษ 173 · ลายไม้อบพิเศษ 190
+console.log("\n═══ ⑲ E-series — อบทุกสี · ราคาตามไฟล์ ═══");
+{
+  const BAKE_OF = { white: "white", black: "white", sahara: "sahara", sahara_black: "sahara", aztec: "special", wood_teak: "woodStock", special: "special", wood_special: "woodSpecial" };
+  const E = (key, pb, extra = {}) => computeCost(pb || PB, PRODUCTS.eseries, { w: 600, h: 300, p: 3, form: "อิสระ", glassType: "เขียว 6มม.", color: BAKE_OF[key], colorKey: key, ...extra });
+  const white = E("white");
+  ok("อบขาว 600×300 3 บาน = ชีต D29 32,125.92", Math.abs(white.cost.total - 32125.92) <= 0.5, String(white.cost.total));
+  ok("อบขาว: ค่าอบ 8,489.83 (เรตเทา 100 ตามชีต H6)", Math.abs(white.cost.bake - 8489.83) <= 0.5, String(white.cost.bake));
+  const kg = 8489.83 / 100;
+  ok("ค่าเปิดตู้อบ 2,000 ทุกสี (ชีต B28)", Object.keys(BAKE_OF).every((k) => E(k).cost.openOven === 2000));
+  for (const [k, rate] of [["black", 100], ["sahara", 100], ["sahara_black", 100], ["special", 173], ["aztec", 190], ["wood_teak", 190], ["wood_special", 190]]) {
+    const r = E(k);
+    ok("สี " + k + ": ค่าอบเรต " + rate + "/กก. ตามชีต", Math.abs(r.cost.bake - rate * kg) <= 1, r.cost.bake + " vs " + (rate * kg).toFixed(2));
+  }
+  // ราคาสโตร์ห้ามทับ — ใส่ราคาปลอมทุกช่องที่มาจากสโตร์ ทุนต้องเท่าเดิมเป๊ะ
+  const pbS = JSON.parse(JSON.stringify(PB));
+  pbS.SKUPRICE = { ...(pbS.SKUPRICE || {}), JR00456: 999, JR00794: 999, JR00864: 999 };
+  pbS.ALUCODE = { ...(pbS.ALUCODE || {}), "E-01": 9999, "E-07E": 9999 };
+  pbS.ALUCODE_FROM_STOCK = { "E-01": true, "E-07E": true };
+  pbS.ALUCOLOR_STOCK = { "อบขาว": { "E-01": 9999 }, "เทาซาฮาร่า": { "E-01": 9999 } };
+  ok("ราคาสโตร์ไม่ทับ E-series (ไม่สต็อก)", E("white", pbS, { stockColor: "อบขาว" }).cost.total === white.cost.total, String(E("white", pbS, { stockColor: "อบขาว" }).cost.total));
+  // เรตต่อโลอลูจากสโตร์ (ตัวคูณแบรนด์ SMS) ก็ห้ามทับ — E-series ใช้แบรนด์ SMS ร่วมกับบานเลื่อน SMS ที่สต็อกจริง
+  const pbK = JSON.parse(JSON.stringify(PB)); pbK.ALU = { ...pbK.ALU, SMS: (pbK.ALU_BASE.SMS || 187) + 13 };
+  ok("เรตต่อโลอลูในสโตร์ขยับ → E-series ไม่ขยับ", E("white", pbK).cost.total === white.cost.total, String(E("white", pbK).cost.total));
+  ok("เรตต่อโลอลูในสโตร์ขยับ → บานเลื่อน SMS ยังขยับตามปกติ",
+    computeCost(pbK, PRODUCTS.sms_slide, { w: 300, h: 250, p: 2, form: "อิสระ", glassType: "เขียว 6มม." }).cost.total !== computeCost(PB, PRODUCTS.sms_slide, { w: 300, h: 250, p: 2, form: "อิสระ", glassType: "เขียว 6มม." }).cost.total);
+  ok("ล็อคก้นหอยใช้ราคาไฟล์ 100 (ไม่ใช่สโตร์)", ((E("white", pbS).lines || []).find((l) => l.name === "ล็อคก้นหอย") || {}).unitPrice === 100);
+  // รุ่นอื่นยังใช้สโตร์ตามปกติ (ธงไม่รั่ว)
+  const sms = computeCost(pbS, PRODUCTS.sms_slide, { w: 300, h: 250, p: 2, form: "อิสระ", glassType: "เขียว 6มม." });
+  const smsBase = computeCost(PB, PRODUCTS.sms_slide, { w: 300, h: 250, p: 2, form: "อิสระ", glassType: "เขียว 6มม." });
+  ok("รุ่นอื่น (SMS) ยังดึงราคาสโตร์ได้ตามปกติ", sms.cost.total !== smsBase.cost.total);
+  ok("ไม่มีราคาสี E-series ในตารางไฟล์ (คิด ขาว + ค่าอบ ล้วน)", !Object.values(PB.ALUCOLOR_KEY || {}).some((t) => t && t["E-01"] != null) && !Object.values(PB.ALUCOLOR || {}).some((t) => t && t["E-01"] != null));
+}
+
 // ── ⑪ บานติดตายดัดโค้ง — กล่องเปิด+ตบปิดเปิด คิดตามยาวจริง ไม่ใช่ซื้อเต็มเส้น ──────
 //   ไฟล์ ถอดทุน v20.1 ชีต "คิดทุน ตายดัดโค้ง" D14 = (กว้าง/600) × buf_scrap 1.3 × (1267+582)
 //   เดิมเว็บ ceil(กว้าง/600) × 1849 → กว้าง 1 ม. คิด 1,849 แทน 400.62 → ทุนเกิน 50% (QA จับ 9 ก.ย.69)

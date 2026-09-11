@@ -651,7 +651,15 @@ export const PRODUCTS = {
   },
 
   eseries: {
-    id: 'eseries', aluWaste: true, group: 1, name: 'บานเลื่อน E-series', brand: 'SMS', laborKey: 'บานเลื่อน SMS',
+    // E-series (เจ้าของยืนยัน 11 ก.ย.69): ซื้อเส้นมาสีมิว ต้องอบทุกสีเหมือน Velora · ไม่สต็อกในสโตร์ (สั่งตามงาน)
+    //   "เอามาแค่ข้อมูลวัสดุ ราคา ตามไฟล์" → noStore: ราคาจากไฟล์ถอดทุนเท่านั้น ห้ามราคาสโตร์ทับ
+    //   ค่าอบตามชีต "คิดทุน E-series" v20.1 ทุกอย่าง:
+    //     H6: สีอบขาว/ดำ → คิดเป็นเทาซาฮาร่า · ราคาเส้น = ราคาขาว + เรต×กก.
+    //     เรต: เทาซาฮาร่า/ดำซาฮาร่า 100 · สีอบพิเศษ 173 · สีอื่นทั้งหมด (แอทแทค/ลายไม้) = ลายไม้อบพิเศษ 190
+    //     ค่าเปิดตู้อบ B28 = 1 ทุกงานทุกสี · 600×300 3 บาน อบขาว = 32,125.92 ตรงชีต D29
+    id: 'eseries', aluWaste: true, noStore: true, ovenAlways: true,
+    bakeByKey: { white: 'sahara', black: 'sahara', sahara: 'sahara', sahara_black: 'sahara', special: 'special', _default: 'woodSpecial' },
+    group: 1, name: 'บานเลื่อน E-series', brand: 'SMS', laborKey: 'บานเลื่อน SMS',
     icon: '🪟', defForm: 'อิสระ', forms: ['อิสระ', 'สลับ', 'ลากจูง', 'เปิดคู่กลาง'],
     specOpts: [{ key: 'bottomrail', label: 'ราง', opts: ['รางกันน้ำ', 'รางเตี้ย (งานใน)'], def: 'รางกันน้ำ' }], // R3.9 label-only · รางเตี้ย=งานในระบุในใบ
     defaults: { w: 600, h: 300, p: 3 }, defGlass: 'เขียว 6มม.', minP: 2, maxP: 6,

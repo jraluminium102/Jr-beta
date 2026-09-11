@@ -114,7 +114,8 @@ export function auditStockLink(stock: AuditStockRow[], PB: any): AuditRow[] {
   };
 
   // ① อลูรายเส้น — ทุกบรรทัดในสูตรของทุกรุ่น
-  for (const p of Object.values(PRODUCTS as Record<string, any>)) {
+  // รุ่นที่ไม่สต็อกในสโตร์ (noStore เช่น E-series) ไม่ต้องผูกรหัส — ราคาใช้จากไฟล์
+  for (const p of Object.values(PRODUCTS as Record<string, any>).filter((x) => !x?.noStore)) {
     for (const a of (p.alu || [])) {
       const code = norm(a.code);
       const eff = code ? (PB.ALUCODE_ALIAS?.[code] || code) : "";
@@ -137,7 +138,7 @@ export function auditStockLink(stock: AuditStockRow[], PB: any): AuditRow[] {
     }
   }
   // ② อุปกรณ์/สิ้นเปลือง — ผูกได้เฉพาะรุ่นที่ติดธง partsLinked
-  for (const p of Object.values(PRODUCTS as Record<string, any>)) {
+  for (const p of Object.values(PRODUCTS as Record<string, any>).filter((x) => !x?.noStore)) {
     for (const grp of ["hardware", "consum"] as const) {
       for (const it of (p[grp] || [])) {
         const nm = norm(it.name);
@@ -276,7 +277,7 @@ export type KgRow = {
 /** ไล่เส้นอลูที่คิดราคา 4.0 ใช้จริง ว่าสาย "เรตต่อโล → ราคาต่อเส้น" ต่อครบไหม */
 export function auditKgLink(stock: AuditStockRow[]): KgRow[] {
   const codes = new Set<string>();
-  for (const p of Object.values(PRODUCTS as Record<string, any>))
+  for (const p of Object.values(PRODUCTS as Record<string, any>).filter((x) => !x?.noStore))
     for (const a of (p?.alu || [])) if (a.code) codes.add(up(a.code));
 
   const out: KgRow[] = [];

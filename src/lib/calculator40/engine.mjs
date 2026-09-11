@@ -106,6 +106,10 @@ function buildEvaluator(extraVarNames) {
  * @returns {object} ผลคิดราคาแบบละเอียด
  */
 export function computeCost(PB, prod, opt) {
+  // prod.noStore = รุ่นที่ไม่สต็อกในสโตร์ (สั่งตามงาน) → ราคาจากไฟล์ถอดทุนเท่านั้น · ตัดตารางราคาที่มาจากสโตร์ทิ้งทั้งชุด
+  //   E-series (เจ้าของ 11 ก.ย.69 "ไม่ได้มีของในสโตร์ ไม่สต็อค สั่งใหม่ เอามาแค่ข้อมูลวัสดุ ราคาตามไฟล์")
+  //   ALU = เรตต่อโลจากสโตร์ (ตัวคูณแบรนด์) → ตรึงเท่าเรตตั้งต้นในไฟล์ ไม่งั้นแก้ราคาอลู SMS ในสโตร์แล้ว E-series ขยับตาม (QA จับ 11 ก.ย.69)
+  if (prod && prod.noStore) PB = { ...PB, SKUPRICE: {}, ALUCODE: {}, ALUCODE_FROM_STOCK: {}, ALUCOLOR_STOCK: {}, BOXPRICE: {}, BOXSKU: {}, ALU: { ...(PB.ALU || {}), ...(PB.ALU_BASE || {}) } };
   const W = (opt.w ?? prod.defaults.w) / 100;   // ม.
   const H = (opt.h ?? prod.defaults.h) / 100;   // ม.
   const P = opt.p ?? prod.defaults.p ?? 1;
@@ -140,6 +144,13 @@ export function computeCost(PB, prod, opt) {
   //   ตรงสูตรชีต: IF(สี="อบขาว/ดำ/เทา", rate_grey, ...) — ไม่มีเคสค่าอบ 0
   let bakeRate = PB.BAKE[color] ?? 0;
   if (prod.rawAlu && bakeRate <= 0) bakeRate = PB.BAKE.sahara ?? 0;
+  // prod.bakeByKey = เรตค่าอบตาม "สีที่เลือก" แบบชีตคิดทุนของรุ่นนั้น (E-series: ขาว/ดำ คิดเป็นเทา · สีอื่นนอกเทา/อบพิเศษ = เรตลายไม้อบพิเศษ)
+  //   มีคีย์สีจริง (opt.colorKey) ใช้คีย์นั้นก่อน — หมวดค่าอบของแอทแทค (special) ไม่ตรงชีต
+  if (prod.bakeByKey) {
+    const bm = prod.bakeByKey, ck = String(opt.colorKey || '');
+    const bk = ck ? (bm[ck] ?? bm._default) : (bm[color] ?? bm._default);
+    if (bk != null && PB.BAKE[bk] != null) bakeRate = PB.BAKE[bk];
+  }
 
   // เตรียม scope + evaluator
   const varDefs = prod.vars || {};
@@ -365,7 +376,8 @@ export function computeCost(PB, prod, opt) {
   //   prod.millBar = ซื้อเส้นมาเป็น "สีมิว" → สีอบขาว/ดำ ก็ต้องเข้าตู้อบเหมือนกัน
   //     (เจ้าของเคาะ 10 ก.ย.69 "ค่าเปิดตู้อบบวกสีขาวดำด้วย เฉพาะ SlimLux Velora เพราะเราซื้อมาเป็นสีมิว")
   //     รุ่นอื่นซื้อเส้นอบขาวมาเลย ไม่ต้องเปิดตู้
-  if ((color === 'special' || color === 'woodSpecial' || (prod.millBar && color === 'white')) && aluBarsAll > 0) {
+  // prod.ovenAlways = ชีตคิดทุนคิดค่าเปิดตู้อบทุกงานทุกสี (E-series B28 = 1)
+  if ((prod.ovenAlways || color === 'special' || color === 'woodSpecial' || (prod.millBar && color === 'white')) && aluBarsAll > 0) {
     openOven = PB.BAKE_OPEN_OVEN || 0;
     if (openOven) lines.push({ cat: 'bake', name: 'ค่าเปิดตู้อบ', qty: 1, unit: 'งาน', unitPrice: openOven, amount: openOven });
   }
