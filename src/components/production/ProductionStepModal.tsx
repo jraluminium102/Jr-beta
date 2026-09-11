@@ -349,6 +349,19 @@ export function ProductionStepModal({
     finally { setUndepBusy(false); }
   };
 
+  // ลบงานทิ้งถาวร (ADMIN) — เฉพาะงานว่าง/ซ้ำ (junk) ที่ไม่มีเอกสาร/เงิน · งานมีเงินจะถูก block ให้ยกเลิกแทน
+  const [delBusy, setDelBusy] = useState(false);
+  const doDeleteJob = async () => {
+    if (!prod.job_id) { setAdminErr("งานนี้ไม่มี job ให้ลบ"); return; }
+    if (!confirm(`ลบงาน ${prod.job?.customer_name ?? ""} ${prod.job?.job_code ? "(" + prod.job.job_code + ")" : ""} ทิ้งถาวร?\n\nใช้กับงานซ้ำ/ว่างที่กดผิดเท่านั้น · ลบแล้วเอาคืนไม่ได้\n(ถ้างานมีใบเสนอ/บิล/เงิน ระบบจะไม่ลบให้ — ใช้ "ยกเลิกงาน" แทน)`)) return;
+    setAdminErr(null); setDelBusy(true);
+    try {
+      await api.del(`/jobs/${prod.job_id}`);
+      if (onSavedAndClose) onSavedAndClose(); else onClose();
+    } catch (e) { setAdminErr(e instanceof ApiError ? e.message : "ลบงานไม่สำเร็จ"); }
+    finally { setDelBusy(false); }
+  };
+
   // ── P0-1A: ดึง schedule เฉพาะตอน PENDING_MEASURE (React Query dedupe กับหน้า measure-schedule) ──
   const { data: scheduleRes } = useQuery({
     queryKey: ["measure-schedule"],
@@ -1032,6 +1045,21 @@ export function ProductionStepModal({
                         ) : (
                           <SplitOrdersPanel jobId={prod.job_id} onSplit={() => { setSplitOpen(false); if (onSavedAndClose) onSavedAndClose(); else onClose(); }} />
                         )}
+                      </div>
+                    )}
+
+                    {/* ลบงานทิ้งถาวร (เฉพาะงานซ้ำ/ว่าง — งานมีเงินจะถูกกันไว้) */}
+                    {canAdmin && prod.job_id && (
+                      <div className="glass-card rounded-2xl p-4 border border-rose-300/25">
+                        <div className="text-[13px] font-semibold text-rose-100 mb-1">ลบงานนี้ทิ้งถาวร</div>
+                        <p className="text-[11px] mb-2" style={{ color: "var(--t-low)" }}>
+                          ใช้ลบงานซ้ำ/ว่าง (เช่น เพิ่มลูกค้านอกระบบผิด) · ลบแล้วเอาคืนไม่ได้ ·
+                          งานที่มีใบเสนอ/บิล/เงิน ระบบจะไม่ลบให้ ให้ใช้ "ยกเลิกงาน" แทน
+                        </p>
+                        <button onClick={doDeleteJob} disabled={delBusy}
+                          className="focusable pressable w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-rose-50 bg-rose-500/25 hover:bg-rose-500/40 border border-rose-300/35 min-h-[44px] disabled:opacity-60">
+                          {delBusy ? "กำลังลบ…" : "🗑 ลบงานนี้ทิ้ง"}
+                        </button>
                       </div>
                     )}
 

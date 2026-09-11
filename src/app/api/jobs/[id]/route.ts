@@ -6,6 +6,7 @@ import { dbError } from "@/lib/bff/db-error";
 import { can } from "@/lib/rbac";
 import { toArray } from "@/lib/bff/normalize";
 import { businessDateIssue } from "@/lib/date-guard";
+import { createServiceClient } from "@/lib/supabase/admin";
 
 const FINANCE_COLS = ["net_amount", "vat_amount", "total_amount", "deposit_amount", "discount_amount"];
 type Params = { params: { id: string } };
@@ -149,4 +150,47 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
   if (error) throw dbError(error);
   if (!data) throw dbError({ message: "Update failed" });
   return ok(data);
+});
+
+// DELETE /api/jobs/:id — ลบงานทิ้งถาวร (ADMIN เท่านั้น) เฉพาะงานว่าง (ไม่มีเอกสาร/เงินผูก)
+//   ใช้ลบงานซ้ำ/junk เช่น placeholder จากปุ่ม "เพิ่มลูกค้านอกระบบ" ที่กดผิด
+//   safety: งานที่มี ใบเสนอ/บิล/เงิน = ห้ามลบ (FK NO ACTION ในตาราง money/doc กันไว้อีกชั้น) → ให้ใช้ "ยกเลิกงาน" แทน
+//   ตารางฝั่งผลิต (productions/ชุดงาน/ติดตั้ง/ใบปะหน้า/เอกสาร/แบบ/โน้ต) เป็น on delete cascade → ลบตามให้เอง
+export const DELETE = withRoute(async (_req: Request, { params }: Params) => {
+  const ctx = await requirePermission("jobs", "write");
+  if (ctx.role !== "ADMIN") return err("เฉพาะแอดมินลบงานได้", 403);
+
+  const jobId = params.id;
+  const { data: job } = await ctx.supabase.from("jobs").select("id, job_code, customer_name").eq("id", jobId).maybeSingle<{ id: string; job_code: string | null; customer_name: string | null }>();
+  if (!job) return notFound("ไม่พบงานนี้");
+
+  // guard: มีเอกสาร/เงินผูกอยู่ไหม (ใบเสนอ/บิล/เงิน) → ห้ามลบทิ้ง (กันข้อมูลการเงินหาย) ให้ยกเลิกแทน
+  const [q, bn, fe] = await Promise.all([
+    ctx.supabase.from("quotations").select("id", { count: "exact", head: true }).eq("job_id", jobId),
+    ctx.supabase.from("billing_notes").select("id", { count: "exact", head: true }).eq("job_id", jobId),
+    ctx.supabase.from("finance_entries").select("id", { count: "exact", head: true }).eq("job_id", jobId),
+  ]);
+  const docs = (q.count ?? 0) + (bn.count ?? 0) + (fe.count ?? 0);
+  if (docs > 0) {
+    return err('งานนี้มีเอกสาร/เงินผูกอยู่ (ใบเสนอ/บิล/ใบเสร็จ) — ลบทิ้งถาวรไม่ได้ ให้ใช้ "ยกเลิกงาน" แทน (ซ่อนจากผลิต แต่เก็บประวัติไว้)', 409);
+  }
+
+  // ลบผ่าน service client (jobs ไม่มี RLS DELETE policy) — one statement, cascade ฝั่งผลิตอัตโนมัติ
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const svc = createServiceClient() as any;
+  const { error: delErr } = await svc.from("jobs").delete().eq("id", jobId);
+  if (delErr) {
+    // FK NO ACTION (23503) = ยังมีข้อมูลผูก (เงิน/ใบตัด/สต๊อก/BOQ/คิวประเมิน ฯลฯ) → เมสเสจอ่านง่าย
+    if (String(delErr.code) === "23503") {
+      return err('ลบไม่ได้ — งานนี้ยังมีข้อมูลผูกอยู่ (เงิน/ใบตัด/สต๊อก/คิวประเมิน) ให้ใช้ "ยกเลิกงาน" แทน', 409);
+    }
+    throw dbError(delErr);
+  }
+
+  await audit({
+    jobId: null, userId: ctx.user.id, action: "JOB_DELETED",
+    table: "jobs", recordId: jobId,
+    oldValue: { job_code: job.job_code, customer_name: job.customer_name, by: ctx.user.email },
+  });
+  return ok({ deleted: true, job_id: jobId });
 });
