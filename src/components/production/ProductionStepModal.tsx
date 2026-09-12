@@ -362,6 +362,18 @@ export function ProductionStepModal({
     finally { setDelBusy(false); }
   };
 
+  // ซ่อนงานออกจากหน้าผลิต (soft delete · กู้คืนได้) — งานที่ "โผล่มาเอง"/ซ้ำ กดผิดเอากลับได้
+  const [hideBusy, setHideBusy] = useState(false);
+  const doHideJob = async () => {
+    if (!prod.job_id) { setAdminErr("งานนี้ไม่มี job ให้ซ่อน"); return; }
+    setAdminErr(null); setHideBusy(true);
+    try {
+      await api.post(`/jobs/${prod.job_id}/hide`, { hidden: true });
+      if (onSavedAndClose) onSavedAndClose(); else onClose();
+    } catch (e) { setAdminErr(e instanceof ApiError ? e.message : "ซ่อนงานไม่สำเร็จ"); }
+    finally { setHideBusy(false); }
+  };
+
   // ── P0-1A: ดึง schedule เฉพาะตอน PENDING_MEASURE (React Query dedupe กับหน้า measure-schedule) ──
   const { data: scheduleRes } = useQuery({
     queryKey: ["measure-schedule"],
@@ -1045,6 +1057,20 @@ export function ProductionStepModal({
                         ) : (
                           <SplitOrdersPanel jobId={prod.job_id} onSplit={() => { setSplitOpen(false); if (onSavedAndClose) onSavedAndClose(); else onClose(); }} />
                         )}
+                      </div>
+                    )}
+
+                    {/* ซ่อนออกจากผลิต (soft delete · กู้คืนได้) — งานที่ "โผล่มาเอง"/ซ้ำ */}
+                    {canAdmin && prod.job_id && (
+                      <div className="glass-card rounded-2xl p-4 border border-amber-300/25">
+                        <div className="text-[13px] font-semibold text-amber-100 mb-1">ซ่อนงานออกจากผลิต (เอากลับได้)</div>
+                        <p className="text-[11px] mb-2" style={{ color: "var(--t-low)" }}>
+                          เอางานที่โผล่มาเอง/ซ้ำ ออกจากหน้าผลิต · ข้อมูลไม่หาย กดผิดเอากลับได้ที่ &quot;🗃 ที่ซ่อนไว้&quot; ล่างหน้าผลิต
+                        </p>
+                        <button onClick={doHideJob} disabled={hideBusy}
+                          className="focusable pressable w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-amber-50 bg-amber-500/25 hover:bg-amber-500/40 border border-amber-300/35 min-h-[44px] disabled:opacity-60">
+                          {hideBusy ? "กำลังซ่อน…" : "🗃 ซ่อนออกจากผลิต"}
+                        </button>
                       </div>
                     )}
 

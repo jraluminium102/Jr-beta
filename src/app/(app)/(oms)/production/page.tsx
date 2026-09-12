@@ -218,6 +218,12 @@ export default function ProductionPage() {
   const canUndeposit = (data?.meta?.can_undeposit as boolean) ?? false;
   const canRemeasure = (data?.meta?.can_remeasure as boolean) ?? false;
   const adhocJobs = (data?.meta?.adhoc as AdhocJob[] | undefined) ?? [];
+  // งานที่ซ่อนจากผลิต (0152 soft delete · กู้คืนได้)
+  type HiddenJob = { production_id: string; job_id: string; job_code: string | null; customer_name: string | null; customer_area: string | null; hidden_at: string | null };
+  const hiddenJobs = (data?.meta?.hidden as HiddenJob[] | undefined) ?? [];
+  const [showHidden, setShowHidden] = useState(false);
+  const [unhideBusy, setUnhideBusy] = useState<string | null>(null);
+  const [unhideErr, setUnhideErr] = useState("");
 
   // คืน Promise (รอ refetch จบ) — ปุ่มแก้เฟสจะ await ก่อนปลดล็อก กัน race แสดงค่าสถานะเก่า
   const invalidateAll = () => Promise.all([
@@ -225,6 +231,13 @@ export default function ProductionPage() {
     queryClient.invalidateQueries({ queryKey: ["measure-schedule"] }),
     queryClient.invalidateQueries({ queryKey: ["overdue-count"] }),
   ]);
+
+  const unhideJob = async (jobId: string) => {
+    setUnhideBusy(jobId); setUnhideErr("");
+    try { await api.post(`/jobs/${jobId}/hide`, { hidden: false }); await invalidateAll(); }
+    catch (e) { setUnhideErr(e instanceof ApiError ? e.message : "เอากลับมาไม่สำเร็จ"); }
+    finally { setUnhideBusy(null); }
+  };
 
   const markAdhocDone = async (id: string) => {
     if (!confirm("ทำเครื่องหมายว่างานจดเองนี้เสร็จแล้ว?")) return;
@@ -467,6 +480,42 @@ export default function ProductionPage() {
             );
           })}
           {filtered.length === 0 && <EmptyState title="ไม่มีงานในกลุ่มนี้" />}
+        </div>
+      )}
+
+      {/* 🗃 ที่ซ่อนไว้ (soft delete · กู้คืนได้) — โชว์เฉพาะแอดมิน (ตรงกับปุ่มซ่อน) เมื่อมีงานที่ซ่อน */}
+      {isAdmin && hiddenJobs.length > 0 && (
+        <div className="mt-6">
+          <button
+            onClick={() => setShowHidden((v) => !v)}
+            className="focusable pressable inline-flex items-center gap-2 px-3 py-2 rounded-xl glass-card border border-white/15 text-white/80 text-[13px] min-h-[44px]"
+          >
+            🗃 ที่ซ่อนไว้ ({hiddenJobs.length})
+            <ChevronRight size={14} className={`transition-transform ${showHidden ? "rotate-90" : ""}`} />
+          </button>
+          {showHidden && (
+            <div className="mt-2 space-y-2">
+              {unhideErr && <p role="alert" className="text-sm text-rose-200 bg-rose-500/15 border border-rose-300/25 rounded-xl px-3 py-2">{unhideErr}</p>}
+              {hiddenJobs.map((h) => (
+                <div key={h.production_id} className="flex items-center justify-between gap-3 rounded-xl glass-card border border-white/10 px-4 py-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-white truncate">
+                      {h.customer_name ?? "—"}
+                      {h.customer_area && <span className="ml-2 text-[12px] text-white/50">{h.customer_area}</span>}
+                    </div>
+                    {h.job_code && <div className="text-[11px] text-white/40">{h.job_code}</div>}
+                  </div>
+                  <button
+                    onClick={() => unhideJob(h.job_id)}
+                    disabled={unhideBusy === h.job_id}
+                    className="focusable pressable shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500/25 hover:bg-emerald-500/40 border border-emerald-300/35 text-emerald-50 text-[12px] font-semibold min-h-[44px] disabled:opacity-60"
+                  >
+                    {unhideBusy === h.job_id ? "กำลังคืน…" : "↩ เอากลับมา"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

@@ -10,13 +10,21 @@ export const GET = withRoute(async () => {
   let { data, error } = await ctx.supabase
     .from("productions")
     .select(`${baseCols},
-      job:job_id(job_code, customer_name, customer_area, status, deposit_date, floor_work, floor_note, current_stage,
+      job:job_id(job_code, customer_name, customer_area, status, deposit_date, floor_work, floor_note, current_stage, hidden_from_production, hidden_at,
         job_blocker_notes(id, tag, note, source, created_at)
       )`)
     .order("created_at", { ascending: false });
   // กันพัง: ตาราง job_blocker_notes (0098) ยังไม่รัน → query ทั้งก้อนล้ม = หน้างานผลิตทั้งหน้าโชว์ 0
   // (เจอจริงบน production 16 ก.ค.69) → ตัด join นั้นออกแล้วดึงใหม่ — โน้ตแค่ยังไม่โชว์ หน้าหลักต้องรอด
   if (error && /job_blocker_notes/i.test(error.message ?? "")) {
+    ({ data, error } = await ctx.supabase
+      .from("productions")
+      .select(`${baseCols},
+        job:job_id(job_code, customer_name, customer_area, status, deposit_date, floor_work, floor_note, current_stage, hidden_from_production, hidden_at)`)
+      .order("created_at", { ascending: false }));
+  }
+  // กันพัง: migration 0152 (hidden_from_production) ยังไม่รัน → ถอย select ไม่มีคอลัมน์ซ่อน (ฟีเจอร์ซ่อนยังไม่ทำงาน แต่หน้าไม่ล่ม)
+  if (error && /hidden_from_production|hidden_at/i.test(error.message ?? "")) {
     ({ data, error } = await ctx.supabase
       .from("productions")
       .select(`${baseCols},
@@ -84,11 +92,21 @@ export const GET = withRoute(async () => {
   const isStale = (quotationId: number | null, storedRev: number) =>
     quotationId != null && (revByQuoteId[quotationId] ?? 0) > storedRev;
 
-  // ตัดงานที่ถูกยกเลิกออก + เรียง blocker_notes เก่า→ใหม่ (PostgREST ไม่การันตี order ของ embed)
+  // งานที่ "ซ่อนจากผลิต" (0152 soft delete) → แยกไปลิสต์ hidden (กู้คืนได้) ไม่โชว์ในตารางหลัก
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const hidden = (data ?? [])
+    .filter((p: any) => p.job && p.job.status !== "CANCELLED" && p.job.hidden_from_production === true)
+    .map((p: any) => ({
+      production_id: p.id, job_id: p.job_id,
+      job_code: p.job?.job_code ?? null, customer_name: p.job?.customer_name ?? null,
+      customer_area: p.job?.customer_area ?? null, hidden_at: p.job?.hidden_at ?? null,
+    }));
+
+  // ตัดงานที่ถูกยกเลิก + งานที่ซ่อน ออกจากตารางหลัก + เรียง blocker_notes เก่า→ใหม่ (PostgREST ไม่การันตี order ของ embed)
   const rows = (data ?? [])
     .filter((p: Record<string, unknown>) => {
-      const job = p.job as { status?: string } | null;
-      return job?.status !== "CANCELLED";
+      const job = p.job as { status?: string; hidden_from_production?: boolean } | null;
+      return job?.status !== "CANCELLED" && job?.hidden_from_production !== true;
     })
     .map((p: Record<string, unknown>) => {
       const job = p.job as Record<string, unknown> | null;
@@ -124,5 +142,6 @@ export const GET = withRoute(async () => {
     can_undeposit: can(ctx.role, "finance", "void"),       // ถอยมัดจำ = ADMIN/ACCOUNTING (void เงิน)
     can_remeasure: ctx.role === "ADMIN" || ctx.role === "PRODUCTION",   // วัดซ้ำ (0130) — เฉพาะออฟฟิศ/ผลิต
     adhoc: adhoc ?? [],
+    hidden,   // งานที่ซ่อนจากผลิต (กู้คืนได้)
   });
 });
