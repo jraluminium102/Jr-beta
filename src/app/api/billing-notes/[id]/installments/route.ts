@@ -44,7 +44,7 @@ export const PUT = withRoute(async (req: Request, { params }: { params: { id: st
   // 1) ดึงใบวางบิล + งวดปัจจุบัน (base_amt/kind ใช้หา locked set ในโหมด Rev)
   const { data: bn, error: bnErr } = await ctx.supabase
     .from("billing_notes")
-    .select("id, total, status, labor_amt, billing_installments(id, seq, label, amount, status, paid_amount, base_amt, kind)")
+    .select("id, total, status, labor_amt, subtotal, discount_amt, vat_amt, wht_amt, billing_installments(id, seq, label, amount, status, paid_amount, base_amt, kind)")
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .eq("id", bnId)
     .single<any>();
@@ -59,16 +59,34 @@ export const PUT = withRoute(async (req: Request, { params }: { params: { id: st
   const existingInst = (bn.billing_installments ?? []) as InstallmentForLock[];
   const existingIds = existingInst.map((e) => e.id);
 
-  if (!rev) {
-    // ── โหมดปกติ (ก่อนจ่าย) — พฤติกรรมเดิมทุกจุด ไม่กระทบ ──
-    if (newInst.length === 0) return err("ต้องมีอย่างน้อย 1 งวด", 400);
-    const total = Number(bn.total) || 0;
-    const newSum = round2(newInst.reduce((s, i) => s + i.amount, 0));
-    if (Math.abs(newSum - total) > 0.01) {
-      return err(`ผลรวมงวด (${newSum}) ไม่ตรงกับยอดใบวางบิล (${total})`, 400);
+  // "total วิ่งตามงวด" → ยอดแยก (subtotal/VAT/หัก ณ ที่จ่าย/ส่วนลด) ต้องวิ่งตาม total ใหม่ด้วย
+  //   ไม่งั้นใบพิมพ์ไม่ balance (subtotal+VAT ≠ ยอดรวม) + รายได้งาน (net/vat split ที่ 0128) เพี้ยน (บัญชีจับ)
+  //   วิธี: สเกลยอดแยกตามสัดส่วน total ใหม่/เดิม (คงอัตรา VAT/หัก · balance เป๊ะ) + has_tax_breakdown=false (ไม่ยึดใบเสนอแล้ว)
+  const syncBreakdown = async (newTotal: number) => {
+    const oldTotal = Number(bn.total) || 0;
+    const f = oldTotal > 0 ? newTotal / oldTotal : 0;
+    const bd = oldTotal > 0
+      ? {
+          subtotal: round2((Number(bn.subtotal) || 0) * f),
+          discount_amt: round2((Number(bn.discount_amt) || 0) * f),
+          vat_amt: round2((Number(bn.vat_amt) || 0) * f),
+          wht_amt: round2((Number(bn.wht_amt) || 0) * f),
+          has_tax_breakdown: false,
+        }
+      : { subtotal: newTotal, discount_amt: 0, vat_amt: 0, wht_amt: 0, has_tax_breakdown: false };
+    const { error: bdErr } = await ctx.supabase.from("billing_notes").update(bd).eq("id", Number(bnId));
+    // ใบเก่า/ยังไม่รัน 0078 (ไม่มีคอลัมน์ยอดแยก) → ข้าม (total ถูกแล้ว ไม่ให้พัง)
+    if (bdErr && !/subtotal|discount_amt|vat_amt|wht_amt|has_tax_breakdown/i.test(bdErr.message ?? "")) {
+      throw new Error(bdErr.message);
     }
+  };
 
-    // Business rule: แต่งงวดได้เฉพาะตอน "ยังไม่มีการชำระ/ออกใบเสร็จ" ใดๆ
+  if (!rev) {
+    // ── โหมดปกติ (ก่อนจ่าย) — แก้งวดได้อิสระ "total วิ่งตามงวด" (เจ้าของสั่ง 12 ก.ย.69) ──
+    //   ไม่บล็อกถ้า Σงวด ≠ ยอดบิล — RPC (0151) เขียน total = Σงวดใหม่ ให้เอง
+    if (newInst.length === 0) return err("ต้องมีอย่างน้อย 1 งวด", 400);
+
+    // Business rule: แต่งงวดได้เฉพาะตอน "ยังไม่มีการชำระ/ออกใบเสร็จ" ใดๆ (เงินรับจริงแตะไม่ได้ → ใช้โหมด Rev)
     if (existingInst.some((e) => e.status === "paid" || (Number(e.paid_amount) || 0) > 0)) {
       return err("ใบวางบิลนี้มีงวดที่ชำระแล้ว — ปรับงวดไม่ได้ ต้องยกเลิกใบวางบิลแล้วออกใหม่ (หรือใช้โหมด Rev)", 409);
     }
@@ -91,6 +109,9 @@ export const PUT = withRoute(async (req: Request, { params }: { params: { id: st
       p_items: newInst.map((n, idx) => ({ seq: n.seq ?? idx + 1, label: n.label, amount: n.amount, due_date: n.due_date ?? null })),
     });
     if (rpcErr) return err("แก้งวดไม่สำเร็จ: " + rpcErr.message, 400);
+
+    // ยอดแยกวิ่งตาม total ใหม่ (= Σงวด) — balance ใบพิมพ์ + รายได้งานถูก
+    await syncBreakdown(round2(newInst.reduce((s, i) => s + i.amount, 0)));
 
     await audit({
       userId: ctx.user.id,
@@ -120,6 +141,9 @@ export const PUT = withRoute(async (req: Request, { params }: { params: { id: st
     return err("Rev งวดไม่สำเร็จ: " + rpcErr.message, status);
   }
   const r = (rpcData ?? {}) as { new_total?: number; overpaid?: number; status?: string };
+
+  // ยอดแยกวิ่งตาม total ใหม่ (locked + Σงวดใหม่ ที่ RPC คำนวณ) — balance ใบพิมพ์ + รายได้งานถูก
+  if (r.new_total != null) await syncBreakdown(Number(r.new_total));
 
   await audit({
     userId: ctx.user.id,

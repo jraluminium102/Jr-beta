@@ -910,13 +910,6 @@ export function InstallmentEditor({
   const paidLocked = round2(lockedRows.reduce((s, i) => s + (Number(i.paid_amount) || 0), 0));
   const maxPaidSeq = lockedRows.reduce((m, i) => Math.max(m, i.seq), 0);
 
-  // Rev: ยอดบิลใหม่แก้ได้ (default = ยอดเดิม) — เฉพาะตอนมีงวด locked เท่านั้น (ไม่งั้นแก้ยอดตรงผ่านปุ่ม "แก้ยอดบิล" อยู่แล้ว)
-  const [newTotalStr, setNewTotalStr] = useState(String(total));
-  const newTotal = hasPaid ? (Number(newTotalStr) || 0) : total;
-  // ยอดที่งวดที่ยังไม่จ่ายต้องรวมให้ได้ = ยอดบิลใหม่ − งวด locked
-  const targetSum = round2(newTotal - lockedSum);
-  const belowLocked = hasPaid && targetSum < -0.005; // ยอดใหม่ < ที่ล็อกไว้ (รับเกิน) — เครื่องมือนี้ไม่รองรับ ชี้ไปปุ่ม "แก้ยอดบิล"
-
   const [reason, setReason] = useState("");
   const reasonOk = !hasPaid || reason.trim().length >= 5;
 
@@ -934,12 +927,14 @@ export function InstallmentEditor({
   const [overpaidNotice, setOverpaidNotice] = useState<number | null>(null); // แสดงเตือนหลังบันทึกสำเร็จ ก่อนปิด/refresh
 
   const sum = round2(rows.reduce((s, r) => s + (Number(r.amount) || 0), 0));
-  const diff = round2(Math.abs(sum - targetSum));
-  const sumOk = !belowLocked && diff <= 0.01;
+  // ★ total วิ่งตามงวด (เจ้าของสั่ง 12 ก.ย.69): ยอดบิลใหม่ = งวด locked (ตรึง) + Σ งวดที่แก้ได้ · ไม่บังคับให้ตรงยอดเดิม
+  const newTotalComputed = round2(lockedSum + sum);
+  const overpaidPreview = hasPaid ? round2(paidLocked - newTotalComputed) : 0; // >0 = รับเกิน (เตือน ไม่บล็อก)
+  // เป้าหมายสำหรับปุ่มช่วย (เกลี่ย/ใส่ส่วนต่าง) = ยอดบิลเดิม − งวด locked · แค่ preset เริ่มต้น แก้ต่อได้อิสระ
+  const helperTarget = round2(total - lockedSum);
 
   function addRow() {
-    // เติมยอดที่เหลือ (targetSum − ผลรวมปัจจุบัน) ให้งวดใหม่ → ผลรวมไม่เพี้ยน บันทึกได้ทันที
-    const remaining = round2(targetSum - sum);
+    const remaining = round2(helperTarget - sum);
     setRows([
       ...rows,
       { rid: ridRef.current++, label: `งวด ${maxPaidSeq + rows.length + 1}`, amount: remaining > 0 ? remaining : 0, due_date: null },
@@ -950,26 +945,26 @@ export function InstallmentEditor({
     setRows(rows.filter((_, i) => i !== idx));
   }
 
-  // เกลี่ยยอดเท่ากันทุกงวด (เฉพาะที่ยังไม่จ่าย) — งวดสุดท้ายดูดเศษ
+  // เกลี่ยยอด (ตามยอดบิลเดิม) เท่ากันทุกงวด — งวดสุดท้ายดูดเศษ · เป็นแค่ตัวช่วย แก้ต่อได้
   function splitEven() {
     const n = rows.length;
     if (n === 0) return;
-    const per = round2(targetSum / n);
+    const per = round2(helperTarget / n);
     setRows(rows.map((r, i) => ({
       ...r,
-      amount: i === n - 1 ? round2(targetSum - per * (n - 1)) : per,
+      amount: i === n - 1 ? round2(helperTarget - per * (n - 1)) : per,
     })));
     setError("");
   }
 
-  // ใส่ส่วนต่างที่เหลือลงงวดสุดท้าย — กัน ≤ 0 (API บังคับ amount > 0)
+  // ใส่ส่วนต่างที่เหลือ (เทียบยอดบิลเดิม) ลงงวดสุดท้าย — กัน ≤ 0 (API บังคับ amount > 0)
   function fillLast() {
     const n = rows.length;
     if (n === 0) return;
     const others = round2(rows.slice(0, n - 1).reduce((s, r) => s + (Number(r.amount) || 0), 0));
-    const last = round2(targetSum - others);
+    const last = round2(helperTarget - others);
     if (last <= 0) {
-      setError(`งวดอื่นรวม ${baht(others)} เกิน/เท่ายอดที่เหลือแล้ว — ลดยอดงวดอื่นก่อน`);
+      setError(`งวดอื่นรวม ${baht(others)} เกิน/เท่ายอดบิลเดิมแล้ว — ลดยอดงวดอื่นก่อน หรือพิมพ์ยอดงวดสุดท้ายเอง`);
       return;
     }
     setRows(rows.map((r, i) => (i === n - 1 ? { ...r, amount: last } : r)));
@@ -982,16 +977,9 @@ export function InstallmentEditor({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (belowLocked) {
-      setError(`ยอดใหม่ (${baht(newTotal)}) ต่ำกว่างวดที่ล็อกไว้แล้ว (${baht(lockedSum)}) — เครื่องมือนี้ไม่รองรับกรณี "รับเกิน" ใช้ปุ่ม "แก้ยอดบิล" แทน`);
-      return;
-    }
-    if (!sumOk) {
-      setError(hasPaid
-        ? `ผลรวมงวดที่เหลือ ${baht(sum)} ต้องเท่ากับ ${baht(targetSum)} (ยอดบิลใหม่ − งวดที่ล็อกไว้)`
-        : `ผลรวม ${baht(sum)} ต้องตรงกับยอดบิล ${baht(total)}`);
-      return;
-    }
+    // total วิ่งตามงวด — ไม่บล็อกเรื่องผลรวมไม่ตรงยอดเดิมอีกต่อไป · เช็คแค่ให้ยอดแต่ละงวด > 0 (API บังคับ)
+    if (!hasPaid && rows.length === 0) { setError("ต้องมีอย่างน้อย 1 งวด"); return; }
+    if (rows.some((r) => (Number(r.amount) || 0) <= 0)) { setError("ยอดแต่ละงวดต้องมากกว่า 0"); return; }
     if (hasPaid && !reasonOk) { setError("Rev (แก้แม้ชำระแล้ว) ต้องระบุเหตุผล อย่างน้อย 5 ตัวอักษร"); return; }
     setBusy(true);
     setError("");
@@ -1065,23 +1053,9 @@ export function InstallmentEditor({
           </button>
         </div>
 
-        {/* Rev: แก้ยอดบิลใหม่ได้ตรงนี้เลย (เฉพาะตอนมีงวด locked) */}
+        {/* Rev: เหตุผลบังคับ (แก้แม้ชำระแล้ว) — ยอดบิลใหม่วิ่งตามงวดเอง ไม่ต้องกรอกยอดรวม */}
         {hasPaid && (
           <div className="rounded-xl border border-brand/20 bg-brand-soft/40 p-3 space-y-2">
-            <label className="block text-sm">
-              <span className="text-xs font-medium text-brand-dark flex items-center gap-1"><Icon name="pencil" size={13} /> ยอดบิลใหม่ (Rev)</span>
-              <input
-                type="number" inputMode="decimal" step="0.01"
-                value={newTotalStr}
-                onChange={(e) => setNewTotalStr(e.target.value)}
-                className="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-right tabular-nums outline-none focus-visible:ring-2"
-              />
-            </label>
-            {belowLocked && (
-              <p className="text-xs text-red-700">
-                ยอดใหม่ต่ำกว่างวดที่ล็อกไว้ (฿{baht(lockedSum)}) — เครื่องมือนี้ไม่รองรับกรณี &quot;รับเกิน&quot; ใช้ปุ่ม &quot;แก้ยอดบิล&quot; แทน
-              </p>
-            )}
             <label className="block text-sm">
               <span className="text-xs font-medium text-gray-500">เหตุผลที่ Rev <span className="text-red-600">*</span></span>
               <textarea
@@ -1093,23 +1067,19 @@ export function InstallmentEditor({
           </div>
         )}
 
-        {/* ตัวเตือนผลรวม — ปรับข้อความตามว่ามีงวด locked ไหม */}
-        <div className={`text-sm px-3 py-2 rounded-xl border ${sumOk ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-red-50 border-red-200 text-red-800"}`}>
-          {hasPaid ? (
-            <>
-              ล็อกไว้ (ตรึง ไม่แตะ) <b className="tabular-nums">{baht(lockedSum)}</b>
-              {" · "}จ่ายจริงในงวดล็อก <b className="tabular-nums">{baht(paidLocked)}</b>
-              {" · "}งวดที่เหลือต้องรวม <b className="tabular-nums">{baht(targetSum)}</b>
-              {" "}(ตอนนี้ <b className="tabular-nums">{baht(sum)}</b>)
-            </>
-          ) : (
-            <>
-              ผลรวมงวด: <b className="tabular-nums">{baht(sum)}</b>
-              {" "}/ ยอดบิล: <b className="tabular-nums">{baht(total)}</b>
-            </>
+        {/* สรุปยอด — โชว์ยอดบิลใหม่ที่วิ่งตามงวด (ไม่บล็อก) */}
+        <div className="text-sm px-3 py-2 rounded-xl border bg-emerald-50 border-emerald-200 text-emerald-900">
+          {hasPaid && (
+            <>ล็อกไว้ (ตรึง ไม่แตะ) <b className="tabular-nums">{baht(lockedSum)}</b>{" · "}งวดที่แก้ได้รวม <b className="tabular-nums">{baht(sum)}</b>{" · "}</>
           )}
-          {!sumOk && !belowLocked && <span className="ml-2">ต่างกัน {baht(diff)}</span>}
+          ยอดบิลใหม่ (ตามงวด): <b className="tabular-nums">฿{baht(newTotalComputed)}</b>
         </div>
+        {hasPaid && overpaidPreview > 0.01 && (
+          <div className="text-sm px-3 py-2 rounded-xl border bg-red-50 border-red-200 text-red-800">
+            <b className="flex items-center gap-1.5"><Icon name="warn" size={15} /> รับเงินเกิน ฿{baht(overpaidPreview)}</b>
+            ยอดบิลใหม่ต่ำกว่าเงินที่รับมาแล้ว — บันทึกได้ แต่ต้องคืนเงิน/ออกใบลดหนี้ในระบบบัญชี (ห้ามออกใบกำกับภาษีจากใบนี้)
+          </div>
+        )}
 
         {/* งวด locked (จ่ายแล้ว/มีใบเสร็จ-รายการเงินผูก — ตรึงไว้ แก้ไม่ได้) */}
         {lockedRows.map((p) => (
@@ -1208,7 +1178,7 @@ export function InstallmentEditor({
             className="press flex-1 border border-gray-200 rounded-xl py-2.5 text-sm text-gray-700 hover:bg-gray-50 min-h-[44px] focus:outline-none focus-visible:ring-2">
             ยกเลิก
           </button>
-          <button type="submit" disabled={busy || !sumOk || !reasonOk}
+          <button type="submit" disabled={busy || !reasonOk}
             className="press flex-1 bg-brand text-white rounded-xl py-2.5 text-sm font-semibold shadow-brand disabled:opacity-50 min-h-[44px] flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2">
             {busy && <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />}
             {hasPaid ? "บันทึก Rev" : "บันทึกงวด"}
