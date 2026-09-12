@@ -296,6 +296,13 @@ export function computeCost(PB, prod, opt) {
     return round2(base * boxCF(it));
   };
 
+  // น้ำหนักเส้น: ยึด "กก./เมตร" จากแคตตาล็อกผู้ผลิต (PB.ALUWEIGHT_KGM · โฟลเดอร์ อลู) เป็นแหล่งเดียว — เจ้าของสั่ง 12 ก.ย.69
+  //   กก./เส้น = กก./ม. × ความยาวเส้นของบรรทัดนั้น (6.4 ม. ปกติ · Velora/เมืองทอง 6 ม. · มือจับ X-J 2.8 ม.)
+  //   รหัสที่แคตตาล็อกไม่มี (E-series/Velora/SlimLux/กล่องเมืองทอง) → ใช้ กก. ที่ฝังในสูตรเหมือนเดิม
+  const kgOfLine = (it, code, barLen) => {
+    const km = (PB.ALUWEIGHT_KGM || {})[code];
+    return km > 0 ? Math.round(km * (barLen || STOCK_LEN) * 1000) / 1000 : (Number(it.kg) || 0);
+  };
   let aluCost = 0, aluKg = 0, aluBarsAll = 0;
   // น้ำหนักอลูจริง = ความยาวที่ตัดจริง × (กก./เส้น ÷ ความยาวเส้น) — ไม่ใช่ aluKg ข้างบน
   //   (aluKg ใช้คิดค่าอบสี นับเฉพาะเส้นที่ยังไม่รวมราคาสี และนับเป็น "เส้นที่ซื้อ" = มากกว่าของจริง)
@@ -400,15 +407,16 @@ export function computeCost(PB, prod, opt) {
     const amount = bars * price * m;
     aluCost += amount;
     // เส้นที่ราคารวมสีแล้ว หรือเป็นเส้นสีเงินไม่อบสี → ไม่เข้ากองคิดค่าอบ
-    if (!(colorPrice > 0) && cfPrice == null && !boxColorDone && !noColor) aluKg += bars * (it.kg || 0);
+    const kgBar = kgOfLine(it, code, Number(it.stockLen) || stockLen);
+    if (!(colorPrice > 0) && cfPrice == null && !boxColorDone && !noColor) aluKg += bars * kgBar;
     // น้ำหนักจริงของท่อนที่ตัด (ไว้เลือกมอเตอร์ตามน้ำหนักบาน)
     const barLen = Number(it.stockLen) || stockLen;
-    const kgPerM = (Number(it.kg) || 0) > 0 && barLen > 0 ? (Number(it.kg) / barLen) : 0;
+    const kgPerM = kgBar > 0 && barLen > 0 ? (kgBar / barLen) : 0;
     const kgLine = kgPerM * seg * count;
     if (kgPerM > 0) aluKgReal += kgLine; else if (seg * count > 0) kgMissing.push(it.name);
     aluBarsAll += bars;   // นับทุกเส้น (รวมเส้นที่ราคารวมสีมาแล้ว) — ใช้ตัดสินค่าเปิดตู้อบ
     // code/kg ติดมากับบรรทัดด้วย — หน้าเทียบ "คิดราคา ↔ ใบตัด" ใช้จับคู่รหัส + คิด ฿/กก. (ไม่กระทบตัวเลขใด ๆ)
-    lines.push({ cat: 'alu', name: it.name + (colorPrice > 0 || cfPrice != null ? ' (' + colorDisp + ')' : ''), code: code || '', kg: it.kg || 0, kgLine: round2(kgLine),
+    lines.push({ cat: 'alu', name: it.name + (colorPrice > 0 || cfPrice != null ? ' (' + colorDisp + ')' : ''), code: code || '', kg: kgBar || 0, kgLine: round2(kgLine),
       qty: bars, unit: 'เส้น', unitPrice: round2(price * m), amount: round2(amount),
       // ความยาวที่ต้องตัดจริง + จำนวนชิ้น — หน้าเทียบ "คิดราคา ↔ ใบตัด" ใช้ตัวนี้เทียบ
       //   (เทียบ "จำนวนเส้น" ตรง ๆ ไม่ได้แล้ว: คิดราคานับแบบไฟล์ ÷6.4+เศษ · ใบตัดนับเส้นเต็ม)
