@@ -31,6 +31,8 @@ const CF_EXPR = "mult*((({white:1,sahara:1.5208,woodStock:1.5859,special:1.9010,
 //   ขาว/ดำ/เทา → rate_grey · สีอบพิเศษ → rate_special · สีอื่น (ลายไม้) → rate_woodbake · ค่าเปิดตู้อบทุกสี
 const BAKE_MILL = { white: 'sahara', black: 'sahara', sahara: 'sahara', sahara_black: 'sahara', special: 'special', _default: 'woodSpecial' };
 // ติดตาย โปรไฟล์ 9014 — ชีต "คิดทุน ติดตาย" E3: เทา 550 (ขาว 380) · ลายไม้ stock ×1.6 · อบพิเศษ ×(1+rate/192)
+// ตัวคูณสีบานเกล็ด — ชีต "คิดทุน บานเกล็ด" E6: ลายไม้สต็อค 1.6 (เท่าบานติดตาย ไม่ใช่ 1.5859 ตัวกลาง) · สีอื่นตกไปใช้ PB.BOX_CF
+const CF_BANKLET = { woodStock: 1.6 };
 const CF_9014 = { sahara: 550 / 380, woodStock: 1.6, special: 1 + 173 / 192, woodSpecial: 1 + 190 / 192 };
 // จำนวนบานล็อกตามชื่อรูปแบบของบานเฟี้ยม ("3บาน: เปิดกลาง (2-1)" → 3 บานเท่านั้น)
 //   เจ้าของสั่ง 21 ส.ค.69 ให้ยึดใบตัด — ใบตัดคิดจาก config พับ ถ้าจำนวนบานไม่ตรงชื่อ = คนละงาน
@@ -656,6 +658,8 @@ export const PRODUCTS = {
     ],
     consum: [
       SILICONE,
+      // ชีต "คิดทุน บานเลื่อนรางบน" C22 = IF(สีพิเศษ) × 2,000
+      { labor: true, name: 'สีพิเศษ (ค่าเปิดตู้อบ)', price: 2000, unit: 'งาน', count: "(color==='special'||color==='woodSpecial') ? 1 : 0" },
     ],
   },
 
@@ -971,12 +975,19 @@ export const PRODUCTS = {
     alu: [],
     glass: null,
     hardware: [
-      { name: 'เฟรม 1"×4" (รอบ+เสาแบ่ง)', needCode: true, price: 905, unit: 'เส้น', count: 'frameLines' },
+      // cf = ตัวคูณสี E6 ของชีต (ลายไม้สต็อค 1.6 เท่าบานติดตาย · สีอื่นใช้ตัวคูณกลาง PB.BOX_CF)
+      //   ⚠ วันที่เติมรหัสสโตร์ (needCode) ให้ 2 บรรทัดนี้ ต้องเช็คลำดับราคาสีซ้ำ — engine ใช้ราคาสโตร์ก่อนแล้ว "ข้าม cf ทันที"
+      //     (hardware loop: sp != null → else if formulaCF ไม่ทำงาน) ถ้าผูก sku ราคาเดียวไม่แยกสี บานเกล็ดจะกลับไปทุกสีเท่าขาวเหมือนก่อน 12 ก.ย.69
+      //     ผูกเป็น box (กล่อง|1X4) ปลอดภัยกว่า เพราะ boxPrice คิดสีให้ในตัว · QA ท้วงไว้ 12 ก.ย.69
+      { name: 'เฟรม 1"×4" (รอบ+เสาแบ่ง)', needCode: true, price: 905, unit: 'เส้น', count: 'frameLines', cf: CF_BANKLET },
       { name: 'ขาเกล็ดโยก', needCode: true, price: 1, unit: 'ชุด', count: 'P * N * legRate' },
-      { name: 'ใบเกล็ด', needCode: true, price: 572, unit: 'เส้น', count: 'Math.ceil(totalBlades*bladeLen/600)' },
+      { name: 'ใบเกล็ด', needCode: true, price: 572, unit: 'เส้น', count: 'Math.ceil(totalBlades*bladeLen/600)', cf: CF_BANKLET },
       { name: 'ยู4หุน เกล็ดติดตาย', needCode: true, price: 1, unit: 'ชุด', count: '(tie>0?2*P:0) * (tie>0?(G/600)*150:0)' },
     ],
-    consum: [],
+    consum: [
+      // ชีต "คิดทุน บานเกล็ด" E7/C28 = IF(สีพิเศษ) × 2,000
+      { labor: true, name: 'สีพิเศษ (ค่าเปิดตู้อบ)', price: 2000, unit: 'งาน', count: "(color==='special'||color==='woodSpecial') ? 1 : 0" },
+    ],
     note: 'แนว "นอน" · P = จำนวนช่อง · มอเตอร์เลือกได้ (1,800→6,000) · แนว "ตั้ง"/สีพิเศษ/ใบกระจก ยังไม่ทำ (เช็คซ้ำ)',
   },
 
@@ -1063,7 +1074,8 @@ export const PRODUCTS = {
     consum: [
       { box: "'กล่อง|'+(spec.rnBox?String(spec.rnBox).toUpperCase():'1.6X4')", name: 'ใบระแนง (กล่อง)', price: 'BOXP', unit: 'เส้น', count: 'NLINE' },
       { box: 'กล่อง|1X1.6', name: 'โครงดาม 1"×1.6" (รวมโครง)', price: 'FRAMEP', unit: 'เส้น', count: 'NFRAME' },
-      { labor: true, name: 'สีพิเศษ (ค่าเปิดตู้อบ)', price: 2000, unit: 'งาน', count: 'spec.rnCustomColor ? 1 : 0' },
+      // ชีต "คิดทุน ระแนง" C18 = IF(สีพิเศษ) × 2,000 → ผูกกับสีที่เลือกจริง (เดิมผูก spec.rnCustomColor ที่ไม่มีในระบบ = ไม่เคยคิดเลย)
+      { labor: true, name: 'สีพิเศษ (ค่าเปิดตู้อบ)', price: 2000, unit: 'งาน', count: "(color==='special'||color==='woodSpecial') ? 1 : 0" },
     ],
     note: 'ระแนงบังตา — คิดทุน BOM ตามชีต Excel: กล่อง→หน้าโชว์→**ช่องห่างกรอกเอง**→โครง(รวม/ไม่รวม) · pitch=หน้าโชว์+ช่องห่าง · นับใบ/เส้น (สต็อก 6ม.) × ราคากล่อง×ปัจจัยสี · โครงดาม 1"×1.6" · สีพิเศษ +2,000 · ค่าแรง 300+600/ตร.ม. · ส่วนลดปริมาณ >10ตร.ม. · บานเลื่อน/เฟี้ยม/เปิด +ค่าบาน รอราคา',
   },
@@ -1240,6 +1252,8 @@ export const PRODUCTS = {
       // ขายฟิก 12,000 ตามชีตราคาออโต้ ไม่ผ่านกำไร (เจ้าของเคาะ 5 ก.ย.69)
       { name: 'มอเตอร์ระแนงหมุน', price: 1800, ref: 'MOTOR.ระแนงหมุน', motorSellKey: 'ระแนงหมุน', unit: 'ตัว', count: "spec.rnMotor==='ไม่เอา' ? 0 : 1" },
       { orderOnly: true, name: 'อุปกรณ์หมุน+จุดหมุน', price: 1, unit: 'ชุด', count: "Math.round(200*(W*100)/100) + Math.round(160*NLEAF)" },
+      // ชีต "คิดทุน ระแนงหมุน" C21 = IF(สีพิเศษ) × 2,000
+      { labor: true, name: 'สีพิเศษ (ค่าเปิดตู้อบ)', price: 2000, unit: 'งาน', count: "(color==='special'||color==='woodSpecial') ? 1 : 0" },
     ],
     note: 'ระแนงปรับหมุนได้ + มอเตอร์ default · กล่องเมืองทอง stock 6ม. · ค่าแรงใช้เรต "ระแนง" กลาง (ชีตจริง 965 vs 900 ต่าง ~312฿ เช็คซ้ำ) · โครงดาม/ต่อ/สีพิเศษ ยังไม่ทำ',
   },

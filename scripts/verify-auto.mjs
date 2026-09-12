@@ -853,6 +853,38 @@ console.log("\n═══ ⑳ ลำดับราคาสี — ขาว=ด
   ok("ตรวจครบทุกรุ่นที่เลือกสีได้ (≥ 25 รุ่น)", checked >= 25, String(checked));
   // ใบเก่าที่เลือก 3 สีนี้ ในรุ่นที่เอาตัวเลือกออกแล้ว → Aztec = สีอบพิเศษ · มะฮอกกานี/ไวท์โอ๊ค = ลายไม้อบพิเศษ (แพงกว่าสักทอง)
   const baseOf = (p) => ({ w: p.defaults?.w ?? 200, h: p.defaults?.h ?? 200, p: p.defaults?.p ?? 1, form: p.defForm ?? (p.forms || [])[0] ?? "", ...(p.defGlass ? { glassType: p.defGlass } : {}) });
+
+  // ③ ค่าเปิดตู้อบ 2,000 — เทียบชีตคิดทุนรายรุ่น (เจ้าของเคาะ 12 ก.ย.69 "เติมให้ตรงไฟล์")
+  //   ระแนงบังตา C18 · ระแนงหมุน C21 · ระแนงสลับ · ประตูรั้ว · บานเกล็ด E7/C28 · บานเลื่อนรางบน C22 — ทุกใบคิดเฉพาะสีอบพิเศษ/ลายไม้อบพิเศษ
+  //   ⚠ ระแนงบังตา + ฝ้าระแนง เคยผูกบรรทัดนี้กับ spec.rnCustomColor ที่ "ไม่มีอยู่จริงในระบบ" → นับได้ 0 เสมอ (ตกเงิน 2,000 เงียบ ๆ)
+  {
+    const ovenOf = (id, colorKey, color) => {
+      const p = PRODUCTS[id], b = baseOf(p);
+      const r = computeCost(PB, p, { ...b, color, colorKey });
+      return (r.lines || []).filter((l) => /เปิดตู้อบ/.test(l.name)).reduce((a, l) => a + (Number(l.amount) || 0), 0);
+    };
+    for (const id of ["louver", "louver_rotate", "louver_slip", "gate", "banklet", "topslide"]) {
+      ok(id + ": ค่าเปิดตู้อบ 2,000 (สีอบพิเศษ)", ovenOf(id, "special", "special") === 2000, String(ovenOf(id, "special", "special")));
+      ok(id + ": ค่าเปิดตู้อบ 2,000 (ลายไม้อบพิเศษ)", ovenOf(id, "wood_special", "woodSpecial") === 2000, String(ovenOf(id, "wood_special", "woodSpecial")));
+      const cheap = ["white", "sahara", "wood_teak"].map((k) => ovenOf(id, k, ({ white: "white", sahara: "sahara", wood_teak: "woodStock" })[k]));
+      ok(id + ": ขาว/เทา/ลายไม้สต็อค ไม่คิดค่าเปิดตู้อบ", cheap.every((v) => v === 0), cheap.join("/"));
+    }
+    // บานเกล็ด: ชีต E6 คูณสีลงเฟรม+ใบเกล็ด · ลายไม้สต็อค 1.6 (เท่าบานติดตาย ไม่ใช่ 1.5859 ตัวกลาง)
+    const bkFrame = (colorKey, color) => {
+      const p = PRODUCTS.banklet;
+      const r = computeCost(PB, p, { ...baseOf(p), color, colorKey });
+      return (r.lines || []).find((l) => /เฟรม 1/.test(l.name))?.unitPrice ?? 0;
+    };
+    ok("บานเกล็ด เฟรม 1\"×4\" ขาว = 905", bkFrame("white", "white") === 905, String(bkFrame("white", "white")));
+    ok("บานเกล็ด เฟรม ลายไม้สต็อค = 905×1.6 = 1,448", Math.abs(bkFrame("wood_teak", "woodStock") - 1448) < 0.5, String(bkFrame("wood_teak", "woodStock")));
+    ok("บานเกล็ด เฟรม เทาซาฮาร่า = 905×1.5208 = 1,376.4", Math.abs(bkFrame("sahara", "sahara") - 1376.35) < 1, String(bkFrame("sahara", "sahara")));
+    const bkAll = ["white", "sahara", "wood_teak", "special", "wood_special"].map((k, i) => {
+      const p = PRODUCTS.banklet, color = ["white", "sahara", "woodStock", "special", "woodSpecial"][i];
+      return computeCost(PB, p, { ...baseOf(p), color, colorKey: k }).cost.total;
+    });
+    ok("บานเกล็ด: ลำดับราคาสี ขาว < เทา < ลายไม้สต็อค < อบพิเศษ < ลายไม้อบพิเศษ",
+      bkAll.every((v, i) => i === 0 || v > bkAll[i - 1] + 0.5), bkAll.map((v) => Math.round(v)).join(" < "));
+  }
   for (const id of ["awning", "pivot", "fold_euro", "fold_lift", "sms_slide"]) {
     const p = PRODUCTS[id], cost = (x) => computeCost(PB, p, { ...baseOf(p), ...x }).cost.total;
     const ws = cost({ color: "woodSpecial", colorKey: "wood_special" }), sp = cost({ color: "special", colorKey: "special" });
