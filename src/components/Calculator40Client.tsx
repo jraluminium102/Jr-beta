@@ -178,6 +178,9 @@ export default function Calculator40Client({ customers = [], priceOverride, line
   const [material, setMaterial] = useState<string>("");
   const [spec, setSpec] = useState<Record<string, string>>({});
   const [addons, setAddons] = useState<Record<string, any>>({});
+  // ราคาขายมอเตอร์แก้มือ (เจ้าของ 12 ก.ย.69) — ว่างทั้งคู่ = ราคาตามไฟล์ · กรอกบาทชนะ %
+  const [motorSell, setMotorSell] = useState("");
+  const [motorPct, setMotorPct] = useState("");
   const [fixedPanes, setFixedPanes] = useState(0); // บานติดตาย (ไม่เลื่อน/ไม่เปิด) — ลด movePanes ของมุ้ง + ขึ้นใบ
   const [profit, setProfit] = useState("100");        // กำไรค่าวัสดุ % (ชื่อเดิม — เก็บลงสูตรของข้อ)
   const [profitProd, setProfitProd] = useState("100"); // กำไรค่าผลิต %
@@ -342,6 +345,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     setSpec(s);
     setUseSel("auto"); setSillSel("");   // เปลี่ยนรุ่น → กลับไปให้ระบบเดา ประตู/หน้าต่าง + พื้นล่าง
     setAddons({}); // เปลี่ยนรุ่น → เคลียร์ของเสริม (ของเสริมผูกกับ addon id เฉพาะรุ่น)
+    setMotorSell(""); setMotorPct("");   // ราคามอเตอร์ที่แก้มือไว้ = ของรุ่นเดิม ห้ามติดมา
     setFixedPanes(0);
     // G4 kindOpts default ต่อ key (ตรง defCfg ของ mockup)
     const k: Record<string, string> = {};
@@ -458,6 +462,9 @@ export default function Calculator40Client({ customers = [], priceOverride, line
         ...(profitEdit ? { profitEdit } : {}),   // R4.1: แก้ทีละก้อน (ไม่ส่ง = ใบเก่า/ไม่ได้แตะ)
         spec: specForCalc,
         addons,
+        // มอเตอร์คิดแยกจากกำไรค่าของ — กรอกราคาขาย (บาท) หรือ % กำไรมอเตอร์ ก็ได้
+        ...(motorSell !== "" && Number(motorSell) > 0 ? { motorSell: Number(motorSell) } : {}),
+        ...(motorSell === "" && motorPct !== "" && Number.isFinite(Number(motorPct)) ? { motorPct: Number(motorPct) } : {}),
       };
       // ── หลังคาหลายด้าน: เส้นอลู + แผ่นมุง + พื้นที่ ดึงจากเอนจินใบตัดตรง ๆ (ตรงกันโดยโครงสร้าง) ──
       if (ALU_FROM_CUTLIST[prod.id]) {
@@ -556,7 +563,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     } catch (e) {
       return { error: e instanceof Error ? e.message : String(e) } as any;
     }
-  }, [pb, prod, w, h, p, form, color, glassType, material, spec, profit, profitProd, profitInst, addons, fixedPanes, kind, faceColorCode, depth, shelves, cabSides, sheetColor, roofSegs, subs, roomTotals, laborMode, cutSel]);
+  }, [pb, prod, w, h, p, form, color, glassType, material, spec, profit, profitProd, profitInst, addons, motorSell, motorPct, fixedPanes, kind, faceColorCode, depth, shelves, cabSides, sheetColor, roofSegs, subs, roomTotals, laborMode, cutSel]);
 
   /**
    * % กำไรที่ "ใช้จริง" ตอนนี้ — โหมดตามไฟล์ใช้ตัวคูณที่เอนจินคิดได้ (result.profit3)
@@ -660,7 +667,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     return {
       v: 1, kind: "std", prodId: prod.id, group: prod.group,
       w, h, p, form, color, glassType, material,
-      spec, addons, fixedPanes, profit, profitProd, profitInst, profitManual, profitEdit, laborMode, useSel, sillSel, cutSel,
+      spec, addons, motorSell, motorPct, fixedPanes, profit, profitProd, profitInst, profitManual, profitEdit, laborMode, useSel, sillSel, cutSel,
       kindOpts: kind, faceColorCode, depth, shelves, cabSides, sheetColor, roofSegs, subs,
     };
   }
@@ -836,6 +843,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
       setMaterial(r.material ?? px.defMaterial ?? (px.materials?.[0] ?? ""));
       setSpec(r.spec ?? {});
       setAddons(r.addons ?? {});
+      setMotorSell(r.motorSell ?? ""); setMotorPct(r.motorPct ?? "");   // ใบเก่าไม่มี = ราคามอเตอร์ตามไฟล์ (เท่าเดิมเป๊ะ)
       setFixedPanes(Number(r.fixedPanes) || 0);
       setKind(r.kindOpts ?? {});
       setFaceColorCode(r.faceColorCode ?? "");
@@ -1874,6 +1882,34 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                             </li>
                           ))}
                         </ul>
+                        {/* มอเตอร์: ทุน/ขาย/กำไร + ช่องแก้ราคา (เจ้าของ 12 ก.ย.69 "ยังไม่แสดงต้นทุนมอเตอร์ + ไม่มีช่องแก้ราคามอเตอร์แยก") */}
+                        {(result as any).motor && (
+                          <div className="mt-2 pt-2 border-t border-emerald-200/70">
+                            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[13px]">
+                              <span className="font-semibold">มอเตอร์ / ชุดออโต้</span>
+                              <span className="tabular-nums">ทุน ฿{baht((result as any).motor.cost)}</span>
+                              <span className="tabular-nums">ขาย ฿{baht((result as any).motor.sell)}</span>
+                              <span className="tabular-nums">กำไร ฿{baht((result as any).motor.profit)}{(result as any).motor.pct != null ? ` (${Math.round((result as any).motor.pct)}%)` : ""}</span>
+                              {(result as any).motor.edited && <span className="text-[11px] text-amber-700">แก้ราคาเอง · ตามไฟล์ ฿{baht((result as any).motor.fileSell)}</span>}
+                            </div>
+                            <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                              <label className="flex items-center gap-1 text-[12px]">ราคาขายมอเตอร์ ฿
+                                <input value={motorSell} onChange={(e) => setMotorSell(e.target.value.replace(/[^0-9.]/g, ""))} inputMode="decimal"
+                                  placeholder={String(Math.round((result as any).motor.fileSell || 0))}
+                                  className="w-24 rounded-lg border border-emerald-300 bg-white px-2 py-1 text-right tabular-nums outline-none" />
+                              </label>
+                              <label className="flex items-center gap-1 text-[12px]">กำไรมอเตอร์
+                                <input value={motorPct} onChange={(e) => setMotorPct(e.target.value.replace(/[^0-9.-]/g, ""))} inputMode="decimal" disabled={motorSell !== ""}
+                                  placeholder={(result as any).motor.pct != null ? String(Math.round((result as any).motor.pct)) : ""}
+                                  className="w-16 rounded-lg border border-emerald-300 bg-white px-2 py-1 text-right tabular-nums outline-none disabled:opacity-40" />%
+                              </label>
+                              {(motorSell !== "" || motorPct !== "") && (
+                                <button type="button" onClick={() => { setMotorSell(""); setMotorPct(""); }} className="text-[12px] underline text-emerald-800">กลับราคาไฟล์</button>
+                              )}
+                            </div>
+                            <div className="mt-1 text-[11px] text-emerald-700/80">กรอกช่องเดียวพอ — ใส่บาท = ราคาขายชุดออโต้ทั้งก้อน · ใส่ % = ทุนชุดออโต้ × (1+%) · ทั้งสองแบบไม่โดนกำไรค่าของ<br />ก้อนนี้รวมทุกบรรทัดที่ขายราคาฟิกตามไฟล์ (บางรุ่น เช่น SlimLux/ช่างแซก รวมรางและอุปกรณ์ในชุดด้วย) — แก้แล้วราคาต่อหน่วยของบรรทัดพวกนั้นขยับตามสัดส่วน</div>
+                          </div>
+                        )}
                         {addonLines.some((l: any) => l.fixedSell) && (
                           <div className="mt-1 text-[11px] text-emerald-700/80">📌 = ราคาขายตามไฟล์ (ชีตราคาออโต้ · ขายขั้นต่ำ) คิดแยกจากกำไรรวม — ทุนยังนับใน &quot;ทุนรวม&quot; ตามปกติ</div>
                         )}

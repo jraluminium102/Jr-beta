@@ -304,7 +304,8 @@ console.log(NL + "═══ ⑭ ห้องกระจก G6 — กำไร 
 }
 
 // ── ⑬ มอเตอร์ Velora บานเปิดสลิม (Kuangdi) — ชีตราคาออโต้ แถว 34-36 ──
-//   เจ้าของเพิ่มลงไฟล์เอง 10 ก.ย.69 → ทุน 6,800/บาน + ค่าส่ง 1,700 · ขายขั้นต่ำ 20,000/บาน
+//   เจ้าของเพิ่มลงไฟล์เอง 10 ก.ย.69 → ทุน 6,800/บาน + ค่าส่ง 1,700
+//   ขาย (เจ้าของแก้ 12 ก.ย.69): 1 บาน 24,000 · คู่ 28,000 (เดิม 20,000/บาน = คู่ 40,000)
 console.log("\n═══ ⑬ มอเตอร์ Velora (Kuangdi) ═══");
 {
   const V = (o) => computeCost(PB, PRODUCTS.velora, { w: 220, h: 200, glassType: "เทมเปอร์ใส 6มม.", ...o });
@@ -312,11 +313,12 @@ console.log("\n═══ ⑬ มอเตอร์ Velora (Kuangdi) ═══");
 
   ok("ราคาตรงไฟล์: ทุน 6,800/บาน", PB.MOTOR["Velora Kuangdi"] === 6800, String(PB.MOTOR["Velora Kuangdi"]));
   ok("ราคาตรงไฟล์: ค่าส่ง 1,700", PB.MOTOR["Velora ค่าส่ง"] === 1700);
-  ok("ราคาตรงไฟล์: ขายขั้นต่ำ 20,000/บาน", PB.MOTORSELL["Velora บานเปิดสลิม"] === 20000);
+  ok("ราคาตรงไฟล์: 1 บาน 24,000", PB.MOTORSELL["Velora บานเปิดสลิม"] === 24000, String(PB.MOTORSELL["Velora บานเปิดสลิม"]));
+  ok("ราคาตรงไฟล์: คู่ 28,000", PB.MOTORSELL["Velora บานเปิดสลิม คู่"] === 28000, String(PB.MOTORSELL["Velora บานเปิดสลิม คู่"]));
 
   const m1 = V({ p: 1, addons: { velora_motor: {} } }), m2 = V({ p: 2, addons: { velora_motor: {} } });
-  ok("1 บาน → ขาย 20,000 (ไฟล์)", ln(m1, /ชุดออโต้ Velora/).amount === 20000, String(ln(m1, /Velora/).amount));
-  ok("2 บาน → ขาย 40,000 (ไฟล์)", ln(m2, /ชุดออโต้ Velora/).amount === 40000, String(ln(m2, /Velora/).amount));
+  ok("1 บาน → ขาย 24,000", ln(m1, /ชุดออโต้ Velora/).amount === 24000, String(ln(m1, /Velora/).amount));
+  ok("2 บาน (คู่) → ขาย 28,000 ไม่ใช่ 48,000", ln(m2, /ชุดออโต้ Velora/).amount === 28000, String(ln(m2, /Velora/).amount));
   ok("ทุน 1 บาน = 8,500 (6,800 + ค่าส่ง)", ln(m1, /ชุดออโต้ Velora/).cost === 8500, String(ln(m1, /Velora/).cost));
   ok("ทุน 2 บาน = 15,300 (ค่าส่งครั้งเดียว)", ln(m2, /ชุดออโต้ Velora/).cost === 15300, String(ln(m2, /Velora/).cost));
   ok("มอเตอร์ขายฟิก ไม่ผ่านกำไร", ln(m2, /ชุดออโต้ Velora/).fixedSell === true);
@@ -338,6 +340,45 @@ console.log("\n═══ ⑬ มอเตอร์ Velora (Kuangdi) ═══");
   // ไม่ไปโดนรุ่นอื่น (เคยแก้ผิดไปลง pcdoor มาก่อน)
   ok("PC Door ไม่มีมอเตอร์ Velora ติดไป", !PRODUCTS.pcdoor.addons.includes("velora_motor"), JSON.stringify(PRODUCTS.pcdoor.addons));
   ok("PC Door ออปชั่นครบเหมือนเดิม", PRODUCTS.pcdoor.addons.includes("digihandle") && PRODUCTS.pcdoor.addons.length === 7);
+
+  // ── ช่องแก้ราคามอเตอร์ + โชว์ทุน/กำไรมอเตอร์ (เจ้าของ 12 ก.ย.69) ──
+  //   "ยังไม่แสดงต้นทุนราคามอเตอร์ · ไม่มีช่องแก้ราคามอเตอร์แยก แบบเพิ่มกำไรมอเตอร์ · กดคูณกำไรทุนแล้วเหมือนคูณมอเตอร์ไปด้วย"
+  const mo = (r) => r.motor || {};
+  ok("ส่งก้อนมอเตอร์ให้หน้าจอ (ทุน/ขาย/กำไร)", mo(m2).cost === 15300 && mo(m2).sell === 28000 && mo(m2).profit === 12700, JSON.stringify(mo(m2)));
+  ok("ยังไม่แก้ = ไม่ติดธงแก้มือ", mo(m2).edited === false);
+  const mFix = V({ p: 2, addons: { velora_motor: {} }, motorSell: 35000 });
+  ok("กรอกราคาขายมอเตอร์ 35,000 → ใช้ตามนั้น", mo(mFix).sell === 35000 && mo(mFix).edited === true, JSON.stringify(mo(mFix)));
+  ok("กรอกราคาแล้วยอดรวมขยับเท่าส่วนต่างมอเตอร์", mFix.sell.withInstall - m2.sell.withInstall === 7000,
+    mFix.sell.withInstall + " vs " + m2.sell.withInstall);
+  ok("บรรทัดมอเตอร์ในใบก็เปลี่ยนตาม (ไม่ใช่แค่ยอดรวม)", ln(mFix, /ชุดออโต้ Velora/).amount === 35000, String(ln(mFix, /ชุดออโต้ Velora/).amount));
+  const mPct = V({ p: 2, addons: { velora_motor: {} }, motorPct: 150 });
+  ok("กรอก % กำไรมอเตอร์ 150 → ทุน 15,300 × 2.5 ปัดร้อย = 38,300", mo(mPct).sell === 38300, JSON.stringify(mo(mPct)));
+  ok("กรอกบาทชนะ %", mo(V({ p: 2, addons: { velora_motor: {} }, motorSell: 30000, motorPct: 999 })).sell === 30000);
+  // กฎเดิมต้องไม่พัง: กด +/- กำไรค่าของ ราคามอเตอร์ต้องนิ่ง
+  const mP200 = V({ p: 2, addons: { velora_motor: {} }, profitPct: 200, profitManual: true });
+  ok("กำไรค่าของ 200% → ราคามอเตอร์ไม่ขยับ", mo(mP200).sell === 28000, JSON.stringify(mo(mP200)));
+  // มอเตอร์ที่ฝังในสูตรบาน (ประตูรั้ว) ก็แก้ราคาได้เหมือนกัน
+  const G = (o) => computeCost(PB, PRODUCTS.gate, { w: 400, h: 180, p: 1, ...o });
+  const g0 = G({}), gFix = G({ motorSell: 40000 });
+  ok("ประตูรั้ว: แก้ราคามอเตอร์ได้ (ยอดรวมขยับเท่าส่วนต่าง)", mo(gFix).sell === 40000 && Math.round(gFix.sell.withInstall - g0.sell.withInstall) === Math.round(40000 - mo(g0).sell),
+    JSON.stringify(mo(g0)) + " → " + JSON.stringify(mo(gFix)));
+  // หน้าจอต้องต่อสายครบ (ช่องกรอก → opt → สูตรข้อ → เปลี่ยนรุ่นล้างค่า)
+  const cli = fs.readFileSync(new URL("../src/components/Calculator40Client.tsx", import.meta.url), "utf8");
+  ok("หน้าคิดราคา: ส่ง motorSell/motorPct เข้า engine", cli.includes("motorSell: Number(motorSell)") && cli.includes("motorPct: Number(motorPct)"));
+  ok("หน้าคิดราคา: เก็บลงสูตรข้อ (Rev/แก้ย้อนหลังได้)", cli.includes("addons, motorSell, motorPct, fixedPanes") && cli.includes("setMotorSell(r.motorSell"));
+  ok("หน้าคิดราคา: เปลี่ยนรุ่นแล้วล้างราคามอเตอร์ที่แก้ไว้", cli.includes('setMotorSell(""); setMotorPct("");'));
+  ok("หน้าคิดราคา: โชว์ทุน/กำไรมอเตอร์", cli.includes("motor.cost") && cli.includes("motor.profit") && cli.includes("ราคาขายมอเตอร์"));
+  // QA 12 ก.ย.69: % ติดลบจนราคาต่ำกว่า 0 = ไม่รับ และห้ามติดธง "แก้ราคาเอง" (จอเคยขึ้นว่าแก้แล้วทั้งที่ราคาเท่าไฟล์)
+  const mNeg = V({ p: 2, addons: { velora_motor: {} }, motorPct: -150 });
+  ok("% ติดลบเกิน −100 → ราคาเท่าไฟล์ + ไม่ติดธงแก้มือ", mo(mNeg).sell === 28000 && mo(mNeg).edited === false, JSON.stringify(mo(mNeg)));
+  ok("% −50 (ลดราคาได้จริง) ยังใช้ได้", mo(V({ p: 2, addons: { velora_motor: {} }, motorPct: -50 })).sell === 7700,
+    JSON.stringify(mo(V({ p: 2, addons: { velora_motor: {} }, motorPct: -50 }))));
+  // เศษสตางค์: ผลรวมรายบรรทัดต้องเท่ายอดที่กรอกเป๊ะ (ประตูรั้ว = มอเตอร์ 2 บรรทัด)
+  for (const target of [53333.33, 40000, 12345.67]) {
+    const g = G({ addons: { gate_motor: 1 }, motorSell: target });
+    const sum = (g.lines || []).filter((l) => l.fixedSell).reduce((s, l) => s + (l.sellFixed != null ? l.sellFixed : l.amount), 0);
+    ok("ผลรวมบรรทัดมอเตอร์ = ยอดที่กรอก " + target, Math.abs(sum - target) < 0.005, sum + " vs " + target);
+  }
 }
 
 // ── ⑧ น้ำหนักบาน + เลือกมอเตอร์อัตโนมัติ ─────────────────────────────

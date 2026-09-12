@@ -947,6 +947,35 @@ export function computeCost(PB, prod, opt) {
     const min = /บานเปิด|บานเลื่อน/.test(String(form || '')) ? SMF.floor.withDoor : SMF.floor.base;
     if (sellWithInstall < min) { sellMfgOnly = ceil100(sellMfgOnly * (min / Math.max(1, sellWithInstall))); sellWithInstall = min; }
   }
+  // ── ราคาขายมอเตอร์แก้มือ (เจ้าของ 12 ก.ย.69 "ยังไม่มีช่องแก้ราคามอเตอร์แยก แบบเพิ่มกำไรมอเตอร์") ──
+  //   opt.motorSell = ราคาขายมอเตอร์ทั้งก้อน (บาท) · opt.motorPct = % กำไรจาก "ทุนมอเตอร์" (ปัดร้อยเหมือนสูตรไฟล์)
+  //   กรอกบาทชนะ % · ไม่กรอกทั้งคู่ = ราคาตามไฟล์ (ชีตราคาออโต้ ช่องขายขั้นต่ำ) เหมือนเดิมเป๊ะ
+  //   ⚠ มอเตอร์ยังอยู่นอกฐานกำไรค่าของเสมอ — กด +/- % กำไรทุน ราคามอเตอร์ต้องไม่ขยับ
+  const fixedSellBase = fixedSellTotal;   // ราคามอเตอร์ตามไฟล์ (ก่อนแก้มือ) — หน้าจอโชว์เทียบให้เห็น
+  const mSellManual = Number(opt.motorSell) > 0 ? Number(opt.motorSell) : null;
+  const mPctRaw = opt.motorPct;
+  const mPct = (mPctRaw !== '' && mPctRaw != null && Number.isFinite(Number(mPctRaw))) ? Number(mPctRaw) : null;
+  //   % ที่ทำให้ราคาติดลบ (เช่น −150%) = ไม่รับ · ต้องไม่ติดธง "แก้ราคาเอง" ด้วย ไม่งั้นจอขึ้นว่าแก้แล้วทั้งที่ราคาเท่าไฟล์ (QA 12 ก.ย.69)
+  const motorTargetRaw = mSellManual != null ? mSellManual
+    : (mPct != null && fixedSellCost > 0 ? ceil100(fixedSellCost * (1 + mPct / 100)) : null);
+  const motorTarget = (motorTargetRaw != null && motorTargetRaw >= 0 && fixedSellTotal > 0) ? motorTargetRaw : null;
+  if (motorTarget != null) {
+    const k = motorTarget / fixedSellTotal;
+    const fx = lines.filter((l) => l.fixedSell);
+    let acc = 0;
+    for (const l of fx) {
+      if (l.sellFixed != null) { l.sellFixed = round2(l.sellFixed * k); acc += l.sellFixed; }   // มอเตอร์ที่ฝังในสูตรบาน (บรรทัดโชว์ทุนใน amount)
+      else { l.amount = round2(l.amount * k); l.unitPrice = round2((l.unitPrice || 0) * k); acc += l.amount; }
+    }
+    // เศษปัดสตางค์ลงบรรทัดสุดท้าย — ผลรวมรายบรรทัดต้องเท่ายอดที่กรอกเป๊ะ (คนบวกเลขในใบเสนอตรวจได้)
+    const diff = round2(motorTarget - acc);
+    if (Math.abs(diff) >= 0.01 && fx.length) {
+      const last = fx[fx.length - 1];
+      if (last.sellFixed != null) last.sellFixed = round2(last.sellFixed + diff);
+      else { last.amount = round2(last.amount + diff); last.unitPrice = round2(last.amount / Math.max(1, last.qty || 1)); }
+    }
+    fixedSellTotal = motorTarget;
+  }
   // มอเตอร์ขายฟิก — บวกท้ายสุด ไม่ผ่านกำไร (ชีต "★ ราคาขาย ... + IF(เลื่อน, ค่ามอเตอร์ขาย, 0)")
   if (fixedSellTotal > 0) { sellMfgOnly += fixedSellTotal; sellWithInstall += fixedSellTotal; }
   // ก้อนแสดงผล: ทุกอย่างที่มาทีหลัง (ของเสริม/ราคาตายตัว/ขั้นต่ำ/มอเตอร์) ลงที่ก้อน "ค่าของ"
@@ -970,6 +999,12 @@ export function computeCost(PB, prod, opt) {
     profit: round2(sellWithInstall - costTotalOut),  // กำไร (ขาย − ทุน)
     glassArea: round2(glassArea), aluKg: round2(aluKg), weight,
     profit3: sellPct || { mat: pctMat, prod: pctProd, inst: pctInst },   // % ที่ใช้จริง (หน้าจอเอาไปโชว์/แก้)
+    // ก้อนมอเตอร์ (ขายฟิก ไม่ผ่านกำไรค่าของ) — หน้าจอโชว์ ทุน/ขาย/กำไร + ช่องแก้ราคา (เจ้าของ 12 ก.ย.69)
+    motor: fixedSellTotal > 0 || fixedSellCost > 0
+      ? { sell: round2(fixedSellTotal), cost: round2(fixedSellCost), profit: round2(fixedSellTotal - fixedSellCost),
+          pct: fixedSellCost > 0 ? round2((fixedSellTotal / fixedSellCost - 1) * 100) : null,
+          edited: motorTarget != null, fileSell: round2(motorTarget != null ? fixedSellBase : fixedSellTotal) }
+      : null,
     // สูตรราคาขายตามไฟล์: เป้ากำไรสุทธิ + ตัวปรับอัตโนมัติ + ค่าดำเนินการ (null = รุ่นที่ยังใช้สูตรเดิม)
     sellModel: r41Info ? { r41: true, ...r41Info, small: (SELL_RAW && SELL_RAW.small) || null, fixedSell: fixedSellTotal || 0 }
       : SELLM ? { target: sellTarget, adj: sellAdj, overheadPct: SELLM.overheadPct, shape: SELLM.shape, small: SELLM.small || null, fixedSell: fixedSellTotal || 0 } : null,
@@ -1478,13 +1513,15 @@ export function computeAddon(id, sel, ctx) {
   }
   if (id === 'velora_motor') {          // มอเตอร์ Velora บานเปิดสลิม (Kuangdi) — ชีตราคาออโต้ แถว 34-36
     //   ทุน 6,800 บาท/บาน + ค่าส่ง 1,700 ครั้งเดียวต่องาน (แบบเดียวกับชุดออโต้กระทุ้ง)
-    //   ขายขั้นต่ำ 20,000/บาน (ไฟล์เขียน "1บานขายขั้นต่ำ 20,000 2บานขายขั้นต่ำ 40,000")
+    //   ขาย: 1 บาน 24,000 · คู่ (2 บาน) 28,000 — เจ้าของสั่ง 12 ก.ย.69 (แก้ไฟล์ v20.1 ชีตราคาออโต้ F34 ด้วย)
     const s = (sel && typeof sel === 'object') ? sel : (sel === 'yes' ? {} : null);
     if (!s) return null;
     const n = Math.max(1, ctx.P || 1);
     const cost = motorCost(ctx.PB, 'Velora Kuangdi', 6800) * n + motorCost(ctx.PB, 'Velora ค่าส่ง', 1700);
     const each = motorFixSell(ctx.PB, 'Velora บานเปิดสลิม', 0);
-    const sell = each > 0 ? each * n : autoSell(cost, ctx);
+    const pair = motorFixSell(ctx.PB, 'Velora บานเปิดสลิม คู่', 0);
+    // คู่ = ราคาชุดคู่ (ถูกกว่า 2 ตัวแยก) · เกิน 2 บาน (ยังไม่มีในไฟล์) = คู่ + ตัวละ 24,000
+    const sell = each > 0 ? (n >= 2 && pair > 0 ? pair + each * (n - 2) : each * n) : autoSell(cost, ctx);
     const out = [{
       label: 'ชุดออโต้ Velora (Kuangdi)' + (n > 1 ? ' ×' + n + ' บาน' : '') + ' (รวมค่าส่ง)',
       qty: n, unit: 'ชุด', unitPrice: round2(sell / n), amount: sell, cost, fixedSell: each > 0,
