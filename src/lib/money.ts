@@ -198,11 +198,20 @@ export const baht = (n: number) =>
 export interface BillVatSource {
   vat_rate?: number | null;
   vat_rate_set?: boolean | null;
+  vat_amt?: number | null;
 }
 
 /** การตัดสินใจ VAT ที่ "ตัวใบวางบิลเอง" บอกได้ (ไม่พึ่งงาน) */
 export function billVatDecision(bn: BillVatSource): { rate: number; known: boolean } {
   if (bn.vat_rate_set) return { rate: Number(bn.vat_rate) || 0, known: true };
+  // ★ 14 ก.ย.69: ใบที่ "มี VAT จริง booked อยู่" (vat_amt > 0 + อัตรา > 0 · footer ใบวางบิลโชว์ VAT) = รู้ชัดว่ามี VAT
+  //   เดิม vat_rate_set=false → known=false → ใบเสร็จหล่นไป fallback jobs.vat_rate (บางงาน=0) → VAT หายทั้งที่บิลมี VAT
+  //   ต้นเหตุ VAT หายบนใบเสร็จซ้ำ ๆ = ใบโชว์ VAT (bn.vat_amt) แต่ใบเสร็จตัดสินด้วย flag คนละตัว → แยกออกจากกัน
+  //   ★ ต้องเช็ค vat_amt > 0 (ไม่ใช่แค่ vat_rate) — กันใบเก่า import ที่ vat_rate=7 ค้างแต่ยอด flatten ไม่มี VAT จริง (vat_amt=0)
+  //     → ใบเก่าพวกนั้น vat_amt=0 → known=false → fallback jobs.vat_rate เหมือนเดิม (คงการป้องกัน 15 ก.ค.)
+  const r = Number(bn.vat_rate) || 0;
+  const va = Number(bn.vat_amt) || 0;
+  if (r > 0 && va > 0) return { rate: r, known: true };
   return { rate: 0, known: false };
 }
 

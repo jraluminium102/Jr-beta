@@ -15,7 +15,7 @@ export default async function NewReceiptPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data } = await (supabase as any)
     .from("billing_notes")
-    .select("id, code, customer_snapshot, total, status, job_id, vat_rate, vat_rate_set, wht_rate, jobs(vat_rate), billing_installments(id, seq, label, amount, paid_amount, status, sort_order)")
+    .select("id, code, customer_snapshot, total, status, job_id, vat_rate, vat_rate_set, vat_amt, wht_rate, jobs(vat_rate), billing_installments(id, seq, label, amount, paid_amount, status, sort_order)")
     .in("status", ["unpaid", "partial"])
     .order("created_at", { ascending: false });
 
