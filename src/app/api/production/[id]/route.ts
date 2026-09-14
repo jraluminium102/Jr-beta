@@ -88,12 +88,8 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
       if (body.status === "MANUFACTURING" && !MFG_FROM.includes(current.status as string)) {
         return err("ต้องส่งเข้า 'รอลงผลิต' ก่อนจึงเริ่มผลิตได้", 409);
       }
-      // เริ่มผลิตจากรอลงผลิต: บังคับกรอกวันติดตั้ง + วันกำหนดผลิตเสร็จให้ครบก่อน
-      if (body.status === "MANUFACTURING" && current.status === "QUEUED") {
-        const inst = body.planned_install_date ?? current.planned_install_date;
-        const due = body.production_due_date ?? current.production_due_date;
-        if (!inst || !due) return err("ต้องกรอกวันติดตั้ง + วันกำหนดผลิตเสร็จ ก่อนเริ่มผลิต", 400);
-      }
+      // เริ่มผลิตจากรอลงผลิต: free-space — กดได้เลย ไม่บังคับวันติดตั้ง/วันกำหนดผลิตเสร็จ (กรอกทีหลังได้ · เจ้าของสั่ง)
+      //   เดิม server บังคับ 2 วันนี้ → ชนกับ client ที่ปลดล็อกแล้ว (ปุ่มบอก "ไม่บังคับ") → กดแล้ว 400 ค้างไม่ไป (JR2026-264 · 14 ก.ย.69)
       // ส่งเข้ารอลงผลิต (QUEUED) — ได้จากขั้นวัด/ประชุม/ยืนยันแบบ (กันลงคิวตั้งแต่ยังไม่วัด)
       const QUEUE_FROM = ["MEASURED", "PENDING_MEETING", "REVISING", "PENDING_CONFIRM"];
       if (body.status === "QUEUED" && !QUEUE_FROM.includes(current.status as string)) {
