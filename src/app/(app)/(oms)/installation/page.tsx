@@ -55,7 +55,7 @@ type Plan = {
   booked?: Booked[]; // "จองจากผลิต" — วันติดตั้งที่ตั้งตอนผลิต ยังไม่ลงคิวจริง (0021/adhoc)
   producing?: Producing[]; // "ยังผลิตไม่เสร็จ" — จองคิวติดตั้งล่วงหน้าได้
   readySets?: ReadySet[]; // ชุดที่ยังไม่ลงคิว (รายข้อ)
-  readyToClose?: { job_id: string; customer_name: string; job_code: string | null; customer_area: string | null }[]; // ติดตั้งครบทุกชุด รอปิดงาน
+  readyToClose?: { job_id: string; customer_name: string; job_code: string | null; customer_area: string | null; done_date?: string | null; days?: number | null }[]; // ติดตั้งจบแล้ว รอปิดงาน (+ ค้างกี่วัน)
 };
 type ReadySet = { id: number; job_id: string; set_label: string; hold?: string; customer_name: string; job_code: string | null; customer_area: string | null };
 const prodStatusLabel = (s: string) => (s === "MANUFACTURING" ? "กำลังผลิต" : s === "QUEUED" ? "รอลงผลิต" : s);
@@ -285,19 +285,29 @@ export default function InstallationPage() {
             </div>
           )}
 
-          {/* ติดตั้งครบทุกชุดแล้ว รอปิดงาน — กดจบงาน (per-set ครบแล้วต้องมีทางปิดงาน) */}
+          {/* ติดตั้งจบแล้วแต่ยังไม่ปิดงาน — ไล่กดปิดงานที่ลืมปิด (เรียงค้างนานสุดก่อน · เจ้าของสั่ง 14 ก.ย.69) */}
           {readyToClose.length > 0 && (
             <div className="glass-card rounded-2xl p-3 mb-3" style={{ background: "rgba(16,185,129,.10)", border: "1px solid rgba(16,185,129,.3)" }}>
-              <div className="text-xs mb-2" style={{ color: "#6ee7b7" }}>✓ ติดตั้งครบทุกชุดแล้ว · {readyToClose.length} งาน — แตะเพื่อ<b className="text-emerald-200">จบงาน</b></div>
-              <div className="flex gap-2 flex-wrap">
-                {readyToClose.map((r) => (
-                  <button key={r.job_id} disabled={!canWrite}
-                    onClick={() => completeJob(r.job_id, r.customer_name || jobName({ job_code: r.job_code ?? undefined }))}
-                    className="text-xs px-2.5 py-1.5 rounded-lg text-white disabled:opacity-50 flex items-center gap-1.5"
-                    style={{ background: "rgba(16,185,129,.18)", border: "1px solid rgba(16,185,129,.45)" }}>
-                    ✓ <b>{r.customer_name}</b>{r.customer_area ? ` · ${r.customer_area}` : ""}
-                  </button>
-                ))}
+              <div className="text-xs mb-2" style={{ color: "#6ee7b7" }}>🔔 ติดตั้งจบแล้ว รอปิดงาน · {readyToClose.length} งาน — แตะเพื่อ<b className="text-emerald-200">ปิดงาน</b> (เรียงค้างนานสุดขึ้นก่อน)</div>
+              <div className="flex flex-col gap-1.5">
+                {readyToClose.map((r) => {
+                  const d = r.days ?? 0;
+                  const overdue = d >= 7;   // ค้างเกิน 7 วัน = เน้นแดง (ลืมปิดนาน)
+                  return (
+                    <button key={r.job_id} disabled={!canWrite}
+                      onClick={() => completeJob(r.job_id, r.customer_name || jobName({ job_code: r.job_code ?? undefined }))}
+                      className="w-full text-left text-xs px-3 py-2 rounded-lg text-white disabled:opacity-50 flex items-center justify-between gap-2 min-h-[44px]"
+                      style={{ background: "rgba(16,185,129,.18)", border: `1px solid ${overdue ? "rgba(248,113,113,.55)" : "rgba(16,185,129,.45)"}` }}>
+                      <span className="min-w-0 truncate">✓ <b>{r.customer_name}</b>{r.customer_area ? ` · ${r.customer_area}` : ""}{r.job_code ? ` · ${r.job_code}` : ""}</span>
+                      <span className="shrink-0 px-1.5 py-0.5 rounded-md text-[11px] font-semibold"
+                        style={overdue
+                          ? { background: "rgba(248,113,113,.22)", color: "#fecaca", border: "1px solid rgba(248,113,113,.4)" }
+                          : { background: "rgba(255,255,255,.12)", color: "rgba(255,255,255,.75)" }}>
+                        {d === 0 ? "วันนี้" : `ค้าง ${d} วัน`}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}

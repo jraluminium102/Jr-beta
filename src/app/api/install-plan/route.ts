@@ -43,16 +43,35 @@ export const GET = withRoute(async (req: Request) => {
   let readySets: any[] = [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let readyToClose: any[] = [];
+  // วันนี้ (UTC+7) สำหรับคำนวณ "ค้างมากี่วัน"
+  const todayIso = new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10);
+  const daysAgo = (dateOnly: string | null) =>
+    dateOnly ? Math.max(0, Math.floor((Date.parse(todayIso) - Date.parse(dateOnly)) / 86400000)) : null;
+  // แปลง timestamptz (UTC) → วันที่ไทย (+7) ก่อนตัดเอาแค่วันที่ (กัน off-by-1 ช่วงดึก) · วัน date-only จากคิวไม่ต้องแปลง
+  const thaiDate = (ts: string | null) => ts ? new Date(Date.parse(ts) + 7 * 3600 * 1000).toISOString().slice(0, 10) : null;
+
   if (jobIdsAll.length) {
     const [quosR, setsR, setAsgR] = await Promise.all([
       sb.from("quotations").select("job_id").in("job_id", jobIdsAll).neq("status", "cancelled"),
-      sb.from("production_sets").select("id, job_id, set_label, install_status, hold, hold_reason").in("job_id", jobIdsAll),
-      sb.from("install_assignments").select("production_set_id").in("job_id", jobIdsAll).not("production_set_id", "is", null),
+      sb.from("production_sets").select("id, job_id, set_label, install_status, hold, hold_reason, installed_at").in("job_id", jobIdsAll),
+      sb.from("install_assignments").select("job_id, date, production_set_id").in("job_id", jobIdsAll),
     ]);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     quoteJobIds = new Set(((quosR.data ?? []) as any[]).map((q) => q.job_id));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const assignedSetIds = new Set(((setAsgR.data ?? []) as any[]).map((a) => a.production_set_id));
+    const assignedSetIds = new Set(((setAsgR.data ?? []) as any[]).filter((a) => a.production_set_id).map((a) => a.production_set_id));
+    // วันติดตั้งล่าสุดที่ "ถึง/เลยแล้ว" ต่องาน + งานที่ยังมีคิววันอนาคตค้าง (กันงานติดตั้งหลายวันเข้าลิสต์ก่อนติดตั้งจบ)
+    const lastPastAssign = new Map<string, string>();
+    const hasFutureAssign = new Set<string>();
+    for (const a of (setAsgR.data ?? []) as any[]) {   // eslint-disable-line @typescript-eslint/no-explicit-any
+      if (!a.job_id || !a.date) continue;
+      if (a.date <= todayIso) {
+        const cur = lastPastAssign.get(a.job_id);
+        if (!cur || a.date > cur) lastPastAssign.set(a.job_id, a.date);
+      } else {
+        hasFutureAssign.add(a.job_id);   // ยังมีคิวติดตั้งวันหน้า = ยังติดตั้งไม่จบ
+      }
+    }
     // job → ชื่อลูกค้า/รหัส (เอาจาก ready ก่อน ไม่งั้นจาก booked)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const jobMeta = new Map<string, any>();
@@ -68,18 +87,41 @@ export const GET = withRoute(async (req: Request) => {
         customer_area: jobMeta.get(s.job_id)?.customer_area ?? null,
       }));
 
-    // งานที่ "ติดตั้งครบทุกชุดแล้ว + ไม่มี hold" → รอปิดงาน (แก้ H1: หลังปิดชุดครบต้องมีทางปิดงาน)
+    // งานที่ "ติดตั้งจบแล้วแต่ยังไม่ปิดงาน" → รอปิดงาน (เจ้าของสั่ง 14 ก.ย.69: ไล่ปิดงานที่ลืมปิดง่าย ๆ)
+    //   2 กรณี: (ก) มีชุดผลิต + ติดตั้งครบทุกชุด + ไม่มี hold → วันเสร็จ = installed_at ล่าสุด
+    //           (ข) ไม่มีชุดผลิต + เลยวันคิวติดตั้งแล้ว (installations ยัง PENDING = ยังไม่ปิด) → วันเสร็จ = วันคิวติดตั้ง
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const byJobSets = new Map<string, { total: number; installed: number; hold: number }>();
+    const byJobSets = new Map<string, { total: number; installed: number; hold: number; lastInstalledAt: string | null }>();
     for (const s of (setsR.data ?? []) as any[]) {   // eslint-disable-line @typescript-eslint/no-explicit-any
-      const g = byJobSets.get(s.job_id) ?? { total: 0, installed: 0, hold: 0 };
+      const g = byJobSets.get(s.job_id) ?? { total: 0, installed: 0, hold: 0, lastInstalledAt: null };
       g.total++; if (s.install_status === "INSTALLED") g.installed++; if (s.hold) g.hold++;
+      if (s.installed_at && (!g.lastInstalledAt || s.installed_at > g.lastInstalledAt)) g.lastInstalledAt = s.installed_at;
       byJobSets.set(s.job_id, g);
     }
     readyToClose = ((readyR.data ?? []) as any[])   // eslint-disable-line @typescript-eslint/no-explicit-any
       .filter((r) => r.job_id && quoteJobIds.has(r.job_id))
-      .filter((r) => { const g = byJobSets.get(r.job_id); return g && g.total > 0 && g.installed === g.total && g.hold === 0; })
-      .map((r) => ({ job_id: r.job_id, customer_name: r.jobs?.customer_name ?? "", job_code: r.jobs?.job_code ?? null, customer_area: r.jobs?.customer_area ?? null }));
+      .map((r) => {
+        const g = byJobSets.get(r.job_id);
+        let qualifies = false;
+        let doneDate: string | null = null;   // วันติดตั้งเสร็จ (date-only)
+        if (g && g.total > 0) {
+          // มีชุดผลิต → ต้องครบทุกชุด + ไม่มี hold ถึงจะพร้อมปิด (โชว์เสมอแม้ไม่มีวันที่ · install-gate กันปิดก่อนครบอยู่แล้ว)
+          if (g.installed === g.total && g.hold === 0) {
+            qualifies = true;
+            doneDate = thaiDate(g.lastInstalledAt) ?? lastPastAssign.get(r.job_id) ?? null;
+          }
+        } else if (lastPastAssign.has(r.job_id) && !hasFutureAssign.has(r.job_id)) {
+          // ไม่มีชุดผลิต + เลยวันคิวติดตั้งแล้ว + ไม่มีคิววันหน้าค้าง = ติดตั้งจบแล้วแต่ยังไม่ปิด (กันงานหลายวันปิดก่อนจบ)
+          qualifies = true;
+          doneDate = lastPastAssign.get(r.job_id) ?? null;
+        }
+        return !qualifies ? null : {
+          job_id: r.job_id, customer_name: r.jobs?.customer_name ?? "", job_code: r.jobs?.job_code ?? null,
+          customer_area: r.jobs?.customer_area ?? null, done_date: doneDate, days: daysAgo(doneDate),
+        };
+      })
+      .filter(Boolean)
+      .sort((a: any, b: any) => (b.days ?? 0) - (a.days ?? 0));   // eslint-disable-line @typescript-eslint/no-explicit-any
   }
   // งานที่ไม่มีใบเสนอในระบบ = ซ่อน (เฉพาะงานในระบบ · adhoc/คิวนอกระบบไม่แตะ)
   const hasQuote = (jobId: string | null) => !jobId || quoteJobIds.has(jobId);
