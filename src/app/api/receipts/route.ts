@@ -3,7 +3,7 @@ import { getProfile } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 import { applyInstallmentPayment } from "@/lib/billing";
-import { effectiveBillVat, splitCashReceived } from "@/lib/money";
+import { effectiveBillVat, splitCashReceived, billVatDecision } from "@/lib/money";
 import { getDocCutoff } from "@/lib/doc-cutoff";
 import { nextDocumentCode } from "@/lib/doc-code";
 import { businessDateIssue } from "@/lib/date-guard";
@@ -49,9 +49,9 @@ export async function POST(req: Request) {
   // 1) ดึงใบวางบิล → copy customer_snapshot + job_id (ใช้กรณีไม่มี installment [HIGH-3])
   const { data: bn, error: bnErr } = await supabase
     .from("billing_notes")
-    .select("id, customer_snapshot, job_id, vat_rate, vat_rate_set, vat_amt, wht_rate, status")
+    .select("id, customer_snapshot, job_id, quotation_id, vat_rate, vat_rate_set, vat_amt, wht_rate, status")
     .eq("id", body.billing_note_id)
-    .single<Pick<BillingNote, "id" | "customer_snapshot"> & { job_id: string | null; vat_rate: number | null; vat_rate_set: boolean | null; vat_amt: number | null; wht_rate: number | null; status: string }>();
+    .single<Pick<BillingNote, "id" | "customer_snapshot"> & { job_id: string | null; quotation_id: number | null; vat_rate: number | null; vat_rate_set: boolean | null; vat_amt: number | null; wht_rate: number | null; status: string }>();
   if (bnErr || !bn) return fail("ไม่พบใบวางบิล", 404);
   // กันออกใบเสร็จให้บิลที่ถูกยกเลิกแล้ว (กัน race กับ cascade void — บิล cancelled ห้ามรับชำระ/ออกใบเสร็จ)
   if (bn.status === "cancelled") return fail("ใบวางบิลนี้ถูกยกเลิกแล้ว — ออกใบเสร็จไม่ได้", 409);
@@ -66,6 +66,16 @@ export async function POST(req: Request) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: j } = await (supabase as any).from("jobs").select("vat_rate").eq("id", bn.job_id).single();
     jobVatRate = Number(j?.vat_rate ?? 7);
+  }
+  // 🔧 ตาข่ายถาวร (14 ก.ย.69 · เคส BL2569090042): บิลที่ breakdown ว่าง (billVatDecision ไม่ known)
+  //   → ยึด VAT จาก "ใบเสนอต้นทาง" (แหล่งความจริงของดีล) แทน jobs.vat_rate ที่อาจเป็น 0
+  //   ต้นเหตุ: บางบิลตอนสร้าง ใบเสนอยัง subtotal/vat ว่าง (จังหวะข้อมูล) → บิลเก็บ breakdown ว่าง
+  //   → เดิม fallback jobs.vat_rate=0 → ใบเสร็จ VAT หาย · ใบเสนอมี vat_rate=7 ชัด = ดีลมี VAT แน่
+  if (!billVatDecision(bn).known && bn.quotation_id) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: quo } = await (supabase as any).from("quotations").select("vat_rate").eq("id", bn.quotation_id).maybeSingle();
+    const qRate = Number(quo?.vat_rate) || 0;
+    if (qRate > 0) jobVatRate = qRate;
   }
   const vat_rate = effectiveBillVat(bn, jobVatRate); // ignore body.vat_rate เสมอ (ไม่เชื่อ client)
 
