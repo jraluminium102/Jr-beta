@@ -3,7 +3,7 @@ import { requirePermission } from "@/lib/bff/context";
 import { withRoute, audit } from "@/lib/bff/handler";
 import { ok, err } from "@/lib/bff/response";
 import { dbError } from "@/lib/bff/db-error";
-import { installCompleteBlockReason } from "@/lib/production/install-gate";
+import { holdSetsBlockReason, markActiveSetsInstalledForClose } from "@/lib/production/install-gate";
 
 type Params = { params: { id: string } };
 
@@ -38,10 +38,10 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
     if (current?.status === "COMPLETED" && body.status !== "COMPLETED") {
       return err("งานจบแล้ว ไม่สามารถเปลี่ยนสถานะกลับได้", 409);
     }
-    // 0131: ปิดงาน (COMPLETED) — ชุดผลิต active ต้องติดตั้งครบ + ห้ามมี hold ค้าง
+    // 0131 (name-based 15 ก.ย.69): ปิดงาน (COMPLETED) เหลือบล็อกเฉพาะชุด hold ค้าง — เช็คก่อน mutate
     if (body.status === "COMPLETED" && current?.job_id) {
       const sbAny = ctx.supabase as unknown as { from: (t: string) => any }; // eslint-disable-line @typescript-eslint/no-explicit-any
-      const blockReason = await installCompleteBlockReason(sbAny, current.job_id);
+      const blockReason = await holdSetsBlockReason(sbAny, current.job_id);
       if (blockReason) return err(blockReason, 409);
     }
   }
@@ -50,6 +50,14 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
     .from("installations").update(body).eq("id", params.id).select().single();
   if (error) throw dbError(error);
   if (!data) throw dbError({ message: "Update failed" });
+
+  // ปิดสำเร็จแล้ว → มาร์คชุด active ที่ยังไม่ติดตั้ง = INSTALLED (ไม่บังคับติ๊กรายชุด · เจ้าของสั่ง 15 ก.ย.69)
+  if (body.status === "COMPLETED" && data.job_id) {
+    const sbAny = ctx.supabase as unknown as { from: (t: string) => any }; // eslint-disable-line @typescript-eslint/no-explicit-any
+    const actor = ctx.profile?.full_name ?? ctx.user.email ?? "ไม่ทราบ";
+    const marked = await markActiveSetsInstalledForClose(sbAny, data.job_id, actor);
+    if (marked > 0) await audit({ jobId: data.job_id, userId: ctx.user.id, action: "SET_INSTALL_STATUS", table: "production_sets", newValue: { auto: true, count: marked, by: actor, from: "inst-patch" } });
+  }
 
   if (body.status) {
     await audit({

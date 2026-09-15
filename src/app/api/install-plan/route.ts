@@ -30,7 +30,8 @@ export const GET = withRoute(async (req: Request) => {
   ]);
 
   // ── งานที่มี "ใบเสนอราคาในระบบ" เท่านั้น (เจ้าของสั่ง: งานไม่มีใบเสนอ ไม่ต้องแสดง) ──
-  //   + ชุดงาน (production_sets) ของงานที่พร้อมติดตั้ง → "รอลง (รายชุด)"
+  //   🔄 15 ก.ย.69 เจ้าของสั่งเลิกระบบลงคิว "รายชุด" → กลับเป็นลงคิวด้วย "ชื่อ (ทั้งงาน)" เหมือนเดิม
+  //      ชุดงาน (production_sets) เหลือไว้เป็น "ตัวเลือกป้ายคิว" (jobSets) — เลือกในโมดัลได้ ไม่บังคับ
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const jobIdsAll = [...new Set([
     ...((readyR.data ?? []) as any[]).map((r) => r.job_id),
@@ -39,28 +40,35 @@ export const GET = withRoute(async (req: Request) => {
   ].filter(Boolean))] as string[];
 
   let quoteJobIds = new Set<string>();
+  // ชุดของแต่ละงาน (ยังไม่ติดตั้ง) → ให้โมดัลเลือกเป็นป้ายคิว (option ไม่บังคับ)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let readySets: any[] = [];
+  let jobSets: any[] = [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let readyToClose: any[] = [];
   // วันนี้ (UTC+7) สำหรับคำนวณ "ค้างมากี่วัน"
   const todayIso = new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10);
   const daysAgo = (dateOnly: string | null) =>
     dateOnly ? Math.max(0, Math.floor((Date.parse(todayIso) - Date.parse(dateOnly)) / 86400000)) : null;
-  // แปลง timestamptz (UTC) → วันที่ไทย (+7) ก่อนตัดเอาแค่วันที่ (กัน off-by-1 ช่วงดึก) · วัน date-only จากคิวไม่ต้องแปลง
-  const thaiDate = (ts: string | null) => ts ? new Date(Date.parse(ts) + 7 * 3600 * 1000).toISOString().slice(0, 10) : null;
 
   if (jobIdsAll.length) {
     const [quosR, setsR, setAsgR] = await Promise.all([
       sb.from("quotations").select("job_id").in("job_id", jobIdsAll).neq("status", "cancelled"),
-      sb.from("production_sets").select("id, job_id, set_label, install_status, hold, hold_reason, installed_at").in("job_id", jobIdsAll),
-      sb.from("install_assignments").select("job_id, date, production_set_id").in("job_id", jobIdsAll),
+      sb.from("production_sets").select("id, job_id, set_label, install_status, hold, hold_reason").in("job_id", jobIdsAll),
+      sb.from("install_assignments").select("job_id, date").in("job_id", jobIdsAll),
     ]);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     quoteJobIds = new Set(((quosR.data ?? []) as any[]).map((q) => q.job_id));
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const assignedSetIds = new Set(((setAsgR.data ?? []) as any[]).filter((a) => a.production_set_id).map((a) => a.production_set_id));
-    // วันติดตั้งล่าสุดที่ "ถึง/เลยแล้ว" ต่องาน + งานที่ยังมีคิววันอนาคตค้าง (กันงานติดตั้งหลายวันเข้าลิสต์ก่อนติดตั้งจบ)
+    // job → ชุดที่ยังไม่ติดตั้ง (option ป้ายคิว) · เรียงตาม id (ลำดับชุด)
+    jobSets = ((setsR.data ?? []) as any[])   // eslint-disable-line @typescript-eslint/no-explicit-any
+      .filter((s) => s.install_status !== "INSTALLED" && quoteJobIds.has(s.job_id))
+      .map((s) => ({
+        id: s.id, job_id: s.job_id, set_label: s.set_label || "(ไม่มีชื่อชุด)",
+        hold: s.hold ? (String(s.hold_reason || "").trim() || "พักงาน") : "",
+      }))
+      .sort((a: any, b: any) => a.id - b.id);   // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    // ── "ติดตั้งจบแล้วแต่ยังไม่ปิดงาน" → รอปิดงาน (name-based: มีคิวเลยวันแล้ว + ไม่มีคิววันหน้าค้าง) ──
+    //   เจ้าของสั่ง 14 ก.ย.69 (ไล่ปิดงานที่ลืมปิด) · 15 ก.ย.69 เลิกอิงรายชุด → ใช้วันคิวติดตั้งล่าสุดที่เลยแล้ว
     const lastPastAssign = new Map<string, string>();
     const hasFutureAssign = new Set<string>();
     for (const a of (setAsgR.data ?? []) as any[]) {   // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -72,55 +80,15 @@ export const GET = withRoute(async (req: Request) => {
         hasFutureAssign.add(a.job_id);   // ยังมีคิวติดตั้งวันหน้า = ยังติดตั้งไม่จบ
       }
     }
-    // job → ชื่อลูกค้า/รหัส (เอาจาก ready ก่อน ไม่งั้นจาก booked)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const jobMeta = new Map<string, any>();
-    for (const r of (readyR.data ?? []) as any[]) if (r.job_id && !jobMeta.has(r.job_id)) jobMeta.set(r.job_id, r.jobs);   // eslint-disable-line @typescript-eslint/no-explicit-any
-    for (const r of (prodBookR.data ?? []) as any[]) if (r.job_id && !jobMeta.has(r.job_id)) jobMeta.set(r.job_id, r.job); // eslint-disable-line @typescript-eslint/no-explicit-any
-    readySets = ((setsR.data ?? []) as any[])   // eslint-disable-line @typescript-eslint/no-explicit-any
-      .filter((s) => s.install_status !== "INSTALLED" && !assignedSetIds.has(s.id) && quoteJobIds.has(s.job_id))
-      .map((s) => ({
-        id: s.id, job_id: s.job_id, set_label: s.set_label || "(ไม่มีชื่อชุด)",
-        hold: s.hold ? (String(s.hold_reason || "").trim() || "พักงาน") : "",   // เหตุผล hold (text) ไม่ใช่ boolean
-        customer_name: jobMeta.get(s.job_id)?.customer_name ?? "",
-        job_code: jobMeta.get(s.job_id)?.job_code ?? null,
-        customer_area: jobMeta.get(s.job_id)?.customer_area ?? null,
-      }));
-
-    // งานที่ "ติดตั้งจบแล้วแต่ยังไม่ปิดงาน" → รอปิดงาน (เจ้าของสั่ง 14 ก.ย.69: ไล่ปิดงานที่ลืมปิดง่าย ๆ)
-    //   2 กรณี: (ก) มีชุดผลิต + ติดตั้งครบทุกชุด + ไม่มี hold → วันเสร็จ = installed_at ล่าสุด
-    //           (ข) ไม่มีชุดผลิต + เลยวันคิวติดตั้งแล้ว (installations ยัง PENDING = ยังไม่ปิด) → วันเสร็จ = วันคิวติดตั้ง
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const byJobSets = new Map<string, { total: number; installed: number; hold: number; lastInstalledAt: string | null }>();
-    for (const s of (setsR.data ?? []) as any[]) {   // eslint-disable-line @typescript-eslint/no-explicit-any
-      const g = byJobSets.get(s.job_id) ?? { total: 0, installed: 0, hold: 0, lastInstalledAt: null };
-      g.total++; if (s.install_status === "INSTALLED") g.installed++; if (s.hold) g.hold++;
-      if (s.installed_at && (!g.lastInstalledAt || s.installed_at > g.lastInstalledAt)) g.lastInstalledAt = s.installed_at;
-      byJobSets.set(s.job_id, g);
-    }
     readyToClose = ((readyR.data ?? []) as any[])   // eslint-disable-line @typescript-eslint/no-explicit-any
-      .filter((r) => r.job_id && quoteJobIds.has(r.job_id))
+      .filter((r) => r.job_id && quoteJobIds.has(r.job_id) && lastPastAssign.has(r.job_id) && !hasFutureAssign.has(r.job_id))
       .map((r) => {
-        const g = byJobSets.get(r.job_id);
-        let qualifies = false;
-        let doneDate: string | null = null;   // วันติดตั้งเสร็จ (date-only)
-        if (g && g.total > 0) {
-          // มีชุดผลิต → ต้องครบทุกชุด + ไม่มี hold ถึงจะพร้อมปิด (โชว์เสมอแม้ไม่มีวันที่ · install-gate กันปิดก่อนครบอยู่แล้ว)
-          if (g.installed === g.total && g.hold === 0) {
-            qualifies = true;
-            doneDate = thaiDate(g.lastInstalledAt) ?? lastPastAssign.get(r.job_id) ?? null;
-          }
-        } else if (lastPastAssign.has(r.job_id) && !hasFutureAssign.has(r.job_id)) {
-          // ไม่มีชุดผลิต + เลยวันคิวติดตั้งแล้ว + ไม่มีคิววันหน้าค้าง = ติดตั้งจบแล้วแต่ยังไม่ปิด (กันงานหลายวันปิดก่อนจบ)
-          qualifies = true;
-          doneDate = lastPastAssign.get(r.job_id) ?? null;
-        }
-        return !qualifies ? null : {
+        const doneDate = lastPastAssign.get(r.job_id) ?? null;
+        return {
           job_id: r.job_id, customer_name: r.jobs?.customer_name ?? "", job_code: r.jobs?.job_code ?? null,
           customer_area: r.jobs?.customer_area ?? null, done_date: doneDate, days: daysAgo(doneDate),
         };
       })
-      .filter(Boolean)
       .sort((a: any, b: any) => (b.days ?? 0) - (a.days ?? 0));   // eslint-disable-line @typescript-eslint/no-explicit-any
   }
   // งานที่ไม่มีใบเสนอในระบบ = ซ่อน (เฉพาะงานในระบบ · adhoc/คิวนอกระบบไม่แตะ)
@@ -153,8 +121,8 @@ export const GET = withRoute(async (req: Request) => {
     // ready = งานพร้อมติดตั้ง เฉพาะที่มีใบเสนอในระบบ (ซ่อนงานไม่มีใบเสนอ)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ready: ((readyR.data ?? []) as any[]).filter((r) => hasQuote(r.job_id)),
-    readySets,   // ชุดที่ยังไม่ลงคิว → "รอลง (รายชุด)"
-    readyToClose,   // งานที่ติดตั้งครบทุกชุดแล้ว รอปิดงาน
+    jobSets,   // ชุดของแต่ละงาน (option ป้ายคิว — เลือกในโมดัลได้ ไม่บังคับ)
+    readyToClose,   // งานที่ติดตั้งจบแล้ว รอปิดงาน (name-based)
     booked,
     producing,
   });
