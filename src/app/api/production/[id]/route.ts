@@ -125,6 +125,17 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
     .from("productions").update(body).eq("id", params.id).select().single();
   if (error || !data) throw new Error(error?.message ?? "Update failed");
 
+  // เจ้าของสั่ง 15 ก.ย.69: แก้วันติดตั้ง / วันกำหนดผลิตเสร็จ ระดับงาน → เติมให้ "ทุกชุด" (production_sets) อัตโนมัติ
+  //   ไม่ต้องไล่แก้รายชุดเอง · map เดียวกับ fill-all: install_date←planned_install_date, must_finish_date←production_due_date
+  //   (แก้รายชุดต่างวันทีหลังได้ตามปกติ — cascade เกิดเฉพาะตอนแก้วันระดับงาน)
+  if (data.job_id && (body.planned_install_date !== undefined || body.production_due_date !== undefined)) {
+    const setUpd: Record<string, unknown> = {};
+    if (body.planned_install_date !== undefined) setUpd.install_date = body.planned_install_date ?? null;
+    if (body.production_due_date !== undefined) setUpd.must_finish_date = body.production_due_date ?? null;
+    // best-effort — ไม่ให้ล้ม patch หลักถ้า production_sets ยังไม่รัน migration / ไม่มีชุด
+    try { await ctx.supabase.from("production_sets").update(setUpd).eq("job_id", data.job_id); } catch { /* ignore */ }
+  }
+
   // แก้แบบหลังวัด → เด้งงานกลับหน้าเขียนแบบ (ตั้ง design_state=REVISING + นับรอบแก้)
   // นับ +1 เฉพาะตอนเพิ่งเข้า REVISING (กันนับซ้ำกับ send-revise/กดซ้ำ — guard เดียวกับ send-revise route)
   if (body.status === "REVISING" && data.job_id) {

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "@/lib/api";
 import { PROD_STATUS, PROD_LANE, PROD_LANE_META, PROD_FLOW_STEPS } from "@/lib/constants";
 import { thDate } from "@/lib/format";
@@ -264,6 +264,7 @@ export function ProductionStepModal({
   // row ที่ใช้แสดงใน summary/ประวัติ — อัปเดตสดหลัง in-place save
   const [row, setRow] = useState<ProdRow>(prod);
 
+  const qc = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [savedField, setSavedField] = useState<string | null>(null); // feedback flash
@@ -423,6 +424,10 @@ export function ProductionStepModal({
     setErr(null); setSaving(true);
     try {
       await api.patch(`/production/${prod.id}`, body);
+      // แก้วันติดตั้ง/กำหนดผลิตเสร็จ ระดับงาน → server เติมให้ทุกชุดแล้ว → refetch ชุดงานให้เห็นทันที
+      if (prod.job_id && ("planned_install_date" in body || "production_due_date" in body)) {
+        qc.invalidateQueries({ queryKey: ["production-sets", prod.job_id] });
+      }
       if (close) {
         // ปิดโมดอล
         if (onSavedAndClose) onSavedAndClose();
