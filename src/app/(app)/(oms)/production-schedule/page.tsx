@@ -231,6 +231,15 @@ export default function ProductionSchedulePage() {
     [viewRows]
   );
 
+  // 🔴 งานที่ "เลยวันกำหนดผลิตเสร็จ" แล้วแต่ยังผลิตไม่เสร็จ (ยังไม่พร้อมติดตั้ง) — แจ้งเตือนเด่นบนสุด (เจ้าของสั่ง 15 ก.ย.69)
+  const overdueRows = useMemo(() => {
+    const t = today();
+    return viewRows
+      .filter((r) => r.kind === "job" && !!r.due_date && r.due_date < t && derivePhase(r) !== "พร้อม")
+      .slice()
+      .sort((a, b) => (a.due_date ?? "").localeCompare(b.due_date ?? ""));
+  }, [viewRows]);
+
   const v = (r: SchedRow, k: keyof SchedRow) => (draft[r.id]?.[k] ?? r[k] ?? "") as string;
 
   // ── มาร์คเช็คลิสต์ช่าง (เขียนลง production_sets ช่องเดียว — ออฟฟิศเห็นทันที) ──
@@ -451,6 +460,30 @@ export default function ProductionSchedulePage() {
           {officeMode && <span> · <b>โหมดออฟฟิศ</b> = ดูภาพรวมทุกงานแบบตาราง</span>}
         </span>
       </div>
+
+      {/* 🔴 แจ้งเตือนเด่น: งานเลยกำหนดผลิตเสร็จ (ยังผลิตไม่เสร็จ) — กดชื่อ = กรองไปที่งานนั้น */}
+      {overdueRows.length > 0 && (
+        <div className="rounded-xl px-4 py-3 mb-4" style={{ background: "#fdecec", border: "2px solid #e53935" }}>
+          <div className="font-bold text-[15px] mb-2 flex items-center gap-2" style={{ color: "#c0392b" }}>
+            ⏰ เลยกำหนดผลิตเสร็จ {overdueRows.length} งาน — ยังผลิตไม่เสร็จ เร่งด่วน
+          </div>
+          <div className="flex gap-1.5 flex-wrap">
+            {overdueRows.map((r) => {
+              const over = Math.floor((Date.parse(today()) - Date.parse(r.due_date!)) / 86400000);
+              return (
+                <button key={r.id} onClick={() => { setQuery(r.title); setPhaseFilter(""); }}
+                  title={`กดเพื่อดูงานนี้ · กำหนดเสร็จ ${thShort(r.due_date)}`}
+                  className="focusable pressable inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12.5px] font-semibold min-h-[34px]"
+                  style={{ background: "#fff", color: "#c0392b", border: "1px solid #f1a9a0" }}>
+                  {r.title}
+                  {r.job_code && <span className="tnum text-[10px] rounded px-1 py-0.5" style={{ background: "#fdecec", color: "#c0392b" }}>{r.job_code}</span>}
+                  <span className="tnum" style={{ color: "#e53935" }}>· เลย {over} วัน</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* 🔔 แจ้งเตือนรวม: ชุดที่ผลิตเสร็จแล้วรอ QC ตรวจก่อนใส่กระจก */}
       {waitQcCount > 0 && (
