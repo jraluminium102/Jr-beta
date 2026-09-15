@@ -29,6 +29,23 @@ export const GET = withRoute(async (req: Request) => {
       .is("planned_install_date", null).in("status", ["QUEUED", "MANUFACTURING"]),
   ]);
 
+  // ── งานที่ "ซ่อน" (ลูกค้าขึ้นผิด/ซ้ำ) → ไม่ต้องแสดงในแผนติดตั้ง (ใช้ธงเดียวกับหน้าผลิต · กู้คืนได้) ──
+  //   เจ้าของสั่ง 15 ก.ย.69: แผนติดตั้งมีเคสลูกค้าขึ้นผิด อยากลบออกได้ · best-effort กัน 0152 ยังไม่รัน
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let hiddenJobs: any[] = [];
+  let hiddenSet = new Set<string>();
+  try {
+    // ชุดกรอง — เอา id ทั้งหมด (ห้าม cap ไม่งั้นงานที่ซ่อนเกินลิมิตจะโผล่กลับเงียบ ๆ)
+    const { data: hidIds } = await sb.from("jobs").select("id").eq("hidden_from_production", true);
+    hiddenSet = new Set(((hidIds ?? []) as { id: string }[]).map((r) => r.id));
+    // ลิสต์แสดงผลกู้คืน — เอารายละเอียด เรียงซ่อนล่าสุดก่อน จำกัด 200 (แค่ส่วนแสดง ไม่กระทบการกรอง)
+    const { data: hid } = await sb.from("jobs")
+      .select("id, job_code, customer_name, customer_area, hidden_at")
+      .eq("hidden_from_production", true).order("hidden_at", { ascending: false }).limit(200);
+    hiddenJobs = (hid ?? []) as any[];   // eslint-disable-line @typescript-eslint/no-explicit-any
+  } catch { /* 0152 ยังไม่รัน — ไม่กรอง (ไม่ให้ล้มทั้งแผน) */ }
+  const notHidden = (jobId: string | null) => !jobId || !hiddenSet.has(jobId);
+
   // ── งานที่มี "ใบเสนอราคาในระบบ" เท่านั้น (เจ้าของสั่ง: งานไม่มีใบเสนอ ไม่ต้องแสดง) ──
   //   🔄 15 ก.ย.69 เจ้าของสั่งเลิกระบบลงคิว "รายชุด" → กลับเป็นลงคิวด้วย "ชื่อ (ทั้งงาน)" เหมือนเดิม
   //      ชุดงาน (production_sets) เหลือไว้เป็น "ตัวเลือกป้ายคิว" (jobSets) — เลือกในโมดัลได้ ไม่บังคับ
@@ -60,7 +77,7 @@ export const GET = withRoute(async (req: Request) => {
     quoteJobIds = new Set(((quosR.data ?? []) as any[]).map((q) => q.job_id));
     // job → ชุดที่ยังไม่ติดตั้ง (option ป้ายคิว) · เรียงตาม id (ลำดับชุด)
     jobSets = ((setsR.data ?? []) as any[])   // eslint-disable-line @typescript-eslint/no-explicit-any
-      .filter((s) => s.install_status !== "INSTALLED" && quoteJobIds.has(s.job_id))
+      .filter((s) => s.install_status !== "INSTALLED" && quoteJobIds.has(s.job_id) && notHidden(s.job_id))
       .map((s) => ({
         id: s.id, job_id: s.job_id, set_label: s.set_label || "(ไม่มีชื่อชุด)",
         hold: s.hold ? (String(s.hold_reason || "").trim() || "พักงาน") : "",
@@ -81,7 +98,7 @@ export const GET = withRoute(async (req: Request) => {
       }
     }
     readyToClose = ((readyR.data ?? []) as any[])   // eslint-disable-line @typescript-eslint/no-explicit-any
-      .filter((r) => r.job_id && quoteJobIds.has(r.job_id) && lastPastAssign.has(r.job_id) && !hasFutureAssign.has(r.job_id))
+      .filter((r) => r.job_id && quoteJobIds.has(r.job_id) && notHidden(r.job_id) && lastPastAssign.has(r.job_id) && !hasFutureAssign.has(r.job_id))
       .map((r) => {
         const doneDate = lastPastAssign.get(r.job_id) ?? null;
         return {
@@ -99,7 +116,7 @@ export const GET = withRoute(async (req: Request) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const booked = [
     ...((prodBookR.data ?? []) as any[])
-      .filter((p) => p.job && p.job.status !== "CANCELLED" && !assignedJobIds.has(p.job_id) && hasQuote(p.job_id))
+      .filter((p) => p.job && p.job.status !== "CANCELLED" && !assignedJobIds.has(p.job_id) && hasQuote(p.job_id) && notHidden(p.job_id))
       .map((p) => ({ kind: "job" as const, id: p.id, job_id: p.job_id, date: p.planned_install_date, customer_name: p.job.customer_name, job_code: p.job.job_code, customer_area: p.job.customer_area, prod_status: p.status })),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ...((adhocBookR.data ?? []) as any[])
@@ -109,7 +126,7 @@ export const GET = withRoute(async (req: Request) => {
   // งานกำลังผลิต/รอลงผลิต ที่ยังไม่ตั้งวัน → บับเบิ้ล "จองล่วงหน้า" (ตัดงาน CANCELLED + งานที่ลงคิวจริงแล้ว)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const producing = ((producingR.data ?? []) as any[])
-    .filter((p) => p.job && p.job.status !== "CANCELLED" && !assignedJobIds.has(p.job_id) && hasQuote(p.job_id))
+    .filter((p) => p.job && p.job.status !== "CANCELLED" && !assignedJobIds.has(p.job_id) && hasQuote(p.job_id) && notHidden(p.job_id))
     .map((p) => ({
       id: p.id, job_id: p.job_id, prod_status: p.status, due_date: p.production_due_date,
       customer_name: p.job.customer_name, job_code: p.job.job_code, customer_area: p.job.customer_area,
@@ -117,13 +134,16 @@ export const GET = withRoute(async (req: Request) => {
 
   return ok({
     teams: teamsR.data ?? [],
-    assignments: asgR.data ?? [],
+    // การ์ดในปฏิทิน — ตัดงานที่ซ่อนออกด้วย (ลูกค้าขึ้นผิดที่เผลอลงคิวไปแล้ว) · คิวนอกระบบ (ไม่มี job) ไม่แตะ
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    assignments: ((asgR.data ?? []) as any[]).filter((a) => notHidden(a.job_id)),
     // ready = งานพร้อมติดตั้ง เฉพาะที่มีใบเสนอในระบบ (ซ่อนงานไม่มีใบเสนอ)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ready: ((readyR.data ?? []) as any[]).filter((r) => hasQuote(r.job_id)),
+    ready: ((readyR.data ?? []) as any[]).filter((r) => hasQuote(r.job_id) && notHidden(r.job_id)),
     jobSets,   // ชุดของแต่ละงาน (option ป้ายคิว — เลือกในโมดัลได้ ไม่บังคับ)
     readyToClose,   // งานที่ติดตั้งจบแล้ว รอปิดงาน (name-based)
     booked,
     producing,
+    hidden: hiddenJobs,   // งานที่ซ่อน (ลูกค้าขึ้นผิด) — ไว้กู้คืน
   });
 });

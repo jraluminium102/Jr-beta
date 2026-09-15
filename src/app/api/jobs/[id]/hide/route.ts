@@ -1,15 +1,18 @@
-import { requirePermission, Http } from "@/lib/bff/context";
+import { getContext, Http } from "@/lib/bff/context";
 import { withRoute, audit } from "@/lib/bff/handler";
 import { ok, err, notFound } from "@/lib/bff/response";
 import { createServiceClient } from "@/lib/supabase/admin";
+import { can } from "@/lib/rbac";
 
 // POST /api/jobs/[id]/hide  { hidden: boolean }
-// ซ่อน/เอากลับ งานในหน้าผลิต (soft delete · กู้คืนได้) — ไม่แตะสถานะงาน/เงิน/เอกสาร
-//   ใช้กับงานที่ "โผล่มาเอง"/ซ้ำ ในหน้าผลิต · กดผิดก็เอากลับได้
-// สิทธิ์: production:write (ครอบ CHANG) → จำกัด ADMIN/PRODUCTION · ใช้ service client (jobs RLS update = ADMIN/SALES/DESIGNER)
+// ซ่อน/เอากลับ งานในหน้าผลิต + แผนติดตั้ง (soft delete · กู้คืนได้) — ไม่แตะสถานะงาน/เงิน/เอกสาร
+//   ใช้กับงานที่ "โผล่มาเอง"/ซ้ำ/ลูกค้าขึ้นผิด · กดผิดก็เอากลับได้
+// สิทธิ์: ฝ่ายผลิต (production:write = ADMIN/PRODUCTION) หรือ ช่างติดตั้ง (installation:write = ADMIN/INSTALLER)
+//   → รวม = ADMIN/PRODUCTION/INSTALLER · ใช้ service client (jobs RLS update = ADMIN/SALES/DESIGNER)
 export const POST = withRoute(async (req: Request, { params }: { params: { id: string } }) => {
-  const ctx = await requirePermission("production", "write");
-  if (ctx.role !== "ADMIN" && ctx.role !== "PRODUCTION") throw Http.forbidden();
+  const ctx = await getContext();
+  if (!ctx) throw Http.unauthorized();
+  if (!(can(ctx.role, "production", "write") || can(ctx.role, "installation", "write"))) throw Http.forbidden();
 
   const body = await req.json().catch(() => null);
   const hidden = !!(body && body.hidden);

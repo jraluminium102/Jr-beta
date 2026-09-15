@@ -56,8 +56,10 @@ type Plan = {
   producing?: Producing[]; // "ยังผลิตไม่เสร็จ" — จองคิวติดตั้งล่วงหน้าได้
   jobSets?: JobSet[]; // ชุดของแต่ละงาน (option ป้ายคิว — เลือกในโมดัล ไม่บังคับ)
   readyToClose?: { job_id: string; customer_name: string; job_code: string | null; customer_area: string | null; done_date?: string | null; days?: number | null }[]; // ติดตั้งจบแล้ว รอปิดงาน (+ ค้างกี่วัน)
+  hidden?: HiddenJob[]; // งานที่ซ่อน (ลูกค้าขึ้นผิด) — ไว้กู้คืน
 };
 type JobSet = { id: number; job_id: string; set_label: string; hold?: string };
+type HiddenJob = { id: string; job_code: string | null; customer_name: string | null; customer_area: string | null };
 const prodStatusLabel = (s: string) => (s === "MANUFACTURING" ? "กำลังผลิต" : s === "QUEUED" ? "รอลงผลิต" : s);
 
 export default function InstallationPage() {
@@ -105,6 +107,9 @@ export default function InstallationPage() {
   }, [jobSets]);
   // งานที่ติดตั้งจบแล้ว รอปิดงาน (name-based)
   const readyToClose = useMemo(() => plan?.readyToClose ?? [], [plan]);
+  // งานที่ซ่อน (ลูกค้าขึ้นผิด) — ไว้กู้คืน
+  const hidden = useMemo(() => plan?.hidden ?? [], [plan]);
+  const [hideErr, setHideErr] = useState<string | null>(null);
   // "จองจากผลิต" ต่อวัน — โชว์การ์ดบนปฏิทิน (informational · กดลงคิวจริงได้)
   const bookedByDate = useMemo(() => {
     const m = new Map<string, Booked[]>();
@@ -199,6 +204,22 @@ export default function InstallationPage() {
     try { await api.post(`/jobs/${job_id}/install-complete`, {}); setReadyPick(null); await refetch(); }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     catch (e: any) { alert(e?.message ?? "ปิดงานไม่สำเร็จ"); }
+    finally { setBusy(false); }
+  }
+  // ลบ/ซ่อนลูกค้าที่ขึ้นผิดออกจากแผนติดตั้ง (soft-delete · กู้คืนได้ · ใช้ธงเดียวกับหน้าผลิต · เจ้าของสั่ง 15 ก.ย.69)
+  async function hideJob(job_id: string, name: string) {
+    if (!window.confirm(`ซ่อน "${name}" ออกจากแผนติดตั้ง?\n(ลูกค้าขึ้นผิด/ซ้ำ — กดผิดกู้คืนได้ที่ล่างสุด · ไม่แตะสถานะงาน/เงิน/เอกสาร)`)) return;
+    setBusy(true); setHideErr(null);
+    try { await api.post(`/jobs/${job_id}/hide`, { hidden: true }); setReadyPick(null); setPrebook(null); setDetail(null); await refetch(); }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    catch (e: any) { setHideErr(e?.message ?? "ซ่อนไม่สำเร็จ"); alert(e?.message ?? "ซ่อนไม่สำเร็จ"); }
+    finally { setBusy(false); }
+  }
+  async function unhideJob(job_id: string) {
+    setBusy(true); setHideErr(null);
+    try { await api.post(`/jobs/${job_id}/hide`, { hidden: false }); await refetch(); }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    catch (e: any) { setHideErr(e?.message ?? "กู้คืนไม่สำเร็จ"); }
     finally { setBusy(false); }
   }
 
@@ -429,6 +450,25 @@ export default function InstallationPage() {
               </div>
             </div>
           )}
+
+          {/* งานที่ซ่อน (ลูกค้าขึ้นผิด) — กู้คืนได้ · โผล่เฉพาะเมื่อมีของซ่อน (เจ้าของสั่ง 15 ก.ย.69) */}
+          {hidden.length > 0 && (
+            <details className="mt-4 rounded-2xl p-3" style={{ background: "rgba(255,255,255,.03)", border: "1px solid rgba(255,255,255,.08)" }}>
+              <summary className="text-xs cursor-pointer select-none" style={{ color: "var(--t-low)" }}>🗑 งานที่ซ่อนไว้ · {hidden.length} — กดเพื่อดู/กู้คืน</summary>
+              {hideErr && <div className="text-[11px] text-red-300 mt-2">{hideErr}</div>}
+              <div className="flex flex-col gap-1.5 mt-2">
+                {hidden.map((h) => (
+                  <div key={h.id} className="flex items-center justify-between gap-2 text-xs px-3 py-2 rounded-lg" style={{ background: "rgba(255,255,255,.05)" }}>
+                    <span className="min-w-0 truncate" style={{ color: "var(--t-mid)" }}>{h.customer_name || "—"}{h.customer_area ? ` · ${h.customer_area}` : ""}{h.job_code ? ` · ${h.job_code}` : ""}</span>
+                    {canWrite && (
+                      <button disabled={busy} onClick={() => unhideJob(h.id)}
+                        className="shrink-0 px-3 rounded-lg text-[12px] font-medium disabled:opacity-50" style={{ minHeight: 40, background: "rgba(56,189,248,.16)", color: "#bae6fd", border: "1px solid rgba(56,189,248,.35)" }}>↩ กู้คืน</button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </details>
+          )}
         </>
       )}
 
@@ -479,7 +519,8 @@ export default function InstallationPage() {
       )}
 
       {prebook && (
-        <PrebookModal job={prebook} busy={busy} onClose={() => setPrebook(null)} onSave={savePrebook} />
+        <PrebookModal job={prebook} busy={busy} onClose={() => setPrebook(null)} onSave={savePrebook}
+          onHide={() => hideJob(prebook.job_id, prebook.customer_name)} />
       )}
 
       {/* เลือกทำอะไรกับงานพร้อมติดตั้ง — ลงคิว หรือ จบงานเลย (ปิดตรง ไม่ต้องหาในปฏิทิน) */}
@@ -491,12 +532,20 @@ export default function InstallationPage() {
           <button disabled={busy} onClick={() => completeJob(readyPick.job_id, readyPick.name, activeSetsLeft(readyPick.job_id))}
             className="w-full py-3 rounded-xl bg-emerald-500/90 text-white font-bold disabled:opacity-50">✓ จบงานเลย (ติดตั้งเสร็จแล้ว)</button>
           <p className="text-[11px] mt-2" style={{ color: "var(--t-low)" }}>“จบงานเลย” = ปิดงานทันทีโดยไม่ต้องลงคิว (กรณีติดตั้งไปแล้ว/มาปิดย้อนหลัง)</p>
+          <div className="mt-3 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,.1)" }}>
+            <button disabled={busy} onClick={() => hideJob(readyPick.job_id, readyPick.name)}
+              className="w-full py-2.5 rounded-xl text-sm font-medium disabled:opacity-50" style={{ background: "rgba(239,68,68,.16)", color: "#fca5a5", border: "1px solid rgba(239,68,68,.35)" }}>
+              🗑 ลบออกจากแผนติดตั้ง (ลูกค้าขึ้นผิด/ซ้ำ)
+            </button>
+            <p className="text-[11px] mt-1.5" style={{ color: "var(--t-low)" }}>ซ่อนออกจากแผน — กดผิดกู้คืนได้ที่ล่างสุดของหน้า</p>
+          </div>
         </Modal>
       )}
 
       {detail && (
         <DetailDrawer a={detail} busy={busy} leaderOptions={leaderOptions} remainingSets={activeSetsLeft(detail.job_id)}
           onClose={() => setDetail(null)} onPatch={patchAssign} onDelete={delAssign} onComplete={completeAssign}
+          onHide={detail.job_id ? () => hideJob(detail.job_id!, nameOf(detail)) : undefined}
           onGoCrew={() => { const d = detail.date; setDetail(null); jumpToCrewDay(d); }} />
       )}
 
@@ -605,8 +654,8 @@ function AddAssignModal({ ready, setsByJob, initial, busy, leaderOptions, onClos
 }
 
 // ── modal จองคิวติดตั้งล่วงหน้า (งานยังผลิตไม่เสร็จ) — set planned_install_date → โชว์ทั้งหน้าติดตั้ง+ผลิต ลิงก์กัน ──
-function PrebookModal({ job, busy, onClose, onSave }: {
-  job: Producing; busy: boolean; onClose: () => void; onSave: (date: string) => void;
+function PrebookModal({ job, busy, onClose, onSave, onHide }: {
+  job: Producing; busy: boolean; onClose: () => void; onSave: (date: string) => void; onHide: () => void;
 }) {
   const [date, setDate] = useState(job.due_date || iso(new Date()));
   return (
@@ -622,15 +671,22 @@ function PrebookModal({ job, busy, onClose, onSave }: {
         className="w-full mt-3 py-2.5 rounded-xl font-medium disabled:opacity-50" style={{ background: "rgba(245,158,11,.25)", color: "#fde68a", border: "1px solid rgba(245,158,11,.4)" }}>
         จองวันติดตั้ง
       </button>
+      <div className="mt-3 pt-3" style={{ borderTop: "1px solid rgba(255,255,255,.1)" }}>
+        <button disabled={busy} onClick={onHide}
+          className="w-full py-2.5 rounded-xl text-sm font-medium disabled:opacity-50" style={{ background: "rgba(239,68,68,.16)", color: "#fca5a5", border: "1px solid rgba(239,68,68,.35)" }}>
+          🗑 ลบออกจากแผนติดตั้ง (ลูกค้าขึ้นผิด/ซ้ำ)
+        </button>
+        <p className="text-[11px] mt-1.5" style={{ color: "var(--t-low)" }}>ซ่อนออกจากแผน — กดผิดกู้คืนได้ที่ล่างสุดของหน้า</p>
+      </div>
     </Modal>
   );
 }
 
 // ── drawer รายละเอียด/แก้ ──
-function DetailDrawer({ a, busy, leaderOptions, remainingSets, onClose, onPatch, onDelete, onComplete, onGoCrew }: {
+function DetailDrawer({ a, busy, leaderOptions, remainingSets, onClose, onPatch, onDelete, onComplete, onHide, onGoCrew }: {
   a: InstallAssignment; busy: boolean; leaderOptions: string[]; remainingSets: number;
   onClose: () => void; onPatch: (id: string, b: Record<string, unknown>) => void; onDelete: (id: string) => void;
-  onComplete: (id: string) => void; onGoCrew: () => void;
+  onComplete: (id: string) => void; onHide?: () => void; onGoCrew: () => void;
 }) {
   const [lead, setLead] = useState(a.lead_name || "");
   const [date, setDate] = useState(a.date);
@@ -685,6 +741,13 @@ function DetailDrawer({ a, busy, leaderOptions, remainingSets, onClose, onPatch,
         <button disabled={busy} onClick={() => onPatch(a.id, { lead_name: lead.trim(), date, note })}
           className="flex-1 py-2.5 rounded-xl bg-white/16 text-white font-medium disabled:opacity-50">บันทึก</button>
       </div>
+      {/* ลบลูกค้าที่ขึ้นผิดออกจากแผน (เฉพาะงานในระบบ) — ซ่อนทั้งงาน กู้คืนได้ที่ล่างสุดหน้า */}
+      {onHide && (
+        <button disabled={busy} onClick={onHide}
+          className="w-full mt-2 py-2 rounded-xl text-[13px] font-medium disabled:opacity-50" style={{ background: "rgba(239,68,68,.14)", color: "#fca5a5", border: "1px solid rgba(239,68,68,.3)" }}>
+          🗑 ลบลูกค้านี้ออกจากแผนติดตั้ง (ขึ้นผิด/ซ้ำ)
+        </button>
+      )}
     </Modal>
   );
 }
