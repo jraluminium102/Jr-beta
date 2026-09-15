@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Printer, RefreshCw } from "lucide-react";
+import { Printer, RefreshCw, Search } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { PROD_STATUS } from "@/lib/constants";
 import { Chip, Spinner, EmptyState } from "@/components/ui/primitives";
@@ -164,6 +164,12 @@ export default function ProductionSchedulePage() {
   // ── filter ช่าง ──
   const [producerFilter, setProducerFilter] = useState<string>("");
 
+  // ── ค้นหา (ชื่อลูกค้า / รหัสงาน / พื้นที่) — กรองเฉพาะรายการที่แสดง ไม่แตะตัวเลขสรุป ──
+  const [query, setQuery] = useState<string>("");
+  const qLower = query.trim().toLowerCase();
+  const matchQuery = (r: SchedRow) => !qLower ||
+    [r.title, r.job_code, r.customer_area, r.subtitle, r.customer_name].some((x) => String(x ?? "").toLowerCase().includes(qLower));
+
   // ── filter โรงงาน (ตารางแยกโรง 1 / โรง 3 — ลิงก์เดียว สลับโรงได้) ──
   const [factoryFilter, setFactoryFilter] = useState<string>("");
   const factoriesPresent = useMemo(() => {
@@ -203,6 +209,7 @@ export default function ProductionSchedulePage() {
     const filtered = viewRows.filter((r) => {
       if (r.kind === "job" && r.status === "READY") return false;   // พร้อมติดตั้ง → หลุดไปหน้าติดตั้ง
       if (ft && (r.producer_note ?? "").trim() !== ft) return false;
+      if (!matchQuery(r)) return false;   // ค้นหา
       return true;
     });
     const map = new Map<string, SchedRow[]>();
@@ -213,7 +220,8 @@ export default function ProductionSchedulePage() {
     }
     for (const arr of map.values()) arr.sort((a, b) => (a.due_date ?? "zzz").localeCompare(b.due_date ?? "zzz"));
     return CHANG_PHASES.filter((p) => map.has(p)).map((p) => [p, map.get(p)!] as [string, SchedRow[]]);
-  }, [viewRows, producerFilter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewRows, producerFilter, qLower]);
 
   // นับชุดที่ผลิตเสร็จแล้วแต่ยังรอ QC ตรวจก่อนใส่กระจก (แจ้งเตือนเด่นๆ บนสุด)
   const waitQcCount = useMemo(
@@ -403,6 +411,24 @@ export default function ProductionSchedulePage() {
           {producerList.map((name) => (<option key={name} value={name}>{name}</option>))}
         </select>
 
+        {/* ค้นหา — ชื่อลูกค้า / รหัสงาน / พื้นที่ (ช่างใช้หางานเร็ว) */}
+        <div className="relative flex items-center" style={{ minWidth: 200 }}>
+          <Search size={15} className="absolute left-2.5 pointer-events-none" style={{ color: IOS.ink3 }} />
+          <input
+            type="text" value={query} onChange={(e) => setQuery(e.target.value)}
+            placeholder="ค้นหา ลูกค้า / รหัสงาน / พื้นที่"
+            aria-label="ค้นหางานในตารางผลิต"
+            className="focusable w-full rounded-[10px] pl-8 pr-8 py-1.5 text-[13px] outline-none min-h-[34px] border"
+            style={{ background: "#fff", color: IOS.ink, borderColor: IOS.line }}
+          />
+          {query && (
+            <button onClick={() => setQuery("")} aria-label="ล้างคำค้น"
+              className="focusable absolute right-1.5 inline-flex items-center justify-center rounded-full" style={{ width: 22, height: 22, color: IOS.ink3 }}>
+              <X size={15} />
+            </button>
+          )}
+        </div>
+
         {/* รีเฟรช — ดึงข้อมูลใหม่โดยไม่ต้องรีโหลดทั้งหน้า (ช่างเห็นด้วย เจ้าของสั่ง) */}
         <button onClick={() => refetch()} disabled={isFetching} aria-label="รีเฟรช"
           title="รีเฟรชข้อมูลตารางผลิต"
@@ -473,8 +499,8 @@ export default function ProductionSchedulePage() {
           )}
           {groups.length === 0 ? (
             <EmptyState
-              title={producerFilter ? `ไม่มีงานของ "${producerFilter}"` : "ไม่มีงานกำลังผลิต"}
-              sub={producerFilter ? "ลองเลือกช่างคนอื่น หรือเลือก 'ทั้งหมด'" : "งานพร้อมติดตั้งไปอยู่ที่หน้าติดตั้งแล้ว"} />
+              title={qLower ? `ไม่พบงานที่ค้นหา "${query.trim()}"` : producerFilter ? `ไม่มีงานของ "${producerFilter}"` : "ไม่มีงานกำลังผลิต"}
+              sub={qLower ? "ลองพิมพ์ชื่อลูกค้า/รหัสงาน/พื้นที่ให้สั้นลง หรือกดล้างคำค้น" : producerFilter ? "ลองเลือกช่างคนอื่น หรือเลือก 'ทั้งหมด'" : "งานพร้อมติดตั้งไปอยู่ที่หน้าติดตั้งแล้ว"} />
           ) : (
             ((phaseFilter && groups.some(([p]) => p === phaseFilter)) ? groups.filter(([p]) => p === phaseFilter) : groups).map(([phase, items]) => {
               const pm = PHASE_META[phase] ?? PHASE_META["รอผลิต"];
@@ -663,7 +689,8 @@ export default function ProductionSchedulePage() {
         </div>
       ) : (
         (() => {
-          const base = producerFilter.trim() ? viewRows.filter((r) => (r.producer_note ?? "").trim() === producerFilter.trim()) : viewRows;
+          const baseAll = producerFilter.trim() ? viewRows.filter((r) => (r.producer_note ?? "").trim() === producerFilter.trim()) : viewRows;
+          const base = qLower ? baseAll.filter(matchQuery) : baseAll;
           const counts: Record<string, number> = {};
           base.forEach((r) => { const p = derivePhase(r); counts[p] = (counts[p] || 0) + 1; });
           const list = (phaseFilter ? base.filter((r) => derivePhase(r) === phaseFilter) : base)
