@@ -8,10 +8,12 @@ import CrewHistoryTab from "./CrewHistoryTab";
 import CrewStaffTab from "./CrewStaffTab";
 import type { CrewDayTeam, CrewPerson } from "@/lib/types";
 
-const DOW = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
 const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const addDays = (d: Date, n: number) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
-const thDate = (dateIso: string) => { const d = new Date(dateIso + "T00:00:00"); return `${DOW[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear() + 543}`; };
+// วันที่แบบเต็มภาษาไทย (dropdown เลือกวัน — เหมือน SetTeamApp) เช่น "อังคาร 15 กันยายน 2569"
+const DOW_FULL = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
+const TH_MONTH_FULL = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+const thaiLong = (dateIso: string) => { const d = new Date(dateIso + "T00:00:00"); return `${DOW_FULL[d.getDay()]} ${d.getDate()} ${TH_MONTH_FULL[d.getMonth()]} ${d.getFullYear() + 543}`; };
 
 // จัดทีมช่างรายวัน — ลอกจากเว็บ SetTeamApp (ของจริงเจ้าของใช้ทุกวัน) มาเป็นแท็บใหม่ในหน้าติดตั้ง
 // เชื่อมกับปฏิทินรายเดือน (install_assignments, 0086) ด้วยปุ่ม "ดึงจากแผนปฏิทิน" — ทิศทางเดียว ไม่ sync กลับ
@@ -36,6 +38,15 @@ export default function CrewDayTeamsPanel({
   const people = peopleData?.data ?? [];
   const leaders = useMemo(() => people.filter((p) => p.is_leader), [people]);
   const members = useMemo(() => people.filter((p) => p.is_member), [people]);
+
+  // ตัวเลือกวันที่ใน dropdown — ย้อนหลัง 14 วัน ถึงล่วงหน้า 60 วัน (+ วันที่ที่เลือกอยู่ ถ้าอยู่นอกช่วง)
+  const dateOptions = useMemo(() => {
+    const base = new Date(); base.setHours(0, 0, 0, 0);
+    const arr: string[] = [];
+    for (let i = -14; i <= 60; i++) arr.push(iso(addDays(base, i)));
+    if (!arr.includes(date)) { arr.push(date); arr.sort(); }
+    return arr;
+  }, [date]);
 
   const refetchDay = () => qc.invalidateQueries({ queryKey: ["crew-day", date] });
   const refetchCounts = () => { qc.invalidateQueries({ queryKey: ["crew-day-counts"] }); qc.invalidateQueries({ queryKey: ["crew-day-counts-month"] }); };
@@ -110,12 +121,23 @@ export default function CrewDayTeamsPanel({
 
       {subtab === "editor" && (
         <>
-          <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
-            <div className="flex items-center gap-2">
-              <button onClick={() => onDateChange(iso(addDays(new Date(date + "T00:00:00"), -1)))} className="px-3 py-1.5 rounded-lg bg-white/8 text-white text-sm" style={{ minHeight: 36 }}>‹</button>
-              <span className="text-white text-sm font-medium tnum" style={{ minWidth: 150, textAlign: "center" }}>{thDate(date)}</span>
-              <button onClick={() => onDateChange(iso(addDays(new Date(date + "T00:00:00"), 1)))} className="px-3 py-1.5 rounded-lg bg-white/8 text-white text-sm" style={{ minHeight: 36 }}>›</button>
-              <button onClick={() => onDateChange(iso(new Date()))} className="px-3 py-1.5 rounded-lg bg-white/8 text-white/70 text-xs" style={{ minHeight: 36 }}>วันนี้</button>
+          {/* แถบวันที่ — dropdown เลือกวัน (เหมือน SetTeamApp · ไม่ต้องกดลูกศรเลื่อนทีละวัน) */}
+          <div className="glass-card rounded-2xl p-3 mb-3 flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="inline-flex items-center gap-1.5 text-sm font-medium shrink-0" style={{ color: "var(--t-mid)" }}>
+                <Icon name="calendar" size={16} />วันที่จัดทีม
+              </span>
+              <div className="relative">
+                <select value={date} onChange={(e) => onDateChange(e.target.value)}
+                  className="crew-date-select appearance-none rounded-xl pl-3.5 pr-9 py-2 text-sm font-semibold text-white outline-none cursor-pointer"
+                  style={{ background: "rgba(255,255,255,.10)", border: "1px solid rgba(255,255,255,.18)", minWidth: 210 }}>
+                  {dateOptions.map((d) => <option key={d} value={d}>{thaiLong(d)}{d === iso(new Date()) ? " (วันนี้)" : ""}</option>)}
+                </select>
+                <span aria-hidden className="pointer-events-none absolute top-1/2 -translate-y-1/2 text-white/60" style={{ right: 12 }}>▾</span>
+              </div>
+              {date !== iso(new Date()) && (
+                <button onClick={() => onDateChange(iso(new Date()))} className="px-2.5 py-2 rounded-xl bg-white/8 text-white/70 text-xs shrink-0" style={{ minHeight: 36 }}>วันนี้</button>
+              )}
             </div>
             <div className="flex gap-2 flex-wrap">
               <a href={`/installation/crew-teams/print?date=${date}`} target="_blank" rel="noopener noreferrer"
@@ -127,6 +149,8 @@ export default function CrewDayTeamsPanel({
                 </>
               )}
             </div>
+            {/* option ต้องบังคับสีเข้มบนพื้นขาว ไม่งั้น dropdown เป็นตัวขาวบนขาว มองไม่เห็น */}
+            <style>{`.crew-date-select option{color:#1c1c1e;background:#fff}`}</style>
           </div>
 
           {isLoading ? (

@@ -49,27 +49,33 @@ export default function CrewTeamCard({
   const sites = team.crew_team_sites ?? [];
 
   return (
-    <div className="glass-card rounded-2xl p-3.5">
-      <div className="flex items-center justify-between gap-2 mb-2.5">
+    <div className="rounded-2xl overflow-hidden flex flex-col" style={{ background: "var(--card, rgba(255,255,255,.04))", border: "1px solid rgba(255,255,255,.10)" }}>
+      {/* หัวการ์ดแดง (แบบ SetTeamApp) — ชื่อทีม + หัวหน้า + ลบ */}
+      <div className="flex items-center justify-between gap-2 px-3.5 py-2.5"
+        style={{ background: "linear-gradient(90deg, #c02f45 0%, #e0344f 100%)" }}>
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-white font-semibold text-sm shrink-0">ทีม {index}</span>
+          <span className="text-white font-bold text-[15px] shrink-0">ทีมที่ {index}</span>
           {team.leader?.name && (
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/10 truncate" style={{ color: "var(--t-mid)" }}>{team.leader.name}</span>
+            <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full truncate" style={{ background: "rgba(255,255,255,.22)", color: "#fff" }}>
+              <Icon name="user" size={11} />{team.leader.name}
+            </span>
           )}
         </div>
         {canWrite && (
-          <button onClick={() => { if (confirm(`ลบทีม ${index} ออกจากวันนี้? (สถานที่ในทีมจะหายด้วย)`)) onDeleteTeam(team.id); }}
-            className="text-red-300/70 hover:text-red-300 p-1.5 rounded-lg shrink-0" aria-label="ลบทีม" style={{ minWidth: 32, minHeight: 32 }}>
+          <button onClick={() => { if (confirm(`ลบทีมที่ ${index} ออกจากวันนี้? (สถานที่ในทีมจะหายด้วย)`)) onDeleteTeam(team.id); }}
+            className="text-white/80 hover:text-white p-1.5 rounded-lg shrink-0" aria-label="ลบทีม" style={{ minWidth: 32, minHeight: 32 }}>
             <Icon name="trash" size={15} />
           </button>
         )}
       </div>
 
+      {/* เนื้อการ์ด */}
+      <div className="p-3.5">
       {/* สถานที่ทำงาน 1-4 จุด — ช่องแรกของการ์ด
           (เอา "เวลาเริ่มงาน" ระดับทีมออกแล้ว 16 ก.ค.2569 ตามเจ้าของสั่ง — เวลานัดอยู่รายจุดใน CrewSiteRow พอ
            คอลัมน์ crew_day_teams.start_time ยังอยู่ใน DB แต่ไม่ใช้แล้ว ไม่ต้องลบ) */}
       <div className="flex items-center justify-between mb-1">
-        <label className="text-[11px]" style={{ color: "var(--t-low)" }}>สถานที่ทำงาน</label>
+        <label className="inline-flex items-center gap-1.5 text-[11.5px] font-medium" style={{ color: "var(--t-mid)" }}><Icon name="pin" size={13} />สถานที่ทำงาน</label>
         <span className="text-[10.5px] tnum px-1.5 py-0.5 rounded bg-white/8" style={{ color: "var(--t-low)" }}>{sites.length}/4</span>
       </div>
       <div className="space-y-1.5 mb-1.5">
@@ -83,7 +89,7 @@ export default function CrewTeamCard({
       )}
 
       {/* หัวหน้าทีม — chip เลือก 1 คน */}
-      <label className="block text-[11px] mb-1 mt-1" style={{ color: "var(--t-low)" }}>หัวหน้าทีม (ถ้ามี)</label>
+      <label className="flex items-center gap-1.5 text-[11.5px] font-medium mb-1 mt-1" style={{ color: "var(--t-mid)" }}><Icon name="user" size={13} />หัวหน้าทีม (ถ้ามี)</label>
       <div className="flex flex-wrap gap-1.5 mb-2.5">
         <Chip active={!team.leader_id} onClick={() => onPatchTeam(team.id, { leader_id: null })} disabled={!canWrite}>ไม่ระบุ</Chip>
         {leaders.map((l) => (
@@ -93,10 +99,10 @@ export default function CrewTeamCard({
 
       {/* สมาชิกทีม — chip เลือกได้หลายคน + ปุ่มลัด "ทั้งหมดที่เหลือ" */}
       <div className="flex items-center justify-between mb-1">
-        <label className="text-[11px]" style={{ color: "var(--t-low)" }}>สมาชิกทีม ({team.member_ids.length})</label>
+        <label className="inline-flex items-center gap-1.5 text-[11.5px] font-medium" style={{ color: "var(--t-mid)" }}><Icon name="users" size={13} />สมาชิกทีม ({team.member_ids.length})</label>
         {canWrite && (
           <button onClick={() => onPatchTeam(team.id, { member_ids: remainingIds })}
-            className="text-[11px] px-2 py-1 rounded-full bg-white/10 text-white/80 hover:bg-white/16">ทั้งหมดที่เหลือ</button>
+            className="text-[11px] px-2 py-1 rounded-full bg-white/10 text-white/80 hover:bg-white/16">+ ทั้งหมดที่เหลือ</button>
         )}
       </div>
       <div className="flex flex-wrap gap-1.5 mb-2.5">
@@ -114,7 +120,7 @@ export default function CrewTeamCard({
       </div>
 
       {/* หมายเหตุ */}
-      <label className="block text-[11px] mb-1" style={{ color: "var(--t-low)" }}>หมายเหตุ</label>
+      <label className="flex items-center gap-1.5 text-[11.5px] font-medium mb-1" style={{ color: "var(--t-mid)" }}><Icon name="pencil" size={12} />หมายเหตุ</label>
       <textarea
         value={note} disabled={!canWrite} rows={2}
         onChange={(e) => setNote(e.target.value)}
@@ -122,6 +128,7 @@ export default function CrewTeamCard({
         placeholder="เช่น รอลูกน้องอีกคน, งานใหญ่ต้องรถกระเช้า"
         className="w-full bg-white/8 border border-white/12 rounded-lg px-2.5 py-2 text-white text-[12.5px] outline-none placeholder:text-white/30"
       />
+      </div>
     </div>
   );
 }
