@@ -203,14 +203,19 @@ export async function POST(req: Request) {
   //   🔧 เดิมผูกกับ hasSubtotal เท่านั้น → บิลจากใบเสนอ subtotal ว่าง (แต่มี VAT) → vat_rate_set=false → ใบเสร็จ VAT หาย
   // 0133 — จำว่าตอนออกบิล ใบเสนออยู่ Rev ไหน · ใบเสนอ Rev ใหม่กว่านี้เมื่อไร บิลใบนี้ขึ้นป้าย "เช็คยอดใหม่"
   //   ใส่ในก้อน breakdown เพราะมี fallback insert แบบไม่มีคอลัมน์อยู่แล้ว (เผื่อยังไม่ได้รัน 0133)
-  const bnBreakdown = { subtotal: bt.subtotal, discount_pct: bStoredPct, discount_amt: bt.discount_amt, discount_label: bDiscLabel, vat_rate: bVat, vat_amt: bt.vat_amt, wht_rate: bWht, wht_amt: bt.wht_amt, has_tax_breakdown: breakdownKnown, vat_rate_set: breakdownKnown, labor_ratio: bLaborRatio, labor_amt: bLaborAmt, source_revision_no: Number((q as { revision_no?: number }).revision_no) || 0 };
+  // ★ 15 ก.ย.69: แยก "ยอดแยก VAT" (แกนสำคัญ ห้ามหาย) ออกจากคอลัมน์เสริม (Rev/ค่าแรง)
+  //   ต้นเหตุ VAT หายทุกใบ = 0133 (source_revision_no) ยังไม่รัน → insert พัง → fallback เดิมตัด "ทั้งก้อน" รวม VAT ทิ้ง
+  //   แก้ถาวร: fallback 2 ชั้น — ตัดเฉพาะคอลัมน์เสริมก่อน (เก็บ VAT ไว้) · ตัด VAT เป็นทางสุดท้ายจริง ๆ เท่านั้น
+  const bnBreakdownCore = { subtotal: bt.subtotal, discount_pct: bStoredPct, discount_amt: bt.discount_amt, discount_label: bDiscLabel, vat_rate: bVat, vat_amt: bt.vat_amt, wht_rate: bWht, wht_amt: bt.wht_amt, has_tax_breakdown: breakdownKnown, vat_rate_set: breakdownKnown };
+  const bnBreakdownExtra = { labor_ratio: bLaborRatio, labor_amt: bLaborAmt, source_revision_no: Number((q as { revision_no?: number }).revision_no) || 0 };
   let { data: bn, error: bnErr } = await supabase
-    .from("billing_notes").insert({ ...bnBase, ...bnBreakdown }).select("id, code").single();
-  // กันพัง: ถ้า migration 0078/0079/0081/0102/0133 (ยอดแยก/ค่าแรง/Rev) ยังไม่รัน → insert ใหม่แบบไม่มี breakdown
-  //   (total ยังถูก · ใบวางบิลใช้ทุกวัน ห้ามออกบิลไม่ได้เพราะรอ migration)
-  //   ⚠ เพิ่มชื่อคอลัมน์ใหม่ทุกครั้งที่ใส่ของเข้า bnBreakdown ไม่งั้น fallback ไม่ทำงาน = ออกบิลไม่ได้ทั้งบริษัท
-  //     (QA จับได้ 1 ก.ย.69: ใส่ source_revision_no แล้วลืมเพิ่มในนี้)
-  if (bnErr && /subtotal|discount_amt|discount_label|vat_amt|wht_amt|discount_pct|vat_rate|wht_rate|has_tax_breakdown|vat_rate_set|labor_ratio|labor_amt|source_revision_no|ack_revision_no/i.test(bnErr.message ?? "")) {
+    .from("billing_notes").insert({ ...bnBase, ...bnBreakdownCore, ...bnBreakdownExtra }).select("id, code").single();
+  // ชั้น 1: คอลัมน์เสริม (0081 labor_ratio / 0102 labor_amt / 0133 source_revision_no) ยังไม่รัน → ตัดเฉพาะเสริม เก็บ VAT ไว้
+  if (bnErr && /labor_ratio|labor_amt|source_revision_no|ack_revision_no/i.test(bnErr.message ?? "")) {
+    ({ data: bn, error: bnErr } = await supabase.from("billing_notes").insert({ ...bnBase, ...bnBreakdownCore }).select("id, code").single());
+  }
+  // ชั้น 2 (ทางสุดท้าย): ยอดแยก VAT เอง (0078/0079) ก็ยังไม่มี — DB เก่ามาก → เก็บแค่ยอดรวม (total ยังถูก · ห้ามออกบิลไม่ได้)
+  if (bnErr && /subtotal|discount_amt|discount_label|vat_amt|wht_amt|discount_pct|vat_rate|wht_rate|has_tax_breakdown|vat_rate_set/i.test(bnErr.message ?? "")) {
     ({ data: bn, error: bnErr } = await supabase.from("billing_notes").insert(bnBase).select("id, code").single());
   }
   if (bnErr || !bn) return fail("บันทึกใบวางบิลไม่สำเร็จ: " + (bnErr?.message ?? ""), 500);
