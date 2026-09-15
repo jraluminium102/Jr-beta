@@ -211,7 +211,7 @@ export default function ProductionPage() {
   const [addOpen, setAddOpen] = useState(false);
 
   const queryClient = useQueryClient();
-  const { data, isLoading } = useQuery({ queryKey: ["production"], queryFn: () => api.get<Row[]>("/production") });
+  const { data, isLoading, isFetching, refetch } = useQuery({ queryKey: ["production"], queryFn: () => api.get<Row[]>("/production") });
   const rows = data?.data ?? [];
   const canWrite = (data?.meta?.can_write as boolean) ?? false;
   const isAdmin = (data?.meta?.is_admin as boolean) ?? false;
@@ -276,6 +276,11 @@ export default function ProductionPage() {
       <div className="flex items-center justify-between gap-3 mb-1 flex-wrap">
         <h1 className="text-xl sm:text-2xl font-bold text-white">งานผลิต</h1>
         <div className="flex items-center gap-2">
+          {/* รีเฟรช — ดึงข้อมูลใหม่โดยไม่ต้องรีโหลดทั้งหน้า */}
+          <button onClick={() => refetch()} disabled={isFetching} aria-label="รีเฟรช" title="รีเฟรชข้อมูลงานผลิต"
+            className="focusable pressable inline-flex items-center gap-1.5 px-3 py-2 rounded-xl glass-card border border-white/15 text-white text-[13px] font-medium min-h-[40px] disabled:opacity-60">
+            <Icon name="refresh" size={14} className={isFetching ? "animate-spin" : ""} /> รีเฟรช
+          </button>
           {/* ข้อ 5: shortcut ไปหน้านัดวัดจริง */}
           <Link
             href="/measure-schedule"
