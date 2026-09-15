@@ -66,7 +66,8 @@ export function PrintCustomerBlock({ c, color }: { c: CustomerSnapshot; color?: 
   return (
     <div style={{ fontSize: 13, marginTop: 14, borderLeft: `3px solid ${color ?? PRINT_THEME.rose}`, background: PRINT_THEME.blushSoft, borderRadius: "0 12px 12px 0", padding: "10px 16px" }}>
       <span className="font-bold" style={{ color: color ?? PRINT_THEME.rose }}>ลูกค้า</span>
-      <div className="mt-0.5" style={{ lineHeight: 1.55 }}>
+      {/* word-break: keep-all → ตัดบรรทัดเฉพาะช่องว่าง คำไทย (กรุงเทพมหานคร / (สำนักงานใหญ่) / ชื่อเขต-แขวง) ไม่ถูกตัดกลางคำ */}
+      <div className="mt-0.5" style={{ lineHeight: 1.55, wordBreak: "keep-all" }}>
         <div className="font-semibold" style={{ color: "#1f2937" }}>
           {c.name || "—"}
           {c.kind === "COMPANY" && c.branch ? <span style={{ fontWeight: 400 }}> ({c.branch})</span> : null}

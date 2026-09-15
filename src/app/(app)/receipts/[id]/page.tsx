@@ -5,6 +5,7 @@ import { getProfile, canWrite } from "@/lib/auth";
 import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
+import { ddmy } from "@/lib/format";
 import VoidReceiptButton from "./VoidReceiptButton";
 import EditReceiptDateButton from "./EditReceiptDateButton";
 import EditReceiptAmountsButton from "./EditReceiptAmountsButton";
@@ -99,7 +100,7 @@ export default async function ReceiptDetail({ params }: { params: { id: string }
           </div>
           <div className="sm:text-right">
             <div className="text-xs text-ink-3 inline-flex items-center gap-1 sm:justify-end">
-              วันที่ออก: <b className="text-ink">{rc.issue_date}</b>
+              วันที่ออก: <b className="text-ink">{ddmy(rc.issue_date)}</b>
               {writable && !rc.is_voided && (
                 <EditReceiptDateButton receiptId={rc.id} currentDate={rc.issue_date} currentCode={rc.code} />
               )}

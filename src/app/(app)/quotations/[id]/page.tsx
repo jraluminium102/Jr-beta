@@ -6,6 +6,7 @@ import { Card, StatusBadge } from "@/components/ui";
 import { FloorWorkBadge } from "@/components/ui/FloorWorkBadge";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
+import { ddmy } from "@/lib/format";
 import QuotationActions from "./QuotationActions";
 import QuotationEditButton from "./QuotationEditButton";
 import CustomerHeaderEditButton from "./CustomerHeaderEditButton";
@@ -137,7 +138,7 @@ export default async function QuotationDetail({ params }: { params: { id: string
           </div>
           <div className="sm:text-right">
             <div className="text-xs text-ink-3 flex items-center gap-1 sm:justify-end">
-              <span>วันที่ออก: <b className="text-ink">{q.issue_date}</b></span>
+              <span>วันที่ออก: <b className="text-ink">{ddmy(q.issue_date)}</b></span>
               {writable && <IssueDateEditButton quotationId={q.id} currentIssueDate={q.issue_date} />}
             </div>
             <div className="text-xs text-ink-3">ผู้ติดต่อ: {c.contact_person || "—"}</div>

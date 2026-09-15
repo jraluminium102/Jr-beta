@@ -5,6 +5,7 @@ import { getProfile, canWrite } from "@/lib/auth";
 import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { baht, isNoVatBill, type BillVatSource } from "@/lib/money";
+import { ddmy } from "@/lib/format";
 import BillingActions from "./BillingActions";
 import { VoidBillingNoteButton, InstallmentEditor, EditBillingTotalButton, EditBillingBreakdownButton, IssueReceiptButton, EditBillingStatusButton, EditBillingDateButton } from "./BillingFinanceActions";
 import { EditDocHeaderModal } from "@/components/finance/EditDocHeaderModal";
@@ -237,14 +238,15 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
         <div className="grid sm:grid-cols-2 gap-4 text-sm">
           <div>
             <div className="text-xs font-medium text-ink-3 mb-1">ลูกค้า</div>
-            <div className="font-semibold">{c.name}</div>
-            <div className="text-ink-2">{c.job}</div>
-            <div className="text-xs text-ink-3 mt-1">{c.address}</div>
+            {/* word-break: keep-all → ตัดบรรทัดเฉพาะที่ช่องว่าง (คำไทย เช่น กรุงเทพมหานคร / (สำนักงานใหญ่) ไม่ถูกตัดกลางคำ) */}
+            <div className="font-semibold" style={{ wordBreak: "keep-all" }}>{c.name}</div>
+            <div className="text-ink-2" style={{ wordBreak: "keep-all" }}>{c.job}</div>
+            <div className="text-xs text-ink-3 mt-1" style={{ wordBreak: "keep-all" }}>{c.address}</div>
             {c.tax_id && <div className="text-xs text-ink-3">เลขผู้เสียภาษี: {c.tax_id}</div>}
           </div>
           <div className="sm:text-right">
             <div className="text-xs text-ink-3 inline-flex items-center gap-1 sm:justify-end">
-              วันที่ออก: <b className="text-ink">{bn.issue_date}</b>
+              วันที่ออก: <b className="text-ink">{ddmy(bn.issue_date)}</b>
               {writable && !isCancelled && bn.status !== "paid" && (
                 <EditBillingDateButton billingNoteId={bn.id} currentDate={bn.issue_date} currentCode={bn.code} />
               )}
@@ -274,7 +276,7 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
                   <td>
                     <div className="font-medium whitespace-pre-line">{it.label}</div>
                     {it.status === "paid" && (
-                      <div className="text-xs text-emerald-700">รับแล้ว ฿{baht(it.paid_amount)} · {it.paid_date}</div>
+                      <div className="text-xs text-emerald-700">รับแล้ว ฿{baht(it.paid_amount)} · {ddmy(it.paid_date)}</div>
                     )}
                     <div className="flex items-center gap-3 mt-0.5">
                       <Link
