@@ -819,6 +819,11 @@ console.log("\n═══ ⑳ ลำดับราคาสี — ขาว=ด
   ok("ตัวเลือกสีกระทุ้ง/บานหมุน/เฟี้ยมยูโร/เฟี้ยมยก ไม่มี 3 สีพิเศษ", ["awning", "pivot", "fold_euro", "fold_lift"].every((id) => !AC.aluColorKeysFor(id).some((k) => ["aztec", "wood_maho", "wood_whiteoak"].includes(k))));
   // สีพิมพ์ลงใบอย่างเดียว (ไฟล์ไม่มีสูตรสี) — ผนังลูกฟูก/ผนังคอมโพสิต/ตู้
   const LABEL_ONLY = new Set(["wall_corrugated", "wall_composite", "cabinet"]);
+  // ⏳ รุ่นใหม่ v1 ที่ยังเทียบลำดับราคาสีไม่ได้ (คนละเหตุผล — ห้ามลบทิ้งเงียบ ๆ)
+  //   woodjamb    = ไฟล์ให้ราคาสีแค่ "บังใบกล่อง 802" ตัวเดียว (ราคาสี แถว 125) อีก 4 โปรไฟล์ไม่มีแถวในชีตราคาสี → ทุกสีเท่ากันหมด
+  //                 ⇒ ต้องให้เจ้าของเติมราคาสีของ กล่องเรียบ 1.6×4 · วงกบ/ธรณีมีติ่ง · กรอบบาน 3" มี/ไม่มีบังใบ ลงไฟล์ก่อน
+  //   velora_auto = ชีตบังคับ "สีอบพิเศษ" เสมอ ไม่มีให้เลือกสี และราคาเส้นรวมค่าอบมาแล้ว
+  const NO_COLOR_TABLE_IN_FILE = new Set(["woodjamb", "velora_auto"]);
   // ราวกันตก: ชีต H7 คิดสีเฉพาะ "กล่องอลู 1×1.6" (ระบบเสาตั้ง) · ระบบยูเหล็ก+ครอบอลู (ค่าตั้งต้น) ไฟล์ไม่มีส่วนต่างสี
   const OVR = { handrail: { material: "เฉียง|เสาตั้ง+ราวจับอลู" } };
   const order = (id, c) => {
@@ -848,7 +853,7 @@ console.log("\n═══ ⑳ ลำดับราคาสี — ขาว=ด
   const round = (c) => JSON.stringify(Object.fromEntries(Object.entries(c).map(([k, v]) => [k, Math.round(v)])));
   let checked = 0;
   for (const p of Object.values(PRODUCTS)) {
-    if (p.composite || p.sellDirect || p.sellZip || LABEL_ONLY.has(p.id)) continue;
+    if (p.composite || p.sellDirect || p.sellZip || LABEL_ONLY.has(p.id) || NO_COLOR_TABLE_IN_FILE.has(p.id)) continue;
     if (!(p.alu || []).length && !p.showColor) continue;
     const c = costs(PB, p, () => OVR[p.id] || {});
     if (c.white == null || c.sahara == null) continue;

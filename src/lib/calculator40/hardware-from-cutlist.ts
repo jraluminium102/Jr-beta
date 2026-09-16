@@ -34,6 +34,7 @@ import { PRODUCTS } from "./products.mjs";
 export const HW_FROM_CUTLIST = new Set<string>([
   "sms_slide", "euro_slide", "folding", "pcdoor",   // เปิดมาก่อน (19–24 ส.ค.69)
   "slimlux", "fixed", "velora", "fold_euro", "gate", "fold_lift",   // เปิดเพิ่ม 2 ก.ย.69 ตามที่เจ้าของเคาะ
+  "woodjamb",   // เวฟ 6: รุ่นใหม่ ใบตัดตรงไฟล์ v1 ทุกบรรทัด + ทุกรหัสมีราคาในสโตร์แล้ว
 ]);
 
 /** หน่วยที่สโตร์ตั้งราคาเป็น "แพ็ค" แต่ใบตัดนับเป็นหน่วยย่อย → ตัวหารให้ได้ราคาต่อหน่วยย่อย */

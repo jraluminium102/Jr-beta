@@ -3695,6 +3695,11 @@
       "mat": 100,
       "prod": 50,
       "inst": 100
+    },
+    "woodjamb": {
+      "mat": 81,
+      "prod": 0,
+      "inst": 0
     }
   },
   "SELL": {

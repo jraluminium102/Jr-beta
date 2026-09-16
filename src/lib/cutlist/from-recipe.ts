@@ -184,6 +184,26 @@ export function cutInputFromRecipe(recipe: any, opts?: { rawCompare?: boolean })
       } };
       break;
     }
+    // ครอบวงกบไม้ (รุ่นใหม่ v1) → ใบตัด woodjamb_swing · คีย์ช่องเลือกฝั่งคิดราคาเป็นตัวพิมพ์เล็กล้วน ใบตัดเป็น camelCase
+    case "woodjamb": {
+      const sp = (recipe.spec ?? {}) as Record<string, unknown>;
+      const h1 = String(sp.handle ?? "คิงโบ ล็อค+กุญแจ");
+      m = { spec_id: "woodjamb_swing", input: {
+        W, H, N,
+        doorSplit: String(recipe.form ?? "") === "เท่ากัน" ? "เท่ากัน" : "แม่ลูก",
+        // ค่าตั้งต้นต้องเป็น 80 เท่ากับช่อง "บานแม่ กว้าง" ฝั่งคิดราคา (ไม่ใช่ W/N ซึ่งทำให้สองฝั่งวัดคนละบาน)
+        motherW: Number(sp.motherw) > 0 ? Number(sp.motherw) : 80,
+        sill: sp.sill === "ไม่มีธรณี" ? "ไม่มีธรณี" : "มีธรณี",
+        boxColor: sp.boxcolor === "อบขาว" ? "อบขาว" : "ดำ",
+        hwColor: sp.hwcolor === "ดำ" ? "ดำ" : "ขาว",
+        lockType: sp.locktype === "มัลติพ้อยล็อค" ? "มัลติพ้อยล็อค" : "ล็อคปกติ",
+        openDir: sp.opendir === "เปิดเข้า" ? "เปิดเข้า" : "เปิดออก",
+        // คิดราคามีตัวเลือก "Cmech" ตัวเดียว · ใบตัดแตกเป็น 3 แบบตามไฟล์ v2 → ตกลงที่ "กุญแจ+ล็อค"
+        motherHandle: h1 === "Cmech" ? "Cmech กุญแจ+ล็อค" : h1 === "ไม่ใส่" ? "ไม่ใส่" : h1,
+        childHandle: String(sp.handle2 ?? "ไม่ใส่"),
+      } };
+      break;
+    }
     case "roof": {
       if (!opts?.rawCompare) { m = null; break; }   // งานจริง (/api/cutlists) = skip ให้ช่างกรอกเอง · เฉพาะหน้าเทียบเท่านั้นที่ map
       // กันสาด (หลังคาเพิง) — ดึงเข้าหน้าเทียบใบตัด (เจ้าของสั่ง 26 ส.ค.69 "ดึงขึ้นก่อน")

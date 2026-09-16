@@ -2725,6 +2725,103 @@ export const PRODUCTS = {
     ],
   },
 
+  // ══════════ ครอบวงกบไม้ (รุ่นใหม่ · เจ้าของเคาะข้อ 15) ══════════
+  // ชีต "คิดทุน ครอบวงกบไม้" + ใบตัด "ครอบวงกบไม้_ตัด" (ใบตัดในเว็บ = woodjamb_swing ตรงไฟล์อยู่แล้ว)
+  //   กล่องครอบ = กล่องเรียบ 1.6"×4" เมืองทอง (ไม่ใช่ 4"×4") · โปรไฟล์เมืองทองซื้อมาเป็นสีขาว/ดำอยู่แล้ว (ข้อ 18)
+  //   → kg 0 ทุกเส้น = ไม่คิดค่าอบจากน้ำหนัก · ค่าเปิดตู้อบคิดเฉพาะสีอบพิเศษ/ลายไม้พิเศษ ตามชีต D33
+  //   นับเส้น = ROUNDUP(ท่อน ÷ FLOOR(600/ยาว)) ต่อบรรทัด = ค่าเริ่มต้นของเอนจิน (ห้ามใส่ aluWaste)
+  //   ทุนวัสดุ 130×210 · 2 บาน แม่ลูก 80 · มีธรณี · เขียว 6 มม. = 18,013.72 ตรงชีต D35
+  //   ค่าแรงใช้เรต "บานเปิด (ยูโร)" · กำไรค่าวัสดุ 81% (PB.R41.matPct.woodjamb) · R41_ALIAS → open_door
+  woodjamb: {
+    id: 'woodjamb', group: 1, name: 'บานเปิดครอบวงกบไม้', brand: 'MTONG', laborKey: 'บานเปิด (ยูโร)',
+    icon: '🚪', showColor: true, stockLen: 6.0,
+    defForm: 'แม่ลูก', forms: ['แม่ลูก', 'เท่ากัน'],
+    defaults: { w: 130, h: 210, p: 2 }, defGlass: 'เขียว 6มม.', minP: 1, maxP: 2,
+    specOpts: [
+      { key: 'motherw', label: 'บานแม่ กว้าง (ซม.)', type: 'number', def: '80', step: 5, placeholder: '80' },
+      { key: 'sill', label: 'ธรณี', opts: ['มีธรณี', 'ไม่มีธรณี'], def: 'มีธรณี' },
+      { key: 'boxcolor', label: 'สีกล่องอลู', opts: ['ดำ', 'อบขาว'], def: 'ดำ' },
+      { key: 'hwcolor', label: 'สีอุปกรณ์', opts: ['ขาว', 'ดำ'], def: 'ขาว' },
+      { key: 'locktype', label: 'ตลับกุญแจ', opts: ['ล็อคปกติ', 'มัลติพ้อยล็อค'], def: 'ล็อคปกติ' },
+      { key: 'opendir', label: 'ทิศเปิด', opts: ['เปิดออก', 'เปิดเข้า'], def: 'เปิดออก' },
+      { key: 'handle', label: 'มือจับ ใบหลัก', opts: ['คิงโบ ล็อค+กุญแจ', 'คิงโบ ดัมมี่+ดัมมี่', 'Cmech', 'ไม่ใส่'], def: 'คิงโบ ล็อค+กุญแจ' },
+      { key: 'handle2', label: 'มือจับ ใบลอง', opts: ['ไม่ใส่', 'คิงโบ ล็อค+กุญแจ', 'คิงโบ ดัมมี่+ดัมมี่'], def: 'ไม่ใส่' },
+    ],
+    vars: {
+      S: "spec.sill==='ไม่มีธรณี' ? 0 : 1",
+      BC: "spec.boxcolor==='อบขาว' ? 1 : 0",
+      HWB: "spec.hwcolor==='ดำ' ? 1 : 0",
+      D1: "P===1 ? W : (form==='เท่ากัน' ? W/P : (Number(spec.motherw)>0 ? Number(spec.motherw)/100 : 0.8))",
+      D2: "P===1 ? 0 : (W - (form==='เท่ากัน' ? W/P : (Number(spec.motherw)>0 ? Number(spec.motherw)/100 : 0.8)))",
+    },
+    alu: [
+      { name: 'กล่องเรียบ 1.6"×4" แนวตั้ง (ครอบข้าง)', code: "BC?'JR01984':'JR01985'", price: 1220, kg: 0, seg: 'H-0.043', count: '2' },
+      { name: 'กล่องเรียบ 1.6"×4" แนวนอน (ครอบบน)', code: "BC?'JR01984':'JR01985'", price: 1220, kg: 0, seg: 'W-0.007', count: '1' },
+      { name: 'บังใบกล่อง ½"×1" แนวนอน (บน)', code: "BC?'JR01822':'JR01823'", price: 218, kg: 0, seg: 'W-0.004', count: '1' },
+      { name: 'บังใบกล่อง ½"×1" แนวตั้ง (ข้าง)', code: "BC?'JR01822':'JR01823'", price: 218, kg: 0, seg: 'H-0.002-(S?0.045:0)', count: '2' },
+      { name: 'วงกบ/ธรณี มีติ่ง', code: "BC?'JR03130':'JR03129'", price: 1820, kg: 0, seg: 'W-0.004', count: 'S?1:0' },
+      { name: 'กรอบบาน 3" มีบังใบ แนวตั้ง', code: "BC?'JR03132':'JR03131'", price: 1670, kg: 0, seg: 'H-0.01+0.027-(S?0.032:0)', count: 'P' },
+      { name: 'กรอบบาน 3" ไม่มีบังใบ แนวตั้ง', code: "BC?'JR03127':'JR03126'", price: 1600, kg: 0, seg: 'H-0.01-(S?0.032:0)', count: 'P' },
+      { name: 'กรอบบาน 3" มีบังใบ แนวนอน — บาน 1', code: "BC?'JR03132':'JR03131'", price: 1670, kg: 0, seg: 'D1-0.008+0.027', count: '1' },
+      { name: 'กรอบบาน 3" มีบังใบ แนวนอน — บาน 2', code: "BC?'JR03132':'JR03131'", price: 1670, kg: 0, seg: 'D2-0.008+0.027', count: 'P===2?1:0' },
+      { name: 'กรอบบาน 3" ไม่มีบังใบ แนวนอน — บาน 1', code: "BC?'JR03127':'JR03126'", price: 1600, kg: 0, seg: 'D1-0.04', count: '1' },
+      { name: 'กรอบบาน 3" ไม่มีบังใบ แนวนอน — บาน 2', code: "BC?'JR03127':'JR03126'", price: 1600, kg: 0, seg: 'D2-0.04', count: 'P===2?1:0' },
+    ],
+    glass: 'W*H',
+    hardware: [
+      { name: 'บานพับ hyda', sku: "HWB?'JR00488':'JR00489'", price: 117, unit: 'ตัว', count: '(H>3 || W/P>1.2 ? 5 : 4)*P' },
+      { name: 'มือจับ ล็อค+กุญแจ (คิงโบ)', sku: "HWB?'JR00314':'JR00315'", price: 330, unit: 'ชุด',
+        count: "((spec.handle||'คิงโบ ล็อค+กุญแจ')==='คิงโบ ล็อค+กุญแจ'?1:0) + ((spec.handle2||'ไม่ใส่')==='คิงโบ ล็อค+กุญแจ'?1:0)" },
+      { name: 'มือจับ ดัมมี่+ดัมมี่ (คิงโบ)', sku: "HWB?'JR00312':'JR00313'", price: 330, unit: 'ชุด',
+        count: "((spec.handle||'คิงโบ ล็อค+กุญแจ')==='คิงโบ ดัมมี่+ดัมมี่'?1:0) + ((spec.handle2||'ไม่ใส่')==='คิงโบ ดัมมี่+ดัมมี่'?1:0)" },
+      { name: 'มือจับ Cmech (ซื้อแยก ไม่ตัดสต็อก)', price: 523, unit: 'ชุด', orderOnly: true, count: "spec.handle==='Cmech'?1:0" },
+      { name: 'ตลับกุญแจไฮด้า', sku: "spec.locktype==='มัลติพ้อยล็อค'?'JR00553':'JR00551'", price: 285, unit: 'ตัว', count: '1' },
+      { name: 'ไส้กุญแจ', sku: "spec.opendir==='เปิดเข้า'?'JR00498':'JR00499'", price: 429, unit: 'ตัว', count: '1' },
+      { name: 'แผ่นรับล็อค', sku: 'JR00562', price: 15, unit: 'ชุด', count: '1' },
+      { name: 'CDQ บานเปิด (บานลอง)', sku: 'JR00596', price: 370, unit: 'ตัว', count: 'Math.max(P-1,0)' },
+      { name: 'ปลายกลอน (บานลอง)', sku: 'JR00598', price: 80, unit: 'ตัว', count: 'Math.max(P-1,0)' },
+      { name: 'น็อตเฟรม 1"', sku: 'JR00864', price: 1, unit: 'ตัว', count: 'S?8:6' },
+    ],
+    consum: [
+      { name: 'ยาง', sku: 'JR00771', price: 11, unit: 'ม.', count: 'Math.round(2*(W+H)*P)' },
+      { name: 'ซิลิโคน ใน+นอก', price: 90, unit: 'หลอด', orderOnly: true, count: 'Math.ceil(2*(W+H)*2/12.5)' },
+      { labor: true, name: 'ค่าเปิดตู้อบ (สีพิเศษ)', price: 2000, unit: 'งาน', count: "(color==='special'||color==='woodSpecial') ? 1 : 0" },
+    ],
+    note: 'บานเปิดครอบวงกบไม้เดิม — กล่องเรียบ 1.6"×4" เมืองทอง ครอบทับวงกบไม้ · โปรไฟล์ซื้อมาเป็นสีขาว/ดำแล้ว ไม่คิดค่าอบจากน้ำหนัก',
+  },
+
+  // ══════════ สวิงออโต้ Velora (หมวดใหม่ · เจ้าของเคาะข้อ 16) ══════════
+  // ชีต "คิดทุน มอเตอร์ Velora" — ไม่มีใบตัดในไฟล์ จึงไม่ทำใบตัด (กฎข้อ 4)
+  //   ราคาขาย = MAX(ทุน × 2, ขั้นต่ำ) · ขั้นต่ำ 1 บาน 20,000 · 2 บาน 40,000 (ชีต D27 · ใบราคา)
+  //   ⚠ คนละตัวกับ add-on "มอเตอร์ Velora" ของรุ่น Velora เดิม (24,000 / คู่ 28,000) — ห้ามปนกัน
+  //   ราคาเส้นอลูในชีตรวมค่าอบมาแล้ว (ราคาสี + rate_special × กก.) → kg 0 กันคิดค่าอบซ้ำ
+  //   ทุนรวม 1 บาน 100×220 เทมเปอร์ 6 + สแกนหน้า + ค่าส่งครั้งเดียว = 18,250.45 ตรงชีต D25
+  velora_auto: {
+    id: 'velora_auto', group: 1, subcat: 'สวิงออโต้', name: 'สวิงออโต้ Velora (ชุดมอเตอร์)', brand: 'VELORA',
+    laborKey: '-', aluWaste: true, stockLen: 6.0, icon: '🔌', showColor: true, defColor: 'special',
+    sellCostMult: 2, sellMinFix: 'P>=2 ? 40000 : 20000',
+    defForm: 'เดี่ยว', forms: [], defaults: { w: 100, h: 220, p: 1 }, defGlass: 'เทมเปอร์ 6มม.', minP: 1, maxP: 2,
+    specOpts: [
+      { key: 'ship', label: 'ค่าส่ง', opts: ['ครั้งเดียว', 'ต่อบาน'], def: 'ครั้งเดียว' },
+      { key: 'autoopt', label: 'ออปเสริม', opts: ['สแกนหน้า', 'Touch Switch', 'ไม่มี'], def: 'สแกนหน้า' },
+    ],
+    alu: [
+      { code: 'JR01840', name: 'เสาวงกบ 1"×4" (เมืองทอง)', price: 2183.65, kg: 0, seg: 'H', count: '2' },
+      { name: 'เสากุญแจ (ไส้เสาบาน)', code: 'OPK-A202-40', price: 990.35, kg: 0, seg: 'H-0.08', count: '2*P' },
+      { name: 'ขวางบน/ล่าง', code: 'OPK-A201-40', price: 1576.17, kg: 0, seg: 'W/P-0.088', count: '2*P' },
+      { name: 'ตบเรียบปิดหน้าเสากุญแจ', code: 'OPK-A203-40', price: 543.61, kg: 0, seg: 'H-0.08', count: '2*P' },
+    ],
+    glass: 'W*H',
+    hardware: [
+      { name: 'ชุดมอเตอร์ Velora (Kuangdi · รวมเฟรมบน)', ref: 'MOTOR.Velora Kuangdi', price: 6800, unit: 'ชุด', count: 'P' },
+      { name: 'ค่าส่ง', ref: 'MOTOR.Velora ค่าส่ง', price: 1700, unit: 'ครั้ง', count: "spec.ship==='ต่อบาน' ? P : 1" },
+      { name: 'ออปเสริม สแกนหน้า', ref: 'MOTOR.Velora สแกนหน้า', price: 2750, unit: 'ชุด', count: "(spec.autoopt||'สแกนหน้า')==='สแกนหน้า' ? 1 : 0" },
+      { name: 'ออปเสริม Touch Switch', ref: 'MOTOR.Velora Touch', price: 100, unit: 'ชุด', count: "spec.autoopt==='Touch Switch' ? 1 : 0" },
+    ],
+    // ค่าเปิดตู้อบ 2,000 เอนจินออกให้เองจากสีอบพิเศษ (บรรทัด bake) — ไม่ต้องใส่ซ้ำในนี้
+    note: 'ชุดออโต้บานเปิดสวิง Velora (Kuangdi) · บังคับกระจกเทมเปอร์ 6-8 มม. และสีอบพิเศษ · ขาย = ทุน×2 เทียบขั้นต่ำ 20,000 (คู่ 40,000)',
+  },
+
   ykk: {
     id: 'ykk', group: 1, subcat: 'พิเศษ · กระจกเปลือย · สำเร็จ', name: 'บานสำเร็จ YKK', brand: 'YKK',
     sellDirect: true, sellRate: 'SR', sellInstallRate: '0', sellMin: "material==='Exhido'?120000:(material==='Tostem Airflow'?34000:30000)",
