@@ -1079,7 +1079,8 @@ function sellParts(total, labProd, labInst, pP, pI, oh) {
 // ── ตาราง R4.1 ──────────────────────────────────────────────────────────────
 //   ข้อมูลอยู่ใน PB.R41 (สร้างด้วย scripts/gen-r41-table.mjs จาก PDF ของเจ้าของ)
 //   หลังคาหลายด้าน/กลาสเฮ้าส์ = โครงเดียวกับหลังคาเพิง/จั่ว → ใช้จุดอ้างอิงของรุ่นแม่
-const R41_ALIAS = { roof_multi: 'roof', glasshouse: 'roof', glasshouse_multi: 'roof', gable_multi: 'roof_gable' };
+// woodjamb (ครอบวงกบไม้ · รุ่นใหม่ v1) ใช้เรตค่าแรง "บานเปิด (ยูโร)" ตามชีตคิดทุน → ยืมแถว R4.1 ของบานเปิดมาใช้
+const R41_ALIAS = { roof_multi: 'roof', glasshouse: 'roof', glasshouse_multi: 'roof', gable_multi: 'roof_gable', woodjamb: 'open_door' };
 export function r41Key(id) { return R41_ALIAS[id] || id; }
 export function r41Nodes(PB, id) {
   const L = PB && PB.R41 && PB.R41.labor;
