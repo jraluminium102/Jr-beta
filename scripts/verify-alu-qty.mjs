@@ -17,7 +17,9 @@ import { computeCost } from "../src/lib/calculator40/engine.mjs";
 
 const require = createRequire(import.meta.url);
 const PB = require("../src/lib/calculator40/pricebook.json");
-const XLSX = "C:/Users/jralu/JR-beta/ถอดทุน_รวมทั้งหมด v9.xlsx";
+// 16 ก.ย.69: ย้ายมาอ่านไฟล์ v1 (ถอดทุน+ตัดผลิต รวม) — เว็บพอร์ตตามไฟล์นี้แล้ว
+//   ไฟล์ v9 เป็นของเก่า (นับเส้นจากความกว้างเต็ม ไม่หักระยะตัดจริง) → เทียบแล้วไม่มีทางตรง
+const XLSX = "C:/Users/jralu/JR-beta/ถอดทุน+ตัดผลิต รวม v1.xlsx";
 
 // ชีต → รุ่นในเว็บ + ชื่อบรรทัดที่เขียนต่างกันระหว่างไฟล์กับเว็บ (alias)
 // ⚠ ใส่เฉพาะรุ่นที่ชีตกรอกขนาด/รูปแบบตรงกับที่เว็บรับได้ · รุ่นที่ชีตเขียน "สูตร live ประมาณ" ไม่ใส่
