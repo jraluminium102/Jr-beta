@@ -92,7 +92,10 @@ export function cutInputFromRecipe(recipe: any, opts?: { rawCompare?: boolean })
       const slx = String(recipe.spec?.slxhandle ?? "");
       const handle = slx === "X-J" ? "X-J" : slx.includes("ลูกค้าเตรียม") ? "ไม่มี" : "มือจับล็อค";
       m = { spec_id: "slimlux_slide", input: {
-        W, H, N, sashMode, fit: "ยัดในช่อง", beam: "1×4", receiverBox: "1×3", handle,
+        W, H, N, sashMode, fit: "ยัดในช่อง", beam: "1×4",
+        // เสารับบาน: ชีต SlimLux_ตัด C16 ค่าตั้งต้น "1×4+1×4" (= 4 ท่อน) · เดิมส่ง "1×3" ซึ่งไม่ใช่ตัวเลือกที่มีจริง
+        //   ทำให้ใบตัดออกกล่อง 1×3 สองท่อน แต่คิดราคาออก 1×4 ห้าท่อน → หน้าเทียบขึ้น "มีแต่ใบตัด/จำนวนต่าง"
+        receiverBox: "1×4+1×4", handle,
         handleColor: recipe.spec?.slxhwcolor === "ดำ" ? "ดำ" : "ขาว",
       } };
       break;
