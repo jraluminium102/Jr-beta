@@ -2756,8 +2756,8 @@ export const PRODUCTS = {
       D2: "P===1 ? 0 : (W - (form==='เท่ากัน' ? W/P : (Number(spec.motherw)>0 ? Number(spec.motherw)/100 : 0.8)))",
     },
     alu: [
-      { name: 'กล่องเรียบ 1"×4" แนวตั้ง (ครอบข้าง)', code: "BC?'JR01840':'JR01841'", price: 905, kg: 0, seg: 'H-0.043', count: '2' },
-      { name: 'กล่องเรียบ 1"×4" แนวนอน (ครอบบน)', code: "BC?'JR01840':'JR01841'", price: 905, kg: 0, seg: 'W-0.007', count: '1' },
+      { name: 'กล่องเรียบ 1.6"×4" แนวตั้ง (ครอบข้าง)', code: "BC?'JR01984':'JR01985'", price: 1220, kg: 0, seg: 'H-0.043', count: '2' },
+      { name: 'กล่องเรียบ 1.6"×4" แนวนอน (ครอบบน)', code: "BC?'JR01984':'JR01985'", price: 1220, kg: 0, seg: 'W-0.007', count: '1' },
       { name: 'บังใบกล่อง ½"×1" แนวนอน (บน)', code: "BC?'JR01822':'JR01823'", price: 218, kg: 0, seg: 'W-0.004', count: '1' },
       { name: 'บังใบกล่อง ½"×1" แนวตั้ง (ข้าง)', code: "BC?'JR01822':'JR01823'", price: 218, kg: 0, seg: 'H-0.002-(S?0.045:0)', count: '2' },
       { name: 'วงกบ/ธรณี มีติ่ง', code: "BC?'JR03130':'JR03129'", price: 1820, kg: 0, seg: 'W-0.004', count: 'S?1:0' },
