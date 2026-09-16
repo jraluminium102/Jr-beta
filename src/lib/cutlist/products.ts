@@ -347,24 +347,28 @@ export const FIXED_PANEL: CutSpec = {
   name: "บานติดตาย (เลือกชนิดกล่อง)",
   stockLen: 600,
   rails: [],
-  opts: [{ key: "box", label: "ชนิดกล่อง", choices: ["กล่อง 1.6×3 + 9014", "กล่อง 1.6×4 + ฉาก", "กล่องร่อง"] }],
-  defaults: { W: 150, H: 200, N: 1, rail: "", honk: false, box: "กล่อง 1.6×3 + 9014" },
+  opts: [
+    { key: "box", label: "ชนิดกล่อง", choices: ["กล่อง 1.6×3 + 9014", "กล่อง 1.6×4 + ฉาก", "กล่องร่อง"] },
+    // v1 ติดตาย_ตัด K10:M18 — รหัสสลับตามช่อง "สีกล่อง" (B7 · ค่าตั้งต้น ดำ)
+    { key: "boxColor", label: "สีกล่อง (รหัส)", choices: ["ดำ", "อบขาว"] },
+  ],
+  defaults: { W: 150, H: 200, N: 1, rail: "", honk: false, box: "กล่อง 1.6×3 + 9014", boxColor: "ดำ" },
   profiles: [
     { name: "กล่อง 1.6×3 — ตั้ง", code: "กล่อง 1.6\"x3\"", len: (o) => o.H, qty: (o) => (boxIs(o, "กล่อง 1.6×3 + 9014") ? o.N + 1 : 0) },
-    { name: "กล่อง 1.6×3 — นอน", code: "กล่อง 1.6\"x3\"", len: (o) => o.W - 9, qty: (o) => (boxIs(o, "กล่อง 1.6×3 + 9014") ? 2 * o.N : 0) },
+    { name: "กล่อง 1.6×3 — นอน", code: "กล่อง 1.6\"x3\"", len: (o) => o.W / o.N - 9, qty: (o) => (boxIs(o, "กล่อง 1.6×3 + 9014") ? 2 * o.N : 0) },
     { name: "9014 คัลเทิลวอล — ตั้ง", code: "9014", len: (o) => o.H, qty: (o) => (boxIs(o, "กล่อง 1.6×3 + 9014") ? o.N + 1 : 0) },
-    { name: "9014 คัลเทิลวอล — นอน", code: "9014", len: (o) => o.W - 9, qty: (o) => (boxIs(o, "กล่อง 1.6×3 + 9014") ? 2 * o.N : 0) },
-    { name: "กล่อง 1.6×4 — ตั้ง", code: "-", len: (o) => o.H, qty: (o) => (boxIs(o, "กล่อง 1.6×4 + ฉาก") ? o.N + 1 : 0) },
-    { name: "กล่อง 1.6×4 — นอน", code: "-", len: (o) => o.W - 9, qty: (o) => (boxIs(o, "กล่อง 1.6×4 + ฉาก") ? 2 * o.N : 0) },
-    { name: "กล่อง 4หุน — ตั้ง", code: "-", len: (o) => o.H - 9 - 2.4, qty: (o) => (boxIs(o, "กล่อง 1.6×4 + ฉาก") ? o.N + 1 : 0) },
-    { name: "กล่อง 4หุน — นอน", code: "-", len: (o) => o.W - 9, qty: (o) => (boxIs(o, "กล่อง 1.6×4 + ฉาก") ? 2 * o.N : 0) },
-    { name: "ฉาก 4หุน — ตั้ง", code: "-", len: (o) => o.H - 9 - 2.4, qty: (o) => (boxIs(o, "กล่อง 1.6×4 + ฉาก") ? o.N + 1 : 0) },
-    { name: "ฉาก 4หุน — นอน", code: "-", len: (o) => o.W - 9, qty: (o) => (boxIs(o, "กล่อง 1.6×4 + ฉาก") ? 2 * o.N : 0) },
-    { name: "กล่องร่อง — ตั้ง", code: "-", len: (o) => o.H, qty: (o) => (boxIs(o, "กล่องร่อง") ? o.N + 1 : 0) },
-    { name: "กล่องร่อง — นอน", code: "-", len: (o) => o.W - 9, qty: (o) => (boxIs(o, "กล่องร่อง") ? o.N : 0) },
-    { name: "กล่องเปิด — นอน", code: "-", len: (o) => o.W - 9, qty: (o) => (boxIs(o, "กล่องร่อง") ? o.N : 0) },
-    { name: "ตบปิดกล่องเปิด — นอน", code: "-", len: (o) => o.W - 9, qty: (o) => (boxIs(o, "กล่องร่อง") ? o.N : 0) },
-    { name: "ตบร่อง — ตั้ง (ทุกเสากลาง)", code: "-", len: (o) => o.H, qty: (o) => (boxIs(o, "กล่องร่อง") ? Math.max(o.N - 1, 0) : 0), note: "โน้ตชีต 700/เส้น (ขัดสูตร /600 — รอเคาะ)" },
+    { name: "9014 คัลเทิลวอล — นอน", code: "9014", len: (o) => o.W / o.N - 9, qty: (o) => (boxIs(o, "กล่อง 1.6×3 + 9014") ? 2 * o.N : 0) },
+    { name: "กล่อง 1.6×4 — ตั้ง", code: byColor("boxColor", "JR01751", "JR01750"), len: (o) => o.H, qty: (o) => (boxIs(o, "กล่อง 1.6×4 + ฉาก") ? o.N + 1 : 0) },
+    { name: "กล่อง 1.6×4 — นอน", code: byColor("boxColor", "JR01751", "JR01750"), len: (o) => o.W / o.N - 9, qty: (o) => (boxIs(o, "กล่อง 1.6×4 + ฉาก") ? 2 * o.N : 0) },
+    { name: "กล่อง 4หุน — ตั้ง", code: byColor("boxColor", "JR01688", "JR01687"), len: (o) => o.H - 9 - 2.4, qty: (o) => (boxIs(o, "กล่อง 1.6×4 + ฉาก") ? o.N + 1 : 0) },
+    { name: "กล่อง 4หุน — นอน", code: byColor("boxColor", "JR01688", "JR01687"), len: (o) => o.W / o.N - 9, qty: (o) => (boxIs(o, "กล่อง 1.6×4 + ฉาก") ? 2 * o.N : 0) },
+    { name: "ฉาก 4หุน — ตั้ง", code: byColor("boxColor", "JR01904", "JR01903"), len: (o) => o.H - 9 - 2.4, qty: (o) => (boxIs(o, "กล่อง 1.6×4 + ฉาก") ? o.N + 1 : 0) },
+    { name: "ฉาก 4หุน — นอน", code: byColor("boxColor", "JR01904", "JR01903"), len: (o) => o.W / o.N - 9, qty: (o) => (boxIs(o, "กล่อง 1.6×4 + ฉาก") ? 2 * o.N : 0) },
+    { name: "กล่องร่อง — ตั้ง", code: byColor("boxColor", "JR01674", "JR01673"), len: (o) => o.H, qty: (o) => (boxIs(o, "กล่องร่อง") ? o.N + 1 : 0) },
+    { name: "กล่องร่อง — นอน", code: byColor("boxColor", "JR01674", "JR01673"), len: (o) => o.W / o.N - 9, qty: (o) => (boxIs(o, "กล่องร่อง") ? o.N : 0) },
+    { name: "กล่องเปิด — นอน", code: byColor("boxColor", "JR02067", "JR02066"), len: (o) => o.W / o.N - 9, qty: (o) => (boxIs(o, "กล่องร่อง") ? o.N : 0) },
+    { name: "ตบปิดกล่องเปิด — นอน", code: byColor("boxColor", "JR02073", "JR02072"), len: (o) => o.W / o.N - 9, qty: (o) => (boxIs(o, "กล่องร่อง") ? o.N : 0) },
+    { name: "ตบร่อง — ตั้ง (ทุกเสากลาง)", code: byColor("boxColor", "JR02085", "JR02084"), len: (o) => o.H, qty: (o) => (boxIs(o, "กล่องร่อง") ? Math.max(o.N - 1, 0) : 0), note: "โน้ตชีต 700/เส้น (ขัดสูตร /600 — รอเคาะ)" },
   ],
   hardware: [
     // เทปวิ่งรอบกระจกแต่ละช่อง — ช่องกว้าง W/N (เดิมใช้ W เต็มต่อช่อง = เกินจริง เมื่อหลายช่อง)
@@ -1203,8 +1207,12 @@ const gStand = (o: CutInput) => o.H - (gOut(o) ? GATE.standOut : GATE.standIn); 
 const gSpan = (o: CutInput) => (o.slatDir === "นอน" ? gStand(o) : o.W);
 /** ยาว/ใบระแนง — ตั้ง วิ่งตามเสาตั้ง · นอน วิ่งตามเสานอน(W) · ยัดในหัก 20.4 · แปะนอกบวก 5 */
 const gSlatLen = (o: CutInput) => {
-  const base = o.slatDir === "นอน" ? o.W : gStand(o);
-  return gR1(base + (gOut(o) ? GATE.slatAddOut : -GATE.slatCutIn));
+  const vertical = o.slatDir !== "นอน";
+  const base = vertical ? gStand(o) : o.W;
+  // v1 ประตูรั้ว_ตัด E8 = IF(ตั้ง, IF(ยัดใน, E3−20.4, E3+5), IF(ยัดใน, E4−20.4, E4))
+  //   → แปะนอก บวก 5 เฉพาะ "แนวตั้ง" · แนวนอน+แปะนอก = กว้างเต็ม (เดิมเว็บบวก 5 ทั้ง 2 แนว)
+  if (gOut(o)) return gR1(base + (vertical ? GATE.slatAddOut : 0));
+  return gR1(base - GATE.slatCutIn);
 };
 // เส้นทแยงค้ำหาง = √(หางยื่น² + (หางหน้าลง − หางท้ายลง)²) = 39.1
 const GATE_DIAG = gR1(Math.sqrt(GATE.tail ** 2 + (GATE.tailFront - GATE.tailBack) ** 2));
@@ -1219,7 +1227,12 @@ const gAlt = (o: CutInput) => o.slatType === "ระแนงสลับ";
  */
 function gCounts(o: CutInput) {
   const span = gSpan(o), fA = gShow(o.showA), fB = gShow(o.showB), gap = o.gap ?? 5;
-  const single = Math.max(1, Math.trunc(span / (fA + gap) + 1e-9) + 1);
+  // v1 ประตูรั้ว_ตัด E9/E10: n0 = MAX(INT((ช่วง+ห่าง)/pitch), 2) แล้วเลือก n0 หรือ n0+1
+  //   ตัวที่ "ระยะห่างจริง (ช่วง − n×โชว์)/(n−1)" ใกล้ค่าห่างที่ตั้งไว้ที่สุด (เสมอ → เอา n0)
+  //   เดิมเว็บ INT(ช่วง/pitch)+1 → ต่างจากไฟล์ 32 จาก 101 ความกว้าง ที่โชว์ 4"/ห่าง 2
+  const gapAt = (n) => (n > 1 ? (span - n * fA) / (n - 1) : 0);
+  const n0 = Math.max(Math.trunc((span + gap) / (fA + gap) + 1e-9), 2);
+  const single = Math.abs(gapAt(n0 + 1) - gap) < Math.abs(gapAt(n0) - gap) - 1e-9 ? n0 + 1 : n0;
   if (!gAlt(o)) return { nA: single, nB: 0, faceSum: gR1(single * fA), gapReal: single > 1 ? gR2((span - single * fA) / (single - 1)) : 0 };
   const aRun = Math.max(1, Math.round(o.aRun ?? 3)), bRun = Math.max(1, Math.round(o.bRun ?? 5));
   let cum = 0, nA = 0, nB = 0;
@@ -1413,7 +1426,9 @@ const r1 = (x: number) => Math.round(x * 10) / 10;
 const r2 = (x: number) => Math.round(x * 100) / 100;
 // ตารางชนิดแผ่นมุง: max = ระยะจันทันสูงสุด · w = กว้างใช้งาน/แผ่น (ซม.)
 const ROOF_SHEET: Record<string, { max: number; w: number }> = {
-  "ไวนิล": { max: 75, w: 25 }, "ดีไลท์": { max: 100, w: 100 }, "เมทัลชีท": { max: 100, w: 34 },
+  // v1 + decisions ข้อ 5: ระยะจันทันไวนิล = 100 (ไฟล์ทั้งคิดทุน E1 และใบตัด F45 · ไฟล์ตัดเดิมก็ 100)
+  //   เดิมเว็บ 75 มาจากที่เจ้าของเคาะ 27 ส.ค.69 — v1 สั่งยึดไฟล์ จึงกลับเป็น 100
+  "ไวนิล": { max: 100, w: 25 }, "ดีไลท์": { max: 100, w: 100 }, "เมทัลชีท": { max: 100, w: 34 },
   "โพลีตัน": { max: 122, w: 122 }, "ชินโคร์ HC": { max: 138, w: 138 }, "ชินโคร์ Sup": { max: 138, w: 138 },
   // ── เพิ่ม 12 ชนิดที่คิดราคามีแต่ใบตัดยังไม่รู้จัก (เจ้าของให้ตัวเลข 2 ก.ย.69) ──
   //   เจ้าของยืนยัน: "ระยะจันทัน คือระยะกว้าง 138ซม. กับ กว้าง 100 ซม." → max = w (จันทันวางตามแนวรอยต่อแผ่น)

@@ -422,13 +422,14 @@ function check(label, res, want) {
   if (!rail || rail.code !== "F7994" || rail.qty !== 2) { fails++; console.log(`  ✗ ตบรางล้อ (TOW) want F7994 qty=2(N−1) got ${JSON.stringify(rail)}`); } else console.log("  ✓ ตบรางล้อ F7994 qty=2 (N−1 ตาม F2 บานเลื่อน · v1)");
 }
 
-// ── D) กันสาดเพิง (AWNING) — จันทัน max ไวนิล 75 · ค่าหักปิดปลาย/รางน้ำ · กล่องครอบเพลท×0.25 · แปเดี่ยว · ลบกล่องเหล็ก · override จันทันรวม ──
+// ── D) กันสาดเพิง (AWNING) — จันทัน max ไวนิล 100 (v1) · ค่าหักปิดปลาย/รางน้ำ · กล่องครอบเพลท×0.25 · แปเดี่ยว · ลบกล่องเหล็ก · override จันทันรวม ──
 {
   const spec = CUT_SPEC_BY_ID["awning"];
   const res = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1); // W300 ไวนิล P150 deg7 รางน้ำ
   console.log("กันสาดเพิง (AWNING):");
   const jack = res.rows.find((r) => r.name === "จันทันซอย 1.6×4");
-  if (!jack || jack.qty !== 5) { fails++; console.log(`  ✗ จันทันซอย qty ต้อง 5 (⌈300/75⌉+1) got ${jack?.qty}`); } else console.log("  ✓ จันทัน max ไวนิล=75 → จันทันซอย qty=5");
+  // v1 + decisions ข้อ 5: ระยะจันทันไวนิล = 100 (ไฟล์ทั้งคิดทุน E1 และใบตัด F45) เดิมเว็บ 75 → ⌈300/100⌉+1 = 4
+  if (!jack || jack.qty !== 4) { fails++; console.log(`  ✗ จันทันซอย qty ต้อง 4 (⌈300/100⌉+1) got ${jack?.qty}`); } else console.log("  ✓ จันทัน max ไวนิล=100 (v1) → จันทันซอย qty=4");
   if (res.rows.some((r) => r.name.includes("กล่องเหล็ก"))) { fails++; console.log("  ✗ กล่องเหล็ก 1x1 ไม่ควรมีแล้ว (ไฟล์ยกเลิก)"); } else console.log("  ✓ ไม่มีโปรไฟล์ 'กล่องเหล็ก' แล้ว (ยกเลิกตามไฟล์)");
   const plate = res.rows.find((r) => r.name.includes("กล่องครอบเพลท"));
   const rake = res.rows.find((r) => r.name === "แผ่นหลังคา")?.len ?? 0;
