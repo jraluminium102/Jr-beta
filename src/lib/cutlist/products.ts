@@ -70,20 +70,36 @@ const winHandleSku = (o: CutInput) => {
 
 function fujiSwingHardware(): HardwareDef[] {
   const lockExtra = (o: CutInput) => 2 + Math.max(0, Math.ceil((o.H - 180) / 50)); // สูง(ซม.)>180 เพิ่มทุก 50ซม. (ไฟล์: mm>1800 ทุก 500mm)
-  const rubberM = (o: CutInput) => Math.round((2 * (o.W + o.H) / 100) * 10) / 10;
+  // v1 กระทุ้ง_ตัด ⑤: ยางกรอบบาน = ROUND(2×(กว้างบาน+สูง)×บาน/100,1) · ยางวงกบ = ROUND(2×(กว้าง+สูง)/100,1)
+  const sashRubber = (o: CutInput) => Math.round(2 * (o.W / o.N + o.H) * o.N / 100 * 10) / 10;
+  const jambRubber = (o: CutInput) => Math.round((2 * (o.W + o.H) / 100) * 10) / 10;
+  // มือจับ "ใบลอง" — รหัสชุดเดียวกับใบหลัก แต่เลือกด้านแยก (v1 มีมือจับ ใบ1 ×1 · ใบ2 ×(บาน−1))
+  const winHandleSku2 = (o: CutInput) => {
+    const dark = optStr(o, "winHandleColor", "อบขาว") === "ดำ";
+    const right = optStr(o, "winHandleSide2", "ซ้าย") === "ขวา";
+    return dark ? (right ? "JR00317" : "JR00316") : (right ? "JR00319" : "JR00318");
+  };
   return [
     // มือจับหลบมุ้ง KINGBO-FH3016 — 2 สี × ซ้าย/ขวา = 4 รหัส (ราคาเท่ากันทุกตัว ฿111)
-    //   เจ้าของสั่งเปลี่ยน 27 ส.ค.69 (เดิม JR00304 มือจับ CENZA)
+    //   เจ้าของสั่งเปลี่ยน 27 ส.ค.69 (เดิม JR00304 มือจับ CENZA) · decisions ข้อ 10 "มือจับใช้ KINGBO" → คงไว้
     { name: "มือจับหลบมุ้ง KINGBO-FH3016", sku: winHandleSku, qty: () => 1, unit: "ชุด" },
-    { name: "CDQ Kingbo", sku: "JR00564", qty: () => 1, unit: "ตัว" },   // เดิม JR00566 CDQ ชุดบานกระทุ้ง-เงิน
-    { name: "วิทโก้", sku: "JR00559", qty: () => 2, unit: "ตัว" },
-    { name: "ลูกเบี้ยวล็อค", sku: "JR00486", qty: lockExtra, unit: "ตัว", note: "2 + สูง>180 เพิ่มทุก 50ซม." },
-    { name: "รับล็อคลูกเบี้ยว", sku: "JR00483", qty: lockExtra, unit: "ตัว", note: "2 + สูง>180 เพิ่มทุก 50ซม." },
-    { name: "สปิงก็อท", sku: "JR00592", qty: () => 4, unit: "ตัว" },
-    { name: "ฉากประคองมุม", sku: "JR00480", qty: () => 8, unit: "ตัว" },
-    { name: "น็อตเฟรม", sku: "JR00864", qty: () => 8, unit: "ตัว" },
-    { name: "ยางกรอบบาน", sku: "JR00770", qty: rubberM, unit: "เมตร" },
-    { name: "ยางวงกบ", sku: "JR00770", qty: rubberM, unit: "เมตร" },
+    { name: "มือจับหลบมุ้ง KINGBO-FH3016 (ใบลอง)", sku: winHandleSku2, qty: (o) => Math.max(o.N - 1, 0), unit: "ชุด" },
+    { name: "CDQ Kingbo", sku: "JR00564", qty: (o) => o.N, unit: "ตัว" },   // เดิม JR00566 CDQ ชุดบานกระทุ้ง-เงิน (decisions ข้อ 10: SKU เอาตามสโตร์)
+    { name: "วิทโก้", sku: "JR00559", qty: (o) => 2 * o.N, unit: "ตัว" },
+    { name: "ลูกเบี้ยวล็อค", sku: "JR00486", qty: (o) => lockExtra(o) * o.N, unit: "ตัว", note: "(2 + สูง>180 เพิ่มทุก 50ซม.) × บาน" },
+    { name: "รับล็อคลูกเบี้ยว", sku: "JR00483", qty: (o) => lockExtra(o) * o.N, unit: "ตัว", note: "(2 + สูง>180 เพิ่มทุก 50ซม.) × บาน" },
+    // ⚠ decisions ข้อ 10 "กระทุ้ง SKU เอาตามสโตร์ (ไม่ใช่ตามไฟล์)" — ไฟล์ v1 ใช้ JR00482/JR00557
+    //   แต่เว็บผูก JR00592/JR00480 มาก่อน → คงของเว็บไว้ รอเจ้าของ/สโตร์ยืนยัน (กฎ "ไม่ชัด = ไม่หัก")
+    { name: "สปิงก็อท", sku: "JR00592", qty: (o) => 4 * o.N, unit: "ตัว" },
+    { name: "ฉากประคองมุม", sku: "JR00480", qty: (o) => 8 * o.N, unit: "ตัว" },
+    { name: "น็อตเฟรม", sku: "JR00864", qty: () => 8, unit: "ตัว", note: "ไม่คูณบาน (ตามไฟล์)" },
+    { name: "ยางกรอบบาน", sku: "JR00770", qty: sashRubber, unit: "เมตร" },
+    { name: "ยางวงกบ", sku: "JR00770", qty: jambRubber, unit: "เมตร" },
+    // v1 กระทุ้ง_ตัด แถว 82-83 + decisions ข้อ 10 "ใส่แกนล็อค JR03133 + วาวล์ JR00485 กลับมา"
+    //   (เคยถอดออก 1 ก.ย.69 เพราะใบตัดตอนนั้นไม่มี — v1 ใส่กลับมาแล้ว)
+    { name: "แกนล็อค", sku: "JR03133", qty: (o) => 2 * o.N, unit: "อัน" },
+    { name: "วาวล์ระบายน้ำ", sku: "JR00485", qty: () => 2, unit: "อัน" },
+    { name: "ซิลิโคน ใน+นอก", sku: "JR00504", qty: (o) => Math.ceil(((2 * (o.W + o.H)) / 100) * 2 / 12.5), unit: "หลอด" },
   ];
 }
 
@@ -426,13 +442,14 @@ const SMS240_CFG: Record<string, BifoldCfg> = {
   "3L0R": { d: 18.2, post: 4, lock: 1, handle: 1, stop: 0 }, "0L3R": { d: 18.2, post: 4, lock: 1, handle: 1, stop: 0 },
   "1L3R": { d: 18.5, post: 6, lock: 1, handle: 1, stop: 2 }, "3L1R": { d: 18.5, post: 6, lock: 1, handle: 1, stop: 2 },
   "2L2R": { d: 18.5, post: 6, lock: 2, handle: 0, stop: 0 },
-  "4L0R": { d: 18.2, post: 6, lock: 2, handle: 0, stop: 0 }, "0L4R": { d: 18.2, post: 6, lock: 2, handle: 0, stop: 0 },
+  // v1 ชีต Y: ฐานคิ้วแนวนอน = 18.5 ตั้งแต่ 4 บานขึ้นไป (2-3 บาน ยัง 18.2) — เดิมเว็บใช้ 18.2 หมด
+  "4L0R": { d: 18.5, post: 6, lock: 2, handle: 0, stop: 0 }, "0L4R": { d: 18.5, post: 6, lock: 2, handle: 0, stop: 0 },
   "1L4R": { d: 18.5, post: 7, lock: 2, handle: 1, stop: 2 }, "2L3R": { d: 18.5, post: 7, lock: 2, handle: 1, stop: 2 },
   "3L2R": { d: 18.5, post: 7, lock: 2, handle: 1, stop: 2 }, "4L1R": { d: 18.5, post: 7, lock: 2, handle: 1, stop: 2 },
-  "5L0R": { d: 18.2, post: 7, lock: 2, handle: 1, stop: 0 }, "0L5R": { d: 18.2, post: 7, lock: 2, handle: 1, stop: 0 },
+  "5L0R": { d: 18.5, post: 7, lock: 2, handle: 1, stop: 0 }, "0L5R": { d: 18.5, post: 7, lock: 2, handle: 1, stop: 0 },
   "1L5R": { d: 18.5, post: 9, lock: 2, handle: 1, stop: 2 }, "5L1R": { d: 18.5, post: 9, lock: 2, handle: 1, stop: 2 },
   "3L3R": { d: 18.5, post: 9, lock: 1, handle: 2, stop: 2 },
-  "6L0R": { d: 18.2, post: 9, lock: 3, handle: 0, stop: 0 }, "0L6R": { d: 18.2, post: 9, lock: 3, handle: 0, stop: 0 },
+  "6L0R": { d: 18.5, post: 9, lock: 3, handle: 0, stop: 0 }, "0L6R": { d: 18.5, post: 9, lock: 3, handle: 0, stop: 0 },
   "1L6R": { d: 18.5, post: 10, lock: 3, handle: 1, stop: 2 }, "2L5R": { d: 18.5, post: 10, lock: 3, handle: 1, stop: 2 },
   "3L4R": { d: 18.5, post: 10, lock: 3, handle: 1, stop: 2 }, "4L3R": { d: 18.5, post: 10, lock: 3, handle: 1, stop: 2 },
   "5L2R": { d: 18.5, post: 10, lock: 3, handle: 1, stop: 2 }, "6L1R": { d: 18.5, post: 10, lock: 3, handle: 1, stop: 2 },
@@ -461,6 +478,8 @@ const smsSashW = (o: CutInput) => {
   if ((o.cutAngle ?? "45°") === "90°") return (o.W - smsCfg(o).d - 11.325 * (N - 1)) / N;
   return smsIsSym(o) ? (o.W / 2 - 6 - (N / 2 + 1) * 0.4) / (N / 2) : (o.W - 6 - (N + 1) * 0.4) / N;
 };
+/** คิ้วตบกระจกแนวนอน — v1: (กว้าง − ฐานคิ้ว d − 11.325×(บาน−1)) ÷ บาน (สูตรเดียวกับขวาง 90°) */
+const smsBeadW = (o: CutInput) => { const N = smsN(o); return (o.W - smsCfg(o).d - 11.325 * (N - 1)) / N; };
 const smsBead = (o: { glass?: number }) => (Number(o.glass ?? 6) <= 6 ? "B24008" : Number(o.glass ?? 6) <= 12 ? "B24016" : "B24013");
 
 // LUT อุปกรณ์เฟี้ยม (จากตาราง 45-90 · คอลัมน์ K + N-V) — key = ซ้าย_ขวา_แบ่งบาน(1/0)
@@ -476,6 +495,8 @@ const SMS240_HW: Record<string, number[]> = {
   "3_3_0": [0,2,1,1,0,0,0,2,2], "3_3_1": [0,2,1,1,0,0,0,2,6], "5_1_0": [1,1,1,1,0,0,0,2,2], "6_0_0": [1,2,1,0,0,1,0,2,3],
   "0_6_0": [1,2,0,1,1,0,0,2,3], "1_6_0": [1,2,1,1,1,0,0,2,3], "3_4_0": [0,3,1,1,1,0,0,2,3], "4_3_0": [0,3,1,1,0,1,0,2,3],
   "5_2_0": [2,1,1,1,1,0,0,2,3], "6_1_0": [1,2,1,1,0,1,0,2,3], "7_0_0": [2,1,1,0,0,0,0,3,3], "0_7_0": [2,1,0,1,0,0,0,3,3],
+  // v1 LUT K209:AA255 — 2 แบบที่เว็บขาด (sms240Lut เคยคืน null → อุปกรณ์ออก 0 เงียบ ๆ ทั้งที่เส้นออกปกติ)
+  "2_5_0": [2,1,1,1,0,1,0,2,3], "0_8_0": [2,2,0,1,1,0,0,3,4],
   "3_5_0": [1,2,1,1,0,0,0,3,3], "4_4_0": [0,4,1,1,0,0,1,2,4], "5_3_0": [1,2,1,1,0,0,0,3,3], "3_6_0": [1,3,1,1,1,0,0,3,4],
   "4_5_0": [1,3,1,1,0,1,0,3,4], "5_4_0": [1,3,1,1,1,0,0,3,4], "6_3_0": [1,3,1,1,0,1,0,3,4], "5_5_0": [2,2,1,1,0,0,0,4,4],
   "5_6_0": [2,3,1,1,1,0,0,4,5], "6_5_0": [2,3,1,1,0,1,0,4,5], "5_7_0": [3,2,1,1,0,0,0,5,5], "6_6_0": [2,4,1,1,0,0,1,4,6],
@@ -524,8 +545,12 @@ export const SMS240_BIFOLD: CutSpec = {
     // เสากุญแจ: จำนวนมาจาก config เสมอ (smsCfg.lock) ไม่ผูกมุมตัด — มุมตัดกระทบแค่ความยาวขวาง/คิ้ว (สมมาตรบางคอนฟิก INT(N/2) ผิดจากค่าจริง เช่น 3L3R=1 ไม่ใช่ 3)
     { name: "เสากุญแจ", code: "B24007", len: (o) => o.H - 9.2, qty: (o) => smsCfg(o).lock },
     { name: "เสากุญแจมือจับ", code: "B24007", len: (o) => o.H - 9.2, qty: (o) => smsCfg(o).handle },
-    { name: "บังใบ (บานสวิง)", code: "B24009", len: (o) => o.H - 9.2, qty: (o) => smsCfg(o).stop },
-    { name: "คิ้วตบกระจกแนวนอน", code: smsBead, len: smsSashW, qty: (o) => 2 * smsN(o) },
+    // v1 + decisions ข้อ 11: B24009 = "ต่อกลาง" ยาวเต็มความสูง · จำนวน = ISEVEN(บาน) ? 1 : 0
+    //   (เดิมเว็บใช้เป็น "บังใบบานสวิง" ยาว H−9.2 จำนวนตามตาราง HOMELIFE — คนละความหมาย)
+    { name: "ต่อกลาง", code: "B24009", len: (o) => o.H, qty: (o) => (smsN(o) % 2 === 0 ? 1 : 0) },
+    // v1 เฟี้ยม_ตัด แถว 13: คิ้วแนวนอน = (กว้าง − ฐานคิ้ว d − 11.325×(บาน−1)) ÷ บาน
+    //   เดิมเว็บใช้ความยาว "ขวาง" (smsSashW) → ยาวเกิน ~11 ซม./ท่อน
+    { name: "คิ้วตบกระจกแนวนอน", code: smsBead, len: smsBeadW, qty: (o) => 2 * smsN(o) },
     { name: "คิ้วตบกระจกแนวตั้ง", code: smsBead, len: (o) => o.H - 24.2, qty: (o) => 2 * smsN(o) },
   ],
   // กระจก (ไม่ใช่เส้นตัดอลู): (H−21.5) × (ขวาง−1.3) ซม. × N แผ่น
@@ -542,6 +567,8 @@ export const SMS240_BIFOLD: CutSpec = {
     //   (24 ส.ค.69 เคยปลดออกเพราะชื่อไม่ตรง · 31 ส.ค.69 เจ้าของสั่งให้ยึดไฟล์ = ใส่คืน)
     { name: "ชุดสลักล็อค (Twin Bolt · 05-014)", sku: "JR00563", qty: (o) => sms240Lut(o)?.[8] ?? 0, unit: "ชุด" },
     { name: "ซิลิโคน ใน+นอก", sku: "JR00504", qty: (o) => Math.ceil(((2 * (o.W + o.H)) / 100) * 2 / 12.5), unit: "หลอด" },
+    // v1 เฟี้ยม_ตัด ⑤: น็อต 1" = 8×บาน + 8 (เดิมเว็บไม่มีแถวนี้)
+    { name: "น็อต 1\" (ประกอบบาน+เฟรม)", sku: "JR00864", qty: (o) => 8 * smsN(o) + 8, unit: "ตัว" },
     { name: "ยางเฟรม (บน+ล่าง+ข้าง×2)", sku: "JR00804", qty: (o) => Math.round((2 * o.W + 2 * o.H) / 100 * 10) / 10, unit: "ม." },
     { name: "ยางกรอบบาน (วน 2 รอบ/บาน)", sku: "JR00805", qty: (o) => Math.round(2 * (smsSashW(o) + (o.H - 9.2)) * 2 * smsN(o) / 100 * 10) / 10, unit: "ม." },
   ],
@@ -959,6 +986,8 @@ export const FUJI_SLIDE_MULTI: CutSpec = {
  *   3) เพิ่ม opt "กันสาด" → ใส่ = กันสาด F7948 ยาว=W (มม.) qty 1
  * เส้นเดิม 7 เส้น (เฟรมข้าง/บน/ล่าง/เสา/ขวาง/คิ้วตั้ง/คิ้วขวาง) สูตรความยาวตรงกับไฟล์ v2 เป๊ะ (ไม่เปลี่ยน) — เทียบละเอียดในรายงาน PR
  */
+/** ขวางกระทุ้ง = (กว้าง − 18.5 − 2×(บาน−1) − 18.5) ÷ บาน — v1 กระทุ้ง_ตัด แถว 58 (มม. → ซม.) */
+const fsSashW = (o: CutInput) => (o.W - 3.7 - 0.2 * (o.N - 1)) / o.N;
 export const FUJI_SWING: CutSpec = {
   id: "fuji_swing", name: "FUJI บานเปิด (เปิด/กระทุ้ง)", stockLen: 640, rails: [],
   opts: [
@@ -966,17 +995,22 @@ export const FUJI_SWING: CutSpec = {
     { key: "awning", label: "กันสาด", choices: ["ไม่ใส่", "ใส่"] },
     { key: "winHandleColor", label: "สีมือจับ", choices: ["อบขาว", "ดำ"] },
     { key: "winHandleSide", label: "มือจับ ด้าน", choices: ["ซ้าย", "ขวา"] },
+    { key: "winHandleSide2", label: "มือจับ ใบลอง ด้าน", choices: ["ซ้าย", "ขวา"] },
   ],
-  defaults: { W: 80, H: 140, N: 1, rail: "", honk: false, mesh: "ไม่ใส่", awning: "ไม่ใส่", winHandleColor: "อบขาว", winHandleSide: "ซ้าย" },
+  defaults: { W: 80, H: 140, N: 1, rail: "", honk: false, mesh: "ไม่ใส่", awning: "ไม่ใส่", winHandleColor: "อบขาว", winHandleSide: "ซ้าย", winHandleSide2: "ซ้าย" },
   profiles: [
     // รหัสผูกกับมุ้ง: ไม่ใส่=F7859 (sheet เดิม) · ใส่=F7938 (sheet +มุ้ง) — ยาวเท่าเดิมทั้ง 2 กรณี
     { name: "เฟรมข้าง", code: (o) => (o.mesh === "ใส่" ? "F7938" : "F7859"), len: (o) => o.H, qty: () => 2 },
     { name: "เฟรม บน", code: (o) => (o.mesh === "ใส่" ? "F7938" : "F7859"), len: (o) => o.W - 5.0, qty: () => 1, note: "อลูเดียวกับเฟรมข้าง" },
-    { name: "เฟรม ล่าง", code: "F7939", len: (o) => o.W - 5.0, qty: () => 1 },
-    { name: "เสา", code: "F7943", len: (o) => o.H - 3.7, qty: () => 2 },
-    { name: "ขวาง", code: "F7943", len: (o) => o.W - 3.7, qty: () => 2, note: "อลูเดียวกับเสา" },
-    { name: "คิ้ว ตั้ง", code: "F7935", len: (o) => o.H - 3.7 - 16.0, qty: () => 2 },
-    { name: "คิ้ว ขวาง", code: "F7935", len: (o) => o.W - 3.7 - 12.0, qty: () => 2, note: "อลูเดียวกับคิ้วตั้ง" },
+    // v1 กระทุ้ง_ตัด: รหัสมี B ต่อท้าย (F7939B/F7943B) — ตรง PB.ALUCODE/ราคาสี/สโตร์ (เดิมเว็บเขียน F7939/F7943 ผูกไม่ติด)
+    { name: "เฟรม ล่าง", code: "F7939B", len: (o) => o.W - 5.0, qty: () => 1 },
+    // v1 รองรับหลายบาน: เสา/ขวาง/คิ้ว = ×(2×บาน) · ขวาง = (กว้าง−18.5−2×(บาน−1)−18.5)÷บาน
+    { name: "เสา", code: "F7943B", len: (o) => o.H - 3.7, qty: (o) => 2 * o.N },
+    { name: "ขวาง", code: "F7943B", len: fsSashW, qty: (o) => 2 * o.N, note: "อลูเดียวกับเสา" },
+    { name: "คิ้ว ตั้ง", code: "F7935", len: (o) => o.H - 3.7 - 16.0, qty: (o) => 2 * o.N },
+    { name: "คิ้ว ขวาง", code: "F7935", len: (o) => fsSashW(o) - 12.0, qty: (o) => 2 * o.N, note: "อลูเดียวกับคิ้วตั้ง" },
+    // v1: ชนกลาง F7945C = สูง−27−27 × MAX(บาน−1,0) — เดิมเว็บไม่มีแถวนี้ (บานเดียวจึงไม่เคยเห็น)
+    { name: "ชนกลาง", code: "F7945C", len: (o) => o.H - 5.4, qty: (o) => Math.max(o.N - 1, 0) },
     // ตัวเลือก "มุ้ง" — ยาวเท่า เสา/ขวาง/คิ้วตั้ง/คิ้วขวาง ทุกเส้น (Excel v2 FUJI บานเปิด+มุ้ง R60-63)
     { name: "เสามุ้ง", code: "F7944", len: (o) => o.H - 3.7, qty: (o) => (o.mesh === "ใส่" ? 2 : 0), note: "ยาวเท่าเสา" },
     { name: "ขวางมุ้ง", code: "F7944", len: (o) => o.W - 3.7, qty: (o) => (o.mesh === "ใส่" ? 2 : 0), note: "อลูเดียวกับเสามุ้ง · ยาวเท่าขวาง" },
