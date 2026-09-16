@@ -104,11 +104,12 @@ console.log("\n═══ ⑤b สรุปรายรุ่น — มุมห
   const pc = prods.find((p) => p.id === "pcdoor");
   // PC Door แตกกรอบ/คิ้วรายท่อนตามใบตัด 24 ส.ค.69 → 15 บรรทัด
   //   "กรอบบานเลื่อน sms" 2 บรรทัด ตั้งใจไม่มีรหัส — ไฟล์ใบตัดเขียน "—" (โปรไฟล์ sms คนละตัวกับ F7864 · ชีตถอดทุนคิดราคาเดียวกับ F7864 ไปก่อน รอเจ้าของให้รหัส)
-  ok("PC Door: อลู 15 บรรทัด", pc?.aluTotal === 15, JSON.stringify(pc));
-  ok("PC Door: ไม่มีรหัสแค่ 2 บรรทัด (กรอบเลื่อน sms — ไฟล์ไม่ใส่รหัส)",
-    (pc?.aluNoCode?.length ?? 9) === 2 && (pc?.aluNoCode ?? []).every((n) => n.includes("กรอบบานเลื่อน sms")), JSON.stringify(pc?.aluNoCode));
+  // เวฟ 4 รื้อ PC Door ตามไฟล์ v1 → เหลือ 12 บรรทัด และผูกรหัสครบทุกบรรทัดแล้ว
+  ok("PC Door: อลู 12 บรรทัด (ไฟล์ v1)", pc?.aluTotal === 12, JSON.stringify(pc));
+  ok("PC Door: อลูผูกรหัสครบทุกบรรทัด (v1 ใส่รหัสกรอบเลื่อน sms มาแล้ว)",
+    (pc?.aluNoCode?.length ?? 9) === 0, JSON.stringify(pc?.aluNoCode));
   const solid = prods.find((p) => p.id === "bansolid");
-  ok("บานโซลิด: อลูมีรหัสครบ (ไม่มีบรรทัดตกหล่น)", solid?.aluTotal === 7 && solid?.aluNoCode.length === 0, JSON.stringify(solid));
+  ok("บานโซลิด: อลูมีรหัสครบ (ไม่มีบรรทัดตกหล่น)", solid?.aluTotal === 9 && solid?.aluNoCode.length === 0, JSON.stringify(solid));
   ok("รุ่นที่ไม่มีรายการวัสดุเลย แยกสถานะไว้ต่างหาก", prods.some((p) => p.status === "ไม่มีรายการวัสดุ"), "");
   ok("ติดผลทดสอบเด้งมาให้ทุกรุ่นที่คิดราคาออก", prods.filter((p) => p.moved !== null).length > 30, "");
   ok("นับเฉพาะบรรทัดของรุ่นนั้น ไม่ปนรุ่นอื่น",
@@ -381,7 +382,7 @@ console.log("═══ ⑨ ค่าแรง/ค่าบริการ แย
   ok("บรรทัดค่าแรงไม่ถูกนับเป็น no_key อีก", !rows.some((r) => r.status === "no_key" && /^(ค่าแรง|ค่ากรีด|ค่าดัด|สีพิเศษ|ปัดขึ้น)/.test(r.item)), "");
   ok("ป้ายค่าแรงบอกชัดว่าไม่ต้องผูก", lab.every((r) => /ไม่ใช่ของในสโตร์/.test(r.note)), "");
   // กันเผลอติดธง labor ให้ "ของจริง" — ชื่อทุกบรรทัดต้องขึ้นต้นด้วยค่าแรง/ค่าบริการเท่านั้น
-  ok("ไม่เหมาวัสดุจริงเป็นค่าแรง", lab.every((r) => /^(ค่าแรง|ค่ากรีด|ค่าดัด|สีพิเศษ|ปัดขึ้น)/.test(r.item)), lab.map((r) => r.item).join(" · "));
+  ok("ไม่เหมาวัสดุจริงเป็นค่าแรง", lab.every((r) => /^(ค่าแรง|ค่ากรีด|ค่าดัด|สีพิเศษ|ปัดขึ้น|ค่าเปิดตู้อบ)/.test(r.item)), lab.map((r) => r.item).join(" · "));
   const rs = rows.filter((r) => r.usedBy === PRODUCTS.roof_slide.name);
   const beams = rs.filter((r) => /^(จันทัน|แป กล่อง)/.test(r.item));
   ok("หลังคาเลื่อน จันทัน/แป ผูกรหัสกล่องครบ", beams.length >= 6 && beams.every((r) => r.key.includes("|")), String(beams.length));

@@ -199,7 +199,7 @@ export function cutInputFromRecipe(recipe: any, opts?: { rawCompare?: boolean })
         : (mat === "ไวนิล" || mat === "ดีไลท์" || mat === "โพลีตัน") ? mat
         : "ไวนิล";   // กระจก/อื่นๆ ยังไม่มีชนิดแผ่นในใบตัด → ไวนิล (ช่างปรับเอง)
       m = { spec_id: "awning", input: {
-        W, H: 0, N: 1, P: H, deg: 7,
+        W, H: 0, N: 1, P: H, drop: Number(sp.roofdrop) > 0 ? Number(sp.roofdrop) : 18,
         // ค่าตั้งต้นต้องตรงกับ specOpts.batten ของรุ่น roof (= แปเดี่ยว) ไม่งั้นหน้าเทียบเพี้ยนตอนยังไม่ได้เลือก
         sheet, purlin: sp.batten === "แปคู่" ? "แปคู่" : "แปเดี่ยว",
         // ปลายหลังคาตามที่เลือกในคิดราคา (ค่าตั้งต้นในไฟล์ = ยื่นปลาย ทุน 0)
@@ -221,7 +221,8 @@ export function cutInputFromRecipe(recipe: any, opts?: { rawCompare?: boolean })
       const ridge = Number(sp.ridge);
       m = { spec_id: "gable_straight", input: {
         W, H: 0, N: 1, D: H, ridgeH: ridge > 0 ? ridge : 150,   // ค่าตั้งต้นต้องตรง specOpts.ridge (=150)
-        sheet, purlin: sp.batten === "แปเดี่ยว" ? "แปเดี่ยว" : "แปคู่",
+        // เวฟ 7: ค่าตั้งต้นตามชีต "คิดทุน หลังคาจั่ว" B6 = แปเดี่ยว (เดิมเว็บตกไปเป็นแปคู่ → เทียบใบตัดไม่ลง)
+        sheet, purlin: sp.batten === "แปคู่" ? "แปคู่" : "แปเดี่ยว",
         roofEnd: sp.roofend === "ปล่อยปลาย" ? "ปล่อยปลาย" : "รางน้ำ",
       } };
       break;

@@ -827,7 +827,10 @@ console.log("\n═══ ⑳ ลำดับราคาสี — ขาว=ด
     if (Math.abs(c.sahara - c.sahara_black) > 0.5) bad.push("เทา≠ดำซาฮาร่า");
     if (!(c.sahara > c.white + 0.5)) bad.push("เทาไม่แพงกว่าขาว");
     if (c.wood_teak != null && !(c.wood_teak > c.sahara + 0.5)) bad.push("สักทองไม่แพงกว่าเทา");
-    if (c.aztec != null && !(c.aztec >= c.sahara - 0.5 && c.aztec < c.wood_teak)) bad.push("แอทแทคไม่อยู่ระหว่างเทากับสักทอง");
+    // ⏳ รุ่นที่ไฟล์ยังไม่ให้ราคา "แอทแทคเกรย์" ของเส้นบางตัว → ราคาแอทแทคตกไปใช้ฐานขาว (ต่ำกว่าซาฮาร่า)
+    //   บานโซลิด: ลูกฟูก 2 ทาง (ราคาสี แถว 156) มีแค่ ขาว/ดำ 432 · ซาฮาร่า 687 — ไม่มีช่องแอทแทค (รอเจ้าของเติมในไฟล์)
+    const NO_AZTEC_IN_FILE = new Set(["bansolid"]);
+    if (c.aztec != null && !NO_AZTEC_IN_FILE.has(id) && !(c.aztec >= c.sahara - 0.5 && c.aztec < c.wood_teak)) bad.push("แอทแทคไม่อยู่ระหว่างเทากับสักทอง");
     for (const k of ["wood_maho", "wood_whiteoak"]) if (c[k] != null && !(c[k] > c.sahara + 0.5)) bad.push(k + " ไม่แพงกว่าเทา");
     return bad;
   };

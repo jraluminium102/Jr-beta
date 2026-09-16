@@ -145,7 +145,7 @@ function check(label, res, want) {
     { nameHas: "CDQ", sku: "JR00596", qty: 1 },
     { nameHas: "น็อตเฟรม", sku: "JR00864", qty: 8 },
     // 4 ก.ย.69: เจ้าของเคาะ "บานโซลิด เอาตามคิดราคา" → ยางกรอบบาน = วนรอบช่องเต็ม × จำนวนบาน (เดิมวนรอบใบจริง 13.6)
-    { nameHas: "ยางกรอบบาน", sku: "JR00771", qty: 16 },
+    { nameHas: "ยางกรอบบาน", sku: "JR00771", qty: 13.6 },   // v1 โซลิด_ตัด D74: รอบบานแม่ + รอบบานลูก×จำนวนลูก (เดิมปัดเป็นเมตรเต็มก่อนคูณ = 16)
     { nameHas: "ยางวงกบ", sku: "JR00771", qty: 8 },
   ]);
   // ดัมมี่+ดัมมี่/Cmech ต้องไม่โผล่ที่ default
@@ -429,10 +429,12 @@ function check(label, res, want) {
   console.log("กันสาดเพิง (AWNING):");
   const jack = res.rows.find((r) => r.name === "จันทันซอย 1.6×4");
   // v1 + decisions ข้อ 5: ระยะจันทันไวนิล = 100 (ไฟล์ทั้งคิดทุน E1 และใบตัด F45) เดิมเว็บ 75 → ⌈300/100⌉+1 = 4
-  if (!jack || jack.qty !== 4) { fails++; console.log(`  ✗ จันทันซอย qty ต้อง 4 (⌈300/100⌉+1) got ${jack?.qty}`); } else console.log("  ✓ จันทัน max ไวนิล=100 (v1) → จันทันซอย qty=4");
+  // เวฟ 7 (ไฟล์ v1 D14): ซอย = จันทันรวม − 2 (หักข้างซ้าย/ขวา) → ⌈300/100⌉+1 = 4 แนว ⇒ ซอย 2 ท่อน
+  if (!jack || jack.qty !== 2) { fails++; console.log(`  ✗ จันทันซอย qty ต้อง 2 (จันทันรวม 4 − 2) got ${jack?.qty}`); } else console.log("  ✓ ซอย = จันทันรวม − 2 = 2 ท่อน (ไฟล์ v1)");
   if (res.rows.some((r) => r.name.includes("กล่องเหล็ก"))) { fails++; console.log("  ✗ กล่องเหล็ก 1x1 ไม่ควรมีแล้ว (ไฟล์ยกเลิก)"); } else console.log("  ✓ ไม่มีโปรไฟล์ 'กล่องเหล็ก' แล้ว (ยกเลิกตามไฟล์)");
   const plate = res.rows.find((r) => r.name.includes("กล่องครอบเพลท"));
-  const rake = res.rows.find((r) => r.name === "แผ่นหลังคา")?.len ?? 0;
+  // แผ่นหลังคา = ยื่นเอียง − 3 (ไฟล์ C24) → บวกกลับ 3 เพื่อได้ยื่นเอียงจริง
+  const rake = (res.rows.find((r) => r.name === "แผ่นหลังคา")?.len ?? 0) + 3;
   if (!plate || Math.abs(plate.len - rake * 0.25) > 0.05) { fails++; console.log(`  ✗ กล่องครอบเพลท want ${rake * 0.25} got ${plate?.len}`); } else console.log(`  ✓ กล่องครอบเพลท = ยื่นเอียง×0.25 (${plate.len})`);
   const purlinCouple = res.rows.find((r) => r.name.startsWith("แป ("));
   if (!purlinCouple || !purlinCouple.code.includes("1\"x1.5\"")) { fails++; console.log(`  ✗ แปคู่(default) code ต้องเป็นกล่อง 1x1.5 got ${purlinCouple?.code}`); } else console.log("  ✓ แปคู่(default) code = กล่อง 1\"x1.5\"");
@@ -442,14 +444,14 @@ function check(label, res, want) {
   // ค่าหักจันทันซอย: ปิดปลาย=2.5 · รางน้ำ=10.2 (เดิม 16.5/14.7)
   const closed = computeCutList(spec, { ...spec.defaults, roofEnd: "ปิดปลาย" }, 1);
   const jackClosed = closed.rows.find((r) => r.name === "จันทันซอย 1.6×4");
-  const rakeClosed = closed.rows.find((r) => r.name === "แผ่นหลังคา")?.len ?? 0;
-  if (!jackClosed || Math.abs(jackClosed.len - (rakeClosed - 2.5)) > 0.05) { fails++; console.log(`  ✗ จันทันซอย ปิดปลาย ค่าหักต้อง 2.5 got len=${jackClosed?.len} rake=${rakeClosed}`); } else console.log("  ✓ จันทันซอย ปิดปลาย ค่าหัก=2.5 (เดิม 16.5)");
+  const rakeClosed = (closed.rows.find((r) => r.name === "แผ่นหลังคา")?.len ?? 0) + 3;
+  if (!jackClosed || Math.abs(jackClosed.len - (rakeClosed - 4)) > 0.05) { fails++; console.log(`  ✗ จันทันซอย ปิดปลาย ค่าหักต้อง 4 got len=${jackClosed?.len} rake=${rakeClosed}`); } else console.log("  ✓ จันทันซอย ปิดปลาย ค่าหัก=4 (แผง ⑦ F37 · เดิมเว็บ 2.5)");
   const jackRain = res.rows.find((r) => r.name === "จันทันซอย 1.6×4");
   if (!jackRain || Math.abs(jackRain.len - (rake - 10.2)) > 0.05) { fails++; console.log(`  ✗ จันทันซอย รางน้ำ ค่าหักต้อง 10.2 got len=${jackRain?.len} rake=${rake}`); } else console.log("  ✓ จันทันซอย รางน้ำ ค่าหัก=10.2 (เดิม 14.7)");
   // override จันทันรวม (ช่างกรอกเอง)
   const overridden = computeCutList(spec, { ...spec.defaults, rakeTotal: 6 }, 1);
   const jackOv = overridden.rows.find((r) => r.name === "จันทันซอย 1.6×4");
-  if (!jackOv || jackOv.qty !== 6) { fails++; console.log(`  ✗ จันทันรวม override=6 ต้อง qty=6 got ${jackOv?.qty}`); } else console.log("  ✓ จันทันรวม override (rakeTotal=6) → จันทันซอย qty=6");
+  if (!jackOv || jackOv.qty !== 4) { fails++; console.log(`  ✗ จันทันรวม override=6 → ซอยต้อง 4 got ${jackOv?.qty}`); } else console.log("  ✓ จันทันรวม override (rakeTotal=6) → จันทันซอย qty=4 (=6−2)");
 }
 
 // ── E) SMS 240 เฟี้ยม — มุมตัด 45°(default)/90° ──

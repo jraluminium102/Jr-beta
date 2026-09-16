@@ -416,7 +416,9 @@ export function computeCost(PB, prod, opt) {
     if (kgPerM > 0) aluKgReal += kgLine; else if (seg * count > 0) kgMissing.push(it.name);
     aluBarsAll += bars;   // นับทุกเส้น (รวมเส้นที่ราคารวมสีมาแล้ว) — ใช้ตัดสินค่าเปิดตู้อบ
     // code/kg ติดมากับบรรทัดด้วย — หน้าเทียบ "คิดราคา ↔ ใบตัด" ใช้จับคู่รหัส + คิด ฿/กก. (ไม่กระทบตัวเลขใด ๆ)
-    lines.push({ cat: 'alu', name: it.name + (colorPrice > 0 || cfPrice != null ? ' (' + colorDisp + ')' : ''), code: code || '', kg: kgBar || 0, kgLine: round2(kgLine),
+    // เวฟ 7: พ่วงรหัสสโตร์ให้บรรทัดเส้นอลูด้วย — เส้นที่ผูกด้วย "ชนิด|ขนาด" (กล่อง/ฉาก/แซด)
+    //   จะได้ไม่หลุดรหัสเวลาย้ายบรรทัดจากของสิ้นเปลืองมาอยู่กองเส้นอลู · การจับคู่ยังใช้ code เหมือนเดิม
+    lines.push({ cat: 'alu', name: it.name + (colorPrice > 0 || cfPrice != null ? ' (' + colorDisp + ')' : ''), code: code || '', sku: skuOf(it) || '', kg: kgBar || 0, kgLine: round2(kgLine),
       qty: bars, unit: 'เส้น', unitPrice: round2(price * m), amount: round2(amount),
       // ความยาวที่ต้องตัดจริง + จำนวนชิ้น — หน้าเทียบ "คิดราคา ↔ ใบตัด" ใช้ตัวนี้เทียบ
       //   (เทียบ "จำนวนเส้น" ตรง ๆ ไม่ได้แล้ว: คิดราคานับแบบไฟล์ ÷6.4+เศษ · ใบตัดนับเส้นเต็ม)
