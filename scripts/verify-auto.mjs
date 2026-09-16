@@ -739,7 +739,8 @@ console.log("\n═══ ⑰ บานโซลิด 1 ชั้น / 2 ชั�
 console.log("\n═══ ⑱ นับเส้นอลูแบบไฟล์ — Velora · บานระแนงเลื่อน ═══");
 {
   const v = computeCost(PB, PRODUCTS.velora, { w: 220, h: 200, p: 1, glassType: "เทมเปอร์ใส 6มม.", color: "white", colorKey: "white" });
-  ok("Velora 220×200 อบขาว: ทุนรวม = ชีต D24 8,151.57", Math.abs(v.cost.total - 8151.57) <= 0.5, String(v.cost.total));
+  // เวฟ 3 (16 ก.ย.69): ไฟล์ v1 แทรกแถว 17 "ลูกฟูก 2 ทาง ตั้ง+นอน [JR01994]" = 580.32 → ชีต D25 = 8,731.89
+  ok("Velora 220×200 อบขาว: ทุนรวม = ชีต v1 D25 8,731.89", Math.abs(v.cost.total - 8731.89) <= 0.5, String(v.cost.total));
   const q = (r, re) => (r.lines || []).filter((l) => l.cat === "alu" && re.test(l.name || "")).reduce((a, l) => a + Number(l.qty), 0);
   ok("Velora วงกบ = ชีต B15 1.3433 เส้น", Math.abs(q(v, /^วงกบ/) - 1.34333) < 0.001, String(q(v, /^วงกบ/)));
   ok("Velora กรอบบาน = ชีต B16 1.781 เส้น", Math.abs(q(v, /^กรอบบาน/) - 1.781) < 0.001, String(q(v, /^กรอบบาน/)));
