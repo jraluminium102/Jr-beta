@@ -388,10 +388,11 @@ console.log("═══ ⑨ ค่าแรง/ค่าบริการ แย
   ok("หลังคาเลื่อน จันทัน/แป ผูกรหัสกล่องครบ", beams.length >= 6 && beams.every((r) => r.key.includes("|")), String(beams.length));
   // ค่าแรงที่ "มีรหัสในสโตร์" (ค่ากรีดราง JR00202) ต้องขึ้นว่าผูกแล้ว ไม่ใช่ถูกป้ายค่าแรงกลบ
   // สโตร์ขายเป็นแพ็ค (per) — ต้องหารก่อนเทียบ ไม่งั้นขึ้น "ราคาไม่ตรง" ทั้งที่ตรง แล้วกลบตัวที่ต่างจริง
-  //   เคสจริง: มือจับ Align SMS ของ PC Door สูตร 198 (2 ตัว) สโตร์ JR00378 = 99/ตัว per=0.5
+  //   เคสจริง: สักหลาด JR00794 สโตร์ขายเป็นม้วน 250 ม. (ราคาม้วน 375) · สูตรคิด 1.5 บาท/ม. → 375 ÷ 250 = 1.5 ต้องถือว่า "ตรง"
+  //   (ของเดิมใช้มือจับ Align JR00378 สูตร 198 = 2 ตัว/ชุด — v1 แตกเป็นราคา/ตัวแล้ว ไม่มีรายการ per เหลือในรหัสนั้น)
   {
-    const one = auditStockLink([{ name: "x", sku: "JR00378", color: "อบขาว", unit_cost: 99 }], PB)
-      .filter((r) => r.key === "JR00378" && r.formulaPrice === 198);
+    const one = auditStockLink([{ name: "x", sku: "JR00794", color: "", unit_cost: 375 }], PB)
+      .filter((r) => r.key === "JR00794" && r.formulaPrice === 1.5);
     ok("หารราคาแพ็คก่อนเทียบ (per)", one.length > 0 && one.every((r) => r.status !== "price_diff"),
       one.map((r) => r.status + "/" + r.stockPrice).join(" "));
   }
