@@ -26,24 +26,33 @@ const SWING_DOOR_DEF = { hwColor: "ขาว", lockType: "ล็อคปกต�
 //   "Cmech ดัมมี่+ดัมมี่" → ดัมมี่ JR00289=2 (กุญแจ/ล็อค=0)
 //   + เพิ่ม CDQ/ปลายกลอน (บานลอง) ให้ครบชุดกับ SOLID_DOOR — ประตูเดี่ยว/บานเปิดตระกูลนี้ไม่มีบานลอง (N คงที่ 1) → เป็น 0 เสมอ (พอร์ตตามไฟล์)
 function casementDoorHardware(hasSill: (o: CutInput) => boolean, sashN: (o: CutInput) => number = () => 1): HardwareDef[] {
+  // จำนวน "บานลอง" = บานทั้งหมด − ใบหลัก (บานเดี่ยว = 0)
+  const childN = (o: CutInput) => Math.max(sashN(o) - 1, 0);
+  // นับมือจับ: ใบหลัก (motherHandle) + ใบลอง (childHandle · เฉพาะเมื่อมีบานลอง) — ตรงชีต ⑤ "มือจับ ใบหลัก / ใบลอง"
+  const handleN = (o: CutInput, pick: string) =>
+    (o.motherHandle === pick ? 1 : 0) + (childN(o) > 0 && o.childHandle === pick ? 1 : 0);
   return [
     { name: "บานพับ hyda", sku: (o) => (o.hwColor === "ดำ" ? "JR00488" : "JR00489"), qty: (o) => (o.H > 300 || o.W / sashN(o) > 120 ? 5 : 4) * sashN(o), unit: "ตัว" },
-    { name: "สปิงก็อท", sku: "JR00592", qty: (o) => 4 * sashN(o), unit: "ตัว" },
-    { name: "ฉากประคองมุม", sku: "JR00480", qty: (o) => 8 * sashN(o), unit: "ตัว" },
-    { name: "มือจับ ล็อค+กุญแจ (คิงโบ)", sku: (o) => (o.hwColor === "ดำ" ? "JR00314" : "JR00315"), qty: (o) => (o.motherHandle === "คิงโบ ล็อค+กุญแจ" ? 1 : 0), unit: "ชุด" },
-    { name: "มือจับ ดัมมี่+ดัมมี่ (คิงโบ)", sku: (o) => (o.hwColor === "ดำ" ? "JR00312" : "JR00313"), qty: (o) => (o.motherHandle === "คิงโบ ดัมมี่+ดัมมี่" ? 1 : 0), unit: "ชุด" },
-    { name: "มือจับ Cmech กุญแจ", sku: "JR00293", qty: (o) => (o.motherHandle === "Cmech กุญแจ+ล็อค" ? 1 : 0), unit: "ชุด", noStock: true, note: "ไม่ตัดสต็อก" },
-    { name: "มือจับ Cmech ล็อค", sku: "JR00291", qty: (o) => (o.motherHandle === "Cmech กุญแจ+ล็อค" || o.motherHandle === "Cmech ล็อค+ดัมมี่" ? 1 : 0), unit: "ชุด" },
-    { name: "มือจับ Cmech ดัมมี่", sku: "JR00289", qty: (o) => (o.motherHandle === "Cmech ล็อค+ดัมมี่" ? 1 : 0) + (o.motherHandle === "Cmech ดัมมี่+ดัมมี่" ? 2 : 0), unit: "ชุด" },
+    // v1 (16 ก.ย.69): โซลิด_ตัด/กระทุ้ง_ตัด ⑤.1 ใช้ JR00482 (สปิงก็อท) · JR00557 (ฉากประคองมุม)
+    //   เดิมเว็บผูก JR00592/JR00267 ซึ่ง ราคา ERP ระบุว่าเป็นของบานเลื่อนยูโร (คนละตัว) — รายงาน C ชี้ว่าผูกผิดตัว
+    { name: "สปิงก็อท", sku: "JR00482", qty: (o) => 4 * sashN(o), unit: "ตัว" },
+    { name: "ฉากประคองมุม", sku: "JR00557", qty: (o) => 8 * sashN(o), unit: "ตัว" },
+    { name: "มือจับ ล็อค+กุญแจ (คิงโบ)", sku: (o) => (o.hwColor === "ดำ" ? "JR00314" : "JR00315"), qty: (o) => handleN(o, "คิงโบ ล็อค+กุญแจ"), unit: "ชุด" },
+    { name: "มือจับ ดัมมี่+ดัมมี่ (คิงโบ)", sku: (o) => (o.hwColor === "ดำ" ? "JR00312" : "JR00313"), qty: (o) => handleN(o, "คิงโบ ดัมมี่+ดัมมี่"), unit: "ชุด" },
+    { name: "มือจับ Cmech กุญแจ", sku: "JR00293", qty: (o) => handleN(o, "Cmech กุญแจ+ล็อค"), unit: "ชุด", noStock: true, note: "ไม่ตัดสต็อก" },
+    { name: "มือจับ Cmech ล็อค", sku: "JR00291", qty: (o) => handleN(o, "Cmech กุญแจ+ล็อค") + handleN(o, "Cmech ล็อค+ดัมมี่"), unit: "ชุด" },
+    { name: "มือจับ Cmech ดัมมี่", sku: "JR00289", qty: (o) => handleN(o, "Cmech ล็อค+ดัมมี่") + 2 * handleN(o, "Cmech ดัมมี่+ดัมมี่"), unit: "ชุด" },
     otherHandleRow("motherHandle"),
+    otherHandleRow("childHandle", { label: "มือจับใบลอง (อื่นๆ)", gate: (o) => childN(o) > 0 }),
     { name: "ตลับกุญแจไฮด้า", sku: (o) => (o.lockType === "มัลติพ้อยล็อค" ? "JR00553" : "JR00551"), qty: () => 1, unit: "ตัว" },
     { name: "ไส้กุญแจ", sku: (o) => (o.openDir === "เปิดเข้า" ? "JR00498" : "JR00499"), qty: () => 1, unit: "ตัว", note: "auto เข้า/ออก" },
     { name: "แผ่นรับล็อค", sku: "JR00562", qty: () => 1, unit: "ชุด" },
-    { name: "CDQ บานเปิด (บานลอง)", sku: "JR00596", qty: () => 0, unit: "ตัว", note: "บานเดี่ยว (N คงที่ 1) → ไม่มีบานลอง เป็น 0 เสมอ" },
-    { name: "ปลายกลอน (บานลอง)", sku: "JR00598", qty: () => 0, unit: "ตัว", note: "บานเดี่ยว (N คงที่ 1) → ไม่มีบานลอง เป็น 0 เสมอ" },
+    { name: "CDQ บานเปิด (บานลอง)", sku: "JR00596", qty: childN, unit: "ตัว", note: "= จำนวนบาน − 1 (บานเดี่ยว = 0)" },
+    { name: "ปลายกลอน (บานลอง)", sku: "JR00598", qty: childN, unit: "ตัว", note: "= จำนวนบาน − 1 (บานเดี่ยว = 0)" },
     { name: "น็อตเฟรม 1\"", sku: "JR00864", qty: (o) => (hasSill(o) ? 8 : 6), unit: "ตัว" },
-    { name: "ยางกรอบบาน", sku: "JR00771", qty: (o) => Math.round(2 * (o.W + o.H) / 100 * 10) / 10, unit: "เมตร" },
-    { name: "ยางวงกบ", sku: "JR00771", qty: (o) => Math.round((hasSill(o) ? 2 * (o.W + o.H) : o.W + 2 * o.H) / 100 * 10) / 10, unit: "เมตร" },
+    // v1 + decisions ข้อ 7: ยาง = ROUND(2×(กว้าง+สูง)/100 × จำนวนบาน) บรรทัดเดียว (เลิกแยก ยางกรอบบาน/ยางวงกบ)
+    //   ตรวจ: บานเปิด_ตัด 150×200 1 บาน = 7 ม. · บานเปิดคู่_ตัด 150×200 2 บาน = 14 ม. · ครอบวงกบไม้ 130×210 2 บาน = 14 ม.
+    { name: "ยาง", sku: "JR00771", qty: (o) => Math.round(2 * (o.W + o.H) / 100 * sashN(o)), unit: "เมตร" },
   ];
 }
 
@@ -80,6 +89,11 @@ function fujiSwingHardware(): HardwareDef[] {
 
 const isPlug = (rail: string) => rail === "3รางเสียบ"; // 3รางเสียบ → ค่าหัก "เสียบ" · ไม่งั้น "เตี้ย"
 
+/** อ่าน opt ที่ยังไม่ได้ประกาศใน CutInput (engine.ts อยู่นอกขอบเขตเวฟนี้) — รูปแบบเดียวกับ fIn()/otherHandleRow() */
+const optStr = (o: CutInput, key: string, def: string) => String((o as unknown as Record<string, unknown>)[key] ?? def);
+/** เลือกรหัสตามสี (ดำ = ค่าตั้งต้นของทุกชีต v1) */
+const byColor = (key: string, dark: string, white: string, def = "ดำ") => (o: CutInput) => (optStr(o, key, def) === "ดำ" ? dark : white);
+
 /**
  * โหนกเกี่ยว (เสาเกี่ยวรับแรง B20010) — "ออโต้ตามความสูง"
  *   บานสูงเกิน 240 ซม. ต้องใช้เสาเกี่ยวรับแรงเสมอ (คิดราคา 4.0 ใช้กฎนี้มาตลอด: count = H>2.4 ? ... )
@@ -98,7 +112,8 @@ export const sBoxLeft = (o: CutInput) => {
   if (v.includes("เปิดขวา")) return false;
   return v === "ซ้าย";
 };
-export const honkOf = (o: CutInput) => !!o.honk || Number(o.H) > 240;
+//   v1 (16 ก.ย.69): ทั้ง 3 ชีต SMS_ตัด_* แถว 6 เขียน "B20010 ผูกกับความสูง ≥240 ซม." → ใช้ >= ไม่ใช่ >
+export const honkOf = (o: CutInput) => !!o.honk || Number(o.H) >= 240;
 // มือจับเริ่มต้น (บานเลื่อน/ประตู) — ตรง default ในไฟล์ Excel
 const HANDLE_DEF_LR = { handleBrand: "Align", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค", handleR: "ล็อค+ดัมมี่" };
 const HANDLE_DEF_L = { handleBrand: "Align", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค" };
@@ -134,11 +149,13 @@ export const SMS_SLIDE_FREE: CutSpec = {
     { name: "ขวางบน", code: "B20054", len: freeCross, qty: (o) => o.N },
     { name: "ขวางล่าง", code: "B20054", len: freeCross, qty: (o) => o.N },
     { name: "ฝาปิดเฟรมข้าง", code: "B20019", len: (o) => o.H - (isPlug(o.rail) ? 5 : 2.3), qty: () => 4 },
-    { name: "ตบเฟรมบน/ล่าง ร่องในบน", code: "-", len: (o) => o.W - 7, qty: (o) => (meshOf(o) === "ไม่มี" ? Math.max(3 - o.N, 0) : 0) },
-    { name: "ตบเฟรมบน/ล่าง ร่องในล่าง", code: (o) => (meshOf(o) === "เฟรมเล็ก" ? "B20048" : "-"), len: (o) => o.W - 7, qty: (o) => (meshOf(o) === "เฟรมใหญ่" ? 0 : Math.max(3 - o.N, 0)) },
+    // v1: SMS_ตัด_อิสระ แถว 20 "ตบเฟรมบน/ล่าง ร่องใน" รหัส = B20019 (เดิมเว็บเว้น "-" → ไม่คิดเงิน/ไม่หักสต็อก)
+    { name: "ตบเฟรมบน/ล่าง ร่องในบน", code: "B20019", len: (o) => o.W - 7, qty: (o) => (meshOf(o) === "ไม่มี" ? Math.max(3 - o.N, 0) : 0) },
+    { name: "ตบเฟรมบน/ล่าง ร่องในล่าง", code: (o) => (meshOf(o) === "เฟรมเล็ก" ? "B20048" : "B20019"), len: (o) => o.W - 7, qty: (o) => (meshOf(o) === "เฟรมใหญ่" ? 0 : Math.max(3 - o.N, 0)) },
     { name: "เบรคบาน (ธรณี)", code: "B20050", len: (o) => o.W - 4.4, qty: (o) => (o.rail === "รางเตี้ย7มม" ? 2 : 0) },
-    { name: "ตบรางล้อ", code: "F7994", len: (o) => o.W - 4.4, qty: (o) => (isPlug(o.rail) ? o.N : 0) },   // รางเตี้ยไม่ใช้ตบรางล้อ (ใช้ B20050 แทน)
-    { name: "ตบรางล้อ (มุ้งใหญ่)", code: "F7994", len: (o) => o.W - 4.4, qty: (o) => (meshOf(o) === "เฟรมใหญ่" ? meshCountOf(o) : 0) },
+    // v1: SMS_ตัด (ชีตรวม) D20 = กว้างเต็ม (ไม่หัก 4.4) · E20 = F2 "บานเลื่อน" (อิสระ = N)
+    { name: "ตบรางล้อ", code: "F7994", len: (o) => o.W, qty: (o) => (isPlug(o.rail) ? o.N : 0) },   // รางเตี้ยไม่ใช้ตบรางล้อ (ใช้ B20050 แทน)
+    { name: "ตบรางล้อ (มุ้งใหญ่)", code: "F7994", len: (o) => o.W, qty: (o) => (meshOf(o) === "เฟรมใหญ่" ? meshCountOf(o) : 0) },
     { name: "เสานอนมุ้ง (เฟรมเล็ก)", code: "B30006", len: (o) => freeCross(o) + 9.7, qty: (o) => (meshOf(o) === "เฟรมเล็ก" ? 2 * meshCountOf(o) : 0) },
     { name: "เสาตั้งมุ้ง (เฟรมเล็ก)", code: "B30006", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3) - 1, qty: (o) => (meshOf(o) === "เฟรมเล็ก" ? 2 * meshCountOf(o) : 0) },
     { name: "เสากุญแจมุ้ง (ใหญ่)", code: "B20051", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3), qty: (o) => (meshOf(o) === "เฟรมใหญ่" ? meshCountOf(o) : 0), note: "อลูเดียวกับเสากุญแจ ML" },
@@ -174,12 +191,14 @@ export const SMS_SLIDE_CENTER: CutSpec = {
     { name: "ขวางบน", code: "B20054", len: centerCross, qty: () => 4 },
     { name: "ขวางล่าง", code: "B20054", len: centerCross, qty: () => 4 },
     { name: "ฝาปิดเฟรมข้าง", code: "B20019", len: (o) => o.H - (isPlug(o.rail) ? 5 : 2.3), qty: () => 4 },
-    { name: "ตบเฟรมบน/ล่าง ร่องในบน", code: "-", len: (o) => o.W - 7, qty: (o) => (meshOf(o) === "ไม่มี" ? 1 : 0) },
-    { name: "ตบเฟรมบน/ล่าง ร่องในล่าง", code: (o) => (meshOf(o) === "เฟรมเล็ก" ? "B20048" : "-"), len: (o) => o.W - 7, qty: (o) => (meshOf(o) === "เฟรมใหญ่" ? 0 : 1) },
-    { name: "ตบเฟรมบน/ล่าง ร่องกลาง", code: "-", len: (o) => (o.W - 4.4) - 2 * (centerCross(o) + 9.7), qty: () => 2, note: "เฟรมบน − 2×(ขวางล่าง+9.7)" },
+    // v1: SMS_ตัด_คู่กลาง แถว 21-22 ร่องใน/ร่องกลาง รหัส = B20019 ทั้งคู่
+    { name: "ตบเฟรมบน/ล่าง ร่องในบน", code: "B20019", len: (o) => o.W - 7, qty: (o) => (meshOf(o) === "ไม่มี" ? 1 : 0) },
+    { name: "ตบเฟรมบน/ล่าง ร่องในล่าง", code: (o) => (meshOf(o) === "เฟรมเล็ก" ? "B20048" : "B20019"), len: (o) => o.W - 7, qty: (o) => (meshOf(o) === "เฟรมใหญ่" ? 0 : 1) },
+    { name: "ตบเฟรมบน/ล่าง ร่องกลาง", code: "B20019", len: (o) => (o.W - 4.4) - 2 * (centerCross(o) + 9.7), qty: () => 2, note: "เฟรมบน − 2×(ขวางล่าง+9.7)" },
     { name: "เบรคบาน (ธรณี)", code: "B20050", len: (o) => o.W - 4.4, qty: (o) => (o.rail === "รางเตี้ย7มม" ? 2 : 0) },
-    { name: "ตบรางล้อ", code: "F7994", len: (o) => o.W - 4.4, qty: (o) => (isPlug(o.rail) ? 2 : 0) },   // รางเตี้ยไม่ใช้ตบรางล้อ
-    { name: "ตบรางล้อ (มุ้งใหญ่)", code: "F7994", len: (o) => o.W - 4.4, qty: (o) => (meshOf(o) === "เฟรมใหญ่" ? 2 : 0) },
+    // v1: ยาว = กว้างเต็ม · จำนวน = F2 "บานเลื่อน" (เปิดคู่กลาง = N−2 · ที่ N=4 ได้ 2 เท่าเดิม)
+    { name: "ตบรางล้อ", code: "F7994", len: (o) => o.W, qty: (o) => (isPlug(o.rail) ? Math.max(o.N - 2, 0) : 0) },   // รางเตี้ยไม่ใช้ตบรางล้อ
+    { name: "ตบรางล้อ (มุ้งใหญ่)", code: "F7994", len: (o) => o.W, qty: (o) => (meshOf(o) === "เฟรมใหญ่" ? 2 : 0) },
     { name: "เสานอนมุ้ง (เฟรมเล็ก)", code: "B30006", len: (o) => centerCross(o) + 9.7, qty: (o) => (meshOf(o) === "เฟรมเล็ก" ? 4 : 0) },
     { name: "เสาตั้งมุ้ง (เฟรมเล็ก)", code: "B30006", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3.2) - 1, qty: (o) => (meshOf(o) === "เฟรมเล็ก" ? 4 : 0) },
     { name: "เสากุญแจมุ้ง (ใหญ่)", code: "B20051", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3.2), qty: (o) => (meshOf(o) === "เฟรมใหญ่" ? 2 : 0), note: "อลูเดียวกับเสากุญแจมัลติพ้อย" },
@@ -215,12 +234,14 @@ export const SMS_SLIDE_TOW: CutSpec = {
     { name: "ขวางบน", code: "B20054", len: (o) => (o.W - 4.2 * o.N - 11.2) / o.N, qty: (o) => o.N },
     { name: "ขวางล่าง", code: "B20054", len: (o) => (o.W - 4.2 * o.N - 11.2) / o.N, qty: (o) => o.N },
     { name: "ฝาปิดเฟรมข้าง", code: "B20019", len: (o) => o.H - (isPlug(o.rail) ? 5 : 2.3), qty: () => 4 },
-    { name: "ตบร่องบานเลื่อน", code: "-", len: (o) => towCross(o) + (o.N <= 2 ? 4.3 : 4.7), qty: () => 2, note: "N≤2: ขวางบน+4.7−0.4 · N≥3: ขวางบน+4.7" },
-    { name: "ตบร่องบานตาย (ร่องในบน)", code: "-", len: (o) => (o.N <= 2 ? o.W - 7 : (o.W - 4.4) - 1.3 - towCross(o) - 9.7 * (o.N - 2)), qty: (o) => (meshOf(o) === "ไม่มี" ? 1 : 0), note: "N≤2: W−7 · N≥3: (W−4.4)−1.3−ขวางบน−9.7×(N−2)" },
-    { name: "ตบร่องบานตาย (ร่องในล่าง)", code: (o) => (meshOf(o) === "เฟรมเล็ก" ? "B20048" : "-"), len: (o) => (o.N <= 2 ? o.W - 7 : (o.W - 4.4) - 1.3 - towCross(o) - 9.7 * (o.N - 2)), qty: (o) => (meshOf(o) === "เฟรมใหญ่" ? 0 : 1) },
+    // v1: SMS_ตัด_ลากจูง แถว 20-21 ร่องกลาง/ร่องใน รหัส = B20019 ทั้งคู่
+    { name: "ตบร่องบานเลื่อน", code: "B20019", len: (o) => towCross(o) + (o.N <= 2 ? 4.3 : 4.7), qty: () => 2, note: "N≤2: ขวางบน+4.7−0.4 · N≥3: ขวางบน+4.7" },
+    { name: "ตบร่องบานตาย (ร่องในบน)", code: "B20019", len: (o) => (o.N <= 2 ? o.W - 7 : (o.W - 4.4) - 1.3 - towCross(o) - 9.7 * (o.N - 2)), qty: (o) => (meshOf(o) === "ไม่มี" ? 1 : 0), note: "N≤2: W−7 · N≥3: (W−4.4)−1.3−ขวางบน−9.7×(N−2)" },
+    { name: "ตบร่องบานตาย (ร่องในล่าง)", code: (o) => (meshOf(o) === "เฟรมเล็ก" ? "B20048" : "B20019"), len: (o) => (o.N <= 2 ? o.W - 7 : (o.W - 4.4) - 1.3 - towCross(o) - 9.7 * (o.N - 2)), qty: (o) => (meshOf(o) === "เฟรมใหญ่" ? 0 : 1) },
     { name: "เบรคบาน (ธรณี)", code: "B20050", len: (o) => o.W - 4.4, qty: (o) => (o.rail === "รางเตี้ย7มม" ? 2 : 0) },
-    { name: "ตบรางล้อ", code: "F7994", len: (o) => o.W - 4.4, qty: (o) => (isPlug(o.rail) ? o.N : 0) },   // รางเตี้ยไม่ใช้ตบรางล้อ (ใช้ B20050 แทน)
-    { name: "ตบรางล้อ (มุ้งใหญ่)", code: "F7994", len: (o) => o.W - 4.4, qty: (o) => (meshOf(o) === "เฟรมใหญ่" ? meshCountOf(o) : 0) },
+    // v1: ยาว = กว้างเต็ม · จำนวน = F2 "บานเลื่อน" (ลากจูง = N−1) — ของเดิม "N ดิบ" มาจากไฟล์ v2 เก่า
+    { name: "ตบรางล้อ", code: "F7994", len: (o) => o.W, qty: (o) => (isPlug(o.rail) ? Math.max(o.N - 1, 0) : 0) },   // รางเตี้ยไม่ใช้ตบรางล้อ (ใช้ B20050 แทน)
+    { name: "ตบรางล้อ (มุ้งใหญ่)", code: "F7994", len: (o) => o.W, qty: (o) => (meshOf(o) === "เฟรมใหญ่" ? meshCountOf(o) : 0) },
     { name: "เสานอนมุ้ง (เฟรมเล็ก)", code: "B30006", len: (o) => towCross(o) + 9.7, qty: (o) => (meshOf(o) === "เฟรมเล็ก" ? 2 * meshCountOf(o) : 0) },
     { name: "เสาตั้งมุ้ง (เฟรมเล็ก)", code: "B30006", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3) - 1, qty: (o) => (meshOf(o) === "เฟรมเล็ก" ? 2 * meshCountOf(o) : 0) },
     { name: "เสากุญแจมุ้ง (ใหญ่)", code: "B20051", len: (o) => o.H - (isPlug(o.rail) ? 6.1 : 3), qty: (o) => (meshOf(o) === "เฟรมใหญ่" ? meshCountOf(o) : 0), note: "อลูเดียวกับเสากุญแจ ML" },
@@ -736,13 +757,15 @@ export const FUJI_SLIDE: CutSpec = {
     // เสารับแรง — ไฟล์ Excel ไม่ได้ใส่มา แต่ของจริงต้องมี (เจ้าของเช็คหน้างานยืนยัน 20 ส.ค.69)
     //   สูงเกิน 2.6 ม. ใส่เพิ่ม "ผสมกับ" ตบเกี่ยว (ไม่ใช่แทนกัน) · ตัดยาวเท่าตบเกี่ยว จำนวนเท่ากัน
     //   หลักการเดียวกับ SMS (เสาเกี่ยวรับแรง B20010) · คิดราคา 4.0 ใช้เกณฑ์เดียวกัน
-    { name: "เสารับแรง", code: "F7951", len: fPost, qty: (o) => (o.H > 260 ? frc(o).hook : 0), note: "ไฟล์ตัดประกอบไม่มี — เจ้าของสั่งเพิ่ม · สูงเกิน 2.6 ม. · ยาวเท่าตบเกี่ยว" },
+    // v1: ยูโร_ตัด #25 "เสารับแรง (สูงเกิน 280)" F7951 ยาว = สูงช่อง (3000 มม.) × 1 ท่อน · เงื่อนไข สูง > 280 ซม.
+    { name: "เสารับแรง", code: "F7951", len: (o) => o.H, qty: (o) => (o.H > 280 ? 1 : 0), note: "v1 ยูโร_ตัด #25 · สูง>280 → 1 ท่อน ยาว=สูงช่อง" },
     { name: "ยูข้าง", code: "F7986", len: fU, qty: (o) => 2 + (fMesh(o) ? 1 : 0) },
     { name: "ตบเฟรมบน", code: "F7993", len: (o) => o.W - 4.2, qty: () => 3, stockLens: [500] },
     { name: "ตบยูข้าง", code: "F7988", len: fU, qty: (o) => 2 + (fMesh(o) ? 1 : 0) },
     // F7988 ใช้ 4 หน้าที่ (เจ้าของยืนยัน 20 ส.ค.69): ตบยูข้าง · ปิดตบเกี่ยว · ตบกันสาด#2 · ปิดรับล็อค
     { name: "ปิดตบเกี่ยว", code: "F7988", len: fPost, qty: (o) => (fIn(o) || fMesh(o) ? 4 : frc(o).hook) },
-    { name: "ตบกันสาด#2", code: "F7988", len: (o) => o.W, qty: (o) => (fIn(o) ? (fMesh(o) ? 1 : 0) : 1) },
+    // v1: ยูโร_ตัด #21 "ตบกันสาด (ปิด)" รหัส F7992 (ไม่ใช่ F7988) · คงเงื่อนไขมุ้งของเว็บไว้
+    { name: "ตบกันสาด (ปิด)", code: "F7992", len: (o) => o.W, qty: (o) => (fIn(o) ? (fMesh(o) ? 1 : 0) : 1) },
     { name: "ราง", code: "F7994", len: (o) => o.W - 4.2, qty: () => 3, stockLens: [500] },
   ],
   // ⑤ อุปกรณ์ FUJI เลื่อน (มี SKU ในไฟล์ คอลัมน์ AK-AY · ใช้ตาราง lookup มือจับเดียวกับ SMS)
@@ -756,11 +779,13 @@ export const FUJI_SLIDE: CutSpec = {
     { name: "ล้อ 24", sku: "JR00586", qty: (o) => 2 * frc(o).p, unit: "ตัว" },
     ...handleHardware("LR"),
     { name: "สปิงก็อท", sku: "JR00592", qty: (o) => 4 * frc(o).p, unit: "ตัว" },
-    { name: "ฉากประกอบมุม", sku: "JR00480", qty: (o) => 12 * frc(o).p, unit: "ตัว" },
+    // v1: ยูโร_ตัด #17 "มุมเลื่อน JR00480 = 8/บาน (ตามชีทคิดทุน)" — เดิมเว็บ 12/บาน (เจ้าของเคาะ 21 ส.ค.69)
+    { name: "ฉากประกอบมุม", sku: "JR00480", qty: (o) => 8 * frc(o).p, unit: "ตัว" },
     { name: "ยางรูน้ำ", sku: "JR00589", qty: (o) => 2 + Math.max(0, Math.ceil((o.W - 4.2 - 150) / 50)), unit: "อัน" },
     { name: "วาวรูน้ำ", sku: "JR00485", qty: (o) => 2 + Math.max(0, Math.ceil((o.W - 4.2 - 150) / 50)), unit: "อัน" },
-    { name: "สักหลาด (ม.)", sku: "JR00794", unit: "ม.", noStock: true, note: "สะสมม้วน",
-      qty: (o, ctx) => Math.round((2 * 2 * (ctx.len("ขวาง") + ctx.len("เสา")) * frc(o).p + ctx.len("ตบเกี่ยว") * frc(o).hook) / 100 * 10) / 10 },
+    // v1: สักหลาด D60 = (4·N·(ขวาง+เสา) + 8·เฟรมบน-ล่าง + เฟรมข้าง)/100  (ตรวจแล้ว 600×300 3ราง = 110.2 ม.)
+    { name: "สักหลาด (ม.)", sku: "JR00794", unit: "ม.", noStock: true, note: "สะสมม้วน · สูตร v1 ยูโร_ตัด D60",
+      qty: (o) => Math.round((4 * frc(o).p * (fSash(o) + fPost(o)) + 8 * (o.W - 4.2) + o.H) / 100 * 10) / 10 },
     ...fujiSlideConsum(),
   ],
 };
@@ -770,6 +795,8 @@ export const FUJI_SLIDE: CutSpec = {
 function fujiSlideConsum(panels: (o: CutInput) => number = (o) => frc(o).p): HardwareDef[] {
   return [
     { name: "น็อต 1\" (ประกอบบาน+เฟรม)", sku: "JR00864", qty: (o) => 8 + 4 * panels(o), unit: "ตัว" },
+    // v1: ยูโร_ตัด #12 "น็อต 6 หุน (ยึดล้อ) JR00863 = 4/บานเลื่อนจริง" (เดิมเว็บไม่มีแถวนี้)
+    { name: "น็อต 6 หุน (ยึดล้อ)", sku: "JR00863", qty: (o) => 4 * panels(o), unit: "ตัว" },
     { name: "ซิลิโคน ใน+นอก", sku: "JR00504", qty: (o) => Math.ceil(((2 * (o.W + o.H)) / 100) * 2 / 12.5), unit: "หลอด" },
   ];
 }
@@ -799,17 +826,19 @@ export const FUJI_SLIDE_CENTER: CutSpec = {
     { name: "ขวาง", code: "F7980", len: fcSash, qty: (o) => 2 * o.N, note: "อลูเดียวกับเสา" },
     { name: "คิ้ว ตั้ง", code: fBead, len: (o) => fcPost(o) - 15.6, qty: (o) => 2 * o.N },
     { name: "คิ้ว ขวาง", code: fBead, len: (o) => fcSash(o) - 12.6, qty: (o) => 2 * o.N, note: "อลูเดียวกับคิ้วตั้ง" },
-    // ชนกลาง เลือกตามความสูง (เจ้าของยืนยัน 20 ส.ค.69) — ไม่เกิน 2.8 ม. ใช้ต่อชนกลาง · เกินนั้นใช้ตัวรับแรง
-    { name: "ต่อชนกลาง (ไม่เกิน 2.8 ม.)", code: "F7925", len: fcPost, qty: (o) => (o.H <= 280 ? 1 : 0) },
-    { name: "ชนกลางรับแรง (เกิน 2.8 ม.)", code: "F7855", len: fcPost, qty: (o) => (o.H > 280 ? 1 : 0) },
+    // v1 + decisions ข้อ 6: คู่กลางใส่ F7855 ×1 + F7925 ×1 + F7880 ×2 + F7879 ×2 "พร้อมกัน" (เลิก either/or ตามความสูง)
+    { name: "ต่อชนกลาง", code: "F7925", len: fcPost, qty: () => 1, note: "v1 ยูโร_ตัด #29 · เปิดคู่กลาง 1 เส้น" },
+    { name: "ชนกลาง", code: "F7855", len: fcPost, qty: () => 1, note: "v1 ยูโร_ตัด #26 · เปิดคู่กลาง 1 เส้น" },
+    { name: "ตบปิดเฟรมร่องใน", code: "F7880", len: (o) => o.W - 4.2, qty: () => 2, note: "v1 ยูโร_ตัด #27 · ยาว = เฟรมบน-ล่าง" },
+    { name: "ตบปิดเฟรมร่องกลาง", code: "F7879", len: (o) => (o.W - 4.2) / 2, qty: () => 2, note: "v1 ยูโร_ตัด #28 · ยาว = ครึ่งเฟรมบน-ล่าง" },
     { name: "ตบเกี่ยว", code: "F7983", len: fcPost, qty: (o) => fc(o).hook },
-    { name: "เสารับแรง", code: "F7951", len: fcPost, qty: (o) => (o.H > 260 ? fc(o).hook : 0), note: "ไฟล์ตัดประกอบไม่มี — เจ้าของสั่งเพิ่ม · สูงเกิน 2.6 ม." },
+    { name: "เสารับแรง", code: "F7951", len: (o) => o.H, qty: (o) => (o.H > 280 ? 1 : 0), note: "v1 ยูโร_ตัด #25 · สูง>280 → 1 ท่อน ยาว=สูงช่อง" },
     { name: "ยูข้าง", code: "F7986", len: (o) => o.H - fc(o).u, qty: () => 2 },
     { name: "ตบเฟรมบน", code: "F7993", len: (o) => o.W - 4.2, qty: () => 3, stockLens: [500] },
     { name: "ปิดตบเกี่ยว", code: "F7988", len: fcPost, qty: (o) => fc(o).hook },
     { name: "ปิดรับล็อค", code: "F7988", len: fcPost, qty: () => 1 },
-    // ตบกันสาด — งานใน (รางเตี้ย) ไม่ใช้ (เจ้าของเคาะ 20 ส.ค.69)
-    { name: "ปิดตบกันสาด", code: "F7988", len: (o) => o.W, qty: (o) => (fIn(o) ? 0 : 1) },
+    // ตบกันสาด — งานใน (รางเตี้ย) ไม่ใช้ (เจ้าของเคาะ 20 ส.ค.69) · v1: "ตบกันสาด (ปิด)" = F7992 ไม่ใช่ F7988
+    { name: "ตบกันสาด (ปิด)", code: "F7992", len: (o) => o.W, qty: (o) => (fIn(o) ? 0 : 1) },
     { name: "รางเลื่อน", code: "F7994", len: (o) => o.W - 4.2, qty: (o) => fc(o).rail, stockLens: [500] },
     { name: "ตบกันสาด", code: "F7992", len: (o) => o.W, qty: (o) => (fIn(o) ? 0 : 1) },
   ],
@@ -817,11 +846,13 @@ export const FUJI_SLIDE_CENTER: CutSpec = {
     { name: "ล้อ 24", sku: "JR00586", qty: (o) => 2 * o.N, unit: "ตัว" },
     ...handleHardware("LR"),
     { name: "สปิงก็อท", sku: "JR00592", qty: (o) => 4 * o.N, unit: "ตัว" },
-    { name: "ฉากประกอบมุม", sku: "JR00480", qty: (o) => 12 * o.N, unit: "ตัว" },
+    // v1: มุมเลื่อน JR00480 = 8/บาน (เดิม 12/บาน)
+    { name: "ฉากประกอบมุม", sku: "JR00480", qty: (o) => 8 * o.N, unit: "ตัว" },
     { name: "ยางรูน้ำ", sku: "JR00589", qty: (o) => 2 + Math.max(0, Math.ceil((o.W - 4.2 - 150) / 50)), unit: "อัน" },
     { name: "วาวรูน้ำ", sku: "JR00485", qty: (o) => 2 + Math.max(0, Math.ceil((o.W - 4.2 - 150) / 50)), unit: "อัน" },
-    { name: "สักหลาด (ม.)", sku: "JR00794", unit: "ม.", noStock: true, note: "สะสมม้วน",
-      qty: (o, ctx) => Math.round((2 * 2 * (ctx.len("ขวาง") + ctx.len("เสา")) * o.N + ctx.len("ตบเกี่ยว") * fc(o).hook) / 100 * 10) / 10 },
+    // v1: สักหลาด = (4·N·(ขวาง+เสา) + 8·เฟรมบน-ล่าง + เฟรมข้าง)/100
+    { name: "สักหลาด (ม.)", sku: "JR00794", unit: "ม.", noStock: true, note: "สะสมม้วน · สูตร v1 ยูโร_ตัด D60",
+      qty: (o) => Math.round((4 * o.N * (fcSash(o) + fcPost(o)) + 8 * (o.W - 4.2) + o.H) / 100 * 10) / 10 },
     ...fujiSlideConsum((o) => o.N),
   ],
 };
@@ -846,15 +877,17 @@ const fmPost = (o: CutInput) => o.H - 7.4;                       // "สูง�
 const fmSash = (o: CutInput) => (o.W - fm(o).sd) / o.N + fm(o).sa;
 export const FUJI_SLIDE_MULTI: CutSpec = {
   id: "fuji_slide_multi", name: "FUJI บานเลื่อน 4 / 5 บาน (เฟรมต่อ)", stockLen: 640, rails: [],
-  opts: [...HANDLE_OPTS_LR],
-  defaults: { W: 800, H: 240, N: 4, handleBrand: "Align", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค", handleR: "ล็อค+ดัมมี่" },
+  opts: [{ key: "work", label: "งาน", choices: ["ภายนอก", "ภายใน"] }, ...HANDLE_OPTS_LR],
+  defaults: { W: 800, H: 240, N: 4, work: "ภายนอก", handleBrand: "Align", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค", handleR: "ล็อค+ดัมมี่" },
   profiles: [
     { name: "เฟรมข้าง (2 ราง)", code: "F7979", len: (o) => o.H, qty: (o) => fm(o).side79 },
     { name: "เฟรมข้าง (3 ราง)", code: "F7978", len: (o) => o.H, qty: (o) => fm(o).side78 },
     { name: "ต่อเฟรมข้าง", code: "F7989", len: (o) => o.H, qty: (o) => fm(o).joinSide },
     // เฟรมบน + รางล่างกันน้ำ = F7869 ตัวหนา ทุกรูปแบบการเลื่อน (เจ้าของสั่ง 20 ส.ค.69 · ทับไฟล์ที่เขียน F7977/F7976)
     { name: "เฟรม บน-ล่าง", code: "F7869", len: (o) => o.W - 4.2, qty: () => 2 },
-    { name: "ต่อราง", code: "F7990", len: (o) => o.W - 4.2, qty: (o) => fm(o).joinRail },
+    // v1: ยูโร_ตัด ⑨ ต่อราง F7990 — งานนอก เลื่อน4/เลื่อน5 = 4 · งานใน 4ราง = 1 · 5ราง = 2
+    //   ⚠ บล็อก "4ราง/5ราง ภายใน" ในไฟล์ดูเหมือนสลับคอลัมน์ (เฟรมล่างภายใน F7902 ×4/×5) — decisions ข้อ 6 สั่ง "ทำตามไฟล์ไปก่อน แล้วให้เจ้าของตรวจ"
+    { name: "ต่อราง", code: "F7990", len: (o) => o.W - 4.2, qty: (o) => (fIn(o) ? (o.N === 5 ? 2 : 1) : fm(o).joinRail) },
     { name: "ตบกันสาด", code: "F7992", len: (o) => o.W, qty: (o) => fm(o).awning },
     { name: "เสา", code: "F7980", len: fmPost, qty: (o) => 2 * o.N },
     { name: "ขวาง", code: "F7980", len: fmSash, qty: (o) => 2 * o.N, note: "อลูเดียวกับเสา" },
@@ -872,11 +905,13 @@ export const FUJI_SLIDE_MULTI: CutSpec = {
     { name: "ล้อ 24", sku: "JR00586", qty: (o) => 2 * o.N, unit: "ตัว" },
     ...handleHardware("LR"),
     { name: "สปิงก็อท", sku: "JR00592", qty: (o) => 4 * o.N, unit: "ตัว" },
-    { name: "ฉากประกอบมุม", sku: "JR00480", qty: (o) => 12 * o.N, unit: "ตัว" },
+    // v1: มุมเลื่อน JR00480 = 8/บาน (เดิม 12/บาน)
+    { name: "ฉากประกอบมุม", sku: "JR00480", qty: (o) => 8 * o.N, unit: "ตัว" },
     { name: "ยางรูน้ำ", sku: "JR00589", qty: (o) => 2 + Math.max(0, Math.ceil((o.W - 4.2 - 150) / 50)), unit: "อัน" },
     { name: "วาวรูน้ำ", sku: "JR00485", qty: (o) => 2 + Math.max(0, Math.ceil((o.W - 4.2 - 150) / 50)), unit: "อัน" },
-    { name: "สักหลาด (ม.)", sku: "JR00794", unit: "ม.", noStock: true, note: "สะสมม้วน",
-      qty: (o, ctx) => Math.round((2 * 2 * (ctx.len("ขวาง") + ctx.len("เสา")) * o.N + ctx.len("ตบเกี่ยว") * fm(o).hook) / 100 * 10) / 10 },
+    // v1: สักหลาด = (4·N·(ขวาง+เสา) + 8·เฟรมบน-ล่าง + เฟรมข้าง)/100
+    { name: "สักหลาด (ม.)", sku: "JR00794", unit: "ม.", noStock: true, note: "สะสมม้วน · สูตร v1 ยูโร_ตัด D60",
+      qty: (o) => Math.round((4 * o.N * (fmSash(o) + fmPost(o)) + 8 * (o.W - 4.2) + o.H) / 100 * 10) / 10 },
     ...fujiSlideConsum((o) => o.N),
   ],
 };
@@ -919,23 +954,65 @@ export const FUJI_SWING: CutSpec = {
   hardware: fujiSwingHardware(),
 };
 
-// ⑪ FUJI ประตูเดี่ยว มีธรณี (dropdown เสา 10/8 ซม.)
+// ⑪ FUJI ประตูเดี่ยว (dropdown เสา 10/8 ซม. · ธรณี มี/ไม่มี)
+// v1 (บานเปิด_ตัด แผงแก้สูตร แถว 54-60 + ⑥ แถว 86):
+//   ธรณี = F7938B (ไม่ใช่ F7938) · กรอบประตู = F7864 (ไม่ใช่ "7864" ที่ไม่มี F → ผูกสโตร์/PB ไม่ติด)
+//   คิ้ว ตั้ง = เสา−80−80 · คิ้ว ขวาง = ขวาง−60−60 (หน่วยไฟล์ มม. → 16.0/12.0 ซม.) ทั้ง 2 ตัวเลือกเสา
+//   ตบธรณี F7960 ยาว = กว้างเต็ม (D86 = C11) ไม่ใช่ W−5
+//   ไม่มีธรณี → ใช้ เสริมใต้บาน F7863 ยาวเท่าธรณี (W−5) แทน
+const fdSill = (o: CutInput) => o.sill !== "ไม่มีธรณี";
+const fdPost = (o: CutInput) => (o.box === "8 cm · F7943B" ? "F7943B" : "F7864");
 export const FUJI_DOOR: CutSpec = {
-  id: "fuji_door", name: "FUJI ประตูเดี่ยว มีธรณี", stockLen: 640, rails: [],
-  opts: [{ key: "box", label: "เสา", choices: ["10 cm · 7864", "8 cm · 7943B"] }, ...SWING_DOOR_OPTS],
-  defaults: { W: 90, H: 210, N: 1, rail: "", honk: false, box: "10 cm · 7864", ...SWING_DOOR_DEF },
+  id: "fuji_door", name: "FUJI ประตูเดี่ยว", stockLen: 640, rails: [],
+  opts: [
+    { key: "box", label: "เสา", choices: ["10 cm · F7864", "8 cm · F7943B"] },
+    { key: "sill", label: "ธรณี", choices: ["มีธรณี", "ไม่มีธรณี"] },
+    ...SWING_DOOR_OPTS,
+  ],
+  defaults: { W: 90, H: 210, N: 1, rail: "", honk: false, box: "10 cm · F7864", sill: "มีธรณี", ...SWING_DOOR_DEF },
   profiles: [
     { name: "เฟรมข้าง", code: "F7859", len: (o) => o.H, qty: () => 2 },
     { name: "เฟรม บน", code: "F7859", len: (o) => o.W - 5.0, qty: () => 1 },
-    { name: "เฟรม ล่าง", code: "F7938", len: (o) => o.W - 5.0, qty: () => 1 },
-    { name: "เสา", code: (o) => (o.box === "8 cm · 7943B" ? "7943B" : "7864"), len: (o) => o.H - 3.7, qty: () => 2 },
-    { name: "ขวาง", code: (o) => (o.box === "8 cm · 7943B" ? "7943B" : "7864"), len: (o) => o.W - 3.7, qty: () => 2, note: "อลูเดียวกับเสา" },
-    { name: "คิ้ว ตั้ง", code: "F7935", len: (o) => o.H - 3.7 - (o.box === "8 cm · 7943B" ? 16.0 : 20.0), qty: () => 2 },
-    { name: "คิ้ว ขวาง", code: "F7935", len: (o) => o.W - 3.7 - (o.box === "8 cm · 7943B" ? 12.0 : 16.0), qty: () => 2 },
-    { name: "ตบธรณี", code: "F7960", len: (o) => o.W - 5.0, qty: () => 1 },
+    { name: "ธรณี", code: "F7938B", len: (o) => o.W - 5.0, qty: (o) => (fdSill(o) ? 1 : 0) },
+    { name: "เสริมใต้บาน", code: "F7863", len: (o) => o.W - 5.0, qty: (o) => (fdSill(o) ? 0 : 1), note: "ใช้แทนธรณีเมื่อเลือก ไม่มีธรณี" },
+    { name: "เสา", code: fdPost, len: (o) => o.H - 3.7, qty: () => 2 },
+    { name: "ขวาง", code: fdPost, len: (o) => o.W - 3.7, qty: () => 2, note: "อลูเดียวกับเสา" },
+    { name: "คิ้ว ตั้ง", code: "F7935", len: (o) => o.H - 3.7 - 16.0, qty: () => 2, note: "v1: เสา−80−80" },
+    { name: "คิ้ว ขวาง", code: "F7935", len: (o) => o.W - 3.7 - 12.0, qty: () => 2, note: "v1: ขวาง−60−60" },
+    { name: "ตบธรณี", code: "F7960", len: (o) => o.W, qty: (o) => (fdSill(o) ? 1 : 0), note: "v1: ยาว = กว้างเต็ม" },
   ],
-  // ⑤ อุปกรณ์ FUJI ประตูเดี่ยว (SKU ชุดเดียวกับบานโซลิด · มีธรณี → น็อต 8)
-  hardware: casementDoorHardware(() => true),
+  // ⑤ อุปกรณ์ FUJI ประตูเดี่ยว (SKU ชุดเดียวกับบานโซลิด · มีธรณี → น็อต 8 · ไม่มี → 6)
+  hardware: casementDoorHardware(fdSill),
+};
+
+// ⑪b FUJI ประตูคู่ (บานเปิดคู่_ตัด) — 2 บาน + เปิดกลาง F7945C
+// v1 แผงแก้สูตร แถว 54-61 (ที่ 1500×2000): วงกบข้าง 2000×2 · วงกบบน/ธรณี 1450×1 · กรอบตั้ง 1963×4
+//   กรอบขวาง = (กว้าง−18.5−2−18.5)/2 = 730.5 · คิ้วตั้ง = กรอบตั้ง−80−80 · คิ้วขวาง = กรอบขวาง−60−60
+//   เปิดกลาง F7945C = สูง−27−27 ×1
+// ⚠ ไฟล์ขัดกันเอง: กรอบขวาง L58 = 2 ท่อน แต่ คิ้วขวาง L60 = 4 — 2 บานต้องมีขวาง 4
+//   decisions ข้อ 7 เคาะ "ใช้ ×4" แล้วให้เจ้าของแก้ไฟล์
+export const FUJI_DOOR_DOUBLE: CutSpec = {
+  id: "fuji_door_double", name: "FUJI ประตูคู่ (2 บาน)", stockLen: 640, rails: [],
+  opts: [
+    { key: "box", label: "เสา", choices: ["10 cm · F7864", "8 cm · F7943B"] },
+    { key: "sill", label: "ธรณี", choices: ["มีธรณี", "ไม่มีธรณี"] },
+    ...SWING_DOOR_OPTS,
+    { key: "childHandle", label: "มือจับ ใบลอง", choices: ["ไม่ใส่", "คิงโบ ล็อค+กุญแจ", "คิงโบ ดัมมี่+ดัมมี่", "Cmech กุญแจ+ล็อค", "Cmech ล็อค+ดัมมี่", "Cmech ดัมมี่+ดัมมี่", "อื่นๆ"] },
+  ],
+  defaults: { W: 150, H: 200, N: 2, rail: "", honk: false, box: "10 cm · F7864", sill: "มีธรณี", ...SWING_DOOR_DEF, childHandle: "ไม่ใส่" },
+  profiles: [
+    { name: "วงกบ ข้าง", code: "F7859", len: (o) => o.H, qty: () => 2 },
+    { name: "วงกบ บน", code: "F7859", len: (o) => o.W - 5.0, qty: () => 1 },
+    { name: "ธรณี", code: "F7938B", len: (o) => o.W - 5.0, qty: (o) => (fdSill(o) ? 1 : 0) },
+    { name: "เสริมใต้บาน", code: "F7863", len: (o) => o.W - 5.0, qty: (o) => (fdSill(o) ? 0 : 1) },
+    { name: "กรอบประตู ตั้ง", code: fdPost, len: (o) => o.H - 3.7, qty: () => 4 },
+    { name: "กรอบประตู ขวาง", code: fdPost, len: (o) => (o.W - 3.9) / 2, qty: () => 4, note: "v1: (กว้าง−18.5−2−18.5)/2 · จำนวน ×4 ตาม decisions ข้อ 7" },
+    { name: "คิ้ว ตั้ง", code: "F7935", len: (o) => o.H - 3.7 - 16.0, qty: () => 4 },
+    { name: "คิ้ว ขวาง", code: "F7935", len: (o) => (o.W - 3.9) / 2 - 12.0, qty: () => 4 },
+    { name: "เปิดกลาง", code: "F7945C", len: (o) => o.H - 5.4, qty: () => 1, note: "v1: สูง−27−27" },
+    { name: "ตบธรณี", code: "F7960", len: (o) => o.W, qty: (o) => (fdSill(o) ? 1 : 0) },
+  ],
+  hardware: casementDoorHardware(fdSill, () => 2),
 };
 
 // ⑫ FUJI บานติดตาย (Fix)
@@ -1229,8 +1306,9 @@ export const SOLID_DOOR: CutSpec = {
     // Cmech แยก 2 sub-choice ตรงไฟล์ (⑤.1 แถว 67-68) · motherHandle เพิ่ม Digital lock/ไม่ใส่ (แถว 69-71,77 เช็ค B57)
     { key: "motherHandle", label: "มือจับใบแม่", choices: ["คิงโบ ล็อค+กุญแจ", "คิงโบ ดัมมี่+ดัมมี่", "Cmech ล็อค+กุญแจ", "Cmech ดัมมี่+ดัมมี่", "Digital lock", "ไม่ใส่", "อื่นๆ"] },
     { key: "childHandle", label: "มือจับใบลูก", choices: ["ไม่ใส่", "คิงโบ ล็อค+กุญแจ", "คิงโบ ดัมมี่+ดัมมี่", "Cmech ล็อค+กุญแจ", "Cmech ดัมมี่+ดัมมี่", "อื่นๆ"] },
+    { key: "corrColor", label: "สีลูกฟูก+เส้นคาด", choices: ["ดำ", "ขาว"] },
   ],
-  defaults: { W: 120, H: 279, N: 2, rail: "", honk: false, sill: "มี", doorSplit: "แม่-ลูก", motherW: 80, hwColor: "ขาว", lockType: "ล็อคปกติ", openDir: "เปิดออก", motherHandle: "คิงโบ ล็อค+กุญแจ", childHandle: "ไม่ใส่", solidLayer: "โซลิด 2 ชั้น" },
+  defaults: { W: 120, H: 279, N: 2, rail: "", honk: false, sill: "มี", doorSplit: "แม่-ลูก", motherW: 80, hwColor: "ขาว", lockType: "ล็อคปกติ", openDir: "เปิดออก", motherHandle: "คิงโบ ล็อค+กุญแจ", childHandle: "ไม่ใส่", corrColor: "ดำ", solidLayer: "โซลิด 2 ชั้น" },
   profiles: [
     { name: "วงกบบน F7859", code: "F7859", len: (o) => o.W - 5, qty: () => 1 },
     { name: "วงกบข้าง F7859", code: "F7859", len: (o) => o.H, qty: () => 2 },
@@ -1245,17 +1323,21 @@ export const SOLID_DOOR: CutSpec = {
     { name: "กรอบนอน บานลูก F7864", code: "F7864", len: (o) => (sChild(o) > 0 ? sChild(o) - (o.N === 1 ? 3.7 : 1.95) : 0), qty: (o) => 2 * sChildN(o) },
     { name: "คิ้วนอน บานแม่ F7935", code: "F7935", len: (o) => sMother(o) - (o.N === 1 ? 19.7 : 17.95), qty: () => 2 },
     { name: "คิ้วนอน บานลูก F7935", code: "F7935", len: (o) => (sChild(o) > 0 ? sChild(o) - (o.N === 1 ? 19.7 : 17.95) : 0), qty: (o) => 2 * sChildN(o) },
-    { name: (o) => "ลูกฟูก บานแม่ (" + sSides(o) + "ฝั่ง)", code: "-", len: sFrameH, qty: (o) => sCorrM(o) * sSides(o) },
-    { name: (o) => "ลูกฟูก บานลูก (" + sSides(o) + "ฝั่ง)", code: "-", len: sFrameH, qty: (o) => sCorrC(o) * sSides(o) * sChildN(o) },
-    { name: "เส้นคาด บานแม่ (2ฝั่ง)", code: "-", len: sFrameH, qty: (o) => sBattenM(o) * 2 },
-    { name: "เส้นคาด บานลูก (2ฝั่ง)", code: "-", len: sFrameH, qty: (o) => sBattenC(o) * 2 * sChildN(o) },
+    // v1 + decisions ข้อ 9: ลูกฟูก/เส้นคาด ใช้รหัสไฟล์ (คิดทุน บานโซลิด A32 + ราคา ERP แถว 144-147)
+    //   สลับตามช่อง "สีลูกฟูก+เส้นคาด" (F9 · ค่าตั้งต้น ดำ) — เดิม code "-" → ไม่คิดเงิน/ไม่หักสต็อก (หาย ~4,132 บาท/ชุด)
+    //   คงสูตร sSides() ของ "โซลิด 1 ชั้น / 2 ชั้น" (commit bad63733) ไว้ — ไม่ถอยกลับเป็น ×2 ตายตัว
+    { name: (o) => "ลูกฟูก บานแม่ (" + sSides(o) + "ฝั่ง)", code: byColor("corrColor", "JR01994", "JR01993"), len: sFrameH, qty: (o) => sCorrM(o) * sSides(o) },
+    { name: (o) => "ลูกฟูก บานลูก (" + sSides(o) + "ฝั่ง)", code: byColor("corrColor", "JR01994", "JR01993"), len: sFrameH, qty: (o) => sCorrC(o) * sSides(o) * sChildN(o) },
+    { name: "เส้นคาด บานแม่ (2ฝั่ง)", code: byColor("corrColor", "JR01679", "JR01678"), len: sFrameH, qty: (o) => sBattenM(o) * 2 },
+    { name: "เส้นคาด บานลูก (2ฝั่ง)", code: byColor("corrColor", "JR01679", "JR01678"), len: sFrameH, qty: (o) => sBattenC(o) * 2 * sChildN(o) },
   ],
   // ⑤ อุปกรณ์ บานโซลิด (มี SKU · เงื่อนไขสี ดำ↔ขาว + ตลับ/ทิศ/มือจับแม่-ลูก) — พอร์ตตรงไฟล์
   hardware: [
     { name: "บานพับ hyda", sku: (o) => (o.hwColor === "ดำ" ? "JR00488" : "JR00489"), unit: "ตัว",
       qty: (o) => (o.H > 300 || sMother(o) > 120 ? 5 : 4) + (sChild(o) > 0 ? (o.H > 300 || sChild(o) > 120 ? 5 : 4) * sChildN(o) : 0) },
-    { name: "สปิงก็อท", sku: "JR00592", qty: (o) => 4 * o.N, unit: "ตัว" },
-    { name: "ฉากประคองมุม", sku: "JR00480", qty: (o) => 8 * o.N, unit: "ตัว" },
+    // v1: โซลิด_ตัด ⑤.1 แถว 63-64 = JR00482 (สปิงก็อท) · JR00557 (ฉากประคองมุม) — เดิมเว็บผูก JR00592/JR00267 (ของบานเลื่อนยูโร)
+    { name: "สปิงก็อท", sku: "JR00482", qty: (o) => 4 * o.N, unit: "ตัว" },
+    { name: "ฉากประคองมุม", sku: "JR00557", qty: (o) => 8 * o.N, unit: "ตัว" },
     { name: "มือจับ ล็อค+กุญแจ (คิงโบ)", sku: (o) => (o.hwColor === "ดำ" ? "JR00314" : "JR00315"), unit: "ชุด",
       qty: (o) => (o.motherHandle === "คิงโบ ล็อค+กุญแจ" ? 1 : 0) + (sChildN(o) > 0 && o.childHandle === "คิงโบ ล็อค+กุญแจ" ? 1 : 0) },
     { name: "มือจับ ดัมมี่+ดัมมี่ (คิงโบ)", sku: (o) => (o.hwColor === "ดำ" ? "JR00312" : "JR00313"), unit: "ชุด",
@@ -1282,41 +1364,45 @@ export const SOLID_DOOR: CutSpec = {
   ],
 };
 
-// ⑱ บานเปิดครอบวงกบไม้ (JR_บานเปิดครอบวงกบไม้) — กล่องเรียบ/บังใบล้วน · N ∈ {1,2}
+// ⑱ บานเปิดครอบวงกบไม้ (ครอบวงกบไม้_ตัด v1) — กล่องเรียบ/บังใบล้วน · N ∈ {1,2}
 // ⚠ ไฟล์ไม่มีคอลัมน์เส้นสต็อก → ใช้ 600 (รอเจ้าของยืนยัน)
-// กล่องครอบวงกบ = กล่องเรียบ 4"x4" (เจ้าของยืนยัน) — สต็อกมี 1.6"x4" กับไม่ระบุขนาดด้วย ต้องใส่ขนาดเต็มกันจับผิดตัว
+// v1 + decisions ข้อ 15: กล่องครอบวงกบ = **กล่อง 1.6"×4" เมืองทอง** (ไม่ใช่ 4"×4") ดึงราคาตามสีจากสโตร์
+//   รหัสตามชีต คอลัมน์ F (สลับตามช่อง "สีกล่องอลู (รหัส)" F10 · ค่าตั้งต้น ดำ):
+//     กล่องเรียบ 1.6"×4"  JR01985 ดำ / JR01984 อบขาว
+//     บังใบกล่อง ½"×1"    JR01823 / JR01822
+//     วงกบ-ธรณี มีติ่ง    JR03129 / JR03130
+//     กรอบบาน 3" มีบังใบ  JR03131 / JR03132
+//     กรอบบาน 3" ไม่บังใบ JR03126 / JR03127
 const wDoor1 = (o: CutInput) => (o.N === 1 ? o.W : o.doorSplit === "เท่ากัน" ? o.W / 2 : (o.motherW ?? o.W));
 const wDoor2 = (o: CutInput) => (o.N === 2 ? (o.doorSplit === "เท่ากัน" ? o.W / 2 : o.W - (o.motherW ?? 0)) : 0);
 const wSill = (o: CutInput) => o.sill === "มีธรณี";
+const wCode = (dark: string, white: string) => byColor("boxColor", dark, white);
 export const WOODJAMB_SWING: CutSpec = {
   id: "woodjamb_swing", name: "บานเปิดครอบวงกบไม้", stockLen: 600, rails: [],
   opts: [
     { key: "doorSplit", label: "แบบแบ่ง (2 บาน)", choices: ["แม่ลูก", "เท่ากัน"] },
     { key: "motherW", label: "บานแม่ กว้าง (ซม.)", type: "number" },
     { key: "sill", label: "ธรณี", choices: ["มีธรณี", "ไม่มีธรณี"] },
+    { key: "boxColor", label: "สีกล่องอลู (รหัส)", choices: ["ดำ", "อบขาว"] },
+    ...SWING_DOOR_OPTS,
+    { key: "childHandle", label: "มือจับ ใบลอง", choices: ["ไม่ใส่", "คิงโบ ล็อค+กุญแจ", "คิงโบ ดัมมี่+ดัมมี่", "Cmech กุญแจ+ล็อค", "Cmech ล็อค+ดัมมี่", "Cmech ดัมมี่+ดัมมี่", "อื่นๆ"] },
   ],
-  defaults: { W: 130, H: 210, N: 2, rail: "", honk: false, doorSplit: "แม่ลูก", motherW: 80, sill: "มีธรณี" },
+  defaults: { W: 130, H: 210, N: 2, rail: "", honk: false, doorSplit: "แม่ลูก", motherW: 80, sill: "มีธรณี", boxColor: "ดำ", ...SWING_DOOR_DEF, childHandle: "ไม่ใส่" },
   profiles: [
-    { name: 'กล่องเรียบ 4"x4" แนวตั้ง (ครอบข้าง)', code: 'กล่องเรียบ 4"x4"', len: (o) => o.H - 4.3, qty: () => 2 },
-    { name: 'กล่องเรียบ 4"x4" แนวนอน (ครอบบน)', code: 'กล่องเรียบ 4"x4"', len: (o) => o.W - 0.7, qty: () => 1 },
-    { name: "บังใบกล่อง แนวนอน (บน)", code: "-", len: (o) => o.W - 0.4, qty: () => 1, note: "45° 2ฝั่ง" },
-    { name: "บังใบกล่อง แนวตั้ง (ข้าง)", code: "-", len: (o) => o.H - 0.2 - (wSill(o) ? 4.5 : 0), qty: () => 2, note: "45° 1ฝั่ง" },
-    { name: "ธรณี", code: "-", len: (o) => o.W - 0.4, qty: (o) => (wSill(o) ? 1 : 0) },
-    { name: "กรอบบานบังใบ แนวตั้ง", code: "-", len: (o) => o.H - 0.2 - 0.8 + 2.7 - (wSill(o) ? 3.2 : 0), qty: (o) => o.N },
-    { name: "กรอบบานไม่บังใบ แนวตั้ง", code: "-", len: (o) => o.H - 0.2 - 0.8 - (wSill(o) ? 3.2 : 0), qty: (o) => o.N },
-    { name: "กรอบบานบังใบ แนวนอน — บาน1", code: "-", len: (o) => wDoor1(o) - 0.8 + 2.7, qty: () => 1 },
-    { name: "กรอบบานบังใบ แนวนอน — บาน2", code: "-", len: (o) => wDoor2(o) - 0.8 + 2.7, qty: (o) => (o.N === 2 ? 1 : 0) },
-    { name: "กรอบบานไม่บังใบ แนวนอน — บาน1", code: "-", len: (o) => wDoor1(o) - 0.8 - 3.2, qty: () => 1 },
-    { name: "กรอบบานไม่บังใบ แนวนอน — บาน2", code: "-", len: (o) => wDoor2(o) - 0.8 - 3.2, qty: (o) => (o.N === 2 ? 1 : 0) },
+    { name: 'กล่องเรียบ 1.6"x4" แนวตั้ง (ครอบข้าง)', code: wCode("JR01985", "JR01984"), len: (o) => o.H - 4.3, qty: () => 2 },
+    { name: 'กล่องเรียบ 1.6"x4" แนวนอน (ครอบบน)', code: wCode("JR01985", "JR01984"), len: (o) => o.W - 0.7, qty: () => 1 },
+    { name: "บังใบกล่อง แนวนอน (บน)", code: wCode("JR01823", "JR01822"), len: (o) => o.W - 0.4, qty: () => 1, note: "45° 2ฝั่ง" },
+    { name: "บังใบกล่อง แนวตั้ง (ข้าง)", code: wCode("JR01823", "JR01822"), len: (o) => o.H - 0.2 - (wSill(o) ? 4.5 : 0), qty: () => 2, note: "45° 1ฝั่ง" },
+    { name: "ธรณี", code: wCode("JR03129", "JR03130"), len: (o) => o.W - 0.4, qty: (o) => (wSill(o) ? 1 : 0) },
+    { name: "กรอบบานบังใบ แนวตั้ง", code: wCode("JR03131", "JR03132"), len: (o) => o.H - 0.2 - 0.8 + 2.7 - (wSill(o) ? 3.2 : 0), qty: (o) => o.N },
+    { name: "กรอบบานไม่บังใบ แนวตั้ง", code: wCode("JR03126", "JR03127"), len: (o) => o.H - 0.2 - 0.8 - (wSill(o) ? 3.2 : 0), qty: (o) => o.N },
+    { name: "กรอบบานบังใบ แนวนอน — บาน1", code: wCode("JR03131", "JR03132"), len: (o) => wDoor1(o) - 0.8 + 2.7, qty: () => 1 },
+    { name: "กรอบบานบังใบ แนวนอน — บาน2", code: wCode("JR03131", "JR03132"), len: (o) => wDoor2(o) - 0.8 + 2.7, qty: (o) => (o.N === 2 ? 1 : 0) },
+    { name: "กรอบบานไม่บังใบ แนวนอน — บาน1", code: wCode("JR03126", "JR03127"), len: (o) => wDoor1(o) - 0.8 - 3.2, qty: () => 1 },
+    { name: "กรอบบานไม่บังใบ แนวนอน — บาน2", code: wCode("JR03126", "JR03127"), len: (o) => wDoor2(o) - 0.8 - 3.2, qty: (o) => (o.N === 2 ? 1 : 0) },
   ],
-  hardware: [
-    { name: "บานพับ hyda", qty: (o) => (o.H > 300 || o.W / o.N > 120 ? 5 : 4) * o.N, unit: "ชิ้น" },
-    { name: "มือจับ+ล็อค (ใบหลัก)", qty: () => 1, unit: "ชุด" },
-    { name: "ชุดกลอน (ใบลอง)", qty: (o) => Math.max(o.N - 1, 0), unit: "ชุด" },
-    { name: "น็อตเฟรม", qty: (o) => (wSill(o) ? 8 : 6), unit: "ตัว" },
-    { name: "ยาง", qty: (o) => Math.round((2 * (o.W + o.H)) / 100 * o.N), unit: "ม." },
-    { name: "ซิลิโคน ใน+นอก", sku: "JR00504", qty: (o) => Math.ceil((2 * (o.W + o.H)) / 100 * 2 / 12.5), unit: "หลอด" },
-  ],
+  // v1 ⑥: อุปกรณ์ชุดเดียวกับ บานเปิด_ตัด ทุกรหัส → ใช้ casementDoorHardware (เดิม 6 บรรทัดไม่มี sku ผูกสโตร์ไม่ได้)
+  hardware: casementDoorHardware(wSill, (o) => o.N),
 };
 
 // ═══════════════════════ หลังคา / กันสาด / ระแนง (ไฟล์เป็น ซม. อยู่แล้ว) ═══════════════════════
@@ -2059,23 +2145,26 @@ export const TOPRAIL_FRAME: CutSpec = {
     { key: "fit", label: "ช่องปูน", choices: ["ยัดในช่อง", "แปะนอกชนผนัง", "แปะนอกไปต่อ"] },
     { key: "handle", label: "มือจับ (SMS+ไปต่อ)", choices: ["ฝัง", "เมโทร"] },
     { key: "beam", label: "คาน (กล่อง)", choices: ["1×1.6", "1.6×1.6", "1×3", "2×4", "4×4", "2×4+4×4"] },
+    { key: "mtongColor", label: "สีอลูเมืองทอง", choices: ["ดำ", "อบขาว"] },
     ...HANDLE_OPTS_LR,
   ],
-  defaults: { W: 360, H: 240, N: 2, rail: "", honk: false, sys: "SMS", sashMode: "อิสระ", fit: "ยัดในช่อง", handle: "ฝัง", beam: "2×4", handleBrand: "Align", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค", handleR: "ล็อค+ดัมมี่" },
+  defaults: { W: 360, H: 240, N: 2, rail: "", honk: false, sys: "SMS", sashMode: "อิสระ", fit: "ยัดในช่อง", handle: "ฝัง", beam: "2×4", mtongColor: "ดำ", handleBrand: "Align", handleColor: "อบขาว", handleL: "กุญแจ+ล็อค", handleR: "ล็อค+ดัมมี่" },
   profiles: [
     // คานผสม "2×4+4×4" ห้ามเข้า boxCode ตรงๆ (ได้รหัสผี กล่อง 2"x4+4") → แตก 2 โปรไฟล์เหมือน SlimLux
     { name: "คานรับราง", code: (o) => beamBoxCodes(o.beam ?? "2×4")[0] ?? "-", len: (o) => o.W, qty: () => 1, note: "ตัดเท่าช่อง" },
     { name: "คานรับราง (กล่องตัวที่ 2 — คานผสม)", code: (o) => beamBoxCodes(o.beam ?? "2×4")[1] ?? "-", len: (o) => o.W, qty: (o) => (beamBoxCodes(o.beam ?? "2×4").length > 1 ? 1 : 0) },
-    { name: "เสารับบาน (กล่อง)", code: "-", len: (o) => o.H - trBeam(o), qty: (o) => (trOut(o) === 1 ? 1 : 2), note: "ไฟล์ไม่ผูกรหัสกล่อง" },
-    { name: "ชนกลางรับบาน", code: "-", len: (o) => o.H - trBeam(o), qty: () => 1, note: "ไฟล์ตั้ง 1 ตายตัว" },
-    { name: "รางบน Hafele", code: "-", len: (o) => (o.fit === "ยัดในช่อง" ? o.W - 5 : o.W * 2), qty: trSlide, note: "⚠ แปะนอก = W×2 (ไฟล์ตั้งใจว่า 2 ท่อนเท่า W)" },
-    { name: 'ฉาก 4" ปิดราง', code: "-", len: (o) => o.W, qty: () => 2 },
+    // v1 (รางบน_ตัด แถว 25-34 + ตาราง BF:BI) — ไฟล์ผูกรหัสครบแล้ว สลับตามช่อง "สีอลูเมืองทอง" (E12 · ค่าตั้งต้น ดำ)
+    { name: "เสารับบาน (กล่อง)", code: byColor("mtongColor", "JR01841", "JR01840"), len: (o) => o.H - trBeam(o), qty: (o) => (trOut(o) === 1 ? 1 : 2), note: "v1: กล่อง 1×4 (C12 ค่าตั้งต้น)" },
+    { name: "ชนกลางรับบาน", code: byColor("mtongColor", "JR03125", "JR03128"), len: (o) => o.H - trBeam(o), qty: () => 1, note: "ไฟล์ตั้ง 1 ตายตัว" },
+    { name: "รางบน Hafele", code: "JR03141", len: (o) => (o.fit === "ยัดในช่อง" ? o.W - 5 : o.W * 2), qty: trSlide, note: "⚠ แปะนอก = W×2 (ไฟล์ตั้งใจว่า 2 ท่อนเท่า W)" },
+    { name: 'ฉาก 4" ปิดราง', code: byColor("mtongColor", "JR01949", "JR01948"), len: (o) => o.W, qty: () => 2 },
     { name: "เสากุญแจ B20051 (SMS·ตั้ง)", code: "B20051", len: (o) => o.H - trBeam(o) - 5.1, qty: (o) => (trSMS(o) ? trLock(o) : 0) },
     { name: "เสาเกี่ยว B20009 (SMS·ตั้ง)", code: "B20009", len: (o) => o.H - trBeam(o) - 5.1, qty: (o) => (trSMS(o) ? trHook(o) : 0) },
     { name: "ขวางบน/ล่าง B20054 (SMS·นอน)", code: "B20054", len: (o) => (o.W - trCsms(o) - trOv(o) * 4) / o.N, qty: (o) => (trSMS(o) ? 2 * o.N : 0) },
-    { name: "เสากุญแจยูโร (ตั้ง)", code: "-", len: (o) => o.H - trBeam(o) - 5.1, qty: (o) => (trSMS(o) ? 0 : trLock(o)), note: "ไฟล์เขียนรหัสว่า 'ยูโร' ไม่ใช่ B####" },
-    { name: "เสากุญแจยูโร (นอน 45°)", code: "-", len: (o) => (o.W - trCeuro(o) + trOv(o) * 8) / o.N, qty: (o) => (trSMS(o) ? 0 : 2 * o.N) },
-    { name: "ตบเกี่ยวยูโร", code: "-", len: (o) => o.H - trBeam(o) - 5.1, qty: (o) => (trSMS(o) ? 0 : trHook(o)) },
+    // v1: รางบน_ตัด แถว 32-34 ใส่รหัสยูโรแล้ว (F7980 ทั้งเสาตั้ง/นอน · F7983 ตบเกี่ยว)
+    { name: "เสากุญแจยูโร (ตั้ง)", code: "F7980", len: (o) => o.H - trBeam(o) - 5.1, qty: (o) => (trSMS(o) ? 0 : trLock(o)) },
+    { name: "เสากุญแจยูโร (นอน 45°)", code: "F7980", len: (o) => (o.W - trCeuro(o) + trOv(o) * 8) / o.N, qty: (o) => (trSMS(o) ? 0 : 2 * o.N) },
+    { name: "ตบเกี่ยวยูโร", code: "F7983", len: (o) => o.H - trBeam(o) - 5.1, qty: (o) => (trSMS(o) ? 0 : trHook(o)) },
   ],
   // ⑤ อุปกรณ์ toprail (มี SKU · ใช้ตาราง lookup มือจับเดียวกับ SMS) · ล้อ/น็อต = จำนวนบานเลื่อน (C16=trSlide)
   hardware: [
@@ -2088,7 +2177,8 @@ export const TOPRAIL_FRAME: CutSpec = {
         const cross = trSMS(o) ? ctx.len("ขวางบน/ล่าง B20054 (SMS·นอน)") : ctx.len("เสากุญแจยูโร (นอน 45°)");
         return Math.round((4 * (post + cross) * trSlide(o) + 2 * o.H) / 100 * 10) / 10;
       } },
-    { name: "ไกด์ดำ", sku: "JR00558", qty: (o) => (o.sashMode === "ลากจูง" ? 1 : 2), unit: "ตัว", note: "เปิดคู่กลาง/อิสระ 2 · ลากจูง 1 · สโตร์ JR00558 ไกด์รางแขวน-ดำ (ไฟล์ตัดไม่ได้ใส่รหัสไว้)" },
+    // v1 (16 ก.ย.69): รางบน_ตัด ⑤.1 แถว 85-96 **ไม่มีแถว "ไกด์ดำ"** → ถอดออกตามกฎ "อย่ากำหนดจำนวนเอง"
+    //   (เดิมเว็บใส่ JR00558 ×2/×1 เอง · JR00558 ยังไม่มีราคาสโตร์ด้วย → เป็นตัวบล็อก HW_FROM_CUTLIST มาตลอด)
   ],
 };
 
@@ -2146,7 +2236,7 @@ export const CUT_SPECS: CutSpec[] = [
   SMS_SLIDE_FREE, SMS_SLIDE_CENTER, SMS_SLIDE_TOW,
   SLIMLUX_SLIDE, FIXED_PANEL,
   VELORA_SWING, SMS240_BIFOLD, EURO_BIFOLD, EURO_BIFOLD_CORNER, EURO_LIFT,
-  FUJI_SLIDE, FUJI_SLIDE_CENTER, FUJI_SLIDE_MULTI, FUJI_SWING, FUJI_DOOR, FUJI_FIX, FUJI_HUNG,
+  FUJI_SLIDE, FUJI_SLIDE_CENTER, FUJI_SLIDE_MULTI, FUJI_SWING, FUJI_DOOR, FUJI_DOOR_DOUBLE, FUJI_FIX, FUJI_HUNG,
   PC_DOOR, GATE_SLIDE, SOLID_DOOR, WOODJAMB_SWING,
   AWNING, AWNING_L, AWNING_MULTI, GABLE_STRAIGHT, GABLE_MULTI, GLASSHOUSE, GLASSHOUSE_MULTI, LOUVER_PANEL, TOPRAIL_FRAME,
 ];
