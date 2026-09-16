@@ -134,8 +134,10 @@ function check(label, res, want) {
   console.log("บานโซลิด (แม่-ลูก):");
   check("โซลิด", res, [
     { nameHas: "บานพับ hyda", sku: "JR00489", qty: 8 },  // แม่4 + ลูก4×1
-    { nameHas: "สปิงก็อท", sku: "JR00592", qty: 8 },      // 4×2
-    { nameHas: "ฉากประคองมุม", sku: "JR00480", qty: 16 }, // 8×2
+    // v1 (16 ก.ย.69): โซลิด_ตัด ⑤.1 แถว 63-64 = JR00482 (สปิงก็อท) · JR00557 (ฉากประคองมุม)
+    //   เดิมเว็บผูก JR00592/JR00480 ซึ่ง ราคา ERP ระบุว่าเป็นของบานเลื่อนยูโร (คนละตัว)
+    { nameHas: "สปิงก็อท", sku: "JR00482", qty: 8 },      // 4×2
+    { nameHas: "ฉากประคองมุม", sku: "JR00557", qty: 16 }, // 8×2
     { nameHas: "มือจับ ล็อค+กุญแจ (คิงโบ)", sku: "JR00315", qty: 1 },
     { nameHas: "ตลับกุญแจไฮด้า", sku: "JR00551", qty: 1 },
     { nameHas: "ไส้กุญแจ", sku: "JR00499", qty: 1 },
@@ -223,7 +225,8 @@ function check(label, res, want) {
     { nameHas: "แกนมือจับ A", sku: "JR00478", qty: 4 },
     { nameHas: "ก้ามปูรับล็อค", sku: "JR00477", qty: 4 },
     { nameHas: "สปิงก็อท", sku: "JR00592", qty: 8 },
-    { nameHas: "ฉากประกอบมุม", sku: "JR00480", qty: 24 },   // 12/บาน × 2 บาน — เจ้าของเคาะ 21 ส.ค.69 (เดิมไฟล์เขียน 16/บาน)
+    // v1 (16 ก.ย.69) + decisions ข้อ 6: ยูโร_ตัด #17 "มุมเลื่อน JR00480 = 8/บาน (ตามชีทคิดทุน)" → 8×2 = 16 (เดิมเว็บ 12/บาน = 24)
+    { nameHas: "ฉากประกอบมุม", sku: "JR00480", qty: 16 },
     { nameHas: "ยางรูน้ำ", sku: "JR00589", qty: 6 },
     { nameHas: "วาวรูน้ำ", sku: "JR00485", qty: 6 },
   ]);
@@ -370,8 +373,9 @@ function check(label, res, want) {
   const rowOf = (res, name) => res.rows.find((r) => r.name === name);
   console.log("SMS อิสระ/สลับ — ตบรางล้อ + มุ้ง:");
   const rail = rowOf(base, "ตบรางล้อ");
-  if (!rail || rail.code !== "F7994" || rail.qty !== 3 || Math.abs(rail.len - 345.6) > 0.05) { fails++; console.log(`  ✗ ตบรางล้อ want code=F7994 qty=3 len=345.6 got ${JSON.stringify(rail)}`); }
-  else console.log("  ✓ ตบรางล้อ F7994 qty=3(N) len=345.6(W-4.4)");
+  // v1 (16 ก.ย.69): SMS_ตัด ชีตรวม D20 = กว้างเต็ม (ไม่หัก 4.4) → len 350 · qty ยังเป็น N (อิสระ)
+  if (!rail || rail.code !== "F7994" || rail.qty !== 3 || Math.abs(rail.len - 350) > 0.05) { fails++; console.log(`  ✗ ตบรางล้อ want code=F7994 qty=3 len=350 got ${JSON.stringify(rail)}`); }
+  else console.log("  ✓ ตบรางล้อ F7994 qty=3(N) len=350(W เต็ม · v1)");
 
   const small = computeCutList(spec, { ...spec.defaults, N: 2, mesh: "เฟรมเล็ก", meshCount: 2 }, 1);
   const postSmall = rowOf(small, "เสาตั้งมุ้ง (เฟรมเล็ก)"), crossSmall = rowOf(small, "เสานอนมุ้ง (เฟรมเล็ก)");
@@ -408,13 +412,14 @@ function check(label, res, want) {
   if (!wheel || wheel.qty !== 4 || wheel.sku !== "JR00576") { fails++; console.log(`  ✗ CENTER มุ้งใหญ่ ล้อมุ้ง want qty=4 sku=JR00576 got ${JSON.stringify(wheel)}`); } else console.log("  ✓ CENTER มุ้งใหญ่ · ล้อมุ้ง qty=4 (2 มุ้งคงที่)");
 }
 
-// ── C) SMS ลากจูง (TOW) — ตบรางล้อ qty=N (ดิบ ไม่ใช่ N-1) ──
+// ── C) SMS ลากจูง (TOW) — ตบรางล้อ qty=N−1 (บานเลื่อน · v1) ──
 {
   const spec = CUT_SPEC_BY_ID["sms_slide_tow"];
   const res = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1); // N=3
   const rail = res.rows.find((r) => r.name === "ตบรางล้อ");
-  console.log("SMS ลากจูง — ตบรางล้อ (N ดิบ):");
-  if (!rail || rail.code !== "F7994" || rail.qty !== 3) { fails++; console.log(`  ✗ ตบรางล้อ (TOW) want F7994 qty=3(N) got ${JSON.stringify(rail)}`); } else console.log("  ✓ ตบรางล้อ F7994 qty=3 (N ดิบ ไม่ใช่ N-1)");
+  console.log("SMS ลากจูง — ตบรางล้อ (บานเลื่อน = N−1):");
+  // v1 (16 ก.ย.69): SMS_ตัด ชีตรวม E20 = F2 "บานเลื่อน" (ลากจูง = N−1) · ของเดิม "N ดิบ" มาจากไฟล์ v2 เก่า
+  if (!rail || rail.code !== "F7994" || rail.qty !== 2) { fails++; console.log(`  ✗ ตบรางล้อ (TOW) want F7994 qty=2(N−1) got ${JSON.stringify(rail)}`); } else console.log("  ✓ ตบรางล้อ F7994 qty=2 (N−1 ตาม F2 บานเลื่อน · v1)");
 }
 
 // ── D) กันสาดเพิง (AWNING) — จันทัน max ไวนิล 75 · ค่าหักปิดปลาย/รางน้ำ · กล่องครอบเพลท×0.25 · แปเดี่ยว · ลบกล่องเหล็ก · override จันทันรวม ──
@@ -462,17 +467,23 @@ function check(label, res, want) {
   if (lock45 !== 1 || lock90 !== 1) { fails++; console.log(`  ✗ เสากุญแจ 3L3R ต้อง=1 ทั้ง 45°/90° (จาก config) got 45°=${lock45} 90°=${lock90}`); } else console.log("  ✓ เสากุญแจ 3L3R · lock=1 ทั้ง 45°/90° (มาจาก config ไม่ผูกมุมตัด)");
 }
 
-// ── F) รางบนเฟรม (TOPRAIL_FRAME) — เพิ่ม "ไกด์ดำ" (noStock) ──
+// ── F) รางบนเฟรม (TOPRAIL_FRAME) — v1: ไม่มี "ไกด์ดำ" + โปรไฟล์ต้องผูกรหัสครบ ──
+//   v1 (16 ก.ย.69) รางบน_ตัด ⑤.1 แถว 85-96 ไม่มีแถวไกด์ดำ → ถอดออก (กฎ "อย่ากำหนดจำนวนเอง")
+//   เดิมเทสล็อก qty 2/1 sku JR00558 — เปลี่ยนเป็นล็อกว่า "ต้องไม่มีแถวนี้แล้ว" (ไม่ลบเทส แค่กลับเงื่อนไขตามไฟล์)
 {
   const spec = CUT_SPEC_BY_ID["toprail_frame"];
-  console.log("รางบนเฟรม — ไกด์ดำ:");
+  console.log("รางบนเฟรม — v1 ไม่มีไกด์ดำ + รหัสโปรไฟล์ครบ:");
   const free = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1); // sashMode=อิสระ
   const tow = computeCutList(spec, { ...spec.defaults, sashMode: "ลากจูง" }, 1);
-  const gFree = free.hardware.find((h) => h.name.includes("ไกด์ดำ"));
-  const gTow = tow.hardware.find((h) => h.name.includes("ไกด์ดำ"));
-  // ผูกรหัส JR00558 (ไกด์รางแขวน-ดำ) แล้ว 27 ส.ค.69 — ไม่ใช่ noStock อีกต่อไป (ไฟล์ตัดไม่ได้ใส่รหัสไว้ แต่สโตร์มี)
-  if (!gFree || gFree.qty !== 2 || gFree.sku !== "JR00558") { fails++; console.log(`  ✗ ไกด์ดำ (อิสระ) want qty=2 sku=JR00558 got ${JSON.stringify(gFree)}`); } else console.log("  ✓ ไกด์ดำ อิสระ qty=2 · ผูก JR00558");
-  if (!gTow || gTow.qty !== 1) { fails++; console.log(`  ✗ ไกด์ดำ (ลากจูง) want qty=1 got ${JSON.stringify(gTow)}`); } else console.log("  ✓ ไกด์ดำ ลากจูง qty=1");
+  if (free.hardware.some((h) => h.name.includes("ไกด์ดำ")) || tow.hardware.some((h) => h.name.includes("ไกด์ดำ"))) {
+    fails++; console.log("  ✗ ไกด์ดำ ต้องไม่มีแล้ว (v1 รางบน_ตัด ไม่มีแถวนี้)");
+  } else console.log("  ✓ ไม่มีแถว ไกด์ดำ แล้ว (ตาม v1)");
+  // รหัสโปรไฟล์ที่ v1 ใส่มาให้ครบ (เดิมเว็บเว้น "-" → ผูกสโตร์/คิดเงินไม่ได้)
+  const codeOf = (n) => free.rows.find((r) => r.name === n)?.code;
+  for (const [n, c] of [["เสารับบาน (กล่อง)", "JR01841"], ["ชนกลางรับบาน", "JR03125"], ["รางบน Hafele", "JR03141"],
+    ['ฉาก 4" ปิดราง', "JR01949"], ["เสากุญแจยูโร (ตั้ง)", "F7980"], ["ตบเกี่ยวยูโร", "F7983"]]) {
+    if (codeOf(n) !== c) { fails++; console.log(`  ✗ ${n} ต้องเป็น ${c} got ${codeOf(n)}`); } else console.log(`  ✓ ${n} = ${c}`);
+  }
 }
 
 // ── บานโซลิด 1 ชั้น (เจ้าของเคาะ 10 ก.ย.69) — ลูกฟูกฝั่งเดียว · เส้นคาดยัง 2 ฝั่ง ──
