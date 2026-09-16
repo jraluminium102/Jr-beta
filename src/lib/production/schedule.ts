@@ -15,6 +15,8 @@
  *   → รวมไว้ที่เดียว เพิ่มฟีลด์ทีเดียวได้ทั้ง 2 ทางพร้อมกันเสมอ
  */
 
+import { buildSalesResolver } from "@/lib/sales-resolve";
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Sb = { from: (t: string) => any };
 
@@ -37,6 +39,8 @@ export type ScheduleRow = {
   sets: ScheduleSet[];
   /** ใบตัดของงานนี้ (0094) — โชว์ชิปกดเปิดบนการ์ด (ช่าง + ออฟฟิศ) */
   cutlists: { id: number; code: string | null; name: string; status: string }[];
+  /** เซลล์ที่ดูแลงาน (เจ้าของสั่ง 16 ก.ย.69 · โชว์บนการ์ดให้ช่างรู้ว่าใครดูแล) */
+  sales_name: string | null;
 };
 
 /** สถานะที่ถือว่า "อยู่ในตารางผลิต" */
@@ -54,11 +58,13 @@ export const SET_COLS =
  * @param sb  client ที่มีสิทธิ์อ่านแล้ว (ctx.supabase ของคนล็อกอิน หรือ service client ของลิงก์ช่าง)
  */
 export async function buildScheduleRows(sb: Sb): Promise<ScheduleRow[]> {
-  const [{ data: prods }, { data: adhoc }] = await Promise.all([
+  const [{ data: prods }, { data: adhoc }, resolveSales] = await Promise.all([
     sb.from("productions")
       .select("id, job_id, status, production_queued, production_due_date, planned_install_date, producer_note, job:job_id(job_code, customer_name, customer_area, status)")
       .in("status", SCHEDULE_STATUSES as unknown as string[]),
     sb.from("adhoc_production_tasks").select("*").neq("status", "DONE"),
+    // เซลล์ต่องาน — resolver คืน (job)=>ชื่อเซลล์ · ถ้า RLS อ่านคิวไม่ได้ก็คืน null (ไม่ล้มบอร์ด)
+    buildSalesResolver(sb).catch(() => (() => null)),
   ]);
 
   const jobIds = (prods ?? [])
@@ -90,15 +96,19 @@ export async function buildScheduleRows(sb: Sb): Promise<ScheduleRow[]> {
     }, {});
   }
 
-  // ตัดงานที่ job ถูกยกเลิก
+  // ตัดงานที่ job ถูกยกเลิก (CANCELLED) หรือจบงานแล้ว (COMPLETED) — งานจบแล้วไม่ควรค้างในบอร์ดผลิต
   const jobRows: ScheduleRow[] = (prods ?? [])
-    .filter((p: Record<string, unknown>) => (p.job as { status?: string } | null)?.status !== "CANCELLED")
+    .filter((p: Record<string, unknown>) => {
+      const st = (p.job as { status?: string } | null)?.status;
+      return st !== "CANCELLED" && st !== "COMPLETED";
+    })
     .map((p: Record<string, unknown>) => {
       const job = p.job as { job_code?: string; customer_name?: string; customer_area?: string } | null;
+      const jobId = (p.job_id as string | null) ?? null;
       return {
         kind: "job" as const,
         id: p.id as string,
-        job_id: (p.job_id as string | null) ?? null,
+        job_id: jobId,
         title: job?.customer_name ?? "—",
         subtitle: job?.customer_area ?? null,
         job_code: job?.job_code ?? null,
@@ -110,6 +120,7 @@ export async function buildScheduleRows(sb: Sb): Promise<ScheduleRow[]> {
         status: p.status as string,
         sets: p.job_id ? (setsByJob[p.job_id as string] ?? []) : [],
         cutlists: p.job_id ? (cutsByJob[p.job_id as string] ?? []) : [],
+        sales_name: jobId ? resolveSales({ id: jobId, customer_name: job?.customer_name ?? null }) : null,
       };
     });
 
@@ -129,6 +140,7 @@ export async function buildScheduleRows(sb: Sb): Promise<ScheduleRow[]> {
     status: (a.status as string) ?? "QUEUED",
     sets: [],
     cutlists: [],
+    sales_name: null,
   }));
 
   // งานด่วนก่อน: วันกำหนดเสร็จใกล้สุดขึ้นก่อน · ไม่มีวันไปท้าย

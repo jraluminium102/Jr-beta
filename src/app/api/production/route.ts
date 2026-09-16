@@ -106,7 +106,8 @@ export const GET = withRoute(async () => {
   const rows = (data ?? [])
     .filter((p: Record<string, unknown>) => {
       const job = p.job as { status?: string; hidden_from_production?: boolean } | null;
-      return job?.status !== "CANCELLED" && job?.hidden_from_production !== true;
+      // จบงาน (COMPLETED) แล้ว ไม่ควรค้างในบอร์ดผลิต (เหมือน CANCELLED)
+      return job?.status !== "CANCELLED" && job?.status !== "COMPLETED" && job?.hidden_from_production !== true;
     })
     .map((p: Record<string, unknown>) => {
       const job = p.job as Record<string, unknown> | null;

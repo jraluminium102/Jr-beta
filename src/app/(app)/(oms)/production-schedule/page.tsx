@@ -41,6 +41,7 @@ type SchedRow = {
   due_date: string | null;       // วันกำหนดผลิตเสร็จ = หัววัน/เรียงในตาราง
   install_date: string | null;
   producer_note: string | null;
+  sales_name?: string | null;   // เซลล์ที่ดูแลงาน (โชว์บนการ์ด · เจ้าของสั่ง 16 ก.ย.69)
   status: string;
   sets?: ProdSet[];
   allSets?: ProdSet[];   // ชุดเต็มของงาน (ก่อนกรองโรง) — ใช้ตัดสิน "ส่งติดตั้ง" ให้ครบทั้งงานเสมอ
@@ -168,7 +169,7 @@ export default function ProductionSchedulePage() {
   const [query, setQuery] = useState<string>("");
   const qLower = query.trim().toLowerCase();
   const matchQuery = (r: SchedRow) => !qLower ||
-    [r.title, r.job_code, r.customer_area, r.subtitle, r.customer_name].some((x) => String(x ?? "").toLowerCase().includes(qLower));
+    [r.title, r.job_code, r.customer_area, r.subtitle, r.customer_name, r.sales_name].some((x) => String(x ?? "").toLowerCase().includes(qLower));
 
   // ── filter โรงงาน (ตารางแยกโรง 1 / โรง 3 — ลิงก์เดียว สลับโรงได้) ──
   const [factoryFilter, setFactoryFilter] = useState<string>("");
@@ -571,6 +572,9 @@ export default function ProductionSchedulePage() {
                         <div className="flex items-center gap-2.5 flex-wrap mt-1">
                           {(r.customer_area || r.subtitle) && (
                             <span className="text-[12px] truncate" style={{ color: IOS.ink3 }}>📍 {r.customer_area || r.subtitle}</span>
+                          )}
+                          {r.sales_name && (
+                            <span className="text-[12px] font-semibold rounded-md px-1.5 py-0.5 truncate" style={{ background: "#f0f7ff", color: IOS.blue }}>🧑‍💼 เซลล์: {r.sales_name}</span>
                           )}
                           {r.due_date && (() => {
                             const late = r.due_date < today() && derivePhase(r) !== "พร้อม";
