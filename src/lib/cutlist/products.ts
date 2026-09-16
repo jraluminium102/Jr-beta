@@ -8,6 +8,7 @@
  */
 import type { CutSpec, CutInput } from "./engine.ts";
 // นามสกุล .ts จำเป็นให้ verify script (node --experimental-strip-types) resolve value import ได้ · bundler/webpack รับปกติ
+import { PRODUCTS as CALC_PRODUCTS } from "../calculator40/products.mjs";
 import { smsSlideHardware, smsMeshHardware, handleHardware, otherHandleRow, HANDLE_OPTS_LR, HANDLE_OPTS_L, HANDLE_BRANDS, HANDLE_TYPES, type HardwareDef } from "./hardware.ts";
 
 // ── อุปกรณ์บานเปิดเดี่ยว (casement/ประตูเดี่ยว) — SKU ชุดเดียวกับบานโซลิด (N=1 ไม่มีบานลอง) · ใช้ร่วม FUJI บานเปิด/ประตู ──
@@ -608,18 +609,15 @@ const euroSashW = (o: { W: number; N: number; L?: number }) => {
 const euroSashH = (o: { H: number; rail: string }) => o.H - 5.5 - 2 * 0.7 - (eIsU(o.rail) ? 0 : 2.5);
 // จำนวนบานพับเฟี้ยม HD-641 — ตาราง LUT จากไฟล์ (ขึ้นกับจำนวนบาน · รูปแบบพับ · ความสูง)
 //   ชุดเดียวกับที่คิดราคา 4.0 ใช้ (ตัวแปร HINGE) — แก้ที่นี่ต้องแก้ที่นั่นด้วย
-const euroHinge = (o: { N: number; L?: number; H: number }): number => {
+const euroHinge = (o: { N: number; L?: number; H: number; rail?: string }): number => {
   const L = o.L ?? Math.ceil(o.N / 2);
-  const wall = L === 0 || L === o.N;      // รวบชนผนัง (X-0 / 0-X)
-  const hmm = o.H * 10;                   // ซม. → มม.
-  const T: Record<string, [number, number, number, number]> = {
-    "2w": [2700, 7, 9999, 10], "3w": [3000, 7, 9999, 13], "3m": [9999, 9, 9999, 12],
-    "4w": [9999, 11, 9999, 16], "4m": [3000, 14, 9999, 26],
-    "5w": [9999, 11, 9999, 16], "5m": [9999, 14, 9999, 20],
-    "6w": [9999, 15, 9999, 22], "6m": [3000, 14, 9999, 22],
-  };
-  const t = T[`${o.N}${wall ? "w" : "m"}`] ?? T["2w"];
-  return hmm <= t[0] ? t[1] : t[3];
+  const hi = Math.max(L, o.N - L), lo = Math.min(L, o.N - L);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const T = (((CALC_PRODUCTS as any)?.fold_euro?.tables?.hinge) ?? {}) as Record<string, number[]>;
+  const k = `${o.N}P ${hi}-${lo}`;
+  const t = T[k + (eIsU(String(o.rail ?? "")) ? " (U)" : "")] ?? T[k] ?? [270, 7, 10];
+  const h = o.H;   // ซม. (ตาราง LUT เก็บเป็น ซม.)
+  return t.length === 3 ? (h <= t[0] ? t[1] : t[2]) : (h <= t[0] ? t[1] : (h <= t[2] ? t[3] : t[4]));
 };
 /** ก้านสไลด์ HD-1180 = 2×(INT(ซ้าย/2) + INT(ขวา/2)) — v1 เฟี้ยมยูโร_ตัด D55 (= 2×P12) */
 const ebSlide = (o: CutInput) => {
