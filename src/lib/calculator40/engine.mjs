@@ -789,6 +789,12 @@ export function computeCost(PB, prod, opt) {
     lines.push({ cat: 'hardware', name: 'มอเตอร์ ' + (Z.motorLabel[motorKey] || motorKey), qty: 1, unit: 'ชุด', unitPrice: motorSell, amount: motorSell });
     if (remoteSell > 0) lines.push({ cat: 'hardware', name: 'รีโมท 1 ตัว', qty: 1, unit: 'ตัว', unitPrice: remoteSell, amount: remoteSell });
     zWarn.forEach(w => lines.push({ cat: 'warn', name: w, amount: 0 }));
+  } else if (prod.sellCostMult) {
+    // ราคาขาย = ทุน × ตัวคูณ เทียบ "ขายขั้นต่ำ" แล้วใช้ตัวที่สูงกว่า (ชีต "คิดทุน มอเตอร์ Velora" D26/D27/D28)
+    //   ชีตไม่มีค่าแรง → ผลิตอย่างเดียว = ผลิต+ติดตั้ง · ปัดแบบ ROUND ตามสูตรในชีต (ไม่ปัดร้อย)
+    const scm = typeof prod.sellCostMult === 'number' ? prod.sellCostMult : Number(val(prod.sellCostMult)) || 0;
+    const scmMin = prod.sellMinFix == null ? 0 : (typeof prod.sellMinFix === 'number' ? prod.sellMinFix : Number(val(prod.sellMinFix)) || 0);
+    sellBeforeLabor = sellMfgOnly = sellWithInstall = Math.max(Math.round(costTotal * scm), scmMin);
   } else if (prod.sellDirect) {
     // ของซื้อสำเร็จ — ราคาขาย = พื้นที่ × เรต/ตร.ม. (B เป็นราคาขายแล้ว ไม่ ×กำไร) + ค่าแรงติดตั้ง/ตร.ม.
     let aSell = area, hNote = '';
