@@ -65,19 +65,33 @@ function motorPicked(prod: any, A: AddonsMap, area = 0, spec: any = {}, weight: 
   // ยก 80 กก. เกิน 3.5 ตร.ม. = engine ปฏิเสธ (ขึ้นคำเตือนแทนมอเตอร์) → ยังไม่ถือว่ามีมอเตอร์
   // "auto" = ต้องคิดน้ำหนักได้ครบ + มีขนาดที่รับไหว ไม่งั้น engine ขึ้นคำเตือนแทนมอเตอร์ (เซนเซอร์ต้องไม่โผล่)
   if (ads.includes("motor")) {
-    if (!motorSizeOk(v("motor"), weight, [80, 300])) return false;
-    return !(v("motor") === "80" && !weight && area > 3.5);   // ยังไม่มีน้ำหนัก = ถอยไปใช้กฎพื้นที่เดิม
+    // 17 ก.ย.69 เจ้าของสั่ง: เลือกมอเตอร์ไม่ตรงเงื่อนไข ก็ยังต้องถือว่า "มีมอเตอร์"
+    //   ไม่งั้นออปชั่นร่วมอย่าง "เซนเซอร์กันฝน" หายไปจากหน้าจอ (เจ้าของเจอที่บานกระทุ้ง)
+    //   คำเตือนเกินพิกัดยังโชว์ตามเดิมที่ MotorAutoNote
+    //   ยกเว้น "อัตโนมัติ" ที่เลือกรุ่นให้ไม่สำเร็จ (น้ำหนักไม่ครบ/หนักเกินตัวใหญ่สุด)
+    //   = ไม่มีมอเตอร์จริงสักตัว เอนจินก็ไม่ขึ้นบรรทัด → ต้องซ่อนของต่อพ่วงตามเดิม
+    const sel = String(v("motor") || "");
+    if (sel === "auto") return motorSizeOk(sel, weight, [80, 300]);
+    return !!sel && sel !== "none";
   }
   // Velora บานเปิดสลิม — ติ๊กมอเตอร์แล้วถือว่ามี (ไม่มีเงื่อนไขขนาด/น้ำหนัก)
   if (ads.includes("velora_motor")) { const v2 = v("velora_motor"); return !!v2 && v2 !== "none"; }
   if (ads.includes("banklet_motor")) return v("banklet_motor") === "yes";
   // บานกระทุ้ง: ขนาดบานต้องอยู่ในช่วงที่รุ่นนั้นทำได้ ไม่งั้น engine ขึ้นคำเตือนแทนมอเตอร์
   if (ads.includes("awn_auto")) {
-    const p = awnMotorPick(v("awn_auto"), size?.W ?? 0, size?.H ?? 0, size?.P ?? 1, PB_JSON);
-    return !!p.key;
+    // บานกระทุ้ง: เลือกรุ่นมอเตอร์ที่ขนาดบานไม่เข้าเงื่อนไข ก็ยังถือว่ามีมอเตอร์
+    //   (เดิมคืน false → เซนเซอร์กันฝนหายจากหน้าจอ — เจ้าของแจ้ง 17 ก.ย.69)
+    //   ยกเว้นโหมด "อัตโนมัติ" ที่ไม่มีรุ่นไหนทำได้ = ไม่มีมอเตอร์จริง เอนจินก็ไม่ขึ้นบรรทัด
+    const a = String(v("awn_auto") || "");
+    if (a === "auto") return !!awnMotorPick(a, size?.W ?? 0, size?.H ?? 0, size?.P ?? 1, PB_JSON).key;
+    return !!a && a !== "none";
   }
   if (ads.includes("slide_auto")) return !!(v("slide_auto")?.brand && v("slide_auto").brand !== "none");
-  if (ads.includes("slide_motor")) return motorSizeOk(v("slide_motor")?.kw, weight, [80, 300, 1500]);
+  if (ads.includes("slide_motor")) {
+    const k = String(v("slide_motor")?.kw || "");
+    if (k === "auto") return motorSizeOk(k, weight, [80, 300, 1500]);   // auto เลือกไม่ได้ = ไม่มีมอเตอร์จริง
+    return !!k && k !== "none";
+  }
   return false;
 }
 
@@ -164,6 +178,8 @@ function AwnAutoNote({ sel, size }: { sel: any; size: { W: number; H: number; P:
   const p = awnMotorPick(s, size?.W ?? 0, size?.H ?? 0, size?.P ?? 1, PB_JSON);
   if (p.warn) return <p className="text-[11px] text-amber-700 mt-1.5">{p.warn}</p>;
   if (!p.key) return null;
+  // เลือกรุ่นที่ขนาดบานไม่เข้าเงื่อนไข: คิดราคาให้ แต่เตือนไว้ (เจ้าของสั่ง 17 ก.ย.69)
+  if (p.over) return <p className="text-[11px] text-amber-700 mt-1.5">{p.over}</p>;
   const m = AWN_TABLE[p.key];
   return (
     <p className="text-[11px] text-sky-700 mt-1.5">

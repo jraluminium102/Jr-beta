@@ -1194,8 +1194,9 @@ export function motorPicked(ctx) {
   // ม่านซิป: มอเตอร์อยู่ในชุดเสมอ ยกเว้นเลือก "มือดึงล้วน" (manual)
   if (ads.includes('zip_motor')) return String((ctx.opt && ctx.opt.motor) || A.zip_motor || '') !== 'manual';
   // ⚠ ต้องเป็น "ขึ้นบรรทัดมอเตอร์จริงแล้ว" ไม่ใช่แค่ผู้ใช้ติ๊กไว้
-  //   เช่น เลือกยก 80 กก. กับงานเกิน 3.5 ตร.ม. → engine ขึ้นคำเตือนแทน ไม่มีมอเตอร์จริง
-  //   ⇒ ของต่อพ่วงต้องหายตามไปด้วย ไม่ใช่ลอยอยู่คนเดียวในใบเสนอ
+  //   เช่น ถอดมอเตอร์ออกทีหลังแต่เซนเซอร์ยังติ๊กค้าง → ของต่อพ่วงต้องหายตามไปด้วย
+  // 17 ก.ย.69 เจ้าของสั่ง: เลือกรุ่นที่ไม่ตรงเงื่อนไข ให้คิดราคาได้ (ติดคำเตือนที่ชื่อบรรทัดแทน)
+  //   ⇒ เคส "เกินพิกัด" ขึ้นบรรทัดมอเตอร์จริงแล้ว เซนเซอร์กันฝนจึงไม่หายอีก
   //   (ทำได้เพราะ addons ของทุกรุ่นเรียง "มอเตอร์ก่อน ของต่อพ่วงทีหลัง" เสมอ — ดู products.mjs)
   return !!ctx.motorAdded;
 }
@@ -1252,9 +1253,13 @@ export function awnMotorPick(sel, W, H, P, PB) {
   const m = T[s];
   if (!m) return {};
   if (!fits(m)) {
+    // 17 ก.ย.69 เจ้าของสั่ง "อยากให้เลือกได้ แม้ไม่ตรงเงื่อนไข ตอนนี้ล็อกไม่ให้คิดราคา"
+    //   เดิมคืน warn เปล่า = ไม่มี key → เอนจินไม่คิดเงิน และออปชั่นร่วม (เซนเซอร์กันฝน) หายตามไปด้วย
+    //   ตอนนี้คืนรุ่นที่เลือกตามปกติ แต่แนบ over ไว้ให้ติดคำเตือนที่ชื่อบรรทัด/ป้ายใต้ปุ่ม
     const okList = order.filter((k) => fits(T[k])).map((k) => T[k].label);
-    return { warn: '⚠️ ' + m.label + ' ทำได้ ' + sizeTxt(m) + ' — บานนี้ ' + pw + '×' + ph + ' ซม. (กว้าง×ยื่น ต่อบาน)'
-      + (okList.length ? ' · ใช้ได้: ' + okList.join(', ') : ' · ไม่มีรุ่นไหนทำได้ ต้องแบ่งบาน') };
+    const over = '⚠️ ' + m.label + ' ทำได้ ' + sizeTxt(m) + ' — บานนี้ ' + pw + '×' + ph + ' ซม. (กว้าง×ยื่น ต่อบาน)'
+      + (okList.length ? ' · ใช้ได้: ' + okList.join(', ') : ' · ไม่มีรุ่นไหนทำได้ ต้องแบ่งบาน');
+    return { key: s, model: m, pw, ph, auto: false, over };
   }
   return { key: s, model: m, pw, ph, auto: false };
 }
@@ -1463,11 +1468,14 @@ export function computeAddon(id, sel, ctx) {
     const cost = cmap[sel]; if (cost == null) return null;
     // เลือกเองแล้วน้ำหนักเกินพิกัด = ต้องเตือน (ใช้น้ำหนักจริงถ้าคิดได้ · คิดไม่ได้ถอยไปใช้พื้นที่แบบเดิม)
     const wKg = ctx.weight && !(ctx.weight.missing || []).length ? (ctx.weight.load != null ? ctx.weight.load : ctx.weight.total) : 0;
-    if (!autoKg && !motorSizeOk(sel, ctx.weight, [80, 300]) && wKg > 0)
-      return { cat: 'warn', label: '⚠️ มอเตอร์ ' + sel + ' กก. รับไม่ไหว — น้ำหนักที่ต้องยก ' + round2(wKg) + ' กก. (อลู ' + ctx.weight.alu + ' + กระจก ' + ctx.weight.glass + ') · เผื่อ ' + ctx.weight.loadPct + '% แล้วรับได้ ' + round2(Number(sel) * ctx.weight.loadPct / 100) + ' กก.', amount: 0 };
-    if (!autoKg && !(wKg > 0) && sel === '80' && ctx.area > 3.5) return { cat: 'warn', label: '⚠️ มอเตอร์ 80 กก. ใช้ได้ ≤3.5 ตร.ม. (พื้นที่ ' + round2(ctx.area) + ') — เปลี่ยนเป็น 300 กก.', amount: 0 };
+    // 17 ก.ย.69 เจ้าของสั่ง "เลือกได้แม้ไม่ตรงเงื่อนไข ตอนนี้ล็อกไม่ให้คิดราคา"
+    //   เดิม return warn แทนราคา = ไม่คิดเงิน และออปชั่นร่วม (เซนเซอร์กันฝน) หายตามไปด้วย
+    const overKg = (!autoKg && !motorSizeOk(sel, ctx.weight, [80, 300]) && wKg > 0)
+      ? ' ⚠️ เกินพิกัด — น้ำหนักที่ต้องยก ' + round2(wKg) + ' กก.' : '';
+    const overArea = (!autoKg && !(wKg > 0) && sel === '80' && ctx.area > 3.5)
+      ? ' ⚠️ 80 กก. เหมาะกับ ≤3.5 ตร.ม. (พื้นที่ ' + round2(ctx.area) + ' ตร.ม.)' : '';
     const sell = motorFixSell(ctx.PB, 'บานยก ยก' + sel, autoSell(cost, ctx));   // ยก80 = 25,000 · ยก300 = 35,000
-    return { label: 'ชุดออโต้บานยก ' + sel + ' กก. (รวมค่าส่ง)' + (autoKg ? ' · เลือกอัตโนมัติจากน้ำหนักบาน ' + autoKg + ' กก.' : ''), qty: 1, unit: 'ชุด', unitPrice: sell, amount: sell, cost, fixedSell: true };
+    return { label: 'ชุดออโต้บานยก ' + sel + ' กก. (รวมค่าส่ง)' + (autoKg ? ' · เลือกอัตโนมัติจากน้ำหนักบาน ' + autoKg + ' กก.' : '') + overKg + overArea, qty: 1, unit: 'ชุด', unitPrice: sell, amount: sell, cost, fixedSell: true };
   }
   if (id === 'slide_motor') {           // มอเตอร์หลังคาเลื่อน — ชีต "คิดทุน หลังคาเลื่อน" แถว 44-52
     // 💲 ราคาขายมอเตอร์/เซนเซอร์ = "ราคาขายตรง ไม่ผ่านกำไร" (ชีตแถว 49-51 + หมายเหตุแถว 60)
@@ -1563,7 +1571,8 @@ export function computeAddon(id, sel, ctx) {
     const sell = eachSell > 0 ? eachSell * n : autoSell(cost, ctx);
     const out = [{
       label: 'ชุดออโต้กระทุ้ง ' + M.label + (n > 1 ? ' ×' + n + ' บาน' : '') + ' (รวมค่าส่ง · ระบบสั่งงาน: รีโมท)'
-        + (p.auto ? ' · เลือกอัตโนมัติจากขนาดบาน ' + p.pw + '×' + p.ph + ' ซม.' : ''),
+        + (p.auto ? ' · เลือกอัตโนมัติจากขนาดบาน ' + p.pw + '×' + p.ph + ' ซม.' : '')
+        + (p.over ? ' ' + p.over : ''),
       qty: n, unit: 'ชุด', unitPrice: round2(sell / n), amount: sell, cost, fixedSell: eachSell > 0,
     }];
     // ทุนยังไม่มีในไฟล์ (รุ่นใหม่ที่ชีตราคาออโต้ยังไม่ได้เติม) — ราคาขายฟิกอยู่แล้ว แต่ทุนรวมจะขาด ต้องเตือน

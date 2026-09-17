@@ -1025,10 +1025,10 @@ export const PRODUCTS = {
       { code: 'B28010', name: 'ตบปิดเฟรมบน (COVER HEAD)', price: 395, kg: 2.24, seg: 'W-0.094', count: '1' },
       { code: 'B28011', name: 'กรอบบาน แนวนอน (SASH↔)', price: 600, kg: 3.379, seg: 'W-0.154', count: '4' },
       { code: 'B28011', name: 'กรอบบาน แนวตั้ง (SASH↕)', price: 600, kg: 3.379, seg: '(H-0.046)/2-0.001', count: '4' },
-      { code: 'B28012', name: 'คิ้วยึดเสาเกี่ยว (ADAPTOR)', price: 195, kg: 1.094, seg: 'W-0.132', count: '2' },
+      { code: 'B28012', name: 'คิ้วยึดเสาเกี่ยว (ADAPTOR)', price: 195, kg: 0.326, seg: 'W-0.132', count: '2' },
       { code: 'B28013', name: 'เสาเกี่ยว (INTERLOCK)', price: 195, kg: 1.094, seg: 'W-0.112', count: '2' },
       { code: 'B28014', name: 'เฟรมล่าง (SILL)', price: 840, kg: 4.71, seg: 'W-0.05', count: '1' },
-      { code: 'B28015', name: 'เสาเสริมเฟรมข้าง (JAMB ADAPTOR)', price: 60, kg: 0.326, seg: 'H-0.069', count: '2' },
+      { code: 'B28015', name: 'เสาเสริมเฟรมข้าง (JAMB ADAPTOR)', price: 60, kg: 1.094, seg: 'H-0.069', count: '2' },
       { code: 'B10004', name: 'เฟรมข้าง (NARROW FRAME)', price: 1175, kg: 6.355, seg: 'H', count: '2' },
       { name: 'กล่องร่องมีสกรู', needCode: true, price: 995, kg: 5.741, seg: 'W', count: '1' },   // ไฟล์ยังไม่ให้รหัสเส้นนี้
     ],
