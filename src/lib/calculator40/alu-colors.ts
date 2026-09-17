@@ -40,11 +40,12 @@ export const ALU_COLOR_KEYS: string[] = ALU_COLORS.map((c) => c.key);
 //     ถ้าไม่กรอง เซลล์จะเลือกสีที่โรงงานทำไม่ได้ แล้วเสนอราคาออกไปแล้ว
 export const SPECIAL_COLOR_KEYS = ["aztec", "wood_maho", "wood_whiteoak"] as const;
 // ── 3 สีนี้มีแค่ 4 รุ่น (เจ้าของ 11 ก.ย.69 "นอกเหนือจากบานที่กำหนดว่ามีสีนี้ บานที่ไม่มีไม่ต้องใส่มาในช้อยส์สี เอาออกไปเลย") ──
-//   บานเปิดยูโร · บานเลื่อนยูโร · บานโซลิด (1 และ 2 ชั้น) · PC Door
+//   บานเปิดยูโร · บานเลื่อนยูโร · บานเฟี้ยมยูโร · PC Door  (เจ้าของยืนยันซ้ำ 17 ก.ย.69)
+//   ⚠ เคยใส่ "บานโซลิด" ไว้ผิดตั้งแต่ 11 ก.ย.69 และขาด "เฟี้ยมยูโร" → บานโซลิดเคยเลือกสีที่โรงงานทำไม่ได้
 //   (19 ส.ค.69 เคยเปิด Aztec ให้ กระทุ้ง/บานหมุน/เฟี้ยมยูโร/เฟี้ยมยก ด้วย — ยกเลิกแล้ว)
 //   รุ่นอื่นลูกค้าอยากได้ = สีอบพิเศษ / ลายไม้อบพิเศษ (แพงกว่า)
 //   ⚠ ต้องตรงกับธง prod.euroColors ใน products.mjs (engine ใช้คิดใบเก่า · verify-auto ⑳ ตรวจ)
-export const SPECIAL_COLOR_PRODUCTS = new Set(["open_door", "euro_slide", "bansolid", "pcdoor"]);
+export const SPECIAL_COLOR_PRODUCTS = new Set(["open_door", "euro_slide", "fold_euro", "pcdoor"]);
 
 /** สีที่รุ่นนี้เลือกได้จริง — Aztec/มะฮอกกานี/ไวท์โอ๊ค เฉพาะ 4 รุ่น */
 export function aluColorKeysFor(prodId?: string | null): string[] {

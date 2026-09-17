@@ -809,16 +809,18 @@ console.log("\n═══ ⑳ ลำดับราคาสี — ขาว=ด
   const EURO_ONLY = ["aztec", "wood_maho", "wood_whiteoak"];
   const colorsSrc = fsx.readFileSync(new URL("../src/lib/calculator40/alu-colors.ts", import.meta.url), "utf8");
   const special = new Set([...((/SPECIAL_COLOR_PRODUCTS = new Set\(\[([\s\S]*?)\]\)/.exec(colorsSrc) || [])[1] || "").matchAll(/"([a-z_]+)"/g)].map((m) => m[1]));
-  ok("อ่านรายชื่อรุ่นยูโรที่มีสีพิเศษได้", special.has("open_door") && special.has("bansolid"), [...special].join(","));
+  ok("อ่านรายชื่อรุ่นยูโรที่มีสีพิเศษได้", special.has("open_door") && special.has("fold_euro"), [...special].join(","));
   // เจ้าของ 11 ก.ย.69: Aztec gray / มะฮอกกานี / ไวท์โอ๊ค มีแค่ บานเปิดยูโร · บานเลื่อนยูโร · บานโซลิด · PC Door (E-series ใบเก่า aztec = สีอบพิเศษ ⑲)
-  ok("3 สีพิเศษเลือกได้ 4 รุ่นเท่านั้น", [...special].sort().join(",") === "bansolid,euro_slide,open_door,pcdoor", [...special].join(","));
+  // เจ้าของยืนยันซ้ำ 17 ก.ย.69: เฟี้ยมยูโรมี · บานโซลิดไม่มี (ของเดิมสลับกัน)
+  ok("3 สีพิเศษเลือกได้ 4 รุ่นเท่านั้น", [...special].sort().join(",") === "euro_slide,fold_euro,open_door,pcdoor", [...special].join(","));
   ok("ธง euroColors ในสูตร = รายชื่อใน alu-colors", Object.values(PRODUCTS).filter((p) => p.euroColors).map((p) => p.id).sort().join(",") === [...special].sort().join(","),
     Object.values(PRODUCTS).filter((p) => p.euroColors).map((p) => p.id).join(","));
   const AC = await import("../src/lib/calculator40/alu-colors.ts");
   ok("ใบเก่า: กระทุ้ง Aztec → สีอบพิเศษ", AC.allowedColorFor("awning", "aztec") === "special");
   ok("ใบเก่า: กระทุ้ง มะฮอกกานี → ลายไม้อบพิเศษ", AC.allowedColorFor("awning", "wood_maho") === "wood_special" && AC.allowedColorFor("sms_slide", "wood_whiteoak") === "wood_special");
   ok("รุ่นที่มีสีนี้ / สีปกติ → คงเดิม", AC.allowedColorFor("open_door", "aztec") === "aztec" && AC.allowedColorFor("pcdoor", "wood_maho") === "wood_maho" && AC.allowedColorFor("awning", "sahara") === "sahara");
-  ok("ตัวเลือกสีกระทุ้ง/บานหมุน/เฟี้ยมยูโร/เฟี้ยมยก ไม่มี 3 สีพิเศษ", ["awning", "pivot", "fold_euro", "fold_lift"].every((id) => !AC.aluColorKeysFor(id).some((k) => ["aztec", "wood_maho", "wood_whiteoak"].includes(k))));
+  // 17 ก.ย.69: เฟี้ยมยูโร (fold_euro) ย้ายไปอยู่กลุ่ม "มี 3 สีพิเศษ" · บานโซลิดย้ายออก
+  ok("ตัวเลือกสีกระทุ้ง/บานหมุน/บานโซลิด/เฟี้ยมยก ไม่มี 3 สีพิเศษ", ["awning", "pivot", "bold_euro", "fold_lift"].every((id) => !AC.aluColorKeysFor(id).some((k) => ["aztec", "wood_maho", "wood_whiteoak"].includes(k))));
   // สีพิมพ์ลงใบอย่างเดียว (ไฟล์ไม่มีสูตรสี) — ผนังลูกฟูก/ผนังคอมโพสิต/ตู้
   const LABEL_ONLY = new Set(["wall_corrugated", "wall_composite", "cabinet"]);
   // ⏳ รุ่นใหม่ v1 ที่ยังเทียบลำดับราคาสีไม่ได้ (คนละเหตุผล — ห้ามลบทิ้งเงียบ ๆ)
@@ -900,7 +902,8 @@ console.log("\n═══ ⑳ ลำดับราคาสี — ขาว=ด
     ok("บานเกล็ด: ลำดับราคาสี ขาว < เทา < ลายไม้สต็อค < อบพิเศษ < ลายไม้อบพิเศษ",
       bkAll.every((v, i) => i === 0 || v > bkAll[i - 1] + 0.5), bkAll.map((v) => Math.round(v)).join(" < "));
   }
-  for (const id of ["awning", "pivot", "fold_euro", "fold_lift", "sms_slide"]) {
+  // 17 ก.ย.69: เฟี้ยมยูโรมี 3 สีพิเศษจริง จึงไม่ต้องแปลงเป็นอบพิเศษ · สลับเป็นบานโซลิดที่ไม่มี
+  for (const id of ["awning", "pivot", "bansolid", "fold_lift", "sms_slide"]) {
     const p = PRODUCTS[id], cost = (x) => computeCost(PB, p, { ...baseOf(p), ...x }).cost.total;
     const ws = cost({ color: "woodSpecial", colorKey: "wood_special" }), sp = cost({ color: "special", colorKey: "special" });
     const tk = cost({ color: "woodStock", colorKey: "wood_teak" });
@@ -911,7 +914,7 @@ console.log("\n═══ ⑳ ลำดับราคาสี — ขาว=ด
     const az = cost({ color: "sahara", colorKey: "aztec", stockColor: "Aztecgray" }), azOld = cost({ color: "special", colorKey: "aztec" });
     ok(id + ": ใบเก่า aztec = สีอบพิเศษ", Math.abs(az - sp) < 0.01 && Math.abs(azOld - sp) < 0.01, az + " / " + azOld + " / " + sp);
   }
-  for (const id of ["open_door", "euro_slide", "bansolid", "pcdoor"]) {
+  for (const id of ["open_door", "euro_slide", "fold_euro", "pcdoor"]) {
     const p = PRODUCTS[id], cost = (x) => computeCost(PB, p, { ...baseOf(p), ...x }).cost.total;
     const m = cost({ color: "woodStock", colorKey: "wood_maho" }), ws = cost({ color: "woodSpecial", colorKey: "wood_special" });
     const az = cost({ color: "sahara", colorKey: "aztec" }), sp = cost({ color: "special", colorKey: "special" });
