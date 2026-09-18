@@ -2842,7 +2842,7 @@ export const PRODUCTS = {
     //   ราคาขาย/ชุด = ROUNDUP(ROUNDUP(ทุน×1.538462/100)×100 × 1.3 /100)×100 (ชีต I7 · ค่าดำเนินการ 30% B21)
     //   ใบเก่าที่เลือก "Exhido" (ก่อนแยกรุ่น) → เลือกรุ่นตามความกว้าง (≤80 เล็ก · ≤110 ใหญ่ · ≤155 Master & Slave · ที่เหลือ Double)
     id: 'ykk', group: 1, subcat: 'พิเศษ · กระจกเปลือย · สำเร็จ', name: 'บานสำเร็จ YKK', brand: 'YKK',
-    sellDirect: true, sellRate: '0', sellInstallRate: '0', sellAdd: 'P*SELLSET',
+    sellDirect: true, sellRate: '0', sellInstallRate: '0', sellAdd: 'P*SELLSET', sellCost: 'P*COSTSET',   // ทุน = ชีต G (ใบราคา+ค่าส่ง)
     icon: '🚪', materialLabel: 'รุ่น',
     materials: ['Ventilation', 'Tostem Airflow', 'Exhido Single เล็ก', 'Exhido Single ใหญ่', 'Exhido Master & Slave', 'Exhido Double'], defMaterial: 'Ventilation',
     defForm: 'มาตรฐาน', forms: ['มาตรฐาน'], defaults: { w: 80, h: 200, p: 1 }, defGlass: 'เขียว 6มม.', minP: 1, maxP: 4,

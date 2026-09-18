@@ -230,7 +230,7 @@ console.log("\n═══ 12) ทุนขยับตรงกับที่ค
   const expectedQty = diff / 1000;   // ราคาต่อหน่วยขยับ 1000 → ทุนต้องขยับ 1000×จำนวนล้อ
   okTrue(`ทุนขยับขึ้นจริง (+${diff.toFixed(2)})`, diff > 0);
   okTrue(`ส่วนต่างหารด้วย 1000 ได้จำนวนเต็มบวก (${expectedQty}) — ไม่ใช่เศษเลขมั่ว`, Number.isInteger(Math.round(expectedQty * 100) / 100) && expectedQty > 0);
-  okTrue("PRODUCTS ต้นฉบับไม่ถูกแตะ (ราคาล้อยังเท่าเดิม)", PRODUCTS[prodId].hardware.find((h) => h.sku === "JR00228").price === wheelLine.price);
+  okTrue("PRODUCTS ต้นฉบับไม่ถูกแตะ (ราคาล้อยังเท่าเดิม)", PRODUCTS[prodId].hardware.find((h) => h.sku === "JR00576").price === wheelLine.price);
 }
 
 console.log("\n═══ lineKeyOf() ═══");

@@ -863,6 +863,8 @@ export function computeCost(PB, prod, opt) {
     let rnDisc = 0;
     if (prod.ranaeDisc) { const d = area > 30 ? 0.15 : area > 20 ? 0.11 : area > 15 ? 0.08 : area > 10 ? 0.05 : 0; if (d > 0) { rnDisc = ceil100(matBase) - ceil100(matBase * (1 - d)); } }
     sellBeforeLabor = sellMfgOnly = ceil100(matBase) - rnDisc;
+    // prod.sellCost = ทุนจริงตามชีตคิดทุน (ของซื้อสำเร็จที่ไฟล์มีทุน เช่น YKK ใบราคา+ค่าส่ง) — เดิมทุนขึ้น 0 (18 ก.ย.69)
+    if (prod.sellCost) { const sc = Number(val(prod.sellCost)); if (Number.isFinite(sc) && sc > 0) sellCostOverride = round2(sc); }
     sellWithInstall = sellMfgOnly + ceil100(aSell * irate);
     lines.length = 0;
     const sdName = (prod.name || 'รายการ');   // เลิกคำ "สำเร็จ" (R3.9 ไม่มี · พี่สั่ง 1ก.ค.) — ใช้ชื่อรุ่นจริง
