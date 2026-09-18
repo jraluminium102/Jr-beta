@@ -7,6 +7,7 @@ import Icon from "@/components/Icon";
 import OptionAdder from "@/components/quotation/OptionAdder";
 import DiscountLinesEditor from "@/components/quotation/DiscountLinesEditor";
 import type { QuotationItem } from "@/lib/types";
+import { saveFetch } from "@/lib/saveFetch";
 
 // category/product_id/group_label/calc_recipe = passthrough (มองไม่เห็นใน dialog) — กันสูตร/หัวข้อชุดหายตอนแก้ข้อความ (0093/0076)
 type EditRow = { name: string; detail: string; qty: number; unit_price: number; sort_order: number; category?: string; product_id?: string; group_label?: string; calc_recipe?: unknown };
@@ -91,7 +92,8 @@ export default function QuotationEditButton({
     e.preventDefault();
     if (rows.some((r) => !r.name.trim())) { setError("ทุกรายการต้องมีชื่อ"); return; }
     setBusy(true); setError("");
-    const res = await fetch(`/api/quotations/${quotationId}`, {
+    // saveFetch: ไม่มีทางค้าง — เดิม await fetch/res.json() ตรง ๆ ถ้าเน็ตหลุด/ตอบช้า busy ค้าง ปุ่มบันทึก+ยกเลิกล็อก (18 ก.ย.69)
+    const r = await saveFetch<{ error?: string }>(`/api/quotations/${quotationId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -103,11 +105,10 @@ export default function QuotationEditButton({
         // Rev (0093): none = แค่บันทึกทับ · rev/rev_keep = ขึ้น Rev ใหม่ (rev_keep เก็บฉบับเดิมเป็นประวัติ)
         ...(revAction !== "none" ? { revision_action: revAction, revision_label: revLabel.trim() } : {}),
       }),
-    });
-    const json = await res.json();
+    }, 90000);
     setBusy(false);
-    if (res.ok) { setOpen(false); router.refresh(); }
-    else setError(json.error ?? "แก้ไขไม่สำเร็จ");
+    if (r.ok) { setOpen(false); router.refresh(); }
+    else setError(r.error || "แก้ไขไม่สำเร็จ");
   }
 
   if (!open) {

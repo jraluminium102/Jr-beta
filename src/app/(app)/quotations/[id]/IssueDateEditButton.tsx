@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Icon from "@/components/Icon";
 import DateField from "@/components/ui/DateField";
+import { saveFetch } from "@/lib/saveFetch";
 
 // แก้วันที่ออกใบเสนอราคา (ต่อใบ) — ISO YYYY-MM-DD · DateField บล็อกปี พ.ศ.
 export default function IssueDateEditButton({
@@ -29,15 +30,14 @@ export default function IssueDateEditButton({
     e.preventDefault();
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { setError("กรุณาเลือกวันที่ให้ถูกต้อง"); return; }
     setBusy(true); setError("");
-    const res = await fetch(`/api/quotations/${quotationId}/header`, {
+    const r = await saveFetch<{ error?: string }>(`/api/quotations/${quotationId}/header`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ issue_date: date }),
     });
-    const json = await res.json().catch(() => null);
     setBusy(false);
-    if (res.ok) { setOpen(false); router.refresh(); }
-    else setError(json?.error ?? "แก้ไขไม่สำเร็จ");
+    if (r.ok) { setOpen(false); router.refresh(); }
+    else setError(r.error || "แก้ไขไม่สำเร็จ");
   }
 
   if (!open) {

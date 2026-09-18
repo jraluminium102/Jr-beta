@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { QuotationStatus } from "@/lib/types";
+import { saveFetch } from "@/lib/saveFetch";
 
 const NEXT: Record<QuotationStatus, { to: QuotationStatus; label: string }[]> = {
   draft: [{ to: "sent", label: "ทำเครื่องหมายส่งลูกค้า" }, { to: "cancelled", label: "ยกเลิก" }],
@@ -30,15 +31,12 @@ export default function QuotationActions({
     // free-space: ถอยสถานะได้เสมอแม้มีบิล active (ไม่บังคับยกเลิกบิลก่อน) — คนจัดการเอง
 
     setBusy(true);
-    const res = await fetch(`/api/quotations/${id}/status`, {
+    const r = await saveFetch<{ error?: string }>(`/api/quotations/${id}/status`, {
       method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: to }),
     });
     setBusy(false);
-    if (res.ok) router.refresh();
-    else {
-      const json = await res.json().catch(() => null);
-      alert(json?.error ?? "เปลี่ยนสถานะไม่สำเร็จ");
-    }
+    if (r.ok) router.refresh();
+    else alert(r.error || "เปลี่ยนสถานะไม่สำเร็จ");
   }
 
   return (

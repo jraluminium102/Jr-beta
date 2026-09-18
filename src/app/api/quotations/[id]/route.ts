@@ -8,6 +8,10 @@ import { getProfile } from "@/lib/auth";
 import { fail, UNAUTHORIZED } from "@/lib/bff";
 import { regenSetsFromQuotation, jobHasAutoSets } from "@/lib/production/regen-sets";
 
+// บันทึกใบเสนอ = ~10 query ต่อกัน + ขึ้น Rev + สร้างชุดผลิตใหม่ (regen) — ค่าเริ่มต้นของ Vercel สั้น
+//   เคยโดนตัดกลางทางแล้วหน้าจอค้าง (เจ้าของแจ้ง 18 ก.ย.69) → ขยายเป็น 60 วินาที (เท่า backfill-geo)
+export const maxDuration = 60;
+
 // GET /api/quotations/[id]  → ใบเสนอ + รายการ
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   const profile = await getProfile();

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Icon from "@/components/Icon";
+import { saveFetch } from "@/lib/saveFetch";
 
 // แก้หัวเอกสารใบเสนอ (เหมือนใบวางบิล) — ชื่อ/นิติบุคคล/สาขา/เลขภาษี/ที่อยู่/ผู้ติดต่อ/เบอร์
 //   บันทึกลง customer_snapshot ของใบนี้ + (ถ้าเลือก) ทะเบียนลูกค้าด้วย
@@ -68,7 +69,7 @@ export default function CustomerHeaderEditButton({
     const effName = (kind === "COMPANY" ? nameCompany : nameIndiv).trim();
     if (!effName) { setError(kind === "COMPANY" ? "กรุณากรอกชื่อบริษัท" : "กรุณากรอกชื่อลูกค้า"); return; }
     setBusy(true); setError("");
-    const res = await fetch(`/api/quotations/${quotationId}/header`, {
+    const r = await saveFetch<{ error?: string }>(`/api/quotations/${quotationId}/header`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -87,10 +88,9 @@ export default function CustomerHeaderEditButton({
         save_to_registry: hasCustomerLink && saveToRegistry,
       }),
     });
-    const json = await res.json().catch(() => null);
     setBusy(false);
-    if (res.ok) { setOpen(false); router.refresh(); }
-    else setError(json?.error ?? "แก้ไขไม่สำเร็จ");
+    if (r.ok) { setOpen(false); router.refresh(); }
+    else setError(r.error || "แก้ไขไม่สำเร็จ");
   }
 
   if (!open) {
