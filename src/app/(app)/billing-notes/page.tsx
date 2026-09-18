@@ -7,6 +7,7 @@ import { baht } from "@/lib/money";
 import { getDocCutoff } from "@/lib/doc-cutoff";
 import { TestDocsToggle } from "@/components/TestDocsToggle";
 import { BILLING_STATUS_LABEL, type BillingStatus } from "@/lib/types";
+import { RelatedDocs, type RelatedDoc } from "@/components/documents/RelatedDocs";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,27 @@ export default async function BillingNotesPage({ searchParams }: { searchParams?
   // ป้าย "นอกระบบ" = ยังไม่ผูกใบเสนอ · ไม่ใช่ใบค่าประเมิน (assess ตั้งใจไม่ผูกงาน) · ไม่ใช่ใบยกเลิก
   const isExternal = (r: { quotation_id: number | null; doc_kind?: string | null; status: BillingStatus }) =>
     !r.quotation_id && String(r.doc_kind ?? "work") !== "assess" && r.status !== "cancelled";
+
+  // ── เอกสารที่เกี่ยวข้อง (กดกระโดดได้) — ใบเสนอต้นทาง (อ้างอิง) + ใบเสร็จที่ออกจากบิลนี้ ──
+  const bnIds = rows.map((r) => r.id);
+  const quoIds = [...new Set(rows.map((r) => r.quotation_id).filter((x): x is number => !!x))];
+  const [{ data: relQuos }, { data: relRcpts }] = await Promise.all([
+    quoIds.length ? supabase.from("quotations").select("id, code").in("id", quoIds) : Promise.resolve({ data: [] as { id: number; code: string }[] }),
+    bnIds.length ? supabase.from("receipts").select("id, code, billing_note_id").in("billing_note_id", bnIds) : Promise.resolve({ data: [] as { id: number; code: string; billing_note_id: number }[] }),
+  ]);
+  const quoCode = new Map((relQuos ?? []).map((q) => [q.id, q.code]));
+  const rcptsByBn = new Map<number, { id: number; code: string }[]>();
+  for (const rc of (relRcpts ?? []) as { id: number; code: string; billing_note_id: number }[]) {
+    const l = rcptsByBn.get(rc.billing_note_id) ?? [];
+    l.push({ id: rc.id, code: rc.code });
+    rcptsByBn.set(rc.billing_note_id, l);
+  }
+  const relatedOf = (r: { id: number; quotation_id: number | null }): RelatedDoc[] => {
+    const docs: RelatedDoc[] = [];
+    if (r.quotation_id && quoCode.get(r.quotation_id)) docs.push({ group: "ใบเสนอ (อ้างอิง)", code: quoCode.get(r.quotation_id)!, href: `/quotations/${r.quotation_id}` });
+    for (const rc of rcptsByBn.get(r.id) ?? []) docs.push({ group: "ใบเสร็จ", code: rc.code, href: `/receipts/${rc.id}` });
+    return docs;
+  };
 
   return (
     <div className="space-y-5">
@@ -75,7 +97,7 @@ export default async function BillingNotesPage({ searchParams }: { searchParams?
               {rows.map((r) => (
                 <Link key={r.id} href={`/billing-notes/${r.id}`} className="block glass-soft rounded-xl p-3.5">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono font-semibold text-brand-dark">{r.code}</span>
+                    <span className="font-mono font-semibold text-brand-dark inline-flex items-center">{r.code}<RelatedDocs docs={relatedOf(r)} /></span>
                     <span className="flex items-center gap-1.5">
                       {isExternal(r) && <Badge tone="amber">นอกระบบ</Badge>}
                       <Badge tone={STATUS_TONE[r.status]} dot>{BILLING_STATUS_LABEL[r.status]}</Badge>
@@ -106,7 +128,10 @@ export default async function BillingNotesPage({ searchParams }: { searchParams?
                   {rows.map((r) => (
                     <tr key={r.id} className="border-t border-gray-200/70 hover:bg-white/50">
                       <td className="py-3">
-                        <Link href={`/billing-notes/${r.id}`} className="font-mono font-semibold text-brand-dark hover:underline">{r.code}</Link>
+                        <span className="inline-flex items-center">
+                          <Link href={`/billing-notes/${r.id}`} className="font-mono font-semibold text-brand-dark hover:underline">{r.code}</Link>
+                          <RelatedDocs docs={relatedOf(r)} />
+                        </span>
                         {isExternal(r) && <div className="mt-0.5"><Badge tone="amber">นอกระบบ</Badge></div>}
                       </td>
                       <td>

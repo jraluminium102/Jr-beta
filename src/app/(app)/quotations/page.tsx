@@ -8,6 +8,7 @@ import { baht } from "@/lib/money";
 import { getDocCutoff } from "@/lib/doc-cutoff";
 import { TestDocsToggle } from "@/components/TestDocsToggle";
 import type { QuotationStatus } from "@/lib/types";
+import { RelatedDocs, type RelatedDoc } from "@/components/documents/RelatedDocs";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,37 @@ export default async function QuotationsPage({ searchParams }: { searchParams?: 
     issue_date: string; status: QuotationStatus; net: number;
     job_id: string | null; jobs: { job_code: string | null; floor_work: string | null; floor_note: string | null } | null;
   }[];
+
+  // ── เอกสารที่เกี่ยวข้อง (กดกระโดดได้) — ใบวางบิล + ใบเสร็จ ที่ออกจากใบเสนอนี้ (ปลายทาง) ──
+  const quoIds = rows.map((r) => r.id);
+  const { data: relBns } = quoIds.length
+    ? await supabase.from("billing_notes").select("id, code, quotation_id").in("quotation_id", quoIds)
+    : { data: [] as { id: number; code: string; quotation_id: number }[] };
+  const bnByQuo = new Map<number, { id: number; code: string }[]>();
+  const relBnIds: number[] = [];
+  for (const bn of (relBns ?? []) as { id: number; code: string; quotation_id: number }[]) {
+    const l = bnByQuo.get(bn.quotation_id) ?? [];
+    l.push({ id: bn.id, code: bn.code });
+    bnByQuo.set(bn.quotation_id, l);
+    relBnIds.push(bn.id);
+  }
+  const { data: relRcpts } = relBnIds.length
+    ? await supabase.from("receipts").select("id, code, billing_note_id").in("billing_note_id", relBnIds)
+    : { data: [] as { id: number; code: string; billing_note_id: number }[] };
+  const rcptsByBn = new Map<number, { id: number; code: string }[]>();
+  for (const rc of (relRcpts ?? []) as { id: number; code: string; billing_note_id: number }[]) {
+    const l = rcptsByBn.get(rc.billing_note_id) ?? [];
+    l.push({ id: rc.id, code: rc.code });
+    rcptsByBn.set(rc.billing_note_id, l);
+  }
+  const relatedOf = (r: { id: number }): RelatedDoc[] => {
+    const docs: RelatedDoc[] = [];
+    for (const bn of bnByQuo.get(r.id) ?? []) {
+      docs.push({ group: "ใบวางบิล", code: bn.code, href: `/billing-notes/${bn.id}` });
+      for (const rc of rcptsByBn.get(bn.id) ?? []) docs.push({ group: "ใบเสร็จ", code: rc.code, href: `/receipts/${rc.id}` });
+    }
+    return docs;
+  };
 
   return (
     <div className="space-y-5">
@@ -82,6 +114,7 @@ export default async function QuotationsPage({ searchParams }: { searchParams?: 
                     <td className="py-3">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <Link href={`/quotations/${r.id}`} className="font-mono font-semibold text-brand-dark hover:underline">{r.code}</Link>
+                        <RelatedDocs docs={relatedOf(r)} />
                         <FloorWorkBadge floorWork={r.jobs?.floor_work} floorNote={r.jobs?.floor_note} />
                       </div>
                     </td>
