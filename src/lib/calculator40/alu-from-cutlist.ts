@@ -44,7 +44,7 @@ export const ALU_FROM_CUTLIST: Record<string, string> = {
  */
 export const BOX_BY_CODE: Record<string, { box: string; price: number }> = {
   'กล่อง 1"x1"': { box: "กล่อง|1X1", price: 310 },
-  'กล่อง 1"x1.5"': { box: "กล่อง|1X1.5", price: 393 },
+  'กล่อง 1"x1.5"': { box: "กล่อง|1X1.5", price: 395 },   // 18 ก.ย.69 ราคาสี D (กล่อง 1"×1½") = 395 ตามไฟล์ (เดิม 393)
   'กล่อง 1"x1.6"': { box: "กล่อง|1X1.6", price: 485 },
   'กล่อง 1"x3"': { box: "กล่อง|1X3", price: 761 },
   'กล่อง 1"x4"': { box: "กล่อง|1X4", price: 905 },
@@ -243,7 +243,9 @@ const MH_W: Record<string, number> = {
 
 export type ConsumLine = { name: string; price: number; ref?: string; unit: string; count: number;
   /** คีย์กล่องอลู (เช่น "กล่อง|4") → engine ไปหาราคาจากสโตร์ให้เอง (boxPrice) · ไม่เจอ = ใช้ price สำรอง */
-  box?: string };
+  box?: string;
+  /** ตัวคูณเผื่อเศษ (แผ่นหลังคา = buf_roof 1.2 ตามไฟล์) — engine คูณหลังได้ราคา */
+  buf?: number };
 
 /**
  * บรรทัด "แผ่นมุง + เหล็ก + ราง" จากแถวใบตัดที่ไม่มีรหัสสโตร์
@@ -270,12 +272,15 @@ export function cutRoofConsumLines(
   const out: ConsumLine[] = [];
   // box = คีย์กล่องอลูในสโตร์ (เช่น "กล่อง|4") — ต้องส่งต่อออกไปด้วย ไม่งั้นแถวที่ผูกสโตร์ไว้
   //   จะกลายเป็นราคาสำรองในสูตรตลอด แก้ราคาที่สโตร์แล้วทุนไม่ขยับ (เจ้าของสั่งผูกราง 2 ก.ย.69)
-  const bump = (name: string, price: number, ref: string | undefined, unit: string, count: number, box?: string) => {
+  const bump = (name: string, price: number, ref: string | undefined, unit: string, count: number, box?: string, buf?: number) => {
     if (!(count > 0)) return;
     const hit = out.find((x) => x.name === name);
     if (hit) hit.count = Math.round((hit.count + count) * 100) / 100;
-    else out.push({ name, price, ref, unit, count: Math.round(count * 100) / 100, ...(box ? { box } : {}) });
+    else out.push({ name, price, ref, unit, count: Math.round(count * 100) / 100, ...(box ? { box } : {}), ...(buf ? { buf } : {}) });
   };
+  // 18 ก.ย.69 ตามไฟล์: ทุนแผ่นหลังคา × buf_roof (อัปเดตราคาอลู!B23 = 1.2) ทุกชนิด · ฝาครอบไม่คูณ
+  //   (ชีต คิดทุน กลาสเฮ้าส์ E8 = IF(ชนิดแผ่น…)*buf_roof) — เดิมหลังคาจากใบตัดไม่คูณ ทุนแผ่นขาด 20%
+  const BUF = 1.2;
 
   for (const r of rows) {
     const code = String(r.code ?? "");
@@ -297,7 +302,7 @@ export function cutRoofConsumLines(
         // ใบตัดออกแถว "แผ่นหลังคา" ด้านละแถว → ต้องลงบรรทัดเดียว ไม่ใช่บวกพื้นที่รวมซ้ำทุกด้าน
         if (planArea > 0 && !flatAreaDone) {
           flatAreaDone = true;
-          bump(sideTag(`แผ่น${inp.material}`), price.p, `ROOFMAT.${inp.material}`, price.u, planArea);
+          bump(sideTag(`แผ่น${inp.material}`), price.p, `ROOFMAT.${inp.material}`, price.u, planArea, undefined, BUF);
         }
         continue;
       }
@@ -307,10 +312,10 @@ export function cutRoofConsumLines(
       const n = price.u === "แผ่น" ? Math.ceil(r.qty / Math.max(1, Math.trunc(SHEET_LEN_CM / r.len)))
         : price.u === "ม." ? (r.qty * r.len) / 100
         : (r.qty * (sheetW / 100) * (r.len / 100));
-      bump(sideTag(`แผ่น${inp.material === "ไวนิล" ? "ไวนิล" : inp.material}`), price.p, `ROOFMAT.${inp.material}`, price.u, n);
+      bump(sideTag(`แผ่น${inp.material === "ไวนิล" ? "ไวนิล" : inp.material}`), price.p, `ROOFMAT.${inp.material}`, price.u, n, undefined, BUF);
       // ฝาครอบไวนิล เดินคู่แผ่นไวนิลเสมอ (เหมือนหลังคาเดี่ยว)
       if (inp.material === "ไวนิล" && inp.rm["ฝาครอบไวนิล"]) {
-        bump(sideTag("ฝาครอบไวนิล"), inp.rm["ฝาครอบไวนิล"].p, "ROOFMAT.ฝาครอบไวนิล", inp.rm["ฝาครอบไวนิล"].u, r.qty);   // เดินคู่แผ่นไวนิลเสมอ
+        bump(sideTag("ฝาครอบไวนิล"), inp.rm["ฝาครอบไวนิล"].p, "ROOFMAT.ฝาครอบไวนิล", inp.rm["ฝาครอบไวนิล"].u, n);   // 18 ก.ย.69 ไฟล์: ฝาครอบ 1 เส้น/แผ่นไวนิล (= จำนวนแผ่น ไม่ใช่จำนวนแถบ)   // เดินคู่แผ่นไวนิลเสมอ
       }
       continue;
     }

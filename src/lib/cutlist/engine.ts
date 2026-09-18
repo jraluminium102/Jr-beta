@@ -155,6 +155,8 @@ export type CutSpec = {
     unit?: string;
     note?: string;
     noStock?: boolean;
+    /** ทศนิยมของจำนวน (ตั้งต้น 1) — ชีตตัดบางแถวปัด 2 ตำแหน่ง เช่น ยางเฟี้ยมยูโร ROUND(…,2) */
+    dp?: number;
   }[];
 };
 
@@ -254,7 +256,7 @@ export function computeCutList(spec: CutSpec, input: Partial<CutInput>, sets = 1
     .map((h) => ({
       name: typeof h.name === "function" ? h.name(o) : h.name,
       sku: (typeof h.sku === "function" ? h.sku(o) : h.sku) ?? "",
-      qty: round1(Math.max(0, h.qty(o, hwCtx)) * n),
+      qty: h.dp ? Math.round(Math.max(0, h.qty(o, hwCtx)) * n * 10 ** h.dp + 1e-9) / 10 ** h.dp : round1(Math.max(0, h.qty(o, hwCtx)) * n),
       unit: h.unit ?? "ชิ้น",
       note: h.note,
       noStock: h.noStock,

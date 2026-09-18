@@ -391,6 +391,10 @@ export default function Calculator40Client({ customers = [], priceOverride, line
         if (o.type === 'number') return;   // ช่องตัวเลข (เช่น ระยะ@) ไม่มี opts — ค่าเป็นตัวเลขอิสระ ไม่ต้อง normalize
         const opts: string[] = (o.optsByMaterial && o.optsByMaterial[material]) || o.opts;
         if (!opts) return;                  // กันพัง: specOpt ที่ไม่มี opts
+        // o.alias = ชื่อตัวเลือกเก่า → ชื่อใหม่ (ใบเสนอเก่าที่บันทึกไว้ก่อนเปลี่ยนตัวเลือก) — ห้ามรีเซ็ตเป็นค่าตั้งต้นเงียบ ๆ
+        //   เช่น หลังคาจั่ว "รางน้ำ" → "รางน้ำอลู" (18 ก.ย.69 ตัวเลือกตามไฟล์) ไม่งั้นรางน้ำหายจากใบเก่า
+        const al = o.alias && o.alias[next[o.key]];
+        if (al && opts.includes(al)) { next[o.key] = al; changed = true; return; }
         if (!opts.includes(next[o.key])) {
           next[o.key] = o.def && opts.includes(o.def) ? o.def : opts[0];
           changed = true;

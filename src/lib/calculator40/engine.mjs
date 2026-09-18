@@ -234,6 +234,7 @@ export function computeCost(PB, prod, opt) {
     if (!(count > 0) || !it.sku) return;
     const sku = String(it.sku).toUpperCase();
     if ((PB.SKUPRICE && PB.SKUPRICE[sku] > 0) || (Number(it.price) || 0) > 0) return;
+    if (filePrice(sku) !== undefined) return;   // ไฟล์มีราคา (รวมตั้ง 0 = ยังไม่คิดเงิน) = ไม่ขาด
     if (hwMissing.some((m) => m.sku === sku)) return;
     hwMissing.push({ sku, name: it.name });
   };
@@ -312,6 +313,24 @@ export function computeCost(PB, prod, opt) {
   // ตั้งต้น PARTS = ราคาเดิมใน BOM → behavior-preserving (verify 63/63 คงเดิม) · รุ่นเดิม (ไม่ติดธง) ใช้ it.price ปกติ
   const pPrice = (name, base) => (prod.partsLinked && PB.PARTS && name in PB.PARTS) ? PB.PARTS[name] : base;
 
+  // ── ไฟล์เป็นตัวตั้ง (เจ้าของสั่ง 18 ก.ย.69 "ตีให้ในเว็บเท่าไฟล์เด๊ะ ๆ · แก้ราคาของให้เท่า") ──
+  //   เดิม: สโตร์ชนะไฟล์เสมอ (19 ส.ค.69) → ราคาบนเว็บจริงไม่เท่าชีตคิดทุน เพราะสโตร์ตั้งราคาไม่ตรงไฟล์
+  //   ตอนนี้: ราคาในไฟล์มาก่อน · สโตร์ใช้เติมเฉพาะรายการที่ไฟล์ไม่มีราคา
+  //   PB.PRICE_SOURCE = "store" = ย้อนกลับเป็นแบบเดิม (สวิตช์เดียว ไม่ต้องแก้โค้ด)
+  const FILE_FIRST = PB.PRICE_SOURCE !== 'store';
+  // ราคาอุปกรณ์ตามไฟล์ของรหัสนั้น — undefined = ไฟล์ไม่มีราคา (ให้แหล่งอื่นเติม)
+  //   ① ราคาเฉพาะรุ่น (ชีตคิดทุนรุ่นนั้นใช้ราคาไม่ตรง "ราคา ERP" เช่น SlimLux ใช้ JR01931 = 483)
+  //   ② ไฟล์ตั้ง 0 = "ยังไม่คิดเงิน" (ราคา ERP สถานะ ⚠ ไม่มีราคา) → คิด 0 จริง ไม่ใช่ขาดราคา
+  //   ③ ราคา ERP (PB.HWPRICE)
+  const filePrice = (sku) => {
+    if (!FILE_FIRST || !sku) return undefined;
+    const bp = PB.HWPRICE_BY_PROD && PB.HWPRICE_BY_PROD[prod.id];
+    if (bp && typeof bp[sku] === 'number') return bp[sku];
+    if (Array.isArray(PB.HWPRICE_ZERO) && PB.HWPRICE_ZERO.includes(sku)) return 0;
+    if (PB.HWPRICE && PB.HWPRICE[sku] > 0) return PB.HWPRICE[sku];
+    return undefined;
+  };
+
   // prod.poolBars = นับเส้นแบบ "รวมทุกท่อนที่ใช้รหัสเดียวกันก่อน แล้วค่อยหารเส้น" — วิธีเดียวกับหน้าใบตัด
   //   (cutlist/engine barsByCode) · เศษเส้นเอาไปตัดท่อนอื่นของรหัสเดียวกันต่อได้จริงในโรงงาน
   //   ไม่เปิด = นับทีละบรรทัด (เส้นละบรรทัด ปัดขึ้นทุกบรรทัด) เหมือนเดิมทุกรุ่น
@@ -362,12 +381,19 @@ export function computeCost(PB, prod, opt) {
     // ALUCODE_NOCOLOR = เส้นสีเงิน/ผิวเดิม ไม่มีการอบสี → ราคาเดียวทุกสี ห้ามบวกค่าอบ
     //   (เจ้าของยืนยัน 8 ส.ค.69: F7994 ตบรางล้อ เป็นสีเงิน ใช้กับทุกสีราคาเดียว)
     const noColor = !!(code && (PB.ALUCODE_NOCOLOR || []).includes(code));
+    // it.priceCode = ชีตคิดทุนคิดราคาบรรทัดนี้ด้วยรหัสอื่น (เช่น SlimLux ฝาปิดล่างใหญ่ ชีตรวมเป็น WM-K20 = ราคาตัวเล็ก)
+    //   ใช้เฉพาะตอนหาราคา — รหัสบนบรรทัด/หักสต็อกยังเป็นรหัสจริง (18 ก.ย.69 ไฟล์เป็นตัวตั้ง)
+    const pcode = (FILE_FIRST && it.priceCode) ? String(it.priceCode) : code;
     // ลำดับราคาเส้น: ① สีจริงจากสโตร์ (สโตร์เป็นตัวตั้ง — เจ้าของสั่ง 8 ส.ค.69)
     //                ② ตารางราคาสีในไฟล์  ③ ราคาขาว + ค่าอบ×กก. (ทางสุดท้าย)
     //   opt.stockColor = ชื่อสีในสโตร์ของสีที่ลูกค้าเลือก (แอปส่งมาให้ · "" = สีนั้นไม่มีในสโตร์)
-    const sColor = (k) => (!noColor && code && k && PB.ALUCOLOR_STOCK && PB.ALUCOLOR_STOCK[k]) ? PB.ALUCOLOR_STOCK[k][code] : null;
+    const sColor = (k) => (!noColor && code && k && PB.ALUCOLOR_STOCK && PB.ALUCOLOR_STOCK[k]) ? PB.ALUCOLOR_STOCK[k][pcode] : null;
     // ราคาขาวของเส้นนี้ (หลังคูณ mult) — ใช้ตัดสินว่า "ราคาสี" ใช้ได้ไหม
-    const basePrice = (code && PB.ALUCODE && PB.ALUCODE[code] > 0) ? PB.ALUCODE[code] : pPrice(it.name, it.price);
+    // it.filePrice = ราคาเฉพาะรุ่นที่ชีตคิดทุนรุ่นนั้นใช้ (ไม่ตรงราคากลางของรหัส) — ไฟล์เป็นตัวตั้ง 18 ก.ย.69
+    //   เช่น SlimLux บังใบ 4 หุน สีขาว/เทา ชีตใช้ ราคาสี E191 (200) ส่วนบานเปิดใช้ D191 (170)
+    const fixP = (FILE_FIRST && it.filePrice != null) ? Number(typeof it.filePrice === 'string' ? val(it.filePrice) : it.filePrice) : NaN;
+    const basePrice = (FILE_FIRST && it.priceLocked && Number(it.price) > 0) ? Number(it.price) : fixP > 0 ? fixP
+      : (pcode && PB.ALUCODE && PB.ALUCODE[pcode] > 0) ? PB.ALUCODE[pcode] : pPrice(it.name, it.price);
     const baseFromStock = !!(code && PB.ALUCODE_FROM_STOCK && PB.ALUCODE_FROM_STOCK[code] && PB.ALUCODE[code] > 0);
     const whiteStock = sColor('อบขาว');
     const whiteRef = whiteStock > 0 ? whiteStock : (Number(basePrice) || 0) * (baseFromStock ? 1 : mult);
@@ -381,13 +407,19 @@ export function computeCost(PB, prod, opt) {
     //    ไฟล์แยก 6 สีจริง (เทาซาฮาร่า/ดำซาฮาร่า/แอทแทคเกรย์/ลายไม้สักทอง/มะฮอกกานี/ไวท์โอ๊ค)
     //    ละเอียดกว่าตารางเดิมที่แยกแค่ "หมวดค่าอบ" → ลายไม้ 3 สี เคยใช้ราคาเดียวกันหมด
     const fileColorPrice0 = (!noColor && code && priceKey && PB.ALUCOLOR_KEY && PB.ALUCOLOR_KEY[priceKey])
-      ? PB.ALUCOLOR_KEY[priceKey][code] : null;
+      ? (fixP > 0 ? null : PB.ALUCOLOR_KEY[priceKey][pcode]) : null;   // ราคาเฉพาะรุ่น (filePrice) = ราคาสุดท้ายแล้ว
     const fileColorPrice = okColor(fileColorPrice0, mult) ? fileColorPrice0 : null;
-    const legacyColorPrice = (!noColor && code && PB.ALUCOLOR && PB.ALUCOLOR[priceColor]) ? PB.ALUCOLOR[priceColor][code] : null;
-    const colorPrice = stockColorPrice > 0 ? stockColorPrice
-      : fileColorPrice > 0 ? fileColorPrice
-      : okColor(legacyColorPrice, mult) ? legacyColorPrice : null;
-    const bxp = boxPrice(it);   // กล่อง/ฉาก ผูกด้วยชื่อ+ขนาด+สี (สโตร์เป็นตัวตั้ง)
+    const legacyColorPrice = (!noColor && code && PB.ALUCOLOR && PB.ALUCOLOR[priceColor] && !(fixP > 0)) ? PB.ALUCOLOR[priceColor][pcode] : null;
+    // 18 ก.ย.69 ไฟล์มาก่อน: ราคาสีในไฟล์ → ตารางสีเดิม → สโตร์ (สโตร์เติมเฉพาะสีที่ไฟล์ไม่มี)
+    const legacyOk = okColor(legacyColorPrice, mult) ? legacyColorPrice : null;
+    const colorPrice = FILE_FIRST
+      ? (fileColorPrice > 0 ? fileColorPrice : legacyOk > 0 ? legacyOk : stockColorPrice > 0 ? stockColorPrice : null)
+      : (stockColorPrice > 0 ? stockColorPrice : fileColorPrice > 0 ? fileColorPrice : legacyOk);
+    const colorFromStock = colorPrice > 0 && colorPrice === stockColorPrice && !(FILE_FIRST && (fileColorPrice > 0 || legacyOk > 0));
+    // กล่อง/ฉาก — ไฟล์มาก่อน: มีราคาในสูตร (พอร์ตจากชีตคิดทุน) = ราคาสูตร × ตัวคูณสีในไฟล์ ไม่ให้สโตร์ทับ
+    let bxp;
+    if (FILE_FIRST && Number(basePrice) > 0) { boxColorDone = false; bxp = null; }   // ต้องรีเซ็ต ไม่งั้นค้างค่าบรรทัดก่อน
+    else bxp = boxPrice(it);   // กล่อง/ฉาก ผูกด้วยชื่อ+ขนาด+สี (สโตร์เป็นตัวตั้ง)
     // สีตามชีตรุ่นนั้น (prod.boxCF / it.cf) — ใช้เมื่อไม่มีราคาสโตร์และไม่มีราคาสี (ติดตาย: สโตร์กล่อง 1.6×3 ราคา 0 · 9014 ไม่มีในสโตร์)
     const cfPrice = (bxp == null && !(colorPrice > 0) && formulaCF(it) !== 1)
       ? Math.round((Number(basePrice) || 0) * formulaCF(it)) : null;
@@ -398,7 +430,7 @@ export function computeCost(PB, prod, opt) {
     // ⚠ ห้ามคูณ mult ทับ "ราคาที่มาจากสโตร์" — สโตร์คิด ราคา/เส้น = น้ำหนัก × เรตต่อโล ปัจจุบัน ให้แล้ว
     //   mult (= เรตต่อโลปัจจุบัน ÷ เรตตั้งต้น) มีไว้ขยับ "ราคาฝังในไฟล์" ที่ยังผูกสโตร์ไม่ได้เท่านั้น
     //   ถ้าคูณทั้งคู่ = ขึ้นเรตต่อโล 7% แล้วราคาเด้ง 14% (คิดซ้ำสองต่อ)
-    const fromStock = !!(bxp != null || stockColorPrice > 0
+    const fromStock = !!(bxp != null || colorFromStock
       || (!(colorPrice > 0) && code && PB.ALUCODE_FROM_STOCK && PB.ALUCODE_FROM_STOCK[code] && PB.ALUCODE[code] > 0));
     const m = fromStock ? 1 : mult;
     // เส้นที่ราคาออกมาเป็น 0 (สโตร์ยังไม่ตั้งราคา + สูตรไม่มีราคาสำรอง) → เตือนบนหน้าจอ
@@ -472,6 +504,8 @@ export function computeCost(PB, prod, opt) {
       // กระจกที่ไฟล์ถอดทุนล่าสุดไม่มีแล้ว (ใบเสนอเก่าเลือกไว้) → เตือน ไม่ใช่คิดเป็น 0 เงียบ ๆ
       if (!(gp > 0) && glassArea > 0) hwMissing.push({ sku: '', name: `กระจก "${glassType}" ไม่มีในไฟล์ถอดทุนล่าสุดแล้ว — เลือกกระจกใหม่` });
       glassCost = glassArea * gp;
+      // prod.glassRound = ชีตคิดทุนปัดค่ากระจกเป็นบาทเต็ม ROUND(พื้นที่×ราคา,0) (เช่น เปิดดัดโค้ง D15) — 18 ก.ย.69 ตามไฟล์
+      if (prod.glassRound) glassCost = Math.round(glassCost);
       lines.push({ cat: 'glass', name: 'กระจก ' + glassType, qty: round2(glassArea), unit: 'ตร.ม.', unitPrice: gp, amount: round2(glassCost) });
     }
   }
@@ -487,12 +521,15 @@ export function computeCost(PB, prod, opt) {
   //   ราคาสโตร์ชนะเสมอ — พอเจ้าของตั้งราคาในสโตร์ ระบบสลับไปใช้ของสโตร์เอง
   const hwPrice = (it) => {
     const sku = String(it.sku || '').toUpperCase();
+    const fp = filePrice(sku);   // 18 ก.ย.69 ไฟล์มาก่อน (ราคาไฟล์ = ต่อหน่วยย่อยอยู่แล้ว ไม่หาร per)
+    if (fp !== undefined) return fp;
     if (sku && PB.SKUPRICE && PB.SKUPRICE[sku] > 0) return PB.SKUPRICE[sku] / (Number(it.per) || 1);
-    if (sku && PB.HWPRICE && PB.HWPRICE[sku] > 0) return PB.HWPRICE[sku];   // ราคาไฟล์ = ต่อหน่วยย่อยอยู่แล้ว ไม่หาร per
+    if (sku && PB.HWPRICE && PB.HWPRICE[sku] > 0) return PB.HWPRICE[sku];
     return Number(it.price) || 0;
   };
   const hwFromFile = (it) => {
     const sku = String(it.sku || '').toUpperCase();
+    if (filePrice(sku) !== undefined) return true;
     return !!(sku && !(PB.SKUPRICE && PB.SKUPRICE[sku] > 0) && PB.HWPRICE && PB.HWPRICE[sku] > 0);
   };
   // ⚠ กันคิดต่ำกว่าจริงเงียบ ๆ — รหัสไหนยังไม่ตั้งราคาในสโตร์ ค่าของบรรทัดนั้นจะเป็น 0
@@ -511,7 +548,9 @@ export function computeCost(PB, prod, opt) {
   const orderOnlyFormula = (it) => (it.noStock && !it.sku) ? (prod.hardware || []).find((h) => h.orderOnly && h.name === it.name) : null;
   const cutHwPrice = (it) => { const f = orderOnlyFormula(it); return f ? formulaHwPrice(f) : hwPrice(it); };
   for (const it of (rawHwLines || [])) {
-    if ((Number(it.qty) || 0) > 0 && !(cutHwPrice(it) > 0)) hwMissing.push({ sku: String(it.sku || ''), name: it.name });
+    // ไฟล์ตั้ง 0 ("ยังไม่คิดเงิน") = มีราคาแล้ว ไม่ใช่ขาดราคา — เดิมนับเป็นขาด แล้วถอยไปสูตรเก่าทั้งชุด
+    //   (เจอจริง: SMS/ยูโร JR00589 ยางรูน้ำลง ไฟล์ 0 → ทั้งชุดอุปกรณ์ไม่ตรงชีต)
+    if ((Number(it.qty) || 0) > 0 && !(cutHwPrice(it) > 0) && filePrice(String(it.sku || '').toUpperCase()) !== 0) hwMissing.push({ sku: String(it.sku || ''), name: it.name });
   }
   const hwLines = rawHwLines && !hwMissing.length ? rawHwLines : null;
   let hwCost = 0;
@@ -540,13 +579,20 @@ export function computeCost(PB, prod, opt) {
     let price = formulaHwPrice(it);   // ราคาตั้ง (สูตร/PARTS override) → ตารางกลาง PB.ref → ตัวคูณอลู (mult)
     const hwSku = skuOf(it);
     // per = สโตร์ตั้งราคาเป็นแพ็ค แต่สูตรนับเป็นหน่วยย่อย (เช่น สักหลาดม้วนละ 250 ม.)
-    const spRaw = skuPrice(hwSku);
-    const sp = spRaw != null ? spRaw / (Number(it.per) || 1) : boxPrice(it);
-    if (sp != null) price = sp;   // มีราคาในสโตร์ → ใช้ของสโตร์ (สโตร์เป็นตัวตั้ง)
-    else if (formulaCF(it) !== 1) price = round2(price * formulaCF(it));   // กล่อง/ฉาก ราคาสูตร → คูณสีตามไฟล์
+    const hfp = it.priceLocked ? undefined : filePrice(hwSku);   // ราคาที่แอดมินแก้เอง (line override) ชนะราคาไฟล์
+    if (hfp !== undefined) price = hfp;   // 18 ก.ย.69 ไฟล์มาก่อน: ราคา ERP / ราคาเฉพาะรุ่นในชีตคิดทุน
+    else if (FILE_FIRST && price > 0) {
+      // ราคาในสูตร = พอร์ตมาจากชีตคิดทุน → ใช้ตามไฟล์ ไม่ให้สโตร์ทับ · กล่อง/ฉาก คูณสีตามตัวคูณในไฟล์
+      if (formulaCF(it) !== 1) price = round2(price * formulaCF(it));
+    } else {
+      const spRaw = skuPrice(hwSku);
+      const sp = spRaw != null ? spRaw / (Number(it.per) || 1) : boxPrice(it);
+      if (sp != null) price = sp;   // ไฟล์ไม่มีราคา → สโตร์เติม
+      else if (formulaCF(it) !== 1) price = round2(price * formulaCF(it));   // กล่อง/ฉาก ราคาสูตร → คูณสีตามไฟล์
+    }
     noteMissing({ ...it, sku: hwSku }, count);
     // ราคาออกมา 0 ทั้งที่ไม่ได้ตั้งใจ (ตารางราคากลางยังว่าง) → ต้องเตือน ไม่ใช่คิดเป็นศูนย์เงียบ ๆ
-    if (!(price > 0) && !it.orderOnly && !it.labor) noteMissing({ sku: hwSku || it.ref || it.name, name: it.name, price: 0 }, count);
+    if (!(price > 0) && hfp !== 0 && !it.orderOnly && !it.labor) noteMissing({ sku: hwSku || it.ref || it.name, name: it.name, price: 0 }, count);
     const amount = count * price;
     // มอเตอร์ขายฟิก: ทุนไม่เข้า hwCost (= ไม่เข้าฐานคิดกำไร) แต่ไปเข้าทุนรวมทางช่อง fixedSellCost
     const mSell = it.motorSellKey ? motorFixSell(PB, it.motorSellKey, 0) : 0;
@@ -570,16 +616,22 @@ export function computeCost(PB, prod, opt) {
     if (it.ref) { const rp = refPrice(PB, it.ref); if (rp != null) unitPrice = rp; }   // ราคาจาก PB (แอดมินแก้ได้ · ไม่มี=ใช้ price เดิม)
     if (it.mult) unitPrice *= mult;   // กล่องอลูเมืองทอง (ระแนงสลับ/หมุน) → ขยับตามราคาอลู/กก.
     const cSku = skuOf(it);
-    const cspRaw = skuPrice(cSku);
-    const csp = cspRaw != null ? cspRaw / (Number(it.per) || 1) : boxPrice(it);
-    if (csp != null) unitPrice = csp;   // มีราคาในสโตร์ → ใช้ของสโตร์ (÷ per ถ้าสโตร์ขายเป็นแพ็ค)
-    else if (formulaCF(it) !== 1) unitPrice = round2(unitPrice * formulaCF(it));   // กล่อง/ฉาก ราคาสูตร → คูณสีตามไฟล์
+    const cfp = it.priceLocked ? undefined : filePrice(cSku);
+    if (cfp !== undefined) unitPrice = cfp;   // 18 ก.ย.69 ไฟล์มาก่อน
+    else if (FILE_FIRST && unitPrice > 0) {
+      if (formulaCF(it) !== 1) unitPrice = round2(unitPrice * formulaCF(it));   // ราคาสูตร (มาจากชีตคิดทุน) ไม่ให้สโตร์ทับ
+    } else {
+      const cspRaw = skuPrice(cSku);
+      const csp = cspRaw != null ? cspRaw / (Number(it.per) || 1) : boxPrice(it);
+      if (csp != null) unitPrice = csp;   // ไฟล์ไม่มีราคา → สโตร์เติม (÷ per ถ้าสโตร์ขายเป็นแพ็ค)
+      else if (formulaCF(it) !== 1) unitPrice = round2(unitPrice * formulaCF(it));   // กล่อง/ฉาก ราคาสูตร → คูณสีตามไฟล์
+    }
     // it.buf = ตัวคูณเผื่อเศษ (แผ่นหลังคา 1.2 = buf_roof ในไฟล์ถอดทุน "เผื่อเศษแผ่นหลังคา ตัดเสีย/ซ้อนแผ่น 20%")
     //   ชีต E8 คูณ buf_roof ทับราคาแผ่น (รวมราคาจากสโตร์ด้วย) → ต้องคูณหลังจากทับราคาสโตร์แล้ว
     //   ⚠ เว็บไม่เคยคูณตัวนี้เลย (v20 ก็มี) → ทุนแผ่นทุกหลังคาขาด 20% มาตลอด (เจ้าของสั่งอิง v20.1 3 ก.ย.69)
     if (it.buf > 0) unitPrice *= it.buf;
     noteMissing({ ...it, sku: cSku }, count);
-    if (!(unitPrice > 0) && !it.orderOnly && !it.labor) noteMissing({ sku: cSku || it.ref || it.name, name: it.name, price: 0 }, count);
+    if (!(unitPrice > 0) && cfp !== 0 && !it.orderOnly && !it.labor) noteMissing({ sku: cSku || it.ref || it.name, name: it.name, price: 0 }, count);
     const amount = count * unitPrice;
     // มอเตอร์ขายฟิก (ระแนงหมุน) — ทุนไม่เข้า consumCost = ไม่เข้าฐานคิดกำไร แต่ยังเข้าทุนรวมทาง fixedSellCost
     const cSell = it.motorSellKey ? motorFixSell(PB, it.motorSellKey, 0) : 0;

@@ -807,7 +807,9 @@ console.log("\n═══ ⑲ E-series — อบทุกสี · ราคา�
     computeCost(pbK, PRODUCTS.sms_slide, { w: 300, h: 250, p: 2, form: "อิสระ", glassType: "เขียว 6มม." }).cost.total !== computeCost(PB, PRODUCTS.sms_slide, { w: 300, h: 250, p: 2, form: "อิสระ", glassType: "เขียว 6มม." }).cost.total);
   ok("ล็อคก้นหอยใช้ราคาไฟล์ 100 (ไม่ใช่สโตร์)", ((E("white", pbS).lines || []).find((l) => l.name === "ล็อคก้นหอย") || {}).unitPrice === 100);
   // รุ่นอื่นยังใช้สโตร์ตามปกติ (ธงไม่รั่ว)
-  const sms = computeCost(pbS, PRODUCTS.sms_slide, { w: 300, h: 250, p: 2, form: "อิสระ", glassType: "เขียว 6มม." });
+  // 18 ก.ย.69 ราคาไฟล์มาก่อนสโตร์แล้ว (เจ้าของสั่ง) → ตรวจ "ธงไม่รั่ว" ในโหมดสโตร์ (PB.PRICE_SOURCE = "store")
+  const pbSs = { ...pbS, PRICE_SOURCE: "store" };
+  const sms = computeCost(pbSs, PRODUCTS.sms_slide, { w: 300, h: 250, p: 2, form: "อิสระ", glassType: "เขียว 6มม." });
   const smsBase = computeCost(PB, PRODUCTS.sms_slide, { w: 300, h: 250, p: 2, form: "อิสระ", glassType: "เขียว 6มม." });
   ok("รุ่นอื่น (SMS) ยังดึงราคาสโตร์ได้ตามปกติ", sms.cost.total !== smsBase.cost.total);
   ok("ไม่มีราคาสี E-series ในตารางไฟล์ (คิด ขาว + ค่าอบ ล้วน)", !Object.values(PB.ALUCOLOR_KEY || {}).some((t) => t && t["E-01"] != null) && !Object.values(PB.ALUCOLOR || {}).some((t) => t && t["E-01"] != null));

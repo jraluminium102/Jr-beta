@@ -268,19 +268,25 @@ export function applyPriceOverride(pb: any, ov?: PriceOverride | null): any {
     for (const k in ov.BOXPRICE) pb.BOXPRICE[k] = { ...(pb.BOXPRICE[k] || {}), ...ov.BOXPRICE[k] };
   }
   // ธง "ราคาเส้นนี้มาจากสโตร์" — engine ใช้กัน mult คูณซ้ำ (สโตร์คิด น้ำหนัก×เรตต่อโล ให้แล้ว)
+  // 18 ก.ย.69 เจ้าของสั่ง "ตีให้ในเว็บเท่าไฟล์เด๊ะ ๆ" → ไฟล์เป็นตัวตั้ง
+  //   สโตร์เติมเฉพาะช่องที่ไฟล์ไม่มีราคา (ไม่มีคีย์ / เป็น 0) — ไม่ทับราคาที่ไฟล์ตั้งไว้แล้ว
+  //   pb.PRICE_SOURCE = "store" = ย้อนกลับเป็นแบบเดิม (สโตร์ทับทุกช่อง)
+  const storeWins = pb.PRICE_SOURCE === "store";
+  const fileHas = (tbl: any, k: string) => !!(tbl && typeof tbl[k] === "number" && tbl[k] > 0);
   pb.ALUCODE_FROM_STOCK = pb.ALUCODE_FROM_STOCK || {};
-  for (const c in ov.ALUCODE || {}) pb.ALUCODE_FROM_STOCK[c] = true;
+  for (const c in ov.ALUCODE || {}) if (storeWins || !fileHas(pb.ALUCODE, c)) pb.ALUCODE_FROM_STOCK[c] = true;
   for (const sec of ["GLASS", "ROOFMAT", "MOTOR", "STEEL", "ALU", "PARTS", "ALUCODE"] as const) {
     const o = ov[sec];
     if (!o) continue;
     if (!pb[sec] && sec === "ALUCODE" && Object.keys(o).length) pb[sec] = {};   // pricebook.json ไม่มี ALUCODE ตั้งต้น (ไม่แตะไฟล์ = verify คงเดิม)
-    if (pb[sec]) for (const k in o) pb[sec][k] = o[k];
+    if (pb[sec]) for (const k in o) if (storeWins || !fileHas(pb[sec], k)) pb[sec][k] = o[k];
   }
   // EXTRA: ค่าเป็น object {make, install, unit} — ทับช่องที่มีอยู่จริง (ให้ค่า make ก่อน install)
   if (ov.EXTRA && pb.EXTRA) {
     for (const k in ov.EXTRA) {
       const cur = pb.EXTRA[k];
       if (cur && typeof cur === "object") {
+        if (!storeWins && ((cur.make ?? 0) > 0 || (cur.install ?? 0) > 0)) continue;   // ไฟล์มีราคาแล้ว = ไม่ทับ
         if (typeof cur.make === "number") cur.make = ov.EXTRA[k];
         else if (typeof cur.install === "number") cur.install = ov.EXTRA[k];
       }

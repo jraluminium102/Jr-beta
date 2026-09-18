@@ -22,7 +22,9 @@ function check(label, res, want) {
   const spec = CUT_SPEC_BY_ID["sms_slide_free"];
   const res = computeCutList(spec, { ...spec.defaults, handleBrand: "เมโทร" }, 1);
   // felt อิสระ: 4*(ขวางบน+เสากุญแจ)*N + 2N*เฟรมบน + 2N*เฟรมล่าง + เฟรมข้าง (3รางเสียบ)
-  const cross = round1((350 - 4.2 * 3 - 11.2) / 3), post = 159 - 6.1, top = 345.6, bot = 345.6, side = 159;
+  // 18 ก.ย.69 "ตีให้เท่าไฟล์เด๊ะ ๆ": ชีต SMS_ตัด_อิสระ D68 ใช้ $E$17 = "จำนวน" ขวางบน (= N) ไม่ใช่ความยาว
+  //   เดิมเทสนี้ใช้ความยาวขวางบน ((350−4.2×3−11.2)/3) → 74.5 ม. · ตามไฟล์ = 61.8 ม.
+  const cross = 3, post = 159 - 6.1, top = 345.6, bot = 345.6, side = 159;
   const felt = round1((4 * (cross + post) * 3 + 2 * 3 * top + 2 * 3 * bot + side) / 100);
   console.log("SMS อิสระ/สลับ (N=3):");
   check("อิสระ", res, [

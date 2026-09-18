@@ -171,7 +171,8 @@ function applyFieldOverrides(item: LineItem, ov: LineOverride, prodVars?: readon
     if ("code" in next) next.code = ov.set_sku;
     else if ("sku" in next) next.sku = ov.set_sku;
   }
-  if (ov.set_price != null && "price" in next) next.price = ov.set_price;
+  // priceLocked = ราคาที่แอดมินแก้เอง → engine ใช้ตรงตัว ไม่ให้ราคาไฟล์ (ERP) ทับ (18 ก.ย.69 ไฟล์เป็นตัวตั้ง)
+  if (ov.set_price != null && "price" in next) { next.price = ov.set_price; (next as Record<string, unknown>).priceLocked = true; }
   if (ov.scope === "cut") {
     // ฝั่งใบตัด: len/qty เป็นฟังก์ชันเสมอในซอร์ส (ดู cutlist/engine.ts) — ต้องคอมไพล์ข้อความเป็นฟังก์ชันจริง
     if (ov.set_len != null && ov.set_len !== "" && "len" in next) {
@@ -246,9 +247,9 @@ function buildAddedLine(ov: LineOverride, targetKey: string, prodVars?: readonly
     // 🔴 กรองสูตรก่อนเสมอ (ช่องเดียวกับ applyFieldOverrides — QA เจอ 1 ก.ย.69)
     const seg = isSafeCalcExpr(ov.set_len ?? "", prodVars) ? (ov.set_len || "W") : "W";
     const cnt = isSafeCalcExpr(ov.set_qty ?? "", prodVars) ? (ov.set_qty || "1") : "1";
-    return { name, code: ov.set_sku || "", price, kg: Number(ov.set_kg) || 0, seg, count: cnt };
+    return { name, code: ov.set_sku || "", price, priceLocked: ov.set_price != null, kg: Number(ov.set_kg) || 0, seg, count: cnt };
   }
-  return { name, sku: ov.set_sku || "", price, unit: ov.unit || "ชิ้น",
+  return { name, sku: ov.set_sku || "", price, priceLocked: ov.set_price != null, unit: ov.unit || "ชิ้น",
     count: isSafeCalcExpr(ov.set_qty ?? "", prodVars) ? (ov.set_qty || "1") : "1" };
 }
 

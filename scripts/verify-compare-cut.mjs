@@ -229,13 +229,17 @@ console.log("\n═══ ④ข รางน้ำอลู ผูกสโต�
 {
   const PB_BOX = JSON.parse(JSON.stringify(PB));
   PB_BOX.BOXPRICE = { ...(PB_BOX.BOXPRICE ?? {}), "กล่อง|4": { "มิว": 9999, "อบขาว": 9999, "ดำ": 9999 } };
+  // 18 ก.ย.69 ราคาไฟล์มาก่อนสโตร์ (เจ้าของสั่ง "ตีให้เท่าไฟล์เด๊ะ ๆ") → ด่านนี้ตรวจ "การผูกสโตร์" จึงวัดในโหมดสโตร์
+  //   (ถ้าเจ้าของสลับกลับ PB.PRICE_SOURCE = "store" การผูกนี้ต้องยังทำงาน)
+  PB_BOX.PRICE_SOURCE = "store";
+  const PB_STORE = { ...PB, PRICE_SOURCE: "store" };
   for (const id of ["glasshouse", "glasshouse_multi", "roof_multi", "gable_multi", "roof"]) {
     const P = PRODUCTS[id];
     if (!P) { ok(`${id}: มีรุ่นในระบบ`, false, ""); continue; }
     const d = P.defaults ?? { w: 400, h: 300, p: 1 };
     // หลังคาเดี่ยว: ค่าตั้งต้นปลายหลังคาในไฟล์ = 'ยื่นปลาย' (ไม่มีราง) → ต้องเลือกรางน้ำอลูก่อน ถึงจะมีบรรทัดกล่อง 4 ให้ทดสอบ
     const IN2 = { prodId: id, w: d.w, h: d.h, p: d.p || 1, form: P.defForm, spec: id === 'roof' ? { roofend: 'รางน้ำอลู' } : {}, cut: {}, material: P.defMaterial };
-    const base = compareCut(PB, IN2)?.totals?.costTotal;
+    const base = compareCut(PB_STORE, IN2)?.totals?.costTotal;
     const hi = compareCut(PB_BOX, IN2)?.totals?.costTotal;
     ok(`${id}: ตั้งราคากล่อง 4" ในสโตร์ → ทุนขยับตาม`, hi > base, `${base} → ${hi}`);
   }

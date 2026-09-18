@@ -65,6 +65,8 @@ export type HardwareDef = {
   unit?: string;
   note?: string;
   noStock?: boolean;
+  /** ทศนิยมของจำนวน (ตั้งต้น 1) — ชีตตัดบางแถวปัด 2 ตำแหน่ง เช่น ยางเฟี้ยมยูโร ROUND(…,2) */
+  dp?: number;
 };
 
 /**
@@ -88,11 +90,14 @@ export function otherHandleRow(key: string, opts?: { label?: string; gate?: (o: 
 
 /**
  * สักหลาด 5×3 (เมตร) — รอบกรอบบาน (ขวางบน+เสากุญแจ) × 4 ต่อบาน + เฟรมบน/ล่าง (รางเสียบ) + เฟรมข้าง
- *   พอร์ตจากสูตรไฟล์ (เปิดคู่กลาง/ลากจูง อ้างความยาวขวางบน · ชีตอิสระอ้าง E17=จำนวน = พิมพ์ผิด → ใช้ความยาวให้สอดคล้อง)
+ *   พอร์ตจากสูตรไฟล์ (เปิดคู่กลาง/ลากจูง อ้างความยาวขวางบน · ชีตอิสระอ้าง E17=จำนวน → ตามไฟล์ตรง ๆ ผ่าน crossAsCount)
  *   panels = สปส.บานของรุ่น · postName = ชื่อโปรไฟล์เสากุญแจ (ชื่อต่างกันบางรุ่น)
  */
-export function smsFeltMeters(o: CutInput, ctx: HardwareCtx, panels: number, postName = "เสากุญแจ ML"): number {
-  const cross = ctx.len("ขวางบน");
+export function smsFeltMeters(o: CutInput, ctx: HardwareCtx, panels: number, postName = "เสากุญแจ ML", crossAsCount = false): number {
+  // ชีต SMS_ตัด_อิสระ D68 อ้าง $E$17 = "จำนวน" ขวางบน ไม่ใช่ความยาว (ลากจูง/คู่กลาง อ้างความยาว)
+  //   เจ้าของสั่ง 18 ก.ย.69 "ตีให้เท่าไฟล์เด๊ะ ๆ" → อิสระคิดตามไฟล์ตรง ๆ (600×300 3 บาน = 110.1 ม. ตรงชีต)
+  //   ⚠ น่าจะเป็นสูตรพิมพ์ผิดในไฟล์ (ควรเป็น D17) — ถ้าเจ้าของแก้ไฟล์ ให้ส่ง crossAsCount=false
+  const cross = crossAsCount ? ctx.qty("ขวางบน") : ctx.len("ขวางบน");
   const post = ctx.len(postName);
   const topF = ctx.len("เฟรมบน");
   const botF = ctx.len("เฟรมล่าง");
@@ -114,6 +119,7 @@ export function smsSlideHardware(
   panelsFn: (o: CutInput) => number,
   handles: "LR" | "L" = "LR",
   postName = "เสากุญแจ ML",
+  crossAsCount = false,
 ): HardwareDef[] {
   return [
     { name: "ล้อ 27", sku: "JR00576", qty: (o) => 2 * panelsFn(o), unit: "ตัว" },
@@ -121,7 +127,7 @@ export function smsSlideHardware(
     { name: "น็อต 1\" (ประกอบบาน)", sku: "JR00864", qty: (o) => 4 * panelsFn(o), unit: "ตัว" },
     { name: "น็อต 1\" (ประกอบเฟรม)", sku: "JR00864", qty: () => 8, unit: "ตัว" },
     { name: "น็อต 6 หุน (ยึดล้อ)", sku: "JR00863", qty: (o) => 4 * panelsFn(o), unit: "ตัว" },
-    { name: "สักหลาด 5×3 (รวม)", sku: "JR00794", qty: (o, ctx) => smsFeltMeters(o, ctx, panelsFn(o), postName), unit: "ม.", noStock: true, note: "ม้วนละ 250ม. · สะสมครบม้วนค่อยตัด (ไม่หักอัตโนมัติ)" },
+    { name: "สักหลาด 5×3 (รวม)", sku: "JR00794", qty: (o, ctx) => smsFeltMeters(o, ctx, panelsFn(o), postName, crossAsCount), unit: "ม.", noStock: true, note: "ม้วนละ 250ม. · สะสมครบม้วนค่อยตัด (ไม่หักอัตโนมัติ)" },
     { name: "ยางรูน้ำลง", sku: "JR00589", qty: drainCount, unit: "อัน", note: "2 + เฟรมล่าง>150 เพิ่มทุก 50ซม." },
     { name: "วาวรูน้ำออก", sku: "JR00485", qty: drainCount, unit: "อัน", note: "2 + เฟรมล่าง>150 เพิ่มทุก 50ซม." },
     // ซิลิโคนรอบวงกบ ใน+นอก — สูตรเดียวกับคิดราคา 4.0 (เส้นรอบรูป ×2 ÷ 12.5 ม./หลอด) · รหัสจากเจ้าของ 19 ส.ค.69

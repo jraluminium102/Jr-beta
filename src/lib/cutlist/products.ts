@@ -26,18 +26,23 @@ const SWING_DOOR_DEF = { hwColor: "ขาว", lockType: "ล็อคปกต�
 //   "Cmech ล็อค+ดัมมี่" → ล็อค JR00291=1 + ดัมมี่ JR00289=1 (กุญแจ=0)
 //   "Cmech ดัมมี่+ดัมมี่" → ดัมมี่ JR00289=2 (กุญแจ/ล็อค=0)
 //   + เพิ่ม CDQ/ปลายกลอน (บานลอง) ให้ครบชุดกับ SOLID_DOOR — ประตูเดี่ยว/บานเปิดตระกูลนี้ไม่มีบานลอง (N คงที่ 1) → เป็น 0 เสมอ (พอร์ตตามไฟล์)
-function casementDoorHardware(hasSill: (o: CutInput) => boolean, sashN: (o: CutInput) => number = () => 1): HardwareDef[] {
+// opt.fileSet = "woodjamb": ชุดอุปกรณ์ตาม ครอบวงกบไม้_ตัด ⑥ ตรงตัว (18 ก.ย.69 "ตีให้เท่าไฟล์เด๊ะ ๆ")
+//   ไม่มี สปิงก็อท/ฉากประคองมุม · มีซิลิโคน ROUNDUP(2×(ก+ส)/100×2/12.5) หลอด (ไม่ตัดสต็อก)
+function casementDoorHardware(hasSill: (o: CutInput) => boolean, sashN: (o: CutInput) => number = () => 1, opt: { fileSet?: "woodjamb" } = {}): HardwareDef[] {
   // จำนวน "บานลอง" = บานทั้งหมด − ใบหลัก (บานเดี่ยว = 0)
   const childN = (o: CutInput) => Math.max(sashN(o) - 1, 0);
   // นับมือจับ: ใบหลัก (motherHandle) + ใบลอง (childHandle · เฉพาะเมื่อมีบานลอง) — ตรงชีต ⑤ "มือจับ ใบหลัก / ใบลอง"
   const handleN = (o: CutInput, pick: string) =>
     (o.motherHandle === pick ? 1 : 0) + (childN(o) > 0 && o.childHandle === pick ? 1 : 0);
+  const wj = opt.fileSet === "woodjamb";
   return [
     { name: "บานพับ hyda", sku: (o) => (o.hwColor === "ดำ" ? "JR00488" : "JR00489"), qty: (o) => (o.H > 300 || o.W / sashN(o) > 120 ? 5 : 4) * sashN(o), unit: "ตัว" },
     // v1 (16 ก.ย.69): โซลิด_ตัด/กระทุ้ง_ตัด ⑤.1 ใช้ JR00482 (สปิงก็อท) · JR00557 (ฉากประคองมุม)
     //   เดิมเว็บผูก JR00592/JR00267 ซึ่ง ราคา ERP ระบุว่าเป็นของบานเลื่อนยูโร (คนละตัว) — รายงาน C ชี้ว่าผูกผิดตัว
-    { name: "สปิงก็อท", sku: "JR00482", qty: (o) => 4 * sashN(o), unit: "ตัว" },
-    { name: "ฉากประคองมุม", sku: "JR00557", qty: (o) => 8 * sashN(o), unit: "ตัว" },
+    ...(wj ? [] : [
+      { name: "สปิงก็อท", sku: "JR00482", qty: (o: CutInput) => 4 * sashN(o), unit: "ตัว" },
+      { name: "ฉากประคองมุม", sku: "JR00557", qty: (o: CutInput) => 8 * sashN(o), unit: "ตัว" },
+    ]),
     { name: "มือจับ ล็อค+กุญแจ (คิงโบ)", sku: (o) => (o.hwColor === "ดำ" ? "JR00314" : "JR00315"), qty: (o) => handleN(o, "คิงโบ ล็อค+กุญแจ"), unit: "ชุด" },
     { name: "มือจับ ดัมมี่+ดัมมี่ (คิงโบ)", sku: (o) => (o.hwColor === "ดำ" ? "JR00312" : "JR00313"), qty: (o) => handleN(o, "คิงโบ ดัมมี่+ดัมมี่"), unit: "ชุด" },
     { name: "มือจับ Cmech กุญแจ", sku: "JR00293", qty: (o) => handleN(o, "Cmech กุญแจ+ล็อค"), unit: "ชุด", noStock: true, note: "ไม่ตัดสต็อก" },
@@ -54,6 +59,7 @@ function casementDoorHardware(hasSill: (o: CutInput) => boolean, sashN: (o: CutI
     // v1 + decisions ข้อ 7: ยาง = ROUND(2×(กว้าง+สูง)/100 × จำนวนบาน) บรรทัดเดียว (เลิกแยก ยางกรอบบาน/ยางวงกบ)
     //   ตรวจ: บานเปิด_ตัด 150×200 1 บาน = 7 ม. · บานเปิดคู่_ตัด 150×200 2 บาน = 14 ม. · ครอบวงกบไม้ 130×210 2 บาน = 14 ม.
     { name: "ยาง", sku: "JR00771", qty: (o) => Math.round(2 * (o.W + o.H) / 100 * sashN(o)), unit: "เมตร" },
+    ...(wj ? [{ name: "ซิลิโคน ใน+นอก", sku: "JR00504", qty: (o: CutInput) => Math.ceil(2 * (o.W + o.H) / 100 * 2 / 12.5), unit: "หลอด", noStock: true, note: "ไม่ตัดสต็อก (ตามไฟล์)" }] : []),
   ];
 }
 
@@ -180,7 +186,7 @@ export const SMS_SLIDE_FREE: CutSpec = {
     { name: "ขวางบนมุ้ง (ใหญ่)", code: "B20054", len: freeCross, qty: (o) => (meshOf(o) === "เฟรมใหญ่" ? meshCountOf(o) : 0) },
     { name: "ขวางล่างมุ้ง (ใหญ่)", code: "B20054", len: freeCross, qty: (o) => (meshOf(o) === "เฟรมใหญ่" ? meshCountOf(o) : 0) },
   ],
-  hardware: [...smsSlideHardware((o) => o.N, "LR", "เสากุญแจ ML"), ...smsMeshHardware(meshCountOf)],
+  hardware: [...smsSlideHardware((o) => o.N, "LR", "เสากุญแจ ML", true), ...smsMeshHardware(meshCountOf)],   // true = สักหลาดตามสูตรไฟล์ (E17 จำนวน)
 };
 
 /**
@@ -343,7 +349,8 @@ export const SLIMLUX_SLIDE: CutSpec = {
     // มือจับล็อค — คนละรหัสตามสี (เจ้าของให้รหัส 20 ส.ค.69) · X-J เป็นเส้นอลู อยู่ในบล็อกโปรไฟล์
     { name: (o) => `มือจับล็อค สลิม (${o.handleColor === "ดำ" ? "ดำ" : "ขาว"})`,
       sku: (o) => (o.handleColor === "ดำ" ? "JR00367" : "JR00366"),
-      qty: (o) => (o.handle === "มือจับล็อค" ? (o.sashMode === "เปิดคู่กลาง" ? 2 : 1) : 0), unit: "ชุด" },
+      // 18 ก.ย.69 ตามตาราง คิดทุน SlimLux G40:S47 — อิสระ 2 บาน = 2 · อิสระ 3-5 = 1 · ลากจูง = 1 · เปิดคู่กลาง = 2
+      qty: (o) => (o.handle === "มือจับล็อค" ? (o.sashMode === "เปิดคู่กลาง" || ((o.sashMode || "อิสระ") === "อิสระ" && o.N === 2) ? 2 : 1) : 0), unit: "ชุด" },
     // สักหลาด — ใช้ยาวเท่า "ตบเกี่ยวใส่สักหลาด" (เจ้าของสั่ง 20 ส.ค.69) · สลิมใช้เบอร์ JR00776 (ไม่ใช่ JR00794 ของ SMS)
     // ซิลิโคน ใน+นอก — คิดราคาคิดอยู่แล้ว (ของใช้จริงทุกงาน) เติมฝั่งใบตัดให้ตรงกัน 21 ส.ค.69
     { name: "ซิลิโคน ใน+นอก", sku: "JR00504", qty: (o) => Math.ceil(((2 * (o.W + o.H)) / 100) * 2 / 12.5), unit: "หลอด" },
@@ -692,11 +699,30 @@ export const EURO_BIFOLD: CutSpec = {
     { name: "ก้านสไลด์ มัลติพ้อยท์", sku: "JR02953", qty: (o) => ebOdd(o) * (Math.floor(euroSashH(o) / 10) / 10), unit: "ม.", note: "ROUNDDOWN(สูงบาน/100, 1) ม." },
     // ยาง/สักหลาด — สูตรชุดเดียวกับคิดราคา 4.0 · รหัสยางเจ้าของให้ 28 ส.ค.69 (อัด JR00768 · รอง JR00769 · ลูกโป่ง JR00770)
     // ⚠ คิดเป็น มม. แล้ว ÷1000 — ต้องปัดเศษลำดับเดียวกับฝั่งคิดราคา ไม่งั้นต่างกัน 0.1 ม.
-    { name: "ยางลูกโป่ง 6mm", sku: "JR00273", qty: (o) => Math.round(((o.W * 10 - 36) * 2 + o.H * 10 + (o.H * 10 - 120) * 2
-      + (o.H * 10 - 94) * (2 * o.N) * 2 + (o.H * 10 - 94) * (2 * o.N) * 2 + euroSashW(o) * 10 * 3 + (o.H * 10 - 80)) / 1000 * 10) / 10, unit: "ม." },
+    // 18 ก.ย.69 เจ้าของสั่ง "ตีให้เท่าไฟล์เด๊ะ ๆ" → พอร์ตสูตร เฟี้ยมยูโร_ตัด D66 ตรงตัว (5 แบบตามรูปแบบพับ · ปัด 2 ตำแหน่ง)
+    //   เดิมใช้สูตรแบบ "ชนผนัง-คู่" แบบเดียว + ปัด 1 ตำแหน่ง (60.2 แทน 60.25)
+    { name: "ยางลูกโป่ง 6mm", sku: "JR00273", qty: (o, ctx) => {
+      const L = Number(o.L ?? Math.ceil(o.N / 2)), R = o.N - L;
+      const hi = Math.max(L, R), lo = Math.min(L, R);
+      const lay = lo === 0 ? (hi % 2 === 0 ? "ชนผนัง-คู่" : "ชนผนัง-คี่")
+        : (hi % 2 === 0 && lo % 2 === 0 ? "คู่+คู่" : (hi % 2 === 1 && lo % 2 === 1 ? "คี่+คี่" : "คู่+คี่"));
+      const e31 = ctx.len("เฟรมบนบานเฟี้ยม"), e32 = eIsU(o.rail) ? 0 : ctx.len("เฟรมล่าง/รางยู");
+      const e33 = ctx.len("เฟรมข้างบานเฟี้ยม"), e34 = ctx.len("คิ้วตบเฟรมข้าง");
+      const e37 = ctx.len("กรอบบานเฟี้ยม (ตั้ง)"), f37 = ctx.qty("กรอบบานเฟี้ยม (ตั้ง)");
+      const e38 = ctx.len("กรอบบานเฟี้ยม (ขวาง 45°)"), f38 = ctx.qty("กรอบบานเฟี้ยม (ขวาง 45°)");
+      const e39 = ctx.len("ชนกลางบานคู่"), e40 = ctx.len("บังใบ"), e41 = ctx.len("รับล็อคเฟรมข้างบานคู่"), e42 = ctx.len("รับล็อคบานคู่+บานคี่");
+      const head = e31 + e32;
+      const cm = lay === "ชนผนัง-คู่" ? head + e33 + e34 * 2 + e37 * f37 * 2 + e39 * f38 * 2 + e38 * 3 + e41
+        : lay === "คู่+คู่" ? head + e33 * 2 + e34 * 2 + e37 * f37 * 2 + e39 * 2 * 3 + e38 * f38 * 2
+        : lay === "ชนผนัง-คี่" ? head + e33 + e34 * 2 + e37 * f37 * 2 + e38 * f38 + e40 - e37 * 2
+        : lay === "คู่+คี่" ? head + e33 + e34 * 2 + e37 * f37 * 2 + e38 * f38 + e40 + e42 * 3
+        : head + e33 + e34 * 2 + e37 * f37 * 2 + e38 * f38 + e40 * 2 - e37 * 4;
+      return Math.round(cm + 1e-9) / 100;   // ROUND(ซม./100, 2) = ปัดเป็น ซม.เต็ม
+    }, unit: "ม.", dp: 2 },
     // สักหลาด: เจ้าของสั่ง 3 ก.ย.69 "เฟี้ยมยูโร เอาสักหลาดออกไปเลย ไม่มี" — ถอดออกทั้งใบตัดและคิดราคา
-    { name: "ยางอัด", sku: "JR00783", qty: (o) => Math.round(((o.H * 10 - 224) + (euroSashW(o) * 10 - 130)) * 2 * o.N / 1000 * 10) / 10, unit: "ม." },
-    { name: "ยางรอง", sku: "JR00258", qty: (o) => Math.round(((o.H * 10 - 224) + (euroSashW(o) * 10 - 130)) * 2 * o.N / 1000 * 10) / 10, unit: "ม." },
+    // ยางอัด/ยางรอง = ROUND(((สูงบาน−13)+(กว้างบาน−13))×2×N/100, 2) ตาม D67/D68 (เดิมปัด 1 ตำแหน่ง → 13.2 แทน 13.18)
+    { name: "ยางอัด", sku: "JR00783", qty: (o) => Math.round(((o.H * 10 - 224) + (euroSashW(o) * 10 - 130)) * 2 * o.N / 1000 * 100) / 100, unit: "ม.", dp: 2 },
+    { name: "ยางรอง", sku: "JR00258", qty: (o) => Math.round(((o.H * 10 - 224) + (euroSashW(o) * 10 - 130)) * 2 * o.N / 1000 * 100) / 100, unit: "ม.", dp: 2 },
   ],
   // กระจก: (ขวาง−13มม.)×(สูงบาน−1.3ซม.) × N แผ่น ตามไฟล์
 };
@@ -1233,6 +1259,11 @@ export const PC_DOOR: CutSpec = {
     { name: "บานพับไม่บาก", sku: (o) => (o.handleColor === "ดำ" ? "JR00474" : "JR00473"), qty: (o) => 4 * (pcN(o) / 2), unit: "ตัว", note: "4/บานเปิด" },
     { name: "กลอน", sku: (o) => (o.handleColor === "ดำ" ? "JR00627" : "JR00630"), qty: (o) => pcN(o) / 2, unit: "อัน", note: "1/บานเปิด" },
     { name: "ปลายกลอน", sku: "JR00598", qty: (o) => pcN(o) / 2, unit: "อัน", note: "1/บานเปิด" },
+    // 18 ก.ย.69 "ตีให้เท่าไฟล์เด๊ะ ๆ" — PCDoor_ตัด แถว 83-84 มี แต่เว็บตกหล่น (ทุนขาดไฟล์ 342 ที่ 150×200)
+    { name: "น็อตเฟรม 1\"", sku: "JR00864", qty: (o) => (pcNoSill(o) ? 6 : 8), unit: "ตัว", note: "ยึดวงกบ · มีธรณี 8 / ไม่มี 6" },
+    { name: "ยางกรอบบาน/วงกบ", sku: "JR00771", qty: (o) => Math.round(2 * (o.W + o.H) / 100 * pcN(o)), unit: "เมตร", note: "2×(กว้าง+สูง)×จำนวนบาน" },
+    // ซิลิโคน: ชีตคิดทุน PC Door แถว 41 = ROUNDUP(2×(ก+ส)/100×2/12.5) หลอด (ไม่อยู่ในชีตตัด → ไม่ตัดสต็อก)
+    { name: "ซิลิโคน ใน+นอก", sku: "JR00504", qty: (o) => Math.ceil(2 * (o.W + o.H) / 100 * 2 / 12.5), unit: "หลอด", noStock: true, note: "ไม่ตัดสต็อก (ตามชีตคิดทุน)" },
   ],
 };
 
@@ -1493,7 +1524,7 @@ export const WOODJAMB_SWING: CutSpec = {
     { name: "กรอบบานไม่บังใบ แนวนอน — บาน2", code: wCode("JR03126", "JR03127"), len: (o) => wDoor2(o) - 0.8 - 3.2, qty: (o) => (o.N === 2 ? 1 : 0) },
   ],
   // v1 ⑥: อุปกรณ์ชุดเดียวกับ บานเปิด_ตัด ทุกรหัส → ใช้ casementDoorHardware (เดิม 6 บรรทัดไม่มี sku ผูกสโตร์ไม่ได้)
-  hardware: casementDoorHardware(wSill, (o) => o.N),
+  hardware: casementDoorHardware(wSill, (o) => o.N, { fileSet: "woodjamb" }),
 };
 
 // ═══════════════════════ หลังคา / กันสาด / ระแนง (ไฟล์เป็น ซม. อยู่แล้ว) ═══════════════════════

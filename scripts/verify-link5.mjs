@@ -12,6 +12,10 @@ import { isAluCode, applyPriceOverride, buildPriceOverride } from '../src/lib/ca
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PB = JSON.parse(fs.readFileSync(path.join(__dirname, '../src/lib/calculator40/pricebook.json'), 'utf8'));
+// 18 ก.ย.69 เจ้าของสั่ง "ตีให้ในเว็บเท่าไฟล์เด๊ะ ๆ" → ราคาไฟล์มาก่อนสโตร์ (PB.PRICE_SOURCE = "file")
+//   ชุดนี้ตรวจตรรกะ "ผูกสโตร์" (ราคาสโตร์ไหลเข้าสูตร/ใบตัด) ซึ่งยังอยู่หลังสวิตช์ → รันในโหมดสโตร์
+//   ถ้าเจ้าของสลับกลับ ตรรกะนี้ต้องยังทำงานครบ
+PB.PRICE_SOURCE = 'store';
 
 let pass = 0, fail = 0;
 const ok = (label, cond, got = '') => {
