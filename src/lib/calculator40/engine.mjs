@@ -315,9 +315,11 @@ export function computeCost(PB, prod, opt) {
   // น้ำหนักที่ใช้ "คิดค่าอบสี" — กล่อง/ฉากไม่นับ เพราะราคากล่องคิดสีมาในตัวแล้ว
   //   (รุ่นที่ซื้อเส้นมิวมาอบเอง เช่น SlimLux ก็ยังไม่นับ — ชีตคิดทุนไม่บวกค่าอบให้กล่อง)
   const kgForBake = (it, code, barLen) => {
+    // ⚠ ยึด กก. ที่ชีตคิดทุนเขียนไว้ในสูตรก่อน — ตารางน้ำหนักละเอียดกว่า (ทศนิยม 3 ตำแหน่ง)
+    //   ถ้าให้ตารางชนะ ค่าอบจะขยับเศษสตางค์ทุกครั้งที่เติมตาราง (21 ก.ย.69)
+    if (Number(it.kg) > 0) return Number(it.kg);
     const km = (PB.ALUWEIGHT_KGM || {})[code];
-    if (km > 0) return Math.round(km * (barLen || STOCK_LEN) * 1000) / 1000;
-    return Number(it.kg) || 0;
+    return km > 0 ? Math.round(km * (barLen || STOCK_LEN) * 1000) / 1000 : 0;
   };
   let aluCost = 0, aluKg = 0, aluBarsAll = 0;
   // น้ำหนักอลูจริง = ความยาวที่ตัดจริง × (กก./เส้น ÷ ความยาวเส้น) — ไม่ใช่ aluKg ข้างบน
