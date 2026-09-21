@@ -4,9 +4,10 @@
  *   node scripts/gen-r41-split-pdf.mjs
  *   ออก: docs/เทียบราคาขายแยกก้อน-R4.1.pdf + docs/เทียบราคาขายแยกก้อน-R4.1.xlsx
  *
- * เจ้าของสั่ง 21 ก.ย.69: "อยากได้แบบแยกราคาต้นทุนค่าของ ค่าผลิต ติดตั้ง + แสดงความต่างกำไรที่คูณด้วย
- *   ในไฟล์ที่แนบมันคิดแบบ กำไร 60% คือ 160% — เอาอัตราส่วน 60%"
- * → ทุกช่อง "กำไร %" ในไฟล์นี้ = (ขาย ÷ ทุน − 1) × 100  เช่น ทุน 100 ขาย 160 → 60%
+ * เจ้าของสั่ง 21 ก.ย.69
+ *   ① "แยกราคาต้นทุนค่าของ ค่าผลิต ติดตั้ง + กำไรเอาอัตราส่วน 60% (ไม่ใช่ 160%)"
+ *   ② "ไม่มีสีหน่อยหรอ ตาลายหมดแล้ว แบบแยกช่อง ตัวแดงบอกราคาต่าง"
+ * → 3 ก้อนแยกด้วยแถบสีคนละสี · ช่อง "ต่าง" ตัวแดง/เขียวตัวหนา · 1 รุ่นเต็มความกว้างหน้า
  */
 import fs from "node:fs";
 import { chromium } from "playwright";
@@ -23,8 +24,15 @@ const rows = FX.rows || FX;
 const baht = (v) => (typeof v === "number" && Number.isFinite(v) && v !== 0 ? Math.round(v).toLocaleString("en-US") : v === 0 ? "0" : "—");
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
 /** กำไร % แบบที่เจ้าของใช้: ขาย 160 จากทุน 100 = 60% */
-const gain = (cost, sell) => (cost > 0 && sell > 0 ? Math.round(((sell / cost) - 1) * 1000) / 10 : null);
-const pct = (v) => (v == null ? "—" : (v > 0 ? "+" : "") + v + "%");
+const gain = (cost, sell) => (cost > 0 && sell > 0 ? Math.round(((sell / cost) - 1) * 100) : null);
+const gp = (v) => (v == null ? "—" : v + "%");
+/** ช่องส่วนต่าง: +เว็บแพงกว่า (แดง) · −เว็บถูกกว่า (เขียว) · ใกล้เคียง (เทา) */
+const diff = (web, tab) => {
+  if (!(tab > 0)) return { txt: "—", cls: "z" };
+  const d = Math.round(web - tab), p = Math.abs(d / tab) * 100;
+  const cls = p <= 2 ? "z" : d > 0 ? "up" : "dn";
+  return { txt: (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d).toLocaleString("en-US"), cls };
+};
 
 const byProd = new Map();
 for (const r of rows) {
@@ -33,12 +41,8 @@ for (const r of rows) {
   let c;
   try { c = computeCost(PB, p, { ...(r.inputs || {}), spec: r.inputs?.spec || {}, addons: {} }); } catch { continue; }
   const T = r.pdf || {};
-  const web = {
-    cM: c.cost?.total || 0, sM: c.sell?.parts?.mat || 0,
-    cP: c.labor?.prod || 0, sP: c.sell?.parts?.prod || 0,
-    cI: c.labor?.install || 0, sI: c.sell?.parts?.inst || 0,
-    sT: c.sell?.withInstall || 0,
-  };
+  const web = { cM: c.cost?.total || 0, sM: c.sell?.parts?.mat || 0, cP: c.labor?.prod || 0, sP: c.sell?.parts?.prod || 0,
+    cI: c.labor?.install || 0, sI: c.sell?.parts?.inst || 0, sT: c.sell?.withInstall || 0 };
   web.cT = web.cM + web.cP + web.cI;
   const tab = { cM: T.cM || 0, sM: T.sM || 0, cP: T.cP || 0, sP: T.sP || 0, cI: T.cI || 0, sI: T.sI || 0, sT: T.sT || 0 };
   tab.cT = tab.cM + tab.cP + tab.cI;
@@ -53,79 +57,78 @@ const blocks = [...byProd.values()].map((b) => {
   return b;
 }).sort((a, b) => (b.off - a.off) || (b.lines.length - a.lines.length));
 
-const tone = (dp) => (dp == null ? "" : Math.abs(dp) <= 1 ? "ok" : Math.abs(dp) <= 5 ? "warn" : "bad");
-// เทียบกำไร: ต่างเกิน 5 จุด % = แดง
-const gTone = (a, b) => (a == null || b == null ? "" : Math.abs(a - b) <= 2 ? "ok" : Math.abs(a - b) <= 5 ? "warn" : "bad");
-
-const lineRows = (l) => {
+/** 1 ขนาด = 1 แถว · ในแต่ละก้อนโชว์ ตาราง → เว็บ → ต่าง */
+const line = (l) => {
   const g = (o) => [gain(o.cM, o.sM), gain(o.cP, o.sP), gain(o.cI, o.sI), gain(o.cT, o.sT)];
   const [tM, tP, tI, tT] = g(l.tab), [wM, wP, wI, wT] = g(l.web);
-  return `
-  <tr class="sz"><td class="l" rowspan="2">${esc(l.size)}<br><span class="sm">${l.panels} บาน${l.vk ? " · " + esc(l.vk) : ""}</span></td>
-    <td class="l sm">ตาราง</td>
-    <td>${baht(l.tab.cM)}</td><td>${baht(l.tab.sM)}</td><td class="g">${pct(tM)}</td>
-    <td>${baht(l.tab.cP)}</td><td>${baht(l.tab.sP)}</td><td class="g">${pct(tP)}</td>
-    <td>${baht(l.tab.cI)}</td><td>${baht(l.tab.sI)}</td><td class="g">${pct(tI)}</td>
-    <td>${baht(l.tab.sT)}</td><td class="g">${pct(tT)}</td><td class="chk" rowspan="2"><i></i></td></tr>
-  <tr class="web"><td class="l sm">เว็บ</td>
-    <td>${baht(l.web.cM)}</td><td>${baht(l.web.sM)}</td><td class="g ${gTone(tM, wM)}">${pct(wM)}</td>
-    <td>${baht(l.web.cP)}</td><td>${baht(l.web.sP)}</td><td class="g ${gTone(tP, wP)}">${pct(wP)}</td>
-    <td>${baht(l.web.cI)}</td><td>${baht(l.web.sI)}</td><td class="g ${gTone(tI, wI)}">${pct(wI)}</td>
-    <td class="big">${baht(l.web.sT)}</td><td class="g ${gTone(tT, wT)}">${pct(wT)}</td></tr>`;
+  const dM = diff(l.web.sM, l.tab.sM), dP = diff(l.web.sP, l.tab.sP), dI = diff(l.web.sI, l.tab.sI), dT = diff(l.web.sT, l.tab.sT);
+  const gcls = (a, b) => (a == null || b == null ? "z" : Math.abs(a - b) <= 3 ? "z" : Math.abs(a - b) <= 10 ? "up sm" : "up");
+  return `<tr>
+    <td class="l sz">${esc(l.size)}<span class="sm"> · ${l.panels} บาน${l.vk ? " · " + esc(l.vk) : ""}</span></td>
+    <td class="g1">${baht(l.tab.cM)}</td><td class="g1">${baht(l.tab.sM)}</td><td class="g1 b">${baht(l.web.sM)}</td><td class="g1 ${dM.cls}">${dM.txt}</td><td class="g1 pc">${gp(tM)}→<b class="${gcls(tM, wM)}">${gp(wM)}</b></td>
+    <td class="g2">${baht(l.tab.cP)}</td><td class="g2">${baht(l.tab.sP)}</td><td class="g2 b">${baht(l.web.sP)}</td><td class="g2 ${dP.cls}">${dP.txt}</td><td class="g2 pc">${gp(tP)}→<b class="${gcls(tP, wP)}">${gp(wP)}</b></td>
+    <td class="g3">${baht(l.tab.cI)}</td><td class="g3">${baht(l.tab.sI)}</td><td class="g3 b">${baht(l.web.sI)}</td><td class="g3 ${dI.cls}">${dI.txt}</td><td class="g3 pc">${gp(tI)}→<b class="${gcls(tI, wI)}">${gp(wI)}</b></td>
+    <td class="g4">${baht(l.tab.sT)}</td><td class="g4 big">${baht(l.web.sT)}</td><td class="g4 ${dT.cls} big">${dT.txt}</td><td class="g4 ${l.dp == null ? "z" : Math.abs(l.dp) <= 5 ? "z" : l.dp > 0 ? "up" : "dn"}">${l.dp == null ? "—" : (l.dp > 0 ? "+" : "") + l.dp + "%"}</td>
+    <td class="chk"><i></i></td></tr>`;
 };
-const tbl = (ls) => `<table>
-  <tr><th class="l" rowspan="2">ขนาด</th><th class="l" rowspan="2"></th>
-      <th colspan="3">ค่าของ (วัสดุ)</th><th colspan="3">ค่าผลิต</th><th colspan="3">ค่าติดตั้ง</th><th colspan="2">รวม</th><th class="chk" rowspan="2">✓</th></tr>
-  <tr><th>ทุน</th><th>ขาย</th><th>กำไร</th><th>ทุน</th><th>ขาย</th><th>กำไร</th><th>ทุน</th><th>ขาย</th><th>กำไร</th><th>ขาย</th><th>กำไร</th></tr>
-  ${ls.map(lineRows).join("")}
-</table>`;
-const card = (b) => `<div class="card${b.lines.length > 6 ? " wide" : ""}">
-  <div class="hd"><b>${esc(b.name)}</b><span>${esc(b.id)} · ${b.lines.length} ขนาด${b.off ? ` · <u>ขายรวมต่างเกิน 5% : ${b.off}</u>` : " · ขายรวมตรงทุกขนาด"}</span></div>
-  ${b.lines.length > 12
-    ? `<div class="two">${tbl(b.lines.slice(0, Math.ceil(b.lines.length / 2)))}${tbl(b.lines.slice(Math.ceil(b.lines.length / 2)))}</div>`
-    : tbl(b.lines)}
+const card = (b) => `<div class="card">
+  <div class="hd"><b>${esc(b.name)}</b><span>${esc(b.id)} · ${b.lines.length} ขนาด${b.off ? ` · <u class="up">ต่างเกิน 5% : ${b.off} ขนาด</u>` : ` · <span class="dn">ตรงทุกขนาด</span>`}</span></div>
+  <table>
+    <tr class="h1"><th class="l" rowspan="2">ขนาด</th>
+      <th class="g1" colspan="5">ค่าของ (วัสดุ)</th><th class="g2" colspan="5">ค่าผลิต</th><th class="g3" colspan="5">ค่าติดตั้ง</th><th class="g4" colspan="4">รวมทั้งชุด</th><th class="chk" rowspan="2">✓</th></tr>
+    <tr class="h2">
+      <th class="g1">ทุน</th><th class="g1">ขาย<br>ตาราง</th><th class="g1">ขาย<br>เว็บ</th><th class="g1">ต่าง</th><th class="g1">กำไร ตาราง→เว็บ</th>
+      <th class="g2">ทุน</th><th class="g2">ขาย<br>ตาราง</th><th class="g2">ขาย<br>เว็บ</th><th class="g2">ต่าง</th><th class="g2">กำไร ตาราง→เว็บ</th>
+      <th class="g3">ทุน</th><th class="g3">ขาย<br>ตาราง</th><th class="g3">ขาย<br>เว็บ</th><th class="g3">ต่าง</th><th class="g3">กำไร ตาราง→เว็บ</th>
+      <th class="g4">ขาย<br>ตาราง</th><th class="g4">ขาย<br>เว็บ</th><th class="g4">ต่าง</th><th class="g4">ต่าง %</th></tr>
+    ${b.lines.map(line).join("")}
+  </table>
 </div>`;
 
 const nAll = blocks.reduce((s, b) => s + b.lines.length, 0);
+const nOff = blocks.reduce((s, b) => s + b.off, 0);
 const html = `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>เทียบราคาขายแยกก้อน R4.1</title>
 <style>
   @page { size: A4 landscape; margin: 8mm 6mm 10mm; }
   * { box-sizing: border-box; }
   body { font-family: "Leelawadee UI","Tahoma",sans-serif; color:#111; margin:0; }
   h1 { font-size: 15pt; margin: 0 0 1mm; }
-  .sub { font-size: 9.5pt; color:#555; margin-bottom: 3mm; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3.5mm 4mm; }
-  .card { border: 1.1pt solid #222; border-radius: 1.5mm; padding: 2mm 2.4mm; break-inside: avoid; }
-  .card.wide { grid-column: span 2; }
-  .two { display:grid; grid-template-columns: 1fr 1fr; gap: 0 4mm; }
-  .hd { display:flex; justify-content:space-between; align-items:baseline; border-bottom: 1pt solid #222; padding-bottom:1mm; margin-bottom:1.2mm; gap:2mm; }
-  .hd b { font-size: 13pt; }
-  .hd span { font-size: 9pt; color:#333; text-align:right; }
-  table { width:100%; border-collapse:collapse; font-size: 9.5pt; }
-  th { text-align:right; font-weight:600; padding:0.6mm 0.8mm; border-bottom:0.8pt solid #888; white-space:nowrap; font-size:8.5pt; }
-  th[colspan] { text-align:center; border-left:0.5pt solid #ccc; border-right:0.5pt solid #ccc; background:#eee; }
+  .sub { font-size: 9.5pt; color:#555; margin-bottom: 2.5mm; }
+  .card { border: 1.2pt solid #333; border-radius: 1.5mm; padding: 2mm 2.4mm; break-inside: avoid; margin-bottom: 3.5mm; }
+  .hd { display:flex; justify-content:space-between; align-items:baseline; border-bottom: 1.2pt solid #333; padding-bottom:1mm; margin-bottom:1.5mm; gap:3mm; }
+  .hd b { font-size: 14pt; }
+  .hd span { font-size: 10pt; color:#333; text-align:right; }
+  table { width:100%; border-collapse:collapse; font-size: 10pt; }
+  th { font-weight:700; padding:0.8mm; white-space:nowrap; font-size:8.5pt; text-align:right; line-height:1.15; border-bottom:1pt solid #999; }
   th.l, td.l { text-align:left; }
-  td { padding:0.9mm 0.8mm; text-align:right; white-space:nowrap; }
-  tr.sz td { border-top:0.6pt solid #999; }
-  tr.sz td.l:first-child { font-weight:700; }
-  tr.web td { color:#000; background:#f6f6f6; }
-  td.g { font-weight:600; }
-  td.big { font-size:11pt; font-weight:700; }
-  td.sm, .sm { font-size:8pt; color:#555; }
-  .ok { color:#137333; }
-  .warn { color:#a06000; }
-  .bad { color:#c5221f; }
+  tr.h1 th { text-align:center; font-size:10pt; padding:1mm; border-bottom:0.8pt solid #666; }
+  td { padding:1.1mm 0.9mm; text-align:right; white-space:nowrap; border-bottom:0.5pt solid #ddd; }
+  td.sz { font-weight:700; font-size:10.5pt; }
+  td.b { font-weight:700; }
+  td.big { font-size:11.5pt; font-weight:700; }
+  .sm { font-size:8pt; color:#555; font-weight:400; }
+  td.pc, th .pc { font-size:8.5pt; color:#333; }
+  /* แถบสีแยกก้อน */
+  .g1 { background:#eaf2fd; }  th.g1 { background:#cfe0f7; }
+  .g2 { background:#eaf7ed; }  th.g2 { background:#cbeacf; }
+  .g3 { background:#fdf3e3; }  th.g3 { background:#f8e0b5; }
+  .g4 { background:#f2eefb; }  th.g4 { background:#ded3f3; }
+  /* ส่วนต่าง */
+  .up { color:#c5221f; font-weight:700; }   /* เว็บแพงกว่าตาราง */
+  .dn { color:#0b7a37; font-weight:700; }   /* เว็บถูกกว่าตาราง */
+  .z  { color:#777; }
   .chk { width:8mm; text-align:center; }
-  .chk i { display:inline-block; width:4.5mm; height:4.5mm; border:1pt solid #666; border-radius:0.6mm; }
-  .note { font-size:8.5pt; color:#444; margin-top:3mm; border-top:0.8pt solid #888; padding-top:1.2mm; line-height:1.5; }
+  .chk i { display:inline-block; width:4.5mm; height:4.5mm; border:1pt solid #666; border-radius:0.6mm; background:#fff; }
+  .note { font-size:9pt; color:#333; margin-top:2mm; border-top:1pt solid #666; padding-top:1.5mm; line-height:1.6; }
+  .key { display:inline-block; padding:0.4mm 1.5mm; border-radius:1mm; margin-right:1mm; }
 </style></head><body>
 <h1>เทียบราคาขายแยกก้อน — ค่าของ · ค่าผลิต · ค่าติดตั้ง (เว็บ เทียบ ★ ตารางราคาขาย R4.1)</h1>
-<div class="sub">${nAll} ขนาด · ${blocks.length} รุ่น · สีขาว ไม่มีของเสริม · แถวบน = ตาราง R4.1 · แถวล่าง (พื้นเทา) = เว็บตอนนี้ · ออกเมื่อ ${new Date().toLocaleDateString("th-TH")}</div>
-<div class="grid">${blocks.map(card).join("")}</div>
+<div class="sub">${nAll} ขนาด · ${blocks.length} รุ่น · สีขาว ไม่มีของเสริม · ต่างเกิน 5% = ${nOff} ขนาด · ออกเมื่อ ${new Date().toLocaleDateString("th-TH")}</div>
+${blocks.map(card).join("")}
 <div class="note">
-<b>กำไร %</b> = (ขาย ÷ ทุน − 1) × 100 — คิดเป็น "ส่วนที่บวกเพิ่ม" เช่น ทุน 100 ขาย 160 = <b>60%</b> (ไม่ใช่ 160%)<br>
-สีที่ช่องกำไรของแถวเว็บ = เทียบกับกำไรของตาราง : <span class="ok">เขียว ต่างไม่เกิน 2 จุด%</span> &nbsp; <span class="warn">เหลือง ≤5 จุด%</span> &nbsp; <span class="bad">แดง เกิน 5 จุด%</span><br>
-ทุนค่าผลิต/ค่าติดตั้งของเว็บมาจากสูตรค่าแรงของรุ่นนั้น — ถ้าทุนค่าแรงไม่ตรงตาราง กำไรก้อนนั้นจะต่างตามไปด้วย แก้ด้วย % กำไรค่าของไม่ได้
+<span class="key g1">ค่าของ</span><span class="key g2">ค่าผลิต</span><span class="key g3">ค่าติดตั้ง</span><span class="key g4">รวมทั้งชุด</span>
+&nbsp;·&nbsp; ช่อง <b>ต่าง</b> = ขายเว็บ − ขายตาราง : <span class="up">แดง = เว็บแพงกว่า</span> &nbsp; <span class="dn">เขียว = เว็บถูกกว่า</span> &nbsp; <span class="z">เทา = ต่างไม่ถึง 2%</span><br>
+<b>กำไร ตาราง→เว็บ</b> = (ขาย ÷ ทุน − 1) × 100 — ทุน 100 ขาย 160 คือ <b>60%</b> (ไม่ใช่ 160%) · ตัวหลังลูกศรคือของเว็บ <span class="up">แดง = ต่างจากตารางเกิน 3 จุด%</span>
 </div>
 </body></html>`;
 
@@ -144,7 +147,7 @@ await page.pdf({
 await browser.close();
 if (!process.argv.includes("--keep-html")) fs.unlinkSync(tmp);
 
-// ── Excel ฉบับเดียวกัน (ไว้กรอง/เรียงเอง) ──
+// ── Excel ฉบับเดียวกัน ──
 const HEAD = ["รุ่น", "รหัส", "ขนาด", "บาน", "แบบ", "ที่มา",
   "ค่าของ ทุน", "ค่าของ ขาย", "ค่าของ กำไร%", "ค่าผลิต ทุน", "ค่าผลิต ขาย", "ค่าผลิต กำไร%",
   "ค่าติดตั้ง ทุน", "ค่าติดตั้ง ขาย", "ค่าติดตั้ง กำไร%", "รวม ขาย", "รวม กำไร%"];
