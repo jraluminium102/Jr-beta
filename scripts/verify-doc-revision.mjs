@@ -29,10 +29,15 @@ ok('quotation ไม่มี revision_no (0093 ไม่ได้รัน) →
 {
   const fs = await import('node:fs');
   const src = fs.readFileSync('src/app/api/billing-notes/route.ts', 'utf8');
-  const bd = (src.match(/const bnBreakdown = \{([\s\S]*?)\};/) || [])[1] || '';
-  const cols = [...bd.matchAll(/(?:^|[{,]\s*)([a-z_]+)\s*:/g)].map(m => m[1]);
-  const re = (src.match(/if \(bnErr && \/([^/]+)\/i\.test/) || [])[1] || '';
-  const missing = cols.filter(c => !re.split('|').includes(c));
+  // 21 ก.ย.69: โค้ดแยก bnBreakdown เป็น Core (คอลัมน์เดิม) + Extra (คอลัมน์ที่ต้องรอ migration)
+  //   แต่ละก้อนมี regex fallback ของตัวเอง → ตรวจทีละก้อนว่า "ทุกคอลัมน์มีชื่อใน regex ของก้อนนั้น"
+  const colsOf = (name) => {
+    const bd = (src.match(new RegExp('const ' + name + ' = \\{([\\s\\S]*?)\\};')) || [])[1] || '';
+    return [...bd.matchAll(/(?:^|[{,]\s*)([a-z_]+)\s*:/g)].map((m) => m[1]);
+  };
+  const res = [...src.matchAll(/if \(bnErr && \/([^/]+)\/i\.test/g)].map((m) => m[1].split('|'));
+  const cols = [...colsOf('bnBreakdownCore'), ...colsOf('bnBreakdownExtra')];
+  const missing = cols.filter((c) => !res.some((re) => re.includes(c)));
   console.log('\n═══ fallback regex ครอบคลุมทุกคอลัมน์ใน bnBreakdown ═══');
   console.log(`  คอลัมน์ใน bnBreakdown = ${cols.length} ตัว`);
   const good = cols.length > 0 && missing.length === 0;

@@ -5,7 +5,8 @@ import { usableWeights } from "@/lib/calculator40/weight-backfill";
 
 // เติม "น้ำหนัก กก./เส้น" ให้เส้นอลูในสโตร์ จากไฟล์ถอดทุน (ชีต "น้ำหนักโปรไฟล์")
 //   เจ้าของสั่ง 19 ส.ค.69 — เส้นที่ไม่มีน้ำหนัก กดเปลี่ยนเรตต่อโลแล้วราคาไม่ขยับ
-// ⚠ เขียนแค่ weight_per_unit เท่านั้น — ไม่แตะราคา
+// ⚠ ตาราง stock_items เขียนแค่ weight_per_unit — ราคาใหม่ (เรตต่อโล × น้ำหนัก) ลงประวัติที่ stock_prices เท่านั้น
+//   และทำเฉพาะเส้นที่ "ตั้งเรตต่อโลไว้แล้ว" · เส้นที่ยังไม่มีเรต ไม่แตะราคาเลย
 //   ราคาต้องไปผ่าน "ตั้งเรตต่อโล" (/api/stock/alu-rates) ที่ลงประวัติ stock_prices ให้ครบ
 const WRITE_ROLES = ["ADMIN", "ACCOUNTING"];
 type Sb = { from: (t: string) => any };   // eslint-disable-line @typescript-eslint/no-explicit-any

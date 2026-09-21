@@ -55,9 +55,9 @@ console.log("\n═══ ① รายการอุปกรณ์ต้อง
     cutHardwareLines({ prodId: "roof", ...BASE_IN, cut: DEF_CUT }) === null, "");
   // เจ้าของเคาะ 2 ก.ย.69: เปิดทุกรุ่นที่ผูกใบตัดได้ (เดิม 4 → 10)
   //   ปลอดภัยเพราะ engine กันไว้ — รหัสไหนไม่มีราคาสโตร์ จะไม่ใช้ทั้งชุด กลับไปใช้ราคาเดิม ไม่ตกเงียบ ๆ
-  ok("เปิดครบทุกรุ่นที่ผูกใบตัดได้ (10 รุ่น)",
+  ok("เปิดครบทุกรุ่นที่ผูกใบตัดได้ (11 รุ่น)",
     JSON.stringify([...HW_FROM_CUTLIST].sort()) === JSON.stringify(
-      ["euro_slide", "fixed", "fold_euro", "fold_lift", "folding", "gate", "pcdoor", "slimlux", "sms_slide", "velora"]),
+      ["euro_slide", "fixed", "fold_euro", "fold_lift", "folding", "gate", "pcdoor", "slimlux", "sms_slide", "velora", "woodjamb"]),
     [...HW_FROM_CUTLIST].sort().join(","));
 }
 
@@ -135,8 +135,14 @@ console.log("\n═══ ④ ⚠ รหัสยังไม่ตั้งร�
   ok("ราคาขายเท่าเดิมเป๊ะ (ไม่มีใครโดนคิดถูกลงโดยไม่ตั้งใจ)",
     noStock.sell.withInstall === plain.sell.withInstall, `${noStock.sell.withInstall} vs ${plain.sell.withInstall}`);
   // 6 รหัสมีราคาสำรองจากไฟล์ถอดทุนแล้ว (④b) → ที่เหลือคือรหัสที่ต้องตั้งราคาในสโตร์เท่านั้น
-  ok("รายงานเฉพาะรหัสที่ยังไม่มีราคาเลย (ไฟล์ก็ไม่มี สโตร์ก็ไม่มี)",
-    noStock.hwMissing.length === linesOf().length - Object.keys(BASE.HWPRICE ?? {}).length - 1, String(noStock.hwMissing.length));
+  // 21 ก.ย.69: สูตรเดิมเอา "จำนวนบรรทัด − จำนวนคีย์ใน HWPRICE − 1" ซึ่งติดลบเสมอ (HWPRICE มีหลายร้อยคีย์)
+  //   เจตนาจริง = hwMissing ต้องเป็นรหัสที่ "ไฟล์ก็ไม่มีราคา" เท่านั้น → เช็คตรง ๆ แบบนั้น
+  {
+    const noPriceInFile = linesOf().filter((l) => l.sku && !l.noStock && !((BASE.HWPRICE ?? {})[String(l.sku).toUpperCase()] > 0));
+    ok("รายงานเฉพาะรหัสที่ยังไม่มีราคาเลย (ไฟล์ก็ไม่มี สโตร์ก็ไม่มี)",
+      noStock.hwMissing.length === noPriceInFile.length,
+      'ขาด ' + noStock.hwMissing.length + ' · ไฟล์ไม่มีราคา ' + noPriceInFile.length + ' (' + noPriceInFile.map((l) => l.sku).join(',') + ')');
+  }
   ok("รหัสที่มีราคาไฟล์แล้ว ต้องไม่โผล่ในรายการที่ขาด",
     !noStock.hwMissing.some((m) => (BASE.HWPRICE ?? {})[m.sku.toUpperCase()] > 0), "");
   ok("รายงานทั้งรหัสและชื่อ (เอาไปหาในสโตร์ได้)",
@@ -184,8 +190,16 @@ console.log("\n═══ ④b ราคาสำรองจากไฟล์�
     r2.hwFileFallback.length === 5 && !r2.hwFileFallback.some((m) => m.sku === "JR00576"), String(r2.hwFileFallback.length));
   // ราคาขายฐาน SMS = 61,800 (สูตรราคาขายตามไฟล์ เป้ากำไร 40% + ค่าดำเนินการ 30%
   //   + ปรับกำไรค่าของ +2% ที่เจ้าของเคาะ 9 ก.ย.69 ให้ไปชน ★ ตารางราคาขาย R4.1 — เดิม 60,700)
-  ok("ราคาไฟล์อุปกรณ์ไม่ไปแตะฝั่งอลู (ไม่มี hardwareLines = เท่าราคาฐาน)",
-    computeCost(BASE, PRODUCTS.sms_slide, { ...BASE_IN }).sell.withInstall === 61900, "");
+  // 21 ก.ย.69: เดิมตรึงยอดขาย 61,900 ไว้ตรง ๆ → ราคาไฟล์ขยับทีไรด่านนี้แดงทั้งที่ไม่เกี่ยวกับเรื่องที่ตรวจ
+  //   (ยอดขาย SMS มีด่านของตัวเองใน verify-r40 แล้ว) → เปลี่ยนมาตรวจ "เจตนา" ตรง ๆ:
+  //   ราคาอุปกรณ์จากไฟล์/ใบตัด ต้องไม่ไปขยับค่าอลูของรุ่นนั้น
+  {
+    const base0 = computeCost(BASE, PRODUCTS.sms_slide, { ...BASE_IN });
+    const withCut = computeCost(BASE, PRODUCTS.sms_slide, { ...BASE_IN, hardwareLines: linesOf() });
+    ok("ราคาไฟล์อุปกรณ์ไม่ไปแตะฝั่งอลู (ใส่ hardwareLines แล้วค่าอลูต้องเท่าเดิม)",
+      Math.round(base0.cost.alu * 100) === Math.round(withCut.cost.alu * 100),
+      base0.cost.alu + ' vs ' + withCut.cost.alu);
+  }
 }
 
 console.log("\n═══ ④c เฟรมล่างรางเตี้ย = B20047 ไม่ใช่ B20046 (ชนกลาง) ═══");
@@ -270,6 +284,30 @@ console.log("\n═══ ⑤ หน้าจอต่อสายครบไห
     ok(prod + ": ล้อคิดราคา = ล้อใบตัด = " + want,
       calcWheel(prod) === want && cutWheel(spec) === want, "คิดราคา " + calcWheel(prod) + " · ใบตัด " + cutWheel(spec));
   ok("ระแนงเลื่อนใช้ล้อตัวเดียวกับ SMS (JR00576)", calcWheel("bar_slide") === "JR00576", String(calcWheel("bar_slide")));
+
+  // ── บานเลื่อนรางบน: เลือกยี่ห้อ/สีมือจับได้ (21 ก.ย.69 "มีมือจับ Align ในสโตร์ ก็แก้สิ")
+  //    รุ่นนี้ไม่ได้ดึงอุปกรณ์จากใบตัด (ไม่อยู่ใน HW_FROM_CUTLIST) → สูตรต้องมีมือจับครบทั้ง 2 ยี่ห้อ×2 สี
+  //    และต้องได้รหัสเดียวกับใบตัด toprail_frame เป๊ะ ไม่งั้นเลือก Align แล้วราคาไม่ขยับ/หักสต็อกผิดตัว
+  {
+    const TS = PRODUCTS.topslide, spec0 = CUT_SPEC_BY_ID.toprail_frame;
+    const want = { 'เมโทรอบขาว': ['JR00368','JR00369','JR00370'], 'เมโทรดำ': ['JR00371','JR00372','JR00373'],
+                   'Alignอบขาว': ['JR00377','JR00378','JR00379'], 'Alignดำ': ['JR00374','JR00375','JR00376'] };
+    for (const brand of ['เมโทร', 'Align']) for (const color of ['อบขาว', 'ดำ']) {
+      const c = computeCost(BASE, TS, { w: 360, h: 240, p: 2, color: 'white', colorKey: 'white',
+        spec: { tsHandleBrand: brand, tsHandleColor: color } });
+      const got = c.lines.filter((l) => /^มือจับ/.test(l.name)).map((l) => l.sku);
+      ok('บานเลื่อนรางบน มือจับ ' + brand + ' ' + color + ' → ' + want[brand + color].join(','),
+        JSON.stringify(got) === JSON.stringify(want[brand + color]), got.join(',') || 'ไม่มีบรรทัดมือจับ');
+      const cut = computeCutList(spec0, { ...spec0.defaults, handleBrand: brand, handleColor: color }, 1);
+      const cutSku = cut.hardware.filter((h) => /^มือจับ/.test(h.name)).map((h) => h.sku);
+      ok('บานเลื่อนรางบน ' + brand + ' ' + color + ': คิดราคา = ใบตัด', JSON.stringify(got) === JSON.stringify(cutSku),
+        'คิดราคา ' + got.join(',') + ' · ใบตัด ' + cutSku.join(','));
+    }
+    // จำนวนต้องเท่าใบตัดด้วย (กุญแจ 1 · ล็อค 2 · ดัมมี่ 1)
+    const cA = computeCost(BASE, TS, { w: 360, h: 240, p: 2, color: 'white', colorKey: 'white', spec: { tsHandleBrand: 'Align' } });
+    ok('Align: กุญแจ 1 · ล็อค 2 · ดัมมี่ 1', JSON.stringify(cA.lines.filter((l) => /^มือจับ/.test(l.name)).map((l) => l.qty)) === '[1,2,1]',
+      cA.lines.filter((l) => /^มือจับ/.test(l.name)).map((l) => l.qty).join(','));
+  }
 }
 
 // ═══ ⑥ แท็ก "ใช้ในคิดราคา 4.0" ในหน้าสโตร์ ต้องขึ้นกับอุปกรณ์ที่คิดราคาใช้จริง ═══
@@ -288,7 +326,19 @@ console.log("\n═══ ⑤ หน้าจอต่อสายครบไห
     ok("รหัส " + s + " ติดแท็กใช้ในคิดราคา", tagged(s));
   // ของที่เลิกใช้/ไม่มีในสูตร ต้องไม่ติดแท็ก (กันแท็กมั่วทุกอย่าง)
   ok("รหัสที่ไม่มีในสูตร ต้องไม่ติดแท็ก", !tagged("JR09999", "ของที่ไม่เกี่ยว"));
-  ok("HD-305 กลอนบานเฟี้ยม (ไม่มีในไฟล์ถอดทุน) ต้องไม่ติดแท็ก", !tagged("JR02950", "HD-305 กลอนบานเฟี้ยม"));
+  // 21 ก.ย.69: ชุดมัลติพ้อยท์เฟี้ยมยูโร (JR02945-JR02953) — ไฟล์ถอดทุนไม่ตั้งราคาให้ (แถว "[ไม่สต็อค]" = 0)
+  //   แต่คิดราคา "ใช้ของพวกนี้จริง" เพราะ fold_euro ดึงอุปกรณ์จากใบตัด → ต้องติดแท็ก เพื่อให้สโตร์รู้ว่าต้องตั้งราคา
+  //   (เดิมด่านนี้เขียนกลับด้าน "ต้องไม่ติดแท็ก" — ผิดตั้งแต่เปิด HW_FROM_CUTLIST ให้ fold_euro)
+  ok("HD-305 กลอนบานเฟี้ยม (คิดราคาใช้ผ่านใบตัด) ต้องติดแท็ก", tagged("JR02950", "HD-305 กลอนบานเฟี้ยม"));
+  // ...และต้องโผล่ในรายการ "ยังไม่มีราคา" ให้เจ้าของไปตั้งราคาในสโตร์ (ไม่ใช่เงียบ ๆ คิดเป็น 0)
+  {
+    const hwl = cutHardwareLines({ prodId: "fold_euro", w: 180, h: 280, p: 2, form: "3บาน: รวบเปิดซ้าย (3-0)", spec: {}, cut: DEF_CUT });
+    const r = computeCost(BASE, PRODUCTS.fold_euro, { w: 180, h: 280, p: 2, form: "3บาน: รวบเปิดซ้าย (3-0)",
+      color: "white", colorKey: "white", hardwareLines: hwl });
+    const miss = (r.hwMissing ?? []).map((m) => m.sku);
+    ok("ชุดมัลติพ้อยท์ที่ยังไม่มีราคา ต้องขึ้นเตือน ไม่ใช่คิดเป็น 0",
+      ["JR02946", "JR02947", "JR02948"].every((k) => miss.includes(k)), miss.join(",") || "ไม่มีรายการเตือน");
+  }
 }
 
 // ═══ ⑦ ผูกราคาด้วย "ชื่อ" ต้องไม่ถูกของใหม่ชื่อชนแย่งไป ═══

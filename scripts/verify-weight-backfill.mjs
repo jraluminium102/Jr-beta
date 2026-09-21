@@ -26,8 +26,9 @@ console.log("\n═══ ① น้ำหนักที่เอาไปเต
     Object.keys(W).length === Object.keys(PB.ALUWEIGHT).length - (PB.ALUWEIGHT_SUSPECT ?? []).length,
     `${Object.keys(W).length} จาก ${Object.keys(PB.ALUWEIGHT).length}`);
   ok("ทุกค่า > 0 (ไม่มีน้ำหนักศูนย์หลุดเข้าไป)", Object.values(W).every((v) => v > 0), "");
-  ok("B20001 = 6.25 กก. (ชั่งจริง ไม่ใช่ 6.016 ที่เป็นราคา÷187)", W.B20001 === 6.25, String(W.B20001));
-  ok("F7935 = 2.424 กก. (ถอดจากราคาลายไม้จริงที่เจ้าของแจ้ง)", W.F7935 === 2.424, String(W.F7935));
+  // 21 ก.ย.69: น้ำหนักยึดชีต "น้ำหนักโปรไฟล์" ของไฟล์ v1 (แถว 291 คิ้ว F7935 = 1.824 · แถว 324 เฟรมบนบานเลื่อน B20001-15 = 8.1)
+  ok("B20001 = 8.1 กก. ตามชีตน้ำหนักโปรไฟล์ (ไม่ใช่ราคา÷187)", W.B20001 === 8.1, String(W.B20001));
+  ok("F7935 = 1.824 กก. ตามชีตน้ำหนักโปรไฟล์", W.F7935 === 1.824, String(W.F7935));
 }
 
 console.log("\n═══ ② ⚠ รหัสที่น้ำหนักยังไม่ชัวร์ — ห้ามเติม ═══");
@@ -47,7 +48,7 @@ console.log("\n═══ ③ จัดสถานะถูกไหม (เต�
 {
   const rows = matchWeights([
     { id: 1, sku: "B20001", name: "เฟรมบน", color: "อบขาว", weight_per_unit: 0 },        // ยังไม่มี
-    { id: 2, sku: "B20001", name: "เฟรมบน", color: "ดำ", weight_per_unit: 6.25 },        // ตรงแล้ว
+    { id: 2, sku: "B20001", name: "เฟรมบน", color: "ดำ", weight_per_unit: 8.1 },         // ตรงแล้ว (ตามไฟล์ v1)
     { id: 3, sku: "B20003", name: "เฟรมข้าง", color: "อบขาว", weight_per_unit: 9.9 },     // ต่าง
     { id: 4, sku: "JR00576", name: "ล้อ", weight_per_unit: 0 },                           // ไม่ใช่เส้นอลู
     { id: 5, sku: "", name: "ไม่มีรหัส", weight_per_unit: 0 },                            // ไม่มีรหัส
@@ -72,10 +73,18 @@ console.log("\n═══ ④ API — เขียนแค่น้ำหนั�
   ok("อัปเดตเฉพาะ weight_per_unit", /update\(\{ weight_per_unit: kg \}\)/.test(src), "");
   // ตัดคอมเมนต์ออกก่อน แล้วค่อยเช็คว่าโค้ดจริงไม่ได้แตะตารางราคา
   const code = src.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
-  ok("⚠ ห้ามเขียน unit_cost / price_per_kg / stock_prices",
-    !code.includes("unit_cost:") && !code.includes("price_per_kg:") && !code.includes("stock_prices"), "");
-  ok("ไม่ได้แตะตารางอื่นนอกจาก stock_items",
-    [...code.matchAll(/\.from\("([^"]+)"\)/g)].every((m) => m[1] === "stock_items"), "");
+  // 21 ก.ย.69: API นี้ "คิดราคา/หน่วยใหม่" ให้เส้นที่ตั้งเรตต่อโลไว้แล้วด้วย (เรต × น้ำหนักที่เพิ่งเติม)
+  //   ไม่ใช่การขึ้นราคา — เป็นการคิดสูตรเดิมให้จบ · กติกาที่ยังต้องล็อกไว้:
+  //   (ก) ตาราง stock_items เขียนได้แค่ weight_per_unit  (ข) ราคาใหม่ต้องลงประวัติที่ stock_prices เท่านั้น
+  //   (ค) แตะได้แค่ 2 ตารางนี้  (ง) ราคาใหม่ = เรตต่อโล × น้ำหนัก และทำเฉพาะตัวที่มีเรตอยู่แล้ว
+  ok("stock_items เขียนแค่ weight_per_unit (ไม่ยัดราคาเข้าไปด้วย)",
+    !/stock_items"\)\s*\.update\(\{[^}]*(unit_cost|price_per_kg)/.test(code), "");
+  ok("ราคาใหม่ลงประวัติ stock_prices (ไม่ใช่ทับ unit_cost เงียบ ๆ)",
+    /from\("stock_prices"\)\s*\.insert\(/.test(code) && !/stock_items"\)\s*\.update\(\{[^}]*unit_cost/.test(code), "");
+  ok("คิดราคาใหม่เฉพาะตัวที่ตั้งเรตต่อโลไว้แล้ว (เรต × น้ำหนัก)",
+    code.includes("is_weight_based") && /rate \* t\.kg/.test(code), "");
+  ok("ไม่ได้แตะตารางอื่นนอกจาก stock_items + stock_prices",
+    [...code.matchAll(/\.from\("([^"]+)"\)/g)].every((m) => m[1] === "stock_items" || m[1] === "stock_prices"), "");
   ok("น้ำหนักดึงจากตารางกลาง ไม่รับตัวเลขจาก client", src.includes("usableWeights()") && !/body\?\.(kg|weight)/.test(src), "");
   ok("จำกัดจำนวนต่อครั้ง (กันยิงทั้งสโตร์พลาด)", src.includes("ids.length > 1000"), "");
   ok("บอกต่อว่าต้องไปตั้งเรตต่อโลราคาถึงขยับ", src.includes("ตั้งเรตต่อโล"), "");

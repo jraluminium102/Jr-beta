@@ -164,7 +164,9 @@ console.log("\n═══ ⑦ ประตู/หน้าต่าง ในห�
   ok("ชื่อรายการใช้ quoteProductName (ไม่เขียนคำเอง)", /quoteProductName\(prod\.id, paneKind, baseName\)/.test(c), "");
   ok("โชว์เฉพาะกลุ่มบาน G1 ที่ไม่ใช่ติดตาย/ชุดพิเศษ",
     /prod\.group === 1 && !prod\.composite && !isFixedPane\(prod\.id\) && !noKindPrefix\(prod\.id\)/.test(c), "");
-  ok("เก็บลงสูตรข้อ (กลับมาแก้ได้)", /profit, profitProd, profitInst, laborMode, useSel, sillSel,/.test(c), "");
+  // 21 ก.ย.69: สูตรข้อมีคีย์เพิ่มมาระหว่างทาง (profitManual/profitEdit) → เช็คทีละคีย์ ไม่ล็อกลำดับ
+  ok("เก็บลงสูตรข้อ (กลับมาแก้ได้)",
+    ["profit", "profitProd", "profitInst", "laborMode", "useSel", "sillSel"].every((k) => c.includes(" " + k + ",") || c.includes("{" + k + ",")), "");
   ok("โหลดสูตรเก่าคืนค่า (ใบเก่า = ให้ระบบเดา)", /setUseSel\(r\.useSel === "door"/.test(c), "");
   ok("เปลี่ยนรุ่นแล้วรีเซ็ตกลับเป็นอัตโนมัติ", /setUseSel\("auto"\); setSillSel\(""\);/.test(c), "");
 }

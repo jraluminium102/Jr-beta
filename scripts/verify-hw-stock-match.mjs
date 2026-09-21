@@ -33,6 +33,11 @@ const STOCK = [
   { id: 8, sku: "JR09008", name: "HD-200 ฉากประคองมุม", qty: 99 },
   { id: 9, sku: "JR00213", name: "HD-474 มือจับกลอนรุ่นก้านโยก", qty: 7 },
   // ตัวล่อ: ห้ามให้ HD-200 ไปแมชตัวนี้
+  // 21 ก.ย.69: เติมของที่ชีต "ราคา ERP" ยืนยันว่ามีรหัสสโตร์จริง — ใบตัดเฟี้ยมหักของพวกนี้
+  { id: 11, sku: "JR00273", name: "ยางลูกโป่ง 6 มม. (ม.)", qty: 300 },
+  { id: 12, sku: "JR00783", name: "ยางอัด (ม.)", qty: 300 },
+  { id: 13, sku: "JR00258", name: "ยางรอง (ม.)", qty: 300 },
+  { id: 14, sku: "JR00563", name: "05-014 ชุดสลักล็อค Twin Bolt", qty: 6 },
   { id: 10, sku: "JR09010", name: "HD-2000 อะไหล่คนละตัว", qty: 3 },
 ];
 
@@ -91,9 +96,13 @@ console.log("\n═══ ⑤ เฟี้ยม SMS: ชุดอุปกรณ
     }
     ok(`สีอุปกรณ์ "${hwColor}" → ชุดสีเดียวกันทุกบรรทัด`, bad.length === 0, bad.join(" · "));
   }
-  const noSku = computeCutList(spec, spec.defaults, 1).hardware.filter((h) => /สลักล็อค/.test(h.name));
-  ok("ชุดสลักล็อค (05-014) ไม่ผูก sku — สโตร์ยังไม่มี ห้ามไปหักตัวอื่นแทน",
-    noSku.length > 0 && noSku.every((h) => !h.sku && h.noStock), JSON.stringify(noSku.map((h) => h.sku)));
+  // 21 ก.ย.69: ชีต "ราคา ERP" แถว 56 ยืนยันแล้วว่า JR00563 = "05-014 ชุดสลักล็อค Twin Bolt" ฿295
+  //   (ชื่อเดิมในสโตร์ "CDQ ชุดบานเฟี้ยม CMECH" ถูกแก้แล้ว · เจ้าของสั่งยึดไฟล์ 31 ส.ค.69)
+  //   → ด่านนี้กลับด้าน: ต้องผูก JR00563 และต้องหาเจอในสโตร์
+  const twinBolt = computeCutList(spec, spec.defaults, 1).hardware.filter((h) => /สลักล็อค/.test(h.name));
+  ok("ชุดสลักล็อค (05-014) ผูก JR00563 ตามชีต ราคา ERP",
+    twinBolt.length > 0 && twinBolt.every((h) => h.sku === "JR00563"), JSON.stringify(twinBolt.map((h) => h.sku)));
+  ok("ชุดสลักล็อค หาเจอในสโตร์ (หักสต็อกได้)", !!resolveHwStock(STOCK, "JR00563"));
 }
 
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);

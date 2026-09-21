@@ -71,6 +71,8 @@ const LEVEL = {
   "ราคามาจากสโตร์":     { flag:"🟡 ราคามาจากสโตร์", style:S.YELLOW },
   // ของชิ้นเดียวกันแต่คนละสี/ตัวเลือก (มือจับดำ-เงิน · คิ้วกระจกหนา-บาง) — ตรวจไปแล้วที่รหัสพี่น้องชื่อเดียวกัน
   "รหัสสำรองตามสี":     { flag:"⚪ ตรวจแล้วที่รหัสพี่น้อง", style:S.GREY },
+  // ของสั่งตามงาน (orderOnly) — เจ้าของสั่ง 21 ก.ย.69 "มอเตอร์ประตูรั้วไม่สต็อค ไม่ลงสโตร์ แค่เอาราคาไว้"
+  "สั่งตามงาน":         { flag:"⚪ สั่งตามงาน (ไม่ลงสโตร์)", style:S.GREY },
   "คิดราคาไม่มีรายการนี้": { flag:"🟠 ต้องเติม",  style:S.ORANGE },
   "คิดราคายังไม่มีรหัส":  { flag:"🟡 ต้องเคาะ",  style:S.YELLOW },
   "ใบตัดไม่ให้รหัส":     { flag:"🟡 ต้องเคาะ",  style:S.YELLOW },
@@ -109,7 +111,7 @@ function samplesOf(p) {
   return out.length ? out : [{ w: d.w, h: d.h, p: d.p || 1, form: p.defForm, label: `${d.w}×${d.h} ${d.p || 1} บาน` }];
 }
 // สถานะไหน "ตรวจได้จริง" มากกว่ากัน — เลขน้อย = ดีกว่า (ใช้ merge ผลจากหลายขนาด)
-const RANK0 = { 'ตรง':0, 'นับคนละหน่วย':0.5, 'ไฟล์รวมบรรทัด':0.6, 'ราคามาจากสโตร์':0.7, 'รหัสสำรองตามสี':0.8, 'จำนวนต่าง':1, 'รหัสไม่ตรง':2, 'คิดราคาไม่มีรายการนี้':3, 'ใบตัดไม่มีรายการนี้':4,
+const RANK0 = { 'ตรง':0, 'นับคนละหน่วย':0.5, 'ไฟล์รวมบรรทัด':0.6, 'ราคามาจากสโตร์':0.7, 'รหัสสำรองตามสี':0.8, 'สั่งตามงาน':0.9, 'จำนวนต่าง':1, 'รหัสไม่ตรง':2, 'คิดราคาไม่มีรายการนี้':3, 'ใบตัดไม่มีรายการนี้':4,
   'คิดราคายังไม่มีรหัส':5, 'ใบตัดไม่ให้รหัส':6, 'ใบตัดไม่ลงประเภทนี้':7, 'ยังไม่ผูกไฟล์':8, 'ยังไม่ได้ตรวจ':9 };
 
 for (const p of Object.values(PRODUCTS)) {
@@ -135,7 +137,10 @@ for (const p of Object.values(PRODUCTS)) {
   //   หน้าคิดราคาส่ง "อุปกรณ์จากใบตัด" ให้รุ่นที่ผูกใบตัด + ดึงเส้นอลู/แผ่นจากใบตัด (หลังคาหลายด้าน)
   //   เดิมรายงานเรียก computeCost เปล่า ๆ → เทียบสูตรสำรองกับใบตัด ขึ้นไม่ตรงหลายสิบแถวทั้งที่ของจริงตรง
   let calc; try {
-    const optC = { w:d.w, h:d.h, p:d.p||1, form:SMP.form, color:'white', colorKey:'white' };
+    // ถ้ารุ่นนี้มีตัวเลือก "ยี่ห้อมือจับ" ในฝั่งคิดราคา ต้องตั้งให้ตรงกับรอบที่ลอง (เหมือนใบตัด)
+    const specC = {};
+    for (const o of (p.specOpts || [])) if (/ยี่ห้อมือจับ/.test(String(o.label||'')) && (o.opts||[]).includes(HB.handleBrand)) specC[o.key] = HB.handleBrand;
+    const optC = { w:d.w, h:d.h, p:d.p||1, form:SMP.form, color:'white', colorKey:'white', spec:specC };
     try {
       const hwl = cutHardwareLines({ prodId:p.id, w:d.w, h:d.h, p:d.p||1, form:SMP.form || p.defForm, spec:{}, cut:HB });
       if (hwl?.length) optC.hardwareLines = hwl;
@@ -245,7 +250,10 @@ for (const p of Object.values(PRODUCTS)) {
     const cutHasHardware = !!(spec && (spec.hardware || []).length);
     const notInCutByNature = l.cat === 'glass' || /ซิลิโคน|ค่าอบ|ค่าเปิดตู้อบ|ค่าดัด|ปัดขึ้น/.test(String(l.name))
       || (l.cat !== 'alu' && !cutHasHardware);
-    const same = !spec ? 'ยังไม่ผูกไฟล์' : !hit ? (notInCutByNature ? 'ใบตัดไม่ลงประเภทนี้' : 'ใบตัดไม่มีรายการนี้')
+    // ของสั่งตามงาน = ไม่ต้องมีรหัสสโตร์ ไม่ต้องตัดสต็อก (เก็บไว้แค่ราคา)
+    const orderOnly = !!(raw && raw.orderOnly) || !!l.orderOnly;
+    const same = orderOnly && !code ? 'สั่งตามงาน'
+      : !spec ? 'ยังไม่ผูกไฟล์' : !hit ? (notInCutByNature ? 'ใบตัดไม่ลงประเภทนี้' : 'ใบตัดไม่มีรายการนี้')
       : !code ? 'คิดราคายังไม่มีรหัส' : !hit.sku ? 'ใบตัดไม่ให้รหัส'
       : code.toUpperCase()!==String(hit.sku).toUpperCase() ? 'รหัสไม่ตรง'
       : Math.abs(myQty - hit.qty) <= Math.max(0.05, hit.qty*0.02) ? 'ตรง'

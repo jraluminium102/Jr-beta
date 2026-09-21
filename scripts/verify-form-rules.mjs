@@ -58,14 +58,15 @@ console.log('\n═══ ④ ของที่เจ้าของเคาะ
   ok('ซิลิโคน = JR00504 (ตรงกับใบตัด)', sil?.sku === 'JR00504', String(sil?.sku));
   const src = fs.readFileSync(path.join(__dirname, '../src/lib/calculator40/products.mjs'), 'utf8');
   ok('ไม่มี JR00501 หลงเหลือในสูตรคิดราคา', !src.includes('JR00501'));
-  // ฉากประกอบมุม ยูโร = 12/บาน ทั้งสองฝั่ง
-  const ang = PRODUCTS.euro_slide.hardware.find((h) => /ฉากประกอบมุม/.test(h.name));
-  ok('ยูโร ฉากประกอบมุม = 12/บาน (ถอดทุน)', ang?.count === '12*P', String(ang?.count));
+  // ฉากประกอบมุม ยูโร = 8/บาน ทั้งสองฝั่ง — ไฟล์ v1 ชีต "คิดทุน ยูโร" แถว 35 "มุมเลื่อน [JR00480] (8/บาน)" (เดิม 12)
+  const ang = PRODUCTS.euro_slide.hardware.find((h) => /ฉากประกอบมุม|มุมเลื่อน/.test(h.name));
+  ok('ยูโร ฉากประกอบมุม = 8/บาน (ไฟล์ v1)', ang?.count === '8*P', String(ang?.count));
   const cut = fs.readFileSync(path.join(__dirname, '../src/lib/cutlist/products.ts'), 'utf8');
-  ok('ใบตัด FUJI ฉากประกอบมุม = 12/บาน ทุกชีต', !/ฉากประกอบมุม", sku: "JR00480", qty: \(o\) => 16 \*/.test(cut));
-  ok('ใบตัด FUJI ฉากประกอบมุม มี 3 ชีต ใช้ 12', (cut.match(/ฉากประกอบมุม", sku: "JR00480", qty: \(o\) => 12 \*/g) || []).length === 3);
-  // ยาง/วาวรูน้ำ มีราคาสำรองแล้ว (สโตร์ยังชนะเสมอ)
-  for (const [sku, want] of [['JR00589', 5], ['JR00485', 5]]) {
+  ok('ใบตัด FUJI ฉากประกอบมุม ไม่เหลือ 12/บาน', !/ฉากประกอบมุม", sku: "JR00480", qty: \(o\) => 12 \*/.test(cut));
+  ok('ใบตัด FUJI ฉากประกอบมุม มี 3 ชีต ใช้ 8', (cut.match(/ฉากประกอบมุม", sku: "JR00480", qty: \(o\) => 8 \*/g) || []).length === 3);
+  // ราคาสำรองยาง/วาวรูน้ำ ตามชีต "ราคา ERP" ไฟล์ v1 (18 ก.ย.69 ตีให้เท่าไฟล์)
+  //   JR00589 ยางรูน้ำลง = 0 (ไฟล์กำกับ "ยังไม่มีราคา รอ ERP" → อยู่ใน HWPRICE_ZERO = ยังไม่คิดเงิน) · JR00485 วาวรูน้ำออก = 14
+  for (const [sku, want] of [['JR00589', 0], ['JR00485', 14]]) {
     const it = PRODUCTS.euro_slide.hardware.find((h) => h.sku === sku);
     ok(`${sku} ราคาสำรอง ฿${want}`, it?.price === want, String(it?.price));
   }
@@ -80,8 +81,8 @@ console.log('\n═══ ④ ของที่เจ้าของเคาะ
   //   ถ้าไปตั้งราคานี้ที่แถวสีในสโตร์ ระบบจะถือว่า 'ราคารวมอบแล้ว' แล้วตัดค่าอบทิ้ง = ถูกกว่าจริง
   ok('กล่อง/ฉาก ทุกตัวที่ใช้ มีราคาสำรอง (ไม่มีตัวไหนโชว์ ฿0)',
     Object.values(PRODUCTS).flatMap((pr) => pr?.alu || []).filter((a2) => a2.box).every((a2) => Number(a2.price) > 0));
-  // SlimLux ของเสริม = รื้อของเดิม อย่างเดียว
-  ok('SlimLux ของเสริม = รื้อของเดิม', JSON.stringify(PRODUCTS.slimlux.addons) === '["demolish"]', JSON.stringify(PRODUCTS.slimlux.addons));
+  // SlimLux ของเสริม = ชุดเลื่อนออโต้ + รื้อของเดิม (เพิ่มชุดออโต้ตอนพอร์ตไฟล์)
+  ok('SlimLux ของเสริม = ชุดออโต้ + รื้อของเดิม', JSON.stringify(PRODUCTS.slimlux.addons) === '["slide_auto","demolish"]', JSON.stringify(PRODUCTS.slimlux.addons));
 }
 
 console.log('\n═══ ⑤ จำนวนบานที่ล็อกไว้ ต้องแมปเข้าใบตัดได้ (ไม่ตกไปใช้รายการเดิม) ═══');

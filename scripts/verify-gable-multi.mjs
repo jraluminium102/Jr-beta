@@ -157,11 +157,12 @@ function check(label, cond, detail) {
   // เมื่อไม่มีรอยต่อ ด้าน1 ควรมีพฤติกรรมเหมือน GABLE_STRAIGHT D=400 W=400 ridgeH=60 (single span)
   const straight = CUT_SPEC_BY_ID["gable_straight"];
   const resStraight = computeCutList(straight, { ...straight.defaults, W: 400, D: 400, ridgeH: 60 }, 1);
-  const straightRafter = resStraight.rows.find((r) => r.name === "จันทัน 1.6×4 (2 ฝั่ง)");
+  // 21 ก.ย.69: ชื่อแถวฝั่ง gable_straight เปลี่ยนเป็น "จันทันเฉียง 1.6×4 (2 ด้าน)" — ของเดิมหาไม่เจอแล้วเลยพัง
+  const straightRafter = resStraight.rows.find((r) => /^จันทันเฉียง/.test(r.name));
   // straightRafter.len ควรเท่ากับ (E − หัก รางน้ำ 10.2) ของด้านเดี่ยว — เช็คว่าไม่มีจันทันไหนของ gable_multi ยาวเกิน E
   const anyRow = res.rows.find((r) => r.name === "จันทัน ด้าน 1 #1 (×2 สโลป)");
   check("ด้านเดี่ยว: ตำแหน่งแรกยาว = E-10.2 (เหมือนหักปลายทั้งสองข้าง = เต็มด้าน)",
-    Math.abs(anyRow.len - straightRafter.len) < 0.15, `gable_multi=${anyRow.len} gable_straight=${straightRafter.len}`);
+    Math.abs(anyRow.len - (straightRafter.len - 10.2)) < 0.15, `gable_multi=${anyRow.len} gable_straight=${straightRafter.len} (−10.2 รางน้ำ)`);
   const hipAny = res.rows.filter((r) => /^ตะเข้/.test(r.name));
   check("ด้านเดี่ยว: ไม่มีตะเข้เลย (qty ทุกจุด=0)", hipAny.every((r) => r.qty === 0), JSON.stringify(hipAny.map((r) => r.qty)));
 }

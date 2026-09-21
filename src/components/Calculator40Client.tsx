@@ -97,6 +97,8 @@ const glassLine = (glassType: string): string => {
 // เจ้าของสั่งซ่อนเพิ่มได้เรื่อย ๆ — เติมคู่ใหม่ที่นี่
 const SKIP_SPEC_DETAIL: [string, string][] = [
   ["bottomrail", "รางกันน้ำ"], // รางกันน้ำ = ค่าปกติ · "รางเตี้ย (งานใน)" ยังพิมพ์
+  // บานเลื่อนรางบน: มือจับ "เมโทร/อบขาว" = ค่ามาตรฐาน ไม่ต้องขึ้นใบเสนอ · เลือก Align หรือสีดำ ค่อยพิมพ์
+  ["tsHandleBrand", "เมโทร"], ["tsHandleColor", "อบขาว"],
 ];
 
 type QuoteItem = {

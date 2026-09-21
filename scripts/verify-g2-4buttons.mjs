@@ -208,37 +208,16 @@ for (const { id, label } of PROD_LIST) {
 }
 
 // ============================================================
-// C. คิดเร็ว (.qi-cats) grp='2' → 4 ปุ่ม
+// C. คิดเร็ว — ปิดไปแล้ว (27 มิ.ย.69 setMode('quote') ยุบโหมดคิดเร็ว)
+//   โค้ด addQuickItem/qiDispatch/#q-items ถูกถอดออกจากหน้าแล้ว เหลือแต่ CSS .qi-cats
+//   → ด่านนี้เลิกตรวจ แต่ล็อกไว้ว่า "ถ้าโหมดคิดเร็วกลับมา ต้องกลับมาเขียนด่านนี้ใหม่" (21 ก.ย.69)
 // ============================================================
-console.log("\n=== C. คิดเร็ว qiRenderG2 → 4 ปุ่ม (.qi-cats) ===");
+console.log("\n=== C. คิดเร็ว — ปิดโหมดแล้ว (ข้าม) ===");
 {
-  // addQuickItem แล้วตั้งกลุ่ม 2 (Quick mode ใช้ #q-items)
-  const qItems = doc.getElementById("q-items");
-  if (!qItems) { err("ไม่พบ #q-items"); }
-  else {
-    qItems.innerHTML = "";
-    try { w.addQuickItem && w.addQuickItem(); } catch(e) {}
-    const ch = qItems.querySelector(".ch");
-    if (!ch) { err("ไม่พบ .ch ใน #q-items"); }
-    else {
-      const gSel = ch.querySelector(".qi-group");
-      if (gSel) { gSel.value = "2"; fire(gSel, "change"); }
-      try { w.qiDispatch && w.qiDispatch(ch); } catch(e) {}
-      // .qi-cats = แถวหมวด 4 ปุ่ม (gate/ranae/rail/special)
-      const qiCats = ch.querySelector(".qi-cats");
-      if (!qiCats) { err("ไม่พบ .qi-cats ใน ch (qiRenderG2 ต้อง render .qi-cats)"); }
-      else {
-        const catBtns = qiCats.querySelectorAll("button");
-        if (catBtns.length === 4) {
-          ok(`คิดเร็ว: พบ 4 ปุ่มใน .qi-cats: ${[...catBtns].map(b=>b.textContent.trim()).join(", ")}`);
-        } else {
-          err(`คิดเร็ว: .qi-cats มี ${catBtns.length} ปุ่ม (คาด 4): ${[...catBtns].map(b=>b.textContent.trim()).join(", ")}`);
-        }
-      }
-    }
-  }
+  const hasQuick = /function\s+addQuickItem|function\s+qiRenderG2/.test(html);
+  if (hasQuick) err("โหมดคิดเร็วกลับมาแล้ว — ต้องเขียนด่าน .qi-cats กลับมาด้วย");
+  else ok("โหมดคิดเร็วยังปิดอยู่ (ไม่มี addQuickItem/qiRenderG2 ในหน้า)");
 }
-
 // ============================================================
 // สรุป
 // ============================================================

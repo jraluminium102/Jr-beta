@@ -106,7 +106,9 @@ console.log("\n④ ทุกตัวเลือกใน dropdown 'รูป�
   //   awning     = ใบตัด FUJI ใช้แบบตัดเดียวกันทั้ง "เปิดข้าง/กระทุ้ง" → ราคาเท่ากันถูกแล้ว (ดู audit-form-options)
   //   bar_grid_z = รุ่นกรอกราคา/ตร.ม. เอง (sellDirect) ไม่มีสูตรทุนให้เปลี่ยน
   //   roof_slide = อ่าน form จริงที่ railLen แต่ค่าตั้งต้น กว้าง=ยื่น=150 เลยได้เลขเท่ากันพอดี
-  const KNOWN = new Set(["awning", "bar_grid_z", "roof_slide"]);
+  //   woodjamb   = "แม่ลูก/เท่ากัน" เปลี่ยน "ความยาวท่อนที่ตัด" ในใบตัด (ยอดอลูรวมเท่ากัน)
+  //                ที่ขนาดตั้งต้น 130×210 บานพับยังได้ 4 เท่ากัน → ทุนเลยเท่ากัน (21 ก.ย.69 ตรวจแล้ว ไม่ใช่ dropdown หลอกตา)
+  const KNOWN = new Set(["awning", "bar_grid_z", "roof_slide", "woodjamb"]);
   const dead = [];
   for (const p of Object.values(PRODUCTS)) {
     if (!p.forms || p.forms.length < 2) continue;
