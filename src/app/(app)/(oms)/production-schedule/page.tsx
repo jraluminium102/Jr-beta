@@ -904,7 +904,7 @@ function SetCard({ s, saving, mark, canMark }: {
         ) : (
           <span className="text-[11px]" style={{ color: IOS.ink3 }}>ไม่มีมุ้ง</span>
         )}
-        {s.glass_spec && <span className="text-[12px] truncate max-w-[55%]" style={{ color: IOS.ink2 }}>🟦 {s.glass_spec}</span>}
+        {s.glass_spec && <span className="text-[12px] truncate max-w-[55%]" style={{ color: IOS.ink2 }}>🟦 {s.glass_spec.replace(/\n+/g, " · ")}</span>}
       </div>
 
       {canMark ? (
