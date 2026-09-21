@@ -9,7 +9,7 @@
  *
  *   node scripts/verify-stock-match.mjs
  */
-import { matchStock, nameHasCode, stockColorOf, isStockTracked, MATCH_REASON_TH } from "../src/lib/cutlist/stock-match.ts";
+import { matchStock, nameHasCode, stockColorOf, isStockTracked, MATCH_REASON_TH, normBoxName } from "../src/lib/cutlist/stock-match.ts";
 
 let pass = 0, fail = 0;
 const ok = (label, cond, got = "") => {
@@ -81,6 +81,35 @@ console.log("\n═══ ⑤ ของสั่งตามงาน — ใช�
   ok("ของเก่าที่ยังไม่มีธง → หักตามเดิม (ไม่เปลี่ยนพฤติกรรมย้อนหลัง)",
     isStockTracked({ id: 1, sku: "X", name: "ของเก่า", qty: 1 }) === true);
   ok("หาไม่เจอ → ไม่หัก", isStockTracked(null) === false && isStockTracked(undefined) === false);
+}
+
+// ── ⑥ กล่อง/ฉากเมืองทอง — ใบตัดเขียนเป็น "ชื่อกล่อง" ไม่ใช่รหัส (21 ก.ย.69) ──
+//    บั๊กเดิม: คาน/เสา/ฉาก ทุกรุ่นไม่เคยถูกหักสต็อกเลย เพราะ "กล่อง 1\"x4\"" ไม่ตรง sku ไหนเลย
+//    แก้: เทียบด้วยชื่อที่ปัดรูปแบบ (ฟุต/คูณ/ช่องว่าง) แล้วให้ตัวกรองสีเดิมทำงานต่อ
+console.log("\n═══ ⑥ กล่อง/ฉาก จับคู่ด้วยชื่อ (ใบตัดไม่มีรหัสกล่อง) ═══");
+{
+  const BOX = [
+    { id: 1, sku: "JR01840", name: "JR01840-กล่อง 1×4-อบขาว", color: "อบขาว", qty: 9 },
+    { id: 2, sku: "JR01841", name: "JR01841-กล่อง 1×4-ดำ", color: "ดำ", qty: 9 },
+    { id: 3, sku: "JR01985", name: "กล่องเรียบ 1.6\"x4\"-ดำ", color: "ดำ", qty: 9 },
+    { id: 4, sku: "JR01751", name: "กล่อง 1.6\"×4\"", color: "ดำ", qty: 9 },
+    { id: 5, sku: "JR01777", name: "กล่อง 1\"×1½\"", color: "อบขาว", qty: 9 },
+    { id: 6, sku: "JR01687", name: "กล่อง 4 หุน", color: "เทาซาฮาร่า", qty: 9 },
+    { id: 7, sku: "JR01903", name: "ฉาก 4 หุน", color: "อบขาว", qty: 9 },
+  ];
+  const hit = (code, color) => matchStock(BOX, code, color).item?.id ?? null;
+  ok("กล่อง 1\"x4\" ดำ → JR01841", hit('กล่อง 1"x4"', "ดำ") === 2);
+  ok("กล่อง 1\"x4\" อบขาว → JR01840", hit('กล่อง 1"x4"', "อบขาว") === 1);
+  ok("กล่อง 1.6\"x4\" ไม่ไปโดน \"กล่องเรียบ 1.6x4\"", hit('กล่อง 1.6"x4"', "ดำ") === 4);
+  ok("ครึ่งนิ้ว: กล่อง 1\"x1.5\" = กล่อง 1×1½", hit('กล่อง 1"x1.5"', "อบขาว") === 5);
+  ok("สีที่สโตร์เพิ่งเพิ่มเองก็ใช้ได้ (เทาซาฮาร่า)", hit("กล่อง 4 หุน", "เทาซาฮาร่า") === 6);
+  ok("ฉากก็จับคู่ได้", hit("ฉาก 4 หุน", "อบขาว") === 7);
+  ok("ไม่มีสีที่ขอ → ไม่หัก (ห้ามเดาสี)", matchStock(BOX, 'กล่อง 1"x4"', "เทาซาฮาร่า").reason === "color_not_found");
+  ok("กล่องที่สโตร์ไม่มี → ไม่หัก", matchStock(BOX, 'กล่อง 9"x9"', "ดำ").reason === "not_found");
+  ok("ชื่อที่ไม่ใช่กล่อง/ฉาก ไม่ถูกจับด้วยกติกานี้", normBoxName("F7935-คิ้วกระจก-ดำ") === "");
+  ok("เจอ 2 ตัวในสีเดียวกัน → ไม่หัก", matchStock([
+    { id: 1, sku: "A", name: "กล่อง 1×4", color: "ดำ", qty: 1 },
+    { id: 2, sku: "B", name: "กล่อง 1\"x4\"", color: "ดำ", qty: 1 }], 'กล่อง 1"x4"', "ดำ").reason === "ambiguous");
 }
 
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);

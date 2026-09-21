@@ -117,6 +117,36 @@ export const MATCH_REASON_TH: Record<MatchReason, string> = {
 };
 
 /**
+ * กล่อง/ฉากเมืองทอง — ใบตัดเขียนเป็น "ชื่อกล่อง" ไม่ใช่รหัส (เช่น กล่อง 1"x4")
+ * เพราะกล่องตัวเดียวกันมีหลายสี สโตร์แยกเป็นคนละแถว/คนละรหัส
+ *
+ * ⚠ ของเดิมจับคู่ไม่ได้เลย → "คาน/เสา/ฉาก" ทุกรุ่นไม่เคยถูกหักสต็อก (เจอ 21 ก.ย.69)
+ * วิธีแก้: เทียบด้วย "ชื่อ" แบบปัดรูปแบบการเขียนออก (ฟุตหนึ่งเขียน 1" หรือ 1 · คูณเขียน x หรือ ×)
+ *   แล้วปล่อยให้ตัวกรองสีเดิมทำงานต่อ — ไม่ต้องมีตารางรหัสตายตัว รองรับสีใหม่ที่สโตร์เพิ่มเอง
+ * กติกาเดิมยังอยู่: ชื่อต้อง "ตรงเป๊ะหลังปัดรูปแบบ" (กล่องเรียบ 1.6x4 ไม่ใช่ กล่อง 1.6x4)
+ *   และถ้าเจอหลายตัวในสีเดียวกัน = ไม่หัก (กัน "หยิบตัวแรก")
+ */
+const BOX_HEAD = /^(กล่อง|ฉาก|แซด|แป๊ป|ท่อ)/;
+export function normBoxName(raw: unknown): string {
+  let t = String(raw ?? "").trim();
+  if (!t) return "";
+  // ชื่อในสต็อกเป็นรูปแบบ "รหัส-ชื่อ-สี" → ตัดหัวรหัสและท้ายสีทิ้งก่อนเทียบ
+  const parts = t.split("-").map((x) => x.trim()).filter(Boolean);
+  if (parts.length > 1) {
+    if (/^(JR[0-9]{5}|B[0-9]{5}|F[0-9]{4}[A-Z]?)$/i.test(parts[0])) parts.shift();
+    if (parts.length > 1 && KNOWN_NORM.has(normColor(parts[parts.length - 1]))) parts.pop();
+    t = parts.join("-");
+  }
+  if (!BOX_HEAD.test(t)) return "";
+  return t
+    .replace(/[\u201C\u201D"'\u2032\u2033]/g, "")   // ฟุต/นิ้ว จะพิมพ์เครื่องหมายหรือไม่ก็ได้
+    .replace(/\u00BD/g, ".5").replace(/\u00BC/g, ".25").replace(/\u00BE/g, ".75")
+    .replace(/[\u00D7xX*]/g, "x")                   // คูณ เขียน x X * หรือ ×
+    .replace(/\s+/g, "")                            // ช่องว่างไม่สำคัญ
+    .replace(/([0-9])\.0(?![0-9])/g, "$1")          // 4.0 = 4
+    .toLowerCase();
+}
+/**
  * จับคู่ (รหัส, สี) → รายการสต็อก + "เหตุผล" เมื่อจับไม่ได้
  *
  * กฎเหล็ก (เจ้าของสั่ง 24 ส.ค.69 หลังเจอบั๊กอุปกรณ์ HD ไม่ถูกหัก):
@@ -129,7 +159,10 @@ export function matchStock(stock: StockLite[], code: string, color?: string): Ma
   if (!uc || uc === "-") return { item: null, reason: "not_found" };
   const skuHits = stock.filter((s) => U(s.sku) === uc);
   const nameHits = stock.filter((s) => nameHasCode(s.name, uc) && !skuHits.includes(s));
-  const cand = [...skuHits, ...nameHits]; // sku ตรงก่อน แล้วชื่อมีรหัส
+  // กล่อง/ฉาก: ใบตัดส่งชื่อมา ไม่ใช่รหัส → เทียบด้วยชื่อที่ปัดรูปแบบแล้ว (ดู normBoxName)
+  const nb = normBoxName(code);
+  const boxHits = nb ? stock.filter((s) => normBoxName(s.name) === nb && !skuHits.includes(s) && !nameHits.includes(s)) : [];
+  const cand = [...skuHits, ...nameHits, ...boxHits]; // sku ตรงก่อน · ชื่อมีรหัส · แล้วค่อยชื่อกล่อง
   if (!cand.length) return { item: null, reason: "not_found" };
 
   const col = String(color ?? "").trim();
