@@ -158,9 +158,16 @@ export function matchStock(stock: StockLite[], code: string, color?: string): Ma
   const uc = U(code);
   if (!uc || uc === "-") return { item: null, reason: "not_found" };
   const skuHits = stock.filter((s) => U(s.sku) === uc);
-  const nameHits = stock.filter((s) => nameHasCode(s.name, uc) && !skuHits.includes(s));
-  // กล่อง/ฉาก: ใบตัดส่งชื่อมา ไม่ใช่รหัส → เทียบด้วยชื่อที่ปัดรูปแบบแล้ว (ดู normBoxName)
+  // ① รหัสสโตร์ JR##### ตรงเป๊ะตัวเดียว = ชี้ตัวนั้นแน่นอน — รหัส JR ผูก "สี" มาในตัวแล้ว
+  //    (JR01841 = กล่อง 1×4 ดำ · JR01840 = อบขาว) จึงไม่ต้องเอาสีของงานมากรองซ้ำ
+    //  เคสจริง (QA 21 ก.ย.69): กล่องเมืองทองสีดำบนเฟรมสีเทา เคยขึ้น "ไม่มีสีที่เลือก" แล้วข้ามไม่หักเลย
+  //    ⚠ ใช้เฉพาะรหัส JR — เส้นอลู (F7935/B20051) ใช้รหัสเดียวกันทุกสี ต้องกรองสีตามเดิม ไม่งั้นหักผิดสี
+  if (skuHits.length === 1 && /^JR[0-9]{5}$/i.test(uc)) return { item: skuHits[0], reason: "ok" };
+  // ② ชื่อกล่อง/ฉาก (ใบตัดไม่มีรหัสกล่อง) — เทียบชื่อแบบปัดรูปแบบ ดู normBoxName
+  //    เคสนี้ห้ามใช้ "ชื่อมีรหัสอยู่ข้างใน" มาช่วย เพราะชื่อไทยขึ้นต้นเหมือนกันได้
+  //    (กล่องเปิดปิด ⊂ กล่องเปิดปิด ตัวตบ · กล่องเรียบ ⊂ กล่องเรียบ 4"x4") → ต้องตรงเป๊ะเท่านั้น
   const nb = normBoxName(code);
+  const nameHits = nb ? [] : stock.filter((s) => nameHasCode(s.name, uc) && !skuHits.includes(s));
   const boxHits = nb ? stock.filter((s) => normBoxName(s.name) === nb && !skuHits.includes(s) && !nameHits.includes(s)) : [];
   const cand = [...skuHits, ...nameHits, ...boxHits]; // sku ตรงก่อน · ชื่อมีรหัส · แล้วค่อยชื่อกล่อง
   if (!cand.length) return { item: null, reason: "not_found" };
