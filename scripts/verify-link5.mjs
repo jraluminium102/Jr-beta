@@ -124,12 +124,22 @@ console.log('\n═══ ④ Velora + บานติดตาย ═══');
 //   stock-link ทำดัชนีจากชื่อให้ → สูตรอ้างรหัส HD ตรง ๆ ได้ ไม่ต้องรู้เลข JR
 console.log('\n═══ ⑤ อุปกรณ์ HD ผูกสโตร์ด้วยรหัสในชื่อ ═══');
 {
-  const HD = ['HD-640', 'HD-641', 'HD-642', 'HD-643', 'HD-312', 'HD-1180', 'HD-213', 'HD-200'];
+  // 21 ก.ย.69: เฟี้ยมยก ใช้รหัสสโตร์ JR (ชีต "ราคา ERP" มีครบ: JR00198=HD-640 …) ทั้งคิดราคา+ใบตัด
+
+  //   เฟี้ยมยูโร ยังใช้รหัสผู้ผลิต HD-xxx → ผูกสโตร์ด้วย "รหัสในชื่อ" เหมือนเดิม
+
+  const HD_BY_PROD = {
+
+    fold_euro: ['HD-640', 'HD-641', 'HD-642', 'HD-643', 'HD-312', 'HD-1180', 'HD-213', 'HD-200'],
+
+    fold_lift: ['JR00198', 'JR00252', 'JR00203', 'JR00239', 'HD-312', 'HD-1180', 'HD-213', 'HD-200'],
+
+  };
   for (const id of ['fold_euro', 'fold_lift']) {
     const Pr = PRODUCTS[id];
     ok(`${Pr.name}: อุปกรณ์ทุกบรรทัดมีรหัสสโตร์`, Pr.hardware.every((h) => !!h.sku),
       Pr.hardware.filter((h) => !h.sku).map((h) => h.name).join(','));
-    for (const c of HD) ok(`${Pr.name}: ใช้รหัส ${c}`, Pr.hardware.some((h) => h.sku === c));
+    for (const c of HD_BY_PROD[id]) ok(`${Pr.name}: ใช้รหัส ${c}`, Pr.hardware.some((h) => h.sku === c));
   }
   const rows = [{ sku: 'JR09001', name: 'HD-640 บานพับล้อบนเฟี้ยม', unit_cost: 350 },
     { sku: 'JR09002', name: 'HD-1180 ก้าน AL สไลด์ 19.5 mm', unit_cost: 90 }];

@@ -14,6 +14,17 @@ import { CUT_SPEC_BY_ID } from '../src/lib/cutlist/products.ts';
 import { cutInputFromRecipe } from '../src/lib/cutlist/from-recipe.ts';
 import { createRequire } from 'node:module';
 import { writeXlsx, S } from './xlsxwrite.mjs';
+import { cutHardwareLines } from '../src/lib/calculator40/hardware-from-cutlist.ts';
+import { cutAluLines, cutRoofConsumLines, cutUncodedLines, multiRoofArea, ALU_FROM_CUTLIST } from '../src/lib/calculator40/alu-from-cutlist.ts';
+import { RM } from '../src/lib/calculator40/products.mjs';
+
+// ยี่ห้อ/สีมือจับที่ใช้เทียบ — ต้องเป็นตัวเดียวกันทั้ง 2 ฝั่ง ไม่งั้นรหัสมือจับคนละตัว
+//   แล้วรายงานจะฟ้อง "อีกฝั่งไม่มีรายการนี้" ทั้งที่เป็นของชิ้นเดียวกัน (เจอ 21 ก.ย.69 · 16 แถวหลอก)
+//   ใช้ค่าตั้งต้นของหน้าคิดราคา (HANDLE_FIELDS def) = Align · อบขาว
+// ยี่ห้อมือจับเป็น "ตัวเลือก" ไม่ใช่ของตกหล่น — สูตรคิดราคามีทุกยี่ห้อ ใบตัดเลือกได้ยี่ห้อเดียว
+//   ถ้ารายงานลองแค่ยี่ห้อเดียว จะขึ้นว่า "คิดราคามีมือจับเมโทร แต่ใบตัดไม่มี" ทั้งที่แค่คนละตัวเลือก (21 ก.ย.69)
+const HANDLE_BRANDS = ['Align', 'เมโทร'];
+const HB0 = { handleBrand: 'Align', handleColor: 'อบขาว' };
 const PB = createRequire(import.meta.url)('../src/lib/calculator40/pricebook.json');
 
 const MAP = { awning:'FUJI_SWING', open_door:'FUJI_DOOR', bansolid:'SOLID_DOOR', topslide:'TOPRAIL_FRAME',
@@ -51,6 +62,15 @@ const HEAD = ['ต้องเช็ค','รุ่น','หมวด','ชื�
 const LEVEL = {
   "รหัสไม่ตรง":        { flag:"🔴 ต้องแก้",   style:S.RED },
   "จำนวนต่าง":         { flag:"🔴 ต้องแก้",   style:S.RED },
+  // 21 ก.ย.69: คิดราคานับ "เส้น 6.4 ม. ที่ต้องซื้อ" · ใบตัดนับ "ท่อนที่ตัด" — ของชิ้นเดียวกันคนละหน่วย
+  //   ยอดเงินถูกตรวจโดยหน้าเทียบคิดราคา↔ใบตัด (sweep-compare) อยู่แล้ว → ไม่ใช่แถวที่ต้องแก้
+  "นับคนละหน่วย":      { flag:"⚪ ปกติ (คนละหน่วย)", style:S.GREY },
+  "ไฟล์รวมบรรทัด":     { flag:"⚪ ปกติ (ไฟล์รวมบรรทัด)", style:S.GREY },
+  // ไฟล์ถอดทุนไม่ตั้งราคาให้ → เครื่องคิดราคาขึ้นธง "ยังไม่มีราคา" และไปดึงจากสโตร์ให้เอง
+  //   (รายงานนี้รันโดยไม่มีข้อมูลสโตร์ จึงเห็นเป็นของที่ยังไม่ถูกคิดเงิน)
+  "ราคามาจากสโตร์":     { flag:"🟡 ราคามาจากสโตร์", style:S.YELLOW },
+  // ของชิ้นเดียวกันแต่คนละสี/ตัวเลือก (มือจับดำ-เงิน · คิ้วกระจกหนา-บาง) — ตรวจไปแล้วที่รหัสพี่น้องชื่อเดียวกัน
+  "รหัสสำรองตามสี":     { flag:"⚪ ตรวจแล้วที่รหัสพี่น้อง", style:S.GREY },
   "คิดราคาไม่มีรายการนี้": { flag:"🟠 ต้องเติม",  style:S.ORANGE },
   "คิดราคายังไม่มีรหัส":  { flag:"🟡 ต้องเคาะ",  style:S.YELLOW },
   "ใบตัดไม่ให้รหัส":     { flag:"🟡 ต้องเคาะ",  style:S.YELLOW },
@@ -61,6 +81,10 @@ const LEVEL = {
   "ยังไม่ได้ตรวจ":       { flag:"🟣 ยังไม่ได้ตรวจ", style:S.YELLOW },
 };
 const FLAG = st => (LEVEL[st]?.flag) || "";
+// รหัสที่ไฟล์ถอดทุน "รวมเป็นบรรทัดเดียว" แต่ใบตัดแยกบรรทัด → ไม่ใช่ของตกหล่น
+const FILE_MERGED = {
+  'fold_euro|F7962': 'ชีตคิดทุน เฟี้ยมยูโร D19 รวม F7961+F7962 เป็นบรรทัดเดียว (คิดเงินที่ F7961 ด้วยราคา F7962) — เจ้าของสั่งตามไฟล์ 18 ก.ย.69',
+};
 const STYLE = st => (LEVEL[st]?.style) ?? 0;
 const esc = v => { const s=String(v??''); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; };
 const SUFFIX = process.argv[2] || '';   // เลี่ยงไฟล์ถูกล็อกตอนเจ้าของเปิดค้างใน Excel
@@ -85,18 +109,17 @@ function samplesOf(p) {
   return out.length ? out : [{ w: d.w, h: d.h, p: d.p || 1, form: p.defForm, label: `${d.w}×${d.h} ${d.p || 1} บาน` }];
 }
 // สถานะไหน "ตรวจได้จริง" มากกว่ากัน — เลขน้อย = ดีกว่า (ใช้ merge ผลจากหลายขนาด)
-const RANK0 = { 'ตรง':0, 'จำนวนต่าง':1, 'รหัสไม่ตรง':2, 'คิดราคาไม่มีรายการนี้':3, 'ใบตัดไม่มีรายการนี้':4,
+const RANK0 = { 'ตรง':0, 'นับคนละหน่วย':0.5, 'ไฟล์รวมบรรทัด':0.6, 'ราคามาจากสโตร์':0.7, 'รหัสสำรองตามสี':0.8, 'จำนวนต่าง':1, 'รหัสไม่ตรง':2, 'คิดราคาไม่มีรายการนี้':3, 'ใบตัดไม่มีรายการนี้':4,
   'คิดราคายังไม่มีรหัส':5, 'ใบตัดไม่ให้รหัส':6, 'ใบตัดไม่ลงประเภทนี้':7, 'ยังไม่ผูกไฟล์':8, 'ยังไม่ได้ตรวจ':9 };
 
 for (const p of Object.values(PRODUCTS)) {
   if (p.id === 'sms_slide') continue;
   const merged = new Map();     // คีย์ = หมวด|ชื่อ|รหัส → แถวที่สถานะดีที่สุดจากทุกขนาดที่ลอง
   for (const SMP of samplesOf(p)) {
+  for (const HBRAND of HANDLE_BRANDS) {
+  const HB = { ...HB0, handleBrand: HBRAND };
   const d = SMP;
   const sz = SMP.label;
-  let calc; try {
-    calc = computeCost(PB, p, { w:d.w, h:d.h, p:d.p||1, form:SMP.form, color:'white', colorKey:'white' });
-  } catch { continue; }
   const sn = MAP[p.id];
   // ใช้ตัวแปลง "คิดราคา → ใบตัด" ตัวจริง (from-recipe) ก่อน — ตัวเดียวกับหน้าเทียบ
   //   ถ้าเดา input เอง (แค่ยัด W/H/N) รุ่นที่ใบตัดนับคนละฐาน (เลื่อนยูโร ฯลฯ) จะออกมาผิดเป็นกอง
@@ -105,7 +128,28 @@ for (const p of Object.values(PRODUCTS)) {
     form:SMP.form || p.defForm, spec:{}, glassType:p.defGlass }, { rawCompare:true });
   if (rec && CUT_SPEC_BY_ID[rec.spec_id]) { spec = CUT_SPEC_BY_ID[rec.spec_id]; co = { ...spec.defaults, ...rec.input }; }
   else if (spec) co = { ...spec.defaults, W:d.w, H:d.h, N:d.p||1 };
+  // บังคับยี่ห้อมือจับให้ตรงกับรอบที่กำลังลอง (ค่า default ของใบตัดคือ Align เสมอ → ถ้าไม่บังคับ รอบเมโทรจะไม่เกิดผล)
+  if (co) { co.handleBrand = HB.handleBrand; if (co.handleColor == null) co.handleColor = HB.handleColor; }
   const mult = (rec && rec.multiplier) || 1;
+  // ── ฝั่งคิดราคา: คิดแบบเดียวกับหน้าเว็บจริง (21 ก.ย.69) ─────────────────
+  //   หน้าคิดราคาส่ง "อุปกรณ์จากใบตัด" ให้รุ่นที่ผูกใบตัด + ดึงเส้นอลู/แผ่นจากใบตัด (หลังคาหลายด้าน)
+  //   เดิมรายงานเรียก computeCost เปล่า ๆ → เทียบสูตรสำรองกับใบตัด ขึ้นไม่ตรงหลายสิบแถวทั้งที่ของจริงตรง
+  let calc; try {
+    const optC = { w:d.w, h:d.h, p:d.p||1, form:SMP.form, color:'white', colorKey:'white' };
+    try {
+      const hwl = cutHardwareLines({ prodId:p.id, w:d.w, h:d.h, p:d.p||1, form:SMP.form || p.defForm, spec:{}, cut:HB });
+      if (hwl?.length) optC.hardwareLines = hwl;
+    } catch { /* รุ่นไม่ผูกใบตัด */ }
+    if (ALU_FROM_CUTLIST[p.id] && rec && rec.input) {
+      const ci = rec.input, ar = multiRoofArea(p.id, ci);
+      const al = cutAluLines({ prodId:p.id, cutInput:ci }); if (al?.length) optC.aluLines = al;
+      const cl = cutRoofConsumLines({ prodId:p.id, cutInput:ci, material:String(p.defMaterial || 'ไวนิล'), rm:RM, planArea:ar });
+      if (cl?.length) optC.consumLines = cl;
+      const un = cutUncodedLines({ prodId:p.id, cutInput:ci }); if (un?.length) optC.consumLines = [...(optC.consumLines ?? p.consum ?? []), ...un];
+      if (ar > 0 || p.multiSide) optC.areaOverride = ar;
+    }
+    calc = computeCost(PB, p, optC);
+  } catch { continue; }
   // ⚠ ต้องเก็บทั้ง hardware (อุปกรณ์) และ profiles (อลูรายเส้น)
   //   บั๊กเดิม (เจ้าของจับได้ 1 ก.ย.69): อ่านแค่ spec.hardware → บรรทัดอลูทุกเส้นขึ้น
   //   "ใบตัดไม่มีรายการนี้" ทั้งที่ใบตัดมีครบ ทำให้รายงานหลอกตาไป 120+ แถว
@@ -164,7 +208,11 @@ for (const p of Object.values(PRODUCTS)) {
     const mine = skuVariants(l, rawBy.get(l.name));
     if (!mine.length) continue;
     const i = cutList.findIndex((c,ix)=>!used.has(ix) && c.sku && mine.includes(String(c.sku).toUpperCase()));
-    if (i>=0) { used.add(i); hitOf.set(l, cutList[i]); }
+    if (i>=0) { used.add(i); hitOf.set(l, cutList[i]); continue; }
+    // 21 ก.ย.69: ของชิ้นเดียวกันอยู่คนละหมวดได้ — คิดราคาลง "อุปกรณ์" (รางบน Hafele JR03141)
+    //   แต่ใบตัดลงเป็น "เส้นอลูที่ต้องตัด" → ถ้าไม่จับข้ามหมวด จะขึ้นสองแถวว่าต่างฝ่ายต่างไม่มี
+    const pc = mine.map(c=>cutProf.get(c)).find(Boolean);
+    if (pc) { usedProf.add(String(pc.sku).toUpperCase()); hitOf.set(l, pc); }
   }
   for (const l of lines) {
     if (l.cat === 'alu' || hitOf.has(l)) continue;
@@ -192,11 +240,17 @@ for (const p of Object.values(PRODUCTS)) {
     // อลูเทียบชิ้นต่อชิ้น (คิดราคาเก็บ pieces มาให้แล้ว) · อุปกรณ์เทียบจำนวนตรง ๆ
     const myQty = l.cat === 'alu' ? Number(l.pieces)||0 : Number(l.qty)||0;
     // ใบตัดไม่เคยลง "กระจก / ซิลิโคน / ค่าอบสี" อยู่แล้ว — ไม่ใช่ของตกหล่น
-    const notInCutByNature = l.cat === 'glass' || /ซิลิโคน|ค่าอบ|ค่าดัด|ปัดขึ้น/.test(String(l.name));
+    // 21 ก.ย.69: ใบตัดหลังคา/กลาสเฮ้าส์/จั่ว มีแต่ "เส้นอลูที่ต้องตัด" ไม่มีช่องอุปกรณ์เลย
+    //   → ของกินของใช้ (แผ่นไวนิล เพลทเหล็ก รางน้ำ ฝาครอบ) ไม่ใช่ของตกหล่น แต่ใบตัดไม่ลงประเภทนี้อยู่แล้ว
+    const cutHasHardware = !!(spec && (spec.hardware || []).length);
+    const notInCutByNature = l.cat === 'glass' || /ซิลิโคน|ค่าอบ|ค่าเปิดตู้อบ|ค่าดัด|ปัดขึ้น/.test(String(l.name))
+      || (l.cat !== 'alu' && !cutHasHardware);
     const same = !spec ? 'ยังไม่ผูกไฟล์' : !hit ? (notInCutByNature ? 'ใบตัดไม่ลงประเภทนี้' : 'ใบตัดไม่มีรายการนี้')
       : !code ? 'คิดราคายังไม่มีรหัส' : !hit.sku ? 'ใบตัดไม่ให้รหัส'
       : code.toUpperCase()!==String(hit.sku).toUpperCase() ? 'รหัสไม่ตรง'
-      : Math.abs(myQty - hit.qty) <= Math.max(0.05, hit.qty*0.02) ? 'ตรง' : 'จำนวนต่าง';
+      : Math.abs(myQty - hit.qty) <= Math.max(0.05, hit.qty*0.02) ? 'ตรง'
+      : (String(l.unit||'').includes('เส้น') && String(hit.unit||'').includes('ชิ้น')) ? 'นับคนละหน่วย'
+      : 'จำนวนต่าง';
     rows.push([ FLAG(same), p.name, cat, l.name, code, variants.filter(v=>v!==code.toUpperCase()).join(" · "), n2(l.unitPrice ?? ''), l.unit || '',
       n2(l.cat==='alu' ? myQty : (l.qty ?? '')), n2(l.amount ?? ''), sz,
       hit?(hit.sku||'—'):'', hit?n2(hit.qty):'', hit?(hit.unit||''):'', same, fileLabel ]);
@@ -208,7 +262,13 @@ for (const p of Object.values(PRODUCTS)) {
   const calcAllCodes = new Set();
   for (const it of (p.alu||[])) for (const c of skuVariants({}, { sku: it.code })) calcAllCodes.add(c);
   for (const g of ['hardware','consum']) for (const it of (p[g]||[])) for (const c of skuVariants({}, it)) calcAllCodes.add(c);
-  const cutOnlySt = (sku) => (sku && calcAllCodes.has(String(sku).toUpperCase())) ? 'จำนวนต่าง' : 'คิดราคาไม่มีรายการนี้';
+  const hwMissing = new Set((calc.hwMissing || []).map(m => String(m.sku||'').toUpperCase()));
+  const cutOnlySt = (sku) => {
+    const c = String(sku||'').toUpperCase();
+    if (c && hwMissing.has(c)) return 'ราคามาจากสโตร์';
+    if (c && FILE_MERGED[`${p.id}|${c}`]) return 'ไฟล์รวมบรรทัด';
+    return (c && calcAllCodes.has(c)) ? 'จำนวนต่าง' : 'คิดราคาไม่มีรายการนี้';
+  };
   cutList.forEach((c,ix)=>{ if(used.has(ix)) return;
     const st = cutOnlySt(c.sku);
     rows.push([ FLAG(st), p.name, 'มีแต่ในใบตัด', c.name, c.sku||'', '', '', c.unit||'', st==='จำนวนต่าง'?0:'', '', sz,
@@ -226,6 +286,7 @@ for (const p of Object.values(PRODUCTS)) {
     const cur = merged.get(key);
     if (!cur || (RANK0[r[14]] ?? 99) < (RANK0[cur[14]] ?? 99)) merged.set(key, r);
   }
+  }   // ← จบลูปยี่ห้อมือจับ
   }   // ← จบลูปขนาดตัวอย่าง
 
   // ⚠ ของที่ "ไม่โผล่เลยสักขนาดที่ลอง" — ไม่ใช่ของไม่ต้องทำ แต่คือ "ยังไม่ได้ตรวจ" (เจ้าของท้วง 1 ก.ย.69)
@@ -237,15 +298,23 @@ for (const p of Object.values(PRODUCTS)) {
     for (const r of rows) for (const c of [String(r[4]||"").toUpperCase(), String(r[11]||"").toUpperCase()]) if (c) shown.add(c);
     for (const v of String(rows.map(r=>r[5]).join(" · ")).split("·")) { const t=v.trim().toUpperCase(); if (t) shown.add(t); }
     const seenX = new Set();
+    const goodCodes = new Set();
+    for (const r of rows) if (['ตรง','นับคนละหน่วย'].includes(r[14]))
+      for (const c of [String(r[4]||'').toUpperCase(), String(r[11]||'').toUpperCase()]) if (c) goodCodes.add(c);
     for (const g of ["alu","hardware","consum"]) for (const it of (p[g]||[])) {
       // รหัสอลูเป็นสูตรเลือกตามสี/ความหนากระจกได้ → ต้องกางออก ไม่งั้นได้สูตรดิบมาโชว์เป็น "รหัส"
       const codes = g === "alu" ? skuVariants({}, { sku: it.code }) : skuVariants({}, it);
       for (const c of codes) {
         if (!c || shown.has(c) || seenX.has(c)) continue;
         seenX.add(c);
-        rows.push([ FLAG("ยังไม่ได้ตรวจ"), p.name, g==="alu"?"อลูมิเนียม":"อุปกรณ์/สิ้นเปลือง",
-          it.name, c, "", n2(it.price ?? ""), it.unit || "", "", "", "— ไม่โผล่ในขนาด/รูปแบบที่ลอง —", "", "", "",
-          "ยังไม่ได้ตรวจ", fileLabel0 ]);
+        // 21 ก.ย.69: ถ้าของชื่อเดียวกัน "ตรวจผ่านแล้ว" ที่รหัสอื่น (คนละสี/คนละตัวเลือก) ไม่ต้องให้เจ้าของไล่ซ้ำ
+        // พี่น้อง = รหัสอื่นของ "ของชิ้นเดียวกัน" (สูตรเลือกตามสี/ความหนากระจก) หรือชื่อเดียวกันที่ตรวจผ่านแล้ว
+        const twin = codes.some(c2 => goodCodes.has(c2)) || rows.some(r => r[3] === it.name && ['ตรง','นับคนละหน่วย'].includes(r[14]));
+        const st0 = twin ? "รหัสสำรองตามสี" : "ยังไม่ได้ตรวจ";
+        rows.push([ FLAG(st0), p.name, g==="alu"?"อลูมิเนียม":"อุปกรณ์/สิ้นเปลือง",
+          it.name, c, "", n2(it.price ?? ""), it.unit || "",
+          "", "", twin ? "— ตรวจแล้วที่รหัสพี่น้องชื่อเดียวกัน —" : "— ไม่โผล่ในขนาด/รูปแบบที่ลอง —", "", "", "",
+          st0, fileLabel0 ]);
       }
     }
   }
@@ -254,11 +323,11 @@ for (const p of Object.values(PRODUCTS)) {
     '\ufeff' + [HEAD, ...rows].map(r=>r.map(esc).join(',')).join('\r\n') + '\r\n');
   all.push(...rows);
 }
-fs.writeFileSync(`docs/ผูกสโตร์-ทุกบาน-1ก.ย.69${SUFFIX}.csv`,
+fs.writeFileSync(`docs/ผูกสโตร์-ทุกบาน-21ก.ย.69${SUFFIX}.csv`,
   '\ufeff' + [HEAD, ...all].map(r=>r.map(esc).join(',')).join('\r\n') + '\r\n');
 
 // ── Excel: แท็บ "สรุป" + "รวมทุกบาน" + แท็บละบาน (เจ้าของเปิด CSV ไม่ได้) ──
-const STATUS = ["ตรง","จำนวนต่าง","รหัสไม่ตรง","คิดราคายังไม่มีรหัส","ใบตัดไม่ให้รหัส","ใบตัดไม่มีรายการนี้","คิดราคาไม่มีรายการนี้","ยังไม่ได้ตรวจ","ใบตัดไม่ลงประเภทนี้","ยังไม่ผูกไฟล์"];
+const STATUS = ["ตรง","จำนวนต่าง","รหัสไม่ตรง","คิดราคายังไม่มีรหัส","ใบตัดไม่ให้รหัส","ใบตัดไม่มีรายการนี้","คิดราคาไม่มีรายการนี้","ยังไม่ได้ตรวจ","ใบตัดไม่ลงประเภทนี้","ยังไม่ผูกไฟล์", "นับคนละหน่วย", "ไฟล์รวมบรรทัด", "ราคามาจากสโตร์", "รหัสสำรองตามสี"];
 const prodNames = [...new Set(all.map(r=>r[1]))];
 const summary = [["รุ่น","แถวรวม", ...STATUS, "ไฟล์ตัดประกอบ"]];
 for (const n of prodNames) {
@@ -271,13 +340,29 @@ const sty = rs => [0, ...rs.map(r=>STYLE(r[14]))];
 const RANK = { "รหัสไม่ตรง":0, "จำนวนต่าง":1, "คิดราคาไม่มีรายการนี้":2, "ใบตัดไม่มีรายการนี้":3, "คิดราคายังไม่มีรหัส":4, "ใบตัดไม่ให้รหัส":5, "ยังไม่ได้ตรวจ":6, "ตรง":7, "ใบตัดไม่ลงประเภทนี้":8, "ยังไม่ผูกไฟล์":9 };
 const todo = all.filter(r=>RANK[r[14]] <= 6)
   .sort((a,b)=> RANK[a[14]]-RANK[b[14]] || String(a[1]).localeCompare(String(b[1]),"th"));
+// แท็บอธิบาย — เจ้าของถาม 21 ก.ย.69 "ต้องเช็คคือไร เยอะไปไหม"
+const HOWTO = [
+  ["ป้าย", "แปลว่าอะไร", "ต้องทำอะไร"],
+  ["✓ ผ่าน", "คิดราคากับใบตัดใช้รหัสเดียวกัน จำนวนตรงกัน", "ไม่ต้องทำอะไร"],
+  ["⚪ ปกติ (คนละหน่วย)", "คิดราคานับ \"เส้น 6.4 ม. ที่ต้องซื้อ\" · ใบตัดนับ \"ท่อนที่ตัด\" — ของชิ้นเดียวกัน", "ไม่ต้องทำอะไร (ยอดเงินถูกตรวจโดยหน้าเทียบคิดราคา↔ใบตัดแล้ว)"],
+  ["⚪ ปกติ (ไฟล์รวมบรรทัด)", "ไฟล์ถอดทุนรวม 2 บรรทัดเป็นบรรทัดเดียว เว็บตามไฟล์", "ไม่ต้องทำอะไร"],
+  ["⚪ ตรวจแล้วที่รหัสพี่น้อง", "ของชิ้นเดียวกันคนละสี/คนละตัวเลือก ตรวจผ่านแล้วที่อีกรหัส", "ไม่ต้องทำอะไร"],
+  ["⚪ ดูเฉย ๆ", "ใบตัดไม่ลงของประเภทนี้อยู่แล้ว (กระจก ซิลิโคน ค่าอบสี แผ่นไวนิล เพลทเหล็ก)", "ไม่ต้องทำอะไร"],
+  ["🟡 ราคามาจากสโตร์", "ไฟล์ถอดทุนไม่ได้ตั้งราคาให้ เว็บไปดึงราคาจากสโตร์เอง", "เช็คว่าสโตร์ตั้งราคาไว้แล้ว ไม่งั้นจะคิดเป็น 0"],
+  ["🔵 เช็คว่าคิดเกินไหม", "คิดราคาคิดเงินของชิ้นนี้ แต่ใบตัดไม่ได้เบิก", "ดูว่าของจริงใช้ไหม ถ้าไม่ใช้ = คิดเกิน"],
+  ["🟠 ต้องเติม", "ใบตัดเบิกของ แต่คิดราคาไม่ได้คิดเงิน", "ดูว่าควรคิดเงินไหม (ไฟล์ถอดทุนไม่มีบรรทัดนี้)"],
+  ["🟡 ต้องเคาะ", "คิดราคายังไม่มีรหัสสโตร์ให้ของชิ้นนี้", "เจ้าของบอกรหัส แล้วผมผูกให้"],
+  ["🟣 ยังไม่ได้ตรวจ", "ของชิ้นนี้ไม่โผล่ในขนาด/รูปแบบที่รายงานสุ่มลอง", "ยังไม่ต้องทำ — ไม่ได้แปลว่าพัง"],
+  ["⚪ ยังตรวจไม่ได้", "รุ่นนี้ยังไม่มีไฟล์ตัดประกอบ เลยไม่มีอะไรให้เทียบ", "รอไฟล์ตัดของรุ่นนั้น"],
+];
 const sheets = [
+  { name:"อ่านยังไง", rows:HOWTO, widths:[24,66,54] },
   { name:"🔴 ต้องเช็ค", rows:[HEAD, ...todo], widths:W, rowStyles:sty(todo) },
   { name:"สรุป", rows:summary, widths:[30,9,7,10,10,10,14,12,16,16,12,26] },
   { name:"รวมทุกบาน", rows:[HEAD, ...all], widths:W, rowStyles:sty(all) },
   ...prodNames.map(n=>{ const rs=all.filter(r=>r[1]===n); return { name:n, rows:[HEAD, ...rs], widths:W, rowStyles:sty(rs) }; }),
 ];
-writeXlsx(`docs/ผูกสโตร์-ทุกบาน-1ก.ย.69${SUFFIX}.xlsx`, sheets);
+writeXlsx(`docs/ผูกสโตร์-ทุกบาน-21ก.ย.69${SUFFIX}.xlsx`, sheets);
 console.log("Excel:", sheets.length, "แท็บ · แถวที่ต้องเช็ค", todo.length);
 const c = k => all.filter(r=>r[14]===k).length;
 console.log('รุ่น', fs.readdirSync(outDir).length, '· แถวรวม', all.length);
