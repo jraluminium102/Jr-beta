@@ -15,12 +15,14 @@ export const GET = withRoute(async () => {
     .order("updated_at", { ascending: false })
     .limit(500);
   if (error) throw new Error(error.message);
-  // distinct + คงลำดับ (ล่าสุดก่อน)
+  // distinct + คงลำดับ (ล่าสุดก่อน) · แยกรายบรรทัด (ชุดที่มีกระจกหลายแบบเก็บคั่น \n) → เสนอเป็นสเปคเดี่ยว
   const seen = new Set<string>();
   const specs: string[] = [];
   for (const r of (data ?? []) as { glass_spec: string | null }[]) {
-    const v = (r.glass_spec ?? "").trim();
-    if (v && !seen.has(v)) { seen.add(v); specs.push(v); }
+    for (const part of (r.glass_spec ?? "").split("\n")) {
+      const v = part.trim();
+      if (v && !seen.has(v)) { seen.add(v); specs.push(v); }
+    }
   }
   return ok(specs.slice(0, 50));
 });

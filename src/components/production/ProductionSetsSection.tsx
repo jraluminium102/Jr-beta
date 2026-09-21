@@ -65,6 +65,42 @@ function F({ label, children, onEditOpts }: { label: string; children: React.Rea
   );
 }
 
+// สเปคกระจกหลายแบบต่อชุด (เจ้าของสั่ง 21 ก.ย.69) — หลายช่อง เก็บรวมในคอลัมน์ glass_spec เดิม (คั่นบรรทัด · ไม่ต้อง migration)
+//   ⚠ ไม่ครอบ <label> (F) เพราะมีหลาย input + ปุ่ม → เรียกป้ายเองข้างนอก
+function GlassSpecMulti({ value, disabled, listId, onSave }: {
+  value: string; disabled: boolean; listId: string; onSave: (joined: string) => void;
+}) {
+  const [lines, setLines] = useState<string[]>(() => {
+    const arr = String(value ?? "").split("\n");
+    return arr.length ? arr : [""];
+  });
+  const commit = (arr: string[]) => {
+    const joined = arr.map((x) => x.trim()).filter(Boolean).join("\n");
+    if (joined !== String(value ?? "")) onSave(joined);
+  };
+  return (
+    <div className="space-y-1.5">
+      {lines.map((ln, i) => (
+        <div key={i} className="flex items-center gap-1.5">
+          <input list={listId} value={ln} disabled={disabled} placeholder="พิมพ์ / เลือกจากประวัติ"
+            onChange={(e) => setLines((p) => p.map((x, idx) => (idx === i ? e.target.value : x)))}
+            onBlur={() => commit(lines)}
+            className={fieldCls + " placeholder-white/35"} />
+          {!disabled && lines.length > 1 && (
+            <button type="button" aria-label="ลบกระจกแบบนี้"
+              onClick={() => { const next = lines.filter((_, idx) => idx !== i); const n = next.length ? next : [""]; setLines(n); commit(n); }}
+              className="shrink-0 w-9 h-9 inline-flex items-center justify-center rounded-lg text-white/45 hover:text-red-300 hover:bg-white/5">✕</button>
+          )}
+        </div>
+      ))}
+      {!disabled && (
+        <button type="button" onClick={() => setLines((p) => [...p, ""])}
+          className="text-[13px] font-medium text-sky-300 hover:text-sky-200">+ เพิ่มกระจกอีกแบบ</button>
+      )}
+    </div>
+  );
+}
+
 // เส้นแบ่งกลุ่มย่อย + กริดฟิลด์ในกลุ่ม — จัดหมวดให้อ่านง่าย (แบบ→วัด→โครง/โรง→วัสดุ→กระจก→มุ้ง→วันที่→หมายเหตุ)
 // มือถือคอลัมน์เดียว (อ่านง่าย/ช่องเต็มความกว้าง) · จอกว้างขึ้นค่อยขยับเป็น 2-4 คอลัมน์
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
@@ -238,11 +274,10 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
   const sel = (s: SetRow, f: string, opts: string[]) => (
     <SelectField value={s[f] ?? ""} disabled={!canWrite} onChange={(v) => save(s.id, f, v)} options={withCurrent(opts, s[f])} />
   );
-  // สเปคกระจก — พิมพ์เอง หรือเลือกจากประวัติ (datalist)
+  // สเปคกระจก — หลายแบบต่อชุดได้ (พิมพ์เอง/เลือกจากประวัติ datalist) · เก็บรวมคั่นบรรทัดในคอลัมน์เดิม
   const glassSpec = (s: SetRow) => (
-    <input list="glass-spec-history" defaultValue={s.glass_spec ?? ""} disabled={!canWrite} placeholder="พิมพ์ / เลือกจากประวัติ"
-      onBlur={(e) => e.target.value !== String(s.glass_spec ?? "") && save(s.id, "glass_spec", e.target.value)}
-      className={fieldCls + " placeholder-white/35"} />
+    <GlassSpecMulti key={s.id} value={String(s.glass_spec ?? "")} disabled={!canWrite}
+      listId="glass-spec-history" onSave={(joined) => save(s.id, "glass_spec", joined)} />
   );
 
   // ช่องที่ "ช่างกดเอง" — โชว์ read-only + ใครกด/เมื่อไหร่ · กด "แก้" เพื่อ override (กันเขียนทับช่างโดยไม่ตั้งใจ)
@@ -453,7 +488,15 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
                 </Group>
 
                 <Group title="กระจก">
-                  <div className="sm:col-span-2"><F label="สเปคกระจก">{glassSpec(s)}</F></div>
+                  <div className="sm:col-span-2">
+                    <div className="block">
+                      <span className="flex items-center gap-1 text-[13px] font-medium mb-1.5" style={{ color: "var(--t-mid)" }}>
+                        <span className="truncate">สเปคกระจก</span>
+                        <span className="text-[11px] font-normal text-white/40">(หลายแบบได้)</span>
+                      </span>
+                      {glassSpec(s)}
+                    </div>
+                  </div>
                   <F label="สั่งกระจก" onEditOpts={openOpts("glass_order", "สั่งกระจก")}>{sel(s, "glass_order", valuesOf("glass_order"))}</F>
                   <F label="ใส่กระจก 👷 (ช่างกด)" onEditOpts={openOpts("glass_installed", "ใส่กระจก")}>{markRO(s, "glass_installed", "glass_installed_by", "glass_installed_at", valuesOf("glass_installed"))}</F>
                 </Group>
