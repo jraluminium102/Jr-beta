@@ -242,7 +242,8 @@ console.log(NL + "═══ ⑮ SlimLux — ราคาเส้นตามส
   const wh = S("white", "white"), sp = S("special", "special");
   // 11 ก.ย.69: ชีต "คิดทุน SlimLux" C12–C20 บวกค่าอบเรตเทาทุกเส้น (ขาว/ดำ/เทา) — เส้นที่ใช้ราคาอบสำเร็จจากไฟล์ (7 รหัส) ไม่บวกซ้ำ
   //   เส้นดิบที่ไม่มีราคาอบ (กล่อง/ฉาก/บังใบ) → ค่าอบ 100/กก. × กก.ของเส้นพวกนั้น
-  const rawKg = (wh.lines || []).filter((l) => l.cat === "alu" && !/\(อบขาว/.test(l.name)).reduce((s, l) => s + l.qty * (l.kg || 0), 0);
+  // 21 ก.ย.69: เส้นที่น้ำหนักมาจากตารางกล่อง (l.kgBox) มีไว้ชั่งบานอย่างเดียว ไม่เข้ากองค่าอบ
+  const rawKg = (wh.lines || []).filter((l) => l.cat === "alu" && !l.kgBox && !/\(อบขาว/.test(l.name)).reduce((s, l) => s + l.qty * (l.kg || 0), 0);
   ok("อบขาว: เส้นราคาไฟล์ไม่บวกค่าอบซ้ำ · เส้นดิบบวกเรตเทา 100/กก.", rawKg > 0 && Math.abs(wh.cost.bake - 100 * rawKg) <= 1, wh.cost.bake + " vs " + (100 * rawKg).toFixed(2));
   ok("อบขาว: ทุนสูงกว่าเดิม (เดิมคิดราคามิว)", wh.cost.total > 9000, String(wh.cost.total));
   ok("สีอื่น (อบพิเศษ): ยังคิดค่าอบตามปกติ", sp.cost.bake > 0, String(sp.cost.bake));

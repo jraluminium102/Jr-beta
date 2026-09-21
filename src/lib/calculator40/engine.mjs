@@ -302,7 +302,22 @@ export function computeCost(PB, prod, opt) {
   //   รหัสที่แคตตาล็อกไม่มี (E-series/Velora/SlimLux/กล่องเมืองทอง) → ใช้ กก. ที่ฝังในสูตรเหมือนเดิม
   const kgOfLine = (it, code, barLen) => {
     const km = (PB.ALUWEIGHT_KGM || {})[code];
-    return km > 0 ? Math.round(km * (barLen || STOCK_LEN) * 1000) / 1000 : (Number(it.kg) || 0);
+    if (km > 0) return Math.round(km * (barLen || STOCK_LEN) * 1000) / 1000;
+    if (Number(it.kg) > 0) return Number(it.kg);
+    // กล่อง/ฉากเมืองทอง: น้ำหนักอยู่ใน PB.BOX_KG (กก./เส้น 6 ม.) — ใส่ kg ในสูตรตรง ๆ ไม่ได้
+    //   เพราะ boxPrice() ใช้ it.kg เป็นตัวสลับ "ราคาสี → ราคาดิบ+ค่าอบ" → ราคาจะเพี้ยน (21 ก.ย.69)
+    //   อ่านจาก BOX_KG แทน = ได้น้ำหนักไว้เลือกมอเตอร์/ล้อ/ราง โดยเงินไม่ขยับ
+    const bkg = (PB.BOX_KG || {})[boxOf(it)];
+    if (bkg > 0) return Math.round((bkg / 6) * (barLen || STOCK_LEN) * 1000) / 1000;
+    return 0;
+  };
+  // it.colorIn = ราคาในไฟล์รวมค่าสีมาแล้ว (Velora/ครอบวงกบไม้) → ใส่น้ำหนักไว้ชั่งบานได้ แต่ห้ามบวกค่าอบซ้ำ
+  // น้ำหนักที่ใช้ "คิดค่าอบสี" — กล่อง/ฉากไม่นับ เพราะราคากล่องคิดสีมาในตัวแล้ว
+  //   (รุ่นที่ซื้อเส้นมิวมาอบเอง เช่น SlimLux ก็ยังไม่นับ — ชีตคิดทุนไม่บวกค่าอบให้กล่อง)
+  const kgForBake = (it, code, barLen) => {
+    const km = (PB.ALUWEIGHT_KGM || {})[code];
+    if (km > 0) return Math.round(km * (barLen || STOCK_LEN) * 1000) / 1000;
+    return Number(it.kg) || 0;
   };
   let aluCost = 0, aluKg = 0, aluBarsAll = 0;
   // น้ำหนักอลูจริง = ความยาวที่ตัดจริง × (กก./เส้น ÷ ความยาวเส้น) — ไม่ใช่ aluKg ข้างบน
@@ -440,12 +455,15 @@ export function computeCost(PB, prod, opt) {
     aluCost += amount;
     // เส้นที่ราคารวมสีแล้ว หรือเป็นเส้นสีเงินไม่อบสี → ไม่เข้ากองคิดค่าอบ
     const kgBar = kgOfLine(it, code, Number(it.stockLen) || stockLen);
-    if (!(colorPrice > 0) && cfPrice == null && !boxColorDone && !noColor) aluKg += bars * kgBar;
+    if (!(colorPrice > 0) && cfPrice == null && !boxColorDone && !noColor && !it.colorIn) aluKg += bars * kgForBake(it, code, Number(it.stockLen) || stockLen);
     // น้ำหนักจริงของท่อนที่ตัด (ไว้เลือกมอเตอร์ตามน้ำหนักบาน)
     const barLen = Number(it.stockLen) || stockLen;
     const kgPerM = kgBar > 0 && barLen > 0 ? (kgBar / barLen) : 0;
     const kgLine = kgPerM * seg * count;
-    if (kgPerM > 0) aluKgReal += kgLine; else if (seg * count > 0) kgMissing.push(it.name);
+    // it.fixed = โครงที่อยู่กับที่ (คาน/เสารับราง/ฉากปิดราง) — ไม่ใช่น้ำหนักที่ล้อ/มอเตอร์ต้องลาก
+    //   ชีตคิดทุนก็ไม่นับรวมใน "น้ำหนักบาน" เหมือนกัน (เช่น บานเลื่อนรางบน = กรอบบาน+เสากุญแจ+กระจก)
+    if (it.fixed) { /* ข้าม — ไม่เข้าน้ำหนักบาน */ }
+    else if (kgPerM > 0) aluKgReal += kgLine; else if (seg * count > 0) kgMissing.push(it.name);
     aluBarsAll += bars;   // นับทุกเส้น (รวมเส้นที่ราคารวมสีมาแล้ว) — ใช้ตัดสินค่าเปิดตู้อบ
     // code/kg ติดมากับบรรทัดด้วย — หน้าเทียบ "คิดราคา ↔ ใบตัด" ใช้จับคู่รหัส + คิด ฿/กก. (ไม่กระทบตัวเลขใด ๆ)
     // เวฟ 7: พ่วงรหัสสโตร์ให้บรรทัดเส้นอลูด้วย — เส้นที่ผูกด้วย "ชนิด|ขนาด" (กล่อง/ฉาก/แซด)
@@ -459,7 +477,10 @@ export function computeCost(PB, prod, opt) {
       //   บรรทัดพวกนี้เอาไปเทียบ "ชิ้น" กับใบตัดไม่ได้ — หน้าเทียบจะขึ้นว่า 'นับคนละหน่วย'
       //   it.lenTotal = ไฟล์เขียนบรรทัดนี้เป็น "ความยาวรวมทุกท่อน" (เช่น วงกบ 3 ด้าน = W+2H) count = 1
       //     ใบตัดแตกเป็นหลายท่อน → เทียบ "ชิ้น" ไม่ได้ ต้องเทียบจำนวนเส้น (เงินเท่ากัน)
-      barCounted: Math.abs(seg - stockLen) < 1e-9 || !!it.lenTotal });
+      barCounted: Math.abs(seg - stockLen) < 1e-9 || !!it.lenTotal,
+      // กล่อง/ฉากเมืองทอง: ราคาคิดสีมาในตัวแล้ว → ไม่เข้ากองค่าอบ (น้ำหนักยังมีไว้ชั่งบาน)
+      ...(it.box ? { box: boxOf(it) } : {}),
+      ...(kgBar > 0 && !(kgForBake(it, code, Number(it.stockLen) || stockLen) > 0) ? { kgBox: true } : {}) });
   }
   // ค่าอบสี (อลูเท่านั้น)
   let bakeCost = 0, openOven = 0;

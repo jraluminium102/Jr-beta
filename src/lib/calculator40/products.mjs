@@ -224,7 +224,7 @@ export const PRODUCTS = {
       // เกณฑ์โหนก: ใบตัดใช้ IF(สูง >= 240) — เดิมเว็บใช้ > 240 (ต่างเฉพาะที่ 240 ซม. พอดี)
       { name: 'เสาเกี่ยวธรรมดา', code: 'B20009', price: 690, kg: 4.35, seg: 'H-0.061', count: 'H>=2.4?F6:2*F6' },
       { name: 'เสาเกี่ยวรับแรง', code: 'B20010', price: 1235, kg: 7.8, seg: 'H-0.061', count: 'H>=2.4?F6:0' },
-      { name: 'ขวางบน/ล่าง', code: 'B20054', price: 1060, kg: 6.6, seg: '(W-0.042*P-0.112)/P', count: '2*P' },
+      { name: 'ขวางบน/ล่าง', code: 'B20054', price: 1060, kg: 6.6, seg: '(W-0.042*P-0.112)/P', count: '2*P', colorIn: true },
       { name: 'ตบปิดเฟรม', code: 'B20019', price: 175, kg: 1.2, seg: 'H-0.05', count: '4' },
       // ตบราง: รางนอกใช้ F7994 (สีเงิน — ราคาเดียวทุกสี ดู ALUCODE_NOCOLOR) · รางเตี้ยใช้ B20050
       // จำนวนยึดตามใบตัด (เจ้าของเคาะ 19 ส.ค.69) — ตบรางล้อคิดตาม "ร่องราง" ไม่ใช่จำนวนบานเลื่อน
@@ -418,7 +418,7 @@ export const PRODUCTS = {
       { box: 'กล่อง|4หุน', code: 'กล่อง 4 หุน', name: 'บังใบ 4 หุน', price: 210, kg: 0, filePrice: "['white','black','sahara','sahara_black'].includes(CKEY) ? 200 : 170", seg: 'H-0.061', count: '2' },
       { name: 'รางแขวน 1 ราง', code: 'XSW40008', price: 868.8, kg: 5.46, seg: 'W-0.05', count: 'SLIDE' },
       { name: 'ขวางบน-ล่าง', code: 'OPK-A201-40', price: 764.8, kg: 4.69, seg: '(W-0.05)/P + 0.002*P', count: '2*P' },
-      { name: 'เสากุญแจ (ไส้เสาบาน)', code: 'OPK-A202-40', price: 480, kg: 2.95, seg: 'H-0.146', count: '2*P' },
+      { name: 'เสากุญแจ (ไส้เสาบาน)', code: 'OPK-A202-40', price: 480, kg: 2.95, seg: 'H-0.146', count: '2*P', colorIn: true },
       { name: 'ตบเรียบหน้าเสากุญแจ', code: 'OPK-A203-40', price: 272, kg: 1.57, seg: 'H-0.076', count: '2' },
       { name: 'ตบเกี่ยวใส่สักหลาด', code: 'OPK-A204-40', price: 284.8, kg: 1.692, seg: 'H-0.076', count: 'SLIDE+1' },
       { box: 'ฉาก|2', code: 'ฉาก 2"', name: 'ฉากปิดราง 2"', price: 320, kg: 1.63, seg: 'W', count: '2' },   // กก./เส้น จาก น้ำหนักโปรไฟล์ C284 (เดิม 1 = ค่าอบขาดไป)
@@ -790,14 +790,14 @@ export const PRODUCTS = {
       HBLACK: "(((spec&&spec.tsHandleColor)||'')==='ดำ')?1:0" },
     alu: [
       // ── เมืองทอง (เส้น 6 ม. · ราคาสีคูณด้วย PB.BOX_CF อัตโนมัติเพราะ kg = 0 ตรงช่อง F8 ของชีต) ──
-      { box: 'กล่อง|2X4', code: 'JR01859', name: 'คานรับราง (กล่อง 2"x4")', price: 1540, kg: 0, stockLen: 6.0, seg: 'W', count: '1' },
-      { box: 'กล่อง|1X4', code: 'JR01841', name: 'เสารับบาน (กล่อง 1"x4")', price: 905, kg: 0, stockLen: 6.0, seg: 'H-BEAM', count: '2' },
-      { code: 'JR03125', name: 'ชนกลางรับบาน', price: 300, kg: 0, stockLen: 6.0, seg: 'H-BEAM', count: '1' },
-      { box: 'ฉาก|4', code: 'JR01949', name: 'ฉาก 4" ปิดราง', price: 280, kg: 0, stockLen: 6.0, seg: 'W', count: '2' },
+      { box: 'กล่อง|2X4', code: 'JR01859', name: 'คานรับราง (กล่อง 2"x4")', price: 1540, kg: 0, stockLen: 6.0, seg: 'W', count: '1', fixed: true },
+      { box: 'กล่อง|1X4', code: 'JR01841', name: 'เสารับบาน (กล่อง 1"x4")', price: 905, kg: 0, stockLen: 6.0, seg: 'H-BEAM', count: '2', fixed: true },
+      { code: 'JR03125', name: 'ชนกลางรับบาน', price: 300, kg: 0, stockLen: 6.0, seg: 'H-BEAM', count: '1', fixed: true },
+      { box: 'ฉาก|4', code: 'JR01949', name: 'ฉาก 4" ปิดราง', price: 280, kg: 0, stockLen: 6.0, seg: 'W', count: '2', fixed: true },
       // ── SMS (เส้น 6.4 ม. · ราคาตามสีมาจาก PB.ALUCODE/ALUCOLOR_KEY) ──
       { code: 'B20051', name: 'เสากุญแจ ML', price: 885, seg: 'H-BEAM-SUB', count: '2' },
       { code: 'B20009', name: 'เสาเกี่ยว', price: 690, seg: 'H-BEAM-SUB', count: '2' },
-      { code: 'B20054', name: 'ขวางบน/ล่าง', price: 1060, seg: '(W-CC-OVL)/P', count: '2*P' },
+      { code: 'B20054', name: 'ขวางบน/ล่าง', price: 1060, seg: '(W-CC-OVL)/P', count: '2*P', colorIn: true },
     ],
     glass: 'W*H',
     hardware: [
@@ -914,8 +914,8 @@ export const PRODUCTS = {
       //   ⚠ สีนอก ขาว/ดำ/เทา ชีตใช้ 687 (E156) — ยังผูกไม่ได้เพราะรหัสนี้ไม่มีใน PB.ALUCODE (ดูรายการค้าง)
       // เวฟ 7: กางเป็น 2 บรรทัดตามใบตัด (Velora_ตัด แถว 13/14) — ยาวรวมเท่าเดิมทุกประการ
       //   เดิมยุบเป็นบรรทัดเดียวแบบ lenTotal → หน้าเทียบอ่าน "จำนวนชิ้น" ไม่ได้ (ขึ้น 0 ชิ้นทั้งที่มีของ)
-      { name: 'ลูกฟูก 2 ทาง แนวตั้ง (ยัดในช่อง)', code: 'JR01994', price: 432, kg: 0, seg: 'H', count: '2*P' },
-      { name: 'ลูกฟูก 2 ทาง แนวนอน (ยัดในช่อง)', code: 'JR01994', price: 432, kg: 0, seg: 'W/P', count: 'P' },
+      { name: 'ลูกฟูก 2 ทาง แนวตั้ง (ยัดในช่อง)', code: 'JR01994', price: 432, kg: 0, seg: 'H', count: '2*P', colorIn: true },
+      { name: 'ลูกฟูก 2 ทาง แนวนอน (ยัดในช่อง)', code: 'JR01994', price: 432, kg: 0, seg: 'W/P', count: 'P', colorIn: true },
     ],
     glass: 'W*H',
     hardware: [
@@ -959,7 +959,7 @@ export const PRODUCTS = {
       //     (ดรอปดาว "ธรณี" เหลือผลแค่ระยะหักกับจำนวนน็อต) — ดูรายการถามเจ้าของ ข้อ 1
       { box: 'กล่อง|1X4', code: 'JR01840', name: 'คาน (กล่อง 1"x4")', price: 905, kg: 6.05, stockLen: 6.0, seg: 'W', count: '1' },
       { code: 'JR03136', name: 'ฝาครอบรางบน', price: 600, kg: 1, stockLen: 6.0, seg: 'W-0.058', count: '1' },                       // ช่อง−3.3−2.5
-      { code: 'JR03141', name: 'รางบนบานเลื่อน Hafele', price: 2010, kg: 0, stockLen: 6.0, seg: 'W-0.07', count: '1' },              // ช่อง−4.5−2.5 · เจ้าของท้วง 3 ก.ย. "รางบนหาย" → v1 ใส่แล้ว
+      { code: 'JR03141', name: 'รางบนบานเลื่อน Hafele', price: 2010, kg: 0, stockLen: 6.0, seg: 'W-0.07', count: '1', fixed: true },              // ช่อง−4.5−2.5 · เจ้าของท้วง 3 ก.ย. "รางบนหาย" → v1 ใส่แล้ว
       { code: 'JR03129', name: 'วงกบบานเปิด เมืองทอง', price: 1820, kg: 6.576, stockLen: 6.0, seg: 'H-0.025', count: '1' },          // สูง−คาน (คานทำหน้าที่วงกบบน)
       { box: 'กล่อง|1X4', code: 'JR01840', name: 'เสารับบานเลื่อน (กล่อง 1"x4")', price: 905, kg: 6.05, stockLen: 6.0, seg: 'H-0.025', count: '1' },
       { code: 'JR03125', name: 'ชนกลางรับบานเลื่อน เมืองทอง', price: 355, kg: 2, stockLen: 6.0, seg: 'H-0.065', count: '1' },        // สูง−คาน−4
@@ -1360,7 +1360,7 @@ export const PRODUCTS = {
       { code: 'JR02944', name: 'ฉากข้อต่อ 2" (เฉพาะแปะนอก)', price: 320, kg: 0, seg: 'W', count: 'OUT' },
       { box: 'กล่อง|4X4', code: 'กล่อง 4"x4"', name: 'เสารับไกด์ (4×4) — เสาแยก', price: 2210, kg: 0, seg: 'H + (OUT ? 0.05 : 0)', count: '1' },
       // ราง = ฉากเหล็ก 1.5" + เพลา 4 หุน — ยังไม่มีในสโตร์ ใช้ราคาชุด 6 ม. ตามชีตถอดทุน
-      { name: 'ราง ฉากเหล็ก 1.5"+เพลา 4หุน (ชุด 6 ม.)', orderOnly: true, price: 1090, kg: 0, seg: 'NRAIL', count: "(spec && spec.gaterail && spec.gaterail.indexOf('ใช้รางเดิม') >= 0) ? 0 : 1" },
+      { name: 'ราง ฉากเหล็ก 1.5"+เพลา 4หุน (ชุด 6 ม.)', orderOnly: true, price: 1090, kg: 0, seg: 'NRAIL', count: "(spec && spec.gaterail && spec.gaterail.indexOf('ใช้รางเดิม') >= 0) ? 0 : 1", fixed: true },
     ],
     glass: null,
     // ⑤ อุปกรณ์ — ไฟล์เขียนกำกับ "ไม่สต็อก ซื้อต่อออเดอร์ เว้นรหัส" · เหล็กยัดเสา มีเฉพาะชีตถอดทุน
@@ -2836,10 +2836,10 @@ export const PRODUCTS = {
       { key: 'autoopt', label: 'ออปเสริม', opts: ['สแกนหน้า', 'Touch Switch', 'ไม่มี'], def: 'สแกนหน้า' },
     ],
     alu: [
-      { code: 'JR01840', name: 'เสาวงกบ 1"×4" (เมืองทอง)', price: 2183.65, kg: 0, seg: 'H', count: '2' },
-      { name: 'เสากุญแจ (ไส้เสาบาน)', code: 'OPK-A202-40', price: 990.35, kg: 0, seg: 'H-0.08', count: '2*P' },
-      { name: 'ขวางบน/ล่าง', code: 'OPK-A201-40', price: 1576.17, kg: 0, seg: 'W/P-0.088', count: '2*P' },
-      { name: 'ตบเรียบปิดหน้าเสากุญแจ', code: 'OPK-A203-40', price: 543.61, kg: 0, seg: 'H-0.08', count: '2*P' },
+      { code: 'JR01840', name: 'เสาวงกบ 1"×4" (เมืองทอง)', price: 2183.65, kg: 0, seg: 'H', count: '2', colorIn: true },
+      { name: 'เสากุญแจ (ไส้เสาบาน)', code: 'OPK-A202-40', price: 990.35, kg: 0, seg: 'H-0.08', count: '2*P', colorIn: true },
+      { name: 'ขวางบน/ล่าง', code: 'OPK-A201-40', price: 1576.17, kg: 0, seg: 'W/P-0.088', count: '2*P', colorIn: true },
+      { name: 'ตบเรียบปิดหน้าเสากุญแจ', code: 'OPK-A203-40', price: 543.61, kg: 0, seg: 'H-0.08', count: '2*P', colorIn: true },
     ],
     glass: 'W*H',
     hardware: [
