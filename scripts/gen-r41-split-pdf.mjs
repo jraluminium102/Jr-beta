@@ -55,6 +55,7 @@ for (const r of rows) {
   const tab = { cM: T.cM || 0, sM: T.sM || 0, cP: T.cP || 0, sP: T.sP || 0, cI: T.cI || 0, sI: T.sI || 0, sT: T.sT || 0 };
   tab.cT = tab.cM + tab.cP + tab.cI;
   const e = byProd.get(r.id) || { name: p.name || r.head, id: r.id, lines: [] };
+  if (e.target == null && r.target != null) e.target = r.target;
   e.lines.push({ size: `${r.w}×${r.h}`, panels: r.p || 1, vk: r.vk || "", tab, web,
     dp: tab.sT > 0 ? Math.round(((web.sT - tab.sT) / tab.sT) * 1000) / 10 : null });
   byProd.set(r.id, e);
@@ -111,7 +112,7 @@ const tbl = (b) => `<table><thead>
 const card = (b) => `<div class="card">
   <div class="hd"><b>${esc(b.name)}</b><span>${esc(b.id)} · ${b.lines.length} ขนาด${b.off ? ` · <u class="up">ขายรวมต่างเกิน 5% : ${b.off} ขนาด</u>` : ` · <span class="dn">ตรงทุกขนาด</span>`}</span></div>
   <div class="mg">
-    <div><span class="tag t1">ตาราง R4.1</span> กำไรสุทธิ <b>${gp(b.m.tab.net)}</b> · ของ/ผลิต/ติดตั้ง <b>${gp(b.m.tab.mat)} / ${gp(b.m.tab.prod)} / ${gp(b.m.tab.inst)}</b></div>
+    <div><span class="tag t1">ตาราง R4.1</span> เป้ากำไรสุทธิที่ไฟล์ตั้งไว้ <b>${b.target != null ? b.target + "%" : "—"}</b> → ได้จริง <b>${gp(b.m.tab.net)}</b> · ของ/ผลิต/ติดตั้ง <b>${gp(b.m.tab.mat)} / ${gp(b.m.tab.prod)} / ${gp(b.m.tab.inst)}</b></div>
     <div><span class="tag t2">เว็บตอนนี้</span> กำไรสุทธิ <b>${gp(b.m.web.net)}</b>${dTxt(dPt(b.m.tab.net, b.m.web.net))} · ของ/ผลิต/ติดตั้ง <b>${gp(b.m.web.mat)}</b>${dTxt(dPt(b.m.tab.mat, b.m.web.mat))} / <b>${gp(b.m.web.prod)}</b>${dTxt(dPt(b.m.tab.prod, b.m.web.prod))} / <b>${gp(b.m.web.inst)}</b>${dTxt(dPt(b.m.tab.inst, b.m.web.inst))}</div>
   </div>
   ${tbl(b)}
@@ -170,12 +171,13 @@ const html = `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>
   .tag.t2 { background:#cfe0f7; }
   .def { font-size:9.5pt; background:#fffbe6; border:0.8pt solid #e0c97a; border-radius:1mm; padding:1.5mm 2.5mm; margin-bottom:3mm; line-height:1.6; }
   .wb { color:#0b57d0; }
+
   .note { font-size:9pt; color:#333; margin-top:2mm; border-top:1pt solid #666; padding-top:1.5mm; line-height:1.6; }
   .key { display:inline-block; padding:0.4mm 1.5mm; border-radius:1mm; margin-right:1mm; }
 </style></head><body>
 <h1>เทียบราคาขายแยกก้อน — ค่าของ · ค่าผลิต · ค่าติดตั้ง (เว็บ เทียบ ★ ตารางราคาขาย R4.1)</h1>
 <div class="sub">${nAll} ขนาด · ${blocks.length} รุ่น · สีขาว ไม่มีของเสริม · คอลัมน์เรียงเหมือน ★ ตารางราคาขาย R4.1 · แต่ละขนาด 2 บรรทัด: <b>ตาราง</b> = เลขในไฟล์ · <b class="wb">เว็บ</b> = เครื่องคิดราคาตอนนี้ (<span class="up">แดง = เว็บสูงกว่า</span> · <span class="dn">เขียว = เว็บต่ำกว่า</span>) · ต่างเกิน 5% = ${nOff} ขนาด · ออกเมื่อ ${new Date().toLocaleDateString("th-TH")}</div>
-<div class="def"><b>กำไรสุทธิ (บาท)</b> = ★ ราคาขายรวมทั้งชุด ÷ 1.3 − รวมทุน &nbsp;(หักค่าดำเนินการ 30% ออกจากราคาขายก่อน แล้วค่อยลบทุน — ช่องเดียวกับ "หักค่าดำเนินการแล้ว" ในไฟล์) &nbsp;·&nbsp; <b>กำไรสุทธิ %</b> = กำไรสุทธิ (บาท) ÷ ราคาขายรวมทั้งชุด &nbsp;·&nbsp; <b>ของ / ผลิต / ติดตั้ง %</b> = (ขาย − ทุน) ÷ ขาย ของก้อนนั้น รวมทุกขนาดของรุ่น</div>
+<div class="def"><b>กำไรสุทธิ (บาท)</b> = ★ ราคาขายรวมทั้งชุด ÷ 1.3 − รวมทุน &nbsp;(หักค่าดำเนินการ 30% ออกจากราคาขายก่อน แล้วค่อยลบทุน — ช่องเดียวกับ "หักค่าดำเนินการแล้ว" ในไฟล์) &nbsp;·&nbsp; <b>กำไรสุทธิ %</b> = กำไรสุทธิ (บาท) ÷ ราคาขายรวมทั้งชุด &nbsp;·&nbsp; <b>ของ / ผลิต / ติดตั้ง %</b> = (ขาย − ทุน) ÷ ขาย ของก้อนนั้น รวมทุกขนาดของรุ่น &nbsp;·&nbsp; <b>ทำไมกำไรสุทธิ % เกือบเท่ากันทุกขนาด</b> — ทั้งไฟล์และเว็บตั้ง "เป้ากำไรสุทธิ" ไว้ต่อรุ่น แล้วถอดราคาขายกลับจากทุน (SMS 40% · บานเปิด 31% · หลังคา 20%) ตัวเลขที่เห็นต่างกันนิดหน่อยมาจากการปัดราคาขายเป็นหลักร้อย และราคาขั้นต่ำของบานเล็ก</div>
 <div class="card sum">
   <div class="hd"><b>สรุปต่อรุ่น</b><span>ดูก่อนว่าต้องเปิดหน้าไหน · เรียงรุ่นที่ต่างเยอะขึ้นก่อน</span></div>
   <table><thead><tr class="h1"><th class="l">รุ่น</th><th>ขนาด</th><th class="g1">ทุนค่าของ<br>เว็บ − ตาราง</th><th class="g2">ทุนค่าผลิต<br>เว็บ − ตาราง</th><th class="g3">ทุนค่าติดตั้ง<br>เว็บ − ตาราง</th><th class="g4">ขายรวม<br>เว็บ − ตาราง</th><th class="g4">กำไรสุทธิ<br>ตาราง → เว็บ</th><th class="g4">ขายรวมต่าง<br>เกิน 5%</th></tr></thead>
