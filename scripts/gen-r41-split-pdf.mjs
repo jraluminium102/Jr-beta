@@ -71,33 +71,52 @@ const blocks = [...byProd.values()].map((b) => {
   return b;
 }).sort((a, b) => (b.off - a.off) || (b.lines.length - a.lines.length));
 
-/** แถวของตาราง "ทุน" หรือ "ราคาขาย" — แต่ละก้อนโชว์ ตาราง · เว็บ · ต่าง */
-const row = (l, kind) => {
-  const K = kind === "cost" ? ["cM", "cP", "cI", "cT"] : ["sM", "sP", "sI", "sT"];
-  const cells = K.map((k, i) => {
-    const t = l.tab[k] || 0, w = l.web[k] || 0, d = diff(w, t), g = "g" + (i + 1);
-    return `<td class="${g}">${baht(t)}</td><td class="${g} b">${baht(w)}</td><td class="${g} ${d.cls}">${d.txt}</td>`;
-  }).join("");
-  const tail = kind === "cost" ? "" :
-    `<td class="g4 pc">${gp(gain(l.tab.cT, l.tab.sT))} → <b class="${(() => { const a = gain(l.tab.cT, l.tab.sT), b2 = gain(l.web.cT, l.web.sT); return a == null || b2 == null ? "z" : Math.abs(a - b2) <= 3 ? "z" : "up"; })()}">${gp(gain(l.web.cT, l.web.sT))}</b></td><td class="chk"><i></i></td>`;
-  return `<tr><td class="l sz">${esc(l.size)}<span class="sm"> · ${l.panels} บาน${l.vk ? " · " + esc(l.vk) : ""}</span></td>${cells}${tail}</tr>`;
+/** ฟอร์มเดียวกับ ★ ตารางราคาขาย R4.1 — ตารางเดียว คอลัมน์เรียงเหมือนไฟล์
+ *  ค่าของ (ทุน|ขาย) · ค่าแรงผลิต (ทุน|ขาย) · ค่าแรงติดตั้ง (ทุน|ขาย) · รวมทุน · กำไรสุทธิ(บาท) · ★ ราคาขายรวมทั้งชุด · กำไรสุทธิ %
+ *  แต่ละขนาดมี 2 บรรทัด: ตาราง R4.1 / เว็บ (บรรทัดเว็บตัวหนา + ช่องที่ต่างเป็นสีแดง-เขียว)
+ */
+const netBaht = (cost, sell) => (sell > 0 ? Math.round(sell / (1 + OVERHEAD / 100) - cost) : null);
+const cell = (val, t, g, bold) => {
+  const d = diff(val, t);
+  const cls = bold && d.cls !== "z" ? d.cls : "";
+  return `<td class="${g} ${bold ? "b" : ""} ${cls}">${baht(val)}</td>`;
 };
-const headRow = (kind) => `<thead>
-  <tr class="h1"><th class="l" rowspan="2">ขนาด</th>
-    <th class="g1" colspan="3">ค่าของ (วัสดุ)</th><th class="g2" colspan="3">ค่าผลิต</th><th class="g3" colspan="3">ค่าติดตั้ง</th><th class="g4" colspan="3">รวมทั้งชุด</th>
-    ${kind === "sell" ? '<th class="g4" rowspan="2">กำไร<br>ตาราง → เว็บ</th><th class="chk" rowspan="2">✓</th>' : ""}</tr>
-  <tr class="h2">${["g1", "g2", "g3", "g4"].map((g) => `<th class="${g}">ตาราง</th><th class="${g}">เว็บ</th><th class="${g}">ต่าง</th>`).join("")}</tr></thead>`;
-const tbl = (b, kind) => `<div class="ttl ${kind}">${kind === "cost" ? "① ทุน — เงินที่เราจ่ายจริง (ยังไม่บวกกำไร)" : "② ราคาขาย — เงินที่ลูกค้าจ่าย (บวกกำไรแล้ว)"}</div>
-<table>${headRow(kind)}${b.lines.map((l) => row(l, kind)).join("")}</table>`;
+const pair = (l, ck, sk, g) => `${cell(l.tab[ck], l.tab[ck], g, false)}${cell(l.tab[sk], l.tab[sk], g, false)}`;
+const rowFor = (l, src) => {
+  const o = l[src], t = l.tab, isW = src === "web";
+  const C = (k, g) => cell(o[k], t[k], g, isW);
+  const cT = o.cM + o.cP + o.cI;
+  const nb = netBaht(cT, o.sT), np = o.sT > 0 ? Math.round((100 / (100 + OVERHEAD) - cT / o.sT) * 1000) / 10 : null;
+  const tnb = netBaht(t.cM + t.cP + t.cI, t.sT);
+  const tnp = t.sT > 0 ? Math.round((100 / (100 + OVERHEAD) - (t.cM + t.cP + t.cI) / t.sT) * 1000) / 10 : null;
+  const dNb = diff(nb, tnb), dSell = diff(o.sT, t.sT);
+  const dNp = isW && tnp != null && np != null ? Math.round((np - tnp) * 10) / 10 : null;
+  return `<tr class="${isW ? "web" : "tab"}">
+    ${src === "tab" ? `<td class="l sz" rowspan="2">${esc(l.size)}<span class="sm"> · ${l.panels} บาน${l.vk ? " · " + esc(l.vk) : ""}</span></td>` : ""}
+    <td class="l src">${isW ? "เว็บ" : "ตาราง"}</td>
+    ${C("cM", "g1")}${C("sM", "g1")}${C("cP", "g2")}${C("sP", "g2")}${C("cI", "g3")}${C("sI", "g3")}
+    <td class="g4 ${isW && diff(cT, t.cM + t.cP + t.cI).cls !== "z" ? diff(cT, t.cM + t.cP + t.cI).cls : ""} ${isW ? "b" : ""}">${baht(cT)}</td>
+    <td class="g4 ${isW && dNb.cls !== "z" ? dNb.cls : ""} ${isW ? "b" : ""}">${baht(nb)}</td>
+    <td class="g5 ${isW && dSell.cls !== "z" ? dSell.cls : ""} ${isW ? "b big" : ""}">${baht(o.sT)}</td>
+    <td class="g5 ${isW ? "b" : ""}">${np == null ? "—" : np + "%"}${isW && dNp != null && Math.abs(dNp) > 2 ? ` <b class="${dNp > 0 ? "dn" : "up"}">(${dNp > 0 ? "+" : ""}${dNp})</b>` : ""}</td>
+    ${src === "tab" ? `<td class="chk" rowspan="2"><i></i></td>` : ""}</tr>`;
+};
+const tbl = (b) => `<table><thead>
+  <tr class="h1"><th class="l" rowspan="2">ขนาด (ซม.)</th><th class="l" rowspan="2"></th>
+    <th class="g1" colspan="2">ค่าของ (อลู+กระจก+อุปกรณ์)</th><th class="g2" colspan="2">ค่าแรงผลิต</th><th class="g3" colspan="2">ค่าแรงติดตั้ง</th>
+    <th class="g4" rowspan="2">รวมทุน</th><th class="g4" rowspan="2">กำไรสุทธิ<br>(บาท)</th>
+    <th class="g5" rowspan="2">★ ราคาขาย<br>รวมทั้งชุด</th><th class="g5" rowspan="2">กำไร<br>สุทธิ %</th><th class="chk" rowspan="2">✓</th></tr>
+  <tr class="h2"><th class="g1">ทุน</th><th class="g1">ขาย</th><th class="g2">ทุน</th><th class="g2">ขาย</th><th class="g3">ทุน</th><th class="g3">ขาย</th></tr>
+</thead>${b.lines.map((l) => rowFor(l, "tab") + rowFor(l, "web")).join("")}</table>`;
 const card = (b) => `<div class="card">
   <div class="hd"><b>${esc(b.name)}</b><span>${esc(b.id)} · ${b.lines.length} ขนาด${b.off ? ` · <u class="up">ขายรวมต่างเกิน 5% : ${b.off} ขนาด</u>` : ` · <span class="dn">ตรงทุกขนาด</span>`}</span></div>
   <div class="mg">
     <div><span class="tag t1">ตาราง R4.1</span> กำไรสุทธิ <b>${gp(b.m.tab.net)}</b> · ของ/ผลิต/ติดตั้ง <b>${gp(b.m.tab.mat)} / ${gp(b.m.tab.prod)} / ${gp(b.m.tab.inst)}</b></div>
     <div><span class="tag t2">เว็บตอนนี้</span> กำไรสุทธิ <b>${gp(b.m.web.net)}</b>${dTxt(dPt(b.m.tab.net, b.m.web.net))} · ของ/ผลิต/ติดตั้ง <b>${gp(b.m.web.mat)}</b>${dTxt(dPt(b.m.tab.mat, b.m.web.mat))} / <b>${gp(b.m.web.prod)}</b>${dTxt(dPt(b.m.tab.prod, b.m.web.prod))} / <b>${gp(b.m.web.inst)}</b>${dTxt(dPt(b.m.tab.inst, b.m.web.inst))}</div>
   </div>
-  ${tbl(b, "cost")}
-  ${tbl(b, "sell")}
+  ${tbl(b)}
 </div>`;
+
 
 const nAll = blocks.reduce((s, b) => s + b.lines.length, 0);
 const nOff = blocks.reduce((s, b) => s + b.off, 0);
@@ -130,7 +149,12 @@ const html = `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>
   .g1 { background:#eaf2fd; }  th.g1 { background:#cfe0f7; }
   .g2 { background:#eaf7ed; }  th.g2 { background:#cbeacf; }
   .g3 { background:#fdf3e3; }  th.g3 { background:#f8e0b5; }
-  .g4 { background:#f2eefb; }  th.g4 { background:#ded3f3; }
+  .g4 { background:#f5f5f5; }  th.g4 { background:#e0e0e0; }
+  .g5 { background:#f2eefb; }  th.g5 { background:#ded3f3; }
+  tr.web td { border-bottom:1pt solid #999; }
+  tr.tab td { border-bottom:0.3pt dotted #ccc; }
+  td.src { font-size:8.5pt; color:#444; font-weight:700; width:11mm; }
+  tr.web td.src { color:#0b57d0; }
   /* ส่วนต่าง */
   .up { color:#c5221f; font-weight:700; }   /* เว็บแพงกว่าตาราง */
   .dn { color:#0b7a37; font-weight:700; }   /* เว็บถูกกว่าตาราง */
@@ -144,11 +168,14 @@ const html = `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>
   .tag { display:inline-block; min-width:22mm; text-align:center; font-size:8.5pt; font-weight:700; padding:0.3mm 1.5mm; border-radius:1mm; margin-right:1.5mm; }
   .tag.t1 { background:#ded3f3; }
   .tag.t2 { background:#cfe0f7; }
+  .def { font-size:9.5pt; background:#fffbe6; border:0.8pt solid #e0c97a; border-radius:1mm; padding:1.5mm 2.5mm; margin-bottom:3mm; line-height:1.6; }
+  .wb { color:#0b57d0; }
   .note { font-size:9pt; color:#333; margin-top:2mm; border-top:1pt solid #666; padding-top:1.5mm; line-height:1.6; }
   .key { display:inline-block; padding:0.4mm 1.5mm; border-radius:1mm; margin-right:1mm; }
 </style></head><body>
 <h1>เทียบราคาขายแยกก้อน — ค่าของ · ค่าผลิต · ค่าติดตั้ง (เว็บ เทียบ ★ ตารางราคาขาย R4.1)</h1>
-<div class="sub">${nAll} ขนาด · ${blocks.length} รุ่น · สีขาว ไม่มีของเสริม · ต่างเกิน 5% = ${nOff} ขนาด · ออกเมื่อ ${new Date().toLocaleDateString("th-TH")}</div>
+<div class="sub">${nAll} ขนาด · ${blocks.length} รุ่น · สีขาว ไม่มีของเสริม · คอลัมน์เรียงเหมือน ★ ตารางราคาขาย R4.1 · แต่ละขนาด 2 บรรทัด: <b>ตาราง</b> = เลขในไฟล์ · <b class="wb">เว็บ</b> = เครื่องคิดราคาตอนนี้ (<span class="up">แดง = เว็บสูงกว่า</span> · <span class="dn">เขียว = เว็บต่ำกว่า</span>) · ต่างเกิน 5% = ${nOff} ขนาด · ออกเมื่อ ${new Date().toLocaleDateString("th-TH")}</div>
+<div class="def"><b>กำไรสุทธิ (บาท)</b> = ★ ราคาขายรวมทั้งชุด ÷ 1.3 − รวมทุน &nbsp;(หักค่าดำเนินการ 30% ออกจากราคาขายก่อน แล้วค่อยลบทุน — ช่องเดียวกับ "หักค่าดำเนินการแล้ว" ในไฟล์) &nbsp;·&nbsp; <b>กำไรสุทธิ %</b> = กำไรสุทธิ (บาท) ÷ ราคาขายรวมทั้งชุด &nbsp;·&nbsp; <b>ของ / ผลิต / ติดตั้ง %</b> = (ขาย − ทุน) ÷ ขาย ของก้อนนั้น รวมทุกขนาดของรุ่น</div>
 <div class="card sum">
   <div class="hd"><b>สรุปต่อรุ่น</b><span>ดูก่อนว่าต้องเปิดหน้าไหน · เรียงรุ่นที่ต่างเยอะขึ้นก่อน</span></div>
   <table><thead><tr class="h1"><th class="l">รุ่น</th><th>ขนาด</th><th class="g1">ทุนค่าของ<br>เว็บ − ตาราง</th><th class="g2">ทุนค่าผลิต<br>เว็บ − ตาราง</th><th class="g3">ทุนค่าติดตั้ง<br>เว็บ − ตาราง</th><th class="g4">ขายรวม<br>เว็บ − ตาราง</th><th class="g4">กำไรสุทธิ<br>ตาราง → เว็บ</th><th class="g4">ขายรวมต่าง<br>เกิน 5%</th></tr></thead>
