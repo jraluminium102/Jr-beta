@@ -1256,7 +1256,7 @@ export const PRODUCTS = {
   louver: {
     id: 'louver', group: 2, name: 'ระแนงบังตา', brand: 'MTONG', laborKey: 'ระแนง', ranaeDisc: true,
     // พื้นที่คิดค่าแรง = ขนาดที่ปัดตาม LUT ในไฟล์ (ชีต "คิดทุน ระแนง" E2/H12/H15) — เจ้าของเคาะ 16 ก.ย.69 "ราคาใช้ตามไฟล์"
-    areaExpr: "(function(){var L=[50,60,75,100,120,150,200,300,600];var lo=function(v){var r=L[0];for(var i=0;i<L.length;i++){if(L[i]<=v)r=L[i];}return r;};var up=function(v){for(var i=0;i<L.length;i++){if(L[i]>v)return L[i];}return 99999;};var f=function(v){var a=lo(v);return (v===a)?a:up(a);};var w=W*100,h=H*100;return ((form==='นอน'?f(w):w)/100)*((form==='ตั้ง'?f(h):h)/100);})()",
+    areaExpr: "(function(){var L=[50,60,75,100,120,150,200,300,600];var lo=function(v){var r=L[0];for(var i=0;i<L.length;i++){if(L[i]<=v)r=L[i];}return r;};var up=function(v){for(var i=0;i<L.length;i++){if(L[i]>v)return L[i];}return 99999;};var f=function(v){var a=lo(v);return (v===a)?a:up(a);};var cm=function(v){return Math.round(v*100*1e6)/1e6;};var w=cm(W),h=cm(H);return ((form==='นอน'?f(w):w)/100)*((form==='ตั้ง'?f(h):h)/100);})()",
     showColor: true, outdoor: true,   // งานนอก → ตัดสีชุบ (label-only · ทุนใบระแนงไม่ผูกสี → พิมพ์ลงใบเฉยๆ)
     icon: '🪵', defForm: 'นอน', forms: ['นอน', 'ตั้ง'],
     defaults: { w: 200, h: 240, p: 1 }, defGlass: null, minP: 1, maxP: 1,
@@ -1312,7 +1312,7 @@ export const PRODUCTS = {
   gate: {
     id: 'gate', packBars: true, group: 2, name: 'ประตูรั้วบานเลื่อน', brand: 'MTONG', laborKey: 'ประตูรั้ว',
     // พื้นที่คิดค่าแรง = ขนาดที่ปัดตาม LUT ในไฟล์ (ชีต "คิดทุน ประตูรั้ว" X2/H4/H7) — เจ้าของเคาะ 16 ก.ย.69 "ราคาใช้ตามไฟล์"
-    areaExpr: "(function(){var L=[50,60,75,100,120,150,200,300,600];var lo=function(v){var r=L[0];for(var i=0;i<L.length;i++){if(L[i]<=v)r=L[i];}return r;};var up=function(v){for(var i=0;i<L.length;i++){if(L[i]>v)return L[i];}return 99999;};var f=function(v){var a=lo(v),b=up(a);return (v-a<=20)?a:((b-v<=20)?b:v);};var w=W*100,h=H*100;return ((form==='นอน'?f(w):w)/100)*((form==='ตั้ง'?f(h):h)/100);})()",
+    areaExpr: "(function(){var L=[50,60,75,100,120,150,200,300,600];var lo=function(v){var r=L[0];for(var i=0;i<L.length;i++){if(L[i]<=v)r=L[i];}return r;};var up=function(v){for(var i=0;i<L.length;i++){if(L[i]>v)return L[i];}return 99999;};var f=function(v){var a=lo(v),b=up(a);return (v-a<=20)?a:((b-v<=20)?b:v);};var cm=function(v){return Math.round(v*100*1e6)/1e6;};var w=cm(W),h=cm(H);return ((form==='นอน'?f(w):w)/100)*((form==='ตั้ง'?f(h):h)/100);})()",
     showColor: true, outdoor: true,   // งานนอก → ตัดสีชุบ (ชุดเดียวกับระแนง · label-only)
     icon: '🚧', defForm: 'ตั้ง', forms: ['ตั้ง', 'นอน'],   // = แนวระแนง ในไฟล์
     materialLabel: 'กล่องใบระแนง (A)',
@@ -1407,7 +1407,7 @@ export const PRODUCTS = {
     // ค่าแรง: ชีต "คิดทุน ระแนงสลับ" B13/B14 เปิดชื่อว่า VLOOKUP("ระแนงสลับ") ไม่ใช่ "ระแนง" (แก้ 4 ก.ย.69 ตอนไล่ตรวจค่าแรงทุกรุ่น)
     id: 'louver_slip', group: 2, name: 'ระแนงสลับ (คละกล่อง 2 แบบ)', brand: 'MTONG', laborKey: 'ระแนงสลับ', ranaeDisc: true,
     // พื้นที่คิดค่าแรง = ขนาดที่ปัดตาม LUT ในไฟล์ (ชีต "คิดทุน ระแนงสลับ" E2/H4) — เจ้าของเคาะ 16 ก.ย.69 "ราคาใช้ตามไฟล์"
-    areaExpr: "(function(){var L=[50,60,75,100,120,150,200,300,600];var lo=function(v){var r=L[0];for(var i=0;i<L.length;i++){if(L[i]<=v)r=L[i];}return r;};var up=function(v){for(var i=0;i<L.length;i++){if(L[i]>v)return L[i];}return 99999;};var f=function(v){var a=lo(v);return (v===a)?a:up(a);};return W*(f(H*100)/100);})()",
+    areaExpr: "(function(){var L=[50,60,75,100,120,150,200,300,600];var lo=function(v){var r=L[0];for(var i=0;i<L.length;i++){if(L[i]<=v)r=L[i];}return r;};var up=function(v){for(var i=0;i<L.length;i++){if(L[i]>v)return L[i];}return 99999;};var f=function(v){var a=lo(v);return (v===a)?a:up(a);};return W*(f(Math.round(H*100*1e6)/1e6)/100);})()",
     showColor: true, outdoor: true,   // งานนอก → ตัดสีชุบ (label-only)
     icon: '🪵', defForm: 'นอน', forms: ['นอน'], stockLen: 6.0,
     defaults: { w: 400, h: 200, p: 1 }, defGlass: null, minP: 1, maxP: 1,

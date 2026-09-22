@@ -204,6 +204,21 @@ console.log("\n═══ ⑦ ช่องระแนงสลับ ต้อ�
   ok("ใบเสนอไม่พิมพ์ช่อง [สลับ] ตอนไม่ใช่ระแนงสลับ", cl.includes('if (isAlt && spec.gslat !== "ระแนงสลับ") return;'));
   ok("ใบเสนอไม่พิมพ์ป้าย [สลับ] ให้ลูกค้าเห็น", cl.includes('replace(/^\\[สลับ\\]\\s*/, "")'));
 }
+{
+  // ⑩ พื้นที่คิดค่าแรง = ขนาดที่ปัดตามกฎชีต (ห่างมาตรฐานไม่เกิน 20 ซม. → ใช้ขนาดมาตรฐาน)
+  //    เคย์ 220 ซม. เคยพลาดเพราะ 2.2×100 = 220.00000000000003 ทำให้กฎ "ไม่เกิน 20" ไม่ทำงาน (แก้ 22 ก.ย.69)
+  const areaOf = (w, h) => computeCost(PB, PRODUCTS.gate, { w, h, p: 1, form: "ตั้ง", material: "1.6x4",
+    spec: { gslat: "ระแนง", rnFace: "10.16", rnGap: "2" }, color: "white", colorKey: "white" }).laborCalc.area;
+  ok("⑩ สูง 220 → คิดค่าแรงที่ 200 (ห่าง 20 พอดี)", areaOf(600, 220) === 12, String(areaOf(600, 220)));
+  ok("⑩ สูง 180 → คิดค่าแรงที่ 200", areaOf(300, 180) === 6, String(areaOf(300, 180)));
+  ok("⑩ สูง 250 → ไม่ปัด (ห่างเกิน 20 ทั้งสองทาง)", areaOf(400, 250) === 10, String(areaOf(400, 250)));
+  ok("⑩ ค่าแรงประตูรั้ว 600×220 ตรงตาราง R4.1 (3,145 / 11,918)", (() => {
+    const c = computeCost(PB, PRODUCTS.gate, { w: 600, h: 220, p: 1, form: "ตั้ง", material: "1.6x4",
+      spec: { gslat: "ระแนง", rnFace: "10.16", rnGap: "2" }, color: "white", colorKey: "white" });
+    return Math.round(c.labor.prod) === 3145 && Math.round(c.labor.install) === 11918;
+  })());
+}
+
 
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);
