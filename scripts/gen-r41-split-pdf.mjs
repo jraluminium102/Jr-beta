@@ -26,6 +26,14 @@ const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
 /** กำไร % แบบที่เจ้าของใช้: ขาย 160 จากทุน 100 = 60% */
 const gain = (cost, sell) => (cost > 0 && sell > 0 ? Math.round(((sell / cost) - 1) * 100) : null);
 const gp = (v) => (v == null ? "—" : v + "%");
+const OVERHEAD = 30;                       // ค่าดำเนินการ % ตามหัวไฟล์ R4.1
+/** กำไรขั้นต้นของก้อน = (ขาย − ทุน) ÷ ขาย × 100 — เลขชุด "ของ/ผลิต/ติดตั้ง 63/65/62%" ในไฟล์ */
+const gross = (cost, sell) => (sell > 0 && cost > 0 ? Math.round((1 - cost / sell) * 1000) / 10 : null);
+/** กำไรสุทธิ = 100/(100+ค่าดำเนินการ) − ทุน/ขาย — ตรวจแล้วตรงกับ "กำไรสุทธิ 40%" ของ SMS ในไฟล์ */
+const net = (cost, sell) => (sell > 0 && cost > 0 ? Math.round((100 / (100 + OVERHEAD) - cost / sell) * 1000) / 10 : null);
+/** ส่วนต่างเป็น "จุด %" */
+const dPt = (a, b) => (a == null || b == null ? null : Math.round((b - a) * 10) / 10);
+const dTxt = (d) => (d == null ? "" : ` <b class="${Math.abs(d) <= 2 ? "z" : d > 0 ? "dn" : "up"}">(${d > 0 ? "+" : ""}${d} จุด)</b>`);
 /** ช่องส่วนต่าง: +เว็บแพงกว่า (แดง) · −เว็บถูกกว่า (เขียว) · ใกล้เคียง (เทา) */
 const diff = (web, tab) => {
   if (!(tab > 0)) return { txt: "—", cls: "z" };
@@ -52,6 +60,13 @@ for (const r of rows) {
   byProd.set(r.id, e);
 }
 const blocks = [...byProd.values()].map((b) => {
+  const S = (src, k) => b.lines.reduce((s, l) => s + (l[src][k] || 0), 0);
+  b.m = {
+    tab: { mat: gross(S("tab", "cM"), S("tab", "sM")), prod: gross(S("tab", "cP"), S("tab", "sP")),
+           inst: gross(S("tab", "cI"), S("tab", "sI")), net: net(S("tab", "cT"), S("tab", "sT")) },
+    web: { mat: gross(S("web", "cM"), S("web", "sM")), prod: gross(S("web", "cP"), S("web", "sP")),
+           inst: gross(S("web", "cI"), S("web", "sI")), net: net(S("web", "cT"), S("web", "sT")) },
+  };
   b.off = b.lines.filter((l) => l.dp != null && Math.abs(l.dp) > 5).length;
   return b;
 }).sort((a, b) => (b.off - a.off) || (b.lines.length - a.lines.length));
@@ -72,10 +87,14 @@ const headRow = (kind) => `<thead>
     <th class="g1" colspan="3">ค่าของ (วัสดุ)</th><th class="g2" colspan="3">ค่าผลิต</th><th class="g3" colspan="3">ค่าติดตั้ง</th><th class="g4" colspan="3">รวมทั้งชุด</th>
     ${kind === "sell" ? '<th class="g4" rowspan="2">กำไร<br>ตาราง → เว็บ</th><th class="chk" rowspan="2">✓</th>' : ""}</tr>
   <tr class="h2">${["g1", "g2", "g3", "g4"].map((g) => `<th class="${g}">ตาราง</th><th class="${g}">เว็บ</th><th class="${g}">ต่าง</th>`).join("")}</tr></thead>`;
-const tbl = (b, kind) => `<div class="ttl ${kind}">${kind === "cost" ? "ทุน (บาท)" : "ราคาขาย (บาท)"}</div>
+const tbl = (b, kind) => `<div class="ttl ${kind}">${kind === "cost" ? "① ทุน — เงินที่เราจ่ายจริง (ยังไม่บวกกำไร)" : "② ราคาขาย — เงินที่ลูกค้าจ่าย (บวกกำไรแล้ว)"}</div>
 <table>${headRow(kind)}${b.lines.map((l) => row(l, kind)).join("")}</table>`;
 const card = (b) => `<div class="card">
   <div class="hd"><b>${esc(b.name)}</b><span>${esc(b.id)} · ${b.lines.length} ขนาด${b.off ? ` · <u class="up">ขายรวมต่างเกิน 5% : ${b.off} ขนาด</u>` : ` · <span class="dn">ตรงทุกขนาด</span>`}</span></div>
+  <div class="mg">
+    <div><span class="tag t1">ตาราง R4.1</span> กำไรสุทธิ <b>${gp(b.m.tab.net)}</b> · ของ/ผลิต/ติดตั้ง <b>${gp(b.m.tab.mat)} / ${gp(b.m.tab.prod)} / ${gp(b.m.tab.inst)}</b></div>
+    <div><span class="tag t2">เว็บตอนนี้</span> กำไรสุทธิ <b>${gp(b.m.web.net)}</b>${dTxt(dPt(b.m.tab.net, b.m.web.net))} · ของ/ผลิต/ติดตั้ง <b>${gp(b.m.web.mat)}</b>${dTxt(dPt(b.m.tab.mat, b.m.web.mat))} / <b>${gp(b.m.web.prod)}</b>${dTxt(dPt(b.m.tab.prod, b.m.web.prod))} / <b>${gp(b.m.web.inst)}</b>${dTxt(dPt(b.m.tab.inst, b.m.web.inst))}</div>
+  </div>
   ${tbl(b, "cost")}
   ${tbl(b, "sell")}
 </div>`;
@@ -118,9 +137,13 @@ const html = `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>
   .z  { color:#777; }
   .chk { width:8mm; text-align:center; }
   .chk i { display:inline-block; width:4.5mm; height:4.5mm; border:1pt solid #666; border-radius:0.6mm; background:#fff; }
-  .ttl { font-size:10pt; font-weight:700; margin:1.5mm 0 0.8mm; padding:0.6mm 1.5mm; border-radius:1mm; display:inline-block; }
-  .ttl.cost { background:#e8e8e8; }
-  .ttl.sell { background:#fff2c9; }
+  .ttl { font-size:10.5pt; font-weight:700; margin:2mm 0 1mm; padding:1mm 2mm; border-radius:1mm; display:block; }
+  .ttl.cost { background:#3c4043; color:#fff; }
+  .ttl.sell { background:#b06000; color:#fff; }
+  .mg { font-size:10pt; line-height:1.7; background:#fafafa; border:0.8pt solid #ccc; border-radius:1mm; padding:1.2mm 2mm; margin-bottom:0.5mm; }
+  .tag { display:inline-block; min-width:22mm; text-align:center; font-size:8.5pt; font-weight:700; padding:0.3mm 1.5mm; border-radius:1mm; margin-right:1.5mm; }
+  .tag.t1 { background:#ded3f3; }
+  .tag.t2 { background:#cfe0f7; }
   .note { font-size:9pt; color:#333; margin-top:2mm; border-top:1pt solid #666; padding-top:1.5mm; line-height:1.6; }
   .key { display:inline-block; padding:0.4mm 1.5mm; border-radius:1mm; margin-right:1mm; }
 </style></head><body>
@@ -128,18 +151,18 @@ const html = `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>
 <div class="sub">${nAll} ขนาด · ${blocks.length} รุ่น · สีขาว ไม่มีของเสริม · ต่างเกิน 5% = ${nOff} ขนาด · ออกเมื่อ ${new Date().toLocaleDateString("th-TH")}</div>
 <div class="card sum">
   <div class="hd"><b>สรุปต่อรุ่น</b><span>ดูก่อนว่าต้องเปิดหน้าไหน · เรียงรุ่นที่ต่างเยอะขึ้นก่อน</span></div>
-  <table><thead><tr class="h1"><th class="l">รุ่น</th><th>ขนาด</th><th class="g1">ทุนค่าของ<br>เว็บ − ตาราง</th><th class="g2">ทุนค่าผลิต<br>เว็บ − ตาราง</th><th class="g3">ทุนค่าติดตั้ง<br>เว็บ − ตาราง</th><th class="g4">ขายรวม<br>เว็บ − ตาราง</th><th class="g4">ขายรวมต่าง<br>เกิน 5%</th></tr></thead>
+  <table><thead><tr class="h1"><th class="l">รุ่น</th><th>ขนาด</th><th class="g1">ทุนค่าของ<br>เว็บ − ตาราง</th><th class="g2">ทุนค่าผลิต<br>เว็บ − ตาราง</th><th class="g3">ทุนค่าติดตั้ง<br>เว็บ − ตาราง</th><th class="g4">ขายรวม<br>เว็บ − ตาราง</th><th class="g4">กำไรสุทธิ<br>ตาราง → เว็บ</th><th class="g4">ขายรวมต่าง<br>เกิน 5%</th></tr></thead>
   ${blocks.map((b) => {
     const avg = (k) => { const v = b.lines.filter((l) => (l.tab[k] || 0) > 0).map((l) => ((l.web[k] || 0) - l.tab[k]) / l.tab[k] * 100); return v.length ? Math.round(v.reduce((a, c) => a + c, 0) / v.length * 10) / 10 : null; };
     const cell = (v, g) => `<td class="${g} ${v == null ? "z" : Math.abs(v) <= 2 ? "z" : v > 0 ? "up" : "dn"}">${v == null ? "—" : (v > 0 ? "+" : "") + v + "%"}</td>`;
-    return `<tr><td class="l sz">${esc(b.name)}<span class="sm"> · ${esc(b.id)}</span></td><td>${b.lines.length}</td>${cell(avg("cM"), "g1")}${cell(avg("cP"), "g2")}${cell(avg("cI"), "g3")}${cell(avg("sT"), "g4")}<td class="g4 ${b.off ? "up" : "z"}">${b.off || "—"}</td></tr>`;
+    return `<tr><td class="l sz">${esc(b.name)}<span class="sm"> · ${esc(b.id)}</span></td><td>${b.lines.length}</td>${cell(avg("cM"), "g1")}${cell(avg("cP"), "g2")}${cell(avg("cI"), "g3")}${cell(avg("sT"), "g4")}<td class="g4">${gp(b.m.tab.net)} → <b class="${(() => { const d = dPt(b.m.tab.net, b.m.web.net); return d == null || Math.abs(d) <= 2 ? "z" : d > 0 ? "dn" : "up"; })()}">${gp(b.m.web.net)}</b></td><td class="g4 ${b.off ? "up" : "z"}">${b.off || "—"}</td></tr>`;
   }).join("")}</table>
 </div>
 ${blocks.map(card).join("")}
 <div class="note">
 <span class="key g1">ค่าของ</span><span class="key g2">ค่าผลิต</span><span class="key g3">ค่าติดตั้ง</span><span class="key g4">รวมทั้งชุด</span>
 &nbsp;·&nbsp; ช่อง <b>ต่าง</b> = ขายเว็บ − ขายตาราง : <span class="up">แดง = เว็บแพงกว่า</span> &nbsp; <span class="dn">เขียว = เว็บถูกกว่า</span> &nbsp; <span class="z">เทา = ต่างไม่ถึง 2%</span><br>
-<b>กำไร ตาราง→เว็บ</b> = (ขาย ÷ ทุน − 1) × 100 — ทุน 100 ขาย 160 คือ <b>60%</b> (ไม่ใช่ 160%) · ตัวหลังลูกศรคือของเว็บ <span class="up">แดง = ต่างจากตารางเกิน 3 จุด%</span>
+<b>กำไรสุทธิ</b> = 100 ÷ (100 + ค่าดำเนินการ 30) − ทุน ÷ ขาย · <b>ของ/ผลิต/ติดตั้ง</b> = กำไรขั้นต้นของก้อนนั้น = (ขาย − ทุน) ÷ ขาย — ชุดเลขเดียวกับที่ไฟล์ R4.1 เขียนไว้หัวรุ่น (เช่น SMS 40% · 63/65/62%)<br><b>(+n จุด)</b> = เว็บกำไรมากกว่าตาราง n จุด% · <span class="up">แดง = เว็บกำไรน้อยกว่า</span><br><b>กำไร ตาราง→เว็บ</b> = (ขาย ÷ ทุน − 1) × 100 — ทุน 100 ขาย 160 คือ <b>60%</b> (ไม่ใช่ 160%) · ตัวหลังลูกศรคือของเว็บ <span class="up">แดง = ต่างจากตารางเกิน 3 จุด%</span>
 </div>
 </body></html>`;
 
