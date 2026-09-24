@@ -73,12 +73,14 @@ export async function buildScheduleRows(sb: Sb): Promise<ScheduleRow[]> {
 
   let setsByJob: Record<string, ScheduleSet[]> = {};
   if (jobIds.length) {
-    const { data: sets } = await sb
-      .from("production_sets")
-      .select(SET_COLS)
-      .in("job_id", jobIds)
-      .order("seq", { ascending: true })
-      .order("id", { ascending: true });
+    // ★ ดึง glass_items ด้วย (0154 · กระจกหลายแผ่น) แบบกันพัง: ถ้าคอลัมน์ยังไม่มี (migration ไม่รัน) → ถอยไป SET_COLS เดิม
+    //   (ห้ามให้ board ทั้งหน้าว่างเพราะ select คอลัมน์ที่ยังไม่มี)
+    let sets = (await sb.from("production_sets").select(SET_COLS + ", glass_items")
+      .in("job_id", jobIds).order("seq", { ascending: true }).order("id", { ascending: true })).data;
+    if (!sets) {
+      sets = (await sb.from("production_sets").select(SET_COLS)
+        .in("job_id", jobIds).order("seq", { ascending: true }).order("id", { ascending: true })).data;
+    }
     setsByJob = (sets ?? []).reduce((acc: Record<string, ScheduleSet[]>, s: Record<string, unknown>) => {
       (acc[s.job_id as string] ??= []).push(s);
       return acc;

@@ -65,36 +65,64 @@ function F({ label, children, onEditOpts }: { label: string; children: React.Rea
   );
 }
 
-// สเปคกระจกหลายแบบต่อชุด (เจ้าของสั่ง 21 ก.ย.69) — หลายช่อง เก็บรวมในคอลัมน์ glass_spec เดิม (คั่นบรรทัด · ไม่ต้อง migration)
-//   ⚠ ไม่ครอบ <label> (F) เพราะมีหลาย input + ปุ่ม → เรียกป้ายเองข้างนอก
-function GlassSpecMulti({ value, disabled, listId, onSave }: {
-  value: string; disabled: boolean; listId: string; onSave: (joined: string) => void;
+// กระจกหลายแผ่นต่อชุด (เจ้าของสั่ง 24 ก.ย.69) — แต่ละแผ่นมี สเปค + สั่งกระจก + ใส่กระจก แยกกัน
+//   เก็บใน glass_items (jsonb · 0154) · API คิด roll-up กลับ glass_spec/glass_installed ให้เอง (เฟส/ช่างไม่พัง)
+//   ⚠ ไม่ครอบ <label> (F) เพราะมีหลาย control → เรียกป้ายเองข้างนอก
+type GlassItem = { spec: string; order: string; installed: string };
+function GlassItemsEditor({ seed, disabled, listId, orderOpts, installedOpts, onSave }: {
+  seed: GlassItem[]; disabled: boolean; listId: string; orderOpts: string[]; installedOpts: string[];
+  onSave: (items: GlassItem[]) => void;
 }) {
-  const [lines, setLines] = useState<string[]>(() => {
-    const arr = String(value ?? "").split("\n");
-    return arr.length ? arr : [""];
-  });
-  const commit = (arr: string[]) => {
-    const joined = arr.map((x) => x.trim()).filter(Boolean).join("\n");
-    if (joined !== String(value ?? "")) onSave(joined);
-  };
+  const [items, setItems] = useState<GlassItem[]>(seed.length ? seed : [{ spec: "", order: "", installed: "" }]);
+  const commit = (next: GlassItem[]) =>
+    onSave(next.filter((i) => i.spec.trim() || i.order.trim() || i.installed.trim()));
+  const patchAt = (i: number, patch: Partial<GlassItem>, doSave: boolean) =>
+    setItems((prev) => {
+      const next = prev.map((x, idx) => (idx === i ? { ...x, ...patch } : x));
+      if (doSave) commit(next);
+      return next;
+    });
+  const removeAt = (i: number) =>
+    setItems((prev) => {
+      const next = prev.filter((_, idx) => idx !== i);
+      const n = next.length ? next : [{ spec: "", order: "", installed: "" }];
+      commit(n);
+      return n;
+    });
   return (
-    <div className="space-y-1.5">
-      {lines.map((ln, i) => (
-        <div key={i} className="flex items-center gap-1.5">
-          <input list={listId} value={ln} disabled={disabled} placeholder="พิมพ์ / เลือกจากประวัติ"
-            onChange={(e) => setLines((p) => p.map((x, idx) => (idx === i ? e.target.value : x)))}
-            onBlur={() => commit(lines)}
-            className={fieldCls + " placeholder-white/35"} />
-          {!disabled && lines.length > 1 && (
-            <button type="button" aria-label="ลบกระจกแบบนี้"
-              onClick={() => { const next = lines.filter((_, idx) => idx !== i); const n = next.length ? next : [""]; setLines(n); commit(n); }}
-              className="shrink-0 w-9 h-9 inline-flex items-center justify-center rounded-lg text-white/45 hover:text-red-300 hover:bg-white/5">✕</button>
-          )}
+    <div className="space-y-2">
+      {items.map((it, i) => (
+        <div key={i} className="rounded-xl border border-white/12 bg-white/[0.03] p-2.5">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <span className="text-[11px] font-medium text-white/45">กระจกแผ่นที่ {i + 1}</span>
+            {!disabled && items.length > 1 && (
+              <button type="button" onClick={() => removeAt(i)}
+                className="ml-auto text-[12px] text-white/45 hover:text-red-300">✕ ลบแผ่นนี้</button>
+            )}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div>
+              <div className="text-[11px] text-white/50 mb-1">สเปคกระจก</div>
+              <input list={listId} value={it.spec} disabled={disabled} placeholder="พิมพ์ / เลือกประวัติ"
+                onChange={(e) => patchAt(i, { spec: e.target.value }, false)}
+                onBlur={() => commit(items)}
+                className={fieldCls + " placeholder-white/35"} />
+            </div>
+            <div>
+              <div className="text-[11px] text-white/50 mb-1">สั่งกระจก</div>
+              <SelectField value={it.order} disabled={disabled} options={orderOpts}
+                onChange={(v) => patchAt(i, { order: v }, true)} />
+            </div>
+            <div>
+              <div className="text-[11px] text-white/50 mb-1">ใส่กระจก</div>
+              <SelectField value={it.installed} disabled={disabled} options={installedOpts}
+                onChange={(v) => patchAt(i, { installed: v }, true)} />
+            </div>
+          </div>
         </div>
       ))}
       {!disabled && (
-        <button type="button" onClick={() => setLines((p) => [...p, ""])}
+        <button type="button" onClick={() => setItems((p) => [...p, { spec: "", order: "", installed: "" }])}
           className="text-[13px] font-medium text-sky-300 hover:text-sky-200">+ เพิ่มกระจกอีกแบบ</button>
       )}
     </div>
@@ -274,10 +302,21 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
   const sel = (s: SetRow, f: string, opts: string[]) => (
     <SelectField value={s[f] ?? ""} disabled={!canWrite} onChange={(v) => save(s.id, f, v)} options={withCurrent(opts, s[f])} />
   );
-  // สเปคกระจก — หลายแบบต่อชุดได้ (พิมพ์เอง/เลือกจากประวัติ datalist) · เก็บรวมคั่นบรรทัดในคอลัมน์เดิม
-  const glassSpec = (s: SetRow) => (
-    <GlassSpecMulti key={s.id} value={String(s.glass_spec ?? "")} disabled={!canWrite}
-      listId="glass-spec-history" onSave={(joined) => save(s.id, "glass_spec", joined)} />
+  // กระจกหลายแผ่นต่อชุด — seed จาก glass_items (0154) หรือคอลัมน์เดิม (ชุดก่อนรัน migration)
+  const glassSeed = (s: SetRow): GlassItem[] => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const gi = Array.isArray(s.glass_items) ? (s.glass_items as any[]) : [];
+    if (gi.length) return gi.map((x) => ({ spec: String(x?.spec ?? ""), order: String(x?.order ?? ""), installed: String(x?.installed ?? "") }));
+    const specs = String(s.glass_spec ?? "").split("\n").map((x) => x.trim()).filter(Boolean);
+    if (specs.length) return specs.map((sp) => ({ spec: sp, order: String(s.glass_order ?? ""), installed: String(s.glass_installed ?? "") }));
+    return [];
+  };
+  const glassEditor = (s: SetRow) => (
+    // key ผูกจำนวนแผ่นจาก server → ถ้ามีคนอื่นเพิ่ม/ลบแผ่นระหว่างแก้ จะ remount ดึงของใหม่ (กันแผ่นที่เพิ่มหาย)
+    //   แต่ไม่ remount ตอนแก้สเปค/สั่ง/ใส่ (จำนวนเท่าเดิม) → local state คงอยู่ ไม่หลุด focus
+    <GlassItemsEditor key={`${s.id}:${Array.isArray(s.glass_items) ? s.glass_items.length : 0}`} seed={glassSeed(s)} disabled={!canWrite} listId="glass-spec-history"
+      orderOpts={valuesOf("glass_order")} installedOpts={valuesOf("glass_installed")}
+      onSave={(items) => save(s.id, "glass_items", items)} />
   );
 
   // ช่องที่ "ช่างกดเอง" — โชว์ read-only + ใครกด/เมื่อไหร่ · กด "แก้" เพื่อ override (กันเขียนทับช่างโดยไม่ตั้งใจ)
@@ -488,17 +527,18 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
                 </Group>
 
                 <Group title="กระจก">
-                  <div className="sm:col-span-2">
+                  <div className="sm:col-span-2 lg:col-span-3">
                     <div className="block">
-                      <span className="flex items-center gap-1 text-[13px] font-medium mb-1.5" style={{ color: "var(--t-mid)" }}>
-                        <span className="truncate">สเปคกระจก</span>
-                        <span className="text-[11px] font-normal text-white/40">(หลายแบบได้)</span>
+                      <span className="flex items-center gap-2 text-[13px] font-medium mb-1.5" style={{ color: "var(--t-mid)" }}>
+                        <span className="truncate">กระจก — ใส่ได้หลายแผ่น (สเปค · สั่งกระจก · ใส่กระจก แยกกัน)</span>
+                        {canWrite && optsMigrated && (
+                          <button type="button" onClick={() => setOptField({ key: "glass_order", label: "สั่งกระจก" })}
+                            title="เพิ่ม/ลบตัวเลือก สั่งกระจก" className="shrink-0 text-white/45 hover:text-sky-300 text-[11px]">⚙ ตัวเลือกสั่งกระจก</button>
+                        )}
                       </span>
-                      {glassSpec(s)}
+                      {glassEditor(s)}
                     </div>
                   </div>
-                  <F label="สั่งกระจก" onEditOpts={openOpts("glass_order", "สั่งกระจก")}>{sel(s, "glass_order", valuesOf("glass_order"))}</F>
-                  <F label="ใส่กระจก 👷 (ช่างกด)" onEditOpts={openOpts("glass_installed", "ใส่กระจก")}>{markRO(s, "glass_installed", "glass_installed_by", "glass_installed_at", valuesOf("glass_installed"))}</F>
                 </Group>
 
                 <Group title="มุ้ง & QC หลังใส่กระจก">
