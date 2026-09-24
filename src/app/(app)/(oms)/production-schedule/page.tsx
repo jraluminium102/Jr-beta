@@ -237,10 +237,20 @@ export default function ProductionSchedulePage() {
   const overdueRows = useMemo(() => {
     const t = today();
     return viewRows
-      .filter((r) => r.kind === "job" && !!r.due_date && r.due_date < t && derivePhase(r) !== "พร้อม")
+      .filter((r) => {
+        if (r.kind !== "job" || r.status === "READY") return false;
+        // แยกโรง (0114 · เจ้าของสั่ง 24 ก.ย.69): เลือกโรง → เตือนจากชุด "ในโรงนั้น" ที่เลยวันกำหนดเสร็จของชุด แล้วยังผลิตไม่เสร็จ
+        //   (โรง3 เสร็จ/โรง1 ไม่ทัน → แท็บโรง1 เตือน แท็บโรง3 ไม่เตือน) · ทั้งหมด = ใช้วันรวมงานเดิม
+        if (factoryFilter) {
+          const act = (r.sets ?? []).filter((s) => !s.hold);
+          const gauge = act.length ? act : (r.sets ?? []);
+          return gauge.some((s) => s.must_finish_date && s.must_finish_date < t && !setIsDone(s));
+        }
+        return !!r.due_date && r.due_date < t && derivePhase(r) !== "พร้อม";
+      })
       .slice()
       .sort((a, b) => (a.due_date ?? "").localeCompare(b.due_date ?? ""));
-  }, [viewRows]);
+  }, [viewRows, factoryFilter]);
 
   const v = (r: SchedRow, k: keyof SchedRow) => (draft[r.id]?.[k] ?? r[k] ?? "") as string;
 
