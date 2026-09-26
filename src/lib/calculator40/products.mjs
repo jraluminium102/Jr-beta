@@ -1979,30 +1979,37 @@ export const PRODUCTS = {
     // ช่องกรอกตามชีตถอดทุน "คิดทุน หลังคาเลื่อน" — เดิมตรึงส่วนเลื่อน 150×150 ซม. ตายตัว (ชีต B7/C7 เป็นช่องกรอก)
     //   ⚠ ไม่มีไฟล์ตัดประกอบสำหรับหลังคาเลื่อน (เจ้าของยืนยัน 27 ส.ค.69) → ชีตถอดทุนคือแหล่งความจริงเดียว
     specOpts: [
-      { key: 'slidew', label: 'ส่วนเลื่อน กว้าง/บาน (ซม.)', type: 'number', def: '150', step: 10, placeholder: '150' },
-      { key: 'slideh', label: 'ส่วนเลื่อน ยื่น/บาน (ซม.)', type: 'number', def: '150', step: 10, placeholder: '150' },
+      { key: 'fixw', label: 'ส่วนติดตาย (ซม.) — 0 = ผืนเลื่อนล้วน', type: 'number', def: '0', step: 10, placeholder: '0' },
       { key: 'batten', label: 'แป', opts: ['แปเดี่ยว', 'แปคู่'], def: 'แปเดี่ยว' },
     ],
     laborKey: 'หลังคาเลื่อน',
     areaExpr: 'fArea + sArea*P',   // ค่าแรงคิดจากพื้นที่ ติดตาย + เลื่อน×บาน (ชีต D14/D15)
     vars: {
-      SW: 'Number(spec.slidew)>0?Number(spec.slidew):150',
-      SH: 'Number(spec.slideh)>0?Number(spec.slideh):150',
       Wcm: 'W*100',
       Hcm: 'H*100',
+      // ⚠ นิยามจากเจ้าของ 26 ก.ย.69: "หลังคาเลื่อน 400×200 · 2 บาน = แผ่นเลื่อนกว้าง 200 ซม. 2 แผ่น
+      //   ไม่มีฟิก ใต้บานเลื่อนโล่ง" → กว้าง×ยื่นที่กรอก = ผืนรวม แบ่งเป็นบานเลื่อนเท่า ๆ กัน P บาน
+      //   ส่วนติดตายมีเฉพาะตอนกรอก fixw (วัดตามแนวที่เลื่อน) · ของเดิมคิด ติดตาย=ผืนเต็ม + บานเลื่อนซ้อนอีกชั้น
+      FIX: "Math.max(0, Math.min(Number(spec.fixw)>0?Number(spec.fixw):0, (form==='เลื่อนยื่น'?Hcm:Wcm)-1))",
+      FW: "form==='เลื่อนยื่น'?(FIX>0?Wcm:0):FIX",                                   // กว้างส่วนติดตาย
+      FH: "form==='เลื่อนยื่น'?FIX:(FIX>0?Hcm:0)",                                   // ยื่นส่วนติดตาย
+      STW: "form==='เลื่อนยื่น'?Wcm:(Wcm-FIX)",                                      // กว้างรวมของส่วนเลื่อน
+      STH: "form==='เลื่อนยื่น'?(Hcm-FIX):Hcm",                                      // ยื่นรวมของส่วนเลื่อน
+      SW: "form==='เลื่อนยื่น'?STW:STW/P",                                           // กว้าง/บาน (ชีต H17)
+      SH: "form==='เลื่อนยื่น'?STH/P:STH",                                           // ยื่น/บาน (ชีต H18)
       E1: "material==='โพลีตัน'?122:(material&&material.indexOf('ชินโคร์')>=0?138:100)",   // จันทันห่างตามวัสดุ (ชีต H1/J1)
-      H6: 'Hcm<=300?3:(Hcm<=400?4:(Hcm<=500?5:6))',                                        // จำนวนแผ่นชินโคร์ ส่วนติดตาย (ชีต H6)
+      H6: 'FH<=300?3:(FH<=400?4:(FH<=500?5:6))',                                        // จำนวนแผ่นชินโคร์ ส่วนติดตาย (ชีต H6)
       J6: 'SH<=300?3:(SH<=400?4:(SH<=500?5:6))',
       // ชินโคร์ไลท์ เลือกความยาวแผ่นคุ้มสุด (v20.1 บล็อก N) แยกส่วนติดตาย/เลื่อน
-      SCLF: "(function(){var R=Math.ceil(Wcm/138),D=Math.max(Hcm,1),PR=(material==='ชินโคร์ Prime 10มม');var best=1e15;[3,4,5,6].forEach(function(L){if(L*100<D)return;if(PR&&(L===4||L===5))return;var t=Math.max(1,Math.trunc(L*100/D));var s=Math.ceil(R/t)*1.38*L;if(s<best)best=s;});return best<1e15?best:R*1.38*Math.ceil(D/100);})()",
+      SCLF: "(function(){if(!(FW>0))return 0;var R=Math.ceil(FW/138),D=Math.max(FH,1),PR=(material==='ชินโคร์ Prime 10มม');var best=1e15;[3,4,5,6].forEach(function(L){if(L*100<D)return;if(PR&&(L===4||L===5))return;var t=Math.max(1,Math.trunc(L*100/D));var s=Math.ceil(R/t)*1.38*L;if(s<best)best=s;});return best<1e15?best:R*1.38*Math.ceil(D/100);})()",
       SCLS: "(function(){var R=Math.ceil(SW/138),D=Math.max(SH,1),PR=(material==='ชินโคร์ Prime 10มม');var best=1e15;[3,4,5,6].forEach(function(L){if(L*100<D)return;if(PR&&(L===4||L===5))return;var t=Math.max(1,Math.trunc(L*100/D));var s=Math.ceil(R/t)*1.38*L;if(s<best)best=s;});return best<1e15?best:R*1.38*Math.ceil(D/100);})()",                                            // จำนวนแผ่นชินโคร์ ส่วนเลื่อน (ชีต J6 — เดิมตรึง 3)
-      fJ: 'Math.ceil(Wcm/E1)+1',                                                            // แนวจันทัน ติดตาย (ชีต H2)
+      fJ: 'FW>0?Math.ceil(FW/E1)+1:0',                                                            // แนวจันทัน ติดตาย (ชีต H2)
       sJ: 'Math.ceil(SW/E1)+1',                                                             // แนวจันทัน เลื่อน (ชีต J2 — เดิมตรึง ⌈150/100⌉+1)
       BATP: "spec.batten==='แปคู่'?395:770",                                                // ราคาแป/เส้น (ชีต F5/F6 · เวฟ 5: แปคู่ 393 → 395 = ราคาสี!D196)
-      fArea: 'Wcm*Hcm/10000',
+      fArea: 'FW*FH/10000',
       sArea: 'SW*SH/10000',
       // ⚠ แผ่นไวนิลยาว 7 ม. — 1 แผ่นตัดได้หลายแถบตามระยะยื่น (ชีต H7/J7) ไม่ใช่ซื้อ 1 แผ่นต่อ 1 แถบ
-      fVinyl: 'Math.ceil(Math.ceil(Wcm/25)/Math.max(1,Math.trunc(700/Hcm)))',
+      fVinyl: 'FW>0?Math.ceil(Math.ceil(FW/25)/Math.max(1,Math.trunc(700/Math.max(FH,1)))):0',
       sVinyl: 'Math.ceil(Math.ceil(SW/25)/Math.max(1,Math.trunc(700/SH)))',
       railLen: "form==='เลื่อนยื่น'?SH:SW",                                                  // ชีต D12: เลื่อนยื่น=ใช้ยื่น · อื่น=ใช้กว้าง (เดิมตรึง 150 ทั้งคู่)
       CF: CF_EXPR,
@@ -2014,31 +2021,31 @@ export const PRODUCTS = {
       // kgLen = ยาวตัดจริงรวม (ม.) ใช้คิดน้ำหนักเท่านั้น ไม่กระทบราคา (ราคายังนับเป็นเส้นเหมือนเดิม)
       // เวฟ 5 (16 ก.ย.69) ยึดชีต "คิดทุน หลังคาเลื่อน" H11 — ทุกแถวคิดเป็น "Σ ยาวจริง ÷ 600 × buf_scrap 1.3" (เศษส่วน)
       //   จันทันติดตาย H11 = ((2×กว้าง + จันทัน×ยื่น) ÷ 600) × 1.3 — เดิมนับ fJ × ⌈ยื่น/600⌉ = ปัดขึ้นเต็มเส้นต่อแนว
-      { box: 'กล่อง|1.6X4', name: 'จันทัน 1.6×4 (ติดตาย)', price: 'CF*1220', unit: 'เส้น', count: '((2*Wcm + fJ*Hcm)/600)*1.3', kgLen: 'fJ*Hcm/100' },
+      { box: 'กล่อง|1.6X4', name: 'จันทัน 1.6×4 (ติดตาย)', price: 'CF*1220', unit: 'เส้น', count: '((2*FW + fJ*FH)/600)*1.3', kgLen: 'fJ*FH/100' },
       // แปเดี่ยว = กล่อง 1.6×1.6 (770) · แปคู่ = กล่อง 1×1½ (393) — คนละรหัสสโตร์ เลยกางเป็น 2 บรรทัด (ยอดรวมเท่าเดิม)
       // แป (ติดตาย) H11 = ((⌈ยื่น/50⌉+1) × (คู่?2:1) × กว้าง ÷ 600) × 1.3
-      { box: 'กล่อง|1.6X1.6', name: 'แป กล่อง (ติดตาย) — เดี่ยว', price: 'CF*770', unit: 'เส้น', count: "spec.batten==='แปคู่' ? 0 : ((Math.ceil(Hcm/50)+1)*Wcm/600)*1.3", kgLen: "spec.batten==='แปคู่' ? 0 : (Math.ceil(Hcm/50)+1)*Wcm/100" },
-      { box: 'กล่อง|1X1.5', name: 'แป กล่อง (ติดตาย) — คู่', price: 'CF*395', unit: 'เส้น', count: "spec.batten==='แปคู่' ? ((Math.ceil(Hcm/50)+1)*2*Wcm/600)*1.3 : 0", kgLen: "spec.batten==='แปคู่' ? (Math.ceil(Hcm/50)+1)*Wcm/100 : 0" },
+      { box: 'กล่อง|1.6X1.6', name: 'แป กล่อง (ติดตาย) — เดี่ยว', price: 'CF*770', unit: 'เส้น', count: "spec.batten==='แปคู่' ? 0 : ((Math.ceil(FH/50)+1)*FW/600)*1.3", kgLen: "spec.batten==='แปคู่' ? 0 : (Math.ceil(FH/50)+1)*FW/100" },
+      { box: 'กล่อง|1X1.5', name: 'แป กล่อง (ติดตาย) — คู่', price: 'CF*395', unit: 'เส้น', count: "spec.batten==='แปคู่' ? ((Math.ceil(FH/50)+1)*2*FW/600)*1.3 : 0", kgLen: "spec.batten==='แปคู่' ? (Math.ceil(FH/50)+1)*FW/100 : 0" },
       // เวฟ 5: ราคาฉาก/แซด ตามไฟล์ (ราคาสี!D201 = 158 · D202 = 616) · จำนวน = (กว้าง ÷ 600) × 1.3
-      { box: 'ฉาก|6หุน', name: 'ฉาก 6 หุน (ติดตาย)', price: 'CF*158', unit: 'เส้น', count: '(Wcm/600)*1.3', kgLen: 'Wcm/100' },
-      { box: 'ตัวZ|4', name: 'แซด 4" (ติดตาย)', price: 'CF*616', unit: 'เส้น', count: '(Wcm/600)*1.3', kgLen: 'Wcm/100' },
-      { name: 'กล่องเหล็ก 1×1 (ติดตาย)', price: 110, ref: 'STEEL.box1', unit: 'เส้น', count: 'fJ*(Hcm/600)*1.3', kgLen: 'fJ*Hcm/100' },
+      { box: 'ฉาก|6หุน', name: 'ฉาก 6 หุน (ติดตาย)', price: 'CF*158', unit: 'เส้น', count: '(FW/600)*1.3', kgLen: 'FW/100' },
+      { box: 'ตัวZ|4', name: 'แซด 4" (ติดตาย)', price: 'CF*616', unit: 'เส้น', count: '(FW/600)*1.3', kgLen: 'FW/100' },
+      { name: 'กล่องเหล็ก 1×1 (ติดตาย)', price: 110, ref: 'STEEL.box1', unit: 'เส้น', count: 'fJ*(FH/600)*1.3', kgLen: 'fJ*FH/100' },
       { name: 'เพลทเหล็ก (ติดตาย)', price: 15, ref: 'STEEL.plate', unit: 'แผ่น', count: '2*fJ' },
       // แผ่นมุงส่วนติดตาย ตามวัสดุ (ชีต H7/H8 · B6=Wcm C6=Hcm) · ไวนิล=anchor
       // ── อิง v20.1 ชีต "คิดทุน หลังคาเลื่อน" H7/H8 (ติดตาย) — 3 ก.ย.69 ──
       rmS('ไวนิล', 'แผ่นไวนิล (ติดตาย)', "material==='ไวนิล'?fVinyl:0"),
       rm('ฝาครอบไวนิล', 'ฝาครอบไวนิล (ติดตาย)', "material==='ไวนิล'?fVinyl:0"),
-      rmS('ดีไลท์', 'แผ่นดีไลท์ (ติดตาย)', "material==='ดีไลท์'?Math.ceil(Math.ceil(Wcm/100)/Math.max(1,Math.trunc(600/Hcm))):0"),
-      rmS('โพลีตัน', 'แผ่นโพลีตัน (ติดตาย)', "material==='โพลีตัน'?Math.ceil(Wcm/122)*Math.ceil(Hcm/100):0"),
-      rm('ครอบโพลีตัน', 'ตัวครอบโพลีตัน (ติดตาย)', "material==='โพลีตัน'?Math.ceil(fJ/Math.max(1,Math.trunc(600/Hcm))):0"),
+      rmS('ดีไลท์', 'แผ่นดีไลท์ (ติดตาย)', "material==='ดีไลท์'?Math.ceil(Math.ceil(FW/100)/Math.max(1,Math.trunc(600/FH))):0"),
+      rmS('โพลีตัน', 'แผ่นโพลีตัน (ติดตาย)', "material==='โพลีตัน'?Math.ceil(FW/122)*Math.ceil(FH/100):0"),
+      rm('ครอบโพลีตัน', 'ตัวครอบโพลีตัน (ติดตาย)', "material==='โพลีตัน'?Math.ceil(fJ/Math.max(1,Math.trunc(600/FH))):0"),
       rmS('ชินโคร์ HC', 'ชินโคร์ Heat Cut (ติดตาย)', "material==='ชินโคร์ HC'?SCLF:0"),
       rmS('ชินโคร์ Sup', 'ชินโคร์ Superior (ติดตาย)', "material==='ชินโคร์ Sup'?SCLF:0"),
       rmS('ชินโคร์ Shade 4มม', 'ชินโคร์ Shade 4มม (ติดตาย)', "material==='ชินโคร์ Shade 4มม'?SCLF:0"),
       rmS('ชินโคร์ Prime 10มม', 'ชินโคร์ Prime 10มม (ติดตาย)', "material==='ชินโคร์ Prime 10มม'?SCLF:0"),
-      rm('ฝาครอบชินโคร์ Prime', 'ฝาครอบชินโคร์ Prime (ติดตาย)', "material==='ชินโคร์ Prime 10มม'?Math.ceil(fJ/Math.max(1,Math.trunc(600/Hcm))):0"),
-      rmS('เมทัลชีท EPS 2 นิ้ว เหล็ก', 'แผ่นเมทัลชีท EPS 2 นิ้ว เหล็ก (ติดตาย)', "material==='เมทัลชีท EPS 2 นิ้ว เหล็ก'?Math.ceil(Wcm/34)*(0.34*Hcm/100):0"),
-      rmS('เมทัลชีท EPS 2 นิ้ว PVC', 'แผ่นเมทัลชีท EPS 2 นิ้ว PVC (ติดตาย)', "material==='เมทัลชีท EPS 2 นิ้ว PVC'?Math.ceil(Wcm/34)*(0.34*Hcm/100):0"),
-      rmS('เมทัลชีท EPS 1 นิ้ว PVC', 'แผ่นเมทัลชีท EPS 1 นิ้ว PVC (ติดตาย)', "material==='เมทัลชีท EPS 1 นิ้ว PVC'?Math.ceil(Wcm/34)*(0.34*Hcm/100):0"),
+      rm('ฝาครอบชินโคร์ Prime', 'ฝาครอบชินโคร์ Prime (ติดตาย)', "material==='ชินโคร์ Prime 10มม'?Math.ceil(fJ/Math.max(1,Math.trunc(600/FH))):0"),
+      rmS('เมทัลชีท EPS 2 นิ้ว เหล็ก', 'แผ่นเมทัลชีท EPS 2 นิ้ว เหล็ก (ติดตาย)', "material==='เมทัลชีท EPS 2 นิ้ว เหล็ก'?Math.ceil(FW/34)*(0.34*FH/100):0"),
+      rmS('เมทัลชีท EPS 2 นิ้ว PVC', 'แผ่นเมทัลชีท EPS 2 นิ้ว PVC (ติดตาย)', "material==='เมทัลชีท EPS 2 นิ้ว PVC'?Math.ceil(FW/34)*(0.34*FH/100):0"),
+      rmS('เมทัลชีท EPS 1 นิ้ว PVC', 'แผ่นเมทัลชีท EPS 1 นิ้ว PVC (ติดตาย)', "material==='เมทัลชีท EPS 1 นิ้ว PVC'?Math.ceil(FW/34)*(0.34*FH/100):0"),
       rmS('กระจก 4+4', 'กระจก 4+4 (ติดตาย)', "material==='กระจก 4+4'?fArea:0"),
       rmS('กระจก 5+5', 'กระจก 5+5 (ติดตาย)', "material==='กระจก 5+5'?fArea:0"),
       // เวฟ 5: ส่วนเลื่อน ชีต K2-K7 (ต่อ 1 บาน × จำนวนบาน) — ทุกแถวเป็นเศษส่วน ÷600 ×1.3
@@ -2085,7 +2092,7 @@ export const PRODUCTS = {
     // น้ำหนัก (ไว้ให้มอเตอร์เลือกขนาดเอง) — แผ่นมุงคิดจาก "พื้นที่ที่ปูจริง × กก./ตร.ม." (PB.ROOFMAT_KG)
     //   มอเตอร์ลากเฉพาะ "ส่วนเลื่อน" ไม่ได้ลากส่วนติดตาย → movingSheetArea/movingConsum แยกไว้
     weightSpec: { sheetArea: 'fArea + P*sArea', movingSheetArea: 'P*sArea', movingConsum: '(เลื่อน)' },
-    note: 'หลังคาเลื่อน = ติดตาย(W×H) + บานเลื่อน P บาน (ฝังขนาด 150×150ซม.) + ราง + มอเตอร์ · ค่าแรงฝังในวัสดุ (laborKey ศูนย์ กันคิดซ้ำ) · ขนาดบานเลื่อนแยก/วัสดุมุงอื่น/มอเตอร์รุ่นอื่น ยังไม่ทำ',
+    note: 'หลังคาเลื่อน = ผืนเลื่อนล้วน (กว้าง×ยื่น ที่กรอก แบ่งเป็นบานเลื่อน P บานเท่า ๆ กัน) + ราง + มอเตอร์ · ใต้บานเลื่อนโล่ง ไม่มีหลังคาตายรอง · ถ้ามีส่วนติดตายให้กรอกช่อง "ส่วนติดตาย (ซม.)" ระบบจะหักออกจากช่วงเลื่อนให้',
   },
 
   // ═══ กันสาดหลายด้าน — เส้นอลูมาจากเอนจินใบตัดตรง ๆ (alu-from-cutlist) ไม่มี BOM ซ้ำในนี้ ═══

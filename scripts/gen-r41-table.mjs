@@ -78,7 +78,7 @@ const ROOFMAT = [["EPS1นิวPVC", "เมทัลชีท EPS 1 นิ้�
   ["ไวนิล", "ไวนิล"], ["ดีไลท์", "ดีไลท์"], ["โพลีตัน", "โพลีตัน"], ["Shade", "ชินโคร์ Shade 4มม"], ["Sup", "ชินโคร์ Sup"], ["HC", "ชินโคร์ HC"],
   ["Prime", "ชินโคร์ Prime 10มม"], ["กระจก4+4", "กระจก 4+4"], ["กระจก5+5", "กระจก 5+5"]];
 const RIDGE = { "200x120": 100, "400x200": 150, "600x250": 250 };
-// หลังคาเลื่อน: ตารางให้ขนาดรวม · ข้อความใต้ขนาด = ส่วนเลื่อน 2 บาน + ส่วนติดตาย
+// หลังคาเลื่อน: ตารางให้ขนาดรวม · ข้อความใต้ขนาด = [กว้างส่วนเลื่อนรวม, กว้างส่วนติดตาย, ยื่น]
 const SLIDE = { "400x200": [270, 130, 200], "600x300": [400, 200, 300], "1000x400": [670, 330, 400] };
 const RANAE = (box, face) => ({ form: "ตั้ง", spec: { rnBox: box, rnFace: face, rnGap: "2", rnFrame: "รวมโครง" } });
 const SLIP = { boxA: "1x4", showA: "10.16", cntA: "3", boxB: "1.6x1.6", showB: "4.06", cntB: "5", rnGap: "2" };
@@ -123,7 +123,7 @@ for (const r of rows) {
     if (!m) note = "จับวัสดุหลังคาไม่ได้";
     else if (id === "roof_slide") {
       const s = SLIDE[key];
-      if (s) inputs = { w: s[1], h: s[2], p: 2, material: vk, spec: { slidew: s[0] / 2, slideh: s[2] }, addons: { slide_motor: { kw: "80" } } };
+      if (s) inputs = { w: W, h: H, p: 2, material: vk, spec: { fixw: s[1] }, addons: { slide_motor: { kw: "80" } } };
       else note = "ไม่รู้สัดส่วนเลื่อน/ติดตาย ของขนาดนี้";
     } else inputs = { w: W, h: H, p: 1, material: vk, spec: id === "roof_gable" ? { ridge: RIDGE[key], batten: "แปเดี่ยว", roofend: "ปล่อยปลาย" } : {} };   // ค่าตั้งต้นชีต "คิดทุน หลังคาจั่ว" (แปเดี่ยว · ยื่นปลาย)
   } else if (HEAD[h]) {
@@ -161,6 +161,7 @@ PB.R41 = {
   },
   labor,
   matPct: (PB.R41 && PB.R41.matPct) || {},
+  ...((PB.R41 && PB.R41.matPct_NOTE) ? { matPct_NOTE: PB.R41.matPct_NOTE } : {}),
 };
 fs.writeFileSync(PB_PATH, JSON.stringify(PB, null, 2) + "\n");
 const byNote = {};
