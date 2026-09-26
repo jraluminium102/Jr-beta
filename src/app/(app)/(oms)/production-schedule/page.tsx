@@ -27,6 +27,7 @@ export type ProdSet = {
   install_status?: string;   // PENDING | INSTALLED (0131)
   hold?: boolean;            // ชุดพักรอ — ไม่นับใน gate "ส่งติดตั้ง"/เฟสรวม (0131)
   hold_reason?: string | null;
+  glass_items?: { spec?: string; order?: string; installed?: string }[] | null;   // กระจกหลายแผ่น (0154) — ต่อแผ่น
 };
 type SchedRow = {
   kind: "job" | "adhoc";
@@ -236,16 +237,26 @@ export default function ProductionSchedulePage() {
   const overdueRows = useMemo(() => {
     const t = today();
     return viewRows
-      .filter((r) => r.kind === "job" && !!r.due_date && r.due_date < t && derivePhase(r) !== "พร้อม")
+      .filter((r) => {
+        if (r.kind !== "job" || r.status === "READY") return false;
+        // แยกโรง (0114 · เจ้าของสั่ง 24 ก.ย.69): เลือกโรง → เตือนจากชุด "ในโรงนั้น" ที่เลยวันกำหนดเสร็จของชุด แล้วยังผลิตไม่เสร็จ
+        //   (โรง3 เสร็จ/โรง1 ไม่ทัน → แท็บโรง1 เตือน แท็บโรง3 ไม่เตือน) · ทั้งหมด = ใช้วันรวมงานเดิม
+        if (factoryFilter) {
+          const act = (r.sets ?? []).filter((s) => !s.hold);
+          const gauge = act.length ? act : (r.sets ?? []);
+          return gauge.some((s) => s.must_finish_date && s.must_finish_date < t && !setIsDone(s));
+        }
+        return !!r.due_date && r.due_date < t && derivePhase(r) !== "พร้อม";
+      })
       .slice()
       .sort((a, b) => (a.due_date ?? "").localeCompare(b.due_date ?? ""));
-  }, [viewRows]);
+  }, [viewRows, factoryFilter]);
 
   const v = (r: SchedRow, k: keyof SchedRow) => (draft[r.id]?.[k] ?? r[k] ?? "") as string;
 
   // ── มาร์คเช็คลิสต์ช่าง (เขียนลง production_sets ช่องเดียว — ออฟฟิศเห็นทันที) ──
   const [savingSetIds, setSavingSetIds] = useState<Set<number>>(new Set());
-  const markSet = async (setId: number, patch: Record<string, string | null>, confirmMsg?: string) => {
+  const markSet = async (setId: number, patch: Record<string, unknown>, confirmMsg?: string) => {
     if (confirmMsg && !confirm(confirmMsg)) return;
     setSavingSetIds((p) => new Set(p).add(setId));
     try {
@@ -837,7 +848,7 @@ export default function ProductionSchedulePage() {
 export function ChangChecklist({ sets, savingSetIds, mark, canMark }: {
   sets: ProdSet[];
   savingSetIds: Set<number>;
-  mark: (setId: number, patch: Record<string, string | null>, confirmMsg?: string) => void;
+  mark: (setId: number, patch: Record<string, unknown>, confirmMsg?: string) => void;
   canMark: boolean;
 }) {
   return (
@@ -849,7 +860,7 @@ export function ChangChecklist({ sets, savingSetIds, mark, canMark }: {
 
 function SetCard({ s, saving, mark, canMark }: {
   s: ProdSet; saving: boolean;
-  mark: (setId: number, patch: Record<string, string | null>, confirmMsg?: string) => void;
+  mark: (setId: number, patch: Record<string, unknown>, confirmMsg?: string) => void;
   canMark: boolean;
 }) {
   const [showMore, setShowMore] = useState(false);
@@ -919,10 +930,29 @@ function SetCard({ s, saving, mark, canMark }: {
               onClick={() => frameDone
                 ? mark(s.id, { frame_done: "" }, "ยกเลิก “ผลิตเสร็จ” ?")
                 : mark(s.id, { frame_done: V_FRAME_DONE })} />
-            <MarkBtn label={glassDone ? "ใส่กระจกแล้ว" : "ใส่กระจก"} done={glassDone} saving={saving}
-              onClick={() => glassDone
-                ? mark(s.id, { glass_installed: V_GLASS_UNDONE }, "ยกเลิก “ใส่กระจกแล้ว” ?")
-                : mark(s.id, { glass_installed: V_GLASS_DONE })} />
+            {/* ใส่กระจก — หลายแผ่นกดแยกทีละแผ่น (0154) · แผ่นเดียว/ไม่มี detail = ปุ่มรวมเดิม */}
+            {(() => {
+              const gi = Array.isArray(s.glass_items) ? s.glass_items : [];
+              if (gi.length >= 2) {
+                return gi.map((it, gi2) => {
+                  const on = String(it.installed ?? "") === V_GLASS_DONE;
+                  const nm = (String(it.spec ?? "").trim() || `แผ่น ${gi2 + 1}`).slice(0, 16);
+                  return (
+                    <MarkBtn key={gi2} label={on ? `✓ ใส่แล้ว: ${nm}` : `ใส่กระจก: ${nm}`} done={on} saving={saving}
+                      onClick={() => {
+                        const next = gi.map((x, i) => (i === gi2 ? { ...x, installed: on ? "" : V_GLASS_DONE } : x));
+                        mark(s.id, { glass_items: next }, on ? `ยกเลิกใส่กระจก "${nm}" ?` : undefined);
+                      }} />
+                  );
+                });
+              }
+              return (
+                <MarkBtn label={glassDone ? "ใส่กระจกแล้ว" : "ใส่กระจก"} done={glassDone} saving={saving}
+                  onClick={() => glassDone
+                    ? mark(s.id, { glass_installed: V_GLASS_UNDONE }, "ยกเลิก “ใส่กระจกแล้ว” ?")
+                    : mark(s.id, { glass_installed: V_GLASS_DONE })} />
+              );
+            })()}
             {hasScreen && (
               <MarkBtn label={screenDone ? "ใส่มุ้งแล้ว" : "ใส่มุ้ง"} done={screenDone} saving={saving}
                 onClick={() => screenDone
