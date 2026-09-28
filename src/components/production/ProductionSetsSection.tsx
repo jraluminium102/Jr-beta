@@ -244,21 +244,7 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
   // ช่องหมายเหตุ — textarea เต็มแถว (เจ้าของแจ้ง: ช่องเดิมแคบ พิมพ์ยาวไม่พอ)
   const area = (s: SetRow, f: string) => <textarea defaultValue={s[f] ?? ""} disabled={!canWrite} rows={3} placeholder="พิมพ์หมายเหตุ / สิ่งที่ต้องระวัง…" onBlur={(e) => e.target.value !== String(s[f] ?? "") && save(s.id, f, e.target.value)} className={fieldCls + " resize-y min-h-[80px] leading-relaxed placeholder-white/35"} />;
   const date = (s: SetRow, f: string) => <input type="date" defaultValue={s[f] ?? ""} disabled={!canWrite} onBlur={(e) => save(s.id, f, e.target.value)} className={fieldCls} />;
-  // บันทึกวันเริ่มผลิตของโรงหนึ่ง (merge เข้า map factory_start · เว้นว่าง = ลบ key นั้น)
-  // เลือกโรงที่ 2 บนชุดที่มีโรงแล้ว → "เลือก 2 โรง = แยกเป็น 2 ชุด" อัตโนมัติ (เจ้าของสั่ง 26 ก.ย.69)
-  async function addFactoryAsSplit(s: SetRow, f: string) {
-    const cur: string[] = Array.isArray(s.factories) ? s.factories : [];
-    if (cur.includes(f)) return;
-    if (!confirm(`เลือก 2 โรง (${[...cur, f].join(", ")}) → แยกเป็น 2 ชุด (โรงละชุด)\nติ๊กสถานะ/เตือนเกินกำหนดแยกโรงได้ (คัดลอกสเปค+สถานะปัจจุบันไปเริ่มต้น)`)) return;
-    setBusy(true);
-    try {
-      await api.patch(`/production-sets/${s.id}`, { factories: [...cur, f] });   // → 2 โรงชั่วคราว
-      await api.post(`/production-sets/${s.id}/split-factory`, {});               // แยกเป็นชุดละโรง
-      await qc.invalidateQueries({ queryKey: key });
-    } catch (e) { alert(e instanceof Error ? e.message : "แยกชุดไม่สำเร็จ"); }
-    finally { setBusy(false); }
-  }
-  // แยกชุดที่ติ๊กหลายโรง (ชุดเก่า) → 1 ชุด = 1 โรง (สถานะ/เตือนเกินกำหนดแยกโรงได้ · เจ้าของสั่ง 24 ก.ย.69)
+  // แยกชุดที่ติ๊กหลายโรง → 1 ชุด = 1 โรง (ออปชั่น · กดเองเมื่ออยากติ๊กสถานะ/เตือนเกินกำหนดแยกโรค · เจ้าของสั่ง 24 ก.ย.69)
   async function splitByFactory(s: SetRow) {
     const cur: string[] = Array.isArray(s.factories) ? s.factories : [];
     if (cur.length <= 1) return;
@@ -273,32 +259,23 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
     if (iso) cur[factory] = iso; else delete cur[factory];
     await save(s.id, "factory_start", cur);
   }
-  // โรงงานผลิต — 1 ชุด = 1 โรง (เลือกโรงเดียว · เจ้าของสั่ง 24 ก.ย.69) · โรงที่เลือก → มีช่อง "เริ่มผลิต" แยกวัน (0115)
+  // โรงงานผลิต — ติ๊กได้หลายโรงในชุดเดียว (เจ้าของสั่ง 28 ก.ย.69 "เอาเหมือนเดิม") · โรงที่เลือก → มีช่อง "เริ่มผลิต" แยกวัน (0115)
+  //   ⚠ ติ๊ก >1 โรง = สถานะใช้ร่วมกันทั้งงาน · อยากติ๊กสถานะ/เตือนแยกโรค → กดปุ่ม "✂️ แยกชุด" (ออปชั่น ไม่บังคับ)
   const factoryPick = (s: SetRow) => {
     const cur: string[] = Array.isArray(s.factories) ? s.factories : [];
     const starts: Record<string, string> = (s.factory_start && typeof s.factory_start === "object") ? s.factory_start : {};
-    const multi = cur.length > 1;   // ชุดเก่าที่ติ๊กหลายโรง — ต้องกด "แยกชุด"
     return (
       <div className="space-y-2">
         <div className="flex flex-wrap gap-2">
           {FACTORIES.map((f) => {
             const on = cur.includes(f);
             return (
-              <button key={f} type="button" disabled={!canWrite || multi}
-                title={multi ? "ชุดนี้ติ๊กหลายโรง — กดปุ่ม ✂️ แยกชุด ก่อน (กันข้อมูลโรงหายเงียบ)" : undefined}
+              <button key={f} type="button" disabled={!canWrite}
                 onClick={async () => {
-                  if (multi) return;   // ★ ชุดเก่าที่ติ๊กหลายโรง — ต้องกดปุ่มแยกชุด (กันลบโรงเงียบ)
-                  if (on) {
-                    // กดโรงที่เลือกอยู่ → ปลด (ล้างวันเริ่มด้วย)
-                    await save(s.id, "factories", []);
-                    if (starts[f]) await saveFactoryStart(s, f, "");
-                  } else if (cur.length === 0) {
-                    // ยังไม่มีโรง → เลือกโรงแรก
-                    await save(s.id, "factories", [f]);
-                  } else {
-                    // มีโรงแล้ว 1 โรง + กดอีกโรง = เลือก 2 โรง → แยกเป็น 2 ชุดอัตโนมัติ
-                    await addFactoryAsSplit(s, f);
-                  }
+                  // toggle อิสระ — ติ๊ก/ปลดได้หลายโรง (ปลดโรค = ล้างวันเริ่มของโรคนั้นด้วย)
+                  const next = on ? cur.filter((x) => x !== f) : [...cur, f];
+                  await save(s.id, "factories", next);
+                  if (on && starts[f]) await saveFactoryStart(s, f, "");
                 }}
                 className={`text-[15px] px-3 py-2.5 rounded-lg border transition-colors ${on ? "bg-sky-500/80 border-sky-400 text-white" : "bg-slate-900/60 border-white/20 text-white/70 hover:text-white hover:border-white/35"} disabled:opacity-50`}>
                 {on ? "✓ " : ""}{f}
@@ -306,10 +283,10 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
             );
           })}
         </div>
-        {/* ชุดเก่าที่ติ๊ก 2 โรงในชุดเดียว — สถานะใช้ร่วมกัน ติ๊กแยกโรงไม่ได้ → ปุ่มแยกเป็นชุดละโรง */}
-        {multi && (
+        {/* ติ๊กหลายโรง = สถานะใช้ร่วมกัน · อยากติ๊กสถานะ/เตือนเกินกำหนดแยกโรค → กดแยกเป็นชุดละโรง (ทางเลือก) */}
+        {cur.length > 1 && (
           <div className="rounded-lg px-3 py-2" style={{ background: "rgba(245,158,11,.12)", border: "1px solid rgba(245,158,11,.4)" }}>
-            <div className="text-[12px] mb-1.5" style={{ color: "#fcd34d" }}>⚠ ชุดนี้ติ๊ก {cur.length} โรง ({cur.join(", ")}) — สถานะใช้ร่วมกัน ติ๊กแยกโรงไม่ได้</div>
+            <div className="text-[12px] mb-1.5" style={{ color: "#fcd34d" }}>ℹ️ ติ๊ก {cur.length} โรง ({cur.join(", ")}) — สถานะใช้ร่วมกันทั้งงาน · อยากติ๊กสถานะ/เตือนแยกแต่ละโรค กดแยกชุด</div>
             <button type="button" disabled={!canWrite || busy} onClick={() => splitByFactory(s)}
               className="text-[13px] font-semibold px-3 py-2 rounded-lg disabled:opacity-50" style={{ background: "rgba(245,158,11,.28)", color: "#fde68a", border: "1px solid rgba(245,158,11,.5)" }}>
               ✂️ แยกเป็น {cur.length} ชุด (โรงละชุด)
@@ -556,7 +533,7 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
 
                 <Group title="โครง & โรงงาน">
                   <F label="โครง/โรงงาน" onEditOpts={openOpts("frame_status", "โครง/โรงงาน")}>{sel(s, "frame_status", valuesOf("frame_status"))}</F>
-                  <div className="sm:col-span-1 lg:col-span-3"><F label="โรงงานผลิต (เลือก 1 โรง · เลือก 2 โรง = แยกเป็น 2 ชุด)">{factoryPick(s)}</F></div>
+                  <div className="sm:col-span-1 lg:col-span-3"><F label="โรงงานผลิต (ติ๊กได้หลายโรง · อยากแยกสถานะรายโรงค่อยกด ✂️ แยกชุด)">{factoryPick(s)}</F></div>
                 </Group>
 
                 <Group title="วัสดุ & QC ก่อนใส่กระจก">
