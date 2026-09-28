@@ -119,6 +119,28 @@ export function deadlineInfo(must: string | null, done: boolean): { tone: string
 }
 export const setIsDone = (s: ProdSet) => s.glass_installed === V_GLASS_DONE && s.qc_after_glass === V_QC_PASS;
 
+// ── "รอกระจก" (เจ้าของสั่ง 28 ก.ย.69) — เฟรมผลิตเสร็จแต่กระจกยังไม่มาส่ง กดปิดงานไม่ได้ ──
+const V_GLASS_ARRIVED = "มาแล้ว";   // ตรง glass_order ฝั่งออฟฟิศ (ProductionSetsSection)
+const glassItemsOf = (s: ProdSet) =>
+  (Array.isArray(s.glass_items) ? s.glass_items : [])
+    .map((i) => ({ spec: String(i?.spec ?? "").trim(), order: String(i?.order ?? "").trim() }))   // ⚠ i อาจเป็น null (SQL แก้ตรง DB) — กัน crash ทั้งหน้า+ลิงก์ช่าง
+    .filter((i) => i.spec || i.order);
+// ชุดนี้มีกระจกหรือไม่ (บางชุดไม่มีกระจก = ไม่ต้องรอ)
+const setHasGlass = (s: ProdSet) => {
+  const items = glassItemsOf(s);
+  return items.length ? true : !!String(s.glass_spec ?? "").trim();
+};
+// กระจกมาส่งครบทุกแผ่นแล้ว (glass_order = "มาแล้ว")
+const setGlassArrived = (s: ProdSet) => {
+  const items = glassItemsOf(s);
+  if (items.length) return items.every((i) => i.order === V_GLASS_ARRIVED);
+  return String(s.glass_order ?? "").trim() === V_GLASS_ARRIVED;
+};
+// รอกระจก = เฟรมเสร็จ (หรือกดผลิตเสร็จ) · มีกระจก · กระจกยังไม่มาครบ · ยังไม่ปิดงาน
+export const setWaitingGlass = (s: ProdSet) =>
+  (s.frame_done === V_FRAME_DONE || s.produce_status === "DONE") &&
+  setHasGlass(s) && !setGlassArrived(s) && !setIsDone(s);
+
 // สไตล์ iOS — พื้นสว่าง การ์ดขาว ตัวเข้ม สีน้อยแต่คม
 export const IOS = {
   page: "#f2f2f7", card: "#ffffff", inset: "#f4f4f7",
@@ -233,24 +255,39 @@ export default function ProductionSchedulePage() {
     [viewRows]
   );
 
-  // 🔴 งานที่ "เลยวันกำหนดผลิตเสร็จ" แล้วแต่ยังผลิตไม่เสร็จ (ยังไม่พร้อมติดตั้ง) — แจ้งเตือนเด่นบนสุด (เจ้าของสั่ง 15 ก.ย.69)
-  const overdueRows = useMemo(() => {
+  // 🔴 งานค้าง — (1) เลยวันกำหนดผลิตเสร็จแต่ยังไม่เสร็จ (เจ้าของสั่ง 15 ก.ย.69)
+  //             (2) เฟรมเสร็จแต่ "รอกระจก" กดปิดงานไม่ได้ (เจ้าของสั่ง 28 ก.ย.69)
+  const stuckRows = useMemo(() => {
     const t = today();
-    return viewRows
-      .filter((r) => {
-        if (r.kind !== "job" || r.status === "READY") return false;
-        // แยกโรง (0114 · เจ้าของสั่ง 24 ก.ย.69): เลือกโรง → เตือนจากชุด "ในโรงนั้น" ที่เลยวันกำหนดเสร็จของชุด แล้วยังผลิตไม่เสร็จ
-        //   (โรง3 เสร็จ/โรง1 ไม่ทัน → แท็บโรง1 เตือน แท็บโรง3 ไม่เตือน) · ทั้งหมด = ใช้วันรวมงานเดิม
-        if (factoryFilter) {
-          const act = (r.sets ?? []).filter((s) => !s.hold);
-          const gauge = act.length ? act : (r.sets ?? []);
-          return gauge.some((s) => s.must_finish_date && s.must_finish_date < t && !setIsDone(s));
-        }
-        return !!r.due_date && r.due_date < t && derivePhase(r) !== "พร้อม";
-      })
-      .slice()
-      .sort((a, b) => (a.due_date ?? "").localeCompare(b.due_date ?? ""));
+    // ชุดที่ใช้ตัดสิน: กรองโรง = เฉพาะชุดโรคนั้น · ไม่กรอง = ชุดเต็มของงาน · ตัด hold ออก (ถ้าเหลือ 0 ใช้ทั้งหมด)
+    const gaugeOf = (r: SchedRow) => {
+      const sets = (factoryFilter ? (r.sets ?? []) : (r.allSets ?? r.sets ?? []));
+      const act = sets.filter((s) => !s.hold);
+      return act.length ? act : sets;
+    };
+    // แยกโรง (0114): เลือกโรง → เตือนจากชุด "ในโรงนั้น" ที่เลยวันกำหนดเสร็จของชุด · ทั้งหมด = ใช้วันรวมงานเดิม
+    const isOverdue = (r: SchedRow) =>
+      factoryFilter
+        ? gaugeOf(r).some((s) => s.must_finish_date && s.must_finish_date < t && !setIsDone(s))
+        : (!!r.due_date && r.due_date < t && derivePhase(r) !== "พร้อม");
+    // รอกระจก = ดูเฉพาะชุด active (ไม่รวม hold) · ถ้าทั้งงานถูกพัก (hold หมด) = ไม่เตือน (BUG-2)
+    const isGlassWait = (r: SchedRow) => {
+      const sets = (factoryFilter ? (r.sets ?? []) : (r.allSets ?? r.sets ?? []));
+      return sets.some((s) => !s.hold && setWaitingGlass(s));
+    };
+
+    const out: { r: SchedRow; over: boolean; glass: boolean }[] = [];
+    for (const r of viewRows) {
+      if (r.kind !== "job" || r.status === "READY") continue;
+      const over = isOverdue(r), glass = isGlassWait(r);
+      if (over || glass) out.push({ r, over, glass });
+    }
+    // เลยกำหนดขึ้นก่อน แล้วเรียงตามวันกำหนดเสร็จ
+    return out.sort((a, b) =>
+      a.over !== b.over ? (a.over ? -1 : 1) : (a.r.due_date ?? "9999").localeCompare(b.r.due_date ?? "9999"));
   }, [viewRows, factoryFilter]);
+  const overdueCount = stuckRows.filter((x) => x.over).length;
+  const glassWaitCount = stuckRows.filter((x) => x.glass && !x.over).length;
 
   const v = (r: SchedRow, k: keyof SchedRow) => (draft[r.id]?.[k] ?? r[k] ?? "") as string;
 
@@ -473,23 +510,26 @@ export default function ProductionSchedulePage() {
         </span>
       </div>
 
-      {/* 🔴 แจ้งเตือนเด่น: งานเลยกำหนดผลิตเสร็จ (ยังผลิตไม่เสร็จ) — กดชื่อ = กรองไปที่งานนั้น */}
-      {overdueRows.length > 0 && (
+      {/* 🔴 แจ้งเตือนเด่น: งานค้าง (เลยกำหนด / รอกระจก) — กดชื่อ = กรองไปที่งานนั้น */}
+      {stuckRows.length > 0 && (
         <div className="rounded-xl px-4 py-3 mb-4" style={{ background: "#fdecec", border: "2px solid #e53935" }}>
-          <div className="font-bold text-[15px] mb-2 flex items-center gap-2" style={{ color: "#c0392b" }}>
-            ⏰ เลยกำหนดผลิตเสร็จ {overdueRows.length} งาน — ยังผลิตไม่เสร็จ เร่งด่วน
+          <div className="font-bold text-[15px] mb-2 flex items-center gap-2 flex-wrap" style={{ color: "#c0392b" }}>
+            ⏰ งานค้าง {stuckRows.length} งาน — เร่งด่วน
+            {overdueCount > 0 && <span className="tnum text-[12px] rounded-full px-2 py-0.5" style={{ background: "#fff", color: "#c0392b", border: "1px solid #f1a9a0" }}>เลยกำหนด {overdueCount}</span>}
+            {glassWaitCount > 0 && <span className="tnum text-[12px] rounded-full px-2 py-0.5" style={{ background: "#fff", color: "#c2410c", border: "1px solid #f6c99a" }}>🪟 รอกระจก {glassWaitCount}</span>}
           </div>
           <div className="flex gap-1.5 flex-wrap">
-            {overdueRows.map((r) => {
-              const over = Math.floor((Date.parse(today()) - Date.parse(r.due_date!)) / 86400000);
+            {stuckRows.map(({ r, over, glass }) => {
+              const overDays = over && r.due_date ? Math.floor((Date.parse(today()) - Date.parse(r.due_date)) / 86400000) : null;
               return (
                 <button key={r.id} onClick={() => { setQuery(r.title); setPhaseFilter(""); }}
                   title={`กดเพื่อดูงานนี้ · กำหนดเสร็จ ${thShort(r.due_date)}`}
                   className="focusable pressable inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12.5px] font-semibold min-h-[34px]"
-                  style={{ background: "#fff", color: "#c0392b", border: "1px solid #f1a9a0" }}>
+                  style={{ background: "#fff", color: "#c0392b", border: `1px solid ${over ? "#f1a9a0" : "#f6c99a"}` }}>
                   {r.title}
                   {r.job_code && <span className="tnum text-[10px] rounded px-1 py-0.5" style={{ background: "#fdecec", color: "#c0392b" }}>{r.job_code}</span>}
-                  <span className="tnum" style={{ color: "#e53935" }}>· เลย {over} วัน</span>
+                  {over && <span className="tnum" style={{ color: "#e53935" }}>· {overDays != null ? `เลย ${overDays} วัน` : "เลยกำหนด"}</span>}
+                  {glass && <span className="text-[10px] rounded-full px-1.5 py-0.5 font-bold" style={{ background: "#fff0e0", color: "#c2410c" }}>🪟 รอกระจก</span>}
                 </button>
               );
             })}
