@@ -75,10 +75,16 @@ function GlassItemsEditor({ seed, disabled, listId, orderOpts, installedOpts, on
 }) {
   const [items, setItems] = useState<GlassItem[]>(seed.length ? seed : [{ spec: "", order: "", installed: "" }]);
   const [flash, setFlash] = useState(false);   // "บันทึกแล้ว ✓" ตรงช่องกระจก (feedback ใกล้ตา)
+  const [err, setErr] = useState("");           // ❌ โชว์ error จริง ถ้า API ล้ม (ห้ามเงียบ)
   const timers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
+  const onSaveRef = useRef(onSave);
+  onSaveRef.current = onSave;   // ให้ native listener ที่ผูกครั้งเดียวเรียก onSave ล่าสุดเสมอ
   const commit = (next: GlassItem[]) => {
     const filtered = next.filter((i) => i.spec.trim() || i.order.trim() || i.installed.trim());
-    Promise.resolve(onSave(filtered)).then(() => { setFlash(true); setTimeout(() => setFlash(false), 1600); }).catch(() => {});
+    setErr("");
+    Promise.resolve(onSaveRef.current(filtered))
+      .then(() => { setFlash(true); setTimeout(() => setFlash(false), 1600); })
+      .catch((e) => setErr(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ — เช็คเน็ตแล้วลองใหม่"));
   };
   const patchAt = (i: number, patch: Partial<GlassItem>, doSave: boolean) =>
     setItems((prev) => {
@@ -87,7 +93,7 @@ function GlassItemsEditor({ seed, disabled, listId, orderOpts, installedOpts, on
       return next;
     });
   // สเปคกระจก (พิมพ์เอง/เลือกประวัติ) — auto-save เอง ไม่ต้องกดออกจากช่อง (เจ้าของสั่ง 29 ก.ย.69)
-  //   พิมพ์ → เด้ง debounce เซฟหลังหยุดพิมพ์ 0.6s · กดออก = เซฟทันที (เคลียร์ timer)
+  //   พิมพ์ → เด้ง debounce เซฟหลังหยุดพิมพ์ 0.6s · กดออก/เลือกประวัติ = เซฟทันที
   const specChange = (i: number, val: string) => {
     patchAt(i, { spec: val }, false);   // อัปเดตค่าที่โชว์ (controlled)
     clearTimeout(timers.current[i]);
@@ -95,7 +101,14 @@ function GlassItemsEditor({ seed, disabled, listId, orderOpts, installedOpts, on
   };
   const specBlur = (i: number, val: string) => {
     clearTimeout(timers.current[i]);
-    patchAt(i, { spec: val }, true);   // เซฟทันทีจากค่าจริงในช่อง
+    patchAt(i, { spec: val }, true);   // เซฟทันทีจากค่าจริงในช่อง (+ sync state กัน controlled รีเซ็ต)
+  };
+  // ★ ผูก native 'change' เอง — พิสูจน์แล้วว่าตอน "เลือกจาก datalist/ประวัติ" เบราว์เซอร์ยิงแค่ 'change'
+  //   ไม่ยิง 'input' → React onChange (=input) ไม่ทำงาน → เดิมไม่เซฟ ไม่มีป้ายเลย (อาการคุณลีฟ)
+  const bindSpec = (i: number) => (el: HTMLInputElement | null) => {
+    if (!el || (el as unknown as { __gb?: boolean }).__gb) return;
+    (el as unknown as { __gb?: boolean }).__gb = true;
+    el.addEventListener("change", () => specBlur(i, el.value));
   };
   const removeAt = (i: number) =>
     setItems((prev) => {
@@ -118,9 +131,9 @@ function GlassItemsEditor({ seed, disabled, listId, orderOpts, installedOpts, on
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <div>
               <div className="text-[11px] text-white/50 mb-1">สเปคกระจก</div>
-              <input list={listId} value={it.spec} disabled={disabled} placeholder="พิมพ์ / เลือกประวัติ"
-                onChange={(e) => specChange(i, e.target.value)}   // auto-save (debounce) — ไม่ต้องกดออก
-                onBlur={(e) => specBlur(i, e.target.value)}       // กดออก = เซฟทันที
+              <input ref={bindSpec(i)} list={listId} value={it.spec} disabled={disabled} placeholder="พิมพ์ / เลือกประวัติ"
+                onChange={(e) => specChange(i, e.target.value)}   // พิมพ์เอง (input) → auto-save debounce
+                onBlur={(e) => specBlur(i, e.target.value)}       // กดออก = เซฟทันที · native 'change' (bindSpec) = เลือกประวัติ
                 className={fieldCls + " placeholder-white/35"} />
             </div>
             <div>
@@ -142,6 +155,7 @@ function GlassItemsEditor({ seed, disabled, listId, orderOpts, installedOpts, on
             className="text-[13px] font-medium text-sky-300 hover:text-sky-200">+ เพิ่มกระจกอีกแบบ</button>
         )}
         <span className={`text-[12px] text-emerald-300 transition-opacity duration-300 ${flash ? "opacity-100" : "opacity-0"}`}>บันทึกแล้ว ✓</span>
+        {err && <span className="text-[12px] text-red-300 font-medium">❌ {err}</span>}
       </div>
     </div>
   );
@@ -211,6 +225,12 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
       qc.invalidateQueries({ queryKey: key }); // refetch → เห็นค่าล่าสุด/ใครกด (กัน stale ทับ)
       setSaved(true); setTimeout(() => setSaved(false), 1600); // แฟลชป้าย "บันทึกแล้ว ✓"
     } catch { /* keep typed value */ }
+  }
+  // เซฟกระจก — ★ ไม่ swallow error (ให้ GlassItemsEditor โชว์ ❌ เหตุผลจริง ถ้า API ล้ม · เลิกเงียบ)
+  async function saveGlassItems(id: number, items: GlassItem[]) {
+    await api.patch(`/production-sets/${id}`, { glass_items: items });
+    qc.invalidateQueries({ queryKey: key });
+    setSaved(true); setTimeout(() => setSaved(false), 1600);
   }
   // เซฟหลายฟิลด์ในคำขอเดียว — ใช้ตอน hold (hold + hold_reason พร้อมกัน กันแฟลชค้าง/เรียก 2 รอบ)
   async function saveMany(id: number, patch: Record<string, any>) {
@@ -351,7 +371,7 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
     //   ถ้า key ผูก length จะ remount กลางพิมพ์ = หลุดโฟกัส · แลกกับ: ถ้ามีคนอื่นเพิ่ม/ลบแผ่นพร้อมกัน ต้องรีเฟรชถึงเห็น (เคสน้อย)
     <GlassItemsEditor key={s.id} seed={glassSeed(s)} disabled={!canWrite} listId="glass-spec-history"
       orderOpts={valuesOf("glass_order")} installedOpts={valuesOf("glass_installed")}
-      onSave={(items) => save(s.id, "glass_items", items)} />
+      onSave={(items) => saveGlassItems(s.id, items)} />
   );
 
   // ช่องที่ "ช่างกดเอง" — โชว์ read-only + ใครกด/เมื่อไหร่ · กด "แก้" เพื่อ override (กันเขียนทับช่างโดยไม่ตั้งใจ)
