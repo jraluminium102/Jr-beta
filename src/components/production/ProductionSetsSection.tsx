@@ -105,7 +105,8 @@ function GlassItemsEditor({ seed, disabled, listId, orderOpts, installedOpts, on
               <div className="text-[11px] text-white/50 mb-1">สเปคกระจก</div>
               <input list={listId} value={it.spec} disabled={disabled} placeholder="พิมพ์ / เลือกประวัติ"
                 onChange={(e) => patchAt(i, { spec: e.target.value }, false)}
-                onBlur={() => commit(items)}
+                // เซฟจากค่าจริงในช่อง + funcional setItems (prev ล่าสุด) — กัน commit(items) อ้าง closure เก่า → ค่าที่เพิ่งพิมพ์หลุด ไม่บันทึก
+                onBlur={(e) => patchAt(i, { spec: e.target.value }, true)}
                 className={fieldCls + " placeholder-white/35"} />
             </div>
             <div>
