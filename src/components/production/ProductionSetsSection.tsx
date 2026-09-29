@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Plus, X, ChevronDown } from "@/components/ui/icons";
@@ -71,17 +71,32 @@ function F({ label, children, onEditOpts }: { label: string; children: React.Rea
 type GlassItem = { spec: string; order: string; installed: string };
 function GlassItemsEditor({ seed, disabled, listId, orderOpts, installedOpts, onSave }: {
   seed: GlassItem[]; disabled: boolean; listId: string; orderOpts: string[]; installedOpts: string[];
-  onSave: (items: GlassItem[]) => void;
+  onSave: (items: GlassItem[]) => void | Promise<unknown>;
 }) {
   const [items, setItems] = useState<GlassItem[]>(seed.length ? seed : [{ spec: "", order: "", installed: "" }]);
-  const commit = (next: GlassItem[]) =>
-    onSave(next.filter((i) => i.spec.trim() || i.order.trim() || i.installed.trim()));
+  const [flash, setFlash] = useState(false);   // "บันทึกแล้ว ✓" ตรงช่องกระจก (feedback ใกล้ตา)
+  const timers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
+  const commit = (next: GlassItem[]) => {
+    const filtered = next.filter((i) => i.spec.trim() || i.order.trim() || i.installed.trim());
+    Promise.resolve(onSave(filtered)).then(() => { setFlash(true); setTimeout(() => setFlash(false), 1600); }).catch(() => {});
+  };
   const patchAt = (i: number, patch: Partial<GlassItem>, doSave: boolean) =>
     setItems((prev) => {
       const next = prev.map((x, idx) => (idx === i ? { ...x, ...patch } : x));
       if (doSave) commit(next);
       return next;
     });
+  // สเปคกระจก (พิมพ์เอง/เลือกประวัติ) — auto-save เอง ไม่ต้องกดออกจากช่อง (เจ้าของสั่ง 29 ก.ย.69)
+  //   พิมพ์ → เด้ง debounce เซฟหลังหยุดพิมพ์ 0.6s · กดออก = เซฟทันที (เคลียร์ timer)
+  const specChange = (i: number, val: string) => {
+    patchAt(i, { spec: val }, false);   // อัปเดตค่าที่โชว์ (controlled)
+    clearTimeout(timers.current[i]);
+    timers.current[i] = setTimeout(() => setItems((cur) => { commit(cur); return cur; }), 600);
+  };
+  const specBlur = (i: number, val: string) => {
+    clearTimeout(timers.current[i]);
+    patchAt(i, { spec: val }, true);   // เซฟทันทีจากค่าจริงในช่อง
+  };
   const removeAt = (i: number) =>
     setItems((prev) => {
       const next = prev.filter((_, idx) => idx !== i);
@@ -104,9 +119,8 @@ function GlassItemsEditor({ seed, disabled, listId, orderOpts, installedOpts, on
             <div>
               <div className="text-[11px] text-white/50 mb-1">สเปคกระจก</div>
               <input list={listId} value={it.spec} disabled={disabled} placeholder="พิมพ์ / เลือกประวัติ"
-                onChange={(e) => patchAt(i, { spec: e.target.value }, false)}
-                // เซฟจากค่าจริงในช่อง + funcional setItems (prev ล่าสุด) — กัน commit(items) อ้าง closure เก่า → ค่าที่เพิ่งพิมพ์หลุด ไม่บันทึก
-                onBlur={(e) => patchAt(i, { spec: e.target.value }, true)}
+                onChange={(e) => specChange(i, e.target.value)}   // auto-save (debounce) — ไม่ต้องกดออก
+                onBlur={(e) => specBlur(i, e.target.value)}       // กดออก = เซฟทันที
                 className={fieldCls + " placeholder-white/35"} />
             </div>
             <div>
@@ -122,10 +136,13 @@ function GlassItemsEditor({ seed, disabled, listId, orderOpts, installedOpts, on
           </div>
         </div>
       ))}
-      {!disabled && (
-        <button type="button" onClick={() => setItems((p) => [...p, { spec: "", order: "", installed: "" }])}
-          className="text-[13px] font-medium text-sky-300 hover:text-sky-200">+ เพิ่มกระจกอีกแบบ</button>
-      )}
+      <div className="flex items-center gap-3">
+        {!disabled && (
+          <button type="button" onClick={() => setItems((p) => [...p, { spec: "", order: "", installed: "" }])}
+            className="text-[13px] font-medium text-sky-300 hover:text-sky-200">+ เพิ่มกระจกอีกแบบ</button>
+        )}
+        <span className={`text-[12px] text-emerald-300 transition-opacity duration-300 ${flash ? "opacity-100" : "opacity-0"}`}>บันทึกแล้ว ✓</span>
+      </div>
     </div>
   );
 }
@@ -330,9 +347,9 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
     return [];
   };
   const glassEditor = (s: SetRow) => (
-    // key ผูกจำนวนแผ่นจาก server → ถ้ามีคนอื่นเพิ่ม/ลบแผ่นระหว่างแก้ จะ remount ดึงของใหม่ (กันแผ่นที่เพิ่มหาย)
-    //   แต่ไม่ remount ตอนแก้สเปค/สั่ง/ใส่ (จำนวนเท่าเดิม) → local state คงอยู่ ไม่หลุด focus
-    <GlassItemsEditor key={`${s.id}:${Array.isArray(s.glass_items) ? s.glass_items.length : 0}`} seed={glassSeed(s)} disabled={!canWrite} listId="glass-spec-history"
+    // key คงที่ต่อชุด (ไม่ผูกจำนวนแผ่น) — auto-save ระหว่างพิมพ์ทำให้จำนวนแผ่น 0→1 ได้เอง
+    //   ถ้า key ผูก length จะ remount กลางพิมพ์ = หลุดโฟกัส · แลกกับ: ถ้ามีคนอื่นเพิ่ม/ลบแผ่นพร้อมกัน ต้องรีเฟรชถึงเห็น (เคสน้อย)
+    <GlassItemsEditor key={s.id} seed={glassSeed(s)} disabled={!canWrite} listId="glass-spec-history"
       orderOpts={valuesOf("glass_order")} installedOpts={valuesOf("glass_installed")}
       onSave={(items) => save(s.id, "glass_items", items)} />
   );
