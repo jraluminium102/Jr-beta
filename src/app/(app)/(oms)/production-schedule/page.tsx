@@ -119,28 +119,23 @@ export function deadlineInfo(must: string | null, done: boolean): { tone: string
 }
 export const setIsDone = (s: ProdSet) => s.glass_installed === V_GLASS_DONE && s.qc_after_glass === V_QC_PASS;
 
-// ── "รอกระจก" (เจ้าของสั่ง 28 ก.ย.69) — เฟรมผลิตเสร็จแต่กระจกยังไม่มาส่ง กดปิดงานไม่ได้ ──
-const V_GLASS_ARRIVED = "มาแล้ว";   // ตรง glass_order ฝั่งออฟฟิศ (ProductionSetsSection)
-const glassItemsOf = (s: ProdSet) =>
-  (Array.isArray(s.glass_items) ? s.glass_items : [])
-    .map((i) => ({ spec: String(i?.spec ?? "").trim(), order: String(i?.order ?? "").trim() }))   // ⚠ i อาจเป็น null (SQL แก้ตรง DB) — กัน crash ทั้งหน้า+ลิงก์ช่าง
-    .filter((i) => i.spec || i.order);
-// ชุดนี้มีกระจกหรือไม่ (บางชุดไม่มีกระจก = ไม่ต้องรอ)
-const setHasGlass = (s: ProdSet) => {
-  const items = glassItemsOf(s);
-  return items.length ? true : !!String(s.glass_spec ?? "").trim();
+// ── "รอกระจก" (เจ้าของสั่ง 28 ก.ย.69) — สั่งกระจกแล้วกำลังรอของมาส่ง กดปิดงานไม่ได้ ──
+//   ⚠ "รอกระจก" = สั่งกระจกไปแล้วรอของ/มายังไม่ครบ เท่านั้น · ไม่ใช่ "ยังไม่ขึ้นมาแล้ว" ทุกแบบ
+//      (ไม่งั้นงานที่ยังไม่ได้สั่งกระจกด้วยซ้ำก็ขึ้นเต็มไปหมด — เจ้าของ 1 ต.ค.69: โชว์ผิด 16 งาน)
+const GLASS_WAITING = new Set(["สั่งแล้ว รอของ", "มายังไม่ครบ"]);
+// สถานะสั่งกระจกของชุด (รองรับหลายแผ่น glass_items · i อาจ null จาก SQL แก้ตรง DB → กัน crash)
+const glassOrdersOf = (s: ProdSet): string[] => {
+  const items = (Array.isArray(s.glass_items) ? s.glass_items : [])
+    .map((i) => String(i?.order ?? "").trim()).filter(Boolean);
+  if (items.length) return items;
+  const o = String(s.glass_order ?? "").trim();
+  return o ? [o] : [];
 };
-// กระจกมาส่งครบทุกแผ่นแล้ว (glass_order = "มาแล้ว")
-const setGlassArrived = (s: ProdSet) => {
-  const items = glassItemsOf(s);
-  if (items.length) return items.every((i) => i.order === V_GLASS_ARRIVED);
-  return String(s.glass_order ?? "").trim() === V_GLASS_ARRIVED;
-};
-// ชุดนี้ "รอกระจก" = มีกระจก · กระจกยังไม่มาครบ · ยังไม่ปิดงาน
-//   ⚠ ไม่ผูกว่าเฟรมต้องกด "ผลิตเสร็จ" ก่อน (เจ้าของ 1 ต.ค.69: มิลค์เริ่มผลิตแต่ยังไม่กดเฟรมเสร็จ ก็ต้องขึ้นรอกระจก)
-//   การ "เริ่มผลิตแล้ว" เช็คที่ระดับงาน (status) ใน stuckRows แทน — กันขึ้นงานที่ยังไม่เริ่มทำ
+// ชุดนี้ "รอกระจก" = มีแผ่นที่ "สั่งแล้ว รอของ" / "มายังไม่ครบ" · ยังไม่ปิดงาน
+//   ⚠ ไม่ผูกว่าเฟรมต้องกด "ผลิตเสร็จ" ก่อน (มิลค์เริ่มผลิตแต่ยังไม่กดเฟรมเสร็จ ก็ขึ้นได้)
+//   "เริ่มผลิตแล้ว" เช็คที่ระดับงาน (status) ใน stuckRows แทน
 export const setWaitingGlass = (s: ProdSet) =>
-  setHasGlass(s) && !setGlassArrived(s) && !setIsDone(s);
+  !setIsDone(s) && glassOrdersOf(s).some((o) => GLASS_WAITING.has(o));
 
 // สไตล์ iOS — พื้นสว่าง การ์ดขาว ตัวเข้ม สีน้อยแต่คม
 export const IOS = {
