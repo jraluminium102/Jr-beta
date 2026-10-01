@@ -136,9 +136,10 @@ const setGlassArrived = (s: ProdSet) => {
   if (items.length) return items.every((i) => i.order === V_GLASS_ARRIVED);
   return String(s.glass_order ?? "").trim() === V_GLASS_ARRIVED;
 };
-// รอกระจก = เฟรมเสร็จ (หรือกดผลิตเสร็จ) · มีกระจก · กระจกยังไม่มาครบ · ยังไม่ปิดงาน
+// ชุดนี้ "รอกระจก" = มีกระจก · กระจกยังไม่มาครบ · ยังไม่ปิดงาน
+//   ⚠ ไม่ผูกว่าเฟรมต้องกด "ผลิตเสร็จ" ก่อน (เจ้าของ 1 ต.ค.69: มิลค์เริ่มผลิตแต่ยังไม่กดเฟรมเสร็จ ก็ต้องขึ้นรอกระจก)
+//   การ "เริ่มผลิตแล้ว" เช็คที่ระดับงาน (status) ใน stuckRows แทน — กันขึ้นงานที่ยังไม่เริ่มทำ
 export const setWaitingGlass = (s: ProdSet) =>
-  (s.frame_done === V_FRAME_DONE || s.produce_status === "DONE") &&
   setHasGlass(s) && !setGlassArrived(s) && !setIsDone(s);
 
 // สไตล์ iOS — พื้นสว่าง การ์ดขาว ตัวเข้ม สีน้อยแต่คม
@@ -270,16 +271,20 @@ export default function ProductionSchedulePage() {
       factoryFilter
         ? gaugeOf(r).some((s) => s.must_finish_date && s.must_finish_date < t && !setIsDone(s))
         : (!!r.due_date && r.due_date < t && derivePhase(r) !== "พร้อม");
-    // รอกระจก = ดูเฉพาะชุด active (ไม่รวม hold) · ถ้าทั้งงานถูกพัก (hold หมด) = ไม่เตือน (BUG-2)
-    const isGlassWait = (r: SchedRow) => {
+    // มีชุด "รอกระจก" ไหม — ดูเฉพาะชุด active (ไม่รวม hold · ทั้งงาน hold = ไม่เตือน · BUG-2)
+    const hasGlassWait = (r: SchedRow) => {
       const sets = (factoryFilter ? (r.sets ?? []) : (r.allSets ?? r.sets ?? []));
       return sets.some((s) => !s.hold && setWaitingGlass(s));
     };
+    // เริ่มผลิตแล้ว (เจ้าของ: "ช่างเริ่มผลิตแล้วแต่กระจกยังไม่มา") = งานอยู่สถานะผลิต/QC หรือเลยกำหนดแล้ว
+    const started = (r: SchedRow) => r.status === "MANUFACTURING" || r.status === "QC";
 
     const out: { r: SchedRow; over: boolean; glass: boolean }[] = [];
     for (const r of viewRows) {
       if (r.kind !== "job" || r.status === "READY") continue;
-      const over = isOverdue(r), glass = isGlassWait(r);
+      const over = isOverdue(r);
+      // รอกระจก = กระจกยังไม่มา + งานเริ่มผลิตแล้ว/เลยกำหนด (ไม่ขึ้นกับว่าเฟรมกด "ผลิตเสร็จ" หรือยัง)
+      const glass = hasGlassWait(r) && (over || started(r));
       if (over || glass) out.push({ r, over, glass });
     }
     // เลยกำหนดขึ้นก่อน แล้วเรียงตามวันกำหนดเสร็จ
