@@ -747,15 +747,21 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     if (SLIDE_SALE.has(prod.id)) {
       const kind = paneKindOn ? (paneKind === "door" ? "ประตู" : "หน้าต่าง") : "";
       const isTop = prod.id === "slimlux";
-      const low = String(spec?.bottomrail ?? "").includes("รางเตี้ย");
-      const railTxt = isTop ? "รางบน" : `รางล่าง (${low ? "รุ่นรางเตี้ย 7 มม." : "รุ่นกันน้ำ"})`;
-      // แบ่ง N บาน เฉพาะ อิสระ/ลากจูง (ตามจำนวนบานจริง) · สลับ/เปิดคู่กลาง ไม่ต้อง
-      const split = (form === "อิสระ" || form === "ลากจูง") && nBan > 1 ? ` แบ่ง ${nBan} บาน` : "";
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const softclose = isTop && (addons as any)?.slide_auto ? " ระบบ Soft-Close" : "";
-      itemName = `${kind}บานเลื่อน${form || ""} ${railTxt}`.replace(/\s+/g, " ").trim()
+      // SlimLux: form ตามจำนวนบานจริง (เจ้าของ 2 ต.ค.69) — 1 บาน=เดี่ยว · อิสระ 2 บาน=สลับ · ที่เหลือตาม form
+      const formLabel = isTop
+        ? (nBan === 1 ? "เดี่ยว" : (form === "อิสระ" && nBan === 2 ? "สลับ" : (form || "")))
+        : (form || "");
+      let railTxt: string;
+      if (isTop) railTxt = `รางบน (รุ่น${spec?.slxrail || "โชว์ราง"})`;
+      else railTxt = `รางล่าง (${String(spec?.bottomrail ?? "").includes("รางเตี้ย") ? "รุ่นรางเตี้ย 7 มม." : "รุ่นกันน้ำ"})`;
+      // แบ่ง N บาน เฉพาะ อิสระ/ลากจูง (ตามจำนวนบานจริง) · เดี่ยว/สลับ/เปิดคู่กลาง ไม่ต้อง
+      const split = (formLabel === "อิสระ" || formLabel === "ลากจูง") && nBan > 1 ? ` แบ่ง ${nBan} บาน` : "";
+      // SlimLux: เสริมคาน (ถ้าเลือก) + มีสลิงดึง/Soft-Close ติดมาเสมอ (เจ้าของ: ไม่ต้องเลือก แค่เขียน)
+      const beam = isTop && spec?.slxbeam === "เสริมคานซัพพอร์ท" ? " เสริมคานซัพพอร์ท" : "";
+      const slxFeat = isTop ? " มีระบบสลิงดึง และระบบ Soft-Close" : "";
+      itemName = `${kind}บานเลื่อน${formLabel} ${railTxt}`.replace(/\s+/g, " ").trim()
         + (mqType ? ` (มีมุ้ง${mqType})` : "")
-        + split + softclose
+        + beam + split + slxFeat
         + " พร้อมกระจกติดตายด้านข้าง (ถ้ามี)"
         + szTxt;
     } else {
@@ -801,8 +807,11 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     // specOpts ที่ผู้ใช้เลือกทุกตัว (รวมค่า default = สเปกที่ลูกค้าควรเห็น) → priced เข้า "รายการ" · label-only เข้า "รายละเอียดงาน"
     // ยกเว้น type:'number' (ช่องกรอกราคาเอง ฿/ตร.ม. — ไม่ใช่ option ลูกค้า · ไปเป็นบรรทัดราคาแล้ว)
     const specDetailLines: string[] = [];
+    // ออปชั่นที่ "ขึ้นในชื่อสินค้าแล้ว" (ราง/คานซัพพอร์ท ของบานเลื่อน) — ไม่ต้องซ้ำเป็นบุลเล็ตรายละเอียดงาน
+    const NAME_OWNED_SPEC = new Set(["bottomrail", "slxrail", "slxbeam"]);
     (prod.specOpts ?? []).forEach((o: any) => {
       if (o.type === "number") return;
+      if (NAME_OWNED_SPEC.has(o.key)) return;
       const v = spec[o.key];
       if (v == null || v === "") return;
       // ค่ามาตรฐานที่ "เป็นค่าปกติอยู่แล้ว" ไม่ต้องพิมพ์ลงใบ (เจ้าของสั่ง 18 ก.ค.2569)
