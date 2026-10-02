@@ -142,7 +142,7 @@ for (const [id, form] of [["sms_slide", "อิสระ"], ["euro_slide", "อ�
   ok('สีลายไม้สักทอง แพงกว่าสีขาว (มีราคาสี/ค่าอบจริง)', matOf('wood_teak') > matOf('white'), `${matOf('wood_teak')} vs ${matOf('white')}`);
   ok('เทาซาฮาร่า แพงกว่าสีขาว', matOf('sahara') > matOf('white'), `${matOf('sahara')} vs ${matOf('white')}`);
   const black = panePrice(mkPane('sms_slide'), PB, 'black', 'เทมเปอร์ 6มม.', 100).r;
-  ok('อบดำ = หมวดค่าอบขาว (ไม่มีค่าอบเพิ่ม)', (black.cost.bake || 0) === 0, String(black.cost.bake));
+  ok('ดำ = หมวดค่าอบขาว (ไม่มีค่าอบเพิ่ม)', (black.cost.bake || 0) === 0, String(black.cost.bake));
 }
 
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);

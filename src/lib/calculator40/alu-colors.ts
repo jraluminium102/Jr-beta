@@ -8,7 +8,7 @@ export type AluColor = { key: string; label: string; bake: string; note?: string
 
 export const ALU_COLORS: AluColor[] = [
   { key: "white", label: "อบขาว", bake: "white" },
-  { key: "black", label: "อบดำ", bake: "white" },
+  { key: "black", label: "ดำ", bake: "white" },   // เจ้าของ 2 ต.ค.69: ชื่อสีเป็น "ดำ" (ไม่ใช่ "อบดำ") · key/ค่าอบเดิม
   { key: "sahara", label: "เทาซาฮาร่า", bake: "sahara" },
   { key: "sahara_black", label: "ดำซาฮาร่า", bake: "sahara" },
   // Aztec = สีสต็อกโปรไฟล์ยูโร (ชีตราคาสี v20.1 มีราคาทุกรหัส F) — ไม่มีราคาสีคิดค่าอบเรตเทา ไม่เปิดตู้อบ (เจ้าของ 11 ก.ย.69)

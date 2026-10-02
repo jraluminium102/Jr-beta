@@ -259,7 +259,7 @@ console.log(NL + "═══ ⑮ SlimLux — ราคาเส้นตามส
   const oven = (id, ck, bk, o) => computeCost(PB, PRODUCTS[id],
     { w: 200, h: 240, p: 2, glassType: "เทมเปอร์ 6มม.", color: bk, colorKey: ck, ...(o || {}) }).cost.openOven;
   ok("SlimLux อบขาว: คิดค่าเปิดตู้อบ 2,000", oven("slimlux", "white", "white", { form: "อิสระ" }) === 2000);
-  ok("SlimLux อบดำ: คิดค่าเปิดตู้อบ 2,000", oven("slimlux", "black", "white", { form: "อิสระ" }) === 2000);
+  ok("SlimLux ดำ: คิดค่าเปิดตู้อบ 2,000", oven("slimlux", "black", "white", { form: "อิสระ" }) === 2000);
   ok("Velora อบขาว: คิดค่าเปิดตู้อบ 2,000", oven("velora", "white", "white") === 2000);
   ok("SlimLux อบพิเศษ: ยังคิดเหมือนเดิม", oven("slimlux", "special", "special", { form: "อิสระ" }) === 2000);
   // รุ่นอื่นซื้อเส้นอบขาวมาแล้ว — ห้ามโดนด้วย
