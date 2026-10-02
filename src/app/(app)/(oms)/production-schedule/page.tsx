@@ -137,6 +137,10 @@ const glassOrdersOf = (s: ProdSet): string[] => {
 export const setWaitingGlass = (s: ProdSet) =>
   !setIsDone(s) && glassOrdersOf(s).some((o) => GLASS_WAITING.has(o));
 
+// ── "รออบสี" (เจ้าของสั่ง 2 ต.ค.69) — อลูอบสี "สั่งแล้ว รอของ" = สั่งอบสีไปแล้วรอของมาส่ง (ฟีลเดียวกับรอกระจก) ──
+export const setWaitingPaint = (s: ProdSet) =>
+  !setIsDone(s) && String(s.mat_alu_painted ?? "").trim() === "สั่งแล้ว รอของ";
+
 // สไตล์ iOS — พื้นสว่าง การ์ดขาว ตัวเข้ม สีน้อยแต่คม
 export const IOS = {
   page: "#f2f2f7", card: "#ffffff", inset: "#f4f4f7",
@@ -266,21 +270,22 @@ export default function ProductionSchedulePage() {
       factoryFilter
         ? gaugeOf(r).some((s) => s.must_finish_date && s.must_finish_date < t && !setIsDone(s))
         : (!!r.due_date && r.due_date < t && derivePhase(r) !== "พร้อม");
-    // มีชุด "รอกระจก" ไหม — ดูเฉพาะชุด active (ไม่รวม hold · ทั้งงาน hold = ไม่เตือน · BUG-2)
-    const hasGlassWait = (r: SchedRow) => {
-      const sets = (factoryFilter ? (r.sets ?? []) : (r.allSets ?? r.sets ?? []));
-      return sets.some((s) => !s.hold && setWaitingGlass(s));
-    };
-    // เริ่มผลิตแล้ว (เจ้าของ: "ช่างเริ่มผลิตแล้วแต่กระจกยังไม่มา") = งานอยู่สถานะผลิต/QC หรือเลยกำหนดแล้ว
+    // มีชุด "รอกระจก"/"รออบสี" ไหม — ดูเฉพาะชุด active (ไม่รวม hold · ทั้งงาน hold = ไม่เตือน · BUG-2)
+    const activeSets = (r: SchedRow) =>
+      (factoryFilter ? (r.sets ?? []) : (r.allSets ?? r.sets ?? [])).filter((s) => !s.hold);
+    const hasGlassWait = (r: SchedRow) => activeSets(r).some(setWaitingGlass);
+    const hasPaintWait = (r: SchedRow) => activeSets(r).some(setWaitingPaint);
+    // เริ่มผลิตแล้ว (เจ้าของ: "ช่างเริ่มผลิตแล้วแต่ของยังไม่มา") = งานอยู่สถานะผลิต/QC หรือเลยกำหนดแล้ว
     const started = (r: SchedRow) => r.status === "MANUFACTURING" || r.status === "QC";
 
-    const out: { r: SchedRow; over: boolean; glass: boolean }[] = [];
+    const out: { r: SchedRow; over: boolean; glass: boolean; paint: boolean }[] = [];
     for (const r of viewRows) {
       if (r.kind !== "job" || r.status === "READY") continue;
       const over = isOverdue(r);
-      // รอกระจก = กระจกยังไม่มา + งานเริ่มผลิตแล้ว/เลยกำหนด (ไม่ขึ้นกับว่าเฟรมกด "ผลิตเสร็จ" หรือยัง)
+      // รอกระจก/รออบสี = สั่งไปแล้วรอของ + งานเริ่มผลิตแล้ว/เลยกำหนด (ไม่ขึ้นกับว่าเฟรมกด "ผลิตเสร็จ" หรือยัง)
       const glass = hasGlassWait(r) && (over || started(r));
-      if (over || glass) out.push({ r, over, glass });
+      const paint = hasPaintWait(r) && (over || started(r));
+      if (over || glass || paint) out.push({ r, over, glass, paint });
     }
     // เลยกำหนดขึ้นก่อน แล้วเรียงตามวันกำหนดเสร็จ
     return out.sort((a, b) =>
@@ -288,6 +293,7 @@ export default function ProductionSchedulePage() {
   }, [viewRows, factoryFilter]);
   const overdueCount = stuckRows.filter((x) => x.over).length;
   const glassWaitCount = stuckRows.filter((x) => x.glass && !x.over).length;
+  const paintWaitCount = stuckRows.filter((x) => x.paint && !x.over).length;
 
   const v = (r: SchedRow, k: keyof SchedRow) => (draft[r.id]?.[k] ?? r[k] ?? "") as string;
 
@@ -517,9 +523,10 @@ export default function ProductionSchedulePage() {
             ⏰ งานค้าง {stuckRows.length} งาน — เร่งด่วน
             {overdueCount > 0 && <span className="tnum text-[12px] rounded-full px-2 py-0.5" style={{ background: "#fff", color: "#c0392b", border: "1px solid #f1a9a0" }}>เลยกำหนด {overdueCount}</span>}
             {glassWaitCount > 0 && <span className="tnum text-[12px] rounded-full px-2 py-0.5" style={{ background: "#fff", color: "#c2410c", border: "1px solid #f6c99a" }}>🪟 รอกระจก {glassWaitCount}</span>}
+            {paintWaitCount > 0 && <span className="tnum text-[12px] rounded-full px-2 py-0.5" style={{ background: "#fff", color: "#7e22ce", border: "1px solid #ddb8f0" }}>🎨 รออบสี {paintWaitCount}</span>}
           </div>
           <div className="flex gap-1.5 flex-wrap">
-            {stuckRows.map(({ r, over, glass }) => {
+            {stuckRows.map(({ r, over, glass, paint }) => {
               const overDays = over && r.due_date ? Math.floor((Date.parse(today()) - Date.parse(r.due_date)) / 86400000) : null;
               return (
                 <button key={r.id} onClick={() => { setQuery(r.title); setPhaseFilter(""); }}
@@ -530,6 +537,7 @@ export default function ProductionSchedulePage() {
                   {r.job_code && <span className="tnum text-[10px] rounded px-1 py-0.5" style={{ background: "#fdecec", color: "#c0392b" }}>{r.job_code}</span>}
                   {over && <span className="tnum" style={{ color: "#e53935" }}>· {overDays != null ? `เลย ${overDays} วัน` : "เลยกำหนด"}</span>}
                   {glass && <span className="text-[10px] rounded-full px-1.5 py-0.5 font-bold" style={{ background: "#fff0e0", color: "#c2410c" }}>🪟 รอกระจก</span>}
+                  {paint && <span className="text-[10px] rounded-full px-1.5 py-0.5 font-bold" style={{ background: "#f3e8ff", color: "#7e22ce" }}>🎨 รออบสี</span>}
                 </button>
               );
             })}
