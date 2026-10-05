@@ -128,8 +128,8 @@ function GlassItemsEditor({ seed, disabled, listId, orderOpts, installedOpts, on
                 className="ml-auto text-[12px] text-white/45 hover:text-red-300">✕ ลบแผ่นนี้</button>
             )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <div>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+            <div className="sm:col-span-2">
               <div className="text-[11px] text-white/50 mb-1">สเปคกระจก</div>
               <input ref={bindSpec(i)} list={listId} value={it.spec} disabled={disabled} placeholder="พิมพ์ / เลือกประวัติ"
                 onChange={(e) => specChange(i, e.target.value)}   // พิมพ์เอง (input) → auto-save debounce
@@ -582,7 +582,7 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
                 </Group>
 
                 <Group title="กระจก">
-                  <div className="sm:col-span-2 lg:col-span-3">
+                  <div className="sm:col-span-2 lg:col-span-4">
                     <div className="block">
                       <span className="flex items-center gap-2 text-[13px] font-medium mb-1.5" style={{ color: "var(--t-mid)" }}>
                         <span className="truncate">กระจก — ใส่ได้หลายแผ่น (สเปค · สั่งกระจก · ใส่กระจก แยกกัน)</span>
