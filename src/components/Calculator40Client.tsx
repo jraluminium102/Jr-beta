@@ -1331,8 +1331,22 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                       </label>
                     );
                   }
+                  // specOpts type:'text' → ช่องพิมพ์อิสระ (รหัสสี/ชื่อสีผนัง · สีแผ่นไอโซวอล)
+                  //   🐞 เจ้าของเจอเอง 5 ต.ค.69 "กดผนังสมาร์ทบอร์ด/ไอโซวอลแล้วเด้ง" — ของเดิมไม่มีสาขานี้
+                  //   ตกลงไปโค้ด dropdown ข้างล่างที่เรียก opts.includes(...) ทั้งที่ฟิลด์ text ไม่มี opts → หน้าพัง
+                  if (o.type === 'text') {
+                    return (
+                      <label key={o.key} className="block">
+                        <span className="text-xs font-medium text-ink-3">{o.label}</span>
+                        <input type="text" value={spec[o.key] ?? ""} placeholder={o.placeholder ?? ""}
+                          onChange={(e) => setSpec((s) => ({ ...s, [o.key]: e.target.value }))}
+                          className="mt-1.5 w-full min-h-[44px] glass-soft rounded-lg px-3 py-2 outline-none text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" />
+                      </label>
+                    );
+                  }
                   // optsByMaterial: ตัวเลือกล็อกตามวัสดุที่เลือก (เช่น สีผ้ามุ้ง — ผ้ากันแมวมีแต่สีขาว) ตรง app.js ~1468
                   const opts: string[] = (o.optsByMaterial && o.optsByMaterial[material]) || o.opts;
+                  if (!opts?.length) return null;   // กันพัง: ฟิลด์ที่ไม่มีตัวเลือก (ชนิดใหม่ที่ยังไม่รองรับ) ข้ามไป ดีกว่าทำหน้าพังทั้งหน้า
                   const val = opts.includes(spec[o.key]) ? spec[o.key] : (o.def && opts.includes(o.def) ? o.def : opts[0]);
                   return (
                     <Select key={o.key} label={o.label} value={val ?? ""} onChange={(v) => setSpec((s) => ({ ...s, [o.key]: v }))} opts={opts} labels={o.labels} disabled={altLocked} />

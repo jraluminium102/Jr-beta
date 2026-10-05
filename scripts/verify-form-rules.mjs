@@ -95,5 +95,38 @@ for (const id of SLIDES) {
   }
 }
 
+// ── ⑤ ช่องกรอกของทุกรุ่นต้องมีสาขารองรับในหน้าคิดราคา (กัน "กดรุ่นแล้วเด้ง") ──
+//   🐞 เจ้าของเจอเอง 5 ต.ค.69: ผนังสมาร์ทบอร์ด / ผนังไอโซวอล กดแล้วหน้าพัง
+//   เพราะ specOpts type:'text' ไม่มีสาขาใน Calculator40Client → ตกไปโค้ด dropdown ที่เรียก opts.includes()
+{
+  console.log('\n═══ ⑤ specOpts ทุกชนิด ต้องมีสาขาในหน้าคิดราคา ═══');
+  const ui = fs.readFileSync(path.join(__dirname, '../src/components/Calculator40Client.tsx'), 'utf8');
+  const kinds = new Map();   // ชนิด → รุ่นที่ใช้
+  for (const p of Object.values(PRODUCTS)) {
+    for (const o of (p && p.specOpts) || []) {
+      const t = o.type || 'select';
+      if (!kinds.has(t)) kinds.set(t, []);
+      if (kinds.get(t).length < 3) kinds.get(t).push(p.id);
+    }
+  }
+  for (const [t, ids] of kinds) {
+    const has = t === 'select' ? /<Select key=\{o\.key\}/.test(ui) : ui.includes(`o.type === '${t}'`) || ui.includes(`o.type === "${t}"`);
+    ok(`ชนิด '${t}' (ใช้ที่ ${ids.join(', ')}) มีสาขารองรับ`, has);
+  }
+  ok('มีตัวกันพัง: ฟิลด์ที่ไม่มี opts ต้องข้าม ไม่ใช่ทำหน้าพัง', /if \(!opts\?\.length\) return null;/.test(ui));
+  // ทุกรุ่นที่มี specOpts ชนิด text/number ต้องคิดราคาได้ (ค่าเริ่มต้นว่าง)
+  for (const p of Object.values(PRODUCTS)) {
+    if (!(p && (p.specOpts || []).some((o) => o.type === 'text' || o.type === 'number'))) continue;
+    const d = p.defaults || { w: 300, h: 270, p: 1 };
+    let okRun = true, msg = '';
+    try {
+      const spec = {};
+      for (const o of p.specOpts) spec[o.key] = o.def ?? (o.opts && o.opts[0]) ?? '';
+      computeCost(PB, p, { ...d, form: p.defForm, material: p.defMaterial, glassType: p.defGlass, spec, addons: {}, color: 'white', colorKey: 'white' });
+    } catch (e) { okRun = false; msg = e.message.slice(0, 60); }
+    ok(`${p.id}: คิดราคาด้วยค่าตั้งต้นได้`, okRun, msg);
+  }
+}
+
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);
