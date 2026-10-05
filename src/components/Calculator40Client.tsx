@@ -764,6 +764,18 @@ export default function Calculator40Client({ customers = [], priceOverride, line
         + beam + split + slxFeat
         + " พร้อมกระจกติดตายด้านข้าง (ถ้ามี)"
         + szTxt;
+    } else if (prod.id === "wall_smartboard") {
+      // เจ้าของสั่ง 5 ต.ค.69 — ผนังสมาร์ทบอร์ด: สะท้อนฉนวน(form)+โครง(wallframe)
+      const ins = form === 'ใส่ฉนวน 3"' ? "พร้อมฉนวนกันร้อนกันเสียง" : "(ไม่ใส่ฉนวน)";
+      itemName = `ผนังสมาร์ทบอร์ด${ins} โครง${spec?.wallframe || "เหล็กชุบซิงค์ (ไร้สนิม)"}` + szTxt;
+    } else if (prod.id === "ceil_gypsum") {
+      // เจ้าของสั่ง 5 ต.ค.69 — ผนังยิปซั่ม: สะท้อนฉนวน(form) · โครงคร่าวซี-ไลน์เสริมแรง
+      const ins = form === 'ใส่ฉนวน rockwool 3"' ? "พร้อมฉนวนกันร้อนกันเสียง" : "(ไม่ใส่ฉนวน)";
+      itemName = `ผนังยิปซั่ม${ins} โครงคร่าวซี-ไลน์เสริมแรง` + szTxt;
+    } else if (prod.id === "ykk" && (material === "Ventilation" || material === "Tostem Airflow")) {
+      // เจ้าของสั่ง 5 ต.ค.69 — YKK Ventilation / Tostem Airflow = ประตูระบายอากาศบานเปิด (Exhido คงชื่อเดิม)
+      const kind = paneKindOn && paneKind === "window" ? "หน้าต่าง" : "ประตู";
+      itemName = `${kind}ระบายอากาศบานเปิด ${material === "Tostem Airflow" ? "(Airflow Door)" : "(Ventilation Door)"}` + szTxt;
     } else {
       // ชื่อบรรยาย: prod.saleName (แทน {form}) · ไม่มี → ชื่อรุ่นเดิม + (รูปแบบ)
       const baseName: string = prod.saleName
