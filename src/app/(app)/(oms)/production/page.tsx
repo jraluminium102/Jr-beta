@@ -11,6 +11,7 @@ import { Chip, Spinner, EmptyState } from "@/components/ui/primitives";
 import { TriangleAlert, Clock, ChevronRight, PackageCheck, Search } from "@/components/ui/icons";
 import Icon from "@/components/Icon";
 import { ProductionStepModal, type ProdRow } from "@/components/production/ProductionStepModal";
+import GlassStatusButton from "@/components/production/GlassStatusButton";
 import { FloorWorkBadge } from "@/components/ui/FloorWorkBadge";
 import { BlockerNotesInline } from "@/components/production/BlockerNotesInline";
 import CutlistChip, { type CutBrief } from "@/components/production/CutlistChip";
@@ -276,6 +277,8 @@ export default function ProductionPage() {
       <div className="flex items-center justify-between gap-3 mb-1 flex-wrap">
         <h1 className="text-xl sm:text-2xl font-bold text-white">งานผลิต</h1>
         <div className="flex items-center gap-2">
+          {/* 🪟 สถานะกระจกทุกงาน (ดูอย่างเดียว · เจ้าของสั่ง 5 ต.ค.69) */}
+          <GlassStatusButton className="focusable pressable inline-flex items-center gap-1.5 px-3 py-2 rounded-xl glass-card border border-amber-300/40 text-amber-100 text-[13px] font-medium min-h-[40px]" />
           {/* รีเฟรช — ดึงข้อมูลใหม่โดยไม่ต้องรีโหลดทั้งหน้า */}
           <button onClick={() => refetch()} disabled={isFetching} aria-label="รีเฟรช" title="รีเฟรชข้อมูลงานผลิต"
             className="focusable pressable inline-flex items-center gap-1.5 px-3 py-2 rounded-xl glass-card border border-white/15 text-white text-[13px] font-medium min-h-[40px] disabled:opacity-60">
@@ -355,13 +358,18 @@ export default function ProductionPage() {
               <span className="text-[11px]" style={{ color: "var(--t-low)" }}>{h.sub}</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              {gs.map((g) => (
-                <button key={g.key} onClick={() => setFilterKey(filterKey === g.key ? null : g.key)}
-                  className={`focusable pressable glass-card rounded-2xl p-3 text-left border-2 ${filterKey === g.key ? "border-white/60" : "border-transparent"}`}>
+              {gs.map((g) => {
+                const sel = filterKey === g.key;
+                return (
+                <button key={g.key} onClick={() => setFilterKey(sel ? null : g.key)}
+                  className={`focusable pressable glass-card rounded-2xl p-3 text-left border-2 transition-all duration-150 relative ${
+                    sel ? "border-white bg-white/15 shadow-lg scale-[1.03]" : `border-transparent ${filterKey ? "opacity-45" : ""}`}`}>
+                  {sel && <span className="absolute top-1.5 right-2.5 text-white text-[14px] font-black leading-none">✓</span>}
                   <div className={`text-2xl font-bold tnum ${g.tone}`}>{counts[g.key] ?? 0}</div>
-                  <div className="text-[12px] mt-0.5" style={{ color: "var(--t-mid)" }}>{g.label}</div>
+                  <div className={`text-[12px] mt-0.5 ${sel ? "text-white font-semibold" : ""}`} style={sel ? undefined : { color: "var(--t-mid)" }}>{g.label}</div>
                 </button>
-              ))}
+                );
+              })}
             </div>
           </div>
         );

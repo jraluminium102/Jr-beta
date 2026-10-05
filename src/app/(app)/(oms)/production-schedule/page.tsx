@@ -616,19 +616,26 @@ export default function ProductionSchedulePage() {
           {/* ชิปเลือกสเตจ — กดดูเฉพาะสเตจนั้น (กดซ้ำ = กลับทั้งหมด) */}
           {groups.length > 0 && (
             <div className="flex gap-1.5 flex-wrap">
-              <button onClick={() => setPhaseFilter("")}
-                className="focusable text-[12.5px] rounded-full px-3.5 py-1.5 font-bold min-h-[36px]"
-                style={phaseFilter === "" ? { background: IOS.ink, color: "#fff" } : { background: IOS.inset, color: IOS.ink2 }}>
-                ทั้งหมด {groups.reduce((n, [, items]) => n + items.length, 0)}
-              </button>
+              {(() => { const allOn = phaseFilter === ""; return (
+                <button onClick={() => setPhaseFilter("")}
+                  className="focusable text-[12.5px] rounded-full px-3.5 py-1.5 font-bold min-h-[36px] inline-flex items-center gap-1.5 transition-all duration-150"
+                  style={allOn
+                    ? { background: IOS.ink, color: "#fff", boxShadow: `0 0 0 2px #fff, 0 0 0 4px ${IOS.ink}`, transform: "scale(1.06)" }
+                    : { background: IOS.inset, color: IOS.ink2 }}>
+                  {allOn && <span className="font-black">✓</span>}
+                  ทั้งหมด {groups.reduce((n, [, items]) => n + items.length, 0)}
+                </button>
+              ); })()}
               {groups.map(([p, items]) => {
                 const pm = PHASE_META[p] ?? PHASE_META["รอผลิต"];
                 const on = phaseFilter === p;
                 return (
                   <button key={p} onClick={() => setPhaseFilter(on ? "" : p)}
-                    className="focusable text-[12.5px] rounded-full px-3.5 py-1.5 font-bold min-h-[36px] inline-flex items-center gap-1.5"
-                    style={on ? { background: pm.fg, color: "#fff" } : { background: pm.bg, color: pm.fg }}>
-                    <span className="w-2 h-2 rounded-full" style={{ background: on ? "#fff" : pm.fg }} />
+                    className="focusable text-[12.5px] rounded-full px-3.5 py-1.5 font-bold min-h-[36px] inline-flex items-center gap-1.5 transition-all duration-150"
+                    style={on
+                      ? { background: pm.fg, color: "#fff", boxShadow: `0 0 0 2px #fff, 0 0 0 4px ${pm.fg}`, transform: "scale(1.06)" }
+                      : { background: pm.bg, color: pm.fg, opacity: phaseFilter ? 0.55 : 1 }}>
+                    {on ? <span className="font-black">✓</span> : <span className="w-2 h-2 rounded-full" style={{ background: pm.fg }} />}
                     {p} {items.length}
                   </button>
                 );
