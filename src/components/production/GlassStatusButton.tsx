@@ -52,6 +52,7 @@ export default function GlassStatusButton({ className }: { className?: string })
   const counts: Record<Bucket, number> = { waiting: 0, unordered: 0, arrived: 0 };
   for (const r of rows) {
     if (r?.kind !== "job") continue;
+    if (r?.status === "READY" || r?.status === "DONE") continue;   // กดไปติดตั้ง/ปิดงานแล้ว = เอาออก (เจ้าของสั่ง 5 ต.ค.69)
     const setGrps: SetGrp[] = [];
     for (const s of (r.allSets ?? r.sets ?? [])) {
       const lines: Line[] = [];
@@ -108,6 +109,7 @@ export default function GlassStatusButton({ className }: { className?: string })
             <div className="flex items-center gap-1.5 flex-wrap px-4 py-2.5 border-b" style={{ background: "#fff", borderColor: "#e5e5ea" }}>
               {chip("", "ทั้งหมด", counts.waiting + counts.unordered + counts.arrived, "#1c1c1e", "#e5e5ea")}
               {ORDER.map((b) => chip(b, `${BK[b].dot} ${BK[b].label}`, counts[b], BK[b].fg, BK[b].bd))}
+              <span className="text-[11px] w-full sm:w-auto sm:ml-1" style={{ color: "#a1a1a8" }}>* ตัวเลข = จำนวนรายการกระจก (ไม่ใช่จำนวนลูกค้า) · ตัดงานที่ส่งติดตั้งแล้วออก</span>
             </div>
             {/* รายการ: ลูกค้า → ชุด → กระจก */}
             <div className="overflow-y-auto p-3 sm:p-4 space-y-3">
