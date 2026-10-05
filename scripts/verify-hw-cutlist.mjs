@@ -126,8 +126,12 @@ console.log("\n═══ ③ ค่าของคิดจากราคาใ
 
 console.log("\n═══ ④ ⚠ รหัสยังไม่ตั้งราคา = ห้ามคิดเป็น 0 เงียบ ๆ (เสนอราคาต่ำกว่าจริง) ═══");
 {
-  const noStock = computeCost(BASE, PRODUCTS.sms_slide, { ...BASE_IN, hardwareLines: linesOf() });
-  const plain = computeCost(BASE, PRODUCTS.sms_slide, { ...BASE_IN });
+  // ⚠ 5 ต.ค.69: ของเดิมอาศัยว่า "ยางรูน้ำ JR00589 ไม่มีราคา" เป็นตัวจำลองสถานการณ์ "สโตร์ยังไม่ตั้งราคา"
+  //   พอเติมราคาให้ JR00589 (สโตร์มี 5 บาท · เจ้าของท้วง) ทุกรหัสมีราคาครบ ชุดนี้เลยไม่ได้ทดสอบสิ่งที่ตั้งใจ
+   //   → จำลองตรง ๆ ด้วยสมุดราคาที่ไม่มีราคาอุปกรณ์เลย (HWPRICE ว่าง) แทนการพึ่งของชิ้นเดียว
+  const NOPRICE = { ...BASE, HWPRICE: {}, HWPRICE_BY_PROD: {} };
+  const noStock = computeCost(NOPRICE, PRODUCTS.sms_slide, { ...BASE_IN, hardwareLines: linesOf() });
+  const plain = computeCost(NOPRICE, PRODUCTS.sms_slide, { ...BASE_IN });
   ok("สโตร์ยังไม่มีราคาเลย → ไม่ใช้รายการใบตัด", noStock.hwFromCutlist === false, "");
   ok("ค่าของต้องไม่หล่นเป็น 0 — ถอยไปใช้ราคาเดิมในสูตร",
     noStock.cost.hardware + noStock.cost.consum === plain.cost.hardware + plain.cost.consum
@@ -138,18 +142,23 @@ console.log("\n═══ ④ ⚠ รหัสยังไม่ตั้งร�
   // 21 ก.ย.69: สูตรเดิมเอา "จำนวนบรรทัด − จำนวนคีย์ใน HWPRICE − 1" ซึ่งติดลบเสมอ (HWPRICE มีหลายร้อยคีย์)
   //   เจตนาจริง = hwMissing ต้องเป็นรหัสที่ "ไฟล์ก็ไม่มีราคา" เท่านั้น → เช็คตรง ๆ แบบนั้น
   {
-    const noPriceInFile = linesOf().filter((l) => l.sku && !l.noStock && !((BASE.HWPRICE ?? {})[String(l.sku).toUpperCase()] > 0));
+    // รหัสที่ควรขึ้น "ยังไม่มีราคา" = ทั้งบรรทัดจากใบตัด และบรรทัดของสูตรเองที่ไม่มีราคาสำรอง
+    //   (5 ต.ค.69 เพิ่มฝั่งสูตร — สักหลาด JR00794 อยู่ใน consum ของรุ่น ไม่ได้มาจากใบตัด)
+    const fromCut = linesOf().filter((l) => l.sku && !l.noStock && !((NOPRICE.HWPRICE ?? {})[String(l.sku).toUpperCase()] > 0));
+    const fromProd = (PRODUCTS.sms_slide.consum ?? [])   // เฉพาะ consum — บรรทัด hardware ถูกชุดใบตัดแทนที่ไปแล้ว
+      .filter((it) => it.sku && !it.noStock && !it.labor && Number(it.price) !== 0);   // สูตรมีราคาสำรองก็ยังต้องเตือน (เอนจินเตือนเมื่อ "สโตร์/ไฟล์ไม่มีราคา")
+    const noPriceInFile = [...fromCut, ...fromProd];
     ok("รายงานเฉพาะรหัสที่ยังไม่มีราคาเลย (ไฟล์ก็ไม่มี สโตร์ก็ไม่มี)",
-      noStock.hwMissing.length === noPriceInFile.length,
+      new Set(noStock.hwMissing.map((m) => String(m.sku).toUpperCase())).size === new Set(noPriceInFile.map((l) => String(l.sku).toUpperCase())).size,   // นับแบบไม่ซ้ำรหัส (ใบตัดมีรหัสเดียวกันได้หลายบรรทัด)
       'ขาด ' + noStock.hwMissing.length + ' · ไฟล์ไม่มีราคา ' + noPriceInFile.length + ' (' + noPriceInFile.map((l) => l.sku).join(',') + ')');
   }
   ok("รหัสที่มีราคาไฟล์แล้ว ต้องไม่โผล่ในรายการที่ขาด",
-    !noStock.hwMissing.some((m) => (BASE.HWPRICE ?? {})[m.sku.toUpperCase()] > 0), "");
+    !noStock.hwMissing.some((m) => (NOPRICE.HWPRICE ?? {})[m.sku.toUpperCase()] > 0), "");
   ok("รายงานทั้งรหัสและชื่อ (เอาไปหาในสโตร์ได้)",
     noStock.hwMissing.every((m) => m.sku && m.name), "");
   // ขาดแค่ตัวเดียวก็ต้องถอยทั้งชุด (ไม่ใช่คิดครึ่ง ๆ)
-  const partial = applyPriceOverride(JSON.parse(JSON.stringify(BASE)),
-    buildPriceOverride([{ name: "ล้อ", sku: "JR00576", unit_cost: 80 }], BASE));
+  const partial = applyPriceOverride(JSON.parse(JSON.stringify(NOPRICE)),   // 5 ต.ค.69 ใช้สมุดราคาเปล่า ไม่งั้นราคาไฟล์เติมให้ครบทุกตัวตั้งแต่ต้น
+    buildPriceOverride([{ name: "ล้อ", sku: "JR00576", unit_cost: 80 }], NOPRICE));
   const p1 = computeCost(partial, PRODUCTS.sms_slide, { ...BASE_IN, hardwareLines: linesOf() });
   ok("ตั้งราคาไม่ครบ (ขาดตัวเดียว) → ยังไม่สลับ ใช้ราคาเดิมทั้งชุด", p1.hwFromCutlist === false, "");
   ok("ไม่มี hardwareLines ส่งมา = ทำงานเหมือนเดิมทุกอย่าง",

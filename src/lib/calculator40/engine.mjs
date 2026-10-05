@@ -894,6 +894,9 @@ export function computeCost(PB, prod, opt) {
     lines.push({ cat: 'consum', name: sdName + (material ? ' ' + material : '') + hNote + (minHit ? ' (ขั้นต่ำ)' : ''), qty: round2(aSell), unit: 'ตร.ม.', unitPrice: rate, amount: round2(matBase) });
     if (rnDisc > 0) lines.push({ cat: 'discount', name: 'ส่วนลดปริมาณ ' + Math.round((area > 30 ? 15 : area > 20 ? 11 : area > 15 ? 8 : 5)) + '% (พื้นที่ ' + round2(area) + ' ตร.ม.)', qty: 1, unit: '', unitPrice: -rnDisc, amount: -rnDisc });
     if (irate > 0) lines.push({ cat: 'labor', name: 'ค่าแรงติดตั้ง', qty: round2(aSell), unit: 'ตร.ม.', unitPrice: irate, amount: round2(aSell * irate) });
+    // ⚠️ รุ่นที่ให้กรอกราคาเอง (ระแนงบานเกล็ด/ระแนงหมุน R3.9 ข้อ 38.1/38.3) ถ้ายังไม่กรอก ราคาจะเป็น 0 เงียบ ๆ
+    //   เจ้าของเจอ 5 ต.ค.69 ว่ามีของเข้าไปในราคาเป็น 0 โดยไม่มีใครเตือน → ขึ้นคำเตือนให้เห็นที่หน้าคิดราคา
+    if (!(rate > 0)) lines.push({ cat: 'warn', name: '⚠️ ยังไม่ได้กรอกราคาขาย/ตร.ม. ของรุ่นนี้ — ราคาจะออกเป็น 0', amount: 0 });
   } else if (R41N) {
     const vk = r41VariantKey(prod, material, opt.spec || {}, form);
     const small = !r41AnyEdit && !!(SELL_RAW && SELL_RAW.small && area > 0 && area < SELL_RAW.small.maxArea);

@@ -3,6 +3,7 @@ import { getProfile } from "@/lib/auth";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 import { colorFromName } from "@/lib/cutlist/stock-match";
 import { canSeeCost } from "@/lib/rbac";
+import { fetchAllPaged } from "@/lib/supabase/fetch-all";
 
 // สโตร์/ผลิต บันทึกวัสดุได้ด้วย (0073) — ไม่ใช่แค่ ADMIN/SALES/ACCOUNTING
 const STORE_WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING", "STORE"];
@@ -14,20 +15,27 @@ export async function GET(req: Request) {
 
   const q = new URL(req.url).searchParams.get("q")?.trim() ?? "";
   const supabase = createClient();
-  let query = supabase
-    .from("stock_items")
-    .select("*")
-    .eq("is_active", true)
-    .order("name", { ascending: true });
-
-  if (q) {
-    // escape อักขระที่ทำ .or() filter เพี้ยน (comma แยก filter, % คือ wildcard)
-    const safe = q.replace(/[,%()]/g, " ").trim();
-    if (safe) query = query.or(`name.ilike.%${safe}%,sku.ilike.%${safe}%,category.ilike.%${safe}%`);
-  }
-
-  const { data, error } = await query;
-  if (error) return fail(error.message, 500);
+  // ⚠ 5 ต.ค.69: เดิม select ครั้งเดียว → PostgREST ตัดที่ 1,000 แถว "เงียบ ๆ" (สโตร์มี 2,191 รายการ)
+  //   ค้นหาแบบไม่ใส่คำค้นเลยได้แค่ของที่ชื่อขึ้นต้นด้วย ก. → ใช้ fetchAllPaged เหมือนสมุดสโตร์
+  const q2 = q.replace(/[,%()]/g, " ").trim();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let data: any[] = [];
+  let error: unknown = null;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data = await fetchAllPaged<any>((from, to) => {
+      let query = supabase
+        .from("stock_items")
+        .select("*")
+        .eq("is_active", true)
+        .order("name", { ascending: true })
+        .order("id", { ascending: true })   // กันหน้าถัดไปแถวซ้ำ/หาย (ชื่อซ้ำกันได้)
+        .range(from, to);
+      if (q2) query = query.or(`name.ilike.%${q2}%,sku.ilike.%${q2}%,category.ilike.%${q2}%`);
+      return query;
+    });
+  } catch (e) { error = e; }
+  if (error) return fail(error instanceof Error ? error.message : String(error), 500);
   // role สโตร์ = ตาบอดราคา → ตัดฟิลด์ต้นทุนออกก่อนส่ง (กันหลุดผ่าน network)
   if (!canSeeCost(profile.role)) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
