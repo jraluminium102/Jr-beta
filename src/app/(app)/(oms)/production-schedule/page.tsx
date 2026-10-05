@@ -119,6 +119,45 @@ export function deadlineInfo(must: string | null, done: boolean): { tone: string
 }
 export const setIsDone = (s: ProdSet) => s.glass_installed === V_GLASS_DONE && s.qc_after_glass === V_QC_PASS;
 
+// ── "รอกระจก" (เจ้าของสั่ง 28 ก.ย.69) — สั่งกระจกแล้วกำลังรอของมาส่ง กดปิดงานไม่ได้ ──
+//   ⚠ "รอกระจก" = สั่งกระจกไปแล้วรอของ/มายังไม่ครบ เท่านั้น · ไม่ใช่ "ยังไม่ขึ้นมาแล้ว" ทุกแบบ
+//      (ไม่งั้นงานที่ยังไม่ได้สั่งกระจกด้วยซ้ำก็ขึ้นเต็มไปหมด — เจ้าของ 1 ต.ค.69: โชว์ผิด 16 งาน)
+const GLASS_WAITING = new Set(["สั่งแล้ว รอของ", "มายังไม่ครบ"]);
+// สถานะสั่งกระจกของชุด (รองรับหลายแผ่น glass_items · i อาจ null จาก SQL แก้ตรง DB → กัน crash)
+const glassOrdersOf = (s: ProdSet): string[] => {
+  const items = (Array.isArray(s.glass_items) ? s.glass_items : [])
+    .map((i) => String(i?.order ?? "").trim()).filter(Boolean);
+  if (items.length) return items;
+  const o = String(s.glass_order ?? "").trim();
+  return o ? [o] : [];
+};
+// ชุดนี้ "รอกระจก" = มีแผ่นที่ "สั่งแล้ว รอของ" / "มายังไม่ครบ" · ยังไม่ปิดงาน
+//   ⚠ ไม่ผูกว่าเฟรมต้องกด "ผลิตเสร็จ" ก่อน (มิลค์เริ่มผลิตแต่ยังไม่กดเฟรมเสร็จ ก็ขึ้นได้)
+//   "เริ่มผลิตแล้ว" เช็คที่ระดับงาน (status) ใน stuckRows แทน
+export const setWaitingGlass = (s: ProdSet) =>
+  !setIsDone(s) && glassOrdersOf(s).some((o) => GLASS_WAITING.has(o));
+
+// ── "รออบสี" (เจ้าของสั่ง 2 ต.ค.69) — อลูอบสี "สั่งแล้ว รอของ" = สั่งอบสีไปแล้วรอของมาส่ง (ฟีลเดียวกับรอกระจก) ──
+export const setWaitingPaint = (s: ProdSet) =>
+  !setIsDone(s) && String(s.mat_alu_painted ?? "").trim() === "สั่งแล้ว รอของ";
+
+// ── ภาพรวมสถานะกระจก (เจ้าของสั่ง 5 ต.ค.69) — ดูอย่างเดียว · แยกกระจกรายแผ่น ──
+type GlassSheet = { spec: string; order: string; installed: string };
+const sheetsOfSet = (s: ProdSet): GlassSheet[] => {
+  const items = (Array.isArray(s.glass_items) ? s.glass_items : [])
+    .map((i) => ({ spec: String(i?.spec ?? "").trim(), order: String(i?.order ?? "").trim(), installed: String(i?.installed ?? "").trim() }))
+    .filter((x) => x.spec || x.order || x.installed);
+  if (items.length) return items;
+  const spec = String(s.glass_spec ?? "").trim(), order = String(s.glass_order ?? "").trim(), installed = String(s.glass_installed ?? "").trim();
+  return (spec || order || installed) ? [{ spec, order, installed }] : [];
+};
+type GlassBucket = "waiting" | "unordered" | "arrived" | "installed";
+const bucketOfSheet = (sh: GlassSheet): GlassBucket =>
+  sh.installed === V_GLASS_DONE ? "installed"
+    : sh.order === "มาแล้ว" ? "arrived"
+      : GLASS_WAITING.has(sh.order) ? "waiting"
+        : "unordered";   // "" / รอวัด / วัดแล้ว = ยังไม่สั่ง
+
 // สไตล์ iOS — พื้นสว่าง การ์ดขาว ตัวเข้ม สีน้อยแต่คม
 export const IOS = {
   page: "#f2f2f7", card: "#ffffff", inset: "#f4f4f7",
@@ -139,9 +178,11 @@ export const dayColorOf = (dateKey: string) =>
   (!dateKey || dateKey === "zzz") ? null : DAY_COLOR[new Date(dateKey + "T00:00:00").getDay()];
 
 export default function ProductionSchedulePage() {
+  const [glassOpen, setGlassOpen] = useState(false);   // หน้าภาพรวมสถานะกระจก (ดูอย่างเดียว)
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ["production-schedule"],
     queryFn: () => api.get<SchedRow[]>("/production-schedule"),
+    refetchInterval: glassOpen ? 30000 : false,   // เปิดหน้ากระจก = ดึงใหม่ทุก 30 วิ (อัปเดตตามเวลา · ปิดแล้วหยุด)
   });
   const rows = data?.data ?? [];
   const canWrite = (data?.meta?.can_write as boolean) ?? false;
@@ -233,24 +274,64 @@ export default function ProductionSchedulePage() {
     [viewRows]
   );
 
-  // 🔴 งานที่ "เลยวันกำหนดผลิตเสร็จ" แล้วแต่ยังผลิตไม่เสร็จ (ยังไม่พร้อมติดตั้ง) — แจ้งเตือนเด่นบนสุด (เจ้าของสั่ง 15 ก.ย.69)
-  const overdueRows = useMemo(() => {
+  // 🔴 งานค้าง — (1) เลยวันกำหนดผลิตเสร็จแต่ยังไม่เสร็จ (เจ้าของสั่ง 15 ก.ย.69)
+  //             (2) เฟรมเสร็จแต่ "รอกระจก" กดปิดงานไม่ได้ (เจ้าของสั่ง 28 ก.ย.69)
+  const stuckRows = useMemo(() => {
     const t = today();
-    return viewRows
-      .filter((r) => {
-        if (r.kind !== "job" || r.status === "READY") return false;
-        // แยกโรง (0114 · เจ้าของสั่ง 24 ก.ย.69): เลือกโรง → เตือนจากชุด "ในโรงนั้น" ที่เลยวันกำหนดเสร็จของชุด แล้วยังผลิตไม่เสร็จ
-        //   (โรง3 เสร็จ/โรง1 ไม่ทัน → แท็บโรง1 เตือน แท็บโรง3 ไม่เตือน) · ทั้งหมด = ใช้วันรวมงานเดิม
-        if (factoryFilter) {
-          const act = (r.sets ?? []).filter((s) => !s.hold);
-          const gauge = act.length ? act : (r.sets ?? []);
-          return gauge.some((s) => s.must_finish_date && s.must_finish_date < t && !setIsDone(s));
-        }
-        return !!r.due_date && r.due_date < t && derivePhase(r) !== "พร้อม";
-      })
-      .slice()
-      .sort((a, b) => (a.due_date ?? "").localeCompare(b.due_date ?? ""));
+    // ชุดที่ใช้ตัดสิน: กรองโรง = เฉพาะชุดโรคนั้น · ไม่กรอง = ชุดเต็มของงาน · ตัด hold ออก (ถ้าเหลือ 0 ใช้ทั้งหมด)
+    const gaugeOf = (r: SchedRow) => {
+      const sets = (factoryFilter ? (r.sets ?? []) : (r.allSets ?? r.sets ?? []));
+      const act = sets.filter((s) => !s.hold);
+      return act.length ? act : sets;
+    };
+    // แยกโรง (0114): เลือกโรง → เตือนจากชุด "ในโรงนั้น" ที่เลยวันกำหนดเสร็จของชุด · ทั้งหมด = ใช้วันรวมงานเดิม
+    const isOverdue = (r: SchedRow) =>
+      factoryFilter
+        ? gaugeOf(r).some((s) => s.must_finish_date && s.must_finish_date < t && !setIsDone(s))
+        : (!!r.due_date && r.due_date < t && derivePhase(r) !== "พร้อม");
+    // มีชุด "รอกระจก"/"รออบสี" ไหม — ดูเฉพาะชุด active (ไม่รวม hold · ทั้งงาน hold = ไม่เตือน · BUG-2)
+    const activeSets = (r: SchedRow) =>
+      (factoryFilter ? (r.sets ?? []) : (r.allSets ?? r.sets ?? [])).filter((s) => !s.hold);
+    const hasGlassWait = (r: SchedRow) => activeSets(r).some(setWaitingGlass);
+    const hasPaintWait = (r: SchedRow) => activeSets(r).some(setWaitingPaint);
+    // เริ่มผลิตแล้ว (เจ้าของ: "ช่างเริ่มผลิตแล้วแต่ของยังไม่มา") = งานอยู่สถานะผลิต/QC หรือเลยกำหนดแล้ว
+    const started = (r: SchedRow) => r.status === "MANUFACTURING" || r.status === "QC";
+
+    const out: { r: SchedRow; over: boolean; glass: boolean; paint: boolean }[] = [];
+    for (const r of viewRows) {
+      if (r.kind !== "job" || r.status === "READY") continue;
+      const over = isOverdue(r);
+      // รอกระจก/รออบสี = สั่งไปแล้วรอของ + งานเริ่มผลิตแล้ว/เลยกำหนด (ไม่ขึ้นกับว่าเฟรมกด "ผลิตเสร็จ" หรือยัง)
+      const glass = hasGlassWait(r) && (over || started(r));
+      const paint = hasPaintWait(r) && (over || started(r));
+      if (over || glass || paint) out.push({ r, over, glass, paint });
+    }
+    // เลยกำหนดขึ้นก่อน แล้วเรียงตามวันกำหนดเสร็จ
+    return out.sort((a, b) =>
+      a.over !== b.over ? (a.over ? -1 : 1) : (a.r.due_date ?? "9999").localeCompare(b.r.due_date ?? "9999"));
   }, [viewRows, factoryFilter]);
+  const overdueCount = stuckRows.filter((x) => x.over).length;
+  const glassWaitCount = stuckRows.filter((x) => x.glass && !x.over).length;
+  const paintWaitCount = stuckRows.filter((x) => x.paint && !x.over).length;
+
+  // 🪟 ภาพรวมสถานะกระจกทั้งหมด (ดูอย่างเดียว) — แยก รอกระจก / ยังไม่สั่ง / มาแล้ว (ตัด ใส่แล้ว ออก)
+  type GlassEntry = { customer: string; code: string | null; setLabel: string; spec: string; order: string; hold: boolean };
+  const glassBoard = useMemo(() => {
+    const g: Record<"waiting" | "unordered" | "arrived", GlassEntry[]> = { waiting: [], unordered: [], arrived: [] };
+    for (const r of rows) {
+      if (r.kind !== "job") continue;
+      for (const s of (r.allSets ?? r.sets ?? [])) {
+        for (const sh of sheetsOfSet(s)) {
+          const b = bucketOfSheet(sh);
+          if (b === "installed") continue;   // ใส่แล้ว = จบ ไม่ต้องตามกระจก
+          g[b].push({ customer: r.title, code: r.job_code, setLabel: String(s.set_label ?? ""), spec: sh.spec, order: sh.order, hold: !!s.hold });
+        }
+      }
+    }
+    const byCustomer = (a: GlassEntry, b: GlassEntry) => a.customer.localeCompare(b.customer, "th");
+    g.waiting.sort(byCustomer); g.unordered.sort(byCustomer); g.arrived.sort(byCustomer);
+    return g;
+  }, [rows]);
 
   const v = (r: SchedRow, k: keyof SchedRow) => (draft[r.id]?.[k] ?? r[k] ?? "") as string;
 
@@ -450,6 +531,13 @@ export default function ProductionSchedulePage() {
           )}
         </div>
 
+        {/* สถานะกระจกทั้งหมด (ดูอย่างเดียว) — เช็ค รอกระจก/ยังไม่สั่ง/มาแล้ว (เจ้าของสั่ง 5 ต.ค.69) */}
+        <button onClick={() => setGlassOpen(true)} title="ดูสถานะกระจกทุกงาน (รอกระจก/ยังไม่สั่ง/มาแล้ว)"
+          className="focusable inline-flex items-center gap-1.5 rounded-[10px] px-3.5 py-2 text-sm font-semibold min-h-[34px] border"
+          style={{ background: "#fff", color: "#c2410c", borderColor: "#f6c99a" }}>
+          🪟 สถานะกระจก
+        </button>
+
         {/* รีเฟรช — ดึงข้อมูลใหม่โดยไม่ต้องรีโหลดทั้งหน้า (ช่างเห็นด้วย เจ้าของสั่ง) */}
         <button onClick={() => refetch()} disabled={isFetching} aria-label="รีเฟรช"
           title="รีเฟรชข้อมูลตารางผลิต"
@@ -473,23 +561,28 @@ export default function ProductionSchedulePage() {
         </span>
       </div>
 
-      {/* 🔴 แจ้งเตือนเด่น: งานเลยกำหนดผลิตเสร็จ (ยังผลิตไม่เสร็จ) — กดชื่อ = กรองไปที่งานนั้น */}
-      {overdueRows.length > 0 && (
+      {/* 🔴 แจ้งเตือนเด่น: งานค้าง (เลยกำหนด / รอกระจก) — กดชื่อ = กรองไปที่งานนั้น */}
+      {stuckRows.length > 0 && (
         <div className="rounded-xl px-4 py-3 mb-4" style={{ background: "#fdecec", border: "2px solid #e53935" }}>
-          <div className="font-bold text-[15px] mb-2 flex items-center gap-2" style={{ color: "#c0392b" }}>
-            ⏰ เลยกำหนดผลิตเสร็จ {overdueRows.length} งาน — ยังผลิตไม่เสร็จ เร่งด่วน
+          <div className="font-bold text-[15px] mb-2 flex items-center gap-2 flex-wrap" style={{ color: "#c0392b" }}>
+            ⏰ งานค้าง {stuckRows.length} งาน — เร่งด่วน
+            {overdueCount > 0 && <span className="tnum text-[12px] rounded-full px-2 py-0.5" style={{ background: "#fff", color: "#c0392b", border: "1px solid #f1a9a0" }}>เลยกำหนด {overdueCount}</span>}
+            {glassWaitCount > 0 && <span className="tnum text-[12px] rounded-full px-2 py-0.5" style={{ background: "#fff", color: "#c2410c", border: "1px solid #f6c99a" }}>🪟 รอกระจก {glassWaitCount}</span>}
+            {paintWaitCount > 0 && <span className="tnum text-[12px] rounded-full px-2 py-0.5" style={{ background: "#fff", color: "#7e22ce", border: "1px solid #ddb8f0" }}>🎨 รออบสี {paintWaitCount}</span>}
           </div>
           <div className="flex gap-1.5 flex-wrap">
-            {overdueRows.map((r) => {
-              const over = Math.floor((Date.parse(today()) - Date.parse(r.due_date!)) / 86400000);
+            {stuckRows.map(({ r, over, glass, paint }) => {
+              const overDays = over && r.due_date ? Math.floor((Date.parse(today()) - Date.parse(r.due_date)) / 86400000) : null;
               return (
                 <button key={r.id} onClick={() => { setQuery(r.title); setPhaseFilter(""); }}
                   title={`กดเพื่อดูงานนี้ · กำหนดเสร็จ ${thShort(r.due_date)}`}
                   className="focusable pressable inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12.5px] font-semibold min-h-[34px]"
-                  style={{ background: "#fff", color: "#c0392b", border: "1px solid #f1a9a0" }}>
+                  style={{ background: "#fff", color: "#c0392b", border: `1px solid ${over ? "#f1a9a0" : "#f6c99a"}` }}>
                   {r.title}
                   {r.job_code && <span className="tnum text-[10px] rounded px-1 py-0.5" style={{ background: "#fdecec", color: "#c0392b" }}>{r.job_code}</span>}
-                  <span className="tnum" style={{ color: "#e53935" }}>· เลย {over} วัน</span>
+                  {over && <span className="tnum" style={{ color: "#e53935" }}>· {overDays != null ? `เลย ${overDays} วัน` : "เลยกำหนด"}</span>}
+                  {glass && <span className="text-[10px] rounded-full px-1.5 py-0.5 font-bold" style={{ background: "#fff0e0", color: "#c2410c" }}>🪟 รอกระจก</span>}
+                  {paint && <span className="text-[10px] rounded-full px-1.5 py-0.5 font-bold" style={{ background: "#f3e8ff", color: "#7e22ce" }}>🎨 รออบสี</span>}
                 </button>
               );
             })}
@@ -839,6 +932,62 @@ export default function ProductionSchedulePage() {
       )}
 
       {addOpen && <AddProductionJobModal producerList={producerList} isChang={isChang} onClose={() => setAddOpen(false)} onSaved={() => { setAddOpen(false); refetch(); }} />}
+
+      {/* 🪟 ภาพรวมสถานะกระจก (ดูอย่างเดียว) — เจ้าของสั่ง 5 ต.ค.69 */}
+      {glassOpen && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6" style={{ background: "rgba(0,0,0,.45)" }}
+          onClick={() => setGlassOpen(false)}>
+          <div className="w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden flex flex-col" style={{ background: IOS.page, maxHeight: "92vh" }}
+            onClick={(e) => e.stopPropagation()}>
+            {/* หัว */}
+            <div className="flex items-center gap-2 px-4 py-3 border-b" style={{ background: "#fff", borderColor: IOS.line }}>
+              <span className="text-[16px] font-bold" style={{ color: IOS.ink }}>🪟 สถานะกระจกทุกงาน</span>
+              <span className="text-[12px] rounded-full px-2 py-0.5" style={{ background: IOS.inset, color: IOS.ink2 }}>ดูอย่างเดียว · อัปเดตอัตโนมัติทุก 30 วิ</span>
+              {isFetching && <RefreshCw size={14} className="animate-spin" style={{ color: IOS.ink3 }} />}
+              <button onClick={() => refetch()} className="ml-auto focusable inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[13px] font-semibold border" style={{ background: "#fff", color: IOS.ink, borderColor: IOS.line }}>
+                <RefreshCw size={14} /> รีเฟรช
+              </button>
+              <button onClick={() => setGlassOpen(false)} className="focusable rounded-lg px-2.5 py-1.5 text-[13px] font-semibold" style={{ background: IOS.inset, color: IOS.ink2 }}>ปิด ✕</button>
+            </div>
+            {/* เนื้อหา 3 กลุ่ม */}
+            <div className="overflow-y-auto p-3 sm:p-4 grid grid-cols-1 lg:grid-cols-3 gap-3">
+              {([
+                { key: "waiting" as const, title: "รอกระจก (สั่งแล้ว รอของ)", dot: "🟡", fg: "#c2410c", bg: "#fff7ed", bd: "#f6c99a" },
+                { key: "unordered" as const, title: "ยังไม่สั่งกระจก", dot: "⚪", fg: "#4b5563", bg: "#f3f4f6", bd: "#e5e7eb" },
+                { key: "arrived" as const, title: "กระจกมาแล้ว (รอใส่)", dot: "🟢", fg: "#227a44", bg: "#e7f6ec", bd: "#b6e3c5" },
+              ]).map((sec) => {
+                const list = glassBoard[sec.key];
+                return (
+                  <div key={sec.key} className="rounded-xl border flex flex-col min-h-0" style={{ background: "#fff", borderColor: sec.bd }}>
+                    <div className="px-3 py-2 rounded-t-xl font-bold text-[14px] flex items-center gap-2" style={{ background: sec.bg, color: sec.fg }}>
+                      <span>{sec.dot} {sec.title}</span>
+                      <span className="ml-auto tnum text-[13px] rounded-full px-2 py-0.5" style={{ background: "#fff", color: sec.fg, border: `1px solid ${sec.bd}` }}>{list.length}</span>
+                    </div>
+                    <div className="p-2 space-y-1.5 overflow-y-auto" style={{ maxHeight: "70vh" }}>
+                      {list.length === 0 ? (
+                        <div className="text-[13px] text-center py-4" style={{ color: IOS.ink3 }}>— ไม่มี —</div>
+                      ) : list.map((e, i) => (
+                        <div key={i} className="rounded-lg px-2.5 py-2 border" style={{ background: IOS.inset, borderColor: IOS.line }}>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[13.5px] font-semibold" style={{ color: IOS.ink }}>{e.customer}</span>
+                            {e.code && <span className="tnum text-[10px] rounded px-1 py-0.5" style={{ background: "#fff", color: IOS.ink2, border: `1px solid ${IOS.line}` }}>{e.code}</span>}
+                            {e.hold && <span className="text-[10px] rounded px-1 py-0.5 font-bold" style={{ background: "#fdecec", color: "#c0392b" }}>พัก</span>}
+                          </div>
+                          <div className="text-[12.5px] mt-0.5" style={{ color: IOS.ink2 }}>
+                            {e.spec || <span style={{ color: IOS.ink3 }}>(ยังไม่ระบุสเปค)</span>}
+                            {e.setLabel && <span style={{ color: IOS.ink3 }}> · {e.setLabel}</span>}
+                            {e.order && <span style={{ color: sec.fg }}> · {e.order}</span>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
      </div>
     </div>
   );

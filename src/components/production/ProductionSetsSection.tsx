@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Plus, X, ChevronDown } from "@/components/ui/icons";
@@ -71,17 +71,45 @@ function F({ label, children, onEditOpts }: { label: string; children: React.Rea
 type GlassItem = { spec: string; order: string; installed: string };
 function GlassItemsEditor({ seed, disabled, listId, orderOpts, installedOpts, onSave }: {
   seed: GlassItem[]; disabled: boolean; listId: string; orderOpts: string[]; installedOpts: string[];
-  onSave: (items: GlassItem[]) => void;
+  onSave: (items: GlassItem[]) => void | Promise<unknown>;
 }) {
   const [items, setItems] = useState<GlassItem[]>(seed.length ? seed : [{ spec: "", order: "", installed: "" }]);
-  const commit = (next: GlassItem[]) =>
-    onSave(next.filter((i) => i.spec.trim() || i.order.trim() || i.installed.trim()));
+  const [flash, setFlash] = useState(false);   // "บันทึกแล้ว ✓" ตรงช่องกระจก (feedback ใกล้ตา)
+  const [err, setErr] = useState("");           // ❌ โชว์ error จริง ถ้า API ล้ม (ห้ามเงียบ)
+  const timers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
+  const onSaveRef = useRef(onSave);
+  onSaveRef.current = onSave;   // ให้ native listener ที่ผูกครั้งเดียวเรียก onSave ล่าสุดเสมอ
+  const commit = (next: GlassItem[]) => {
+    const filtered = next.filter((i) => i.spec.trim() || i.order.trim() || i.installed.trim());
+    setErr("");
+    Promise.resolve(onSaveRef.current(filtered))
+      .then(() => { setFlash(true); setTimeout(() => setFlash(false), 1600); })
+      .catch((e) => setErr(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ — เช็คเน็ตแล้วลองใหม่"));
+  };
   const patchAt = (i: number, patch: Partial<GlassItem>, doSave: boolean) =>
     setItems((prev) => {
       const next = prev.map((x, idx) => (idx === i ? { ...x, ...patch } : x));
       if (doSave) commit(next);
       return next;
     });
+  // สเปคกระจก (พิมพ์เอง/เลือกประวัติ) — auto-save เอง ไม่ต้องกดออกจากช่อง (เจ้าของสั่ง 29 ก.ย.69)
+  //   พิมพ์ → เด้ง debounce เซฟหลังหยุดพิมพ์ 0.6s · กดออก/เลือกประวัติ = เซฟทันที
+  const specChange = (i: number, val: string) => {
+    patchAt(i, { spec: val }, false);   // อัปเดตค่าที่โชว์ (controlled)
+    clearTimeout(timers.current[i]);
+    timers.current[i] = setTimeout(() => setItems((cur) => { commit(cur); return cur; }), 600);
+  };
+  const specBlur = (i: number, val: string) => {
+    clearTimeout(timers.current[i]);
+    patchAt(i, { spec: val }, true);   // เซฟทันทีจากค่าจริงในช่อง (+ sync state กัน controlled รีเซ็ต)
+  };
+  // ★ ผูก native 'change' เอง — พิสูจน์แล้วว่าตอน "เลือกจาก datalist/ประวัติ" เบราว์เซอร์ยิงแค่ 'change'
+  //   ไม่ยิง 'input' → React onChange (=input) ไม่ทำงาน → เดิมไม่เซฟ ไม่มีป้ายเลย (อาการคุณลีฟ)
+  const bindSpec = (i: number) => (el: HTMLInputElement | null) => {
+    if (!el || (el as unknown as { __gb?: boolean }).__gb) return;
+    (el as unknown as { __gb?: boolean }).__gb = true;
+    el.addEventListener("change", () => specBlur(i, el.value));
+  };
   const removeAt = (i: number) =>
     setItems((prev) => {
       const next = prev.filter((_, idx) => idx !== i);
@@ -100,12 +128,12 @@ function GlassItemsEditor({ seed, disabled, listId, orderOpts, installedOpts, on
                 className="ml-auto text-[12px] text-white/45 hover:text-red-300">✕ ลบแผ่นนี้</button>
             )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <div>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+            <div className="sm:col-span-2">
               <div className="text-[11px] text-white/50 mb-1">สเปคกระจก</div>
-              <input list={listId} value={it.spec} disabled={disabled} placeholder="พิมพ์ / เลือกประวัติ"
-                onChange={(e) => patchAt(i, { spec: e.target.value }, false)}
-                onBlur={() => commit(items)}
+              <input ref={bindSpec(i)} list={listId} value={it.spec} disabled={disabled} placeholder="พิมพ์ / เลือกประวัติ"
+                onChange={(e) => specChange(i, e.target.value)}   // พิมพ์เอง (input) → auto-save debounce
+                onBlur={(e) => specBlur(i, e.target.value)}       // กดออก = เซฟทันที · native 'change' (bindSpec) = เลือกประวัติ
                 className={fieldCls + " placeholder-white/35"} />
             </div>
             <div>
@@ -121,10 +149,14 @@ function GlassItemsEditor({ seed, disabled, listId, orderOpts, installedOpts, on
           </div>
         </div>
       ))}
-      {!disabled && (
-        <button type="button" onClick={() => setItems((p) => [...p, { spec: "", order: "", installed: "" }])}
-          className="text-[13px] font-medium text-sky-300 hover:text-sky-200">+ เพิ่มกระจกอีกแบบ</button>
-      )}
+      <div className="flex items-center gap-3">
+        {!disabled && (
+          <button type="button" onClick={() => setItems((p) => [...p, { spec: "", order: "", installed: "" }])}
+            className="text-[13px] font-medium text-sky-300 hover:text-sky-200">+ เพิ่มกระจกอีกแบบ</button>
+        )}
+        <span className={`text-[12px] text-emerald-300 transition-opacity duration-300 ${flash ? "opacity-100" : "opacity-0"}`}>บันทึกแล้ว ✓</span>
+        {err && <span className="text-[12px] text-red-300 font-medium">❌ {err}</span>}
+      </div>
     </div>
   );
 }
@@ -194,6 +226,12 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
       setSaved(true); setTimeout(() => setSaved(false), 1600); // แฟลชป้าย "บันทึกแล้ว ✓"
     } catch { /* keep typed value */ }
   }
+  // เซฟกระจก — ★ ไม่ swallow error (ให้ GlassItemsEditor โชว์ ❌ เหตุผลจริง ถ้า API ล้ม · เลิกเงียบ)
+  async function saveGlassItems(id: number, items: GlassItem[]) {
+    await api.patch(`/production-sets/${id}`, { glass_items: items });
+    qc.invalidateQueries({ queryKey: key });
+    setSaved(true); setTimeout(() => setSaved(false), 1600);
+  }
   // เซฟหลายฟิลด์ในคำขอเดียว — ใช้ตอน hold (hold + hold_reason พร้อมกัน กันแฟลชค้าง/เรียก 2 รอบ)
   async function saveMany(id: number, patch: Record<string, any>) {
     try {
@@ -244,21 +282,7 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
   // ช่องหมายเหตุ — textarea เต็มแถว (เจ้าของแจ้ง: ช่องเดิมแคบ พิมพ์ยาวไม่พอ)
   const area = (s: SetRow, f: string) => <textarea defaultValue={s[f] ?? ""} disabled={!canWrite} rows={3} placeholder="พิมพ์หมายเหตุ / สิ่งที่ต้องระวัง…" onBlur={(e) => e.target.value !== String(s[f] ?? "") && save(s.id, f, e.target.value)} className={fieldCls + " resize-y min-h-[80px] leading-relaxed placeholder-white/35"} />;
   const date = (s: SetRow, f: string) => <input type="date" defaultValue={s[f] ?? ""} disabled={!canWrite} onBlur={(e) => save(s.id, f, e.target.value)} className={fieldCls} />;
-  // บันทึกวันเริ่มผลิตของโรงหนึ่ง (merge เข้า map factory_start · เว้นว่าง = ลบ key นั้น)
-  // เลือกโรงที่ 2 บนชุดที่มีโรงแล้ว → "เลือก 2 โรง = แยกเป็น 2 ชุด" อัตโนมัติ (เจ้าของสั่ง 26 ก.ย.69)
-  async function addFactoryAsSplit(s: SetRow, f: string) {
-    const cur: string[] = Array.isArray(s.factories) ? s.factories : [];
-    if (cur.includes(f)) return;
-    if (!confirm(`เลือก 2 โรง (${[...cur, f].join(", ")}) → แยกเป็น 2 ชุด (โรงละชุด)\nติ๊กสถานะ/เตือนเกินกำหนดแยกโรงได้ (คัดลอกสเปค+สถานะปัจจุบันไปเริ่มต้น)`)) return;
-    setBusy(true);
-    try {
-      await api.patch(`/production-sets/${s.id}`, { factories: [...cur, f] });   // → 2 โรงชั่วคราว
-      await api.post(`/production-sets/${s.id}/split-factory`, {});               // แยกเป็นชุดละโรง
-      await qc.invalidateQueries({ queryKey: key });
-    } catch (e) { alert(e instanceof Error ? e.message : "แยกชุดไม่สำเร็จ"); }
-    finally { setBusy(false); }
-  }
-  // แยกชุดที่ติ๊กหลายโรง (ชุดเก่า) → 1 ชุด = 1 โรง (สถานะ/เตือนเกินกำหนดแยกโรงได้ · เจ้าของสั่ง 24 ก.ย.69)
+  // แยกชุดที่ติ๊กหลายโรง → 1 ชุด = 1 โรง (ออปชั่น · กดเองเมื่ออยากติ๊กสถานะ/เตือนเกินกำหนดแยกโรค · เจ้าของสั่ง 24 ก.ย.69)
   async function splitByFactory(s: SetRow) {
     const cur: string[] = Array.isArray(s.factories) ? s.factories : [];
     if (cur.length <= 1) return;
@@ -273,32 +297,23 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
     if (iso) cur[factory] = iso; else delete cur[factory];
     await save(s.id, "factory_start", cur);
   }
-  // โรงงานผลิต — 1 ชุด = 1 โรง (เลือกโรงเดียว · เจ้าของสั่ง 24 ก.ย.69) · โรงที่เลือก → มีช่อง "เริ่มผลิต" แยกวัน (0115)
+  // โรงงานผลิต — ติ๊กได้หลายโรงในชุดเดียว (เจ้าของสั่ง 28 ก.ย.69 "เอาเหมือนเดิม") · โรงที่เลือก → มีช่อง "เริ่มผลิต" แยกวัน (0115)
+  //   ⚠ ติ๊ก >1 โรง = สถานะใช้ร่วมกันทั้งงาน · อยากติ๊กสถานะ/เตือนแยกโรค → กดปุ่ม "✂️ แยกชุด" (ออปชั่น ไม่บังคับ)
   const factoryPick = (s: SetRow) => {
     const cur: string[] = Array.isArray(s.factories) ? s.factories : [];
     const starts: Record<string, string> = (s.factory_start && typeof s.factory_start === "object") ? s.factory_start : {};
-    const multi = cur.length > 1;   // ชุดเก่าที่ติ๊กหลายโรง — ต้องกด "แยกชุด"
     return (
       <div className="space-y-2">
         <div className="flex flex-wrap gap-2">
           {FACTORIES.map((f) => {
             const on = cur.includes(f);
             return (
-              <button key={f} type="button" disabled={!canWrite || multi}
-                title={multi ? "ชุดนี้ติ๊กหลายโรง — กดปุ่ม ✂️ แยกชุด ก่อน (กันข้อมูลโรงหายเงียบ)" : undefined}
+              <button key={f} type="button" disabled={!canWrite}
                 onClick={async () => {
-                  if (multi) return;   // ★ ชุดเก่าที่ติ๊กหลายโรง — ต้องกดปุ่มแยกชุด (กันลบโรงเงียบ)
-                  if (on) {
-                    // กดโรงที่เลือกอยู่ → ปลด (ล้างวันเริ่มด้วย)
-                    await save(s.id, "factories", []);
-                    if (starts[f]) await saveFactoryStart(s, f, "");
-                  } else if (cur.length === 0) {
-                    // ยังไม่มีโรง → เลือกโรงแรก
-                    await save(s.id, "factories", [f]);
-                  } else {
-                    // มีโรงแล้ว 1 โรง + กดอีกโรง = เลือก 2 โรง → แยกเป็น 2 ชุดอัตโนมัติ
-                    await addFactoryAsSplit(s, f);
-                  }
+                  // toggle อิสระ — ติ๊ก/ปลดได้หลายโรง (ปลดโรค = ล้างวันเริ่มของโรคนั้นด้วย)
+                  const next = on ? cur.filter((x) => x !== f) : [...cur, f];
+                  await save(s.id, "factories", next);
+                  if (on && starts[f]) await saveFactoryStart(s, f, "");
                 }}
                 className={`text-[15px] px-3 py-2.5 rounded-lg border transition-colors ${on ? "bg-sky-500/80 border-sky-400 text-white" : "bg-slate-900/60 border-white/20 text-white/70 hover:text-white hover:border-white/35"} disabled:opacity-50`}>
                 {on ? "✓ " : ""}{f}
@@ -306,10 +321,10 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
             );
           })}
         </div>
-        {/* ชุดเก่าที่ติ๊ก 2 โรงในชุดเดียว — สถานะใช้ร่วมกัน ติ๊กแยกโรงไม่ได้ → ปุ่มแยกเป็นชุดละโรง */}
-        {multi && (
+        {/* ติ๊กหลายโรง = สถานะใช้ร่วมกัน · อยากติ๊กสถานะ/เตือนเกินกำหนดแยกโรค → กดแยกเป็นชุดละโรง (ทางเลือก) */}
+        {cur.length > 1 && (
           <div className="rounded-lg px-3 py-2" style={{ background: "rgba(245,158,11,.12)", border: "1px solid rgba(245,158,11,.4)" }}>
-            <div className="text-[12px] mb-1.5" style={{ color: "#fcd34d" }}>⚠ ชุดนี้ติ๊ก {cur.length} โรง ({cur.join(", ")}) — สถานะใช้ร่วมกัน ติ๊กแยกโรงไม่ได้</div>
+            <div className="text-[12px] mb-1.5" style={{ color: "#fcd34d" }}>ℹ️ ติ๊ก {cur.length} โรง ({cur.join(", ")}) — สถานะใช้ร่วมกันทั้งงาน · อยากติ๊กสถานะ/เตือนแยกแต่ละโรค กดแยกชุด</div>
             <button type="button" disabled={!canWrite || busy} onClick={() => splitByFactory(s)}
               className="text-[13px] font-semibold px-3 py-2 rounded-lg disabled:opacity-50" style={{ background: "rgba(245,158,11,.28)", color: "#fde68a", border: "1px solid rgba(245,158,11,.5)" }}>
               ✂️ แยกเป็น {cur.length} ชุด (โรงละชุด)
@@ -352,11 +367,11 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
     return [];
   };
   const glassEditor = (s: SetRow) => (
-    // key ผูกจำนวนแผ่นจาก server → ถ้ามีคนอื่นเพิ่ม/ลบแผ่นระหว่างแก้ จะ remount ดึงของใหม่ (กันแผ่นที่เพิ่มหาย)
-    //   แต่ไม่ remount ตอนแก้สเปค/สั่ง/ใส่ (จำนวนเท่าเดิม) → local state คงอยู่ ไม่หลุด focus
-    <GlassItemsEditor key={`${s.id}:${Array.isArray(s.glass_items) ? s.glass_items.length : 0}`} seed={glassSeed(s)} disabled={!canWrite} listId="glass-spec-history"
+    // key คงที่ต่อชุด (ไม่ผูกจำนวนแผ่น) — auto-save ระหว่างพิมพ์ทำให้จำนวนแผ่น 0→1 ได้เอง
+    //   ถ้า key ผูก length จะ remount กลางพิมพ์ = หลุดโฟกัส · แลกกับ: ถ้ามีคนอื่นเพิ่ม/ลบแผ่นพร้อมกัน ต้องรีเฟรชถึงเห็น (เคสน้อย)
+    <GlassItemsEditor key={s.id} seed={glassSeed(s)} disabled={!canWrite} listId="glass-spec-history"
       orderOpts={valuesOf("glass_order")} installedOpts={valuesOf("glass_installed")}
-      onSave={(items) => save(s.id, "glass_items", items)} />
+      onSave={(items) => saveGlassItems(s.id, items)} />
   );
 
   // ช่องที่ "ช่างกดเอง" — โชว์ read-only + ใครกด/เมื่อไหร่ · กด "แก้" เพื่อ override (กันเขียนทับช่างโดยไม่ตั้งใจ)
@@ -556,7 +571,7 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
 
                 <Group title="โครง & โรงงาน">
                   <F label="โครง/โรงงาน" onEditOpts={openOpts("frame_status", "โครง/โรงงาน")}>{sel(s, "frame_status", valuesOf("frame_status"))}</F>
-                  <div className="sm:col-span-1 lg:col-span-3"><F label="โรงงานผลิต (เลือก 1 โรง · เลือก 2 โรง = แยกเป็น 2 ชุด)">{factoryPick(s)}</F></div>
+                  <div className="sm:col-span-1 lg:col-span-3"><F label="โรงงานผลิต (ติ๊กได้หลายโรง · อยากแยกสถานะรายโรงค่อยกด ✂️ แยกชุด)">{factoryPick(s)}</F></div>
                 </Group>
 
                 <Group title="วัสดุ & QC ก่อนใส่กระจก">
@@ -567,7 +582,7 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
                 </Group>
 
                 <Group title="กระจก">
-                  <div className="sm:col-span-2 lg:col-span-3">
+                  <div className="sm:col-span-2 lg:col-span-4">
                     <div className="block">
                       <span className="flex items-center gap-2 text-[13px] font-medium mb-1.5" style={{ color: "var(--t-mid)" }}>
                         <span className="truncate">กระจก — ใส่ได้หลายแผ่น (สเปค · สั่งกระจก · ใส่กระจก แยกกัน)</span>

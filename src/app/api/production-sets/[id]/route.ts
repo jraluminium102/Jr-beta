@@ -38,9 +38,15 @@ const patchSchema = z.object({
 export const PATCH = withRoute(async (req: Request, { params }: Params) => {
   const ctx = await requireChangOr(req, "production", "write");
   const body = patchSchema.parse(await req.json());
-  // "" ในช่องวันที่ → null
+  // คอลัมน์ text NOT NULL (0050/0063) — ห้ามเขียน null (Postgres 23502 "ข้อมูลไม่ครบ") · ล้างค่าใช้ "" แทน
+  const NOT_NULL_TEXT = new Set([
+    "set_label", "measurer_name", "design_received", "mat_equipment", "mat_alu_normal", "mat_alu_painted",
+    "glass_spec", "glass_order", "glass_installed", "qc_before_glass", "frame_status", "screen_type",
+    "screen_installed", "qc_after_glass", "note", "frame_done",
+  ]);
+  // "" ในช่องวันที่ (nullable) → null · ช่อง text NOT NULL คง "" ไว้ (กัน 23502)
   const clean: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(body)) clean[k] = v === "" ? null : v;
+  for (const [k, v] of Object.entries(body)) clean[k] = (v === "" && !NOT_NULL_TEXT.has(k)) ? null : v;
 
   const sb = ctx.supabase as unknown as Sb;
   // ── กระจกหลายแผ่น (0154): glass_items = แหล่งจริง → คิด roll-up ระดับชุดลงคอลัมน์เดิม ──
@@ -59,11 +65,12 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
       .map((i) => ({ spec: String(i.spec ?? "").trim(), order: String(i.order ?? "").trim(), installed: String(i.installed ?? "").trim() }))
       .filter((i) => i.spec || i.order || i.installed);
     clean.glass_items = items;
-    clean.glass_spec = items.map((i) => i.spec).filter(Boolean).join("\n") || null;
+    // ★ คอลัมน์ NOT NULL — ใช้ "" ไม่ใช่ null (roll-up เขียน null = 23502 "ข้อมูลไม่ครบ" = save กระจกล้มเงียบมาตลอด)
+    clean.glass_spec = items.map((i) => i.spec).filter(Boolean).join("\n");
     const orders = [...new Set(items.map((i) => i.order).filter(Boolean))];
-    clean.glass_order = orders.length ? orders.join(" · ") : null;
-    // ชุด "ใส่กระจกครบ" = ทุกแผ่น installed = ใส่แล้ว (ขับเฟส/ส่งติดตั้ง เหมือนเดิม)
-    clean.glass_installed = (items.length > 0 && items.every((i) => i.installed === V_GLASS_DONE)) ? V_GLASS_DONE : null;
+    clean.glass_order = orders.length ? orders.join(" · ") : "";
+    // ชุด "ใส่กระจกครบ" = ทุกแผ่น installed = ใส่แล้ว (ขับเฟส/ส่งติดตั้ง เหมือนเดิม) · ไม่ครบ = "" (NOT NULL)
+    clean.glass_installed = (items.length > 0 && items.every((i) => i.installed === V_GLASS_DONE)) ? V_GLASS_DONE : "";
   } else if (body.glass_installed !== undefined) {
     // ช่างกด "ใส่กระจก" ระดับชุด (ชุดแผ่นเดียว/ลิงก์ช่างเก่า) → sync ทุกแผ่นให้ตรง (แหล่งเดียว กัน roll-up รอบหน้าย้อนค่า)
     //   ⚠ บอร์ดช่างที่อัปเดตแล้วจะส่ง glass_items รายแผ่นมาเอง (กรณีหลายแผ่น) — else นี้เหลือแค่ชุดแผ่นเดียว จึงปลอดภัย

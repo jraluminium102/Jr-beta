@@ -737,20 +737,46 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     const nBan = Number(p) || prod.defaults?.p || 1;
     // ชนิดมุ้งที่เลือก → ขึ้นในชื่อ "(มีมุ้ง...)" + รายละเอียดงาน (ผ้ามุ้ง) · ชื่อชนิดใช้แหล่งเดียวกับ G6 (mosquitoTypeLabel)
     const mqType = mosquitoTypeLabel((addons as any)?.mosquito);
-    // ชื่อบรรยาย: prod.saleName (แทน {form} = รูปแบบที่เลือก) · ไม่มี → ชื่อรุ่นเดิม + (รูปแบบ)
-    const baseName: string = prod.saleName
-      ? String(prod.saleName).replace(/\{form\}/g, form || "")
-      : `${prod.name}` + (prod.forms?.length && form && !/^(อิสระ|มาตรฐาน|std)$/.test(form) ? ` (${form})` : "");
-    // ประตู/หน้าต่าง — คำนำหน้าชื่อ + พื้นล่าง (เฉพาะประตู) · แหล่งคำเดียวกับห้องกระจก
-    //   รุ่นที่มี saleName เขียนชื่อขายไว้เองแล้ว (ตู้/ม่านซิป/ของสำเร็จ) ไม่ต้องเติมคำนำหน้า
-    // ใช้กับทุกรุ่น (รวมที่มี saleName) — quoteProductName ตัดคำนำหน้าเดิมทิ้งให้แล้ว
-    const nameWithKind = paneKindOn ? quoteProductName(prod.id, paneKind, baseName) : baseName;
-    const itemName = nameWithKind
-      + (nBan > 1 ? ` แบ่ง ${nBan} บาน` : "")
-      // รุ่นที่ "รูปแบบ" คือธรณีอยู่แล้ว (บานเปิด/หมุน/โซลิด) ไม่ต้องขึ้นพื้นล่างซ้ำอีกวงเล็บ
-      + (paneKindOn && paneKind === "door" && !sillIsForm(prod.id) ? ` (${paneSill({ typeKey: prod.id, w: 0, h: 0, n: 1, sill: sillSel || undefined })})` : "")
-      + (mqType ? ` (มีมุ้ง${mqType})` : "")
-      + ` (${fmtM(Number(w) || prod.defaults?.w || 0)} × ${fmtM(Number(h) || prod.defaults?.h || 0)} ม.)`;
+    const szTxt = ` (${fmtM(Number(w) || prod.defaults?.w || 0)} × ${fmtM(Number(h) || prod.defaults?.h || 0)} ม.)`;
+    // ── ชื่อบรรยาย "บานเลื่อน" (เจ้าของสั่ง 2 ต.ค.69) — เติมอัตโนมัติจากที่เลือก ──
+    //   ประตู/หน้าต่าง + บานเลื่อน{form} + ราง (ล่างกันน้ำ/ล่างเตี้ย 7มม. · รางบน=SlimLux)
+    //   + (มีมุ้ง…) + แบ่ง N บาน (เฉพาะ อิสระ/ลากจูง) + Soft-Close (SlimLux) + พร้อมกระจกติดตายด้านข้าง (ถ้ามี)
+    //   แยกจาก path ทั่วไป → ไม่กระทบรุ่นอื่น (กัน regression ชื่อสินค้าทั้งระบบ)
+    const SLIDE_SALE = new Set(["sms_slide", "euro_slide", "slimlux"]);
+    let itemName: string;
+    if (SLIDE_SALE.has(prod.id)) {
+      const kind = paneKindOn ? (paneKind === "door" ? "ประตู" : "หน้าต่าง") : "";
+      const isTop = prod.id === "slimlux";
+      // SlimLux: form ตามจำนวนบานจริง (เจ้าของ 2 ต.ค.69) — 1 บาน=เดี่ยว · อิสระ 2 บาน=สลับ · ที่เหลือตาม form
+      const formLabel = isTop
+        ? (nBan === 1 ? "เดี่ยว" : (form === "อิสระ" && nBan === 2 ? "สลับ" : (form || "")))
+        : (form || "");
+      let railTxt: string;
+      if (isTop) railTxt = `รางบน (รุ่น${spec?.slxrail || "โชว์ราง"})`;
+      else railTxt = `รางล่าง (${String(spec?.bottomrail ?? "").includes("รางเตี้ย") ? "รุ่นรางเตี้ย 7 มม." : "รุ่นกันน้ำ"})`;
+      // แบ่ง N บาน เฉพาะ อิสระ/ลากจูง (ตามจำนวนบานจริง) · เดี่ยว/สลับ/เปิดคู่กลาง ไม่ต้อง
+      const split = (formLabel === "อิสระ" || formLabel === "ลากจูง") && nBan > 1 ? ` แบ่ง ${nBan} บาน` : "";
+      // SlimLux: เสริมคาน (ถ้าเลือก) + มีสลิงดึง/Soft-Close ติดมาเสมอ (เจ้าของ: ไม่ต้องเลือก แค่เขียน)
+      const beam = isTop && spec?.slxbeam === "เสริมคานซัพพอร์ท" ? " เสริมคานซัพพอร์ท" : "";
+      const slxFeat = isTop ? " มีระบบสลิงดึง และระบบ Soft-Close" : "";
+      itemName = `${kind}บานเลื่อน${formLabel} ${railTxt}`.replace(/\s+/g, " ").trim()
+        + (mqType ? ` (มีมุ้ง${mqType})` : "")
+        + beam + split + slxFeat
+        + " พร้อมกระจกติดตายด้านข้าง (ถ้ามี)"
+        + szTxt;
+    } else {
+      // ชื่อบรรยาย: prod.saleName (แทน {form}) · ไม่มี → ชื่อรุ่นเดิม + (รูปแบบ)
+      const baseName: string = prod.saleName
+        ? String(prod.saleName).replace(/\{form\}/g, form || "")
+        : `${prod.name}` + (prod.forms?.length && form && !/^(อิสระ|มาตรฐาน|std)$/.test(form) ? ` (${form})` : "");
+      // ประตู/หน้าต่าง — คำนำหน้าชื่อ + พื้นล่าง (เฉพาะประตู) · quoteProductName ตัดคำนำหน้าเดิมทิ้งให้แล้ว
+      const nameWithKind = paneKindOn ? quoteProductName(prod.id, paneKind, baseName) : baseName;
+      itemName = nameWithKind
+        + (nBan > 1 ? ` แบ่ง ${nBan} บาน` : "")
+        + (paneKindOn && paneKind === "door" && !sillIsForm(prod.id) ? ` (${paneSill({ typeKey: prod.id, w: 0, h: 0, n: 1, sill: sillSel || undefined })})` : "")
+        + (mqType ? ` (มีมุ้ง${mqType})` : "")
+        + szTxt;
+    }
     // ── "รายการ" (บน · บุลเล็ตงานที่ทำ) ──────────────────────────────────────
     // ทุก option ที่ผู้ใช้เลือก "และคิดเงินแล้ว" ต้องขึ้นในใบ (ตรงโจทย์เจ้าของ)
     // - subDescs = ผสมบาน G1 / หลังคาหลายช่วง G3 (เดิม)
@@ -781,8 +807,11 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     // specOpts ที่ผู้ใช้เลือกทุกตัว (รวมค่า default = สเปกที่ลูกค้าควรเห็น) → priced เข้า "รายการ" · label-only เข้า "รายละเอียดงาน"
     // ยกเว้น type:'number' (ช่องกรอกราคาเอง ฿/ตร.ม. — ไม่ใช่ option ลูกค้า · ไปเป็นบรรทัดราคาแล้ว)
     const specDetailLines: string[] = [];
+    // ออปชั่นที่ "ขึ้นในชื่อสินค้าแล้ว" (ราง/คานซัพพอร์ท ของบานเลื่อน) — ไม่ต้องซ้ำเป็นบุลเล็ตรายละเอียดงาน
+    const NAME_OWNED_SPEC = new Set(["bottomrail", "slxrail", "slxbeam"]);
     (prod.specOpts ?? []).forEach((o: any) => {
       if (o.type === "number") return;
+      if (NAME_OWNED_SPEC.has(o.key)) return;
       const v = spec[o.key];
       if (v == null || v === "") return;
       // ค่ามาตรฐานที่ "เป็นค่าปกติอยู่แล้ว" ไม่ต้องพิมพ์ลงใบ (เจ้าของสั่ง 18 ก.ค.2569)
