@@ -2543,7 +2543,7 @@ export const PRODUCTS = {
   cabinet_face: {
     // ถอดทุน BOM R4.0 (ชีต "คิดทุน บานตู้ Futuretech") — เฟรม+เสามือจับ+อุปกรณ์+กระจก · คูณจำนวนบาน (P)
     // W=กว้างรวมทุกบาน · H=สูง · P=จำนวนบาน · material=สีเฟรม(สีดำ=อบขาว/ดำ · สีทอง=ชุบ) · form=แบบ(เลื่อน/เปิด)
-    id: 'cabinet_face', partsLinked: true, group: 4, name: 'ฝาตู้ Future Tech (เฉพาะบานหน้า)', brand: 'SMS', faceOnly: true, laborKey: 'Futuretech (ในวัสดุ)',
+    id: 'cabinet_face', partsLinked: true, group: 4, name: 'ฝาตู้ Future Tech (เฉพาะบานหน้า)', brand: 'SMS', faceOnly: true, laborKey: 'บานตู้ Futuretech',
     icon: '🚪', materialLabel: 'สีเฟรม (มีผลราคา)', materials: ['สีดำ', 'สีทอง'], defMaterial: 'สีดำ',
     defForm: 'บานเลื่อน', forms: ['บานเลื่อน', 'บานเปิด'],
     defaults: { w: 120, h: 240, p: 2 }, defGlass: 'ใส 5มม.', minP: 1, maxP: 3, faceHint: 'แนะนำพื้นที่/บาน ≤ 1.7 ตร.ม. (บานใหญ่กว่านี้เสี่ยงแอ่น)',
@@ -2562,7 +2562,9 @@ export const PRODUCTS = {
       { labor: true, name: 'ค่ากรีดราง', sku: 'JR00202', price: 800, unit: 'ม.', count: "form==='บานเลื่อน'?2*W:0" },
     ],
     consum: [
-      { labor: true, name: 'ค่าแรง (ผลิต+ติดตั้ง)', price: 87.5, unit: 'ชม.', count: '12*P' },   // (ผลิต7+ติดตั้ง5)×87.5×บาน (Excel E25)
+      // ⬇ เจ้าของสั่ง 5 ต.ค.69 "ค่าแรงเอาตามตาราง 4.1" → ย้ายไปใช้ชีต "ค่าแรง" แถว บานตู้ Futuretech
+      //   (ผลิต 306.25 + 31.06/ตร.ม. · ติดตั้ง 1,225 + 24.5/ตร.ม.) ตรงกับที่ชีตคิดทุน E38/E39 VLOOKUP อยู่ตอนนี้
+      //   ของเดิมฝังเป็นบรรทัดวัสดุ 12 ชม./บาน × 87.5 = 1,050/บาน (สูตรเก่าของชีต) → คิดค่าแรงขาดบานละ ~500
     ],
     note: 'ฝาตู้ Future Tech — ถอดทุน R4.0 (เฟรม+เสามือจับ+กระจก 5มม.) · สีเฟรม สีดำ=อบขาว/ดำ · สีทอง=ชุบ',
   },
