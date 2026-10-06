@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui";
 import Icon from "@/components/Icon";
 import DateField from "@/components/ui/DateField";
-import { baht, suggestInstallments, computeTotals, planInstallments } from "@/lib/money";
+import { baht, suggestInstallments, computeTotals, planInstallments, isCompanyName } from "@/lib/money";
 import { todayISO } from "@/lib/date-guard";
 import type { AvailableQuotation } from "./page";
 import ExternalBillingForm from "./ExternalBillingForm";
@@ -87,7 +87,7 @@ export default function NewBillingClient({
   );
   const plan = useMemo(() => {
     if (!selected) return [] as { seq: number; label: string; amount: number }[];
-    if (t.labor_amt > 0.005) return planInstallments({ material_amt: t.material_amt, labor_amt: t.labor_amt, vat_rate: locked ? 0 : vat, wht_rate: locked ? 0 : wht, hasRetention }).installments;
+    if (t.labor_amt > 0.005) return planInstallments({ material_amt: t.material_amt, labor_amt: t.labor_amt, vat_rate: locked ? 0 : vat, wht_rate: locked ? 0 : wht, hasRetention, company: isCompanyName(selected.customer_snapshot?.name) }).installments;
     return suggestInstallments(t.net, locked ? 0 : vat);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, t, vat, wht, hasRetention, locked]);

@@ -263,8 +263,13 @@ const RETENTION = 40000; // เงินประกันงวดท้าย 
 //   หัวงวดตามตำแหน่ง: งวดแรก(เบิกมัดจำ) / กลาง(เข้าติดตั้ง 50%) / สุดท้าย(เก็บงานเรียบร้อย) · retention = เงินประกัน
 //   บรรทัดย่อยชนิดเงิน (เฉพาะมี VAT): ค่าวัสดุ/ค่าแรง/เงินประกัน (รวมVat)
 //   ⚠ label เป็น "ข้อความ" ล้วน — ไม่กระทบยอด/golden test (cell เช็คแค่ kind/amount/base/vat/wht) · แก้ต่อใบได้ (PrintLabelEditor)
+// นามออกบิลเป็น "บริษัท/นิติบุคคล" ไหม — ใช้ตัดสินว่าใส่หมายเหตุ "หักภาษี ณ ที่จ่าย" ในงวดค่าแรง (เจ้าของสั่ง 6 ต.ค.69)
+export const isCompanyName = (name?: string | null): boolean =>
+  /บริษัท|จำกัด|หจก|ห้างหุ้นส่วน|บมจ|บจก/.test(String(name ?? ""));
+
 export function billInstallmentLabel(
   i: number, n: number, kind: "material" | "labor" | "retention", vatRate: number,
+  opts?: { company?: boolean; whtRate?: number },
 ): string {
   const head =
     kind === "retention" ? "งวดสุดท้าย  เบิกเงินประกันผลงาน"
@@ -272,6 +277,10 @@ export function billInstallmentLabel(
         : i === n - 1 ? "งวดสุดท้าย  เบิกส่วนที่เหลือ เมื่อเก็บงานเรียบร้อยแล้ว"
           : `งวดที่ ${i + 1}  เบิกวันแรกเข้าติดตั้ง และงานเสร็จแล้ว 50%`;
   if (!(Number(vatRate) > 0)) return head;   // ไม่มี VAT = ไม่มีบรรทัดย่อยชนิดเงิน
+  // บริษัท + งวดค่าแรง(มี WHT) → "ค่าแรงติดตั้ง (รวมVat + หักภาษี ณ ที่จ่าย X%)" (เจ้าของสั่ง 6 ต.ค.69)
+  if (kind === "labor" && opts?.company && Number(opts?.whtRate) > 0) {
+    return `${head}\n- ค่าแรงติดตั้ง (รวมVat + หักภาษี ณ ที่จ่าย ${Number(opts.whtRate)}%)`;
+  }
   const sub = kind === "labor" ? "ค่าแรง" : kind === "retention" ? "เงินประกัน" : "ค่าวัสดุ";
   return `${head}\n- ${sub} (รวมVat)`;
 }
@@ -368,7 +377,7 @@ function bracketMaterial(net: number): [number, number[]] {
 
 export function planInstallments(opts: {
   material_amt: number; labor_amt: number; vat_rate: number; wht_rate: number;
-  hasRetention?: boolean; retention?: number;
+  hasRetention?: boolean; retention?: number; company?: boolean;   // company=นามออกบิลเป็นนิติบุคคล → งวดค่าแรงระบุ WHT
 }): { installments: InstallmentTaxPlan[]; retentionApplied: boolean; retentionRequested: boolean } {
   const material_amt = round2(Math.max(0, Number(opts.material_amt) || 0));
   const labor_amt = round2(Math.max(0, Number(opts.labor_amt) || 0));
@@ -424,7 +433,7 @@ export function planInstallments(opts: {
   const n = out.length;
   out.forEach((it, i) => {
     it.seq = i + 1;
-    it.label = billInstallmentLabel(i, n, it.kind, vrRate);   // คำพูดชุดเดียวกับ suggestInstallments (22 ก.ค.69)
+    it.label = billInstallmentLabel(i, n, it.kind, vrRate, { company: opts.company, whtRate: wrRate });   // บริษัท → งวดค่าแรงระบุ WHT
   });
   return { installments: out, retentionApplied: useRet, retentionRequested: hasRetention };
 }
