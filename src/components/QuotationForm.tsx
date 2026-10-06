@@ -9,7 +9,7 @@ import { computeTotals, baht, sumDiscountLines, type DiscountLine } from "@/lib/
 import DiscountLinesEditor from "@/components/quotation/DiscountLinesEditor";
 import DateField from "@/components/ui/DateField";
 import type { Customer } from "@/lib/types";
-import { CONDITIONS_WORK, CONDITIONS_QUOTE } from "@/app/(app)/quotations/[id]/print/quote-constants";
+import { CONDITIONS_WORK, CONDITIONS_QUOTE, WORK_NOTE_PRESETS } from "@/app/(app)/quotations/[id]/print/quote-constants";
 
 type ActiveJob = { id: string; job_code: string | null; current_stage: number; status: string; created_at: string };
 
@@ -559,6 +559,21 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
                       <span className="text-xs font-semibold text-brand-dark">{title}</span>
                       <button onClick={() => { setList([...list, ""]); setCondEdited(true); }} className="press text-xs text-brand font-semibold">+ เพิ่มข้อ</button>
                     </div>
+                    {/* ติ๊กเพิ่มหมายเหตุการทำงานสำเร็จรูป (เจ้าของสั่ง 5 ต.ค.69) — เฉพาะ "เงื่อนไขการเข้าทำงาน" */}
+                    {title === "เงื่อนไขการเข้าทำงาน" && (
+                      <div className="mb-2 flex flex-wrap gap-1.5">
+                        {WORK_NOTE_PRESETS.map((p) => {
+                          const on = list.includes(p.text);
+                          return (
+                            <button key={p.label} type="button" title={p.text}
+                              onClick={() => { setList(on ? list.filter((x) => x !== p.text) : [...list, p.text]); setCondEdited(true); }}
+                              className={`press text-[11px] rounded-full px-2.5 py-1 border ${on ? "bg-brand text-white border-brand" : "bg-white text-ink-2 border-ink-3/30 hover:border-brand/50"}`}>
+                              {on ? "✓ " : "+ "}{p.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                     <div className="space-y-1.5">
                       {list.map((c, ci) => (
                         <div key={ci} className="flex gap-1.5">
