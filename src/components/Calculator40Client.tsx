@@ -776,6 +776,33 @@ export default function Calculator40Client({ customers = [], priceOverride, line
       // เจ้าของสั่ง 5 ต.ค.69 — YKK Ventilation / Tostem Airflow = ประตูระบายอากาศบานเปิด (Exhido คงชื่อเดิม)
       const kind = paneKindOn && paneKind === "window" ? "หน้าต่าง" : "ประตู";
       itemName = `${kind}ระบายอากาศบานเปิด ${material === "Tostem Airflow" ? "(Airflow Door)" : "(Ventilation Door)"}` + szTxt;
+    } else if (prod.id === "folding" || prod.id === "fold_euro") {
+      // #2 เจ้าของสั่ง 5 ต.ค.69 — ประตูบานเฟี้ยม + แบ่งบาน + วงเล็บเสริมคาน/ราง (เติมจำนวนรางในช่อง)
+      const kind = paneKindOn && paneKind === "window" ? "หน้าต่าง" : "ประตู";
+      itemName = `${kind}บานเฟี้ยม${nBan > 1 ? ` แบ่ง ${nBan} บาน` : ""} ( เสริมคานซัพพอร์ทรุ่นโชว์คานหรือซ่อนคาน และฝังรางยูกันบานแกว่ง กี่ ราง )` + szTxt;
+    } else if (prod.id === "roof") {
+      // #5-9 เจ้าของสั่ง 5 ต.ค.69 — หลังคาเพิง: สะท้อนวัสดุ/แป/โครง/เพลท/ปลายหลังคา/โซ่/ซ่อนสโลป
+      const matRaw = String(material || prod.defMaterial || "");
+      const mat = matRaw.startsWith("กระจก") ? `กระจกนิรภัยลามิเนต (${matRaw.replace("กระจก", "").trim()})` : matRaw;
+      const batten = spec?.batten || "แปเดี่ยว";
+      const frame = spec?.roofframe === "โครงเหล็กชุบซิงค์" ? "โครงเหล็กชุบซิงค์(ไม่ทาสี)" : "โครงอลูมิเนียม";
+      const hs = spec?.hideslopemat && spec.hideslopemat !== "—" ? ` (ซ่อนสโลปหลังคาด้วย${spec.hideslopemat})` : "";
+      const plate = (spec?.rfplate ?? "มี · รวมในราคา") !== "ไม่ใส่";
+      const pull = (spec?.rfpull ?? "มี · รวมในราคา") !== "ไม่ใส่";
+      const reinforce = (plate || pull) ? ` (เสริม${[plate ? "เพลทเหล็กรับล่าง" : "", pull ? "เหล็กดึงด้านบน" : ""].filter(Boolean).join("และ")})` : "";
+      const roofend = spec?.roofend || "ยื่นปลาย";
+      const isChain = String(spec?.drainsys ?? "").includes("โซ่");
+      let ending: string;
+      if (roofend.includes("รางน้ำ")) {   // #5 มีรางน้ำ
+        const gutterMat = roofend.includes("สแตน") ? "สแตนเลส" : "อลูมิเนียม";
+        const leaf = (spec?.rfleaf ?? "มี · รวมในราคา") !== "ไม่ใส่" ? " + ตะแกรงกันใบไม้" : "";
+        ending = ` พร้อมรางน้ำ${gutterMat}${leaf} ${isChain ? "และมีโซ่รางน้ำ กี่ จุด" : "และมีท่อน้ำทิ้ง PVC ปล่อยปลาย"}`;   // #9 โซ่
+      } else if (roofend === "ปิดปลาย") {   // #6 ไม่มีรางน้ำ ปิดปลาย
+        ending = " โครงปิดปลายกันน้ำกระเด็น/ไม่มีรางน้ำ";
+      } else {   // #7 ยื่น/ปล่อยปลาย ไม่มีรางน้ำ
+        ending = " ปล่อยปลาย/ไม่มีรางน้ำ";
+      }
+      itemName = `หลังคา${mat} (${batten}) ${frame}${hs}${reinforce}${ending}` + szTxt;   // #8 ซ่อนสโลปต่อจากโครง
     } else {
       // ชื่อบรรยาย: prod.saleName (แทน {form}) · ไม่มี → ชื่อรุ่นเดิม + (รูปแบบ)
       const baseName: string = prod.saleName
@@ -820,7 +847,8 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     // ยกเว้น type:'number' (ช่องกรอกราคาเอง ฿/ตร.ม. — ไม่ใช่ option ลูกค้า · ไปเป็นบรรทัดราคาแล้ว)
     const specDetailLines: string[] = [];
     // ออปชั่นที่ "ขึ้นในชื่อสินค้าแล้ว" (ราง/คานซัพพอร์ท ของบานเลื่อน) — ไม่ต้องซ้ำเป็นบุลเล็ตรายละเอียดงาน
-    const NAME_OWNED_SPEC = new Set(["bottomrail", "slxrail", "slxbeam"]);
+    const NAME_OWNED_SPEC = new Set(["bottomrail", "slxrail", "slxbeam",
+      "batten", "roofframe", "roofend", "drainsys", "rfplate", "rfpull", "rfleaf", "hideslopemat"]);   // หลังคา: ขึ้นในชื่อแล้ว
     (prod.specOpts ?? []).forEach((o: any) => {
       if (o.type === "number") return;
       if (NAME_OWNED_SPEC.has(o.key)) return;
