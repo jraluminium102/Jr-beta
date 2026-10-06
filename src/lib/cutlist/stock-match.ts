@@ -126,7 +126,7 @@ export const MATCH_REASON_TH: Record<MatchReason, string> = {
  * กติกาเดิมยังอยู่: ชื่อต้อง "ตรงเป๊ะหลังปัดรูปแบบ" (กล่องเรียบ 1.6x4 ไม่ใช่ กล่อง 1.6x4)
  *   และถ้าเจอหลายตัวในสีเดียวกัน = ไม่หัก (กัน "หยิบตัวแรก")
  */
-const BOX_HEAD = /^(กล่อง|ฉาก|แซด|แป๊ป|ท่อ)/;
+const BOX_HEAD = /^(กล่อง|ฉาก|แซด|ตัวแซด|ตัวZ|Z\s*[\d"”]|แป๊ป|ท่อ)/i;   // 5 ต.ค.69 สโตร์เขียน "Z 4\"" = แซด (ของที่เบิกจริง)
 export function normBoxName(raw: unknown): string {
   let t = String(raw ?? "").trim();
   if (!t) return "";

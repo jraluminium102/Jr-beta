@@ -16,6 +16,9 @@
 export const BOX_KINDS = ["กล่อง", "ฉาก", "แป๊บ", "ตัวZ", "ท่อ"] as const;
 export type BoxKind = (typeof BOX_KINDS)[number];
 
+/** ชื่อชนิดที่สโตร์เขียนไม่ตรงคีย์ในสูตร — "Z 4\"" / "แซด 4\"" คือของเดียวกับ "ตัวZ 4" (เจอจากของที่เบิกจริง 5 ต.ค.69) */
+const KIND_ALIAS: Array<[RegExp, BoxKind]> = [[/^(ตัวแซด|แซด|ตัวz|z)\s*(?=[\d"”])/i, "ตัวZ"]];
+
 const th = (s: unknown) => String(s ?? "").trim();
 /** ชื่อสีแบบเทียบได้ — ตัดช่องว่างทิ้ง ให้ตรงกับ normColorName ใน stock-link ("Aztec gray" = "Aztecgray") */
 export const normColor = (s: unknown) => String(s ?? "").replace(/\s+/g, "").trim();
@@ -26,6 +29,9 @@ export const normColor = (s: unknown) => String(s ?? "").replace(/\s+/g, "").tri
  */
 export function normSize(raw: unknown): string {
   let s = th(raw)
+    // เลขผสมแบบที่สโตร์พิมพ์: `1"x1"1/2` = 1×1½ — ต้องรวมเป็น 1.5 ก่อนตัดเครื่องหมายนิ้ว
+    //   ไม่งั้นพอตัด " ทิ้งจะกลายเป็น 1X11/2 → อ่านได้ 1X10.5 (คนละของกันเลย · เจอ 5 ต.ค.69 JR03153/54)
+    .replace(/(\d+)\s*["”″]\s*(\d+)\/(\d+)/g, (_m, a, b, c) => String(Number(a) + Number(b) / Number(c)))
     .replace(/[”"″']/g, "")
     .replace(/[×✕✖]/g, "x")
     .replace(/½/g, ".5").replace(/¼/g, ".25").replace(/¾/g, ".75")
@@ -55,7 +61,17 @@ export const boxKey = (kind: string, size: unknown) => `${th(kind)}|${normSize(s
 export function parseBoxName(name: unknown): { kind: BoxKind; size: string; color: string } | null {
   const raw = th(name);
   if (!raw) return null;
-  const kind = BOX_KINDS.find((k) => raw.replace(/\s+/g, "").startsWith(k.replace(/\s+/g, "")));
+  const flat = raw.replace(/\s+/g, "");
+  const alias = KIND_ALIAS.find(([re]) => re.test(raw.trim()));
+  const kind = alias ? alias[1] : BOX_KINDS.find((k) => flat.startsWith(k.replace(/\s+/g, "")));
+  // มีคำไทยแทรกระหว่างชนิดกับขนาด ("กล่องเรียบ 4\"x4\"") = คนละโปรไฟล์ → ไม่เดา ปล่อยให้ไม่ผูก
+  //   (เจ้าของสั่งเสมอ "ไม่ชัด = ไม่หัก" · เดิมจับเป็น กล่อง|4X4 ซึ่งเป็นคนละเส้น)
+  if (kind && !alias) {
+    const rest = flat.slice(kind.replace(/\s+/g, "").length);
+    //   ยกเว้นชื่อที่ยืนยันแล้วว่าเป็นของชิ้นเดียวกัน — นอกลิสต์นี้ไม่เดา
+    const SAME_THING = [/^เปิด/];   // "กล่องเปิด 4"" = กล่อง|4 (JR02987 รางน้ำอลู ของหลังคาจั่ว)
+    if (/^[\u0E00-\u0E7F]/.test(rest) && !SAME_THING.some((re) => re.test(rest))) return null;
+  }
   if (!kind) return null;
   // สีอยู่หลังขีดสุดท้าย (ชื่อกล่องเองไม่มีขีด) — ไม่มีขีด = ยังไม่ระบุสี
   const dash = raw.lastIndexOf("-");
