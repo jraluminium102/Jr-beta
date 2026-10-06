@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
-import { suggestInstallments, computeTotals, planInstallments } from "@/lib/money";
+import { suggestInstallments, computeTotals, planInstallments, isCompanyName } from "@/lib/money";
 import { getDocCutoff } from "@/lib/doc-cutoff";
 import { nextDocumentCode } from "@/lib/doc-code";
 import { businessDateIssue } from "@/lib/date-guard";
@@ -136,9 +136,11 @@ export async function POST(req: Request) {
   if (net <= 0) return fail("ยอดสุทธิต้องมากกว่า 0 จึงวางบิลได้", 400);
 
   // มีค่าแรง → planInstallments (ค่าแรงงวดสุดท้าย + ภาษี booked ต่องวด) · ไม่มี → suggestInstallments เดิม (legacy)
+  //   นามออกบิลเป็นบริษัท → งวดค่าแรงระบุ "หักภาษี ณ ที่จ่าย" (เจ้าของสั่ง 6 ต.ค.69) · ชื่อจาก customer_snapshot.name (นามบิล)
+  const bIsCompany = isCompanyName((q.customer_snapshot as { name?: string } | null)?.name);
   const useLaborPlan = bt.labor_amt > 0.005;
   const taxPlan = useLaborPlan
-    ? planInstallments({ material_amt: bt.material_amt, labor_amt: bt.labor_amt, vat_rate: bVat, wht_rate: bWht, hasRetention: !!body.has_retention }).installments
+    ? planInstallments({ material_amt: bt.material_amt, labor_amt: bt.labor_amt, vat_rate: bVat, wht_rate: bWht, hasRetention: !!body.has_retention, company: bIsCompany }).installments
     : null;
   const plan = taxPlan
     ? taxPlan.map((i) => ({ seq: i.seq, label: i.label, amount: i.amount }))
