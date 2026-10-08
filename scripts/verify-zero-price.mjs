@@ -49,6 +49,41 @@ console.log(`\n═══ ไล่คิด ${runs} เคส (ทุกรุ�
 if (!bad.size) { pass++; console.log("  ✅ ไม่มีบรรทัดไหนนับของแล้วราคาเป็น 0"); }
 for (const [name, ids] of bad) { fail++; console.log(`  ❌ ${name}  → ${[...ids].join(", ")}`); }
 if (bad.size) console.log("\n  แก้ด้วยการเติมราคาใน pricebook (HWPRICE/HWPRICE_BY_PROD) หรือใส่เหตุผลใน ALLOW ของไฟล์นี้");
+// ── ③ กดออปชั่นแล้วของเพิ่มมาต้องไม่ฟรี (8 ต.ค.69) ──
+//    ข้อ ① ไล่แค่ค่าตั้งต้นของออปชั่น → บรรทัดที่ขึ้นเฉพาะตอน "ติดมุ้ง / มีบานตาย / มีช่องแสง" เลยไม่เคยถูกตรวจ
+//    เคสจริง: บานเปิดติดมุ้ง คิ้วมุ้ง F7949 + กันสาด F7948 ราคา 0 → อลู 437 บาท/ชุด หายเงียบ
+//    ด่านนี้สลับค่าออปชั่นทีละตัว (ช่องตัวเลข/ข้อความ ลองค่า 40) แล้วตรวจแบบเดียวกับข้อ ①
+console.log("\n" + "═══ ③ สลับออปชั่นทีละตัว — ของที่เพิ่มมาต้องมีราคา ═══");
+{
+  const bad2 = new Map();
+  let runs2 = 0;
+  for (const p of Object.values(PRODUCTS).filter((x) => x && !x.pickerHide)) {
+    const base = Object.fromEntries((p.specOpts || []).map((o) => [o.key, o.def ?? o.opts?.[0] ?? ""]));
+    const d = p.defaults || { w: 200, h: 200, p: 1 };
+    for (const o of p.specOpts || []) {
+      const cands = Array.isArray(o.opts) && o.opts.length ? o.opts : ["40"];
+      for (const v of cands) {
+        if (v === base[o.key]) continue;
+        const spec = { ...base, [o.key]: v };
+        let c;
+        try { c = computeCost(PB, p, { ...d, form: p.defForm, material: p.defMaterial, glassType: p.defGlass, spec, addons: {}, color: "white", colorKey: "white" }); } catch { continue; }
+        runs2++;
+        for (const l of c.lines || []) {
+          if (l.cat === "warn" || l.cat === "labor" || l.cat === "discount") continue;
+          if (!(Number(l.qty) > 0)) continue;
+          if (Number(l.unitPrice) > 0 || Number(l.amount) > 0) continue;
+          if (allowed(l.name)) continue;
+          const k = String(l.name);
+          if (!bad2.has(k)) bad2.set(k, new Set());
+          bad2.get(k).add(p.id + " (" + o.key + "=" + v + ")");
+        }
+      }
+    }
+  }
+  console.log("  ไล่คิดเพิ่ม " + runs2 + " เคส");
+  if (!bad2.size) { pass++; console.log("  ✅ กดออปชั่นไหนก็ไม่มีของฟรี"); }
+  for (const [name, ids] of bad2) { fail++; console.log("  ❌ " + name + "  → " + [...ids].slice(0, 4).join(", ")); }
+}
 console.log("\n═══ ② รุ่นที่ให้กรอกราคาเอง ต้องขึ้นคำเตือนเมื่อยังไม่กรอก ═══");
 for (const id of ["bar_grid_z", "bar_openclose"]) {
   const p = PRODUCTS[id]; if (!p) continue;
