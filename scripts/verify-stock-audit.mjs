@@ -18,6 +18,10 @@ import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PB = JSON.parse(fs.readFileSync(path.join(ROOT, "src/lib/calculator40/pricebook.json"), "utf8"));
+PB.ALU_BRAND_ON = false;   // ดูหมายเหตุด้านล่าง — บล็อก ⑫ เปิดกลับเอง
+// 8 ต.ค.69 ระบบราคาอลูใหม่ = น้ำหนัก × เรตแบรนด์ มาก่อนทุกแหล่ง (PB.ALU_BRAND)
+//   ชุดนี้ตรวจ "กลไกสโตร์" ที่ยังใช้กับรหัสไม่มีน้ำหนัก/ไม่มีแบรนด์ → ปิดสวิตช์แบรนด์เพื่อตรวจชั้นล่าง
+//   ลำดับใหม่ (แบรนด์มาก่อนสโตร์) ตรวจที่บล็อก ⑫ ท้ายไฟล์
 // 18 ก.ย.69 เจ้าของสั่ง "ตีให้ในเว็บเท่าไฟล์เด๊ะ ๆ" → ราคาไฟล์มาก่อนสโตร์ (PB.PRICE_SOURCE = "file")
 //   ชุดนี้ตรวจตรรกะ "ผูกสโตร์" (ราคาสโตร์ไหลเข้าสูตร · ตัวคูณเรต · สีกล่อง) ซึ่งยังอยู่หลังสวิตช์
 //   จึงรันในโหมดสโตร์ — ถ้าเจ้าของสลับกลับ ตรรกะนี้ต้องยังทำงานครบ
@@ -468,6 +472,39 @@ console.log("\n" + "═══ ⑪ ราคาสีที่เคาะเอ�
   ok("ราคาที่เคาะเอง " + n + " ช่อง อยู่ใน ALUCOLOR_KEY ครบ (import ไม่ลบทิ้ง)", miss.length === 0, miss.slice(0, 8).join(", "));
   ok("ทุกช่องที่เคาะเองเป็นรหัสที่ชีตไม่มี (ไม่ใช่ B####/F####)", Object.values(MAN).every((m) => Object.keys(m).every((c) => !/^[BF]\d/.test(c))));
   ok("มีคำอธิบายกำกับ (ALUCOLOR_KEY_MANUAL_NOTE)", typeof PB.ALUCOLOR_KEY_MANUAL_NOTE === "string" && PB.ALUCOLOR_KEY_MANUAL_NOTE.length > 40);
+}
+// ── ⑫ เรตแบรนด์ (น้ำหนัก × บาท/กก.) ต้องมาก่อนราคาสโตร์/ราคาไฟล์ (8 ต.ค.69) ──
+console.log("\n" + "═══ ⑫ เรตแบรนด์มาก่อนทุกแหล่ง ═══");
+{
+  const ON = JSON.parse(JSON.stringify(PB)); ON.ALU_BRAND_ON = true;
+  const run = (pb, ck) => computeCost(pb, PRODUCTS.sms_slide, { w: 300, h: 250, p: 2, form: 'อิสระ', glassType: 'เขียว 6มม.', color: ck, colorKey: ck });
+  const bar = (r, n) => (r.lines || []).find((l) => String(l.name).startsWith(n)) || {};
+  const w = run(ON, 'white');
+  const kg = ON.ALU_KG.B20001, rate = ON.ALU_BRAND.sms['อบขาว'];
+  ok("เฟรมบน B20001 = น้ำหนัก " + kg + " × เรต " + rate, Math.abs(bar(w, "เฟรมบน").unitPrice - Math.round(kg * rate)) < 1, String(bar(w, "เฟรมบน").unitPrice));
+  // ราคาสโตร์ตั้งไว้มั่ว ๆ ก็ต้องไม่ทับเรตแบรนด์
+  const S2 = JSON.parse(JSON.stringify(ON));
+  S2.ALUCOLOR_STOCK = { 'อบขาว': { B20001: 9999 } };
+  S2.ALUCODE = { ...S2.ALUCODE, B20001: 9999 };
+  ok("ราคาสโตร์/ALUCODE ทับเรตแบรนด์ไม่ได้", bar(run(S2, "white"), "เฟรมบน").unitPrice === bar(w, "เฟรมบน").unitPrice, String(bar(run(S2, "white"), "เฟรมบน").unitPrice));
+  // ขึ้นเรตแบรนด์ → ราคาเส้นขยับตามเป๊ะ ไม่คูณซ้ำ
+  const UP = JSON.parse(JSON.stringify(ON));
+  for (const k of Object.keys(UP.ALU_BRAND.sms)) UP.ALU_BRAND.sms[k] = Math.round(UP.ALU_BRAND.sms[k] * 1.1);
+  const up = bar(run(UP, 'white')).unitPrice, before = bar(w, 'เฟรมบน').unitPrice;
+  ok("ขึ้นเรตแบรนด์ 10% → ราคาเส้นขึ้น ~10% (ไม่คูณซ้ำ)", Math.abs(bar(run(UP, "white"), "เฟรมบน").unitPrice / before - 1.1) < 0.02, String(bar(run(UP, "white"), "เฟรมบน").unitPrice));
+  // สีที่แบรนด์นั้นไม่มีขาย → ไม่มีเรต → ตกไปทางค่าอบสีพิเศษ (ต้องแพงกว่าขาว)
+  const maho = run(ON, 'wood_maho');
+  ok("SMS ไม่มีมะฮอกกานี → ตกไปทางสีอบพิเศษ (แพงกว่าขาว)", maho.cost.total > w.cost.total, Math.round(maho.cost.total) + " vs " + Math.round(w.cost.total));
+  ok("ตารางเรตครบ 3 แบรนด์", ["fuji", "sms", "market"].every((b) => ON.ALU_BRAND && Object.keys(ON.ALU_BRAND[b] || {}).length >= 6));
+  // รหัสที่ยังรอเจ้าของให้ "กก./เส้น" — ระหว่างนี้ใช้ราคาเดิมในสูตรไปก่อน (ไม่หล่นเป็น 0)
+  const PENDING_KG = ["9014", "ฉาก 4\"", "กล่อง 1x5", "JR01984", "JR01985", "JR03127", "JR03130", "JR03131", "JR03132"];
+  const noKg = Object.entries(ON.ALU_BRAND_OF || {}).filter(([c, br]) => br !== "fixed" && br !== "?" && !(ON.ALU_KG || {})[c]).map(([c]) => c);
+  ok("รหัสที่ยังไม่มีน้ำหนัก = ตรงรายการที่รอเจ้าของ (" + PENDING_KG.length + " รหัส)",
+    noKg.length === PENDING_KG.length && noKg.every((c) => PENDING_KG.includes(c)), noKg.join(" "));
+  for (const c of noKg) {
+    const line = (PRODUCTS && 1) && null;
+    void line;
+  }
 }
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);

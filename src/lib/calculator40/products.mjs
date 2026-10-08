@@ -797,7 +797,7 @@ export const PRODUCTS = {
       { box: 'กล่อง|2X4', code: 'JR01859', name: 'คานรับราง (กล่อง 2"x4")', price: 1540, kg: 0, stockLen: 6.0, seg: 'W', count: '1', fixed: true },
       { box: 'กล่อง|1X4', code: 'JR01841', name: 'เสารับบาน (กล่อง 1"x4")', price: 905, kg: 0, stockLen: 6.0, seg: 'H-BEAM', count: '2', fixed: true },
       { code: 'JR03125', name: 'ชนกลางรับบาน', price: 300, kg: 0, stockLen: 6.0, seg: 'H-BEAM', count: '1', fixed: true },
-      { box: 'ฉาก|4', code: 'JR01949', name: 'ฉาก 4" ปิดราง', price: 280, kg: 0, stockLen: 6.0, seg: 'W', count: '2', fixed: true },
+      { box: 'ฉาก|4', code: 'ฉาก 4"', name: 'ฉาก 4" ปิดราง', price: 280, kg: 0, stockLen: 6.0, seg: 'W', count: '2', fixed: true },
       // ── SMS (เส้น 6.4 ม. · ราคาตามสีมาจาก PB.ALUCODE/ALUCOLOR_KEY) ──
       { code: 'B20051', name: 'เสากุญแจ ML', price: 885, seg: 'H-BEAM-SUB', count: '2' },
       { code: 'B20009', name: 'เสาเกี่ยว', price: 690, seg: 'H-BEAM-SUB', count: '2' },

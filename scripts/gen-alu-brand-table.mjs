@@ -84,14 +84,14 @@ const BRAND_CODE = new Map(Object.entries({
   JR01994: "fuji",      // ลูกฟูก 2 ทาง — "ลูกฟูกทุกเส้น" = Fuji
   JR01679: "market",    // เส้นคาดตาราง
   "9014": "market",     // ตัวตบ/ตัวเดินเคอเทนวอล
-  JR02944: "market",    // ฉากข้อต่อ 2"
+  JR02944: "fixed",     // ฉากข้อต่อ 2" — เจ้าของสั่งตัดออกจากระบบต่อกิโล (8 ต.ค.69)
   JR03125: "market",    // ชนกลางรับบานเลื่อน (เมืองทอง)
   JR03126: "market", JR03127: "market", JR03131: "market", JR03132: "market",  // กรอบบานเปิด 3"
   JR03129: "market", JR03130: "market",                                        // วงกบมีติ่ง
   JR02892: "fuji", JR02893: "fuji", JR02894: "fuji",                           // F7948/F7949/F7860
   JR01949: "fuji",      // ฉาก 4" ปิดราง
   JR01822: "market", JR01823: "market",   // บังใบกล่อง ½"×1" — ไซส์นอกลิสต์
-  JR01984: "?", JR01985: "?",             // กล่องเรียบ 1.6×4 — "เรียบ" = มีชื่อเรียก หรือนับเป็นไซส์? รอเจ้าของ
+  JR01984: "market", JR01985: "market",   // กล่องเรียบ 1.6×4 — "เรียบ" = ชื่อเรียก (เจ้าของตอบ 8 ต.ค.69)
 }));
 
 const normBox = (s) => String(s).toUpperCase().replace(/["”]/g, "").replace(/\s+/g, "").replace(/นิ้ว/g, "").replace(/X/g, "X");
@@ -130,7 +130,8 @@ function readWeights() {
     const len = Number(cells.F) || 0;
     const kg = Number(cells.H) || (Number(cells.G) || 0) * len;
     if (!(kg > 0)) continue;
-    if (code && code !== "-" && !byCode.has(code)) byCode.set(code, { kg, len, name, thick: size });
+    // แถวหลังทับแถวก่อน — บล็อกท้าย (มีคอลัมน์ ราคา) คือชุดที่ดูแลอยู่ ส่วนบล็อกต้นมีแถวติดธง ตรวจหน่วย
+    if (code && code !== "-") byCode.set(code, { kg, len, name, thick: size });
     // กล่อง/แป๊บ ของเมืองทอง: ชื่ออยู่คอลัมน์ E, ความหนาอยู่ D
     if (/^เมืองทอง/.test(brand) && /^[\d.]+\s*มม\.$/.test(size) && name) {
       const t = Number(size);
@@ -142,6 +143,23 @@ function readWeights() {
       boxSizes.get(size).push({ thick: Number(String(cells.D).match(/[\d.]+/) ?? 0) || 0, kg, code });
     }
   }
+  // ⚠ ตารางล่าง (แถว 254+ "น้ำหนักที่ใช้คำนวณค่าอบสีจริง") เป็นตัวจริง — ต้องทับตารางบนเสมอ
+  //   เจ้าของเคาะไว้ตั้งแต่ 17 ก.ย.69 ว่าห้ามหยิบตารางบน · รหัสเขียนในวงเล็บเหลี่ยม [B22001-15]
+  for (const { cells } of rows) {
+    const label = String(cells.B ?? "");
+    const kg = Number(cells.C);
+    //   บางแถวเขียนรหัสนำหน้าชื่อแทนวงเล็บ ("B24002 คิ้วเฟรมบน") — รับทั้งสองแบบ
+    //   รหัสในตารางล่างเขียนได้ 3 แบบ: ในวงเล็บ [B24001-18] · นำหน้าชื่อ "B24002 คิ้วเฟรมบน" · ท้ายชื่อ "ตบราง F7994"
+    //   รหัสในตารางล่างเขียน 3 แบบ: ในวงเล็บ [B24001-18] · นำหน้าชื่อ "B24002 คิ้วเฟรมบน" · ท้ายชื่อ "ตบราง F7994"
+    //   จับท้ายชื่อเฉพาะที่ลงท้ายจริง ๆ หรือก่อน · เท่านั้น (กันหยิบรหัสผิดจากกลางข้อความ)
+    const CODE_RE = /^([A-Z]{1,2}\d{4,5}[A-Z]?)(?:-\d{2})?\b/;
+    const END_RE = /\b([A-Z]{1,2}\d{4,5}[A-Z]?)(?:-\d{2})?\s*(?:·.*)?$/;
+    const m = label.match(/\[([A-Z0-9-]+)\]/i) || label.match(CODE_RE) || label.match(END_RE);
+    if (!m || !(kg > 0)) continue;
+    const code = m[1].replace(/-\d{2}$/, "").toUpperCase();
+    byCode.set(code, { kg, len: 0, name: label.replace(/\s*\[[^\]]+\]\s*/, "").trim(), thick: "", low: true });
+  }
+
   return { byCode, boxSizes };
 }
 
@@ -157,9 +175,11 @@ export function pickThickness(list) {
 
 // น้ำหนักที่อ่านจากแคตตาล็อก Schimmer (กล่องฉากแซด อื่นๆ.pdf) — ยังไม่ได้ให้เจ้าของยืนยัน
 const FROM_SHEET_NAME = {
+  JR01679: { kg: 0.40, note: "เจ้าของให้ 8 ต.ค.69 — เส้นคาดตาราง 0.40 กก./เส้น 6 ม." },
   JR01994: { kg: 2.544, note: "ชีตน้ำหนักโปรไฟล์ แถว 53 (SlimLux · ลูกฟูก 6 ม. 0.424 กก./ม.)" },
 };
 const FROM_CATALOGUE = {
+  // เจ้าของยืนยันแล้ว 8 ต.ค.69 ("เค")
   "ฉาก 4 หุน": { kg: 0.47, note: "S05214 12.7×12.7 หนา 1.2 (ไม่มี 1.5) · แคตตาล็อก Schimmer" },
   "ฉาก 1\"x1\"": { kg: 1.20, note: "S05282 25.4×25.4 หนา 1.5 · แคตตาล็อก Schimmer" },
   "กล่อง 4 หุน": { kg: 0.83, note: "S12071 12×12 หนา 1.2 (ไม่มี 1.5) · แคตตาล็อก Schimmer" },
@@ -196,6 +216,7 @@ const SIZE_ALIAS = {
   "กล่อง 1.6\"x3\"": "กล่อง 1.6\"×3\"", "กล่อง 1.6\"x4\"": "กล่อง 1.6\"×4\"",
   "กล่อง 2\"x2\"": "แป๊บ 2 นิ้ว", "กล่อง 2\"x4\"": "2×4 นิ้ว", "กล่อง 4\"x4\"": "กล่อง 4\"×4\"",
   "ฉาก 6 หุน": "ฉาก 6 หุน",
+  JR01822: "½×1 นิ้ว", JR01823: "½×1 นิ้ว",   // บังใบกล่อง ½"×1" = แป๊บ ½×1 (เมืองทอง 802)
 };
 const rowsOut = [];
 const gaps = [];
@@ -293,6 +314,13 @@ if (process.argv.includes("--write")) {
   PB.ALU_BRAND_OF = Object.fromEntries(rowsOut.map((r) => [r.code, r.brand]));
   PB.ALU_COLOR_NAME = ALU_COLOR_NAME;
   PB.ALU_KG = Object.fromEntries(rowsOut.filter((r) => r.kg > 0).map((r) => [r.code, Math.round(r.kg * 1000) / 1000]));
+  // น้ำหนักเดิมใน ALUWEIGHT เพี้ยนจากไฟล์ถึง 34/79 รหัส (F7932 +396% · E-series +74%) — ตัวนี้คูณเป็นค่าอบ
+  // กก./ม. ต้องขยับตามด้วย (ใช้คิดค่าอบรายท่อน) — เส้น B/F มาตรฐาน 6.4 ม. · เมืองทอง 6 ม.
+  PB.ALUWEIGHT_KGM = { ...PB.ALUWEIGHT_KGM, ...Object.fromEntries([...byCode.entries()]
+    .filter(([c]) => PB.ALUWEIGHT_KGM && PB.ALUWEIGHT_KGM[c] != null)
+    .map(([c, w]) => [c, Math.round(w.kg / (w.len > 0 ? w.len : /^[0-9]/.test(c) ? 6 : 6.4) * 100000) / 100000])) };
+  PB.ALUWEIGHT = { ...PB.ALUWEIGHT, ...Object.fromEntries([...byCode.entries()].map(([c, w]) => [c, Math.round(w.kg * 1000) / 1000])) };
+  PB.ALUWEIGHT_NOTE = "น้ำหนัก กก./เส้น ยึดไฟล์ น้ำหนักโปรไฟล์.xlsx (8 ต.ค.69 ล้างของเดิมที่เพี้ยน 34 รหัส) — ใช้ทั้งคิดราคาต่อกิโลและค่าอบสีพิเศษ";
   fs.writeFileSync(PB_PATH, JSON.stringify(PB, null, 2) + "\n");
   console.log("เขียน PB.ALU_BRAND / ALU_BRAND_OF / ALU_KG ลง pricebook แล้ว (ยังไม่มีผลกับราคา)");
 }

@@ -408,8 +408,22 @@ export function computeCost(PB, prod, opt) {
     // ราคาขาวของเส้นนี้ (หลังคูณ mult) — ใช้ตัดสินว่า "ราคาสี" ใช้ได้ไหม
     // it.filePrice = ราคาเฉพาะรุ่นที่ชีตคิดทุนรุ่นนั้นใช้ (ไม่ตรงราคากลางของรหัส) — ไฟล์เป็นตัวตั้ง 18 ก.ย.69
     //   เช่น SlimLux บังใบ 4 หุน สีขาว/เทา ชีตใช้ ราคาสี E191 (200) ส่วนบานเปิดใช้ D191 (170)
+    // ── ราคาเส้นแบบใหม่: น้ำหนัก/เส้น × เรต(แบรนด์, สี) — เจ้าของสั่ง 8 ต.ค.69 "3 แบรนด์จบ" ──
+    //   แก้ราคาที่ PB.ALU_BRAND ที่เดียว ไม่ต้องไล่แก้รายรหัสอีก (scripts/gen-alu-brand-table.mjs)
+    //   ใช้เฉพาะรหัสที่รู้ทั้งแบรนด์และน้ำหนัก · brand=fixed (ซื้อเป็นเส้น) หรือยังไม่มีน้ำหนัก = เดินทางเดิมทุกอย่าง
+    //   สีที่แบรนด์นั้นไม่มีขาย = ไม่มีเรต → ตกไปทาง "ขาว + ค่าอบสีพิเศษ" ตามเดิม (ถูกต้องตามที่เจ้าของอธิบาย)
+    //   ⚠ ใช้ opt.colorKey ตรง ๆ ไม่ใช่ priceKey เพราะตลาด ดำ 203 ≠ อบขาว 188 (priceKey ยุบ ดำ→ขาว)
+    const brandOn = PB.ALU_BRAND_ON !== false;
+    const bBrand = brandOn && code && PB.ALU_BRAND_OF ? PB.ALU_BRAND_OF[code] : null;
+    const bRates = bBrand && PB.ALU_BRAND ? PB.ALU_BRAND[bBrand] : null;
+    const bKg = brandOn && code && PB.ALU_KG ? Number(PB.ALU_KG[code]) || 0 : 0;
+    const bColName = (PB.ALU_COLOR_NAME || {})[greyUp ? 'white' : (opt.colorKey || color)];
+    const brandWhite = (bRates && bKg > 0 && bRates['อบขาว'] > 0) ? Math.round(bKg * bRates['อบขาว']) : 0;
+    const brandColor = (!noColor && bRates && bKg > 0 && bColName && bRates[bColName] > 0) ? Math.round(bKg * bRates[bColName]) : 0;
+
     const fixP = (FILE_FIRST && it.filePrice != null) ? Number(typeof it.filePrice === 'string' ? val(it.filePrice) : it.filePrice) : NaN;
     const basePrice = (FILE_FIRST && it.priceLocked && Number(it.price) > 0) ? Number(it.price) : fixP > 0 ? fixP
+      : brandWhite > 0 ? brandWhite
       : (pcode && PB.ALUCODE && PB.ALUCODE[pcode] > 0) ? PB.ALUCODE[pcode] : pPrice(it.name, it.price);
     const baseFromStock = !!(code && PB.ALUCODE_FROM_STOCK && PB.ALUCODE_FROM_STOCK[code] && PB.ALUCODE[code] > 0);
     const whiteStock = sColor('อบขาว');
@@ -429,7 +443,7 @@ export function computeCost(PB, prod, opt) {
     const legacyColorPrice = (!noColor && code && PB.ALUCOLOR && PB.ALUCOLOR[priceColor] && !(fixP > 0)) ? PB.ALUCOLOR[priceColor][pcode] : null;
     // 18 ก.ย.69 ไฟล์มาก่อน: ราคาสีในไฟล์ → ตารางสีเดิม → สโตร์ (สโตร์เติมเฉพาะสีที่ไฟล์ไม่มี)
     const legacyOk = okColor(legacyColorPrice, mult) ? legacyColorPrice : null;
-    const colorPrice = FILE_FIRST
+    const colorPrice = brandColor > 0 ? brandColor : FILE_FIRST
       ? (fileColorPrice > 0 ? fileColorPrice : legacyOk > 0 ? legacyOk : stockColorPrice > 0 ? stockColorPrice : null)
       : (stockColorPrice > 0 ? stockColorPrice : fileColorPrice > 0 ? fileColorPrice : legacyOk);
     const colorFromStock = colorPrice > 0 && colorPrice === stockColorPrice && !(FILE_FIRST && (fileColorPrice > 0 || legacyOk > 0));
@@ -449,7 +463,8 @@ export function computeCost(PB, prod, opt) {
     //   ถ้าคูณทั้งคู่ = ขึ้นเรตต่อโล 7% แล้วราคาเด้ง 14% (คิดซ้ำสองต่อ)
     const fromStock = !!(bxp != null || colorFromStock
       || (!(colorPrice > 0) && code && PB.ALUCODE_FROM_STOCK && PB.ALUCODE_FROM_STOCK[code] && PB.ALUCODE[code] > 0));
-    const m = fromStock ? 1 : mult;
+    // เรตแบรนด์เป็นราคา ณ ปัจจุบันอยู่แล้ว → ห้ามคูณ mult ซ้ำ (เหมือนราคาที่มาจากสโตร์)
+    const m = (fromStock || brandColor > 0 || brandWhite > 0) ? 1 : mult;
     // เส้นที่ราคาออกมาเป็น 0 (สโตร์ยังไม่ตั้งราคา + สูตรไม่มีราคาสำรอง) → เตือนบนหน้าจอ
     //   ไม่งั้นค่าของหายเงียบ ๆ เหมือนเคสอุปกรณ์ (เจ้าของเจอมาแล้ว)
     if (!(price > 0)) noteMissing({ sku: code || it.box || it.name, name: it.name, price: 0 }, bars);

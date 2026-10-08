@@ -85,6 +85,8 @@ console.log("\n═══ ② แก้ราคาที่ต้นทาง �
   const before = compareCut(PB, IN);
   const PB2 = JSON.parse(JSON.stringify(PB));
   PB2.ALU.SMS = PB.ALU.SMS * 2;                       // ขึ้นเรตอลูเท่าตัว
+  // 8 ต.ค.69 ราคาอลู = น้ำหนัก × เรตแบรนด์ → ต้องขยับที่ ALU_BRAND ด้วย
+  for (const k of Object.keys(PB2.ALU_BRAND?.sms ?? {})) PB2.ALU_BRAND.sms[k] *= 2;
   const afterAlu = compareCut(PB2, IN);
   ok("ขึ้นเรตอลูที่ pricebook → ทุนอลูบนหน้าเทียบขยับ", afterAlu.totals.aluCost > before.totals.aluCost, "");
   ok("หัวตารางโชว์เรต ฿/กก. ตามที่ตั้งจริง", afterAlu.aluRate.rate === PB.ALU.SMS * 2, String(afterAlu.aluRate.rate));

@@ -244,7 +244,9 @@ console.log(NL + "═══ ⑮ SlimLux — ราคาเส้นตามส
   //   เส้นดิบที่ไม่มีราคาอบ (กล่อง/ฉาก/บังใบ) → ค่าอบ 100/กก. × กก.ของเส้นพวกนั้น
   // 21 ก.ย.69: เส้นที่น้ำหนักมาจากตารางกล่อง (l.kgBox) มีไว้ชั่งบานอย่างเดียว ไม่เข้ากองค่าอบ
   const rawKg = (wh.lines || []).filter((l) => l.cat === "alu" && !l.kgBox && !/\(อบขาว/.test(l.name)).reduce((s, l) => s + l.qty * (l.kg || 0), 0);
-  ok("อบขาว: เส้นราคาไฟล์ไม่บวกค่าอบซ้ำ · เส้นดิบบวกเรตเทา 100/กก.", rawKg > 0 && Math.abs(wh.cost.bake - 100 * rawKg) <= 1, wh.cost.bake + " vs " + (100 * rawKg).toFixed(2));
+  // 8 ต.ค.69 ระบบเรตแบรนด์: กล่อง/ฉากเมืองทองซื้อมาอบขาวแล้ว (Fuji/ตลาด 188-193 บาท/กก. = ราคาสำเร็จ)
+  //   เดิมเว็บบวกค่าอบ 100/กก. ทับอีกชั้น = คิดซ้ำ → ตอนนี้ค่าอบอบขาวต้องเป็น 0
+  ok("อบขาว: ไม่มีค่าอบซ้ำแล้ว (ทุกเส้นมีราคาสีสำเร็จ)", wh.cost.bake === 0, String(wh.cost.bake) + " · เส้นดิบ " + rawKg.toFixed(2) + " กก.");
   ok("อบขาว: ทุนสูงกว่าเดิม (เดิมคิดราคามิว)", wh.cost.total > 9000, String(wh.cost.total));
   ok("สีอื่น (อบพิเศษ): ยังคิดค่าอบตามปกติ", sp.cost.bake > 0, String(sp.cost.bake));
   ok("สีอบพิเศษแพงกว่าอบขาว", sp.cost.total > wh.cost.total);
@@ -743,7 +745,10 @@ console.log("\n═══ ⑰ บานโซลิด 1 ชั้น / 2 ชั�
     ok(w + "×" + h + ": ตาราง R4.1 มีทั้ง 2 แบบ", !!(t1 && t2));
     if (!(t1 && t2)) continue;
     const dWeb = two.cost.total - one.cost.total, dPdf = t2.pdf.cM - t1.pdf.cM;
-    ok(w + "×" + h + ": ทุน 2 ชั้น − 1 ชั้น = ส่วนต่างในตาราง (" + dPdf + ")", Math.abs(dWeb - dPdf) <= 1, String(Math.round(dWeb)));
+    // 8 ต.ค.69 ลูกฟูกย้ายมาคิดตามเรตแบรนด์ Fuji (491/เส้น แทน 432 ที่ไฟล์ปักไว้) → ส่วนต่าง 2-1 ชั้น โตขึ้น ~13.6%
+    //   ตาราง R4.1 (PDF) ของบานโซลิดยังเป็นชุดเก่า — ต้อง regen หลังเจ้าของเคาะราคาลูกฟูกรอบใหม่
+    const dWant = Math.round(dPdf * 491 / 432);
+    ok(w + "×" + h + ": ทุน 2 ชั้น − 1 ชั้น ≈ ตาราง R4.1 ปรับราคาลูกฟูกใหม่ (" + dWant + ")", Math.abs(dWeb - dWant) <= 25, String(Math.round(dWeb)));
     // สูตรชีตคิดทุน B24 (P=1): ROUNDUP(ROUNDUP(กว้าง/10) × ฝั่ง / INT(600/สูง)) — ปัดขึ้นทั้งก้อน ไม่ใช่ครึ่งหนึ่งเป๊ะ (90×240: 5 กับ 9)
     const corr = (sides) => Math.ceil(Math.ceil(w / 10) * sides / Math.max(1, Math.trunc(600 / h)));
     ok(w + "×" + h + ": ลูกฟูกตามสูตรชีต B24 (1 ชั้น " + corr(1) + " · 2 ชั้น " + corr(2) + " เส้น)",
@@ -764,7 +769,8 @@ console.log("\n═══ ⑱ นับเส้นอลูแบบไฟล์
 {
   const v = computeCost(PB, PRODUCTS.velora, { w: 220, h: 200, p: 1, glassType: "เทมเปอร์ใส 6มม.", color: "white", colorKey: "white" });
   // เวฟ 3 (16 ก.ย.69): ไฟล์ v1 แทรกแถว 17 "ลูกฟูก 2 ทาง ตั้ง+นอน [JR01994]" = 580.32 → ชีต D25 = 8,731.89
-  ok("Velora 220×200 อบขาว: ทุนรวม = ชีต v1 D25 8,731.89", Math.abs(v.cost.total - 8731.89) <= 0.5, String(v.cost.total));
+  // 8 ต.ค.69 +79.26 = ลูกฟูก 2 ทาง คิดตามเรตแบรนด์ Fuji (491/เส้น) แทนราคาปักในไฟล์ 432
+  ok("Velora 220×200 อบขาว: ทุนรวม = ชีต v1 D25 + ลูกฟูกเรตใหม่ 8,811.15", Math.abs(v.cost.total - 8811.15) <= 0.5, String(v.cost.total));
   const q = (r, re) => (r.lines || []).filter((l) => l.cat === "alu" && re.test(l.name || "")).reduce((a, l) => a + Number(l.qty), 0);
   ok("Velora วงกบ = ชีต B15 1.3433 เส้น", Math.abs(q(v, /^วงกบ/) - 1.34333) < 0.001, String(q(v, /^วงกบ/)));
   ok("Velora กรอบบาน = ชีต B16 1.781 เส้น", Math.abs(q(v, /^กรอบบาน/) - 1.781) < 0.001, String(q(v, /^กรอบบาน/)));
@@ -807,7 +813,10 @@ console.log("\n═══ ⑲ E-series — อบทุกสี · ราคา�
   pbS.ALUCOLOR_STOCK = { "อบขาว": { "E-01": 9999 }, "เทาซาฮาร่า": { "E-01": 9999 } };
   ok("ราคาสโตร์ไม่ทับ E-series (ไม่สต็อก)", E("white", pbS, { stockColor: "อบขาว" }).cost.total === white.cost.total, String(E("white", pbS, { stockColor: "อบขาว" }).cost.total));
   // เรตต่อโลอลูจากสโตร์ (ตัวคูณแบรนด์ SMS) ก็ห้ามทับ — E-series ใช้แบรนด์ SMS ร่วมกับบานเลื่อน SMS ที่สต็อกจริง
-  const pbK = JSON.parse(JSON.stringify(PB)); pbK.ALU = { ...pbK.ALU, SMS: (pbK.ALU_BASE.SMS || 187) + 13 };
+  // 8 ต.ค.69 ราคาอลู = น้ำหนัก × เรตแบรนด์ → ตัวที่ต้องขยับคือ PB.ALU_BRAND ไม่ใช่ PB.ALU
+  const pbK = JSON.parse(JSON.stringify(PB));
+  pbK.ALU = { ...pbK.ALU, SMS: (pbK.ALU_BASE.SMS || 187) + 13 };
+  for (const k of Object.keys(pbK.ALU_BRAND.sms)) pbK.ALU_BRAND.sms[k] += 13;
   ok("เรตต่อโลอลูในสโตร์ขยับ → E-series ไม่ขยับ", E("white", pbK).cost.total === white.cost.total, String(E("white", pbK).cost.total));
   ok("เรตต่อโลอลูในสโตร์ขยับ → บานเลื่อน SMS ยังขยับตามปกติ",
     computeCost(pbK, PRODUCTS.sms_slide, { w: 300, h: 250, p: 2, form: "อิสระ", glassType: "เขียว 6มม." }).cost.total !== computeCost(PB, PRODUCTS.sms_slide, { w: 300, h: 250, p: 2, form: "อิสระ", glassType: "เขียว 6มม." }).cost.total);
@@ -824,7 +833,7 @@ console.log("\n═══ ⑲ E-series — อบทุกสี · ราคา�
 // ── ⑳ ลำดับราคาสี (เจ้าของ 11 ก.ย.69) ─────────────────────────────
 //   "อบขาว ดำ ถูกสุด → เทาซาฮาร่า ดำซาฮาร่า → เอสเทคเกรย์ (มีแค่ยูโร) → ไม้สักทอง · มะฮอกกานี/ไวท์โอ๊ค มีแค่ยูโร"
 //   ① ทุกรุ่นที่เลือกสีได้ ขนาดตั้งต้น (ราคาไฟล์ ไม่มีสโตร์)  ② สโตร์จำลองเคสที่เคยพังจริง
-console.log("\n═══ ⑳ ลำดับราคาสี — ขาว=ดำ < เทา=ดำซาฮาร่า ≤ แอทแทค < ลายไม้ ═══");
+console.log("\n═══ ⑳ ลำดับราคาสี — ขาว ≤ ดำ < เทา=ดำซาฮาร่า ≤ แอทแทค < ลายไม้ ═══");
 {
   const fsx = await import("node:fs");
   const BAKE = { white: "white", black: "white", sahara: "sahara", sahara_black: "sahara", aztec: "sahara", wood_teak: "woodStock", wood_maho: "woodStock", wood_whiteoak: "woodStock" };
@@ -854,7 +863,8 @@ console.log("\n═══ ⑳ ลำดับราคาสี — ขาว=ด
   const OVR = { handrail: { material: "เฉียง|เสาตั้ง+ราวจับอลู" } };
   const order = (id, c) => {
     const bad = [];
-    if (Math.abs(c.white - c.black) > 0.5) bad.push("ขาว≠ดำ");
+    // 8 ต.ค.69 เรตแบรนด์: Fuji/SMS ขาว=ดำ แต่ "ตลาด" ดำ 203 > อบขาว 188 → ดำต้องไม่ถูกกว่าขาว (เท่ากันหรือแพงกว่าได้)
+    if (c.black < c.white - 0.5) bad.push("ดำถูกกว่าขาว");
     if (Math.abs(c.sahara - c.sahara_black) > 0.5) bad.push("เทา≠ดำซาฮาร่า");
     if (!(c.sahara > c.white + 0.5)) bad.push("เทาไม่แพงกว่าขาว");
     if (c.wood_teak != null && !(c.wood_teak > c.sahara + 0.5)) bad.push("สักทองไม่แพงกว่าเทา");
