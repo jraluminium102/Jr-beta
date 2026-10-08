@@ -148,6 +148,9 @@ if (process.argv[1]?.endsWith("import-color-prices.mjs")) {
   if (!write) { console.log("\n(ยังไม่เขียนลง pricebook — ใส่ --write ถ้าจะเขียนจริง)"); process.exit(0); }
   pb.ALUCODE = { ...cur, ...nw.ALUCODE };
   pb.ALUCOLOR_KEY = nw.ALUCOLOR_KEY;
+  // ราคาที่เจ้าของเคาะเอง (ชีตไม่มีช่องนั้น หรือชีตเขียนเป็นชื่อไม่มีรหัส) ต้องไม่หายตอน import
+  for (const [k, m] of Object.entries(pb.ALUCOLOR_KEY_MANUAL ?? {}))
+    pb.ALUCOLOR_KEY[k] = { ...(pb.ALUCOLOR_KEY[k] ?? {}), ...m };
   pb.ALUWEIGHT = nw.ALUWEIGHT;
   // รหัสที่น้ำหนักในชีตยังน่าสงสัย (ต่างจากที่ราคาบอกเกิน 15%) — ห้ามเอาไปเติมสโตร์
   pb.ALUWEIGHT_SUSPECT = nw.outliers.map((o) => o.code).sort();

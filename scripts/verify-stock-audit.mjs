@@ -450,5 +450,24 @@ console.log("\n" + "═══ ⑩ รหัสผี/รหัสผิดตั
   ok("ฟิกซ์ยังผูก JR00557 เข้ามุมเล็ก", SKUS.has("JR00557"));
 }
 
+// ── ⑪ ราคาสีที่เจ้าของเคาะเอง ต้องไม่หายตอน import ราคาจากไฟล์ (8 ต.ค.69) ──
+//    scripts/import-color-prices.mjs --write เขียน pb.ALUCOLOR_KEY ทับทั้งก้อน
+//    ของที่ชีตไม่มี (ลูกฟูก/เส้นคาดตาราง/OPK/XSW ฯลฯ) จึงหายทุกครั้ง → เก็บไว้ที่ ALUCOLOR_KEY_MANUAL แล้วทับคืน
+console.log("\n" + "═══ ⑪ ราคาสีที่เคาะเอง ต้องอยู่ใน ALUCOLOR_KEY ครบ ═══");
+{
+  const MAN = PB.ALUCOLOR_KEY_MANUAL ?? {};
+  const CK = PB.ALUCOLOR_KEY ?? {};
+  const miss = [];
+  let n = 0;
+  for (const [key, m] of Object.entries(MAN)) {
+    for (const [code, price] of Object.entries(m)) {
+      n++;
+      if (!(Math.abs(Number((CK[key] ?? {})[code]) - Number(price)) < 0.01)) miss.push(key + "." + code);
+    }
+  }
+  ok("ราคาที่เคาะเอง " + n + " ช่อง อยู่ใน ALUCOLOR_KEY ครบ (import ไม่ลบทิ้ง)", miss.length === 0, miss.slice(0, 8).join(", "));
+  ok("ทุกช่องที่เคาะเองเป็นรหัสที่ชีตไม่มี (ไม่ใช่ B####/F####)", Object.values(MAN).every((m) => Object.keys(m).every((c) => !/^[BF]\d/.test(c))));
+  ok("มีคำอธิบายกำกับ (ALUCOLOR_KEY_MANUAL_NOTE)", typeof PB.ALUCOLOR_KEY_MANUAL_NOTE === "string" && PB.ALUCOLOR_KEY_MANUAL_NOTE.length > 40);
+}
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);
