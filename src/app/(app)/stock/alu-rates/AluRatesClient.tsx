@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 
-// เรตอลูต่อโล — จัดกลุ่ม ซีรีส์ × สี · แก้เรต ฿/กก. แล้วอัปเดตราคาทุกเส้นในกลุ่ม (unit_cost = น้ำหนัก × เรต)
+// เรตอลูต่อโล — จัดกลุ่ม แบรนด์ × สี · แก้เรต ฿/กก. แล้วอัปเดตราคาทุกเส้นในกลุ่ม (unit_cost = น้ำหนัก × เรต)
 type Row = { id: number; sku: string; name: string; color?: string | null; supplier: string; weight_per_unit: number; unit_cost: number; price_per_kg: number };
 
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
@@ -125,7 +125,7 @@ export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog 
       </div>
 
       <p className="text-[13px] text-ink-2 glass-soft rounded-xl px-4 py-3">
-        ตั้งราคา <b>฿/กก.</b> ของแต่ละกลุ่ม (ซีรีส์ × สี) แล้วกดอัปเดต — ระบบคูณ<b>น้ำหนักต่อเส้น</b>ของแต่ละรหัส
+        ตั้งราคา <b>฿/กก.</b> ของแต่ละ <b>แบรนด์ × สี</b> แล้วกดอัปเดต — ระบบคูณ<b>น้ำหนักต่อเส้น</b>ของแต่ละรหัส
         อัปเดตราคา/เส้นให้ทั้งกลุ่ม · เส้นที่ผูกรหัสกับคิดราคา 4.0 จะใช้ราคาใหม่ทันที
         {noWeightCount > 0 && <> · ⚠ อลูอีก <b>{noWeightCount}</b> รายการยังไม่มีน้ำหนัก/เส้น (เติมในหน้าสต๊อกแล้วจะโผล่ที่นี่)</>}
       </p>
