@@ -7,7 +7,7 @@ type Row = { id: number; sku: string; name: string; color?: string | null; suppl
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 const fmt = (n: number) => n.toLocaleString("th-TH", { maximumFractionDigits: 2 });
 
-function seriesOf(sku: string): string {
+function seriesOf(sku: string, name = ""): string {
   const s = sku.toUpperCase();
   if (s.startsWith("B20")) return "บานเลื่อน SMS (B20xxx)";
   if (s.startsWith("B22")) return "ระแนงเลื่อน (B22xxx)";
@@ -16,7 +16,10 @@ function seriesOf(sku: string): string {
   if (s.startsWith("WM-")) return "SlimLux (WM-Kxx)";
   if (/^F7[89]/.test(s) || /^F79/.test(s)) return "ยูโร (F78xx-F79xx)";
   if (s.startsWith("F")) return "ยูโร อื่นๆ (F...)";
-  return "อื่นๆ";
+  const b = brandOfSku(sku, name);
+  if (b === "fuji") return "กล่อง/ฉาก (ฟูจิ)";
+  if (b === "market") return "ตลาด (ตัว Z · กล่องมีชื่อ · ไซส์นอกลิสต์)";
+  return "อื่นๆ (ซื้อเป็นเส้น / ยังไม่จัดกลุ่ม)";
 }
 // สีจากท้ายชื่อ "รหัส-ชื่อ-สี" · ชื่อแบบเก่า "เฟรมบน (B22001)" = ไม่ระบุสี
 // 9 ต.ค.69: stock_items.color เติมครบแล้ว → ใช้ช่องสีเป็นหลัก เดาจากท้ายชื่อเฉพาะตอนช่องว่าง
@@ -26,13 +29,21 @@ function colorRow(r: Row): string {
   return c || colorOf(r.name);
 }
 // เรตแบรนด์: B2x = SMS · F7x = ยูโรฟูจิ · กล่อง/ฉาก/Z = ตลาด · ที่เหลือซื้อเป็นเส้น (ไม่คิดต่อโล)
+// กล่อง/ฉาก ไซส์ที่เป็นฟูจิ (ลิสต์เจ้าของ) — ไซส์นอกลิสต์ หรือกล่องที่มีชื่อเรียก = ตลาด
+const FUJI_BOX = ["1X1", "1X1.6", "1X2", "1X4", "1.6X1.6", "1.6X3", "1.6X4", "2X2", "2X4", "4X4"];
+const FUJI_ANG = ["3หุน", "4หุน", "6หุน", "1", "2", "3", "4"];
+const sizeKey = (t: string) => t.toUpperCase().replace(/["”]/g, "").replace(/\s+/g, "").replace(/นิ้ว/g, "").replace(/×/g, "X");
 function brandOfSku(sku: string, name: string): string {
   const s = (sku || "").toUpperCase(), n = (name || "").trim();
   if (/^(WM-|OPK|XSW|E-)/i.test(s) || /^(WM-|OPK|XSW|E-|VELORA)/i.test(n)) return "";
   if (/^B\d/.test(s)) return "sms";
   if (/^F\d/.test(s)) return "fuji";
   if (/^(Z |ตัวZ|แซด)/i.test(n)) return "market";
-  if (/^(กล่อง|ฉาก)/.test(n)) return "fuji";
+  const bx = n.match(/^กล่อง\s*([\d."x×\/ ]+?)\s*(?:-|\(|$)/i);
+  if (bx) return FUJI_BOX.includes(sizeKey(bx[1])) ? "fuji" : "market";
+  const ag = n.match(/^ฉาก\s*([\d."x×\/ ]+?|\d+\s*หุน)\s*(?:-|\(|$)/i);
+  if (ag) return FUJI_ANG.includes(sizeKey(ag[1])) ? "fuji" : "market";
+  if (/^(กล่อง|ฉาก)/.test(n)) return "market";   // กล่อง/ฉากที่มีชื่อเรียก (กล่องเรียบ/แจ๊คสัน/ร่อง) = ตลาด
   return "";
 }
 // ชื่อสีในสโตร์ → ชื่อสีในตารางเรต
@@ -62,7 +73,7 @@ export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog 
   const groups = useMemo<Group[]>(() => {
     const m = new Map<string, Group>();
     for (const r of rows) {
-      const series = seriesOf(r.sku), color = colorRow(r);
+      const series = seriesOf(r.sku, r.name), color = colorRow(r);
       const key = series + "‖" + color;
       const g = m.get(key) || { key, series, color, items: [], rate: 0 };
       g.items.push(r);
