@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
-import { usableWeights } from "@/lib/calculator40/weight-backfill";
+import { usableWeights, weightOf } from "@/lib/calculator40/weight-backfill";
 
 // เติม "น้ำหนัก กก./เส้น" ให้เส้นอลูในสโตร์ จากไฟล์ถอดทุน (ชีต "น้ำหนักโปรไฟล์")
 //   เจ้าของสั่ง 19 ส.ค.69 — เส้นที่ไม่มีน้ำหนัก กดเปลี่ยนเรตต่อโลแล้วราคาไม่ขยับ
@@ -29,8 +29,9 @@ export async function POST(req: Request) {
   // น้ำหนักต้องมาจากตารางกลางเท่านั้น — client ส่งตัวเลขน้ำหนักมาเองไม่ได้ (กันยัดค่ามั่ว)
   const W = usableWeights();
   const rows = (items ?? []) as { id: number; sku: string; name: string; weight_per_unit: number }[];
+  // 9 ต.ค.69 จับคู่ด้วยรหัสหน้าชื่อด้วย (สโตร์ใส่ sku เป็น JR0xxxx แต่รหัสจริงอยู่ในชื่อ)
   const todo = rows
-    .map((r) => ({ r, kg: W[String(r.sku ?? "").trim().toUpperCase()] }))
+    .map((r) => ({ r, kg: weightOf(r, W).kg }))
     .filter((x) => x.kg > 0 && Math.abs(Number(x.r.weight_per_unit || 0) - x.kg) >= 0.005);
 
   const skipped = rows.length - todo.length;

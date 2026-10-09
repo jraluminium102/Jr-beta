@@ -44,6 +44,31 @@ export type WeightRow = {
 };
 
 /** รหัสที่มีน้ำหนักในไฟล์และเชื่อถือได้ (ตัดตัวที่ยังไม่ชัวร์ออก) */
+/**
+ * รหัสจริงของแถวสโตร์ — สโตร์หลายแถวใส่ sku เป็น JR0xxxx แต่รหัสจริงอยู่หน้าชื่อ
+ *   "JR02029 | 9014 ตัวตบเคอเทนวอล" · "JR02885 | Velora01" · "F7865 | F7865B-แผงประตู"
+ *   (9 ต.ค.69 เจ้าของทักว่าน้ำหนักในสโตร์ยังไม่ถูกแก้ — เพราะจับคู่ด้วย sku อย่างเดียวเลยพลาด 358 แถว)
+ */
+export function codesOf(r: StockLite): string[] {
+  const list: string[] = [];
+  const sku = up(r.sku);
+  if (sku) list.push(sku);
+  const head = String(r.name ?? "").trim().match(/^([A-Za-z]{0,3}\d{3,5}[A-Za-z]?)\b/);
+  if (head) list.push(up(head[1]));
+  // รหัสที่ขึ้นต้นด้วยตัวอักษรล้วน (OPK-A205-40 / WM-K01 / Velora01 / E-01)
+  const alpha = String(r.name ?? "").trim().match(/^([A-Za-z]{2,}-?[A-Za-z0-9-]*\d[A-Za-z0-9-]*)/);
+  if (alpha) list.push(up(alpha[1]));
+  // sku ที่ตัดตัวอักษรท้ายของรหัสไฟล์ (สโตร์ F7865 ↔ ไฟล์ F7865B)
+  if (/^F\d{4}$/.test(sku)) { list.push(sku + "B"); list.push(sku + "C"); }
+  return [...new Set(list)].filter(Boolean);
+}
+
+/** น้ำหนักของแถวสโตร์ จากรหัสตัวแรกที่ไฟล์รู้จัก */
+export function weightOf(r: StockLite, W?: Record<string, number>): { kg: number; code: string } {
+  const tab = W ?? usableWeights();
+  for (const c of codesOf(r)) if (num(tab[c]) > 0) return { kg: num(tab[c]), code: c };
+  return { kg: 0, code: "" };
+}
 export function usableWeights(): Record<string, number> {
   const bad = new Set<string>((PB.ALUWEIGHT_SUSPECT ?? []).map(up));
   const out: Record<string, number> = {};

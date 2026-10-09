@@ -323,6 +323,8 @@ if (process.argv.includes("--write")) {
   PB.ALUWEIGHT_KGM = { ...PB.ALUWEIGHT_KGM, ...Object.fromEntries([...byCode.entries()]
     .filter(([c]) => PB.ALUWEIGHT_KGM && PB.ALUWEIGHT_KGM[c] != null)
     .map(([c, w]) => [c, Math.round(w.kg / (w.len > 0 ? w.len : /^[0-9]/.test(c) ? 6 : 6.4) * 100000) / 100000])) };
+  // น้ำหนักที่เจ้าของให้มาเอง/ชีตเขียนเป็นชื่อ ต้องเข้า ALUWEIGHT ด้วย (หน้าสโตร์ดึงจากตารางนี้)
+  PB.ALUWEIGHT = { ...PB.ALUWEIGHT, ...Object.fromEntries(Object.entries(FROM_SHEET_NAME).map(([c, v]) => [c, v.kg])), ...Object.fromEntries(Object.entries(FROM_CATALOGUE).map(([c, v]) => [c, v.kg])) };
   PB.ALUWEIGHT = { ...PB.ALUWEIGHT, ...Object.fromEntries([...byCode.entries()].map(([c, w]) => [c, Math.round(w.kg * 1000) / 1000])) };
   PB.ALUWEIGHT_NOTE = "น้ำหนัก กก./เส้น ยึดไฟล์ น้ำหนักโปรไฟล์.xlsx (8 ต.ค.69 ล้างของเดิมที่เพี้ยน 34 รหัส) — ใช้ทั้งคิดราคาต่อกิโลและค่าอบสีพิเศษ";
   fs.writeFileSync(PB_PATH, JSON.stringify(PB, null, 2) + "\n");
