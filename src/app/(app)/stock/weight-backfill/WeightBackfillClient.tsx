@@ -5,17 +5,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card, Badge } from "@/components/ui";
 import { api } from "@/lib/api";
-import { WEIGHT_STATUS_LABEL, type WeightRow, type WeightStatus } from "@/lib/calculator40/weight-backfill";
+import { WEIGHT_STATUS_LABEL, type WeightRow, type WeightStatus, type ManualGroup } from "@/lib/calculator40/weight-backfill";
 
 const TONE: Record<WeightStatus, "emerald" | "amber" | "red" | "gray"> = {
   fill: "red", differ: "amber", suspect: "gray", same: "emerald",
 };
 const n3 = (n: number) => (n > 0 ? Number(n).toLocaleString("th-TH", { maximumFractionDigits: 3 }) : "—");
 
-export default function WeightBackfillClient({ rows, counts, stockCount }: {
+export default function WeightBackfillClient({ rows, counts, stockCount, manual }: {
   rows: WeightRow[];
   counts: Record<WeightStatus, number>;
   stockCount: number;
+  manual: ManualGroup[];
 }) {
   const router = useRouter();
   // ค่าตั้งต้น: ติ๊กเฉพาะ "ยังไม่มีน้ำหนัก" — ตัวที่มีอยู่แล้วต้องกดเลือกเอง (กันทับของที่ตั้งมือไว้)
@@ -53,6 +54,29 @@ export default function WeightBackfillClient({ rows, counts, stockCount }: {
     router.refresh();
   }
 
+  // ── กรอกน้ำหนักเอง: เส้นที่ไฟล์ไม่มีให้ (กล่อง/ฉาก/แซด หลายขนาด) ──
+  const [kgIn, setKgIn] = useState<Record<string, string>>({});
+  const [mq, setMq] = useState("");
+  const [saving, setSaving] = useState<string | null>(null);
+  const manShown = useMemo(() => {
+    const kw = mq.trim().toLowerCase();
+    return kw ? manual.filter((g) => g.label.toLowerCase().includes(kw)) : manual;
+  }, [manual, mq]);
+
+  async function saveManual(g: ManualGroup) {
+    const kg = Number(kgIn[g.key]);
+    if (!(kg > 0)) { setErr(`${g.label}: ใส่น้ำหนัก กก./เส้น ก่อน`); return; }
+    setSaving(g.key); setMsg(null); setErr(null);
+    const res = await api<{ updated: number; priced: number; note?: string; warns?: string[] }>(
+      "/stock/weights/manual", { method: "POST", body: JSON.stringify({ ids: g.ids, kg, label: g.label }) },
+    ).catch((e) => { setErr(String(e?.message || e)); return null; });
+    setSaving(null);
+    if (!res) return;
+    const d = res.data;
+    setMsg(`${g.label} = ${kg} กก./เส้น · บันทึก ${d.updated} สี${d.note ? ` — ${d.note}` : ""}`);
+    if (d.warns?.length) setErr(d.warns.join(" · "));
+    router.refresh();
+  }
   const pickable = rows.filter(canPick).length;
 
   return (
@@ -129,6 +153,56 @@ export default function WeightBackfillClient({ rows, counts, stockCount }: {
               ))}
               {!shown.length && (
                 <tr><td colSpan={9} className="p-4 text-center text-ink-3">ไม่มีเส้นอลูในสโตร์ที่รหัสตรงกับไฟล์ถอดทุน</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      <Card className="p-5">
+        <div className="flex items-center gap-2 flex-wrap">
+          <h2 className="text-base font-bold text-brand-dark">✍️ กรอกน้ำหนักเอง — เส้นที่ไฟล์ไม่มีให้</h2>
+          <span className="text-xs text-ink-3">{manual.length.toLocaleString("th-TH")} ขนาด</span>
+          <input value={mq} onChange={(e) => setMq(e.target.value)} placeholder="ค้นหาขนาด เช่น กล่อง 2x6"
+            className="ml-auto glass-soft rounded-lg px-3 py-2 text-sm outline-none min-w-[200px]" />
+        </div>
+        <p className="mt-1 text-xs text-ink-3">
+          ใส่ <b>กก./เส้น</b> ครั้งเดียว ระบบใส่ให้ทุกสีของขนาดนั้น · แถวที่ตั้งเรตต่อโลไว้แล้ว ราคา/เส้นจะคิดใหม่ให้พร้อมลงประวัติ
+        </p>
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left bg-brand-soft text-brand-dark">
+                <th className="p-2 rounded-l-lg">ขนาด / ชื่อเส้น</th>
+                <th className="text-right">จำนวนสี</th>
+                <th className="text-right">มีน้ำหนักแล้ว</th>
+                <th className="text-right">กก./เส้น</th>
+                <th className="p-2 rounded-r-lg"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {manShown.map((g) => (
+                <tr key={g.key} className="border-t border-line/60">
+                  <td className="p-2 text-xs">{g.label}
+                    {!!g.colors.length && <span className="ml-2 text-ink-3">({g.colors.slice(0, 4).join(" · ")}{g.colors.length > 4 ? " …" : ""})</span>}
+                  </td>
+                  <td className="px-2 text-right tabular-nums">{g.ids.length}</td>
+                  <td className="px-2 text-right tabular-nums text-ink-3">{g.withKg ? `${g.withKg} (${n3(g.current)})` : "—"}</td>
+                  <td className="px-2 text-right">
+                    <input inputMode="decimal" value={kgIn[g.key] ?? ""} placeholder={g.current > 0 ? String(g.current) : "กก."}
+                      onChange={(e) => setKgIn((m) => ({ ...m, [g.key]: e.target.value }))}
+                      className="glass-soft rounded-lg px-2 py-1.5 text-sm text-right outline-none w-24" />
+                  </td>
+                  <td className="p-2">
+                    <button type="button" onClick={() => saveManual(g)} disabled={saving === g.key || !(Number(kgIn[g.key]) > 0)}
+                      className="press rounded-lg px-3 py-1.5 text-xs font-semibold bg-brand text-white disabled:opacity-40">
+                      {saving === g.key ? "กำลังบันทึก…" : `ใส่ ${g.ids.length} สี`}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {!manShown.length && (
+                <tr><td colSpan={5} className="p-4 text-center text-ink-3">ไม่มีเส้นอลูที่ยังไม่มีน้ำหนัก 🎉</td></tr>
               )}
             </tbody>
           </table>

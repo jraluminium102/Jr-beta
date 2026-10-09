@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { fetchAllPaged } from "@/lib/supabase/fetch-all";
-import { matchWeights, summarize, type StockLite } from "@/lib/calculator40/weight-backfill";
+import { matchWeights, summarize, manualGroups, type StockLite } from "@/lib/calculator40/weight-backfill";
 import WeightBackfillClient from "./WeightBackfillClient";
 
 export const dynamic = "force-dynamic";
@@ -20,12 +20,14 @@ export default async function WeightBackfillPage() {
   const stock = await fetchAllPaged<StockLite>((f, t) =>
     anyDb
       .from("stock_items")
-      .select("id, name, sku, color, weight_per_unit, price_per_kg, unit_cost, is_weight_based")
+      .select("id, name, sku, color, category, weight_per_unit, price_per_kg, unit_cost, is_weight_based")
       .eq("is_active", true)
       .order("id", { ascending: true })
       .range(f, t),
   );
 
   const rows = matchWeights(stock);
-  return <WeightBackfillClient rows={rows} counts={summarize(rows)} stockCount={stock.length} />;
+  // เส้นอลูที่ไฟล์ไม่มีน้ำหนักให้ → กรอกเองในหน้าเดียวกัน (เจ้าของสั่ง 9 ต.ค.69)
+  const manual = manualGroups(stock);
+  return <WeightBackfillClient rows={rows} counts={summarize(rows)} stockCount={stock.length} manual={manual} />;
 }

@@ -17,7 +17,7 @@ const up = (s: unknown) => String(s ?? "").trim().toUpperCase();
 const num = (v: unknown) => Number(v) || 0;
 
 export type StockLite = {
-  id: number; name?: string | null; sku?: string | null; color?: string | null;
+  id: number; name?: string | null; sku?: string | null; color?: string | null; category?: string | null;
   weight_per_unit?: number | string | null; price_per_kg?: number | string | null;
   unit_cost?: number | string | null; is_weight_based?: boolean | null;
 };
@@ -121,4 +121,38 @@ export function summarize(rows: WeightRow[]) {
   const c: Record<WeightStatus, number> = { fill: 0, differ: 0, same: 0, suspect: 0 };
   for (const r of rows) c[r.status]++;
   return c;
+}
+
+/** ชื่อขนาดของแถว (ตัดสีท้าย + รหัสนำหน้าออก) — ใช้รวมกลุ่มตอนกรอกน้ำหนักเอง */
+export function sizeLabel(r: StockLite): string {
+  return String(r.name ?? "").replace(/-[^-]*$/, "").replace(/^[A-Za-z]{0,3}\d{3,5}[A-Za-z]?\s+/, "").trim();
+}
+
+export type ManualGroup = {
+  key: string; label: string; ids: number[]; colors: string[];
+  withKg: number;        // กี่สีที่มีน้ำหนักแล้ว
+  current: number;       // น้ำหนักที่ใช้อยู่ (ถ้ามี)
+};
+
+/**
+ * เส้นอลูที่ไฟล์ไม่มีน้ำหนักให้ → รวมตามชื่อขนาด ให้เจ้าของกรอก กก./เส้น เองทีเดียวทุกสี
+ *   (9 ต.ค.69 เจ้าของสั่ง "ก่อนอื่นแก้หน้าน้ำหนักให้ใส่น้ำหนักให้ได้ด้วย")
+ */
+export function manualGroups(stock: StockLite[]): ManualGroup[] {
+  const W = usableWeights();
+  const by = new Map<string, ManualGroup>();
+  for (const r of stock ?? []) {
+    if (!/อลูมิเนียม/.test(String(r.category ?? ""))) continue;
+    if (weightOf(r, W).kg > 0) continue;              // ไฟล์มีให้แล้ว ไปใช้ตารางด้านบน
+    const label = sizeLabel(r) || String(r.name ?? "").trim();
+    if (!label) continue;
+    const g = by.get(label) ?? { key: label, label, ids: [], colors: [], withKg: 0, current: 0 };
+    g.ids.push(Number(r.id));
+    const c = String(r.color ?? "").replace(/[()]/g, "").trim();
+    if (c && !g.colors.includes(c)) g.colors.push(c);
+    const kg = num(r.weight_per_unit);
+    if (kg > 0) { g.withKg++; if (!(g.current > 0)) g.current = kg; }
+    by.set(label, g);
+  }
+  return [...by.values()].sort((a, b) => b.ids.length - a.ids.length || a.label.localeCompare(b.label, "th"));
 }
