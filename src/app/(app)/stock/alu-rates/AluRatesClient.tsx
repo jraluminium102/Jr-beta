@@ -16,6 +16,12 @@ const BRAND_LABEL: Record<string, string> = {
   "": "ซื้อเป็นเส้น — ไม่คิดต่อโล",
 };
 const BRAND_ORDER = ["fuji", "sms", "market", ""];
+// ลำดับสีมาตรฐาน — เรียงเหมือนกันทุกแบรนด์ (ไล่จากสีพื้น → ซาฮาร่า → แอทแทค → ลายไม้ → มิว)
+const COLOR_ORDER = [
+  "อบขาว", "ขาว", "ขาว NA", "ดำ", "เทาซาฮาร่า", "ดำซาฮาร่า", "Aztec gray", "Aztecgray",
+  "ลายไม้สักทอง", "มะฮอกกานี", "ไวท์โอ็ค", "ไวท์โอ๊ค", "สีชา", "มิว",
+];
+const colorRank = (c: string) => { const i = COLOR_ORDER.indexOf(c); return i < 0 ? 900 : i; };
 function seriesOf(sku: string, name = ""): string {
   return BRAND_LABEL[brandOfSku(sku, name)] ?? BRAND_LABEL[""];
 }
@@ -87,7 +93,10 @@ export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog 
       g.brandRate = b && ck ? (brandRates[b] ?? {})[ck] : undefined;
     }
     const rank = (lbl: string) => BRAND_ORDER.findIndex((b) => BRAND_LABEL[b] === lbl);
-    return [...m.values()].sort((a, b) => rank(a.series) - rank(b.series) || a.color.localeCompare(b.color, "th"));
+    return [...m.values()].sort((a, b) =>
+      rank(a.series) - rank(b.series)
+      || colorRank(a.color) - colorRank(b.color)
+      || a.color.localeCompare(b.color, "th"));
   }, [rows, brandRates]);
 
   const seriesList = useMemo(() => [...new Set(groups.map((g) => g.series))], [groups]);
