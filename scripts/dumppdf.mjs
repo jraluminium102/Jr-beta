@@ -6,6 +6,8 @@
  * ⚠ 2 กับดักที่ทำให้ได้ข้อความมั่ว
  *   ① ต้องถอดทีละฟอนต์ (ToUnicode ของใครของมัน) — รวมตารางทุกฟอนต์เข้าด้วยกัน CID จะชนกัน
  *      ("ราคา" กลายเป็น "ร6ค6")
+ *   ③ ตัวเลข/ASCII ในตารางมักเขียนเป็นสตริงธรรมดา (123) ไม่ใช่ฮ็กซ์ <0031...>
+ *      อ่านแต่ <…> จะได้แต่ชื่อรายการ คอลัมน์น้ำหนัก/ขนาดหายทั้งตาราง (แคตตาล็อก Schimmer)
  *   ② PDF ที่ export จาก Sheets/Excel ยิง Td ทุกตัวอักษร — ถ้าขึ้นบรรทัดใหม่ทุก Td จะได้ทีละตัวอักษร
  *      → ขึ้นบรรทัดใหม่เฉพาะตอนย้ายแนวตั้ง (y ≠ 0) · ย้ายแนวนอนไกล ๆ = คั่นแท็บ (แยกคอลัมน์)
  */
@@ -80,8 +82,9 @@ const TOK = new RegExp(
     String.raw`\/(\w+)\s+[\d.]+\s+Tf`,                       // 1 = เปลี่ยนฟอนต์
     String.raw`(\[[^\]]*\]\s*TJ)`,                            // 2 = ข้อความชุด
     String.raw`(<[0-9A-Fa-f\s]+>\s*Tj)`,                      // 3 = ข้อความเดี่ยว
-    String.raw`(-?[\d.]+)\s+(-?[\d.]+)\s+(?:Td|TD)`,          // 4,5 = ย้ายตำแหน่ง
-    String.raw`(T\*|\bET\b)`,                                 // 6 = ขึ้นบรรทัด/จบบล็อก
+    String.raw`(\((?:\\.|[^\\()])*\)\s*Tj)`,                    // 4 = ข้อความเดี่ยวแบบสตริงธรรมดา
+    String.raw`(-?[\d.]+)\s+(-?[\d.]+)\s+(?:Td|TD)`,          // 5,6 = ย้ายตำแหน่ง
+    String.raw`(T\*|\bET\b)`,                                 // 7 = ขึ้นบรรทัด/จบบล็อก
   ].join("|"),
   "g",
 );
@@ -91,13 +94,38 @@ for (const s of objStream.values()) {
   let cur = null, line = "";
   const dec = (hex) => (hex.replace(/\s+/g, "").match(/.{1,4}/g) || [])
     .map((c) => (cur ? cur.get(parseInt(c, 16)) ?? "" : "")).join("");
+  // สตริงธรรมดา (…): ถอด escape ก่อน แล้วค่อยแปลงรหัสตัวอักษร
+  //   ⚠ ฟอนต์ไทยแบบ subset ไม่มี ToUnicode → ไบต์ดิบไม่มีความหมาย ต้องทิ้ง ไม่ใช่พิมพ์เป็นขยะ
+  //     เก็บไว้เฉพาะตัวที่ ToUnicode แปลให้ได้ หรือเป็น ASCII อ่านออก (ตัวเลข/ขนาดในตาราง)
+  const decLit = (lit) => {
+    const t = lit.slice(1, -1)
+      .replace(/\\([0-7]{1,3})/g, (_, o) => String.fromCharCode(parseInt(o, 8)))
+      .replace(/\\n/g, " ").replace(/\\[rbf]/g, "").replace(/\\t/g, "\t")
+      .replace(/\\(.)/g, "$1");
+    let out = "";
+    for (const ch of t) {
+      const c = ch.charCodeAt(0);
+      const m = cur ? cur.get(c) : undefined;
+      if (m != null) out += m;
+      else if (c === 9 || (c >= 32 && c < 127)) out += ch;
+    }
+    // ฟอนต์ไม่มี ToUnicode (cur = null) → ไบต์ดิบของฟอนต์ไทยไปตกช่วง ASCII กลายเป็นขยะ
+    //   เก็บไว้เฉพาะสตริงที่มีตัวเลข = ค่าในตาราง (ขนาด/น้ำหนัก) ซึ่งเป็น ASCII จริง
+    return (!cur && !/[0-9]/.test(out)) ? "" : out;
+  };
   for (const m of s.matchAll(TOK)) {
     if (m[1]) { cur = nameToMap.get(m[1]) ?? cur; continue; }
-    if (m[2]) { for (const p of m[2].matchAll(/<([0-9A-Fa-f\s]+)>/g)) line += dec(p[1]); continue; }
+    if (m[2]) {
+      // ชุดเดียวกันปนได้ทั้ง <ฮ็กซ์> และ (สตริงธรรมดา)
+      for (const p of m[2].matchAll(/<([0-9A-Fa-f\s]+)>|(\((?:\\.|[^\\()])*\))/g))
+        line += p[1] != null ? dec(p[1]) : decLit(p[2]);
+      continue;
+    }
     if (m[3]) { const p = /<([0-9A-Fa-f\s]+)>/.exec(m[3]); if (p) line += dec(p[1]); continue; }
-    if (m[4] != null) {
-      if (Math.abs(Number(m[5])) > 0.5) { if (line.trim()) out.push(line.trim()); line = ""; }
-      else if (Number(m[4]) > 20 && line && !line.endsWith("\t")) line += "\t";
+    if (m[4]) { const p = /(\((?:\\.|[^\\()])*\))/.exec(m[4]); if (p) line += decLit(p[1]); continue; }
+    if (m[5] != null) {
+      if (Math.abs(Number(m[6])) > 0.5) { if (line.trim()) out.push(line.trim()); line = ""; }
+      else if (Number(m[5]) > 20 && line && !line.endsWith("\t")) line += "\t";
       continue;
     }
     if (line.trim()) out.push(line.trim());

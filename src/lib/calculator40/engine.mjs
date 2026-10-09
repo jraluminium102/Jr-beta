@@ -420,6 +420,11 @@ export function computeCost(PB, prod, opt) {
     const bColName = (PB.ALU_COLOR_NAME || {})[greyUp ? 'white' : (opt.colorKey || color)];
     const brandWhite = (bRates && bKg > 0 && bRates['อบขาว'] > 0) ? Math.round(bKg * bRates['อบขาว']) : 0;
     const brandColor = (!noColor && bRates && bKg > 0 && bColName && bRates[bColName] > 0) ? Math.round(bKg * bRates[bColName]) : 0;
+    // สีที่แบรนด์นั้น "ไม่มีขาย" (รู้แบรนด์+น้ำหนัก แต่ตารางไม่มีเรตสีนี้) = ต้องซื้อเส้นขาวมาอบเอง
+    //   → ห้ามหยิบราคาสีจากไฟล์/ตารางเดิม/สโตร์มาใช้ ให้ตกไปทาง "ราคาขาว + ค่าอบสี (+ค่าเปิดตู้อบ)"
+    //   เจ้าของสั่ง 9 ต.ค.69 "ถ้าใช้กล่องดังกล่าวในสีพิเศษ ให้ตีว่าเป็นคิดอบสีเฉพาะกล่องที่ไม่มี"
+    //   เคสจริง: ตัว Z / กล่องไซส์นอกลิสต์ (แบรนด์ตลาด) สั่งสีลายไม้·Aztec·มะฮอก·ไวท์โอ๊ค — ตลาดไม่ขายสีพวกนี้
+    const brandNoColor = !noColor && !!bRates && bKg > 0 && !!bColName && !(bRates[bColName] > 0);
 
     const fixP = (FILE_FIRST && it.filePrice != null) ? Number(typeof it.filePrice === 'string' ? val(it.filePrice) : it.filePrice) : NaN;
     const basePrice = (FILE_FIRST && it.priceLocked && Number(it.price) > 0) ? Number(it.price) : fixP > 0 ? fixP
@@ -443,7 +448,7 @@ export function computeCost(PB, prod, opt) {
     const legacyColorPrice = (!noColor && code && PB.ALUCOLOR && PB.ALUCOLOR[priceColor] && !(fixP > 0)) ? PB.ALUCOLOR[priceColor][pcode] : null;
     // 18 ก.ย.69 ไฟล์มาก่อน: ราคาสีในไฟล์ → ตารางสีเดิม → สโตร์ (สโตร์เติมเฉพาะสีที่ไฟล์ไม่มี)
     const legacyOk = okColor(legacyColorPrice, mult) ? legacyColorPrice : null;
-    const colorPrice = brandColor > 0 ? brandColor : FILE_FIRST
+    const colorPrice = brandColor > 0 ? brandColor : brandNoColor ? null : FILE_FIRST
       ? (fileColorPrice > 0 ? fileColorPrice : legacyOk > 0 ? legacyOk : stockColorPrice > 0 ? stockColorPrice : null)
       : (stockColorPrice > 0 ? stockColorPrice : fileColorPrice > 0 ? fileColorPrice : legacyOk);
     const colorFromStock = colorPrice > 0 && colorPrice === stockColorPrice && !(FILE_FIRST && (fileColorPrice > 0 || legacyOk > 0));
@@ -452,7 +457,7 @@ export function computeCost(PB, prod, opt) {
     if (FILE_FIRST && Number(basePrice) > 0) { boxColorDone = false; bxp = null; }   // ต้องรีเซ็ต ไม่งั้นค้างค่าบรรทัดก่อน
     else bxp = boxPrice(it);   // กล่อง/ฉาก ผูกด้วยชื่อ+ขนาด+สี (สโตร์เป็นตัวตั้ง)
     // สีตามชีตรุ่นนั้น (prod.boxCF / it.cf) — ใช้เมื่อไม่มีราคาสโตร์และไม่มีราคาสี (ติดตาย: สโตร์กล่อง 1.6×3 ราคา 0 · 9014 ไม่มีในสโตร์)
-    const cfPrice = (bxp == null && !(colorPrice > 0) && formulaCF(it) !== 1)
+    const cfPrice = (bxp == null && !(colorPrice > 0) && !brandNoColor && formulaCF(it) !== 1)
       ? Math.round((Number(basePrice) || 0) * formulaCF(it)) : null;
     const price = bxp != null ? bxp
       : colorPrice > 0 ? colorPrice

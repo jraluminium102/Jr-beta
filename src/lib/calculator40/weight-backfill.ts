@@ -57,7 +57,15 @@ export function codesOf(r: StockLite): string[] {
   if (head) list.push(up(head[1]));
   // รหัสที่ขึ้นต้นด้วยตัวอักษรล้วน (OPK-A205-40 / WM-K01 / Velora01 / E-01)
   const alpha = String(r.name ?? "").trim().match(/^([A-Za-z]{2,}-?[A-Za-z0-9-]*\d[A-Za-z0-9-]*)/);
-  if (alpha) list.push(up(alpha[1]));
+  // ⚠ ต้องตัด "-" ท้ายออกก่อน — ชื่อสโตร์เขียน "OPK-A201-40-ขวางบนล่าง-ดำ" regex จับติด "-" มาด้วย
+  //   ไม่ตัด = "OPK-A201-40-" ไม่ตรงกับ "OPK-A201-40" ในไฟล์ → เส้น OPK/XSW 17 แถวไม่ได้น้ำหนักเลย (9 ต.ค.69)
+  //   ลองรหัสแบบสั้นลงทีละท่อนด้วย (OPK-A201-40 → OPK-A201) เผื่อไฟล์เขียนสั้นกว่าสโตร์
+  if (alpha) {
+    const a = up(alpha[1]).replace(/[-\s]+$/, "");
+    if (a) list.push(a);
+    const seg = a.split("-");
+    for (let n = seg.length - 1; n >= 2; n--) list.push(seg.slice(0, n).join("-"));
+  }
   // sku ที่ตัดตัวอักษรท้ายของรหัสไฟล์ (สโตร์ F7865 ↔ ไฟล์ F7865B)
   if (/^F\d{4}$/.test(sku)) { list.push(sku + "B"); list.push(sku + "C"); }
   return [...new Set(list)].filter(Boolean);
@@ -98,7 +106,9 @@ export function weightOf(r: StockLite, W?: Record<string, number>): { kg: number
   return { kg: 0, code: "" };
 }
 export function usableWeights(): Record<string, number> {
-  const bad = new Set<string>((PB.ALUWEIGHT_SUSPECT ?? []).map(up));
+  // รหัสที่ยืนยันน้ำหนักจากไฟล์แล้ว (ตารางล่าง / แถวที่ไฟล์เขียนราคากำกับ) = ใช้ได้ ไม่ต้องรอเจ้าของ
+  const okCodes = new Set<string>((PB.ALUWEIGHT_CONFIRMED ?? []).map(up));
+  const bad = new Set<string>((PB.ALUWEIGHT_SUSPECT ?? []).map(up).filter((c) => !okCodes.has(c)));
   const out: Record<string, number> = {};
   for (const [code, kg] of Object.entries(PB.ALUWEIGHT ?? {}))
     if (!bad.has(up(code)) && num(kg) > 0) out[up(code)] = num(kg);
@@ -108,7 +118,8 @@ export function usableWeights(): Record<string, number> {
 /** จับคู่แถวสโตร์กับน้ำหนักในไฟล์ — คืนเฉพาะแถวที่รหัสตรงกับไฟล์ */
 export function matchWeights(stock: StockLite[]): WeightRow[] {
   const W = usableWeights();
-  const suspect = new Set<string>((PB.ALUWEIGHT_SUSPECT ?? []).map(up));
+  const okCodes2 = new Set<string>((PB.ALUWEIGHT_CONFIRMED ?? []).map(up));
+  const suspect = new Set<string>((PB.ALUWEIGHT_SUSPECT ?? []).map(up).filter((c) => !okCodes2.has(c)));
   const rows: WeightRow[] = [];
   for (const r of stock ?? []) {
     const sku = up(r.sku);

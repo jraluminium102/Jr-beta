@@ -12,6 +12,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { openXlsx } from "./dumpxlsx.mjs";
+import { readFujiCatalogue } from "./read-fuji-catalogue.mjs";
 import { writeXlsx, S } from "./xlsxwrite.mjs";
 import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
 
@@ -119,6 +120,10 @@ function readWeights() {
   const sh = x.sheets.find((s) => s.name === "น้ำหนักโปรไฟล์");
   const rows = x.read(sh.path);
   const byCode = new Map();      // รหัส → {kg, thick, len, name}
+  // รหัสที่ "น้ำหนักในไฟล์ยืนยันแล้ว" — ใช้ปลดธงน่าสงสัยของ import-color-prices (9 ต.ค.69)
+  //   ยืนยันเมื่อ: อยู่ในตารางล่าง (แถว 254+ ตัวจริง) หรือแถวบนที่ช่อง I เขียน "ราคา NNN"
+  //   ไม่ยืนยัน: แถวที่ไฟล์ติดธง "ตรวจหน่วย" เอง (เช่น F7971 · F7932)
+  const confirmed = new Set();
   const boxSizes = new Map();    // ชื่อขนาด → [{thick, kg}]
   for (const { cells } of rows) {
     const brand = String(cells.B ?? "").trim();
@@ -131,6 +136,7 @@ function readWeights() {
     if (!(kg > 0)) continue;
     // แถวหลังทับแถวก่อน — บล็อกท้าย (มีคอลัมน์ ราคา) คือชุดที่ดูแลอยู่ ส่วนบล็อกต้นมีแถวติดธง ตรวจหน่วย
     if (code && code !== "-") byCode.set(code, { kg, len, name, thick: size });
+    if (code && code !== "-" && /^ราคา/.test(String(cells.I ?? "").trim())) confirmed.add(code.toUpperCase());
     // กล่อง/แป๊บ ของเมืองทอง: ชื่ออยู่คอลัมน์ E, ความหนาอยู่ D
     if (/^เมืองทอง/.test(brand) && /^[\d.]+\s*มม\.$/.test(size) && name) {
       const t = Number(String(size).match(/[\d.]+/)?.[0]) || 0;   // "1.20 มม." → 1.2 (เดิม Number() ตรง ๆ = NaN)
@@ -157,6 +163,7 @@ function readWeights() {
     if (!m || !(kg > 0)) continue;
     const code = m[1].replace(/-\d{2}$/, "").toUpperCase();
     byCode.set(code, { kg, len: 0, name: label.replace(/\s*\[[^\]]+\]\s*/, "").trim(), thick: "", low: true });
+    confirmed.add(code);
   }
 
   // ตัว Z เมืองทอง: คอลัมน์ D เป็นขนาดหน้าตัด ไม่ใช่ความหนา → เก็บด้วยชื่อตรง ๆ
@@ -166,7 +173,7 @@ function readWeights() {
     const kg = Number(cells.H) || 0;
     if (/^ตัว ?Z/i.test(nm) && kg > 0 && !boxSizes.has(nm)) boxSizes.set(nm, [{ thick: 1.5, kg, code: String(cells.C ?? '') }]);
   }
-  return { byCode, boxSizes };
+  return { byCode, boxSizes, confirmed };
 }
 
 /** เลือกความหนาตามกฎ 1.5 → 1.2 → หนาที่สุดที่มี */
@@ -230,7 +237,14 @@ function collectCodes() {
 }
 
 // ── main ───────────────────────────────────────────────────────────────────
-const { byCode, boxSizes } = readWeights();
+const { byCode, boxSizes, confirmed } = readWeights();
+// แคตตาล็อกผู้ผลิต Euro Fuji (อลู/fuji.pdf) — กก./ม. รายรหัส · ใช้เฉพาะรหัสที่ชีตไม่มี
+//   ตรวจแล้ว 9 ต.ค.69: ค่าในเล่มตรงกับชีตทุกรหัสที่ทั้งสองมี (F7864 11.328 · F7932 0.303 · F7971 2.56)
+//   และตรงกับราคาเดิมในสูตรที่ตั้งไว้ 187 ฿/กก. (F7948 169 · F7860 493 · F7949 302)
+const FUJI_BAR = 6.4;
+const fujiCat = new Map();
+for (const [code, kgm] of readFujiCatalogue())
+  fujiCat.set(code, Math.round(kgm * FUJI_BAR * 1000) / 1000);
 const codes = collectCodes();
 const SIZE_ALIAS = {
   "กล่อง 1\"x1\"": "แป๊บ 1 นิ้ว",
@@ -257,6 +271,8 @@ for (const e of codes) {
     if (list && list.length) { const p = pickThickness(list); kg = p.kg; src = "เมืองทอง · " + p.rule; }
   }
   if (!kg && FROM_SHEET_NAME[e.code]) { kg = FROM_SHEET_NAME[e.code].kg; src = FROM_SHEET_NAME[e.code].note; }
+  if (!kg && fujiCat.has(e.code)) { kg = fujiCat.get(e.code); src = "แคตตาล็อก Euro Fuji (กก./ม. × 6.4)"; }
+  if (!kg && fujiCat.has(e.code + "B")) { kg = fujiCat.get(e.code + "B"); src = "แคตตาล็อก Euro Fuji รหัส " + e.code + "B"; }
   if (!kg && FROM_CATALOGUE[e.code]) { kg = FROM_CATALOGUE[e.code].kg; src = FROM_CATALOGUE[e.code].note; }
   if (!kg && e.kgLine > 0) { kg = e.kgLine; src = "น้ำหนักที่ฝังในสูตร (ยังไม่ยืนยัน)"; }
   const oldWhite = Number(PB.ALUCODE?.[e.code]) || 0;
@@ -339,6 +355,15 @@ if (process.argv.includes("--write")) {
   PB.ALU_BRAND_NOTE = "เรตบาท/กก. แยกแบรนด์ × สี (เจ้าของส่ง 8 ต.ค.69) — ราคาเส้น = น้ำหนัก × เรต · ยังไม่ต่อเข้าเอนจิน";
   PB.ALU_BRAND_OF = Object.fromEntries(rowsOut.map((r) => [r.code, r.brand]));
   PB.ALU_COLOR_NAME = ALU_COLOR_NAME;
+  // รหัสที่น้ำหนักยืนยันจากไฟล์แล้ว → หน้าเติมน้ำหนักสโตร์เอาไปใช้ได้ แม้เคยติดธง ALUWEIGHT_SUSPECT
+  //   ธงนั้นมาจากกฎเก่า "น้ำหนัก ≈ ราคาขาว ÷ 187" ซึ่งเลิกใช้แล้วตั้งแต่ย้ายมาเป็น น้ำหนัก × เรตแบรนด์
+  // น้ำหนักจากแคตตาล็อกผู้ผลิต → เติมเฉพาะรหัสที่ ALUWEIGHT ยังไม่มี (ชีตเป็นตัวตั้ง)
+  PB.ALUWEIGHT = { ...PB.ALUWEIGHT };
+  for (const [code, kg] of fujiCat) {
+    if (!(Number(PB.ALUWEIGHT[code]) > 0)) { PB.ALUWEIGHT[code] = kg; confirmed.add(code); }
+    else if (Math.abs(Number(PB.ALUWEIGHT[code]) - kg) / kg < 0.03) confirmed.add(code);   // เล่มยืนยันค่าชีต
+  }
+  PB.ALUWEIGHT_CONFIRMED = [...confirmed].sort();
   PB.ALU_KG = Object.fromEntries(rowsOut.filter((r) => r.kg > 0).map((r) => [r.code, Math.round(r.kg * 1000) / 1000]));
   // น้ำหนักเดิมใน ALUWEIGHT เพี้ยนจากไฟล์ถึง 34/79 รหัส (F7932 +396% · E-series +74%) — ตัวนี้คูณเป็นค่าอบ
   // กก./ม. ต้องขยับตามด้วย (ใช้คิดค่าอบรายท่อน) — เส้น B/F มาตรฐาน 6.4 ม. · เมืองทอง 6 ม.

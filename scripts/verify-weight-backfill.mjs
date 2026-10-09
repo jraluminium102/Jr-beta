@@ -22,33 +22,45 @@ const ok = (name, cond, extra = "") => { cond ? pass++ : fail++; console.log(`${
 console.log("\n═══ ① น้ำหนักที่เอาไปเติม — ต้องมาจากตารางกลาง ไม่ใช่ตัวเลขลอย ═══");
 {
   const W = usableWeights();
-  ok("มีน้ำหนักให้เติม (ตัดตัวที่ยังไม่ชัวร์ออกแล้ว)",
-    Object.keys(W).length === Object.keys(PB.ALUWEIGHT).length - (PB.ALUWEIGHT_SUSPECT ?? []).length,
-    `${Object.keys(W).length} จาก ${Object.keys(PB.ALUWEIGHT).length}`);
+  // ธงยังไม่ชัวร์ที่ "ยังไม่ถูกยืนยัน" เท่านั้นที่ถูกตัดออก (ยืนยันแล้วจากตารางล่าง/แคตตาล็อก = เติมได้)
+  const stillSus = (PB.ALUWEIGHT_SUSPECT ?? []).filter((c) => !(PB.ALUWEIGHT_CONFIRMED ?? []).includes(c));
+  ok("มีน้ำหนักให้เติม (ตัดตัวที่ยังไม่ชัวร์และยังไม่ถูกยืนยันออกแล้ว)",
+    Object.keys(W).length === Object.keys(PB.ALUWEIGHT).length - stillSus.length,
+    `${Object.keys(W).length} จาก ${Object.keys(PB.ALUWEIGHT).length} · ยังไม่ชัวร์จริง ${stillSus.length}`);
   ok("ทุกค่า > 0 (ไม่มีน้ำหนักศูนย์หลุดเข้าไป)", Object.values(W).every((v) => v > 0), "");
-  // 21 ก.ย.69: น้ำหนักยึดชีต "น้ำหนักโปรไฟล์" ของไฟล์ v1 (แถว 291 คิ้ว F7935 = 1.824 · แถว 324 เฟรมบนบานเลื่อน B20001-15 = 8.1)
-  ok("B20001 = 8.1 กก. ตามชีตน้ำหนักโปรไฟล์ (ไม่ใช่ราคา÷187)", W.B20001 === 8.1, String(W.B20001));
+  // น้ำหนักยึดตารางล่างของชีต "น้ำหนักโปรไฟล์" (แถว 291 คิ้ว F7935 = 1.824 · แถว 324 เฟรมบนบานเลื่อน [B20001-15] = 7.104)
+  ok("B20001 = 7.104 กก. ตามตารางล่างของชีตน้ำหนักโปรไฟล์ (ไม่ใช่ราคา÷187)", W.B20001 === 7.104, String(W.B20001));
   ok("F7935 = 1.824 กก. ตามชีตน้ำหนักโปรไฟล์", W.F7935 === 1.824, String(W.F7935));
 }
 
 console.log("\n═══ ② ⚠ รหัสที่น้ำหนักยังไม่ชัวร์ — ห้ามเติม ═══");
 {
+  // 9 ต.ค.69: ธง ALUWEIGHT_SUSPECT มาจากกฎเก่า "น้ำหนัก ≈ ราคาขาว ÷ 187" ซึ่งเลิกใช้แล้ว
+  //   ตอนนี้ปลดธงให้รหัสที่ไฟล์ยืนยัน (อยู่ตารางล่าง / มีราคากำกับ / แคตตาล็อกผู้ผลิตตรงกัน)
+  //   → เทสต้องตรวจ "กลไกกัน" ไม่ใช่ผูกกับรายชื่อรหัส เพราะรายชื่อเปลี่ยนได้เมื่อยืนยันเพิ่ม
   const SUS = PB.ALUWEIGHT_SUSPECT ?? [];
-  ok("มีรายชื่อรหัสที่ยังไม่ชัวร์เก็บไว้", SUS.length === 4, JSON.stringify(SUS));
-  for (const c of ["B20024", "F7855", "F7993", "F7971"]) ok(`${c} อยู่ในรายการห้ามเติม`, SUS.includes(c), "");
+  const CONF = PB.ALUWEIGHT_CONFIRMED ?? [];
+  const stillSus = SUS.filter((c) => !CONF.includes(c));
+  ok("ยังเก็บรายชื่อรหัสที่เคยน่าสงสัยไว้ (ไม่ได้ลบทิ้ง)", SUS.length > 0, JSON.stringify(SUS));
+  ok("มีรายชื่อรหัสที่ไฟล์ยืนยันน้ำหนักแล้ว", CONF.length > 50, String(CONF.length));
   const W = usableWeights();
-  ok("ไม่มีตัวไหนหลุดเข้าไปในชุดที่เอาไปเติม", SUS.every((c) => !(c in W)), "");
-  // ต่อให้ client ส่ง id ของตัวที่ห้ามเติมมา ก็ต้องไม่มีน้ำหนักให้เขียน
-  const rows = matchWeights(SUS.map((sku, i) => ({ id: i + 1, sku, name: sku, weight_per_unit: 0 })));
-  ok("โชว์บนหน้าจอได้ แต่สถานะเป็น 'ยังไม่ชัวร์'", rows.length === 4 && rows.every((r) => r.status === "suspect"), "");
-  ok("สถานะนี้เลือกไม่ได้ (ไม่ใช่ fill/differ)", !rows.some((r) => ["fill", "differ"].includes(r.status)), "");
+  ok("รหัสที่ยังไม่ถูกยืนยัน ต้องไม่หลุดเข้าชุดที่เอาไปเติม", stillSus.every((c) => !(c in W)), JSON.stringify(stillSus));
+  ok("รหัสที่ไฟล์ยืนยันแล้ว ต้องเติมได้ (ไม่ติดธงค้าง)",
+    SUS.filter((c) => CONF.includes(c)).every((c) => W[c] > 0), "");
+  // ตัวที่ยังไม่ถูกยืนยัน (ถ้ามี) ต้องโชว์บนหน้าจอได้ แต่ติ๊กไม่ได้
+  if (stillSus.length) {
+    const rows = matchWeights(stillSus.map((sku, k) => ({ id: k + 1, sku, name: sku, weight_per_unit: 0 })));
+    ok("โชว์บนหน้าจอได้ แต่สถานะเป็น 'ยังไม่ชัวร์'", rows.length === stillSus.length && rows.every((r) => r.status === "suspect"), "");
+    ok("สถานะนี้เลือกไม่ได้ (ไม่ใช่ fill/differ)", !rows.some((r) => ["fill", "differ"].includes(r.status)), "");
+  } else {
+    ok("ตอนนี้ไม่มีรหัสค้างธง — ทุกตัวไฟล์ยืนยันแล้ว", true, "");
+  }
 }
-
 console.log("\n═══ ③ จัดสถานะถูกไหม (เติม / ต่าง / ตรงแล้ว) ═══");
 {
   const rows = matchWeights([
     { id: 1, sku: "B20001", name: "เฟรมบน", color: "อบขาว", weight_per_unit: 0 },        // ยังไม่มี
-    { id: 2, sku: "B20001", name: "เฟรมบน", color: "ดำ", weight_per_unit: 8.1 },         // ตรงแล้ว (ตามไฟล์ v1)
+    { id: 2, sku: "B20001", name: "เฟรมบน", color: "ดำ", weight_per_unit: 7.104 },       // ตรงแล้ว (ตารางล่างของไฟล์)
     { id: 3, sku: "B20003", name: "เฟรมข้าง", color: "อบขาว", weight_per_unit: 9.9 },     // ต่าง
     { id: 4, sku: "JR00576", name: "ล้อ", weight_per_unit: 0 },                           // ไม่ใช่เส้นอลู
     { id: 5, sku: "", name: "ไม่มีรหัส", weight_per_unit: 0 },                            // ไม่มีรหัส
