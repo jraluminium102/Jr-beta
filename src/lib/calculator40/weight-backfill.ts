@@ -78,7 +78,7 @@ export function codesOf(r: StockLite): string[] {
  *   ตัดสีท้าย · ตัดคำนำหน้า (ดาม/ใบ/เสา…) · Z = แซด = ตัวZ · 1"1/2 = 1.5" · cm = ซม.
  *   (9 ต.ค.69 สโตร์เขียนชื่อหลายแบบสำหรับของชิ้นเดียวกัน)
  */
-const normName = (s: unknown) => {
+export const normName = (s: unknown) => {
   let t = String(s ?? "").replace(/\s*\([^)]*\)\s*$/, "").replace(/-[^-]*$/, "").trim().toUpperCase();   // ตัดวงเล็บสีท้าย แล้วค่อยตัดสีท้าย
   t = t.replace(/[”"″']/g, '"').replace(/\s+/g, " ");
   t = t.replace(/(\d)"\s*1\/2/g, "$1.5\"");          // 1"1/2 → 1.5"
@@ -105,6 +105,28 @@ export function weightOf(r: StockLite, W?: Record<string, number>): { kg: number
   if (num(byName) > 0) return { kg: num(byName), code: nn };
   return { kg: 0, code: "" };
 }
+/**
+ * น้ำหนักที่ยกมาจาก "แถวสีอื่นของของชิ้นเดียวกัน" (9 ต.ค.69)
+ *   ของชิ้นเดียวกันในสโตร์แตกเป็นแถวละสี · น้ำหนักที่เจ้าของเคยกรอกผูกกับ sku แถวนั้นแถวเดียว
+ *   → แถวสีอื่นยังว่างทั้งที่เป็นเส้นเดียวกัน (กล่องเรียบ 1.6"x4" มี 4 แถว กรอกไว้ 2)
+ * ⚠ ยกให้เฉพาะเมื่อแถวที่มีน้ำหนักอยู่แล้ว "ตรงกันทุกแถว" เท่านั้น
+ *   ถ้าชื่อเดียวกันแต่น้ำหนักขัดกัน (เส้นกลาง 0.40 กับ 0.84) = ไม่ชัด ต้องไม่เดา
+ */
+export function siblingWeights(stock: StockLite[]): Record<string, number> {
+  const byName = new Map<string, Set<number>>();
+  for (const r of stock ?? []) {
+    const kg = num(r.weight_per_unit);
+    if (!(kg > 0)) continue;
+    const nn = normName(r.name);
+    if (!nn) continue;
+    if (!byName.has(nn)) byName.set(nn, new Set());
+    byName.get(nn)!.add(Math.round(kg * 1000) / 1000);
+  }
+  const out: Record<string, number> = {};
+  for (const [nn, set] of byName) if (set.size === 1) out[nn] = [...set][0];
+  return out;
+}
+
 export function usableWeights(): Record<string, number> {
   // รหัสที่ยืนยันน้ำหนักจากไฟล์แล้ว (ตารางล่าง / แถวที่ไฟล์เขียนราคากำกับ) = ใช้ได้ ไม่ต้องรอเจ้าของ
   const okCodes = new Set<string>((PB.ALUWEIGHT_CONFIRMED ?? []).map(up));

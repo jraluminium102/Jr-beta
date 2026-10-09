@@ -12,7 +12,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { matchWeights, summarize, usableWeights, WEIGHT_STATUS_LABEL } from "../src/lib/calculator40/weight-backfill.ts";
+import { matchWeights, summarize, usableWeights, siblingWeights, normName, WEIGHT_STATUS_LABEL } from "../src/lib/calculator40/weight-backfill.ts";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PB = JSON.parse(fs.readFileSync(path.join(ROOT, "src/lib/calculator40/pricebook.json"), "utf8"));
@@ -76,6 +76,30 @@ console.log("\n═══ ③ จัดสถานะถูกไหม (เต�
   const c = summarize(rows);
   ok("นับสรุปถูก", c.fill === 1 && c.same === 1 && c.differ === 1, JSON.stringify(c));
   ok("ป้ายสถานะครบทุกแบบ", Object.keys(WEIGHT_STATUS_LABEL).length === 4, "");
+}
+
+console.log("\n═══ ③.5 ยกน้ำหนักจากแถวสีอื่นของของชิ้นเดียวกัน — ต้องตรงกันทุกแถวถึงยกได้ ═══");
+{
+  // 9 ต.ค.69: ของชิ้นเดียวกันแตกเป็นแถวละสี · ค่าที่เจ้าของกรอกติดอยู่แค่ sku แถวนั้น
+  //   เคสจริง: กล่องเรียบ 1.6"x4" มี 4 แถว กรอกไว้ 2 (5.30) อีก 2 ว่าง ทั้งที่เป็นเส้นเดียวกัน
+  const SIB = siblingWeights([
+    { id: 1, name: "กล่องเรียบ 1.6\"x4\"", sku: "JR01984", weight_per_unit: 5.3 },
+    { id: 2, name: "กล่องเรียบ 1.6\"x4\"-ดำ", sku: "JR01985", weight_per_unit: 5.3 },
+    { id: 3, name: "กล่องเรียบ 1.6\"x4\"-เทาซาฮาร่า", sku: "JR01986", weight_per_unit: 0 },
+    // ชื่อเดียวกันแต่น้ำหนักขัดกัน → ห้ามยก (เส้นกลาง 0.40 กับ 0.84 ของจริงในสโตร์)
+    { id: 4, name: "เส้นกลาง-ดำ", sku: "JR01679", weight_per_unit: 0.4 },
+    { id: 5, name: "เส้นกลาง-อบขาว", sku: "JR01678", weight_per_unit: 0.84 },
+    { id: 6, name: "เส้นกลาง-มิว", sku: "JR01677", weight_per_unit: 0 },
+  ]);
+  ok("ยกน้ำหนักให้แถวสีที่ยังว่างได้ (ทุกแถวที่มีค่าตรงกัน)", SIB[normName('กล่องเรียบ 1.6"x4"-เทาซาฮาร่า')] === 5.3,
+    String(SIB[normName('กล่องเรียบ 1.6"x4"-เทาซาฮาร่า')]));
+  ok("น้ำหนักขัดกันในชื่อเดียวกัน → ต้องไม่ยก (ไม่เดา)", !(SIB[normName("เส้นกลาง-มิว")] > 0),
+    String(SIB[normName("เส้นกลาง-มิว")]));
+  ok("ของที่ยังไม่มีใครกรอกเลย ก็ต้องไม่โผล่", !(SIB[normName("ยู 4 หุน-ดำ")] > 0), "");
+
+  const api = fs.readFileSync(path.join(ROOT, "src/app/api/stock/weights/route.ts"), "utf8");
+  ok("API ใช้แหล่งนี้ต่อจากไฟล์ (ไฟล์มาก่อนเสมอ)", /weightOf\(r, W\)\.kg \|\| \(Number\(SIB\[normName/.test(api), "");
+  ok("ดึงแถวอลูแบบแบ่งหน้า (อลูเกิน 1,000 แถว)", api.includes("fetchAllPaged"), "");
 }
 
 console.log("\n═══ ④ API — เขียนแค่น้ำหนัก ห้ามแตะราคา ═══");

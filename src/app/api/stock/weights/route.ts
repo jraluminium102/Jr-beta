@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
-import { usableWeights, weightOf } from "@/lib/calculator40/weight-backfill";
+import { fetchAllPaged } from "@/lib/supabase/fetch-all";
+import { usableWeights, weightOf, siblingWeights, normName } from "@/lib/calculator40/weight-backfill";
 
 // เติม "น้ำหนัก กก./เส้น" ให้เส้นอลูในสโตร์ จากไฟล์ถอดทุน (ชีต "น้ำหนักโปรไฟล์")
 //   เจ้าของสั่ง 19 ส.ค.69 — เส้นที่ไม่มีน้ำหนัก กดเปลี่ยนเรตต่อโลแล้วราคาไม่ขยับ
@@ -29,9 +30,16 @@ export async function POST(req: Request) {
   // น้ำหนักต้องมาจากตารางกลางเท่านั้น — client ส่งตัวเลขน้ำหนักมาเองไม่ได้ (กันยัดค่ามั่ว)
   const W = usableWeights();
   const rows = (items ?? []) as { id: number; sku: string; name: string; weight_per_unit: number }[];
+  // แหล่งที่ 2: น้ำหนักที่กรอกไว้แล้วในแถวสีอื่นของของชิ้นเดียวกัน (ต้องตรงกันทุกแถวถึงยกมาได้)
+  //   ของชิ้นเดียวกันแตกเป็นแถวละสี · ค่าที่เจ้าของกรอกติดอยู่แค่ sku แถวนั้น แถวสีอื่นจึงยังว่าง
+  //   ⚠ ต้องดึงแบบแบ่งหน้า — อลูมีเกิน 1,000 แถว (ดู [[supabase-1000-row-cap]])
+  const allAlu = await fetchAllPaged<{ id: number; sku: string; name: string; weight_per_unit: number; category?: string }>((f0, t0) =>
+    sb.from("stock_items").select("id, sku, name, weight_per_unit, category")
+      .eq("is_active", true).order("id", { ascending: true }).range(f0, t0));
+  const SIB = siblingWeights(allAlu.filter((r) => /อลูมิเนียม/.test(String(r.category ?? ""))));
   // 9 ต.ค.69 จับคู่ด้วยรหัสหน้าชื่อด้วย (สโตร์ใส่ sku เป็น JR0xxxx แต่รหัสจริงอยู่ในชื่อ)
   const todo = rows
-    .map((r) => ({ r, kg: weightOf(r, W).kg }))
+    .map((r) => ({ r, kg: weightOf(r, W).kg || (Number(SIB[normName(r.name)]) || 0) }))
     .filter((x) => x.kg > 0 && Math.abs(Number(x.r.weight_per_unit || 0) - x.kg) >= 0.005);
 
   const skipped = rows.length - todo.length;
