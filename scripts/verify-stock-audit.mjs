@@ -9,6 +9,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { weightOf } from "../src/lib/calculator40/weight-backfill.ts";
 import { auditStockLink, auditByProduct, auditKgLink, bumpTest, STATUS_LABEL } from "../src/lib/calculator40/stock-audit.ts";
 import { buildPriceOverride, applyPriceOverride, stockColorOfCalc } from "../src/lib/calculator40/stock-link.ts";
 import { parseBoxName, normSize, buildBoxPrices } from "../src/lib/calculator40/box-link.ts";
@@ -507,6 +508,39 @@ console.log("\n" + "═══ ⑫ เรตแบรนด์มาก่อน�
     const line = (PRODUCTS && 1) && null;
     void line;
   }
+}
+// ── ⑬ จับคู่น้ำหนักเส้นอลูกับชื่อแถวสโตร์ (9 ต.ค.69) ──
+//    เคสจริง: regex ใน normName พัง → ชื่อทุกแถวกลายเป็นสตริงว่าง แล้วหยิบ BYNAME[""] มาใส่หมด
+//    ผลคือ 496 แถวได้น้ำหนัก 1.63 เท่ากันทั้งสโตร์ (ของ ฉาก 2") → ต้องมีด่านกันไว้
+console.log("\n" + "═══ ⑬ จับคู่น้ำหนักกับชื่อแถวสโตร์ ═══");
+{
+  // [ชื่อแถวในสโตร์, sku, น้ำหนักที่ต้องได้ (0 = ต้องไม่จับคู่)]
+  const CASES = [
+    ["B20001-เฟรมบนบานเลื่อน-ดำ", "B20001", 7.104],
+    ['ฉาก 4"-อบขาว', "JR01948", 2.208],
+    ['Z 4"-ดำ', "JR02023", 4.062],
+    ['กล่อง 1"x1"1/2 (ดำ)', "JR01730", 1.99],
+    ["กล่อง 1x5 cm-ดำ", "JR01740", 2.77],
+    ["9014 ตัวตบเคอเทนวอล", "JR02029", 3.396],
+    ['F7865B-แผงประตู-ดำ', "F7865", 8.25],   // สโตร์ตัด B ท้ายรหัสทิ้ง — ต้องเติมคืนแล้วเจอในไฟล์
+    // ต้องไม่จับคู่ — คนละโปรไฟล์ / ไฟล์ไม่มีน้ำหนัก
+    ["กล่องแจ๊คสัน-อบขาว", "JR01800", 0],
+    ['กล่องเรียบ 4"x4" (อบขาว)', "JR01870", 0],
+    ['Z 2"-ดำ', "JR02014", 0],
+    ["ยู 4 หุน-อบขาว", "JR01960", 0],
+    ["ฉากเสริม-อบขาว", "JR01970", 0],
+    ["B20024-คิ้วกันตก-ดำ", "B20024", 0],
+  ];
+  for (const [name, sku, want] of CASES) {
+    const got = weightOf({ id: 0, name, sku }).kg;
+    ok(`${name} → ${want || "ไม่จับคู่"}`, Math.abs(got - want) < 0.005, String(got));
+  }
+  ok("ไม่มีน้ำหนักก้อนไหนถูกใช้ซ้ำเกิน 12 ชื่อ (กันคีย์ว่างจับทุกอย่าง)", (() => {
+    const cnt = new Map();
+    for (const v of Object.values(PB.ALUWEIGHT_BYNAME ?? {})) cnt.set(v, (cnt.get(v) ?? 0) + 1);
+    return [...cnt.values()].every((n) => n <= 12);
+  })());
+  ok("ตาราง ALUWEIGHT_BYNAME ไม่มีคีย์ว่าง", !Object.keys(PB.ALUWEIGHT_BYNAME ?? {}).some((k) => !String(k).trim()));
 }
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);

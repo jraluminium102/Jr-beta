@@ -71,7 +71,7 @@ export function codesOf(r: StockLite): string[] {
  *   (9 ต.ค.69 สโตร์เขียนชื่อหลายแบบสำหรับของชิ้นเดียวกัน)
  */
 const normName = (s: unknown) => {
-  let t = String(s ?? "").replace(/s*([^)]*)s*$/, "").replace(/-[^-]*$/, "").trim().toUpperCase();   // ตัดวงเล็บสีท้ายชื่อก่อน
+  let t = String(s ?? "").replace(/\s*\([^)]*\)\s*$/, "").replace(/-[^-]*$/, "").trim().toUpperCase();   // ตัดวงเล็บสีท้าย แล้วค่อยตัดสีท้าย
   t = t.replace(/[”"″']/g, '"').replace(/\s+/g, " ");
   t = t.replace(/(\d)"\s*1\/2/g, "$1.5\"");          // 1"1/2 → 1.5"
   t = t.replace(/(\d)\s*1\/2"/g, "$1.5\"");
@@ -83,15 +83,18 @@ const normName = (s: unknown) => {
   return t.trim();
 };
 const BYNAME: Record<string, number> = Object.fromEntries(
-  Object.entries((PB.ALUWEIGHT_BYNAME ?? {}) as Record<string, unknown>).map(([k, v]) => [normName(k), num(v)]),
+  Object.entries((PB.ALUWEIGHT_BYNAME ?? {}) as Record<string, unknown>)
+    .map(([k, v]) => [normName(k), num(v)] as const)
+    .filter(([k, v]) => k !== "" && v > 0),   // คีย์ว่าง = ชื่อถูกล้างจนหมด ห้ามเก็บ (เคยทำให้ทุกเส้นได้น้ำหนักเดียวกัน)
 );
 
 export function weightOf(r: StockLite, W?: Record<string, number>): { kg: number; code: string } {
   const tab = W ?? usableWeights();
   for (const c of codesOf(r)) if (num(tab[c]) > 0) return { kg: num(tab[c]), code: c };
   // กล่อง/ฉาก/แซด ในสโตร์ไม่มีรหัส — จับด้วยชื่อขนาด (ตัดสีท้ายออก)
-  const byName = BYNAME[normName(r.name)];
-  if (num(byName) > 0) return { kg: num(byName), code: normName(r.name) };
+  const nn = normName(r.name);
+  const byName = nn ? BYNAME[nn] : 0;
+  if (num(byName) > 0) return { kg: num(byName), code: nn };
   return { kg: 0, code: "" };
 }
 export function usableWeights(): Record<string, number> {
