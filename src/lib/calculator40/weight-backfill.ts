@@ -65,9 +65,23 @@ export function codesOf(r: StockLite): string[] {
 
 /** น้ำหนักของแถวสโตร์ จากรหัสตัวแรกที่ไฟล์รู้จัก */
 /** ชื่อแถวสโตร์ตัดสีท้ายออก + ล้างช่องว่าง/เครื่องหมายนิ้ว — ใช้จับคู่กับ ALUWEIGHT_BYNAME */
-const normName = (s: unknown) =>
-  String(s ?? "").replace(/-[^-]*$/, "").trim().toUpperCase()
-    .replace(/[”"″']/g, '"').replace(/\s+/g, " ").replace(/\s*[xX×]\s*/g, "X");
+/**
+ * ชื่อแถวสโตร์ → คีย์กลาง สำหรับจับคู่กับ ALUWEIGHT_BYNAME
+ *   ตัดสีท้าย · ตัดคำนำหน้า (ดาม/ใบ/เสา…) · Z = แซด = ตัวZ · 1"1/2 = 1.5" · cm = ซม.
+ *   (9 ต.ค.69 สโตร์เขียนชื่อหลายแบบสำหรับของชิ้นเดียวกัน)
+ */
+const normName = (s: unknown) => {
+  let t = String(s ?? "").replace(/s*([^)]*)s*$/, "").replace(/-[^-]*$/, "").trim().toUpperCase();   // ตัดวงเล็บสีท้ายชื่อก่อน
+  t = t.replace(/[”"″']/g, '"').replace(/\s+/g, " ");
+  t = t.replace(/(\d)"\s*1\/2/g, "$1.5\"");          // 1"1/2 → 1.5"
+  t = t.replace(/(\d)\s*1\/2"/g, "$1.5\"");
+  t = t.replace(/\bCM\b|\bซม\.?/g, "ซม.");
+  t = t.replace(/^(?:ดาม|ใบ|เส้น)\s+/, "");            // "ดาม กล่อง1×1" → "กล่อง1×1"
+  t = t.replace(/^(?:ตัว\s?Z|Z)\s*(?=[\d"])/, "แซด ");  // Z 4" / ตัวZ 4" → แซด 4"
+  t = t.replace(/\s*[xX×]\s*/g, "X");
+  t = t.replace(/^(กล่อง|ฉาก|แซด)\s*/, "$1 ");
+  return t.trim();
+};
 const BYNAME: Record<string, number> = Object.fromEntries(
   Object.entries((PB.ALUWEIGHT_BYNAME ?? {}) as Record<string, unknown>).map(([k, v]) => [normName(k), num(v)]),
 );
