@@ -7,19 +7,17 @@ type Row = { id: number; sku: string; name: string; color?: string | null; suppl
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 const fmt = (n: number) => n.toLocaleString("th-TH", { maximumFractionDigits: 2 });
 
+// 9 ต.ค.69 เจ้าของสั่ง: หน้านี้มีแค่ 3 หมวด = แบรนด์ (SMS / Euro Fuji / ตลาด) × สี
+//   ไม่แยกตามโปรไฟล์อีกแล้ว (เดิมแยก B20/B22/B24/F78… ทำให้เรตเดียวกันกระจายเป็นสิบกลุ่ม)
+const BRAND_LABEL: Record<string, string> = {
+  fuji: "Euro Fuji",
+  sms: "SMS",
+  market: "ตลาด",
+  "": "ซื้อเป็นเส้น — ไม่คิดต่อโล",
+};
+const BRAND_ORDER = ["fuji", "sms", "market", ""];
 function seriesOf(sku: string, name = ""): string {
-  const s = sku.toUpperCase();
-  if (s.startsWith("B20")) return "บานเลื่อน SMS (B20xxx)";
-  if (s.startsWith("B22")) return "ระแนงเลื่อน (B22xxx)";
-  if (s.startsWith("B24")) return "บานเฟี้ยม (B24xxx)";
-  if (s.startsWith("E-")) return "บานเลื่อน E-series";
-  if (s.startsWith("WM-")) return "SlimLux (WM-Kxx)";
-  if (/^F7[89]/.test(s) || /^F79/.test(s)) return "ยูโร (F78xx-F79xx)";
-  if (s.startsWith("F")) return "ยูโร อื่นๆ (F...)";
-  const b = brandOfSku(sku, name);
-  if (b === "fuji") return "กล่อง/ฉาก (ฟูจิ)";
-  if (b === "market") return "ตลาด (ตัว Z · กล่องมีชื่อ · ไซส์นอกลิสต์)";
-  return "อื่นๆ (ซื้อเป็นเส้น / ยังไม่จัดกลุ่ม)";
+  return BRAND_LABEL[brandOfSku(sku, name)] ?? BRAND_LABEL[""];
 }
 // สีจากท้ายชื่อ "รหัส-ชื่อ-สี" · ชื่อแบบเก่า "เฟรมบน (B22001)" = ไม่ระบุสี
 // 9 ต.ค.69: stock_items.color เติมครบแล้ว → ใช้ช่องสีเป็นหลัก เดาจากท้ายชื่อเฉพาะตอนช่องว่าง
@@ -84,12 +82,12 @@ export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog 
       const cost = g.items.reduce((s, r) => s + Number(r.unit_cost), 0);
       g.rate = kg > 0 ? round2(cost / kg) : 0;   // เรตเฉลี่ยถ่วงน้ำหนักปัจจุบัน
       // เรตที่ "ควรเป็น" ตามตาราง 3 แบรนด์ (ถ้าทุกเส้นในกลุ่มเป็นแบรนด์เดียวกันและแบรนด์นั้นมีสีนี้ขาย)
-      const bs = new Set(g.items.map((r) => brandOfSku(r.sku, r.name)));
-      const b = bs.size === 1 ? [...bs][0] : "";
+      const b = BRAND_ORDER.find((x) => BRAND_LABEL[x] === g.series) ?? "";
       const ck = COLOR_KEY[g.color];
       g.brandRate = b && ck ? (brandRates[b] ?? {})[ck] : undefined;
     }
-    return [...m.values()].sort((a, b) => a.series.localeCompare(b.series, "th") || a.color.localeCompare(b.color, "th"));
+    const rank = (lbl: string) => BRAND_ORDER.findIndex((b) => BRAND_LABEL[b] === lbl);
+    return [...m.values()].sort((a, b) => rank(a.series) - rank(b.series) || a.color.localeCompare(b.color, "th"));
   }, [rows, brandRates]);
 
   const seriesList = useMemo(() => [...new Set(groups.map((g) => g.series))], [groups]);
