@@ -133,7 +133,7 @@ function readWeights() {
     if (code && code !== "-") byCode.set(code, { kg, len, name, thick: size });
     // กล่อง/แป๊บ ของเมืองทอง: ชื่ออยู่คอลัมน์ E, ความหนาอยู่ D
     if (/^เมืองทอง/.test(brand) && /^[\d.]+\s*มม\.$/.test(size) && name) {
-      const t = Number(size);
+      const t = Number(String(size).match(/[\d.]+/)?.[0]) || 0;   // "1.20 มม." → 1.2 (เดิม Number() ตรง ๆ = NaN)
       if (!boxSizes.has(name)) boxSizes.set(name, []);
       boxSizes.get(name).push({ thick: t, kg, code });
     }
@@ -159,6 +159,13 @@ function readWeights() {
     byCode.set(code, { kg, len: 0, name: label.replace(/\s*\[[^\]]+\]\s*/, "").trim(), thick: "", low: true });
   }
 
+  // ตัว Z เมืองทอง: คอลัมน์ D เป็นขนาดหน้าตัด ไม่ใช่ความหนา → เก็บด้วยชื่อตรง ๆ
+  for (const { cells } of rows) {
+    if (!/^เมืองทอง$/.test(String(cells.B ?? "").trim())) continue;
+    const nm = String(cells.E ?? "").trim();
+    const kg = Number(cells.H) || 0;
+    if (/^ตัว ?Z/i.test(nm) && kg > 0 && !boxSizes.has(nm)) boxSizes.set(nm, [{ thick: 1.5, kg, code: String(cells.C ?? '') }]);
+  }
   return { byCode, boxSizes };
 }
 
@@ -215,11 +222,14 @@ function collectCodes() {
 const { byCode, boxSizes } = readWeights();
 const codes = collectCodes();
 const SIZE_ALIAS = {
-  "กล่อง 1\"x1\"": "แป๊บ 1 นิ้ว", "กล่อง 1\"x1.5\"": "แป๊บ 1½ นิ้ว", "กล่อง 1\"x1.6\"": "1¾×1 นิ้ว",
+  "กล่อง 1\"x1\"": "แป๊บ 1 นิ้ว",
+  "กล่อง 1\"x1.5\"": "1½×1 นิ้ว",   // 1"×1½ = กล่องด้านไม่เท่า (รหัส 808) ไม่ใช่แป๊บ 1½ ด้านเท่า
+  "กล่อง 1\"x1.6\"": "1¾×1 นิ้ว",
   "กล่อง 1\"x2\"": "1×2 นิ้ว", "กล่อง 1\"x4\"": "1×4 นิ้ว", "กล่อง 1.6\"x1.6\"": "แป๊บ 1¾ นิ้ว",
   "กล่อง 1.6\"x3\"": "กล่อง 1.6\"×3\"", "กล่อง 1.6\"x4\"": "กล่อง 1.6\"×4\"",
   "กล่อง 2\"x2\"": "แป๊บ 2 นิ้ว", "กล่อง 2\"x4\"": "2×4 นิ้ว", "กล่อง 4\"x4\"": "กล่อง 4\"×4\"",
   "ฉาก 6 หุน": "ฉาก 6 หุน",
+  'แซด 4"': "ตัว Z 4 นิ้ว", 'ตัวZ 4': "ตัว Z 4 นิ้ว",
   JR01822: "½×1 นิ้ว", JR01823: "½×1 นิ้ว",   // บังใบกล่อง ½"×1" = แป๊บ ½×1 (เมืองทอง 802)
 };
 const rowsOut = [];
@@ -324,6 +334,20 @@ if (process.argv.includes("--write")) {
     .filter(([c]) => PB.ALUWEIGHT_KGM && PB.ALUWEIGHT_KGM[c] != null)
     .map(([c, w]) => [c, Math.round(w.kg / (w.len > 0 ? w.len : /^[0-9]/.test(c) ? 6 : 6.4) * 100000) / 100000])) };
   // น้ำหนักที่เจ้าของให้มาเอง/ชีตเขียนเป็นชื่อ ต้องเข้า ALUWEIGHT ด้วย (หน้าสโตร์ดึงจากตารางนี้)
+  // น้ำหนักที่คีย์ด้วย "ชื่อขนาด" (กล่อง/ฉาก/แซด) — สโตร์ตั้งชื่อแถวแบบนี้ ไม่ได้ใส่รหัส
+  // เก็บทุกชื่อขนาดที่รู้ค่า ไม่ใช่เฉพาะที่สูตรเรียกใช้ — สโตร์มีกล่อง/ฉากมากกว่าที่สูตรใช้
+  const byName = {};
+  const put = (k, kg) => { if (k && kg > 0 && !(byName[k] > 0)) byName[k] = Math.round(kg * 1000) / 1000; };
+  for (const [k, v] of Object.entries(FROM_SHEET_NAME)) if (/[\u0E00-\u0E7F]/.test(k)) put(k, v.kg);
+  for (const [k, v] of Object.entries(FROM_CATALOGUE)) if (/[\u0E00-\u0E7F]/.test(k)) put(k, v.kg);
+  for (const [storeName, sheetGroup] of Object.entries(SIZE_ALIAS)) {
+    if (!/[\u0E00-\u0E7F]/.test(storeName)) continue;
+    const list = boxSizes.get(sheetGroup);
+    if (list && list.length) { const p = pickThickness(list); put(storeName, p.kg); }
+  }
+  for (const r of rowsOut) if (/[\u0E00-\u0E7F]/.test(r.code) && r.kg > 0) put(r.code, r.kg);
+  PB.ALUWEIGHT_BYNAME = byName;
+  PB.ALUWEIGHT_BYNAME_NOTE = "น้ำหนัก กก./เส้น ของกล่อง/ฉาก/แซด ที่คีย์ด้วยชื่อขนาด (ชีตเมืองทอง · เลือกความหนา 1.5 ไม่มีก็ 1.2) — หน้าสโตร์จับคู่ด้วยชื่อแถว";
   PB.ALUWEIGHT = { ...PB.ALUWEIGHT, ...Object.fromEntries(Object.entries(FROM_SHEET_NAME).map(([c, v]) => [c, v.kg])), ...Object.fromEntries(Object.entries(FROM_CATALOGUE).map(([c, v]) => [c, v.kg])) };
   PB.ALUWEIGHT = { ...PB.ALUWEIGHT, ...Object.fromEntries([...byCode.entries()].map(([c, w]) => [c, Math.round(w.kg * 1000) / 1000])) };
   PB.ALUWEIGHT_NOTE = "น้ำหนัก กก./เส้น ยึดไฟล์ น้ำหนักโปรไฟล์.xlsx (8 ต.ค.69 ล้างของเดิมที่เพี้ยน 34 รหัส) — ใช้ทั้งคิดราคาต่อกิโลและค่าอบสีพิเศษ";

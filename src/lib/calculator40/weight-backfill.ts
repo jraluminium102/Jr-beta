@@ -64,9 +64,20 @@ export function codesOf(r: StockLite): string[] {
 }
 
 /** น้ำหนักของแถวสโตร์ จากรหัสตัวแรกที่ไฟล์รู้จัก */
+/** ชื่อแถวสโตร์ตัดสีท้ายออก + ล้างช่องว่าง/เครื่องหมายนิ้ว — ใช้จับคู่กับ ALUWEIGHT_BYNAME */
+const normName = (s: unknown) =>
+  String(s ?? "").replace(/-[^-]*$/, "").trim().toUpperCase()
+    .replace(/[”"″']/g, '"').replace(/\s+/g, " ").replace(/\s*[xX×]\s*/g, "X");
+const BYNAME: Record<string, number> = Object.fromEntries(
+  Object.entries((PB.ALUWEIGHT_BYNAME ?? {}) as Record<string, unknown>).map(([k, v]) => [normName(k), num(v)]),
+);
+
 export function weightOf(r: StockLite, W?: Record<string, number>): { kg: number; code: string } {
   const tab = W ?? usableWeights();
   for (const c of codesOf(r)) if (num(tab[c]) > 0) return { kg: num(tab[c]), code: c };
+  // กล่อง/ฉาก/แซด ในสโตร์ไม่มีรหัส — จับด้วยชื่อขนาด (ตัดสีท้ายออก)
+  const byName = BYNAME[normName(r.name)];
+  if (num(byName) > 0) return { kg: num(byName), code: normName(r.name) };
   return { kg: 0, code: "" };
 }
 export function usableWeights(): Record<string, number> {
