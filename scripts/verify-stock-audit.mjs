@@ -498,7 +498,8 @@ console.log("\n" + "═══ ⑫ เรตแบรนด์มาก่อน�
   ok("ตารางเรตครบ 3 แบรนด์", ["fuji", "sms", "market"].every((b) => ON.ALU_BRAND && Object.keys(ON.ALU_BRAND[b] || {}).length >= 6));
   // รหัสที่ยังรอเจ้าของให้ "กก./เส้น" — ระหว่างนี้ใช้ราคาเดิมในสูตรไปก่อน (ไม่หล่นเป็น 0)
   // 9 ต.ค.69 เจ้าของให้น้ำหนักมาแล้ว 4 รหัส (ฉาก 4" · 9014 · กล่องเรียบ 1.6"×4" 2 สี) → เหลือ 5
-  const PENDING_KG = ["กล่อง 1x5", "JR03127", "JR03130", "JR03131", "JR03132"];
+  // 9 ต.ค.69 กล่อง 1x5 ซม. คำนวณน้ำหนักเองแล้ว → เหลือ 4 โปรไฟล์วงกบ/กรอบบาน 3" ที่รอเจ้าของ
+  const PENDING_KG = ["JR03127", "JR03130", "JR03131", "JR03132"];
   const noKg = Object.entries(ON.ALU_BRAND_OF || {}).filter(([c, br]) => br !== "fixed" && br !== "?" && !(ON.ALU_KG || {})[c]).map(([c]) => c);
   ok("รหัสที่ยังไม่มีน้ำหนัก = ตรงรายการที่รอเจ้าของ (" + PENDING_KG.length + " รหัส)",
     noKg.length === PENDING_KG.length && noKg.every((c) => PENDING_KG.includes(c)), noKg.join(" "));
