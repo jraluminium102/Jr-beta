@@ -3,6 +3,7 @@ import { getProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { canSeeCost } from "@/lib/rbac";
 import { fetchAllPaged } from "@/lib/supabase/fetch-all";
+import PRICEBOOK from "@/lib/calculator40/pricebook.json";
 import AluRatesClient from "./AluRatesClient";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +23,7 @@ export default async function AluRatesPage() {
   const [withWeight, { count: noWeight }, { data: rateLog }] = await Promise.all([
     fetchAllPaged<Record<string, unknown>>((f, t) =>
       supabase.from("stock_items")
-        .select("id, sku, name, supplier, weight_per_unit, unit_cost, price_per_kg")
+        .select("id, sku, name, color, supplier, weight_per_unit, unit_cost, price_per_kg")
         .eq("is_active", true).gt("weight_per_unit", 0).neq("sku", "")
         .order("sku", { ascending: true }).order("id", { ascending: true }).range(f, t),
     ),
@@ -43,6 +44,6 @@ export default async function AluRatesPage() {
       canEdit={PRICE_WRITE.includes(role)}
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       rateLog={(rateLog ?? []) as any[]}
-    />
+     brandRates={(PRICEBOOK as Record<string, unknown>).ALU_BRAND as Record<string, Record<string, number>>} />
   );
 }

@@ -2,7 +2,7 @@
 import { useMemo, useState } from "react";
 
 // เรตอลูต่อโล — จัดกลุ่ม ซีรีส์ × สี · แก้เรต ฿/กก. แล้วอัปเดตราคาทุกเส้นในกลุ่ม (unit_cost = น้ำหนัก × เรต)
-type Row = { id: number; sku: string; name: string; supplier: string; weight_per_unit: number; unit_cost: number; price_per_kg: number };
+type Row = { id: number; sku: string; name: string; color?: string | null; supplier: string; weight_per_unit: number; unit_cost: number; price_per_kg: number };
 
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 const fmt = (n: number) => n.toLocaleString("th-TH", { maximumFractionDigits: 2 });
@@ -19,6 +19,28 @@ function seriesOf(sku: string): string {
   return "อื่นๆ";
 }
 // สีจากท้ายชื่อ "รหัส-ชื่อ-สี" · ชื่อแบบเก่า "เฟรมบน (B22001)" = ไม่ระบุสี
+// 9 ต.ค.69: stock_items.color เติมครบแล้ว → ใช้ช่องสีเป็นหลัก เดาจากท้ายชื่อเฉพาะตอนช่องว่าง
+//   (เดิมเดาอย่างเดียว เลยได้ "สี" เป็น ตัวตบรางมุ้ง / ฝาปิดเฟรมข้าง / เฟรมบนบานเลื่อน)
+function colorRow(r: Row): string {
+  const c = String(r.color ?? "").replace(/[()]/g, "").trim();
+  return c || colorOf(r.name);
+}
+// เรตแบรนด์: B2x = SMS · F7x = ยูโรฟูจิ · กล่อง/ฉาก/Z = ตลาด · ที่เหลือซื้อเป็นเส้น (ไม่คิดต่อโล)
+function brandOfSku(sku: string, name: string): string {
+  const s = (sku || "").toUpperCase(), n = (name || "").trim();
+  if (/^(WM-|OPK|XSW|E-)/i.test(s) || /^(WM-|OPK|XSW|E-|VELORA)/i.test(n)) return "";
+  if (/^B\d/.test(s)) return "sms";
+  if (/^F\d/.test(s)) return "fuji";
+  if (/^(Z |ตัวZ|แซด)/i.test(n)) return "market";
+  if (/^(กล่อง|ฉาก)/.test(n)) return "fuji";
+  return "";
+}
+// ชื่อสีในสโตร์ → ชื่อสีในตารางเรต
+const COLOR_KEY: Record<string, string> = {
+  "อบขาว": "อบขาว", "ขาว": "อบขาว", "ดำ": "ดำ", "เทาซาฮาร่า": "เทาซาฮาร่า", "ดำซาฮาร่า": "ดำซาฮาร่า",
+  "Aztec gray": "แอทแทคเกรย์", "Aztecgray": "แอทแทคเกรย์", "ลายไม้สักทอง": "ลายไม้สักทอง",
+  "มะฮอกกานี": "มะฮอกกานี", "ไวท์โอ็ค": "ไวท์โอ๊ค", "ไวท์โอ๊ค": "ไวท์โอ๊ค", "มิว": "มิว",
+};
 function colorOf(name: string): string {
   const i = name.lastIndexOf("-");
   if (i < 0) return "ไม่ระบุสี";
@@ -26,10 +48,10 @@ function colorOf(name: string): string {
   return c && c.length <= 20 ? c : "ไม่ระบุสี";
 }
 
-type Group = { key: string; series: string; color: string; items: Row[]; rate: number };
+type Group = { key: string; series: string; color: string; items: Row[]; rate: number; brandRate?: number };
 type RateLog = { id: number; series: string; color: string; prev_rate: number | null; rate: number; item_count: number; changed_by_name: string; created_at: string };
 
-export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog = [] }: { items: Row[]; noWeightCount: number; canEdit: boolean; rateLog?: RateLog[] }) {
+export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog = [], brandRates = {} }: { items: Row[]; noWeightCount: number; canEdit: boolean; rateLog?: RateLog[]; brandRates?: Record<string, Record<string, number>> }) {
   const [rows, setRows] = useState<Row[]>(items);
   const [log, setLog] = useState<RateLog[]>(rateLog);
   const [inputs, setInputs] = useState<Record<string, string>>({});
@@ -40,7 +62,7 @@ export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog 
   const groups = useMemo<Group[]>(() => {
     const m = new Map<string, Group>();
     for (const r of rows) {
-      const series = seriesOf(r.sku), color = colorOf(r.name);
+      const series = seriesOf(r.sku), color = colorRow(r);
       const key = series + "‖" + color;
       const g = m.get(key) || { key, series, color, items: [], rate: 0 };
       g.items.push(r);
@@ -50,9 +72,14 @@ export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog 
       const kg = g.items.reduce((s, r) => s + Number(r.weight_per_unit), 0);
       const cost = g.items.reduce((s, r) => s + Number(r.unit_cost), 0);
       g.rate = kg > 0 ? round2(cost / kg) : 0;   // เรตเฉลี่ยถ่วงน้ำหนักปัจจุบัน
+      // เรตที่ "ควรเป็น" ตามตาราง 3 แบรนด์ (ถ้าทุกเส้นในกลุ่มเป็นแบรนด์เดียวกันและแบรนด์นั้นมีสีนี้ขาย)
+      const bs = new Set(g.items.map((r) => brandOfSku(r.sku, r.name)));
+      const b = bs.size === 1 ? [...bs][0] : "";
+      const ck = COLOR_KEY[g.color];
+      g.brandRate = b && ck ? (brandRates[b] ?? {})[ck] : undefined;
     }
     return [...m.values()].sort((a, b) => a.series.localeCompare(b.series, "th") || a.color.localeCompare(b.color, "th"));
-  }, [rows]);
+  }, [rows, brandRates]);
 
   const seriesList = useMemo(() => [...new Set(groups.map((g) => g.series))], [groups]);
 
@@ -113,6 +140,7 @@ export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog 
                       <th className="py-1.5 pr-3">สี</th>
                       <th className="py-1.5 pr-3 text-right">จำนวนเส้น</th>
                       <th className="py-1.5 pr-3 text-right">เรตตอนนี้ (฿/กก.)</th>
+                      <th className="py-1.5 pr-3 text-right">ตารางแบรนด์</th>
                       <th className="py-1.5 pr-3">เรตใหม่</th>
                       <th className="py-1.5 pr-3"></th>
                     </tr>
@@ -200,6 +228,15 @@ function RateRow({ g, value, busy, msg, canEdit, onChange, onApply }: {
         </td>
         <td className="py-2 pr-3 text-right">{g.items.length}</td>
         <td className="py-2 pr-3 text-right font-semibold">{g.rate > 0 ? fmt(g.rate) : "-"}</td>
+        <td className="py-2 pr-3 text-right">
+          {g.brandRate ? (
+            <button type="button" onClick={() => onChange(String(g.brandRate))} disabled={!canEdit}
+              title="ใส่เรตนี้ลงช่องเรตใหม่"
+              className={`press rounded-lg px-2 py-1 text-xs font-bold ${Math.abs((g.rate || 0) - g.brandRate) < 0.5 ? "text-green-700 bg-green-50" : "text-brand-dark bg-brand-soft"}`}>
+              {fmt(g.brandRate)}
+            </button>
+          ) : <span className="text-ink-3 text-xs">—</span>}
+        </td>
         <td className="py-2 pr-3">
           {canEdit ? (
             <input inputMode="decimal" value={value} onChange={(e) => onChange(e.target.value)}
@@ -218,7 +255,7 @@ function RateRow({ g, value, busy, msg, canEdit, onChange, onApply }: {
       </tr>
       {show && (
         <tr className="border-b border-brand/5">
-          <td colSpan={5} className="pb-2">
+          <td colSpan={6} className="pb-2">
             <div className="rounded-xl bg-brand/5 border border-brand/10 px-3 py-2 text-[12px] text-ink-2 grid sm:grid-cols-2 gap-x-4">
               {g.items.map((r) => (
                 <div key={r.id} className="flex justify-between gap-2 py-0.5">
