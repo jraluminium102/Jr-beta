@@ -358,8 +358,27 @@ if (process.argv.includes("--write")) {
     if (list && list.length) { const p = pickThickness(list); put(storeName, p.kg); }
   }
   for (const r of rowsOut) if (/[\u0E00-\u0E7F]/.test(r.code) && r.kg > 0) put(r.code, r.kg);
+  // แปลงชื่อกลุ่มในชีตเมืองทอง → ชื่อที่สโตร์ใช้ ("แป๊บ 1½ นิ้ว" → กล่อง 1.5"x1.5" · "1×3 นิ้ว" → กล่อง 1"x3")
+  const FRAC = { "½": 0.5, "¼": 0.25, "¾": 0.75 };
+  const numOf = (t) => { const m = String(t).match(/(\d+)?\s*([½¼¾])?/); const w = Number(m?.[1] ?? 0); const fr = FRAC[m?.[2] ?? ""] ?? 0; return w + fr; };
+  const asIn = (v) => (Math.abs(v - 1.75) < 0.01 ? "1.6" : String(Math.round(v * 100) / 100));
+  for (const [group, list] of boxSizes) {
+    if (!list?.length) continue;
+    const p = pickThickness(list);
+    if (!(p?.kg > 0)) continue;
+    const sq = String(group).match(/^แป๊บ\s*(.+?)\s*นิ้ว$/);
+    if (sq) { const v = numOf(sq[1]); if (v > 0) put('กล่อง ' + asIn(v) + '"x' + asIn(v) + '"', p.kg); continue; }
+    const sq2 = String(group).match(/^แป๊บ\s*(\d+)\s*หุน$/);
+    if (sq2) { put("กล่อง " + sq2[1] + " หุน", p.kg); continue; }
+    const re = String(group).match(/^(.+?)×(.+?)\s*นิ้ว$/);
+    if (re) { const a = numOf(re[1]), b = numOf(re[2]); if (a > 0 && b > 0) { put('กล่อง ' + asIn(Math.min(a, b)) + '"x' + asIn(Math.max(a, b)) + '"', p.kg); } }
+  }
+  // ลูกฟูก (ชีตเขียนเป็นชื่อ ไม่มีรหัส) — สโตร์เรียก "ลูกฟูกเรียบ 2 หน้า"
+  put("ลูกฟูกเรียบ 2 หน้า", (FROM_SHEET_NAME.JR01994 ?? {}).kg);
   PB.ALUWEIGHT_BYNAME = byName;
   PB.ALUWEIGHT_BYNAME_NOTE = "น้ำหนัก กก./เส้น ของกล่อง/ฉาก/แซด ที่คีย์ด้วยชื่อขนาด (ชีตเมืองทอง · เลือกความหนา 1.5 ไม่มีก็ 1.2) — หน้าสโตร์จับคู่ด้วยชื่อแถว";
+  // รหัส JR ที่สูตรผูกไว้ (เช่น JR02894 = F7860) ต้องมีน้ำหนักในตารางกลางด้วย สโตร์จะได้จับคู่ได้
+  PB.ALUWEIGHT = { ...PB.ALUWEIGHT, ...Object.fromEntries(rowsOut.filter((r) => /^JR\d{5}$/.test(r.code) && r.kg > 0).map((r) => [r.code, Math.round(r.kg * 1000) / 1000])) };
   PB.ALUWEIGHT = { ...PB.ALUWEIGHT, ...Object.fromEntries(Object.entries(FROM_SHEET_NAME).map(([c, v]) => [c, v.kg])), ...Object.fromEntries(Object.entries(FROM_CATALOGUE).map(([c, v]) => [c, v.kg])) };
   PB.ALUWEIGHT = { ...PB.ALUWEIGHT, ...Object.fromEntries([...byCode.entries()].map(([c, w]) => [c, Math.round(w.kg * 1000) / 1000])) };
   PB.ALUWEIGHT_NOTE = "น้ำหนัก กก./เส้น ยึดไฟล์ น้ำหนักโปรไฟล์.xlsx (8 ต.ค.69 ล้างของเดิมที่เพี้ยน 34 รหัส) — ใช้ทั้งคิดราคาต่อกิโลและค่าอบสีพิเศษ";
