@@ -45,7 +45,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (!STORE_WRITE.includes(profile.role)) return FORBIDDEN();
 
   const body = await req.json().catch(() => ({}));
-  const allowed = ["sku", "name", "unit", "min_qty", "note", "is_active", "supplier",
+  const allowed = ["sku", "name", "unit", "min_qty", "note", "is_active", "supplier", "color",
     "image_url", "is_weight_based", "weight_per_unit", "is_stocked"];
   const patch: Record<string, unknown> = {};
   for (const k of allowed) if (k in body) patch[k] = body[k];
