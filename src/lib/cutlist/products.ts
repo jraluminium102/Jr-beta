@@ -1451,8 +1451,11 @@ export const SOLID_DOOR: CutSpec = {
     //   คงสูตร sSides() ของ "โซลิด 1 ชั้น / 2 ชั้น" (commit bad63733) ไว้ — ไม่ถอยกลับเป็น ×2 ตายตัว
     { name: (o) => "ลูกฟูก บานแม่ (" + sSides(o) + "ฝั่ง)", code: byColor("corrColor", "JR01994", "JR01993"), len: sFrameH, qty: (o) => sCorrM(o) * sSides(o) },
     { name: (o) => "ลูกฟูก บานลูก (" + sSides(o) + "ฝั่ง)", code: byColor("corrColor", "JR01994", "JR01993"), len: sFrameH, qty: (o) => sCorrC(o) * sSides(o) * sChildN(o) },
-    { name: "เส้นคาด บานแม่ (2ฝั่ง)", code: byColor("corrColor", "JR01679", "JR01678"), len: sFrameH, qty: (o) => sBattenM(o) * 2 },
-    { name: "เส้นคาด บานลูก (2ฝั่ง)", code: byColor("corrColor", "JR01679", "JR01678"), len: sFrameH, qty: (o) => sBattenC(o) * 2 * sChildN(o) },
+    // เจ้าของสั่ง 10 ต.ค.69: "เส้นคาดตาราง" = "เส้นกลาง" ซึ่งสโตร์มีครบ 8 สี (JR01677-JR01684)
+    //   เดิมผูก sku ดำ/ขาว ตามช่อง "สีลูกฟูก" → งานสีอื่น (เทาซาฮาร่า/ลายไม้) หักของผิดสีเงียบ ๆ
+    //   รหัสกลาง "เส้นกลาง" ให้ matchStock ไล่ชื่อแล้วกรองด้วย "สีของงาน" เองตามปกติ
+    { name: "เส้นคาด บานแม่ (2ฝั่ง)", code: "เส้นกลาง", len: sFrameH, qty: (o) => sBattenM(o) * 2 },
+    { name: "เส้นคาด บานลูก (2ฝั่ง)", code: "เส้นกลาง", len: sFrameH, qty: (o) => sBattenC(o) * 2 * sChildN(o) },
   ],
   // ⑤ อุปกรณ์ บานโซลิด (มี SKU · เงื่อนไขสี ดำ↔ขาว + ตลับ/ทิศ/มือจับแม่-ลูก) — พอร์ตตรงไฟล์
   hardware: [

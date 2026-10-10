@@ -9,7 +9,11 @@
  *
  *   node scripts/verify-stock-match.mjs
  */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseBoxName, normSize } from "../src/lib/calculator40/box-link.ts";
+const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 import { matchStock, nameHasCode, stockColorOf, isStockTracked, MATCH_REASON_TH, normBoxName } from "../src/lib/cutlist/stock-match.ts";
 
 let pass = 0, fail = 0;
@@ -152,6 +156,39 @@ console.log("\n═══ ⑦ ชื่อจริงในสโตร์ ต�
     const got = key(name);
     ok(`${name} → ${want ?? "ไม่จับคู่"} (${why})`, got === want, String(got));
   }
+}
+
+// ── ⑧ "เส้นกลาง" (= เส้นคาดตาราง) ต้องหักตามสีของงาน ไม่ใช่ล็อกสีเดียว (เจ้าของสั่ง 10 ต.ค.69) ──
+console.log("\n═══ ⑧ เส้นกลาง — หักตามสีของงาน ═══");
+{
+  // สโตร์จริง: เส้นกลาง 8 สี · sku JR01677-JR01684
+  const STOCK = [
+    { id: 1677, sku: "JR01677", name: "เส้นกลาง-มิว", color: "มิว", qty: 10 },
+    { id: 1678, sku: "JR01678", name: "เส้นกลาง-อบขาว", color: "อบขาว", qty: 0 },
+    { id: 1679, sku: "JR01679", name: "เส้นกลาง-ดำ", color: "ดำ", qty: 0 },
+    { id: 1680, sku: "JR01680", name: "เส้นกลาง-เทาซาฮาร่า", color: "เทาซาฮาร่า", qty: 52 },
+    { id: 1682, sku: "JR01682", name: "เส้นกลาง-ลายไม้สักทอง", color: "ลายไม้สักทอง", qty: 50 },
+  ];
+  for (const [color, wantId] of [["เทาซาฮาร่า", 1680], ["ลายไม้สักทอง", 1682], ["ดำ", 1679], ["อบขาว", 1678], ["มิว", 1677]]) {
+    const r = matchStock(STOCK, "เส้นกลาง", color);
+    ok(`งานสี ${color} → หัก id${wantId}`, r.item?.id === wantId, `${r.item?.id ?? "-"} (${r.reason})`);
+  }
+  ok("ไม่ระบุสี → ไม่หัก (มีหลายสี ห้ามเดา)", matchStock(STOCK, "เส้นกลาง", "").reason === "need_color",
+    matchStock(STOCK, "เส้นกลาง", "").reason);
+  ok("สีที่สโตร์ไม่มี → ไม่หัก", matchStock(STOCK, "เส้นกลาง", "มะฮอกกานี").item === null, "");
+  // ⚠ สูตรทั้งสองฝั่งต้องใช้รหัสกลางนี้ ไม่ใช่ sku สีใดสีหนึ่ง
+  const prods = fs.readFileSync(path.join(ROOT, "src/lib/calculator40/products.mjs"), "utf8");
+  const cuts = fs.readFileSync(path.join(ROOT, "src/lib/cutlist/products.ts"), "utf8");
+  ok("คิดราคา: บรรทัดเส้นคาดตาราง ใช้รหัสกลาง + priceCode เดิม",
+    /เส้นคาดตาราง 2 ฝั่ง', code: 'เส้นกลาง', priceCode: 'JR01679'/.test(prods), "");
+  ok("ใบตัด: เส้นคาด บานแม่/บานลูก ใช้รหัสกลาง ไม่ผูก sku สีเดียว",
+    /name: "เส้นคาด บานแม่ \(2ฝั่ง\)", code: "เส้นกลาง"/.test(cuts)
+    && /name: "เส้นคาด บานลูก \(2ฝั่ง\)", code: "เส้นกลาง"/.test(cuts), "");
+  // ตัดคอมเมนต์ + ช่อง priceCode (ตัวนั้นใช้หาราคาอย่างเดียว ไม่ได้ใช้หักสต็อก) แล้วค่อยตรวจ
+  const noCmt = (t) => t.replace(/\/\/[^\n]*/g, "").replace(/priceCode:\s*'[^']*'/g, "");
+  ok("ไม่มีบรรทัดไหนหักสต็อกด้วย sku เส้นกลางสีเดียวอีก",
+    !/JR0167[789]|JR0168[0-4]/.test(noCmt(prods)) && !/JR0167[789]|JR0168[0-4]/.test(noCmt(cuts)),
+    "ยังเจอ sku เส้นกลางในสูตร");
 }
 
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
