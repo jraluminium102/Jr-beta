@@ -581,6 +581,19 @@ console.log("\n" + "═══ ⑬ จับคู่น้ำหนักกั�
     "ปลดธงที่ยืนยันแล้วไปใช้งานได้");
   ok("แคตตาล็อก Euro Fuji ยืนยันน้ำหนักให้แล้วเกิน 50 รหัส", (PB.ALUWEIGHT_CONFIRMED ?? []).length > 50,
     String((PB.ALUWEIGHT_CONFIRMED ?? []).length));
+  // ⑭ หน้าเรตอลูต้องจัดแบรนด์ด้วยตารางเดียวกับคิดราคา ไม่ใช่เดาจากรหัส/ชื่อเอง (เจอ 10 ต.ค.69)
+  //    เคสจริง: เส้นกลาง (market) / ลูกฟูก JR01994 (fuji) คิดราคาถือเป็นแบรนด์ แต่หน้านี้เดาเป็น
+  //    "ซื้อเป็นเส้น" → ไม่มีเรตให้กด ราคาในสโตร์ค้างของเก่า (เส้นกลาง 140 ทั้งที่ควรเป็น 75)
+  {
+    const pg = fs.readFileSync(path.join(ROOT, "src/app/(app)/stock/alu-rates/page.tsx"), "utf8");
+    const cl = fs.readFileSync(path.join(ROOT, "src/app/(app)/stock/alu-rates/AluRatesClient.tsx"), "utf8");
+    ok("หน้าเรตอลูส่ง ALU_BRAND_OF ของ pricebook ลงไป", pg.includes("brandOfCode={(PRICEBOOK"), "");
+    ok("จัดกลุ่มแบรนด์: เช็ค pricebook ก่อน แล้วค่อยเดาจากรหัส/ชื่อ",
+      cl.includes('const b = BRAND_OF[c]; if (b && b !== "fixed") return'), "");
+    ok("มีตัวตัดรหัสกลางจากชื่อแถว (ตัดรหัสหน้า + สีท้าย)", cl.includes("function codeOfRow("), "");
+    const thai = Object.keys(PB.ALU_BRAND_OF ?? {}).filter((c) => /[฀-๿]/.test(c));
+    ok("รหัสกลางภาษาไทยใน ALU_BRAND_OF มีอยู่จริง (เส้นกลาง ฯลฯ)", thai.length > 0, thai.join(", "));
+  }
   ok("ตาราง ALUWEIGHT_BYNAME ไม่มีคีย์ว่าง", !Object.keys(PB.ALUWEIGHT_BYNAME ?? {}).some((k) => !String(k).trim()));
 }
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);

@@ -22,7 +22,21 @@ const COLOR_ORDER = [
   "ลายไม้สักทอง", "มะฮอกกานี", "ไวท์โอ็ค", "ไวท์โอ๊ค", "สีชา", "มิว",
 ];
 const colorRank = (c: string) => { const i = COLOR_ORDER.indexOf(c); return i < 0 ? 900 : i; };
+// รหัสที่ pricebook ระบุแบรนด์ไว้ (คิดราคา 4.0 ใช้ตารางนี้) — ตั้งจาก props ตอน render
+let BRAND_OF: Record<string, string> = {};
+/** ชื่อแถวสโตร์ → "รหัสกลาง" ที่สูตรใช้ (ตัดรหัสหน้า/สีท้าย) เช่น "เส้นกลาง-ดำ" → "เส้นกลาง" */
+function codeOfRow(sku: string, name: string): string[] {
+  const out = [sku];
+  const p = String(name ?? "").split("-").map((x) => x.trim()).filter(Boolean);
+  if (p.length > 1 && /^(JR\d{5}|B\d{5}|F\d{4}[A-Z]?)$/i.test(p[0])) p.shift();
+  if (p.length > 1) p.pop();                       // ท้ายสุด = สี
+  out.push(p.join("-"));
+  const head = String(name ?? "").trim().match(/^([A-Za-z]{0,3}\d{3,5}[A-Za-z]?)\b/);
+  if (head) out.push(head[1]);
+  return out.filter(Boolean);
+}
 function seriesOf(sku: string, name = ""): string {
+  for (const c of codeOfRow(sku, name)) { const b = BRAND_OF[c]; if (b && b !== "fixed") return BRAND_LABEL[b] ?? BRAND_LABEL[""]; }
   return BRAND_LABEL[brandOfSku(sku, name)] ?? BRAND_LABEL[""];
 }
 // สีจากท้ายชื่อ "รหัส-ชื่อ-สี" · ชื่อแบบเก่า "เฟรมบน (B22001)" = ไม่ระบุสี
@@ -66,7 +80,8 @@ function colorOf(name: string): string {
 type Group = { key: string; series: string; color: string; items: Row[]; rate: number; brandRate?: number };
 type RateLog = { id: number; series: string; color: string; prev_rate: number | null; rate: number; item_count: number; changed_by_name: string; created_at: string };
 
-export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog = [], brandRates = {} }: { items: Row[]; noWeightCount: number; canEdit: boolean; rateLog?: RateLog[]; brandRates?: Record<string, Record<string, number>> }) {
+export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog = [], brandRates = {}, brandOfCode = {} }: { items: Row[]; noWeightCount: number; canEdit: boolean; rateLog?: RateLog[]; brandRates?: Record<string, Record<string, number>>; brandOfCode?: Record<string, string> }) {
+  BRAND_OF = brandOfCode;   // ตารางแบรนด์ของคิดราคา 4.0 — ใช้ก่อนการเดาจากรหัส/ชื่อ
   const [rows, setRows] = useState<Row[]>(items);
   const [log, setLog] = useState<RateLog[]>(rateLog);
   const [inputs, setInputs] = useState<Record<string, string>>({});
@@ -97,7 +112,7 @@ export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog 
       rank(a.series) - rank(b.series)
       || colorRank(a.color) - colorRank(b.color)
       || a.color.localeCompare(b.color, "th"));
-  }, [rows, brandRates]);
+  }, [rows, brandRates, brandOfCode]);
 
   const seriesList = useMemo(() => [...new Set(groups.map((g) => g.series))], [groups]);
 

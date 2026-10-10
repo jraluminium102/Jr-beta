@@ -44,6 +44,10 @@ export default async function AluRatesPage() {
       canEdit={PRICE_WRITE.includes(role)}
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       rateLog={(rateLog ?? []) as any[]}
-     brandRates={(PRICEBOOK as Record<string, unknown>).ALU_BRAND as Record<string, Record<string, number>>} />
+      brandRates={(PRICEBOOK as Record<string, unknown>).ALU_BRAND as Record<string, Record<string, number>>}
+      // รหัส → แบรนด์ ของคิดราคา 4.0 — ต้องใช้ตารางเดียวกัน ไม่ให้หน้านี้เดาแบรนด์เอง
+      //   (10 ต.ค.69 เจอว่าเส้นกลาง/ลูกฟูก คิดราคาถือเป็น ตลาด/ฟูจิ แต่หน้านี้เดาเป็น "ซื้อเป็นเส้น"
+      //    → ไม่มีเรตให้กด ราคาในสโตร์เลยค้างของเก่า ไม่ตรงกับที่คิดราคาใช้)
+      brandOfCode={(PRICEBOOK as Record<string, unknown>).ALU_BRAND_OF as Record<string, string>} />
   );
 }
