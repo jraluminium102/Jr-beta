@@ -10,6 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { weightOf } from "../src/lib/calculator40/weight-backfill.ts";
+import { aluBrandLabel } from "../src/lib/calculator40/alu-brand.ts";
 import { auditStockLink, auditByProduct, auditKgLink, bumpTest, STATUS_LABEL } from "../src/lib/calculator40/stock-audit.ts";
 import { buildPriceOverride, applyPriceOverride, stockColorOfCalc } from "../src/lib/calculator40/stock-link.ts";
 import { parseBoxName, normSize, buildBoxPrices } from "../src/lib/calculator40/box-link.ts";
@@ -604,6 +605,18 @@ console.log("\n" + "═══ ⑬ จับคู่น้ำหนักกั�
   //    เดิมหน้าเรตอลูดูแต่ sku → 40 แถวตกกอง "ซื้อเป็นเส้น" ทั้งที่ซื้อเป็นกิโลตามแบรนด์
   {
     const lib2 = fs.readFileSync(path.join(ROOT, "src/lib/calculator40/alu-brand.ts"), "utf8");
+    // ป้ายแบรนด์ต้องออกถูกกับชื่อแถวจริงในสโตร์ (เจ้าของสั่งติดป้ายแบรนด์ 10 ต.ค.69)
+    for (const [sku, nm, want] of [
+      ["B20001", "B20001-เฟรมบนบานเลื่อน (อบขาว)", "SMS"],
+      ["JR02925", "B24013-คิ้วตบกระจก 14-22 มม.-ดำ", "SMS"],          // รหัสซ่อนหน้าชื่อ
+      ["F7980", "F7980-กรอบบานเลื่อน-ดำ", "Euro Fuji"],
+      ["JR01840", "กล่อง 1\"x4\"-อบขาว", "Euro Fuji"],                  // ไซส์ในลิสต์ฟูจิ
+      ["JR01994", "ลูกฟูกเรียบ 2 หน้า-ดำ", "Euro Fuji"],               // ลูกฟูกทุกเส้น = ฟูจิ
+      ["JR01679", "เส้นกลาง-ดำ", "ตลาด"],
+      ["JR02085", "ตบร่อง-ดำ", "ตลาด"],                                // ชุดบานสวิง Schimmer
+      ["JR02029", "9014 ตัวตบเคอเทนวอล (อบขาว)", "ตลาด"],              // รหัสตัวเลขล้วนหน้าชื่อ
+      ["JR02091", "OPK-A201-40-ขวางบนล่าง-ดำ", "ซื้อเป็นเส้น — ไม่คิดต่อโล"],
+    ]) ok(`ป้ายแบรนด์ ${nm} → ${want}`, aluBrandLabel(sku, nm) === want, aluBrandLabel(sku, nm));
     ok("เดาแบรนด์: อ่านรหัสหน้าชื่อด้วย ไม่ใช่ sku อย่างเดียว",
       lib2.includes("const head = (n.match(") && lib2.includes('.test(head)) return "sms"') && lib2.includes('.test(head)) return "fuji"'), "");
     // ตลาดไม่มีสีลายไม้สักทอง → ใช้เรต SMS (เจ้าของสั่ง "ตีกลับไปเปน sms")

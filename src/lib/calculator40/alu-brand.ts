@@ -40,7 +40,8 @@ export function aluCodesOfRow(sku: string, name: string): string[] {
   if (p.length > 1 && /^(JR\d{5}|B\d{5}|F\d{4}[A-Z]?)$/i.test(p[0])) p.shift();
   if (p.length > 1) p.pop();                     // ท้ายสุด = สี
   out.push(p.join("-"));
-  const head = String(name ?? "").trim().match(/^([A-Za-z]{1,3}\d{3,5}[A-Za-z]?)\b/);
+  // {0,3} = รับรหัสตัวเลขล้วนหน้าชื่อด้วย ("9014 ตัวตบเคอเทนวอล" = เคอเทนวอล ของตลาด)
+  const head = String(name ?? "").trim().match(/^([A-Za-z]{0,3}\d{3,5}[A-Za-z]?)\b/);
   if (head) out.push(head[1].toUpperCase());
   return out.filter(Boolean);
 }
