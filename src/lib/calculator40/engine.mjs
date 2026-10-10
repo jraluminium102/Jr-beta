@@ -418,10 +418,13 @@ export function computeCost(PB, prod, opt) {
     //   สีที่แบรนด์นั้นไม่มีขาย = ไม่มีเรต → ตกไปทาง "ขาว + ค่าอบสีพิเศษ" ตามเดิม (ถูกต้องตามที่เจ้าของอธิบาย)
     //   ⚠ ใช้ opt.colorKey ตรง ๆ ไม่ใช่ priceKey เพราะตลาด ดำ 203 ≠ อบขาว 188 (priceKey ยุบ ดำ→ขาว)
     const brandOn = PB.ALU_BRAND_ON !== false;
-    const bBrand = brandOn && code && PB.ALU_BRAND_OF ? PB.ALU_BRAND_OF[code] : null;
+    //   PB.ALU_BRAND_ALT = เส้นที่สีบางสีต้องไปซื้อยี่ห้ออื่น (เส้นกลาง สีแอทแทค/มะฮอก/ไวท์โอ๊ค = ฟูจิ)
+    const bColName0 = (PB.ALU_COLOR_NAME || {})[greyUp ? 'white' : (opt.colorKey || color)];
+    const bAlt = brandOn && code && PB.ALU_BRAND_ALT ? (PB.ALU_BRAND_ALT[code] || {})[bColName0] : null;
+    const bBrand = bAlt || (brandOn && code && PB.ALU_BRAND_OF ? PB.ALU_BRAND_OF[code] : null);
     const bRates = bBrand && PB.ALU_BRAND ? PB.ALU_BRAND[bBrand] : null;
     const bKg = brandOn && code && PB.ALU_KG ? Number(PB.ALU_KG[code]) || 0 : 0;
-    const bColName = (PB.ALU_COLOR_NAME || {})[greyUp ? 'white' : (opt.colorKey || color)];
+    const bColName = bColName0;
     const brandWhite = (bRates && bKg > 0 && bRates['อบขาว'] > 0) ? Math.round(bKg * bRates['อบขาว']) : 0;
     const brandColor = (!noColor && bRates && bKg > 0 && bColName && bRates[bColName] > 0) ? Math.round(bKg * bRates[bColName]) : 0;
     // สีที่แบรนด์นั้น "ไม่มีขาย" (รู้แบรนด์+น้ำหนัก แต่ตารางไม่มีเรตสีนี้) = ต้องซื้อเส้นขาวมาอบเอง

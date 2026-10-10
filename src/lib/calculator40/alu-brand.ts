@@ -27,6 +27,14 @@ export const ALU_BRAND_ORDER = ["fuji", "sms", "market", ""];
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const BRAND_OF: Record<string, string> = ((PRICEBOOK as any).ALU_BRAND_OF ?? {}) as Record<string, string>;
+// บางเส้นมีขายหลายยี่ห้อ — สีที่แบรนด์หลักไม่มี ต้องไปซื้อยี่ห้ออื่นที่ทำโปรไฟล์เดียวกัน
+//   เจ้าของสั่ง 10 ต.ค.69 "เส้นกลาง สี Aztec/มะฮอกกานี/ไวท์โอ็ค ตลาดไม่มี ตีไปฟูจิ"
+const BRAND_ALT: Record<string, Record<string, string>> = ((PRICEBOOK as any).ALU_BRAND_ALT ?? {}) as Record<string, Record<string, string>>;
+// ชื่อสีในสโตร์ → ชื่อสีในตารางเรต (ตารางใช้ชื่อแบบไฟล์ถอดทุน)
+const RATE_COLOR: Record<string, string> = {
+  "Aztec gray": "แอทแทคเกรย์", "Aztecgray": "แอทแทคเกรย์", "ไวท์โอ็ค": "ไวท์โอ๊ค", "ขาว": "อบขาว",
+};
+const rateColorOf = (c?: string | null) => { const t = String(c ?? "").trim(); return RATE_COLOR[t] ?? t; };
 
 // กล่อง/ฉาก ไซส์ที่เป็นฟูจิ (ลิสต์เจ้าของ 8 ต.ค.69) — ไซส์นอกลิสต์/มีชื่อเรียก = ตลาด
 const FUJI_BOX = ["1X1", "1X1.6", "1X2", "1X4", "1.6X1.6", "1.6X3", "1.6X4", "2X2", "2X4", "4X4"];
@@ -65,9 +73,12 @@ export function guessAluBrand(sku: string, name: string): AluBrand {
   return "";
 }
 
-/** แบรนด์ของแถวสโตร์ — ตาราง pricebook มาก่อน แล้วค่อยเดา */
-export function aluBrandOfRow(sku?: string | null, name?: string | null): AluBrand {
-  for (const c of aluCodesOfRow(String(sku ?? ""), String(name ?? ""))) {
+/** แบรนด์ของแถวสโตร์ — สีเฉพาะ (ALU_BRAND_ALT) → ตาราง pricebook → เดาจากรหัส/ชื่อ */
+export function aluBrandOfRow(sku?: string | null, name?: string | null, color?: string | null): AluBrand {
+  const codes = aluCodesOfRow(String(sku ?? ""), String(name ?? ""));
+  const rc = rateColorOf(color);
+  if (rc) for (const c of codes) { const b = (BRAND_ALT[c] ?? {})[rc]; if (b) return b as AluBrand; }
+  for (const c of codes) {
     const b = BRAND_OF[c];
     if (b && b !== "fixed") return b as AluBrand;
   }
@@ -75,6 +86,6 @@ export function aluBrandOfRow(sku?: string | null, name?: string | null): AluBra
 }
 
 /** ป้ายแบรนด์สำหรับโชว์บนจอ — "" = ซื้อเป็นเส้น */
-export function aluBrandLabel(sku?: string | null, name?: string | null): string {
-  return ALU_BRAND_LABEL[aluBrandOfRow(sku, name)] ?? ALU_BRAND_LABEL[""];
+export function aluBrandLabel(sku?: string | null, name?: string | null, color?: string | null): string {
+  return ALU_BRAND_LABEL[aluBrandOfRow(sku, name, color)] ?? ALU_BRAND_LABEL[""];
 }

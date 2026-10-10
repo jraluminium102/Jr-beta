@@ -53,7 +53,7 @@ export async function GET() {
     const w = Number(r.weight_per_unit) || 0;
     const k = Number(r.price_per_kg) || 0;
     const c = Number(r.unit_cost) || 0;
-    const brand = aluBrandOfRow(r.sku, r.name);
+    const brand = aluBrandOfRow(r.sku, r.name, r.color);
     const ck = COLOR_KEY[String(r.color ?? "").trim()] ?? "";
     const want = brand && ck ? Number((RATE[brand] ?? {})[ck]) || 0 : 0;
     const base = { sku: r.sku, name: r.name, color: r.color, brand: ALU_BRAND_LABEL[brand] ?? "", kg: w, rate: k, cost: c, rateWant: want };

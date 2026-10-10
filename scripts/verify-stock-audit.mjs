@@ -7,6 +7,7 @@
  * ตัวตรวจนี้เทสว่าเครื่องมือรายงานถูก — ไม่ได้เทสว่าข้อมูลในสโตร์ถูก (อันนั้นเจ้าของไล่เอง)
  */
 import fs from "node:fs";
+import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { weightOf } from "../src/lib/calculator40/weight-backfill.ts";
@@ -643,6 +644,31 @@ console.log("\n" + "═══ ⑬ จับคู่น้ำหนักกั�
     ok("role สโตร์เข้าไม่ได้ (ตาบอดราคา)", api.includes("canSeeCost") && api.includes("FORBIDDEN()"), "");
     ok("ดึงแบบแบ่งหน้า (อลูเกิน 1,000 แถว)", api.includes("fetchAllPaged"), "");
     ok("หน้าเรตอลูมีปุ่มเรียกใช้", cl.includes("/api/stock/alu-rate-check") && cl.includes("ตรวจเดี๋ยวนี้"), "");
+  }
+  // ⑰ ของที่เจ้าของแก้ 10 ต.ค.69 รอบบ่าย — ต้องไม่ถอยกลับ
+  {
+    // เส้นกลาง = 0.8 กก./เส้น 6 ม. (เดิม 0.40 → เจ้าของแก้) · ช่อง กก./ม. ต้องตามไปด้วย
+    ok("เส้นกลาง 0.8 กก./เส้น", PB.ALU_KG?.["เส้นกลาง"] === 0.8 && PB.ALUWEIGHT?.JR01678 === 0.8 && PB.ALUWEIGHT?.JR01679 === 0.8,
+      [PB.ALU_KG?.["เส้นกลาง"], PB.ALUWEIGHT?.JR01678, PB.ALUWEIGHT?.JR01679].join("/"));
+    ok("เส้นกลาง กก./ม. × 6 = 0.8 (ตารางสองหน่วยสอดคล้องกัน)",
+      Math.abs((PB.ALUWEIGHT_KGM?.["เส้นกลาง"] ?? 0) * 6 - 0.8) < 0.002, String(PB.ALUWEIGHT_KGM?.["เส้นกลาง"]));
+    // แบรนด์ตามสี: เส้นกลาง สี Aztec/มะฮอก/ไวท์โอ๊ค = ฟูจิ (ตลาดไม่มีสีพวกนี้ · เจ้าของสั่ง "ตีไปฟูจิ")
+    const alt = PB.ALU_BRAND_ALT?.["เส้นกลาง"] ?? {};
+    ok("ALU_BRAND_ALT เส้นกลาง: แอทแทค/มะฮอก/ไวท์โอ๊ค → fuji",
+      ["แอทแทคเกรย์", "มะฮอกกานี", "ไวท์โอ๊ค"].every((c) => alt[c] === "fuji"), JSON.stringify(alt));
+    ok("เอนจินอ่าน ALU_BRAND_ALT ก่อน ALU_BRAND_OF",
+      fs.readFileSync(path.join(ROOT, "src/lib/calculator40/engine.mjs"), "utf8").includes("PB.ALU_BRAND_ALT[code]"), "");
+    ok("ป้ายแบรนด์ เส้นกลาง-Aztec gray → Euro Fuji", aluBrandLabel("JR01681", "เส้นกลาง-Aztec gray", "Aztec gray") === "Euro Fuji",
+      aluBrandLabel("JR01681", "เส้นกลาง-Aztec gray", "Aztec gray"));
+    ok("ป้ายแบรนด์ เส้นกลาง-ดำ ยังเป็น ตลาด", aluBrandLabel("JR01679", "เส้นกลาง-ดำ", "ดำ") === "ตลาด",
+      aluBrandLabel("JR01679", "เส้นกลาง-ดำ", "ดำ"));
+    // F7944 ในสูตร = F7944B ของไฟล์ (5.722) ไม่ใช่ F7944C ของแคตตาล็อก · kg ในสูตรต้องตรงไฟล์
+    ok("F7944 = 5.722 กก./เส้น (ไฟล์ F7944B)", PB.ALU_KG?.F7944 === 5.722 && PB.ALUWEIGHT?.F7944 === 5.722,
+      [PB.ALU_KG?.F7944, PB.ALUWEIGHT?.F7944].join("/"));
+    // ตัวตรวจหน่วยน้ำหนัก (กก./เส้น ต้อง = กก./ม. × ความยาวเส้น) ต้องผ่านตลอด
+    const au = spawnSync(process.execPath, [path.join(ROOT, "scripts/audit-alu-weight-units.mjs")], { encoding: "utf8" });
+    ok("audit-alu-weight-units: กก./เส้น = กก./ม. × ความยาวเส้น ทุกรหัส", au.status === 0,
+      (au.stdout.match(/ไม่สอดคล้อง \d+/) ?? [""])[0]);
   }
   ok("ตาราง ALUWEIGHT_BYNAME ไม่มีคีย์ว่าง", !Object.keys(PB.ALUWEIGHT_BYNAME ?? {}).some((k) => !String(k).trim()));
 }

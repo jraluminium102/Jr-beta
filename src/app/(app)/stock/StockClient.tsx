@@ -40,7 +40,7 @@ type JobHit = StockJob;
 //   แบรนด์มาจากตัวกลาง lib/calculator40/alu-brand = แหล่งเดียวกับที่คิดราคา/หน้าเรตอลูใช้
 //   module scope เพราะใช้ทั้งในลิสต์ (StockClient) และการ์ดรายละเอียด (ItemDetail)
 const isAluRow = (c: StockItem) => /อลู/.test(String(c.category ?? "")) || isAluCode(c.sku);
-const brandOf = (c: StockItem) => (isAluRow(c) ? aluBrandOfRow(c.sku, c.name) : null);
+const brandOf = (c: StockItem) => (isAluRow(c) ? aluBrandOfRow(c.sku, c.name, c.color) : null);
 const BRAND_TONE: Record<string, string> = {
   fuji: "text-sky-800 bg-sky-100",
   sms: "text-violet-800 bg-violet-100",
@@ -64,6 +64,8 @@ export default function StockClient({
   const [dupOnly, setDupOnly] = useState(false);
   const [catFilter, setCatFilter] = useState<number | null>(null);
   const [famFilter, setFamFilter] = useState<string>("");   // ใช้กับรุ่นอะไร (บานเฟี้ยม/บานเลื่อน SMS ฯลฯ)
+  // กรองตามแบรนด์เส้นอลู (เจ้าของสั่ง 10 ต.ค.69 "อยากได้ปุ่มตัวกรองกดดู")
+  const [brandFilter, setBrandFilter] = useState<string | null>(null);
   const [noPrice, setNoPrice] = useState(false);            // ยังไม่มีราคา
   const [noImage, setNoImage] = useState(false);            // ยังไม่มีรูป
   const [noQty, setNoQty] = useState(false);                // ไม่มีจำนวน (คงเหลือ ≤ 0)
@@ -92,6 +94,7 @@ export default function StockClient({
     .filter((c) => (boqOnly ? isInCutlist(c.sku) : true))
     .filter((c) => (dupOnly ? isDupHint(c) : true))
     .filter((c) => (famFilter ? skuInFamily(c.sku, famFilter, c.name) : true))
+    .filter((c) => (brandFilter === null ? true : brandOf(c) === brandFilter))
     .filter((c) => (noPrice ? noPriceOf(c) : true))
     .filter((c) => (noImage ? noImageOf(c) : true))
     .filter((c) => (noQty ? noQtyOf(c) : true))
@@ -247,6 +250,25 @@ export default function StockClient({
               <option key={f.key} value={f.key}>{f.label} ({list.filter((c) => skuInFamily(c.sku, f.key, c.name)).length})</option>
             ))}
           </select>
+          {/* กรองตามแบรนด์เส้นอลู — นับเฉพาะแถวหมวดอลู (เจ้าของสั่ง 10 ต.ค.69) */}
+          <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+            <span className="text-[11px] font-semibold text-ink-3">🏷️ แบรนด์อลู</span>
+            {["fuji", "sms", "market", ""].map((b) => {
+              const n = list.filter((c) => brandOf(c) === b).length;
+              if (!n) return null;
+              const on = brandFilter === b;
+              return (
+                <button key={b || "fixed"} onClick={() => setBrandFilter(on ? null : b)}
+                  title={ALU_BRAND_LABEL[b]}
+                  className={`press text-[11px] font-bold rounded-full px-2.5 py-1 ${on ? "bg-brand text-white" : (BRAND_TONE[b] ?? "glass-soft text-ink-2")}`}>
+                  {(ALU_BRAND_LABEL[b] ?? "").replace(" — ไม่คิดต่อโล", "")} ({n})
+                </button>
+              );
+            })}
+            {brandFilter !== null && (
+              <button onClick={() => setBrandFilter(null)} className="text-[11px] text-ink-3 underline">ล้าง</button>
+            )}
+          </div>
           <div className="flex items-center gap-2 mb-3 flex-wrap">
             <button onClick={() => setLowOnly((v) => !v)}
               className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${lowOnly ? "bg-red-600 text-white" : "glass-soft text-ink-2"}`}>
@@ -284,7 +306,7 @@ export default function StockClient({
                 🕘 ประวัติการรวม
               </button>
             )}
-            {(lowOnly || calcOnly || boqOnly || dupOnly || noPrice || noImage || noQty || famFilter || catFilter !== null) && <button onClick={() => { setLowOnly(false); setCalcOnly(false); setBoqOnly(false); setDupOnly(false); setNoPrice(false); setNoImage(false); setNoQty(false); setFamFilter(""); setCatFilter(null); }} className="text-xs text-ink-3">ล้างตัวกรอง</button>}
+            {(lowOnly || calcOnly || boqOnly || dupOnly || noPrice || noImage || noQty || famFilter || brandFilter !== null || catFilter !== null) && <button onClick={() => { setLowOnly(false); setCalcOnly(false); setBoqOnly(false); setDupOnly(false); setNoPrice(false); setNoImage(false); setNoQty(false); setFamFilter(""); setBrandFilter(null); setCatFilter(null); }} className="text-xs text-ink-3">ล้างตัวกรอง</button>}
           </div>
           <div className="space-y-2 max-h-[62vh] overflow-y-auto">
             {filtered.map((c) => {

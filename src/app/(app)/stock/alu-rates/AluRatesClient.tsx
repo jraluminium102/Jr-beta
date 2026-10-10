@@ -22,7 +22,7 @@ const COLOR_ORDER = [
   "ลายไม้สักทอง", "มะฮอกกานี", "ไวท์โอ็ค", "ไวท์โอ๊ค", "สีชา", "มิว",
 ];
 const colorRank = (c: string) => { const i = COLOR_ORDER.indexOf(c); return i < 0 ? 900 : i; };
-const seriesOf = (sku: string, name = "") => aluBrandLabel(sku, name);
+const seriesOf = (sku: string, name = "", color = "") => aluBrandLabel(sku, name, color);
 // สีจากท้ายชื่อ "รหัส-ชื่อ-สี" · ชื่อแบบเก่า "เฟรมบน (B22001)" = ไม่ระบุสี
 // 9 ต.ค.69: stock_items.color เติมครบแล้ว → ใช้ช่องสีเป็นหลัก เดาจากท้ายชื่อเฉพาะตอนช่องว่าง
 //   (เดิมเดาอย่างเดียว เลยได้ "สี" เป็น ตัวตบรางมุ้ง / ฝาปิดเฟรมข้าง / เฟรมบนบานเลื่อน)
@@ -71,7 +71,7 @@ export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog 
   const groups = useMemo<Group[]>(() => {
     const m = new Map<string, Group>();
     for (const r of rows) {
-      const series = seriesOf(r.sku, r.name), color = colorRow(r);
+      const color = colorRow(r), series = seriesOf(r.sku, r.name, color);
       const key = series + "‖" + color;
       const g = m.get(key) || { key, series, color, items: [], rate: 0 };
       g.items.push(r);
