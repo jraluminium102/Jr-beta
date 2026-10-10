@@ -54,8 +54,12 @@ const sizeKey = (t: string) => t.toUpperCase().replace(/["”]/g, "").replace(/\
 function brandOfSku(sku: string, name: string): string {
   const s = (sku || "").toUpperCase(), n = (name || "").trim();
   if (/^(WM-|OPK|XSW|E-)/i.test(s) || /^(WM-|OPK|XSW|E-|VELORA)/i.test(n)) return "";
-  if (/^B\d/.test(s)) return "sms";
-  if (/^F\d/.test(s)) return "fuji";
+  // ⚠ สโตร์หลายแถวใส่ sku เป็น JR0xxxx แต่รหัสจริงอยู่หน้าชื่อ ("B24013-คิ้วตบกระจก 14-22 มม.-ดำ")
+  //   เดิมดูแต่ sku → B24013 / B24016 / F7860 / F7948 / F7971 ตกไปกอง "ซื้อเป็นเส้น" 40 แถว
+  //   ทั้งที่ซื้อเป็นกิโลตามแบรนด์ (เจ้าของทัก 10 ต.ค.69 "มีรหัส B รหัส F อยู่เลย ทั้งที่ซื้อเป็นกิโล")
+  const head = (n.match(/^([A-Za-z]{1,3}\d{3,5}[A-Za-z]?)\b/)?.[1] ?? "").toUpperCase();
+  if (/^B\d/.test(s) || /^B\d/.test(head)) return "sms";
+  if (/^F\d/.test(s) || /^F\d/.test(head)) return "fuji";
   if (/^(Z |ตัวZ|แซด)/i.test(n)) return "market";
   const bx = n.match(/^กล่อง\s*([\d."x×\/ ]+?)\s*(?:-|\(|$)/i);
   if (bx) return FUJI_BOX.includes(sizeKey(bx[1])) ? "fuji" : "market";

@@ -594,6 +594,20 @@ console.log("\n" + "═══ ⑬ จับคู่น้ำหนักกั�
     const thai = Object.keys(PB.ALU_BRAND_OF ?? {}).filter((c) => /[฀-๿]/.test(c));
     ok("รหัสกลางภาษาไทยใน ALU_BRAND_OF มีอยู่จริง (เส้นกลาง ฯลฯ)", thai.length > 0, thai.join(", "));
   }
+  // ⑮ รหัส B/F ที่ซ่อนอยู่หน้าชื่อ ต้องเข้าแบรนด์ (เจ้าของทัก 10 ต.ค.69)
+  //    สโตร์ใส่ sku เป็น JR0xxxx แต่รหัสจริงอยู่หน้าชื่อ — B24013 / B24016 / F7860 / F7948 / F7971
+  //    เดิมหน้าเรตอลูดูแต่ sku → 40 แถวตกกอง "ซื้อเป็นเส้น" ทั้งที่ซื้อเป็นกิโลตามแบรนด์
+  {
+    const cl = fs.readFileSync(path.join(ROOT, "src/app/(app)/stock/alu-rates/AluRatesClient.tsx"), "utf8");
+    ok("brandOfSku อ่านรหัสหน้าชื่อด้วย ไม่ใช่ sku อย่างเดียว",
+      cl.includes("const head = (n.match(") && cl.includes('.test(head)) return "sms"') && cl.includes('.test(head)) return "fuji"'), "");
+    // ตลาดไม่มีสีลายไม้สักทอง → ใช้เรต SMS (เจ้าของสั่ง "ตีกลับไปเปน sms")
+    ok("ตลาด ลายไม้สักทอง = เรต SMS",
+      (PB.ALU_BRAND?.market ?? {})["ลายไม้สักทอง"] === (PB.ALU_BRAND?.sms ?? {})["ลายไม้สักทอง"],
+      String((PB.ALU_BRAND?.market ?? {})["ลายไม้สักทอง"]));
+    ok("ตลาดยังไม่มี Aztec/มะฮอก/ไวท์โอ๊ค (ไม่มีแบรนด์ไหนให้ตีกลับ)",
+      ["แอทแทคเกรย์", "มะฮอกกานี", "ไวท์โอ๊ค"].every((c) => !((PB.ALU_BRAND?.market ?? {})[c] > 0)), "");
+  }
   ok("ตาราง ALUWEIGHT_BYNAME ไม่มีคีย์ว่าง", !Object.keys(PB.ALUWEIGHT_BYNAME ?? {}).some((k) => !String(k).trim()));
 }
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
