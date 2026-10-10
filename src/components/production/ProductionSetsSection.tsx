@@ -223,6 +223,8 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
     try {
       await api.patch(`/production-sets/${id}`, { [field]: value === "" ? null : value });
       qc.invalidateQueries({ queryKey: key }); // refetch → เห็นค่าล่าสุด/ใครกด (กัน stale ทับ)
+      // วันรายชุด sync ขึ้น job-level (server) → บอร์ดช่าง/ตารางผลิตต้อง refetch ด้วย (เจ้าของแจ้ง 10 ต.ค.69)
+      if (field === "must_finish_date" || field === "install_date") qc.invalidateQueries({ queryKey: ["production-schedule"] });
       setSaved(true); setTimeout(() => setSaved(false), 1600); // แฟลชป้าย "บันทึกแล้ว ✓"
     } catch { /* keep typed value */ }
   }
@@ -267,6 +269,7 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
     try {
       await api.post("/production-sets/fill-all", { job_id: jobId, field, value });
       qc.invalidateQueries({ queryKey: key });
+      qc.invalidateQueries({ queryKey: ["production-schedule"] });   // fill-all sync job-level → บอร์ดต้อง refetch
       setSaved(true); setTimeout(() => setSaved(false), 1600);
     } catch { /* ignore */ }
   }
