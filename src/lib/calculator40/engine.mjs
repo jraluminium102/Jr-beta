@@ -322,6 +322,10 @@ export function computeCost(PB, prod, opt) {
     return km > 0 ? Math.round(km * (barLen || STOCK_LEN) * 1000) / 1000 : 0;
   };
   let aluCost = 0, aluKg = 0, aluBarsAll = 0;
+  // กก. ของเส้นที่ "แบรนด์นั้นไม่มีสีนี้ขาย" → ซื้อเส้นขาวมาอบเอง = คิดเรตสีอบพิเศษ + เปิดตู้อบ
+  //   เจ้าของสั่ง 10 ต.ค.69 "PC Door ถ้ามีเส้นอื่นปน ก็ต้องคิดอบสีเส้นที่ไม่มีสีสต็อค คิดเรตสีอบพิเศษ เปิดตู้เลย"
+  //   (เส้นที่แบรนด์มีสีนั้นขายอยู่แล้ว ยังคิดเรตเดิมของสีนั้น)
+  let aluKgNoStockColor = 0;
   // น้ำหนักอลูจริง = ความยาวที่ตัดจริง × (กก./เส้น ÷ ความยาวเส้น) — ไม่ใช่ aluKg ข้างบน
   //   (aluKg ใช้คิดค่าอบสี นับเฉพาะเส้นที่ยังไม่รวมราคาสี และนับเป็น "เส้นที่ซื้อ" = มากกว่าของจริง)
   let aluKgReal = 0; const kgMissing = [];
@@ -477,7 +481,11 @@ export function computeCost(PB, prod, opt) {
     aluCost += amount;
     // เส้นที่ราคารวมสีแล้ว หรือเป็นเส้นสีเงินไม่อบสี → ไม่เข้ากองคิดค่าอบ
     const kgBar = kgOfLine(it, code, Number(it.stockLen) || stockLen);
-    if (!(colorPrice > 0) && cfPrice == null && !boxColorDone && !noColor && !it.colorIn) aluKg += bars * kgForBake(it, code, Number(it.stockLen) || stockLen);
+    if (!(colorPrice > 0) && cfPrice == null && !boxColorDone && !noColor && !it.colorIn) {
+      const kgBake = bars * kgForBake(it, code, Number(it.stockLen) || stockLen);
+      aluKg += kgBake;
+      if (brandNoColor) aluKgNoStockColor += kgBake;   // แบรนด์นี้ไม่มีสีนี้ขาย → อบเอง
+    }
     // น้ำหนักจริงของท่อนที่ตัด (ไว้เลือกมอเตอร์ตามน้ำหนักบาน)
     const barLen = Number(it.stockLen) || stockLen;
     const kgPerM = kgBar > 0 && barLen > 0 ? (kgBar / barLen) : 0;
@@ -506,9 +514,22 @@ export function computeCost(PB, prod, opt) {
   }
   // ค่าอบสี (อลูเท่านั้น)
   let bakeCost = 0, openOven = 0;
-  if (bakeRate > 0 && aluKg > 0) {
-    bakeCost = bakeRate * aluKg;
-    lines.push({ cat: 'bake', name: 'ค่าอบสี (' + colorDisp + ' ' + bakeRate + '/กก. × ' + round2(aluKg) + 'กก.)', qty: round2(aluKg), unit: 'กก.', unitPrice: bakeRate, amount: round2(bakeCost) });
+  // เส้นที่แบรนด์ไม่มีสีนั้นขาย = ซื้อขาวมาอบเอง → เรต "สีอบพิเศษ" (ลายไม้ใช้เรตลายไม้อบพิเศษ)
+  //   ส่วนเส้นที่แบรนด์มีสีนั้นขายอยู่แล้ว (แค่ยังไม่มีราคาสีในตาราง) คิดเรตของสีนั้นตามเดิม
+  const woodish = color === 'woodStock' || color === 'woodSpecial' || /^wood_/.test(String(opt.colorKey || ''));
+  const specialRate = Number(woodish ? PB.BAKE.woodSpecial : PB.BAKE.special) || 0;
+  //   ถ้าเรตของสีนั้นแพงกว่าเรตอบพิเศษอยู่แล้ว (เช่นลายไม้อบพิเศษ) ก็ใช้ตัวที่แพงกว่า ไม่ลดให้
+  const noStockRate = Math.max(specialRate, bakeRate);
+  const kgSpecial = Math.min(aluKgNoStockColor, aluKg);
+  const kgNormal = Math.max(0, aluKg - kgSpecial);
+  if (bakeRate > 0 && kgNormal > 0) {
+    bakeCost += bakeRate * kgNormal;
+    lines.push({ cat: 'bake', name: 'ค่าอบสี (' + colorDisp + ' ' + bakeRate + '/กก. × ' + round2(kgNormal) + 'กก.)', qty: round2(kgNormal), unit: 'กก.', unitPrice: bakeRate, amount: round2(bakeCost) });
+  }
+  if (noStockRate > 0 && kgSpecial > 0) {
+    const c2 = noStockRate * kgSpecial;
+    bakeCost += c2;
+    lines.push({ cat: 'bake', name: 'ค่าอบสีพิเศษ — เส้นที่แบรนด์ไม่มีสี ' + colorDisp + ' ขาย (' + noStockRate + '/กก. × ' + round2(kgSpecial) + 'กก.)', qty: round2(kgSpecial), unit: 'กก.', unitPrice: noStockRate, amount: round2(c2) });
   }
   // ส่วนต่างสีเทา รุ่นซื้อเส้นมิวมาอบเอง (prod.greyRatio) — ชีตคิดทุนคิด ขาว/ดำ/เทา เรตอบเดียวกัน = ราคาเท่ากัน
   //   เจ้าของ 11 ก.ย.69 "เทาต้องแพงกว่าขาว" → เลือกสัดส่วน เทา÷ขาว เฉลี่ยของเส้นรหัส B/F ในชีตราคาสี v20.1 (PB.GREY_RATIO)
@@ -525,7 +546,9 @@ export function computeCost(PB, prod, opt) {
   //     (เจ้าของเคาะ 10 ก.ย.69 "ค่าเปิดตู้อบบวกสีขาวดำด้วย เฉพาะ SlimLux Velora เพราะเราซื้อมาเป็นสีมิว")
   //     รุ่นอื่นซื้อเส้นอบขาวมาเลย ไม่ต้องเปิดตู้
   // prod.ovenAlways = ชีตคิดทุนคิดค่าเปิดตู้อบทุกงานทุกสี (E-series B28 = 1)
-  if ((prod.ovenAlways || color === 'special' || color === 'woodSpecial' || (prod.millBar && color === 'white')) && aluBarsAll > 0) {
+  //   aluKgNoStockColor > 0 = มีเส้นที่ต้องซื้อขาวมาอบเอง → ต้องเปิดตู้อบด้วย (เจ้าของสั่ง 10 ต.ค.69)
+  if ((prod.ovenAlways || color === 'special' || color === 'woodSpecial' || aluKgNoStockColor > 0
+    || (prod.millBar && color === 'white')) && aluBarsAll > 0) {
     openOven = PB.BAKE_OPEN_OVEN || 0;
     if (openOven) lines.push({ cat: 'bake', name: 'ค่าเปิดตู้อบ', qty: 1, unit: 'งาน', unitPrice: openOven, amount: openOven });
   }

@@ -872,8 +872,15 @@ console.log("\n═══ ⑳ ลำดับราคาสี — ขาว ≤
     //   แต่เรตนี้ "ถูกกว่า" ซาฮาร่าจริง ๆ เมื่อคิดต่อกิโล: ขาว 169.8 · แอทแทค 203 · ซาฮาร่า 270 บ./กก.
     //   เส้นนี้จึงไม่เข้ากฎทั่วไปที่ว่าแอทแทคต้องแพงกว่าเทา — เป็นราคาจริงจากเจ้าของ ไม่ใช่ราคาตกหล่น
     //   (ไฟล์ยังไม่มีช่องแอทแทคของแถวลูกฟูก รบกวนเจ้าของเติมในชีต "ราคาสี" แถว 156 คอลัมน์ G ด้วย)
+    // 10 ต.ค.69 เจ้าของสั่ง: เส้นที่ "แบรนด์นั้นไม่มีสีสต็อค" ต้องซื้อขาวมาอบเอง
+    //   = เรตสีอบพิเศษ + เปิดตู้อบ → รุ่นที่ผสมเส้นหลายแบรนด์ (PC Door มีเส้นเมืองทอง/SMS ปน)
+    //   แอทแทคจะ "แพงกว่าลายไม้" ได้ตามจริง เพราะลายไม้ซื้อเส้นสำเร็จสีได้ แต่แอทแทคต้องอบเอง
+    //   ไม่ใช่ราคาผิด — เป็นผลของวิธีซื้อจริง จึงยกเว้นกฎลำดับสีให้รุ่นพวกนี้
     const AZTEC_CHEAPER_BY_DESIGN = new Set(["bansolid"]);
-    if (c.aztec != null && !AZTEC_CHEAPER_BY_DESIGN.has(id) && !(c.aztec >= c.sahara - 0.5 && c.aztec < c.wood_teak)) bad.push("แอทแทคไม่อยู่ระหว่างเทากับสักทอง");
+    const AZTEC_BAKED_SELF = new Set(["pcdoor"]);
+    if (c.aztec != null && AZTEC_BAKED_SELF.has(id) && !(c.aztec > c.sahara + 0.5)) bad.push("แอทแทคไม่แพงกว่าเทา (รุ่นอบเอง)");
+    if (c.aztec != null && !AZTEC_CHEAPER_BY_DESIGN.has(id) && !AZTEC_BAKED_SELF.has(id)
+      && !(c.aztec >= c.sahara - 0.5 && c.aztec < c.wood_teak)) bad.push("แอทแทคไม่อยู่ระหว่างเทากับสักทอง");
     for (const k of ["wood_maho", "wood_whiteoak"]) if (c[k] != null && !(c[k] > c.sahara + 0.5)) bad.push(k + " ไม่แพงกว่าเทา");
     return bad;
   };
@@ -1038,5 +1045,29 @@ console.log("\n═══ ⑦ มอเตอร์ในสูตรบาน �
   ok("ระแนงหมุน ไม่เอามอเตอร์: ขายหาย 12,000", Math.round(lv.sell.withInstall - lvNo.sell.withInstall) === 12000, String(Math.round(lv.sell.withInstall - lvNo.sell.withInstall)));
 }
 
+// ── เส้นที่แบรนด์ไม่มีสีสต็อค = ซื้อขาวมาอบเอง → เรตสีอบพิเศษ + เปิดตู้อบ (เจ้าของสั่ง 10 ต.ค.69) ──
+//    "PC Door ถ้ามีเส้นอื่นปน ก็ต้องคิดอบสีเส้นที่ไม่มีสีสต็อค คิดเรทสีอบพิเศษ เปิดตู้เลย"
+//    PC Door ผสมเส้นเมืองทอง/SMS กับฟูจิ → สั่ง Aztec: ฟูจิมีสีขาย (เรตเทา) · เมืองทอง/SMS ไม่มี (อบเอง)
+console.log("\n═══ เส้นไม่มีสีสต็อค → อบสีพิเศษ + เปิดตู้อบ ═══");
+{
+  const AZ = { w: 300, h: 220, p: 2, colorKey: "aztec", color: "special", colorName: "Aztec gray" };
+  const az = computeCost(PB, PRODUCTS.pcdoor, AZ);
+  const bake = (az.lines || []).filter((l) => l.cat === "bake");
+  const sp = bake.find((l) => /อบสีพิเศษ — เส้นที่แบรนด์ไม่มีสี/.test(l.name));
+  ok("PC Door แอทแทค: มีบรรทัดค่าอบสีพิเศษของเส้นที่ไม่มีสีสต็อค", !!sp, bake.map((l) => l.name).join(" | "));
+  ok("เรตที่ใช้ = สีอบพิเศษ (PB.BAKE.special)", sp?.unitPrice === PB.BAKE.special, String(sp?.unitPrice));
+  ok("เปิดตู้อบด้วย", bake.some((l) => /เปิดตู้อบ/.test(l.name)), "");
+  // เส้นที่แบรนด์ "มีสีนั้นขาย" ยังคิดเรตของสีนั้นตามเดิม (ไม่เหมาเป็นอบพิเศษทั้งงาน)
+  ok("เส้นที่แบรนด์มีสีขาย ยังคิดเรตสีเดิม",
+    bake.some((l) => l.unitPrice === PB.BAKE.sahara && !/ไม่มีสี/.test(l.name)),
+    bake.map((l) => l.name + "=" + l.unitPrice).join(" | "));
+  // รุ่นที่ใช้เส้นฟูจิล้วน — แอทแทคเป็นสีสต็อคของฟูจิ ต้องไม่โดนอบพิเศษ/เปิดตู้
+  for (const id of ["euro_slide", "open_door", "fold_euro"]) {
+    const c = computeCost(PB, PRODUCTS[id], AZ);
+    const b2 = (c.lines || []).filter((l) => l.cat === "bake");
+    ok(id + " แอทแทค: เส้นฟูจิล้วน ไม่ต้องอบเอง/ไม่เปิดตู้",
+      !b2.some((l) => /ไม่มีสี|เปิดตู้อบ/.test(l.name)), b2.map((l) => l.name).join(" | "));
+  }
+}
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);
