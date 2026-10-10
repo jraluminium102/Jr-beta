@@ -198,8 +198,9 @@ console.log("\n═══ ⑧ เส้นกลาง — หักตามส�
 //    วัสดุคือกล่องจริง ๆ ต้องยังจับคู่ได้ ไม่งั้นหมวดโชว์ 0 รายการ
 console.log("\n═══ ⑨ หมวดใช้กับรุ่น — บานเอาแค่โปรไฟล์ประตู ═══");
 {
+  // "บานติดตาย (Fix)" ไม่นับเป็นหมวดโปรไฟล์ประตู — สเปกทำจากกล่อง/ฉากล้วน
   const DOOR = ["sms_slide", "fuji_slide", "slimlux", "toprail", "sms_bifold", "euro_bifold", "euro_lift",
-    "fixed", "fuji_fix", "fuji_swing", "fuji_door", "fuji_hung", "velora", "pcdoor", "solid", "woodjamb"];
+    "fuji_fix", "fuji_swing", "fuji_door", "fuji_hung", "velora", "pcdoor", "solid", "woodjamb"];
   const sets = familyCodeSets();
   const AUX = /^(กล่อง|ฉาก|แซด|ตัวZ|ลูกฟูก|เส้นกลาง|เส้นคาด|ยู|ท่อ|แป๊ป|ตบร่อง|ตบเรียบ|ฝาแจ๊คสัน|บังใบกล่อง)/;
   for (const key of DOOR) {
@@ -207,7 +208,7 @@ console.log("\n═══ ⑨ หมวดใช้กับรุ่น — บ�
     ok(`${key}: ไม่มีอลูเสริมปนในหมวด`, bad.length === 0, bad.join(", "));
   }
   // งานโครงต้องไม่ว่าง (เคยโชว์ 0 เพราะสูตรเขียนชื่อกล่อง แต่สโตร์เป็นรหัส JR)
-  for (const key of ["awning", "gable", "glasshouse", "louver", "gate"])
+  for (const key of ["awning", "gable", "glasshouse", "louver", "gate", "fixed"])
     ok(`${key}: หมวดงานโครงยังมีวัสดุ (ไม่ว่าง)`, (sets.get(key)?.size ?? 0) > 0, String(sets.get(key)?.size ?? 0));
 
   // เคสจริงจากสโตร์

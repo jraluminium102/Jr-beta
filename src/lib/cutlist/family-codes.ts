@@ -55,8 +55,10 @@ export const FAMILIES: { key: string; label: string }[] = [
  */
 const DOOR_FAMILIES = new Set([
   "sms_slide", "fuji_slide", "slimlux", "toprail", "sms_bifold", "euro_bifold", "euro_lift",
-  "fixed", "fuji_fix", "fuji_swing", "fuji_door", "fuji_hung", "velora", "pcdoor", "solid", "woodjamb",
+  "fuji_fix", "fuji_swing", "fuji_door", "fuji_hung", "velora", "pcdoor", "solid", "woodjamb",
 ]);
+// ⚠ "บานติดตาย (Fix)" ไม่อยู่ในลิสต์ — สเปกนี้ทำจากกล่อง/ฉากล้วน (ตัวเลือกเดียวคือ "ชนิดกล่อง")
+//   ถ้าใส่ไว้จะเหลือ 2-4 รหัสที่เป็นอลูเสริมอยู่ดี · ตัวที่เป็นโปรไฟล์ประตูจริงคือ "FUJI บานติดตาย" (fuji_fix)
 
 let _byFamily: Map<string, Set<string>> | null = null;
 let _boxByFamily: Map<string, Set<string>> | null = null;
