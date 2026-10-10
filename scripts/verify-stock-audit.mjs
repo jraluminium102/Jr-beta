@@ -632,6 +632,18 @@ console.log("\n" + "═══ ⑬ จับคู่น้ำหนักกั�
         ["แอทแทคเกรย์", "มะฮอกกานี", "ไวท์โอ๊ค"].every((c) => !((PB.ALU_BRAND?.[b2] ?? {})[c] > 0)),
         JSON.stringify(PB.ALU_BRAND?.[b2] ?? {}));
   }
+  // ⑯ ปุ่ม "ตรวจราคาทั้งระบบ" — เจ้าของถาม 10 ต.ค.69 "อัพแล้วราคาเปลี่ยนจริงไหม ชั้นไม่ชัวร์"
+  //    ต้องตรวจเองได้ทุกเมื่อ ไม่ต้องรอให้ใครมารัน script
+  {
+    const api = fs.readFileSync(path.join(ROOT, "src/app/api/stock/alu-rate-check/route.ts"), "utf8");
+    const cl = fs.readFileSync(path.join(ROOT, "src/app/(app)/stock/alu-rates/AluRatesClient.tsx"), "utf8");
+    ok("มี API ตรวจราคา 3 ชั้น", api.includes("costOff") && api.includes("rateOff") && api.includes("ALU_BRAND"), "");
+    ok("อ่านอย่างเดียว ไม่เขียนอะไร",
+      ![".update(", ".insert(", ".delete(", ".upsert("].some((m) => api.includes(m)), "");
+    ok("role สโตร์เข้าไม่ได้ (ตาบอดราคา)", api.includes("canSeeCost") && api.includes("FORBIDDEN()"), "");
+    ok("ดึงแบบแบ่งหน้า (อลูเกิน 1,000 แถว)", api.includes("fetchAllPaged"), "");
+    ok("หน้าเรตอลูมีปุ่มเรียกใช้", cl.includes("/api/stock/alu-rate-check") && cl.includes("ตรวจเดี๋ยวนี้"), "");
+  }
   ok("ตาราง ALUWEIGHT_BYNAME ไม่มีคีย์ว่าง", !Object.keys(PB.ALUWEIGHT_BYNAME ?? {}).some((k) => !String(k).trim()));
 }
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);

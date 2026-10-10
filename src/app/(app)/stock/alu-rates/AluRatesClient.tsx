@@ -46,9 +46,23 @@ function colorOf(name: string): string {
 type Group = { key: string; series: string; color: string; items: Row[]; rate: number; brandRate?: number };
 type RateLog = { id: number; series: string; color: string; prev_rate: number | null; rate: number; item_count: number; changed_by_name: string; created_at: string };
 
+type ChkRow = { sku: string; name: string; color: string | null; brand: string; kg: number; rate: number; cost: number; rateWant: number; costWant?: number; why?: string };
+type ChkResult = { total: number; same: number; costOff: ChkRow[]; rateOff: ChkRow[]; noRate: ChkRow[]; noWeight: ChkRow[]; note: string };
+
 export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog = [], brandRates = {} }: { items: Row[]; noWeightCount: number; canEdit: boolean; rateLog?: RateLog[]; brandRates?: Record<string, Record<string, number>> }) {
   const [rows, setRows] = useState<Row[]>(items);
   const [log, setLog] = useState<RateLog[]>(rateLog);
+  // ตรวจว่า "กดอัปเดตแล้วราคาเปลี่ยนจริงทั้งระบบไหม" (เจ้าของถาม 10 ต.ค.69 "ชั้นไม่ชัวร์")
+  const [chk, setChk] = useState<ChkResult | null>(null);
+  const [chkBusy, setChkBusy] = useState(false);
+  async function runCheck() {
+    setChkBusy(true);
+    try {
+      const r = await fetch("/api/stock/alu-rate-check", { credentials: "include" });
+      const j = await r.json().catch(() => null);
+      setChk(r.ok ? (j?.data ?? null) : null);
+    } finally { setChkBusy(false); }
+  }
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ key: string; text: string; ok: boolean } | null>(null);
@@ -162,6 +176,39 @@ export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog 
           ยังไม่มีเส้นอลูที่มีทั้ง sku และน้ำหนัก/เส้น — รัน SQL seed น้ำหนัก หรือเติมน้ำหนักในหน้าสต๊อกก่อน
         </p>
       )}
+
+      {/* ── ตรวจว่าอัปเดตแล้วราคาเปลี่ยนจริงทั้งระบบไหม ── */}
+      <div className="glass-card rounded-2xl p-4">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="text-sm font-bold text-brand-dark">🔍 ตรวจราคาทั้งระบบ (คิดราคา 4.0 ↔ สโตร์)</div>
+          <button onClick={runCheck} disabled={chkBusy}
+            className="press rounded-lg px-3 py-1.5 text-xs font-semibold text-white bg-brand shadow-brand disabled:opacity-40">
+            {chkBusy ? "กำลังตรวจ…" : "ตรวจเดี๋ยวนี้"}
+          </button>
+        </div>
+        <p className="text-[12px] text-ink-3 mt-1">
+          เทียบ 3 ชั้น: เรตในตาราง 3 แบรนด์ → เรตที่ตั้งในสโตร์ → ทุน/หน่วย (= น้ำหนัก × เรต)
+          · คิดราคา 4.0 คูณจากตารางเดียวกันนี้ ถ้า 3 ชั้นตรง แปลว่าทั้งระบบใช้เลขชุดเดียวกัน
+        </p>
+        {chk && (
+          <div className="mt-2 space-y-1.5">
+            <div className="flex flex-wrap gap-2 text-[12px] font-semibold">
+              <span className="rounded-full px-2 py-0.5 text-green-800 bg-green-100">ตรงกัน {chk.same} เส้น</span>
+              <span className={`rounded-full px-2 py-0.5 ${chk.costOff.length ? "text-red-800 bg-red-100" : "text-ink-3 bg-black/5"}`}>ทุนไม่ตรงสูตร {chk.costOff.length}</span>
+              <span className={`rounded-full px-2 py-0.5 ${chk.rateOff.length ? "text-red-800 bg-red-100" : "text-ink-3 bg-black/5"}`}>เรตไม่ตรงตาราง {chk.rateOff.length}</span>
+              <span className="rounded-full px-2 py-0.5 text-ink-3 bg-black/5">ยังไม่มีเรต {chk.noRate.length}</span>
+              <span className="rounded-full px-2 py-0.5 text-ink-3 bg-black/5">ยังไม่มีน้ำหนัก {chk.noWeight.length}</span>
+            </div>
+            <p className="text-[12px] text-ink-3">{chk.note}</p>
+            {[...chk.costOff, ...chk.rateOff].slice(0, 20).map((r, i) => (
+              <div key={r.sku + i} className="text-[12px] text-red-800">
+                {r.name} · {r.brand} — น้ำหนัก {fmt(r.kg)} × เรต {fmt(r.rate)}
+                {r.costWant != null ? ` = ${fmt(r.costWant)} แต่ทุนในสโตร์ ${fmt(r.cost)}` : ` (ตารางบอก ${fmt(r.rateWant)})`}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* ประวัติการเปลี่ยนเรต (0088) — วันที่ · กลุ่ม · เรตเดิม→ใหม่ · กี่เส้น · ใคร */}
       <div className="glass-card rounded-2xl p-4">
