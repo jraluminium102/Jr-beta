@@ -428,6 +428,8 @@ export function ProductionStepModal({
       if (prod.job_id && ("planned_install_date" in body || "production_due_date" in body)) {
         qc.invalidateQueries({ queryKey: ["production-sets", prod.job_id] });
       }
+      // ★ บอร์ดช่าง/ออฟฟิศ (ตารางผลิต) อ่าน job-level เดียวกัน — ต้อง invalidate ด้วย ไม่งั้นหน้าช่างค้างค่าเก่า (เจ้าของแจ้ง 10 ต.ค.69)
+      qc.invalidateQueries({ queryKey: ["production-schedule"] });
       if (close) {
         // ปิดโมดอล
         if (onSavedAndClose) onSavedAndClose();

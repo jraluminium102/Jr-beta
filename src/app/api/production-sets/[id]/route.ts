@@ -123,6 +123,23 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
   }
   if (error) throw dbError(error);
   if (!data) return notFound("ไม่พบชุดงานนี้");
+
+  // ★ sync วันรายชุด → job-level (เจ้าของแจ้ง 10 ต.ค.69) — บอร์ดช่าง/ติดตั้ง/follow-up อ่าน productions
+  //   แก้ must_finish_date/install_date ของชุด → อัปเดตวันของจ็อบ = "วันล่าสุดของทุกชุด" (งานเสร็จเมื่อชุดสุดท้ายเสร็จ)
+  //   map ตรงกับ fill-all: must_finish_date→production_due_date · install_date→planned_install_date · best-effort
+  if (data.job_id && (body.must_finish_date !== undefined || body.install_date !== undefined)) {
+    try {
+      const { data: allSets } = await sb.from("production_sets").select("must_finish_date, install_date").eq("job_id", data.job_id);
+      const maxOf = (k: "must_finish_date" | "install_date"): string | null => {
+        const ds = (allSets ?? []).map((s: Record<string, unknown>) => (s[k] as string | null)).filter(Boolean).sort() as string[];
+        return ds.length ? ds[ds.length - 1] : null;
+      };
+      const pj: Record<string, string | null> = {};
+      if (body.must_finish_date !== undefined) pj.production_due_date = maxOf("must_finish_date");
+      if (body.install_date !== undefined) pj.planned_install_date = maxOf("install_date");
+      await sb.from("productions").update(pj).eq("job_id", data.job_id);
+    } catch { /* best-effort — ไม่ให้ล้ม patch หลัก */ }
+  }
   return ok(data);
 });
 

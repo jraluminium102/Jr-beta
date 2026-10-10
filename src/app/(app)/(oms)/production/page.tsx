@@ -231,6 +231,7 @@ export default function ProductionPage() {
     queryClient.invalidateQueries({ queryKey: ["production"] }),
     queryClient.invalidateQueries({ queryKey: ["measure-schedule"] }),
     queryClient.invalidateQueries({ queryKey: ["overdue-count"] }),
+    queryClient.invalidateQueries({ queryKey: ["production-schedule"] }),   // บอร์ดช่าง/ออฟฟิศ อ่าน job-level เดียวกัน (เจ้าของแจ้ง 10 ต.ค.69)
   ]);
 
   const unhideJob = async (jobId: string) => {
