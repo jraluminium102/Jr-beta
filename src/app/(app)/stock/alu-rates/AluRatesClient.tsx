@@ -1,5 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
+import { ALU_BRAND_LABEL, ALU_BRAND_ORDER, aluBrandLabel } from "@/lib/calculator40/alu-brand";
 
 // เรตอลูต่อโล — จัดกลุ่ม แบรนด์ × สี · แก้เรต ฿/กก. แล้วอัปเดตราคาทุกเส้นในกลุ่ม (unit_cost = น้ำหนัก × เรต)
 type Row = { id: number; sku: string; name: string; color?: string | null; supplier: string; weight_per_unit: number; unit_cost: number; price_per_kg: number };
@@ -9,69 +10,25 @@ const fmt = (n: number) => n.toLocaleString("th-TH", { maximumFractionDigits: 2 
 
 // 9 ต.ค.69 เจ้าของสั่ง: หน้านี้มีแค่ 3 หมวด = แบรนด์ (SMS / Euro Fuji / ตลาด) × สี
 //   ไม่แยกตามโปรไฟล์อีกแล้ว (เดิมแยก B20/B22/B24/F78… ทำให้เรตเดียวกันกระจายเป็นสิบกลุ่ม)
-const BRAND_LABEL: Record<string, string> = {
-  fuji: "Euro Fuji",
-  sms: "SMS",
-  market: "ตลาด",
-  "": "ซื้อเป็นเส้น — ไม่คิดต่อโล",
-};
-const BRAND_ORDER = ["fuji", "sms", "market", ""];
+// แบรนด์ของแถวอลู — ใช้ตัวกลางที่อ่าน PB.ALU_BRAND_OF (แหล่งเดียวกับคิดราคา 4.0)
+//   ⚠ ห้ามเขียนตัวเดาแบรนด์ซ้ำในไฟล์นี้ — 10 ต.ค.69 เคยมี 2 ตัวแล้วไม่ตรงกัน
+//     เส้นกลาง/ลูกฟูก/รหัส B,F ที่ซ่อนหน้าชื่อ ตกกอง "ซื้อเป็นเส้น" ไม่มีเรตให้กด
+const BRAND_LABEL = ALU_BRAND_LABEL;
+const BRAND_ORDER = ALU_BRAND_ORDER;
+
 // ลำดับสีมาตรฐาน — เรียงเหมือนกันทุกแบรนด์ (ไล่จากสีพื้น → ซาฮาร่า → แอทแทค → ลายไม้ → มิว)
 const COLOR_ORDER = [
   "อบขาว", "ขาว", "ขาว NA", "ดำ", "เทาซาฮาร่า", "ดำซาฮาร่า", "Aztec gray", "Aztecgray",
   "ลายไม้สักทอง", "มะฮอกกานี", "ไวท์โอ็ค", "ไวท์โอ๊ค", "สีชา", "มิว",
 ];
 const colorRank = (c: string) => { const i = COLOR_ORDER.indexOf(c); return i < 0 ? 900 : i; };
-// รหัสที่ pricebook ระบุแบรนด์ไว้ (คิดราคา 4.0 ใช้ตารางนี้) — ตั้งจาก props ตอน render
-let BRAND_OF: Record<string, string> = {};
-/** ชื่อแถวสโตร์ → "รหัสกลาง" ที่สูตรใช้ (ตัดรหัสหน้า/สีท้าย) เช่น "เส้นกลาง-ดำ" → "เส้นกลาง" */
-function codeOfRow(sku: string, name: string): string[] {
-  const out = [sku];
-  const p = String(name ?? "").split("-").map((x) => x.trim()).filter(Boolean);
-  if (p.length > 1 && /^(JR\d{5}|B\d{5}|F\d{4}[A-Z]?)$/i.test(p[0])) p.shift();
-  if (p.length > 1) p.pop();                       // ท้ายสุด = สี
-  out.push(p.join("-"));
-  const head = String(name ?? "").trim().match(/^([A-Za-z]{0,3}\d{3,5}[A-Za-z]?)\b/);
-  if (head) out.push(head[1]);
-  return out.filter(Boolean);
-}
-function seriesOf(sku: string, name = ""): string {
-  for (const c of codeOfRow(sku, name)) { const b = BRAND_OF[c]; if (b && b !== "fixed") return BRAND_LABEL[b] ?? BRAND_LABEL[""]; }
-  return BRAND_LABEL[brandOfSku(sku, name)] ?? BRAND_LABEL[""];
-}
+const seriesOf = (sku: string, name = "") => aluBrandLabel(sku, name);
 // สีจากท้ายชื่อ "รหัส-ชื่อ-สี" · ชื่อแบบเก่า "เฟรมบน (B22001)" = ไม่ระบุสี
 // 9 ต.ค.69: stock_items.color เติมครบแล้ว → ใช้ช่องสีเป็นหลัก เดาจากท้ายชื่อเฉพาะตอนช่องว่าง
 //   (เดิมเดาอย่างเดียว เลยได้ "สี" เป็น ตัวตบรางมุ้ง / ฝาปิดเฟรมข้าง / เฟรมบนบานเลื่อน)
 function colorRow(r: Row): string {
   const c = String(r.color ?? "").replace(/[()]/g, "").trim();
   return c || colorOf(r.name);
-}
-// เรตแบรนด์: B2x = SMS · F7x = ยูโรฟูจิ · กล่อง/ฉาก/Z = ตลาด · ที่เหลือซื้อเป็นเส้น (ไม่คิดต่อโล)
-// กล่อง/ฉาก ไซส์ที่เป็นฟูจิ (ลิสต์เจ้าของ) — ไซส์นอกลิสต์ หรือกล่องที่มีชื่อเรียก = ตลาด
-const FUJI_BOX = ["1X1", "1X1.6", "1X2", "1X4", "1.6X1.6", "1.6X3", "1.6X4", "2X2", "2X4", "4X4"];
-const FUJI_ANG = ["3หุน", "4หุน", "6หุน", "1", "2", "3", "4"];
-const sizeKey = (t: string) => t.toUpperCase().replace(/["”]/g, "").replace(/\s+/g, "").replace(/นิ้ว/g, "").replace(/×/g, "X");
-function brandOfSku(sku: string, name: string): string {
-  const s = (sku || "").toUpperCase(), n = (name || "").trim();
-  if (/^(WM-|OPK|XSW|E-)/i.test(s) || /^(WM-|OPK|XSW|E-|VELORA)/i.test(n)) return "";
-  // ⚠ สโตร์หลายแถวใส่ sku เป็น JR0xxxx แต่รหัสจริงอยู่หน้าชื่อ ("B24013-คิ้วตบกระจก 14-22 มม.-ดำ")
-  //   เดิมดูแต่ sku → B24013 / B24016 / F7860 / F7948 / F7971 ตกไปกอง "ซื้อเป็นเส้น" 40 แถว
-  //   ทั้งที่ซื้อเป็นกิโลตามแบรนด์ (เจ้าของทัก 10 ต.ค.69 "มีรหัส B รหัส F อยู่เลย ทั้งที่ซื้อเป็นกิโล")
-  const head = (n.match(/^([A-Za-z]{1,3}\d{3,5}[A-Za-z]?)\b/)?.[1] ?? "").toUpperCase();
-  if (/^B\d/.test(s) || /^B\d/.test(head)) return "sms";
-  if (/^F\d/.test(s) || /^F\d/.test(head)) return "fuji";
-  if (/^(Z |ตัวZ|แซด)/i.test(n)) return "market";
-  const bx = n.match(/^กล่อง\s*([\d."x×\/ ]+?)\s*(?:-|\(|$)/i);
-  if (bx) return FUJI_BOX.includes(sizeKey(bx[1])) ? "fuji" : "market";
-  const ag = n.match(/^ฉาก\s*([\d."x×\/ ]+?|\d+\s*หุน)\s*(?:-|\(|$)/i);
-  if (ag) return FUJI_ANG.includes(sizeKey(ag[1])) ? "fuji" : "market";
-  if (/^(กล่อง|ฉาก)/.test(n)) return "market";   // กล่อง/ฉากที่มีชื่อเรียก (กล่องเรียบ/แจ๊คสัน/ร่อง) = ตลาด
-  // ลูกฟูกทุกเส้น = Euro Fuji (เจ้าของเคาะ 8 ต.ค.69) — สโตร์แยกแถวละสี sku ต่างกันหมด
-  if (/^ลูกฟูก/.test(n)) return "fuji";
-  // ชิ้นอื่นในชุดสแตนดาร์ดบานสวิง Schimmer (ชุดเดียวกับ กล่องร่อง/กล่องแจ๊คสัน ที่เป็นตลาด)
-  //   ⚠ ต้องอยู่หลังยาม OPK/XSW เพราะ "OPK-A203-40-ตบเรียบ" ก็มีคำว่า ตบเรียบ
-  if (/^(ตบร่อง|ตบเรียบ|ฝาแจ๊คสัน|ฝาปิดกล่อง|คิ้วลอย)/.test(n)) return "market";
-  return "";
 }
 // ชื่อสีในสโตร์ → ชื่อสีในตารางเรต
 const COLOR_KEY: Record<string, string> = {
@@ -89,8 +46,7 @@ function colorOf(name: string): string {
 type Group = { key: string; series: string; color: string; items: Row[]; rate: number; brandRate?: number };
 type RateLog = { id: number; series: string; color: string; prev_rate: number | null; rate: number; item_count: number; changed_by_name: string; created_at: string };
 
-export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog = [], brandRates = {}, brandOfCode = {} }: { items: Row[]; noWeightCount: number; canEdit: boolean; rateLog?: RateLog[]; brandRates?: Record<string, Record<string, number>>; brandOfCode?: Record<string, string> }) {
-  BRAND_OF = brandOfCode;   // ตารางแบรนด์ของคิดราคา 4.0 — ใช้ก่อนการเดาจากรหัส/ชื่อ
+export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog = [], brandRates = {} }: { items: Row[]; noWeightCount: number; canEdit: boolean; rateLog?: RateLog[]; brandRates?: Record<string, Record<string, number>> }) {
   const [rows, setRows] = useState<Row[]>(items);
   const [log, setLog] = useState<RateLog[]>(rateLog);
   const [inputs, setInputs] = useState<Record<string, string>>({});
@@ -121,7 +77,7 @@ export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog 
       rank(a.series) - rank(b.series)
       || colorRank(a.color) - colorRank(b.color)
       || a.color.localeCompare(b.color, "th"));
-  }, [rows, brandRates, brandOfCode]);
+  }, [rows, brandRates]);
 
   const seriesList = useMemo(() => [...new Set(groups.map((g) => g.series))], [groups]);
 

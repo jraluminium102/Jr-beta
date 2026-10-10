@@ -7,6 +7,7 @@ import { baht } from "@/lib/money";
 import { createClient } from "@/lib/supabase/client";
 import type { StockItem, StockMove, StockMoveType, StockCategory, StockPrice } from "@/lib/types";
 import { calcLink, isAluCode } from "@/lib/calculator40/stock-link";
+import { aluBrandOfRow, ALU_BRAND_LABEL } from "@/lib/calculator40/alu-brand";
 import { isInCutlist } from "@/lib/cutlist/codes";
 import { FAMILIES, skuInFamily } from "@/lib/cutlist/family-codes";
 import { colorFromName } from "@/lib/cutlist/stock-match";
@@ -34,6 +35,17 @@ async function uploadImage(file: File): Promise<string> {
 }
 
 type JobHit = StockJob;
+
+// ── ป้ายแบรนด์อลู (เจ้าของสั่ง 10 ต.ค.69 "ติดป้ายแบรนด์อลูมิเนียมยี่ห้อที่เราทำกันด้วย") ──
+//   แบรนด์มาจากตัวกลาง lib/calculator40/alu-brand = แหล่งเดียวกับที่คิดราคา/หน้าเรตอลูใช้
+//   module scope เพราะใช้ทั้งในลิสต์ (StockClient) และการ์ดรายละเอียด (ItemDetail)
+const isAluRow = (c: StockItem) => /อลู/.test(String(c.category ?? "")) || isAluCode(c.sku);
+const brandOf = (c: StockItem) => (isAluRow(c) ? aluBrandOfRow(c.sku, c.name) : null);
+const BRAND_TONE: Record<string, string> = {
+  fuji: "text-sky-800 bg-sky-100",
+  sms: "text-violet-800 bg-violet-100",
+  market: "text-amber-800 bg-amber-100",
+};
 
 export default function StockClient({
   initial, categories: catsInit, canWrite, canAddItem = false, canPrice, canViewCost, isAdmin, canMerge = false,
@@ -79,7 +91,7 @@ export default function StockClient({
     .filter((c) => (calcOnly ? calcLink(c).linked : true))
     .filter((c) => (boqOnly ? isInCutlist(c.sku) : true))
     .filter((c) => (dupOnly ? isDupHint(c) : true))
-    .filter((c) => (famFilter ? skuInFamily(c.sku, famFilter) : true))
+    .filter((c) => (famFilter ? skuInFamily(c.sku, famFilter, c.name) : true))
     .filter((c) => (noPrice ? noPriceOf(c) : true))
     .filter((c) => (noImage ? noImageOf(c) : true))
     .filter((c) => (noQty ? noQtyOf(c) : true))
@@ -232,7 +244,7 @@ export default function StockClient({
             className="w-full glass-soft rounded-xl px-3 py-2.5 text-sm outline-none mb-2">
             <option value="">🔧 ใช้กับรุ่น — ทุกรุ่น</option>
             {FAMILIES.map((f) => (
-              <option key={f.key} value={f.key}>{f.label} ({list.filter((c) => skuInFamily(c.sku, f.key)).length})</option>
+              <option key={f.key} value={f.key}>{f.label} ({list.filter((c) => skuInFamily(c.sku, f.key, c.name)).length})</option>
             ))}
           </select>
           <div className="flex items-center gap-2 mb-3 flex-wrap">
@@ -288,6 +300,12 @@ export default function StockClient({
                         {isInCutlist(c.sku) && <span title="ใช้ในใบตัด/ถอด BOQ (หักสต็อกตอนตัด)" className="shrink-0">✂️</span>}
                         <span className="truncate">{stockDisplayName(c)}</span>
                       </div>
+                      {brandOf(c) && !active && (
+                        <span title={"แบรนด์อลู: " + ALU_BRAND_LABEL[brandOf(c)!]}
+                          className={`text-[10px] font-bold rounded-full px-1.5 py-0.5 shrink-0 ${BRAND_TONE[brandOf(c)!] ?? "text-ink-3 bg-black/5"}`}>
+                          {brandOf(c) ? (ALU_BRAND_LABEL[brandOf(c)!] ?? "").replace(" — ไม่คิดต่อโล", "") : ""}
+                        </span>
+                      )}
                       {low && (active
                         ? <span className="text-xs font-semibold bg-white/25 rounded-full px-2 py-0.5 shrink-0">ใกล้หมด</span>
                         : <Badge tone="red" dot>ใกล้หมด</Badge>)}
@@ -405,6 +423,12 @@ function ItemDetail({
               {isInCutlist(item.sku) && (
                 <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-100 rounded-full px-2 py-0.5">
                   ✂️ ใช้ในใบตัด/ถอด BOQ (หักสต็อกตอนตัด)
+                </span>
+              )}
+              {brandOf(item) !== null && (
+                <span title="แบรนด์เส้นอลู — เรตบาท/กก. คิดตามแบรนด์นี้ (หน้าเรตอลูต่อโล)"
+                  className={`inline-flex items-center gap-1 text-[11px] font-semibold rounded-full px-2 py-0.5 ${BRAND_TONE[brandOf(item)!] ?? "text-ink-3 bg-black/5"}`}>
+                  🏷️ {ALU_BRAND_LABEL[brandOf(item)!] ?? "—"}
                 </span>
               )}
             </div>

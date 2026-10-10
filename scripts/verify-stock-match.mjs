@@ -13,6 +13,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseBoxName, normSize } from "../src/lib/calculator40/box-link.ts";
+import { FAMILIES, familyCodeSets, familyLabelsOfSku, skuInFamily } from "../src/lib/cutlist/family-codes.ts";
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 import { matchStock, nameHasCode, stockColorOf, isStockTracked, MATCH_REASON_TH, normBoxName } from "../src/lib/cutlist/stock-match.ts";
 
@@ -189,6 +190,48 @@ console.log("\n═══ ⑧ เส้นกลาง — หักตามส�
   ok("ไม่มีบรรทัดไหนหักสต็อกด้วย sku เส้นกลางสีเดียวอีก",
     !/JR0167[789]|JR0168[0-4]/.test(noCmt(prods)) && !/JR0167[789]|JR0168[0-4]/.test(noCmt(cuts)),
     "ยังเจอ sku เส้นกลางในสูตร");
+}
+
+// ── ⑨ หมวด "ใช้กับรุ่น" ในหน้าเช็คสต๊อกวัสดุ (เจ้าของสั่ง 10 ต.ค.69) ──
+//    หมวดตามประเภทบาน = โปรไฟล์ประตูเท่านั้น · อลูเสริม (กล่อง/ฉาก/ลูกฟูก/เส้นกลาง/ตบร่อง)
+//    ใช้กับรุ่นไหนก็ได้ จึงต้องไม่ติดป้ายรุ่น · งานโครง (กันสาด/หลังคา/กลาสเฮ้าส์/ระแนง/รั้ว)
+//    วัสดุคือกล่องจริง ๆ ต้องยังจับคู่ได้ ไม่งั้นหมวดโชว์ 0 รายการ
+console.log("\n═══ ⑨ หมวดใช้กับรุ่น — บานเอาแค่โปรไฟล์ประตู ═══");
+{
+  const DOOR = ["sms_slide", "fuji_slide", "slimlux", "toprail", "sms_bifold", "euro_bifold", "euro_lift",
+    "fixed", "fuji_fix", "fuji_swing", "fuji_door", "fuji_hung", "velora", "pcdoor", "solid", "woodjamb"];
+  const sets = familyCodeSets();
+  const AUX = /^(กล่อง|ฉาก|แซด|ตัวZ|ลูกฟูก|เส้นกลาง|เส้นคาด|ยู|ท่อ|แป๊ป|ตบร่อง|ตบเรียบ|ฝาแจ๊คสัน|บังใบกล่อง)/;
+  for (const key of DOOR) {
+    const bad = [...(sets.get(key) ?? [])].filter((c) => AUX.test(c));
+    ok(`${key}: ไม่มีอลูเสริมปนในหมวด`, bad.length === 0, bad.join(", "));
+  }
+  // งานโครงต้องไม่ว่าง (เคยโชว์ 0 เพราะสูตรเขียนชื่อกล่อง แต่สโตร์เป็นรหัส JR)
+  for (const key of ["awning", "gable", "glasshouse", "louver", "gate"])
+    ok(`${key}: หมวดงานโครงยังมีวัสดุ (ไม่ว่าง)`, (sets.get(key)?.size ?? 0) > 0, String(sets.get(key)?.size ?? 0));
+
+  // เคสจริงจากสโตร์
+  const CASES = [
+    ["B20001", "B20001-เฟรมบนบานเลื่อน-ดำ", "บานเลื่อน SMS", true],
+    ["F7980", "F7980-กรอบบานเลื่อน-ดำ", "บานเลื่อน FUJI", true],
+    ["JR02925", "B24013-คิ้วตบกระจก 14-22 มม.-ดำ", "บานเฟี้ยม SMS", true],   // รหัสซ่อนหน้าชื่อ + คิ้วตามความหนากระจก
+    ["JR03126", "JR03126-กรอบบานเปิด เมืองทอง-ดำ", "ประตู PC Door", true],
+    ["JR01840", 'กล่อง 1"x4"-อบขาว', "กันสาด", true],                        // งานโครงใช้กล่องจริง
+  ];
+  for (const [sku, name, label, want] of CASES) {
+    const got = familyLabelsOfSku(sku, name).includes(label);
+    ok(`${name} → ${want ? "อยู่" : "ไม่อยู่"}หมวด ${label}`, got === want, familyLabelsOfSku(sku, name).join(" · ") || "(ไม่อยู่หมวดไหน)");
+  }
+  // อลูเสริมต้องไม่ติดป้ายรุ่น "บาน" ใดเลย
+  const DOOR_LABELS = new Set(FAMILIES.filter((f) => DOOR.includes(f.key)).map((f) => f.label));
+  for (const [sku, name] of [["JR01948", 'ฉาก 4"-อบขาว'], ["JR02085", "ตบร่อง-ดำ"],
+    ["JR01994", "ลูกฟูกเรียบ 2 หน้า-ดำ"], ["JR01679", "เส้นกลาง-ดำ"], ["JR01841", 'กล่อง 1"x4"-ดำ']]) {
+    const hit = familyLabelsOfSku(sku, name).filter((l) => DOOR_LABELS.has(l));
+    ok(`${name} ไม่ติดป้ายรุ่นบาน (เป็นอลูเสริม)`, hit.length === 0, hit.join(" · "));
+  }
+  ok("skuInFamily รับชื่อแถวด้วย (รหัสซ่อนหน้าชื่อ)",
+    skuInFamily("JR02925", "sms_bifold", "B24013-คิ้วตบกระจก 14-22 มม.-ดำ")
+    && !skuInFamily("JR02925", "sms_bifold"), "");
 }
 
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);

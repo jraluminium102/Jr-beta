@@ -6,6 +6,7 @@
  */
 import { CUT_SPECS } from "./products.ts";
 import { collectCodesForSpec } from "./codes.ts";
+import { normBoxName } from "./stock-match.ts";
 
 const norm = (s: string) => s.trim().toUpperCase();
 
@@ -47,8 +48,25 @@ export const FAMILIES: { key: string; label: string }[] = [
   { key: "louver", label: "บานระแนง" },
 ];
 
+/**
+ * ตระกูลที่เป็น "ประเภทบาน" — หมวดพวกนี้เอาแค่โปรไฟล์ประตู (เจ้าของสั่ง 10 ต.ค.69)
+ *   ที่เหลือ (กันสาด/หลังคาจั่ว/กลาสเฮ้าส์/บานระแนง/ประตูรั้ว) เป็นงานโครง
+ *   วัสดุของมันคือกล่อง/ฉากจริง ๆ จึงต้องเก็บไว้ ไม่งั้นหมวดกลายเป็น 0 รายการ
+ */
+const DOOR_FAMILIES = new Set([
+  "sms_slide", "fuji_slide", "slimlux", "toprail", "sms_bifold", "euro_bifold", "euro_lift",
+  "fixed", "fuji_fix", "fuji_swing", "fuji_door", "fuji_hung", "velora", "pcdoor", "solid", "woodjamb",
+]);
+
 let _byFamily: Map<string, Set<string>> | null = null;
-/** familyKey → เซ็ตรหัส (uppercase) ที่ตระกูลนั้นใช้ (อลู + อุปกรณ์ ทุก variant) */
+let _boxByFamily: Map<string, Set<string>> | null = null;
+/**
+ * familyKey → เซ็ตรหัสที่ตระกูลนั้นใช้ (อุปกรณ์ JR + โปรไฟล์ประตู ทุก variant)
+ * ⚠ 10 ต.ค.69 เจ้าของสั่ง: หมวดตามประเภทบาน ให้เอาแค่โปรไฟล์ประตู ไม่เอาอลูเสริม
+ *   (กล่อง/ฉาก/แซด/ลูกฟูก/เส้นกลาง/ตบร่อง… ใช้ได้ทุกรุ่น ติดป้าย "รุ่นนี้ใช้" ไม่ได้)
+ *   เดิมรวมมาด้วย → บานติดตายโชว์ ตบร่อง/กล่องเปิด · บานโซลิดโชว์ ลูกฟูก/เส้นกลาง
+ *   · วงกบไม้โชว์ กล่องเรียบ/บังใบกล่อง · SlimLux/รางบน/PC Door โชว์กล่องหลายไซส์
+ */
 export function familyCodeSets(): Map<string, Set<string>> {
   if (_byFamily) return _byFamily;
   const m = new Map<string, Set<string>>();
@@ -56,22 +74,37 @@ export function familyCodeSets(): Map<string, Set<string>> {
     const fam = SPEC_FAMILY[spec.id];
     if (!fam) continue;
     const set = m.get(fam) ?? new Set<string>();
-    for (const c of collectCodesForSpec(spec)) set.add(c);
+    for (const c of collectCodesForSpec(spec, { doorOnly: DOOR_FAMILIES.has(fam) })) set.add(c);
     m.set(fam, set);
   }
   _byFamily = m;
+  // คีย์ชื่อกล่อง/ฉาก (งานโครง) — สูตรเขียนเป็นชื่อ ไม่ใช่รหัส JR ของสโตร์
+  //   ต้องเทียบด้วย normBoxName ทั้งสองฝั่ง ไม่งั้นหมวดกันสาด/หลังคา/กลาสเฮ้าส์ โชว์ 0 รายการ
+  _boxByFamily = new Map([...m].map(([k, v]) => [k, new Set([...v].map(normBoxName).filter(Boolean))]));
   return m;
 }
 
-/** วัสดุ sku นี้ ใช้กับตระกูลรุ่น family นี้ไหม */
-export function skuInFamily(sku: string | null | undefined, family: string): boolean {
-  if (!sku || !family) return false;
-  return familyCodeSets().get(family)?.has(norm(String(sku))) ?? false;
+/**
+ * วัสดุแถวนี้ ใช้กับตระกูลรุ่น family นี้ไหม
+ *   เทียบ sku ตรง ๆ ก่อน · แล้วลอง "รหัสที่ซ่อนหน้าชื่อ" (สโตร์ใส่ sku เป็น JR0xxxx
+ *   แต่รหัสจริงอยู่หน้าชื่อ เช่น "B24013-คิ้วตบกระจก…") — เจ้าของทัก 10 ต.ค.69
+ */
+export function skuInFamily(sku: string | null | undefined, family: string, name?: string | null): boolean {
+  if (!family) return false;
+  const set = familyCodeSets().get(family);
+  if (!set) return false;
+  if (sku && set.has(norm(String(sku)))) return true;
+  const head = String(name ?? "").trim().match(/^([A-Za-z]{1,3}\d{3,5}[A-Za-z]?)\b/);
+  if (head && set.has(norm(head[1]))) return true;
+  // งานโครง: สูตรเขียนเป็น "ชื่อกล่อง/ฉาก" ส่วนสโตร์เป็นรหัส JR → เทียบด้วยชื่อที่ปัดรูปแบบแล้ว
+  const nb = normBoxName(name);
+  return !!(nb && _boxByFamily?.get(family)?.has(nb));
 }
 
-/** วัสดุ sku นี้ ใช้กับตระกูลรุ่นไหนบ้าง (คืน label ไทย) */
-export function familyLabelsOfSku(sku?: string | null): string[] {
-  if (!sku) return [];
-  const key = norm(String(sku));
-  return FAMILIES.filter((f) => familyCodeSets().get(f.key)?.has(key)).map((f) => f.label);
+/** วัสดุแถวนี้ ใช้กับตระกูลรุ่นไหนบ้าง (คืน label ไทย) */
+export function familyLabelsOfSku(sku?: string | null, name?: string | null): string[] {
+  return FAMILIES.filter((f) => skuInFamily(sku, f.key, name)).map((f) => f.label);
 }
+
+/** อลูเสริม (กล่อง/ฉาก/ลูกฟูก…) — ใช้ได้ทุกรุ่น จึงไม่อยู่ในหมวดตามประเภทบาน */
+export { isAuxAluName } from "./codes.ts";

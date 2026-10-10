@@ -585,12 +585,17 @@ console.log("\n" + "═══ ⑬ จับคู่น้ำหนักกั�
   //    เคสจริง: เส้นกลาง (market) / ลูกฟูก JR01994 (fuji) คิดราคาถือเป็นแบรนด์ แต่หน้านี้เดาเป็น
   //    "ซื้อเป็นเส้น" → ไม่มีเรตให้กด ราคาในสโตร์ค้างของเก่า (เส้นกลาง 140 ทั้งที่ควรเป็น 75)
   {
-    const pg = fs.readFileSync(path.join(ROOT, "src/app/(app)/stock/alu-rates/page.tsx"), "utf8");
+    const lib = fs.readFileSync(path.join(ROOT, "src/lib/calculator40/alu-brand.ts"), "utf8");
     const cl = fs.readFileSync(path.join(ROOT, "src/app/(app)/stock/alu-rates/AluRatesClient.tsx"), "utf8");
-    ok("หน้าเรตอลูส่ง ALU_BRAND_OF ของ pricebook ลงไป", pg.includes("brandOfCode={(PRICEBOOK"), "");
+    const sc = fs.readFileSync(path.join(ROOT, "src/app/(app)/stock/StockClient.tsx"), "utf8");
+    ok("ตัวตัดสินแบรนด์อยู่ที่เดียว (lib/calculator40/alu-brand) อ่าน PB.ALU_BRAND_OF",
+      lib.includes("ALU_BRAND_OF") && lib.includes("export function aluBrandOfRow"), "");
     ok("จัดกลุ่มแบรนด์: เช็ค pricebook ก่อน แล้วค่อยเดาจากรหัส/ชื่อ",
-      cl.includes('const b = BRAND_OF[c]; if (b && b !== "fixed") return'), "");
-    ok("มีตัวตัดรหัสกลางจากชื่อแถว (ตัดรหัสหน้า + สีท้าย)", cl.includes("function codeOfRow("), "");
+      lib.includes('if (b && b !== "fixed") return b as AluBrand;') && lib.includes("return guessAluBrand("), "");
+    ok("มีตัวตัดรหัสกลางจากชื่อแถว (ตัดรหัสหน้า + สีท้าย)", lib.includes("export function aluCodesOfRow("), "");
+    ok("หน้าเรตอลู + หน้าเช็คสต๊อกวัสดุ ใช้ตัวกลางตัวนี้ ไม่เดาเอง",
+      cl.includes('from "@/lib/calculator40/alu-brand"') && sc.includes('from "@/lib/calculator40/alu-brand"')
+      && !cl.includes("function brandOfSku("), "");
     const thai = Object.keys(PB.ALU_BRAND_OF ?? {}).filter((c) => /[฀-๿]/.test(c));
     ok("รหัสกลางภาษาไทยใน ALU_BRAND_OF มีอยู่จริง (เส้นกลาง ฯลฯ)", thai.length > 0, thai.join(", "));
   }
@@ -598,9 +603,9 @@ console.log("\n" + "═══ ⑬ จับคู่น้ำหนักกั�
   //    สโตร์ใส่ sku เป็น JR0xxxx แต่รหัสจริงอยู่หน้าชื่อ — B24013 / B24016 / F7860 / F7948 / F7971
   //    เดิมหน้าเรตอลูดูแต่ sku → 40 แถวตกกอง "ซื้อเป็นเส้น" ทั้งที่ซื้อเป็นกิโลตามแบรนด์
   {
-    const cl = fs.readFileSync(path.join(ROOT, "src/app/(app)/stock/alu-rates/AluRatesClient.tsx"), "utf8");
-    ok("brandOfSku อ่านรหัสหน้าชื่อด้วย ไม่ใช่ sku อย่างเดียว",
-      cl.includes("const head = (n.match(") && cl.includes('.test(head)) return "sms"') && cl.includes('.test(head)) return "fuji"'), "");
+    const lib2 = fs.readFileSync(path.join(ROOT, "src/lib/calculator40/alu-brand.ts"), "utf8");
+    ok("เดาแบรนด์: อ่านรหัสหน้าชื่อด้วย ไม่ใช่ sku อย่างเดียว",
+      lib2.includes("const head = (n.match(") && lib2.includes('.test(head)) return "sms"') && lib2.includes('.test(head)) return "fuji"'), "");
     // ตลาดไม่มีสีลายไม้สักทอง → ใช้เรต SMS (เจ้าของสั่ง "ตีกลับไปเปน sms")
     ok("ตลาด ลายไม้สักทอง = เรต SMS",
       (PB.ALU_BRAND?.market ?? {})["ลายไม้สักทอง"] === (PB.ALU_BRAND?.sms ?? {})["ลายไม้สักทอง"],
