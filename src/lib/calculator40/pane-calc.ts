@@ -44,10 +44,11 @@ export const WALL_PANES: { key: string; label: string }[] = [
   { key: "wall_composite", label: "ผนังคอมโพสิต (รวมโครง)" },
 ];
 
-/** ชนิดบานในห้องกระจก = ทุกรุ่น G1 อัตโนมัติ (รุ่นใหม่โผล่เองไม่ต้องมาเติม) + ผนังทึบ */
+/** ชนิดบานในห้องกระจก = ทุกรุ่น G1 (บาน) + G2 (ระแนง·รั้ว·ราว · เจ้าของสั่ง 10 ต.ค.69 "รูปด้านเพิ่มระแนงได้") + ผนังทึบ
+ *  รุ่นใหม่ใน group 1/2 โผล่เองไม่ต้องมาเติม */
 export const PANE_TYPES: { key: string; label: string }[] = [
   ...Object.values(PRODUCTS as Record<string, any>)
-    .filter((p: any) => p && p.group === 1 && !p.pickerHide)
+    .filter((p: any) => p && (p.group === 1 || p.group === 2) && !p.pickerHide)
     .map((p: any) => ({ key: p.id as string, label: p.name as string })),
   ...WALL_PANES.filter((w) => (PRODUCTS as Record<string, any>)[w.key]),
 ];
