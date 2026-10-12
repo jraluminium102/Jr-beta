@@ -12,7 +12,7 @@
 import {
   planFloor, layoutAxis, RATE, pileType, suggest, draftItems, sumItems, groupItems,
   quoteFileName, groupNames, addItemToGroup, isExistingPile, PILE_TYPES,
-  MIN_SPAN, MAX_SPAN,
+  MIN_SPAN, MAX_SPAN, demoPrice, DEMO_WORKS, DEMO_BANDS,
 } from "../src/lib/floor-calc/engine.mjs";
 
 let failed = 0;
@@ -101,22 +101,66 @@ for (const [label, fn, want, unit] of flatRates) {
   else bad(`${label} = ${vals.join("/")} (ต้อง ${want.toLocaleString()} คงที่ทุกพื้นที่)`);
 }
 
-// รื้อสกัดพื้น = ราคาเหมาทั้งงาน → ใหญ่ขึ้นต้องแพงขึ้นเรื่อย ๆ ห้ามเด้งลงแม้แต่จุดเดียว
-// (เจ้าของเคาะ 7 ส.ค.69 · เดิมรื้อ 15 ตร.ม. แพงกว่ารื้อ 30 ตร.ม.)
+// ═══ ④c งานรื้อ 5 ประเภท (ไฟล์ ผรม. 5 ต.ค.69) — ราคา = max(ขั้นต่ำ, พื้นที่×เรตช่วง) ═══
+// เจ้าของเคาะ 12 ต.ค.69: รื้อหลังคา(รวมฝ้า) ขั้นต่ำ 12,000 · เกิน 30 ตร.ม. เตือนรีเช็ค
+console.log("\n═══ ④c งานรื้อ 5 ประเภท (ตามไฟล์ ผรม.) ═══");
 {
-  let prev = -1, dip = "";
-  for (let a = 1; a <= 200; a += 1) {
-    const v = suggest.demolish(a);
-    if (v < prev) { dip = `${a} ตร.ม. = ${v.toLocaleString()} ถูกกว่า ${a - 1} ตร.ม. = ${prev.toLocaleString()}`; break; }
-    prev = v;
+  // (1) เรตต่อช่วง + ขั้นต่ำ ต้องตรงไฟล์เป๊ะ
+  const RATE_TABLE = {
+    floorNoStruct:   { min: 9000,  rates: [700, 800, 900, 900, 900] },
+    floorWithStruct: { min: 16500, rates: [1500, 1700, 1850, 1850, 1850] },
+    wall:            { min: 7500,  rates: [500, 500, 500, 500, 500] },
+    roofNoCeil:      { min: 9000,  rates: [650, 650, 650, 650, 650] },
+    roofWithCeil:    { min: 12000, rates: [750, 750, 750, 750, 750] },
+  };
+  let rateBad = 0;
+  for (const d of DEMO_WORKS) {
+    const want = RATE_TABLE[d.key];
+    if (!want) { bad(`ไม่มีเรตอ้างอิงของ ${d.key}`); continue; }
+    if (d.min !== want.min) bad(`${d.label} ขั้นต่ำ ${d.min.toLocaleString()} (ต้อง ${want.min.toLocaleString()})`), rateBad++;
+    if (JSON.stringify(d.rates) !== JSON.stringify(want.rates)) bad(`${d.label} เรตช่วง ${d.rates.join("/")} (ต้อง ${want.rates.join("/")})`), rateBad++;
   }
-  if (dip) bad(`รื้อสกัดราคาเด้งลง: ${dip}`);
-  else console.log("  ✅ รื้อสกัด ใหญ่ขึ้น=แพงขึ้นเรื่อย ๆ ไม่เด้งลงเลย (1–200 ตร.ม.)");
-  // ปลายช่วงต้องตรงเรนจ์ในไฟล์ + ตันที่เพดาน
-  const pts = [[5, 10000], [10, 11000], [20, 12500], [30, 14000], [80, 16000], [200, 16000]];
-  const wrong = pts.filter(([a, w]) => suggest.demolish(a) !== w);
-  if (!wrong.length) console.log(`  ✅ รื้อสกัด ตรงเรนจ์ไฟล์: ${pts.map(([a, w]) => `${a}→${w.toLocaleString()}`).join(" · ")}`);
-  else bad(`รื้อสกัดไม่ตรงเรนจ์: ${wrong.map(([a, w]) => `${a} ตร.ม. ได้ ${suggest.demolish(a).toLocaleString()} (ต้อง ${w.toLocaleString()})`).join(" · ")}`);
+  if (!rateBad) ok(`เรต+ขั้นต่ำ ตรงไฟล์ครบ 5 ประเภท`);
+
+  // (2) คิดราคา = max(ขั้นต่ำ, พื้นที่×เรตช่วง) ตามตัวอย่างคำนวณมือ
+  const CASES = [
+    // รื้อผนังปูน 10 ตร.ม. = 10×500=5,000 < ขั้นต่ำ 7,500 → 7,500
+    ["wall", 10, 7500],
+    // รื้อพื้นไม่รวมโครงสร้าง 18 ตร.ม. (ช่วง 0–20 เรต 800) = 14,400
+    ["floorNoStruct", 18, 14400],
+    // รื้อพื้นรวมโครงสร้าง 25 ตร.ม. (ช่วง 0–30 เรต 1,850) = 46,250
+    ["floorWithStruct", 25, 46250],
+    // รื้อพื้นไม่รวมโครงสร้าง 10 ตร.ม. (เรต 700=7,000) < ขั้นต่ำ 9,000 → 9,000
+    ["floorNoStruct", 10, 9000],
+    // รื้อหลังคา(รวมฝ้า) 5 ตร.ม. (5×750=3,750) < ขั้นต่ำ 12,000 → 12,000
+    ["roofWithCeil", 5, 12000],
+    // รื้อหลังคา(ไม่รวมฝ้า) 40 ตร.ม. (เรต 650) = 26,000 (เกิน 30 → warn)
+    ["roofNoCeil", 40, 26000],
+  ];
+  let calcBad = 0;
+  for (const [key, area, want] of CASES) {
+    const q = demoPrice(key, area);
+    if (!q || q.price !== want) { bad(`${key} ${area} ตร.ม. ได้ ${q?.price?.toLocaleString()} (ต้อง ${want.toLocaleString()})`); calcBad++; }
+  }
+  if (!calcBad) ok(`คิดราคา 6 เคส ตรงตัวอย่างมือ (รวมเคสติดขั้นต่ำ + เกินช่วง)`);
+
+  // (3) เตือนเมื่อเกิน 30 ตร.ม. · ไม่เตือนเมื่อ ≤ 30
+  if (demoPrice("wall", 31).warn && !demoPrice("wall", 30).warn) ok(`เตือน "เกิน 30 ตร.ม. รีเช็ค" ถูกช่วง (31 เตือน · 30 ไม่เตือน)`);
+  else bad(`ธงเตือนเกิน 30 ตร.ม. ผิด`);
+
+  // (4) เรตไม่เด้งลงเมื่อพื้นที่โตขึ้น (ราคารวมต้องไม่ลดลง — รื้อยิ่งใหญ่ยิ่งแพง)
+  let dip = "";
+  for (const d of DEMO_WORKS) {
+    let prev = -1;
+    for (let a = 1; a <= 60; a += 1) {
+      const v = demoPrice(d.key, a).price;
+      if (v < prev) { dip = `${d.label} ${a} ตร.ม.=${v} < ${a - 1} ตร.ม.=${prev}`; break; }
+      prev = v;
+    }
+    if (dip) break;
+  }
+  if (dip) bad(`ราคารื้อเด้งลง: ${dip}`);
+  else ok(`ราคารื้อ ใหญ่ขึ้น=แพงขึ้น ไม่เด้งลง (ทั้ง 5 ประเภท 1–60 ตร.ม.)`);
 }
 
 // ═══ ④b เคสตัวอย่าง 1.8×3.5 — ยอดต้องนิ่ง (คุม regression · ราคาใหม่ 18 ส.ค.69) ═══
