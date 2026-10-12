@@ -1069,5 +1069,15 @@ console.log("\n═══ เส้นไม่มีสีสต็อค → �
       !b2.some((l) => /ไม่มีสี|เปิดตู้อบ/.test(l.name)), b2.map((l) => l.name).join(" | "));
   }
 }
+// 12 ต.ค.69 — เส้น colorIn (ราคาไฟล์รวมสีแล้ว ห้ามอบซ้ำ) + สีที่ไฟล์ไม่มีช่องราคา (ลายไม้อบพิเศษ)
+//   เคยตกไปราคาขาวและไม่โดนค่าอบ → Velora ลายไม้อบพิเศษ ทุนต่ำกว่าสีอบพิเศษ ทั้งที่เรตอบแพงกว่า
+console.log("\n═══ เส้นราคารวมสี (colorIn) ต้องไม่คิดสีฟรี ═══");
+{
+  const V = (k, color) => computeCost(PB, PRODUCTS.velora, { w: 90, h: 220, p: 1, spec: {}, addons: {}, colorKey: k, color });
+  const w = V("white", "white"), sp = V("special", "special"), ws = V("wood_special", "woodSpecial");
+  const fug = (c) => (c.lines || []).find((l) => /ลูกฟูก/.test(l.name))?.unitPrice ?? 0;
+  ok("Velora ลายไม้อบพิเศษ: ลูกฟูกไม่ใช่ราคาขาว", fug(ws) > fug(w), fug(w) + " → " + fug(ws));
+  ok("Velora ทุน ลายไม้อบพิเศษ ≥ สีอบพิเศษ", ws.cost.total >= sp.cost.total - 0.5, sp.cost.total + " / " + ws.cost.total);
+}
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);

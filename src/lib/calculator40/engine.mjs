@@ -474,8 +474,14 @@ export function computeCost(PB, prod, opt) {
     // สีตามชีตรุ่นนั้น (prod.boxCF / it.cf) — ใช้เมื่อไม่มีราคาสโตร์และไม่มีราคาสี (ติดตาย: สโตร์กล่อง 1.6×3 ราคา 0 · 9014 ไม่มีในสโตร์)
     const cfPrice = (bxp == null && !(colorPrice > 0) && !brandNoColor && formulaCF(it) !== 1)
       ? Math.round((Number(basePrice) || 0) * formulaCF(it)) : null;
+    // เส้น colorIn (ไฟล์ตั้งราคา "รวมสีแล้ว" ห้ามอบซ้ำ เช่น ลูกฟูกใน Velora · ขวาง B20054) แต่ไฟล์ไม่มีช่องราคาของสีนี้
+    //   (ลายไม้อบพิเศษ ไม่มีคอลัมน์ในชีตราคาสี) → เดิมตกไปราคาขาว + ไม่อบ = คิดสีฟรี (เจอ 12 ต.ค.69 Velora ลายไม้อบพิเศษ ถูกกว่าสีอบพิเศษ)
+    //   → ใช้ราคาสีสูงสุดที่ไฟล์ให้เส้นนี้ (ราคารวมสีแพงสุด) แทนราคาขาว
+    const colorInFill = (it.colorIn && !isWhite && !noColor && !(colorPrice > 0) && bxp == null && !(fixP > 0) && pcode && PB.ALUCOLOR_KEY)
+      ? Math.max(0, ...Object.values(PB.ALUCOLOR_KEY).map((t) => Number((t || {})[pcode]) || 0)) : 0;
     const price = bxp != null ? bxp
       : colorPrice > 0 ? colorPrice
+      : colorInFill > whiteRef / Math.max(mult, 1e-9) ? colorInFill
       : cfPrice != null ? cfPrice
       : basePrice;
     // ⚠ ห้ามคูณ mult ทับ "ราคาที่มาจากสโตร์" — สโตร์คิด ราคา/เส้น = น้ำหนัก × เรตต่อโล ปัจจุบัน ให้แล้ว
