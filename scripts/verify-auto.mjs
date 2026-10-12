@@ -1069,15 +1069,24 @@ console.log("\n═══ เส้นไม่มีสีสต็อค → �
       !b2.some((l) => /ไม่มีสี|เปิดตู้อบ/.test(l.name)), b2.map((l) => l.name).join(" | "));
   }
 }
-// 12 ต.ค.69 — เส้น colorIn (ราคาไฟล์รวมสีแล้ว ห้ามอบซ้ำ) + สีที่ไฟล์ไม่มีช่องราคา (ลายไม้อบพิเศษ)
-//   เคยตกไปราคาขาวและไม่โดนค่าอบ → Velora ลายไม้อบพิเศษ ทุนต่ำกว่าสีอบพิเศษ ทั้งที่เรตอบแพงกว่า
+// 12 ต.ค.69 — เส้น colorIn (ราคาไฟล์รวมสีแล้ว ห้ามอบซ้ำ) แต่สีที่ไฟล์ไม่มีราคาสี (สีพิเศษ/ลายไม้อบพิเศษ)
+//   เคยตกไปราคาขาวและไม่โดนค่าอบ = คิดสีฟรี (SMS ขวาง B20054 · Velora ลูกฟูก)
+//   กฎ: ไม่มีราคาสี = ซื้อเส้นขาวมาอบเอง → เข้ากองค่าอบ · ยกเว้น colorInAlways (ไส้เสาบาน · Velora ออโต้ · ครอบวงกบไม้)
 console.log("\n═══ เส้นราคารวมสี (colorIn) ต้องไม่คิดสีฟรี ═══");
 {
   const V = (k, color) => computeCost(PB, PRODUCTS.velora, { w: 90, h: 220, p: 1, spec: {}, addons: {}, colorKey: k, color });
   const w = V("white", "white"), sp = V("special", "special"), ws = V("wood_special", "woodSpecial");
-  const fug = (c) => (c.lines || []).find((l) => /ลูกฟูก/.test(l.name))?.unitPrice ?? 0;
-  ok("Velora ลายไม้อบพิเศษ: ลูกฟูกไม่ใช่ราคาขาว", fug(ws) > fug(w), fug(w) + " → " + fug(ws));
+  ok("Velora ลายไม้อบพิเศษ: ลูกฟูก (ไม่มีราคาสี) เข้ากองค่าอบ", ws.aluKg > sp.aluKg + 0.5, sp.aluKg + " / " + ws.aluKg);
   ok("Velora ทุน ลายไม้อบพิเศษ ≥ สีอบพิเศษ", ws.cost.total >= sp.cost.total - 0.5, sp.cost.total + " / " + ws.cost.total);
+  const S = (k, color) => computeCost(PB, PRODUCTS.sms_slide, { w: 400, h: 240, p: 3, spec: {}, addons: {}, colorKey: k, color });
+  const sw = S("white", "white"), ss = S("special", "special"), st = S("wood_teak", "woodStock");
+  const kgB = (c) => (c.lines || []).filter((l) => l.code === "B20054").reduce((a, l) => a + l.qty * 6.6, 0);
+  ok("SMS สีอบพิเศษ: ขวาง B20054 เข้ากองค่าอบ", ss.aluKg > sw.aluKg + kgB(ss) - 0.5, sw.aluKg + " → " + ss.aluKg);
+  ok("SMS ลายไม้สักทอง: ขวาง B20054 มีราคาสีในไฟล์ → ไม่อบซ้ำ", st.aluKg < 0.5, String(st.aluKg));
+  const L = (id, k, color) => computeCost(PB, PRODUCTS[id], { spec: {}, addons: {}, colorKey: k, color });
+  ok("SlimLux ไส้เสาบาน OPK-A202 ไม่อบแม้สีพิเศษ (อยู่ข้างใน)",
+    L("slimlux", "special", "special").aluKg === computeCost(PB, { ...PRODUCTS.slimlux, alu: PRODUCTS.slimlux.alu.filter((a) => a.code !== "OPK-A202-40") }, { spec: {}, addons: {}, colorKey: "special", color: "special" }).aluKg, "");
+  ok("Velora ออโต้ สีพิเศษ: ไม่อบซ้ำ (ราคารวมค่าอบแล้ว)", L("velora_auto", "special", "special").aluKg < 0.5, String(L("velora_auto", "special", "special").aluKg));
 }
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);

@@ -474,14 +474,8 @@ export function computeCost(PB, prod, opt) {
     // สีตามชีตรุ่นนั้น (prod.boxCF / it.cf) — ใช้เมื่อไม่มีราคาสโตร์และไม่มีราคาสี (ติดตาย: สโตร์กล่อง 1.6×3 ราคา 0 · 9014 ไม่มีในสโตร์)
     const cfPrice = (bxp == null && !(colorPrice > 0) && !brandNoColor && formulaCF(it) !== 1)
       ? Math.round((Number(basePrice) || 0) * formulaCF(it)) : null;
-    // เส้น colorIn (ไฟล์ตั้งราคา "รวมสีแล้ว" ห้ามอบซ้ำ เช่น ลูกฟูกใน Velora · ขวาง B20054) แต่ไฟล์ไม่มีช่องราคาของสีนี้
-    //   (ลายไม้อบพิเศษ ไม่มีคอลัมน์ในชีตราคาสี) → เดิมตกไปราคาขาว + ไม่อบ = คิดสีฟรี (เจอ 12 ต.ค.69 Velora ลายไม้อบพิเศษ ถูกกว่าสีอบพิเศษ)
-    //   → ใช้ราคาสีสูงสุดที่ไฟล์ให้เส้นนี้ (ราคารวมสีแพงสุด) แทนราคาขาว
-    const colorInFill = (it.colorIn && !isWhite && !noColor && !(colorPrice > 0) && bxp == null && !(fixP > 0) && pcode && PB.ALUCOLOR_KEY)
-      ? Math.max(0, ...Object.values(PB.ALUCOLOR_KEY).map((t) => Number((t || {})[pcode]) || 0)) : 0;
     const price = bxp != null ? bxp
       : colorPrice > 0 ? colorPrice
-      : colorInFill > whiteRef / Math.max(mult, 1e-9) ? colorInFill
       : cfPrice != null ? cfPrice
       : basePrice;
     // ⚠ ห้ามคูณ mult ทับ "ราคาที่มาจากสโตร์" — สโตร์คิด ราคา/เส้น = น้ำหนัก × เรตต่อโล ปัจจุบัน ให้แล้ว
@@ -498,7 +492,12 @@ export function computeCost(PB, prod, opt) {
     aluCost += amount;
     // เส้นที่ราคารวมสีแล้ว หรือเป็นเส้นสีเงินไม่อบสี → ไม่เข้ากองคิดค่าอบ
     const kgBar = kgOfLine(it, code, Number(it.stockLen) || stockLen);
-    if (!(colorPrice > 0) && cfPrice == null && !boxColorDone && !noColor && !it.colorIn) {
+    // it.colorIn = ราคาไฟล์ "รวมสีแล้ว" → ไม่อบซ้ำ — แต่ใช้ได้เฉพาะสีที่ไฟล์มีราคาสีให้ (หรือสีขาว/ดำ)
+    //   สีที่ไฟล์ไม่มีราคา (สีอบพิเศษ/ลายไม้อบพิเศษ) = ต้องซื้อเส้นขาวมาอบเอง → เข้ากองค่าอบตามกฎ "เส้นไม่มีสีสต็อก คิดอบสีพิเศษ"
+    //   เดิมข้ามทุกสี = คิดสีฟรี (เจอ 12 ต.ค.69: SMS ขวาง B20054 + Velora ลูกฟูก ตอนสีพิเศษ คิดราคาขาวไม่มีค่าอบ)
+    //   colorInAlways (ต่อเส้น/ทั้งรุ่น) = ไม่อบตามสีงานทุกสี: ไส้เสาบาน (อยู่ข้างใน) · Velora ออโต้ (ราคารวมค่าอบแล้ว) · ครอบวงกบไม้ (กล่องเลือกได้แค่ ดำ/อบขาว)
+    const colorInSkip = !!it.colorIn && (isWhite || !!it.colorInAlways || !!prod.colorInAlways);
+    if (!(colorPrice > 0) && cfPrice == null && !boxColorDone && !noColor && !colorInSkip) {
       const kgBake = bars * kgForBake(it, code, Number(it.stockLen) || stockLen);
       aluKg += kgBake;
       if (brandNoColor) aluKgNoStockColor += kgBake;   // แบรนด์นี้ไม่มีสีนี้ขาย → อบเอง

@@ -17,11 +17,12 @@ import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
 import { resolveAluColor } from "../src/lib/calculator40/alu-colors.ts";
 import { stockColorOfCalc, buildPriceOverride, applyPriceOverride } from "../src/lib/calculator40/stock-link.ts";
 import { writeXlsx, S } from "./xlsxwrite.mjs";
+import { IDOF, KEYOF, baseInput } from "./color-compare-config.mjs";
 
-const SRC = process.argv.find((a) => a.endsWith(".xlsx")) || "C:/Users/jralu/JR-beta/เทียบค่าอบสี.xlsx";
+const SRC = process.argv.find((a, i) => a.endsWith(".xlsx") && process.argv[i - 1] !== "--out") || "C:/Users/jralu/JR-beta/เทียบค่าอบสี.xlsx";
 const si = process.argv.indexOf("--stock");
 const STOCK = si > 0 ? process.argv[si + 1] : null;
-const OUT = "docs/เทียบค่าสี-R4.0เว็บ-vs-R3.9.xlsx";
+const OUT = process.argv.includes("--out") ? process.argv[process.argv.indexOf("--out") + 1] : "docs/เทียบค่าสี-R4.0เว็บ-vs-R3.9.xlsx";
 
 const PB0 = JSON.parse(fs.readFileSync("src/lib/calculator40/pricebook.json", "utf8"));
 let PB = PB0, stockNote = "ไม่ได้ทับราคาสโตร์ (pricebook ล้วน)";
@@ -33,25 +34,6 @@ if (STOCK) {
   stockNote = `ทับราคาจากสโตร์จริง ${rows.length} แถว (ดึงจากเว็บ ${new Date().toLocaleDateString("th-TH")})`;
 }
 
-const IDOF = {
-  "บานเลื่อน SMS": "sms_slide", "บานเลื่อน ยูโร": "euro_slide", "บานเลื่อน SlimLux": "slimlux",
-  "บานเลื่อนรางบน": "topslide", "บานเลื่อน E-series": "eseries", "บานระแนงเลื่อน": "bar_slide",
-  "บานเปิด": "open_door", "บานหมุน": "pivot", "บานกระทุ้ง": "awning", "เฟี้ยม": "folding",
-  "เฟี้ยมยูโร": "fold_euro", "ติดตาย": "fixed", "PC Door": "pcdoor", "บานยก": "banyok",
-  "เปิดดัดโค้ง": "curve_open", "บานเกล็ด": "banklet", "บานโซลิด": "bansolid", "Velora": "velora",
-  "หลังคาเพิง ไวนิล": "roof", "ระแนง": "louver", "ระแนงหมุน": "louver_rotate", "ระแนงสลับ": "louver_slip",
-  "ประตูรั้ว": "gate",
-};
-/** สีในไฟล์ → คีย์สีบนหน้าคิดราคา */
-const KEYOF = (s) => {
-  const t = String(s).replace(/\s+/g, "");
-  if (/มะฮอกกานี/.test(t)) return "wood_maho";
-  if (/ไวท์โอ/.test(t)) return "wood_whiteoak";
-  if (/ลายไม้อบพิเศษ/.test(t)) return "wood_special";
-  if (/อบพิเศษ|สีพิเศษ/.test(t)) return "special";
-  if (/ลายไม้/.test(t)) return "wood_teak";
-  return null;
-};
 
 // ── อ่านไฟล์เจ้าของ ──
 const x = openXlsx(SRC), rows0 = x.read(sheetList(x.zip)[0].path);
@@ -94,9 +76,8 @@ const json = [];
 for (const it of items) {
   const id = IDOF[it.name], p = id && PRODUCTS[id];
   if (!p) { body.push([it.name, it.size, it.panels, "", it.spec, "", "", "", "", "", "", "", "", "", "", "", "ยังไม่ได้แมปรุ่นนี้"]); sty.push(S.GREY); continue; }
-  const [w, h] = String(it.size).split(/\s*x\s*/i).map(Number);
   const pn = Number(it.panels) || 1;
-  const base = { w, h, p: pn, form: p.defForm, material: id === "roof" ? "ไวนิล" : p.defMaterial, glassType: p.defGlass, spec: {}, addons: {} };
+  const base = baseInput(id, p, it.size, it.panels);
   const wh = computeCost(PB, p, { ...base, ...webOpt("white") });
   const sellW = wh.sell?.withInstall || 0;
   const pB = pct(sellW, it.base39);
