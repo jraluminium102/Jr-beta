@@ -1,0 +1,211 @@
+<title>เทียบค่าอบสี</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap">
+<style>
+/* layout: แถบควบคุมติดบน + การ์ดรายบานเรียงลงมา · ตัวเลขชิดขวาแบบบัญชี · สีแดง/เขียวใช้บอกขึ้น/ลงเท่านั้น */
+:root {
+  --bg: #eef1f2;          /* อลูอบขาว เทาอมฟ้านิด ๆ */
+  --surface: #ffffff;
+  --sunk: #f6f8f8;
+  --ink: #172026;
+  --muted: #5b6870;
+  --line: #d6dde0;
+  --accent: #23617f;      /* ฟ้าเหล็ก — ปุ่ม/ตัวเลือกที่เลือกอยู่ */
+  --accent-soft: #e2eef4;
+  --up: #b03a2e; --up-bg: #fbeae7;
+  --down: #1d7448; --down-bg: #e2f2e8;
+  --flat: #5b6870; --flat-bg: #eceff0;
+  --n-file: #8a5a00; --n-file-bg: #fff3d6;
+  --n-fix: #1f5f86; --n-fix-bg: #e3f0f8;
+  --n-rule: #5b4597; --n-rule-bg: #eeeafa;
+  --n-info: #4e5b63; --n-info-bg: #eef1f2;
+  --font-display: "Anuphan", "IBM Plex Sans Thai", "Leelawadee UI", Tahoma, sans-serif;
+  --font-body: "IBM Plex Sans Thai", "Leelawadee UI", Tahoma, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12181b; --surface: #1a2226; --sunk: #151c1f; --ink: #e5ebee; --muted: #9aa8af; --line: #2c373c;
+  --accent: #7cbcdb; --accent-soft: #1d3340;
+  --up: #f08b7f; --up-bg: #3a1f1c; --down: #6fd29b; --down-bg: #17321f; --flat: #a5b1b7; --flat-bg: #222b2f;
+  --n-file: #f3c463; --n-file-bg: #3a2f14; --n-fix: #8cc6ea; --n-fix-bg: #183040;
+  --n-rule: #b9a8f0; --n-rule-bg: #2a2342; --n-info: #a5b1b7; --n-info-bg: #222b2f;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #12181b; --surface: #1a2226; --sunk: #151c1f; --ink: #e5ebee; --muted: #9aa8af; --line: #2c373c;
+  --accent: #7cbcdb; --accent-soft: #1d3340;
+  --up: #f08b7f; --up-bg: #3a1f1c; --down: #6fd29b; --down-bg: #17321f; --flat: #a5b1b7; --flat-bg: #222b2f;
+  --n-file: #f3c463; --n-file-bg: #3a2f14; --n-fix: #8cc6ea; --n-fix-bg: #183040;
+  --n-rule: #b9a8f0; --n-rule-bg: #2a2342; --n-info: #a5b1b7; --n-info-bg: #222b2f;
+  color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); }
+.wrap { max-width: 1080px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 56px; display: grid; gap: 18px; }
+h1, h2 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.01em; }
+.sub { color: var(--muted); margin: 4px 0 0; font-size: .92rem; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* แถบควบคุม */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 10px; display: grid; gap: 10px; border-bottom: 1px solid var(--line); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.lbl { font-size: .82rem; color: var(--muted); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg button, .chip { font: inherit; font-size: .88rem; border: 0; background: transparent; color: var(--ink); padding: 6px 12px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
+.chip { border: 1px solid var(--line); border-radius: 999px; background: var(--surface); padding: 4px 12px; }
+.chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input[type="search"] { font: inherit; font-size: .9rem; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); min-width: 0; flex: 1 1 180px; max-width: 260px; }
+label.tog { display: inline-flex; gap: 6px; align-items: center; font-size: .88rem; cursor: pointer; }
+
+/* สรุป */
+.sum { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { display: inline-flex; gap: 6px; align-items: baseline; padding: 6px 12px; border-radius: 8px; font-size: .9rem; }
+.pill b { font-family: var(--font-display); font-size: 1.15rem; }
+.pill.up { background: var(--up-bg); color: var(--up); }
+.pill.down { background: var(--down-bg); color: var(--down); }
+.pill.flat { background: var(--flat-bg); color: var(--flat); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .82rem; color: var(--muted); }
+.legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.legend .l-file::before { background: var(--n-file); } .legend .l-fix::before { background: var(--n-fix); }
+.legend .l-rule::before { background: var(--n-rule); } .legend .l-info::before { background: var(--n-info); }
+.legend span:not([class])::before { display: none; }
+
+/* การ์ดรายบาน */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; display: grid; gap: 10px; padding: 14px 16px; min-width: 0; }
+.card header { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; justify-content: space-between; }
+.card h2 { font-size: 1.15rem; font-weight: 600; }
+.meta { font-size: .84rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.meta .warn { color: var(--n-file); font-weight: 600; }
+.note { font-size: .86rem; padding: 7px 10px; border-radius: 6px; }
+.note.file { background: var(--n-file-bg); color: var(--n-file); }
+.note.fix { background: var(--n-fix-bg); color: var(--n-fix); }
+.note.rule { background: var(--n-rule-bg); color: var(--n-rule); }
+.note.info { background: var(--n-info-bg); color: var(--n-info); }
+details.spec { font-size: .82rem; color: var(--muted); }
+details.spec summary { cursor: pointer; width: fit-content; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { padding: 7px 8px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line); }
+th { font-size: .76rem; font-weight: 500; color: var(--muted); letter-spacing: .02em; vertical-align: bottom; }
+th.grp { text-align: center; border-bottom: 0; padding-bottom: 0; }
+td.c, th.c { text-align: left; white-space: normal; min-width: 130px; }
+tr.base td { background: var(--sunk); }
+tr.na td { color: var(--muted); }
+td.web { font-weight: 600; }
+.ty { display: block; font-size: .74rem; color: var(--muted); }
+.tag { display: inline-block; font-size: .7rem; padding: 0 6px; border-radius: 4px; background: var(--flat-bg); color: var(--flat); margin-left: 4px; white-space: nowrap; }
+.tag.sw { background: var(--n-rule-bg); color: var(--n-rule); }
+.d { display: inline-block; min-width: 76px; padding: 1px 6px; border-radius: 5px; font-weight: 600; }
+.d.up { background: var(--up-bg); color: var(--up); }
+.d.down { background: var(--down-bg); color: var(--down); }
+.d.flat { background: var(--flat-bg); color: var(--flat); }
+.d small { font-weight: 400; opacity: .85; }
+.det { display: none; }
+body.show-det .det { display: table-cell; }
+th.det.grp { text-align: center; }
+.empty { color: var(--muted); text-align: center; padding: 30px; }
+footer { font-size: .8rem; color: var(--muted); }
+@media (max-width: 560px) { h1 { font-size: 1.45rem; } .card { padding: 12px; } }
+</style>
+
+<div class="wrap">
+  <div>
+    <h1>เทียบค่าอบสี</h1>
+    <p class="sub" id="sub">ราคาขายรวม (ผลิต+ติดตั้ง) ต่อชุด · ขนาดและจำนวนบานตามไฟล์ เทียบค่าอบสี.xlsx</p>
+  </div>
+
+  <div class="bar">
+    <div class="row">
+      <span class="lbl">เทียบ R4.0 เว็บ กับ</span>
+      <div class="seg" role="group" aria-label="เทียบกับ">
+        <button id="b39" aria-pressed="true">R3.9</button>
+        <button id="b40" aria-pressed="false">R4.0 เดิม (ไฟล์)</button>
+      </div>
+      <input type="search" id="q" placeholder="ค้นชื่อบาน หรือ สี" aria-label="ค้นหา">
+      <label class="tog"><input type="checkbox" id="det"> ดูค่าสี + ทุนสี</label>
+    </div>
+    <div class="row" id="groups" role="group" aria-label="หมวด"></div>
+  </div>
+
+  <div class="sum" id="sum"></div>
+  <div class="legend">
+    <span class="l-file">ไฟล์เดิมเขียนผิด</span><span class="l-fix">เว็บแก้แล้ว</span><span class="l-rule">กฎสีที่เคาะใหม่</span><span class="l-info">ข้อมูลประกอบ</span>
+    <span style="padding-left:0">แดง = R4.0 เว็บ แพงกว่า · เขียว = ถูกกว่า · เทา = ต่างไม่เกิน 2%</span>
+  </div>
+
+  <div id="list" style="display:grid;gap:14px"></div>
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const DATA = /*__DATA__*/null;
+const $ = (s) => document.querySelector(s);
+const fmt = (v) => (typeof v === "number" ? v.toLocaleString("en-US") : "—");
+let basis = "39", group = "ทั้งหมด", query = "";
+try { const s = JSON.parse(localStorage.getItem("cc-view") || "{}"); if (s.basis) basis = s.basis; if (s.det) document.body.classList.add("show-det"); } catch {}
+const save = () => { try { localStorage.setItem("cc-view", JSON.stringify({ basis, det: document.body.classList.contains("show-det") })); } catch {} };
+
+function diff(web, old) {
+  if (typeof web !== "number" || typeof old !== "number" || !old) return { cls: "", html: "—", kind: null };
+  const d = web - old, p = Math.round((d / old) * 1000) / 10;
+  const kind = p > 2 ? "up" : p < -2 ? "down" : "flat";
+  const sign = d > 0 ? "+" : d < 0 ? "−" : "";
+  return { kind, html: `<span class="d ${kind}">${sign}${Math.abs(p)}% <small>${sign}${fmt(Math.abs(d))}</small></span>` };
+}
+
+function render() {
+  $("#b39").setAttribute("aria-pressed", basis === "39");
+  $("#b40").setAttribute("aria-pressed", basis === "40");
+  const groups = ["ทั้งหมด", ...new Set(DATA.data.map((p) => p.group))];
+  $("#groups").innerHTML = groups.map((g) => `<button class="chip" aria-pressed="${g === group}" data-g="${g}">${g}</button>`).join("");
+  const ql = query.trim().toLowerCase();
+  const prods = DATA.data.filter((p) => (group === "ทั้งหมด" || p.group === group)
+    && (!ql || p.name.toLowerCase().includes(ql) || p.rows.some((r) => String(r.color).toLowerCase().includes(ql))));
+  const cnt = { up: 0, down: 0, flat: 0 };
+  const bName = basis === "39" ? "R3.9" : "R4.0 เดิม";
+  $("#list").innerHTML = prods.length ? prods.map((p) => {
+    const rows = p.rows.map((r) => {
+      if (r.na) return `<tr class="na"><td class="c">${r.color}<span class="ty">${r.type}</span></td><td colspan="4" style="text-align:left">ไม่มีสีนี้ขาย</td><td class="det" colspan="6"></td></tr>`;
+      const old = basis === "39" ? r.t39 : r.t40;
+      const dd = diff(r.tWeb, old);
+      if (dd.kind && !r.base) cnt[dd.kind]++;
+      const tags = (r.oven ? `<span class="tag">+ตู้อบ</span>` : "") + (r.swapped ? `<span class="tag sw">คิดเป็นลายไม้อบพิเศษ</span>` : "");
+      return `<tr class="${r.base ? "base" : ""}">
+        <td class="c">${r.color}${tags}<span class="ty">${r.type}</span></td>
+        <td class="num">${fmt(r.t39)}</td><td class="num">${fmt(r.t40)}</td><td class="num web">${fmt(r.tWeb)}</td>
+        <td class="num">${dd.html}</td>
+        <td class="num det">${r.base ? "ฐาน" : fmt(r.a39)}</td><td class="num det">${r.base ? "ฐาน" : fmt(r.a40)}</td><td class="num det web">${r.base ? "ฐาน" : fmt(r.aWeb)}</td>
+        <td class="num det">${r.base ? "—" : fmt(r.c40)}</td><td class="num det web">${r.base ? fmt(r.costWeb) + " <span class='ty'>ทุนทั้งชุด</span>" : fmt(r.cWeb)}</td>
+      </tr>`;
+    }).join("");
+    const kgOff = p.kgFile && p.kgWeb && Math.abs(p.kgWeb - p.kgFile) / p.kgFile > 0.1;
+    return `<section class="card" id="${encodeURIComponent(p.name)}">
+      <header><h2>${p.name}</h2>
+        <div class="meta"><span>${p.size} ซม.${/\d/.test(p.panels) ? ` · ${p.panels} บาน` : ""}</span>
+          <span class="${kgOff ? "warn" : ""}">อลูที่อบ: ไฟล์ ${p.kgFile ?? "—"} กก. · เว็บ ${p.kgWeb || "—"} กก.</span></div></header>
+      ${p.note ? `<div class="note ${p.note.level}">${p.note.text}</div>` : ""}
+      <div class="tbl"><table>
+        <thead>
+          <tr><th class="c"></th><th class="grp" colspan="4">ราคาขายรวม (บาท)</th><th class="grp det" colspan="3">ค่าสีที่บวกจากสีขาว</th><th class="grp det" colspan="2">ทุนสีที่เพิ่ม</th></tr>
+          <tr><th class="c">สี</th><th>R3.9</th><th>R4.0 เดิม</th><th>R4.0 เว็บ</th><th>เว็บ เทียบ ${bName}</th>
+            <th class="det">R3.9</th><th class="det">R4.0 เดิม</th><th class="det">R4.0 เว็บ</th><th class="det">R4.0 เดิม</th><th class="det">R4.0 เว็บ</th></tr>
+        </thead><tbody>${rows}</tbody></table></div>
+      ${p.spec ? `<details class="spec"><summary>อลูที่ใช้ (ตามไฟล์)</summary>${p.spec}</details>` : ""}
+    </section>`;
+  }).join("") : `<div class="empty">ไม่เจอบานหรือสีที่ค้น</div>`;
+  $("#sum").innerHTML = `<span class="pill up">R4.0 เว็บ แพงกว่า ${bName} <b>${cnt.up}</b> สี</span>
+    <span class="pill down">ถูกกว่า <b>${cnt.down}</b> สี</span><span class="pill flat">ใกล้กัน ±2% <b>${cnt.flat}</b> สี</span>`;
+  $("#det").checked = document.body.classList.contains("show-det");
+}
+
+$("#b39").onclick = () => { basis = "39"; save(); render(); };
+$("#b40").onclick = () => { basis = "40"; save(); render(); };
+$("#groups").onclick = (e) => { const g = e.target.closest("[data-g]"); if (g) { group = g.dataset.g; render(); } };
+$("#q").oninput = (e) => { query = e.target.value; render(); };
+$("#det").onchange = (e) => { document.body.classList.toggle("show-det", e.target.checked); save(); };
+$("#foot").textContent = `R3.9 และ R4.0 เดิม = เลขในไฟล์ เทียบค่าอบสี.xlsx · R4.0 เว็บ = คิดราคา 4.0 ตอนนี้ (เรตอลู 3 แบรนด์ + ราคาสโตร์จริง ${DATA.meta.nStock.toLocaleString("en-US")} แถว) · คำนวณเมื่อ ${DATA.meta.builtAt}`;
+$("#sub").textContent += ` · อัปเดต ${DATA.meta.builtAt}`;
+render();
+</script>
