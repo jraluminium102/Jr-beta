@@ -259,6 +259,8 @@ export default function CutlistEditorClient({
       if (d.hwFailed?.length) parts.push(`⚠ อุปกรณ์หักไม่สำเร็จ ${d.hwFailed.length} รายการ`);
       // ของสั่งตามงาน = ไม่ได้สต็อกไว้ ตั้งใจไม่หัก — บอกให้รู้ว่าต้องสั่งอะไร ไม่ใช่คำเตือน
       if (d.orderOnly?.length) parts.push(`🛒 ของสั่งตามงาน ${d.orderOnly.length} รายการ (ไม่หักสต็อก): ${d.orderOnly.map((x: { name: string; qty: number; unit: string }) => `${x.name} ${x.qty}${x.unit}`).join(", ")}`);
+      // ต้องสั่งมิว = แบรนด์ไม่มีสีของงาน → ซื้อเส้นดิบเป๊ะตามงานไปอบ ไม่หักสต็อก แค่บอกให้ทราบ (12 ต.ค.69)
+      if (d.orderMill?.length) parts.push(`🛒 ต้องสั่งมิว ${d.orderMill.length} รายการ (สี${d.orderMill[0].color} แบรนด์ไม่มี — ไม่หักสต็อก): ${d.orderMill.map((x: { code: string; qty: number; unit: string }) => `${x.code} ${x.qty}${x.unit}`).join(" · ")}`);
       if (d.failed?.length) parts.push(`⚠ หักไม่สำเร็จ ${d.failed.length} รหัส (${d.failed.map((f: { code: string }) => f.code).join(", ")}) — เช็ค/หักมือที่หน้าสต๊อก`);
       setOkMsg(parts.join(" · "));
       router.refresh();
@@ -346,6 +348,7 @@ export default function CutlistEditorClient({
           {cutSummary?.skipped?.length ? ` · ข้ามอลู ${cutSummary.skipped.length} รหัส: ${cutSummary.skipped.map((s: { code: string; why?: string }) => `${s.code}${s.why ? ` (${s.why})` : ""}`).join(", ")} — หักมือได้ที่หน้าสต๊อก` : ""}
           {cutSummary?.hwSkipped?.length ? ` · ข้ามอุปกรณ์ ${cutSummary.hwSkipped.length} รายการ: ${cutSummary.hwSkipped.map((s: { sku: string; name: string }) => `${s.sku} ${s.name}`).join(", ")} — หักมือได้ที่หน้าสต๊อก` : ""}
           {cutSummary?.orderOnly?.length ? ` · 🛒 ของสั่งตามงาน ${cutSummary.orderOnly.length} รายการ (ไม่ได้สต็อกไว้ ไม่หักสต็อก): ${cutSummary.orderOnly.map((s: { name: string; qty: number; unit: string }) => `${s.name} ${s.qty}${s.unit}`).join(", ")}` : ""}
+          {cutSummary?.orderMill?.length ? ` · 🛒 ต้องสั่งมิว ${cutSummary.orderMill.length} รายการ (แบรนด์ไม่มีสี${cutSummary.orderMill[0].color} — ไม่หักสต็อก): ${cutSummary.orderMill.map((s: { code: string; qty: number; unit: string }) => `${s.code} ${s.qty}${s.unit}`).join(" · ")}` : ""}
           {cutSummary?.failed?.length ? ` · ⚠ หักไม่สำเร็จ ${cutSummary.failed.length} รหัส: ${cutSummary.failed.map((s: { code: string }) => s.code).join(", ")}` : ""}
           {cutSummary?.failed?.length && canCutStock ? (
             <button onClick={retryFailed} disabled={busy}

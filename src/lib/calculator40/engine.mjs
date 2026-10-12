@@ -426,7 +426,10 @@ export function computeCost(PB, prod, opt) {
     //   PB.ALU_BRAND_ALT = เส้นที่สีบางสีต้องไปซื้อยี่ห้ออื่น (เส้นกลาง สีแอทแทค/มะฮอก/ไวท์โอ๊ค = ฟูจิ)
     const bColName0 = (PB.ALU_COLOR_NAME || {})[greyUp ? 'white' : (opt.colorKey || color)];
     const bAlt = brandOn && code && PB.ALU_BRAND_ALT ? (PB.ALU_BRAND_ALT[code] || {})[bColName0] : null;
-    const bBrand = bAlt || (brandOn && code && PB.ALU_BRAND_OF ? PB.ALU_BRAND_OF[code] : null);
+    const bBrand0 = bAlt || (brandOn && code && PB.ALU_BRAND_OF ? PB.ALU_BRAND_OF[code] : null);
+    //   PB.ALU_BRAND_FALLBACK = แบรนด์ที่ไม่มีสีนี้ทั้งแบรนด์ → โยนไปแบรนด์อื่น (ตลาด ลายไม้สักทอง → SMS · 12 ต.ค.69)
+    const bFb = bBrand0 && bColName0 && PB.ALU_BRAND_FALLBACK ? (PB.ALU_BRAND_FALLBACK[bBrand0] || {})[bColName0] : null;
+    const bBrand = bFb || bBrand0;
     const bRates = bBrand && PB.ALU_BRAND ? PB.ALU_BRAND[bBrand] : null;
     const bKg = brandOn && code && PB.ALU_KG ? Number(PB.ALU_KG[code]) || 0 : 0;
     const bColName = bColName0;

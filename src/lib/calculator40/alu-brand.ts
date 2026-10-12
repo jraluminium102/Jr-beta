@@ -34,7 +34,10 @@ const BRAND_ALT: Record<string, Record<string, string>> = ((PRICEBOOK as any).AL
 const RATE_COLOR: Record<string, string> = {
   "Aztec gray": "แอทแทคเกรย์", "Aztecgray": "แอทแทคเกรย์", "ไวท์โอ็ค": "ไวท์โอ๊ค", "ขาว": "อบขาว",
 };
-const rateColorOf = (c?: string | null) => { const t = String(c ?? "").trim(); return RATE_COLOR[t] ?? t; };
+export const rateColorOf = (c?: string | null) => { const t = String(c ?? "").trim(); return RATE_COLOR[t] ?? t; };
+// แบรนด์ที่ไม่มีสีนั้นทั้งแบรนด์ → โยนไปแบรนด์อื่น (ตลาด ลายไม้สักทอง → SMS · เจ้าของสั่ง 12 ต.ค.69)
+const BRAND_FALLBACK: Record<string, Record<string, string>> = ((PRICEBOOK as any).ALU_BRAND_FALLBACK ?? {}) as Record<string, Record<string, string>>;
+const RATES: Record<string, Record<string, number>> = ((PRICEBOOK as any).ALU_BRAND ?? {}) as Record<string, Record<string, number>>;
 
 // กล่อง/ฉาก ไซส์ที่เป็นฟูจิ (ลิสต์เจ้าของ 8 ต.ค.69) — ไซส์นอกลิสต์/มีชื่อเรียก = ตลาด
 const FUJI_BOX = ["1X1", "1X1.6", "1X2", "1X4", "1.6X1.6", "1.6X3", "1.6X4", "2X2", "2X4", "4X4"];
@@ -78,11 +81,29 @@ export function aluBrandOfRow(sku?: string | null, name?: string | null, color?:
   const codes = aluCodesOfRow(String(sku ?? ""), String(name ?? ""));
   const rc = rateColorOf(color);
   if (rc) for (const c of codes) { const b = (BRAND_ALT[c] ?? {})[rc]; if (b) return b as AluBrand; }
+  let brand: AluBrand = "";
   for (const c of codes) {
     const b = BRAND_OF[c];
-    if (b && b !== "fixed") return b as AluBrand;
+    if (b && b !== "fixed") { brand = b as AluBrand; break; }
   }
-  return guessAluBrand(String(sku ?? ""), String(name ?? ""));
+  if (!brand) brand = guessAluBrand(String(sku ?? ""), String(name ?? ""));
+  const fb = rc && brand ? (BRAND_FALLBACK[brand] ?? {})[rc] : "";
+  return (fb || brand) as AluBrand;
+}
+
+/**
+ * แบรนด์ของเส้นนี้ "ไม่มีสีนี้ขาย" ไหม (ต้องซื้อเส้นมิวมาอบเอง)
+ *   รู้แบรนด์ (ฟูจิ/SMS/ตลาด หลังตีข้ามแบรนด์ตามสีแล้ว) แต่ตารางเรตของแบรนด์นั้นไม่มีสีนี้
+ *   ใช้ตอนตัดออกสโตร์: ไม่หัก แต่ออกรายการ "ต้องสั่งมิว" (เจ้าของสั่ง 12 ต.ค.69)
+ */
+export function brandLacksColor(sku?: string | null, name?: string | null, color?: string | null): boolean {
+  const rc = rateColorOf(color);
+  if (!rc) return false;
+  const b = aluBrandOfRow(sku, name, color);
+  if (!b || b === "fixed") return false;
+  const table = RATES[b];
+  if (!table) return false;
+  return !((Number(table[rc]) || 0) > 0);
 }
 
 /** ป้ายแบรนด์สำหรับโชว์บนจอ — "" = ซื้อเป็นเส้น */

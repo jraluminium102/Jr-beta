@@ -593,7 +593,7 @@ console.log("\n" + "═══ ⑬ จับคู่น้ำหนักกั�
     ok("ตัวตัดสินแบรนด์อยู่ที่เดียว (lib/calculator40/alu-brand) อ่าน PB.ALU_BRAND_OF",
       lib.includes("ALU_BRAND_OF") && lib.includes("export function aluBrandOfRow"), "");
     ok("จัดกลุ่มแบรนด์: เช็ค pricebook ก่อน แล้วค่อยเดาจากรหัส/ชื่อ",
-      lib.includes('if (b && b !== "fixed") return b as AluBrand;') && lib.includes("return guessAluBrand("), "");
+      lib.includes('if (b && b !== "fixed") { brand = b as AluBrand; break; }') && lib.includes("brand = guessAluBrand("), "");
     ok("มีตัวตัดรหัสกลางจากชื่อแถว (ตัดรหัสหน้า + สีท้าย)", lib.includes("export function aluCodesOfRow("), "");
     ok("หน้าเรตอลู + หน้าเช็คสต๊อกวัสดุ ใช้ตัวกลางตัวนี้ ไม่เดาเอง",
       cl.includes('from "@/lib/calculator40/alu-brand"') && sc.includes('from "@/lib/calculator40/alu-brand"')
@@ -621,9 +621,12 @@ console.log("\n" + "═══ ⑬ จับคู่น้ำหนักกั�
     ok("เดาแบรนด์: อ่านรหัสหน้าชื่อด้วย ไม่ใช่ sku อย่างเดียว",
       lib2.includes("const head = (n.match(") && lib2.includes('.test(head)) return "sms"') && lib2.includes('.test(head)) return "fuji"'), "");
     // ตลาดไม่มีสีลายไม้สักทอง → ใช้เรต SMS (เจ้าของสั่ง "ตีกลับไปเปน sms")
-    ok("ตลาด ลายไม้สักทอง = เรต SMS",
-      (PB.ALU_BRAND?.market ?? {})["ลายไม้สักทอง"] === (PB.ALU_BRAND?.sms ?? {})["ลายไม้สักทอง"],
-      String((PB.ALU_BRAND?.market ?? {})["ลายไม้สักทอง"]));
+    // 12 ต.ค.69 "ตลาดไม่มีลายไม้สักทอง โยนเส้นทุกอันที่อยู่ในตลาด ลายไม้สักทอง ไปอยู่ SMS" → fallback ทั้งแบรนด์ ไม่ก๊อปเรต
+    ok("ตารางตลาดไม่มีลายไม้สักทอง (ไม่ก๊อปเรตมา)", !((PB.ALU_BRAND?.market ?? {})["ลายไม้สักทอง"] > 0), "");
+    ok("ALU_BRAND_FALLBACK: ตลาด ลายไม้สักทอง → sms", PB.ALU_BRAND_FALLBACK?.market?.["ลายไม้สักทอง"] === "sms", JSON.stringify(PB.ALU_BRAND_FALLBACK));
+    ok("ป้าย ตัวZ 4\" ลายไม้สักทอง → SMS", aluBrandLabel("JR02993", 'ตัวZ 4"-ลายไม้สักทอง', "ลายไม้สักทอง") === "SMS",
+      aluBrandLabel("JR02993", 'ตัวZ 4"-ลายไม้สักทอง', "ลายไม้สักทอง"));
+    ok("เอนจินอ่าน ALU_BRAND_FALLBACK", fs.readFileSync(path.join(ROOT, "src/lib/calculator40/engine.mjs"), "utf8").includes("PB.ALU_BRAND_FALLBACK[bBrand0]"), "");
     // ⚠ Aztec/มะฮอก/ไวท์โอ๊ค: SMS กับ ตลาด ห้ามตีกลับไปใช้เรตฟูจิ
     //   เจ้าของอธิบาย 10 ต.ค.69 "อบสีพิเศษเท่านั้น ใช้ฟูจิทำไมได้ มันใช้เส้นตลาด sms ไง"
     //   = เส้นคนละแบรนด์คือคนละโปรไฟล์ สลับกันไม่ได้ ต้องซื้อเส้นขาวมาอบเอง

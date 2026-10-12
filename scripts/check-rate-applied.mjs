@@ -43,7 +43,8 @@ const BR = PB.ALU_BRAND_OF ?? {};
 const KG = PB.ALU_KG ?? {};
 const rows = [];
 for (const v of got.values()) {
-  const brand = BR[v.code];
+  const brand0 = BR[v.code];
+  const brand = ((PB.ALU_BRAND_FALLBACK ?? {})[brand0] ?? {})[v.color] ?? brand0;   // ตลาด ลายไม้สักทอง → sms
   // ALUCODE_NOCOLOR = เส้นสีเงิน/ผิวเดิม ไม่อบสี → ราคาเดียวทุกสี (เรตขาว) ตามที่เจ้าของยืนยัน
   const noColor = (PB.ALUCODE_NOCOLOR ?? []).includes(v.code);
   const rate = brand && RATE[brand] ? (noColor ? RATE[brand]["อบขาว"] : RATE[brand][v.color]) : 0;

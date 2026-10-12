@@ -20,7 +20,9 @@ import MergeHistory from "@/components/stock/MergeHistory";
 
 const MOVE_LABEL: Record<StockMoveType, string> = { in: "รับเข้า", out: "จ่ายออก", adjust: "ปรับยอด" };
 const MOVE_TONE: Record<StockMoveType, "emerald" | "red" | "amber"> = { in: "emerald", out: "red", adjust: "amber" };
-const isLow = (it: StockItem) => Number(it.qty_on_hand) <= Number(it.min_qty);
+// ใกล้หมด = ตั้งจุดเตือนไว้ (> 0) แล้วคงเหลือถึงจุดนั้น · ไม่ตั้งจุดเตือน (0) = ไม่เตือน
+//   เดิม 0 <= 0 = เตือนทุกตัวที่ของหมด (เจ้าของสั่ง 12 ต.ค.69: อลูสีพิเศษ/รหัสที่ไม่ได้ใช้ ไม่ต้องตั้งจุดเตือน ไม่ต้องขึ้นเตือน)
+const isLow = (it: StockItem) => Number(it.min_qty) > 0 && Number(it.qty_on_hand) <= Number(it.min_qty);
 // น้ำหนักเก็บ 3 ตำแหน่ง — baht() ปัดเหลือ 2 ทำให้เลขที่โชว์ไม่ตรงที่บันทึก
 const fmt3 = (n: number) => Number(n || 0).toLocaleString("th-TH", { maximumFractionDigits: 3 });
 
@@ -41,10 +43,11 @@ type JobHit = StockJob;
 //   module scope เพราะใช้ทั้งในลิสต์ (StockClient) และการ์ดรายละเอียด (ItemDetail)
 const isAluRow = (c: StockItem) => /อลู/.test(String(c.category ?? "")) || isAluCode(c.sku);
 const brandOf = (c: StockItem) => (isAluRow(c) ? aluBrandOfRow(c.sku, c.name, c.color) : null);
+// เจ้าของเคาะสี 12 ต.ค.69: Euro Fuji เขียว · SMS ฟ้า · ตลาด แดง (ตัวหนังสือเข้ม-พื้นอ่อน อ่านชัดทั้งคู่)
 const BRAND_TONE: Record<string, string> = {
-  fuji: "text-sky-800 bg-sky-100",
-  sms: "text-violet-800 bg-violet-100",
-  market: "text-amber-800 bg-amber-100",
+  fuji: "text-green-900 bg-green-100",
+  sms: "text-sky-900 bg-sky-100",
+  market: "text-red-900 bg-red-100",
 };
 
 export default function StockClient({
