@@ -61,7 +61,6 @@ export default function StockClient({
   const [lowOnly, setLowOnly] = useState(false);
   const [calcOnly, setCalcOnly] = useState(false);
   const [boqOnly, setBoqOnly] = useState(false);
-  const [dupOnly, setDupOnly] = useState(false);
   const [catFilter, setCatFilter] = useState<number | null>(null);
   const [famFilter, setFamFilter] = useState<string>("");   // ใช้กับรุ่นอะไร (บานเฟี้ยม/บานเลื่อน SMS ฯลฯ)
   // กรองตามแบรนด์เส้นอลู (เจ้าของสั่ง 10 ต.ค.69 "อยากได้ปุ่มตัวกรองกดดู")
@@ -75,12 +74,9 @@ export default function StockClient({
   const [mergeHist, setMergeHist] = useState(false);
   const reqRef = useRef(0); // กัน stale response ทับ state เมื่อคลิกสลับเร็วๆ
 
-  // "น่าจะซ้ำ" = สต็อก 0 แต่ผูกใบตัด/คิดราคาอยู่ (มักเป็นตัวที่สร้างมาเพื่อคิดราคา/ใบตัด ทั้งที่มีของจริงอีกแถว)
-  const isDupHint = (c: StockItem) => Number(c.qty_on_hand) === 0 && (calcLink(c).linked || isInCutlist(c.sku));
   const lowCount = list.filter(isLow).length;
   const calcCount = list.filter((c) => calcLink(c).linked).length;
   const boqCount = list.filter((c) => isInCutlist(c.sku)).length;
-  const dupCount = list.filter(isDupHint).length;
   // ไม่มีราคา = ต้นทุน/หน่วย ≤ 0 (คิดต่อโลที่เรต/น้ำหนัก 0 ก็ออกมา 0 → จับได้ด้วย) · ไม่มีจำนวน = คงเหลือ ≤ 0
   const noPriceOf = (c: StockItem) => !(Number(c.unit_cost) > 0);
   const noImageOf = (c: StockItem) => !c.image_url;
@@ -92,7 +88,6 @@ export default function StockClient({
     .filter((c) => (lowOnly ? isLow(c) : true))
     .filter((c) => (calcOnly ? calcLink(c).linked : true))
     .filter((c) => (boqOnly ? isInCutlist(c.sku) : true))
-    .filter((c) => (dupOnly ? isDupHint(c) : true))
     .filter((c) => (famFilter ? skuInFamily(c.sku, famFilter, c.name) : true))
     .filter((c) => (brandFilter === null ? true : brandOf(c) === brandFilter))
     .filter((c) => (noPrice ? noPriceOf(c) : true))
@@ -294,19 +289,14 @@ export default function StockClient({
               className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${noQty ? "bg-slate-600 text-white" : "glass-soft text-ink-2"}`}>
               📦 ไม่มีจำนวน {noQtyCount > 0 ? `(${noQtyCount})` : ""}
             </button>
-            {canMerge && (
-              <button onClick={() => setDupOnly((v) => !v)} title="สต็อก 0 แต่ผูกใบตัด/คิดราคา — น่าจะเป็นตัวซ้ำที่ควรยุบรวม"
-                className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${dupOnly ? "bg-amber-500 text-white" : "glass-soft text-ink-2"}`}>
-                🔀 น่าจะซ้ำ {dupCount > 0 ? `(${dupCount})` : ""}
-              </button>
-            )}
+            {/* ปุ่มกรอง "น่าจะซ้ำ" เอาออก (เจ้าของสั่ง 10 ต.ค.69) — heuristic สต็อก0+ผูกใบตัด จับผิด: รหัสเดียวกันคนละสีไม่ใช่ซ้ำ · การรวมจริงใช้ปุ่ม "รวมรายการซ้ำเข้าตัวนี้" ในหน้ารายการแทน */}
             {isAdmin && (
               <button onClick={() => setMergeHist(true)} title="ดูประวัติการรวมรายการซ้ำย้อนหลัง (ใคร/รวมอะไร/เมื่อไหร่)"
                 className="press text-xs font-semibold rounded-full px-3 py-1.5 glass-soft text-ink-2">
                 🕘 ประวัติการรวม
               </button>
             )}
-            {(lowOnly || calcOnly || boqOnly || dupOnly || noPrice || noImage || noQty || famFilter || brandFilter !== null || catFilter !== null) && <button onClick={() => { setLowOnly(false); setCalcOnly(false); setBoqOnly(false); setDupOnly(false); setNoPrice(false); setNoImage(false); setNoQty(false); setFamFilter(""); setBrandFilter(null); setCatFilter(null); }} className="text-xs text-ink-3">ล้างตัวกรอง</button>}
+            {(lowOnly || calcOnly || boqOnly || noPrice || noImage || noQty || famFilter || brandFilter !== null || catFilter !== null) && <button onClick={() => { setLowOnly(false); setCalcOnly(false); setBoqOnly(false); setNoPrice(false); setNoImage(false); setNoQty(false); setFamFilter(""); setBrandFilter(null); setCatFilter(null); }} className="text-xs text-ink-3">ล้างตัวกรอง</button>}
           </div>
           <div className="space-y-2 max-h-[62vh] overflow-y-auto">
             {filtered.map((c) => {
