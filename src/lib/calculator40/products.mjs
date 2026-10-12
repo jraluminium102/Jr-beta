@@ -2561,6 +2561,8 @@ export const PRODUCTS = {
     id: 'cabinet_face', partsLinked: true, group: 4, name: 'ฝาตู้ Future Tech (เฉพาะบานหน้า)', brand: 'SMS', faceOnly: true, laborKey: 'บานตู้ Futuretech',
     icon: '🚪', materialLabel: 'สีเฟรม (มีผลราคา)', materials: ['สีดำ', 'สีทอง'], defMaterial: 'สีดำ',
     defForm: 'บานเลื่อน', forms: ['บานเลื่อน', 'บานเปิด'],
+    // ค่ากรีดราง = ออปชั่น ต้องกดเลือกเอง (เจ้าของ 12 ต.ค.69 "ฟิวเจอร์เทคไม่มีค่ากรีดรางตลอด เป็น option อย่าคิดเข้าไป")
+    specOpts: [{ key: 'groove', label: 'ค่ากรีดราง (ออปชั่น)', opts: ['ไม่กรีด', 'กรีดราง'], def: 'ไม่กรีด', priced: true }],
     defaults: { w: 120, h: 240, p: 2 }, defGlass: 'ใส 5มม.', minP: 1, maxP: 3, faceHint: 'แนะนำพื้นที่/บาน ≤ 1.7 ตร.ม. (บานใหญ่กว่านี้เสี่ยงแอ่น)',
     vars: {},
     glass: 'W*H',
@@ -2574,7 +2576,7 @@ export const PRODUCTS = {
       { name: 'สกรู (8/บาน)', sku: 'JR00224', price: 0.5, unit: 'ตัว', count: '8*P' },
       { name: 'ชุดล้อ (4ล้อ)', sku: 'JR00214', price: 100, unit: 'ชุด', count: "form==='บานเลื่อน'?P:0" },
       { name: 'รางยู', sku: 'JR00270', price: 180, unit: 'เส้น6ม', count: "form==='บานเลื่อน'?(2*(W/P)/6)*P:0" },
-      { labor: true, name: 'ค่ากรีดราง', sku: 'JR00202', price: 800, unit: 'ม.', count: "form==='บานเลื่อน'?2*W:0" },
+      { labor: true, name: 'ค่ากรีดราง', sku: 'JR00202', price: 800, unit: 'ม.', count: "form==='บานเลื่อน'&&spec.groove==='กรีดราง'?2*W:0" },   // 800/เมตร · เฉพาะกดเลือก
     ],
     consum: [
       // ⬇ เจ้าของสั่ง 5 ต.ค.69 "ค่าแรงเอาตามตาราง 4.1" → ย้ายไปใช้ชีต "ค่าแรง" แถว บานตู้ Futuretech

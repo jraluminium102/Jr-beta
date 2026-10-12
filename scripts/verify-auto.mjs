@@ -1082,6 +1082,15 @@ console.log("\n═══ เส้นไม่มีสีสต็อค → �
       !b2.some((l) => /ไม่มีสี|เปิดตู้อบ/.test(l.name)), b2.map((l) => l.name).join(" | "));
   }
 }
+// 12 ต.ค.69 — บานตู้ Futuretech: ค่ากรีดรางเป็นออปชั่น (เจ้าของ "ไม่มีค่ากรีดรางตลอด เป็น option อย่าคิดเข้าไป")
+console.log("\n═══ บานตู้ Futuretech ค่ากรีดราง = ออปชั่น ═══");
+{
+  const cab = (spec) => computeCost(PB, PRODUCTS.cabinet_face, { w: 60, h: 120, p: 1, form: "บานเลื่อน", color: "white", colorKey: "white", spec });
+  const g = (c) => (c.lines || []).find((l) => /กรีดราง/.test(l.name))?.amount || 0;
+  ok("ค่าตั้งต้น ไม่คิดค่ากรีดราง", g(cab({})) === 0, String(g(cab({}))));
+  ok("กดเลือก กรีดราง = 800 บาท/เมตร × 2×กว้าง", Math.abs(g(cab({ groove: "กรีดราง" })) - 800 * 1.2) < 0.5, String(g(cab({ groove: "กรีดราง" }))));
+  ok("มีตัวเลือกให้กด (ค่าตั้งต้น ไม่กรีด)", (PRODUCTS.cabinet_face.specOpts || []).some((o) => o.key === "groove" && o.def === "ไม่กรีด"));
+}
 // 12 ต.ค.69 — % ค่าของแยกตามขนาด (R41.matPctBySize · เจ้าของเคาะ "ตั้ง % แยกตามช่วงขนาด")
 console.log("\n═══ % ค่าของแยกตามขนาด (R41.matPctBySize) ═══");
 {
