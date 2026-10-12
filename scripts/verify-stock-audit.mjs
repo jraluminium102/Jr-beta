@@ -666,6 +666,12 @@ console.log("\n" + "═══ ⑬ จับคู่น้ำหนักกั�
     ok("F7944 = 5.722 กก./เส้น (ไฟล์ F7944B)", PB.ALU_KG?.F7944 === 5.722 && PB.ALUWEIGHT?.F7944 === 5.722,
       [PB.ALU_KG?.F7944, PB.ALUWEIGHT?.F7944].join("/"));
     // ตัวตรวจหน่วยน้ำหนัก (กก./เส้น ต้อง = กก./ม. × ความยาวเส้น) ต้องผ่านตลอด
+    // 12 ต.ค.69 ค่าอบต้องยึดตารางน้ำหนัก (ไฟล์) ก่อน kg ที่ฝังในสูตร — kg ฝัง 54 บรรทัดเป็นค่าเก่า (+74%/−83%)
+    const eng = fs.readFileSync(path.join(ROOT, "src/lib/calculator40/engine.mjs"), "utf8");
+    const kfb = eng.slice(eng.indexOf("const kgForBake ="), eng.indexOf("const kgForBake =") + 900);
+    ok("kgForBake: ตาราง กก./ม. × ความยาวเส้น มาก่อน it.kg", kfb.indexOf("PB.ALUWEIGHT_KGM") < kfb.indexOf("Number(it.kg) > 0"), "");
+    const al = spawnSync(process.execPath, [path.join(ROOT, "scripts/audit-alu-bar-length.mjs")], { encoding: "utf8" });
+    ok("audit-alu-bar-length: ทุกบรรทัดใช้ความยาวเส้นถูกตัว", al.status === 0, (al.stdout.match(/ไม่ตรง[^\n]*/) ?? [""])[0]);
     const au = spawnSync(process.execPath, [path.join(ROOT, "scripts/audit-alu-weight-units.mjs")], { encoding: "utf8" });
     ok("audit-alu-weight-units: กก./เส้น = กก./ม. × ความยาวเส้น ทุกรหัส", au.status === 0,
       (au.stdout.match(/ไม่สอดคล้อง \d+/) ?? [""])[0]);

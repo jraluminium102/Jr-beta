@@ -407,6 +407,12 @@ if (process.argv.includes("--write")) {
     if (!(Number(PB.ALUWEIGHT[code]) > 0)) { PB.ALUWEIGHT[code] = kg; confirmed.add(code); }
     else if (Math.abs(Number(PB.ALUWEIGHT[code]) - kg) / kg < 0.03) confirmed.add(code);   // เล่มยืนยันค่าชีต
   }
+  // กก./ม. ให้ทุกเส้นที่สูตรเรียกด้วย "ชื่อ" (กล่อง/ฉาก/แซด เมืองทอง = เส้น 6 ม.) — เดิมไม่มี
+  //   → kgForBake ตกไปใช้ kg ที่ฝังในสูตร ซึ่งเป็นค่าเก่า (กล่อง 1"x1.5" ฝัง 1.2 แต่ตาราง 1.99)
+  //   เติมจาก กก./เส้น ÷ 6 เฉพาะที่ยังไม่มี (ค่าที่มีอยู่แล้วไม่ทับ)
+  for (const r of rowsOut)
+    if (/[฀-๿]/.test(r.code) && r.kg > 0 && !(Number(PB.ALUWEIGHT_KGM[r.code]) > 0))
+      PB.ALUWEIGHT_KGM[r.code] = Math.round((r.kg / 6) * 100000) / 100000;
   PB.ALUWEIGHT_CONFIRMED = [...confirmed].sort();
   PB.ALU_KG = Object.fromEntries(rowsOut.filter((r) => r.kg > 0).map((r) => [r.code, Math.round(r.kg * 1000) / 1000]));
   // น้ำหนักเดิมใน ALUWEIGHT เพี้ยนจากไฟล์ถึง 34/79 รหัส (F7932 +396% · E-series +74%) — ตัวนี้คูณเป็นค่าอบ
