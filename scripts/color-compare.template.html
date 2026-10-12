@@ -104,8 +104,16 @@ td.web { font-weight: 600; }
 .d small { font-weight: 400; opacity: .85; }
 .det { display: none; }
 body.show-det .det { display: table-cell; }
-.d41 { display: none; }
-body.show-det41 .d41 { display: table-cell; }
+td.sep, th.sep { border-left: 1px solid var(--line); }
+.v { display: block; font-variant-numeric: tabular-nums; }
+.v.big { font-weight: 600; }
+.ref { display: block; font-size: .74rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+body.hide41 .ref { display: none; }
+td.hi-up { background: var(--up-bg); } td.hi-up .v { color: var(--up); }
+td.hi-down { background: var(--down-bg); } td.hi-down .v { color: var(--down); }
+.net { font-weight: 600; }
+.net.low { color: var(--up); }
+.tgt { font-size: .72rem; color: var(--muted); display: block; }
 th.det.grp { text-align: center; }
 .empty { color: var(--muted); text-align: center; padding: 30px; }
 footer { font-size: .8rem; color: var(--muted); }
@@ -129,21 +137,20 @@ footer { font-size: .8rem; color: var(--muted); }
     <p class="sub" id="sub">ราคาขายรวม (ผลิต+ติดตั้ง) ต่อชุด</p>
   </div>
   <div class="tabs" role="tablist">
-    <button role="tab" id="t-r41" data-tab="r41">เทียบตาราง R4.1 (ราคาที่อยากขาย)</button>
+    <button role="tab" id="t-r41" data-tab="r41">ทุน + ราคาขาย เทียบตาราง R4.1</button>
     <button role="tab" id="t-color" data-tab="color">เทียบค่าอบสี (R3.9 · R4.0 เดิม)</button>
   </div>
 
   <div id="tab-r41" hidden>
-    <div class="finds" id="finds"></div>
     <div class="bar">
       <div class="row">
         <input type="search" id="q41" placeholder="ค้นชื่อบาน" aria-label="ค้นหาบาน">
-        <label class="tog"><input type="checkbox" id="only5"> เฉพาะแถวที่ต่างเกิน 5%</label>
-        <label class="tog"><input type="checkbox" id="det41"> ดูทุน + ค่าแรง</label>
+        <div class="row" id="groups41" role="group" aria-label="หมวด"></div>
+        <label class="tog"><input type="checkbox" id="hide41"> ซ่อนเลข R4.1</label>
       </div>
     </div>
     <div class="sum" id="sum41"></div>
-    <div class="legend"><span style="padding-left:0">ต่าง % = (เว็บ − R4.1) ÷ R4.1 · แดง = เว็บแพงกว่าเกิน 2% · เขียว = ถูกกว่าเกิน 2% · ตาราง R4.1 = ★ ตารางราคาขาย R4.1.pdf</span></div>
+    <div class="legend"><span style="padding-left:0">เลขตัวใหญ่ = เว็บตอนนี้ · ตัวเล็กข้างใต้ = ★ ตารางราคาขาย R4.1 · ช่องสีแดง/เขียว = เว็บสูง/ต่ำกว่าตารางเกิน 2% · กำไรสุทธิ = (ขายรวม − ค่าดำเนินการ 30% ที่ฝังในราคา − ทุนรวม) ÷ ขายรวม</span></div>
     <div id="list41" style="display:grid;gap:14px"></div>
   </div>
 
@@ -241,53 +248,68 @@ $("#det").onchange = (e) => { document.body.classList.toggle("show-det", e.targe
 $("#foot").textContent = `ตาราง R4.1 = ★ ตารางราคาขาย R4.1.pdf · R3.9 และ R4.0 เดิม = เลขในไฟล์ เทียบค่าอบสี.xlsx · เว็บ = คิดราคา 4.0 ตอนนี้ (เรตอลู 3 แบรนด์ + ราคาสโตร์จริง ${DATA.meta.nStock.toLocaleString("en-US")} แถว) · คำนวณเมื่อ ${DATA.meta.builtAt}`;
 $("#sub").textContent += ` · อัปเดต ${DATA.meta.builtAt}`;
 
-// ── แท็บ เทียบตาราง R4.1 ──
-const R41 = DATA.r41 || { rows: [], notes: {}, finds: [] };
-let q41 = "", only5 = false;
+// ── แท็บ ทุน + ราคาขาย เทียบตาราง R4.1 (หน้าตาแบบ ★ ตารางราคาขาย R4.1.pdf) ──
+const R41 = DATA.r41 || { rows: [], notes: {} };
+let q41 = "", g41 = "ทั้งหมด";
+try { if (localStorage.getItem("cc-hide41") === "1") document.body.classList.add("hide41"); } catch {}
 const pct = (a, b) => (typeof a === "number" && b ? Math.round(((a - b) / b) * 1000) / 10 : null);
 const kindOf = (p) => (p == null ? null : p > 2 ? "up" : p < -2 ? "down" : "flat");
 const chip = (p) => (p == null ? "—" : `<span class="d ${kindOf(p)}">${p > 0 ? "+" : ""}${p}%</span>`);
-$("#finds").innerHTML = `<h2>ควรทำอะไร</h2>` + R41.finds.map((f) => `<div class="find"><span class="sev ${f.sev}">${f.tag}</span>
-  <div><b>${f.title}</b><p>${f.why}</p>${f.act ? `<div class="act">→ ${f.act}</div>` : ""}</div></div>`).join("");
+// กำไรสุทธิตามชีต: ยอดขาย − ค่าดำเนินการที่ฝังในราคา (ขาย × 30 ÷ 130) − ทุนตรง
+const netOf = (sT, cT) => (sT > 0 ? Math.round(((sT - sT * 30 / 130 - cT) / sT) * 1000) / 10 : null);
+const GRP41 = (name) => /หลังคา|กลาสเฮ้าส์/.test(name) ? "หลังคา" : /ระแนง|รั้ว|ราว/.test(name) && !/เลื่อน/.test(name) ? "ระแนง/รั้ว/ราว"
+  : /ฝ้า|ผนัง|พื้น|ไฟ/.test(name) ? "ฝ้า/ผนัง/พื้น" : /เลื่อน|Slim|E-series/i.test(name) ? "บานเลื่อน" : /เฟี้ยม/.test(name) ? "เฟี้ยม" : "บานเปิด/อื่น ๆ";
+// ช่องเดียว: เลขเว็บตัวใหญ่ + เลขตารางตัวเล็ก · ต่างเกิน 2% ระบายสี
+const cell = (web, ref, big, cls = "") => {
+  const p = pct(web, ref), k = (p != null && Math.abs(p) > 2) ? (p > 0 ? " hi-up" : " hi-down") : "";
+  return `<td class="num${cls}${k}"><span class="v${big ? " big" : ""}">${fmt(web)}</span><span class="ref">${fmt(ref)}</span></td>`;
+};
 function render41() {
-  const ql = q41.trim().toLowerCase();
   const groups = new Map();
   for (const r of R41.rows) { const k = (r.name || r.head) + (r.vk ? " · " + r.vk : ""); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(r); }
-  const cnt = { up: 0, down: 0, flat: 0, out5: 0, na: 0 };
-  const cards = [];
+  const gnames = ["ทั้งหมด", ...new Set([...groups.keys()].map(GRP41))];
+  $("#groups41").innerHTML = gnames.map((g) => `<button class="chip" aria-pressed="${g === g41}" data-g="${g}">${g}</button>`).join("");
+  const ql = q41.trim().toLowerCase();
+  const cnt = { up: 0, down: 0, flat: 0, na: 0 }, cards = [];
   for (const [k, rs] of groups) {
+    if (g41 !== "ทั้งหมด" && GRP41(k) !== g41) continue;
     if (ql && !k.toLowerCase().includes(ql)) continue;
-    const ps = rs.filter((r) => r.web).map((r) => pct(r.web.sT, r.pdf.sT));
-    for (const p of ps) { cnt[kindOf(p)]++; if (Math.abs(p) > 5) cnt.out5++; }
-    cnt.na += rs.filter((r) => !r.web).length;
-    const shown = only5 ? rs.filter((r) => r.web && Math.abs(pct(r.web.sT, r.pdf.sT)) > 5) : rs;
-    if (!shown.length) continue;
-    const note = R41.notes[rs[0].id] || (rs[0].id ? null : { level: "info", text: rs[0].na || "" });
-    const avg = ps.length ? Math.round(ps.reduce((a, b) => a + b, 0) / ps.length * 10) / 10 : null;
-    const rows = shown.map((r) => {
-      const size = `${r.w}×${r.h}${r.p > 1 ? ` · ${r.p} บาน` : ""}${r.small ? ' <span class="tag">ไซซ์เล็ก ราคาตายตัว</span>' : ""}`;
-      if (!r.web) return `<tr class="na"><td class="c">${size}</td><td class="num">${fmt(r.pdf.sT)}</td><td colspan="2" style="text-align:left">${r.na}</td><td class="num d41" colspan="6"></td></tr>`;
-      const p = pct(r.web.sT, r.pdf.sT);
-      const labWarn = (Math.abs(r.web.cP - r.pdf.cP) > 1 || Math.abs(r.web.cI - r.pdf.cI) > 1) ? ' <span class="tag sw">ทุนค่าแรงต่าง</span>' : "";
-      return `<tr><td class="c">${size}${labWarn}</td><td class="num">${fmt(r.pdf.sT)}</td><td class="num web">${fmt(r.web.sT)}</td><td class="num">${chip(p)}</td>
-        <td class="num d41">${fmt(r.pdf.cM)}</td><td class="num d41 web">${fmt(r.web.cM)} ${chip(pct(r.web.cM, r.pdf.cM))}</td>
-        <td class="num d41">${fmt(r.pdf.cP)} / ${fmt(r.pdf.sP)}</td><td class="num d41 web">${fmt(r.web.cP)} / ${fmt(r.web.sP)}</td>
-        <td class="num d41">${fmt(r.pdf.cI)} / ${fmt(r.pdf.sI)}</td><td class="num d41 web">${fmt(r.web.cI)} / ${fmt(r.web.sI)}</td></tr>`;
+    const note = R41.notes[rs[0].id] || (!rs[0].id && rs[0].na ? { level: "info", text: rs[0].na } : null);
+    const tgt = rs.find((r) => r.target != null)?.target;
+    const body = rs.map((r) => {
+      const size = `${r.w}×${r.h}${r.p > 1 ? `<span class="tgt">${r.p} บาน</span>` : ""}${r.small ? '<span class="tgt">ไซซ์เล็ก ราคาตายตัว</span>' : ""}`;
+      const d = r.pdf;
+      if (!r.web) { cnt.na++; return `<tr class="na"><td class="c">${size}</td>
+        <td class="num"><span class="v">—</span><span class="ref">${fmt(d.cM)}</span></td><td class="num"><span class="v">—</span><span class="ref">${fmt(d.sM)}</span></td>
+        <td class="num sep"><span class="v">—</span><span class="ref">${fmt(d.cP)}</span></td><td class="num"><span class="v">—</span><span class="ref">${fmt(d.sP)}</span></td>
+        <td class="num sep"><span class="v">—</span><span class="ref">${fmt(d.cI)}</span></td><td class="num"><span class="v">—</span><span class="ref">${fmt(d.sI)}</span></td>
+        <td class="num sep"><span class="v">—</span><span class="ref">${fmt(d.cT)}</span></td><td class="num"><span class="v">—</span><span class="ref">${fmt(d.sT)}</span></td>
+        <td class="num sep" colspan="2" style="text-align:left">${r.na}</td></tr>`; }
+      const w = r.web, p = pct(w.sT, d.sT); cnt[kindOf(p)]++;
+      const nW = netOf(w.sT, w.cT), nR = netOf(d.sT, d.cT);
+      return `<tr><td class="c">${size}</td>
+        ${cell(w.cM, d.cM)}${cell(w.sM, d.sM)}
+        ${cell(w.cP, d.cP, false, " sep")}${cell(w.sP, d.sP)}
+        ${cell(w.cI, d.cI, false, " sep")}${cell(w.sI, d.sI)}
+        ${cell(w.cT, d.cT, false, " sep")}${cell(w.sT, d.sT, true)}
+        <td class="num sep">${chip(p)}</td>
+        <td class="num"><span class="v net${tgt != null && nW < tgt - 2 ? " low" : ""}">${nW == null ? "—" : nW + "%"}</span><span class="ref">${nR == null ? "—" : nR + "%"}</span></td></tr>`;
     }).join("");
-    cards.push(`<section class="card"><header><h2>${k}</h2><div class="meta gsum">${ps.length ? `${ps.length} ขนาด · เฉลี่ย ${chip(avg)} · ช่วง ${chip(Math.min(...ps))} ถึง ${chip(Math.max(...ps))}` : "เทียบไม่ได้"}</div></header>
+    cards.push(`<section class="card"><header><h2>${k}</h2><div class="meta gsum">${tgt != null ? `เป้ากำไรสุทธิในตาราง ${tgt}%` : ""}</div></header>
       ${note && note.text ? `<div class="note ${note.level}">${note.text}</div>` : ""}
       <div class="tbl"><table><thead>
-        <tr><th class="c"></th><th class="grp" colspan="3">ราคาขายรวม (บาท)</th><th class="grp d41" colspan="2">ทุนค่าของ</th><th class="grp d41" colspan="2">ค่าผลิต ทุน / ขาย</th><th class="grp d41" colspan="2">ค่าติดตั้ง ทุน / ขาย</th></tr>
-        <tr><th class="c">ขนาด (ซม.)</th><th>R4.1</th><th>เว็บ</th><th>ต่าง</th><th class="d41">R4.1</th><th class="d41">เว็บ</th><th class="d41">R4.1</th><th class="d41">เว็บ</th><th class="d41">R4.1</th><th class="d41">เว็บ</th></tr>
-      </thead><tbody>${rows}</tbody></table></div></section>`);
+        <tr><th class="c"></th><th class="grp" colspan="2">ค่าของ</th><th class="grp sep" colspan="2">ค่าผลิต</th><th class="grp sep" colspan="2">ค่าติดตั้ง</th><th class="grp sep" colspan="2">รวมทั้งชุด</th><th class="grp sep" colspan="2"></th></tr>
+        <tr><th class="c">ขนาด (ซม.)</th><th>ทุน</th><th>ขาย</th><th class="sep">ทุน</th><th>ขาย</th><th class="sep">ทุน</th><th>ขาย</th><th class="sep">ทุน</th><th>ขาย</th><th class="sep">ขาย เทียบ R4.1</th><th>กำไรสุทธิ</th></tr>
+      </thead><tbody>${body}</tbody></table></div></section>`);
   }
   $("#list41").innerHTML = cards.join("") || `<div class="empty">ไม่เจอบานที่ค้น</div>`;
-  $("#sum41").innerHTML = `<span class="pill flat">ใกล้ตาราง ±2% <b>${cnt.flat}</b> แถว</span><span class="pill up">เว็บแพงกว่า <b>${cnt.up}</b></span>
-    <span class="pill down">เว็บถูกกว่า <b>${cnt.down}</b></span><span class="pill up">ต่างเกิน 5% <b>${cnt.out5}</b></span>${cnt.na ? `<span class="pill flat">เทียบไม่ได้ <b>${cnt.na}</b></span>` : ""}`;
+  $("#sum41").innerHTML = `<span class="pill flat">ขายใกล้ตาราง ±2% <b>${cnt.flat}</b> แถว</span><span class="pill up">เว็บแพงกว่า <b>${cnt.up}</b></span>
+    <span class="pill down">เว็บถูกกว่า <b>${cnt.down}</b></span>${cnt.na ? `<span class="pill flat">เทียบไม่ได้ <b>${cnt.na}</b></span>` : ""}`;
+  $("#hide41").checked = document.body.classList.contains("hide41");
 }
 $("#q41").oninput = (e) => { q41 = e.target.value; render41(); };
-$("#only5").onchange = (e) => { only5 = e.target.checked; render41(); };
-$("#det41").onchange = (e) => { document.body.classList.toggle("show-det41", e.target.checked); };
+$("#groups41").onclick = (e) => { const b = e.target.closest("[data-g]"); if (b) { g41 = b.dataset.g; render41(); } };
+$("#hide41").onchange = (e) => { document.body.classList.toggle("hide41", e.target.checked); try { localStorage.setItem("cc-hide41", e.target.checked ? "1" : "0"); } catch {} };
 let tab = "r41";
 try { const t = localStorage.getItem("cc-tab"); if (t === "color" || t === "r41") tab = t; } catch {}
 if (location.hash === "#color" || location.hash === "#r41") tab = location.hash.slice(1);
@@ -295,7 +317,7 @@ function showTab(t) {
   tab = t; try { localStorage.setItem("cc-tab", t); } catch {}
   $("#tab-r41").hidden = t !== "r41"; $("#tab-color").hidden = t !== "color";
   $("#t-r41").setAttribute("aria-selected", t === "r41"); $("#t-color").setAttribute("aria-selected", t === "color");
-  $("#h1").textContent = t === "r41" ? "เทียบราคาขาย กับตาราง R4.1" : "เทียบค่าอบสี";
+  $("#h1").textContent = t === "r41" ? "ทุน + ราคาขาย เทียบตาราง R4.1" : "เทียบค่าอบสี";
 }
 document.querySelector(".tabs").onclick = (e) => { const b = e.target.closest("[data-tab]"); if (b) showTab(b.dataset.tab); };
 showTab(tab);

@@ -69,9 +69,13 @@ for (const it of items) {
   const base = baseInput(id, p, it.size, it.panels);
   const run = (k) => computeCost(PB, p, { ...base, ...webOpt(k) });
   const wh = run("white"), ws = run("wood_special");
+  // ทุนแยกก้อน (แท็บ ทุน + ราคาขาย) — ทุนค่าของ = c.cost.total (ไม่รวมค่าแรง) · ทุนค่าแรง = ผลิต + ติดตั้ง
+  const costOf = (c) => { const k = c.cost || {}, L = c.labor || {}, P = c.sell?.parts || {};
+    return { mat: R(k.total), alu: R(k.alu), bake: R((k.bake || 0) + (k.openOven || 0)), glass: R(k.glass), hw: R((k.hardware || 0) + (k.consum || 0) + (k.frameColor || 0)),
+      lp: R(L.prod), li: R(L.install), sMat: R(P.mat), sP: R(P.prod), sI: R(P.inst) }; };
   const prod = { name: it.name, group: GROUP(it.name), size: it.size, panels: it.panels, spec: it.spec,
     kgFile: it.kgFile, kgWeb: Math.round((ws.aluKg || 0) * 10) / 10, note: NOTE[it.name] || null,
-    rows: [{ base: true, type: "มาตรฐาน", color: "อบขาว / ดำ", t39: it.base39, t40: it.base40, tWeb: R(wh.sell?.withInstall), costWeb: R(wh.cost.total) }] };
+    rows: [{ base: true, type: "มาตรฐาน", color: "อบขาว / ดำ", t39: it.base39, t40: it.base40, tWeb: R(wh.sell?.withInstall), costWeb: R(wh.cost.total), cost: costOf(wh) }] };
   for (const cr of it.rows) {
     const k = KEYOF(cr.color);
     if (!k || cr.color === "—" || /ไม่มีสีนี้ขาย/.test(cr.costTxt)) { prod.rows.push({ na: true, type: cr.type, color: cr.color || "—" }); continue; }
@@ -81,7 +85,7 @@ for (const it of items) {
       t39: cr.total39, t40: cr.total40, tWeb: R(c.sell?.withInstall),
       a39: cr.add39, a40: cr.add40, aWeb: R((c.sell?.withInstall || 0) - (wh.sell?.withInstall || 0)),
       c40: cr.cost40, cWeb: R(c.cost.total - wh.cost.total),
-      oven: (c.cost?.openOven || 0) > 0, swapped });
+      oven: (c.cost?.openOven || 0) > 0, swapped, cost: costOf(c) });
   }
   data.push(prod);
 }
