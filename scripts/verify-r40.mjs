@@ -373,7 +373,17 @@ for (const a of ANCHORS) {
       return Math.abs(n[cK] - cost) <= 1 ? n[sK] : Math.round(cost * n[sK] / n[cK]);
     };
     const M = PB.R41.matPct && PB.R41.matPct[rk];
-    const m = M == null ? 100 : typeof M === 'number' ? M : (vk && M[vk] != null ? M[vk] : (M._ ?? 100));
+    const m0 = M == null ? 100 : typeof M === 'number' ? M : (vk && M[vk] != null ? M[vk] : (M._ ?? 100));
+    // 12 ต.ค.69 % แยกตามขนาด (R41.matPctBySize) — คิดเองแยกจากเอนจิน: เลือกชุดจำนวนบานใกล้สุด → ไล่ค่าเส้นตรงตามพื้นที่ → ปัด % เต็ม
+    const SZ = PB.R41.matPctBySize && PB.R41.matPctBySize[rk];
+    let pts = SZ && ((vk && SZ[vk]) || SZ._);
+    if (pts && !Array.isArray(pts)) { const ks = Object.keys(pts).map((k) => +k.slice(1)).sort((x, y) => Math.abs(x - pNow) - Math.abs(y - pNow) || x - y); pts = pts['p' + ks[0]]; }
+    let m = m0;
+    if (pts && pts.length && areaNow > 0) {
+      if (areaNow <= pts[0][0]) m = pts[0][1];
+      else if (areaNow >= pts[pts.length - 1][0]) m = pts[pts.length - 1][1];
+      else for (let i = 1; i < pts.length; i++) if (areaNow <= pts[i][0]) { const [a1, p1] = pts[i - 1], [a2, p2] = pts[i]; m = Math.round(p1 + (p2 - p1) * (areaNow - a1) / (a2 - a1)); break; }
+    }
     const matRaw = a.cost * (1 + m / 100), lp = lab('cP', 'sP', wProd), li = lab('cI', 'sI', wInst);
     wantMfg = ceil100(matRaw + lp); wantInst = ceil100(matRaw + lp + li);
     if (small && wantInst > 0) { wantMfg = ceil100(wantMfg * (SR.small.price / wantInst)); wantInst = SR.small.price; }

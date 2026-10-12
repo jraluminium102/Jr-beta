@@ -1082,6 +1082,25 @@ console.log("\n═══ เส้นไม่มีสีสต็อค → �
       !b2.some((l) => /ไม่มีสี|เปิดตู้อบ/.test(l.name)), b2.map((l) => l.name).join(" | "));
   }
 }
+// 12 ต.ค.69 — % ค่าของแยกตามขนาด (R41.matPctBySize · เจ้าของเคาะ "ตั้ง % แยกตามช่วงขนาด")
+console.log("\n═══ % ค่าของแยกตามขนาด (R41.matPctBySize) ═══");
+{
+  const { r41MatPct } = await import("../src/lib/calculator40/engine.mjs");
+  const SZ = PB.R41.matPctBySize || {};
+  ok("มี % แยกขนาดของบานเลื่อนยูโร/รางบน/SlimLux/ระแนง", ["euro_slide", "topslide", "slimlux", "louver"].every((k) => SZ[k]), Object.keys(SZ).join(","));
+  const e = SZ.euro_slide && SZ.euro_slide._;
+  if (e && e.p3) {
+    const [[a1, p1], [a2, p2]] = e.p3;
+    ok("ที่ขนาดในตาราง = % ของจุดนั้นเป๊ะ", r41MatPct(PB, "euro_slide", "", a1, 3) === p1 && r41MatPct(PB, "euro_slide", "", a2, 3) === p2, `${r41MatPct(PB, "euro_slide", "", a1, 3)} / ${p1}`);
+    const mid = r41MatPct(PB, "euro_slide", "", (a1 + a2) / 2, 3);
+    ok("ระหว่างจุด = ไล่ค่าเส้นตรง (อยู่ระหว่าง 2 จุด)", mid >= Math.min(p1, p2) && mid <= Math.max(p1, p2), `${p1} · ${mid} · ${p2}`);
+    ok("เล็กกว่าจุดแรก = ค่าจุดแรก", r41MatPct(PB, "euro_slide", "", 0.5, 3) === p1);
+    ok("จำนวนบานที่ตารางไม่มี (6 บาน) → ใช้ชุดที่ใกล้สุด (4 บาน)", r41MatPct(PB, "euro_slide", "", 9.6, 6) === r41MatPct(PB, "euro_slide", "", 9.6, 4));
+    const c = computeCost(PB, PRODUCTS.euro_slide, { w: 450, h: 240, p: 3, form: "อิสระ", color: "white", colorKey: "white" });
+    ok("% ที่โชว์ = % ที่ใช้คิด (ทุน × (1+%) = ค่าของขาย)", c.profit3.mat === r41MatPct(PB, "euro_slide", "", 10.8, 3), `${c.profit3.mat}`);
+  }
+  ok("รุ่นที่ไม่มีจุด ยังใช้ % เดียวตามเดิม", r41MatPct(PB, "open_door", "", 2, 1) === (PB.R41.matPct.open_door._ ?? PB.R41.matPct.open_door));
+}
 // 12 ต.ค.69 — เส้น colorIn (ราคาไฟล์รวมสีแล้ว ห้ามอบซ้ำ) แต่สีที่ไฟล์ไม่มีราคาสี (สีพิเศษ/ลายไม้อบพิเศษ)
 //   เคยตกไปราคาขาวและไม่โดนค่าอบ = คิดสีฟรี (SMS ขวาง B20054 · Velora ลูกฟูก)
 //   กฎ: ไม่มีราคาสี = ซื้อเส้นขาวมาอบเอง → เข้ากองค่าอบ · ยกเว้น colorInAlways (ไส้เสาบาน · Velora ออโต้ · ครอบวงกบไม้)

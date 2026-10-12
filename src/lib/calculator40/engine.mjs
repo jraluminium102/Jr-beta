@@ -971,7 +971,7 @@ export function computeCost(PB, prod, opt) {
     const labI = (r41Edit.inst || noNode(laborInstall, nI)) ? Math.round(laborInstall * (1 + pctInst / 100)) : r41Sell(nI, 'cI', 'sI', laborInstall);
     if (!r41Edit.prod && noNode(laborProd, nP)) lines.push({ cat: 'warn', name: '⚠️ ค่าผลิตรุ่นนี้ไม่มีในตาราง R4.1 — ใช้กำไร ' + pctProd + '% แทน', amount: 0 });
     if (!r41Edit.inst && noNode(laborInstall, nI)) lines.push({ cat: 'warn', name: '⚠️ ค่าติดตั้งรุ่นนี้ไม่มีในตาราง R4.1 — ใช้กำไร ' + pctInst + '% แทน', amount: 0 });
-    const mPct = r41Edit.mat ? pctMat : r41MatPct(PB, prod.id, vk);
+    const mPct = r41Edit.mat ? pctMat : r41MatPct(PB, prod.id, vk, area, P);
     const matRaw = costTotal * (1 + mPct / 100);
     sellBeforeLabor = ceil100(matRaw);
     sellMfgOnly = ceil100(matRaw + labP);
@@ -1274,8 +1274,30 @@ function r41Sell(node, cKey, sKey, cost) {
   if (Math.abs(node[cKey] - cost) <= 1) return node[sKey];
   return Math.round(cost * node[sKey] / node[cKey]);
 }
-/** % กำไรค่าของตั้งต้น — ตั้งต่อรุ่น ("_") และแยกแบบย่อยได้ (หลังคาแต่ละวัสดุ) */
-export function r41MatPct(PB, id, vk) {
+/** % กำไรค่าของตั้งต้น — ตั้งต่อรุ่น ("_") และแยกแบบย่อยได้ (หลังคาแต่ละวัสดุ)
+ *  PB.R41.matPctBySize[รุ่น][แบบย่อย|"_"] = [[พื้นที่ ตร.ม., %], …] — รุ่นที่ % เดียวคุมทุกขนาดไม่ได้
+ *    (เจ้าของเคาะ 12 ต.ค.69 "ตั้ง % แยกตามช่วงขนาด") → ไล่ค่าเส้นตรงระหว่างจุด · นอกช่วง = ค่าปลาย · ปัดเป็น % เต็ม
+ *    จุด = % ที่ทำให้ยอดรวมชนตาราง R4.1 ที่ขนาดนั้น (scripts/fit-r41-matpct.mjs) */
+export function r41MatPct(PB, id, vk, area, panels) {
+  const S = PB && PB.R41 && PB.R41.matPctBySize && PB.R41.matPctBySize[r41Key(id)];
+  let pts = S && ((vk && S[vk]) || S._);
+  // แยกตามจำนวนบานด้วย ({ p2: [...], p3: [...] }) — ตาราง R4.1 บานเลื่อนมี 2/3/4 บานสลับกัน % คนละชุด
+  //   จำนวนบานที่ตารางไม่มี → ใช้ชุดของจำนวนบานที่ใกล้สุด
+  if (pts && !Array.isArray(pts) && typeof pts === 'object') {
+    const ks = Object.keys(pts).map((k) => Number(k.slice(1))).filter(Number.isFinite);
+    const want = Number(panels) || 1;
+    const near = ks.sort((a, b) => Math.abs(a - want) - Math.abs(b - want) || a - b)[0];
+    pts = near != null ? pts['p' + near] : null;
+  }
+  if (Array.isArray(pts) && pts.length && area > 0) {
+    if (area <= pts[0][0]) return pts[0][1];
+    const last = pts[pts.length - 1];
+    if (area >= last[0]) return last[1];
+    for (let i = 1; i < pts.length; i++) {
+      const [a1, p1] = pts[i - 1], [a2, p2] = pts[i];
+      if (area <= a2) return Math.round(p1 + (p2 - p1) * (area - a1) / (a2 - a1));
+    }
+  }
   const M = PB && PB.R41 && PB.R41.matPct && PB.R41.matPct[r41Key(id)];
   if (M == null) return 100;
   if (typeof M === 'number') return M;
