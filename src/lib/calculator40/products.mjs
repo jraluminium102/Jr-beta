@@ -1474,6 +1474,9 @@ export const PRODUCTS = {
   },
 
   louver_rotate: {
+    // พื้นที่คิดค่าแรง = ขนาดที่ปัดตาม LUT แบบเดียวกับระแนง (ชีต "คิดทุน ระแนงหมุน" E2/H12/H15/H16/H17 · ไฟล์รวม v1)
+    //   เดิมเว็บใช้ กว้าง×สูง ตรง ๆ = ค่าแรงขาด (เจ้าของท้วง 12 ต.ค.69 "ค่าแรงต้องลอกสูตรไฟล์ 100%") · E2 ใช้แค่ค่าแรง ไม่กระทบวัสดุ
+    areaExpr: "(function(){var L=[50,60,75,100,120,150,200,300,600];var lo=function(v){var r=L[0];for(var i=0;i<L.length;i++){if(L[i]<=v)r=L[i];}return r;};var up=function(v){for(var i=0;i<L.length;i++){if(L[i]>v)return L[i];}return 99999;};var f=function(v){var a=lo(v);return (v===a)?a:up(a);};var cm=function(v){return Math.round(v*100*1e6)/1e6;};var w=cm(W),h=cm(H);return ((form==='นอน'?f(w):w)/100)*((form==='ตั้ง'?f(h):h)/100);})()",
     id: 'louver_rotate', group: 2, name: 'ระแนงปรับหมุนได้', brand: 'MTONG', laborKey: 'ระแนงหมุน', ranaeDisc: true,
     showColor: true, outdoor: true,   // งานนอก → ตัดสีชุบ (label-only)
     icon: '🌀', defForm: 'นอน', forms: ['นอน', 'ตั้ง'], stockLen: 6.0,
@@ -2593,8 +2596,13 @@ export const PRODUCTS = {
   },
   shower: {
     // ถอดทุน BOM R4.0 (ชีต "คิดทุน ชุด Shower") — บานตาย(W×H) + ประตู(spec.dw×spec.dh) + ช่องปูน(spec.cw)
-    // material=ชุด(สแตนเลส/อลู) · form=แบบ(บานตาย/+เปิด/+เลื่อน) · ค่าแรงติดตั้งพับในทุน (ผลิต0)
-    id: 'shower', partsLinked: true, group: 1, subcat: 'พิเศษ · กระจกเปลือย · สำเร็จ', name: 'ห้องอาบน้ำ Shower (กระจกเทมเปอร์)', brand: '-', laborKey: 'Shower (ในวัสดุ)',
+    // material=ชุด(สแตนเลส/อลู) · form=แบบ(บานตาย/+เปิด/+เลื่อน)
+    // ค่าแรงตามไฟล์รวม v1 (12 ต.ค.69 เจ้าของ "ลอกสูตรค่าแรง 100%"): ชีต E38/E39
+    //   ผลิต = 0 · ติดตั้ง = ROUND(1,225 + (บานเปิด/เลื่อน ? 87.5 : 0) + 58.33625 × B8) · B8 = ROUND((บานตาย + ประตู) ÷ 10000, 2)
+    //   เดิมเว็บคิด 87.5 × 5/6 ชม. ไว้ในกองวัสดุ (สูตรไฟล์รุ่นเก่า) = ค่าติดตั้งขาดราว 900 บาท/ชุด
+    areaExpr: 'Math.round((W*H + (+spec.dw||0)/100*(+spec.dh||0)/100)*100)/100',
+    laborInstExtra: "form==='บานตาย'?0:87.5",
+    id: 'shower', partsLinked: true, group: 1, subcat: 'พิเศษ · กระจกเปลือย · สำเร็จ', name: 'ห้องอาบน้ำ Shower (กระจกเทมเปอร์)', brand: '-', laborKey: 'ชุด Shower',
     icon: '🚿',
     materialLabel: 'ชุด', materials: ['สแตนเลส', 'อลูมิเนียม'], defMaterial: 'สแตนเลส',
     defForm: 'บานตาย+บานเปิด', forms: ['บานตาย', 'บานตาย+บานเปิด', 'บานตาย+บานเลื่อน'],
@@ -2622,7 +2630,6 @@ export const PRODUCTS = {
       { name: 'ยู5หุนอลู (รอบแผ่น)', sku: 'JR00210', price: 200, unit: 'เส้น6ม', count: "material==='อลูมิเนียม'?(2*(W*100+H*100)+2*((+spec.dw||0)+(+spec.dh||0)))/600:0" },
     ],
     consum: [
-      { labor: true, name: 'ค่าแรงติดตั้ง', price: 87.5, unit: 'ชม.', count: "form==='บานตาย'?5:6" },   // ตาย5/เปิด-เลื่อน6 ชม. × 87.5 (Excel E28)
     ],
     note: 'ห้องอาบน้ำกระจกเทมเปอร์ 10มม. — ถอดทุน R4.0 (สแตนเลส/อลู · บานตาย+ประตู) · กรอกขนาดประตู/ช่องปูนในช่องเสริม',
   },

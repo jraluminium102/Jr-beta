@@ -780,7 +780,10 @@ export function computeCost(PB, prod, opt) {
     const ri = prod.laborNoRate ? 0 : L.iRate;
     laborProd = Math.max(0, L.pBase + rp * area) * lp;
     laborInstall = Math.max(0, L.iBase + ri * area) * lp;
-    laborShow = { mode: prod.laborNoRate ? 'baseOnly' : 'rate', mult: lp, pBase: L.pBase, pRate: rp, iBase: L.iBase, iRate: ri };
+    // prod.laborInstExtra = ค่าติดตั้งบวกเพิ่มตามสูตรชีต (Shower: มีบานเปิด/เลื่อน +1 ชม. = ค่าแรง!I · ไฟล์รวม v1 E39)
+    const instExtra = (area > 0 && prod.laborInstExtra) ? (Number(val(prod.laborInstExtra)) || 0) : 0;
+    laborInstall += instExtra;
+    laborShow = { mode: prod.laborNoRate ? 'baseOnly' : 'rate', mult: lp, pBase: L.pBase, pRate: rp, iBase: L.iBase, iRate: ri, ...(instExtra ? { iExtra: instExtra } : {}) };
   }
 
   // (5) ราคาขาย
