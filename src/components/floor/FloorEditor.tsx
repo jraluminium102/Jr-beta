@@ -359,10 +359,10 @@ export default function FloorEditor({
                 </select>
               </label>
             )}
-            {quickAdds(plan.area).map((qa: { label: string; item: Item }) => (
-              <button key={qa.label} type="button" onClick={() => addItem(qa.item)}
-                className="press rounded-full border border-gray-300 px-3 py-1 text-xs font-medium hover:border-brand hover:text-brand">
-                + {qa.label}
+            {quickAdds(plan.area).map((qa: { label: string; item: Item; hint?: string; warn?: boolean }) => (
+              <button key={qa.label} type="button" onClick={() => addItem(qa.item)} title={qa.hint ?? ""}
+                className={"press rounded-full border px-3 py-1 text-xs font-medium hover:border-brand hover:text-brand " + (qa.warn ? "border-amber-400 text-amber-700" : "border-gray-300")}>
+                + {qa.label}{qa.warn ? " ⚠" : ""}
               </button>
             ))}
           </div>
