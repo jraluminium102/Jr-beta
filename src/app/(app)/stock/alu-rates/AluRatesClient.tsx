@@ -43,7 +43,7 @@ function colorOf(name: string): string {
   return c && c.length <= 20 ? c : "ไม่ระบุสี";
 }
 
-type Group = { key: string; series: string; color: string; items: Row[]; rate: number; brandRate?: number };
+type Group = { key: string; series: string; color: string; items: Row[]; rate: number; brandRate?: number; brandNoColor?: boolean };
 type RateLog = { id: number; series: string; color: string; prev_rate: number | null; rate: number; item_count: number; changed_by_name: string; created_at: string };
 
 type ChkRow = { sku: string; name: string; color: string | null; brand: string; kg: number; rate: number; cost: number; rateWant: number; costWant?: number; why?: string };
@@ -85,6 +85,9 @@ export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog 
       const b = BRAND_ORDER.find((x) => BRAND_LABEL[x] === g.series) ?? "";
       const ck = COLOR_KEY[g.color];
       g.brandRate = b && ck ? (brandRates[b] ?? {})[ck] : undefined;
+      // แบรนด์นี้ "ไม่มีสีนี้ขาย" (SMS ไม่มี Aztec/มะฮอก/ไวท์โอ็ค · ตลาดไม่มี Aztec/มะฮอก/ไวท์โอ็ค)
+      //   แถวพวกนี้ไม่ควรมีในสโตร์ — เจ้าของสั่ง 12 ต.ค.69 ให้ลบ · โชว์แดงไว้กันเผลอสร้างใหม่
+      g.brandNoColor = !!(b && ck && brandRates[b] && !((g.brandRate ?? 0) > 0));
     }
     const rank = (lbl: string) => BRAND_ORDER.findIndex((b) => BRAND_LABEL[b] === lbl);
     return [...m.values()].sort((a, b) =>
@@ -280,17 +283,24 @@ function RateRow({ g, value, busy, msg, canEdit, onChange, onApply }: {
               className={`press rounded-lg px-2 py-1 text-xs font-bold ${Math.abs((g.rate || 0) - g.brandRate) < 0.5 ? "text-green-700 bg-green-50" : "text-brand-dark bg-brand-soft"}`}>
               {fmt(g.brandRate)}
             </button>
+          ) : g.brandNoColor ? (
+            <span title="ตารางแบรนด์นี้ไม่มีสีนี้ — แถวพวกนี้ไม่ควรมีในสโตร์ ให้ลบหรือย้ายแบรนด์"
+              className="inline-block rounded-lg px-2 py-1 text-[11px] font-bold text-red-800 bg-red-100">
+              {g.series} ไม่มีสีนี้ขาย
+            </span>
           ) : <span className="text-ink-3 text-xs">—</span>}
         </td>
         <td className="py-2 pr-3">
-          {canEdit ? (
+          {canEdit && g.brandNoColor ? (
+            <span className="text-[11px] text-red-700">ลบ/ย้ายแถวในหน้าสต๊อก</span>
+          ) : canEdit ? (
             <input inputMode="decimal" value={value} onChange={(e) => onChange(e.target.value)}
               placeholder={g.rate > 0 ? String(g.rate) : "฿/กก."}
               className="w-24 glass-soft rounded-lg px-2 py-1.5 text-sm outline-none" />
           ) : <span className="text-ink-3 text-xs">ดูอย่างเดียว</span>}
         </td>
         <td className="py-2 pr-3">
-          {canEdit && (
+          {canEdit && !g.brandNoColor && (
             <button onClick={onApply} disabled={busy || !(Number(value) > 0)}
               className="press rounded-lg px-3 py-1.5 text-xs font-semibold text-white bg-brand shadow-brand disabled:opacity-40">
               {busy ? "กำลังอัปเดต…" : `อัปเดต ${g.items.length} เส้น`}

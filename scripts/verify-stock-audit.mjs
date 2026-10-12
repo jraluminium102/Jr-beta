@@ -676,6 +676,13 @@ console.log("\n" + "═══ ⑬ จับคู่น้ำหนักกั�
     ok("audit-alu-weight-units: กก./เส้น = กก./ม. × ความยาวเส้น ทุกรหัส", au.status === 0,
       (au.stdout.match(/ไม่สอดคล้อง \d+/) ?? [""])[0]);
   }
+  // ⑱ หน้าเรตอลู: กลุ่มสีที่ "แบรนด์นี้ไม่มีขาย" ต้องโชว์แดง + กดอัปเดตไม่ได้ (เจ้าของสั่ง 12 ต.ค.69 ลบแถว B สี Aztec/มะฮอก/ไวท์โอ็ค)
+  {
+    const cl = fs.readFileSync(path.join(ROOT, "src/app/(app)/stock/alu-rates/AluRatesClient.tsx"), "utf8");
+    ok("กลุ่มที่แบรนด์ไม่มีสีนี้ → ติดธง brandNoColor", cl.includes("g.brandNoColor = !!(b && ck && brandRates[b] && !((g.brandRate ?? 0) > 0))"), "");
+    ok("โชว์ป้ายแดง 'ไม่มีสีนี้ขาย' แทนขีด —", cl.includes("ไม่มีสีนี้ขาย"), "");
+    ok("กลุ่มนั้นไม่มีปุ่มอัปเดต (กันตั้งเรตให้ของที่ไม่ควรมี)", cl.includes("{canEdit && !g.brandNoColor && ("), "");
+  }
   ok("ตาราง ALUWEIGHT_BYNAME ไม่มีคีย์ว่าง", !Object.keys(PB.ALUWEIGHT_BYNAME ?? {}).some((k) => !String(k).trim()));
 }
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
