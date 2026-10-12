@@ -9,6 +9,7 @@ import { applyLineOverrides, type LineOverride } from "@/lib/calculator40/line-o
 import { PRODUCTS } from "@/lib/calculator40/products.mjs";
 import { computeCost } from "@/lib/calculator40/engine.mjs";
 import { CUT_SPEC_BY_ID } from "@/lib/cutlist/products";
+import { CALC_OVERRIDE_SELECT_LEGACY } from "@/lib/calculator40/link-rows";
 // pricebook.json ต้องโหลดด้วย import assertion เดียวกับ stock-link.ts (ไม่งั้นได้คนละ instance)
 import PRICEBOOK from "@/lib/calculator40/pricebook.json" with { type: "json" };
 
@@ -27,10 +28,15 @@ export const GET = withRoute(async (req: Request) => {
   const productId = searchParams.get("product_id");
   const scope = searchParams.get("scope");
 
-  let q = sb.from("calc_line_overrides").select(SELECT).order("scope").order("match_key");
-  if (productId) q = q.eq("product_id", productId);
-  if (scope === "calc" || scope === "cut") q = q.eq("scope", scope);
-  const { data, error } = await q;
+  // ฐานข้อมูลยังไม่ได้รัน 0135 (ไม่มี match_name/set_kg) → ถอยไปชุดคอลัมน์เก่า แทนที่จะพังทั้ง API
+  const run = (sel: string) => {
+    let q = sb.from("calc_line_overrides").select(sel).order("scope").order("match_key");
+    if (productId) q = q.eq("product_id", productId);
+    if (scope === "calc" || scope === "cut") q = q.eq("scope", scope);
+    return q;
+  };
+  let { data, error } = await run(SELECT);
+  if (error && /match_name|set_kg/.test(String(error.message ?? ""))) ({ data, error } = await run(CALC_OVERRIDE_SELECT_LEGACY));
   if (error) throw dbError(error);
   return ok(data ?? []);
 });

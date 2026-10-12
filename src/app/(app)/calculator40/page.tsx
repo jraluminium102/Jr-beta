@@ -3,7 +3,7 @@ import Calculator40Client from "@/components/Calculator40Client";
 import { buildPriceOverride, type StockRow } from "@/lib/calculator40/stock-link";
 import { fetchAllPaged } from "@/lib/supabase/fetch-all";
 import type { Customer } from "@/lib/types";
-import { CALC_OVERRIDE_SELECT, type OverrideRow } from "@/lib/calculator40/link-rows";
+import { CALC_OVERRIDE_SELECT, CALC_OVERRIDE_SELECT_LEGACY, type OverrideRow } from "@/lib/calculator40/link-rows";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +31,13 @@ export default async function Calculator40Page() {
         .range(f, t),
     ),
     // override รหัส/จำนวน/ราคา จากหน้า /calculator40/link — ต้องทับสูตรจริงที่นี่ ไม่ใช่แค่หน้าลิงก์
-    anyDb.from("calc_line_overrides").select(CALC_OVERRIDE_SELECT).eq("scope", "calc") as Promise<{ data: OverrideRow[] | null }>,
+    // ⚠ ฐานข้อมูลจริงยังเป็น 0134 รุ่นก่อนยุบ (ไม่มี match_name/set_kg · เจอ 12 ต.ค.69) → select ชุดใหม่ error
+    //   แล้ว data = null เงียบ ๆ = ตัวแก้สูตรทุกตัวไม่ถูกใช้ → ถอยไปชุดคอลัมน์เก่าเมื่อชุดใหม่พัง
+    (async () => {
+      const r = await anyDb.from("calc_line_overrides").select(CALC_OVERRIDE_SELECT).eq("scope", "calc");
+      if (!r.error) return r;
+      return anyDb.from("calc_line_overrides").select(CALC_OVERRIDE_SELECT_LEGACY).eq("scope", "calc");
+    })() as Promise<{ data: OverrideRow[] | null }>,
   ]);
   const priceOverride = buildPriceOverride(stock);
   return (
