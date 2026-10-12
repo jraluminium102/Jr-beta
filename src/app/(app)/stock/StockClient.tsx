@@ -97,7 +97,8 @@ export default function StockClient({
     .filter((c) => (noImage ? noImageOf(c) : true))
     .filter((c) => (noQty ? noQtyOf(c) : true))
     .filter((c) => (catFilter ? c.category_id === catFilter : true))
-    .filter((c) => [c.name, c.color, c.sku, c.category].join(" ").toLowerCase().includes(q.toLowerCase()));
+    // ค้นในหมายเหตุด้วย — พิมพ์ "ปิด 12 ต.ค.69" จะเห็นแถวที่ปิดจุดเตือนไว้แบบย้อนได้ทั้งหมด
+    .filter((c) => [c.name, c.color, c.sku, c.category, c.note].join(" ").toLowerCase().includes(q.toLowerCase()));
 
   // หลังรวมรายการซ้ำ: เอาตัวที่ลบออกจากลิสต์ + โหลดตัวหลักใหม่ (ชื่อ/รหัส/ราคาอาจเปลี่ยน)
   function afterMerge(removedIds: number[], keepId: number) {
