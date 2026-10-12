@@ -96,7 +96,7 @@ for (const it of items) {
     const add = sell - sellW;
     const pAdd = pct(add, cr.add39), pTot = pct(sell, cr.total39);
     const notes = [];
-    const swapped = !p.euroColors && (key === "wood_maho" || key === "wood_whiteoak");
+    const swapped = !p.euroColors && !p.woodStockColors && (key === "wood_maho" || key === "wood_whiteoak");
     if (swapped) notes.push("เว็บรุ่นนี้ไม่มีสีสต็อกนี้ → คิดเป็นลายไม้อบพิเศษ");
     if ((c.cost?.openOven || 0) > 0) notes.push("รวมค่าเปิดตู้อบ " + r0(c.cost.openOven));
     const rc = resolveAluColor(swapped ? "wood_special" : key);

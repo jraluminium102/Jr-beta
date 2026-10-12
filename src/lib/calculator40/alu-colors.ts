@@ -46,15 +46,23 @@ export const SPECIAL_COLOR_KEYS = ["aztec", "wood_maho", "wood_whiteoak"] as con
 //   รุ่นอื่นลูกค้าอยากได้ = สีอบพิเศษ / ลายไม้อบพิเศษ (แพงกว่า)
 //   ⚠ ต้องตรงกับธง prod.euroColors ใน products.mjs (engine ใช้คิดใบเก่า · verify-auto ⑳ ตรวจ)
 export const SPECIAL_COLOR_PRODUCTS = new Set(["open_door", "euro_slide", "fold_euro", "pcdoor"]);
+// ── รุ่นที่เปิดเฉพาะ "ลายไม้สต็อก มะฮอกกานี/ไวท์โอ๊ค" (ไม่มี Aztec) ──
+//   เจ้าของสั่ง 12 ต.ค.69: บานโซลิดเปิดมะฮอกกานี/ไวท์โอ๊คแบบสีสต็อก (เดิมคิดเป็นลายไม้อบพิเศษ แพงขึ้น ~20,000)
+//   ⚠ ต้องตรงกับธง prod.woodStockColors ใน products.mjs (engine ใช้ · verify-auto ⑳ ตรวจ)
+export const WOOD_STOCK_COLOR_KEYS = ["wood_maho", "wood_whiteoak"] as const;
+export const WOOD_STOCK_COLOR_PRODUCTS = new Set(["bansolid"]);
 
-/** สีที่รุ่นนี้เลือกได้จริง — Aztec/มะฮอกกานี/ไวท์โอ๊ค เฉพาะ 4 รุ่น */
+/** สีที่รุ่นนี้เลือกได้จริง — Aztec/มะฮอกกานี/ไวท์โอ๊ค เฉพาะ 4 รุ่น · บานโซลิดได้มะฮอกกานี/ไวท์โอ๊ค (ไม่มี Aztec) */
 export function aluColorKeysFor(prodId?: string | null): string[] {
   if (prodId && SPECIAL_COLOR_PRODUCTS.has(prodId)) return ALU_COLOR_KEYS;
-  return ALU_COLOR_KEYS.filter((k) => !(SPECIAL_COLOR_KEYS as readonly string[]).includes(k));
+  const woodOk = !!(prodId && WOOD_STOCK_COLOR_PRODUCTS.has(prodId));
+  return ALU_COLOR_KEYS.filter((k) => !(SPECIAL_COLOR_KEYS as readonly string[]).includes(k)
+    || (woodOk && (WOOD_STOCK_COLOR_KEYS as readonly string[]).includes(k)));
 }
 
 /** สีของใบเก่าที่รุ่นนี้ไม่มีแล้ว → สีที่คิดแทน (Aztec → สีอบพิเศษ · มะฮอกกานี/ไวท์โอ๊ค → ลายไม้อบพิเศษ) · สีอื่นคืนค่าเดิม */
 export function allowedColorFor(prodId: string | null | undefined, key: string): string {
   if (!(SPECIAL_COLOR_KEYS as readonly string[]).includes(key) || (prodId && SPECIAL_COLOR_PRODUCTS.has(prodId))) return key;
+  if (prodId && WOOD_STOCK_COLOR_PRODUCTS.has(prodId) && (WOOD_STOCK_COLOR_KEYS as readonly string[]).includes(key)) return key;
   return key === "aztec" ? "special" : "wood_special";
 }

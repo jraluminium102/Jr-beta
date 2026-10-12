@@ -803,7 +803,8 @@ console.log("\n═══ ②i สีพิเศษ (Aztec/มะฮอกกา
   //   เจ้าของ "นอกเหนือจากบานที่กำหนดว่ามีสีนี้ บานที่ไม่มีไม่ต้องใส่มาในช้อยส์สี เอาออกไปเลย"
   for (const id of EURO8) for (const k of ["aztec", "wood_maho", "wood_whiteoak"]) {
     // 17 ก.ย.69 เจ้าของยืนยันซ้ำ: เฟี้ยมยูโรมี · บานโซลิดไม่มี (ของเดิมสลับกันมาตั้งแต่ 11 ก.ย.)
-    const want = ["open_door", "euro_slide", "fold_euro", "pcdoor"].includes(id);
+    // 12 ต.ค.69 บานโซลิดเปิดมะฮอกกานี/ไวท์โอ๊คสต็อก (ไม่มี Aztec)
+    const want = ["open_door", "euro_slide", "fold_euro", "pcdoor"].includes(id) || (id === "bansolid" && k !== "aztec");
     check(`${id} ${want ? "เลือก" : "ต้องเลือกไม่ได้"} ${k}`, has(id, k) ? 1 : 0, want ? 1 : 0, 0);
   }
   for (const id of ["sms_slide", "slimlux", "velora", "fixed", "banyok", "eseries", "roof", "folding", "topslide"])

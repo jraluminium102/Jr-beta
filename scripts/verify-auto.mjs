@@ -851,7 +851,18 @@ console.log("\n═══ ⑳ ลำดับราคาสี — ขาว ≤
   ok("ใบเก่า: กระทุ้ง มะฮอกกานี → ลายไม้อบพิเศษ", AC.allowedColorFor("awning", "wood_maho") === "wood_special" && AC.allowedColorFor("sms_slide", "wood_whiteoak") === "wood_special");
   ok("รุ่นที่มีสีนี้ / สีปกติ → คงเดิม", AC.allowedColorFor("open_door", "aztec") === "aztec" && AC.allowedColorFor("pcdoor", "wood_maho") === "wood_maho" && AC.allowedColorFor("awning", "sahara") === "sahara");
   // 17 ก.ย.69: เฟี้ยมยูโร (fold_euro) ย้ายไปอยู่กลุ่ม "มี 3 สีพิเศษ" · บานโซลิดย้ายออก
-  ok("ตัวเลือกสีกระทุ้ง/บานหมุน/บานโซลิด/เฟี้ยมยก ไม่มี 3 สีพิเศษ", ["awning", "pivot", "bold_euro", "fold_lift"].every((id) => !AC.aluColorKeysFor(id).some((k) => ["aztec", "wood_maho", "wood_whiteoak"].includes(k))));
+  // 12 ต.ค.69 เจ้าของเปิดมะฮอกกานี/ไวท์โอ๊คสต็อกให้บานโซลิด (ไม่มี Aztec)
+  const woodSrc = new Set([...((/WOOD_STOCK_COLOR_PRODUCTS = new Set\(\[([\s\S]*?)\]\)/.exec(colorsSrc) || [])[1] || "").matchAll(/"([a-z_]+)"/g)].map((m) => m[1]));
+  ok("ธง woodStockColors ในสูตร = รายชื่อใน alu-colors", Object.values(PRODUCTS).filter((p) => p.woodStockColors).map((p) => p.id).sort().join(",") === [...woodSrc].sort().join(","),
+    Object.values(PRODUCTS).filter((p) => p.woodStockColors).map((p) => p.id).join(","));
+  ok("บานโซลิด เลือกมะฮอกกานี/ไวท์โอ๊คได้ · Aztec ไม่ได้", AC.aluColorKeysFor("bansolid").includes("wood_maho") && AC.aluColorKeysFor("bansolid").includes("wood_whiteoak") && !AC.aluColorKeysFor("bansolid").includes("aztec"));
+  ok("ใบเก่าบานโซลิด: มะฮอกกานีคงเดิม · Aztec → สีอบพิเศษ", AC.allowedColorFor("bansolid", "wood_maho") === "wood_maho" && AC.allowedColorFor("bansolid", "aztec") === "special");
+  {
+    const bs = (k, c) => computeCost(PB, PRODUCTS.bansolid, { w: 90, h: 240, p: 1, spec: {}, addons: {}, colorKey: k, color: c });
+    const mh = bs("wood_maho", "woodStock"), ws = bs("wood_special", "woodSpecial");
+    ok("บานโซลิด มะฮอกกานี คิดแบบสีสต็อก (ไม่อบ ไม่เปิดตู้ ถูกกว่าลายไม้อบพิเศษ)", mh.aluKg < 0.5 && !(mh.cost.openOven > 0) && mh.cost.total < ws.cost.total, mh.cost.total + " / " + ws.cost.total);
+  }
+  ok("ตัวเลือกสีกระทุ้ง/บานหมุน/เฟี้ยมยก ไม่มี 3 สีพิเศษ", ["awning", "pivot", "bold_euro", "fold_lift"].every((id) => !AC.aluColorKeysFor(id).some((k) => ["aztec", "wood_maho", "wood_whiteoak"].includes(k))));
   // สีพิมพ์ลงใบอย่างเดียว (ไฟล์ไม่มีสูตรสี) — ผนังลูกฟูก/ผนังคอมโพสิต/ตู้
   const LABEL_ONLY = new Set(["wall_corrugated", "wall_composite", "cabinet"]);
   // ⏳ รุ่นใหม่ v1 ที่ยังเทียบลำดับราคาสีไม่ได้ (คนละเหตุผล — ห้ามลบทิ้งเงียบ ๆ)
@@ -948,7 +959,9 @@ console.log("\n═══ ⑳ ลำดับราคาสี — ขาว ≤
     const tk = cost({ color: "woodStock", colorKey: "wood_teak" });
     for (const k of ["wood_maho", "wood_whiteoak"]) {
       const old = cost({ color: "woodStock", colorKey: k, stockColor: k === "wood_maho" ? "มะฮอกกานี" : "ไวท์โอ็ค" });
-      ok(id + ": ใบเก่า " + k + " = ลายไม้อบพิเศษ (แพงกว่าสักทอง)", Math.abs(old - ws) < 0.01 && ws > tk, old + " / " + ws + " / สักทอง " + tk);
+      // 12 ต.ค.69 บานโซลิดเปิดมะฮอกกานี/ไวท์โอ๊คสต็อกแล้ว → ต้องได้ราคาสีสต็อก (ใกล้สักทอง ±3%) ไม่ใช่ลายไม้อบพิเศษ
+      if (p.woodStockColors) ok(id + ": " + k + " = ลายไม้สต็อก (ใกล้สักทอง · ถูกกว่าลายไม้อบพิเศษ)", Math.abs(old - tk) / tk < 0.03 && old < ws, old + " / สักทอง " + tk + " / อบพิเศษ " + ws);
+      else ok(id + ": ใบเก่า " + k + " = ลายไม้อบพิเศษ (แพงกว่าสักทอง)", Math.abs(old - ws) < 0.01 && ws > tk, old + " / " + ws + " / สักทอง " + tk);
     }
     const az = cost({ color: "sahara", colorKey: "aztec", stockColor: "Aztecgray" }), azOld = cost({ color: "special", colorKey: "aztec" });
     ok(id + ": ใบเก่า aztec = สีอบพิเศษ", Math.abs(az - sp) < 0.01 && Math.abs(azOld - sp) < 0.01, az + " / " + azOld + " / " + sp);

@@ -113,7 +113,8 @@ export function computeCost(PB, prod, opt) {
   // Aztec gray / มะฮอกกานี / ไวท์โอ๊ค มีแค่ บานเปิดยูโร · บานเลื่อนยูโร · บานโซลิด · PC Door (prod.euroColors — เจ้าของ 11 ก.ย.69)
   //   รุ่นอื่นเอาตัวเลือกออกแล้ว · ใบเสนอเก่าที่เคยเลือกไว้ → Aztec คิดเป็น "สีอบพิเศษ" · มะฮอกกานี/ไวท์โอ๊ค คิดเป็น "ลายไม้อบพิเศษ"
   if (prod && !prod.euroColors) {
-    if (opt.colorKey === 'wood_maho' || opt.colorKey === 'wood_whiteoak') opt = { ...opt, colorKey: 'wood_special', color: 'woodSpecial', stockColor: '' };
+    //   prod.woodStockColors = เปิดมะฮอกกานี/ไวท์โอ๊คแบบสีสต็อก (บานโซลิด · เจ้าของ 12 ต.ค.69) — Aztec ยังเป็นสีอบพิเศษ
+    if ((opt.colorKey === 'wood_maho' || opt.colorKey === 'wood_whiteoak') && !prod.woodStockColors) opt = { ...opt, colorKey: 'wood_special', color: 'woodSpecial', stockColor: '' };
     else if (opt.colorKey === 'aztec') opt = { ...opt, colorKey: 'special', color: 'special', stockColor: '' };
   }
   const W = (opt.w ?? prod.defaults.w) / 100;   // ม.
