@@ -104,18 +104,50 @@ td.web { font-weight: 600; }
 .d small { font-weight: 400; opacity: .85; }
 .det { display: none; }
 body.show-det .det { display: table-cell; }
+.d41 { display: none; }
+body.show-det41 .d41 { display: table-cell; }
 th.det.grp { text-align: center; }
 .empty { color: var(--muted); text-align: center; padding: 30px; }
 footer { font-size: .8rem; color: var(--muted); }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 1px solid var(--line); }
+.tabs button { font: inherit; font-size: .95rem; border: 0; background: transparent; color: var(--muted); padding: 8px 12px; border-bottom: 3px solid transparent; cursor: pointer; margin-bottom: -1px; }
+.tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.finds { display: grid; gap: 8px; }
+.finds h2 { font-size: 1.1rem; }
+.find { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+.find .sev { font-size: .72rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.sev.hi { background: var(--up-bg); color: var(--up); } .sev.mid { background: var(--n-file-bg); color: var(--n-file); } .sev.lo { background: var(--n-info-bg); color: var(--n-info); }
+.find b { display: block; } .find p { margin: 2px 0 0; font-size: .88rem; color: var(--muted); }
+.find .act { color: var(--ink); font-size: .88rem; margin-top: 4px; }
+.gsum { font-size: .82rem; }
 @media (max-width: 560px) { h1 { font-size: 1.45rem; } .card { padding: 12px; } }
 </style>
 
 <div class="wrap">
   <div>
-    <h1>เทียบค่าอบสี</h1>
-    <p class="sub" id="sub">ราคาขายรวม (ผลิต+ติดตั้ง) ต่อชุด · ขนาดและจำนวนบานตามไฟล์ เทียบค่าอบสี.xlsx</p>
+    <h1 id="h1">เทียบราคาขาย</h1>
+    <p class="sub" id="sub">ราคาขายรวม (ผลิต+ติดตั้ง) ต่อชุด</p>
+  </div>
+  <div class="tabs" role="tablist">
+    <button role="tab" id="t-r41" data-tab="r41">เทียบตาราง R4.1 (ราคาที่อยากขาย)</button>
+    <button role="tab" id="t-color" data-tab="color">เทียบค่าอบสี (R3.9 · R4.0 เดิม)</button>
   </div>
 
+  <div id="tab-r41" hidden>
+    <div class="finds" id="finds"></div>
+    <div class="bar">
+      <div class="row">
+        <input type="search" id="q41" placeholder="ค้นชื่อบาน" aria-label="ค้นหาบาน">
+        <label class="tog"><input type="checkbox" id="only5"> เฉพาะแถวที่ต่างเกิน 5%</label>
+        <label class="tog"><input type="checkbox" id="det41"> ดูทุน + ค่าแรง</label>
+      </div>
+    </div>
+    <div class="sum" id="sum41"></div>
+    <div class="legend"><span style="padding-left:0">ต่าง % = (เว็บ − R4.1) ÷ R4.1 · แดง = เว็บแพงกว่าเกิน 2% · เขียว = ถูกกว่าเกิน 2% · ตาราง R4.1 = ★ ตารางราคาขาย R4.1.pdf</span></div>
+    <div id="list41" style="display:grid;gap:14px"></div>
+  </div>
+
+  <div id="tab-color" hidden>
   <div class="bar">
     <div class="row">
       <span class="lbl">เทียบ R4.0 เว็บ กับ</span>
@@ -136,6 +168,7 @@ footer { font-size: .8rem; color: var(--muted); }
   </div>
 
   <div id="list" style="display:grid;gap:14px"></div>
+  </div>
   <footer id="foot"></footer>
 </div>
 
@@ -205,7 +238,67 @@ $("#b40").onclick = () => { basis = "40"; save(); render(); };
 $("#groups").onclick = (e) => { const g = e.target.closest("[data-g]"); if (g) { group = g.dataset.g; render(); } };
 $("#q").oninput = (e) => { query = e.target.value; render(); };
 $("#det").onchange = (e) => { document.body.classList.toggle("show-det", e.target.checked); save(); };
-$("#foot").textContent = `R3.9 และ R4.0 เดิม = เลขในไฟล์ เทียบค่าอบสี.xlsx · R4.0 เว็บ = คิดราคา 4.0 ตอนนี้ (เรตอลู 3 แบรนด์ + ราคาสโตร์จริง ${DATA.meta.nStock.toLocaleString("en-US")} แถว) · คำนวณเมื่อ ${DATA.meta.builtAt}`;
+$("#foot").textContent = `ตาราง R4.1 = ★ ตารางราคาขาย R4.1.pdf · R3.9 และ R4.0 เดิม = เลขในไฟล์ เทียบค่าอบสี.xlsx · เว็บ = คิดราคา 4.0 ตอนนี้ (เรตอลู 3 แบรนด์ + ราคาสโตร์จริง ${DATA.meta.nStock.toLocaleString("en-US")} แถว) · คำนวณเมื่อ ${DATA.meta.builtAt}`;
 $("#sub").textContent += ` · อัปเดต ${DATA.meta.builtAt}`;
+
+// ── แท็บ เทียบตาราง R4.1 ──
+const R41 = DATA.r41 || { rows: [], notes: {}, finds: [] };
+let q41 = "", only5 = false;
+const pct = (a, b) => (typeof a === "number" && b ? Math.round(((a - b) / b) * 1000) / 10 : null);
+const kindOf = (p) => (p == null ? null : p > 2 ? "up" : p < -2 ? "down" : "flat");
+const chip = (p) => (p == null ? "—" : `<span class="d ${kindOf(p)}">${p > 0 ? "+" : ""}${p}%</span>`);
+$("#finds").innerHTML = `<h2>ควรทำอะไร</h2>` + R41.finds.map((f) => `<div class="find"><span class="sev ${f.sev}">${f.tag}</span>
+  <div><b>${f.title}</b><p>${f.why}</p>${f.act ? `<div class="act">→ ${f.act}</div>` : ""}</div></div>`).join("");
+function render41() {
+  const ql = q41.trim().toLowerCase();
+  const groups = new Map();
+  for (const r of R41.rows) { const k = (r.name || r.head) + (r.vk ? " · " + r.vk : ""); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(r); }
+  const cnt = { up: 0, down: 0, flat: 0, out5: 0, na: 0 };
+  const cards = [];
+  for (const [k, rs] of groups) {
+    if (ql && !k.toLowerCase().includes(ql)) continue;
+    const ps = rs.filter((r) => r.web).map((r) => pct(r.web.sT, r.pdf.sT));
+    for (const p of ps) { cnt[kindOf(p)]++; if (Math.abs(p) > 5) cnt.out5++; }
+    cnt.na += rs.filter((r) => !r.web).length;
+    const shown = only5 ? rs.filter((r) => r.web && Math.abs(pct(r.web.sT, r.pdf.sT)) > 5) : rs;
+    if (!shown.length) continue;
+    const note = R41.notes[rs[0].id] || (rs[0].id ? null : { level: "info", text: rs[0].na || "" });
+    const avg = ps.length ? Math.round(ps.reduce((a, b) => a + b, 0) / ps.length * 10) / 10 : null;
+    const rows = shown.map((r) => {
+      const size = `${r.w}×${r.h}${r.p > 1 ? ` · ${r.p} บาน` : ""}${r.small ? ' <span class="tag">ไซซ์เล็ก ราคาตายตัว</span>' : ""}`;
+      if (!r.web) return `<tr class="na"><td class="c">${size}</td><td class="num">${fmt(r.pdf.sT)}</td><td colspan="2" style="text-align:left">${r.na}</td><td class="num d41" colspan="6"></td></tr>`;
+      const p = pct(r.web.sT, r.pdf.sT);
+      const labWarn = (Math.abs(r.web.cP - r.pdf.cP) > 1 || Math.abs(r.web.cI - r.pdf.cI) > 1) ? ' <span class="tag sw">ทุนค่าแรงต่าง</span>' : "";
+      return `<tr><td class="c">${size}${labWarn}</td><td class="num">${fmt(r.pdf.sT)}</td><td class="num web">${fmt(r.web.sT)}</td><td class="num">${chip(p)}</td>
+        <td class="num d41">${fmt(r.pdf.cM)}</td><td class="num d41 web">${fmt(r.web.cM)} ${chip(pct(r.web.cM, r.pdf.cM))}</td>
+        <td class="num d41">${fmt(r.pdf.cP)} / ${fmt(r.pdf.sP)}</td><td class="num d41 web">${fmt(r.web.cP)} / ${fmt(r.web.sP)}</td>
+        <td class="num d41">${fmt(r.pdf.cI)} / ${fmt(r.pdf.sI)}</td><td class="num d41 web">${fmt(r.web.cI)} / ${fmt(r.web.sI)}</td></tr>`;
+    }).join("");
+    cards.push(`<section class="card"><header><h2>${k}</h2><div class="meta gsum">${ps.length ? `${ps.length} ขนาด · เฉลี่ย ${chip(avg)} · ช่วง ${chip(Math.min(...ps))} ถึง ${chip(Math.max(...ps))}` : "เทียบไม่ได้"}</div></header>
+      ${note && note.text ? `<div class="note ${note.level}">${note.text}</div>` : ""}
+      <div class="tbl"><table><thead>
+        <tr><th class="c"></th><th class="grp" colspan="3">ราคาขายรวม (บาท)</th><th class="grp d41" colspan="2">ทุนค่าของ</th><th class="grp d41" colspan="2">ค่าผลิต ทุน / ขาย</th><th class="grp d41" colspan="2">ค่าติดตั้ง ทุน / ขาย</th></tr>
+        <tr><th class="c">ขนาด (ซม.)</th><th>R4.1</th><th>เว็บ</th><th>ต่าง</th><th class="d41">R4.1</th><th class="d41">เว็บ</th><th class="d41">R4.1</th><th class="d41">เว็บ</th><th class="d41">R4.1</th><th class="d41">เว็บ</th></tr>
+      </thead><tbody>${rows}</tbody></table></div></section>`);
+  }
+  $("#list41").innerHTML = cards.join("") || `<div class="empty">ไม่เจอบานที่ค้น</div>`;
+  $("#sum41").innerHTML = `<span class="pill flat">ใกล้ตาราง ±2% <b>${cnt.flat}</b> แถว</span><span class="pill up">เว็บแพงกว่า <b>${cnt.up}</b></span>
+    <span class="pill down">เว็บถูกกว่า <b>${cnt.down}</b></span><span class="pill up">ต่างเกิน 5% <b>${cnt.out5}</b></span>${cnt.na ? `<span class="pill flat">เทียบไม่ได้ <b>${cnt.na}</b></span>` : ""}`;
+}
+$("#q41").oninput = (e) => { q41 = e.target.value; render41(); };
+$("#only5").onchange = (e) => { only5 = e.target.checked; render41(); };
+$("#det41").onchange = (e) => { document.body.classList.toggle("show-det41", e.target.checked); };
+let tab = "r41";
+try { const t = localStorage.getItem("cc-tab"); if (t === "color" || t === "r41") tab = t; } catch {}
+if (location.hash === "#color" || location.hash === "#r41") tab = location.hash.slice(1);
+function showTab(t) {
+  tab = t; try { localStorage.setItem("cc-tab", t); } catch {}
+  $("#tab-r41").hidden = t !== "r41"; $("#tab-color").hidden = t !== "color";
+  $("#t-r41").setAttribute("aria-selected", t === "r41"); $("#t-color").setAttribute("aria-selected", t === "color");
+  $("#h1").textContent = t === "r41" ? "เทียบราคาขาย กับตาราง R4.1" : "เทียบค่าอบสี";
+}
+document.querySelector(".tabs").onclick = (e) => { const b = e.target.closest("[data-tab]"); if (b) showTab(b.dataset.tab); };
+showTab(tab);
 render();
+render41();
 </script>
