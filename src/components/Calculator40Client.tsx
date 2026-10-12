@@ -637,6 +637,10 @@ export default function Calculator40Client({ customers = [], priceOverride, line
   const stickyPrice = ok
     ? (laborMode === "mfg" ? (result as any).sell.mfgOnlyNet : (result as any).sell.withInstall) + (((result as any).subSell) || 0)
     : 0;
+  // ทุนรวมจริง = ทุนค่าของ + ทุนค่าแรง (ผลิต + ติดตั้ง · ขายส่งไม่ไปติดตั้ง = ผลิตอย่างเดียว) + บานย่อย
+  //   เดิมแผง "ดูทุน/กำไร" โชว์แค่ทุนค่าของ → กำไรสูงเกินจริงเท่าค่าแรง (เจ้าของเจอ 12 ต.ค.69 บานตู้ 40×100 ทุนรวม 800 กำไร 7,800)
+  const labCost = ok ? (Number((result as any).labor?.prod) || 0) + (laborMode === "mfg" ? 0 : (Number((result as any).labor?.install) || 0)) : 0;
+  const fullCost = ok ? (Number((result as any).cost?.total) || 0) + labCost + (Number((result as any).subCost) || 0) : 0;
   const sizeLabel = [
     (Number(w) || 0) > 0 && (Number(h) || 0) > 0 ? `${w}×${h} ซม.` : "",
     (Number(p) || 0) > 1 ? `${p} บาน` : "",
@@ -878,7 +882,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     const desc = [...workLines, "รายละเอียดงาน", ...jobLines].join("\n");
     pushQuoteItem({
       name: itemName, desc, qty: n,
-      perUnit: (laborMode === "mfg" ? result.sell.mfgOnlyNet : result.sell.withInstall) + subSell, cost: result.cost.total + subCost,
+      perUnit: (laborMode === "mfg" ? result.sell.mfgOnlyNet : result.sell.withInstall) + subSell, cost: fullCost,   // ทุนรวมค่าแรง (ใช้แค่โชว์ ทุนรวม/กำไรรวม ของใบ)
       prodId: prod.id, groupLabel: GROUPS.find((g) => g.g === prod.group)?.label ?? "",
       recipe: buildRecipe(),
     });
@@ -1893,8 +1897,8 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                   {showCost && (
                     <div className="col-span-2 rounded-2xl px-5 py-4 bg-amber-50 border border-amber-200">
                       <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
-                        <span>ทุนรวม <b className="tabular-nums">฿{baht(result.cost.total)}</b></span>
-                        <span className="text-emerald-700">กำไร <b className="tabular-nums">฿{baht(result.profit)}</b></span>
+                        <span>ทุนรวม (ของ + ค่าแรง) <b className="tabular-nums">฿{baht(fullCost)}</b></span>
+                        <span className="text-emerald-700">กำไร <b className="tabular-nums">฿{baht(stickyPrice - fullCost)}</b></span>
                         <span className="text-ink-3 text-xs">อลู {baht(result.cost.alu)} · สี {baht(result.cost.bake)} · กระจก {baht(result.cost.glass)} · อุปกรณ์ {baht(result.cost.hardware)} · สิ้นเปลือง {baht(result.cost.consum)} · ค่าแรงผลิต {baht(result.labor.prod)} · ติดตั้ง {baht(result.labor.install)}</span>
                       </div>
                       <button onClick={() => setLinesOpen((v) => !v)} className="press text-xs font-semibold text-brand-dark mt-2">
@@ -2366,7 +2370,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                         {/* ห้องกระจก (G6) ไม่มีทุนรายตัว (cost.total = 0) → ไม่โชว์ กันขึ้นกำไร = ราคาเต็ม */}
                         {showCost && result.cost.total > 0 && (
                           <span className="text-[11px] text-ink-3 tabular-nums">
-                            · ทุน ฿{baht(result.cost.total)} · กำไร ฿{baht(stickyPrice - result.cost.total)}
+                            · ทุน ฿{baht(fullCost)} · กำไร ฿{baht(stickyPrice - fullCost)}
                           </span>
                         )}
                       </div>
