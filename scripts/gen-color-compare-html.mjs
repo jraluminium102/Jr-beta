@@ -88,7 +88,9 @@ for (const it of items) {
       oven: (c.cost?.openOven || 0) > 0, swapped, cost: costOf(c),
       // วิธีคิดค่าสีของเว็บ — ให้คนอ่านตรวจสูตรได้: ค่าอบ = กก.ที่อบ × เรต/กก. + ค่าเปิดตู้อบ · สีสต็อก = ซื้อเส้นสีสำเร็จแพงกว่าขาว
       bake: { kg: Math.round((c.aluKg || 0) * 100) / 100, rate: PB.BAKE?.[resolveAluColor(swapped ? "wood_special" : k).bake] ?? 0,
-        bakeCost: R(c.cost?.bake), oven: R(c.cost?.openOven), aluDiff: R((c.cost?.alu || 0) - (wh.cost?.alu || 0)), otherDiff: R((c.cost.total - wh.cost.total) - (c.cost?.bake || 0) - (c.cost?.openOven || 0) - ((c.cost?.alu || 0) - (wh.cost?.alu || 0))) } });
+        // ทุกก้อนเป็น "ส่วนที่เพิ่มจากสีขาว" — รุ่นที่สีขาวก็อบ/เปิดตู้อยู่แล้ว (Velora · SlimLux · E-series) จะได้ไม่โชว์ตู้อบซ้ำ
+        bakeAll: R(c.cost?.bake), bakeWhite: R(wh.cost?.bake), bakeCost: R((c.cost?.bake || 0) - (wh.cost?.bake || 0)), oven: R((c.cost?.openOven || 0) - (wh.cost?.openOven || 0)), aluDiff: R((c.cost?.alu || 0) - (wh.cost?.alu || 0)),
+        otherDiff: R((c.cost.total - wh.cost.total) - ((c.cost?.bake || 0) - (wh.cost?.bake || 0)) - ((c.cost?.openOven || 0) - (wh.cost?.openOven || 0)) - ((c.cost?.alu || 0) - (wh.cost?.alu || 0))) } });
   }
   data.push(prod);
 }

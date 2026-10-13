@@ -207,7 +207,8 @@ $("#det41").onchange = (e) => { document.body.classList.toggle("show-det41", e.t
 // ── แท็บ ค่าอบสี เทียบ R3.9 ──
 let group = "ทั้งหมด", query = "";
 const howTxt = (r) => { const b = r.bake || {}; const parts = [];
-  if (b.bakeCost > 0) parts.push(`อบ ${b.kg} กก. × ${b.rate} = ${fmt(b.bakeCost)}`);
+  if (b.bakeAll > 0 && b.bakeWhite > 0) parts.push(`อบ ${b.kg} กก. × ${b.rate} = ${fmt(b.bakeAll)} − ที่สีขาวอบอยู่แล้ว ${fmt(b.bakeWhite)} = ${fmt(b.bakeCost)}`);
+  else if (b.bakeCost > 0) parts.push(`อบ ${b.kg} กก. × ${b.rate} = ${fmt(b.bakeCost)}`);
   if (b.oven > 0) parts.push(`ตู้อบ ${fmt(b.oven)}`);
   if (b.aluDiff > 0) parts.push(`เส้นสี +${fmt(b.aluDiff)}`); else if (b.aluDiff < 0) parts.push(`เส้นสี −${fmt(-b.aluDiff)}`);
   if (Math.abs(b.otherDiff || 0) > 50) parts.push(`อื่น ${b.otherDiff > 0 ? "+" : "−"}${fmt(Math.abs(b.otherDiff))}`);
