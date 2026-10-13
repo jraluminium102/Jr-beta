@@ -101,6 +101,8 @@ const SKIP_SPEC_DETAIL: [string, string][] = [
   ["tsHandleBrand", "เมโทร"], ["tsHandleColor", "อบขาว"],
   // หลังคาเลื่อน: ส่วนติดตาย 0 = ผืนเลื่อนล้วน (ค่าปกติ) ไม่ต้องขึ้นใบเสนอ · กรอกมากกว่า 0 ค่อยพิมพ์
   ["fixw", "0"], ["fixw", ""],
+  // บานเปิด: ไม่มีครอบวงกบ = ค่าปกติ ไม่ต้องขึ้นใบ (13 ต.ค.69) · สีกล่องครอบวงกบ พิมพ์เฉพาะเมื่อเลือกครอบวงกบ (ดูในลูปด้านล่าง)
+  ["odwrap", "ไม่มี"],
 ];
 
 type QuoteItem = {
@@ -862,6 +864,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
       //   ราง: รางกันน้ำ = ค่ามาตรฐาน ไม่ต้องขึ้น · แต่ "รางเตี้ย (งานใน)" ยังต้องขึ้น (งานในต้องระบุ)
       //   เติมคู่ [key, value] ใหม่ที่นี่ได้เรื่อย ๆ ถ้าเจ้าของสั่งซ่อนค่าอื่น
       if (SKIP_SPEC_DETAIL.some(([k, val]) => k === o.key && val === v)) return;
+      if (o.key === "odwrapcolor" && (spec.odwrap ?? "ไม่มี") === "ไม่มี") return;   // สีกล่องครอบวงกบ — ไม่มีครอบวงกบก็ไม่ต้องบอกสี
       // ฟิลด์ "[สลับ]" ใช้เฉพาะระแนงสลับ — ไม่ใช่ระแนงผสมแล้วยังพิมพ์ลงใบ = ลูกค้าอ่านแล้วงง (และสูตรก็ไม่ได้คิดเงินให้)
       const isAlt = typeof o.label === "string" && o.label.startsWith("[สลับ]");
       if (isAlt && spec.gslat !== "ระแนงสลับ") return;
@@ -1584,6 +1587,8 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                   }}
                   movePanes={movePanes}
                   color={resolveAluColor(color).bake}
+                  colorKey={color}
+                  material={material}
                   form={form || prod.defForm}
                 />
               )}

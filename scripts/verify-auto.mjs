@@ -78,7 +78,7 @@ console.log("\n═══ ② ทุนชุดออโต้ = สูตรใ
 
   // SlimLux D58 = ชุดแรก + บานเพิ่ม×(บาน−1) + ราง×กว้าง×บาน + (สแกนหน้า | Touch)
   const sl = C("slimlux", { w: 300, h: 200, p: 2, form: "2 บาน (SS)", addons: { slide_auto: { brand: "slimlux" } } });
-  ok("SlimLux 2 บาน 3 ม. = 15,850 (6,900 + 2,250 + ราง 6,600 + Touch 100)", addonCost(sl, /./) === 15850, String(addonCost(sl, /./)));
+  ok("SlimLux 2 บาน 3 ม. = 17,550 (6,900 + ค่าส่ง 1,700 + 2,250 + ราง 6,600 + Touch 100 · ไฟล์ v1 D57 รวมค่าส่ง 13 ต.ค.69)", addonCost(sl, /./) === 17550, String(addonCost(sl, /./)));
   const slS = C("slimlux", { w: 300, h: 200, p: 2, form: "2 บาน (SS)", addons: { slide_auto: { brand: "slimlux", scan: true } } });
   ok("SlimLux เลือกสแกนหน้า = +2,650 จาก Touch", addonCost(slS, /./) - addonCost(sl, /./) === 2650, String(addonCost(slS, /./) - addonCost(sl, /./)));
 
@@ -1161,6 +1161,154 @@ console.log("\n═══ เส้นราคารวมสี (colorIn) ต�
   ok("เปิดดัดโค้ง: ไม่มีสีอบพิเศษ / ลายไม้อบพิเศษ ให้เลือก", !ks.some((k) => ["special", "wood_special", "wood_fuji_oak", "wood_fuji_makha"].includes(k)) && ks.includes("wood_teak") && ks.includes("sahara"), ks.join(","));
   ok("ธง noSpecialBake ในสูตร = รายชื่อใน alu-colors", Object.values(PRODUCTS).filter((p) => p.noSpecialBake).map((p) => p.id).sort().join(",") === [...AC2.NO_SPECIAL_BAKE_PRODUCTS].sort().join(","));
   ok("รุ่นอื่นยังมีสีอบพิเศษ (เช่น บานเปิด)", AC2.aluColorKeysFor("open_door").includes("special"));
+}
+// ── ㉓ ออปชั่นตาม Excel 13 ต.ค.69 (ตรวจกับ v1 ด้วย Excel จริง · opt-misc) ──────────────────────────
+//   เลข "ไฟล์" ทุกตัวมาจาก Excel คำนวณจริง (ส่วนต่างทุน เปิด−ปิด ออปชั่น) · ปิดตารางเรตแบรนด์ (ALU_BRAND_ON=false) = ราคาเส้นเท่าไฟล์
+console.log("\n═══ ㉓ ออปชั่นตาม Excel — ครอบวงกบบานเปิด · เฟี้ยมธรณี · E-series รางใน · PC Door แบ่ง 4 · Shower · คาดตาราง Fuji · ลูกฟูกค่าสี ═══");
+{
+  const PF = { ...PB, ALU_BRAND_ON: false };
+  const RUN = (id, o) => computeCost(PF, PRODUCTS[id], { color: "white", colorKey: "white", spec: {}, addons: {}, ...o });
+  const dCost = (id, base, on) => RUN(id, { ...base, ...on, spec: { ...(base.spec || {}), ...(on.spec || {}) } }).cost.total - RUN(id, base).cost.total;
+  const near = (a, b, tol = 1) => Math.abs(a - b) <= tol;
+
+  // ── ข้อ 1: บานเปิด ครอบวงกบ = วัสดุจริง (ชีต "คิดทุน บานเปิด" แถว 19-20) · 150×200 1 บาน ──
+  const OD = { w: 150, h: 200, p: 1, form: "มีธรณี" };
+  const COLS = [["ขาว", "white", "white", 1453.83, 1656.42], ["เทาซาฮาร่า", "sahara", "sahara", 2285.38, null], ["Aztec", "sahara", "aztec", 2285.38, null],
+    ["ลายไม้สักทอง", "woodStock", "wood_teak", 2389.32, null], ["สีอบพิเศษ", "special", "special", 2892.41, null], ["ลายไม้อบพิเศษ", "woodSpecial", "wood_special", 3033.77, null]];
+  for (const [nm, bake, key, want, wantBlade] of COLS) {
+    const base = { ...OD, color: bake, colorKey: key };
+    const d = dCost("open_door", base, { spec: { odwrap: "มี" } });
+    ok(`บานเปิด ครอบวงกบ "มี" สี${nm}: ทุน +${want} (Excel)`, near(d, want), d.toFixed(2));
+    if (wantBlade) {
+      const d2 = dCost("open_door", base, { spec: { odwrap: "มี+บังใบ" } });
+      ok(`บานเปิด ครอบวงกบ "มี+บังใบ" สี${nm}: ทุน +${wantBlade} (Excel)`, near(d2, wantBlade), d2.toFixed(2));
+    }
+  }
+  ok("บานเปิด 200×240 2 บาน ครอบวงกบ มี: ทุน +1,797.47 / +บังใบ 2,047.93 (Excel)",
+    near(dCost("open_door", { w: 200, h: 240, p: 2, form: "มีธรณี" }, { spec: { odwrap: "มี" } }), 1797.47)
+    && near(dCost("open_door", { w: 200, h: 240, p: 2, form: "มีธรณี" }, { spec: { odwrap: "มี+บังใบ" } }), 2047.93));
+  ok("บานเปิด ครอบวงกบ: ค่าตั้งต้น 'ไม่มี' → ไม่มีบรรทัดครอบวงกบ/บังใบ",
+    !RUN("open_door", OD).lines.some((l) => /ครอบวงกบ|บังใบ/.test(l.name)));
+  {
+    const a = RUN("open_door", { ...OD, spec: { odwrap: "มี", odwrapcolor: "ดำ" } }), b = RUN("open_door", { ...OD, spec: { odwrap: "มี", odwrapcolor: "อบขาว" } });
+    const code = (r) => (r.lines.find((l) => /ครอบวงกบ 1\.6/.test(l.name)) || {}).code;
+    ok("สีกล่อง ดำ = JR01985 · อบขาว = JR01984 (ราคาเท่ากัน)", code(a) === "JR01985" && code(b) === "JR01984" && near(a.cost.total, b.cost.total, 0.01), `${code(a)}/${code(b)}`);
+    const w = RUN("open_door", { ...OD, spec: { odwrap: "มี+บังใบ", odwrapcolor: "อบขาว" } });
+    ok("บังใบ 4 หุน สีอบขาว = JR01687 · สีดำ = JR01688", (w.lines.find((l) => /บังใบ 4 หุน/.test(l.name)) || {}).code === "JR01687"
+      && (RUN("open_door", { ...OD, spec: { odwrap: "มี+บังใบ" } }).lines.find((l) => /บังใบ 4 หุน/.test(l.name)) || {}).code === "JR01688");
+    const sell = (spec) => RUN("open_door", { ...OD, spec }).sell.withInstall;
+    ok("ครอบวงกบเข้ากำไรค่าวัสดุ: ขายเพิ่ม > ทุนเพิ่ม (ไม่ใช่ขาย = ทุน)", sell({ odwrap: "มี" }) - sell({}) > dCost("open_door", OD, { spec: { odwrap: "มี" } }) * 1.5, String(sell({ odwrap: "มี" }) - sell({})));
+  }
+  // ปุ่ม frame_wrap (เหมา R3.9) ต้องไม่ขายซ้ำใน บานเปิด / ครอบวงกบไม้ — แต่ใบเก่าที่เลือกไว้ต้องยังคิดราคาเดิม
+  {
+    const P3 = JSON.parse(JSON.stringify(PRODUCTS, (k, v) => (typeof v === "function" ? undefined : v)));
+    applyBootstrap(P3, R39DATA);
+    ok("บานเปิด: ไม่มีปุ่ม frame_wrap (bootstrap ต้องไม่ใส่กลับ)", !(P3.open_door.addons || []).includes("frame_wrap"), (P3.open_door.addons || []).join(","));
+    ok("ครอบวงกบไม้: ไม่มีปุ่ม frame_wrap (ขายซ้ำกับตัวรุ่น)", !(P3.woodjamb.addons || []).includes("frame_wrap"), (P3.woodjamb.addons || []).join(","));
+    ok("รุ่นอื่นยังมีปุ่ม frame_wrap (เลื่อน SMS · ติดตาย)", (P3.sms_slide.addons || []).includes("frame_wrap") && (P3.fixed.addons || []).includes("frame_wrap"));
+    ok("ปุ่มอื่นของ บานเปิด/ครอบวงกบไม้ ยังอยู่ครบ (ธรณี · มุ้ง · มือจับ)", ["thresh", "mosquito", "cmech"].every((a) => P3.open_door.addons.includes(a)) && P3.woodjamb.addons.includes("mosquito"));
+    const legacy = RUN("open_door", { ...OD, addons: { frame_wrap: "3" } });
+    ok("ใบเก่าที่เลือก frame_wrap ไว้บนบานเปิด: ยังคิดราคาเดิม (700 × (กว้าง+2สูง))", legacy.lines.some((l) => l.cat === "addon" && /ครอบวงกบอลู/.test(l.name) && l.amount === 5.5 * 700), "");
+  }
+
+  // ── ข้อ 3: เฟี้ยม ธรณี (ชีต "คิดทุน เฟี้ยม" B6/C14/D36) ──
+  {
+    const F2 = { w: 120, h: 200, p: 2, form: "2บาน: รวบเปิดซ้าย (2-0)" }, F4 = { w: 320, h: 240, p: 4, form: "4บาน: รวบเปิดซ้าย (4-0)" };
+    const d = (b, t) => dCost("folding", b, { spec: { threshf: t } });
+    ok("เฟี้ยม หลังเต่า (B24018 905): ทุน −540 ทั้ง 120×200 และ 320×240 (Excel)", near(d(F2, "ธรณีหลังเต่า"), -540) && near(d(F4, "ธรณีหลังเต่า"), -540), `${d(F2, "ธรณีหลังเต่า")}/${d(F4, "ธรณีหลังเต่า")}`);
+    ok("เฟี้ยม รางยู (B24017 305 + กรีดพื้น 200/ม.): ทุน −900 @1.2 ม. · −500 @3.2 ม. (Excel)", near(d(F2, "รางยู"), -900) && near(d(F4, "รางยู"), -500), `${d(F2, "รางยู")}/${d(F4, "รางยู")}`);
+    const code = (t) => (RUN("folding", { ...F2, spec: { threshf: t } }).lines.find((l) => /เฟรมล่าง|รางยู/.test(l.name) && l.cat === "alu") || {}).code;
+    ok("เฟี้ยม: เฟรมล่างตามธรณี = B24003 / B24018 / B24017", code("ธรณีกันน้ำ") === "B24003" && code("ธรณีหลังเต่า") === "B24018" && code("รางยู") === "B24017", [code("ธรณีกันน้ำ"), code("ธรณีหลังเต่า"), code("รางยู")].join("/"));
+    // ใบตัดต้องได้รหัสเฟรมล่างเดียวกัน
+    const CE = await import("../src/lib/cutlist/engine.ts"), CP = await import("../src/lib/cutlist/products.ts");
+    const cutCode = (t) => CE.computeCutList(CP.SMS240_BIFOLD, { W: 120, H: 200, N: 2, rail: "2L0R", fold2: "เดี่ยว", foldSill: t }).rows.filter((r) => ["B24003", "B24018", "B24017"].includes(r.code) && r.qty > 0).map((r) => r.code).join(",");
+    ok("ใบตัดเฟี้ยม: เฟรมล่างได้รหัสเดียวกับคิดราคา (กันน้ำ/หลังเต่า/รางยู)", cutCode("ธรณีกันน้ำ") === "B24003" && cutCode("ธรณีหลังเต่า") === "B24018" && cutCode("รางยู") === "B24017",
+      [cutCode("ธรณีกันน้ำ"), cutCode("ธรณีหลังเต่า"), cutCode("รางยู")].join("/"));
+    const fr2 = fs.readFileSync("src/lib/cutlist/from-recipe.ts", "utf8");
+    ok("from-recipe ส่งธรณีเฟี้ยม (threshf) ไปใบตัด", /foldSill/.test(fr2) && /spec\?\.threshf/.test(fr2));
+  }
+
+  // ── ข้อ 4: E-series รางล่างภายใน ── (ไม่มีใบตัด E-series ในระบบ — ตรวจฝั่งคิดราคาอย่างเดียว)
+  {
+    const E = (w, h, p) => ({ w, h, p, form: "อิสระ" }), low = { spec: { bottomrail: "รางเตี้ย (งานใน)" } };
+    ok("E-series รางเตี้ย (งานใน) 300×220 2 บาน: ทุน −2,412.11 (E-03 825 · ถาดลองน้ำ 0) (Excel)", near(dCost("eseries", E(300, 220, 2), low), -2412.11), String(dCost("eseries", E(300, 220, 2), low)));
+    ok("E-series รางเตี้ย (งานใน) 600×250 4 บาน: ทุน −3,669.99 (Excel)", near(dCost("eseries", E(600, 250, 4), low), -3669.99), String(dCost("eseries", E(600, 250, 4), low)));
+    const r = RUN("eseries", { ...E(300, 220, 2), ...low });
+    ok("E-series งานใน: ไม่มีถาดลองน้ำ E-03B · เฟรมล่าง E-03 ราคา 825", !r.lines.some((l) => /E-03B|ถาดลองน้ำ/.test(l.name)) && r.lines.some((l) => l.code === "E-03" && /ภายใน/.test(l.name) && l.unitPrice === 825));
+    ok("E-series รางกันน้ำ (ค่าตั้งต้น): ยังมีถาดลองน้ำ + เฟรมล่าง 2,152", RUN("eseries", E(300, 220, 2)).lines.some((l) => l.code === "E-03B") && RUN("eseries", E(300, 220, 2)).lines.some((l) => l.code === "E-03" && l.unitPrice === 2152));
+  }
+
+  // ── ข้อ 5: PC Door แบ่ง 4 ──
+  {
+    const d = dCost("pcdoor", { w: 160, h: 220, p: 2, form: "แบ่ง 2" }, { p: 4, form: "แบ่ง 4" });
+    const d2 = dCost("pcdoor", { w: 240, h: 240, p: 2, form: "แบ่ง 2" }, { p: 4, form: "แบ่ง 4" });
+    ok("PC Door แบ่ง 4 (160×220): ทุน +4,415.03 · (240×240) +4,672.63 (Excel)", near(d, 4415.03) && near(d2, 4672.63), `${d.toFixed(2)}/${d2.toFixed(2)}`);
+    const q = (form, p, re) => ((RUN("pcdoor", { w: 160, h: 220, p, form }).lines.find((l) => re.test(l.name)) || {}).qty);
+    ok("PC Door แบ่ง 4: กลอน+ปลายกลอน ×2 ชุด · น็อตประกอบบาน 8", q("แบ่ง 4", 4, /^กลอน/) === 2 && q("แบ่ง 4", 4, /^ปลายกลอน/) === 2 && q("แบ่ง 4", 4, /^น็อตประกอบ/) === 8);
+    ok("PC Door: ชิ้นส่วนมือจับ (แกน/ปลาย/ตัวที/ก้ามปู) ไม่คูณจำนวนบาน — แบ่ง 4 = แบ่ง 2", ["แกนมือจับ A", "แกนมือจับ B", "ปลายมือจับ", "ตัวที", "ก้ามปู"].every((n) => q("แบ่ง 4", 4, new RegExp("^" + n)) === q("แบ่ง 2", 2, new RegExp("^" + n))));
+  }
+
+  // ── ข้อ 6: Shower ชุดอลู ยู 5 หุน สีเทา 230 ──
+  {
+    const A = { w: 80, h: 200, p: 1, form: "บานตาย", material: "อลูมิเนียม" };
+    const u5 = (colorKey, color) => RUN("shower", { ...A, colorKey, color }).lines.filter((l) => /ยู5หุนอลู/.test(l.name));
+    ok("Shower อลู สีเทาซาฮาร่า: ยู 5 หุน 230/เส้น · อบขาว/ดำ/ลายไม้ 200/เส้น", u5("sahara", "sahara")[0].unitPrice === 230 && u5("sahara_black", "sahara")[0].unitPrice === 230
+      && u5("white", "white")[0].unitPrice === 200 && u5("black", "white")[0].unitPrice === 200 && u5("wood_teak", "woodStock")[0].unitPrice === 200,
+      [u5("sahara", "sahara")[0].unitPrice, u5("white", "white")[0].unitPrice].join("/"));
+    const g = dCost("shower", A, { colorKey: "sahara", color: "sahara" });
+    ok("Shower อลู เทา 80×200: ทุน +28 · ประตู 90×210 +56 (Excel)", near(g, 28, 1.5)
+      && near(dCost("shower", { w: 90, h: 210, p: 1, form: "บานตาย+บานเปิด", material: "อลูมิเนียม", spec: { dw: "60", dh: "200", cw: "150" } }, { colorKey: "sahara", color: "sahara" }), 56, 1.5), String(g));
+  }
+
+  // ── ข้อ 7: คาดตาราง ลายไม้ Fuji = 300 (R3.9) ──
+  {
+    const G = { ...PRODUCTS.sms_slide, addons: ["grid"] };
+    const gl = (color, key) => (computeCost(PB, G, { w: 200, h: 220, p: 2, spec: {}, addons: { grid: { nh: 2, nv: 1 } }, color, colorKey: key }).lines.find((l) => l.cat === "addon" && /คาดตาราง/.test(l.name)) || {}).unitPrice;
+    ok("คาดตาราง ลายไม้ Fuji Oak/Makha = 300 (R3.9 อบพิเศษ/Fuji)", gl("woodSpecial", "wood_fuji_oak") === 300 && gl("woodSpecial", "wood_fuji_makha") === 300, `${gl("woodSpecial", "wood_fuji_oak")}/${gl("woodSpecial", "wood_fuji_makha")}`);
+    ok("คาดตาราง ลายไม้อบพิเศษ (ระบุรหัส) ยัง 350 · อบพิเศษ 300 · ลายไม้สต็อก 250", gl("woodSpecial", "wood_special") === 350 && gl("special", "special") === 300 && gl("woodStock", "wood_teak") === 250);
+    const ui = fs.readFileSync("src/components/calculator40/AddonsSection.tsx", "utf8");
+    ok("UI คาดตาราง ส่ง colorKey ให้ gridRateFor (ตารางเดียวกับ engine)", /gridRateFor\(color, colorKey\)/.test(ui));
+  }
+
+  // ── ข้อ 8: ทึบล่างลูกฟูก / แผ่นลูกฟูกแทนกระจก บวกค่าสีตาม R3.9 rn90FinRate ──
+  {
+    const FIN = [["white", "white", 0], ["black", "white", 0], ["sahara", "sahara", 400], ["sahara_black", "sahara", 400], ["aztec", "sahara", 950],
+      ["wood_teak", "woodStock", 1500], ["wood_maho", "woodStock", 1500], ["wood_whiteoak", "woodStock", 1500], ["special", "special", 1600], ["plated", "special", 1600],
+      ["wood_special", "woodSpecial", 2200], ["wood_fuji_oak", "woodSpecial", 2200], ["wood_fuji_makha", "woodSpecial", 2200]];
+    const OP = { w: 150, h: 220, p: 1, form: "มีธรณี" };
+    // solid_panel เป็นปุ่ม universal (withUniversalAddons ใส่ตอนรันจริง) — จำลองด้วยการเติมเข้า addons ของรุ่น
+    const ODP = { ...PRODUCTS.open_door, addons: [...PRODUCTS.open_door.addons, "solid_panel"] };
+    const sp = (key, bake, type) => computeCost(PF, ODP, { ...OP, color: bake, colorKey: key, spec: {}, addons: { solid_panel: { type, w: 1.5, h: 0.6 } } }).lines.find((l) => l.cat === "addon" && /แผ่นทึบล่าง/.test(l.name));
+    for (const [key, bake, fin] of FIN) {
+      const l = sp(key, bake, "look");
+      ok(`ทึบล่างลูกฟูก สี ${key}: ${3500 + fin}/ตร.ม. (3,500 + ค่าสี ${fin})`, l && l.unitPrice === 3500 + fin && Math.abs(l.amount - 0.9 * (3500 + fin)) < 0.5, l ? `${l.unitPrice}` : "ไม่มีบรรทัด");
+    }
+    ok("ทึบล่างคอมโพสิต: 3,300 ทุกสี (ไม่คิดค่าสี)", ["white", "sahara", "special", "wood_fuji_oak"].every((k, i) => sp(k, ["white", "sahara", "special", "woodSpecial"][i], "comp").unitPrice === 3300));
+    // แผ่นลูกฟูกแทนกระจก — ส่วนต่างขายจากคอมโพสิต (ไม่คิดสี) = พื้นที่ × (3,500 + ค่าสี − 3,300)
+    const glassDiff = (key, bake) => {
+      const f = (gt) => computeCost(PF, PRODUCTS.fixed, { w: 150, h: 150, p: 1, glassType: gt, color: bake, colorKey: key, spec: {}, addons: {} }).sell.withInstall;
+      return f("แผ่นลูกฟูก") - f("แผ่นคอมโพสิต");
+    };
+    ok("แผ่นลูกฟูกแทนกระจก: ขาว = +200/ตร.ม. จากคอมโพสิต · สีอบพิเศษ +1,800/ตร.ม. · ลายไม้อบพิเศษ Fuji +2,400/ตร.ม. (150×150 = 2.25 ตร.ม.)",
+      Math.abs(glassDiff("white", "white") - 450) < 1 && Math.abs(glassDiff("special", "special") - 4050) < 1 && Math.abs(glassDiff("wood_fuji_oak", "woodSpecial") - 5400) < 1,
+      [glassDiff("white", "white"), glassDiff("special", "special"), glassDiff("wood_fuji_oak", "woodSpecial")].join("/"));
+    const ui = fs.readFileSync("src/components/calculator40/AddonsSection.tsx", "utf8");
+    ok("UI ทึบล่าง ใช้ corrugatedFinRate ตัวเดียวกับ engine (ป้ายราคาตรง)", /corrugatedFinRate\(color, colorKey\)/.test(ui) && /3500 \+ fin/.test(ui));
+  }
+
+  // ── ข้อ 9: Shower เข้ามุม/อุปกรณ์ดำ บวกหลังขั้นต่ำ · ราวจับยู 5 หุน ซ่อนเมื่อแบบเสาตั้งมีราวจับแล้ว ──
+  {
+    const S = { w: 80, h: 200, p: 1, form: "บานตาย", material: "สแตนเลส" };
+    const sell = (addons) => RUN("shower", { ...S, addons }).sell.withInstall;
+    ok("Shower เข้ามุม: ขายเพิ่ม 3,000 เต็ม (บวกหลังขั้นต่ำ 14,000 — เดิมโดนดูดเหลือ 2,000)", sell({ shower_corner: "yes" }) - sell({}) === 3000, String(sell({ shower_corner: "yes" }) - sell({})));
+    ok("Shower อุปกรณ์ดำ +4,000 · ทอง +6,000 บวกเต็ม", sell({ shower_hw: "black" }) - sell({}) === 4000 && sell({ shower_hw: "gold" }) - sell({}) === 6000);
+    ok("Shower ขั้นต่ำ 14,000 (บานตาย) ยังทำงานเมื่อไม่เลือกออปชั่น", sell({}) >= 14000, String(sell({})));
+    const H = (material) => RUN("handrail", { w: 400, h: 100, p: 4, material, addons: { handrail_grip: "u5" } }).lines.filter((l) => l.cat === "addon" && /ราวจับด้านบน/.test(l.name)).length;
+    ok("ราวกันตก: แบบเสาตั้ง+ราวจับอลู ไม่คิดราวจับยู 5 หุนซ้ำ · แบบอื่นยังคิด 500/ม.", H("เฉียง|เสาตั้ง+ราวจับอลู") === 0 && H("ตรง|เสาตั้ง+ราวจับอลู") === 0 && H("เฉียง|ยูเหล็ก+ครอบอลู") === 1 && H("เฉียง|หมุดแปะข้าง") === 1,
+      [H("เฉียง|เสาตั้ง+ราวจับอลู"), H("เฉียง|ยูเหล็ก+ครอบอลู"), H("เฉียง|หมุดแปะข้าง")].join("/"));
+    const ui = fs.readFileSync("src/components/calculator40/AddonsSection.tsx", "utf8");
+    ok("UI ราวจับ: ซ่อนด้วย handrailHasGrip ตัวเดียวกับ engine", /handrailHasGrip\(material\)/.test(ui));
+  }
 }
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);

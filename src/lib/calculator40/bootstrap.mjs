@@ -131,6 +131,12 @@ export function applyBootstrap(PRODUCTS, R39DATA) {
     if (/เปลือย|shower|YKK|สำเร็จ/i.test(nm) || /เปลือย|สำเร็จ/.test(sc)) return; // เปลือย/สำเร็จ ข้าม (ไม่มีเฟรม)
     intendedAddons(nm).forEach(function (a) { if (!p.addons.includes(a)) p.addons.push(a); });
   });
+  // ── 13 ต.ค.69: p.noAddons = ปุ่มที่รุ่นนั้น "ไม่ให้มี" (ขายซ้ำกับตัวเลือกวัสดุจริงในรุ่น เช่น ครอบวงกบอลูเหมา R3.9) ──
+  //   ต้องกรองหลังเติม default + union ทั้งสองรอบ ไม่งั้น bootstrap ใส่ frame_wrap กลับให้ทุกรุ่น G1
+  //   (engine ยังคิดราคาให้ใบเก่าที่เลือกไว้ — ดู addonIds ใน computeCost)
+  Object.values(PRODUCTS).forEach(function (p) {
+    if (Array.isArray(p.noAddons) && Array.isArray(p.addons)) p.addons = p.addons.filter(function (a) { return !p.noAddons.includes(a); });
+  });
   // ── สีอลูที่เลือกได้ต่อรุ่น (ตาม dropdown Excel มด) — ล็อกสีเฉพาะที่รุ่นนั้นมีจริง ──
   const C6 = ['white', 'black', 'sahara', 'sahara_black', 'wood_teak', 'wood_maho', 'wood_whiteoak', 'special', 'wood_special'];       // SMS/รางบน/เฟี้ยม/E-series (6 หมวด)
   const C9 = C6.concat(['aztec']);                                                                                              // ยูโร/เปิด/กระทุ้ง/PC/รั้ว (+แอทแทคเกรย์)

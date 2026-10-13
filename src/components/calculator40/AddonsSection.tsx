@@ -23,7 +23,7 @@ import { MOSQ_CHIPS, mosqVariants } from "@/lib/calculator40/mosquito.mjs";
 // @ts-expect-error — products เป็น ESM JS ล้วน (ใช้ดึง screen_ready.materials สำหรับรุ่นย่อยมุ้ง)
 import { PRODUCTS } from "@/lib/calculator40/products.mjs";
 // @ts-expect-error — engine เป็น ESM JS ล้วน (ตาราง CMECH_TIERS/STAINLESS_TIERS/ADDON_FLAT/CEIL_RATE แหล่งเดียวกับที่ computeAddon ใช้คิดเงิน — import ตรง กันป้าย/ราคาหลุดกัน)
-import { CMECH_TIERS, STAINLESS_TIERS, ADDON_FLAT as ADDON_FLAT_RAW, CEIL_RATE as CEIL_RATE_RAW, zRate as zRateFn, gridRateFor, motorSizeOk, pickMotorByWeight, awnMotorPick } from "@/lib/calculator40/engine.mjs";
+import { CMECH_TIERS, STAINLESS_TIERS, ADDON_FLAT as ADDON_FLAT_RAW, CEIL_RATE as CEIL_RATE_RAW, zRate as zRateFn, gridRateFor, corrugatedFinRate, handrailHasGrip, motorSizeOk, pickMotorByWeight, awnMotorPick } from "@/lib/calculator40/engine.mjs";
 import PB_JSON from "@/lib/calculator40/pricebook.json";
 const ADDON_FLAT: Record<string, number> = ADDON_FLAT_RAW;
 const CEIL_RATE: Record<string, number> = CEIL_RATE_RAW;
@@ -193,7 +193,9 @@ function SectionHeader({ icon, label }: { icon: string; label: string }) {
 }
 
 /* ── field ต่อ addon 1 ตัว — ตรง app.js renderAddonField เป๊ะทีละ branch ── */
-function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, form, spec, weight, size }: {
+function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, colorKey, material, form, spec, weight, size }: {
+  // คีย์สีจริง (wood_fuji_oak ฯลฯ) — เรตคาดตาราง/ค่าสีลูกฟูกแยกตามสีที่ bake เดียวกันแต่ราคาต่างกัน · material = วัสดุ/แบบของรุ่น (ราวกันตก: ซ่อนราวจับถ้ามีใน BOM แล้ว)
+  colorKey?: string; material?: string;
   ad: string; prod: any; addons: AddonsMap; setAddons: (fn: (a: AddonsMap) => AddonsMap) => void; area: number; W: number; movePanes: number; color: string; form: string;
   // น้ำหนักบานที่เอนจินคิดให้ (result.weight) — ใช้ตัดสินว่ามอเตอร์ "อัตโนมัติ" เลือกได้จริงไหม
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -240,7 +242,7 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
   if (ad === "grid") {
     const g = A.grid || { nh: 0, nv: 0 };
     // ออโต้: เส้นคาดสีเดียวกับเฟรม จนกว่าจะเลือกเอง (rateTouched) — ตรง app.js renderAddonField 'grid'
-    const rate = g.rateTouched ? (g.rate || 200) : gridRateFor(color);
+    const rate = g.rateTouched ? (g.rate || 200) : gridRateFor(color, colorKey);
     const wM = W || 0, hM = (area && wM) ? area / wM : 0;
     // custom ความยาวเส้น (เจ้าของเคาะ 17ก.ค.69) — เว้น = อัตโนมัติตามกว้าง/สูงบาน
     const hLen = +g.hLen > 0 ? +g.hLen : wM;
@@ -307,11 +309,13 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
     const pw = +g.w > 0 ? +g.w : (W || 0);
     const ph = +g.h || 0;
     // เกล็ด Z (z1/z16) ราคาตามสีอลูหลัก · คอมโพสิต/ลูกฟูก คงที่ (แหล่งเดียวกับ engine solid_panel)
-    const rate = t === "z1" ? zRateFn("1", color) : t === "z16" ? zRateFn("1.6", color) : t === "comp" ? 3300 : 3500;
+    // ลูกฟูก = 3,500 + ค่าสีตามสีอลูหลัก (R3.9 rn90FinRate · ตารางเดียวกับ engine corrugatedFinRate — แหล่งเดียว)
+    const fin = corrugatedFinRate(color, colorKey);
+    const rate = t === "z1" ? zRateFn("1", color) : t === "z16" ? zRateFn("1.6", color) : t === "comp" ? 3300 : 3500 + fin;
     return (
       <Field label="บานล่างทึบ (คอมโพสิต/ลูกฟูก/เกล็ด Z แทนกระจกช่วงล่าง)">
         <ChipRow
-          items={[{ val: "none", label: "ไม่มี (กระจกเต็มบาน)" }, { val: "comp", label: "คอมโพสิต (3,300/ตร.ม.)" }, { val: "look", label: "อลูลูกฟูก (3,500/ตร.ม.)" }, { val: "z1", label: "เกล็ด Z 1\" (ตามสีอลู)" }, { val: "z16", label: "เกล็ด Z 1.6\" (ตามสีอลู)" }]}
+          items={[{ val: "none", label: "ไม่มี (กระจกเต็มบาน)" }, { val: "comp", label: "คอมโพสิต (3,300/ตร.ม.)" }, { val: "look", label: fin > 0 ? `อลูลูกฟูก (3,500 + สี ${fin.toLocaleString("th-TH")}/ตร.ม.)` : "อลูลูกฟูก (3,500/ตร.ม.)" }, { val: "z1", label: "เกล็ด Z 1\" (ตามสีอลู)" }, { val: "z16", label: "เกล็ด Z 1.6\" (ตามสีอลู)" }]}
           value={t} onChange={(v) => setObj("solid_panel", { type: v })}
         />
         {t !== "none" && (
@@ -526,6 +530,8 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, fo
     );
   }
   if (ad === "handrail_grip") {
+    // แบบ "เสาตั้ง+ราวจับอลู" มี "ราวจับบน" (กล่อง 1×1.6) ใน BOM อยู่แล้ว → ซ่อนปุ่ม (engine ก็ไม่คิดซ้ำ) — 13 ต.ค.69 ตาม Excel
+    if (handrailHasGrip(material)) return null;
     return (
       <Field label="ราวจับด้านบน">
         <ChipRow items={[{ val: "none", label: "ไม่มี" }, { val: "u5", label: 'ยู 5 หุน (+500/ม.)' }, { val: "box", label: 'กล่อง 1"×2" (+600/ม.)' }]} value={A.handrail_grip || "none"} onChange={(v) => set("handrail_grip", v)} />
@@ -1153,8 +1159,10 @@ function fmtNum(n: number) {
 }
 
 /* ── ส่วนหลัก ── */
-export default function AddonsSection({ prod, addons, setAddons, area, W, movePanes, color, form, spec, weight, size }: {
+export default function AddonsSection({ prod, addons, setAddons, area, W, movePanes, color, colorKey, material, form, spec, weight, size }: {
   prod: any; addons: AddonsMap; setAddons: (fn: (a: AddonsMap) => AddonsMap) => void; area: number; W: number; movePanes?: number; color?: string; form?: string;
+  // คีย์สีจริง + วัสดุ/แบบของรุ่น — ใช้ตัดสินเรตคาดตาราง (Fuji) / ค่าสีลูกฟูก / ซ่อนราวจับราวกันตก (ไม่ส่ง = ตกกลับไปใช้หมวดสี color เหมือนเดิม)
+  colorKey?: string; material?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   spec?: any;
   // น้ำหนักบานจากเอนจิน (result.weight) — มอเตอร์ "อัตโนมัติ" ใช้ตัดสินขนาด
@@ -1162,7 +1170,9 @@ export default function AddonsSection({ prod, addons, setAddons, area, W, movePa
   weight?: any;
   size?: { W: number; H: number; P: number } | null;
 }) {
-  const list: string[] = prod?.addons || [];
+  // prod.noAddons = ปุ่มที่รุ่นนี้เอาออกแล้ว (ขายซ้ำกับวัสดุจริงในรุ่น) — ใบเก่าที่เลือกไว้ยังโชว์ให้เห็น/ปิดได้ (engine ยังคิดราคาเดิม)
+  const legacy: string[] = (prod?.noAddons || []).filter((a: string) => addons?.[a] && addons[a] !== "none" && !(prod?.addons || []).includes(a));
+  const list: string[] = [...(prod?.addons || []), ...legacy];
   if (!list.length) return null;
 
   const opening = addonsIn(list, OPENING_ADDONS);
@@ -1190,7 +1200,7 @@ export default function AddonsSection({ prod, addons, setAddons, area, W, movePa
         <div key={g.label} className="space-y-2.5">
           <SectionHeader icon={g.icon} label={g.label} />
           {g.ids.map((ad) => (
-            <AddonField key={ad} ad={ad} prod={prod} addons={addons} setAddons={setAddons} spec={spec} area={area} W={W} movePanes={movePanes ?? 1} color={color ?? "white"} form={form ?? ""} weight={weight} size={size} />
+            <AddonField key={ad} ad={ad} prod={prod} addons={addons} setAddons={setAddons} spec={spec} area={area} W={W} movePanes={movePanes ?? 1} color={color ?? "white"} colorKey={colorKey} material={material} form={form ?? ""} weight={weight} size={size} />
           ))}
         </div>
       ))}

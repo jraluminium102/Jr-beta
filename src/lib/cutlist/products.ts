@@ -530,6 +530,12 @@ const sms240Lut = (o: CutInput): number[] | null => {
   return SMS240_HW[`${L}_${R}_${f}`] ?? SMS240_HW[`${L}_${R}_${f === "1" ? "0" : "1"}`] ?? null;
 };
 
+/** เฟี้ยม SMS: ชนิดธรณีที่เลือก (ชีต "คิดทุน เฟี้ยม" B6) → ใช้เลือกว่าเส้นเฟรมล่างตัวไหนมีจำนวน 1 — ต้องตรง products.mjs folding (THR) */
+const foldSillIs = (o: CutInput, v: "ธรณีกันน้ำ" | "ธรณีหลังเต่า" | "รางยู") => {
+  const cur = optStr(o, "foldSill", "ธรณีกันน้ำ");
+  return (v === "ธรณีกันน้ำ" ? cur !== "ธรณีหลังเต่า" && cur !== "รางยู" : cur === v) ? 1 : 0;
+};
+
 export const SMS240_BIFOLD: CutSpec = {
   id: "sms240_bifold",
   name: "SMS 240 บานเฟี้ยม (HOMELIFE)",
@@ -541,12 +547,17 @@ export const SMS240_BIFOLD: CutSpec = {
     // อุปกรณ์เฟี้ยมมีแค่ ดำ/เงิน (ไม่มีขาว) — ตรงชื่อในสต็อก "อุปกรณ์ชุดบานเฟี้ยม-สีดำ/สีเงิน"
     { key: "hwColor", label: "สีอุปกรณ์", choices: ["เงิน", "ดำ"] },
     { key: "cutAngle", label: "มุมตัด", choices: ["45°", "90°"] },
+    { key: "foldSill", label: "ธรณีเฟี้ยม", choices: ["ธรณีกันน้ำ", "ธรณีหลังเต่า", "รางยู"] },
   ],
-  defaults: { W: 350, H: 250, N: 4, rail: "2L2R", honk: false, glass: 6, fold2: "แบ่งบาน", hwColor: "เงิน", cutAngle: "45°" },
+  defaults: { W: 350, H: 250, N: 4, rail: "2L2R", honk: false, glass: 6, fold2: "แบ่งบาน", hwColor: "เงิน", cutAngle: "45°", foldSill: "ธรณีกันน้ำ" },
   profiles: [
     { name: "เฟรมบน", code: "B24001", len: (o) => o.W - 6, qty: () => 1 },
     { name: "บังใบบน", code: "B24002", len: (o) => o.W - 8.6, qty: () => 1 },
-    { name: "เฟรมล่าง", code: "B24003", len: (o) => o.W - 6, qty: () => 1 },
+    // 13 ต.ค.69 (Excel ชีต "คิดทุน เฟี้ยม" ช่อง B6): เฟรมล่างเปลี่ยนรหัสตามชนิดธรณี — กันน้ำ B24003 · หลังเต่า B24018 · รางยู B24017 (ความยาว/จำนวนเท่าเดิม)
+    //   เลือกรหัสด้วยฟังก์ชันเดียวกับที่หน้าคิดราคา (products.mjs folding THR) ให้หน้าเทียบจับคู่รหัสตรงกัน
+    { name: "เฟรมล่าง", code: "B24003", len: (o) => o.W - 6, qty: (o) => foldSillIs(o, "ธรณีกันน้ำ") },
+    { name: "เฟรมล่าง (ธรณีหลังเต่า)", code: "B24018", len: (o) => o.W - 6, qty: (o) => foldSillIs(o, "ธรณีหลังเต่า") },
+    { name: "รางยู (แทนเฟรมล่าง)", code: "B24017", len: (o) => o.W - 6, qty: (o) => foldSillIs(o, "รางยู") },
     { name: "ตัวตับธรณี", code: "B24004", len: (o) => o.W - 6, qty: () => 1 },
     { name: "เฟรมข้าง (ซ้าย+ขวา)", code: "B24005", len: (o) => o.H, qty: () => 2 },
     { name: "บังใบข้าง (ซ้าย+ขวา)", code: "B24006", len: (o) => o.H - 9.6, qty: () => 2 },

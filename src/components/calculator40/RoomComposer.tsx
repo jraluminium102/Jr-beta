@@ -530,6 +530,7 @@ function ColsEditor({
               size={{ W: sel.w || 1, H: sel.h || 1, P: sel.n || 1 }}
               movePanes={movePanes}
               color={resolveAluColor(sel.colorIdx || color).bake}
+              colorKey={sel.colorIdx || color}
               form={sel.form || prod.defForm}
             />
           )}
@@ -1004,6 +1005,7 @@ export default function RoomComposer({
                       size={{ W: s.aw || 3, H: s.ah || 2.6, P: 1 }}
                       movePanes={1}
                       color={resolveAluColor(mainColor).bake}
+                      colorKey={mainColor}
                       form={prod.defForm}
                     />
                   ) : null)((PRODUCTS as any)[s.wallType === "smartboard" ? "wall_smartboard" : "wall_isowall"])}
@@ -1175,6 +1177,7 @@ export default function RoomComposer({
                   size={{ W: Number(roofW) || 4, H: roofArea / Math.max(0.01, Number(roofW) || 4), P: roofProd.defaults?.p ?? 1 }}
                   movePanes={roofProd.defaults?.p ?? 1}
                   color={resolveAluColor(mainColor).bake}
+                  colorKey={mainColor}
                   form={roofProd.defForm}
                 />
               </div>

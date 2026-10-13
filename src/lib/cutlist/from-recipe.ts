@@ -116,7 +116,9 @@ export function cutInputFromRecipe(recipe: any, opts?: { rawCompare?: boolean })
       const f = String(recipe.form ?? "");
       const lr = /\((\d+)\s*-\s*(\d+)\)/.exec(f);
       const rail = lr ? `${lr[1]}L${lr[2]}R` : `${N}L0R`;
-      m = { spec_id: "sms240_bifold", input: { W, H, N, rail, fold2: /เปิดกลาง/.test(f) ? "แบ่งบาน" : "เดี่ยว", glass: glassMm(recipe.glassType), honk: false } };
+      // ธรณีเฟี้ยม (กันน้ำ/หลังเต่า/รางยู) เปลี่ยนรหัสเฟรมล่าง B24003/B24018/B24017 — ส่งชื่อเดียวกับที่หน้าคิดราคาเก็บใน spec.threshf (13 ต.ค.69)
+      const foldSill = ["ธรณีหลังเต่า", "รางยู"].includes(String(recipe.spec?.threshf ?? "")) ? String(recipe.spec?.threshf) : "ธรณีกันน้ำ";
+      m = { spec_id: "sms240_bifold", input: { W, H, N, rail, fold2: /เปิดกลาง/.test(f) ? "แบ่งบาน" : "เดี่ยว", glass: glassMm(recipe.glassType), honk: false, foldSill } };
       break;
     }
     case "fold_euro": {

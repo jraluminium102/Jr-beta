@@ -303,6 +303,9 @@ export function computeCost(PB, prod, opt) {
   //   กก./เส้น = กก./ม. × ความยาวเส้นของบรรทัดนั้น (6.4 ม. ปกติ · Velora/เมืองทอง 6 ม. · มือจับ X-J 2.8 ม.)
   //   รหัสที่แคตตาล็อกไม่มี (E-series/Velora/SlimLux/กล่องเมืองทอง) → ใช้ กก. ที่ฝังในสูตรเหมือนเดิม
   const kgOfLine = (it, code, barLen) => {
+    // it.kgFile = น้ำหนัก/เส้นที่ "ชีตคิดทุนของรุ่นนั้น" ใช้คิดค่าอบ (ไฟล์ v1 ชนะแคตตาล็อก) — ใช้เมื่อรหัสเดียวกันมีน้ำหนักต่างกันตามชีต
+    //   13 ต.ค.69: ครอบวงกบบานเปิด JR01985/84 ชีตใช้ 6.978 กก. (น้ำหนักโปรไฟล์ C293) แต่ตารางกลางเป็น 5.3 (กล่องเรียบ)
+    if (Number(it.kgFile) > 0) return Number(it.kgFile);
     const km = (PB.ALUWEIGHT_KGM || {})[code];
     if (km > 0) return Math.round(km * (barLen || STOCK_LEN) * 1000) / 1000;
     if (Number(it.kg) > 0) return Number(it.kg);
@@ -323,7 +326,7 @@ export function computeCost(PB, prod, opt) {
     //   · B28015 −83% · กล่อง 1"x1.5" −40%) → ค่าอบคิดจากน้ำหนักผิดโดยที่ตารางถูกแล้ว
     //   ⚠ it.kg ยังต้องคงไว้ในสูตร — ที่อื่นใช้ it.kg > 0 เป็น "ตัวสลับ" (formulaCF / boxPrice) ห้ามลบ
     //   กก./ม. × ความยาวเส้นของบรรทัดนั้น (it.stockLen → prod.stockLen → 6.4) — ไฟล์เก็บ กก./เส้น ÷ ยาวจริงไว้แล้ว
-    const km = (PB.ALUWEIGHT_KGM || {})[code];
+    const km = it.kgFile > 0 ? it.kgFile / (barLen || STOCK_LEN) : (PB.ALUWEIGHT_KGM || {})[code];
     if (km > 0) return Math.round(km * (barLen || STOCK_LEN) * 1000) / 1000;
     if (Number(it.kg) > 0) return Number(it.kg);
     return 0;
@@ -415,7 +418,8 @@ export function computeCost(PB, prod, opt) {
     // ลำดับราคาเส้น: ① สีจริงจากสโตร์ (สโตร์เป็นตัวตั้ง — เจ้าของสั่ง 8 ส.ค.69)
     //                ② ตารางราคาสีในไฟล์  ③ ราคาขาว + ค่าอบ×กก. (ทางสุดท้าย)
     //   opt.stockColor = ชื่อสีในสโตร์ของสีที่ลูกค้าเลือก (แอปส่งมาให้ · "" = สีนั้นไม่มีในสโตร์)
-    const sColor = (k) => (!noColor && code && k && PB.ALUCOLOR_STOCK && PB.ALUCOLOR_STOCK[k]) ? PB.ALUCOLOR_STOCK[k][pcode] : null;
+    //   it.colorByBake = ชีตคิดสีเป็น "ราคาขาว + เรตสี × กก." เสมอ ไม่ดูตารางราคาสี/สโตร์ (ครอบวงกบบานเปิด ชีต C19 · 13 ต.ค.69) → ข้ามตารางสีทุกแหล่ง
+    const sColor = (k) => (!noColor && !it.colorByBake && code && k && PB.ALUCOLOR_STOCK && PB.ALUCOLOR_STOCK[k]) ? PB.ALUCOLOR_STOCK[k][pcode] : null;
     // ราคาขาวของเส้นนี้ (หลังคูณ mult) — ใช้ตัดสินว่า "ราคาสี" ใช้ได้ไหม
     // it.filePrice = ราคาเฉพาะรุ่นที่ชีตคิดทุนรุ่นนั้นใช้ (ไม่ตรงราคากลางของรหัส) — ไฟล์เป็นตัวตั้ง 18 ก.ย.69
     //   เช่น SlimLux บังใบ 4 หุน สีขาว/เทา ชีตใช้ ราคาสี E191 (200) ส่วนบานเปิดใช้ D191 (170)
@@ -459,10 +463,10 @@ export function computeCost(PB, prod, opt) {
     // ② ราคาแยก "สีจริง" จากไฟล์ถอดทุน (ALUCOLOR_KEY[คีย์สี][รหัส]) — ชีตราคาสี v20.1 (อัปเดต 11 ก.ย.69 · เดิม v9)
     //    ไฟล์แยก 6 สีจริง (เทาซาฮาร่า/ดำซาฮาร่า/แอทแทคเกรย์/ลายไม้สักทอง/มะฮอกกานี/ไวท์โอ๊ค)
     //    ละเอียดกว่าตารางเดิมที่แยกแค่ "หมวดค่าอบ" → ลายไม้ 3 สี เคยใช้ราคาเดียวกันหมด
-    const fileColorPrice0 = (!noColor && code && priceKey && PB.ALUCOLOR_KEY && PB.ALUCOLOR_KEY[priceKey])
+    const fileColorPrice0 = (!noColor && !it.colorByBake && code && priceKey && PB.ALUCOLOR_KEY && PB.ALUCOLOR_KEY[priceKey])
       ? (fixP > 0 ? null : PB.ALUCOLOR_KEY[priceKey][pcode]) : null;   // ราคาเฉพาะรุ่น (filePrice) = ราคาสุดท้ายแล้ว
     const fileColorPrice = okColor(fileColorPrice0, mult) ? fileColorPrice0 : null;
-    const legacyColorPrice = (!noColor && code && PB.ALUCOLOR && PB.ALUCOLOR[priceColor] && !(fixP > 0)) ? PB.ALUCOLOR[priceColor][pcode] : null;
+    const legacyColorPrice = (!noColor && !it.colorByBake && code && PB.ALUCOLOR && PB.ALUCOLOR[priceColor] && !(fixP > 0)) ? PB.ALUCOLOR[priceColor][pcode] : null;
     // 18 ก.ย.69 ไฟล์มาก่อน: ราคาสีในไฟล์ → ตารางสีเดิม → สโตร์ (สโตร์เติมเฉพาะสีที่ไฟล์ไม่มี)
     const legacyOk = okColor(legacyColorPrice, mult) ? legacyColorPrice : null;
     const colorPrice = brandColor > 0 ? brandColor : brandNoColor ? null : FILE_FIRST
@@ -580,7 +584,8 @@ export function computeCost(PB, prod, opt) {
   if (prod.glass) {
     glassArea = val(prod.glass);
     if (isPanelGlass) {
-      const rate = zGlassSize ? zRate(zGlassSize, color) : (glassType === 'แผ่นคอมโพสิต' ? 3300 : 3500);
+      //   13 ต.ค.69 (Excel/R3.9): ลูกฟูก = 3,500 + ค่าสีตามสีอลูหลัก (rn90FinRate 400–2,200) · คอมโพสิตไม่คิดสี
+      const rate = zGlassSize ? zRate(zGlassSize, color) : (glassType === 'แผ่นคอมโพสิต' ? 3300 : 3500 + corrugatedFinRate(color, opt.colorKey));
       panelSell = round2(glassArea * rate);   // บวกเข้ายอดขายทีหลัง (sell-based) · ไม่คิดกระจก (glassCost=0)
       // ไม่ push บรรทัดกระจก — คำอธิบายไปอยู่ที่ "รายละเอียดงาน" (glassLine) · ราคาแฝงในราคาสินค้า (เหมือนกระจก)
     } else {
@@ -1069,7 +1074,10 @@ export function computeCost(PB, prod, opt) {
     ],
   };
   const addonCtx = { W, H, P, area, opt, PB, prodId: prod.id, prodAddons: prod.addons || [], motorAdded: false, weight };
-  for (const ad of (prod.addons || [])) {
+  // prod.noAddons = ปุ่มที่เอาออกจากรุ่นนี้แล้ว (ขายซ้ำกับตัวเลือกที่เป็นวัสดุจริงในรุ่น เช่น ครอบวงกบอลูเหมา R3.9 ใน บานเปิด/ครอบวงกบไม้)
+  //   ใบเสนอเก่าที่เลือกไว้ "ยังคิดราคาเดิม" (ไม่ให้ราคาใบเก่าหายเงียบตอนเปิดแก้) — UI ไม่ให้กดใหม่
+  const addonIds = [...(prod.addons || []), ...(prod.noAddons || []).filter((a) => selAddons[a] && selAddons[a] !== 'none' && !(prod.addons || []).includes(a))];
+  for (const ad of addonIds) {
     const rr = computeAddon(ad, selAddons[ad], addonCtx);
     if (!rr) continue;
     if (MOTOR_ADDON_IDS.includes(ad) && (Array.isArray(rr) ? rr : [rr]).some((r) => r && r.cat !== 'warn' && r.amount > 0))
@@ -1094,7 +1102,10 @@ export function computeCost(PB, prod, opt) {
   if (_wpp > 0) { lines.push({ cat: 'addon', name: 'ค่าทาสีผนังเพิ่มเติม (R3.9)', qty: 1, unit: 'งาน', unitPrice: _wpp, amount: _wpp }); addonTotal += _wpp; addonSellImplicit += _wpp; }
   // #1 แผ่นคอมโพสิต/ลูกฟูก แทนกระจก (sell-based) — บวกเข้ายอดขาย + ถอดทุนที่ markup กลาง (เหมือน add-on R3.9)
   if (panelSell > 0) { addonTotal += panelSell; addonSellImplicit += panelSell; }
-  if (addonTotal > 0) { sellBeforeLabor += addonTotal; sellMfgOnly += addonTotal; sellWithInstall += addonTotal; }
+  //   รุ่นที่มี "ขายขั้นต่ำ/ชุด" (Shower) → บวกออปชั่นหลังเช็คขั้นต่ำ (R3.9) ไม่ให้ขั้นต่ำ 14,000 ดูดส่วนของออปชั่น (เข้ามุม +3,000 / อุปกรณ์ดำ +4,000)
+  //   13 ต.ค.69 ตาม R3.9: เดิมบวกก่อนเช็คขั้นต่ำ → บานตาย 80×200 เลือกเข้ามุมได้ขายเพิ่มแค่ 2,000
+  const addonAfterFloor = !!((R41N ? (r41AnyEdit ? null : SELL_RAW) : SELLM) || {}).floor;
+  if (addonTotal > 0 && !addonAfterFloor) { sellBeforeLabor += addonTotal; sellMfgOnly += addonTotal; sellWithInstall += addonTotal; }
   // ราคาตายตัวไซซ์เล็ก (ชีตเขียน "ราคาขาย/ชุด — ถ้าพื้นที่ < N ตร.ม.") — ทับราคาที่คำนวณได้
   const SMF = R41N ? (r41AnyEdit ? null : SELL_RAW) : SELLM;
   if (SMF && SMF.small && area > 0 && area < SMF.small.maxArea && sellWithInstall > 0) {
@@ -1107,6 +1118,7 @@ export function computeCost(PB, prod, opt) {
     const min = /บานเปิด|บานเลื่อน/.test(String(form || '')) ? SMF.floor.withDoor : SMF.floor.base;
     if (sellWithInstall < min) { sellMfgOnly = ceil100(sellMfgOnly * (min / Math.max(1, sellWithInstall))); sellWithInstall = min; }
   }
+  if (addonAfterFloor && addonTotal > 0) { sellBeforeLabor += addonTotal; sellMfgOnly += addonTotal; sellWithInstall += addonTotal; }
   // ── ราคาขายมอเตอร์แก้มือ (เจ้าของ 12 ก.ย.69 "ยังไม่มีช่องแก้ราคามอเตอร์แยก แบบเพิ่มกำไรมอเตอร์") ──
   //   opt.motorSell = ราคาขายมอเตอร์ทั้งก้อน (บาท) · opt.motorPct = % กำไรจาก "ทุนมอเตอร์" (ปัดร้อยเหมือนสูตรไฟล์)
   //   กรอกบาทชนะ % · ไม่กรอกทั้งคู่ = ราคาตามไฟล์ (ชีตราคาออโต้ ช่องขายขั้นต่ำ) เหมือนเดิมเป๊ะ
@@ -1495,7 +1507,7 @@ export function autoSetsFor(PB, prod) {
       row('เลื่อน SMS/ยูโร', 'ออป Infrared', C('เลื่อน ช่างแซก Infrared', 9000), 'ออปชั่น');
     }
     if (br.includes('slimlux')) {
-      row('SlimLux', 'ชุด SlimLux (บานแรก)', C('เลื่อน SlimLux ชุดแรก', 6900), 'สูตรในชีตไม่บวกค่าส่ง');
+      row('SlimLux', 'ชุด SlimLux (บานแรก)', C('เลื่อน SlimLux ชุดแรก', 6900) + C('เลื่อน SlimLux ค่าส่ง', 1700), 'รวมค่าส่ง 1,700 (ไฟล์ v1 สูตร D57)');
       row('SlimLux', 'บานเพิ่ม', C('เลื่อน SlimLux บานเพิ่ม', 2250), 'บาท/บานเพิ่ม');
       row('SlimLux', 'ราง SlimLux', C('เลื่อน SlimLux ราง/ม.', 1100), 'บาท/ม. = กว้าง × จำนวนบาน');
       row('SlimLux', 'ออป สแกนหน้า', C('เลื่อน SlimLux สแกนหน้า', 2750), 'บังคับเลือก 1 ใน 2');
@@ -1545,7 +1557,23 @@ function colorLabel(c) {
 // ราคาอ้างอิง R3.9 (ยังไม่ถอดทุน R4.0 · ติดป้าย "(R3.9)") — W,H เป็นเมตร
 // เรตคาดตาราง (฿/ม.) ตามเกรดสีเฟรม — R3.9 GRID_RATE_BY_BAKE · UI (AddonsSection) import ตัวนี้ ห้ามก๊อปตารางไปไว้ที่อื่น
 export const GRID_RATE_BY_BAKE = { white: 200, sahara: 200, woodStock: 250, special: 300, woodSpecial: 350 };
-export function gridRateFor(bake) { return GRID_RATE_BY_BAKE[bake] || 200; }
+// ลายไม้ Fuji (Oak/Makha) = เรต "อบสีพิเศษ/Fuji" 300 ตาม R3.9 grid_bars (ไม่ใช่ 350 ของลายไม้อบพิเศษ ระบุรหัส) — 13 ต.ค.69 ตรวจกับ R3.9
+//   ต้องส่ง colorKey มาด้วย เพราะ bake ของ Fuji = woodSpecial เหมือน "ลายไม้อบพิเศษ (ระบุรหัส)" แยกไม่ออกจากหมวดอย่างเดียว
+export const GRID_RATE_BY_COLORKEY = { wood_fuji_oak: 300, wood_fuji_makha: 300 };
+export function gridRateFor(bake, colorKey) { return (colorKey && GRID_RATE_BY_COLORKEY[colorKey]) || GRID_RATE_BY_BAKE[bake] || 200; }
+// ค่าสีลูกฟูก ฿/ตร.ม. ตามสีอลูหลัก — R3.9 rn90FinRate (ci 2-3 ซาฮาร่า 400 · 4 Aztec 950 · 5-7 ลายไม้สต็อก 1,500 · 8/9/11 ลายไม้อบพิเศษ 2,200 · 10/12 อบพิเศษ/ชุบ 1,600)
+//   ใช้กับ "ทึบล่างอลูลูกฟูก" (solid_panel) และ "แผ่นลูกฟูกแทนกระจก" — คอมโพสิตไม่คิดสี · UI import ตัวนี้ (แหล่งเดียว)
+//   13 ต.ค.69 ตาม R3.9 (เดิม 3,500 ทุกสี = สีพิเศษขาด 400-2,200 ฿/ตร.ม.)
+export const CORRUGATED_FIN_BY_COLORKEY = { sahara: 400, sahara_black: 400, aztec: 950, wood_teak: 1500, wood_maho: 1500, wood_whiteoak: 1500,
+  special: 1600, plated: 1600, wood_special: 2200, wood_fuji_oak: 2200, wood_fuji_makha: 2200 };
+export const CORRUGATED_FIN_BY_BAKE = { white: 0, sahara: 400, woodStock: 1500, special: 1600, woodSpecial: 2200 };
+export function corrugatedFinRate(bake, colorKey) {
+  if (colorKey && CORRUGATED_FIN_BY_COLORKEY[colorKey] != null) return CORRUGATED_FIN_BY_COLORKEY[colorKey];
+  if (colorKey === 'white' || colorKey === 'black') return 0;
+  return CORRUGATED_FIN_BY_BAKE[bake] || 0;
+}
+// ราวกันตกแบบที่ BOM มีราวจับบนอยู่แล้ว (เสาตั้ง+ราวจับอลู) — ปุ่ม "ราวจับด้านบน" ต้องซ่อน/ไม่คิดซ้ำ (UI import ตัวนี้ แหล่งเดียว)
+export function handrailHasGrip(material) { return String(material || '').includes('เสาตั้ง'); }
 export function computeAddon(id, sel, ctx) {
   if (sel == null || sel === 'none' || sel === false || sel === '') return null;
   const W = ctx.W, H = ctx.H;
@@ -1559,6 +1587,8 @@ export function computeAddon(id, sel, ctx) {
   if (id === 'handrail_grip') {         // ราวจับด้านบน (R3.9: ยู 5หุน 500/ม. · กล่อง 1"×2" 600/ม. · W=ความยาว)
     const rate = sel === 'u5' ? 500 : sel === 'box' ? 600 : 0;
     if (rate <= 0) return null;
+    // 13 ต.ค.69 (Excel ชีต "คิดทุน ราวกันตก"): แบบ "เสาตั้ง+ราวจับอลู" มีราวจับบน (กล่อง 1×1.6) อยู่ใน BOM แล้ว → ไม่คิดราวจับซ้ำ
+    if (handrailHasGrip(ctx.opt && ctx.opt.material)) return null;
     return { label: 'ราวจับด้านบน (' + (sel === 'u5' ? 'ยู 5 หุน' : 'กล่อง 1"×2"') + ')', qty: round2(W), unit: 'ม.', unitPrice: rate, amount: round2(rate * W) };
   }
   if (id === 'closer') {                // โช้คอัพประตู (ทุกชนิด +5,000 · ชนิดพิมพ์ลงใบ · R3.9)
@@ -1574,7 +1604,7 @@ export function computeAddon(id, sel, ctx) {
     // เรตตามสีเฟรมอัตโนมัติ จนกว่าผู้ใช้กดเลือกเอง (rateTouched) — บั๊กเดิม 13 ต.ค.69: UI โชว์ 300 สีพิเศษ แต่ engine คิด 200 เสมอ
     //   (UI ส่ง rate มาเฉพาะตอนกดเลือก · engine เลย fallback 200 ทุกสี) → ตารางเรตย้ายมาอยู่ที่นี่แหล่งเดียว UI import ไปใช้
     const nh = (sel.nh | 0), nv = (sel.nv | 0), nc = (sel.nc | 0);
-    const rate = sel.rateTouched && sel.rate > 0 ? +sel.rate : gridRateFor((ctx.opt && ctx.opt.color) || 'white');
+    const rate = sel.rateTouched && sel.rate > 0 ? +sel.rate : gridRateFor((ctx.opt && ctx.opt.color) || 'white', ctx.opt && ctx.opt.colorKey);
     // custom ความยาวเส้น (ม.) — เจ้าของเคาะ 17ก.ค.69: ตั้งขนาดเองได้ · ไม่ตั้ง = อัตโนมัติตามกว้าง/สูงบาน (พฤติกรรมเดิม · parity)
     const hLen = +sel.hLen > 0 ? +sel.hLen : W;
     const vLen = +sel.vLen > 0 ? +sel.vLen : H;
@@ -1691,6 +1721,8 @@ export function computeAddon(id, sel, ctx) {
     // เซนเซอร์กันฝน — เจ้าของสั่ง 4 ก.ย.69 "เป็นออปชั่นให้เลือก" (เดิมบังคับติดกับ 1500 กก.)
     //   ยังติ๊กไว้ให้เองเมื่อเลือก 1500 กก. ตามที่ไฟล์ v20.1 เขียน แต่เอาออกได้
     const wantSensor = (s.sensor === undefined || s.sensor === null) ? (kw === '1500') : !!s.sensor;
+    //   13 ต.ค.69 (Excel ยืนยัน): ไฟล์ v1 คิดทุนเซนเซอร์ 1,100 กับชุด 1500 กก. เสมอ (มาพร้อมชุด) — เอาออกได้แค่ "ราคาขาย" เซนเซอร์
+    if (kw === '1500' && !wantSensor) out[0].cost = round2(out[0].cost + motorCost(ctx.PB, 'เซนเซอร์กันฝน', 1100));
     if (wantSensor) {
       const sc = motorCost(ctx.PB, 'เซนเซอร์กันฝน', 1100);
       out.push({ label: 'เซนเซอร์กันฝน (ออโต้)', qty: 1, unit: 'ชุด', unitPrice: MS.sensor, amount: MS.sensor, cost: sc, fixedSell: true });
@@ -1779,7 +1811,8 @@ export function computeAddon(id, sel, ctx) {
       out.push({ label, qty: qty || 1, unit: unit || 'ชุด', unitPrice: round2(sl / (qty || 1)), amount: sl, cost, ...(mul > 0 ? { fixedSell: true } : {}) });
     };
     // ช่างแซก: สูตร D57 คูณทั้งก้อน × MIN(จำนวนบาน, 3) · รูปแบบ "เปิดคู่กลาง" = 1 ชุด
-    const csMul = (String((ctx.opt && ctx.opt.form) || '').includes('เปิดคู่กลาง')) ? 1 : Math.max(1, Math.min(P, 3));
+    //   13 ต.ค.69 (Excel ยืนยัน): บานระแนงเลื่อนเก็บโหมดไว้ใน material ไม่ใช่ form → เดิมเปิดคู่กลางคิด ×3 (38,400 แทน 12,800)
+    const csMul = (String(((ctx.opt && ctx.opt.form) || '') + ' ' + ((ctx.opt && ctx.opt.material) || '')).includes('เปิดคู่กลาง')) ? 1 : Math.max(1, Math.min(P, 3));
     const csTag = csMul > 1 ? ' ×' + csMul + ' ชุด' : '';
     if (brand === 'evecca') {
       // Evecca: ทุน = ตัวชุด + สายพาน(กว้าง×2 ม.) + ค่าส่ง + Smart lock(ถ้าเลือก) — สูตร D57 ในชีต
@@ -1800,7 +1833,8 @@ export function computeAddon(id, sel, ctx) {
     } else if (brand === 'slimlux') {
       // ⚠ ชีตราคาออโต้มีค่าส่ง SlimLux 1,700 แต่สูตร D58 ในชีต "คิดทุน SlimLux" ไม่บวก — ยึดสูตร (แจ้งเจ้าของแล้ว)
       // ×2.5 + ค่าส่งฝั่งขาย 2,500 (บวกครั้งเดียวที่บานแรก)
-      const mc = C('เลื่อน SlimLux ชุดแรก', 6900);
+      //   13 ต.ค.69: ไฟล์ v1 สูตร D57 บวกค่าส่ง (ราคาออโต้ คอลัมน์ D แถวชุด SlimLux) แล้ว → ทุน + ค่าส่ง 1,700 (Excel ยืนยัน)
+      const mc = C('เลื่อน SlimLux ชุดแรก', 6900) + C('เลื่อน SlimLux ค่าส่ง', 1700);
       const slSell = mul > 0 ? mulSell(mc) + motorFixSell(ctx.PB, 'เลื่อน SlimLux ค่าส่งขาย', 0) : autoSell(mc, ctx);
       out.push({ label: 'ชุดออโต้เลื่อน SlimLux (บานแรก)', qty: 1, unit: 'ชุด', unitPrice: slSell, amount: slSell, cost: mc, ...(mul > 0 ? { fixedSell: true } : {}) });
       if (P > 1) acc('SlimLux บานเพิ่ม ×' + (P - 1), C('เลื่อน SlimLux บานเพิ่ม', 2250) * (P - 1), P - 1, 'บาน');
@@ -1929,8 +1963,10 @@ export function computeAddon(id, sel, ctx) {
     const g = sel || {}; const t = g.type; if (!t || t === 'none') return null;
     const sw = +g.w > 0 ? +g.w : W, sh = +g.h || 0; if (!(sh > 0)) return null;
     const zsz = t === 'z1' ? '1' : t === 'z16' ? '1.6' : null;   // เกล็ด Z ล่างทึบ — ราคาตามสีอลูหลัก (21ก.ค.69)
-    const rate = zsz ? zRate(zsz, (ctx.opt || {}).color || 'white') : (t === 'comp' ? 3300 : 3500);
-    const lbl = zsz ? Z_LOUVRE[zsz].label : ((t === 'comp' ? 'คอมโพสิต' : 'อลูลูกฟูก') + ' (R3.9)');
+    // ลูกฟูก (look) = 3,500 + ค่าสีตามสีอลูหลัก (R3.9 rn90FinRate · 13 ต.ค.69) · คอมโพสิตไม่คิดสี
+    const fin = (!zsz && t !== 'comp') ? corrugatedFinRate((ctx.opt || {}).color || 'white', (ctx.opt || {}).colorKey) : 0;
+    const rate = zsz ? zRate(zsz, (ctx.opt || {}).color || 'white') : (t === 'comp' ? 3300 : 3500 + fin);
+    const lbl = zsz ? Z_LOUVRE[zsz].label : ((t === 'comp' ? 'คอมโพสิต' : 'อลูลูกฟูก' + (fin > 0 ? ' +สี ' + fin : '')) + ' (R3.9)');
     return { label: 'แผ่นทึบล่าง ' + lbl, qty: round2(sw * sh), unit: 'ตร.ม.', unitPrice: rate, amount: round2(sw * sh * rate) };
   }
   if (id === 'elec') {                   // งานไฟ พัดลม+หน้ากาก+สวิตซ์ (เจ้าของเคาะ 17ก.ค.69 · ราคา "ขาย" ตรง ๆ · sell-based เหมือน add-on R3.9)
