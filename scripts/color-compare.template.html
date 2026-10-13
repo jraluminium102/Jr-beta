@@ -123,6 +123,25 @@ footer { font-size: .8rem; color: var(--muted); }
 .ov { width: 100%; border-collapse: collapse; font-size: .88rem; }
 .ov th, .ov td { padding: 5px 8px; }
 @media (max-width: 560px) { h1 { font-size: 1.4rem; } .card { padding: 12px; } }
+/* ── พิมพ์ A4 แนวนอน (เจ้าของ 13 ต.ค.69 "ทำเป็น pdf ปริ้น a4 อ่านตรวจ") — โชว์ครบ 3 แท็บต่อกัน · ซ่อนปุ่ม/ช่องค้น ── */
+.printhead { display: none; }
+@page { size: A4 landscape; margin: 9mm 9mm 10mm; }
+@media print {
+  :root { --bg: #fff; }
+  body { font-size: 9.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .wrap { max-width: none; padding: 0; gap: 8px; }
+  .tabs, .bar, .chip, input, label.tog { display: none !important; }
+  #tab-sum[hidden], #tab-r41[hidden], #tab-color[hidden] { display: block !important; }
+  #tab-r41, #tab-color { break-before: page; }
+  .printhead { display: block; font-family: var(--font-display); font-size: 14pt; font-weight: 700; margin: 0 0 6px; padding-bottom: 3px; border-bottom: 2px solid var(--ink); }
+  .card, .find, tr { break-inside: avoid; }
+  .card { box-shadow: none; padding: 8px 10px; gap: 6px; }
+  .tbl { overflow: visible; }
+  table { font-size: 8.5pt; }
+  th, td { padding: 3px 5px; }
+  .xl, .how { max-width: none; }
+  footer { font-size: 7.5pt; }
+}
 </style>
 
 <div class="wrap">
@@ -137,6 +156,7 @@ footer { font-size: .8rem; color: var(--muted); }
   </div>
 
   <div id="tab-sum" hidden>
+    <div class="printhead">1 · สรุป</div>
     <div class="finds" id="finds"></div>
     <section class="card"><h3>ภาพรวมรายรุ่น (สีขาว/ดำ · ทุกขนาดในตาราง R4.1)</h3>
       <div class="legend">ทุน = ทุนค่าของเว็บเทียบตาราง · ขาย = ถ้าใช้ตัวคูณกำไรเท่าตาราง (ค่าแรงขายเท่าตารางอยู่แล้ว) · แดงเกิน +5% · เขียวต่ำกว่า −5%</div>
@@ -144,6 +164,7 @@ footer { font-size: .8rem; color: var(--muted); }
   </div>
 
   <div id="tab-r41" hidden>
+    <div class="printhead">2 · ทุน + ขาย เทียบตาราง R4.1 (ทุกแถวพิสูจน์ด้วย Excel)</div>
     <div class="bar"><div class="row">
       <input type="search" id="q41" placeholder="ค้นชื่อบาน" aria-label="ค้นหาบาน">
       <div class="row" id="groups41" role="group" aria-label="หมวด"></div>
@@ -155,6 +176,7 @@ footer { font-size: .8rem; color: var(--muted); }
   </div>
 
   <div id="tab-color" hidden>
+    <div class="printhead">3 · ค่าอบสี เทียบ R3.9</div>
     <div class="bar"><div class="row">
       <input type="search" id="q" placeholder="ค้นชื่อบาน หรือ สี" aria-label="ค้นหา">
       <div class="row" id="groups" role="group" aria-label="หมวด"></div>

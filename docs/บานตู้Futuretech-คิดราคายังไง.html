@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>บานตู้ Futuretech — คิดราคายังไง</title>
+<style>
+@page { size: A4 portrait; margin: 12mm 12mm 14mm; }
+:root { --ink:#13202f; --muted:#4a5768; --line:#cfd7e2; --cost:#1d4ed8; --cost-bg:#edf3ff; --lab:#a14c00; --lab-bg:#fff4e3; --sell:#0b6b3f; --sell-bg:#e9f8f0; --ref:#5b3fa6; --ref-bg:#f3effc; --warn:#9a3412; --warn-bg:#fff1e6; }
+* { box-sizing: border-box; }
+body { margin: 0; color: var(--ink); background: #fff; font: 10.5pt/1.5 "Leelawadee UI", "IBM Plex Sans Thai", Tahoma, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.page { max-width: 186mm; margin: 0 auto; padding: 8mm 0; }
+h1 { font-size: 17pt; margin: 0 0 2px; letter-spacing: -.01em; }
+h2 { font-size: 12.5pt; margin: 14px 0 6px; padding-bottom: 3px; border-bottom: 2px solid var(--ink); break-after: avoid; }
+h3 { font-size: 11pt; margin: 10px 0 4px; break-after: avoid; }
+.sub { color: var(--muted); margin: 0 0 8px; font-size: 9.5pt; }
+p { margin: 4px 0; }
+table { width: 100%; border-collapse: collapse; font-size: 9.5pt; font-variant-numeric: tabular-nums; break-inside: avoid; margin: 4px 0 6px; }
+th, td { border: 1px solid var(--line); padding: 3px 6px; vertical-align: top; }
+th { background: #f1f4f8; font-weight: 600; text-align: left; font-size: 9pt; }
+td.n, th.n { text-align: right; white-space: nowrap; }
+tr.sum td { font-weight: 700; background: #f7f9fb; }
+.cost { background: var(--cost-bg); } .lab { background: var(--lab-bg); } .sell { background: var(--sell-bg); } .ref { background: var(--ref-bg); }
+.box { border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; margin: 6px 0; break-inside: avoid; }
+.box.warn { background: var(--warn-bg); border-color: #f3c9a8; }
+.formula { font-size: 10pt; background: #f7f9fb; border-left: 3px solid var(--sell); padding: 5px 10px; margin: 6px 0; break-inside: avoid; }
+.case { break-inside: avoid; margin-bottom: 8px; }
+.tag { display: inline-block; font-size: 8.5pt; font-weight: 600; padding: 0 6px; border-radius: 4px; background: #e8edf4; color: var(--muted); }
+.big { font-size: 13pt; font-weight: 700; color: var(--sell); }
+ol, ul { margin: 4px 0 4px 18px; padding: 0; }
+li { margin: 2px 0; }
+.foot { color: var(--muted); font-size: 8.5pt; margin-top: 10px; border-top: 1px solid var(--line); padding-top: 4px; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+@media screen { body { background: #e9edf2; } .page { background: #fff; padding: 14mm 12mm; margin: 10px auto; box-shadow: 0 1px 4px rgb(0 0 0 / .12); } }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>บานตู้ Futuretech (ฝาตู้ — เฉพาะบานหน้า) · คิดราคายังไง</h1>
+  <p class="sub">เว็บคิดราคา 4.0 ณ 13 ต.ค. 69 · ราคาอุปกรณ์จากสโตร์จริง · ยังไม่รวม VAT</p>
+
+  <h2>1. สูตร</h2>
+  <div class="cols">
+    <div class="box">
+      <b>ทุนค่าของ</b> (ตามชีต "คิดทุน บานตู้ Futuretech")
+      <ul>
+        <li><b>เฟรม</b> (บน+ล่าง+ข้าง) = (2×กว้างต่อบาน + สูง) ÷ 6 ม. × จำนวนบาน</li>
+        <li><b>เสามือจับ</b> = สูง ÷ 6 ม. × จำนวนบาน</li>
+        <li><b>กระจกใส 5 มม.</b> = กว้าง × สูง × 205/ตร.ม.</li>
+        <li>ฉากประกอบมุม 4/บาน · สกรู 8/บาน</li>
+        <li><b>บานเลื่อน</b>: ชุดล้อ 1/บาน + รางยู (2×กว้างต่อบาน)</li>
+        <li><b>บานเปิด</b>: บานพับ 1 ถุง/บาน (ไม่มีล้อ/ราง)</li>
+        <li><b>ค่ากรีดราง</b> 800/ม. × 2×กว้าง — <span class="tag">ออปชั่น ต้องกดเลือก</span></li>
+      </ul>
+    </div>
+    <div class="box">
+      <b>สีเฟรม</b> (มี 2 แบบ)
+      <table>
+        <tr><th>สี</th><th class="n">เฟรม/เส้น</th><th class="n">เสามือจับ/เส้น</th></tr>
+        <tr><td>สีดำ (อบขาว/ดำ)</td><td class="n">975</td><td class="n">1,500</td></tr>
+        <tr><td>สีทอง (ชุบ)</td><td class="n">875</td><td class="n">1,015</td></tr>
+      </table>
+      <p style="font-size:9pt;color:var(--muted)">ราคาตามไฟล์/สโตร์ — สีทองชุบถูกกว่าสีดำ</p>
+      <p><b>ค่าแรง</b> ใช้ตาราง R4.1 (ชีต "ค่าแรง" แถวบานตู้ Futuretech): ทุนผลิต 306.25 + 31.06/ตร.ม. · ทุนติดตั้ง 1,225 + 24.5/ตร.ม. · ราคาขายค่าแรงตามตาราง R4.1</p>
+    </div>
+  </div>
+  <div class="formula"><b>ราคาขาย</b> = ทุนค่าของ × <b>2.94</b> (กำไรค่าของ 194%) + ค่าแรงผลิต (ขาย) + ค่าแรงติดตั้ง (ขาย) → ปัดขึ้นหลักร้อย</div>
+
+  <h2>2. ตัวอย่าง 3 แบบ (ราคาตอนนี้)</h2>
+
+  <div class="case">
+    <h3>แบบ 1 · บานเลื่อน 2 บาน · สีดำ · กว้าง 120 × สูง 240 ซม. · ไม่กรีดราง</h3>
+    <table>
+      <tr><th>รายการ</th><th class="n">จำนวน</th><th class="n">ราคา/หน่วย</th><th class="n">บาท</th></tr>
+      <tr><td>กระจกใส 5 มม.</td><td class="n">2.88 ตร.ม.</td><td class="n">205</td><td class="n">590</td></tr>
+      <tr><td>เฟรม อบขาว/ดำ JR00245</td><td class="n">1.2 เส้น</td><td class="n">975</td><td class="n">1,170</td></tr>
+      <tr><td>เสามือจับ อบขาว/ดำ JR00230</td><td class="n">0.8 เส้น</td><td class="n">1,500</td><td class="n">1,200</td></tr>
+      <tr><td>ฉากประกอบมุม · สกรู</td><td class="n">8 · 16</td><td class="n">12 · 0.5</td><td class="n">104</td></tr>
+      <tr><td>ชุดล้อ (4 ล้อ)</td><td class="n">2 ชุด</td><td class="n">100</td><td class="n">200</td></tr>
+      <tr><td>รางยู JR00270</td><td class="n">0.4 เส้น</td><td class="n">180</td><td class="n">72</td></tr>
+      <tr class="sum cost"><td colspan="3">ทุนค่าของ</td><td class="n">3,336</td></tr>
+      <tr class="cost"><td colspan="3">ค่าของขาย = 3,336 × 2.94</td><td class="n">9,809</td></tr>
+      <tr class="lab"><td colspan="3">ค่าแรงผลิต (ทุน 396 → ขายตามตาราง)</td><td class="n">1,344</td></tr>
+      <tr class="lab"><td colspan="3">ค่าแรงติดตั้ง (ทุน 1,296 → ขายตามตาราง)</td><td class="n">5,502</td></tr>
+      <tr class="sum sell"><td colspan="3">ราคาขาย ผลิต+ติดตั้ง (ปัดร้อย)</td><td class="n big">16,700</td></tr>
+    </table>
+  </div>
+
+  <div class="case">
+    <h3>แบบ 2 · บานเปิด 1 บาน · สีดำ · กว้าง 80 × สูง 200 ซม.</h3>
+    <table>
+      <tr><th>รายการ</th><th class="n">จำนวน</th><th class="n">ราคา/หน่วย</th><th class="n">บาท</th></tr>
+      <tr><td>กระจกใส 5 มม.</td><td class="n">1.6 ตร.ม.</td><td class="n">205</td><td class="n">328</td></tr>
+      <tr><td>เฟรม อบขาว/ดำ</td><td class="n">0.6 เส้น</td><td class="n">975</td><td class="n">585</td></tr>
+      <tr><td>เสามือจับ อบขาว/ดำ</td><td class="n">0.33 เส้น</td><td class="n">1,500</td><td class="n">500</td></tr>
+      <tr><td>บานพับ (4 ชิ้น)</td><td class="n">1 ถุง</td><td class="n">80</td><td class="n">80</td></tr>
+      <tr><td>ฉากประกอบมุม · สกรู</td><td class="n">4 · 8</td><td class="n">12 · 0.5</td><td class="n">52</td></tr>
+      <tr class="sum cost"><td colspan="3">ทุนค่าของ</td><td class="n">1,545</td></tr>
+      <tr class="cost"><td colspan="3">ค่าของขาย = 1,545 × 2.94</td><td class="n">4,542</td></tr>
+      <tr class="lab"><td colspan="3">ค่าแรงผลิต (ทุน 356 → ขาย)</td><td class="n">1,209</td></tr>
+      <tr class="lab"><td colspan="3">ค่าแรงติดตั้ง (ทุน 1,264 → ขาย)</td><td class="n">5,368</td></tr>
+      <tr class="sum sell"><td colspan="3">ราคาขาย ผลิต+ติดตั้ง</td><td class="n big">11,200</td></tr>
+    </table>
+  </div>
+
+  <div class="case">
+    <h3>แบบ 3 · บานเลื่อน 2 บาน · สีทอง (ชุบ) · 120 × 240 ซม. · <u>กดกรีดราง</u></h3>
+    <table>
+      <tr><th>รายการ</th><th class="n">จำนวน</th><th class="n">ราคา/หน่วย</th><th class="n">บาท</th></tr>
+      <tr><td>กระจกใส 5 มม.</td><td class="n">2.88 ตร.ม.</td><td class="n">205</td><td class="n">590</td></tr>
+      <tr><td>เฟรม สีชุบ JR00193</td><td class="n">1.2 เส้น</td><td class="n">875</td><td class="n">1,050</td></tr>
+      <tr><td>เสามือจับ สีชุบ JR00199</td><td class="n">0.8 เส้น</td><td class="n">1,015</td><td class="n">812</td></tr>
+      <tr><td>ฉากประกอบมุม · สกรู · ชุดล้อ · รางยู</td><td class="n"></td><td class="n"></td><td class="n">376</td></tr>
+      <tr><td><b>ค่ากรีดราง</b> 2 × กว้าง 1.2 ม.</td><td class="n">2.4 ม.</td><td class="n">800</td><td class="n">1,920</td></tr>
+      <tr class="sum cost"><td colspan="3">ทุนค่าของ</td><td class="n">4,748</td></tr>
+      <tr class="cost"><td colspan="3">ค่าของขาย = 4,748 × 2.94 (กรีดรางถูกคูณด้วย)</td><td class="n">13,960</td></tr>
+      <tr class="lab"><td colspan="3">ค่าแรงผลิต · ค่าแรงติดตั้ง (ขาย)</td><td class="n">1,344 · 5,502</td></tr>
+      <tr class="sum sell"><td colspan="3">ราคาขาย ผลิต+ติดตั้ง</td><td class="n big">20,900</td></tr>
+    </table>
+  </div>
+
+  <h2>3. ทำไมราคาเปลี่ยน (ราคาขาย ผลิต+ติดตั้ง)</h2>
+  <table>
+    <tr><th>ช่วง</th><th>วิธีคิดตอนนั้น</th><th class="n">แบบ 1</th><th class="n">แบบ 2</th><th class="n">แบบ 3</th><th class="n">40×100 1 บาน</th></tr>
+    <tr><td>ก่อน 5 ต.ค.</td><td>ค่าแรง 12 ชม./บาน × 87.5 ฝังเป็น "วัสดุ" แล้วโดนคูณกำไรค่าของ 194% · ค่ากรีดรางคิดทุกงาน</td><td class="n">21,700</td><td class="n">7,700</td><td class="n">20,200</td><td class="n">7,400</td></tr>
+    <tr><td>5–12 ต.ค.</td><td>① ค่าแรงย้ายไปตามตาราง R4.1 (เจ้าของสั่ง "ค่าแรงเอาตามตาราง 4.1") — ค่าติดตั้งขายราว 5,100–5,500/งาน · กรีดรางยังคิดทุกงาน</td><td class="n">22,300</td><td class="n">11,200</td><td class="n">20,900</td><td class="n">10,500</td></tr>
+    <tr class="sell"><td><b>ตอนนี้</b> (12 ต.ค.~)</td><td>② ค่ากรีดรางเป็นออปชั่น (เจ้าของ "ไม่มีค่ากรีดรางตลอด เป็น option") — ไม่กด = ไม่คิด</td><td class="n"><b>16,700</b></td><td class="n"><b>11,200</b></td><td class="n"><b>20,900</b></td><td class="n"><b>8,600</b></td></tr>
+    <tr class="ref"><td>ตาราง R4.1</td><td>ทุนค่าของ 566 (สร้างตอนชีตยังไม่เลือกสี/แบบ — คิดเฟรมราคาชุบ ไม่มีล้อ/รางยู) · ค่าแรงเท่าเว็บ</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">8,100</td></tr>
+  </table>
+  <ul>
+    <li><b>บานเปิด (แบบ 2) กระโดด 7,700 → 11,200</b> เพราะ ① — เดิมค่าแรง 1,050 ถูกคิดเป็นวัสดุ ×2.94 ≈ 3,100 · ตอนนี้ขายค่าแรงตามตาราง 1,209 + 5,368 = 6,577</li>
+    <li><b>บานเลื่อนไม่กรีดราง (แบบ 1) ลด 22,300 → 16,700</b> เพราะ ② — ค่ากรีดราง 1,920 × 2.94 ≈ 5,600 หายไป</li>
+    <li><b>40×100 1 บาน</b> ตอนนี้ 8,600 ใกล้ตาราง 8,100 (+6%) — ส่วนต่างคือตารางคิดเฟรมสีชุบและไม่มีล้อ/รางยู</li>
+  </ul>
+
+  <h2>4. ข้อสังเกตให้ดูก่อนส่งราคา</h2>
+  <div class="box warn">
+    <ol>
+      <li><b>ค่าติดตั้งเป็นก้อนใหญ่</b> ราว 5,100–5,500 ต่องาน (ตามตาราง R4.1) — บานเล็กมาก ค่าติดตั้งเกินครึ่งของราคา</li>
+      <li><b>ค่ากรีดรางถูกคูณกำไรค่าของ ×2.94</b> (ทุน 1,920 → ขาย ~5,600) เพราะในไฟล์อยู่ในกองวัสดุ — ถ้าตั้งใจให้เป็นค่าแรง/ราคาขายตรง 800/ม. ต้องเคาะ</li>
+      <li><b>สีทองถูกกว่าสีดำ</b> ตามราคาไฟล์ (เฟรม 875 vs 975 · เสามือจับ 1,015 vs 1,500)</li>
+      <li>กระจกใส 5 มม. ตายตัว · แนะนำพื้นที่ต่อบาน ≤ 1.7 ตร.ม. (บานใหญ่เสี่ยงแอ่น)</li>
+    </ol>
+  </div>
+
+  <p class="foot">คำนวณจากเอนจินคิดราคา 4.0 ของแต่ละช่วง (git: acdecfd7~1 · 2710b77f~1 · ปัจจุบัน) ด้วยราคาสโตร์ชุดเดียวกัน — ตัวเลขต่างกันจึงมาจากวิธีคิดเท่านั้น · JR OMS</p>
+</div>
+</body>
+</html>
