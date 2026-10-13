@@ -977,7 +977,21 @@ export function computeCost(PB, prod, opt) {
     const labI = (r41Edit.inst || noNode(laborInstall, nI)) ? Math.round(laborInstall * (1 + pctInst / 100)) : r41Sell(nI, 'cI', 'sI', laborInstall);
     if (!r41Edit.prod && noNode(laborProd, nP)) lines.push({ cat: 'warn', name: '⚠️ ค่าผลิตรุ่นนี้ไม่มีในตาราง R4.1 — ใช้กำไร ' + pctProd + '% แทน', amount: 0 });
     if (!r41Edit.inst && noNode(laborInstall, nI)) lines.push({ cat: 'warn', name: '⚠️ ค่าติดตั้งรุ่นนี้ไม่มีในตาราง R4.1 — ใช้กำไร ' + pctInst + '% แทน', amount: 0 });
-    const mPct = r41Edit.mat ? pctMat : r41MatPct(PB, prod.id, vk, area, P);
+    // ── กำไรสุทธิตามตาราง R4.1 เป็นตัวตัดสิน (เจ้าของเคาะ 13 ต.ค.69 "ยึดกำไรสุทธิให้ตรงตามไฟล์เป๊ะ ๆ") ──
+    //   ขายรวม = ทุนรวม (ของ+ผลิต+ติดตั้ง) ÷ (1 − ค่าดำเนินการ 30/130 − กำไรสุทธิ) · ค่าแรงขาย 2 ก้อน = ตาราง (ห้ามขยับ)
+    //   → ค่าของขาย = ขายรวม − ค่าแรงขาย · % ค่าของที่โชว์ = ตัวที่เอาทุนคูณแล้วได้ราคานั้นจริง
+    //   ฐานใช้ค่าแรงขาย "ตามตาราง" เสมอ — กด +/- ก้อนค่าแรงเอง ราคาก้อนนั้นต้องขยับจริง ไม่ให้ค่าของดูดกลับ
+    //   มอเตอร์ที่ฝังในสูตรบาน (ระแนงหมุน/ประตูรั้ว — ตารางคิดผ่านกำไรสุทธิ) → ทุนเข้าฐาน แล้วหักราคาขายฟิกที่บวกทีหลังออก
+    //     ยอดรวมจึงได้กำไรสุทธิเท่าตารางทั้งชุด · มอเตอร์ที่เป็นออปชั่น (หลังคาเลื่อน: ตาราง = ตัวหลังคา 25% + มอเตอร์ 35,000) อยู่นอกฐาน
+    const netT = r41Edit.mat ? null : r41Net(PB, prod.id, vk);
+    const netDiv = netT != null ? 1 - 30 / 130 - netT / 100 : 0;
+    let mPct;
+    if (netDiv > 0 && costTotal > 0) {
+      const baseLab = r41Sell(nP, 'cP', 'sP', laborProd) + r41Sell(nI, 'cI', 'sI', laborInstall);
+      const labDef = (noNode(laborProd, nP) ? Math.round(laborProd * (1 + pctProd / 100)) : 0) + (noNode(laborInstall, nI) ? Math.round(laborInstall * (1 + pctInst / 100)) : 0);
+      // ปัดขึ้นทีละ 0.1% — % ที่โชว์ × ทุน = ราคาจริงเป๊ะ และกำไรสุทธิไม่ต่ำกว่าเป้าจากการปัด
+      mPct = Math.ceil((((costTotal + bomFixCost + laborProd + laborInstall) / netDiv - baseLab - labDef - bomFixSell) / costTotal - 1) * 1000 - 1e-9) / 10;
+    } else mPct = r41Edit.mat ? pctMat : r41MatPct(PB, prod.id, vk, area, P);
     const matRaw = costTotal * (1 + mPct / 100);
     sellBeforeLabor = ceil100(matRaw);
     sellMfgOnly = ceil100(matRaw + labP);
@@ -985,7 +999,7 @@ export function computeCost(PB, prod, opt) {
     sellParts_ = { mat: 0, prod: labP, inst: labI };   // ค่าของเติมทีหลัง = ยอดรวม − ค่าแรง 2 ก้อน
     sellPct = { mat: mPct, prod: r41Edit.prod ? pctProd : eff(labP, laborProd), inst: r41Edit.inst ? pctInst : eff(labI, laborInstall) };
     const ref = (n, c, sk) => (n ? { w: n.w, h: n.h, p: n.p, vk: n.vk, cost: n[c], sell: n[sk] } : null);
-    r41Info = { vk, small, matPct: mPct, edit: r41Edit, refProd: r41Edit.prod ? null : ref(nP, 'cP', 'sP'), refInst: r41Edit.inst ? null : ref(nI, 'cI', 'sI') };
+    r41Info = { vk, small, matPct: mPct, net: netT, edit: r41Edit,refProd: r41Edit.prod ? null : ref(nP, 'cP', 'sP'), refInst: r41Edit.inst ? null : ref(nI, 'cI', 'sI') };
   } else if (SELLM) {
     // ── สูตรราคาขายตามไฟล์ถอดทุน v20.1 (เป้ากำไรสุทธิ + ค่าดำเนินการ 30%) ──
     //   เจ้าของสั่ง 3 ก.ย.69 "เอาตามไฟล์ ทำทั้งหมด" · ยันด้วยชุด ส่งต่อ-เว็บ (tests.json)
@@ -1322,6 +1336,14 @@ export function r41MatPct(PB, id, vk, area, panels) {
   if (typeof M === 'number') return M;
   if (vk && M[vk] != null) return M[vk];
   return M._ != null ? M._ : 100;
+}
+/** กำไรสุทธิเป้า (%) ของรุ่น/แบบย่อย จาก ★ ตารางราคาขาย R4.1 — PB.R41.net (scripts/set-r41-net.mjs) · ไม่มี = null (ใช้ % ค่าของเดิม) */
+export function r41Net(PB, id, vk) {
+  const N = PB && PB.R41 && PB.R41.net && PB.R41.net[r41Key(id)];
+  if (N == null) return null;
+  if (typeof N === 'number') return N;
+  if (vk && N[vk] != null) return N[vk];
+  return N._ != null ? N._ : null;
 }
 export function sellFromTarget({ mat, labProd, labInst, target, ratios, overheadPct = 30, shape = 'bucket', matAdjPct = 0 }) {
   const mk = 1 + (Number(matAdjPct) || 0) / 100;

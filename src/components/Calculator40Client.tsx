@@ -1859,6 +1859,12 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                       ราคาขายพร้อมติดตั้ง = ค่าของ + ค่าผลิต + ค่าติดตั้ง = <b className="tabular-nums">฿{baht(result.sell.withInstall)}</b>
                       {" "}· กำไร 100% = ขาย 2 เท่าทุน · 200% = 3 เท่า
                     </p>
+                    {/* กำไรสุทธิตามตาราง R4.1 เป็นตัวตัดสินราคา (เจ้าของเคาะ 13 ต.ค.69) — บอกที่มาของ % ค่าของ */}
+                    {(result as any).sellModel?.r41 && (result as any).sellModel?.net != null && !(result as any).sellModel?.small && (
+                      <p className="text-[11px] text-ink-3">
+                        % ค่าของตั้งให้ <b>กำไรสุทธิ {(result as any).sellModel.net}%</b> ตาม ★ ตาราง R4.1 — ขายรวม = ทุนรวม (ของ+ผลิต+ติดตั้ง) ÷ (1 − ค่าดำเนินการ 30/130 − {(result as any).sellModel.net}%) ปัดร้อย · ค่าผลิต/ติดตั้งขาย = ตาราง
+                      </p>
+                    )}
                   </div>
 
                   {/* ค่าแรงแยก — โชว์ทุกคน (ไม่ใช่ข้อมูลทุน) เพราะเจ้าของต้องเห็นว่าแต่ละรุ่นค่าแรงไม่เท่ากัน */}

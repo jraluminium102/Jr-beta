@@ -384,7 +384,13 @@ for (const a of ANCHORS) {
       else if (areaNow >= pts[pts.length - 1][0]) m = pts[pts.length - 1][1];
       else for (let i = 1; i < pts.length; i++) if (areaNow <= pts[i][0]) { const [a1, p1] = pts[i - 1], [a2, p2] = pts[i]; m = Math.round(p1 + (p2 - p1) * (areaNow - a1) / (a2 - a1)); break; }
     }
-    const matRaw = a.cost * (1 + m / 100), lp = lab('cP', 'sP', wProd), li = lab('cI', 'sI', wInst);
+    const lp = lab('cP', 'sP', wProd), li = lab('cI', 'sI', wInst);
+    // 13 ต.ค.69 กำไรสุทธิตามตาราง R4.1 เป็นตัวตัดสิน (PB.R41.net) — ขายรวม = ทุนรวม ÷ (1 − 30/130 − กำไรสุทธิ)
+    //   ค่าแรงขาย = ตาราง · % ค่าของ = ส่วนที่เหลือ ÷ ทุน (ปัดขึ้น 0.1%) — คิดเองแยกจากเอนจิน
+    const NT = PB.R41.net && PB.R41.net[rk];
+    const net = NT == null ? null : typeof NT === 'number' ? NT : (vk && NT[vk] != null ? NT[vk] : (NT._ ?? null));
+    if (net != null && a.cost > 0) m = Math.ceil((((a.cost + wProd + wInst) / (1 - 30 / 130 - net / 100) - lp - li) / a.cost - 1) * 1000 - 1e-9) / 10;
+    const matRaw = a.cost * (1 + m / 100);
     wantMfg = ceil100(matRaw + lp); wantInst = ceil100(matRaw + lp + li);
     if (small && wantInst > 0) { wantMfg = ceil100(wantMfg * (SR.small.price / wantInst)); wantInst = SR.small.price; }
     if (SR.floor) {
@@ -638,10 +644,11 @@ console.log('\n═══ ②g ราคาเส้นแยกสีจริ�
   //   → ส่วนต่างราคาระหว่างสี = ส่วนต่างทุน × (1 + %) (±ปัดร้อย) · ค่าแรงขายต้องเท่ากันทุกสี
   //   ไม่ตรึงยอดขาย (เปลี่ยนตาม % ตั้งต้นที่จูนกับตาราง) — ทุนต่อสีตรึงไว้ที่ ANCHORS_COLOR แล้ว
   const full = (key, bake) => computeCost(PB, PRODUCTS.sms_slide, { w: 600, h: 300, p: 3, form: 'อิสระ', color: bake, colorKey: key });
-  const W0 = full('white', 'white'), m0 = PB.R41.matPct.sms_slide._;
+  // 13 ต.ค.69 กำไรสุทธิเป็นตัวตัดสิน (SMS 40%) → ส่วนต่างราคา = ส่วนต่างทุน ÷ (1 − 30/130 − 40%) (ค่าแรงเท่ากันทุกสี)
+  const W0 = full('white', 'white'), netDiv = 1 - 30 / 130 - PB.R41.net.sms_slide / 100;
   for (const [lbl, key, bake] of [['SMS ลายไม้สักทอง', 'wood_teak', 'woodStock'], ['SMS ลายไม้อบพิเศษ', 'wood_special', 'woodSpecial'], ['SMS เทาซาฮาร่า', 'sahara', 'sahara']]) {
     const c = full(key, bake);
-    check(lbl + ': ส่วนต่างจากสีขาว = ส่วนต่างทุน × (1+%)', c.sell.withInstall - W0.sell.withInstall, (c.cost.total - W0.cost.total) * (1 + m0 / 100), 100);
+    check(lbl + ': ส่วนต่างจากสีขาว = ส่วนต่างทุน ÷ (1 − 30/130 − กำไรสุทธิ)', c.sell.withInstall - W0.sell.withInstall, (c.cost.total - W0.cost.total) / netDiv, 100);
     check(lbl + ': ค่าแรงขายเท่าสีขาว', c.sell.parts.prod + c.sell.parts.inst, W0.sell.parts.prod + W0.sell.parts.inst, 0);
   }
 

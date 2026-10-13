@@ -163,6 +163,9 @@ PB.R41 = {
   labor,
   matPct: (PB.R41 && PB.R41.matPct) || {},
   ...((PB.R41 && PB.R41.matPct_NOTE) ? { matPct_NOTE: PB.R41.matPct_NOTE } : {}),
+  // ของที่สคริปต์อื่นเขียนไว้ ห้ามหายตอนสร้างใหม่ — % แยกขนาด (fit-r41-matpct) · กำไรสุทธิ (set-r41-net · รันซ้ำหลัง PDF เปลี่ยน)
+  ...((PB.R41 && PB.R41.matPctBySize) ? { matPctBySize: PB.R41.matPctBySize } : {}),
+  ...((PB.R41 && PB.R41.net) ? { net: PB.R41.net, net_NOTE: PB.R41.net_NOTE } : {}),
 };
 fs.writeFileSync(PB_PATH, JSON.stringify(PB, null, 2) + "\n");
 const byNote = {};

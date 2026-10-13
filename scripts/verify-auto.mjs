@@ -561,7 +561,9 @@ console.log("\n═══ ⑨ มอเตอร์บานกระทุ้ง
 console.log("\n═══ ⑩ % กำไรค่าของตั้งต้น (R41.matPct) ═══");
 {
   const R = (id, o, pb) => computeCost(pb || PB, PRODUCTS[id], { w: 200, h: 200, p: 1, glassType: "เขียว 6มม.", ...o });
-  const withPct = (id, pct) => { const p = JSON.parse(JSON.stringify(PB)); p.R41.matPct[id] = { _: pct }; return p; };
+  // 13 ต.ค.69 รุ่นที่มีกำไรสุทธิ (R41.net) ไม่ใช้ matPct แล้ว → ตัวช่วยนี้ปิด net ของรุ่นนั้น เพื่อทดสอบกลไก % สำรอง
+  const withPct = (id, pct) => { const p = JSON.parse(JSON.stringify(PB)); p.R41.matPct[id] = { _: pct }; if (p.R41.net) delete p.R41.net[id]; return p; };
+  const netOf = (r) => { const sT = r.sell.withInstall, cT = r.cost.total + (r.labor.prod || 0) + (r.labor.install || 0); return ((sT - sT * 30 / 130 - cT) / sT) * 100; };
   ok("ไม่เหลือ matAdjPct ค้างใน PB.SELL (เลขที่ไม่มีผลแล้ว หลอกคนแก้)", Object.values(PB.SELL.products).every((x) => x.matAdjPct == null));
 
   for (const id of ["sms_slide", "open_door", "pivot", "awning", "banyok", "fold_euro", "fold_lift", "fixed", "curve_fixed", "bansolid"]) {
@@ -573,7 +575,9 @@ console.log("\n═══ ⑩ % กำไรค่าของตั้งต้�
     ok(id + ": ปรับ % แล้วทุนไม่ขยับ", lo.cost.total === hi.cost.total);
     ok(id + ": % ขึ้น → ค่าของ (ขาย) ขึ้น", hi.sell.parts.mat > lo.sell.parts.mat, lo.sell.parts.mat + " → " + hi.sell.parts.mat);
     ok(id + ": % ขึ้น → ค่าแรงขาย 2 ก้อนนิ่ง", lo.sell.parts.prod === hi.sell.parts.prod && lo.sell.parts.inst === hi.sell.parts.inst);
-    ok(id + ": % ที่โชว์ = % ตั้งต้น", R(id, {}).profit3.mat === m0, String(R(id, {}).profit3.mat));
+    // 13 ต.ค.69 กำไรสุทธิตาราง R4.1 เป็นตัวตัดสิน → ราคาตั้งต้นต้องได้กำไรสุทธิ = ตาราง (ปัดร้อยขึ้นได้ไม่เกิน ~1%)
+    const r0 = R(id, {}), nt = r0.sellModel.net, nv = netOf(r0);
+    ok(id + ": กำไรสุทธิ = ตาราง R4.1 (" + nt + "%)", nt != null && nv >= nt - 0.01 && nv < nt + 1, nv.toFixed(2) + "%");
   }
 
   // % ที่โชว์ต้องคูณกลับได้ราคาจริงทุกก้อน
@@ -709,8 +713,9 @@ console.log("\n═══ ⑫ 3 ก้อนราคาขาย — ค่า�
   }
 
   // ก้อนค่าแรงต้องนิ่งเมื่อขยับกำไรค่าของ (กฎ "ไม่ยุ่งกับค่าแรง")
-  const pbHi = JSON.parse(JSON.stringify(PB)); pbHi.R41.matPct.sms_slide = { _: PB.R41.matPct.sms_slide._ + 40 };
-  const lo = computeCost(PB, PRODUCTS.sms_slide, { w: 300, h: 250, p: 2, glassType: "เขียว 6มม.", form: "อิสระ" });
+  const pbHi = JSON.parse(JSON.stringify(PB)); pbHi.R41.matPct.sms_slide = { _: PB.R41.matPct.sms_slide._ + 40 }; delete pbHi.R41.net.sms_slide;
+  const pbLo = JSON.parse(JSON.stringify(PB)); delete pbLo.R41.net.sms_slide;
+  const lo = computeCost(pbLo, PRODUCTS.sms_slide, { w: 300, h: 250, p: 2, glassType: "เขียว 6มม.", form: "อิสระ" });
   const hi = computeCost(pbHi, PRODUCTS.sms_slide, { w: 300, h: 250, p: 2, glassType: "เขียว 6มม.", form: "อิสระ" });
   ok("ดันกำไรค่าของ: ก้อนค่าแรงผลิตไม่ขยับ", lo.sell.parts.prod === hi.sell.parts.prod, lo.sell.parts.prod + " vs " + hi.sell.parts.prod);
   ok("ดันกำไรค่าของ: ก้อนค่าแรงติดตั้งไม่ขยับ", lo.sell.parts.inst === hi.sell.parts.inst, lo.sell.parts.inst + " vs " + hi.sell.parts.inst);
@@ -1047,7 +1052,11 @@ console.log("\n═══ ⑦ มอเตอร์ในสูตรบาน �
   ok("ประตูรั้ว มอเตอร์ในชุด ยังโชว์ทุน 10,000", fx(g, /^มอเตอร์$/).cost === 10000, String(fx(g, /^มอเตอร์$/).cost));
   const gManual = R("gate", { spec: { drive: "มือผลัก (ไม่มีมอเตอร์)" } });
   ok("ประตูรั้วมือผลัก: ทุนรวมต่างกัน = ทุนมอเตอร์ 10,000", Math.round(g.cost.total - gManual.cost.total) === 10000, String(Math.round(g.cost.total - gManual.cost.total)));
-  ok("ประตูรั้วมือผลัก: ขายต่างกัน = 25,000", Math.round(g.sell.withInstall - gManual.sell.withInstall) === 25000, String(Math.round(g.sell.withInstall - gManual.sell.withInstall)));
+  // 13 ต.ค.69 กำไรสุทธิตาราง R4.1 เป็นตัวตัดสิน — ตารางคิดมอเตอร์ผ่านกำไรสุทธิ 35% → ถอดมอเตอร์ ราคาลด ≈ ทุน 10,000 ÷ (1 − 30/130 − 35%) ไม่ใช่ 25,000 ฟิก
+  const gDiv = 1 - 30 / 130 - PB.R41.net.gate.ระแนง / 100;
+  ok("ประตูรั้วมือผลัก: ขายต่างกัน ≈ ทุนมอเตอร์ ÷ (1 − 30/130 − กำไรสุทธิ)", Math.abs(g.sell.withInstall - gManual.sell.withInstall - 10000 / gDiv) <= 200, String(Math.round(g.sell.withInstall - gManual.sell.withInstall)) + " vs " + Math.round(10000 / gDiv));
+  const gNet = (r) => { const sT = r.sell.withInstall, cT = r.cost.total + r.labor.prod + r.labor.install; return ((sT - sT * 30 / 130 - cT) / sT) * 100; };
+  ok("ประตูรั้ว มี/ไม่มีมอเตอร์ กำไรสุทธิเท่าตาราง 35%", [g, gManual].every((r) => gNet(r) >= 34.99 && gNet(r) < 36), gNet(g).toFixed(2) + " / " + gNet(gManual).toFixed(2));
   const gp = (pp) => R("gate", { profitPct: pp, profitManual: true });
   ok("ประตูรั้ว: กด +/- กำไร ทุนรวมไม่ดิ้น", Math.round(gp(50).cost.total) === Math.round(gp(200).cost.total));
 
@@ -1056,7 +1065,10 @@ console.log("\n═══ ⑦ มอเตอร์ในสูตรบาน �
   ok("ระแนงหมุน มอเตอร์ยังโชว์ทุน 1,800", fx(lv, /มอเตอร์ระแนงหมุน/).cost === 1800, String(fx(lv, /มอเตอร์ระแนงหมุน/).cost));
   const lvNo = R("louver_rotate", { spec: { rnMotor: "ไม่เอา" } });
   ok("ระแนงหมุน ไม่เอามอเตอร์: ทุนหาย 1,800", Math.round(lv.cost.total - lvNo.cost.total) === 1800, String(Math.round(lv.cost.total - lvNo.cost.total)));
-  ok("ระแนงหมุน ไม่เอามอเตอร์: ขายหาย 12,000", Math.round(lv.sell.withInstall - lvNo.sell.withInstall) === 12000, String(Math.round(lv.sell.withInstall - lvNo.sell.withInstall)));
+  // 13 ต.ค.69 ตาราง R4.1 ระแนงหมุน กำไรสุทธิ 26% รวมมอเตอร์ผ่านกำไร → ไม่เอามอเตอร์ = ราคาลด ≈ 1,800 ÷ (1 − 30/130 − 26%) · ไม่ขาดทุนเหมือนเดิม (เดิมหัก 12,000 จนกำไรติดลบ)
+  const lDiv = 1 - 30 / 130 - PB.R41.net.louver_rotate / 100;
+  ok("ระแนงหมุน ไม่เอามอเตอร์: ขายลด ≈ ทุนมอเตอร์ ÷ (1 − 30/130 − กำไรสุทธิ)", Math.abs(lv.sell.withInstall - lvNo.sell.withInstall - 1800 / lDiv) <= 200, String(Math.round(lv.sell.withInstall - lvNo.sell.withInstall)) + " vs " + Math.round(1800 / lDiv));
+  ok("ระแนงหมุน ไม่เอามอเตอร์: กำไรสุทธิยังเท่าตาราง 26%", gNet(lvNo) >= 25.99 && gNet(lvNo) < 27, gNet(lvNo).toFixed(2));
 }
 
 // ── เส้นที่แบรนด์ไม่มีสีสต็อค = ซื้อขาวมาอบเอง → เรตสีอบพิเศษ + เปิดตู้อบ (เจ้าของสั่ง 10 ต.ค.69) ──
@@ -1106,7 +1118,8 @@ console.log("\n═══ % ค่าของแยกตามขนาด (R41
     ok("ระหว่างจุด = ไล่ค่าเส้นตรง (อยู่ระหว่าง 2 จุด)", mid >= Math.min(p1, p2) && mid <= Math.max(p1, p2), `${p1} · ${mid} · ${p2}`);
     ok("เล็กกว่าจุดแรก = ค่าจุดแรก", r41MatPct(PB, "euro_slide", "", 0.5, 3) === p1);
     ok("จำนวนบานที่ตารางไม่มี (6 บาน) → ใช้ชุดที่ใกล้สุด (4 บาน)", r41MatPct(PB, "euro_slide", "", 9.6, 6) === r41MatPct(PB, "euro_slide", "", 9.6, 4));
-    const c = computeCost(PB, PRODUCTS.euro_slide, { w: 450, h: 240, p: 3, form: "อิสระ", color: "white", colorKey: "white" });
+    const pbNoNet = JSON.parse(JSON.stringify(PB)); delete pbNoNet.R41.net.euro_slide;   // กลไกสำรอง (รุ่นที่ไม่มีกำไรสุทธิ)
+    const c = computeCost(pbNoNet, PRODUCTS.euro_slide, { w: 450, h: 240, p: 3, form: "อิสระ", color: "white", colorKey: "white" });
     ok("% ที่โชว์ = % ที่ใช้คิด (ทุน × (1+%) = ค่าของขาย)", c.profit3.mat === r41MatPct(PB, "euro_slide", "", 10.8, 3), `${c.profit3.mat}`);
   }
   ok("รุ่นที่ไม่มีจุด ยังใช้ % เดียวตามเดิม", r41MatPct(PB, "open_door", "", 2, 1) === (PB.R41.matPct.open_door._ ?? PB.R41.matPct.open_door));
