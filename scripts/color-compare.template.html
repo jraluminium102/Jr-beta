@@ -5,22 +5,39 @@
 <style>
 /* layout: 3 แท็บ (สรุป · ทุน+ขาย เทียบตาราง R4.1 · ค่าอบสี เทียบ R3.9) · การ์ดรายบาน · เลขชิดขวา · แดง/เขียว = ขึ้น/ลงเท่านั้น */
 :root {
-  --bg: #eef1f2; --surface: #ffffff; --sunk: #f6f8f8; --ink: #172026; --muted: #5b6870; --line: #d6dde0;
-  --accent: #23617f; --accent-soft: #e2eef4;
-  --up: #b03a2e; --up-bg: #fbeae7; --down: #1d7448; --down-bg: #e2f2e8; --flat: #5b6870; --flat-bg: #eceff0;
-  --n-file: #8a5a00; --n-file-bg: #fff3d6; --n-fix: #1f5f86; --n-fix-bg: #e3f0f8; --n-rule: #5b4597; --n-rule-bg: #eeeafa; --n-info: #4e5b63; --n-info-bg: #eef1f2;
+  --bg: #eef2f8; --surface: #ffffff; --sunk: #f5f7fb; --ink: #0f1a2b; --muted: #3f4c5f; --faint: #6b7789; --line: #d3dae6; --line-strong: #b8c3d4;
+  --accent: #1f4fd1; --accent-ink: #ffffff; --accent-soft: #e4ebff;
+  --up: #b42318; --up-bg: #fee4e2; --down: #08714a; --down-bg: #d9f5e6; --flat: #3f4c5f; --flat-bg: #e8edf4;
+  --k-cost: #1d4ed8; --k-cost-bg: #edf3ff; --k-cost-hd: #d6e3ff;
+  --k-lab: #a14c00; --k-lab-bg: #fff6e8; --k-lab-hd: #ffe4bd;
+  --k-ref: #5b3fa6; --k-ref-bg: #f4f1fc; --k-ref-hd: #e3dcf7;
+  --k-sell: #0b6b3f; --k-sell-bg: #ecfaf2; --k-sell-hd: #c9efd9;
+  --n-file: #8a4b00; --n-file-bg: #fff1d6; --n-fix: #1d4ed8; --n-fix-bg: #e6eeff; --n-rule: #5b3fa6; --n-rule-bg: #efeafb; --n-info: #2c3a4e; --n-info-bg: #eaf0f7;
+  --g1: #2563eb; --g2: #0f9488; --g3: #e2620c; --g4: #15803d; --g5: #9333ea; --g6: #475569; --g7: #db2777;
   --font-display: "Anuphan", "IBM Plex Sans Thai", "Leelawadee UI", Tahoma, sans-serif;
   --font-body: "IBM Plex Sans Thai", "Leelawadee UI", Tahoma, sans-serif;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #12181b; --surface: #1a2226; --sunk: #151c1f; --ink: #e5ebee; --muted: #9aa8af; --line: #2c373c; --accent: #7cbcdb; --accent-soft: #1d3340;
-  --up: #f08b7f; --up-bg: #3a1f1c; --down: #6fd29b; --down-bg: #17321f; --flat: #a5b1b7; --flat-bg: #222b2f;
-  --n-file: #f3c463; --n-file-bg: #3a2f14; --n-fix: #8cc6ea; --n-fix-bg: #183040; --n-rule: #b9a8f0; --n-rule-bg: #2a2342; --n-info: #a5b1b7; --n-info-bg: #222b2f;
+  --bg: #0e1420; --surface: #161e2c; --sunk: #121a27; --ink: #edf2fa; --muted: #b6c2d3; --faint: #8b98ab; --line: #2a3546; --line-strong: #3b4a60;
+  --accent: #7aa2ff; --accent-ink: #0b1220; --accent-soft: #1d2a4a;
+  --up: #ff8f84; --up-bg: #3b1d1b; --down: #5fe0a2; --down-bg: #123224; --flat: #b6c2d3; --flat-bg: #222c3b;
+  --k-cost: #8fb2ff; --k-cost-bg: #16213a; --k-cost-hd: #1f2f52;
+  --k-lab: #ffb867; --k-lab-bg: #2a1f12; --k-lab-hd: #3d2c15;
+  --k-ref: #c4b2ff; --k-ref-bg: #211c35; --k-ref-hd: #2f2750;
+  --k-sell: #6fe3a8; --k-sell-bg: #112a1f; --k-sell-hd: #17402c;
+  --n-file: #ffc76b; --n-file-bg: #33270f; --n-fix: #8fb2ff; --n-fix-bg: #18243f; --n-rule: #c4b2ff; --n-rule-bg: #241f3b; --n-info: #c8d3e3; --n-info-bg: #1d2636;
+  --g1: #6f9bff; --g2: #3fd0c2; --g3: #ff9a52; --g4: #5ad48a; --g5: #c48bff; --g6: #9fb0c6; --g7: #ff7ab8;
   color-scheme: dark; } }
 :root[data-theme="dark"] {
-  --bg: #12181b; --surface: #1a2226; --sunk: #151c1f; --ink: #e5ebee; --muted: #9aa8af; --line: #2c373c; --accent: #7cbcdb; --accent-soft: #1d3340;
-  --up: #f08b7f; --up-bg: #3a1f1c; --down: #6fd29b; --down-bg: #17321f; --flat: #a5b1b7; --flat-bg: #222b2f;
-  --n-file: #f3c463; --n-file-bg: #3a2f14; --n-fix: #8cc6ea; --n-fix-bg: #183040; --n-rule: #b9a8f0; --n-rule-bg: #2a2342; --n-info: #a5b1b7; --n-info-bg: #222b2f;
+  --bg: #0e1420; --surface: #161e2c; --sunk: #121a27; --ink: #edf2fa; --muted: #b6c2d3; --faint: #8b98ab; --line: #2a3546; --line-strong: #3b4a60;
+  --accent: #7aa2ff; --accent-ink: #0b1220; --accent-soft: #1d2a4a;
+  --up: #ff8f84; --up-bg: #3b1d1b; --down: #5fe0a2; --down-bg: #123224; --flat: #b6c2d3; --flat-bg: #222c3b;
+  --k-cost: #8fb2ff; --k-cost-bg: #16213a; --k-cost-hd: #1f2f52;
+  --k-lab: #ffb867; --k-lab-bg: #2a1f12; --k-lab-hd: #3d2c15;
+  --k-ref: #c4b2ff; --k-ref-bg: #211c35; --k-ref-hd: #2f2750;
+  --k-sell: #6fe3a8; --k-sell-bg: #112a1f; --k-sell-hd: #17402c;
+  --n-file: #ffc76b; --n-file-bg: #33270f; --n-fix: #8fb2ff; --n-fix-bg: #18243f; --n-rule: #c4b2ff; --n-rule-bg: #241f3b; --n-info: #c8d3e3; --n-info-bg: #1d2636;
+  --g1: #6f9bff; --g2: #3fd0c2; --g3: #ff9a52; --g4: #5ad48a; --g5: #c48bff; --g6: #9fb0c6; --g7: #ff7ab8;
   color-scheme: dark; }
 * { box-sizing: border-box; }
 body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); }
@@ -30,13 +47,14 @@ h1 { font-size: 1.7rem; font-weight: 700; letter-spacing: -0.01em; }
 h3 { font-size: 1rem; font-weight: 600; }
 .sub { color: var(--muted); margin: 4px 0 0; font-size: .9rem; }
 .num { font-variant-numeric: tabular-nums; }
-.tabs { display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 1px solid var(--line); }
-.tabs button { font: inherit; font-size: .95rem; border: 0; background: transparent; color: var(--muted); padding: 8px 12px; border-bottom: 3px solid transparent; cursor: pointer; margin-bottom: -1px; }
-.tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; width: fit-content; max-width: 100%; }
+.tabs button { font: inherit; font-size: .95rem; font-weight: 500; border: 0; background: transparent; color: var(--muted); padding: 8px 14px; border-radius: 9px; cursor: pointer; }
+.tabs button:hover { background: var(--accent-soft); color: var(--accent); }
+.tabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
 .bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 8px; display: grid; gap: 8px; border-bottom: 1px solid var(--line); }
 .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .chip { font: inherit; font-size: .86rem; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); padding: 4px 12px; cursor: pointer; }
-.chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); font-weight: 600; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 input[type="search"] { font: inherit; font-size: .9rem; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); min-width: 0; flex: 1 1 160px; max-width: 240px; }
 label.tog { display: inline-flex; gap: 6px; align-items: center; font-size: .86rem; cursor: pointer; }
@@ -45,9 +63,12 @@ label.tog { display: inline-flex; gap: 6px; align-items: center; font-size: .86r
 .pill b { font-family: var(--font-display); font-size: 1.15rem; }
 .pill.up { background: var(--up-bg); color: var(--up); } .pill.down { background: var(--down-bg); color: var(--down); } .pill.flat { background: var(--flat-bg); color: var(--flat); }
 .legend { font-size: .82rem; color: var(--muted); }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; display: grid; gap: 10px; padding: 14px 16px; min-width: 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 1px 2px rgb(15 26 43 / .05); display: grid; gap: 10px; padding: 14px 16px; min-width: 0; }
 .card header { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; justify-content: space-between; }
-.card h2 { font-size: 1.12rem; font-weight: 600; }
+.card h2 { font-size: 1.15rem; font-weight: 700; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.gb { font-family: var(--font-body); font-size: .72rem; font-weight: 600; letter-spacing: .02em; padding: 2px 9px; border-radius: 999px; color: #fff; background: var(--gc, var(--g6)); }
+:root[data-theme="dark"] .gb { color: #0b1220; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .gb { color: #0b1220; } }
 .meta { font-size: .84rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 12px; }
 .note { font-size: .86rem; padding: 7px 10px; border-radius: 6px; }
 .note.file { background: var(--n-file-bg); color: var(--n-file); } .note.fix { background: var(--n-fix-bg); color: var(--n-fix); }
@@ -56,11 +77,21 @@ label.tog { display: inline-flex; gap: 6px; align-items: center; font-size: .86r
 .tbl { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; font-size: .9rem; }
 th, td { padding: 6px 8px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line); vertical-align: top; }
-th { font-size: .74rem; font-weight: 500; color: var(--muted); letter-spacing: .02em; vertical-align: bottom; }
+th { font-size: .76rem; font-weight: 600; color: var(--muted); letter-spacing: .02em; vertical-align: bottom; }
+th.grp { font-size: .8rem; border-radius: 6px 6px 0 0; padding-block: 5px; }
+/* สีตามความหมายคอลัมน์: ทุน น้ำเงิน · ค่าแรง ส้ม · ตารางอ้างอิง ม่วง · ขาย เขียว */
+td.k-cost { background: var(--k-cost-bg); } th.k-cost { color: var(--k-cost); } th.grp.k-cost { background: var(--k-cost-hd); }
+td.k-lab { background: var(--k-lab-bg); } th.k-lab { color: var(--k-lab); } th.grp.k-lab { background: var(--k-lab-hd); }
+td.k-ref { background: var(--k-ref-bg); } th.k-ref { color: var(--k-ref); } th.grp.k-ref { background: var(--k-ref-hd); }
+td.k-sell { background: var(--k-sell-bg); } th.k-sell { color: var(--k-sell); } th.grp.k-sell { background: var(--k-sell-hd); }
+td.k-ref .v { color: var(--k-ref); } td.k-sell .v.big { color: var(--k-sell); } td.k-cost .v { color: var(--k-cost); }
+tbody tr:hover td { filter: brightness(.97); }
+.keys { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .82rem; color: var(--muted); }
+.keys i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
 th.grp { text-align: center; border-bottom: 0; padding-bottom: 0; }
 td.c, th.c { text-align: left; white-space: normal; min-width: 120px; }
 td.sep, th.sep { border-left: 1px solid var(--line); }
-tr.base td { background: var(--sunk); }
+tr.base td { font-weight: 600; border-bottom: 2px solid var(--line-strong); }
 tr.na td { color: var(--muted); }
 .v { display: block; font-variant-numeric: tabular-nums; } .v.big { font-weight: 600; }
 .ref { display: block; font-size: .74rem; color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -76,10 +107,11 @@ tr.na td { color: var(--muted); }
 footer { font-size: .8rem; color: var(--muted); }
 /* สรุป */
 .finds { display: grid; gap: 10px; }
-.find { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+.find { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.find.hi { background: var(--up-bg); border-color: transparent; } .find.mid { background: var(--n-file-bg); border-color: transparent; } .find.ok { background: var(--down-bg); border-color: transparent; }
 .find .sev { font-size: .72rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
-.sev.hi { background: var(--up-bg); color: var(--up); } .sev.mid { background: var(--n-file-bg); color: var(--n-file); } .sev.lo { background: var(--n-info-bg); color: var(--n-info); } .sev.ok { background: var(--down-bg); color: var(--down); }
-.find b { display: block; } .find p { margin: 2px 0 0; font-size: .88rem; color: var(--muted); } .find .act { color: var(--ink); font-size: .88rem; margin-top: 4px; }
+.sev.hi { background: var(--up); color: #fff; } .sev.mid { background: var(--n-file); color: #fff; } .sev.lo { background: var(--n-info); color: var(--surface); } .sev.ok { background: var(--down); color: #fff; }
+.find b { display: block; font-size: .98rem; } .find p { margin: 3px 0 0; font-size: .9rem; color: var(--ink); opacity: .85; } .find .act { color: var(--ink); font-size: .88rem; margin-top: 4px; }
 .ov { width: 100%; border-collapse: collapse; font-size: .88rem; }
 .ov th, .ov td { padding: 5px 8px; }
 @media (max-width: 560px) { h1 { font-size: 1.4rem; } .card { padding: 12px; } }
@@ -138,6 +170,9 @@ const netOf = (sT, cT) => (sT > 0 ? Math.round(((sT - sT * 30 / 130 - cT) / sT) 
 const R41 = DATA.r41 || { rows: [], notes: {}, finds: [], reasons: {} };
 const GRP41 = (name) => /หลังคา|กลาสเฮ้าส์/.test(name) ? "หลังคา" : /ระแนง|รั้ว|ราว/.test(name) && !/เลื่อน \(/.test(name) && !/ระแนงเลื่อน/.test(name) ? "ระแนง/รั้ว/ราว"
   : /ฝ้า|ผนัง|พื้น|ไฟ/.test(name) ? "ฝ้า/ผนัง/พื้น" : /เลื่อน|Slim|E-series/i.test(name) ? "บานเลื่อน" : /เฟี้ยม/.test(name) ? "เฟี้ยม" : "บานเปิด/อื่น ๆ";
+const GCOL = { "บานเลื่อน": "--g1", "บานเปิด/อื่น": "--g2", "บานเปิด": "--g2", "หลังคา": "--g3", "ระแนง/รั้ว": "--g4", "ระแนง": "--g4", "เฟี้ยม": "--g5", "ฝ้า/ผนัง/พื้น": "--g6" };
+const gbadge = (g) => `<span class="gb" style="--gc:var(${GCOL[g] || "--g7"})">${g}</span>`;
+const KEYS = `<div class="keys"><span><i style="background:var(--k-cost-hd)"></i>ทุนค่าของ</span><span><i style="background:var(--k-lab-hd)"></i>ค่าแรง</span><span><i style="background:var(--k-ref-hd)"></i>ตารางอ้างอิง (R4.1 / R3.9)</span><span><i style="background:var(--k-sell-hd)"></i>ราคาขายเว็บ</span></div>`;
 const gkey = (r) => (r.name || r.head) + (r.vk ? " · " + r.vk : "");
 const avg = (a) => (a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length * 10) / 10 : null);
 const groups41 = new Map();
@@ -145,7 +180,7 @@ for (const r of R41.rows) { const k = gkey(r); if (!groups41.has(k)) groups41.se
 
 // ── แท็บ สรุป ──
 function renderSum() {
-  $("#finds").innerHTML = (R41.finds || []).map((f) => `<div class="find"><span class="sev ${f.sev}">${f.tag}</span><div><b>${f.title}</b><p>${f.why}</p>${f.act ? `<div class="act">→ ${f.act}</div>` : ""}</div></div>`).join("");
+  $("#finds").innerHTML = (R41.finds || []).map((f) => `<div class="find ${f.sev}"><span class="sev ${f.sev}">${f.tag}</span><div><b>${f.title}</b><p>${f.why}</p>${f.act ? `<div class="act">→ ${f.act}</div>` : ""}</div></div>`).join("");
   const rows = [];
   for (const [k, rs] of groups41) {
     const ok = rs.filter((r) => r.web && !r.small);
@@ -153,9 +188,9 @@ function renderSum() {
     const c = avg(ok.map((r) => pct(r.web.cM, r.pdf.cM))), s = avg(ok.map((r) => pct(r.sellTM, r.pdf.sT))), w = avg(ok.map((r) => pct(r.web.sT, r.pdf.sT)));
     const lab = ok.every((r) => r.web.sP === r.pdf.sP && r.web.sI === r.pdf.sI);
     const reason = (R41.reasons || {})[(ok[0].id || "") + "|" + (ok[0].vk || "")] || (R41.reasons || {})[(ok[0].id || "") + "|"];
-    rows.push(`<tr><td class="c">${k}</td><td class="num">${chip(c, 5)}</td><td class="num">×${ok[0].tableMult}</td><td class="num">${lab ? "✓ เท่าตาราง" : "✗ ต่าง"}</td><td class="num">${chip(s, 5)}</td><td class="c" style="font-size:.82rem;color:var(--muted)">${reason ? `<span class="${reason.kind === "bug" ? "note bug" : ""}" style="padding:1px 6px">${reason.text}</span>` : ""}</td></tr>`);
+    rows.push(`<tr><td class="c">${gbadge(GRP41(k))} ${k}</td><td class="num k-cost">${chip(c, 5)}</td><td class="num k-ref">×${ok[0].tableMult}</td><td class="num k-lab">${lab ? "✓ เท่าตาราง" : "✗ ต่าง"}</td><td class="num k-sell">${chip(s, 5)}</td><td class="c" style="font-size:.82rem;color:var(--muted)">${reason ? `<span class="${reason.kind === "bug" ? "note bug" : ""}" style="padding:1px 6px">${reason.text}</span>` : ""}</td></tr>`);
   }
-  $("#ov").innerHTML = `<thead><tr><th class="c">รุ่น</th><th>ทุนค่าของ เว็บ vs ตาราง</th><th>ตัวคูณตาราง</th><th>ค่าแรงขาย</th><th>ขาย (ตัวคูณเท่าตาราง) vs ตาราง</th><th class="c">สาเหตุที่ทุนต่าง</th></tr></thead><tbody>${rows.join("")}</tbody>`;
+  $("#ov").innerHTML = `<thead><tr><th class="c">รุ่น</th><th class="k-cost">ทุนค่าของ เว็บ vs ตาราง</th><th class="k-ref">ตัวคูณตาราง</th><th class="k-lab">ค่าแรงขาย</th><th class="k-sell">ขาย (ตัวคูณเท่าตาราง) vs ตาราง</th><th class="c">สาเหตุที่ทุนต่าง</th></tr></thead><tbody>${rows.join("")}</tbody>`;
 }
 
 // ── แท็บ ทุน + ขาย เทียบตาราง R4.1 ──
@@ -180,24 +215,24 @@ function render41() {
       const w = r.web, pT = pct(r.sellTM, d.sT); if (!r.small) cnt[kindOf(pT)]++;
       const labOk = w.sP === d.sP && w.sI === d.sI;
       return `<tr><td class="c">${size}</td>
-        ${cell(w.cM, d.cM)}
-        <td class="num"><span class="v">${fmt(w.sP + w.sI)}</span><span class="ref">${labOk ? "✓ เท่าตาราง" : "ตาราง " + fmt(d.sP + d.sI)}</span></td>
-        <td class="num sep"><span class="v">${fmt(d.sT)}</span></td>
-        <td class="num"><span class="v big">${fmt(r.sellTM)}</span><span class="ref">${chip(pT)}</span></td>
-        <td class="num"><span class="v">${fmt(w.sT)}</span><span class="ref">${chip(pct(w.sT, d.sT))}</span></td>
-        ${cell(w.cP, d.cP, false, " sep det41")}${cell(w.cI, d.cI, false, " det41")}${cell(w.cT, d.cT, false, " det41")}
-        <td class="num det41"><span class="v">${netOf(r.sellTM, w.cT) ?? "—"}%</span><span class="ref">ตาราง ${netOf(d.sT, d.cT) ?? "—"}%${tgt != null ? ` · เป้า ${tgt}%` : ""}</span></td></tr>`;
+        ${cell(w.cM, d.cM, false, " k-cost")}
+        <td class="num k-lab"><span class="v">${fmt(w.sP + w.sI)}</span><span class="ref">${labOk ? "✓ เท่าตาราง" : "ตาราง " + fmt(d.sP + d.sI)}</span></td>
+        <td class="num sep k-ref"><span class="v">${fmt(d.sT)}</span></td>
+        <td class="num k-sell"><span class="v big">${fmt(r.sellTM)}</span><span class="ref">${chip(pT)}</span></td>
+        <td class="num k-sell"><span class="v">${fmt(w.sT)}</span><span class="ref">${chip(pct(w.sT, d.sT))}</span></td>
+        ${cell(w.cP, d.cP, false, " sep det41 k-lab")}${cell(w.cI, d.cI, false, " det41 k-lab")}${cell(w.cT, d.cT, false, " det41 k-cost")}
+        <td class="num det41 k-sell"><span class="v">${netOf(r.sellTM, w.cT) ?? "—"}%</span><span class="ref">ตาราง ${netOf(d.sT, d.cT) ?? "—"}%${tgt != null ? ` · เป้า ${tgt}%` : ""}</span></td></tr>`;
     }).join("");
     const c = avg(ok.map((r) => pct(r.web.cM, r.pdf.cM))), s = avg(ok.map((r) => pct(r.sellTM, r.pdf.sT)));
-    cards.push(`<section class="card"><header><h2>${k}</h2><div class="meta">${ok.length ? `ตัวคูณตาราง ×${ok[0].tableMult} · ทุน ${chip(c)} · ขาย(ตัวคูณตาราง) ${chip(s)}` : ""}</div></header>
+    cards.push(`<section class="card"><header><h2>${gbadge(GRP41(k))}${k}</h2><div class="meta">${ok.length ? `ตัวคูณตาราง ×${ok[0].tableMult} · ทุน ${chip(c)} · ขาย(ตัวคูณตาราง) ${chip(s)}` : ""}</div></header>
       ${reason ? `<div class="note ${reason.kind === "bug" ? "bug" : "info"}">${reason.kind === "bug" ? "⚠ " : ""}${reason.text}</div>` : ""}
       ${note && note.text ? `<div class="note ${note.level}">${note.text}</div>` : ""}
       <div class="tbl"><table><thead>
-        <tr><th class="c"></th><th class="grp">ทุนค่าของ</th><th class="grp">ค่าแรงขาย</th><th class="grp sep" colspan="3">ราคาขายรวม (ผลิต+ติดตั้ง)</th><th class="grp sep det41" colspan="3">ทุนค่าแรง / ทุนรวม</th><th class="grp det41"></th></tr>
-        <tr><th class="c">ขนาด (ซม.)</th><th>เว็บ <span class="ref">ตาราง</span></th><th>ผลิต+ติดตั้ง</th><th class="sep">ตาราง R4.1</th><th>เว็บ ตัวคูณเท่าตาราง</th><th>เว็บตอนนี้</th><th class="sep det41">ผลิต</th><th class="det41">ติดตั้ง</th><th class="det41">ทุนรวม</th><th class="det41">กำไรสุทธิ</th></tr>
+        <tr><th class="c"></th><th class="grp k-cost">ทุนค่าของ</th><th class="grp k-lab">ค่าแรงขาย</th><th class="grp sep k-ref">ตาราง</th><th class="grp k-sell" colspan="2">ราคาขายเว็บ (ผลิต+ติดตั้ง)</th><th class="grp sep det41 k-lab" colspan="2">ทุนค่าแรง</th><th class="grp det41 k-cost">ทุนรวม</th><th class="grp det41 k-sell"></th></tr>
+        <tr><th class="c">ขนาด (ซม.)</th><th class="k-cost">เว็บ <span class="ref">ตาราง</span></th><th class="k-lab">ผลิต+ติดตั้ง</th><th class="sep k-ref">R4.1 ขายรวม</th><th class="k-sell">ตัวคูณเท่าตาราง</th><th class="k-sell">เว็บตอนนี้</th><th class="sep det41 k-lab">ผลิต</th><th class="det41 k-lab">ติดตั้ง</th><th class="det41 k-cost">ของ+แรง</th><th class="det41 k-sell">กำไรสุทธิ</th></tr>
       </thead><tbody>${body}</tbody></table></div></section>`);
   }
-  $("#list41").innerHTML = cards.join("") || `<div class="empty">ไม่เจอบานที่ค้น</div>`;
+  $("#list41").innerHTML = (cards.length ? KEYS : "") + cards.join("") || `<div class="empty">ไม่เจอบานที่ค้น</div>`;
   $("#sum41").innerHTML = `<span class="pill flat">ขาย(ตัวคูณตาราง) ใกล้ตาราง ±2% <b>${cnt.flat}</b> แถว</span><span class="pill up">แพงกว่า <b>${cnt.up}</b></span><span class="pill down">ถูกกว่า <b>${cnt.down}</b></span>${cnt.na ? `<span class="pill flat">เทียบไม่ได้ <b>${cnt.na}</b></span>` : ""}`;
 }
 $("#q41").oninput = (e) => { q41 = e.target.value; render41(); };
@@ -219,7 +254,7 @@ function render() {
   const ql = query.trim().toLowerCase();
   const prods = DATA.data.filter((p) => (group === "ทั้งหมด" || p.group === group) && (!ql || p.name.toLowerCase().includes(ql) || p.rows.some((r) => String(r.color).toLowerCase().includes(ql))));
   const cnt = { up: 0, down: 0, flat: 0 };
-  $("#list").innerHTML = prods.length ? prods.map((p) => {
+  $("#list").innerHTML = prods.length ? KEYS + prods.map((p) => {
     const rows = p.rows.map((r) => {
       if (r.na) return `<tr class="na"><td class="c">${r.color}<span class="ty">${r.type}</span></td><td colspan="6" style="text-align:left">ไม่มีสีนี้ขาย</td></tr>`;
       const d = pct(r.tWeb, r.t39); if (d != null && !r.base) cnt[kindOf(d)]++;
@@ -227,16 +262,16 @@ function render() {
       const costT = r.base ? r.costWeb : r.cost?.mat;
       return `<tr class="${r.base ? "base" : ""}">
         <td class="c">${r.color}${tags}<span class="ty">${r.type}</span></td>
-        <td class="num">${fmt(costT)}</td>
-        <td class="num">${r.base ? "ฐาน" : `<span class="v">${fmt(r.cWeb)}</span><span class="how">${howTxt(r)}</span>`}</td>
-        <td class="num det">${r.base ? `<span class="how">อลู ${fmt(r.cost?.alu)} · อบ ${fmt(r.cost?.bake)} · กระจก ${fmt(r.cost?.glass)} · อุปกรณ์ ${fmt(r.cost?.hw)}</span>` : `<span class="how">อลู ${fmt(r.cost?.alu)} · อบ ${fmt(r.cost?.bake)} · กระจก ${fmt(r.cost?.glass)} · อุปกรณ์ ${fmt(r.cost?.hw)}</span>`}</td>
-        <td class="num sep">${fmt(r.t39)}</td><td class="num det">${fmt(r.t40)}</td><td class="num"><span class="v big">${fmt(r.tWeb)}</span><span class="ref">${r.base ? "" : "ค่าสีขาย +" + fmt(r.aWeb) + " (R3.9 +" + fmt(r.a39) + ")"}</span></td><td class="num">${chip(d)}</td></tr>`;
+        <td class="num k-cost">${fmt(costT)}</td>
+        <td class="num k-cost">${r.base ? "ฐาน" : `<span class="v">${fmt(r.cWeb)}</span><span class="how">${howTxt(r)}</span>`}</td>
+        <td class="num det k-cost">${r.base ? `<span class="how">อลู ${fmt(r.cost?.alu)} · อบ ${fmt(r.cost?.bake)} · กระจก ${fmt(r.cost?.glass)} · อุปกรณ์ ${fmt(r.cost?.hw)}</span>` : `<span class="how">อลู ${fmt(r.cost?.alu)} · อบ ${fmt(r.cost?.bake)} · กระจก ${fmt(r.cost?.glass)} · อุปกรณ์ ${fmt(r.cost?.hw)}</span>`}</td>
+        <td class="num sep k-ref"><span class="v">${fmt(r.t39)}</span></td><td class="num det k-ref"><span class="v">${fmt(r.t40)}</span></td><td class="num k-sell"><span class="v big">${fmt(r.tWeb)}</span><span class="ref">${r.base ? "" : "ค่าสีขาย +" + fmt(r.aWeb) + " (R3.9 +" + fmt(r.a39) + ")"}</span></td><td class="num k-sell">${chip(d)}</td></tr>`;
     }).join("");
-    return `<section class="card"><header><h2>${p.name}</h2><div class="meta"><span>${p.size} ซม.${/\d/.test(p.panels) ? ` · ${p.panels} บาน` : ""}</span><span>อลูที่อบ ${p.kgWeb || "—"} กก. (ไฟล์เดิม ${p.kgFile ?? "—"})</span></div></header>
+    return `<section class="card"><header><h2>${gbadge(p.group)}${p.name}</h2><div class="meta"><span>${p.size} ซม.${/\d/.test(p.panels) ? ` · ${p.panels} บาน` : ""}</span><span>อลูที่อบ ${p.kgWeb || "—"} กก. (ไฟล์เดิม ${p.kgFile ?? "—"})</span></div></header>
       ${p.note ? `<div class="note ${p.note.level}">${p.note.text}</div>` : ""}
       <div class="tbl"><table><thead>
-        <tr><th class="c"></th><th class="grp" colspan="3">ทุนค่าของ (เว็บ)</th><th class="grp sep" colspan="4">ราคาขายรวม</th></tr>
-        <tr><th class="c">สี</th><th>ทั้งชุด</th><th>ค่าสีที่เพิ่ม · วิธีคิด</th><th class="det">แยกก้อน</th><th class="sep">R3.9</th><th class="det">R4.0 เดิม</th><th>เว็บ</th><th>เว็บ vs R3.9</th></tr>
+        <tr><th class="c"></th><th class="grp k-cost" colspan="3">ทุนค่าของ (เว็บ)</th><th class="grp sep k-ref" colspan="2">ราคาขาย อ้างอิง</th><th class="grp k-sell" colspan="2">ราคาขาย เว็บ</th></tr>
+        <tr><th class="c">สี</th><th class="k-cost">ทั้งชุด</th><th class="k-cost">ค่าสีที่เพิ่ม · วิธีคิด</th><th class="det k-cost">แยกก้อน</th><th class="sep k-ref">R3.9</th><th class="det k-ref">R4.0 เดิม</th><th class="k-sell">เว็บ</th><th class="k-sell">เว็บ vs R3.9</th></tr>
       </thead><tbody>${rows}</tbody></table></div>
       ${p.spec ? `<details style="font-size:.8rem;color:var(--muted)"><summary>อลูที่ใช้ (ตามไฟล์เดิม)</summary>${p.spec}</details>` : ""}</section>`;
   }).join("") : `<div class="empty">ไม่เจอบานหรือสีที่ค้น</div>`;
