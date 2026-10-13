@@ -1146,7 +1146,10 @@ export function computeCost(PB, prod, opt) {
   const wsPct = PB.WHOLESALE_DISCOUNT_PCT != null ? Number(PB.WHOLESALE_DISCOUNT_PCT) : 0;
   const sellMfgOnlyNet = wsPct > 0 ? ceil100(sellMfgOnly * (1 - wsPct / 100)) : sellMfgOnly;
   // ทุนออปชั่น = ทุนจริง(มอเตอร์) + ถอดทุนจากราคาขาย R3.9 ตาม markup กลาง (÷(1+กำไร%) · เดิม ÷2 ตายตัว=ผูก 100% · แก้ 1ก.ค. ให้ขยับ markup ไม่เพี้ยน) · ที่ 100% = เท่าเดิม
-  const addonCost = round2(addonCostExplicit + fixedSellCost + addonSellImplicit / (1 + (profitPct || 100) / 100));
+  //   13 ต.ค.69 (ออดิตออปชั่น): กลับไป ÷2 ตายตัวทุกรุ่น — ตั้งแต่ขายด้วยตาราง R4.1 แล้ว PB.PROFIT.mat ไม่ใช่กำไรค่าของจริงอีก
+  //   (ของจริงอยู่ที่ R41.matPct) ทำให้ "ทุน" ของออปชั่นเหมาตัวเดียวกันต่างกันตามรุ่น (ยูโร ÷1.8 · SlimLux ÷2.2 · SMS ÷2) ทั้งที่เป็นของชิ้นเดียวกัน
+  //   ÷2 = สมมติฐาน R3.9 (ราคาขาย R3.9 ≈ ทุน×2) · ไม่กระทบราคาขาย กระทบแค่ "ทุนในระบบ/กำไร" ที่โชว์
+  const addonCost = round2(addonCostExplicit + fixedSellCost + addonSellImplicit / 2);
   const costBase = sellCostOverride != null ? sellCostOverride : costTotal;
   const costTotalOut = round2(costBase + addonCost);
   return {
@@ -1233,9 +1236,12 @@ function sellParts(total, labProd, labInst, pP, pI, oh) {
 // woodjamb (ครอบวงกบไม้ · รุ่นใหม่ v1) ใช้เรตค่าแรง "บานเปิด (ยูโร)" ตามชีตคิดทุน → ยืมแถว R4.1 ของบานเปิดมาใช้
 const R41_ALIAS = { roof_multi: 'roof', glasshouse: 'roof', glasshouse_multi: 'roof', gable_multi: 'roof_gable' };
 export function r41Key(id) { return R41_ALIAS[id] || id; }
+// ยืมแถวค่าแรงของรุ่นอื่น (ไม่ยืม % ค่าของ): ครอบวงกบไม้ = บานเปิด (ยูโร) — 16 ก.ย.69 เคยใส่ใน R41_ALIAS แล้วหลุดตอน merge
+//   ⚠ ถ้าไม่มี → sellModel ว่าง ค่าแรงขาย = ทุน (กำไร 0%) เจ้าของเจอ 13 ต.ค.69
+const R41_LABOR_ALIAS = { woodjamb: 'open_door' };
 export function r41Nodes(PB, id) {
   const L = PB && PB.R41 && PB.R41.labor;
-  const n = L && L[r41Key(id)];
+  const n = L && L[R41_LABOR_ALIAS[id] || r41Key(id)];
   return n && n.length ? n : null;
 }
 /** ตัวแยกแบบย่อยในตาราง — แบบที่ค่าแรงขาย/กำไรค่าของต่างกันจริงในตาราง */
@@ -1536,6 +1542,9 @@ function colorLabel(c) {
 
 // ── ออปชั่นเสริม (add-on) — คืน {label,qty,unit,unitPrice,amount} หรือ null ถ้าไม่เลือก ──
 // ราคาอ้างอิง R3.9 (ยังไม่ถอดทุน R4.0 · ติดป้าย "(R3.9)") — W,H เป็นเมตร
+// เรตคาดตาราง (฿/ม.) ตามเกรดสีเฟรม — R3.9 GRID_RATE_BY_BAKE · UI (AddonsSection) import ตัวนี้ ห้ามก๊อปตารางไปไว้ที่อื่น
+export const GRID_RATE_BY_BAKE = { white: 200, sahara: 200, woodStock: 250, special: 300, woodSpecial: 350 };
+export function gridRateFor(bake) { return GRID_RATE_BY_BAKE[bake] || 200; }
 export function computeAddon(id, sel, ctx) {
   if (sel == null || sel === 'none' || sel === false || sel === '') return null;
   const W = ctx.W, H = ctx.H;
@@ -1561,7 +1570,10 @@ export function computeAddon(id, sel, ctx) {
     return null;   // turtle_felt (สักหลาด) / none (ไม่มีธรณี) / std (กันน้ำมาตรฐาน) = ฟรี +0
   }
   if (id === 'grid') {                  // คาดตาราง (เส้นนอน/ตั้ง × ความยาว × เรตสี + เส้นโค้ง × 3,000)
-    const nh = (sel.nh | 0), nv = (sel.nv | 0), nc = (sel.nc | 0), rate = sel.rate || 200;
+    // เรตตามสีเฟรมอัตโนมัติ จนกว่าผู้ใช้กดเลือกเอง (rateTouched) — บั๊กเดิม 13 ต.ค.69: UI โชว์ 300 สีพิเศษ แต่ engine คิด 200 เสมอ
+    //   (UI ส่ง rate มาเฉพาะตอนกดเลือก · engine เลย fallback 200 ทุกสี) → ตารางเรตย้ายมาอยู่ที่นี่แหล่งเดียว UI import ไปใช้
+    const nh = (sel.nh | 0), nv = (sel.nv | 0), nc = (sel.nc | 0);
+    const rate = sel.rateTouched && sel.rate > 0 ? +sel.rate : gridRateFor((ctx.opt && ctx.opt.color) || 'white');
     // custom ความยาวเส้น (ม.) — เจ้าของเคาะ 17ก.ค.69: ตั้งขนาดเองได้ · ไม่ตั้ง = อัตโนมัติตามกว้าง/สูงบาน (พฤติกรรมเดิม · parity)
     const hLen = +sel.hLen > 0 ? +sel.hLen : W;
     const vLen = +sel.vLen > 0 ? +sel.vLen : H;

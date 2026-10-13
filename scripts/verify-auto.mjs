@@ -1129,5 +1129,29 @@ console.log("\n═══ เส้นราคารวมสี (colorIn) ต�
     L("slimlux", "special", "special").aluKg === computeCost(PB, { ...PRODUCTS.slimlux, alu: PRODUCTS.slimlux.alu.filter((a) => a.code !== "OPK-A202-40") }, { spec: {}, addons: {}, colorKey: "special", color: "special" }).aluKg, "");
   ok("Velora ออโต้ สีพิเศษ: ไม่อบซ้ำ (ราคารวมค่าอบแล้ว)", L("velora_auto", "special", "special").aluKg < 0.5, String(L("velora_auto", "special", "special").aluKg));
 }
+// ── ㉑ ออดิตออปชั่น 13 ต.ค.69 (เจ้าของ: "บัคกำไรบางอันขึ้น 0 · คาดตาราง/ทึบล่าง สีถูกไหม") ──
+{
+  const G = { ...PRODUCTS.sms_slide, addons: ["grid", "mosquito"] };   // bootstrap เป็นคนเติม grid ให้ตอนรันจริง — จำลองที่นี่
+  const run = (prod, color, colorKey, addons) => computeCost(PB, prod, { w: 200, h: 220, p: 2, spec: {}, addons, color, colorKey });
+  const gridLine = (c) => (c.lines || []).find((l) => l.cat === "addon" && /คาดตาราง/.test(l.name));
+  // เรตคาดตารางต้องตามสีเฟรมอัตโนมัติ (เดิม UI โชว์ 300 แต่ engine คิด 200 ทุกสี)
+  for (const [color, key, want] of [["white", "white", 200], ["woodStock", "wood_teak", 250], ["special", "special", 300], ["woodSpecial", "wood_mahogany", 350]]) {
+    const l = gridLine(run(G, color, key, { grid: { nh: 2, nv: 1 } }));
+    ok(`คาดตาราง auto สี ${color} = ${want}/ม.`, l && l.unitPrice === want, l ? String(l.unitPrice) : "ไม่มีบรรทัด");
+  }
+  const lt = gridLine(run(G, "special", "special", { grid: { nh: 2, nv: 1, rate: 250, rateTouched: true } }));
+  ok("คาดตาราง กดเลือกเรตเอง 250 → ใช้ 250 ไม่ทับด้วยสี", lt && lt.unitPrice === 250, lt ? String(lt.unitPrice) : "ไม่มีบรรทัด");
+  // ทุนออปชั่นเหมา (ขาย R3.9) = ขาย ÷ 2 เท่ากันทุกรุ่น — ไม่ขึ้นกับ PB.PROFIT.mat ของรุ่น (ยูโร 80 · SlimLux 120 เคยทำให้ต่างกัน)
+  for (const id of ["sms_slide", "euro_slide", "slimlux"]) {
+    const P = { ...PRODUCTS[id], addons: ["mosquito"] };
+    const a = run(P, "white", "white", {}), b = run(P, "white", "white", { mosquito: "small" });
+    const ml = (b.lines || []).find((l) => l.cat === "addon" && /มุ้ง/.test(l.name));
+    ok(`${id}: ทุนมุ้งเหมา = ขาย ÷ 2`, ml && Math.abs((b.cost.total - a.cost.total) - ml.amount / 2) < 1, ml ? `ขาย ${ml.amount} ทุน +${(b.cost.total - a.cost.total).toFixed(0)}` : "ไม่มีบรรทัด");
+  }
+  // ครอบวงกบไม้ ยืมค่าแรงบานเปิด → ค่าแรงขายต้องสูงกว่าทุน (เดิม alias หลุด → กำไรค่าแรง 0)
+  const wj = computeCost(PB, PRODUCTS.woodjamb, { w: 90, h: 240, p: 1, spec: {}, addons: {}, color: "white", colorKey: "white" });
+  ok("ครอบวงกบไม้: ค่าแรงขาย (ผลิต+ติดตั้ง) > ทุนค่าแรง", wj.sell && wj.sell.parts && wj.sell.parts.prod + wj.sell.parts.inst > wj.labor.prod + wj.labor.install + 1,
+    `ขาย ${wj.sell && wj.sell.parts ? wj.sell.parts.prod + "+" + wj.sell.parts.inst : "-"} · ทุน ${wj.labor.prod}+${wj.labor.install}`);
+}
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);

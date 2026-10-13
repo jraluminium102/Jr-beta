@@ -23,7 +23,7 @@ import { MOSQ_CHIPS, mosqVariants } from "@/lib/calculator40/mosquito.mjs";
 // @ts-expect-error — products เป็น ESM JS ล้วน (ใช้ดึง screen_ready.materials สำหรับรุ่นย่อยมุ้ง)
 import { PRODUCTS } from "@/lib/calculator40/products.mjs";
 // @ts-expect-error — engine เป็น ESM JS ล้วน (ตาราง CMECH_TIERS/STAINLESS_TIERS/ADDON_FLAT/CEIL_RATE แหล่งเดียวกับที่ computeAddon ใช้คิดเงิน — import ตรง กันป้าย/ราคาหลุดกัน)
-import { CMECH_TIERS, STAINLESS_TIERS, ADDON_FLAT as ADDON_FLAT_RAW, CEIL_RATE as CEIL_RATE_RAW, zRate as zRateFn, motorSizeOk, pickMotorByWeight, awnMotorPick } from "@/lib/calculator40/engine.mjs";
+import { CMECH_TIERS, STAINLESS_TIERS, ADDON_FLAT as ADDON_FLAT_RAW, CEIL_RATE as CEIL_RATE_RAW, zRate as zRateFn, gridRateFor, motorSizeOk, pickMotorByWeight, awnMotorPick } from "@/lib/calculator40/engine.mjs";
 import PB_JSON from "@/lib/calculator40/pricebook.json";
 const ADDON_FLAT: Record<string, number> = ADDON_FLAT_RAW;
 const CEIL_RATE: Record<string, number> = CEIL_RATE_RAW;
@@ -35,9 +35,8 @@ import R39DATA from "@/lib/calculator40/r39-data.json";
 type AddonsMap = Record<string, any>;
 
 // ADDON_FLAT + CEIL_RATE ย้ายไป import จาก engine.mjs (แหล่งเดียว — กันป้าย UI/ราคา engine หลุดกันในอนาคต)
-// สีเส้นคาดอัตโนมัติตามสีเฟรม (R3.9 GRID_RATE_BY_BAKE) — auto จนกว่าจะกดเลือกเอง (rateTouched)
-const GRID_RATE_BY_BAKE: Record<string, number> = { white: 200, sahara: 200, woodStock: 250, special: 300, woodSpecial: 350 };
-const gridRateFor = (bake: string) => GRID_RATE_BY_BAKE[bake] || 200;
+// สีเส้นคาดอัตโนมัติตามสีเฟรม — auto จนกว่าจะกดเลือกเอง (rateTouched) · ตารางอยู่ใน engine (gridRateFor) แหล่งเดียว
+//   13 ต.ค.69: เดิมตารางอยู่ที่นี่อย่างเดียว engine ไม่รู้สี → UI โชว์ 300 แต่คิดจริง 200
 
 // ── กลุ่มออปชั่นเสริม → จัดเข้าหมวด (แค่จัดหน้า ไม่กระทบราคา/engine) — ตรง app.js OPENING/HANDLE/SCREEN/MAIN_EXTRA/AUTO_ADDONS ──
 const OPENING_ADDONS = ["closer", "thresh", "hide_track", "inner_track", "awn_tt", "awn_brace"];
