@@ -250,8 +250,19 @@ export const PRODUCTS = {
       // 4 ก.ย.69 เจ้าของสั่ง: เลิกใช้ JR00228 (ลบออกจากสโตร์) → ผูก JR00576 "ล้อบานเลื่อน-16x27x190"
       //   รหัสเดียวกับใบตัด (hardware.ts) แล้ว — เดิมสองฝั่งคนละรหัส
       { name: 'ล้อ 27 (16x27x190)', sku: 'JR00576', price: 80, unit: 'ลูก', count: '2*F2' },
-      { name: 'มือจับ Align', sku: 'JR00378', price: 99, unit: 'ตัว', count: '2*F3' },
-      { name: 'ชุดล็อค', sku: 'JR00246', price: 189, unit: 'ชุด', count: 'F4' },
+      // 13 ต.ค.69 ออดิตขนาด: ไฟล์ v1 ชีต คิดทุน SMS แถว 25-28/32-37 แยกมือจับรายชิ้นแบบเดียวกับ bar_slide/ยูโร (ไม่มี JR00246 "ชุดล็อค" เลย)
+      //   เดิมเว็บ "Align ×4 (99) + ชุดล็อค ×2 (189)" = 654 คงที่ · ไฟล์ 587-659 ตามสูง (แกน B) · และเว็บขาด น็อต 6 หุน / ยางรูน้ำ / วาวรูน้ำ ที่ไฟล์คิด (SMS_ตัด D67-D70)
+      { name: 'มือจับ กุญแจ Align', sku: 'JR00377', price: 99, unit: 'ชุด', count: '1' },
+      { name: 'มือจับ ล็อค Align', sku: 'JR00378', price: 69, unit: 'ชุด', count: 'F3' },
+      { name: 'มือจับ ดัมมี่ Align', sku: 'JR00379', price: 62, unit: 'ชุด', count: 'F3-1' },
+      { name: 'แกนมือจับ A', sku: 'JR00478', price: 18, unit: 'อัน', count: '2*F3' },
+      { name: 'แกนมือจับ B', sku: 'JR00479', price: 18, unit: 'อัน', count: '(H>2.8?2:(H>1.4?1:0))*F3' },
+      { name: 'ปลายมือจับ ดำ', sku: 'JR00476', price: 30, unit: 'อัน', count: '2*F3' },
+      { name: 'ก้ามปูรับล็อค', sku: 'JR00477', price: 9, unit: 'อัน', count: '2*F3' },
+      { name: 'ตัวที เงิน', sku: 'JR00475', price: 30, unit: 'อัน', count: 'F3' },
+      { name: 'น็อต 6 หุน (ยึดล้อ)', sku: 'JR00863', price: 1, unit: 'ตัว', count: '4*F2' },
+      { name: 'ยางรูน้ำ', sku: 'JR00589', price: 0, unit: 'อัน', count: 'DRAIN' },      // ราคา ERP v1 = 0 (เหมือนยูโร) — มีไว้ตัดสต็อก
+      { name: 'วาวรูน้ำ', sku: 'JR00485', price: 14, unit: 'อัน', count: 'DRAIN' },
     ],
     consum: [
       // 4 ก.ย.69 เจ้าของเคาะ: ย้ายมาใช้รหัสเดียวกับใบตัด แล้วลบรหัสเก่าทิ้งจากสโตร์
@@ -307,7 +318,7 @@ export const PRODUCTS = {
       { name: 'เฟรมข้าง', code: 'F7978', price: 935, kg: 4.9024, seg: 'H', count: 'MULTI ? (P>=5?2:0) : 2' },
       { name: 'เฟรมข้าง (2 ราง)', code: 'F7979', price: 650, kg: 3.611, seg: 'H', count: 'MULTI ? (P>=5?2:4) : 0' },
       { name: 'ต่อเฟรมข้าง', code: 'F7989', price: 305, kg: 1.694, seg: 'H', count: 'MULTI?2:0' },
-      { name: 'ต่อราง', code: 'F7990', price: 940, kg: 5.222, seg: 'W', count: 'MULTI?4:0' },
+      { name: 'ต่อราง', code: 'F7990', price: 940, kg: 5.222, seg: 'W-0.042', count: 'MULTI?4:0' },   // ยาว = กว้าง−21−21 มม. ตามใบตัด ยูโร_ตัด "เลื่อน4/เลื่อน5" (13 ต.ค.69 เดิม W เต็ม)
       { name: 'เดือย (ยูข้าง)', code: 'F7986', price: 285, kg: 1.65, seg: 'H-0.09', count: '2' },
       // ตบเกี่ยว: เปิดคู่กลางต้องสเกลตามจำนวนบานด้วย (F6 = เปิดคู่กลาง P-2 · อื่น ๆ P-1)
       //   ของเดิมล็อกไว้ 2 เส้น → เปิดคู่กลาง 6 บาน ขาดไป 2 เส้น (ใบตัดตัด 8 ท่อน = 4 เส้น)
@@ -792,7 +803,7 @@ export const PRODUCTS = {
       { key: 'tsHandleBrand', label: 'ยี่ห้อมือจับ', opts: ['เมโทร', 'Align'], def: 'เมโทร' },
       { key: 'tsHandleColor', label: 'สีมือจับ', opts: ['อบขาว', 'ดำ'], def: 'อบขาว' },
     ],
-    vars: { BEAM: '0.05', CC: '0.168', OVL: '0.04', SUB: '0.051',
+    vars: { BEAM: '0.05', CC: '0.168', OVL: '0.04*Math.max(1,P-1)', SUB: '0.051',   // OVL = รอยซ้อน 4 ซม. × (N−1) ตามไฟล์ รางบน_ตัด C20 (13 ต.ค.69 เดิม 4 ซม. คงที่)
       HALIGN: "(((spec&&spec.tsHandleBrand)||'')==='Align')?1:0",
       HBLACK: "(((spec&&spec.tsHandleColor)||'')==='ดำ')?1:0" },
     alu: [
@@ -802,8 +813,10 @@ export const PRODUCTS = {
       { code: 'JR03125', name: 'ชนกลางรับบาน', price: 300, kg: 0, stockLen: 6.0, seg: 'H-BEAM', count: '1', fixed: true },
       { box: 'ฉาก|4', code: 'ฉาก 4"', name: 'ฉาก 4" ปิดราง', price: 280, kg: 0, stockLen: 6.0, seg: 'W', count: '2', fixed: true },
       // ── SMS (เส้น 6.4 ม. · ราคาตามสีมาจาก PB.ALUCODE/ALUCOLOR_KEY) ──
-      { code: 'B20051', name: 'เสากุญแจ ML', price: 885, seg: 'H-BEAM-SUB', count: '2' },
-      { code: 'B20009', name: 'เสาเกี่ยว', price: 690, seg: 'H-BEAM-SUB', count: '2' },
+      // 13 ต.ค.69 ออดิตขนาด: ไฟล์ รางบน_ตัด C18 = IF(N=1,1,2) · C19 = IF(N=1,1,บานเลื่อน) → เสาเกี่ยว = N ท่อน (เดิมเว็บฝัง 2 → 3-4 บานขาด 1-2 ท่อน)
+      //   ⚠ ไฟล์ให้เสาตั้งรวม 2+N ท่อน (ไม่ใช่ 2N) — ยึดไฟล์ · ถ้าไฟล์ผิดต้องแก้ไฟล์ก่อน
+      { code: 'B20051', name: 'เสากุญแจ ML', price: 885, seg: 'H-BEAM-SUB', count: 'P===1?1:2' },
+      { code: 'B20009', name: 'เสาเกี่ยว', price: 690, seg: 'H-BEAM-SUB', count: 'P===1?1:P' },
       { code: 'B20054', name: 'ขวางบน/ล่าง', price: 1060, seg: '(W-CC-OVL)/P', count: '2*P', colorIn: true },
     ],
     glass: 'W*H',
@@ -866,8 +879,10 @@ export const PRODUCTS = {
       { name: 'เสากุญแจสลิม E-04e', code: 'E-04E', price: 1080, kg: 6, seg: 'H', count: 'F3' },
       { name: 'เสาเกี่ยวสลิม E-05e', code: 'E-05E', price: 1072, kg: 5.95556, seg: 'H', count: '2*F4' },
       { name: 'ขวางบน/ล่าง E-07e', code: 'E-07E', price: 1162, kg: 6.45556, seg: 'W/P', count: '2*P' },
-      { name: 'ตบปิดเฟรมบน E-01A', code: 'E-01A', price: 270, kg: 1.5, seg: 'W', count: "(form==='อิสระ'&&P===3)?0:(W>3?2:1)" },
-      { name: 'ตบธรณีเฟรมล่าง E-03C', code: 'E-03C', price: 450, kg: 2.5, seg: 'W', count: "(form==='อิสระ'&&P===3)?0:(W>3?2:1)" },
+      // 13 ต.ค.69 ออดิตขนาด: ไฟล์ B20/B21 นับ 2 ตัวนี้เป็น "เส้นเต็ม" 1 หรือ 2 เส้น (หน่วยเดียวกับ B13-B19) ไม่ใช่เศษเส้นจากความยาว
+      //   เดิมเว็บ seg W → 100×100/2 ได้ 0.2 เส้น ขาด ≈893 (= ส่วนต่างตาราง 892 พอดี) · seg 6.4 + noWaste → เส้น = count เป๊ะ
+      { name: 'ตบปิดเฟรมบน E-01A', code: 'E-01A', price: 270, kg: 1.5, seg: '6.4', count: "(form==='อิสระ'&&P===3)?0:(W>3?2:1)", noWaste: true },
+      { name: 'ตบธรณีเฟรมล่าง E-03C', code: 'E-03C', price: 450, kg: 2.5, seg: '6.4', count: "(form==='อิสระ'&&P===3)?0:(W>3?2:1)", noWaste: true },
     ],
     glass: '((W)+(P-1)*0.1)*H',
     hardware: [

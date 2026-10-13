@@ -98,7 +98,7 @@ const HEAD = {
   "ระแนง1\"×1.6\"โชว์1.6\"": ["louver", "1x1.6", RANAE("1x1.6", "4.06")],
   "ประตูรัวบานเลือน": ["gate", "ระแนง", { material: "1.6x4", spec: { gslat: "ระแนง", rnFace: "10.16", rnGap: "2" } }],
   "ประตูรัวระแนงสลับ": ["gate", "ระแนงสลับ", { material: "1x4", spec: { gslat: "ระแนงสลับ", rnFace: "10.16", rnGap: "2", gboxB: "1.6x1.6", gfaceB: "4.06", gaRun: "3", gbRun: "5" } }],
-  "ระแนงสลับ": ["louver_slip", "", { spec: { ...SLIP, rnFrame: "รวมโครง" } }],
+  "ระแนงสลับ": ["louver_slip", "", { spec: { ...SLIP, rnFrame: "ไม่รวมโครง" } }],   // 13 ต.ค.69: ตาราง R4.1 คิดใบ A+B ล้วน ไม่มีโครงดาม (เดิมใส่ รวมโครง → เว็บสูงกว่าตาราง 485/เส้น ปลอม ๆ)
   "ระแนงหมุน": ["louver_rotate", "", { spec: { rnMotor: "เอา" } }],
   "บานตู้Futuretech": ["cabinet_face"], "ราวกันตก": ["handrail"],
   "ชุดShower": ["shower", "บานตาย", { form: "บานตาย" }],
@@ -123,7 +123,8 @@ for (const r of rows) {
     if (!m) note = "จับวัสดุหลังคาไม่ได้";
     else if (id === "roof_slide") {
       const s = SLIDE[key];
-      if (s) inputs = { w: W, h: H, p: 2, material: vk, spec: { fixw: s[1] }, addons: { slide_motor: { kw: "80" } } };
+      // 13 ต.ค.69: ต้องระบุ form "เลื่อนข้าง" — ไม่ใส่ engine ใช้ defForm "เลื่อนยื่น" → fixw กลายเป็นติดตายเต็มกว้าง เหลือบานเลื่อนลึก 35 ซม. (ตารางเพี้ยน ±15..−32%)
+      if (s) inputs = { w: W, h: H, p: 2, form: "เลื่อนข้าง", material: vk, spec: { fixw: s[1] }, addons: { slide_motor: { kw: "80" } } };
       else note = "ไม่รู้สัดส่วนเลื่อน/ติดตาย ของขนาดนี้";
     } else inputs = { w: W, h: H, p: 1, material: vk, spec: id === "roof_gable" ? { ridge: RIDGE[key], batten: "แปเดี่ยว", roofend: "ปล่อยปลาย" } : {} };   // ค่าตั้งต้นชีต "คิดทุน หลังคาจั่ว" (แปเดี่ยว · ยื่นปลาย)
   } else if (HEAD[h]) {
