@@ -814,13 +814,14 @@ console.log("\n═══ ②i สีพิเศษ (Aztec/มะฮอกกา
   for (const id of EURO8) for (const k of ["aztec", "wood_maho", "wood_whiteoak"]) {
     // 17 ก.ย.69 เจ้าของยืนยันซ้ำ: เฟี้ยมยูโรมี · บานโซลิดไม่มี (ของเดิมสลับกันมาตั้งแต่ 11 ก.ย.)
     // 12 ต.ค.69 บานโซลิดเปิดมะฮอกกานี/ไวท์โอ๊คสต็อก (ไม่มี Aztec)
-    const want = ["open_door", "euro_slide", "fold_euro", "pcdoor"].includes(id) || (id === "bansolid" && k !== "aztec");
+    // 13 ต.ค.69 บานกระทุ้งเปิดมะฮอกกานี/ไวท์โอ๊คสต็อกด้วย (รหัส F มีสต็อก · ไม่มี Aztec)
+    const want = ["open_door", "euro_slide", "fold_euro", "pcdoor"].includes(id) || ((id === "bansolid" || id === "awning") && k !== "aztec");
     check(`${id} ${want ? "เลือก" : "ต้องเลือกไม่ได้"} ${k}`, has(id, k) ? 1 : 0, want ? 1 : 0, 0);
   }
   for (const id of ["sms_slide", "slimlux", "velora", "fixed", "banyok", "eseries", "roof", "folding", "topslide"])
     for (const k of ["aztec", "wood_maho", "wood_whiteoak"])
       check(`${id} ต้องเลือก ${k} ไม่ได้`, has(id, k) ? 0 : 1, 1, 0);
-  check("กระทุ้งเห็น 10 สี (ไม่มี 3 สีพิเศษ)", aluColorKeysFor("awning").length, ALU_COLOR_KEYS.length - 3, 0);
+  check("กระทุ้งเห็น 12 สี (มีมะฮอกกานี/ไวท์โอ๊คสต็อก · ไม่มี Aztec — 13 ต.ค.69)", aluColorKeysFor("awning").length, ALU_COLOR_KEYS.length - 1, 0);
   // สีปกติต้องยังเลือกได้ครบทุกรุ่น
   for (const k of ["white", "black", "sahara", "wood_teak", "special"])
     check(`ทุกรุ่นยังเลือก ${k} ได้`, aluColorKeysFor("sms_slide").includes(k) ? 1 : 0, 1, 0);

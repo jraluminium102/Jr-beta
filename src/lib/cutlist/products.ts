@@ -636,7 +636,7 @@ const ebSlide = (o: CutInput) => {
 /** P12 = INT(ซ้าย/2) + INT(ขวา/2) — v1 เฟี้ยมยูโร_ตัด!P12 (จำนวน HD-640/642/643/474/312 · 5-0 = 2 · 2-0 = 1 · 1-1 = 0) */
 const ebP12 = (o: CutInput) => {
   const L = Number(o.L ?? Math.ceil(o.N / 2)), R = o.N - L;
-  return Math.floor(L / 2) + Math.floor(R / 2);
+  return Math.max(1, Math.floor(L / 2) + Math.floor(R / 2));   // เจ้าของเคาะ 13 ต.ค.69: 1-1 ก็ใส่ 1 ชุด
 };
 /** มีบานคี่ไหม (P11) — ชนผนัง-คี่ · คี่+คี่ · คู่+คี่ = 1 · ชนผนัง-คู่ · คู่+คู่ = 0 */
 const ebOdd = (o: CutInput) => {

@@ -629,6 +629,8 @@ export const PRODUCTS = {
   },
 
   awning: {
+    // woodStockColors: มะฮอกกานี/ไวท์โอ๊ค แบบสีสต็อก (โปรไฟล์ F มีสต็อกสีนี้ — เจ้าของ 13 ต.ค.69) · Aztec ไม่เปิด
+    woodStockColors: true,
     id: 'awning', aluWaste: true, group: 1, name: 'บานกระทุ้ง', brand: 'EURO', laborKey: 'บานกระทุ้ง (ยูโร)',
     icon: '🪟', defForm: 'เปิดล่าง', forms: ['เปิดล่าง', 'เปิดข้าง'], // แบบเปิด (R3.9 awn_mode) · Tilt&Turn = ออปชั่น awn_tt (+5,000/บาน)
     addons: ['awn_tt', 'awn_brace', 'awn_auto', 'rain_sensor', 'mosquito', 'frame_wrap', 'drop_floor', 'demolish'],   // ห้องกระจก G6 พาริตี้ (2ก.ค.) — Tilt&Turn/แขนค้ำ/ชุดออโต้/มุ้ง
@@ -1166,13 +1168,14 @@ export const PRODUCTS = {
     glass: 'W*H',
     hardware: [
       // 13 ต.ค.69 ตาม Excel ไฟล์ v1 (เดิม count '1'): HD-640/642/643/474/312 = เฟี้ยมยูโร_ตัด!P12 = INT(ซ้าย/2)+INT(ขวา/2)
+      //   เจ้าของเคาะ 13 ต.ค.69: แบบ 1-1 (P12 = 0) ก็ต้องใส่ 1 ชุด → ขั้นต่ำ 1 · ของไม่สต็อก (สั่งตามงาน) → orderOnly
       //   (5-0 = 2 ชุด · 2-0 / 3-0 = 1 ชุด · 1-1 = 0) — ใบตัด src/lib/cutlist/products.ts ใช้สูตรเดียวกัน (ebP12)
-      { name: 'HD-640 บานพับล้อบน', sku: 'JR00198', price: 299, unit: 'ตัว', count: 'Math.floor(FL/2)+Math.floor(FR/2)' },
+      { name: 'HD-640 บานพับล้อบน', sku: 'JR00198', price: 299, unit: 'ตัว', count: 'Math.max(1, Math.floor(FL/2)+Math.floor(FR/2))', orderOnly: true },
       { name: 'HD-641 บานพับเฟี้ยม', sku: 'JR00252', price: 72, unit: 'ตัว', count: 'HINGE' },
-      { name: 'HD-642 บานพับมือจับ', sku: 'JR00203', price: 109, unit: 'ตัว', count: 'Math.floor(FL/2)+Math.floor(FR/2)' },
-      { name: 'HD-643 บานพับไกด์ล่าง', sku: 'JR00239', price: 199, unit: 'ตัว', count: 'Math.floor(FL/2)+Math.floor(FR/2)' },
-      { name: 'HD-474 มือจับกลอน', sku: 'JR00213', price: 85, unit: 'ตัว', count: 'Math.floor(FL/2)+Math.floor(FR/2)' },   // สโตร์: JR00213 = HD-474 ฿85 (ตรงชื่อ+ราคา)
-      { name: 'HD-312 ตลับกลอนล็อค', sku: 'JR03185', price: 88, unit: 'ตัว', count: 'Math.floor(FL/2)+Math.floor(FR/2)' },
+      { name: 'HD-642 บานพับมือจับ', sku: 'JR00203', price: 109, unit: 'ตัว', count: 'Math.max(1, Math.floor(FL/2)+Math.floor(FR/2))', orderOnly: true },
+      { name: 'HD-643 บานพับไกด์ล่าง', sku: 'JR00239', price: 199, unit: 'ตัว', count: 'Math.max(1, Math.floor(FL/2)+Math.floor(FR/2))', orderOnly: true },
+      { name: 'HD-474 มือจับกลอน', sku: 'JR00213', price: 85, unit: 'ตัว', count: 'Math.max(1, Math.floor(FL/2)+Math.floor(FR/2))', orderOnly: true },   // สโตร์: JR00213 = HD-474 ฿85 (ตรงชื่อ+ราคา)
+      { name: 'HD-312 ตลับกลอนล็อค', sku: 'JR03185', price: 88, unit: 'ตัว', count: 'Math.max(1, Math.floor(FL/2)+Math.floor(FR/2))', orderOnly: true },
       // ก้านสไลด์ = 2×(INT(ซ้าย/2)+INT(ขวา/2)) ตามใบตัด v1 D55 (เดิมตรึง 2 → 4 บานขึ้นไปขาด)
       { name: 'HD-1180 ก้านสไลด์', sku: 'JR03122', price: 73, unit: 'ตัว', count: '2*(Math.floor(FL/2)+Math.floor(FR/2))' },
       { name: 'HD-213 ฉากเข้ามุม', sku: 'JR03186', price: 15, unit: 'ตัว', count: '4*P' },
@@ -1265,7 +1268,7 @@ export const PRODUCTS = {
       DOOR: "((DOOR_LUT[P+'|'+HB]||[0,0,0])[CCOL-1]||0)",
       // น้ำหนักอลูทั้งชุด (ชีต G1) = Σ ปัดขึ้นเส้นเต็ม × กก./เส้น ของ F7859 · F7938B · F7960 · F7864 · F7935 · F7945C
       //   กก./เส้น = PB.ALUWEIGHT_KGM × 6.4 (แคตตาล็อก — กฎข้อ 6) · ชีตใช้เลขเก่าใน "น้ำหนักโปรไฟล์" C286-292
-      KG: 'Math.ceil((W+2*H)/6.4)*5.984 + Math.ceil(W/6.4)*7.6288 + Math.ceil(W/6.4)*3.1232'
+      KG: 'Math.ceil((W+2*H)/6.4)*6.63 + Math.ceil(W/6.4)*7.6288 + Math.ceil(W/6.4)*3.1232'
         + ' + Math.ceil((2*P*H+2*W)/6.4)*11.328 + Math.ceil((2*P*H+2*W)/6.4)*1.824 + (P>1?1:0)*3.7952',
     },
     alu: [],

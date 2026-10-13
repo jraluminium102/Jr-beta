@@ -848,7 +848,7 @@ console.log("\n═══ ⑳ ลำดับราคาสี — ขาว ≤
     Object.values(PRODUCTS).filter((p) => p.euroColors).map((p) => p.id).join(","));
   const AC = await import("../src/lib/calculator40/alu-colors.ts");
   ok("ใบเก่า: กระทุ้ง Aztec → สีอบพิเศษ", AC.allowedColorFor("awning", "aztec") === "special");
-  ok("ใบเก่า: กระทุ้ง มะฮอกกานี → ลายไม้อบพิเศษ", AC.allowedColorFor("awning", "wood_maho") === "wood_special" && AC.allowedColorFor("sms_slide", "wood_whiteoak") === "wood_special");
+  ok("ใบเก่า: บานหมุน มะฮอกกานี → ลายไม้อบพิเศษ · กระทุ้งคงมะฮอกกานี (สต็อก 13 ต.ค.69)", AC.allowedColorFor("pivot", "wood_maho") === "wood_special" && AC.allowedColorFor("sms_slide", "wood_whiteoak") === "wood_special" && AC.allowedColorFor("awning", "wood_maho") === "wood_maho");
   ok("รุ่นที่มีสีนี้ / สีปกติ → คงเดิม", AC.allowedColorFor("open_door", "aztec") === "aztec" && AC.allowedColorFor("pcdoor", "wood_maho") === "wood_maho" && AC.allowedColorFor("awning", "sahara") === "sahara");
   // 17 ก.ย.69: เฟี้ยมยูโร (fold_euro) ย้ายไปอยู่กลุ่ม "มี 3 สีพิเศษ" · บานโซลิดย้ายออก
   // 12 ต.ค.69 เจ้าของเปิดมะฮอกกานี/ไวท์โอ๊คสต็อกให้บานโซลิด (ไม่มี Aztec)
@@ -862,7 +862,8 @@ console.log("\n═══ ⑳ ลำดับราคาสี — ขาว ≤
     const mh = bs("wood_maho", "woodStock"), ws = bs("wood_special", "woodSpecial");
     ok("บานโซลิด มะฮอกกานี คิดแบบสีสต็อก (ไม่อบ ไม่เปิดตู้ ถูกกว่าลายไม้อบพิเศษ)", mh.aluKg < 0.5 && !(mh.cost.openOven > 0) && mh.cost.total < ws.cost.total, mh.cost.total + " / " + ws.cost.total);
   }
-  ok("ตัวเลือกสีกระทุ้ง/บานหมุน/เฟี้ยมยก ไม่มี 3 สีพิเศษ", ["awning", "pivot", "bold_euro", "fold_lift"].every((id) => !AC.aluColorKeysFor(id).some((k) => ["aztec", "wood_maho", "wood_whiteoak"].includes(k))));
+  ok("ตัวเลือกสีบานหมุน/เฟี้ยมยก ไม่มี 3 สีพิเศษ · กระทุ้งไม่มี Aztec แต่มีมะฮอกกานี/ไวท์โอ๊ค", ["pivot", "fold_lift"].every((id) => !AC.aluColorKeysFor(id).some((k) => ["aztec", "wood_maho", "wood_whiteoak"].includes(k)))
+    && !AC.aluColorKeysFor("awning").includes("aztec") && AC.aluColorKeysFor("awning").includes("wood_maho") && AC.aluColorKeysFor("awning").includes("wood_whiteoak"));
   // สีพิมพ์ลงใบอย่างเดียว (ไฟล์ไม่มีสูตรสี) — ผนังลูกฟูก/ผนังคอมโพสิต/ตู้
   const LABEL_ONLY = new Set(["wall_corrugated", "wall_composite", "cabinet"]);
   // ⏳ รุ่นใหม่ v1 ที่ยังเทียบลำดับราคาสีไม่ได้ (คนละเหตุผล — ห้ามลบทิ้งเงียบ ๆ)

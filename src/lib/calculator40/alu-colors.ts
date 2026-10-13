@@ -50,7 +50,8 @@ export const SPECIAL_COLOR_PRODUCTS = new Set(["open_door", "euro_slide", "fold_
 //   เจ้าของสั่ง 12 ต.ค.69: บานโซลิดเปิดมะฮอกกานี/ไวท์โอ๊คแบบสีสต็อก (เดิมคิดเป็นลายไม้อบพิเศษ แพงขึ้น ~20,000)
 //   ⚠ ต้องตรงกับธง prod.woodStockColors ใน products.mjs (engine ใช้ · verify-auto ⑳ ตรวจ)
 export const WOOD_STOCK_COLOR_KEYS = ["wood_maho", "wood_whiteoak"] as const;
-export const WOOD_STOCK_COLOR_PRODUCTS = new Set(["bansolid"]);
+//   13 ต.ค.69 +บานกระทุ้ง (รหัส F มีสต็อกมะฮอกกานี/ไวท์โอ๊ค — เจ้าของแจ้ง)
+export const WOOD_STOCK_COLOR_PRODUCTS = new Set(["bansolid", "awning"]);
 
 /** สีที่รุ่นนี้เลือกได้จริง — Aztec/มะฮอกกานี/ไวท์โอ๊ค เฉพาะ 4 รุ่น · บานโซลิดได้มะฮอกกานี/ไวท์โอ๊ค (ไม่มี Aztec) */
 export function aluColorKeysFor(prodId?: string | null): string[] {
