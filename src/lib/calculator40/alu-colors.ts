@@ -53,8 +53,17 @@ export const WOOD_STOCK_COLOR_KEYS = ["wood_maho", "wood_whiteoak"] as const;
 //   13 ต.ค.69 +บานกระทุ้ง (รหัส F มีสต็อกมะฮอกกานี/ไวท์โอ๊ค — เจ้าของแจ้ง)
 export const WOOD_STOCK_COLOR_PRODUCTS = new Set(["bansolid", "awning"]);
 
-/** สีที่รุ่นนี้เลือกได้จริง — Aztec/มะฮอกกานี/ไวท์โอ๊ค เฉพาะ 4 รุ่น · บานโซลิดได้มะฮอกกานี/ไวท์โอ๊ค (ไม่มี Aztec) */
+// ── รุ่นที่ "ไม่ขายสีอบพิเศษ / ลายไม้อบพิเศษ" — บานสั่งสำเร็จจากร้าน ร้านไม่ทำสีพวกนี้ (เจ้าของ 13 ต.ค.69: บานโค้งที่สั่งมา) ──
+//   ⚠ ต้องตรงกับธง prod.noSpecialBake ใน products.mjs (verify-auto ตรวจ)
+export const NO_SPECIAL_BAKE_PRODUCTS = new Set(["curve_open"]);
+
+/** สีที่รุ่นนี้เลือกได้จริง — Aztec/มะฮอกกานี/ไวท์โอ๊ค เฉพาะ 4 รุ่น · บานโซลิดได้มะฮอกกานี/ไวท์โอ๊ค (ไม่มี Aztec) · บานโค้งสั่งร้านไม่มีสีอบพิเศษ */
 export function aluColorKeysFor(prodId?: string | null): string[] {
+  if (prodId && NO_SPECIAL_BAKE_PRODUCTS.has(prodId))
+    return aluColorKeysForBase(prodId).filter((k) => BY_KEY[k]?.bake !== "special" && BY_KEY[k]?.bake !== "woodSpecial");
+  return aluColorKeysForBase(prodId);
+}
+function aluColorKeysForBase(prodId?: string | null): string[] {
   if (prodId && SPECIAL_COLOR_PRODUCTS.has(prodId)) return ALU_COLOR_KEYS;
   const woodOk = !!(prodId && WOOD_STOCK_COLOR_PRODUCTS.has(prodId));
   return ALU_COLOR_KEYS.filter((k) => !(SPECIAL_COLOR_KEYS as readonly string[]).includes(k)

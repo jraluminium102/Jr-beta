@@ -274,7 +274,7 @@ const howTxt = (r) => { const b = r.bake || {}; const parts = [];
   else if (b.bakeCost > 0) parts.push(`อบ ${b.kg} กก. × ${b.rate} = ${fmt(b.bakeCost)}`);
   if (b.oven > 0) parts.push(`ตู้อบ ${fmt(b.oven)}`);
   if (b.aluDiff > 0) parts.push(`เส้นสี +${fmt(b.aluDiff)}`); else if (b.aluDiff < 0) parts.push(`เส้นสี −${fmt(-b.aluDiff)}`);
-  if (Math.abs(b.otherDiff || 0) > 50) parts.push(`อื่น ${b.otherDiff > 0 ? "+" : "−"}${fmt(Math.abs(b.otherDiff))}`);
+  if (Math.abs(b.otherDiff || 0) > 50) parts.push(`ราคาตามสีอื่น ๆ (เช่น ราคาร้าน/อุปกรณ์ตามสี) ${b.otherDiff > 0 ? "+" : "−"}${fmt(Math.abs(b.otherDiff))}`);
   return parts.join(" + ") || "—"; };
 function render() {
   const groups = ["ทั้งหมด", ...new Set(DATA.data.map((p) => p.group))];
@@ -293,7 +293,7 @@ function render() {
         <td class="num k-cost">${fmt(costT)}</td>
         <td class="num k-cost">${r.base ? "ฐาน" : `<span class="v">${fmt(r.cWeb)}</span><span class="how">${howTxt(r)}</span>`}</td>
         <td class="num det k-cost">${r.base ? `<span class="how">อลู ${fmt(r.cost?.alu)} · อบ ${fmt(r.cost?.bake)} · กระจก ${fmt(r.cost?.glass)} · อุปกรณ์ ${fmt(r.cost?.hw)}</span>` : `<span class="how">อลู ${fmt(r.cost?.alu)} · อบ ${fmt(r.cost?.bake)} · กระจก ${fmt(r.cost?.glass)} · อุปกรณ์ ${fmt(r.cost?.hw)}</span>`}</td>
-        <td class="num sep k-ref"><span class="v">${fmt(r.t39)}</span></td><td class="num det k-ref"><span class="v">${fmt(r.t40)}</span></td><td class="num k-sell"><span class="v big">${fmt(r.tWeb)}</span><span class="ref">${r.base ? "" : "ค่าสีขาย +" + fmt(r.aWeb) + " (R3.9 +" + fmt(r.a39) + ")"}</span></td><td class="num k-sell">${chip(d)}</td></tr>`;
+        <td class="num sep k-ref"><span class="v">${fmt(r.t39)}</span></td><td class="num det k-ref"><span class="v">${fmt(r.t40)}</span></td><td class="num k-sell"><span class="v big">${fmt(r.tWeb)}</span><span class="ref">${r.base ? "" : "ค่าสีขาย +" + fmt(r.aWeb) + " (R3.9 +" + fmt(r.a39) + ")"}</span>${!r.base && r.cWeb > 0 && r.aWeb > 0 ? `<span class="how">= ทุนสีที่เพิ่ม ${fmt(r.cWeb)} × คูณกำไรค่าของ ×${(r.aWeb / r.cWeb).toFixed(2)}</span>` : ""}</td><td class="num k-sell">${chip(d)}</td></tr>`;
     }).join("");
     return `<section class="card"><header><h2>${gbadge(p.group)}${p.name}</h2><div class="meta"><span>${p.size} ซม.${/\d/.test(p.panels) ? ` · ${p.panels} บาน` : ""}</span><span>อลูที่อบ ${p.kgWeb || "—"} กก. (ไฟล์เดิม ${p.kgFile ?? "—"})</span></div></header>
       ${p.note ? `<div class="note ${p.note.level}">${p.note.text}</div>` : ""}

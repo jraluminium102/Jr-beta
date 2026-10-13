@@ -1258,6 +1258,9 @@ export const PRODUCTS = {
   },
 
   curve_open: {
+    // noSpecialBake: บานสั่งร้าน ไม่ขายสีอบพิเศษ/ลายไม้อบพิเศษ (เจ้าของ 13 ต.ค.69) → ตัวเลือกสีไม่มี 2 สีนี้ (alu-colors NO_SPECIAL_BAKE_PRODUCTS)
+    //   บรรทัดค่าอบ/ตู้อบด้านล่างคงไว้ให้ใบเก่าที่เคยเลือกสีอบพิเศษคิดเท่าเดิม
+    noSpecialBake: true,
     id: 'curve_open', group: 1, name: 'บานเปิดดัดโค้ง', brand: 'EURO', laborKey: 'เปิดดัดโค้ง',
     icon: '🚪', defForm: 'ดัดโค้ง', forms: ['ดัดโค้ง'], showColor: true,
     defaults: { w: 90, h: 240, p: 1 }, defGlass: 'เทมเปอร์ 6มม.', minP: 1, maxP: 2,

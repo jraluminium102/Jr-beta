@@ -1154,5 +1154,13 @@ console.log("\n═══ เส้นราคารวมสี (colorIn) ต�
   ok("ครอบวงกบไม้: ค่าแรงขาย (ผลิต+ติดตั้ง) > ทุนค่าแรง", wj.sell && wj.sell.parts && wj.sell.parts.prod + wj.sell.parts.inst > wj.labor.prod + wj.labor.install + 1,
     `ขาย ${wj.sell && wj.sell.parts ? wj.sell.parts.prod + "+" + wj.sell.parts.inst : "-"} · ทุน ${wj.labor.prod}+${wj.labor.install}`);
 }
+// ── ㉒ บานเปิดดัดโค้ง (สั่งร้าน) ไม่ขายสีอบพิเศษ/ลายไม้อบพิเศษ (เจ้าของ 13 ต.ค.69) ──
+{
+  const AC2 = await import("../src/lib/calculator40/alu-colors.ts");
+  const ks = AC2.aluColorKeysFor("curve_open");
+  ok("เปิดดัดโค้ง: ไม่มีสีอบพิเศษ / ลายไม้อบพิเศษ ให้เลือก", !ks.some((k) => ["special", "wood_special", "wood_fuji_oak", "wood_fuji_makha"].includes(k)) && ks.includes("wood_teak") && ks.includes("sahara"), ks.join(","));
+  ok("ธง noSpecialBake ในสูตร = รายชื่อใน alu-colors", Object.values(PRODUCTS).filter((p) => p.noSpecialBake).map((p) => p.id).sort().join(",") === [...AC2.NO_SPECIAL_BAKE_PRODUCTS].sort().join(","));
+  ok("รุ่นอื่นยังมีสีอบพิเศษ (เช่น บานเปิด)", AC2.aluColorKeysFor("open_door").includes("special"));
+}
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);

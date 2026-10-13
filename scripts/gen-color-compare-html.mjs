@@ -9,7 +9,7 @@ import fs from "node:fs";
 import { openXlsx, sheetList } from "./dumpxlsx.mjs";
 import { computeCost } from "../src/lib/calculator40/engine.mjs";
 import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
-import { resolveAluColor } from "../src/lib/calculator40/alu-colors.ts";
+import { resolveAluColor, aluColorKeysFor } from "../src/lib/calculator40/alu-colors.ts";
 import { stockColorOfCalc, buildPriceOverride, applyPriceOverride } from "../src/lib/calculator40/stock-link.ts";
 import { IDOF, KEYOF, baseInput } from "./color-compare-config.mjs";
 
@@ -37,7 +37,7 @@ const NOTE = {
   "บานเลื่อน E-series": { level: "info", text: "ราคามาตรฐานรวมค่าอบสีเทาไว้แล้ว ค่าสีพิเศษจึงบวกน้อย" },
   "Velora": { level: "info", text: "ราคามาตรฐานรวมค่าอบสีเทาไว้แล้ว · แก้ 12 ต.ค.69 ลูกฟูกตอนลายไม้อบพิเศษคิดค่าอบแล้ว" },
   "บานเลื่อน SMS": { level: "fix", text: "แก้ 12 ต.ค.69: ขวางบน/ล่าง B20054 ตอนสีพิเศษคิดค่าอบแล้ว (เดิมไม่คิด)" },
-  "เปิดดัดโค้ง": { level: "file", text: "บานสั่งสำเร็จจากร้านอื่น — ทุนบาน = ตารางราคาร้านในไฟล์ v1 (ชีต คิดทุน เปิดดัดโค้ง J2:M9 · 1 บาน สูง≤2.4: ขาว/ดำ 16,000 · เทาซาฮาร่า 16,500 · ลายไม้ 21,000) · สีอบพิเศษ/ลายไม้อบพิเศษ ตารางร้านไม่มีช่อง ไฟล์ D14 เลยคิด = ราคาขาว + เรตอบ×น้ำหนักอลูทั้งชุด (G1) + ตู้อบ 2,000 · ค่าสีขายเว็บ = ส่วนต่างทุนนี้ × ตัวคูณกำไรค่าของ (×2.37) จึงห่าง R3.9 ที่บวกเหมา — ⏳ รอเจ้าของเคาะ" },
+  "เปิดดัดโค้ง": { level: "rule", text: "บานสั่งสำเร็จจากร้าน — ทุนบาน = ตารางราคาร้านในไฟล์ v1 (1 บาน สูง≤2.4: ขาว/ดำ 16,000 · เทาซาฮาร่า 16,500 · ลายไม้ 21,000 · บานคู่ 26,000/26,500/34,500) · ร้านไม่ทำสีอบพิเศษ/ลายไม้อบพิเศษ → ไม่มีให้เลือก (เจ้าของ 13 ต.ค.69) · ค่าสีขาย = ราคาสีที่ร้านเพิ่ม × คูณกำไรค่าของ ×2.37 (เคาะ 13 ต.ค.69 ให้คูณกำไรเหมือนค่าของอื่น เช่น ลายไม้ ร้าน +5,000 → ขาย +11,800)" },
 };
 const GROUP = (n) => /ระแนง|รั้ว/.test(n) && !/บานระแนงเลื่อน/.test(n) ? "ระแนง/รั้ว"
   : /หลังคา/.test(n) ? "หลังคา" : /เลื่อน/.test(n) ? "บานเลื่อน" : /เฟี้ยม/.test(n) ? "เฟี้ยม" : "บานเปิด/อื่น ๆ";
@@ -79,6 +79,8 @@ for (const it of items) {
   for (const cr of it.rows) {
     const k = KEYOF(cr.color);
     if (!k || cr.color === "—" || /ไม่มีสีนี้ขาย/.test(cr.costTxt)) { prod.rows.push({ na: true, type: cr.type, color: cr.color || "—" }); continue; }
+    // รุ่นที่ไม่ขายสีนี้ (เช่น บานโค้งสั่งร้าน ไม่มีสีอบพิเศษ — 13 ต.ค.69) → ไม่มีสีนี้ขาย
+    if (k !== "white" && k !== "black" && !aluColorKeysFor(p.id).includes(k) && !aluColorKeysFor(p.id).includes(resolveAluColor(k)?.key)) { prod.rows.push({ na: true, type: cr.type, color: cr.color }); continue; }
     const c = run(k);
     const swapped = !p.euroColors && !p.woodStockColors && (k === "wood_maho" || k === "wood_whiteoak");
     prod.rows.push({ type: cr.type, color: cr.color,
