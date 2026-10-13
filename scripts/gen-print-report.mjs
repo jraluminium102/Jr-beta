@@ -19,6 +19,12 @@ const sgn = (v) => (v > 0 ? "+" : v < 0 ? "−" : "") + fmt(Math.abs(v));
 const mul = (s, c) => (s > 0 && c > 0 ? s / c : null);
 const mtxt = (m) => (m == null ? "—" : "×" + m.toFixed(2));
 const avg = (a) => { const v = a.filter((x) => x != null && Number.isFinite(x)); return v.length ? v.reduce((x, y) => x + y, 0) / v.length : null; };
+// กำไร (คิดแบบชีตคิดทุน): แยกก้อน = (ขาย − ทุน) ÷ ขาย · สุทธิ = (ขายรวม − ค่าดำเนินการ 30/130 − ทุนรวม) ÷ ขายรวม
+const mg = (sv, c) => (sv > 0 && c >= 0 ? Math.round(((sv - c) / sv) * 100) : null);
+const netOf = (sT, cT) => (sT > 0 ? Math.round(((sT - (sT * 30) / 130 - cT) / sT) * 100) : null);
+const pp = (v) => (v == null ? "—" : v + "%");
+const prof = (x) => ({ net: netOf(x.sT, x.cT), m: mg(x.sM, x.cM), p: mg(x.sP, x.cP), i: mg(x.sI, x.cI) });
+const ptxt = (o) => `${pp(o.m)}/${pp(o.p)}/${pp(o.i)}`;
 const reasonOf = (r) => (R41.reasons || {})[(r.id || "") + "|" + (r.vk || "")] || (R41.reasons || {})[(r.id || "") + "|"];
 
 // กลุ่มรุ่น
@@ -30,13 +36,18 @@ const ovRows = [];
 for (const [k, rs] of groups) {
   const ok = rs.filter((r) => r.web && !r.small);
   const rsn = reasonOf(rs[0]);
-  if (!ok.length) { ovRows.push(`<tr class="na"><td class="nm">${esc(k)}</td><td colspan="6">${esc(rs[0].na || "เทียบไม่ได้")}</td><td class="rs">${esc(rsn?.text || "")}</td></tr>`); continue; }
+  if (!ok.length) { ovRows.push(`<tr class="na"><td class="nm">${esc(k)}</td><td colspan="8">${esc(rs[0].na || "เทียบไม่ได้")}</td><td class="rs">${esc(rsn?.text || "")}</td></tr>`); continue; }
   const c = Math.round(avg(ok.map((r) => pct(r.web.cM, r.pdf.cM))) * 10) / 10;
   const mT = avg(ok.map((r) => mul(r.pdf.sM, r.pdf.cM))), mW = avg(ok.map((r) => mul(r.web.sM, r.web.cM)));
   const lab = ok.every((r) => r.web.sP === r.pdf.sP && r.web.sI === r.pdf.sI);
   const sTM = Math.round(avg(ok.map((r) => pct(r.sellTM, r.pdf.sT))) * 10) / 10, sW = Math.round(avg(ok.map((r) => pct(r.web.sT, r.pdf.sT))) * 10) / 10;
   const xlOk = ok.filter((r) => r.xl).length;
-  ovRows.push(`<tr><td class="nm">${esc(k)}</td><td class="n">${pc(c, 5)}</td><td class="n">${mtxt(mT)}</td><td class="n">${mtxt(mW)}</td><td class="c">${lab ? "✓" : "ต่าง"}</td><td class="n">${pc(sTM, 5)}</td><td class="n">${pc(sW, 5)}</td><td class="rs">${xlOk ? '<b class="xl">Excel ✓</b> ' : ""}${esc((rsn?.text || "").replace(/^Excel ยืนยัน: /, ""))}</td></tr>`);
+  const PT = ok.map((r) => prof(r.pdf)), PW = ok.map((r) => prof(r.web));
+  const av = (A, k) => { const v = avg(A.map((o) => o[k])); return v == null ? null : Math.round(v); };
+  const tgt = rs.find((r) => r.target != null)?.target;
+  const netCell = `<td class="n"><b>${pp(av(PW, "net"))}</b><br><small>ตาราง ${pp(av(PT, "net"))}${tgt != null ? " · เป้า " + tgt + "%" : ""}</small></td>`;
+  const partCell = `<td class="n">${pp(av(PW, "m"))}/${pp(av(PW, "p"))}/${pp(av(PW, "i"))}<br><small>ตาราง ${pp(av(PT, "m"))}/${pp(av(PT, "p"))}/${pp(av(PT, "i"))}</small></td>`;
+  ovRows.push(`<tr><td class="nm">${esc(k)}</td><td class="n">${pc(c, 5)}</td><td class="n">${mtxt(mT)}</td><td class="n">${mtxt(mW)}</td><td class="c">${lab ? "✓" : "ต่าง"}</td><td class="n">${pc(sTM, 5)}</td><td class="n">${pc(sW, 5)}</td>${netCell}${partCell}<td class="rs">${xlOk ? '<b class="xl">Excel ✓</b> ' : ""}${esc((rsn?.text || "").replace(/^Excel ยืนยัน: /, ""))}</td></tr>`);
 }
 
 // ② รายขนาด
@@ -44,12 +55,12 @@ const sizeBlocks = [];
 for (const [k, rs] of groups) {
   const body = rs.map((r) => {
     const sz = `${r.w}×${r.h}${r.p > 1 ? ` · ${r.p} บาน` : ""}${r.small ? " (เล็ก)" : ""}`;
-    if (!r.web) return `<tr class="na"><td>${sz}</td><td class="n">${fmt(r.pdf?.cM)}</td><td colspan="9">${esc(r.na || "—")}</td></tr>`;
+    if (!r.web) return `<tr class="na"><td>${sz}</td><td class="n">${fmt(r.pdf?.cM)}</td><td colspan="11">${esc(r.na || "—")}</td></tr>`;
     const x = r.xl, P = x?.parts;
     const parts = P ? [Math.abs(P.fileChange) >= 50 ? `ไฟล์ v1 ${sgn(P.fileChange)}` : "", Math.abs(P.brand) >= 50 ? `เรต ${sgn(P.brand)}` : "", Math.abs(P.webVsFile) >= 50 ? `เว็บ≠ไฟล์ ${sgn(P.webVsFile)}${x.verdict === "decided" ? " เคาะแล้ว" : x.verdict === "file-inconsistent" ? " ไฟล์ขัด" : x.verdict === "web-bug" ? " ⚠" : ""}` : "", Math.abs(P.tableGen) >= 50 ? `ตารางตั้งค่า ${sgn(P.tableGen)}` : ""].filter(Boolean).join(" · ") || "ตรง" : "—";
-    return `<tr><td>${sz}</td><td class="n">${fmt(r.pdf.cM)}</td><td class="n b">${fmt(r.web.cM)}</td><td class="n">${pc(pct(r.web.cM, r.pdf.cM))}</td><td class="ex">${P ? (x.verdict === "web-bug" ? "⚠ " : "✓ ") : ""}${parts}</td><td class="n">${mtxt(mul(r.pdf.sM, r.pdf.cM))}</td><td class="n">${mtxt(mul(r.web.sM, r.web.cM))}</td><td class="n">${fmt(r.web.sP + r.web.sI)}${r.web.sP === r.pdf.sP && r.web.sI === r.pdf.sI ? "" : `<br><small>ตาราง ${fmt(r.pdf.sP + r.pdf.sI)}</small>`}</td><td class="n">${fmt(r.pdf.sT)}</td><td class="n b">${fmt(r.web.sT)}</td><td class="n">${pc(pct(r.web.sT, r.pdf.sT))}</td></tr>`;
+    return `<tr><td>${sz}</td><td class="n">${fmt(r.pdf.cM)}</td><td class="n b">${fmt(r.web.cM)}</td><td class="n">${pc(pct(r.web.cM, r.pdf.cM))}</td><td class="ex">${P ? (x.verdict === "web-bug" ? "⚠ " : "✓ ") : ""}${parts}</td><td class="n">${mtxt(mul(r.pdf.sM, r.pdf.cM))}</td><td class="n">${mtxt(mul(r.web.sM, r.web.cM))}</td><td class="n">${fmt(r.web.sP + r.web.sI)}${r.web.sP === r.pdf.sP && r.web.sI === r.pdf.sI ? "" : `<br><small>ตาราง ${fmt(r.pdf.sP + r.pdf.sI)}</small>`}</td><td class="n">${fmt(r.pdf.sT)}</td><td class="n b">${fmt(r.web.sT)}</td><td class="n">${pc(pct(r.web.sT, r.pdf.sT))}</td><td class="n"><b>${pp(prof(r.web).net)}</b><br><small>ตาราง ${pp(prof(r.pdf).net)}</small></td><td class="n">${ptxt(prof(r.web))}<br><small>ตาราง ${ptxt(prof(r.pdf))}</small></td></tr>`;
   }).join("");
-  sizeBlocks.push(`<tbody class="grp"><tr class="gh"><td colspan="11">${esc(k)}</td></tr>${body}</tbody>`);
+  sizeBlocks.push(`<tbody class="grp"><tr class="gh"><td colspan="13">${esc(k)}</td></tr>${body}</tbody>`);
 }
 
 // ③ ค่าสี
@@ -81,7 +92,7 @@ th { background: #eef2f8; font-size: 8pt; text-align: left; }
 thead { display: table-header-group; }
 td.n, th.n { text-align: right; white-space: nowrap; } td.c { text-align: center; }
 td.b { font-weight: 700; } td.nm { font-weight: 600; white-space: nowrap; }
-td.rs { font-size: 7.6pt; color: #2c3a4e; } td.ex { font-size: 7.6pt; color: #2c3a4e; }
+td.rs { font-size: 7.6pt; color: #2c3a4e; } td.ex { font-size: 7.6pt; color: #2c3a4e; } td.ex { min-width: 44mm; } tbody.grp td:first-child { white-space: nowrap; }
 tr { break-inside: avoid; } tbody.grp { break-inside: avoid; }
 tr.gh td { background: #e4ebff; font-weight: 700; font-size: 8.8pt; border-top: 2px solid #9fb2d9; }
 tr.base td { background: #f5f7fb; font-weight: 600; } tr.na td { color: #6b7789; }
@@ -96,11 +107,11 @@ ul.finds { margin: 4px 0 0 16px; padding: 0; } ul.finds li { margin: 2px 0; }
 <p class="sub">เว็บคิดราคา 4.0 เทียบ ตาราง R4.1 และ R3.9 · ราคาสโตร์จริง ${D.meta.nStock.toLocaleString("en-US")} แถว · คำนวณเมื่อ ${esc(D.meta.builtAt)} · ไม่รวม VAT</p>
 <h2>1 · ข้อค้นพบ</h2><ul class="finds">${finds}</ul>
 <h2>2 · ภาพรวมรายรุ่น (เฉลี่ยทุกขนาดในตาราง R4.1 · สีขาว/ดำ)</h2>
-<p class="legend">ทุน = ทุนค่าของเว็บเทียบตาราง · คูณกำไรค่าของ = ราคาขายค่าของ ÷ ทุนค่าของ · ขาย(คูณเท่าตาราง) = ทุนเว็บ × ตัวคูณตาราง + ค่าแรงขาย · แดง = เว็บสูงกว่า · เขียว = ต่ำกว่า</p>
-<table><thead><tr><th>รุ่น</th><th class="n">ทุนค่าของ</th><th class="n">คูณ ตาราง</th><th class="n">คูณ เว็บ</th><th>ค่าแรงขาย</th><th class="n">ขาย(คูณเท่าตาราง)</th><th class="n">ขายเว็บ</th><th>สาเหตุที่ทุนต่าง</th></tr></thead><tbody>${ovRows.join("")}</tbody></table>
+<p class="legend">ทุน = ทุนค่าของเว็บเทียบตาราง · คูณกำไรค่าของ = ราคาขายค่าของ ÷ ทุนค่าของ · ขาย(คูณเท่าตาราง) = ทุนเว็บ × ตัวคูณตาราง + ค่าแรงขาย · แดง = เว็บสูงกว่า · เขียว = ต่ำกว่า<br>กำไรสุทธิ = (ราคาขายรวม − ค่าดำเนินการ 30/130 − ทุนรวม ของ+ผลิต+ติดตั้ง) ÷ ราคาขายรวม · กำไรแยก ของ/ผลิต/ติดตั้ง = (ขาย − ทุน) ÷ ขาย ของแต่ละก้อน · ตัวเลขบน = เว็บ · ล่าง = ตาราง R4.1</p>
+<table><thead><tr><th>รุ่น</th><th class="n">ทุนค่าของ</th><th class="n">คูณ ตาราง</th><th class="n">คูณ เว็บ</th><th>ค่าแรงขาย</th><th class="n">ขาย(คูณเท่าตาราง)</th><th class="n">ขายเว็บ</th><th class="n">กำไรสุทธิ</th><th class="n">กำไร ของ/ผลิต/ติดตั้ง</th><th>สาเหตุที่ทุนต่าง</th></tr></thead><tbody>${ovRows.join("")}</tbody></table>
 <div class="sec"><h2>3 · รายขนาด — ทุน + ขาย เทียบตาราง R4.1 (ทุกแถวพิสูจน์ด้วย Excel)</h2>
 <p class="legend">ส่วนต่างทุน (Excel) = ไฟล์ v1 เปลี่ยนจากตาราง (v20.1) + เรตแบรนด์ + เว็บ≠ไฟล์ (เคาะแล้ว/ไฟล์ขัดกันเอง) · ✓ = เว็บถูกตามไฟล์</p>
-<table><thead><tr><th>ขนาด (ซม.)</th><th class="n">ทุนตาราง</th><th class="n">ทุนเว็บ</th><th class="n">%</th><th>ส่วนต่างทุน (Excel)</th><th class="n">คูณ ตาราง</th><th class="n">คูณ เว็บ</th><th class="n">ค่าแรงขาย</th><th class="n">ขายตาราง</th><th class="n">ขายเว็บ</th><th class="n">%</th></tr></thead>${sizeBlocks.join("")}</table></div>
+<table><thead><tr><th>ขนาด (ซม.)</th><th class="n">ทุนตาราง</th><th class="n">ทุนเว็บ</th><th class="n">%</th><th>ส่วนต่างทุน (Excel)</th><th class="n">คูณ ตาราง</th><th class="n">คูณ เว็บ</th><th class="n">ค่าแรงขาย</th><th class="n">ขายตาราง</th><th class="n">ขายเว็บ</th><th class="n">%</th><th class="n">กำไรสุทธิ</th><th class="n">กำไร ของ/ผลิต/ติดตั้ง</th></tr></thead>${sizeBlocks.join("")}</table></div>
 <div class="sec"><h2>4 · ค่าสี เทียบ R3.9</h2>
 <p class="legend">ค่าสีที่เพิ่ม (ทุน) = ทุนค่าของสีนั้น − ทุนสีขาว · ค่าสีขาย = ทุนสีที่เพิ่ม × คูณกำไรค่าของ · % = ราคาขายเว็บเทียบ R3.9</p>
 <table><thead><tr><th>สี</th><th>ชนิด</th><th class="n">ทุนค่าของ</th><th class="n">ค่าสี (ทุน)</th><th class="n">ค่าสีขาย เว็บ</th><th class="n">ค่าสีขาย R3.9</th><th class="n">ขาย R3.9</th><th class="n">ขายเว็บ</th><th class="n">%</th></tr></thead>${colorRows.join("")}</table></div>
