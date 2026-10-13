@@ -439,6 +439,15 @@ console.log("\n═══ ยูโร (FUJI) — ค่าของอุปก�
     const codes = (p) => new Set(at("อิสระ", p, "รางกันน้ำ").alu.filter((a) => a.cutBars > 0).map((a) => a.code));
     return [2, 3].every((p) => codes(p).has("F7978") && !codes(p).has("F7977") && !codes(p).has("F7979"));
   })(), "");
+  // 13 ต.ค.69 เจ้าของเคาะ: 4 บาน (เฟรม 2 ราง + 2 ราง ต่อกัน) เฟรมบน-ล่าง = F7977 ตามใบตัด "เลื่อน4" ทั้งคิดราคาและใบตัด · 5 บาน คง F7869
+  ok("4 บาน เฟรมบน-ล่าง F7977 ×2 ทั้งคิดราคา+ใบตัด (ไม่มี F7869)", (() => {
+    const r = at("อิสระ", 4, "รางกันน้ำ"), x = r.alu.find((a) => a.code === "F7977");
+    return !!x && x.calcPieces === 2 && x.cutPieces === 2 && !r.alu.some((a) => a.code === "F7869" && (a.calcPieces > 0 || a.cutPieces > 0));
+  })(), JSON.stringify(at("อิสระ", 4, "รางกันน้ำ").alu.filter((a) => /F7977|F7869/.test(a.code)).map((a) => [a.code, a.calcPieces, a.cutPieces])));
+  ok("5 บาน เฟรมบน-ล่าง ยัง F7869 ทั้งสองฝั่ง", (() => {
+    const x = at("อิสระ", 5, "รางกันน้ำ").alu.find((a) => a.code === "F7869");
+    return !!x && x.calcPieces === 2 && x.cutPieces === 2;
+  })(), "");
 }
 
 
