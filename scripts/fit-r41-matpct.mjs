@@ -14,6 +14,7 @@ import fs from "node:fs";
 import { computeCost, r41Key } from "../src/lib/calculator40/engine.mjs";
 import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
 import { buildPriceOverride, applyPriceOverride } from "../src/lib/calculator40/stock-link.ts";
+import { withSpecDefaults } from "./color-compare-config.mjs";
 
 const arg = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
 const WRITE = process.argv.includes("--write");
@@ -31,7 +32,7 @@ const FX = JSON.parse(fs.readFileSync("scripts/fixtures/r41-rows.json", "utf8"))
 const floorOf = (r) => { const SM = PB.SELL && PB.SELL.products && PB.SELL.products[r.id]; return SM && SM.floor; };
 const rows = FX.rows.filter((r) => r.id && r.inputs && PRODUCTS[r.id] && !SKIP.has(r.id) && !r.small
   && !(floorOf(r) && [floorOf(r).base, floorOf(r).withDoor].includes(r.pdf.sT)));
-const run = (r, m) => computeCost(PB, PRODUCTS[r.id], { ...r.inputs, profitEdit: { mat: true }, profitMat: m });
+const run = (r, m) => computeCost(PB, PRODUCTS[r.id], { ...withSpecDefaults(PRODUCTS[r.id], r.inputs), profitEdit: { mat: true }, profitMat: m });
 const total = (r, m) => run(r, m).sell.withInstall;
 const ideal = new Map(), areaOf = new Map();
 for (const r of rows) {
@@ -70,7 +71,7 @@ for (const [k, rs] of groups) {
     else pts = mkPts(rs);
     (bySize[id] = bySize[id] || {})[vk] = pts;
     const pbT = JSON.parse(JSON.stringify(PB)); pbT.R41.matPct = matPct; pbT.R41.matPctBySize = bySize;
-    after = rs.map((r) => (computeCost(pbT, PRODUCTS[r.id], { ...r.inputs }).sell.withInstall / r.pdf.sT - 1) * 100);
+    after = rs.map((r) => (computeCost(pbT, PRODUCTS[r.id], withSpecDefaults(PRODUCTS[r.id], r.inputs)).sell.withInstall / r.pdf.sT - 1) * 100);
   } else if (bySize[id]) { delete bySize[id][vk]; if (!Object.keys(bySize[id]).length) delete bySize[id]; }
   const w = (a) => Math.max(...a.map(Math.abs)).toFixed(1);
   report.push([id, vk === "_" ? "(ทั้งรุ่น)" : vk, rs.length, `ก่อน ±${w(before)}%`, pts ? (Array.isArray(pts) ? `แยกขนาด ${pts.length} จุด` : `แยกตามจำนวนบาน+ขนาด ${JSON.stringify(pts)}`) : `${best.m}%`, `หลัง ±${w(after)}%`].join(" | "));

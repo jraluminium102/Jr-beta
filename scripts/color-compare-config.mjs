@@ -46,3 +46,14 @@ export function baseInput(id, p, size, panels) {
   return { w, h, p: Number(panels) || 1, form: o.form ?? p.defForm, material: o.material ?? p.defMaterial,
     glassType: p.defGlass, spec: { ...(o.spec || {}) }, addons: {} };
 }
+
+/**
+ * อินพุตให้เหมือนหน้าเว็บ: หน้าคิดราคาตั้ง spec เริ่มต้นจาก specOpts ทุกตัว (Calculator40Client:348) แต่ fixture R4.1 ส่ง spec ว่าง
+ *   → รุ่นที่มีออปชั่นราคาในค่าตั้งต้น (บานเปิด มือจับ · PC Door ซอฟต์โคลส · Shower ราวกลม · SlimLux มือจับ) ทุนในสคริปต์เทียบต่ำกว่าเว็บจริง
+ *   (agent ตรวจ 13 ต.ค.69) · ค่าที่ fixture ระบุมาแล้วชนะค่าตั้งต้นเสมอ
+ */
+export function withSpecDefaults(prod, inputs) {
+  const spec = {};
+  for (const o of prod?.specOpts ?? []) if (!/^(side\d|joint\d)/.test(o.key)) spec[o.key] = o.def ?? o.opts?.[0] ?? "";
+  return { ...inputs, spec: { ...spec, ...(inputs?.spec || {}) } };
+}

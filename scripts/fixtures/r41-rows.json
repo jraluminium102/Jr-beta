@@ -8043,7 +8043,11 @@
     "p": 1,
     "form": "บานตาย",
     "color": "white",
-    "colorKey": "white"
+    "colorKey": "white",
+    "spec": {
+     "dw": "0",
+     "dh": "0"
+    }
    },
    "pdf": {
     "cM": 2262,
@@ -8072,7 +8076,11 @@
     "p": 1,
     "form": "บานตาย",
     "color": "white",
-    "colorKey": "white"
+    "colorKey": "white",
+    "spec": {
+     "dw": "0",
+     "dh": "0"
+    }
    },
    "pdf": {
     "cM": 2464,
@@ -8101,7 +8109,11 @@
     "p": 1,
     "form": "บานตาย",
     "color": "white",
-    "colorKey": "white"
+    "colorKey": "white",
+    "spec": {
+     "dw": "0",
+     "dh": "0"
+    }
    },
    "pdf": {
     "cM": 2818,
@@ -8217,7 +8229,11 @@
     "p": 1,
     "form": "บานตาย+บานเปิด",
     "color": "white",
-    "colorKey": "white"
+    "colorKey": "white",
+    "spec": {
+     "dw": "0",
+     "dh": "0"
+    }
    },
    "pdf": {
     "cM": 7304,
@@ -8246,7 +8262,11 @@
     "p": 1,
     "form": "บานตาย+บานเปิด",
     "color": "white",
-    "colorKey": "white"
+    "colorKey": "white",
+    "spec": {
+     "dw": "0",
+     "dh": "0"
+    }
    },
    "pdf": {
     "cM": 8070,
@@ -8275,7 +8295,11 @@
     "p": 1,
     "form": "บานตาย+บานเปิด",
     "color": "white",
-    "colorKey": "white"
+    "colorKey": "white",
+    "spec": {
+     "dw": "0",
+     "dh": "0"
+    }
    },
    "pdf": {
     "cM": 8529,
@@ -8304,7 +8328,11 @@
     "p": 1,
     "form": "บานตาย+บานเลื่อน",
     "color": "white",
-    "colorKey": "white"
+    "colorKey": "white",
+    "spec": {
+     "dw": "0",
+     "dh": "0"
+    }
    },
    "pdf": {
     "cM": 5660,
@@ -8333,7 +8361,11 @@
     "p": 1,
     "form": "บานตาย+บานเลื่อน",
     "color": "white",
-    "colorKey": "white"
+    "colorKey": "white",
+    "spec": {
+     "dw": "0",
+     "dh": "0"
+    }
    },
    "pdf": {
     "cM": 6389,
@@ -8362,7 +8394,11 @@
     "p": 1,
     "form": "บานตาย+บานเลื่อน",
     "color": "white",
-    "colorKey": "white"
+    "colorKey": "white",
+    "spec": {
+     "dw": "0",
+     "dh": "0"
+    }
    },
    "pdf": {
     "cM": 6827,
@@ -8375,5 +8411,6 @@
     "sT": 22800
    }
   }
- ]
+ ],
+ "note": "shower: ตาราง R4.1 กรอกขนาดเป็นทั้งชุด ไม่มีกระจกประตูแยก (dw/dh = 0) · ค่าเริ่มต้นเว็บ 60×200 เป็นกระจกประตูเพิ่ม → ใส่ 0 ให้เทียบตรงกัน (13 ต.ค.69)"
 }

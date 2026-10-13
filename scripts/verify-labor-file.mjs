@@ -72,7 +72,7 @@ for (const [id, [key, shape, round]] of Object.entries(SHAPE)) {
     else if (shape === "ranae") A = (form === "นอน" ? ceilLut(w) : w) * (form === "ตั้ง" ? ceilLut(h) : h) / 10000;
     else if (shape === "slip") A = w * ceilLut(h) / 10000;
     else if (shape === "gate") A = (form === "นอน" ? snap(w) : w) * (form === "ตั้ง" ? snap(h) : h) / 10000;
-    else if (shape === "shower") A = Math.round((w * h + 60 * 200) / 10000 * 100) / 100;
+    else if (shape === "shower") A = Math.round((w * h + (form === "บานตาย" ? 0 : 60 * 200)) / 10000 * 100) / 100;   // บานตาย ไม่มีประตู (13 ต.ค.69)
     let fp, fi;
     if (shape === "panel") { fp = t.pb * n; fi = t.ib * n; }
     else { fp = Math.max(0, t.pb + t.pr * A); fi = Math.max(0, t.ib + t.ir * A) + (shape === "shower" && form !== "บานตาย" ? t.hr : 0); }

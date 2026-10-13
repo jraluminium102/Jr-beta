@@ -16,6 +16,7 @@
 import fs from "node:fs";
 import { computeCost, r41Key } from "../src/lib/calculator40/engine.mjs";
 import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
+import { withSpecDefaults } from "./color-compare-config.mjs";
 
 const PB_PATH = "src/lib/calculator40/pricebook.json";
 const PB = JSON.parse(fs.readFileSync(PB_PATH, "utf8"));
@@ -24,7 +25,7 @@ const ARG = new Set(process.argv.slice(2));
 const TOL_TOTAL_PCT = 5;   // ยอดรวมต่างจากตารางได้ไม่เกิน ±5% ("+- ได้นิดหน่อย")
 
 const rows = FX.rows.filter((r) => r.id && r.inputs && PRODUCTS[r.id]);
-const run = (pb, r, extra = {}) => computeCost(pb, PRODUCTS[r.id], { ...r.inputs, ...extra });
+const run = (pb, r, extra = {}) => computeCost(pb, PRODUCTS[r.id], { ...withSpecDefaults(PRODUCTS[r.id], r.inputs), ...extra });   // spec เริ่มต้นเหมือนหน้าเว็บ (13 ต.ค.69)
 // หลังคา/ระแนง/บานเปลือย/Shower/ประตูรั้ว มีแบบย่อยในตาราง → ตั้ง % แยกได้
 const VK_IDS = new Set(["roof", "roof_gable", "roof_slide", "louver", "frameless_door", "shower", "gate", "bansolid"]);
 

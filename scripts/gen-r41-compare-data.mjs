@@ -9,6 +9,7 @@ import fs from "node:fs";
 import { computeCost, r41Key } from "../src/lib/calculator40/engine.mjs";
 import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
 import { buildPriceOverride, applyPriceOverride } from "../src/lib/calculator40/stock-link.ts";
+import { withSpecDefaults } from "./color-compare-config.mjs";
 
 const arg = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
 const PB0 = JSON.parse(fs.readFileSync("src/lib/calculator40/pricebook.json", "utf8"));
@@ -23,11 +24,26 @@ for (const r of FX.rows) {
   const p = r.id && PRODUCTS[r.id];
   const base = { head: r.head, id: r.id || null, name: p ? p.name : (HEADFIX[r.head] || r.head), vk: r.vk || "", w: r.w, h: r.h, p: r.p, small: !!r.small, target: r.target ?? null, pdf: r.pdf };
   if (!p || !r.inputs) { out.push({ ...base, na: p ? "ไม่มีอินพุต" : "เว็บรวมค่าแรงไว้ในวัสดุ ยังเทียบ 3 ก้อนไม่ได้" }); continue; }
-  let c; try { c = computeCost(PB, p, { ...r.inputs }); } catch (e) { out.push({ ...base, na: "คิดไม่ได้: " + String(e.message).slice(0, 60) }); continue; }
+  let c; try { c = computeCost(PB, p, withSpecDefaults(p, r.inputs)); } catch (e) { out.push({ ...base, na: "คิดไม่ได้: " + String(e.message).slice(0, 60) }); continue; }
   const P = c.sell.parts || { mat: c.sell.beforeLabor, prod: 0, inst: 0 };
   out.push({ ...base, key: r41Key ? r41Key(r.id) : r.id,
     web: { cM: R(c.cost.total), sM: R(P.mat), cP: R(c.labor?.prod), sP: R(P.prod), cI: R(c.labor?.install), sI: R(P.inst),
       cT: R(c.cost.total + (c.labor?.prod || 0) + (c.labor?.install || 0)), sT: R(c.sell.withInstall) } });
+}
+// ตัวคูณค่าของในตาราง R4.1 (ขายค่าของ ÷ ทุนค่าของ) เกือบคงที่ต่อรุ่น → ใช้ median ของกลุ่ม (ตัดแถวไซซ์เล็กราคาตายตัว)
+//   "ขายถ้าตัวคูณเท่าตาราง" = ปัดร้อย(ทุนเว็บ × ตัวคูณตาราง + ค่าแรงขายตาราง) — เจ้าของ 13 ต.ค.69 "ค่าแรงและการคูณกำไรควรเท่ากัน"
+const ceil100 = (v) => Math.ceil(v / 100) * 100;
+const grp = new Map();
+for (const r of out) { if (!r.web || r.small) continue; const k = (r.key || r.id) + "|" + (r.vk || ""); (grp.get(k) || grp.set(k, []).get(k)).push(r.pdf.sM / r.pdf.cM); }
+for (const r of out) {
+  if (!r.web) continue;
+  const ms = (grp.get((r.key || r.id) + "|" + (r.vk || "")) || []).slice().sort((x, y) => x - y);
+  // ตัวคูณที่ใช้คิด = ตัวเดียวกับที่โชว์ (ปัด 2 ตำแหน่ง) → เจ้าของคิดมือแล้วตรงช่อง (ผู้ตรวจบัญชี 13 ต.ค.69)
+  const mult = Math.round((ms.length ? ms[ms.length >> 1] : r.pdf.sM / r.pdf.cM) * 100) / 100;
+  r.tableMult = mult;
+  r.webMult = r.web.cM ? Math.round((r.web.sM / r.web.cM) * 100) / 100 : null;
+  // ค่าแรงขายใช้ของเว็บ (= ตารางเมื่อทุนค่าแรงเท่ากัน · รุ่นที่กฎค่าแรงเว็บต่างจากตาราง เช่น หลังคาเลื่อน ใช้ของเว็บ)
+  r.sellTM = r.small ? r.pdf.sT : ceil100(r.web.cM * mult + r.web.sP + r.web.sI);
 }
 const file = arg("--out") || "r41-compare.json";
 fs.writeFileSync(file, JSON.stringify({ builtAt: new Date().toISOString(), rows: out }));
