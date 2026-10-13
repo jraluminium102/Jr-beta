@@ -69,10 +69,11 @@ export function packBars(lengths, stockLen) {
   return bins.length;
 }
 
-export function barsNeeded(segLen, count, stockLen = STOCK_LEN, waste = false) {
+// alwaysWaste = ไฟล์คูณเผื่อ 1.3 เสมอแม้ท่อนยาวเท่าเส้นพอดี (หลังคา ฉาก/แซด กว้าง 600 — Excel ยืนยัน 13 ต.ค.69 เดิมเว็บต่ำกว่าไฟล์ 232)
+export function barsNeeded(segLen, count, stockLen = STOCK_LEN, waste = false, alwaysWaste = false) {
   if (!(segLen > 0) || !(count > 0)) return 0;
   if (waste) {
-    if (Math.abs(segLen - stockLen) < 1e-9) return count;
+    if (!alwaysWaste && Math.abs(segLen - stockLen) < 1e-9) return count;
     return (segLen * count / stockLen) * WASTE_FACTOR;
   }
   const fit = Math.floor(stockLen / segLen);
@@ -403,7 +404,7 @@ export function computeCost(PB, prod, opt) {
     const pool = poolShare.get(rawCode);
     const bars = pool && pool.len > 0
       ? pool.bars * (seg * count) / pool.len
-      : barsNeeded(seg, count, Number(it.stockLen) || stockLen, !!prod.aluWaste && !it.noWaste);
+      : barsNeeded(seg, count, Number(it.stockLen) || stockLen, !!prod.aluWaste && !it.noWaste, !!it.alwaysWaste);
     if (bars <= 0) continue;
     // ALUCODE_NOCOLOR = เส้นสีเงิน/ผิวเดิม ไม่มีการอบสี → ราคาเดียวทุกสี ห้ามบวกค่าอบ
     //   (เจ้าของยืนยัน 8 ส.ค.69: F7994 ตบรางล้อ เป็นสีเงิน ใช้กับทุกสีราคาเดียว)

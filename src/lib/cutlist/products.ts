@@ -633,6 +633,11 @@ const ebSlide = (o: CutInput) => {
   const L = Number(o.L ?? Math.ceil(o.N / 2)), R = o.N - L;
   return 2 * (Math.floor(L / 2) + Math.floor(R / 2));
 };
+/** P12 = INT(ซ้าย/2) + INT(ขวา/2) — v1 เฟี้ยมยูโร_ตัด!P12 (จำนวน HD-640/642/643/474/312 · 5-0 = 2 · 2-0 = 1 · 1-1 = 0) */
+const ebP12 = (o: CutInput) => {
+  const L = Number(o.L ?? Math.ceil(o.N / 2)), R = o.N - L;
+  return Math.floor(L / 2) + Math.floor(R / 2);
+};
 /** มีบานคี่ไหม (P11) — ชนผนัง-คี่ · คี่+คี่ · คู่+คี่ = 1 · ชนผนัง-คู่ · คู่+คู่ = 0 */
 const ebOdd = (o: CutInput) => {
   const L = Number(o.L ?? Math.ceil(o.N / 2)), R = o.N - L;
@@ -677,12 +682,13 @@ export const EURO_BIFOLD: CutSpec = {
   ],
   // อุปกรณ์ตามไฟล์ตัดประกอบ ⑤ (JR_เฟี้ยมยูโร.xlsx) — ชุดเดียวกับคิดราคา 4.0
   hardware: [
-    { name: "HD-640 บานพับล้อบน", sku: "HD-640", qty: () => 1, unit: "ตัว" },
+    // 13 ต.ค.69 ตาม Excel ไฟล์ v1 (เดิมตรึง 1): HD-640/642/643/474/312 = เฟี้ยมยูโร_ตัด!P12 (ebP12) — ชุดเดียวกับคิดราคา 4.0
+    { name: "HD-640 บานพับล้อบน", sku: "HD-640", qty: ebP12, unit: "ตัว" },
     { name: "HD-641 บานพับเฟี้ยม", sku: "HD-641", qty: euroHinge, unit: "ตัว" },
-    { name: "HD-642 บานพับมือจับ", sku: "HD-642", qty: () => 1, unit: "ตัว" },
-    { name: "HD-643 บานพับไกด์ล่าง", sku: "HD-643", qty: () => 1, unit: "ตัว" },
-    { name: "HD-474 มือจับกลอน", sku: "JR00213", qty: () => 1, unit: "ตัว" },
-    { name: "HD-312 ตลับกลอนล็อค", sku: "HD-312", qty: () => 1, unit: "ตัว" },
+    { name: "HD-642 บานพับมือจับ", sku: "HD-642", qty: ebP12, unit: "ตัว" },
+    { name: "HD-643 บานพับไกด์ล่าง", sku: "HD-643", qty: ebP12, unit: "ตัว" },
+    { name: "HD-474 มือจับกลอน", sku: "JR00213", qty: ebP12, unit: "ตัว" },
+    { name: "HD-312 ตลับกลอนล็อค", sku: "HD-312", qty: ebP12, unit: "ตัว" },
     // v1 เฟี้ยมยูโร_ตัด D55 = 2×$P$12 = 2×(INT(ซ้าย/2)+INT(ขวา/2)) — เดิมเว็บตรึง 2
     //   ตรวจ: 2-0 → 2 · 3-0 → 2 · 4-0 → 4 · 2-2 → 4
     { name: "HD-1180 ก้านสไลด์", sku: "HD-1180", qty: ebSlide, unit: "ตัว" },
