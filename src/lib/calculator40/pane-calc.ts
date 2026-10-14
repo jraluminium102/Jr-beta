@@ -42,6 +42,7 @@ export const WALL_PANES: { key: string; label: string }[] = [
   { key: "wall_smartboard", label: "ผนังสมาร์ทบอร์ด (รวมโครง)" },
   { key: "wall_corrugated", label: "ผนังอลูลูกฟูก (รวมโครง)" },
   { key: "wall_composite", label: "ผนังคอมโพสิต (รวมโครง)" },
+  { key: "wall_roofsheet", label: "ผนังแผ่นหลังคา (รวมโครง)" },   // 14 ต.ค.69 — เลือกวัสดุ (โพลีตัน/ดีไลท์/ชินโค/เมทัล/ไวนิล) ผ่าน pane.material
 ];
 
 /** ชนิดบานในห้องกระจก = ทุกรุ่น G1 (บาน) + G2 (ระแนง·รั้ว·ราว · เจ้าของสั่ง 10 ต.ค.69 "รูปด้านเพิ่มระแนงได้") + ผนังทึบ
@@ -77,6 +78,7 @@ export type Pane = {
   sill?: string;     // พื้นล่างประตู — label เท่านั้น
   spec?: Record<string, string>;  // specOpts ของรุ่น (ราง/มือจับ) — ไม่ตั้ง = ค่าตั้งต้นของรุ่น
   cut?: Record<string, string>;   // มือจับจากใบตัด (ยี่ห้อ/สี/ซ้าย/ขวา) — เฉพาะรุ่น HW_FROM_CUTLIST
+  material?: string;              // วัสดุแผ่น (เฉพาะรุ่นที่มี prod.materials เช่น ผนังแผ่นหลังคา) — ไม่ตั้ง = prod.defMaterial
 };
 
 /** ค่าตั้งต้น specOpts — ต้องตรงกับหน้า G1 (Calculator40Client: specOpts.forEach) */
@@ -112,7 +114,7 @@ export function panePrice(
   const formVal = (prod.forms?.length ? (pane.form || prod.defForm) : prod.defForm);
   const opt: any = {
     w: wCm, h: hCm, p: pane.n || 1, form: formVal,
-    color: rc.bake, colorName: rc.label, glassType, material: prod.defMaterial ?? undefined,
+    color: rc.bake, colorName: rc.label, glassType, material: (prod.materials ? (pane.material || prod.defMaterial) : prod.defMaterial) ?? undefined,
     stockColor: stockColorOfCalc(pane.colorIdx || roomColor),   // ราคาเส้นตามสีจริงในสโตร์
     colorKey: pane.colorIdx || roomColor,                        // ราคาเส้นแยกสีจากไฟล์ถอดทุน
     profitPct, installProfitPct: profitPct, addons: pane.addons || {},
