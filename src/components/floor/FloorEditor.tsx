@@ -348,13 +348,15 @@ export default function FloorEditor({
 
       {/* ═══ 3. ใบเสนอ — แก้ตรงบนกระดาษได้เลย ═══ */}
       <section className="card p-4">
-        <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
-          <h2 className="font-bold text-ink flex items-center gap-2">
+        <div className="mb-3">
+          <h2 className="font-bold text-ink flex items-center gap-2 flex-wrap">
             <Icon name="clipboard" size={18} /> ใบเสนอราคา
             <span className="text-xs font-normal text-ink-3">
               {items.length} รายการ · คลิกที่ช่องไหนก็แก้ได้เลย — หน้านี้คือหน้าที่จะพิมพ์ออกมา
             </span>
           </h2>
+          {/* แถบเพิ่มรายการ — ปุ่มลัด + แผงงานรื้อ อยู่โซนเดียวกัน (ชิดซ้าย ใต้หัวข้อ) */}
+          <div className="mt-3 flex flex-col gap-2">
           {/* ปุ่มลัด — ต้องเลือกก่อนว่าจะลงหมวดไหน (เดิมต่อท้ายสุดเสมอ เลยไปโผล่ผิดหมวด) */}
           <div className="flex gap-1.5 flex-wrap items-center">
             {groups.length > 1 && (
@@ -377,7 +379,7 @@ export default function FloorEditor({
           </div>
 
           {/* แผงเพิ่มงานรื้อ — ใส่ ตร.ม. แล้วคิดราคา (เรต×ช่วง + ขั้นต่ำ) อัตโนมัติ · ลงบนใบเป็น ตร.ม.×เรต แก้พื้นที่ต่อได้ */}
-          <div className="mt-2 flex items-end gap-2 flex-wrap rounded-xl border border-gray-200 bg-gray-50/60 px-3 py-2">
+          <div className="flex items-end gap-2 flex-wrap rounded-xl border border-gray-200 bg-gray-50/60 px-3 py-2 w-fit">
             <label className="flex flex-col gap-0.5 text-xs text-ink-3">งานรื้อ
               <select value={demoKey} onChange={(e) => setDemoKey(e.target.value)}
                 className="rounded-lg border border-gray-300 px-2 py-1 text-xs max-w-[210px]">
@@ -402,6 +404,7 @@ export default function FloorEditor({
               className="press rounded-full border border-gray-300 px-3 py-1 text-xs font-medium hover:border-brand hover:text-brand">
               + เพิ่มงานรื้อ
             </button>
+          </div>
           </div>
         </div>
 
