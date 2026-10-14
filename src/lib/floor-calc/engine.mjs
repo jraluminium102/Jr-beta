@@ -230,27 +230,33 @@ export function draftItems(plan, pileKey, opts) {
   return out;
 }
 
-/** รายการที่มักเพิ่มเอง — ปุ่มลัดบนหน้าจอ (กดแล้วเติมบรรทัดพร้อมราคาแนะนำ) */
+/** รายการที่มักเพิ่มเอง — ปุ่มลัดบนหน้าจอ · งานรื้อแยกไปแผง "เพิ่มงานรื้อ" (ต้องใส่ ตร.ม.) */
 export function quickAdds(area) {
   const a = Math.max(0, Number(area) || 0);
-  // งานรื้อ 5 ประเภท (ตามไฟล์ ผรม.) — คิด 1 งาน = max(ขั้นต่ำ, พื้นที่×เรต) · ใส่ที่มาราคาในหมายเหตุ
-  const demo = DEMO_WORKS.map((d) => {
-    const q = demoPrice(d.key, a);
-    const it = mk(d.name, 1, "งาน", q.price, "manual", null, q.price);
-    // ⚠ remark ต้องว่างเสมอ — คอลัมน์นี้พิมพ์บนใบเสนอถึงลูกค้า · ที่มาราคา/คำเตือนให้โชว์ฝั่งหน้าจอ (hint) เท่านั้น
-    const hint = a > 0
-      ? `${a} ตร.ม. × ${q.rate.toLocaleString()}/ตร.ม. = ${(a * q.rate).toLocaleString()} ฿${q.atMin ? ` · ต่ำกว่าขั้นต่ำ → ใช้ขั้นต่ำ ${q.min.toLocaleString()}` : ""}${q.warn ? " · ⚠ เกิน 30 ตร.ม. รีเช็คราคากับผรม." : ""}`
-      : `ขั้นต่ำ ${q.min.toLocaleString()}/งาน · ใส่พื้นที่ในผังเพื่อคิดตามเรตต่อ ตร.ม.`;
-    return { label: d.label, item: it, hint, warn: q.warn };
-  });
   return [
     { label: "ผนังก่ออิฐ", item: mk('งานตั้งเสาเหล็ก 3"×3"×3" (ชุบซิงค์) ก่ออิฐ เทเอ็น จับเซี้ยม ฉาบปูน ใช้อิฐมวลเบา', a, "ตร.ม.", suggest.wall(), "manual") },
-    ...demo,
     { label: "งานไฟฟ้า (ต่อจุด)", item: mk("งานเดินท่อร้อยสายไฟ พร้อมอุปกรณ์", 1, "จุด", suggest.electric(), "manual") },
     { label: "ฝ้าเพดาน", item: mk("งานติดตั้งฝ้าเพดาน", a, "ตร.ม.", suggest.ceiling(), "manual") },
     { label: "ทาสี", item: mk("งานทาสี+สกิมผนัง ภายนอก-ภายใน (รวมสี)", 1, "งาน", 12000, "manual", null, 12000) },
     { label: "ว่าง (พิมพ์เอง)", item: mk("", 1, "งาน", 0, "manual") },
   ];
+}
+
+/**
+ * สร้างบรรทัดงานรื้อจากพื้นที่ที่กรอก (แผง "เพิ่มงานรื้อ")
+ *   พื้นที่ > 0 และไม่ติดขั้นต่ำ → ลงเป็น "ตร.ม. × เรต" (แก้พื้นที่บนใบต่อได้ ราคาขยับเอง)
+ *   พื้นที่น้อยจนต่ำกว่าขั้นต่ำ (หรือยังไม่กรอก) → ลงเป็น "เหมา 1 งาน" ราคาขั้นต่ำ
+ */
+export function demoItem(key, area) {
+  const q = demoPrice(key, area);
+  if (!q) return null;
+  const a = Math.max(0, Number(area) || 0);
+  if (a > 0 && !q.atMin) {
+    const total = Math.round(a * q.rate);
+    return { name: q.name, qty: a, unit: "ตร.ม.", material_price: null, labor_price: total, unit_price: q.rate, line_total: total, remark: "", source: "manual" };
+  }
+  const nm = a > 0 ? `${q.name} (${a} ตร.ม. · เหมาขั้นต่ำ)` : `${q.name} (เหมาขั้นต่ำ)`;
+  return { name: nm, qty: 1, unit: "งาน", material_price: null, labor_price: q.price, unit_price: q.price, line_total: q.price, remark: "", source: "manual" };
 }
 
 /** หมายเหตุท้ายใบ — ลอกจากใบจริงของช่าง (แก้ได้ต่อใบ) */
