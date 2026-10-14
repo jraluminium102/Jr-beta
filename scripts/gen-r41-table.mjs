@@ -46,7 +46,7 @@ const num = (s) => (s === "—" ? 0 : Number(s.replace(/,/g, "")));
 // บรรทัดคำอธิบายในคอลัมน์ซ้าย ที่ไม่ใช่ชื่อรุ่น (กำไรสุทธิ / สัดส่วน / หมายเหตุหลังคาเลื่อน)
 const SKIP_LEFT = /^(ตัง|ตั้ง|ขายราคา|\(ชุด|กําไร|กำไร|ทุน|JR|กลุ่ม)/;
 const rows = [];
-let head = "", headOpen = false, target = null, size = null;
+let head = "", headOpen = false, target = null, parts = null, size = null;
 for (const l of lines) {
   if (l.p === 1 || l.y >= 527) continue;                                  // หน้าสรุป + หัวตารางทุกหน้า
   const leftRaw = l.cells.filter(([x]) => x < 120).map((c) => c[1]).join("").trim();
@@ -56,9 +56,12 @@ for (const l of lines) {
   const toks = l.cells.filter(([x]) => x >= 190).map((c) => c[1].trim()).join(" ").split(/\s+/).filter(Boolean);
   // ⚠ ต้องจับจากข้อความดิบ — norm() ตัด % ทิ้ง ถ้าจับจาก norm บรรทัดนี้จะไปต่อท้ายชื่อรุ่นแทน
   const tm = /สุทธิ\s*([\d.]+)\s*%/.exec(leftRaw);
-  if (tm) { target = Number(tm[1]); headOpen = false; }
+  // บรรทัดถัดจากกำไรสุทธิ: "ตั้ง 63/65/62%" = เป้ากำไรแยก ของ/ผลิต/ติดตั้ง (ขาย − ทุน) ÷ ขาย — เจ้าของ 14 ต.ค.69 ขอให้โชว์เป้า/ตาราง/เว็บ
+  const pm = /(\d+)\s*\/\s*(\d+)\s*\/\s*(\d+)\s*%/.exec(leftRaw);
+  if (tm) { target = Number(tm[1]); parts = null; headOpen = false; }
+  else if (pm && target != null && !parts) parts = [Number(pm[1]), Number(pm[2]), Number(pm[3])];
   else if (left && !SKIP_LEFT.test(left) && !/^[▶*⚠]/.test(leftRaw)) {
-    if (headOpen) head += left; else { head = left; headOpen = true; target = null; }
+    if (headOpen) head += left; else { head = left; headOpen = true; target = null; parts = null; }
   }
   const sm = /([\d.]+)\s*x\s*([\d.]+)/.exec(sizeTxt);
   if (sm) size = [Number(sm[1]), Number(sm[2])];
@@ -67,7 +70,7 @@ for (const l of lines) {
     if (x.slice(0, 9).every(isNum) && /%$|^—$/.test(x[10])) {
       const [cM, sM, cP, sP, cI, sI, cT, , sT] = x.slice(0, 9).map(num);
       const pTok = toks.length > 11 ? toks[toks.length - 12] : "";
-      if (sT > 0 && size) rows.push({ head, target, size: [...size], panels: /^\d+$/.test(pTok) ? Number(pTok) : null, pdf: { cM, sM, cP, sP, cI, sI, cT, sT } });
+      if (sT > 0 && size) rows.push({ head, target, targetParts: parts, size: [...size], panels: /^\d+$/.test(pTok) ? Number(pTok) : null, pdf: { cM, sM, cP, sP, cI, sI, cT, sT } });
       headOpen = false;
     }
   }
@@ -101,9 +104,11 @@ const HEAD = {
   "ระแนงสลับ": ["louver_slip", "", { spec: { ...SLIP, rnFrame: "ไม่รวมโครง" } }],   // 13 ต.ค.69: ตาราง R4.1 คิดใบ A+B ล้วน ไม่มีโครงดาม (เดิมใส่ รวมโครง → เว็บสูงกว่าตาราง 485/เส้น ปลอม ๆ)
   "ระแนงหมุน": ["louver_rotate", "", { spec: { rnMotor: "เอา" } }],
   "บานตู้Futuretech": ["cabinet_face"], "ราวกันตก": ["handrail"],
-  "ชุดShower": ["shower", "บานตาย", { form: "บานตาย" }],
-  "ชุดShower+บานเปด": ["shower", "บานตาย+บานเปิด", { form: "บานตาย+บานเปิด" }],
-  "ชุดShower+บานเลือน": ["shower", "บานตาย+บานเลื่อน", { form: "บานตาย+บานเลื่อน" }],
+  // shower: ตาราง R4.1 กรอกขนาดเป็นทั้งชุด ไม่มีกระจกประตูแยก (dw/dh = 0) · ค่าเริ่มต้นเว็บ 60×200 เป็นกระจกประตูเพิ่ม → ใส่ 0 ให้เทียบตรงกัน (13 ต.ค.69)
+  //   ⚠ เคยแก้มือใน fixtures แล้วหลุดตอนรันสร้างใหม่ 14 ต.ค.69 (Shower +เปิด โดดเป็น +9%) — ต้องอยู่ตรงนี้เท่านั้น
+  "ชุดShower": ["shower", "บานตาย", { form: "บานตาย", spec: { dw: "0", dh: "0" } }],
+  "ชุดShower+บานเปด": ["shower", "บานตาย+บานเปิด", { form: "บานตาย+บานเปิด", spec: { dw: "0", dh: "0" } }],
+  "ชุดShower+บานเลือน": ["shower", "บานตาย+บานเลื่อน", { form: "บานตาย+บานเลื่อน", spec: { dw: "0", dh: "0" } }],
 };
 const NOWEB = "ค่าแรงบนเว็บยังรวมอยู่ในค่าวัสดุ (เหมารวม) — ยังแยก 3 ก้อนเทียบตารางไม่ได้";
 const PB = JSON.parse(fs.readFileSync(PB_PATH, "utf8"));
@@ -144,7 +149,7 @@ for (const r of rows) {
   if (inputs) Object.assign(inputs, { color: "white", colorKey: "white" });
   const SM = id && PB.SELL && PB.SELL.products && PB.SELL.products[id];
   const small = !!(SM && SM.small && (W * H) / 10000 < SM.small.maxArea);
-  out.push({ head: h, id, vk, w: W, h: H, p: r.panels, small, target: r.target, note, inputs, pdf: r.pdf });
+  out.push({ head: h, id, vk, w: W, h: H, p: r.panels, small, target: r.target, targetParts: r.targetParts || null, note, inputs, pdf: r.pdf });
 }
 
 // ── ④ เขียนออก ──

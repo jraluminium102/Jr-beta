@@ -78,6 +78,13 @@ label.tog { display: inline-flex; gap: 6px; align-items: center; font-size: .86r
 .note.rule { background: var(--n-rule-bg); color: var(--n-rule); } .note.info { background: var(--n-info-bg); color: var(--n-info); }
 .note.bug { background: var(--up-bg); color: var(--up); }
 .note.why { background: var(--accent-soft); color: var(--ink); border-left: 3px solid var(--accent); }
+/* สรุปกำไรแบบหัวตาราง R4.1 — 3 แถว เป้า / ตาราง / เว็บ */
+.pf { display: grid; gap: 3px; background: var(--sunk); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; font-size: .9rem; font-variant-numeric: tabular-nums; }
+.pfr { display: grid; grid-template-columns: minmax(150px, 230px) 1fr 1fr; gap: 6px 14px; align-items: baseline; }
+.pfr .lb { font-size: .78rem; color: var(--muted); }
+.pfr.web { border-top: 1px dashed var(--line); padding-top: 3px; } .pfr.web b { color: var(--k-sell); }
+.tri { display: grid; gap: 1px; font-size: .8rem; color: var(--muted); text-align: right; } .tri .web { color: var(--k-sell); font-weight: 600; }
+@media (max-width: 560px) { .pfr { grid-template-columns: 1fr; gap: 0; } }
 .bomtog { display: block; margin-top: 4px; font: inherit; font-size: .76rem; font-weight: 600; color: var(--accent); background: var(--accent-soft); border: 0; border-radius: 6px; padding: 2px 8px; cursor: pointer; }
 .bomtog:hover { filter: brightness(.95); }
 tr.bomrow > td { background: var(--sunk); padding: 8px 10px 12px; text-align: left; white-space: normal; }
@@ -223,6 +230,20 @@ const groups41 = new Map();
 for (const r of R41.rows) { const k = gkey(r); if (!groups41.has(k)) groups41.set(k, []); groups41.get(k).push(r); }
 
 // ── แท็บ สรุป ──
+// สรุปกำไรแบบหัวตาราง R4.1 "กำไรสุทธิ 40% · ของ/ผลิต/ติด 63/65/62%" — 3 แถว เป้า / ตาราง / เว็บ (เจ้าของ 14 ต.ค.69)
+//   เป้า = ตัวเลขที่พิมพ์ในหัวตาราง · ตาราง = คิดจากราคาในตารางจริง (เฉลี่ยทุกขนาด) · เว็บ = คิดจากราคาเว็บ
+const mg1 = (s, c) => (s > 0 ? Math.round(((s - c) / s) * 100) : null);
+const profOf = (x) => ({ net: netOf(x.sT, x.cT), m: mg1(x.sM, x.cM), p: mg1(x.sP, x.cP), i: mg1(x.sI, x.cI) });
+const avgP = (rows, pick) => { const P = rows.map((r) => profOf(pick(r))); const a = (k) => { const v = P.map((o) => o[k]).filter((v) => v != null); return v.length ? Math.round((v.reduce((x, y) => x + y, 0) / v.length) * 10) / 10 : null; }; return { net: a("net"), m: a("m"), p: a("p"), i: a("i") }; };
+const ppc = (v) => (v == null ? "—" : v + "%");
+const p3 = (o) => `${o.m == null ? "—" : Math.round(o.m)}/${o.p == null ? "—" : Math.round(o.p)}/${o.i == null ? "—" : Math.round(o.i)}%`;
+const profitBlock = (rs, ok) => {
+  if (!ok.length) return "";
+  const tgt = rs.find((r) => r.target != null)?.target, tp = rs.find((r) => r.targetParts)?.targetParts;
+  const T = avgP(ok, (r) => r.pdf), W = avgP(ok, (r) => r.web);
+  const row = (lb, net, parts, cls = "") => `<div class="pfr ${cls}"><span class="lb">${lb}</span><span>กำไรสุทธิ <b>${net}</b></span><span>ของ/ผลิต/ติดตั้ง <b>${parts}</b></span></div>`;
+  return `<div class="pf">${row("เป้า (หัวตาราง R4.1)", tgt != null ? tgt + "%" : "—", tp ? tp.join("/") + "%" : "—")}${row("ตาราง R4.1 (คิดจากราคาในตาราง)", ppc(T.net), p3(T))}${row("เว็บ", ppc(W.net), p3(W), "web")}</div>`;
+};
 function renderSum() {
   $("#finds").innerHTML = (R41.finds || []).map((f) => `<div class="find ${f.sev}"><span class="sev ${f.sev}">${f.tag}</span><div><b>${f.title}</b><p>${f.why}</p>${f.act ? `<div class="act">→ ${f.act}</div>` : ""}</div></div>`).join("");
   const rows = [];
@@ -232,9 +253,12 @@ function renderSum() {
     const c = avg(ok.map((r) => pct(r.web.cM, r.pdf.cM))), s = avg(ok.map((r) => pct(r.web.sT, r.pdf.sT))), w = avg(ok.map((r) => pct(r.web.sT, r.pdf.sT)));
     const lab = ok.every((r) => r.web.sP === r.pdf.sP && r.web.sI === r.pdf.sI);
     const why = whyOf(ok[0]);
-    rows.push(`<tr><td class="c">${gbadge(GRP41(k))} ${k}</td><td class="num k-cost">${chip(c, 5)}</td><td class="num k-mul">${mulTxt(ok.reduce((a, r) => a + (mulOf(r.pdf.sM, r.pdf.cM) || 0), 0) / ok.length)}</td><td class="num k-mul">${mulTxt(ok.reduce((a, r) => a + (mulOf(r.web.sM, r.web.cM) || 0), 0) / ok.length)}</td><td class="num k-lab">${lab ? "✓ เท่าตาราง" : "✗ ต่าง"}</td><td class="num k-sell">${chip(s, 5)}</td><td class="c" style="font-size:.84rem;color:var(--muted);min-width:260px">${why || (Math.abs(s || 0) < 2 ? "ใกล้ตาราง" : "")}</td></tr>`);
+    const tgt = rs.find((r) => r.target != null)?.target, tp = rs.find((r) => r.targetParts)?.targetParts;
+    const T = avgP(ok, (r) => r.pdf), Wv = avgP(ok, (r) => r.web);
+    const tri = (a, b, c) => `<span class="tri"><span>เป้า ${a}</span><span>ตาราง ${b}</span><span class="web">เว็บ ${c}</span></span>`;
+    rows.push(`<tr><td class="c">${gbadge(GRP41(k))} ${k}</td><td class="num k-cost">${chip(c, 5)}</td><td class="num k-mul">${tri(tgt != null ? tgt + "%" : "—", ppc(T.net), ppc(Wv.net))}</td><td class="num k-mul">${tri(tp ? tp.join("/") + "%" : "—", p3(T), p3(Wv))}</td><td class="num k-lab">${lab ? "✓ เท่าตาราง" : "✗ ต่าง"}</td><td class="num k-sell">${chip(s, 5)}</td><td class="c" style="font-size:.84rem;color:var(--muted);min-width:260px">${why || (Math.abs(s || 0) < 2 ? "ใกล้ตาราง" : "")}</td></tr>`);
   }
-  $("#ov").innerHTML = `<thead><tr><th class="c">รุ่น</th><th class="k-cost">ทุนค่าของ เว็บ vs ตาราง</th><th class="k-mul">กำไรค่าของ ตาราง</th><th class="k-mul">กำไรค่าของ เว็บ</th><th class="k-lab">ค่าแรงขาย</th><th class="k-sell">ขายเว็บ vs ตาราง</th><th class="c">ทำไมราคาต่าง</th></tr></thead><tbody>${rows.join("")}</tbody>`;
+  $("#ov").innerHTML = `<thead><tr><th class="c">รุ่น</th><th class="k-cost">ทุนค่าของ เว็บ vs ตาราง</th><th class="k-mul">กำไรสุทธิ</th><th class="k-mul">กำไร ของ/ผลิต/ติดตั้ง</th><th class="k-lab">ค่าแรงขาย</th><th class="k-sell">ขายเว็บ vs ตาราง</th><th class="c">ทำไมราคาต่าง</th></tr></thead><tbody>${rows.join("")}</tbody>`;
 }
 
 // ── แท็บ ทุน + ขาย เทียบตาราง R4.1 ──
@@ -279,7 +303,7 @@ function render41() {
     const note = R41.notes[rs[0].id] || (!rs[0].id && rs[0].na ? { level: "info", text: rs[0].na } : null);
     const tgt = rs.find((r) => r.target != null)?.target;
     const body = rs.map((r) => {
-      const size = `${r.w}×${r.h}${r.p > 1 ? `<span class="ty">${r.p} บาน</span>` : ""}${r.small ? '<span class="ty">ไซซ์เล็ก ราคาตายตัว</span>' : ""}`;
+      const size = `${r.w}×${r.h}${r.p > 1 ? `<span class="ty">${r.p} บาน</span>` : ""}${r.small ? '<span class="ty">ไซซ์เล็ก (ตารางตั้งราคาตายตัว · เว็บคิดตามเป้ากำไร)</span>' : ""}`;
       const d = r.pdf;
       if (!r.web) { cnt.na++; return `<tr class="na"><td class="c">${size}</td><td class="num"><span class="ref">${fmt(d.cM)}</span></td><td class="num k-mul"><span class="ref">ตาราง ${mulTxt(mulOf(d.sM, d.cM))}</span></td><td class="num">—</td><td class="num"><span class="ref">${fmt(d.sT)}</span></td><td class="num">—</td><td class="c det41" colspan="4">${r.na}</td></tr>`; }
       const w = r.web, pT = pct(r.web.sT, d.sT); if (!r.small) cnt[kindOf(pT)]++;
@@ -296,8 +320,8 @@ function render41() {
         ${r.bom && r.bom.length ? `<tr class="bomrow" id="${bid}" hidden><td colspan="11"><div class="bomwrap"><div class="bomhd">ค่าของ ${r.w}×${r.h}${r.p > 1 ? " · " + r.p + " บาน" : ""} — สีขาว ค่าเริ่มต้นของรุ่น · ราคาทุนจากสโตร์/ไฟล์ (ตาราง R4.1 ทุนค่าของ ${fmt(d.cM)})</div>${bomTable(r)}</div></td></tr>` : ""}`;
     }).join("");
     const c = avg(ok.map((r) => pct(r.web.cM, r.pdf.cM))), s = avg(ok.map((r) => pct(r.web.sT, r.pdf.sT)));
-    const mW = ok.length ? ok.reduce((a, r) => a + (mulOf(r.web.sM, r.web.cM) || 0), 0) / ok.length : null, mT = ok.length ? ok.reduce((a, r) => a + (mulOf(r.pdf.sM, r.pdf.cM) || 0), 0) / ok.length : null;
-    cards.push(`<section class="card"><header><h2>${gbadge(GRP41(k))}${k}</h2><div class="meta">${ok.length ? `<span class="mulpill">กำไรค่าของ · ตาราง ${mulTxt(mT)} · เว็บ ${mulTxt(mW)}</span> ทุน ${chip(c)} · ขายเว็บ ${chip(s)}` : ""}</div></header>
+    cards.push(`<section class="card"><header><h2>${gbadge(GRP41(k))}${k}</h2><div class="meta">${ok.length ? `ทุนค่าของ ${chip(c)} · ราคาขาย ${chip(s)} เทียบตาราง` : ""}</div></header>
+      ${profitBlock(rs, ok)}
       ${whyOf(rs[0]) ? `<div class="note why"><b>ทำไมราคาต่างจากตาราง:</b> ${whyOf(rs[0])}</div>` : ""}
       ${note && note.text ? `<div class="note ${note.level}">${note.text}</div>` : ""}
       <div class="tbl"><table><thead>

@@ -45,9 +45,10 @@ for (const [k, rs] of groups) {
   const xlOk = ok.filter((r) => r.xl).length;
   const PT = ok.map((r) => prof(r.pdf)), PW = ok.map((r) => prof(r.web));
   const av = (A, k) => { const v = avg(A.map((o) => o[k])); return v == null ? null : Math.round(v); };
-  const tgt = rs.find((r) => r.target != null)?.target;
-  const netCell = `<td class="n"><b>${pp(av(PW, "net"))}</b><br><small>ตาราง ${pp(av(PT, "net"))}${tgt != null ? " · เป้า " + tgt + "%" : ""}</small></td>`;
-  const partCell = `<td class="n">${pp(av(PW, "m"))}/${pp(av(PW, "p"))}/${pp(av(PW, "i"))}<br><small>ตาราง ${pp(av(PT, "m"))}/${pp(av(PT, "p"))}/${pp(av(PT, "i"))}</small></td>`;
+  // 14 ต.ค.69 โชว์ 3 บรรทัดแบบหัวตาราง R4.1: เป้า (หัวตาราง) / ตาราง (คิดจากราคาในตาราง) / เว็บ
+  const tgt = rs.find((r) => r.target != null)?.target, tp = rs.find((r) => r.targetParts)?.targetParts;
+  const netCell = `<td class="n"><small>เป้า ${tgt != null ? tgt + "%" : "—"}<br>ตาราง ${pp(av(PT, "net"))}</small><br><b>เว็บ ${pp(av(PW, "net"))}</b></td>`;
+  const partCell = `<td class="n"><small>เป้า ${tp ? tp.join("/") + "%" : "—"}<br>ตาราง ${av(PT, "m")}/${av(PT, "p")}/${av(PT, "i")}%</small><br><b>เว็บ ${av(PW, "m")}/${av(PW, "p")}/${av(PW, "i")}%</b></td>`;
   ovRows.push(`<tr><td class="nm">${esc(k)}</td><td class="n">${pc(c, 5)}</td><td class="c">${lab ? "✓" : "ต่าง"}</td><td class="n">${pc(sW, 5)}</td>${netCell}${partCell}<td class="rs">${esc(rsn?.text || (Math.abs(sW || 0) < 2 ? "ใกล้ตาราง" : ""))}</td></tr>`);
 }
 
@@ -106,7 +107,7 @@ ul.finds { margin: 4px 0 0 16px; padding: 0; } ul.finds li { margin: 2px 0; }
 <p class="sub">เว็บคิดราคา 4.0 เทียบ ตาราง R4.1 และ R3.9 · ราคาสโตร์จริง ${D.meta.nStock.toLocaleString("en-US")} แถว · คำนวณเมื่อ ${esc(D.meta.builtAt)} · ไม่รวม VAT</p>
 <h2>1 · ข้อค้นพบ</h2><ul class="finds">${finds}</ul>
 <h2>2 · ภาพรวมรายรุ่น (เฉลี่ยทุกขนาดในตาราง R4.1 · สีขาว/ดำ)</h2>
-<p class="legend">ราคาเว็บล็อกกำไรสุทธิเท่าตาราง R4.1 (ขายรวม = ทุนรวม ÷ (1 − 30/130 − กำไรสุทธิ) ปัดร้อย · ค่าแรงขาย = ตาราง) → ราคาที่ต่างจากตาราง = ทุนที่ต่าง · ทุน = ทุนค่าของเว็บเทียบตาราง · แดง = เว็บสูงกว่า · เขียว = ต่ำกว่า<br>กำไรสุทธิ = (ราคาขายรวม − ค่าดำเนินการ 30/130 − ทุนรวม ของ+ผลิต+ติดตั้ง) ÷ ราคาขายรวม · กำไรแยก ของ/ผลิต/ติดตั้ง = (ขาย − ทุน) ÷ ขาย ของแต่ละก้อน · ตัวเลขบน = เว็บ · ล่าง = ตาราง R4.1</p>
+<p class="legend">ราคาเว็บล็อกกำไรสุทธิเท่าตาราง R4.1 (ขายรวม = ทุนรวม ÷ (1 − 30/130 − กำไรสุทธิ) ปัดร้อย · ค่าแรงขาย = ตาราง) → ราคาที่ต่างจากตาราง = ทุนที่ต่าง · ทุน = ทุนค่าของเว็บเทียบตาราง · แดง = เว็บสูงกว่า · เขียว = ต่ำกว่า<br>กำไรสุทธิ = (ราคาขายรวม − ค่าดำเนินการ 30/130 − ทุนรวม ของ+ผลิต+ติดตั้ง) ÷ ราคาขายรวม · กำไรแยก ของ/ผลิต/ติดตั้ง = (ขาย − ทุน) ÷ ขาย ของแต่ละก้อน · เป้า = ตัวเลขที่พิมพ์ในหัวตาราง R4.1 · ตาราง = คิดจากราคาในตารางจริง · เว็บ = คิดจากราคาเว็บ (ตัวหนา)</p>
 <table><thead><tr><th>รุ่น</th><th class="n">ทุนค่าของ</th><th>ค่าแรงขาย</th><th class="n">ขายเว็บ</th><th class="n">กำไรสุทธิ</th><th class="n">กำไร ของ/ผลิต/ติดตั้ง</th><th>ทำไมราคาต่าง</th></tr></thead><tbody>${ovRows.join("")}</tbody></table>
 <div class="sec"><h2>3 · รายขนาด — ทุน + ขาย เทียบตาราง R4.1</h2>
 <p class="legend">ดูรายการค่าของทีละขนาด (ใช้อะไร เท่าไหร่ กี่บาท) ได้ในหน้าเว็บ "ตรวจราคา 4.0" กดปุ่ม ค่าของ ▾</p>

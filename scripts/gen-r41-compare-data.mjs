@@ -22,7 +22,7 @@ const HEADFIX = { "ฝายิปซัมฉาบเรียบ": "ฝ้า
 const out = [];
 for (const r of FX.rows) {
   const p = r.id && PRODUCTS[r.id];
-  const base = { head: r.head, id: r.id || null, name: p ? p.name : (HEADFIX[r.head] || r.head), vk: r.vk || "", w: r.w, h: r.h, p: r.p, small: !!r.small, target: r.target ?? null, pdf: r.pdf };
+  const base = { head: r.head, id: r.id || null, name: p ? p.name : (HEADFIX[r.head] || r.head), vk: r.vk || "", w: r.w, h: r.h, p: r.p, small: !!r.small, target: r.target ?? null, targetParts: r.targetParts || null, pdf: r.pdf };
   if (!p || !r.inputs) { out.push({ ...base, na: p ? "ไม่มีอินพุต" : "เว็บรวมค่าแรงไว้ในวัสดุ ยังเทียบ 3 ก้อนไม่ได้" }); continue; }
   let c; try { c = computeCost(PB, p, withSpecDefaults(p, r.inputs)); } catch (e) { out.push({ ...base, na: "คิดไม่ได้: " + String(e.message).slice(0, 60) }); continue; }
   const P = c.sell.parts || { mat: c.sell.beforeLabor, prod: 0, inst: 0 };

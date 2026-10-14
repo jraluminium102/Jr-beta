@@ -24,14 +24,18 @@ for (const r of rows) {
   if (!r.id || !r.inputs) continue;
   const g = (groups[r.id] ??= {});
   const k = r.vk || "_";
-  const x = (g[k] ??= { t: new Set(), nets: [] });
+  const x = (g[k] ??= { t: new Set(), nets: [], parts: null });
   if (r.target != null) x.t.add(r.target);
+  if (r.targetParts && !x.parts) x.parts = r.targetParts;   // เป้า ของ/ผลิต/ติดตั้ง จากหัวตาราง ("ตั้ง 63/65/62%") ไว้โชว์เทียบ
   if (!r.small) x.nets.push(netOf(r.pdf.sT, r.pdf.cT));
 }
-const net = {};
+const net = {}, partsOut = {};
 const log = [];
 for (const [id, g] of Object.entries(groups)) {
   const out = {};
+  const po = {};
+  for (const [k, x] of Object.entries(g)) if (x.parts) po[k] = x.parts;
+  if (Object.keys(po).length) partsOut[id] = Object.keys(po).length === 1 && po._ ? po._ : po;
   for (const [k, x] of Object.entries(g)) {
     let v, how;
     if (OVERRIDE[id] != null) { v = OVERRIDE[id]; how = "ตัวหลังคา (มอเตอร์ขายฟิกแยก)"; }
@@ -48,6 +52,7 @@ console.log(log.join("\n"));
 if (process.argv.includes("--dry")) process.exit(0);
 const PB = JSON.parse(fs.readFileSync(PB_PATH, "utf8"));
 PB.R41.net = net;
+PB.R41.parts = partsOut;   // เป้ากำไรแยก ของ/ผลิต/ติดตั้ง (หัวตาราง) — โชว์เทียบเท่านั้น ไม่ใช้คิดราคา
 PB.R41.net_NOTE = "กำไรสุทธิตาม ★ ตารางราคาขาย R4.1 (เจ้าของเคาะ 13 ต.ค.69) — ขายรวม = ทุนรวม ÷ (1 − 30/130 − %) ปัดร้อย · ค่าผลิต/ติดตั้งขาย = ตาราง · ค่าของ = ส่วนที่เหลือ · สร้างด้วย scripts/set-r41-net.mjs";
 fs.writeFileSync(PB_PATH, JSON.stringify(PB, null, 2) + "\n");
 console.log("เขียน PB.R41.net แล้ว · " + Object.keys(net).length + " รุ่น");

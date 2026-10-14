@@ -11,6 +11,7 @@
    "p": 2,
    "small": true,
    "target": 40,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 100,
@@ -40,6 +41,11 @@
    "p": 2,
    "small": false,
    "target": 40,
+   "targetParts": [
+    63,
+    65,
+    62
+   ],
    "note": "",
    "inputs": {
     "w": 250,
@@ -69,6 +75,11 @@
    "p": 2,
    "small": false,
    "target": 40,
+   "targetParts": [
+    63,
+    65,
+    62
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -98,6 +109,11 @@
    "p": 4,
    "small": false,
    "target": 40,
+   "targetParts": [
+    63,
+    65,
+    62
+   ],
    "note": "",
    "inputs": {
     "w": 200,
@@ -127,6 +143,11 @@
    "p": 4,
    "small": false,
    "target": 40,
+   "targetParts": [
+    63,
+    65,
+    62
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -156,6 +177,11 @@
    "p": 4,
    "small": false,
    "target": 40,
+   "targetParts": [
+    63,
+    65,
+    62
+   ],
    "note": "",
    "inputs": {
     "w": 500,
@@ -185,6 +211,11 @@
    "p": 3,
    "small": false,
    "target": 40,
+   "targetParts": [
+    63,
+    65,
+    62
+   ],
    "note": "",
    "inputs": {
     "w": 300,
@@ -214,6 +245,11 @@
    "p": 3,
    "small": false,
    "target": 40,
+   "targetParts": [
+    63,
+    65,
+    62
+   ],
    "note": "",
    "inputs": {
     "w": 450,
@@ -243,6 +279,11 @@
    "p": 3,
    "small": false,
    "target": 40,
+   "targetParts": [
+    63,
+    65,
+    62
+   ],
    "note": "",
    "inputs": {
     "w": 550,
@@ -272,6 +313,7 @@
    "p": 2,
    "small": true,
    "target": 30,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 100,
@@ -301,6 +343,11 @@
    "p": 2,
    "small": false,
    "target": 30,
+   "targetParts": [
+    52,
+    58,
+    64
+   ],
    "note": "",
    "inputs": {
     "w": 250,
@@ -330,6 +377,11 @@
    "p": 2,
    "small": false,
    "target": 30,
+   "targetParts": [
+    52,
+    58,
+    64
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -359,6 +411,11 @@
    "p": 4,
    "small": false,
    "target": 30,
+   "targetParts": [
+    52,
+    58,
+    64
+   ],
    "note": "",
    "inputs": {
     "w": 200,
@@ -388,6 +445,11 @@
    "p": 4,
    "small": false,
    "target": 30,
+   "targetParts": [
+    52,
+    58,
+    64
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -417,6 +479,11 @@
    "p": 4,
    "small": false,
    "target": 30,
+   "targetParts": [
+    52,
+    58,
+    64
+   ],
    "note": "",
    "inputs": {
     "w": 500,
@@ -446,6 +513,11 @@
    "p": 3,
    "small": false,
    "target": 30,
+   "targetParts": [
+    52,
+    58,
+    64
+   ],
    "note": "",
    "inputs": {
     "w": 300,
@@ -475,6 +547,11 @@
    "p": 3,
    "small": false,
    "target": 30,
+   "targetParts": [
+    52,
+    58,
+    64
+   ],
    "note": "",
    "inputs": {
     "w": 450,
@@ -504,6 +581,11 @@
    "p": 3,
    "small": false,
    "target": 30,
+   "targetParts": [
+    52,
+    58,
+    64
+   ],
    "note": "",
    "inputs": {
     "w": 550,
@@ -533,6 +615,7 @@
    "p": 2,
    "small": true,
    "target": 25,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 100,
@@ -562,6 +645,11 @@
    "p": 2,
    "small": false,
    "target": 25,
+   "targetParts": [
+    47,
+    47,
+    57
+   ],
    "note": "",
    "inputs": {
     "w": 250,
@@ -591,6 +679,11 @@
    "p": 2,
    "small": false,
    "target": 25,
+   "targetParts": [
+    47,
+    47,
+    57
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -620,6 +713,11 @@
    "p": 4,
    "small": false,
    "target": 25,
+   "targetParts": [
+    47,
+    47,
+    57
+   ],
    "note": "",
    "inputs": {
     "w": 200,
@@ -649,6 +747,11 @@
    "p": 4,
    "small": false,
    "target": 25,
+   "targetParts": [
+    47,
+    47,
+    57
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -678,6 +781,11 @@
    "p": 4,
    "small": false,
    "target": 25,
+   "targetParts": [
+    47,
+    47,
+    57
+   ],
    "note": "",
    "inputs": {
     "w": 500,
@@ -707,6 +815,11 @@
    "p": 3,
    "small": false,
    "target": 25,
+   "targetParts": [
+    47,
+    47,
+    57
+   ],
    "note": "",
    "inputs": {
     "w": 300,
@@ -736,6 +849,11 @@
    "p": 3,
    "small": false,
    "target": 25,
+   "targetParts": [
+    47,
+    47,
+    57
+   ],
    "note": "",
    "inputs": {
     "w": 450,
@@ -765,6 +883,11 @@
    "p": 3,
    "small": false,
    "target": 25,
+   "targetParts": [
+    47,
+    47,
+    57
+   ],
    "note": "",
    "inputs": {
     "w": 550,
@@ -794,6 +917,7 @@
    "p": 1,
    "small": false,
    "target": 30,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 90,
@@ -823,6 +947,11 @@
    "p": 2,
    "small": false,
    "target": 30,
+   "targetParts": [
+    52,
+    54,
+    62
+   ],
    "note": "",
    "inputs": {
     "w": 250,
@@ -852,6 +981,11 @@
    "p": 2,
    "small": false,
    "target": 30,
+   "targetParts": [
+    52,
+    54,
+    62
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -881,6 +1015,11 @@
    "p": 4,
    "small": false,
    "target": 30,
+   "targetParts": [
+    52,
+    54,
+    62
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -910,6 +1049,11 @@
    "p": 4,
    "small": false,
    "target": 30,
+   "targetParts": [
+    52,
+    54,
+    62
+   ],
    "note": "",
    "inputs": {
     "w": 500,
@@ -939,6 +1083,11 @@
    "p": 3,
    "small": false,
    "target": 30,
+   "targetParts": [
+    52,
+    54,
+    62
+   ],
    "note": "",
    "inputs": {
     "w": 450,
@@ -968,6 +1117,11 @@
    "p": 3,
    "small": false,
    "target": 30,
+   "targetParts": [
+    52,
+    54,
+    62
+   ],
    "note": "",
    "inputs": {
     "w": 550,
@@ -997,6 +1151,7 @@
    "p": 1,
    "small": false,
    "target": 30,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 90,
@@ -1026,6 +1181,11 @@
    "p": 2,
    "small": false,
    "target": 30,
+   "targetParts": [
+    53,
+    50,
+    59
+   ],
    "note": "",
    "inputs": {
     "w": 250,
@@ -1055,6 +1215,11 @@
    "p": 2,
    "small": false,
    "target": 30,
+   "targetParts": [
+    53,
+    50,
+    59
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -1084,6 +1249,11 @@
    "p": 4,
    "small": false,
    "target": 30,
+   "targetParts": [
+    53,
+    50,
+    59
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -1113,6 +1283,11 @@
    "p": 4,
    "small": false,
    "target": 30,
+   "targetParts": [
+    53,
+    50,
+    59
+   ],
    "note": "",
    "inputs": {
     "w": 500,
@@ -1142,6 +1317,11 @@
    "p": 3,
    "small": false,
    "target": 30,
+   "targetParts": [
+    53,
+    50,
+    59
+   ],
    "note": "",
    "inputs": {
     "w": 450,
@@ -1171,6 +1351,11 @@
    "p": 3,
    "small": false,
    "target": 30,
+   "targetParts": [
+    53,
+    50,
+    59
+   ],
    "note": "",
    "inputs": {
     "w": 550,
@@ -1200,6 +1385,7 @@
    "p": 2,
    "small": false,
    "target": null,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 100,
@@ -1230,6 +1416,11 @@
    "p": 2,
    "small": false,
    "target": 30,
+   "targetParts": [
+    52,
+    53,
+    63
+   ],
    "note": "",
    "inputs": {
     "w": 250,
@@ -1260,6 +1451,11 @@
    "p": 2,
    "small": false,
    "target": 30,
+   "targetParts": [
+    52,
+    53,
+    63
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -1290,6 +1486,11 @@
    "p": 4,
    "small": false,
    "target": 30,
+   "targetParts": [
+    52,
+    53,
+    63
+   ],
    "note": "",
    "inputs": {
     "w": 200,
@@ -1320,6 +1521,11 @@
    "p": 4,
    "small": false,
    "target": 30,
+   "targetParts": [
+    52,
+    53,
+    63
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -1350,6 +1556,11 @@
    "p": 4,
    "small": false,
    "target": 30,
+   "targetParts": [
+    52,
+    53,
+    63
+   ],
    "note": "",
    "inputs": {
     "w": 500,
@@ -1380,6 +1591,11 @@
    "p": 3,
    "small": false,
    "target": 30,
+   "targetParts": [
+    52,
+    53,
+    63
+   ],
    "note": "",
    "inputs": {
     "w": 300,
@@ -1410,6 +1626,11 @@
    "p": 3,
    "small": false,
    "target": 30,
+   "targetParts": [
+    52,
+    53,
+    63
+   ],
    "note": "",
    "inputs": {
     "w": 450,
@@ -1440,6 +1661,11 @@
    "p": 3,
    "small": false,
    "target": 30,
+   "targetParts": [
+    52,
+    53,
+    63
+   ],
    "note": "",
    "inputs": {
     "w": 550,
@@ -1470,6 +1696,7 @@
    "p": 1,
    "small": false,
    "target": 31,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 80,
@@ -1499,6 +1726,11 @@
    "p": 1,
    "small": false,
    "target": 31,
+   "targetParts": [
+    52,
+    55,
+    63
+   ],
    "note": "",
    "inputs": {
     "w": 90,
@@ -1528,6 +1760,11 @@
    "p": 1,
    "small": false,
    "target": 31,
+   "targetParts": [
+    52,
+    55,
+    63
+   ],
    "note": "",
    "inputs": {
     "w": 120,
@@ -1557,6 +1794,11 @@
    "p": 2,
    "small": false,
    "target": 31,
+   "targetParts": [
+    52,
+    55,
+    63
+   ],
    "note": "",
    "inputs": {
     "w": 160,
@@ -1586,6 +1828,11 @@
    "p": 2,
    "small": false,
    "target": 31,
+   "targetParts": [
+    52,
+    55,
+    63
+   ],
    "note": "",
    "inputs": {
     "w": 200,
@@ -1615,6 +1862,11 @@
    "p": 2,
    "small": false,
    "target": 31,
+   "targetParts": [
+    52,
+    55,
+    63
+   ],
    "note": "",
    "inputs": {
     "w": 240,
@@ -1644,6 +1896,7 @@
    "p": 1,
    "small": false,
    "target": 35,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 100,
@@ -1673,6 +1926,11 @@
    "p": 1,
    "small": false,
    "target": 35,
+   "targetParts": [
+    56,
+    58,
+    65
+   ],
    "note": "",
    "inputs": {
     "w": 200,
@@ -1702,6 +1960,11 @@
    "p": 1,
    "small": false,
    "target": 35,
+   "targetParts": [
+    56,
+    58,
+    65
+   ],
    "note": "",
    "inputs": {
     "w": 300,
@@ -1731,6 +1994,7 @@
    "p": 2,
    "small": false,
    "target": 35,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 160,
@@ -1760,6 +2024,11 @@
    "p": 2,
    "small": false,
    "target": 35,
+   "targetParts": [
+    58,
+    54,
+    63
+   ],
    "note": "",
    "inputs": {
     "w": 200,
@@ -1789,6 +2058,11 @@
    "p": 2,
    "small": false,
    "target": 35,
+   "targetParts": [
+    58,
+    54,
+    63
+   ],
    "note": "",
    "inputs": {
     "w": 240,
@@ -1818,6 +2092,7 @@
    "p": 1,
    "small": false,
    "target": 36,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 80,
@@ -1847,6 +2122,11 @@
    "p": 1,
    "small": false,
    "target": 36,
+   "targetParts": [
+    58,
+    51,
+    64
+   ],
    "note": "",
    "inputs": {
     "w": 90,
@@ -1876,6 +2156,11 @@
    "p": 1,
    "small": false,
    "target": 36,
+   "targetParts": [
+    58,
+    51,
+    64
+   ],
    "note": "",
    "inputs": {
     "w": 120,
@@ -1905,6 +2190,7 @@
    "p": 1,
    "small": false,
    "target": 30,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 80,
@@ -1935,6 +2221,7 @@
    "p": 1,
    "small": false,
    "target": 30,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 80,
@@ -1965,6 +2252,7 @@
    "p": 1,
    "small": false,
    "target": 30,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 90,
@@ -1995,6 +2283,7 @@
    "p": 1,
    "small": false,
    "target": 30,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 90,
@@ -2025,6 +2314,7 @@
    "p": 1,
    "small": false,
    "target": 30,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 120,
@@ -2055,6 +2345,7 @@
    "p": 1,
    "small": false,
    "target": 30,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 120,
@@ -2085,6 +2376,7 @@
    "p": 1,
    "small": false,
    "target": 35,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 80,
@@ -2117,6 +2409,11 @@
    "p": 1,
    "small": false,
    "target": 35,
+   "targetParts": [
+    58,
+    60,
+    63
+   ],
    "note": "",
    "inputs": {
     "w": 90,
@@ -2149,6 +2446,11 @@
    "p": 1,
    "small": false,
    "target": 35,
+   "targetParts": [
+    58,
+    60,
+    63
+   ],
    "note": "",
    "inputs": {
     "w": 120,
@@ -2181,6 +2483,7 @@
    "p": 1,
    "small": false,
    "target": 35,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 80,
@@ -2213,6 +2516,11 @@
    "p": 1,
    "small": false,
    "target": 35,
+   "targetParts": [
+    58,
+    59,
+    63
+   ],
    "note": "",
    "inputs": {
     "w": 90,
@@ -2245,6 +2553,11 @@
    "p": 1,
    "small": false,
    "target": 35,
+   "targetParts": [
+    58,
+    59,
+    63
+   ],
    "note": "",
    "inputs": {
     "w": 120,
@@ -2277,6 +2590,7 @@
    "p": 1,
    "small": false,
    "target": 36,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 40,
@@ -2306,6 +2620,11 @@
    "p": 1,
    "small": false,
    "target": 36,
+   "targetParts": [
+    55,
+    57,
+    71
+   ],
    "note": "",
    "inputs": {
     "w": 60,
@@ -2335,6 +2654,11 @@
    "p": 1,
    "small": false,
    "target": 36,
+   "targetParts": [
+    55,
+    57,
+    71
+   ],
    "note": "",
    "inputs": {
     "w": 80,
@@ -2364,6 +2688,7 @@
    "p": 1,
    "small": false,
    "target": 40,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 60,
@@ -2393,6 +2718,11 @@
    "p": 1,
    "small": false,
    "target": 40,
+   "targetParts": [
+    62,
+    63,
+    70
+   ],
    "note": "",
    "inputs": {
     "w": 80,
@@ -2422,6 +2752,11 @@
    "p": 1,
    "small": false,
    "target": 40,
+   "targetParts": [
+    62,
+    63,
+    70
+   ],
    "note": "",
    "inputs": {
     "w": 100,
@@ -2451,6 +2786,7 @@
    "p": 1,
    "small": false,
    "target": 31,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 60,
@@ -2480,6 +2816,11 @@
    "p": 1,
    "small": false,
    "target": 31,
+   "targetParts": [
+    52,
+    52,
+    62
+   ],
    "note": "",
    "inputs": {
     "w": 80,
@@ -2509,6 +2850,11 @@
    "p": 1,
    "small": false,
    "target": 31,
+   "targetParts": [
+    52,
+    52,
+    62
+   ],
    "note": "",
    "inputs": {
     "w": 100,
@@ -2538,6 +2884,7 @@
    "p": 2,
    "small": false,
    "target": 30,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 120,
@@ -2567,6 +2914,11 @@
    "p": 5,
    "small": false,
    "target": 30,
+   "targetParts": [
+    52,
+    53,
+    62
+   ],
    "note": "",
    "inputs": {
     "w": 300,
@@ -2596,6 +2948,11 @@
    "p": 10,
    "small": false,
    "target": 30,
+   "targetParts": [
+    52,
+    53,
+    62
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -2625,6 +2982,7 @@
    "p": 2,
    "small": false,
    "target": 35,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 120,
@@ -2654,6 +3012,11 @@
    "p": 5,
    "small": false,
    "target": 35,
+   "targetParts": [
+    58,
+    52,
+    66
+   ],
    "note": "",
    "inputs": {
     "w": 300,
@@ -2683,6 +3046,11 @@
    "p": 10,
    "small": false,
    "target": 35,
+   "targetParts": [
+    58,
+    52,
+    66
+   ],
    "note": "เว็บเลือกได้ไม่เกิน 6 บาน (ตารางมี 10 บาน)",
    "inputs": null,
    "pdf": {
@@ -2705,6 +3073,7 @@
    "p": 2,
    "small": false,
    "target": 40,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 100,
@@ -2734,6 +3103,11 @@
    "p": 2,
    "small": false,
    "target": 40,
+   "targetParts": [
+    62,
+    61,
+    70
+   ],
    "note": "",
    "inputs": {
     "w": 240,
@@ -2763,6 +3137,11 @@
    "p": 2,
    "small": false,
    "target": 40,
+   "targetParts": [
+    62,
+    61,
+    70
+   ],
    "note": "",
    "inputs": {
     "w": 240,
@@ -2792,6 +3171,7 @@
    "p": 1,
    "small": false,
    "target": 31,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 80,
@@ -2821,6 +3201,11 @@
    "p": 1,
    "small": false,
    "target": 31,
+   "targetParts": [
+    53,
+    49,
+    59
+   ],
    "note": "",
    "inputs": {
     "w": 150,
@@ -2850,6 +3235,11 @@
    "p": 1,
    "small": false,
    "target": 31,
+   "targetParts": [
+    53,
+    49,
+    59
+   ],
    "note": "",
    "inputs": {
     "w": 240,
@@ -2879,6 +3269,7 @@
    "p": 1,
    "small": false,
    "target": 36,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 80,
@@ -2908,6 +3299,11 @@
    "p": 1,
    "small": false,
    "target": 36,
+   "targetParts": [
+    55,
+    55,
+    64
+   ],
    "note": "",
    "inputs": {
     "w": 150,
@@ -2937,6 +3333,11 @@
    "p": 1,
    "small": false,
    "target": 36,
+   "targetParts": [
+    55,
+    55,
+    64
+   ],
    "note": "",
    "inputs": {
     "w": 240,
@@ -2966,6 +3367,7 @@
    "p": 1,
    "small": false,
    "target": 32,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 80,
@@ -2995,6 +3397,11 @@
    "p": 1,
    "small": false,
    "target": 32,
+   "targetParts": [
+    55,
+    55,
+    64
+   ],
    "note": "",
    "inputs": {
     "w": 90,
@@ -3024,6 +3431,11 @@
    "p": 1,
    "small": false,
    "target": 32,
+   "targetParts": [
+    55,
+    55,
+    64
+   ],
    "note": "",
    "inputs": {
     "w": 120,
@@ -3053,6 +3465,7 @@
    "p": null,
    "small": false,
    "target": 20,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 200,
@@ -3083,6 +3496,11 @@
    "p": null,
    "small": false,
    "target": 20,
+   "targetParts": [
+    43,
+    44,
+    42
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -3113,6 +3531,11 @@
    "p": null,
    "small": false,
    "target": 20,
+   "targetParts": [
+    43,
+    44,
+    42
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -3143,6 +3566,7 @@
    "p": null,
    "small": false,
    "target": 20,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 200,
@@ -3173,6 +3597,11 @@
    "p": null,
    "small": false,
    "target": 20,
+   "targetParts": [
+    43,
+    44,
+    42
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -3203,6 +3632,11 @@
    "p": null,
    "small": false,
    "target": 20,
+   "targetParts": [
+    43,
+    44,
+    42
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -3233,6 +3667,7 @@
    "p": null,
    "small": false,
    "target": 20,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 200,
@@ -3263,6 +3698,11 @@
    "p": null,
    "small": false,
    "target": 20,
+   "targetParts": [
+    44,
+    44,
+    42
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -3293,6 +3733,11 @@
    "p": null,
    "small": false,
    "target": 20,
+   "targetParts": [
+    44,
+    44,
+    42
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -3323,6 +3768,7 @@
    "p": null,
    "small": false,
    "target": null,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 200,
@@ -3353,6 +3799,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    53,
+    54,
+    53
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -3383,6 +3834,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    53,
+    54,
+    53
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -3413,6 +3869,7 @@
    "p": null,
    "small": false,
    "target": null,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 200,
@@ -3443,6 +3900,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    53,
+    54,
+    53
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -3473,6 +3935,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    53,
+    54,
+    53
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -3503,6 +3970,7 @@
    "p": null,
    "small": false,
    "target": null,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 200,
@@ -3533,6 +4001,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    53,
+    53,
+    52
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -3563,6 +4036,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    53,
+    53,
+    52
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -3593,6 +4071,7 @@
    "p": null,
    "small": false,
    "target": null,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 200,
@@ -3623,6 +4102,11 @@
    "p": null,
    "small": false,
    "target": 20,
+   "targetParts": [
+    43,
+    44,
+    42
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -3653,6 +4137,11 @@
    "p": null,
    "small": false,
    "target": 20,
+   "targetParts": [
+    43,
+    44,
+    42
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -3683,6 +4172,7 @@
    "p": null,
    "small": false,
    "target": 20,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 200,
@@ -3713,6 +4203,11 @@
    "p": null,
    "small": false,
    "target": 20,
+   "targetParts": [
+    43,
+    43,
+    42
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -3743,6 +4238,11 @@
    "p": null,
    "small": false,
    "target": 20,
+   "targetParts": [
+    43,
+    43,
+    42
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -3773,6 +4273,7 @@
    "p": null,
    "small": false,
    "target": 20,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 200,
@@ -3803,6 +4304,11 @@
    "p": null,
    "small": false,
    "target": 20,
+   "targetParts": [
+    43,
+    43,
+    42
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -3833,6 +4339,11 @@
    "p": null,
    "small": false,
    "target": 20,
+   "targetParts": [
+    43,
+    43,
+    42
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -3863,6 +4374,7 @@
    "p": null,
    "small": false,
    "target": null,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 200,
@@ -3893,6 +4405,11 @@
    "p": null,
    "small": false,
    "target": 20,
+   "targetParts": [
+    43,
+    43,
+    42
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -3923,6 +4440,11 @@
    "p": null,
    "small": false,
    "target": 20,
+   "targetParts": [
+    43,
+    43,
+    42
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -3953,6 +4475,7 @@
    "p": null,
    "small": false,
    "target": 45,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 200,
@@ -3983,6 +4506,11 @@
    "p": null,
    "small": false,
    "target": 45,
+   "targetParts": [
+    68,
+    68,
+    68
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -4013,6 +4541,11 @@
    "p": null,
    "small": false,
    "target": 45,
+   "targetParts": [
+    68,
+    68,
+    68
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -4043,6 +4576,7 @@
    "p": null,
    "small": false,
    "target": 45,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 200,
@@ -4073,6 +4607,11 @@
    "p": null,
    "small": false,
    "target": 45,
+   "targetParts": [
+    68,
+    68,
+    68
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -4103,6 +4642,11 @@
    "p": null,
    "small": false,
    "target": 45,
+   "targetParts": [
+    68,
+    68,
+    68
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -4133,6 +4677,7 @@
    "p": null,
    "small": false,
    "target": 25,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 200,
@@ -4167,6 +4712,11 @@
    "p": null,
    "small": false,
    "target": 25,
+   "targetParts": [
+    50,
+    44,
+    44
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -4201,6 +4751,11 @@
    "p": null,
    "small": false,
    "target": 25,
+   "targetParts": [
+    50,
+    44,
+    44
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -4235,6 +4790,7 @@
    "p": null,
    "small": false,
    "target": 25,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 200,
@@ -4269,6 +4825,11 @@
    "p": null,
    "small": false,
    "target": 25,
+   "targetParts": [
+    50,
+    44,
+    44
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -4303,6 +4864,11 @@
    "p": null,
    "small": false,
    "target": 25,
+   "targetParts": [
+    50,
+    44,
+    44
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -4337,6 +4903,7 @@
    "p": null,
    "small": false,
    "target": 25,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 200,
@@ -4371,6 +4938,11 @@
    "p": null,
    "small": false,
    "target": 25,
+   "targetParts": [
+    50,
+    44,
+    44
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -4405,6 +4977,11 @@
    "p": null,
    "small": false,
    "target": 25,
+   "targetParts": [
+    50,
+    44,
+    44
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -4439,6 +5016,7 @@
    "p": null,
    "small": false,
    "target": null,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 200,
@@ -4473,6 +5051,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    56,
+    50,
+    50
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -4507,6 +5090,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    56,
+    50,
+    50
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -4541,6 +5129,7 @@
    "p": null,
    "small": false,
    "target": null,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 200,
@@ -4575,6 +5164,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    55,
+    50,
+    50
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -4609,6 +5203,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    55,
+    50,
+    50
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -4643,6 +5242,7 @@
    "p": null,
    "small": false,
    "target": null,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 200,
@@ -4677,6 +5277,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    55,
+    50,
+    50
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -4711,6 +5316,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    55,
+    50,
+    50
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -4745,6 +5355,7 @@
    "p": null,
    "small": false,
    "target": null,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 200,
@@ -4779,6 +5390,11 @@
    "p": null,
    "small": false,
    "target": 25,
+   "targetParts": [
+    50,
+    44,
+    44
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -4813,6 +5429,11 @@
    "p": null,
    "small": false,
    "target": 25,
+   "targetParts": [
+    50,
+    44,
+    44
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -4847,6 +5468,7 @@
    "p": null,
    "small": false,
    "target": 25,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 200,
@@ -4881,6 +5503,11 @@
    "p": null,
    "small": false,
    "target": 25,
+   "targetParts": [
+    50,
+    43,
+    43
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -4915,6 +5542,11 @@
    "p": null,
    "small": false,
    "target": 25,
+   "targetParts": [
+    50,
+    43,
+    43
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -4949,6 +5581,7 @@
    "p": null,
    "small": false,
    "target": 25,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 200,
@@ -4983,6 +5616,11 @@
    "p": null,
    "small": false,
    "target": 25,
+   "targetParts": [
+    49,
+    43,
+    43
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -5017,6 +5655,11 @@
    "p": null,
    "small": false,
    "target": 25,
+   "targetParts": [
+    49,
+    43,
+    43
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -5051,6 +5694,7 @@
    "p": null,
    "small": false,
    "target": null,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 200,
@@ -5085,6 +5729,11 @@
    "p": null,
    "small": false,
    "target": 25,
+   "targetParts": [
+    49,
+    42,
+    42
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -5119,6 +5768,11 @@
    "p": null,
    "small": false,
    "target": 25,
+   "targetParts": [
+    49,
+    42,
+    42
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -5153,6 +5807,7 @@
    "p": null,
    "small": false,
    "target": 45,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 200,
@@ -5187,6 +5842,11 @@
    "p": null,
    "small": false,
    "target": 45,
+   "targetParts": [
+    70,
+    66,
+    66
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -5221,6 +5881,11 @@
    "p": null,
    "small": false,
    "target": 45,
+   "targetParts": [
+    70,
+    66,
+    66
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -5255,6 +5920,7 @@
    "p": null,
    "small": false,
    "target": 45,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 200,
@@ -5289,6 +5955,11 @@
    "p": null,
    "small": false,
    "target": 45,
+   "targetParts": [
+    69,
+    66,
+    66
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -5323,6 +5994,11 @@
    "p": null,
    "small": false,
    "target": 45,
+   "targetParts": [
+    69,
+    66,
+    66
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -5357,6 +6033,11 @@
    "p": null,
    "small": false,
    "target": 29,
+   "targetParts": [
+    53,
+    48,
+    48
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -5395,6 +6076,11 @@
    "p": null,
    "small": false,
    "target": 29,
+   "targetParts": [
+    53,
+    48,
+    48
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -5433,6 +6119,11 @@
    "p": null,
    "small": false,
    "target": 29,
+   "targetParts": [
+    53,
+    48,
+    48
+   ],
    "note": "",
    "inputs": {
     "w": 1000,
@@ -5471,6 +6162,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    54,
+    48,
+    48
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -5509,6 +6205,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    54,
+    48,
+    48
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -5547,6 +6248,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    54,
+    48,
+    48
+   ],
    "note": "",
    "inputs": {
     "w": 1000,
@@ -5585,6 +6291,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    54,
+    48,
+    48
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -5623,6 +6334,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    54,
+    48,
+    48
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -5661,6 +6377,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    54,
+    48,
+    48
+   ],
    "note": "",
    "inputs": {
     "w": 1000,
@@ -5699,6 +6420,11 @@
    "p": null,
    "small": false,
    "target": 31,
+   "targetParts": [
+    55,
+    49,
+    49
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -5737,6 +6463,11 @@
    "p": null,
    "small": false,
    "target": 31,
+   "targetParts": [
+    55,
+    49,
+    49
+   ],
    "note": "",
    "inputs": {
     "w": 1000,
@@ -5775,6 +6506,11 @@
    "p": null,
    "small": false,
    "target": 31,
+   "targetParts": [
+    55,
+    49,
+    49
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -5813,6 +6549,11 @@
    "p": null,
    "small": false,
    "target": 31,
+   "targetParts": [
+    55,
+    49,
+    49
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -5851,6 +6592,11 @@
    "p": null,
    "small": false,
    "target": 31,
+   "targetParts": [
+    55,
+    49,
+    49
+   ],
    "note": "",
    "inputs": {
     "w": 1000,
@@ -5889,6 +6635,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    55,
+    49,
+    49
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -5927,6 +6678,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    55,
+    49,
+    49
+   ],
    "note": "",
    "inputs": {
     "w": 1000,
@@ -5965,6 +6721,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    54,
+    48,
+    48
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -6003,6 +6764,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    54,
+    48,
+    48
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -6041,6 +6807,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    54,
+    48,
+    48
+   ],
    "note": "",
    "inputs": {
     "w": 1000,
@@ -6079,6 +6850,11 @@
    "p": null,
    "small": false,
    "target": 29,
+   "targetParts": [
+    53,
+    46,
+    47
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -6117,6 +6893,11 @@
    "p": null,
    "small": false,
    "target": 29,
+   "targetParts": [
+    53,
+    46,
+    47
+   ],
    "note": "",
    "inputs": {
     "w": 1000,
@@ -6155,6 +6936,11 @@
    "p": null,
    "small": false,
    "target": 28,
+   "targetParts": [
+    52,
+    46,
+    46
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -6193,6 +6979,11 @@
    "p": null,
    "small": false,
    "target": 28,
+   "targetParts": [
+    52,
+    46,
+    46
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -6231,6 +7022,11 @@
    "p": null,
    "small": false,
    "target": 28,
+   "targetParts": [
+    52,
+    46,
+    46
+   ],
    "note": "",
    "inputs": {
     "w": 1000,
@@ -6269,6 +7065,11 @@
    "p": null,
    "small": false,
    "target": 27,
+   "targetParts": [
+    51,
+    44,
+    45
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -6307,6 +7108,11 @@
    "p": null,
    "small": false,
    "target": 27,
+   "targetParts": [
+    51,
+    44,
+    45
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -6345,6 +7151,11 @@
    "p": null,
    "small": false,
    "target": 27,
+   "targetParts": [
+    51,
+    44,
+    45
+   ],
    "note": "",
    "inputs": {
     "w": 1000,
@@ -6383,6 +7194,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    54,
+    49,
+    49
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -6421,6 +7237,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    54,
+    49,
+    49
+   ],
    "note": "",
    "inputs": {
     "w": 1000,
@@ -6459,6 +7280,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    54,
+    48,
+    48
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -6497,6 +7323,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    54,
+    48,
+    48
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -6535,6 +7366,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    54,
+    48,
+    48
+   ],
    "note": "",
    "inputs": {
     "w": 1000,
@@ -6573,6 +7409,7 @@
    "p": null,
    "small": false,
    "target": 36,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 100,
@@ -6608,6 +7445,11 @@
    "p": null,
    "small": false,
    "target": 36,
+   "targetParts": [
+    60,
+    55,
+    55
+   ],
    "note": "",
    "inputs": {
     "w": 200,
@@ -6643,6 +7485,11 @@
    "p": null,
    "small": false,
    "target": 36,
+   "targetParts": [
+    60,
+    55,
+    55
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -6678,6 +7525,11 @@
    "p": null,
    "small": false,
    "target": 36,
+   "targetParts": [
+    60,
+    55,
+    55
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -6713,6 +7565,7 @@
    "p": null,
    "small": false,
    "target": 36,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 100,
@@ -6748,6 +7601,11 @@
    "p": null,
    "small": false,
    "target": 36,
+   "targetParts": [
+    60,
+    55,
+    55
+   ],
    "note": "",
    "inputs": {
     "w": 200,
@@ -6783,6 +7641,11 @@
    "p": null,
    "small": false,
    "target": 36,
+   "targetParts": [
+    60,
+    55,
+    55
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -6818,6 +7681,11 @@
    "p": null,
    "small": false,
    "target": 36,
+   "targetParts": [
+    60,
+    55,
+    55
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -6853,6 +7721,7 @@
    "p": null,
    "small": false,
    "target": null,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 100,
@@ -6888,6 +7757,11 @@
    "p": null,
    "small": false,
    "target": 36,
+   "targetParts": [
+    60,
+    55,
+    55
+   ],
    "note": "",
    "inputs": {
     "w": 200,
@@ -6923,6 +7797,11 @@
    "p": null,
    "small": false,
    "target": 36,
+   "targetParts": [
+    60,
+    55,
+    55
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -6958,6 +7837,11 @@
    "p": null,
    "small": false,
    "target": 36,
+   "targetParts": [
+    60,
+    55,
+    55
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -6993,6 +7877,7 @@
    "p": null,
    "small": false,
    "target": 35,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 300,
@@ -7028,6 +7913,11 @@
    "p": null,
    "small": false,
    "target": 35,
+   "targetParts": [
+    60,
+    54,
+    54
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -7063,6 +7953,11 @@
    "p": null,
    "small": false,
    "target": 35,
+   "targetParts": [
+    60,
+    54,
+    54
+   ],
    "note": "",
    "inputs": {
     "w": 500,
@@ -7098,6 +7993,11 @@
    "p": null,
    "small": false,
    "target": 35,
+   "targetParts": [
+    60,
+    54,
+    54
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -7133,6 +8033,7 @@
    "p": 1,
    "small": false,
    "target": 35,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 100,
@@ -7172,6 +8073,11 @@
    "p": 1,
    "small": false,
    "target": 35,
+   "targetParts": [
+    59,
+    59,
+    56
+   ],
    "note": "",
    "inputs": {
     "w": 200,
@@ -7211,6 +8117,11 @@
    "p": 1,
    "small": false,
    "target": 35,
+   "targetParts": [
+    59,
+    59,
+    56
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -7250,6 +8161,11 @@
    "p": 1,
    "small": false,
    "target": 35,
+   "targetParts": [
+    59,
+    59,
+    56
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -7289,6 +8205,7 @@
    "p": 1,
    "small": false,
    "target": 26,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 150,
@@ -7321,6 +8238,11 @@
    "p": 1,
    "small": false,
    "target": 26,
+   "targetParts": [
+    49,
+    49,
+    46
+   ],
    "note": "",
    "inputs": {
     "w": 200,
@@ -7353,6 +8275,11 @@
    "p": 1,
    "small": false,
    "target": 26,
+   "targetParts": [
+    49,
+    49,
+    46
+   ],
    "note": "",
    "inputs": {
     "w": 250,
@@ -7385,6 +8312,7 @@
    "p": 1,
    "small": false,
    "target": 35,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 300,
@@ -7424,6 +8352,11 @@
    "p": 1,
    "small": false,
    "target": 35,
+   "targetParts": [
+    60,
+    54,
+    54
+   ],
    "note": "",
    "inputs": {
     "w": 400,
@@ -7463,6 +8396,11 @@
    "p": 1,
    "small": false,
    "target": 35,
+   "targetParts": [
+    60,
+    54,
+    54
+   ],
    "note": "",
    "inputs": {
     "w": 500,
@@ -7502,6 +8440,11 @@
    "p": 1,
    "small": false,
    "target": 35,
+   "targetParts": [
+    60,
+    54,
+    54
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -7541,6 +8484,7 @@
    "p": null,
    "small": false,
    "target": 40,
+   "targetParts": null,
    "note": "ค่าแรงบนเว็บยังรวมอยู่ในค่าวัสดุ (เหมารวม) — ยังแยก 3 ก้อนเทียบตารางไม่ได้",
    "inputs": null,
    "pdf": {
@@ -7563,6 +8507,11 @@
    "p": null,
    "small": false,
    "target": 40,
+   "targetParts": [
+    68,
+    0,
+    58
+   ],
    "note": "ค่าแรงบนเว็บยังรวมอยู่ในค่าวัสดุ (เหมารวม) — ยังแยก 3 ก้อนเทียบตารางไม่ได้",
    "inputs": null,
    "pdf": {
@@ -7585,6 +8534,11 @@
    "p": null,
    "small": false,
    "target": 40,
+   "targetParts": [
+    68,
+    0,
+    58
+   ],
    "note": "ค่าแรงบนเว็บยังรวมอยู่ในค่าวัสดุ (เหมารวม) — ยังแยก 3 ก้อนเทียบตารางไม่ได้",
    "inputs": null,
    "pdf": {
@@ -7607,6 +8561,11 @@
    "p": null,
    "small": false,
    "target": 40,
+   "targetParts": [
+    65,
+    0,
+    59
+   ],
    "note": "ค่าแรงบนเว็บยังรวมอยู่ในค่าวัสดุ (เหมารวม) — ยังแยก 3 ก้อนเทียบตารางไม่ได้",
    "inputs": null,
    "pdf": {
@@ -7629,6 +8588,11 @@
    "p": null,
    "small": false,
    "target": 40,
+   "targetParts": [
+    65,
+    0,
+    59
+   ],
    "note": "ค่าแรงบนเว็บยังรวมอยู่ในค่าวัสดุ (เหมารวม) — ยังแยก 3 ก้อนเทียบตารางไม่ได้",
    "inputs": null,
    "pdf": {
@@ -7651,6 +8615,7 @@
    "p": null,
    "small": false,
    "target": 32,
+   "targetParts": null,
    "note": "ค่าแรงบนเว็บยังรวมอยู่ในค่าวัสดุ (เหมารวม) — ยังแยก 3 ก้อนเทียบตารางไม่ได้",
    "inputs": null,
    "pdf": {
@@ -7673,6 +8638,11 @@
    "p": null,
    "small": false,
    "target": 32,
+   "targetParts": [
+    58,
+    0,
+    43
+   ],
    "note": "ค่าแรงบนเว็บยังรวมอยู่ในค่าวัสดุ (เหมารวม) — ยังแยก 3 ก้อนเทียบตารางไม่ได้",
    "inputs": null,
    "pdf": {
@@ -7695,6 +8665,11 @@
    "p": null,
    "small": false,
    "target": 32,
+   "targetParts": [
+    58,
+    0,
+    43
+   ],
    "note": "ค่าแรงบนเว็บยังรวมอยู่ในค่าวัสดุ (เหมารวม) — ยังแยก 3 ก้อนเทียบตารางไม่ได้",
    "inputs": null,
    "pdf": {
@@ -7717,6 +8692,7 @@
    "p": null,
    "small": false,
    "target": 35,
+   "targetParts": null,
    "note": "ค่าแรงบนเว็บยังรวมอยู่ในค่าวัสดุ (เหมารวม) — ยังแยก 3 ก้อนเทียบตารางไม่ได้",
    "inputs": null,
    "pdf": {
@@ -7739,6 +8715,11 @@
    "p": null,
    "small": false,
    "target": 35,
+   "targetParts": [
+    64,
+    47,
+    47
+   ],
    "note": "ค่าแรงบนเว็บยังรวมอยู่ในค่าวัสดุ (เหมารวม) — ยังแยก 3 ก้อนเทียบตารางไม่ได้",
    "inputs": null,
    "pdf": {
@@ -7761,6 +8742,11 @@
    "p": null,
    "small": false,
    "target": 35,
+   "targetParts": [
+    64,
+    47,
+    47
+   ],
    "note": "ค่าแรงบนเว็บยังรวมอยู่ในค่าวัสดุ (เหมารวม) — ยังแยก 3 ก้อนเทียบตารางไม่ได้",
    "inputs": null,
    "pdf": {
@@ -7783,6 +8769,7 @@
    "p": null,
    "small": false,
    "target": 35,
+   "targetParts": null,
    "note": "ค่าแรงบนเว็บยังรวมอยู่ในค่าวัสดุ (เหมารวม) — ยังแยก 3 ก้อนเทียบตารางไม่ได้",
    "inputs": null,
    "pdf": {
@@ -7805,6 +8792,11 @@
    "p": null,
    "small": false,
    "target": 35,
+   "targetParts": [
+    62,
+    49,
+    49
+   ],
    "note": "ค่าแรงบนเว็บยังรวมอยู่ในค่าวัสดุ (เหมารวม) — ยังแยก 3 ก้อนเทียบตารางไม่ได้",
    "inputs": null,
    "pdf": {
@@ -7827,6 +8819,11 @@
    "p": null,
    "small": false,
    "target": 35,
+   "targetParts": [
+    62,
+    49,
+    49
+   ],
    "note": "ค่าแรงบนเว็บยังรวมอยู่ในค่าวัสดุ (เหมารวม) — ยังแยก 3 ก้อนเทียบตารางไม่ได้",
    "inputs": null,
    "pdf": {
@@ -7849,6 +8846,7 @@
    "p": null,
    "small": false,
    "target": null,
+   "targetParts": null,
    "note": "ค่าแรงบนเว็บยังรวมอยู่ในค่าวัสดุ (เหมารวม) — ยังแยก 3 ก้อนเทียบตารางไม่ได้",
    "inputs": null,
    "pdf": {
@@ -7871,6 +8869,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    58,
+    44,
+    44
+   ],
    "note": "ค่าแรงบนเว็บยังรวมอยู่ในค่าวัสดุ (เหมารวม) — ยังแยก 3 ก้อนเทียบตารางไม่ได้",
    "inputs": null,
    "pdf": {
@@ -7893,6 +8896,11 @@
    "p": null,
    "small": false,
    "target": 30,
+   "targetParts": [
+    58,
+    44,
+    44
+   ],
    "note": "ค่าแรงบนเว็บยังรวมอยู่ในค่าวัสดุ (เหมารวม) — ยังแยก 3 ก้อนเทียบตารางไม่ได้",
    "inputs": null,
    "pdf": {
@@ -7915,6 +8923,7 @@
    "p": null,
    "small": false,
    "target": null,
+   "targetParts": null,
    "note": "ค่าแรงบนเว็บยังรวมอยู่ในค่าวัสดุ (เหมารวม) — ยังแยก 3 ก้อนเทียบตารางไม่ได้",
    "inputs": null,
    "pdf": {
@@ -7937,6 +8946,11 @@
    "p": null,
    "small": false,
    "target": 32,
+   "targetParts": [
+    60,
+    0,
+    47
+   ],
    "note": "ค่าแรงบนเว็บยังรวมอยู่ในค่าวัสดุ (เหมารวม) — ยังแยก 3 ก้อนเทียบตารางไม่ได้",
    "inputs": null,
    "pdf": {
@@ -7959,6 +8973,11 @@
    "p": null,
    "small": false,
    "target": 32,
+   "targetParts": [
+    60,
+    0,
+    47
+   ],
    "note": "ค่าแรงบนเว็บยังรวมอยู่ในค่าวัสดุ (เหมารวม) — ยังแยก 3 ก้อนเทียบตารางไม่ได้",
    "inputs": null,
    "pdf": {
@@ -7981,6 +9000,7 @@
    "p": 1,
    "small": false,
    "target": 51,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 40,
@@ -8010,6 +9030,11 @@
    "p": 1,
    "small": false,
    "target": 51,
+   "targetParts": [
+    70,
+    70,
+    76
+   ],
    "note": "",
    "inputs": {
     "w": 60,
@@ -8039,6 +9064,11 @@
    "p": 1,
    "small": false,
    "target": 51,
+   "targetParts": [
+    70,
+    70,
+    76
+   ],
    "note": "",
    "inputs": {
     "w": 80,
@@ -8068,18 +9098,19 @@
    "p": null,
    "small": false,
    "target": 49,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 80,
     "h": 200,
     "p": 1,
     "form": "บานตาย",
-    "color": "white",
-    "colorKey": "white",
     "spec": {
      "dw": "0",
      "dh": "0"
-    }
+    },
+    "color": "white",
+    "colorKey": "white"
    },
    "pdf": {
     "cM": 2262,
@@ -8101,18 +9132,23 @@
    "p": null,
    "small": false,
    "target": 49,
+   "targetParts": [
+    70,
+    0,
+    76
+   ],
    "note": "",
    "inputs": {
     "w": 90,
     "h": 210,
     "p": 1,
     "form": "บานตาย",
-    "color": "white",
-    "colorKey": "white",
     "spec": {
      "dw": "0",
      "dh": "0"
-    }
+    },
+    "color": "white",
+    "colorKey": "white"
    },
    "pdf": {
     "cM": 2464,
@@ -8134,18 +9170,23 @@
    "p": null,
    "small": false,
    "target": 49,
+   "targetParts": [
+    70,
+    0,
+    76
+   ],
    "note": "",
    "inputs": {
     "w": 100,
     "h": 240,
     "p": 1,
     "form": "บานตาย",
-    "color": "white",
-    "colorKey": "white",
     "spec": {
      "dw": "0",
      "dh": "0"
-    }
+    },
+    "color": "white",
+    "colorKey": "white"
    },
    "pdf": {
     "cM": 2818,
@@ -8167,6 +9208,7 @@
    "p": null,
    "small": false,
    "target": 55,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 400,
@@ -8196,6 +9238,11 @@
    "p": null,
    "small": false,
    "target": 55,
+   "targetParts": [
+    76,
+    76,
+    84
+   ],
    "note": "",
    "inputs": {
     "w": 500,
@@ -8225,6 +9272,11 @@
    "p": null,
    "small": false,
    "target": 55,
+   "targetParts": [
+    76,
+    76,
+    84
+   ],
    "note": "",
    "inputs": {
     "w": 600,
@@ -8254,18 +9306,19 @@
    "p": null,
    "small": false,
    "target": 40,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 100,
     "h": 210,
     "p": 1,
     "form": "บานตาย+บานเปิด",
-    "color": "white",
-    "colorKey": "white",
     "spec": {
      "dw": "0",
      "dh": "0"
-    }
+    },
+    "color": "white",
+    "colorKey": "white"
    },
    "pdf": {
     "cM": 7304,
@@ -8287,18 +9340,23 @@
    "p": null,
    "small": false,
    "target": 40,
+   "targetParts": [
+    62,
+    0,
+    69
+   ],
    "note": "",
    "inputs": {
     "w": 150,
     "h": 210,
     "p": 1,
     "form": "บานตาย+บานเปิด",
-    "color": "white",
-    "colorKey": "white",
     "spec": {
      "dw": "0",
      "dh": "0"
-    }
+    },
+    "color": "white",
+    "colorKey": "white"
    },
    "pdf": {
     "cM": 8070,
@@ -8320,18 +9378,23 @@
    "p": null,
    "small": false,
    "target": 40,
+   "targetParts": [
+    62,
+    0,
+    69
+   ],
    "note": "",
    "inputs": {
     "w": 180,
     "h": 210,
     "p": 1,
     "form": "บานตาย+บานเปิด",
-    "color": "white",
-    "colorKey": "white",
     "spec": {
      "dw": "0",
      "dh": "0"
-    }
+    },
+    "color": "white",
+    "colorKey": "white"
    },
    "pdf": {
     "cM": 8529,
@@ -8353,18 +9416,19 @@
    "p": null,
    "small": false,
    "target": 40,
+   "targetParts": null,
    "note": "",
    "inputs": {
     "w": 100,
     "h": 210,
     "p": 1,
     "form": "บานตาย+บานเลื่อน",
-    "color": "white",
-    "colorKey": "white",
     "spec": {
      "dw": "0",
      "dh": "0"
-    }
+    },
+    "color": "white",
+    "colorKey": "white"
    },
    "pdf": {
     "cM": 5660,
@@ -8386,18 +9450,23 @@
    "p": null,
    "small": false,
    "target": 40,
+   "targetParts": [
+    62,
+    0,
+    69
+   ],
    "note": "",
    "inputs": {
     "w": 150,
     "h": 210,
     "p": 1,
     "form": "บานตาย+บานเลื่อน",
-    "color": "white",
-    "colorKey": "white",
     "spec": {
      "dw": "0",
      "dh": "0"
-    }
+    },
+    "color": "white",
+    "colorKey": "white"
    },
    "pdf": {
     "cM": 6389,
@@ -8419,18 +9488,23 @@
    "p": null,
    "small": false,
    "target": 40,
+   "targetParts": [
+    62,
+    0,
+    69
+   ],
    "note": "",
    "inputs": {
     "w": 180,
     "h": 210,
     "p": 1,
     "form": "บานตาย+บานเลื่อน",
-    "color": "white",
-    "colorKey": "white",
     "spec": {
      "dw": "0",
      "dh": "0"
-    }
+    },
+    "color": "white",
+    "colorKey": "white"
    },
    "pdf": {
     "cM": 6827,
@@ -8443,6 +9517,5 @@
     "sT": 22800
    }
   }
- ],
- "note": "shower: ตาราง R4.1 กรอกขนาดเป็นทั้งชุด ไม่มีกระจกประตูแยก (dw/dh = 0) · ค่าเริ่มต้นเว็บ 60×200 เป็นกระจกประตูเพิ่ม → ใส่ 0 ให้เทียบตรงกัน (13 ต.ค.69)"
+ ]
 }

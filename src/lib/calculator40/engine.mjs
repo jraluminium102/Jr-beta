@@ -218,6 +218,9 @@ export function computeCost(PB, prod, opt) {
     : (opt.profitManual ? { mat: true, prod: true, inst: true } : { mat: false, prod: false, inst: false });
   const r41AnyEdit = r41Edit.mat || r41Edit.prod || r41Edit.inst;
   let r41Info = null;
+  // ล็อกกำไรสุทธิตามตาราง R4.1 แล้ว → ราคาตายตัวไซซ์เล็ก (ยูโร 100×100 = 18,000 ได้กำไรแค่ 25%) ต้องไม่ทับ
+  //   เจ้าของ 14 ต.ค.69 "เป้าคือ 30% ดึงค่าของ×กำไรให้เข้า 30% เลย ทุกบาน"
+  let r41NetLock = false;
   const SELLM = (R41N || opt.profitManual) ? null : SELL_RAW;
   let sellPct = null, sellAdj = null, sellTarget = null;
   // 3 ก้อนราคาขายสำหรับ "แสดงผล" — ค่าแรงตรงสูตรเป๊ะ · ค่าของรับเศษปัดร้อย (กฎเจ้าของ 9 ก.ย.69)
@@ -992,6 +995,7 @@ export function computeCost(PB, prod, opt) {
     const netDiv = netT != null ? 1 - 30 / 130 - netT / 100 : 0;
     let mPct;
     if (netDiv > 0 && costTotal > 0) {
+      r41NetLock = true;
       const baseLab = r41Sell(nP, 'cP', 'sP', laborProd) + r41Sell(nI, 'cI', 'sI', laborInstall);
       const labDef = (noNode(laborProd, nP) ? Math.round(laborProd * (1 + pctProd / 100)) : 0) + (noNode(laborInstall, nI) ? Math.round(laborInstall * (1 + pctInst / 100)) : 0);
       // ปัดขึ้นทีละ 0.1% — % ที่โชว์ × ทุน = ราคาจริงเป๊ะ และกำไรสุทธิไม่ต่ำกว่าเป้าจากการปัด
@@ -1004,7 +1008,7 @@ export function computeCost(PB, prod, opt) {
     sellParts_ = { mat: 0, prod: labP, inst: labI };   // ค่าของเติมทีหลัง = ยอดรวม − ค่าแรง 2 ก้อน
     sellPct = { mat: mPct, prod: r41Edit.prod ? pctProd : eff(labP, laborProd), inst: r41Edit.inst ? pctInst : eff(labI, laborInstall) };
     const ref = (n, c, sk) => (n ? { w: n.w, h: n.h, p: n.p, vk: n.vk, cost: n[c], sell: n[sk] } : null);
-    r41Info = { vk, small, matPct: mPct, net: netT, edit: r41Edit,refProd: r41Edit.prod ? null : ref(nP, 'cP', 'sP'), refInst: r41Edit.inst ? null : ref(nI, 'cI', 'sI') };
+    r41Info = { vk, small: small && !r41NetLock, matPct: mPct, net: netT, parts: r41Parts(PB, prod.id, vk), edit: r41Edit,refProd: r41Edit.prod ? null : ref(nP, 'cP', 'sP'), refInst: r41Edit.inst ? null : ref(nI, 'cI', 'sI') };
   } else if (SELLM) {
     // ── สูตรราคาขายตามไฟล์ถอดทุน v20.1 (เป้ากำไรสุทธิ + ค่าดำเนินการ 30%) ──
     //   เจ้าของสั่ง 3 ก.ย.69 "เอาตามไฟล์ ทำทั้งหมด" · ยันด้วยชุด ส่งต่อ-เว็บ (tests.json)
@@ -1127,7 +1131,7 @@ export function computeCost(PB, prod, opt) {
   if (addonTotal > 0 && !addonAfterFloor) { sellBeforeLabor += addonTotal; sellMfgOnly += addonTotal; sellWithInstall += addonTotal; }
   // ราคาตายตัวไซซ์เล็ก (ชีตเขียน "ราคาขาย/ชุด — ถ้าพื้นที่ < N ตร.ม.") — ทับราคาที่คำนวณได้
   const SMF = R41N ? (r41AnyEdit ? null : SELL_RAW) : SELLM;
-  if (SMF && SMF.small && area > 0 && area < SMF.small.maxArea && sellWithInstall > 0) {
+  if (SMF && SMF.small && !r41NetLock && area > 0 && area < SMF.small.maxArea && sellWithInstall > 0) {
     const k = SMF.small.price / sellWithInstall;
     sellWithInstall = SMF.small.price;
     sellMfgOnly = ceil100(sellMfgOnly * k); sellBeforeLabor = ceil100(sellBeforeLabor * k);
@@ -1349,6 +1353,13 @@ export function r41Net(PB, id, vk) {
   if (typeof N === 'number') return N;
   if (vk && N[vk] != null) return N[vk];
   return N._ != null ? N._ : null;
+}
+/** เป้ากำไรแยก ของ/ผลิต/ติดตั้ง (%) จากหัวตาราง R4.1 "ตั้ง 63/65/62%" — PB.R41.parts (set-r41-net.mjs) · ไว้โชว์เทียบ ไม่ใช้คิดราคา */
+export function r41Parts(PB, id, vk) {
+  const N = PB && PB.R41 && PB.R41.parts && PB.R41.parts[r41Key(id)];
+  if (!N) return null;
+  if (Array.isArray(N)) return N;
+  return (vk && N[vk]) || N._ || null;
 }
 export function sellFromTarget({ mat, labProd, labInst, target, ratios, overheadPct = 30, shape = 'bucket', matAdjPct = 0 }) {
   const mk = 1 + (Number(matAdjPct) || 0) / 100;

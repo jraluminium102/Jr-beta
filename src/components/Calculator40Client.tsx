@@ -1740,8 +1740,9 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                       const tgt = (result as any).sellModel?.net;
                       return (
                         <div className="text-xs text-ink-2 tabular-nums mb-2">
-                          กำไรสุทธิ <b className="text-brand-dark">{net}%</b>{tgt != null ? <span className="text-ink-3"> (ตาราง R4.1 {tgt}%)</span> : null}
+                          กำไรสุทธิ <b className="text-brand-dark">{net}%</b>{tgt != null ? <span className="text-ink-3"> (เป้าตาราง R4.1 {tgt}%)</span> : null}
                           {" "}· ของ/ผลิต/ติดตั้ง <b>{mg(sellParts.mat, Number(result.cost.total) || 0)}/{mg(sellParts.prod, Number(result.labor.prod) || 0)}/{mg(sellParts.inst, Number(result.labor.install) || 0)}</b>
+                          {Array.isArray((result as any).sellModel?.parts) ? <span className="text-ink-3"> (เป้าตาราง {(result as any).sellModel.parts.join("/")}%)</span> : null}
                         </div>
                       );
                     })()}

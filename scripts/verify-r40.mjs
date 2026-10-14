@@ -392,7 +392,8 @@ for (const a of ANCHORS) {
     if (net != null && a.cost > 0) m = Math.ceil((((a.cost + wProd + wInst) / (1 - 30 / 130 - net / 100) - lp - li) / a.cost - 1) * 1000 - 1e-9) / 10;
     const matRaw = a.cost * (1 + m / 100);
     wantMfg = ceil100(matRaw + lp); wantInst = ceil100(matRaw + lp + li);
-    if (small && wantInst > 0) { wantMfg = ceil100(wantMfg * (SR.small.price / wantInst)); wantInst = SR.small.price; }
+    // 14 ต.ค.69 ล็อกกำไรสุทธิแล้ว ราคาตายตัวไซซ์เล็กไม่ทับ (เจ้าของ "ดึงค่าของ×กำไรให้เข้าเป้า ทุกบาน")
+    if (small && wantInst > 0 && net == null) { wantMfg = ceil100(wantMfg * (SR.small.price / wantInst)); wantInst = SR.small.price; }
     if (SR.floor) {
       const min = /บานเปิด|บานเลื่อน/.test(String(form0 || '')) ? SR.floor.withDoor : SR.floor.base;
       if (wantInst < min) { wantMfg = ceil100(wantMfg * (min / Math.max(1, wantInst))); wantInst = min; }
