@@ -12,7 +12,7 @@ import { FloorQuoteSheet } from "./FloorQuoteSheet";
 import { fixThai } from "@/lib/floor-calc/thai-fix";
 import {
   planFloor, draftItems, quickAdds, quoteFileName, groupNames, addItemToGroup, isExistingPile,
-  PILE_TYPES, DEFAULT_CONTRACTOR,
+  PILE_TYPES, DEFAULT_CONTRACTOR, DEMO_WORKS, demoItem, demoPrice,
 } from "@/lib/floor-calc/engine.mjs";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -93,6 +93,15 @@ export default function FloorEditor({
 
   /** เพิ่มรายการลงท้ายหมวดที่เลือก (logic อยู่ใน engine — มี verify คุม) */
   const addItem = (item: Item) => setItems((p) => addItemToGroup(p, item, targetGroup));
+
+  /** แผงเพิ่มงานรื้อ — เลือกประเภท + ใส่ ตร.ม. → คิดราคา (เรต×ช่วง + ขั้นต่ำ) ให้อัตโนมัติ */
+  const [demoKey, setDemoKey] = useState<string>(DEMO_WORKS[0].key);
+  const [demoArea, setDemoArea] = useState<string>("");
+  const demoCalc = demoPrice(demoKey, num(demoArea));
+  const addDemo = () => {
+    const it = demoItem(demoKey, num(demoArea));
+    if (it) { addItem(it); setDemoArea(""); }
+  };
 
   /**
    * นำเข้าจากไฟล์ผู้รับเหมา — ราคาใช้ตามไฟล์ทั้งหมด (เจ้าของสั่ง "ไม่เกี่ยวกับราคาในเว็บ แค่จัดฟอร์ม")
@@ -359,12 +368,40 @@ export default function FloorEditor({
                 </select>
               </label>
             )}
-            {quickAdds(plan.area).map((qa: { label: string; item: Item; hint?: string; warn?: boolean }) => (
-              <button key={qa.label} type="button" onClick={() => addItem(qa.item)} title={qa.hint ?? ""}
-                className={"press rounded-full border px-3 py-1 text-xs font-medium hover:border-brand hover:text-brand " + (qa.warn ? "border-amber-400 text-amber-700" : "border-gray-300")}>
-                + {qa.label}{qa.warn ? " ⚠" : ""}
+            {quickAdds(plan.area).map((qa: { label: string; item: Item }) => (
+              <button key={qa.label} type="button" onClick={() => addItem(qa.item)}
+                className="press rounded-full border border-gray-300 px-3 py-1 text-xs font-medium hover:border-brand hover:text-brand">
+                + {qa.label}
               </button>
             ))}
+          </div>
+
+          {/* แผงเพิ่มงานรื้อ — ใส่ ตร.ม. แล้วคิดราคา (เรต×ช่วง + ขั้นต่ำ) อัตโนมัติ · ลงบนใบเป็น ตร.ม.×เรต แก้พื้นที่ต่อได้ */}
+          <div className="mt-2 flex items-end gap-2 flex-wrap rounded-xl border border-gray-200 bg-gray-50/60 px-3 py-2">
+            <label className="flex flex-col gap-0.5 text-xs text-ink-3">งานรื้อ
+              <select value={demoKey} onChange={(e) => setDemoKey(e.target.value)}
+                className="rounded-lg border border-gray-300 px-2 py-1 text-xs max-w-[210px]">
+                {DEMO_WORKS.map((d: { key: string; label: string }) => (
+                  <option key={d.key} value={d.key}>{d.label}</option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-0.5 text-xs text-ink-3">พื้นที่ (ตร.ม.)
+              <input type="number" inputMode="decimal" value={demoArea} onChange={(e) => setDemoArea(e.target.value)}
+                placeholder="เช่น 12" className="w-24 rounded-lg border border-gray-300 px-2 py-1 text-xs" />
+            </label>
+            <div className="text-xs leading-tight min-w-[150px]">
+              <div className="font-semibold text-brand-dark">฿{baht(num(demoCalc?.price))}</div>
+              <div className="text-ink-3" style={{ fontSize: 10 }}>
+                {num(demoArea) > 0
+                  ? `${num(demoArea)} × ${num(demoCalc?.rate).toLocaleString()}/ตร.ม.${demoCalc?.atMin ? " · ติดขั้นต่ำ" : ""}${demoCalc?.warn ? " · ⚠ เกิน 30 รีเช็ค" : ""}`
+                  : `ยังไม่ใส่พื้นที่ → เหมาขั้นต่ำ ${baht(num(demoCalc?.min))}`}
+              </div>
+            </div>
+            <button type="button" onClick={addDemo}
+              className="press rounded-full border border-gray-300 px-3 py-1 text-xs font-medium hover:border-brand hover:text-brand">
+              + เพิ่มงานรื้อ
+            </button>
           </div>
         </div>
 
