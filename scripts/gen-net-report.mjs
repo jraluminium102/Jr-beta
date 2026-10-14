@@ -77,14 +77,14 @@ const sumRows = models.map((m) => {
 const detail = models.map((m) => {
   const body = m.rows.map((r) => {
     const sz = `${r.w}×${r.h}${r.p > 1 ? ` · ${r.p} บาน` : ""}`;
-    if (!r.web) return `<tr class="na"><td>${sz}</td><td colspan="9">${esc(r.na || "เทียบไม่ได้")}</td></tr>`;
-    if (r.small) return `<tr class="sm"><td>${sz} <small>(ไซซ์เล็ก)</small></td><td class="n">${fmt(r.pdf.cT)}</td><td class="n">${fmt(r.web.cT)}</td><td class="n">${sp(pct(r.web.cT, r.pdf.cT))}</td><td class="n">${fmt(r.pdf.sT)}</td><td class="n b">${fmt(r.web.sT)}</td><td class="n">ราคาตายตัว</td><td class="n">${r.old ? fmt(r.old.web.sT) : "—"}</td><td class="n">${net(r.web.sT, r.web.cT).toFixed(1)}%</td><td class="n">${net(r.pdf.sT, r.pdf.cT).toFixed(1)}%</td></tr>`;
+    if (!r.web) return `<tr class="na"><td>${sz}</td><td colspan="8">${esc(r.na || "เทียบไม่ได้")}</td></tr>`;
+    if (r.small) return `<tr class="sm"><td>${sz} <small>(ไซซ์เล็ก)</small></td><td class="n">${fmt(r.pdf.cT)}</td><td class="n">${fmt(r.web.cT)}</td><td class="n">${sp(pct(r.web.cT, r.pdf.cT))}</td><td class="n">${fmt(r.pdf.sT)}</td><td class="n b">${fmt(r.web.sT)}</td><td class="n">${sp(pct(r.web.sT, r.pdf.sT))}</td><td class="n">${net(r.web.sT, r.web.cT).toFixed(1)}%</td><td class="n">${net(r.pdf.sT, r.pdf.cT).toFixed(1)}%</td></tr>`;
     const d = pct(r.web.sT, r.pdf.sT);
-    return `<tr><td>${sz}</td><td class="n">${fmt(r.pdf.cT)}</td><td class="n">${fmt(r.web.cT)}</td><td class="n">${sp(pct(r.web.cT, r.pdf.cT))}</td><td class="n">${fmt(r.pdf.sT)}</td><td class="n b">${fmt(r.web.sT)}</td><td class="n">${chip(d)}</td><td class="n mute">${r.old ? fmt(r.old.web.sT) : "—"}</td><td class="n">${net(r.web.sT, r.web.cT).toFixed(1)}%</td><td class="n mute">${net(r.pdf.sT, r.pdf.cT).toFixed(1)}%</td></tr>`;
+    return `<tr><td>${sz}</td><td class="n">${fmt(r.pdf.cT)}</td><td class="n">${fmt(r.web.cT)}</td><td class="n">${sp(pct(r.web.cT, r.pdf.cT))}</td><td class="n">${fmt(r.pdf.sT)}</td><td class="n b">${fmt(r.web.sT)}</td><td class="n">${chip(d)}</td><td class="n">${net(r.web.sT, r.web.cT).toFixed(1)}%</td><td class="n mute">${net(r.pdf.sT, r.pdf.cT).toFixed(1)}%</td></tr>`;
   }).join("");
   const b = band(m.absAvg);
   return `<section class="blk"><h3><span class="tag ${b}">${BAND[b]}</span> ${esc(m.name)} <small>· กำไรสุทธิ ${m.nt}% · ราคาเฉลี่ย ${sp(m.avgD)}</small></h3>
-  <div class="tw"><table class="dt"><thead><tr><th>ขนาด</th><th class="n">ทุนรวม R4.1</th><th class="n">ทุนรวมเว็บ</th><th class="n">ทุนต่าง</th><th class="n">ขาย R4.1</th><th class="n">ขายใหม่</th><th class="n">ราคาต่าง</th><th class="n">ขายเว็บก่อนแก้</th><th class="n">กำไรสุทธิใหม่</th><th class="n">กำไรสุทธิ R4.1</th></tr></thead><tbody>${body}</tbody></table></div>
+  <div class="tw"><table class="dt"><thead><tr><th>ขนาด</th><th class="n">ทุนรวม R4.1</th><th class="n">ทุนรวมเว็บ</th><th class="n">ทุนต่าง</th><th class="n">ขาย R4.1</th><th class="n">ขายใหม่</th><th class="n">ราคาต่าง</th><th class="n">กำไรสุทธิใหม่</th><th class="n">กำไรสุทธิ R4.1</th></tr></thead><tbody>${body}</tbody></table></div>
   <p class="why2">${esc(m.why)}</p></section>`;
 }).join("\n");
 
@@ -146,7 +146,7 @@ ul.notes{margin:6px 0 0;padding-left:20px;color:var(--ink2)}ul.notes li{margin:3
 </section>
 <section class="card">
 <h2>รายขนาด</h2>
-<p class="lead">ราคาต่าง = ขายใหม่ เทียบ ขาย R4.1 · "ขายเว็บก่อนแก้" = ราคาที่เว็บคิดก่อนเปลี่ยนเป็นกำไรสุทธิ (ใช้ % ค่าของที่จูนให้ชนตาราง)</p>
+<p class="lead">ราคาต่าง = ขายใหม่ เทียบ ขาย R4.1 · ไซซ์เล็ก: ตารางตั้งราคาตายตัว เว็บคิดตามเป้ากำไรเหมือนขนาดอื่น</p>
 ${detail}
 </section>
 <p class="lead" style="font-size:12px">สร้างจาก scripts/gen-net-report.mjs · ${new Date().toISOString().slice(0, 10)} · ทุนเว็บ = สีขาว ค่าเริ่มต้นของรุ่น ราคาสโตร์จริง</p>
