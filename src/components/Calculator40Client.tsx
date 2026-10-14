@@ -616,6 +616,21 @@ export default function Calculator40Client({ customers = [], priceOverride, line
    *     จอเลิกอ่าน profit3 แล้วไปอ่าน state → อีก 2 ช่องกระโดดจาก 113/109 กลับเป็น 100/100
    *   ต้อง seed ก่อนเสมอ แล้วค่อยเซตช่องที่ผู้ใช้แก้ทับ (React batch ให้ ลำดับถูก)
    */
+  /**
+   * หน้าจอโชว์/รับ "กำไร %" แบบตาราง R4.1 = (ขาย − ทุน) ÷ ขาย (เจ้าของ 14 ต.ค.69 "อยากได้คล้ายของเดิม ตาราง 4.1 เพราะชินแล้ว")
+   *   ข้างใน state/เอนจินยังเป็น % บวกจากทุน (ทุน × (1+%)) เหมือนเดิม → แปลงตอนโชว์และตอนรับค่าเท่านั้น
+   *   SMS: บวกจากทุน 170% = กำไร 63%
+   */
+  const pctToMargin = (v: string) => { const m = Number(v); return v.trim() !== "" && Number.isFinite(m) && m > -100 ? String(Math.round((m / (100 + m)) * 100)) : v; };
+  const marginToPct = (v: string) => {
+    const g = Number(v);
+    if (v.trim() === "" || !Number.isFinite(g)) return v;
+    const gg = Math.min(Math.max(g, 0), 95);   // กำไร 100% = ขายไม่มีเพดาน → กันไว้ที่ 95%
+    return String(Math.round((gg / (100 - gg)) * 1000) / 10);
+  };
+  const shownMargin = { mat: pctToMargin(shownPct.mat), prod: pctToMargin(shownPct.prod), inst: pctToMargin(shownPct.inst) };
+  const editMargin = (k: "mat" | "prod" | "inst", v: string) => editPct(k, marginToPct(v));
+
   /** แก้ % ก้อนเดียว — รุ่น R4.1 ติดธงเฉพาะก้อนนั้น · รุ่นเก่ายังสลับโหมดกรอกเองผ่าน seedManual() */
   function editPct(k: "mat" | "prod" | "inst", v: string) {
     const set = k === "mat" ? setProfit : k === "prod" ? setProfitProd : setProfitInst;
@@ -1157,7 +1172,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
         </div>
       </div>
       <p className="text-sm text-ink-3 -mt-3">
-        ราคาขาย = ทุนจริง × (1 + กำไร%) ปัดร้อย — อลูขึ้นราคา แก้ที่ ⚙️ ทุกรุ่นขยับตามทันที · R3.9 เดิมยังใช้ได้ที่เมนูเครื่องคิดราคา
+        ราคาขายคิดจากทุนจริงให้ได้กำไรสุทธิตาม ★ ตาราง R4.1 ปัดร้อย — อลูขึ้นราคา แก้ที่ ⚙️ ทุกรุ่นขยับตามทันที · R3.9 เดิมยังใช้ได้ที่เมนูเครื่องคิดราคา
       </p>
 
       {/* ── ผูกลูกค้าจากทะเบียน (เฟส B — ออกใบเสนอราคาจริง) ── */}
@@ -1340,17 +1355,17 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                       <Field label={`จำนวนบาน${prod.minP ? ` (${prod.minP}–${prod.maxP})` : ""}`} value={p} onChange={setP} />
                     )
                   ) : <div />}
-                  <Field label="กำไร ค่าของ %" value={shownPct.mat} onChange={(v: string) => editPct("mat", v)} />
-                  <Field label="กำไร ค่าผลิต %" value={shownPct.prod} onChange={(v: string) => editPct("prod", v)} />
-                  <Field label="กำไร ค่าติดตั้ง %" value={shownPct.inst} onChange={(v: string) => editPct("inst", v)} />
+                  <Field label="กำไร ค่าของ %" value={shownMargin.mat} onChange={(v: string) => editMargin("mat", v)} />
+                  <Field label="กำไร ค่าผลิต %" value={shownMargin.prod} onChange={(v: string) => editMargin("prod", v)} />
+                  <Field label="กำไร ค่าติดตั้ง %" value={shownMargin.inst} onChange={(v: string) => editMargin("inst", v)} />
                 </div>
               )}
               {/* ห้องกระจก (G6) — ไม่มีกว้าง/สูง/บานระดับห้อง (กำหนดต่อบาน/ต่อด้านใน RoomComposer) แต่ยังต้องมีกำไร% + สี/กระจกหลัก (ทุกบานในห้องใช้ร่วมกัน) */}
               {prod.composite && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mt-4">
-                  <Field label="กำไร ค่าของ %" value={shownPct.mat} onChange={(v: string) => editPct("mat", v)} />
-                  <Field label="กำไร ค่าผลิต %" value={shownPct.prod} onChange={(v: string) => editPct("prod", v)} />
-                  <Field label="กำไร ค่าติดตั้ง %" value={shownPct.inst} onChange={(v: string) => editPct("inst", v)} />
+                  <Field label="กำไร ค่าของ %" value={shownMargin.mat} onChange={(v: string) => editMargin("mat", v)} />
+                  <Field label="กำไร ค่าผลิต %" value={shownMargin.prod} onChange={(v: string) => editMargin("prod", v)} />
+                  <Field label="กำไร ค่าติดตั้ง %" value={shownMargin.inst} onChange={(v: string) => editMargin("inst", v)} />
                 </div>
               )}
 
@@ -1714,6 +1729,22 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                         คืนค่าตามไฟล์
                       </button>
                     </div>
+                    {/* บรรทัดสรุปกำไรแบบหัวตาราง R4.1 "กำไรสุทธิ 40% · ของ/ผลิต/ติดตั้ง 63/65/62%" (เจ้าของ 14 ต.ค.69 ชินแบบนี้)
+                        สุทธิ = (ขายรวม − ค่าดำเนินการ 30/130 − ทุนรวม) ÷ ขายรวม · แยกก้อน = (ขาย − ทุน) ÷ ขาย — คิดจากราคาที่เห็นจริง */}
+                    {(() => {
+                      const sT = Number(result.sell.withInstall) || 0;
+                      const cT = (Number(result.cost.total) || 0) + (Number(result.labor.prod) || 0) + (Number(result.labor.install) || 0);
+                      const mg = (sv: number, c: number) => (sv > 0 ? Math.round(((sv - c) / sv) * 100) + "%" : "—");
+                      if (!(sT > 0)) return null;
+                      const net = Math.round(((sT - (sT * 30) / 130 - cT) / sT) * 100);
+                      const tgt = (result as any).sellModel?.net;
+                      return (
+                        <div className="text-xs text-ink-2 tabular-nums mb-2">
+                          กำไรสุทธิ <b className="text-brand-dark">{net}%</b>{tgt != null ? <span className="text-ink-3"> (ตาราง R4.1 {tgt}%)</span> : null}
+                          {" "}· ของ/ผลิต/ติดตั้ง <b>{mg(sellParts.mat, Number(result.cost.total) || 0)}/{mg(sellParts.prod, Number(result.labor.prod) || 0)}/{mg(sellParts.inst, Number(result.labor.install) || 0)}</b>
+                        </div>
+                      );
+                    })()}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       {([
                         // 💡 ก้อนราคาขายมาจาก result.sell.parts — ค่าแรง 2 ก้อนคิดด้วยสูตรของตัวเองเป๊ะ
@@ -1721,15 +1752,16 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                         //    ไปกองที่ "ค่าของ" ซึ่งเป็นก้อนเดียวที่ปรับกำไรได้ (กฎเจ้าของ 9 ก.ย.69
                         //    "+/- กำไรจากต้นทุนสินค้า ไม่ต้องไปยุ่งกับค่าแรง · ค่าแรงอิงไฟล์เป๊ะ ๆ")
                         //    เดิมเอา mfgOnly − beforeLabor มาลบกันตรง ๆ → ค่าแรงเพี้ยน 100-300 บาท
-                        ["ค่าของ", showCost ? result.cost.total : null, shownPct.mat, setProfit, sellParts.mat],
-                        ["ค่าผลิต", showCost ? result.labor.prod : null, shownPct.prod, setProfitProd, sellParts.prod],
-                        ["ค่าติดตั้ง", showCost ? result.labor.install : null, shownPct.inst, setProfitInst, sellParts.inst],
+                        //    ช่อง % = กำไรแบบตาราง R4.1 (ขาย − ทุน) ÷ ขาย (14 ต.ค.69) — กด +/- ทีละ 5%
+                        ["ค่าของ", showCost ? result.cost.total : null, shownMargin.mat, setProfit, sellParts.mat],
+                        ["ค่าผลิต", showCost ? result.labor.prod : null, shownMargin.prod, setProfitProd, sellParts.prod],
+                        ["ค่าติดตั้ง", showCost ? result.labor.install : null, shownMargin.inst, setProfitInst, sellParts.inst],
                       ] as [string, number | null, string, (v: string) => void, number][]).map(([label, cost, pct, setPctRaw, sell]) => {
                       // ⚠ แก้ 5 ก.ย.69 (เจ้าของเจอเอง): กดเพิ่ม/ลดกำไรแล้วราคาไม่ขยับ
                       //   เพราะค่าตั้งต้นใช้ "เป้ากำไรจากไฟล์" (profitManual = false) ซึ่งไม่สนช่อง %
                       //   แต่ไม่มีที่ไหนสลับเป็นโหมดกรอกเองเลย → ช่อง % กับปุ่ม +/- เป็นของตายมาตลอด
                       //   กดครั้งแรกต้องเด้งจาก "ตัวคูณที่เห็นอยู่" (= ที่ใช้จริง) ไม่ใช่จาก 100 ที่ค้างใน state
-                      const setPct = (v: string) => editPct(label === "ค่าของ" ? "mat" : label === "ค่าผลิต" ? "prod" : "inst", v);
+                      const setPct = (v: string) => editMargin(label === "ค่าของ" ? "mat" : label === "ค่าผลิต" ? "prod" : "inst", v);
                       void setPctRaw;
                       return (
                         <div key={label} className={"rounded-xl border px-3 py-2 " + (howOpen === label ? "border-brand bg-brand/5" : "border-line bg-ground/40")}>
@@ -1738,14 +1770,14 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                           <div className="text-xl font-bold text-brand-dark tabular-nums leading-tight">฿{baht(sell)}</div>
                           <div className="flex items-center gap-1 mt-1.5">
                             <button type="button" aria-label={`ลดกำไร ${label}`}
-                              onClick={() => setPct(String(Math.max(0, (Number(pct) || 0) - 10)))}
+                              onClick={() => setPct(String(Math.max(0, (Number(pct) || 0) - 5)))}
                               className="press w-7 h-7 rounded-lg glass-soft text-ink-2 font-bold leading-none">−</button>
                             <input value={pct} onChange={(e) => setPct(e.target.value)} inputMode="numeric"
                               aria-label={`กำไร ${label} เปอร์เซ็นต์`}
                               className="w-14 text-center glass-soft rounded-lg px-1 py-1 text-sm tabular-nums outline-none" />
                             <span className="text-xs text-ink-3">%</span>
                             <button type="button" aria-label={`เพิ่มกำไร ${label}`}
-                              onClick={() => setPct(String((Number(pct) || 0) + 10))}
+                              onClick={() => setPct(String(Math.min(95, (Number(pct) || 0) + 5)))}
                               className="press w-7 h-7 rounded-lg glass-soft text-ink-2 font-bold leading-none">+</button>
                           </div>
                           <button type="button" onClick={() => setHowOpen(howOpen === label ? null : label)}
@@ -1815,7 +1847,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                       const base = isProd ? lc.pBase : lc.iBase;
                       const rate = isProd ? lc.pRate : lc.iRate;
                       const raw = isProd ? result.labor.prod : result.labor.install;
-                      const pct = Number(isProd ? shownPct.prod : shownPct.inst) || 0;
+                      const pct = Number(isProd ? shownMargin.prod : shownMargin.inst) || 0;   // กำไรแบบ R4.1 (ขาย − ทุน) ÷ ขาย
                       const sell = isProd ? sellParts.prod : sellParts.inst;
                       const sm = (result as any).sellModel || {};
                       const ref = sm.r41 ? (isProd ? sm.refProd : sm.refInst) : null;   // จุดอ้างอิงในตาราง R4.1
@@ -1840,12 +1872,12 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                               ราคาขายตาม ★ ตาราง R4.1 — แถว {ref.w}×{ref.h}{ref.p > 1 ? ` ${ref.p} บาน` : ""}{ref.vk ? ` · ${ref.vk}` : ""}: ทุน ฿{baht(ref.cost)} → ขาย ฿{baht(ref.sell)}
                               {Math.abs(ref.cost - raw) <= 1
                                 ? <> (ขนาดตรงตาราง) = <b className="text-brand-dark">฿{baht(sell)}</b></>
-                                : <> → ตัวคูณ ×{(ref.sell / ref.cost).toFixed(3)} × ทุน ฿{baht(raw)} = <b className="text-brand-dark">฿{baht(sell)}</b></>}
+                                : <> (กำไร {Math.round((1 - ref.cost / ref.sell) * 100)}%) → ขนาดนี้ใช้กำไรเท่าแถวนั้น: ทุน ฿{baht(raw)} = <b className="text-brand-dark">฿{baht(sell)}</b></>}
                               <span className="text-ink-3"> (กำไร {pct}%)</span>
                             </div>
                           ) : (
                             <div className="tabular-nums">
-                              บวกกำไร {pct}% = <b className="text-brand-dark">฿{baht(sell)}</b>
+                              กำไร {pct}% = <b className="text-brand-dark">฿{baht(sell)}</b>
                             </div>
                           )}
                           <p className="text-[11px] text-ink-3">
@@ -1857,12 +1889,12 @@ export default function Calculator40Client({ customers = [], priceOverride, line
 
                     <p className="text-[11px] text-ink-3 mt-2">
                       ราคาขายพร้อมติดตั้ง = ค่าของ + ค่าผลิต + ค่าติดตั้ง = <b className="tabular-nums">฿{baht(result.sell.withInstall)}</b>
-                      {" "}· กำไร 100% = ขาย 2 เท่าทุน · 200% = 3 เท่า
+                      {" "}· กำไร % = (ขาย − ทุน) ÷ ขาย แบบตาราง R4.1 — เช่น ทุน 100 ขาย 270 = กำไร 63%
                     </p>
                     {/* กำไรสุทธิตามตาราง R4.1 เป็นตัวตัดสินราคา (เจ้าของเคาะ 13 ต.ค.69) — บอกที่มาของ % ค่าของ */}
                     {(result as any).sellModel?.r41 && (result as any).sellModel?.net != null && !(result as any).sellModel?.small && (
                       <p className="text-[11px] text-ink-3">
-                        % ค่าของตั้งให้ <b>กำไรสุทธิ {(result as any).sellModel.net}%</b> ตาม ★ ตาราง R4.1 — ขายรวม = ทุนรวม (ของ+ผลิต+ติดตั้ง) ÷ (1 − ค่าดำเนินการ 30/130 − {(result as any).sellModel.net}%) ปัดร้อย · ค่าผลิต/ติดตั้งขาย = ตาราง
+                        ราคาล็อก <b>กำไรสุทธิ {(result as any).sellModel.net}%</b> ตาม ★ ตาราง R4.1 — ขายรวม = ทุนรวม (ของ+ผลิต+ติดตั้ง) ÷ (1 − ค่าดำเนินการ 30/130 − {(result as any).sellModel.net}%) ปัดร้อย · ค่าผลิต/ติดตั้งขาย = ตาราง · ค่าของ = ส่วนที่เหลือ
                       </p>
                     )}
                   </div>

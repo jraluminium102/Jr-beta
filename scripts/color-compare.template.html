@@ -147,7 +147,7 @@ footer { font-size: .8rem; color: var(--muted); }
 <div class="wrap">
   <div>
     <h1>ตรวจราคา 4.0</h1>
-    <p class="sub" id="sub">ทุน · ค่าแรง · ตัวคูณกำไร · ราคาขาย — เว็บตอนนี้ เทียบ ตาราง R4.1 และ R3.9</p>
+    <p class="sub" id="sub">ทุน · ค่าแรง · กำไร · ราคาขาย — เว็บตอนนี้ เทียบ ตาราง R4.1 และ R3.9</p>
   </div>
   <div class="tabs" role="tablist">
     <button role="tab" id="t-sum" data-tab="sum">สรุป</button>
@@ -159,7 +159,7 @@ footer { font-size: .8rem; color: var(--muted); }
     <div class="printhead">1 · สรุป</div>
     <div class="finds" id="finds"></div>
     <section class="card"><h3>ภาพรวมรายรุ่น (สีขาว/ดำ · ทุกขนาดในตาราง R4.1)</h3>
-      <div class="legend">ทุน = ทุนค่าของเว็บเทียบตาราง · ขาย = ถ้าใช้ตัวคูณกำไรเท่าตาราง (ค่าแรงขายเท่าตารางอยู่แล้ว) · แดงเกิน +5% · เขียวต่ำกว่า −5%</div>
+      <div class="legend">ทุน = ทุนค่าของเว็บเทียบตาราง · ขาย = ราคาเว็บ (ล็อกกำไรสุทธิเท่าตาราง R4.1 · ค่าแรงขายเท่าตาราง) · แดงเกิน +5% · เขียวต่ำกว่า −5%</div>
       <div class="tbl"><table class="ov" id="ov"></table></div></section>
   </div>
 
@@ -171,7 +171,7 @@ footer { font-size: .8rem; color: var(--muted); }
       <label class="tog"><input type="checkbox" id="det41"> ดูค่าแรง + ทุนรวม + กำไรสุทธิ</label>
     </div></div>
     <div class="sum" id="sum41"></div>
-    <div class="legend">ขาย (ตัวคูณเท่าตาราง) = ปัดร้อย(ทุนเว็บ × ตัวคูณตาราง + ค่าแรงขายตาราง) · ขายเว็บตอนนี้ = % ที่จูนไว้ 12 ต.ค. · ต่าง = เทียบตาราง R4.1 · แดง/เขียว เกิน ±2%</div>
+    <div class="legend">ขายเว็บ = ทุนรวม ÷ (1 − 30/130 − กำไรสุทธิตาราง) ปัดร้อย (ล็อกกำไรสุทธิ 13 ต.ค.69) · ราคาต่างจากตาราง = ทุนต่าง · ต่าง = เทียบตาราง R4.1 · แดง/เขียว เกิน ±2%</div>
     <div id="list41" style="display:grid;gap:14px"></div>
   </div>
 
@@ -202,7 +202,7 @@ const GRP41 = (name) => /หลังคา|กลาสเฮ้าส์/.test
   : /ฝ้า|ผนัง|พื้น|ไฟ/.test(name) ? "ฝ้า/ผนัง/พื้น" : /เลื่อน|Slim|E-series/i.test(name) ? "บานเลื่อน" : /เฟี้ยม/.test(name) ? "เฟี้ยม" : "บานเปิด/อื่น ๆ";
 const GCOL = { "บานเลื่อน": "--g1", "บานเปิด/อื่น": "--g2", "บานเปิด": "--g2", "หลังคา": "--g3", "ระแนง/รั้ว": "--g4", "ระแนง": "--g4", "เฟี้ยม": "--g5", "ฝ้า/ผนัง/พื้น": "--g6" };
 const gbadge = (g) => `<span class="gb" style="--gc:var(${GCOL[g] || "--g7"})">${g}</span>`;
-const KEYS = `<div class="keys"><span><i style="background:var(--k-cost-hd)"></i>ทุนค่าของ</span><span><i style="background:var(--k-mul-hd)"></i>คูณกำไรค่าของ (ขายค่าของ ÷ ทุนค่าของ)</span><span><i style="background:var(--k-lab-hd)"></i>ค่าแรง</span><span><i style="background:var(--k-ref-hd)"></i>ตารางอ้างอิง (R4.1 / R3.9)</span><span><i style="background:var(--k-sell-hd)"></i>ราคาขายเว็บ</span></div>`;
+const KEYS = `<div class="keys"><span><i style="background:var(--k-cost-hd)"></i>ทุนค่าของ</span><span><i style="background:var(--k-mul-hd)"></i>กำไรค่าของ (ขาย − ทุน) ÷ ขาย</span><span><i style="background:var(--k-lab-hd)"></i>ค่าแรง</span><span><i style="background:var(--k-ref-hd)"></i>ตารางอ้างอิง (R4.1 / R3.9)</span><span><i style="background:var(--k-sell-hd)"></i>ราคาขายเว็บ</span></div>`;
 const gkey = (r) => (r.name || r.head) + (r.vk ? " · " + r.vk : "");
 const avg = (a) => (a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length * 10) / 10 : null);
 const groups41 = new Map();
@@ -215,12 +215,12 @@ function renderSum() {
   for (const [k, rs] of groups41) {
     const ok = rs.filter((r) => r.web && !r.small);
     if (!ok.length) { rows.push(`<tr class="na"><td class="c">${k}</td><td colspan="6" style="text-align:left">${rs[0].na || "—"}</td></tr>`); continue; }
-    const c = avg(ok.map((r) => pct(r.web.cM, r.pdf.cM))), s = avg(ok.map((r) => pct(r.sellTM, r.pdf.sT))), w = avg(ok.map((r) => pct(r.web.sT, r.pdf.sT)));
+    const c = avg(ok.map((r) => pct(r.web.cM, r.pdf.cM))), s = avg(ok.map((r) => pct(r.web.sT, r.pdf.sT))), w = avg(ok.map((r) => pct(r.web.sT, r.pdf.sT)));
     const lab = ok.every((r) => r.web.sP === r.pdf.sP && r.web.sI === r.pdf.sI);
     const reason = (R41.reasons || {})[(ok[0].id || "") + "|" + (ok[0].vk || "")] || (R41.reasons || {})[(ok[0].id || "") + "|"];
     rows.push(`<tr><td class="c">${gbadge(GRP41(k))} ${k}</td><td class="num k-cost">${chip(c, 5)}</td><td class="num k-mul">${mulTxt(ok.reduce((a, r) => a + (mulOf(r.pdf.sM, r.pdf.cM) || 0), 0) / ok.length)}</td><td class="num k-mul">${mulTxt(ok.reduce((a, r) => a + (mulOf(r.web.sM, r.web.cM) || 0), 0) / ok.length)}</td><td class="num k-lab">${lab ? "✓ เท่าตาราง" : "✗ ต่าง"}</td><td class="num k-sell">${chip(s, 5)}</td><td class="c" style="font-size:.82rem;color:var(--muted)">${reason ? `<span class="${reason.kind === "bug" ? "note bug" : ""}" style="padding:1px 6px">${reason.text}</span>` : ""}</td></tr>`);
   }
-  $("#ov").innerHTML = `<thead><tr><th class="c">รุ่น</th><th class="k-cost">ทุนค่าของ เว็บ vs ตาราง</th><th class="k-mul">คูณกำไรค่าของ ตาราง</th><th class="k-mul">คูณกำไรค่าของ เว็บ</th><th class="k-lab">ค่าแรงขาย</th><th class="k-sell">ขาย (ตัวคูณเท่าตาราง) vs ตาราง</th><th class="c">สาเหตุที่ทุนต่าง</th></tr></thead><tbody>${rows.join("")}</tbody>`;
+  $("#ov").innerHTML = `<thead><tr><th class="c">รุ่น</th><th class="k-cost">ทุนค่าของ เว็บ vs ตาราง</th><th class="k-mul">กำไรค่าของ ตาราง</th><th class="k-mul">กำไรค่าของ เว็บ</th><th class="k-lab">ค่าแรงขาย</th><th class="k-sell">ขายเว็บ vs ตาราง</th><th class="c">สาเหตุที่ทุนต่าง</th></tr></thead><tbody>${rows.join("")}</tbody>`;
 }
 
 // ── แท็บ ทุน + ขาย เทียบตาราง R4.1 ──
@@ -228,12 +228,14 @@ let q41 = "", g41 = "ทั้งหมด";
 const cell = (web, ref, big, cls = "", tol = 2) => { const p = pct(web, ref), k = kindOf(p, tol);
   return `<td class="num${cls}"><span class="v${big ? " big" : ""}">${fmt(web)}</span><span class="ref">${fmt(ref)}${p != null && k !== "flat" ? ` <span class="${k === "up" ? "d up" : "d down"}" style="min-width:0;padding:0 4px">${p > 0 ? "+" : ""}${p}%</span>` : ""}</span></td>`; };
 // ผลพิสูจน์ด้วย Excel (ไฟล์ v1/v20.1 คำนวณจริงที่ขนาดเดียวกัน) — ส่วนต่างทุนแยก 4 ก้อน
-// คูณกำไรค่าของ = ราคาขายค่าของ ÷ ทุนค่าของ · แสดงเป็น ×2.72 (+172%)
+// กำไรค่าของแบบหัวตาราง R4.1 = (ขาย − ทุน) ÷ ขาย — SMS 63% (14 ต.ค.69 เลิกโชว์ตัวคูณ ×2.72 เจ้าของงง)
+//   mulOf ยังคืน ขาย ÷ ทุน (ใช้เฉลี่ย) · mulTxt แปลงเป็น % กำไรตอนโชว์
 const mulOf = (sM, cM) => (sM > 0 && cM > 0 ? sM / cM : null);
-const mulTxt = (m) => (m == null ? "—" : `×${m.toFixed(2)} <span class="pc">(+${Math.round((m - 1) * 100)}%)</span>`);
+const mgOfMul = (m) => (m == null || !(m > 0) ? null : Math.round((1 - 1 / m) * 100));
+const mulTxt = (m) => (m == null ? "—" : `${mgOfMul(m)}%`);
 const mulCell = (w, d) => { const mw = mulOf(w.sM, w.cM), mt = mulOf(d.sM, d.cM);
-  const dp = mw != null && mt != null ? Math.round((mw - mt) * 100) : null;   // ต่างกี่ % จุด
-  const tag = dp == null || Math.abs(dp) < 5 ? "" : ` <span class="d ${dp > 0 ? "up" : "down"}" style="min-width:0;padding:0 4px">${dp > 0 ? "+" : ""}${dp} จุด</span>`;
+  const dp = mw != null && mt != null ? mgOfMul(mw) - mgOfMul(mt) : null;   // กำไรต่างกี่ % จุด
+  const tag = dp == null || Math.abs(dp) < 3 ? "" : ` <span class="d ${dp > 0 ? "up" : "down"}" style="min-width:0;padding:0 4px">${dp > 0 ? "+" : ""}${dp} จุด</span>`;
   return `<td class="num k-mul"><span class="v">${mulTxt(mw)}</span><span class="ref">ตาราง ${mulTxt(mt)}${tag}</span></td>`; };
 const sgn = (v) => (v > 0 ? "+" : v < 0 ? "−" : "") + fmt(Math.abs(Math.round(v)));
 const xlTxt = (r) => { const x = r.xl; if (!x || !x.parts) return "";
@@ -259,31 +261,30 @@ function render41() {
     const body = rs.map((r) => {
       const size = `${r.w}×${r.h}${r.p > 1 ? `<span class="ty">${r.p} บาน</span>` : ""}${r.small ? '<span class="ty">ไซซ์เล็ก ราคาตายตัว</span>' : ""}`;
       const d = r.pdf;
-      if (!r.web) { cnt.na++; return `<tr class="na"><td class="c">${size}</td><td class="num"><span class="ref">${fmt(d.cM)}</span></td><td class="num k-mul"><span class="ref">ตาราง ${mulTxt(mulOf(d.sM, d.cM))}</span></td><td class="num">—</td><td class="num"><span class="ref">${fmt(d.sT)}</span></td><td class="num">—</td><td class="num">—</td><td class="c det41" colspan="4">${r.na}</td></tr>`; }
-      const w = r.web, pT = pct(r.sellTM, d.sT); if (!r.small) cnt[kindOf(pT)]++;
+      if (!r.web) { cnt.na++; return `<tr class="na"><td class="c">${size}</td><td class="num"><span class="ref">${fmt(d.cM)}</span></td><td class="num k-mul"><span class="ref">ตาราง ${mulTxt(mulOf(d.sM, d.cM))}</span></td><td class="num">—</td><td class="num"><span class="ref">${fmt(d.sT)}</span></td><td class="num">—</td><td class="c det41" colspan="4">${r.na}</td></tr>`; }
+      const w = r.web, pT = pct(r.web.sT, d.sT); if (!r.small) cnt[kindOf(pT)]++;
       const labOk = w.sP === d.sP && w.sI === d.sI;
       return `<tr><td class="c">${size}</td>
         ${cell(w.cM, d.cM, false, " k-cost").replace(/<\/td>$/, xlTxt(r) + "</td>")}
         ${mulCell(w, d)}
         <td class="num k-lab"><span class="v">${fmt(w.sP + w.sI)}</span><span class="ref">${labOk ? "✓ เท่าตาราง" : "ตาราง " + fmt(d.sP + d.sI)}</span></td>
         <td class="num sep k-ref"><span class="v">${fmt(d.sT)}</span></td>
-        <td class="num k-sell"><span class="v big">${fmt(r.sellTM)}</span><span class="ref">${chip(pT)}</span></td>
-        <td class="num k-sell"><span class="v">${fmt(w.sT)}</span><span class="ref">${chip(pct(w.sT, d.sT))}</span></td>
+        <td class="num k-sell"><span class="v big">${fmt(r.web.sT)}</span><span class="ref">${chip(pT)}</span></td>
         ${cell(w.cP, d.cP, false, " sep det41 k-lab")}${cell(w.cI, d.cI, false, " det41 k-lab")}${cell(w.cT, d.cT, false, " det41 k-cost")}
-        <td class="num det41 k-sell"><span class="v">${netOf(r.sellTM, w.cT) ?? "—"}%</span><span class="ref">ตาราง ${netOf(d.sT, d.cT) ?? "—"}%${tgt != null ? ` · เป้า ${tgt}%` : ""}</span></td></tr>`;
+        <td class="num det41 k-sell"><span class="v">${netOf(r.web.sT, w.cT) ?? "—"}%</span><span class="ref">ตาราง ${netOf(d.sT, d.cT) ?? "—"}%${tgt != null ? ` · เป้า ${tgt}%` : ""}</span></td></tr>`;
     }).join("");
-    const c = avg(ok.map((r) => pct(r.web.cM, r.pdf.cM))), s = avg(ok.map((r) => pct(r.sellTM, r.pdf.sT)));
+    const c = avg(ok.map((r) => pct(r.web.cM, r.pdf.cM))), s = avg(ok.map((r) => pct(r.web.sT, r.pdf.sT)));
     const mW = ok.length ? ok.reduce((a, r) => a + (mulOf(r.web.sM, r.web.cM) || 0), 0) / ok.length : null, mT = ok.length ? ok.reduce((a, r) => a + (mulOf(r.pdf.sM, r.pdf.cM) || 0), 0) / ok.length : null;
-    cards.push(`<section class="card"><header><h2>${gbadge(GRP41(k))}${k}</h2><div class="meta">${ok.length ? `<span class="mulpill">คูณกำไรค่าของ · ตาราง ${mulTxt(mT)} · เว็บ ${mulTxt(mW)}</span> ทุน ${chip(c)} · ขาย(ตัวคูณตาราง) ${chip(s)}` : ""}</div></header>
+    cards.push(`<section class="card"><header><h2>${gbadge(GRP41(k))}${k}</h2><div class="meta">${ok.length ? `<span class="mulpill">กำไรค่าของ · ตาราง ${mulTxt(mT)} · เว็บ ${mulTxt(mW)}</span> ทุน ${chip(c)} · ขายเว็บ ${chip(s)}` : ""}</div></header>
       ${reason ? `<div class="note ${reason.kind === "bug" ? "bug" : "info"}">${reason.kind === "bug" ? "⚠ " : ""}${reason.text}</div>` : ""}
       ${note && note.text ? `<div class="note ${note.level}">${note.text}</div>` : ""}
       <div class="tbl"><table><thead>
-        <tr><th class="c"></th><th class="grp k-cost">ทุนค่าของ</th><th class="grp k-mul">คูณกำไรค่าของ</th><th class="grp k-lab">ค่าแรงขาย</th><th class="grp sep k-ref">ตาราง</th><th class="grp k-sell" colspan="2">ราคาขายเว็บ (ผลิต+ติดตั้ง)</th><th class="grp sep det41 k-lab" colspan="2">ทุนค่าแรง</th><th class="grp det41 k-cost">ทุนรวม</th><th class="grp det41 k-sell"></th></tr>
-        <tr><th class="c">ขนาด (ซม.)</th><th class="k-cost">เว็บ <span class="ref">ตาราง</span></th><th class="k-mul">เว็บ <span class="ref">ตาราง</span></th><th class="k-lab">ผลิต+ติดตั้ง</th><th class="sep k-ref">R4.1 ขายรวม</th><th class="k-sell">ตัวคูณเท่าตาราง</th><th class="k-sell">เว็บตอนนี้</th><th class="sep det41 k-lab">ผลิต</th><th class="det41 k-lab">ติดตั้ง</th><th class="det41 k-cost">ของ+แรง</th><th class="det41 k-sell">กำไรสุทธิ</th></tr>
+        <tr><th class="c"></th><th class="grp k-cost">ทุนค่าของ</th><th class="grp k-mul">กำไรค่าของ</th><th class="grp k-lab">ค่าแรงขาย</th><th class="grp sep k-ref">ตาราง</th><th class="grp k-sell">ราคาขายเว็บ (ผลิต+ติดตั้ง)</th><th class="grp sep det41 k-lab" colspan="2">ทุนค่าแรง</th><th class="grp det41 k-cost">ทุนรวม</th><th class="grp det41 k-sell"></th></tr>
+        <tr><th class="c">ขนาด (ซม.)</th><th class="k-cost">เว็บ <span class="ref">ตาราง</span></th><th class="k-mul">เว็บ <span class="ref">ตาราง</span></th><th class="k-lab">ผลิต+ติดตั้ง</th><th class="sep k-ref">R4.1 ขายรวม</th><th class="k-sell">ล็อกกำไรสุทธิ</th><th class="sep det41 k-lab">ผลิต</th><th class="det41 k-lab">ติดตั้ง</th><th class="det41 k-cost">ของ+แรง</th><th class="det41 k-sell">กำไรสุทธิ</th></tr>
       </thead><tbody>${body}</tbody></table></div></section>`);
   }
   $("#list41").innerHTML = (cards.length ? KEYS : "") + cards.join("") || `<div class="empty">ไม่เจอบานที่ค้น</div>`;
-  $("#sum41").innerHTML = `<span class="pill flat">ขาย(ตัวคูณตาราง) ใกล้ตาราง ±2% <b>${cnt.flat}</b> แถว</span><span class="pill up">แพงกว่า <b>${cnt.up}</b></span><span class="pill down">ถูกกว่า <b>${cnt.down}</b></span>${cnt.na ? `<span class="pill flat">เทียบไม่ได้ <b>${cnt.na}</b></span>` : ""}`;
+  $("#sum41").innerHTML = `<span class="pill flat">ขายเว็บ ใกล้ตาราง ±2% <b>${cnt.flat}</b> แถว</span><span class="pill up">แพงกว่า <b>${cnt.up}</b></span><span class="pill down">ถูกกว่า <b>${cnt.down}</b></span>${cnt.na ? `<span class="pill flat">เทียบไม่ได้ <b>${cnt.na}</b></span>` : ""}`;
 }
 $("#q41").oninput = (e) => { q41 = e.target.value; render41(); };
 $("#groups41").onclick = (e) => { const b = e.target.closest("[data-g]"); if (b) { g41 = b.dataset.g; render41(); } };
@@ -315,7 +316,7 @@ function render() {
         <td class="num k-cost">${fmt(costT)}</td>
         <td class="num k-cost">${r.base ? "ฐาน" : `<span class="v">${fmt(r.cWeb)}</span><span class="how">${howTxt(r)}</span>`}</td>
         <td class="num det k-cost">${r.base ? `<span class="how">อลู ${fmt(r.cost?.alu)} · อบ ${fmt(r.cost?.bake)} · กระจก ${fmt(r.cost?.glass)} · อุปกรณ์ ${fmt(r.cost?.hw)}</span>` : `<span class="how">อลู ${fmt(r.cost?.alu)} · อบ ${fmt(r.cost?.bake)} · กระจก ${fmt(r.cost?.glass)} · อุปกรณ์ ${fmt(r.cost?.hw)}</span>`}</td>
-        <td class="num sep k-ref"><span class="v">${fmt(r.t39)}</span></td><td class="num det k-ref"><span class="v">${fmt(r.t40)}</span></td><td class="num k-sell"><span class="v big">${fmt(r.tWeb)}</span><span class="ref">${r.base ? "" : "ค่าสีขาย +" + fmt(r.aWeb) + " (R3.9 +" + fmt(r.a39) + ")"}</span>${!r.base && r.cWeb > 0 && r.aWeb > 0 ? `<span class="how">= ทุนสีที่เพิ่ม ${fmt(r.cWeb)} × คูณกำไรค่าของ ×${(r.aWeb / r.cWeb).toFixed(2)}</span>` : ""}</td><td class="num k-sell">${chip(d)}</td></tr>`;
+        <td class="num sep k-ref"><span class="v">${fmt(r.t39)}</span></td><td class="num det k-ref"><span class="v">${fmt(r.t40)}</span></td><td class="num k-sell"><span class="v big">${fmt(r.tWeb)}</span><span class="ref">${r.base ? "" : "ค่าสีขาย +" + fmt(r.aWeb) + " (R3.9 +" + fmt(r.a39) + ")"}</span>${!r.base && r.cWeb > 0 && r.aWeb > 0 ? `<span class="how">ทุนสีที่เพิ่ม ${fmt(r.cWeb)} · กำไร ${Math.round((1 - r.cWeb / r.aWeb) * 100)}%</span>` : ""}</td><td class="num k-sell">${chip(d)}</td></tr>`;
     }).join("");
     return `<section class="card"><header><h2>${gbadge(p.group)}${p.name}</h2><div class="meta"><span>${p.size} ซม.${/\d/.test(p.panels) ? ` · ${p.panels} บาน` : ""}</span><span>อลูที่อบ ${p.kgWeb || "—"} กก. (ไฟล์เดิม ${p.kgFile ?? "—"})</span></div></header>
       ${p.note ? `<div class="note ${p.note.level}">${p.note.text}</div>` : ""}

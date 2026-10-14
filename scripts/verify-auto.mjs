@@ -639,9 +639,12 @@ console.log("\n═══ ⑩ % กำไรค่าของตั้งต้�
     ok("ขยับ % ค่าของอย่างเดียว: ค่าติดตั้งไม่ขยับ", base.sell.parts.inst === onlyMat.sell.parts.inst);
 
     // R4.1: ช่อง % ทุกช่องแก้ผ่าน editPct → ติดธงเฉพาะก้อนที่แตะ (ไม่สลับทั้งหน้าเป็นโหมดกรอกเอง)
-    ok("ช่อง % ทุกช่องเรียก editPct (ไม่มี seedManual ลอยในช่องกรอก)",
-      !/seedManual\(\); setProfit/.test(src) && (src.match(/editPct\("(mat|prod|inst)", v\)/g) || []).length === 6, String((src.match(/editPct\("(mat|prod|inst)", v\)/g) || []).length));
-    ok("การ์ด 3 ก้อนแก้ผ่าน editPct ตามชื่อก้อน", /const setPct = \(v: string\) => editPct\(label === "ค่าของ" \? "mat" : label === "ค่าผลิต" \? "prod" : "inst", v\);/.test(src));
+    // 14 ต.ค.69 ช่องโชว์/รับกำไรแบบ R4.1 (ขาย − ทุน) ÷ ขาย → editMargin แปลงแล้วส่งต่อ editPct ที่เดียว
+    ok("ช่อง % ทุกช่องเรียก editMargin → editPct (ไม่มี seedManual ลอยในช่องกรอก)",
+      !/seedManual\(\); setProfit/.test(src) && (src.match(/editMargin\("(mat|prod|inst)", v\)/g) || []).length === 6
+        && /const editMargin = \(k: "mat" \| "prod" \| "inst", v: string\) => editPct\(k, marginToPct\(v\)\)/.test(src),
+      String((src.match(/editMargin\("(mat|prod|inst)", v\)/g) || []).length));
+    ok("การ์ด 3 ก้อนแก้ผ่าน editMargin ตามชื่อก้อน", /const setPct = \(v: string\) => editMargin\(label === "ค่าของ" \? "mat" : label === "ค่าผลิต" \? "prod" : "inst", v\);/.test(src));
     ok("รุ่น R4.1 ติดธงรายก้อน · ใบเก่าโหมดกรอกเองเริ่มธงครบ 3 ก้อน",
       /if \(isR41Prod\) \{ setProfitEdit\(\(e\) => \(\{ \.\.\.\(e \|\| \(profitManual \? \{ mat: true, prod: true, inst: true \} : \{\}\)\), \[k\]: true \}\)\); set\(v\); return; \}/.test(src));
     ok("คืนค่าตามไฟล์ / เปลี่ยนรุ่น = ล้างธงแก้เอง", /setProfitManual\(false\); setProfitEdit\(null\);/.test(src) && /setProfitInst\(String\(dp\.inst\)\);\s*setProfitEdit\(null\);/.test(src));
