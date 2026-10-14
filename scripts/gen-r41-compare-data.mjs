@@ -26,7 +26,17 @@ for (const r of FX.rows) {
   if (!p || !r.inputs) { out.push({ ...base, na: p ? "ไม่มีอินพุต" : "เว็บรวมค่าแรงไว้ในวัสดุ ยังเทียบ 3 ก้อนไม่ได้" }); continue; }
   let c; try { c = computeCost(PB, p, withSpecDefaults(p, r.inputs)); } catch (e) { out.push({ ...base, na: "คิดไม่ได้: " + String(e.message).slice(0, 60) }); continue; }
   const P = c.sell.parts || { mat: c.sell.beforeLabor, prod: 0, inst: 0 };
-  out.push({ ...base, key: r41Key ? r41Key(r.id) : r.id,
+  // รายการค่าของ (เจ้าของ 14 ต.ค.69 "แจกแจงค่าของให้ดู ว่าใช้อะไรเท่าไหร่ กี่บาท") — [หมวด, ชื่อ, รหัส, จำนวน, หน่วย, ราคา/หน่วย, รวม]
+  const r2 = (v) => Math.round((Number(v) || 0) * 100) / 100;
+  //   มอเตอร์/ของขายฟิก: บรรทัดเก็บ amount = ราคาขาย (30,000) แต่ที่เข้าทุนค่าของคือ cost (6,200) → ใช้ cost และบอกราคาขายแยกในชื่อ
+  const bom = (c.lines || []).filter((l) => l.cat !== "warn" && l.cat !== "labor" && Math.abs(Number(l.amount) || 0) >= 0.005)
+    .map((l) => {
+      const fixed = !!l.fixedSell && l.cost != null;
+      const amt = fixed ? r2(l.cost) : r2(l.amount), qty = r2(l.qty) || 1;
+      const sell = fixed ? r2(l.sellFixed != null ? l.sellFixed : l.amount) : null;
+      return [l.cat, l.name + (fixed ? ` (ทุน · ขายแยก ${Math.round(sell).toLocaleString("en-US")} ไม่ผ่านกำไร)` : ""), l.code || l.sku || "", qty, l.unit || "", fixed ? r2(amt / qty) : r2(l.unitPrice), amt];
+    });
+  out.push({ ...base, key: r41Key ? r41Key(r.id) : r.id, bom,
     web: { cM: R(c.cost.total), sM: R(P.mat), cP: R(c.labor?.prod), sP: R(P.prod), cI: R(c.labor?.install), sI: R(P.inst),
       cT: R(c.cost.total + (c.labor?.prod || 0) + (c.labor?.install || 0)), sT: R(c.sell.withInstall) } });
 }

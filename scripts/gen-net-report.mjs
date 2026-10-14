@@ -13,8 +13,9 @@ const NEW = JSON.parse(fs.readFileSync(arg("--new"), "utf8")).rows;
 const OLD = arg("--old") ? JSON.parse(fs.readFileSync(arg("--old"), "utf8")).rows : null;
 const OUT = arg("--out") || "docs/ราคาตามกำไรสุทธิR41.html";
 const PB = JSON.parse(fs.readFileSync("src/lib/calculator40/pricebook.json", "utf8"));
-const REASONS = JSON.parse(fs.readFileSync("scripts/fixtures/r41-cost-diff-reasons.json", "utf8"));
-const reasonOf = (id, vk) => (REASONS.find((x) => x.id === id && (x.vk || "") === (vk || "")) || REASONS.find((x) => x.id === id && !x.vk) || {}).reason || "";
+// 14 ต.ค.69 ใช้คำอธิบายภาษาง่าย (เจ้าของอ่านข้อความเทคนิคเดิมไม่เข้าใจ)
+const WHY = JSON.parse(fs.readFileSync("scripts/fixtures/r41-why-plain.json", "utf8"));
+const reasonOf = (id, vk) => WHY[id + "|" + (vk || "")] || WHY[id] || "";
 const netT = (id, vk) => { const N = PB.R41.net[id]; return N == null ? null : typeof N === "number" ? N : N[vk] ?? N._ ?? null; };
 
 const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -26,7 +27,7 @@ const band = (a) => (a == null ? "na" : a <= 3 ? "lo" : a <= 8 ? "mid" : "hi");
 const BAND = { lo: "ต่างน้อย", mid: "ต่างกลาง", hi: "ต่างเยอะ", na: "—" };
 const chip = (p) => { const b = band(p == null ? null : Math.abs(p)); return `<span class="chip ${b}">${sp(p)}</span>`; };
 // เหตุผลแบบสั้น — ประโยคแรกหลัง "Excel ยืนยัน:" (ตัดคำนำ) · เต็มอยู่ใน title
-const shortWhy = (t) => { const s = String(t || "").replace(/^Excel ยืนยัน:\s*/, ""); const cut = s.split(" · "); return cut.slice(0, 2).join(" · "); };
+const shortWhy = (t) => String(t || "");
 
 // กลุ่มรุ่น/แบบย่อย (ลำดับตามตาราง)
 const groups = new Map();
@@ -140,7 +141,7 @@ ul.notes{margin:6px 0 0;padding-left:20px;color:var(--ink2)}ul.notes li{margin:3
 </section>
 <section class="card">
 <h2>สรุปรายรุ่น เรียงจากต่างมากไปน้อย</h2>
-<div class="tw"><table><thead><tr><th>รุ่น</th><th class="n">กำไรสุทธิ</th><th class="n">ขนาด</th><th class="n">ราคาต่างเฉลี่ย</th><th class="n">ต่ำสุด … สูงสุด</th><th class="n">ทุนต่างเฉลี่ย</th><th>ระดับ</th><th>ทุนต่างเพราะ</th></tr></thead>
+<div class="tw"><table><thead><tr><th>รุ่น</th><th class="n">กำไรสุทธิ</th><th class="n">ขนาด</th><th class="n">ราคาต่างเฉลี่ย</th><th class="n">ต่ำสุด … สูงสุด</th><th class="n">ทุนต่างเฉลี่ย</th><th>ระดับ</th><th>ทำไมราคาต่าง</th></tr></thead>
 <tbody>${sumRows}</tbody></table></div>
 </section>
 <section class="card">

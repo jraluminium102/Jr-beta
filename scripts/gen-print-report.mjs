@@ -25,7 +25,8 @@ const netOf = (sT, cT) => (sT > 0 ? Math.round(((sT - (sT * 30) / 130 - cT) / sT
 const pp = (v) => (v == null ? "—" : v + "%");
 const prof = (x) => ({ net: netOf(x.sT, x.cT), m: mg(x.sM, x.cM), p: mg(x.sP, x.cP), i: mg(x.sI, x.cI) });
 const ptxt = (o) => `${pp(o.m)}/${pp(o.p)}/${pp(o.i)}`;
-const reasonOf = (r) => (R41.reasons || {})[(r.id || "") + "|" + (r.vk || "")] || (R41.reasons || {})[(r.id || "") + "|"];
+// 14 ต.ค.69 เลิกข้อความเทคนิค (✓ Excel · ไฟล์ v1 ± · เรตแบรนด์ ±) — ใช้ "ทำไมราคาต่าง" ภาษาง่ายจาก scripts/fixtures/r41-why-plain.json
+const reasonOf = (r) => { const t = (R41.why || {})[(r.id || "") + "|" + (r.vk || "")] || (R41.why || {})[r.id || ""]; return t ? { text: t } : null; };
 
 // กลุ่มรุ่น
 const groups = new Map();
@@ -47,7 +48,7 @@ for (const [k, rs] of groups) {
   const tgt = rs.find((r) => r.target != null)?.target;
   const netCell = `<td class="n"><b>${pp(av(PW, "net"))}</b><br><small>ตาราง ${pp(av(PT, "net"))}${tgt != null ? " · เป้า " + tgt + "%" : ""}</small></td>`;
   const partCell = `<td class="n">${pp(av(PW, "m"))}/${pp(av(PW, "p"))}/${pp(av(PW, "i"))}<br><small>ตาราง ${pp(av(PT, "m"))}/${pp(av(PT, "p"))}/${pp(av(PT, "i"))}</small></td>`;
-  ovRows.push(`<tr><td class="nm">${esc(k)}</td><td class="n">${pc(c, 5)}</td><td class="c">${lab ? "✓" : "ต่าง"}</td><td class="n">${pc(sW, 5)}</td>${netCell}${partCell}<td class="rs">${xlOk ? '<b class="xl">Excel ✓</b> ' : ""}${esc((rsn?.text || "").replace(/^Excel ยืนยัน: /, ""))}</td></tr>`);
+  ovRows.push(`<tr><td class="nm">${esc(k)}</td><td class="n">${pc(c, 5)}</td><td class="c">${lab ? "✓" : "ต่าง"}</td><td class="n">${pc(sW, 5)}</td>${netCell}${partCell}<td class="rs">${esc(rsn?.text || (Math.abs(sW || 0) < 2 ? "ใกล้ตาราง" : ""))}</td></tr>`);
 }
 
 // ② รายขนาด
@@ -55,12 +56,10 @@ const sizeBlocks = [];
 for (const [k, rs] of groups) {
   const body = rs.map((r) => {
     const sz = `${r.w}×${r.h}${r.p > 1 ? ` · ${r.p} บาน` : ""}${r.small ? " (เล็ก)" : ""}`;
-    if (!r.web) return `<tr class="na"><td>${sz}</td><td class="n">${fmt(r.pdf?.cM)}</td><td colspan="9">${esc(r.na || "—")}</td></tr>`;
-    const x = r.xl, P = x?.parts;
-    const parts = P ? [Math.abs(P.fileChange) >= 50 ? `ไฟล์ v1 ${sgn(P.fileChange)}` : "", Math.abs(P.brand) >= 50 ? `เรต ${sgn(P.brand)}` : "", Math.abs(P.webVsFile) >= 50 ? `เว็บ≠ไฟล์ ${sgn(P.webVsFile)}${x.verdict === "decided" ? " เคาะแล้ว" : x.verdict === "file-inconsistent" ? " ไฟล์ขัด" : x.verdict === "web-bug" ? " ⚠" : ""}` : "", Math.abs(P.tableGen) >= 50 ? `ตารางตั้งค่า ${sgn(P.tableGen)}` : ""].filter(Boolean).join(" · ") || "ตรง" : "—";
-    return `<tr><td>${sz}</td><td class="n">${fmt(r.pdf.cM)}</td><td class="n b">${fmt(r.web.cM)}</td><td class="n">${pc(pct(r.web.cM, r.pdf.cM))}</td><td class="ex">${P ? (x.verdict === "web-bug" ? "⚠ " : "✓ ") : ""}${parts}</td><td class="n">${fmt(r.web.sP + r.web.sI)}${r.web.sP === r.pdf.sP && r.web.sI === r.pdf.sI ? "" : `<br><small>ตาราง ${fmt(r.pdf.sP + r.pdf.sI)}</small>`}</td><td class="n">${fmt(r.pdf.sT)}</td><td class="n b">${fmt(r.web.sT)}</td><td class="n">${pc(pct(r.web.sT, r.pdf.sT))}</td><td class="n"><b>${pp(prof(r.web).net)}</b><br><small>ตาราง ${pp(prof(r.pdf).net)}</small></td><td class="n">${ptxt(prof(r.web))}<br><small>ตาราง ${ptxt(prof(r.pdf))}</small></td></tr>`;
+    if (!r.web) return `<tr class="na"><td>${sz}</td><td class="n">${fmt(r.pdf?.cM)}</td><td colspan="8">${esc(r.na || "—")}</td></tr>`;
+    return `<tr><td>${sz}</td><td class="n">${fmt(r.pdf.cM)}</td><td class="n b">${fmt(r.web.cM)}</td><td class="n">${pc(pct(r.web.cM, r.pdf.cM))}</td><td class="n">${fmt(r.web.sP + r.web.sI)}${r.web.sP === r.pdf.sP && r.web.sI === r.pdf.sI ? "" : `<br><small>ตาราง ${fmt(r.pdf.sP + r.pdf.sI)}</small>`}</td><td class="n">${fmt(r.pdf.sT)}</td><td class="n b">${fmt(r.web.sT)}</td><td class="n">${pc(pct(r.web.sT, r.pdf.sT))}</td><td class="n"><b>${pp(prof(r.web).net)}</b><br><small>ตาราง ${pp(prof(r.pdf).net)}</small></td><td class="n">${ptxt(prof(r.web))}<br><small>ตาราง ${ptxt(prof(r.pdf))}</small></td></tr>`;
   }).join("");
-  sizeBlocks.push(`<tbody class="grp"><tr class="gh"><td colspan="11">${esc(k)}</td></tr>${body}</tbody>`);
+  sizeBlocks.push(`<tbody class="grp"><tr class="gh"><td colspan="10">${esc(k)}</td></tr>${body}</tbody>`);
 }
 
 // ③ ค่าสี
@@ -108,10 +107,10 @@ ul.finds { margin: 4px 0 0 16px; padding: 0; } ul.finds li { margin: 2px 0; }
 <h2>1 · ข้อค้นพบ</h2><ul class="finds">${finds}</ul>
 <h2>2 · ภาพรวมรายรุ่น (เฉลี่ยทุกขนาดในตาราง R4.1 · สีขาว/ดำ)</h2>
 <p class="legend">ราคาเว็บล็อกกำไรสุทธิเท่าตาราง R4.1 (ขายรวม = ทุนรวม ÷ (1 − 30/130 − กำไรสุทธิ) ปัดร้อย · ค่าแรงขาย = ตาราง) → ราคาที่ต่างจากตาราง = ทุนที่ต่าง · ทุน = ทุนค่าของเว็บเทียบตาราง · แดง = เว็บสูงกว่า · เขียว = ต่ำกว่า<br>กำไรสุทธิ = (ราคาขายรวม − ค่าดำเนินการ 30/130 − ทุนรวม ของ+ผลิต+ติดตั้ง) ÷ ราคาขายรวม · กำไรแยก ของ/ผลิต/ติดตั้ง = (ขาย − ทุน) ÷ ขาย ของแต่ละก้อน · ตัวเลขบน = เว็บ · ล่าง = ตาราง R4.1</p>
-<table><thead><tr><th>รุ่น</th><th class="n">ทุนค่าของ</th><th>ค่าแรงขาย</th><th class="n">ขายเว็บ</th><th class="n">กำไรสุทธิ</th><th class="n">กำไร ของ/ผลิต/ติดตั้ง</th><th>สาเหตุที่ทุนต่าง</th></tr></thead><tbody>${ovRows.join("")}</tbody></table>
-<div class="sec"><h2>3 · รายขนาด — ทุน + ขาย เทียบตาราง R4.1 (ทุกแถวพิสูจน์ด้วย Excel)</h2>
-<p class="legend">ส่วนต่างทุน (Excel) = ไฟล์ v1 เปลี่ยนจากตาราง (v20.1) + เรตแบรนด์ + เว็บ≠ไฟล์ (เคาะแล้ว/ไฟล์ขัดกันเอง) · ✓ = เว็บถูกตามไฟล์</p>
-<table><thead><tr><th>ขนาด (ซม.)</th><th class="n">ทุนตาราง</th><th class="n">ทุนเว็บ</th><th class="n">%</th><th>ส่วนต่างทุน (Excel)</th><th class="n">ค่าแรงขาย</th><th class="n">ขายตาราง</th><th class="n">ขายเว็บ</th><th class="n">%</th><th class="n">กำไรสุทธิ</th><th class="n">กำไร ของ/ผลิต/ติดตั้ง</th></tr></thead>${sizeBlocks.join("")}</table></div>
+<table><thead><tr><th>รุ่น</th><th class="n">ทุนค่าของ</th><th>ค่าแรงขาย</th><th class="n">ขายเว็บ</th><th class="n">กำไรสุทธิ</th><th class="n">กำไร ของ/ผลิต/ติดตั้ง</th><th>ทำไมราคาต่าง</th></tr></thead><tbody>${ovRows.join("")}</tbody></table>
+<div class="sec"><h2>3 · รายขนาด — ทุน + ขาย เทียบตาราง R4.1</h2>
+<p class="legend">ดูรายการค่าของทีละขนาด (ใช้อะไร เท่าไหร่ กี่บาท) ได้ในหน้าเว็บ "ตรวจราคา 4.0" กดปุ่ม ค่าของ ▾</p>
+<table><thead><tr><th>ขนาด (ซม.)</th><th class="n">ทุนตาราง</th><th class="n">ทุนเว็บ</th><th class="n">%</th><th class="n">ค่าแรงขาย</th><th class="n">ขายตาราง</th><th class="n">ขายเว็บ</th><th class="n">%</th><th class="n">กำไรสุทธิ</th><th class="n">กำไร ของ/ผลิต/ติดตั้ง</th></tr></thead>${sizeBlocks.join("")}</table></div>
 <div class="sec"><h2>4 · ค่าสี เทียบ R3.9</h2>
 <p class="legend">ค่าสีที่เพิ่ม (ทุน) = ทุนค่าของสีนั้น − ทุนสีขาว · ค่าสีขาย = ราคาขายสีนั้น − ราคาขายสีขาว (กำไร = (ขาย − ทุน) ÷ ขาย ของส่วนที่เพิ่ม) · % = ราคาขายเว็บเทียบ R3.9</p>
 <table><thead><tr><th>สี</th><th>ชนิด</th><th class="n">ทุนค่าของ</th><th class="n">ค่าสี (ทุน)</th><th class="n">ค่าสีขาย เว็บ</th><th class="n">ค่าสีขาย R3.9</th><th class="n">ขาย R3.9</th><th class="n">ขายเว็บ</th><th class="n">%</th></tr></thead>${colorRows.join("")}</table></div>
