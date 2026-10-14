@@ -74,17 +74,37 @@ const sumRows = models.map((m) => {
   <td class="why" title="${esc(m.why)}">${esc(shortWhy(m.why))}</td></tr>`;
 }).join("\n");
 
+// รายขนาด + กำไรแยกก้อน + ปุ่มกางค่าของ (เจ้าของ 14 ต.ค.69 "ฟีเจอร์กดดูของที่ใช้หายไปไหน · กำไรค่าของหาย")
+const mg = (sv, c) => (sv > 0 ? Math.round(((sv - c) / sv) * 100) : null);
+const p3 = (x) => `${mg(x.sM, x.cM) ?? "—"}/${mg(x.sP, x.cP) ?? "—"}/${mg(x.sI, x.cI) ?? "—"}%`;
+const avgP = (rows, pick) => { const A = rows.map(pick); const av = (f) => { const v = A.map(f).filter((x) => x != null); return v.length ? v.reduce((p, q) => p + q, 0) / v.length : null; };
+  return { net: av((x) => net(x.sT, x.cT)), m: av((x) => mg(x.sM, x.cM)), p: av((x) => mg(x.sP, x.cP)), i: av((x) => mg(x.sI, x.cI)) }; };
+const r0 = (v) => (v == null ? "—" : Math.round(v));
+const BOMCAT = { alu: "อลูมิเนียม", bake: "ค่าอบสี", openOven: "ค่าเปิดตู้อบ", glass: "กระจก", hardware: "อุปกรณ์", consum: "วัสดุอื่น", addon: "ออปชั่น", discount: "ส่วนลด" };
+const n2 = (v) => (Math.abs(v - Math.round(v)) < 0.005 ? fmt(Math.round(v)) : v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+const bomTable = (r) => { const L = r.bom || []; if (!L.length) return ""; const order = Object.keys(BOMCAT);
+  const cats = [...new Set(L.map((l) => l[0]))].sort((x, y) => (order.indexOf(x) + 99 * (order.indexOf(x) < 0)) - (order.indexOf(y) + 99 * (order.indexOf(y) < 0)));
+  let total = 0; const hows = L.filter((l) => l[0] === "alu" && l[7]); const nW = hows.filter((l) => /เผื่อเศษ/.test(l[7])).length, nF = hows.filter((l) => /ซื้อเต็ม/.test(l[7])).length;
+  const rule = !hows.length ? "" : `<div class="bomhd">วิธีนับเส้นอลู: ${nW && !nF ? "ยาวที่ตัดจริง ÷ ความยาวเส้น × เผื่อเศษ 1.3 (ตามไฟล์ถอดทุน · ไม่ปัดเป็นเส้นเต็ม)" : nF && !nW ? "จัดชิ้นลงเส้นเต็ม ซื้อทั้งเส้น ไม่มีเผื่อเศษ (ตามไฟล์ถอดทุน)" : "ผสม — ดูสูตรใต้ชื่อแต่ละบรรทัด"}</div>`;
+  const body = cats.map((c) => { const ls = L.filter((l) => l[0] === c); const sub = ls.reduce((p, l) => p + l[6], 0); total += sub;
+    return `<tr class="bc"><td colspan="5">${BOMCAT[c] || c}</td><td class="n">${fmt(Math.round(sub))}</td></tr>` + ls.map((l) => `<tr><td>${esc(l[1])}${l[2] ? ` <span class="code">${esc(l[2])}</span>` : ""}${l[7] ? `<div class="how">${esc(l[7])}</div>` : ""}</td><td class="n">${n2(l[3])}</td><td>${esc(l[4])}</td><td class="n">${n2(l[5])}</td><td class="n">=</td><td class="n">${n2(l[6])}</td></tr>`).join(""); }).join("");
+  return rule + `<table class="bom"><thead><tr><th>รายการ</th><th class="n">จำนวน</th><th>หน่วย</th><th class="n">ราคา/หน่วย</th><th></th><th class="n">บาท</th></tr></thead><tbody>${body}<tr class="bt"><td colspan="5">รวมค่าของ (ทุน)</td><td class="n">${fmt(Math.round(total))}</td></tr></tbody></table>`; };
+let bomSeq = 0;
 const detail = models.map((m) => {
   const body = m.rows.map((r) => {
     const sz = `${r.w}×${r.h}${r.p > 1 ? ` · ${r.p} บาน` : ""}`;
-    if (!r.web) return `<tr class="na"><td>${sz}</td><td colspan="8">${esc(r.na || "เทียบไม่ได้")}</td></tr>`;
-    if (r.small) return `<tr class="sm"><td>${sz} <small>(ไซซ์เล็ก)</small></td><td class="n">${fmt(r.pdf.cT)}</td><td class="n">${fmt(r.web.cT)}</td><td class="n">${sp(pct(r.web.cT, r.pdf.cT))}</td><td class="n">${fmt(r.pdf.sT)}</td><td class="n b">${fmt(r.web.sT)}</td><td class="n">${sp(pct(r.web.sT, r.pdf.sT))}</td><td class="n">${net(r.web.sT, r.web.cT).toFixed(1)}%</td><td class="n">${net(r.pdf.sT, r.pdf.cT).toFixed(1)}%</td></tr>`;
-    const d = pct(r.web.sT, r.pdf.sT);
-    return `<tr><td>${sz}</td><td class="n">${fmt(r.pdf.cT)}</td><td class="n">${fmt(r.web.cT)}</td><td class="n">${sp(pct(r.web.cT, r.pdf.cT))}</td><td class="n">${fmt(r.pdf.sT)}</td><td class="n b">${fmt(r.web.sT)}</td><td class="n">${chip(d)}</td><td class="n">${net(r.web.sT, r.web.cT).toFixed(1)}%</td><td class="n mute">${net(r.pdf.sT, r.pdf.cT).toFixed(1)}%</td></tr>`;
+    if (!r.web) return `<tr class="na"><td>${sz}</td><td colspan="9">${esc(r.na || "เทียบไม่ได้")}</td></tr>`;
+    const d = pct(r.web.sT, r.pdf.sT), bid = "bom" + (++bomSeq);
+    const row = `<tr${r.small ? ' class="sm"' : ""}><td>${sz}${r.small ? " <small>(ไซซ์เล็ก)</small>" : ""}${r.bom && r.bom.length ? `<br><button type="button" class="bomtog" aria-expanded="false" aria-controls="${bid}">ค่าของ ▾</button>` : ""}</td><td class="n">${fmt(r.pdf.cT)}</td><td class="n">${fmt(r.web.cT)}</td><td class="n">${sp(pct(r.web.cT, r.pdf.cT))}</td><td class="n">${fmt(r.pdf.sT)}</td><td class="n b">${fmt(r.web.sT)}</td><td class="n">${chip(d)}</td><td class="n">${net(r.web.sT, r.web.cT).toFixed(1)}%<br><small>ตาราง ${net(r.pdf.sT, r.pdf.cT).toFixed(1)}%</small></td><td class="n"><b>${p3(r.web)}</b><br><small>ตาราง ${p3(r.pdf)}</small></td></tr>`;
+    const bom = r.bom && r.bom.length ? `<tr class="bomrow" id="${bid}" hidden><td colspan="9"><div class="bomhd">ค่าของ ${sz} — สีขาว ค่าเริ่มต้นของรุ่น · ราคาทุนจากสโตร์/ไฟล์ (ตาราง R4.1 ทุนค่าของ ${fmt(r.pdf.cM)})</div>${bomTable(r)}</td></tr>` : "";
+    return row + bom;
   }).join("");
   const b = band(m.absAvg);
-  return `<section class="blk"><h3><span class="tag ${b}">${BAND[b]}</span> ${esc(m.name)} <small>· กำไรสุทธิ ${m.nt}% · ราคาเฉลี่ย ${sp(m.avgD)}</small></h3>
-  <div class="tw"><table class="dt"><thead><tr><th>ขนาด</th><th class="n">ทุนรวม R4.1</th><th class="n">ทุนรวมเว็บ</th><th class="n">ทุนต่าง</th><th class="n">ขาย R4.1</th><th class="n">ขายใหม่</th><th class="n">ราคาต่าง</th><th class="n">กำไรสุทธิใหม่</th><th class="n">กำไรสุทธิ R4.1</th></tr></thead><tbody>${body}</tbody></table></div>
+  const tgt = m.nt, tp = m.rows.find((r) => r.targetParts)?.targetParts, T = avgP(m.ok, (r) => r.pdf), W = avgP(m.ok, (r) => r.web);
+  const pf = `<div class="pf"><div class="pfr"><span class="lb">เป้า (หัวตาราง R4.1)</span><span>กำไรสุทธิ <b>${tgt}%</b></span><span>ของ/ผลิต/ติดตั้ง <b>${tp ? tp.join("/") + "%" : "—"}</b></span></div><div class="pfr"><span class="lb">ตาราง R4.1 (คิดจากราคาในตาราง)</span><span>กำไรสุทธิ <b>${T.net == null ? "—" : T.net.toFixed(1) + "%"}</b></span><span>ของ/ผลิต/ติดตั้ง <b>${r0(T.m)}/${r0(T.p)}/${r0(T.i)}%</b></span></div><div class="pfr web"><span class="lb">เว็บ</span><span>กำไรสุทธิ <b>${W.net == null ? "—" : W.net.toFixed(1) + "%"}</b></span><span>ของ/ผลิต/ติดตั้ง <b>${r0(W.m)}/${r0(W.p)}/${r0(W.i)}%</b></span></div></div>`;
+  return `<section class="blk"><h3><span class="tag ${b}">${BAND[b]}</span> ${esc(m.name)} <small>· ราคาเฉลี่ย ${sp(m.avgD)} เทียบตาราง</small></h3>
+  ${pf}
+  <div class="tw"><table class="dt"><thead><tr><th>ขนาด</th><th class="n">ทุนรวม R4.1</th><th class="n">ทุนรวมเว็บ</th><th class="n">ทุนต่าง</th><th class="n">ขาย R4.1</th><th class="n">ขายใหม่</th><th class="n">ราคาต่าง</th><th class="n">กำไรสุทธิ</th><th class="n">กำไร ของ/ผลิต/ติดตั้ง</th></tr></thead><tbody>${body}</tbody></table></div>
   <p class="why2">${esc(m.why)}</p></section>`;
 }).join("\n");
 
@@ -118,6 +138,14 @@ tr.sm td{background:var(--sm);color:var(--ink2)}tr.na td{color:var(--ink3)}
 .blk{break-inside:avoid;padding:12px 0;border-top:1px solid var(--line)}.why2{font-size:12px;color:var(--ink2);margin:6px 0 0;max-width:110ch}
 ul.notes{margin:6px 0 0;padding-left:20px;color:var(--ink2)}ul.notes li{margin:3px 0}
 @media print{@page{size:A4 landscape;margin:10mm}body{background:#fff;font-size:11px}main{max-width:none;padding:0;gap:10px}.card{border:none;padding:0}th,td{padding:3px 5px}h1{font-size:18px}.st .v{font-size:20px}td.why{min-width:200px}}
+.pf{display:grid;gap:3px;background:var(--sm);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:0 0 8px;font-variant-numeric:tabular-nums}
+.pfr{display:grid;grid-template-columns:minmax(150px,230px) 1fr 1fr;gap:4px 14px;align-items:baseline}.pfr .lb{font-size:12px;color:var(--ink3)}.pfr.web{border-top:1px dashed var(--line);padding-top:3px}.pfr.web b{color:var(--acc)}
+.bomtog{font:inherit;font-size:11.5px;font-weight:600;color:var(--acc);background:var(--sm);border:1px solid var(--line);border-radius:6px;padding:1px 7px;cursor:pointer;margin-top:3px}
+tr.bomrow>td{background:var(--sm);padding:8px 10px 12px;white-space:normal}.bomhd{font-size:12px;color:var(--ink2);margin-bottom:6px}
+table.bom{width:auto;min-width:560px;font-size:12.5px;background:var(--card);border-radius:8px}table.bom th,table.bom td{padding:3px 8px}table.bom tr.bc td{background:var(--sm);font-weight:600}table.bom tr.bt td{font-weight:700;border-top:2px solid var(--line)}
+.code{font-size:11px;color:var(--ink3)}.how{font-size:11.5px;color:var(--ink2)}
+@media (max-width:560px){.pfr{grid-template-columns:1fr;gap:0}}
+@media print{.bomtog{display:none}tr.bomrow{display:none}}
 </style></head><body><main>
 <header class="card">
 <h1>ราคาขายใหม่ ยึดกำไรสุทธิตาราง R4.1</h1>
@@ -150,6 +178,6 @@ ul.notes{margin:6px 0 0;padding-left:20px;color:var(--ink2)}ul.notes li{margin:3
 ${detail}
 </section>
 <p class="lead" style="font-size:12px">สร้างจาก scripts/gen-net-report.mjs · ${new Date().toISOString().slice(0, 10)} · ทุนเว็บ = สีขาว ค่าเริ่มต้นของรุ่น ราคาสโตร์จริง</p>
-</main></body></html>`;
+</main><script>document.addEventListener("click",(e)=>{const b=e.target.closest(".bomtog");if(!b)return;const row=document.getElementById(b.getAttribute("aria-controls"));if(!row)return;const open=row.hidden;row.hidden=!open;b.setAttribute("aria-expanded",String(open));b.textContent=open?"ซ่อนค่าของ ▴":"ค่าของ ▾";});</script></body></html>`;
 fs.writeFileSync(OUT, html);
 console.log(OUT + " · รุ่น " + models.length + " · น้อย " + cnt.lo + " กลาง " + cnt.mid + " เยอะ " + cnt.hi + " · กำไรสุทธิต่ำกว่าเป้าสุด " + netMin.toFixed(2));
