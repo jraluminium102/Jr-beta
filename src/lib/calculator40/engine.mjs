@@ -530,6 +530,11 @@ export function computeCost(PB, prod, opt) {
       //   it.lenTotal = ไฟล์เขียนบรรทัดนี้เป็น "ความยาวรวมทุกท่อน" (เช่น วงกบ 3 ด้าน = W+2H) count = 1
       //     ใบตัดแตกเป็นหลายท่อน → เทียบ "ชิ้น" ไม่ได้ ต้องเทียบจำนวนเส้น (เงินเท่ากัน)
       barCounted: Math.abs(seg - stockLen) < 1e-9 || !!it.lenTotal,
+      // วิธีนับเส้นของบรรทัดนี้ — เจ้าของ 14 ต.ค.69 "เอาแบบไม่ซ่อน เขียนให้รู้ จะได้ตรวจได้" (หน้าตรวจราคาเอาไปเขียนสูตรโชว์)
+      //   seg = ยาวต่อชิ้น (ม.) · pieces = จำนวนชิ้น · stock = ยาวเส้นที่ซื้อ · mode: waste = ÷เส้น×1.3 · full = จัดชิ้นลงเส้นเต็ม · exact = ตัดพอดีเต็มเส้น ไม่เผื่อ · pool = รวมทุกบรรทัดรหัสเดียวกันแล้วแบ่ง
+      count: { seg: round2(seg), pieces: count, stock: Number(it.stockLen) || stockLen,
+        mode: pool && pool.len > 0 ? 'pool' : (!!prod.aluWaste && !it.noWaste) ? ((!it.alwaysWaste && Math.abs(seg - (Number(it.stockLen) || stockLen)) < 1e-9) ? 'exact' : 'waste') : 'full',
+        waste: WASTE_FACTOR },
       // กล่อง/ฉากเมืองทอง: ราคาคิดสีมาในตัวแล้ว → ไม่เข้ากองค่าอบ (น้ำหนักยังมีไว้ชั่งบาน)
       ...(it.box ? { box: boxOf(it) } : {}),
       ...(kgBar > 0 && !(kgForBake(it, code, Number(it.stockLen) || stockLen) > 0) ? { kgBox: true } : {}) });

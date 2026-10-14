@@ -34,7 +34,19 @@ for (const r of FX.rows) {
       const fixed = !!l.fixedSell && l.cost != null;
       const amt = fixed ? r2(l.cost) : r2(l.amount), qty = r2(l.qty) || 1;
       const sell = fixed ? r2(l.sellFixed != null ? l.sellFixed : l.amount) : null;
-      return [l.cat, l.name + (fixed ? ` (ทุน · ขายแยก ${Math.round(sell).toLocaleString("en-US")} ไม่ผ่านกำไร)` : ""), l.code || l.sku || "", qty, l.unit || "", fixed ? r2(amt / qty) : r2(l.unitPrice), amt];
+      // วิธีนับเส้นอลู เขียนเป็นสูตรให้ตรวจมือได้ (เจ้าของ 14 ต.ค.69 "เอาแบบไม่ซ่อน")
+      let how = "";
+      const C = l.cat === "alu" && l.count && typeof l.count === "object" ? l.count : null;
+      if (C) {
+        const n2 = (v) => (Math.round(v * 100) / 100).toLocaleString("en-US");
+        const tot = C.seg * C.pieces;
+        const pc = C.pieces === 1 ? `ยาว ${n2(C.seg)} ม.` : `${n2(C.pieces)} ชิ้น × ${n2(C.seg)} ม. = ${n2(tot)} ม.`;
+        if (C.mode === "waste") how = `${pc} ÷ เส้น ${n2(C.stock)} ม. = ${n2(tot / C.stock)} × เผื่อเศษ ${C.waste} = ${n2(qty)} เส้น`;
+        else if (C.mode === "exact") how = `${pc} = เต็มเส้น ${n2(C.stock)} ม. พอดี ไม่เผื่อ = ${n2(qty)} เส้น`;
+        else if (C.mode === "full") { const fit = Math.floor(C.stock / C.seg); how = fit >= 1 ? `${pc} · ตัดได้ ${fit} ชิ้น/เส้น ${n2(C.stock)} ม. → ซื้อเต็ม ${n2(qty)} เส้น` : `${pc} ยาวกว่าเส้น ${n2(C.stock)} ม. → ${n2(qty)} เส้น`; }
+        else how = `${pc} · รวมกับบรรทัดรหัสเดียวกันแล้วแบ่งเส้น = ${n2(qty)} เส้น`;
+      }
+      return [l.cat, l.name + (fixed ? ` (ทุน · ขายแยก ${Math.round(sell).toLocaleString("en-US")} ไม่ผ่านกำไร)` : ""), l.code || l.sku || "", qty, l.unit || "", fixed ? r2(amt / qty) : r2(l.unitPrice), amt, how];
     });
   out.push({ ...base, key: r41Key ? r41Key(r.id) : r.id, bom,
     web: { cM: R(c.cost.total), sM: R(P.mat), cP: R(c.labor?.prod), sP: R(P.prod), cI: R(c.labor?.install), sI: R(P.inst),
