@@ -3,16 +3,15 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap">
 <style>
-/* layout: 3 แท็บ (สรุป · ทุน+ขาย เทียบตาราง R4.1 · ค่าอบสี เทียบ R3.9) · การ์ดรายบาน · เลขชิดขวา · แดง/เขียว = ขึ้น/ลงเท่านั้น */
+/* หน้าเดียวจบ (เจ้าของ 14 ต.ค.69 "ทำไมมีสองไฟล์ เอารวมกัน เอาแต่อะไรสำคัญ")
+   แท็บ ① ราคา เทียบตาราง R4.1 — การ์ดรายรุ่น เรียงจากราคาต่างมากไปน้อย · กำไร เป้า/ตาราง/เว็บ แบบหัวตาราง · ทำไมราคาต่าง · กางค่าของได้
+   แท็บ ② ค่าสี เทียบ R3.9
+   ตัดออก: ข้อค้นพบเชิงเทคนิค · ตารางภาพรวมซ้ำ · ตัวคูณ · ป้าย Excel/ไฟล์ v1/เรตแบรนด์ · สวิตช์ดูทุนแยกก้อน */
 :root {
   --bg: #eef2f8; --surface: #ffffff; --sunk: #f5f7fb; --ink: #0f1a2b; --muted: #3f4c5f; --faint: #6b7789; --line: #d3dae6; --line-strong: #b8c3d4;
   --accent: #1f4fd1; --accent-ink: #ffffff; --accent-soft: #e4ebff;
   --up: #b42318; --up-bg: #fee4e2; --down: #08714a; --down-bg: #d9f5e6; --flat: #3f4c5f; --flat-bg: #e8edf4;
-  --k-cost: #1d4ed8; --k-cost-bg: #edf3ff; --k-cost-hd: #d6e3ff;
-  --k-lab: #a14c00; --k-lab-bg: #fff6e8; --k-lab-hd: #ffe4bd;
-  --k-ref: #5b3fa6; --k-ref-bg: #f4f1fc; --k-ref-hd: #e3dcf7;
-  --k-sell: #0b6b3f; --k-sell-bg: #ecfaf2; --k-sell-hd: #c9efd9;
-  --k-mul: #0e6f7a; --k-mul-bg: #e8f8f9; --k-mul-hd: #c5edf0;
+  --k-cost: #1d4ed8; --k-cost-bg: #edf3ff; --k-lab: #a14c00; --k-lab-bg: #fff6e8; --k-ref: #5b3fa6; --k-ref-bg: #f4f1fc; --k-sell: #0b6b3f; --k-sell-bg: #ecfaf2;
   --n-file: #8a4b00; --n-file-bg: #fff1d6; --n-fix: #1d4ed8; --n-fix-bg: #e6eeff; --n-rule: #5b3fa6; --n-rule-bg: #efeafb; --n-info: #2c3a4e; --n-info-bg: #eaf0f7;
   --g1: #2563eb; --g2: #0f9488; --g3: #e2620c; --g4: #15803d; --g5: #9333ea; --g6: #475569; --g7: #db2777;
   --font-display: "Anuphan", "IBM Plex Sans Thai", "Leelawadee UI", Tahoma, sans-serif;
@@ -22,11 +21,7 @@
   --bg: #0e1420; --surface: #161e2c; --sunk: #121a27; --ink: #edf2fa; --muted: #b6c2d3; --faint: #8b98ab; --line: #2a3546; --line-strong: #3b4a60;
   --accent: #7aa2ff; --accent-ink: #0b1220; --accent-soft: #1d2a4a;
   --up: #ff8f84; --up-bg: #3b1d1b; --down: #5fe0a2; --down-bg: #123224; --flat: #b6c2d3; --flat-bg: #222c3b;
-  --k-cost: #8fb2ff; --k-cost-bg: #16213a; --k-cost-hd: #1f2f52;
-  --k-lab: #ffb867; --k-lab-bg: #2a1f12; --k-lab-hd: #3d2c15;
-  --k-ref: #c4b2ff; --k-ref-bg: #211c35; --k-ref-hd: #2f2750;
-  --k-sell: #6fe3a8; --k-sell-bg: #112a1f; --k-sell-hd: #17402c;
-  --k-mul: #5fd6e0; --k-mul-bg: #0f272b; --k-mul-hd: #153a40;
+  --k-cost: #8fb2ff; --k-cost-bg: #16213a; --k-lab: #ffb867; --k-lab-bg: #2a1f12; --k-ref: #c4b2ff; --k-ref-bg: #211c35; --k-sell: #6fe3a8; --k-sell-bg: #112a1f;
   --n-file: #ffc76b; --n-file-bg: #33270f; --n-fix: #8fb2ff; --n-fix-bg: #18243f; --n-rule: #c4b2ff; --n-rule-bg: #241f3b; --n-info: #c8d3e3; --n-info-bg: #1d2636;
   --g1: #6f9bff; --g2: #3fd0c2; --g3: #ff9a52; --g4: #5ad48a; --g5: #c48bff; --g6: #9fb0c6; --g7: #ff7ab8;
   color-scheme: dark; } }
@@ -34,177 +29,117 @@
   --bg: #0e1420; --surface: #161e2c; --sunk: #121a27; --ink: #edf2fa; --muted: #b6c2d3; --faint: #8b98ab; --line: #2a3546; --line-strong: #3b4a60;
   --accent: #7aa2ff; --accent-ink: #0b1220; --accent-soft: #1d2a4a;
   --up: #ff8f84; --up-bg: #3b1d1b; --down: #5fe0a2; --down-bg: #123224; --flat: #b6c2d3; --flat-bg: #222c3b;
-  --k-cost: #8fb2ff; --k-cost-bg: #16213a; --k-cost-hd: #1f2f52;
-  --k-lab: #ffb867; --k-lab-bg: #2a1f12; --k-lab-hd: #3d2c15;
-  --k-ref: #c4b2ff; --k-ref-bg: #211c35; --k-ref-hd: #2f2750;
-  --k-sell: #6fe3a8; --k-sell-bg: #112a1f; --k-sell-hd: #17402c;
-  --k-mul: #5fd6e0; --k-mul-bg: #0f272b; --k-mul-hd: #153a40;
+  --k-cost: #8fb2ff; --k-cost-bg: #16213a; --k-lab: #ffb867; --k-lab-bg: #2a1f12; --k-ref: #c4b2ff; --k-ref-bg: #211c35; --k-sell: #6fe3a8; --k-sell-bg: #112a1f;
   --n-file: #ffc76b; --n-file-bg: #33270f; --n-fix: #8fb2ff; --n-fix-bg: #18243f; --n-rule: #c4b2ff; --n-rule-bg: #241f3b; --n-info: #c8d3e3; --n-info-bg: #1d2636;
   --g1: #6f9bff; --g2: #3fd0c2; --g3: #ff9a52; --g4: #5ad48a; --g5: #c48bff; --g6: #9fb0c6; --g7: #ff7ab8;
   color-scheme: dark; }
 * { box-sizing: border-box; }
-body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); margin: 0; }
 .wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 56px; display: grid; gap: 16px; }
+.wrap > * { min-width: 0; }
 h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
 h1 { font-size: 1.7rem; font-weight: 700; letter-spacing: -0.01em; }
-h3 { font-size: 1rem; font-weight: 600; }
-.sub { color: var(--muted); margin: 4px 0 0; font-size: .9rem; }
-.num { font-variant-numeric: tabular-nums; }
+.sub { color: var(--muted); margin: 4px 0 0; font-size: .92rem; max-width: 80ch; }
+.rule { font-size: .9rem; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; font-variant-numeric: tabular-nums; }
+.rule b { color: var(--accent); }
 .tabs { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; width: fit-content; max-width: 100%; }
 .tabs button { font: inherit; font-size: .95rem; font-weight: 500; border: 0; background: transparent; color: var(--muted); padding: 8px 14px; border-radius: 9px; cursor: pointer; }
 .tabs button:hover { background: var(--accent-soft); color: var(--accent); }
 .tabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
-.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 8px; display: grid; gap: 8px; border-bottom: 1px solid var(--line); }
+.bar { position: sticky; top: 0; z-index: 5; background: var(--bg); padding-block: 8px; display: grid; gap: 8px; border-bottom: 1px solid var(--line); }
 .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .chip { font: inherit; font-size: .86rem; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); padding: 4px 12px; cursor: pointer; }
 .chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); font-weight: 600; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 input[type="search"] { font: inherit; font-size: .9rem; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); min-width: 0; flex: 1 1 160px; max-width: 240px; }
-label.tog { display: inline-flex; gap: 6px; align-items: center; font-size: .86rem; cursor: pointer; }
-.sum { display: flex; flex-wrap: wrap; gap: 8px; }
-.pill { display: inline-flex; gap: 6px; align-items: baseline; padding: 6px 12px; border-radius: 8px; font-size: .9rem; }
-.pill b { font-family: var(--font-display); font-size: 1.15rem; }
-.pill.up { background: var(--up-bg); color: var(--up); } .pill.down { background: var(--down-bg); color: var(--down); } .pill.flat { background: var(--flat-bg); color: var(--flat); }
-.legend { font-size: .82rem; color: var(--muted); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.st { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+.st .k { font-size: .78rem; color: var(--muted); } .st .v { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; } .st .s { font-size: .78rem; color: var(--muted); }
+.st.lo .v { color: var(--down); } .st.mid .v { color: var(--n-file); } .st.hi .v { color: var(--up); }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 1px 2px rgb(15 26 43 / .05); display: grid; gap: 10px; padding: 14px 16px; min-width: 0; }
 .card header { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; justify-content: space-between; }
 .card h2 { font-size: 1.15rem; font-weight: 700; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .gb { font-family: var(--font-body); font-size: .72rem; font-weight: 600; letter-spacing: .02em; padding: 2px 9px; border-radius: 999px; color: #fff; background: var(--gc, var(--g6)); }
 :root[data-theme="dark"] .gb { color: #0b1220; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .gb { color: #0b1220; } }
-.meta { font-size: .84rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 12px; }
-.note { font-size: .86rem; padding: 7px 10px; border-radius: 6px; }
+.meta { font-size: .86rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.tag { display: inline-block; font-size: .74rem; font-weight: 600; padding: 1px 8px; border-radius: 5px; border: 1px solid currentColor; }
+.tag.lo { color: var(--down); } .tag.mid { color: var(--n-file); } .tag.hi { color: var(--up); }
+.note { font-size: .88rem; padding: 8px 12px; border-radius: 8px; }
+.note.why { background: var(--accent-soft); color: var(--ink); border-left: 3px solid var(--accent); }
 .note.file { background: var(--n-file-bg); color: var(--n-file); } .note.fix { background: var(--n-fix-bg); color: var(--n-fix); }
 .note.rule { background: var(--n-rule-bg); color: var(--n-rule); } .note.info { background: var(--n-info-bg); color: var(--n-info); }
-.note.bug { background: var(--up-bg); color: var(--up); }
-.note.why { background: var(--accent-soft); color: var(--ink); border-left: 3px solid var(--accent); }
-/* สรุปกำไรแบบหัวตาราง R4.1 — 3 แถว เป้า / ตาราง / เว็บ */
+/* กำไรแบบหัวตาราง R4.1 — 3 แถว เป้า / ตาราง / เว็บ */
 .pf { display: grid; gap: 3px; background: var(--sunk); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; font-size: .9rem; font-variant-numeric: tabular-nums; }
 .pfr { display: grid; grid-template-columns: minmax(150px, 230px) 1fr 1fr; gap: 6px 14px; align-items: baseline; }
 .pfr .lb { font-size: .78rem; color: var(--muted); }
 .pfr.web { border-top: 1px dashed var(--line); padding-top: 3px; } .pfr.web b { color: var(--k-sell); }
-.tri { display: grid; gap: 1px; font-size: .8rem; color: var(--muted); text-align: right; } .tri .web { color: var(--k-sell); font-weight: 600; }
-@media (max-width: 560px) { .pfr { grid-template-columns: 1fr; gap: 0; } }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 8px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: .76rem; font-weight: 600; color: var(--muted); letter-spacing: .02em; vertical-align: bottom; }
+td.c, th.c { text-align: left; white-space: normal; min-width: 120px; }
+td.k-cost { background: var(--k-cost-bg); } td.k-lab { background: var(--k-lab-bg); } td.k-ref { background: var(--k-ref-bg); } td.k-sell { background: var(--k-sell-bg); }
+th.k-cost { color: var(--k-cost); } th.k-lab { color: var(--k-lab); } th.k-ref { color: var(--k-ref); } th.k-sell { color: var(--k-sell); }
+.v { display: block; } .v.big { font-weight: 700; color: var(--k-sell); }
+.ref { display: block; font-size: .74rem; color: var(--muted); }
+.ty { display: block; font-size: .74rem; color: var(--muted); white-space: normal; }
+.how { display: block; font-size: .76rem; color: var(--muted); white-space: normal; max-width: 320px; }
+.d { display: inline-block; min-width: 60px; padding: 1px 6px; border-radius: 5px; font-weight: 600; }
+.d.up { background: var(--up-bg); color: var(--up); } .d.down { background: var(--down-bg); color: var(--down); } .d.flat { background: var(--flat-bg); color: var(--flat); }
+tr.base td { font-weight: 600; border-bottom: 2px solid var(--line-strong); }
+tr.na td { color: var(--muted); }
+.empty { color: var(--muted); text-align: center; padding: 30px; }
+footer { font-size: .8rem; color: var(--muted); }
 .bomtog { display: block; margin-top: 4px; font: inherit; font-size: .76rem; font-weight: 600; color: var(--accent); background: var(--accent-soft); border: 0; border-radius: 6px; padding: 2px 8px; cursor: pointer; }
 .bomtog:hover { filter: brightness(.95); }
 tr.bomrow > td { background: var(--sunk); padding: 8px 10px 12px; text-align: left; white-space: normal; }
-.bomwrap { max-width: 760px; }
-.bomhd { font-size: .8rem; color: var(--muted); margin-bottom: 6px; }
-table.bom { width: auto; min-width: 520px; font-size: .84rem; background: var(--surface); border-radius: 8px; }
-table.bom th, table.bom td { padding: 3px 8px; }
-table.bom td.c { min-width: 220px; }
-table.bom tr.bc td { background: var(--accent-soft); font-weight: 600; text-align: left; }
-table.bom tr.bc td.num { text-align: right; }
-table.bom tr.bt td { font-weight: 700; border-top: 2px solid var(--line-strong); text-align: left; }
-table.bom tr.bt td.num { text-align: right; }
+.bomwrap { max-width: 820px; } .bomhd { font-size: .8rem; color: var(--muted); margin-bottom: 6px; }
+table.bom { width: auto; min-width: 560px; font-size: .84rem; background: var(--surface); border-radius: 8px; }
+table.bom th, table.bom td { padding: 3px 8px; } table.bom td.c { min-width: 220px; }
+table.bom tr.bc td { background: var(--accent-soft); font-weight: 600; text-align: left; } table.bom tr.bc td.num { text-align: right; }
+table.bom tr.bt td { font-weight: 700; border-top: 2px solid var(--line-strong); text-align: left; } table.bom tr.bt td.num { text-align: right; }
 .code { font-size: .72rem; color: var(--faint); }
-.tbl { overflow-x: auto; }
-table { border-collapse: collapse; width: 100%; font-size: .9rem; }
-th, td { padding: 6px 8px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line); vertical-align: top; }
-th { font-size: .76rem; font-weight: 600; color: var(--muted); letter-spacing: .02em; vertical-align: bottom; }
-th.grp { font-size: .8rem; border-radius: 6px 6px 0 0; padding-block: 5px; }
-/* สีตามความหมายคอลัมน์: ทุน น้ำเงิน · ค่าแรง ส้ม · ตารางอ้างอิง ม่วง · ขาย เขียว */
-td.k-cost { background: var(--k-cost-bg); } th.k-cost { color: var(--k-cost); } th.grp.k-cost { background: var(--k-cost-hd); }
-td.k-lab { background: var(--k-lab-bg); } th.k-lab { color: var(--k-lab); } th.grp.k-lab { background: var(--k-lab-hd); }
-td.k-ref { background: var(--k-ref-bg); } th.k-ref { color: var(--k-ref); } th.grp.k-ref { background: var(--k-ref-hd); }
-td.k-mul { background: var(--k-mul-bg); } th.k-mul { color: var(--k-mul); } th.grp.k-mul { background: var(--k-mul-hd); } td.k-mul .v { color: var(--k-mul); font-weight: 600; }
-.pc { font-size: .78em; font-weight: 500; opacity: .85; }
-.mulpill { display: inline-block; padding: 1px 8px; border-radius: 6px; background: var(--k-mul-bg); color: var(--k-mul); font-weight: 600; }
-td.k-sell { background: var(--k-sell-bg); } th.k-sell { color: var(--k-sell); } th.grp.k-sell { background: var(--k-sell-hd); }
-td.k-ref .v { color: var(--k-ref); } td.k-sell .v.big { color: var(--k-sell); } td.k-cost .v { color: var(--k-cost); }
-tbody tr:hover td { filter: brightness(.97); }
-.keys { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .82rem; color: var(--muted); }
-.keys i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
-th.grp { text-align: center; border-bottom: 0; padding-bottom: 0; }
-td.c, th.c { text-align: left; white-space: normal; min-width: 120px; }
-td.sep, th.sep { border-left: 1px solid var(--line); }
-tr.base td { font-weight: 600; border-bottom: 2px solid var(--line-strong); }
-tr.na td { color: var(--muted); }
-.v { display: block; font-variant-numeric: tabular-nums; } .v.big { font-weight: 600; }
-.ref { display: block; font-size: .74rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-.ty { display: block; font-size: .74rem; color: var(--muted); white-space: normal; }
-.how { display: block; font-size: .76rem; color: var(--muted); white-space: normal; max-width: 260px; }
-.xl { display: block; margin-top: 3px; font-size: .72rem; line-height: 1.35; white-space: normal; max-width: 230px; text-align: right; padding: 2px 6px; border-radius: 5px; }
-.xl.ok { background: var(--down-bg); color: var(--down); } .xl.bad { background: var(--up-bg); color: var(--up); font-weight: 600; }
-.tag { display: inline-block; font-size: .7rem; padding: 0 6px; border-radius: 4px; background: var(--flat-bg); color: var(--flat); margin-left: 4px; white-space: nowrap; }
-.tag.sw { background: var(--n-rule-bg); color: var(--n-rule); }
-.d { display: inline-block; min-width: 60px; padding: 1px 6px; border-radius: 5px; font-weight: 600; }
-.d.up { background: var(--up-bg); color: var(--up); } .d.down { background: var(--down-bg); color: var(--down); } .d.flat { background: var(--flat-bg); color: var(--flat); }
-.det { display: none; } body.show-det .det { display: table-cell; }
-.det41 { display: none; } body.show-det41 .det41 { display: table-cell; }
-.empty { color: var(--muted); text-align: center; padding: 30px; }
-footer { font-size: .8rem; color: var(--muted); }
-/* สรุป */
-.finds { display: grid; gap: 10px; }
-.find { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
-.find.hi { background: var(--up-bg); border-color: transparent; } .find.mid { background: var(--n-file-bg); border-color: transparent; } .find.ok { background: var(--down-bg); border-color: transparent; }
-.find .sev { font-size: .72rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
-.sev.hi { background: var(--up); color: #fff; } .sev.mid { background: var(--n-file); color: #fff; } .sev.lo { background: var(--n-info); color: var(--surface); } .sev.ok { background: var(--down); color: #fff; }
-.find b { display: block; font-size: .98rem; } .find p { margin: 3px 0 0; font-size: .9rem; color: var(--ink); opacity: .85; } .find .act { color: var(--ink); font-size: .88rem; margin-top: 4px; }
-.ov { width: 100%; border-collapse: collapse; font-size: .88rem; }
-.ov th, .ov td { padding: 5px 8px; }
-@media (max-width: 560px) { h1 { font-size: 1.4rem; } .card { padding: 12px; } }
-/* ── พิมพ์ A4 แนวนอน (เจ้าของ 13 ต.ค.69 "ทำเป็น pdf ปริ้น a4 อ่านตรวจ") — โชว์ครบ 3 แท็บต่อกัน · ซ่อนปุ่ม/ช่องค้น ── */
-.printhead { display: none; }
-@page { size: A4 landscape; margin: 9mm 9mm 10mm; }
+@media (max-width: 560px) { h1 { font-size: 1.4rem; } .card { padding: 12px; } .pfr { grid-template-columns: 1fr; gap: 0; } }
 @media print {
   :root { --bg: #fff; }
   body { font-size: 9.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .wrap { max-width: none; padding: 0; gap: 8px; }
-  .tabs, .bar, .chip, input, label.tog { display: none !important; }
-  #tab-sum[hidden], #tab-r41[hidden], #tab-color[hidden] { display: block !important; }
-  #tab-r41, #tab-color { break-before: page; }
-  .printhead { display: block; font-family: var(--font-display); font-size: 14pt; font-weight: 700; margin: 0 0 6px; padding-bottom: 3px; border-bottom: 2px solid var(--ink); }
-  .card, .find, tr { break-inside: avoid; }
-  .card { box-shadow: none; padding: 8px 10px; gap: 6px; }
-  .tbl { overflow: visible; }
-  table { font-size: 8.5pt; }
-  th, td { padding: 3px 5px; }
-  .xl, .how { max-width: none; }
-  footer { font-size: 7.5pt; }
+  .tabs, .bar, .chip, input, .bomtog, tr.bomrow { display: none !important; }
+  #tab-r41[hidden], #tab-color[hidden] { display: block !important; }
+  #tab-color { break-before: page; }
+  .card, tr { break-inside: avoid; } .card { box-shadow: none; padding: 8px 10px; gap: 6px; }
+  .tbl { overflow: visible; } table { font-size: 8.5pt; } th, td { padding: 3px 5px; }
 }
 </style>
 
 <div class="wrap">
   <div>
     <h1>ตรวจราคา 4.0</h1>
-    <p class="sub" id="sub">ทุน · ค่าแรง · กำไร · ราคาขาย — เว็บตอนนี้ เทียบ ตาราง R4.1 และ R3.9</p>
+    <p class="sub">ราคาเว็บตอนนี้ เทียบ ★ ตารางราคาขาย R4.1 (และค่าสีเทียบ R3.9) — ราคาเว็บล็อกกำไรสุทธิเท่าตาราง R4.1 ทุกรุ่น ราคาที่ต่างจากตาราง = ทุนที่ต่าง</p>
   </div>
   <div class="tabs" role="tablist">
-    <button role="tab" id="t-sum" data-tab="sum">สรุป</button>
-    <button role="tab" id="t-r41" data-tab="r41">ทุน + ขาย เทียบตาราง R4.1</button>
-    <button role="tab" id="t-color" data-tab="color">ค่าอบสี เทียบ R3.9</button>
-  </div>
-
-  <div id="tab-sum" hidden>
-    <div class="printhead">1 · สรุป</div>
-    <div class="finds" id="finds"></div>
-    <section class="card"><h3>ภาพรวมรายรุ่น (สีขาว/ดำ · ทุกขนาดในตาราง R4.1)</h3>
-      <div class="legend">ทุน = ทุนค่าของเว็บเทียบตาราง · ขาย = ราคาเว็บ (ล็อกกำไรสุทธิเท่าตาราง R4.1 · ค่าแรงขายเท่าตาราง) · แดงเกิน +5% · เขียวต่ำกว่า −5%</div>
-      <div class="tbl"><table class="ov" id="ov"></table></div></section>
+    <button role="tab" id="t-r41" data-tab="r41">ราคา เทียบตาราง R4.1</button>
+    <button role="tab" id="t-color" data-tab="color">ค่าสี เทียบ R3.9</button>
   </div>
 
   <div id="tab-r41" hidden>
-    <div class="printhead">2 · ทุน + ขาย เทียบตาราง R4.1 (ทุกแถวพิสูจน์ด้วย Excel)</div>
+    <div class="rule">ขายรวม = <b>ทุนรวม (ของ + ผลิต + ติดตั้ง) ÷ (1 − ค่าดำเนินการ 30/130 − กำไรสุทธิ)</b> ปัดขึ้นหลักร้อย · ค่าผลิต/ติดตั้ง (ขาย) = ตัวเลขในตาราง · ค่าของ (ขาย) = ส่วนที่เหลือ · กำไร % = (ขาย − ทุน) ÷ ขาย แบบหัวตาราง</div>
+    <div class="stats" id="stats"></div>
     <div class="bar"><div class="row">
       <input type="search" id="q41" placeholder="ค้นชื่อบาน" aria-label="ค้นหาบาน">
       <div class="row" id="groups41" role="group" aria-label="หมวด"></div>
-      <label class="tog"><input type="checkbox" id="det41"> ดูค่าแรง + ทุนรวม + กำไรสุทธิ</label>
     </div></div>
-    <div class="sum" id="sum41"></div>
-    <div class="legend">ขายเว็บ = ทุนรวม ÷ (1 − 30/130 − กำไรสุทธิตาราง) ปัดร้อย (ล็อกกำไรสุทธิ 13 ต.ค.69) · ราคาต่างจากตาราง = ทุนต่าง · ต่าง = เทียบตาราง R4.1 · แดง/เขียว เกิน ±2%</div>
     <div id="list41" style="display:grid;gap:14px"></div>
   </div>
 
   <div id="tab-color" hidden>
-    <div class="printhead">3 · ค่าอบสี เทียบ R3.9</div>
+    <div class="rule">ค่าสีที่เพิ่ม (ทุน) = ทุนค่าของสีนั้น − ทุนสีขาว · อบ = กก.ที่เข้ากองอบ × เรต/กก. + ตู้อบ · เส้นสี = ซื้อเส้นสีสำเร็จแพงกว่าขาว · ราคาขายคิดด้วยกำไรสุทธิเดียวกับสีขาว</div>
     <div class="bar"><div class="row">
       <input type="search" id="q" placeholder="ค้นชื่อบาน หรือ สี" aria-label="ค้นหา">
       <div class="row" id="groups" role="group" aria-label="หมวด"></div>
-      <label class="tog"><input type="checkbox" id="det"> ดูทุนแยกก้อน + R4.0 เดิม</label>
     </div></div>
-    <div class="sum" id="sum"></div>
-    <div class="legend">ค่าสีที่เพิ่ม (ทุน) = ทุนค่าของสีนั้น − ทุนสีขาว · อบ = กก.ที่เข้ากองอบ × เรต/กก. + ตู้อบ · เส้นสี = ซื้อเส้นสีสำเร็จแพงกว่าขาว · ต่าง = ขายเว็บ เทียบ R3.9 · แดง/เขียว เกิน ±2%</div>
+    <div class="stats" id="sum"></div>
     <div id="list" style="display:grid;gap:14px"></div>
   </div>
   <footer id="foot"></footer>
@@ -218,23 +153,27 @@ const pct = (a, b) => (typeof a === "number" && typeof b === "number" && Math.ab
 const kindOf = (p, tol = 2) => (p == null ? null : p > tol ? "up" : p < -tol ? "down" : "flat");
 const chip = (p, tol = 2) => (p == null ? "—" : `<span class="d ${kindOf(p, tol)}">${p > 0 ? "+" : ""}${p}%</span>`);
 const netOf = (sT, cT) => (sT > 0 ? Math.round(((sT - sT * 30 / 130 - cT) / sT) * 1000) / 10 : null);
-const R41 = DATA.r41 || { rows: [], notes: {}, finds: [], reasons: {} };
+const mg1 = (s, c) => (s > 0 ? Math.round(((s - c) / s) * 100) : null);
+const R41 = DATA.r41 || { rows: [], notes: {}, why: {} };
 const GRP41 = (name) => /หลังคา|กลาสเฮ้าส์/.test(name) ? "หลังคา" : /ระแนง|รั้ว|ราว/.test(name) && !/เลื่อน \(/.test(name) && !/ระแนงเลื่อน/.test(name) ? "ระแนง/รั้ว/ราว"
   : /ฝ้า|ผนัง|พื้น|ไฟ/.test(name) ? "ฝ้า/ผนัง/พื้น" : /เลื่อน|Slim|E-series/i.test(name) ? "บานเลื่อน" : /เฟี้ยม/.test(name) ? "เฟี้ยม" : "บานเปิด/อื่น ๆ";
-const GCOL = { "บานเลื่อน": "--g1", "บานเปิด/อื่น": "--g2", "บานเปิด": "--g2", "หลังคา": "--g3", "ระแนง/รั้ว": "--g4", "ระแนง": "--g4", "เฟี้ยม": "--g5", "ฝ้า/ผนัง/พื้น": "--g6" };
+const GCOL = { "บานเลื่อน": "--g1", "บานเปิด/อื่น ๆ": "--g2", "หลังคา": "--g3", "ระแนง/รั้ว/ราว": "--g4", "เฟี้ยม": "--g5", "ฝ้า/ผนัง/พื้น": "--g6" };
 const gbadge = (g) => `<span class="gb" style="--gc:var(${GCOL[g] || "--g7"})">${g}</span>`;
-const KEYS = `<div class="keys"><span><i style="background:var(--k-cost-hd)"></i>ทุนค่าของ</span><span><i style="background:var(--k-mul-hd)"></i>กำไรค่าของ (ขาย − ทุน) ÷ ขาย</span><span><i style="background:var(--k-lab-hd)"></i>ค่าแรง</span><span><i style="background:var(--k-ref-hd)"></i>ตารางอ้างอิง (R4.1 / R3.9)</span><span><i style="background:var(--k-sell-hd)"></i>ราคาขายเว็บ</span></div>`;
 const gkey = (r) => (r.name || r.head) + (r.vk ? " · " + r.vk : "");
-const avg = (a) => (a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length * 10) / 10 : null);
+const avg = (a) => { const v = a.filter((x) => x != null); return v.length ? Math.round(v.reduce((x, y) => x + y, 0) / v.length * 10) / 10 : null; };
+const whyOf = (r) => (R41.why || {})[(r.id || "") + "|" + (r.vk || "")] || (R41.why || {})[r.id || ""] || "";
+
+// จัดกลุ่มรุ่น/แบบย่อย แล้วเรียงจากราคาต่างมากไปน้อย (รุ่นที่เทียบไม่ได้ไว้ท้าย)
 const groups41 = new Map();
 for (const r of R41.rows) { const k = gkey(r); if (!groups41.has(k)) groups41.set(k, []); groups41.get(k).push(r); }
+const models = [...groups41].map(([k, rs]) => { const ok = rs.filter((r) => r.web && !r.small); const d = avg(ok.map((r) => pct(r.web.sT, r.pdf.sT)));
+  return { k, rs, ok, d, absD: d == null ? -1 : Math.abs(d), c: avg(ok.map((r) => pct(r.web.cM, r.pdf.cM))) }; }).sort((a, b) => b.absD - a.absD);
+const band = (a) => (a == null || a < 0 ? "na" : a <= 3 ? "lo" : a <= 8 ? "mid" : "hi");
+const BAND = { lo: "ต่างน้อย", mid: "ต่างกลาง", hi: "ต่างเยอะ", na: "เทียบไม่ได้" };
 
-// ── แท็บ สรุป ──
-// สรุปกำไรแบบหัวตาราง R4.1 "กำไรสุทธิ 40% · ของ/ผลิต/ติด 63/65/62%" — 3 แถว เป้า / ตาราง / เว็บ (เจ้าของ 14 ต.ค.69)
-//   เป้า = ตัวเลขที่พิมพ์ในหัวตาราง · ตาราง = คิดจากราคาในตารางจริง (เฉลี่ยทุกขนาด) · เว็บ = คิดจากราคาเว็บ
-const mg1 = (s, c) => (s > 0 ? Math.round(((s - c) / s) * 100) : null);
+// กำไรแบบหัวตาราง R4.1 "กำไรสุทธิ 40% · ของ/ผลิต/ติด 63/65/62%" — เป้า (หัวตาราง) / ตาราง (คิดจากราคาในตาราง) / เว็บ
 const profOf = (x) => ({ net: netOf(x.sT, x.cT), m: mg1(x.sM, x.cM), p: mg1(x.sP, x.cP), i: mg1(x.sI, x.cI) });
-const avgP = (rows, pick) => { const P = rows.map((r) => profOf(pick(r))); const a = (k) => { const v = P.map((o) => o[k]).filter((v) => v != null); return v.length ? Math.round((v.reduce((x, y) => x + y, 0) / v.length) * 10) / 10 : null; }; return { net: a("net"), m: a("m"), p: a("p"), i: a("i") }; };
+const avgP = (rows, pick) => { const P = rows.map((r) => profOf(pick(r))); const a = (k) => avg(P.map((o) => o[k])); return { net: a("net"), m: a("m"), p: a("p"), i: a("i") }; };
 const ppc = (v) => (v == null ? "—" : v + "%");
 const p3 = (o) => `${o.m == null ? "—" : Math.round(o.m)}/${o.p == null ? "—" : Math.round(o.p)}/${o.i == null ? "—" : Math.round(o.i)}%`;
 const profitBlock = (rs, ok) => {
@@ -244,40 +183,8 @@ const profitBlock = (rs, ok) => {
   const row = (lb, net, parts, cls = "") => `<div class="pfr ${cls}"><span class="lb">${lb}</span><span>กำไรสุทธิ <b>${net}</b></span><span>ของ/ผลิต/ติดตั้ง <b>${parts}</b></span></div>`;
   return `<div class="pf">${row("เป้า (หัวตาราง R4.1)", tgt != null ? tgt + "%" : "—", tp ? tp.join("/") + "%" : "—")}${row("ตาราง R4.1 (คิดจากราคาในตาราง)", ppc(T.net), p3(T))}${row("เว็บ", ppc(W.net), p3(W), "web")}</div>`;
 };
-function renderSum() {
-  $("#finds").innerHTML = (R41.finds || []).map((f) => `<div class="find ${f.sev}"><span class="sev ${f.sev}">${f.tag}</span><div><b>${f.title}</b><p>${f.why}</p>${f.act ? `<div class="act">→ ${f.act}</div>` : ""}</div></div>`).join("");
-  const rows = [];
-  for (const [k, rs] of groups41) {
-    const ok = rs.filter((r) => r.web && !r.small);
-    if (!ok.length) { rows.push(`<tr class="na"><td class="c">${k}</td><td colspan="6" style="text-align:left">${rs[0].na || "—"}</td></tr>`); continue; }
-    const c = avg(ok.map((r) => pct(r.web.cM, r.pdf.cM))), s = avg(ok.map((r) => pct(r.web.sT, r.pdf.sT))), w = avg(ok.map((r) => pct(r.web.sT, r.pdf.sT)));
-    const lab = ok.every((r) => r.web.sP === r.pdf.sP && r.web.sI === r.pdf.sI);
-    const why = whyOf(ok[0]);
-    const tgt = rs.find((r) => r.target != null)?.target, tp = rs.find((r) => r.targetParts)?.targetParts;
-    const T = avgP(ok, (r) => r.pdf), Wv = avgP(ok, (r) => r.web);
-    const tri = (a, b, c) => `<span class="tri"><span>เป้า ${a}</span><span>ตาราง ${b}</span><span class="web">เว็บ ${c}</span></span>`;
-    rows.push(`<tr><td class="c">${gbadge(GRP41(k))} ${k}</td><td class="num k-cost">${chip(c, 5)}</td><td class="num k-mul">${tri(tgt != null ? tgt + "%" : "—", ppc(T.net), ppc(Wv.net))}</td><td class="num k-mul">${tri(tp ? tp.join("/") + "%" : "—", p3(T), p3(Wv))}</td><td class="num k-lab">${lab ? "✓ เท่าตาราง" : "✗ ต่าง"}</td><td class="num k-sell">${chip(s, 5)}</td><td class="c" style="font-size:.84rem;color:var(--muted);min-width:260px">${why || (Math.abs(s || 0) < 2 ? "ใกล้ตาราง" : "")}</td></tr>`);
-  }
-  $("#ov").innerHTML = `<thead><tr><th class="c">รุ่น</th><th class="k-cost">ทุนค่าของ เว็บ vs ตาราง</th><th class="k-mul">กำไรสุทธิ</th><th class="k-mul">กำไร ของ/ผลิต/ติดตั้ง</th><th class="k-lab">ค่าแรงขาย</th><th class="k-sell">ขายเว็บ vs ตาราง</th><th class="c">ทำไมราคาต่าง</th></tr></thead><tbody>${rows.join("")}</tbody>`;
-}
 
-// ── แท็บ ทุน + ขาย เทียบตาราง R4.1 ──
-let q41 = "", g41 = "ทั้งหมด";
-const cell = (web, ref, big, cls = "", tol = 2) => { const p = pct(web, ref), k = kindOf(p, tol);
-  return `<td class="num${cls}"><span class="v${big ? " big" : ""}">${fmt(web)}</span><span class="ref">${fmt(ref)}${p != null && k !== "flat" ? ` <span class="${k === "up" ? "d up" : "d down"}" style="min-width:0;padding:0 4px">${p > 0 ? "+" : ""}${p}%</span>` : ""}</span></td>`; };
-// ผลพิสูจน์ด้วย Excel (ไฟล์ v1/v20.1 คำนวณจริงที่ขนาดเดียวกัน) — ส่วนต่างทุนแยก 4 ก้อน
-// กำไรค่าของแบบหัวตาราง R4.1 = (ขาย − ทุน) ÷ ขาย — SMS 63% (14 ต.ค.69 เลิกโชว์ตัวคูณ ×2.72 เจ้าของงง)
-//   mulOf ยังคืน ขาย ÷ ทุน (ใช้เฉลี่ย) · mulTxt แปลงเป็น % กำไรตอนโชว์
-const mulOf = (sM, cM) => (sM > 0 && cM > 0 ? sM / cM : null);
-const mgOfMul = (m) => (m == null || !(m > 0) ? null : Math.round((1 - 1 / m) * 100));
-const mulTxt = (m) => (m == null ? "—" : `${mgOfMul(m)}%`);
-const mulCell = (w, d) => { const mw = mulOf(w.sM, w.cM), mt = mulOf(d.sM, d.cM);
-  const dp = mw != null && mt != null ? mgOfMul(mw) - mgOfMul(mt) : null;   // กำไรต่างกี่ % จุด
-  const tag = dp == null || Math.abs(dp) < 3 ? "" : ` <span class="d ${dp > 0 ? "up" : "down"}" style="min-width:0;padding:0 4px">${dp > 0 ? "+" : ""}${dp} จุด</span>`;
-  return `<td class="num k-mul"><span class="v">${mulTxt(mw)}</span><span class="ref">ตาราง ${mulTxt(mt)}${tag}</span></td>`; };
-// 14 ต.ค.69 เลิกโชว์ "✓ Excel · ไฟล์ v1 เปลี่ยนจากตาราง ± · เรตแบรนด์ ±" (เจ้าของอ่านไม่เข้าใจ)
-//   แทนด้วย ① ทำไมราคาต่าง ภาษาง่าย (R41.why) ② ปุ่มกางรายการค่าของทีละขนาด (r.bom)
-const whyOf = (r) => (R41.why || {})[(r.id || "") + "|" + (r.vk || "")] || (R41.why || {})[r.id || ""] || "";
+// รายการค่าของ (กดกาง) — ทุกบรรทัดอลูมีสูตรนับเส้น
 const BOMCAT = { alu: "อลูมิเนียม", bake: "ค่าอบสี", openOven: "ค่าเปิดตู้อบ", glass: "กระจก", hardware: "อุปกรณ์", consum: "วัสดุอื่น", addon: "ออปชั่น", discount: "ส่วนลด" };
 const n2 = (v) => (Math.abs(v - Math.round(v)) < 0.005 ? fmt(Math.round(v)) : v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
 const bomTable = (r) => {
@@ -286,61 +193,67 @@ const bomTable = (r) => {
   let total = 0;
   const body = cats.map((c) => { const ls = L.filter((l) => l[0] === c); const sub = ls.reduce((a, l) => a + l[6], 0); total += sub;
     return `<tr class="bc"><td colspan="5">${BOMCAT[c] || c}</td><td class="num">${fmt(Math.round(sub))}</td></tr>` + ls.map((l) => `<tr><td class="c">${l[1]}${l[2] ? ` <span class="code">${l[2]}</span>` : ""}${l[7] ? `<span class="how">${l[7]}</span>` : ""}</td><td class="num">${n2(l[3])}</td><td>${l[4]}</td><td class="num">${n2(l[5])}</td><td class="num">=</td><td class="num">${n2(l[6])}</td></tr>`).join(""); }).join("");
-  // สรุปวิธีนับเส้นของรุ่น (ดูจากบรรทัดอลู) — เผื่อเศษ 30% / ซื้อเต็มเส้น ตามที่ไฟล์ถอดทุนแต่ละชีตตั้งไว้
   const hows = L.filter((l) => l[0] === "alu" && l[7]);
   const nW = hows.filter((l) => /เผื่อเศษ/.test(l[7])).length, nF = hows.filter((l) => /ซื้อเต็ม/.test(l[7])).length;
-  const rule = !hows.length ? "" : `<div class="bomhd">วิธีนับเส้นอลู: ${nW && !nF ? "ยาวที่ตัดจริง ÷ ความยาวเส้น × เผื่อเศษ 1.3 (ตามไฟล์ถอดทุน · ไม่ปัดเป็นเส้นเต็ม)" : nF && !nW ? "จัดชิ้นลงเส้นเต็ม ซื้อทั้งเส้น ไม่มีเผื่อเศษ (ตามไฟล์ถอดทุน)" : "ผสม — บรรทัดที่เผื่อเศษ 1.3 กับบรรทัดที่ซื้อเต็มเส้น ดูสูตรใต้ชื่อแต่ละบรรทัด"}</div>`;
+  const rule = !hows.length ? "" : `<div class="bomhd">วิธีนับเส้นอลู: ${nW && !nF ? "ยาวที่ตัดจริง ÷ ความยาวเส้น × เผื่อเศษ 1.3 (ตามไฟล์ถอดทุน · ไม่ปัดเป็นเส้นเต็ม)" : nF && !nW ? "จัดชิ้นลงเส้นเต็ม ซื้อทั้งเส้น ไม่มีเผื่อเศษ (ตามไฟล์ถอดทุน)" : "ผสม — ดูสูตรใต้ชื่อแต่ละบรรทัด"}</div>`;
   return rule + `<table class="bom"><thead><tr><th class="c">รายการ</th><th>จำนวน</th><th>หน่วย</th><th>ราคา/หน่วย</th><th></th><th>บาท</th></tr></thead><tbody>${body}<tr class="bt"><td colspan="5">รวมค่าของ (ทุน)</td><td class="num">${fmt(Math.round(total))}</td></tr></tbody></table>`; };
-let bomSeq = 0;
+
+// ── แท็บ ราคา เทียบตาราง R4.1 ──
+let q41 = "", g41 = "ทั้งหมด", bomSeq = 0;
+const cell = (web, ref, cls = "", tol = 2) => { const p = pct(web, ref), k = kindOf(p, tol);
+  return `<td class="num${cls}"><span class="v">${fmt(web)}</span><span class="ref">ตาราง ${fmt(ref)}${p != null && k !== "flat" ? ` <span class="d ${k}" style="min-width:0;padding:0 4px">${p > 0 ? "+" : ""}${p}%</span>` : ""}</span></td>`; };
+function renderStats() {
+  const cnt = { lo: 0, mid: 0, hi: 0 }, rc = { lo: 0, mid: 0, hi: 0 };
+  for (const m of models) { if (m.absD < 0) continue; cnt[band(m.absD)]++; for (const r of m.ok) rc[band(Math.abs(pct(r.web.sT, r.pdf.sT)))]++; }
+  const n = models.filter((m) => m.absD >= 0).length, nr = rc.lo + rc.mid + rc.hi;
+  $("#stats").innerHTML = `<div class="st"><div class="k">รุ่น/แบบย่อยที่เทียบได้</div><div class="v">${n}</div><div class="s">${nr} ขนาด</div></div>
+    <div class="st lo"><div class="k">ราคาต่างน้อย (≤3%)</div><div class="v">${cnt.lo}</div><div class="s">${rc.lo} ขนาด</div></div>
+    <div class="st mid"><div class="k">ต่างกลาง (3–8%)</div><div class="v">${cnt.mid}</div><div class="s">${rc.mid} ขนาด</div></div>
+    <div class="st hi"><div class="k">ต่างเยอะ (เกิน 8%)</div><div class="v">${cnt.hi}</div><div class="s">${rc.hi} ขนาด · มีคำอธิบายในการ์ด</div></div>`;
+}
 function render41() {
-  const gnames = ["ทั้งหมด", ...new Set([...groups41.keys()].map(GRP41))];
+  const gnames = ["ทั้งหมด", ...new Set(models.map((m) => GRP41(m.k)))];
   $("#groups41").innerHTML = gnames.map((g) => `<button class="chip" aria-pressed="${g === g41}" data-g="${g}">${g}</button>`).join("");
-  const ql = q41.trim().toLowerCase(); const cnt = { up: 0, down: 0, flat: 0, na: 0 }, cards = [];
-  for (const [k, rs] of groups41) {
+  const ql = q41.trim().toLowerCase(); const cards = [];
+  for (const m of models) {
+    const { k, rs, ok } = m;
     if (g41 !== "ทั้งหมด" && GRP41(k) !== g41) continue;
     if (ql && !k.toLowerCase().includes(ql)) continue;
-    const ok = rs.filter((r) => r.web && !r.small);
-    const note = R41.notes[rs[0].id] || (!rs[0].id && rs[0].na ? { level: "info", text: rs[0].na } : null);
-    const tgt = rs.find((r) => r.target != null)?.target;
+    const note = R41.notes[rs[0].id];
     const body = rs.map((r) => {
-      const size = `${r.w}×${r.h}${r.p > 1 ? `<span class="ty">${r.p} บาน</span>` : ""}${r.small ? '<span class="ty">ไซซ์เล็ก (ตารางตั้งราคาตายตัว · เว็บคิดตามเป้ากำไร)</span>' : ""}`;
+      const size = `${r.w}×${r.h}${r.p > 1 ? `<span class="ty">${r.p} บาน</span>` : ""}${r.small ? '<span class="ty">ไซซ์เล็ก (ตารางตั้งราคาตายตัว)</span>' : ""}`;
       const d = r.pdf;
-      if (!r.web) { cnt.na++; return `<tr class="na"><td class="c">${size}</td><td class="num"><span class="ref">${fmt(d.cM)}</span></td><td class="num k-mul"><span class="ref">ตาราง ${mulTxt(mulOf(d.sM, d.cM))}</span></td><td class="num">—</td><td class="num"><span class="ref">${fmt(d.sT)}</span></td><td class="num">—</td><td class="c det41" colspan="4">${r.na}</td></tr>`; }
-      const w = r.web, pT = pct(r.web.sT, d.sT); if (!r.small) cnt[kindOf(pT)]++;
+      if (!r.web) return `<tr class="na"><td class="c">${size}</td><td class="num"><span class="ref">ตาราง ${fmt(d.cM)}</span></td><td class="num">—</td><td class="num"><span class="ref">${fmt(d.sT)}</span></td><td class="c" colspan="4">${r.na}</td></tr>`;
+      const w = r.web, pT = pct(w.sT, d.sT), bid = "bom" + (++bomSeq);
       const labOk = w.sP === d.sP && w.sI === d.sI;
-      const bid = "bom" + (++bomSeq);
+      const pw = profOf(w), pd = profOf(d);
       return `<tr><td class="c">${size}${r.bom && r.bom.length ? `<button type="button" class="bomtog" aria-expanded="false" aria-controls="${bid}">ค่าของ ▾</button>` : ""}</td>
-        ${cell(w.cM, d.cM, false, " k-cost")}
-        ${mulCell(w, d)}
-        <td class="num k-lab"><span class="v">${fmt(w.sP + w.sI)}</span><span class="ref">${labOk ? "✓ เท่าตาราง" : "ตาราง " + fmt(d.sP + d.sI)}</span></td>
-        <td class="num sep k-ref"><span class="v">${fmt(d.sT)}</span></td>
-        <td class="num k-sell"><span class="v big">${fmt(r.web.sT)}</span><span class="ref">${chip(pT)}</span></td>
-        ${cell(w.cP, d.cP, false, " sep det41 k-lab")}${cell(w.cI, d.cI, false, " det41 k-lab")}${cell(w.cT, d.cT, false, " det41 k-cost")}
-        <td class="num det41 k-sell"><span class="v">${netOf(r.web.sT, w.cT) ?? "—"}%</span><span class="ref">ตาราง ${netOf(d.sT, d.cT) ?? "—"}%${tgt != null ? ` · เป้า ${tgt}%` : ""}</span></td></tr>
-        ${r.bom && r.bom.length ? `<tr class="bomrow" id="${bid}" hidden><td colspan="11"><div class="bomwrap"><div class="bomhd">ค่าของ ${r.w}×${r.h}${r.p > 1 ? " · " + r.p + " บาน" : ""} — สีขาว ค่าเริ่มต้นของรุ่น · ราคาทุนจากสโตร์/ไฟล์ (ตาราง R4.1 ทุนค่าของ ${fmt(d.cM)})</div>${bomTable(r)}</div></td></tr>` : ""}`;
+        ${cell(w.cM, d.cM, " k-cost")}
+        <td class="num k-lab"><span class="v">${fmt(w.sP + w.sI)}</span><span class="ref">${labOk ? "เท่าตาราง" : "ตาราง " + fmt(d.sP + d.sI)}</span></td>
+        <td class="num k-ref"><span class="v">${fmt(d.sT)}</span></td>
+        <td class="num k-sell"><span class="v big">${fmt(w.sT)}</span><span class="ref">${chip(pT)}</span></td>
+        <td class="num"><span class="v">${ppc(pw.net)}</span><span class="ref">ตาราง ${ppc(pd.net)}</span></td>
+        <td class="num"><span class="v">${p3(pw)}</span><span class="ref">ตาราง ${p3(pd)}</span></td></tr>
+        ${r.bom && r.bom.length ? `<tr class="bomrow" id="${bid}" hidden><td colspan="7"><div class="bomwrap"><div class="bomhd">ค่าของ ${r.w}×${r.h}${r.p > 1 ? " · " + r.p + " บาน" : ""} — สีขาว ค่าเริ่มต้นของรุ่น · ราคาทุนจากสโตร์/ไฟล์ (ตาราง R4.1 ทุนค่าของ ${fmt(d.cM)})</div>${bomTable(r)}</div></td></tr>` : ""}`;
     }).join("");
-    const c = avg(ok.map((r) => pct(r.web.cM, r.pdf.cM))), s = avg(ok.map((r) => pct(r.web.sT, r.pdf.sT)));
-    cards.push(`<section class="card"><header><h2>${gbadge(GRP41(k))}${k}</h2><div class="meta">${ok.length ? `ทุนค่าของ ${chip(c)} · ราคาขาย ${chip(s)} เทียบตาราง` : ""}</div></header>
+    const b = band(m.absD), why = whyOf(rs[0]);
+    cards.push(`<section class="card"><header><h2>${gbadge(GRP41(k))}${k}</h2><div class="meta">${ok.length ? `<span class="tag ${b}">${BAND[b]}</span><span>ราคาขาย ${chip(m.d)} · ทุนค่าของ ${chip(m.c)} เทียบตาราง (เฉลี่ย)</span>` : ""}</div></header>
       ${profitBlock(rs, ok)}
-      ${whyOf(rs[0]) ? `<div class="note why"><b>ทำไมราคาต่างจากตาราง:</b> ${whyOf(rs[0])}</div>` : ""}
+      ${why ? `<div class="note why"><b>ทำไมราคาต่างจากตาราง:</b> ${why}</div>` : ""}
       ${note && note.text ? `<div class="note ${note.level}">${note.text}</div>` : ""}
       <div class="tbl"><table><thead>
-        <tr><th class="c"></th><th class="grp k-cost">ทุนค่าของ</th><th class="grp k-mul">กำไรค่าของ</th><th class="grp k-lab">ค่าแรงขาย</th><th class="grp sep k-ref">ตาราง</th><th class="grp k-sell">ราคาขายเว็บ (ผลิต+ติดตั้ง)</th><th class="grp sep det41 k-lab" colspan="2">ทุนค่าแรง</th><th class="grp det41 k-cost">ทุนรวม</th><th class="grp det41 k-sell"></th></tr>
-        <tr><th class="c">ขนาด (ซม.)</th><th class="k-cost">เว็บ <span class="ref">ตาราง</span></th><th class="k-mul">เว็บ <span class="ref">ตาราง</span></th><th class="k-lab">ผลิต+ติดตั้ง</th><th class="sep k-ref">R4.1 ขายรวม</th><th class="k-sell">ล็อกกำไรสุทธิ</th><th class="sep det41 k-lab">ผลิต</th><th class="det41 k-lab">ติดตั้ง</th><th class="det41 k-cost">ของ+แรง</th><th class="det41 k-sell">กำไรสุทธิ</th></tr>
+        <tr><th class="c">ขนาด (ซม.)</th><th class="k-cost">ทุนค่าของ เว็บ</th><th class="k-lab">ค่าแรงขาย ผลิต+ติดตั้ง</th><th class="k-ref">ขาย R4.1</th><th class="k-sell">ขายเว็บ</th><th>กำไรสุทธิ</th><th>กำไร ของ/ผลิต/ติดตั้ง</th></tr>
       </thead><tbody>${body}</tbody></table></div></section>`);
   }
-  $("#list41").innerHTML = (cards.length ? KEYS : "") + cards.join("") || `<div class="empty">ไม่เจอบานที่ค้น</div>`;
-  $("#sum41").innerHTML = `<span class="pill flat">ขายเว็บ ใกล้ตาราง ±2% <b>${cnt.flat}</b> แถว</span><span class="pill up">แพงกว่า <b>${cnt.up}</b></span><span class="pill down">ถูกกว่า <b>${cnt.down}</b></span>${cnt.na ? `<span class="pill flat">เทียบไม่ได้ <b>${cnt.na}</b></span>` : ""}`;
+  $("#list41").innerHTML = cards.join("") || `<div class="empty">ไม่เจอบานที่ค้น</div>`;
 }
 $("#q41").oninput = (e) => { q41 = e.target.value; render41(); };
 $("#groups41").onclick = (e) => { const b = e.target.closest("[data-g]"); if (b) { g41 = b.dataset.g; render41(); } };
-$("#det41").onchange = (e) => { document.body.classList.toggle("show-det41", e.target.checked); };
-// กาง/ซ่อน รายการค่าของทีละขนาด
 $("#list41").onclick = (e) => { const b = e.target.closest(".bomtog"); if (!b) return;
   const row = document.getElementById(b.getAttribute("aria-controls")); if (!row) return;
   const open = row.hidden; row.hidden = !open; b.setAttribute("aria-expanded", String(open)); b.textContent = open ? "ซ่อนค่าของ ▴" : "ค่าของ ▾"; };
 
-// ── แท็บ ค่าอบสี เทียบ R3.9 ──
+// ── แท็บ ค่าสี เทียบ R3.9 ──
 let group = "ทั้งหมด", query = "";
 const howTxt = (r) => { const b = r.bake || {}; const parts = [];
   if (b.bakeAll > 0 && b.bakeWhite > 0) parts.push(`อบ ${b.kg} กก. × ${b.rate} = ${fmt(b.bakeAll)} − ที่สีขาวอบอยู่แล้ว ${fmt(b.bakeWhite)} = ${fmt(b.bakeCost)}`);
@@ -355,40 +268,37 @@ function render() {
   const ql = query.trim().toLowerCase();
   const prods = DATA.data.filter((p) => (group === "ทั้งหมด" || p.group === group) && (!ql || p.name.toLowerCase().includes(ql) || p.rows.some((r) => String(r.color).toLowerCase().includes(ql))));
   const cnt = { up: 0, down: 0, flat: 0 };
-  $("#list").innerHTML = prods.length ? KEYS + prods.map((p) => {
+  $("#list").innerHTML = prods.length ? prods.map((p) => {
     const rows = p.rows.map((r) => {
-      if (r.na) return `<tr class="na"><td class="c">${r.color}<span class="ty">${r.type}</span></td><td colspan="6" style="text-align:left">ไม่มีสีนี้ขาย</td></tr>`;
+      if (r.na) return `<tr class="na"><td class="c">${r.color}<span class="ty">${r.type}</span></td><td colspan="5" style="text-align:left">ไม่มีสีนี้ขาย</td></tr>`;
       const d = pct(r.tWeb, r.t39); if (d != null && !r.base) cnt[kindOf(d)]++;
-      const tags = (r.swapped ? `<span class="tag sw">คิดเป็นลายไม้อบพิเศษ</span>` : "");
       const costT = r.base ? r.costWeb : r.cost?.mat;
       return `<tr class="${r.base ? "base" : ""}">
-        <td class="c">${r.color}${tags}<span class="ty">${r.type}</span></td>
+        <td class="c">${r.color}${r.swapped ? ' <span class="ty">คิดเป็นลายไม้อบพิเศษ (รุ่นนี้ไม่มีสีสต็อก)</span>' : ""}<span class="ty">${r.type}</span></td>
         <td class="num k-cost">${fmt(costT)}</td>
-        <td class="num k-cost">${r.base ? "ฐาน" : `<span class="v">${fmt(r.cWeb)}</span><span class="how">${howTxt(r)}</span>`}</td>
-        <td class="num det k-cost">${r.base ? `<span class="how">อลู ${fmt(r.cost?.alu)} · อบ ${fmt(r.cost?.bake)} · กระจก ${fmt(r.cost?.glass)} · อุปกรณ์ ${fmt(r.cost?.hw)}</span>` : `<span class="how">อลู ${fmt(r.cost?.alu)} · อบ ${fmt(r.cost?.bake)} · กระจก ${fmt(r.cost?.glass)} · อุปกรณ์ ${fmt(r.cost?.hw)}</span>`}</td>
-        <td class="num sep k-ref"><span class="v">${fmt(r.t39)}</span></td><td class="num det k-ref"><span class="v">${fmt(r.t40)}</span></td><td class="num k-sell"><span class="v big">${fmt(r.tWeb)}</span><span class="ref">${r.base ? "" : "ค่าสีขาย +" + fmt(r.aWeb) + " (R3.9 +" + fmt(r.a39) + ")"}</span>${!r.base && r.cWeb > 0 && r.aWeb > 0 ? `<span class="how">ทุนสีที่เพิ่ม ${fmt(r.cWeb)} · กำไร ${Math.round((1 - r.cWeb / r.aWeb) * 100)}%</span>` : ""}</td><td class="num k-sell">${chip(d)}</td></tr>`;
+        <td class="num k-cost">${r.base ? "ฐาน" : `<span class="v">+${fmt(r.cWeb)}</span><span class="how">${howTxt(r)}</span>`}</td>
+        <td class="num k-ref"><span class="v">${fmt(r.t39)}</span>${r.base ? "" : `<span class="ref">ค่าสี +${fmt(r.a39)}</span>`}</td>
+        <td class="num k-sell"><span class="v big">${fmt(r.tWeb)}</span>${r.base ? "" : `<span class="ref">ค่าสี +${fmt(r.aWeb)}</span>`}</td>
+        <td class="num k-sell">${r.base ? "" : chip(d)}</td></tr>`;
     }).join("");
-    return `<section class="card"><header><h2>${gbadge(p.group)}${p.name}</h2><div class="meta"><span>${p.size} ซม.${/\d/.test(p.panels) ? ` · ${p.panels} บาน` : ""}</span><span>อลูที่อบ ${p.kgWeb || "—"} กก. (ไฟล์เดิม ${p.kgFile ?? "—"})</span></div></header>
+    return `<section class="card"><header><h2>${gbadge(p.group)}${p.name}</h2><div class="meta"><span>${p.size} ซม.${/\d/.test(p.panels) ? ` · ${p.panels} บาน` : ""}</span><span>อลูที่อบ ${p.kgWeb || "—"} กก.</span></div></header>
       ${p.note ? `<div class="note ${p.note.level}">${p.note.text}</div>` : ""}
       <div class="tbl"><table><thead>
-        <tr><th class="c"></th><th class="grp k-cost" colspan="3">ทุนค่าของ (เว็บ)</th><th class="grp sep k-ref" colspan="2">ราคาขาย อ้างอิง</th><th class="grp k-sell" colspan="2">ราคาขาย เว็บ</th></tr>
-        <tr><th class="c">สี</th><th class="k-cost">ทั้งชุด</th><th class="k-cost">ค่าสีที่เพิ่ม · วิธีคิด</th><th class="det k-cost">แยกก้อน</th><th class="sep k-ref">R3.9</th><th class="det k-ref">R4.0 เดิม</th><th class="k-sell">เว็บ</th><th class="k-sell">เว็บ vs R3.9</th></tr>
-      </thead><tbody>${rows}</tbody></table></div>
-      ${p.spec ? `<details style="font-size:.8rem;color:var(--muted)"><summary>อลูที่ใช้ (ตามไฟล์เดิม)</summary>${p.spec}</details>` : ""}</section>`;
+        <tr><th class="c">สี</th><th class="k-cost">ทุนค่าของ ทั้งชุด</th><th class="k-cost">ค่าสีที่เพิ่ม (ทุน) · วิธีคิด</th><th class="k-ref">ขาย R3.9</th><th class="k-sell">ขายเว็บ</th><th class="k-sell">เว็บ vs R3.9</th></tr>
+      </thead><tbody>${rows}</tbody></table></div></section>`;
   }).join("") : `<div class="empty">ไม่เจอบานหรือสีที่ค้น</div>`;
-  $("#sum").innerHTML = `<span class="pill up">เว็บแพงกว่า R3.9 <b>${cnt.up}</b> สี</span><span class="pill down">ถูกกว่า <b>${cnt.down}</b> สี</span><span class="pill flat">ใกล้กัน ±2% <b>${cnt.flat}</b> สี</span>`;
+  $("#sum").innerHTML = `<div class="st hi"><div class="k">เว็บแพงกว่า R3.9 (เกิน 2%)</div><div class="v">${cnt.up}</div><div class="s">สี</div></div><div class="st lo"><div class="k">ถูกกว่า R3.9</div><div class="v">${cnt.down}</div><div class="s">สี</div></div><div class="st"><div class="k">ใกล้กัน ±2%</div><div class="v">${cnt.flat}</div><div class="s">สี</div></div>`;
 }
 $("#groups").onclick = (e) => { const g = e.target.closest("[data-g]"); if (g) { group = g.dataset.g; render(); } };
 $("#q").oninput = (e) => { query = e.target.value; render(); };
-$("#det").onchange = (e) => { document.body.classList.toggle("show-det", e.target.checked); };
 
 // ── แท็บ ──
-let tab = "sum";
-try { const t = localStorage.getItem("cc-tab3"); if (["sum", "r41", "color"].includes(t)) tab = t; } catch {}
-if (["#sum", "#r41", "#color"].includes(location.hash)) tab = location.hash.slice(1);
-function showTab(t) { tab = t; try { localStorage.setItem("cc-tab3", t); } catch {}
-  for (const x of ["sum", "r41", "color"]) { $("#tab-" + x).hidden = t !== x; $("#t-" + x).setAttribute("aria-selected", t === x); } }
+let tab = "r41";
+try { const t = localStorage.getItem("cc-tab4"); if (["r41", "color"].includes(t)) tab = t; } catch {}
+if (["#r41", "#color"].includes(location.hash)) tab = location.hash.slice(1);
+function showTab(t) { tab = t; try { localStorage.setItem("cc-tab4", t); } catch {}
+  for (const x of ["r41", "color"]) { $("#tab-" + x).hidden = t !== x; $("#t-" + x).setAttribute("aria-selected", t === x); } }
 document.querySelector(".tabs").onclick = (e) => { const b = e.target.closest("[data-tab]"); if (b) showTab(b.dataset.tab); };
-$("#foot").textContent = `ตาราง R4.1 = ★ ตารางราคาขาย R4.1.pdf · R3.9 / R4.0 เดิม = ไฟล์ เทียบค่าอบสี.xlsx · เว็บ = คิดราคา 4.0 ตอนนี้ + ราคาสโตร์จริง ${DATA.meta.nStock.toLocaleString("en-US")} แถว · คำนวณเมื่อ ${DATA.meta.builtAt}`;
-showTab(tab); renderSum(); render41(); render();
+$("#foot").textContent = `ตาราง R4.1 = ★ ตารางราคาขาย R4.1.pdf · R3.9 = ไฟล์ เทียบค่าอบสี.xlsx · เว็บ = คิดราคา 4.0 ตอนนี้ + ราคาสโตร์จริง ${DATA.meta.nStock.toLocaleString("en-US")} แถว · สีขาว ค่าเริ่มต้นของรุ่น · คำนวณเมื่อ ${DATA.meta.builtAt}`;
+showTab(tab); renderStats(); render41(); render();
 </script>
