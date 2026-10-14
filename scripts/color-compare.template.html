@@ -270,21 +270,25 @@ function render() {
   const cnt = { up: 0, down: 0, flat: 0 };
   $("#list").innerHTML = prods.length ? prods.map((p) => {
     const rows = p.rows.map((r) => {
-      if (r.na) return `<tr class="na"><td class="c">${r.color}<span class="ty">${r.type}</span></td><td colspan="5" style="text-align:left">ไม่มีสีนี้ขาย</td></tr>`;
+      if (r.na) return `<tr class="na"><td class="c">${r.color}<span class="ty">${r.type}</span></td><td colspan="6" style="text-align:left">ไม่มีสีนี้ขาย</td></tr>`;
       const d = pct(r.tWeb, r.t39); if (d != null && !r.base) cnt[kindOf(d)]++;
       const costT = r.base ? r.costWeb : r.cost?.mat;
+      // กำไรของชุดสีนี้ที่ราคาเว็บ (เจ้าของขอ 14 ต.ค.69) — สุทธิ = (ขาย − 30/130 − ทุนรวม ของ+ผลิต+ติดตั้ง) ÷ ขาย · แยกก้อน (ขาย − ทุน) ÷ ขาย
+      const k = r.cost || {}; const cT = (k.mat || 0) + (k.lp || 0) + (k.li || 0);
+      const pw = { net: netOf(r.tWeb, cT), m: mg1(k.sMat, k.mat), p: mg1(k.sP, k.lp), i: mg1(k.sI, k.li) };
       return `<tr class="${r.base ? "base" : ""}">
         <td class="c">${r.color}${r.swapped ? ' <span class="ty">คิดเป็นลายไม้อบพิเศษ (รุ่นนี้ไม่มีสีสต็อก)</span>' : ""}<span class="ty">${r.type}</span></td>
         <td class="num k-cost">${fmt(costT)}</td>
         <td class="num k-cost">${r.base ? "ฐาน" : `<span class="v">+${fmt(r.cWeb)}</span><span class="how">${howTxt(r)}</span>`}</td>
         <td class="num k-ref"><span class="v">${fmt(r.t39)}</span>${r.base ? "" : `<span class="ref">ค่าสี +${fmt(r.a39)}</span>`}</td>
         <td class="num k-sell"><span class="v big">${fmt(r.tWeb)}</span>${r.base ? "" : `<span class="ref">ค่าสี +${fmt(r.aWeb)}</span>`}</td>
-        <td class="num k-sell">${r.base ? "" : chip(d)}</td></tr>`;
+        <td class="num k-sell">${r.base ? "" : chip(d)}</td>
+        <td class="num"><span class="v">${ppc(pw.net)}</span><span class="ref">${p3(pw)}</span></td></tr>`;
     }).join("");
     return `<section class="card"><header><h2>${gbadge(p.group)}${p.name}</h2><div class="meta"><span>${p.size} ซม.${/\d/.test(p.panels) ? ` · ${p.panels} บาน` : ""}</span><span>อลูที่อบ ${p.kgWeb || "—"} กก.</span></div></header>
       ${p.note ? `<div class="note ${p.note.level}">${p.note.text}</div>` : ""}
       <div class="tbl"><table><thead>
-        <tr><th class="c">สี</th><th class="k-cost">ทุนค่าของ ทั้งชุด</th><th class="k-cost">ค่าสีที่เพิ่ม (ทุน) · วิธีคิด</th><th class="k-ref">ขาย R3.9</th><th class="k-sell">ขายเว็บ</th><th class="k-sell">เว็บ vs R3.9</th></tr>
+        <tr><th class="c">สี</th><th class="k-cost">ทุนค่าของ ทั้งชุด</th><th class="k-cost">ค่าสีที่เพิ่ม (ทุน) · วิธีคิด</th><th class="k-ref">ขาย R3.9</th><th class="k-sell">ขายเว็บ</th><th class="k-sell">เว็บ vs R3.9</th><th>กำไรสุทธิ (เว็บ)<br><span class="ref">ของ/ผลิต/ติดตั้ง</span></th></tr>
       </thead><tbody>${rows}</tbody></table></div></section>`;
   }).join("") : `<div class="empty">ไม่เจอบานหรือสีที่ค้น</div>`;
   $("#sum").innerHTML = `<div class="st hi"><div class="k">เว็บแพงกว่า R3.9 (เกิน 2%)</div><div class="v">${cnt.up}</div><div class="s">สี</div></div><div class="st lo"><div class="k">ถูกกว่า R3.9</div><div class="v">${cnt.down}</div><div class="s">สี</div></div><div class="st"><div class="k">ใกล้กัน ±2%</div><div class="v">${cnt.flat}</div><div class="s">สี</div></div>`;
