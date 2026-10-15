@@ -645,11 +645,13 @@ console.log('\n═══ ②g ราคาเส้นแยกสีจริ�
   //   → ส่วนต่างราคาระหว่างสี = ส่วนต่างทุน × (1 + %) (±ปัดร้อย) · ค่าแรงขายต้องเท่ากันทุกสี
   //   ไม่ตรึงยอดขาย (เปลี่ยนตาม % ตั้งต้นที่จูนกับตาราง) — ทุนต่อสีตรึงไว้ที่ ANCHORS_COLOR แล้ว
   const full = (key, bake) => computeCost(PB, PRODUCTS.sms_slide, { w: 600, h: 300, p: 3, form: 'อิสระ', color: bake, colorKey: key });
-  // 13 ต.ค.69 กำไรสุทธิเป็นตัวตัดสิน (SMS 40%) → ส่วนต่างราคา = ส่วนต่างทุน ÷ (1 − 30/130 − 40%) (ค่าแรงเท่ากันทุกสี)
+  // 13 ต.ค.69 กำไรสุทธิเป็นตัวตัดสิน (SMS 40%) → สีอบพิเศษ: ส่วนต่างราคา = ส่วนต่างทุน ÷ (1 − 30/130 − 40%) (ค่าแรงเท่ากันทุกสี)
+  // 15 ต.ค.69 สีสต็อก (ลายไม้สต็อก/ซาฮาร่า): ค่าสีที่เพิ่ม ขาย = ทุนสีที่เพิ่ม × 1.6 (STOCK_COLOR_SELL_MULT) ไม่ผ่านกำไรสุทธิ
   const W0 = full('white', 'white'), netDiv = 1 - 30 / 130 - PB.R41.net.sms_slide / 100;
-  for (const [lbl, key, bake] of [['SMS ลายไม้สักทอง', 'wood_teak', 'woodStock'], ['SMS ลายไม้อบพิเศษ', 'wood_special', 'woodSpecial'], ['SMS เทาซาฮาร่า', 'sahara', 'sahara']]) {
+  for (const [lbl, key, bake, stock] of [['SMS ลายไม้สักทอง', 'wood_teak', 'woodStock', true], ['SMS ลายไม้อบพิเศษ', 'wood_special', 'woodSpecial', false], ['SMS เทาซาฮาร่า', 'sahara', 'sahara', true]]) {
     const c = full(key, bake);
-    check(lbl + ': ส่วนต่างจากสีขาว = ส่วนต่างทุน ÷ (1 − 30/130 − กำไรสุทธิ)', c.sell.withInstall - W0.sell.withInstall, (c.cost.total - W0.cost.total) / netDiv, 100);
+    if (stock) check(lbl + ': ส่วนต่างจากสีขาว = ทุนสีที่เพิ่ม × 1.6 (สีสต็อก)', c.sell.withInstall - W0.sell.withInstall, (c.cost.total - W0.cost.total) * 1.6, 100);
+    else check(lbl + ': ส่วนต่างจากสีขาว = ส่วนต่างทุน ÷ (1 − 30/130 − กำไรสุทธิ)', c.sell.withInstall - W0.sell.withInstall, (c.cost.total - W0.cost.total) / netDiv, 100);
     check(lbl + ': ค่าแรงขายเท่าสีขาว', c.sell.parts.prod + c.sell.parts.inst, W0.sell.parts.prod + W0.sell.parts.inst, 0);
   }
 

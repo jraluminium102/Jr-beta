@@ -1085,7 +1085,11 @@ console.log("\n═══ เส้นไม่มีสีสต็อค → �
   const sp = bake.find((l) => /อบสีพิเศษ — เส้นที่แบรนด์ไม่มีสี/.test(l.name));
   ok("PC Door แอทแทค: มีบรรทัดค่าอบสีพิเศษของเส้นที่ไม่มีสีสต็อค", !!sp, bake.map((l) => l.name).join(" | "));
   ok("เรตที่ใช้ = สีอบพิเศษ (PB.BAKE.special)", sp?.unitPrice === PB.BAKE.special, String(sp?.unitPrice));
-  ok("เปิดตู้อบด้วย", bake.some((l) => /เปิดตู้อบ/.test(l.name)), "");
+  // 15 ต.ค.69 เจ้าของย้ำ: สีสต็อก (Aztec = สีสต็อกฟูจิ) ไม่คิดค่าเปิดตู้อบ แม้มีเส้นที่ต้องอบเอง — คิดเฉพาะงานอบสีพิเศษ/ลายไม้อบพิเศษ
+  ok("สีสต็อก: ไม่คิดค่าเปิดตู้อบ (คิดแค่ค่าอบต่อกก. ของเส้นที่ไม่มีสี)", !bake.some((l) => /เปิดตู้อบ/.test(l.name)) && az.cost.openOven === 0, String(az.cost.openOven));
+  const spOven = computeCost(PB, PRODUCTS.pcdoor, { w: 300, h: 220, p: 2, colorKey: "special", color: "special" });
+  ok("สีอบพิเศษ: ยังคิดค่าเปิดตู้อบ 2,000", spOven.cost.openOven === (PB.BAKE_OPEN_OVEN || 0) && spOven.cost.openOven > 0, String(spOven.cost.openOven));
+  ok("opt.noOven (ใบเสนอคิดตู้อบครั้งเดียว): ชุดนี้ไม่คิดซ้ำ", computeCost(PB, PRODUCTS.pcdoor, { w: 300, h: 220, p: 2, colorKey: "special", color: "special", noOven: true }).cost.openOven === 0);
   // เส้นที่แบรนด์ "มีสีนั้นขาย" ยังคิดเรตของสีนั้นตามเดิม (ไม่เหมาเป็นอบพิเศษทั้งงาน)
   ok("เส้นที่แบรนด์มีสีขาย ยังคิดเรตสีเดิม",
     bake.some((l) => l.unitPrice === PB.BAKE.sahara && !/ไม่มีสี/.test(l.name)),

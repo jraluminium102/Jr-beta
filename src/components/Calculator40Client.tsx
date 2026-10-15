@@ -1743,6 +1743,10 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                           กำไรสุทธิ <b className="text-brand-dark">{net}%</b>{tgt != null ? <span className="text-ink-3"> (เป้าตาราง R4.1 {tgt}%)</span> : null}
                           {" "}· ของ/ผลิต/ติดตั้ง <b>{mg(sellParts.mat, Number(result.cost.total) || 0)}/{mg(sellParts.prod, Number(result.labor.prod) || 0)}/{mg(sellParts.inst, Number(result.labor.install) || 0)}</b>
                           {Array.isArray((result as any).sellModel?.parts) ? <span className="text-ink-3"> (เป้าตาราง {(result as any).sellModel.parts.join("/")}%)</span> : null}
+                          {/* สีสต็อก: ค่าสีที่เพิ่มจากสีขาว ขาย × 1.6 (เจ้าของเคาะ 15 ต.ค.69) — บอกให้เห็นว่าก้อนนี้ไม่ได้ผ่านกำไรสุทธิเต็ม */}
+                          {(result as any).sellModel?.colourExtra ? (
+                            <span className="block text-ink-3">ค่าสีสต็อกที่เพิ่มจากสีขาว ทุน ฿{baht((result as any).sellModel.colourExtra.cost)} × {(result as any).sellModel.colourExtra.mult} = ขาย ฿{baht((result as any).sellModel.colourExtra.sell)} (ไม่ผ่านกำไรสุทธิ · ส่วนอื่นยังตามเป้า)</span>
+                          ) : null}
                         </div>
                       );
                     })()}

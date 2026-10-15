@@ -29,6 +29,8 @@ export const GLASS_KG_PER_M2_MM = 2.5;
 export const STOCK_LEN = 6.4; // ความยาวเส้นอลู stock มาตรฐาน (ม.) — บางรุ่นใช้ 6.0 (ตั้ง prod.stockLen)
 
 export function ceil100(x) { return Math.ceil(x / 100) * 100; }
+// ค่าสีสต็อก (ลายไม้สต็อก/ซาฮาร่า ฯลฯ) ที่เพิ่มจากสีขาว ขาย = ทุนสีที่เพิ่ม × 1.6 (เจ้าของเคาะ 15 ต.ค.69 · สีอบพิเศษไม่ใช้)
+export const STOCK_COLOR_SELL_MULT = 1.6;
 export function roundUp1000(x) { return Math.ceil(x / 1000) * 1000; }  // R3.9 ปัดขึ้นหลักพัน
 
 // เลือกเรตขาย R3.9 ตามช่วงพื้นที่ (tier [lo,hi,rate]) — x<lo→เรตแรก · lo≤x<hi→เรตนั้น · เกิน→เรตสุดท้าย
@@ -221,6 +223,7 @@ export function computeCost(PB, prod, opt) {
   // ล็อกกำไรสุทธิตามตาราง R4.1 แล้ว → ราคาตายตัวไซซ์เล็ก (ยูโร 100×100 = 18,000 ได้กำไรแค่ 25%) ต้องไม่ทับ
   //   เจ้าของ 14 ต.ค.69 "เป้าคือ 30% ดึงค่าของ×กำไรให้เข้า 30% เลย ทุกบาน"
   let r41NetLock = false;
+  let colourExtraInfo = null;   // ค่าสีสต็อกที่เพิ่มจากสีขาว {cost, sell, mult} — หน้าจอ/หน้าตรวจเอาไปโชว์
   const SELLM = (R41N || opt.profitManual) ? null : SELL_RAW;
   let sellPct = null, sellAdj = null, sellTarget = null;
   // 3 ก้อนราคาขายสำหรับ "แสดงผล" — ค่าแรงตรงสูตรเป๊ะ · ค่าของรับเศษปัดร้อย (กฎเจ้าของ 9 ก.ย.69)
@@ -577,7 +580,11 @@ export function computeCost(PB, prod, opt) {
   //     รุ่นอื่นซื้อเส้นอบขาวมาเลย ไม่ต้องเปิดตู้
   // prod.ovenAlways = ชีตคิดทุนคิดค่าเปิดตู้อบทุกงานทุกสี (E-series B28 = 1)
   //   aluKgNoStockColor > 0 = มีเส้นที่ต้องซื้อขาวมาอบเอง → ต้องเปิดตู้อบด้วย (เจ้าของสั่ง 10 ต.ค.69)
-  if ((prod.ovenAlways || color === 'special' || color === 'woodSpecial' || aluKgNoStockColor > 0
+  // 15 ต.ค.69 เจ้าของย้ำ: สีสต็อก (ลายไม้สักทอง/มะฮอกกานี/ไวท์โอ๊ค/ซาฮาร่า ฯลฯ) ไม่คิดค่าเปิดตู้อบ — คิดเฉพาะงานอบสีพิเศษ
+  //   (เดิม 10 ต.ค. เส้นที่แบรนด์ไม่มีสีสต็อกนั้นขายก็เปิดตู้ → ยกเลิกสำหรับสีสต็อก · ค่าอบต่อกก. ของเส้นนั้นยังคิดอยู่)
+  //   opt.noOven = ใบเสนอคิดค่าเปิดตู้อบครั้งเดียวต่อใบแล้ว (เจ้าของเคาะ 15 ต.ค.69) → ชุดนี้ไม่คิดซ้ำ
+  const stockColour = !!opt.colorKey && opt.colorKey !== 'white' && color !== 'special' && color !== 'woodSpecial';
+  if (!opt.noOven && (prod.ovenAlways || color === 'special' || color === 'woodSpecial' || (aluKgNoStockColor > 0 && !stockColour)
     || (prod.millBar && color === 'white')) && aluBarsAll > 0) {
     openOven = PB.BAKE_OPEN_OVEN || 0;
     if (openOven) lines.push({ cat: 'bake', name: 'ค่าเปิดตู้อบ', qty: 1, unit: 'งาน', unitPrice: openOven, amount: openOven });
@@ -998,8 +1005,17 @@ export function computeCost(PB, prod, opt) {
       r41NetLock = true;
       const baseLab = r41Sell(nP, 'cP', 'sP', laborProd) + r41Sell(nI, 'cI', 'sI', laborInstall);
       const labDef = (noNode(laborProd, nP) ? Math.round(laborProd * (1 + pctProd / 100)) : 0) + (noNode(laborInstall, nI) ? Math.round(laborInstall * (1 + pctInst / 100)) : 0);
+      // ── สีสต็อก (ลายไม้สักทอง/มะฮอกกานี/ไวท์โอ๊ค/ซาฮาร่า ฯลฯ): ค่าสีที่เพิ่มจากสีขาว ขาย × 1.6 เท่า (เจ้าของเคาะ 15 ต.ค.69) ──
+      //   ไม่ผ่านกำไรสุทธิเหมือนค่าของอื่น (เดิม ÷ 0.369 = ×2.7 สำหรับ SMS ทำให้ค่าสีแพงกว่า R3.9 มาก) · สีอบพิเศษ/ลายไม้อบพิเศษ ยังผ่านกำไรสุทธิเต็ม
+      //   ค่าสีที่เพิ่ม = (อลู+ค่าอบ+ตู้อบ) ของสีนี้ − ของสีขาว (คิดสีขาวซ้ำในตัว 1 รอบ · _inner กันวนซ้ำ)
+      let colourExtra = 0;
+      if (stockColour && !opt._inner) {
+        const wh = computeCost(PB, prod, { ...opt, color: 'white', colorName: undefined, stockColor: undefined, colorKey: 'white', _inner: true });
+        colourExtra = Math.max(0, round2((aluCost + bakeCost + openOven) - ((wh.cost.alu || 0) + (wh.cost.bake || 0) + (wh.cost.openOven || 0))));
+      }
+      colourExtraInfo = colourExtra > 0 ? { cost: colourExtra, sell: round2(colourExtra * STOCK_COLOR_SELL_MULT), mult: STOCK_COLOR_SELL_MULT } : null;
       // ปัดขึ้นทีละ 0.1% — % ที่โชว์ × ทุน = ราคาจริงเป๊ะ และกำไรสุทธิไม่ต่ำกว่าเป้าจากการปัด
-      mPct = Math.ceil((((costTotal + bomFixCost + laborProd + laborInstall) / netDiv - baseLab - labDef - bomFixSell) / costTotal - 1) * 1000 - 1e-9) / 10;
+      mPct = Math.ceil((((costTotal - colourExtra + bomFixCost + laborProd + laborInstall) / netDiv - baseLab - labDef - bomFixSell + colourExtra * STOCK_COLOR_SELL_MULT) / costTotal - 1) * 1000 - 1e-9) / 10;
     } else mPct = r41Edit.mat ? pctMat : r41MatPct(PB, prod.id, vk, area, P);
     const matRaw = costTotal * (1 + mPct / 100);
     sellBeforeLabor = ceil100(matRaw);
@@ -1008,7 +1024,7 @@ export function computeCost(PB, prod, opt) {
     sellParts_ = { mat: 0, prod: labP, inst: labI };   // ค่าของเติมทีหลัง = ยอดรวม − ค่าแรง 2 ก้อน
     sellPct = { mat: mPct, prod: r41Edit.prod ? pctProd : eff(labP, laborProd), inst: r41Edit.inst ? pctInst : eff(labI, laborInstall) };
     const ref = (n, c, sk) => (n ? { w: n.w, h: n.h, p: n.p, vk: n.vk, cost: n[c], sell: n[sk] } : null);
-    r41Info = { vk, small: small && !r41NetLock, matPct: mPct, net: netT, parts: r41Parts(PB, prod.id, vk), edit: r41Edit,refProd: r41Edit.prod ? null : ref(nP, 'cP', 'sP'), refInst: r41Edit.inst ? null : ref(nI, 'cI', 'sI') };
+    r41Info = { vk, small: small && !r41NetLock, matPct: mPct, net: netT, parts: r41Parts(PB, prod.id, vk), colourExtra: colourExtraInfo, edit: r41Edit,refProd: r41Edit.prod ? null : ref(nP, 'cP', 'sP'), refInst: r41Edit.inst ? null : ref(nI, 'cI', 'sI') };
   } else if (SELLM) {
     // ── สูตรราคาขายตามไฟล์ถอดทุน v20.1 (เป้ากำไรสุทธิ + ค่าดำเนินการ 30%) ──
     //   เจ้าของสั่ง 3 ก.ย.69 "เอาตามไฟล์ ทำทั้งหมด" · ยันด้วยชุด ส่งต่อ-เว็บ (tests.json)
