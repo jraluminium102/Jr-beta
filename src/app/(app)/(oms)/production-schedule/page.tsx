@@ -266,11 +266,34 @@ export default function ProductionSchedulePage() {
       const act = sets.filter((s) => !s.hold);
       return act.length ? act : sets;
     };
-    // แยกโรง (0114): เลือกโรง → เตือนจากชุด "ในโรงนั้น" ที่เลยวันกำหนดเสร็จของชุด · ทั้งหมด = ใช้วันรวมงานเดิม
+    // แยกโรง (0114): เลือกโรง → เตือนจากชุด "ในโรงนั้น" ที่เลยวันกำหนดเสร็จของชุด
+    // ทุกโรง: วันรวมงานเลย "หรือ" มีชุดใดเลยวันต้องเสร็จของชุด (15 ต.ค.69 — วันรวม = วันล่าสุดของทุกโรง
+    //   ถ้าโรง 1 เลยแต่โรง 3 ยังไม่ถึง เดิมงานไม่ขึ้นงานค้างเลย)
+    const setOver = (s: ProdSet) => !!s.must_finish_date && s.must_finish_date < t && !setIsDone(s);
     const isOverdue = (r: SchedRow) =>
       factoryFilter
-        ? gaugeOf(r).some((s) => s.must_finish_date && s.must_finish_date < t && !setIsDone(s))
-        : (!!r.due_date && r.due_date < t && derivePhase(r) !== "พร้อม");
+        ? gaugeOf(r).some(setOver)
+        : derivePhase(r) !== "พร้อม" && ((!!r.due_date && r.due_date < t) || gaugeOf(r).some(setOver));
+    // แตกตามโรง — 1 โรง = ชุด active ที่ติดโรงนั้น · วันต้องเสร็จของโรง = วันล่าสุดในชุดที่ยังไม่เสร็จ
+    //   ชุดไม่ระบุโรง → กลุ่ม "" · ชุดไม่มีวันของตัวเอง → ใช้วันรวมงาน
+    const byFactory = (r: SchedRow) => {
+      const m = new Map<string, ProdSet[]>();
+      for (const s of gaugeOf(r)) {
+        const fs = Array.isArray(s.factories) && s.factories.length ? s.factories : [""];
+        for (const f of (factoryFilter ? [factoryFilter] : fs)) m.set(f, [...(m.get(f) ?? []), s]);
+      }
+      return [...m.entries()].map(([f, ss]) => {
+        const open = ss.filter((s) => !setIsDone(s));
+        const due = (open.length ? open : ss).map((s) => s.must_finish_date || r.due_date || "").filter(Boolean).sort().pop() || null;
+        const overF = open.some((s) => (s.must_finish_date || r.due_date || "9999") < t);
+        const overDue = open.map((s) => s.must_finish_date || r.due_date || "").filter((d) => d && d < t).sort()[0] || null;
+        return {
+          f, due, over: overF,
+          overDays: overDue ? Math.floor((Date.parse(t) - Date.parse(overDue)) / 86400000) : 0,
+          glass: ss.some(setWaitingGlass), paint: ss.some(setWaitingPaint),
+        };
+      }).sort((a, b) => a.f.localeCompare(b.f, "th"));
+    };
     // มีชุด "รอกระจก"/"รออบสี" ไหม — ดูเฉพาะชุด active (ไม่รวม hold · ทั้งงาน hold = ไม่เตือน · BUG-2)
     const activeSets = (r: SchedRow) =>
       (factoryFilter ? (r.sets ?? []) : (r.allSets ?? r.sets ?? [])).filter((s) => !s.hold);
@@ -279,14 +302,14 @@ export default function ProductionSchedulePage() {
     // เริ่มผลิตแล้ว (เจ้าของ: "ช่างเริ่มผลิตแล้วแต่ของยังไม่มา") = งานอยู่สถานะผลิต/QC หรือเลยกำหนดแล้ว
     const started = (r: SchedRow) => r.status === "MANUFACTURING" || r.status === "QC";
 
-    const out: { r: SchedRow; over: boolean; glass: boolean; paint: boolean }[] = [];
+    const out: { r: SchedRow; over: boolean; glass: boolean; paint: boolean; fx: ReturnType<typeof byFactory> }[] = [];
     for (const r of viewRows) {
       if (r.kind !== "job" || r.status === "READY") continue;
       const over = isOverdue(r);
       // รอกระจก/รออบสี = สั่งไปแล้วรอของ + งานเริ่มผลิตแล้ว/เลยกำหนด (ไม่ขึ้นกับว่าเฟรมกด "ผลิตเสร็จ" หรือยัง)
       const glass = hasGlassWait(r) && (over || started(r));
       const paint = hasPaintWait(r) && (over || started(r));
-      if (over || glass || paint) out.push({ r, over, glass, paint });
+      if (over || glass || paint) out.push({ r, over, glass, paint, fx: byFactory(r) });
     }
     // 15 ต.ค.69 (ตาราง): ติดหลายเรื่องขึ้นก่อน → เลยกำหนดก่อน → เรียงวันกำหนดเสร็จเก่าสุดก่อน
     const n = (x: { over: boolean; glass: boolean; paint: boolean }) => (x.over ? 1 : 0) + (x.glass ? 1 : 0) + (x.paint ? 1 : 0);
@@ -554,10 +577,27 @@ export default function ProductionSchedulePage() {
                 </tr>
               </thead>
               <tbody>
-                {stuckRows.map(({ r, over, glass, paint }) => {
-                  const overDays = over && r.due_date ? Math.floor((Date.parse(today()) - Date.parse(r.due_date)) / 86400000) : null;
+                {stuckRows.map(({ r, over, glass, paint, fx }) => {
                   const issues = (over ? 1 : 0) + (glass ? 1 : 0) + (paint ? 1 : 0);
                   const empty = <span style={{ color: "#d1d1d6" }}>—</span>;
+                  // บรรทัดละโรง (15 ต.ค.69) — งาน 2 โรงมีวันต้องเสร็จคนละวัน ต้องบอกว่าของโรงไหน
+                  //   ไม่มีชุด → บรรทัดเดียวจากวันรวมงาน
+                  const lines = fx.length ? fx : [{
+                    f: "", due: r.due_date, over, glass, paint,
+                    overDays: over && r.due_date ? Math.floor((Date.parse(today()) - Date.parse(r.due_date)) / 86400000) : 0,
+                  }];
+                  const showF = lines.some((l) => l.f) || lines.length > 1;
+                  const chip = (f: string) => showF ? (
+                    <span className="text-[11px] font-bold rounded px-1.5 py-0.5 mr-1.5 whitespace-nowrap" style={{ background: "#eef0f5", color: "#3a3a3c" }}>🏭 {f || "ไม่ระบุโรง"}</span>
+                  ) : null;
+                  // ทุกคอลัมน์ใช้ความสูงบรรทัดเท่ากัน → บรรทัดโรงเดียวกันเรียงตรงกันข้ามคอลัมน์
+                  const stack = (cell: (l: (typeof lines)[number]) => ReactNode, center = false) => (
+                    <div className="flex flex-col gap-1">
+                      {lines.map((l) => (
+                        <div key={l.f || "_"} className={"min-h-[28px] flex items-center " + (center ? "justify-center" : "")}>{cell(l)}</div>
+                      ))}
+                    </div>
+                  );
                   return (
                     <tr key={r.id} onClick={() => { setQuery(r.title); setPhaseFilter(""); }}
                       title="แตะเพื่อดูงานนี้"
@@ -570,16 +610,28 @@ export default function ProductionSchedulePage() {
                           {issues >= 2 && <span className="text-[11px] font-bold rounded px-1.5 py-0.5" style={{ background: "#e53935", color: "#fff" }}>ติด {issues} เรื่อง</span>}
                         </div>
                       </td>
-                      <td className="px-3 py-2.5 align-top tnum text-[14.5px] font-semibold whitespace-nowrap" style={{ color: over ? "#e53935" : IOS.ink }}>{r.due_date ? thShort(r.due_date) : "—"}</td>
-                      <td className="px-3 py-2.5 align-top tnum text-[14.5px] whitespace-nowrap" style={{ color: IOS.ink2 }}>{r.install_date ? thShort(r.install_date) : "—"}</td>
-                      <td className="px-3 py-2.5 align-top text-center whitespace-nowrap">
-                        {over ? <span className="tnum text-[13.5px] font-bold rounded-full px-2.5 py-1" style={{ background: "#ffe5e5", color: "#d32f2f" }}>{overDays != null && overDays > 0 ? `เลย ${overDays} วัน` : "เลยกำหนด"}</span> : empty}
+                      <td className="px-3 py-2.5 align-top tnum text-[14.5px] whitespace-nowrap">
+                        {stack((l) => (
+                          <>{chip(l.f)}<span className="font-semibold" style={{ color: l.over ? "#e53935" : IOS.ink }}>{l.due ? thShort(l.due) : "—"}</span></>
+                        ))}
                       </td>
-                      <td className="px-3 py-2.5 align-top text-center whitespace-nowrap">
-                        {glass ? <span className="text-[13.5px] font-bold rounded-full px-2.5 py-1" style={{ background: "#fff0e0", color: "#c2410c" }}>รอกระจก</span> : empty}
+                      <td className="px-3 py-2.5 align-top tnum text-[14.5px] whitespace-nowrap" style={{ color: IOS.ink2 }}>
+                        <div className="min-h-[28px] flex items-center">{r.install_date ? thShort(r.install_date) : "—"}</div>
                       </td>
-                      <td className="px-3 py-2.5 align-top text-center whitespace-nowrap">
-                        {paint ? <span className="text-[13.5px] font-bold rounded-full px-2.5 py-1" style={{ background: "#f3e8ff", color: "#7e22ce" }}>รออบสี</span> : empty}
+                      <td className="px-3 py-2.5 align-top whitespace-nowrap">
+                        {stack((l) => l.over
+                          ? <span className="tnum text-[13.5px] font-bold rounded-full px-2.5 py-1" style={{ background: "#ffe5e5", color: "#d32f2f" }}>{l.overDays > 0 ? `เลย ${l.overDays} วัน` : "เลยกำหนด"}</span>
+                          : empty, true)}
+                      </td>
+                      <td className="px-3 py-2.5 align-top whitespace-nowrap">
+                        {stack((l) => glass && l.glass
+                          ? <span className="text-[13.5px] font-bold rounded-full px-2.5 py-1" style={{ background: "#fff0e0", color: "#c2410c" }}>รอกระจก</span>
+                          : empty, true)}
+                      </td>
+                      <td className="px-3 py-2.5 align-top whitespace-nowrap">
+                        {stack((l) => paint && l.paint
+                          ? <span className="text-[13.5px] font-bold rounded-full px-2.5 py-1" style={{ background: "#f3e8ff", color: "#7e22ce" }}>รออบสี</span>
+                          : empty, true)}
                       </td>
                     </tr>
                   );
