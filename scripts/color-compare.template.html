@@ -253,8 +253,14 @@ const howTxt = (r) => { const b = r.bake || {}; const parts = [];
   // รุ่นที่สีขาวก็เข้าตู้อบอยู่แล้ว (Velora/SlimLux ซื้อเส้นมิว · E-series) — ตู้อบไม่หาย แค่ไม่ใช่ส่วนที่เพิ่ม (เจ้าของถาม 15 ต.ค.69 "Velora ค่าเปิดตู้หาย")
   else if (b.ovenWhite > 0 && (b.bakeCost > 0 || b.bakeAll > 0)) parts.push(`ตู้อบ ${fmt(b.ovenWhite)} รวมในราคาสีขาวแล้ว (สีขาวก็เข้าตู้อบ)`);
   if (b.aluDiff > 0) parts.push(`เส้นสี +${fmt(b.aluDiff)}`); else if (b.aluDiff < 0) parts.push(`เส้นสี −${fmt(-b.aluDiff)}`);
-  if (Math.abs(b.otherDiff || 0) > 50) parts.push(`ราคาตามสีอื่น ๆ ${b.otherDiff > 0 ? "+" : "−"}${fmt(Math.abs(b.otherDiff))}`);
+  if (Math.abs(b.otherDiff || 0) > 50) parts.push(`กล่อง/ฉาก/อุปกรณ์ตามสี ${b.otherDiff > 0 ? "+" : "−"}${fmt(Math.abs(b.otherDiff))}`);
   return parts.join(" + ") || "—"; };
+// วิธีคิดค่าสีขาย — เขียนตัวเลขให้คิดตามได้ (เจ้าของ 15 ต.ค.69 "เขียนให้ชัดเจนว่าคูณกำไรยังไงเท่าไหร่")
+//   ยอดจริงปัดขึ้นหลักร้อยทั้งชุด จึงต่างจากผลคูณได้ไม่เกิน ~100
+const sellHowTxt = (r) => { const h = r.sellHow; if (!h || !(h.cost > 0)) return "";
+  if (h.mode === "stock") return `ทุนสี ${fmt(h.cost)} × ${h.mult} = ${fmt(h.sell)} (สีสต็อก)`;
+  if (h.mode === "net") return `ทุนสี ${fmt(h.cost)} ÷ (1 − 30/130 − กำไรสุทธิ ${h.net}%) = ÷ ${h.div.toFixed(3)} = ×${(1 / h.div).toFixed(2)} → ${fmt(h.sell)}`;
+  return h.mult != null ? `ขายเพิ่ม ÷ ทุนเพิ่ม = ×${h.mult.toFixed(2)} (สูตรรุ่นนี้)` : ""; };
 // ราคาเส้นทีละเส้น สีสต็อก vs สีขาว/ดำ (กดกาง · เจ้าของ 15 ต.ค.69 "ไม่มั่นใจว่าถูก ให้เช็คด้วย")
 //   ต่อ กก. = ราคาเส้น ÷ น้ำหนัก/เส้น · PDF = ราคาปลีก KC Fuji ปี 67 (มีเฉพาะรหัส F)
 const barsTable = (r) => {
@@ -279,7 +285,7 @@ const colorBlock = (p) => {
     const bid = r.bars && r.bars.length ? "bars" + (++barSeq) : null;
     return `<tr><td class="c">${r.color}<span class="ty">${r.type}${r.swapped ? " · คิดเป็นลายไม้อบพิเศษ" : ""}</span>${bid ? `<button type="button" class="bomtog" data-lb="ราคาเส้น" aria-expanded="false" aria-controls="${bid}">ราคาเส้น ▾</button>` : ""}</td>
       <td class="num k-cost"><span class="v">+${fmt(r.cWeb)}</span><span class="how">${howTxt(r)}</span></td>
-      <td class="num k-sell"><span class="v big">+${fmt(r.aWeb)}</span>${r.a39 != null ? `<span class="ref">${chip(d)} vs 3.9</span>` : ""}</td>
+      <td class="num k-sell"><span class="v big">+${fmt(r.aWeb)}</span><span class="how">${sellHowTxt(r)}</span>${r.a39 != null ? `<span class="ref">${chip(d)} vs 3.9</span>` : ""}</td>
       <td class="num k-ref">${r.a39 != null ? `<span class="v">+${fmt(r.a39)}</span>` : `<span class="ref">—</span>`}</td>
       <td class="num"><span class="v">${ppc(netOf(r.tWeb, cT))}</span><span class="ref">ขายรวม ${fmt(r.tWeb)}</span></td></tr>
       ${bid ? `<tr class="bomrow" id="${bid}" hidden><td colspan="5"><div class="bomwrap"><div class="bomhd">ราคาเส้นอลู ${r.color} เทียบสีขาว/ดำ — ต่อ กก. = ราคาเส้น ÷ น้ำหนัก · เส้นที่ราคาเท่าขาว = เส้นไม่มีสีนี้ (คิดค่าอบแยก) หรือเส้นสีเงินราคาเดียว</div>${barsTable(r)}</div></td></tr>` : ""}`; }).join("");

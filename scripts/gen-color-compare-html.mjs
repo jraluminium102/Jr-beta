@@ -65,6 +65,16 @@ const R = (v) => (typeof v === "number" && Number.isFinite(v) ? Math.round(v) : 
 const kgAllOf = (c) => Math.round((c.lines || []).filter((l) => l.cat === "alu").reduce((a, l) => a + (Number(l.qty) || 0) * (Number(l.kg) || 0), 0) * 10) / 10;
 
 const data = [];
+// วิธีคิด "ค่าสีขาย" จากทุนสีที่เพิ่ม — เจ้าของ 15 ต.ค.69 "บอกแล้วไงให้เขียนให้ชัดเจนว่าคูณกำไรยังไงเท่าไหร่ ชั้นจะได้ตรวจได้"
+//   สีสต็อก (เทา/ลายไม้สต็อก ฯลฯ) = ทุนสีที่เพิ่ม × 1.6 (เจ้าของเคาะ 15 ต.ค.69)
+//   สีอบพิเศษ/ลายไม้อบพิเศษ = ทุนสีที่เพิ่มเข้าก้อนทุนค่าของ แล้วล็อกกำไรสุทธิเท่ากับทั้งชุด → ÷ (1 − 30/130 − กำไรสุทธิ)
+//   รุ่นนอกตาราง R4.1 = ขายเพิ่ม ÷ ทุนเพิ่ม (สูตรรุ่นนั้น)
+const sellHowOf = (c, wh) => {
+  const sm = c.sellModel || {}, add = (c.sell?.withInstall || 0) - (wh.sell?.withInstall || 0), dc = c.cost.total - wh.cost.total;
+  if (sm.r41 && sm.colourExtra && sm.colourExtra.cost > 0) return { mode: "stock", cost: R(sm.colourExtra.cost), mult: sm.colourExtra.mult, sell: R(sm.colourExtra.sell) };
+  if (sm.r41 && sm.net != null) { const div = 1 - 30 / 130 - sm.net / 100; return { mode: "net", cost: R(dc), net: sm.net, div: Math.round(div * 10000) / 10000, sell: R(dc / div) }; }
+  return { mode: "ratio", cost: R(dc), mult: dc > 0 ? Math.round((add / dc) * 100) / 100 : null, sell: R(add) };
+};
 // ราคาปลีก KC Fuji ปี 67 (บาท/เส้น ตามสี) — ไว้เทียบราคาเส้นลายไม้/ขาวในบล็อกค่าสี (15 ต.ค.69 เจ้าของ "ไม่มั่นใจว่าถูก ให้เช็คตัวเองด้วย")
 const FUJI_RETAIL = fs.existsSync("scripts/fixtures/fuji-retail-2567.json") ? JSON.parse(fs.readFileSync("scripts/fixtures/fuji-retail-2567.json", "utf8")) : {};
 const PDFCOL = { wood_teak: "wood_teak", wood_maho: "wood_maho", wood_whiteoak: "wood_whiteoak", sahara: "sahara", sahara_black: "sahara_black" };
@@ -106,7 +116,7 @@ for (const it of items) {
       t39: cr.total39, t40: cr.total40, tWeb: R(c.sell?.withInstall),
       a39: cr.add39, a40: cr.add40, aWeb: R((c.sell?.withInstall || 0) - (wh.sell?.withInstall || 0)),
       c40: cr.cost40, cWeb: R(c.cost.total - wh.cost.total),
-      oven: (c.cost?.openOven || 0) > 0, swapped, cost: costOf(c),
+      oven: (c.cost?.openOven || 0) > 0, swapped, cost: costOf(c), sellHow: sellHowOf(c, wh),
       ...(PDFCOL[k] && !swapped ? { bars: barsOf(c, wh, k) } : {}),
       // วิธีคิดค่าสีของเว็บ — ให้คนอ่านตรวจสูตรได้: ค่าอบ = กก.ที่อบ × เรต/กก. + ค่าเปิดตู้อบ · สีสต็อก = ซื้อเส้นสีสำเร็จแพงกว่าขาว
       bake: { kg: Math.round((c.aluKg || 0) * 100) / 100, rate: PB.BAKE?.[resolveAluColor(swapped ? "wood_special" : k).bake] ?? 0,
@@ -143,7 +153,7 @@ for (const it of items) {
       if (Math.abs(c.cost.total - wh.cost.total) < 1) continue;
       const rc = resolveAluColor(k);
       rows.push({ type: TYPE[rc.bake] || rc.bake, color: rc.label, t39: null, tWeb: R(c.sell?.withInstall), a39: null, aWeb: R((c.sell?.withInstall || 0) - (wh.sell?.withInstall || 0)),
-        cWeb: R(c.cost.total - wh.cost.total), oven: (c.cost?.openOven || 0) > 0, swapped: false, cost: costOf(c),
+        cWeb: R(c.cost.total - wh.cost.total), oven: (c.cost?.openOven || 0) > 0, swapped: false, cost: costOf(c), sellHow: sellHowOf(c, wh),
         ...(PDFCOL[k] ? { bars: barsOf(c, wh, k) } : {}),
         bake: { kg: Math.round((c.aluKg || 0) * 100) / 100, rate: PB.BAKE?.[rc.bake] ?? 0,
           bakeAll: R(c.cost?.bake), bakeWhite: R(wh.cost?.bake), bakeCost: R((c.cost?.bake || 0) - (wh.cost?.bake || 0)), oven: R((c.cost?.openOven || 0) - (wh.cost?.openOven || 0)), ovenWhite: R(wh.cost?.openOven || 0), aluDiff: R((c.cost?.alu || 0) - (wh.cost?.alu || 0)),
@@ -188,7 +198,7 @@ const NOTES41 = {
 const FINDS41 = [
   { sev: "ok", tag: "ตรวจแล้ว", title: "ทุนค่าของบนเว็บตรงไฟล์ถอดทุนล่าสุด (ตรวจด้วย Excel ทุกแถว)", why: "ตาราง R4.1 ทำจากไฟล์ถอดทุนรุ่นเก่า เว็บใช้ไฟล์รุ่นล่าสุด + ราคาอลูตามน้ำหนัก × เรตแบรนด์ ราคาที่ต่างจากตารางจึงมาจากของที่เปลี่ยน — รุ่นที่ต่างเยอะมีคำอธิบาย \"ทำไมราคาต่างจากตาราง\" ในการ์ดของรุ่นนั้น", act: "กดปุ่ม ค่าของ ▾ ใต้ขนาด เพื่อดูว่าใช้อะไร เท่าไหร่ กี่บาท" },
   { sev: "ok", tag: "ตรงแล้ว", title: "ค่าแรงขาย = ตาราง R4.1 ทุกช่อง", why: "ค่าผลิต/ค่าติดตั้งขาย ตรงตาราง 399/399 ช่อง · ทุนค่าแรงตามไฟล์ v1 ทุกรุ่น (ยกเว้นหลังคาเลื่อน ระแนง ระแนงหมุน ที่กฎเปลี่ยนหลังทำตาราง)", act: "" },
-  { sev: "ok", tag: "ตรวจแล้ว", title: "สูตรค่าอบสี ไม่คิดซ้ำ ไม่คิดขาด", why: "ค่าอบ = กก.ที่เข้ากองอบ × เรต (เทา 100 · อบพิเศษ 173 · ลายไม้อบพิเศษ 190) + ตู้อบ 2,000 · ลายไม้สต็อก = ซื้อเส้นสีสำเร็จ ไม่อบ · เส้นที่ไฟล์ให้ราคาสีแล้วไม่เข้ากองอบ (นักบัญชีตรวจ 13 ต.ค.)", act: "ดูวิธีคิดรายสีในแท็บ ค่าอบสี" },
+  { sev: "ok", tag: "ตรวจแล้ว", title: "สูตรค่าอบสี ไม่คิดซ้ำ ไม่คิดขาด", why: "ค่าอบ = กก.ที่เข้ากองอบ × เรต (เทา 100 · อบพิเศษ 173 · ลายไม้อบพิเศษ 190) + ตู้อบ 2,000 · ลายไม้สต็อก = ซื้อเส้นสีสำเร็จ ไม่อบ · เส้นที่ไฟล์ให้ราคาสีแล้วไม่เข้ากองอบ · กล่อง/ฉาก/ใบระแนง คิดสีตาม กก. เหมือนเส้นอื่นแล้ว (เลิกคูณ 1.52/1.59/1.90/1.99 ตั้งแต่ 15 ต.ค.)", act: "ดูวิธีคิดรายสีในแท็บ ค่าอบสี" },
   { sev: "mid", tag: "แก้แล้ว", title: "บัคทุน 2 จุดที่เจอวันนี้ (Shower)", why: "① แบบบานเลื่อน คิดยูจับกระจก 800 เกิน (ชีตรวมในชุดอุปกรณ์แล้ว) ② แบบบานตาย คิดกระจกประตู 1.2 ตร.ม. เพิ่มจากค่าเริ่มต้น 60×200 ทั้งที่ไม่มีประตู", act: "แก้และขึ้นเว็บแล้ว · Shower บานเลื่อนตรงตาราง 0.0%" },
   { sev: "ok", tag: "เคาะแล้ว", title: "ราคาล็อกกำไรสุทธิเท่าตาราง R4.1 (13–14 ต.ค.69)", why: "ขายรวม = ทุนรวม ÷ (1 − 30/130 − กำไรสุทธิ) ปัดร้อย · ค่าแรงขาย = ตาราง · ไม่จูน % ตามขนาดแล้ว → กำไรสุทธิเท่าตารางทุกขนาด และกำไรค่าของออกมาใกล้ตัวเลขในหัวตาราง (SMS 63%) เอง · ราคาที่ต่างจากตาราง = ทุนที่ต่าง", act: "" },
   { sev: "hi", tag: "เคาะ", title: "ทุนค่าของที่ห่างตารางเกิน 5% มี 21 กลุ่ม — สาเหตุรู้หมดแล้ว", why: "เรตต่อโล 188/193 (รุ่น SMS +4…13%) · เว็บตามไฟล์ v1 แต่ตารางทำจาก v20.1 (PC Door −12% · กระทุ้ง −7% · หลังคาเพิง −5%) · ที่เคาะไว้ (Velora ราคาสโตร์ +28% · SlimLux ไม่อบกล่องฟูจิซ้ำ −9% · หลังคาเลื่อนผืนรวม) · ตารางผิดเอง (เปิดดัดโค้ง นับค่าแรงซ้ำ · บานตู้ไม่ได้เลือกสี/แบบ)", act: "ถ้ายอมรับทุนใหม่ → ยอดขายด้วยตัวคูณเท่าตารางจะห่างจากตารางตามทุน (ดูคอลัมน์ขวา) ถ้าไม่รับ → ต้องแก้ที่ต้นทุน ไม่ใช่ซ่อนใน %" },
