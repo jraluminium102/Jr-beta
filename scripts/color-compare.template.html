@@ -250,6 +250,8 @@ const howTxt = (r) => { const b = r.bake || {}; const parts = [];
   if (b.bakeAll > 0 && b.bakeWhite > 0) parts.push(`อบ ${b.kg} กก. × ${b.rate} = ${fmt(b.bakeAll)} − ที่สีขาวอบอยู่แล้ว ${fmt(b.bakeWhite)} = ${fmt(b.bakeCost)}`);
   else if (b.bakeCost > 0) parts.push(`อบ ${b.kg} กก. × ${b.rate} = ${fmt(b.bakeCost)}`);
   if (b.oven > 0) parts.push(`ตู้อบ ${fmt(b.oven)}`);
+  // รุ่นที่สีขาวก็เข้าตู้อบอยู่แล้ว (Velora/SlimLux ซื้อเส้นมิว · E-series) — ตู้อบไม่หาย แค่ไม่ใช่ส่วนที่เพิ่ม (เจ้าของถาม 15 ต.ค.69 "Velora ค่าเปิดตู้หาย")
+  else if (b.ovenWhite > 0 && (b.bakeCost > 0 || b.bakeAll > 0)) parts.push(`ตู้อบ ${fmt(b.ovenWhite)} รวมในราคาสีขาวแล้ว (สีขาวก็เข้าตู้อบ)`);
   if (b.aluDiff > 0) parts.push(`เส้นสี +${fmt(b.aluDiff)}`); else if (b.aluDiff < 0) parts.push(`เส้นสี −${fmt(-b.aluDiff)}`);
   if (Math.abs(b.otherDiff || 0) > 50) parts.push(`ราคาตามสีอื่น ๆ ${b.otherDiff > 0 ? "+" : "−"}${fmt(Math.abs(b.otherDiff))}`);
   return parts.join(" + ") || "—"; };
