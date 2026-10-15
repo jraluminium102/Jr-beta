@@ -11,7 +11,7 @@ import { computeCost, r41Key, r41VariantKey } from "../src/lib/calculator40/engi
 import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
 import { resolveAluColor, aluColorKeysFor } from "../src/lib/calculator40/alu-colors.ts";
 import { stockColorOfCalc, buildPriceOverride, applyPriceOverride } from "../src/lib/calculator40/stock-link.ts";
-import { IDOF, KEYOF, baseInput } from "./color-compare-config.mjs";
+import { IDOF, KEYOF, baseInput, withSpecDefaults } from "./color-compare-config.mjs";
 
 const arg = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
 const SRC = "C:/Users/jralu/JR-beta/เทียบค่าอบสี.xlsx";
@@ -113,6 +113,44 @@ for (const it of items) {
         otherDiff: R((c.cost.total - wh.cost.total) - ((c.cost?.bake || 0) - (wh.cost?.bake || 0)) - ((c.cost?.openOven || 0) - (wh.cost?.openOven || 0)) - ((c.cost?.alu || 0) - (wh.cost?.alu || 0))) } });
   }
   data.push(prod);
+}
+// ── รุ่นที่ไฟล์ เทียบค่าอบสี.xlsx ไม่มี → คิดค่าสีจากเว็บอย่างเดียว 1 ชุด ขนาดกลางในตาราง R4.1 (เจ้าของ 15 ต.ค.69 "ทำอบสีทุกชุด อย่างละ 1 ชุด ไซส์กลาง") ──
+//   สีตัวแทน: เทาซาฮาร่า · ลายไม้สักทอง (สต็อก) · มะฮอกกานี/ไวท์โอ๊ค (เฉพาะรุ่นที่มีสต็อก) · สีอบพิเศษ · ลายไม้อบพิเศษ
+//   ไม่มีคอลัมน์ R3.9 (a39 = null) · รุ่นที่สีไม่มีผลกับทุน (กระจกล้วน เช่น บานเปลือย/Shower) ไม่แสดง
+{
+  const FX = JSON.parse(fs.readFileSync("scripts/fixtures/r41-rows.json", "utf8")).rows;
+  const have = new Set(data.map((d) => d.id));
+  const byId = new Map();
+  for (const r of FX) { if (!r.id || !r.inputs || r.small) continue; (byId.get(r.id) || byId.set(r.id, []).get(r.id)).push(r); }
+  const TYPE = { sahara: "สต็อก", woodStock: "ลายไม้สต็อค", special: "อบสีพิเศษ", woodSpecial: "ลายไม้อบพิเศษ" };
+  for (const [id, rs] of byId) {
+    if (have.has(r41Key(id)) || !PRODUCTS[id]) continue;
+    const p = PRODUCTS[id], vk0 = rs[0].vk || "";
+    const cand = rs.filter((r) => (r.vk || "") === vk0).sort((a, b) => a.w * a.h - b.w * b.h);
+    const mid = cand[Math.floor((cand.length - 1) / 2)];
+    const base = withSpecDefaults(p, mid.inputs);
+    const run = (k) => computeCost(PB, p, { ...base, ...webOpt(k) });
+    const wh = run("white"), allow = aluColorKeysFor(id);
+    const keys = ["sahara", "wood_teak", ...(p.euroColors || p.woodStockColors ? ["wood_maho", "wood_whiteoak"] : []), "special", "wood_special"].filter((k) => allow.includes(k) || k === "wood_maho" || k === "wood_whiteoak");
+    const costOf = (c) => { const k = c.cost || {}, L = c.labor || {}, P = c.sell?.parts || {};
+      return { mat: R(k.total), alu: R(k.alu), bake: R((k.bake || 0) + (k.openOven || 0)), glass: R(k.glass), hw: R((k.hardware || 0) + (k.consum || 0) + (k.frameColor || 0)),
+        lp: R(L.prod), li: R(L.install), sMat: R(P.mat), sP: R(P.prod), sI: R(P.inst) }; };
+    const rows = [{ base: true, type: "มาตรฐาน", color: "อบขาว / ดำ", t39: null, tWeb: R(wh.sell?.withInstall), costWeb: R(wh.cost.total), cost: costOf(wh) }];
+    for (const k of keys) {
+      const c = run(k);
+      if (Math.abs(c.cost.total - wh.cost.total) < 1) continue;
+      const rc = resolveAluColor(k);
+      rows.push({ type: TYPE[rc.bake] || rc.bake, color: rc.label, t39: null, tWeb: R(c.sell?.withInstall), a39: null, aWeb: R((c.sell?.withInstall || 0) - (wh.sell?.withInstall || 0)),
+        cWeb: R(c.cost.total - wh.cost.total), oven: (c.cost?.openOven || 0) > 0, swapped: false, cost: costOf(c),
+        ...(PDFCOL[k] ? { bars: barsOf(c, wh, k) } : {}),
+        bake: { kg: Math.round((c.aluKg || 0) * 100) / 100, rate: PB.BAKE?.[rc.bake] ?? 0,
+          bakeAll: R(c.cost?.bake), bakeWhite: R(wh.cost?.bake), bakeCost: R((c.cost?.bake || 0) - (wh.cost?.bake || 0)), oven: R((c.cost?.openOven || 0) - (wh.cost?.openOven || 0)), aluDiff: R((c.cost?.alu || 0) - (wh.cost?.alu || 0)),
+          otherDiff: R((c.cost.total - wh.cost.total) - ((c.cost?.bake || 0) - (wh.cost?.bake || 0)) - ((c.cost?.openOven || 0) - (wh.cost?.openOven || 0)) - ((c.cost?.alu || 0) - (wh.cost?.alu || 0))) } });
+    }
+    if (rows.length < 2) continue;
+    data.push({ id: r41Key(id), vk: vk0, name: p.name, group: GROUP(p.name), size: mid.w + " x " + mid.h, panels: mid.p ? String(mid.p) : "—",
+      kgWeb: Math.round((run("wood_special").aluKg || 0) * 10) / 10, note: null, noR39: true, rows });
+  }
 }
 const meta = { builtAt: new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" }), nStock };
 

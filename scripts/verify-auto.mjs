@@ -641,7 +641,8 @@ console.log("\n═══ ⑩ % กำไรค่าของตั้งต้�
     // R4.1: ช่อง % ทุกช่องแก้ผ่าน editPct → ติดธงเฉพาะก้อนที่แตะ (ไม่สลับทั้งหน้าเป็นโหมดกรอกเอง)
     // 14 ต.ค.69 ช่องโชว์/รับกำไรแบบ R4.1 (ขาย − ทุน) ÷ ขาย → editMargin แปลงแล้วส่งต่อ editPct ที่เดียว
     ok("ช่อง % ทุกช่องเรียก editMargin → editPct (ไม่มี seedManual ลอยในช่องกรอก)",
-      !/seedManual\(\); setProfit/.test(src) && (src.match(/editMargin\("(mat|prod|inst)", v\)/g) || []).length === 6
+      // 15 ต.ค.69 (e5bcc1fe) เอาช่อง "กำไร ค่าของ %" แถวบนออก เหลือ 5 ช่อง → ตรวจว่าไม่มีช่องไหนเรียก editPct ตรง ๆ แทนนับจำนวน
+      !/seedManual\(\); setProfit/.test(src) && (src.match(/editMargin\("(mat|prod|inst)", v\)/g) || []).length >= 3 && !/onChange=\{\(v: string\) => editPct\(/.test(src)
         && /const editMargin = \(k: "mat" \| "prod" \| "inst", v: string\) => editPct\(k, marginToPct\(v\)\)/.test(src),
       String((src.match(/editMargin\("(mat|prod|inst)", v\)/g) || []).length));
     ok("การ์ด 3 ก้อนแก้ผ่าน editMargin ตามชื่อก้อน", /const setPct = \(v: string\) => editMargin\(label === "ค่าของ" \? "mat" : label === "ค่าผลิต" \? "prod" : "inst", v\);/.test(src));

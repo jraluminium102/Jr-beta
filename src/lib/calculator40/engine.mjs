@@ -1007,11 +1007,12 @@ export function computeCost(PB, prod, opt) {
       const labDef = (noNode(laborProd, nP) ? Math.round(laborProd * (1 + pctProd / 100)) : 0) + (noNode(laborInstall, nI) ? Math.round(laborInstall * (1 + pctInst / 100)) : 0);
       // ── สีสต็อก (ลายไม้สักทอง/มะฮอกกานี/ไวท์โอ๊ค/ซาฮาร่า ฯลฯ): ค่าสีที่เพิ่มจากสีขาว ขาย × 1.6 เท่า (เจ้าของเคาะ 15 ต.ค.69) ──
       //   ไม่ผ่านกำไรสุทธิเหมือนค่าของอื่น (เดิม ÷ 0.369 = ×2.7 สำหรับ SMS ทำให้ค่าสีแพงกว่า R3.9 มาก) · สีอบพิเศษ/ลายไม้อบพิเศษ ยังผ่านกำไรสุทธิเต็ม
-      //   ค่าสีที่เพิ่ม = (อลู+ค่าอบ+ตู้อบ) ของสีนี้ − ของสีขาว (คิดสีขาวซ้ำในตัว 1 รอบ · _inner กันวนซ้ำ)
+      //   ค่าสีที่เพิ่ม = ทุนค่าของทั้งหมด สีนี้ − สีขาว (คิดสีขาวซ้ำในตัว 1 รอบ · _inner กันวนซ้ำ)
+      //   ⚠ ใช้ทุนรวม ไม่ใช่แค่ อลู+อบ — หลังคาเลื่อนเก็บเส้นส่วนเลื่อนเป็นบรรทัด "วัสดุอื่น" ที่ราคาตามสี (เจอ 15 ต.ค.69 เทา +6,792 แต่นับ ×1.6 แค่ 430)
       let colourExtra = 0;
       if (stockColour && !opt._inner) {
         const wh = computeCost(PB, prod, { ...opt, color: 'white', colorName: undefined, stockColor: undefined, colorKey: 'white', _inner: true });
-        colourExtra = Math.max(0, round2((aluCost + bakeCost + openOven) - ((wh.cost.alu || 0) + (wh.cost.bake || 0) + (wh.cost.openOven || 0))));
+        colourExtra = Math.max(0, round2(costTotal - (wh._costCore || 0)));
       }
       colourExtraInfo = colourExtra > 0 ? { cost: colourExtra, sell: round2(colourExtra * STOCK_COLOR_SELL_MULT), mult: STOCK_COLOR_SELL_MULT } : null;
       // ปัดขึ้นทีละ 0.1% — % ที่โชว์ × ทุน = ราคาจริงเป๊ะ และกำไรสุทธิไม่ต่ำกว่าเป้าจากการปัด
@@ -1211,6 +1212,7 @@ export function computeCost(PB, prod, opt) {
       hardware: round2(hwCost), consum: round2(consumCost + addonCost), total: costTotalOut,
     },
     profit: round2(sellWithInstall - costTotalOut),  // กำไร (ขาย − ทุน)
+    _costCore: round2(costTotal),   // ทุนค่าของก่อนออปชั่น — ใช้เทียบค่าสีสต็อกกับสีขาว (colourExtra)
     glassArea: round2(glassArea), aluKg: round2(aluKg), weight,
     profit3: sellPct || { mat: pctMat, prod: pctProd, inst: pctInst },   // % ที่ใช้จริง (หน้าจอเอาไปโชว์/แก้)
     // ก้อนมอเตอร์ (ขายฟิก ไม่ผ่านกำไรค่าของ) — หน้าจอโชว์ ทุน/ขาย/กำไร + ช่องแก้ราคา (เจ้าของ 12 ก.ย.69)

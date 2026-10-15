@@ -277,11 +277,11 @@ const colorBlock = (p) => {
     const bid = r.bars && r.bars.length ? "bars" + (++barSeq) : null;
     return `<tr><td class="c">${r.color}<span class="ty">${r.type}${r.swapped ? " · คิดเป็นลายไม้อบพิเศษ" : ""}</span>${bid ? `<button type="button" class="bomtog" data-lb="ราคาเส้น" aria-expanded="false" aria-controls="${bid}">ราคาเส้น ▾</button>` : ""}</td>
       <td class="num k-cost"><span class="v">+${fmt(r.cWeb)}</span><span class="how">${howTxt(r)}</span></td>
-      <td class="num k-sell"><span class="v big">+${fmt(r.aWeb)}</span><span class="ref">${chip(d)} vs 3.9</span></td>
-      <td class="num k-ref"><span class="v">+${fmt(r.a39)}</span></td>
+      <td class="num k-sell"><span class="v big">+${fmt(r.aWeb)}</span>${r.a39 != null ? `<span class="ref">${chip(d)} vs 3.9</span>` : ""}</td>
+      <td class="num k-ref">${r.a39 != null ? `<span class="v">+${fmt(r.a39)}</span>` : `<span class="ref">—</span>`}</td>
       <td class="num"><span class="v">${ppc(netOf(r.tWeb, cT))}</span><span class="ref">ขายรวม ${fmt(r.tWeb)}</span></td></tr>
       ${bid ? `<tr class="bomrow" id="${bid}" hidden><td colspan="5"><div class="bomwrap"><div class="bomhd">ราคาเส้นอลู ${r.color} เทียบสีขาว/ดำ — ต่อ กก. = ราคาเส้น ÷ น้ำหนัก · เส้นที่ราคาเท่าขาว = เส้นไม่มีสีนี้ (คิดค่าอบแยก) หรือเส้นสีเงินราคาเดียว</div>${barsTable(r)}</div></td></tr>` : ""}`; }).join("");
-  return `<div class="clr"><h3>ค่าสีที่เพิ่มจากสีขาว · เทียบ R3.9 <span class="ref">ขนาด ${p.size} ซม.${/d/.test(p.panels) ? " · " + p.panels + " บาน" : ""} · สีขาวขาย ${fmt(base?.tWeb)} · อลูที่อบ ${p.kgWeb || "—"} กก.${na.length ? " · ไม่มีขาย: " + na.map((r) => r.color).join(", ") : ""}</span></h3>
+  return `<div class="clr"><h3>ค่าสีที่เพิ่มจากสีขาว${p.noR39 ? "" : " · เทียบ R3.9"} <span class="ref">ขนาด ${p.size} ซม.${/\d/.test(p.panels) ? " · " + p.panels + " บาน" : ""}${p.noR39 ? " (ขนาดกลางในตาราง R4.1 · ไม่มีข้อมูล R3.9)" : ""} · สีขาวขาย ${fmt(base?.tWeb)} · อลูที่อบ ${p.kgWeb || "—"} กก.${na.length ? " · ไม่มีขาย: " + na.map((r) => r.color).join(", ") : ""}</span></h3>
     ${p.note ? `<div class="note ${p.note.level}">${p.note.text}</div>` : ""}
     <div class="tbl"><table class="ct"><thead><tr><th class="c">สี</th><th class="k-cost">ทุนสีที่เพิ่ม · วิธีคิด</th><th class="k-sell">ค่าสีขาย เว็บ</th><th class="k-ref">ค่าสีขาย R3.9</th><th>กำไรสุทธิทั้งชุด<br><span class="ref">สีขาว/ดำ ${ppc(netBase)}</span></th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 };
