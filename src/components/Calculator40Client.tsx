@@ -1355,7 +1355,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                       <Field label={`จำนวนบาน${prod.minP ? ` (${prod.minP}–${prod.maxP})` : ""}`} value={p} onChange={setP} />
                     )
                   ) : <div />}
-                  <Field label="กำไร ค่าของ %" value={shownMargin.mat} onChange={(v: string) => editMargin("mat", v)} />
+                  {/* 15 ต.ค.69 เจ้าของสั่ง: เอาช่อง "กำไร ค่าของ %" แถวบนออก — ปรับที่การ์ด "ค่าของ" ด้านล่างที่เดียว (เดิมมี 2 ที่) */}
                   <Field label="กำไร ค่าผลิต %" value={shownMargin.prod} onChange={(v: string) => editMargin("prod", v)} />
                   <Field label="กำไร ค่าติดตั้ง %" value={shownMargin.inst} onChange={(v: string) => editMargin("inst", v)} />
                 </div>
