@@ -134,7 +134,7 @@ table.bom tr.bt td { font-weight: 700; border-top: 2px solid var(--line-strong);
   </div>
 
   <div id="tab-color" hidden>
-    <div class="rule">ค่าสีที่เพิ่ม (ทุน) = ทุนค่าของสีนั้น − ทุนสีขาว · อบ = กก.ที่เข้ากองอบ × เรต/กก. + ตู้อบ · เส้นสี = ซื้อเส้นสีสำเร็จแพงกว่าขาว · ราคาขายคิดด้วยกำไรสุทธิเดียวกับสีขาว</div>
+    <div class="rule">ดูเฉพาะ "ค่าสีที่เพิ่มจากสีขาว" — ทุน = อบ (กก.ที่เข้ากองอบ × เรต/กก. + ตู้อบ 2,000) หรือเส้นสีสำเร็จแพงกว่าขาว · ค่าสีขายเว็บ = ทุนสีที่เพิ่ม ÷ (1 − 30/130 − กำไรสุทธิ) (กำไรเท่าสีขาว) · เทียบกับค่าสีที่ R3.9 บวก</div>
     <div class="bar"><div class="row">
       <input type="search" id="q" placeholder="ค้นชื่อบาน หรือ สี" aria-label="ค้นหา">
       <div class="row" id="groups" role="group" aria-label="หมวด"></div>
@@ -269,29 +269,29 @@ function render() {
   const prods = DATA.data.filter((p) => (group === "ทั้งหมด" || p.group === group) && (!ql || p.name.toLowerCase().includes(ql) || p.rows.some((r) => String(r.color).toLowerCase().includes(ql))));
   const cnt = { up: 0, down: 0, flat: 0 };
   $("#list").innerHTML = prods.length ? prods.map((p) => {
+    const base = p.rows.find((r) => r.base);
     const rows = p.rows.map((r) => {
-      if (r.na) return `<tr class="na"><td class="c">${r.color}<span class="ty">${r.type}</span></td><td colspan="6" style="text-align:left">ไม่มีสีนี้ขาย</td></tr>`;
-      const d = pct(r.tWeb, r.t39); if (d != null && !r.base) cnt[kindOf(d)]++;
-      const costT = r.base ? r.costWeb : r.cost?.mat;
-      // กำไรของชุดสีนี้ที่ราคาเว็บ (เจ้าของขอ 14 ต.ค.69) — สุทธิ = (ขาย − 30/130 − ทุนรวม ของ+ผลิต+ติดตั้ง) ÷ ขาย · แยกก้อน (ขาย − ทุน) ÷ ขาย
+      if (r.na) return `<tr class="na"><td class="c">${r.color}<span class="ty">${r.type}</span></td><td colspan="5" style="text-align:left">ไม่มีสีนี้ขาย</td></tr>`;
+      // 15 ต.ค.69 เจ้าของ: ดูแค่ "ค่าสีที่เพิ่ม" — ทุนสีที่เพิ่ม · ค่าสีขายเว็บ vs ค่าสีขาย R3.9 ต่างกี่ % (ไม่เอาทุน/ราคาทั้งชุดมาปน)
+      const d = pct(r.aWeb, r.a39); if (d != null && !r.base) cnt[kindOf(d)]++;
+      // กำไรสุทธิทั้งชุดที่ราคาเว็บ + ถ้าขายค่าสีเท่า R3.9 (ราคาขาว เว็บ + ค่าสี 3.9) กำไรจะเหลือเท่าไหร่
       const k = r.cost || {}; const cT = (k.mat || 0) + (k.lp || 0) + (k.li || 0);
-      const pw = { net: netOf(r.tWeb, cT), m: mg1(k.sMat, k.mat), p: mg1(k.sP, k.lp), i: mg1(k.sI, k.li) };
+      const netW = netOf(r.tWeb, cT), net39 = base ? netOf(base.tWeb + (r.a39 || 0), cT) : null;
       return `<tr class="${r.base ? "base" : ""}">
         <td class="c">${r.color}${r.swapped ? ' <span class="ty">คิดเป็นลายไม้อบพิเศษ (รุ่นนี้ไม่มีสีสต็อก)</span>' : ""}<span class="ty">${r.type}</span></td>
-        <td class="num k-cost">${fmt(costT)}</td>
-        <td class="num k-cost">${r.base ? "ฐาน" : `<span class="v">+${fmt(r.cWeb)}</span><span class="how">${howTxt(r)}</span>`}</td>
-        <td class="num k-ref"><span class="v">${fmt(r.t39)}</span>${r.base ? "" : `<span class="ref">ค่าสี +${fmt(r.a39)}</span>`}</td>
-        <td class="num k-sell"><span class="v big">${fmt(r.tWeb)}</span>${r.base ? "" : `<span class="ref">ค่าสี +${fmt(r.aWeb)}</span>`}</td>
+        <td class="num k-cost">${r.base ? `<span class="ref">ฐาน · ขาย ${fmt(r.tWeb)}</span>` : `<span class="v">+${fmt(r.cWeb)}</span><span class="how">${howTxt(r)}</span>`}</td>
+        <td class="num k-sell">${r.base ? "" : `<span class="v big">+${fmt(r.aWeb)}</span><span class="ref">ขายรวม ${fmt(r.tWeb)}</span>`}</td>
+        <td class="num k-ref">${r.base ? "" : `<span class="v">+${fmt(r.a39)}</span><span class="ref">ขายรวม ${fmt(r.t39)}</span>`}</td>
         <td class="num k-sell">${r.base ? "" : chip(d)}</td>
-        <td class="num"><span class="v">${ppc(pw.net)}</span><span class="ref">${p3(pw)}</span></td></tr>`;
+        <td class="num"><span class="v">${ppc(netW)}</span>${r.base || net39 == null ? "" : `<span class="ref">ถ้าคิดค่าสีแบบ 3.9: ${ppc(net39)}</span>`}</td></tr>`;
     }).join("");
     return `<section class="card"><header><h2>${gbadge(p.group)}${p.name}</h2><div class="meta"><span>${p.size} ซม.${/\d/.test(p.panels) ? ` · ${p.panels} บาน` : ""}</span><span>อลูที่อบ ${p.kgWeb || "—"} กก.</span></div></header>
       ${p.note ? `<div class="note ${p.note.level}">${p.note.text}</div>` : ""}
       <div class="tbl"><table><thead>
-        <tr><th class="c">สี</th><th class="k-cost">ทุนค่าของ ทั้งชุด</th><th class="k-cost">ค่าสีที่เพิ่ม (ทุน) · วิธีคิด</th><th class="k-ref">ขาย R3.9</th><th class="k-sell">ขายเว็บ</th><th class="k-sell">เว็บ vs R3.9</th><th>กำไรสุทธิ (เว็บ)<br><span class="ref">ของ/ผลิต/ติดตั้ง</span></th></tr>
+        <tr><th class="c">สี</th><th class="k-cost">ค่าสีที่เพิ่ม (ทุน) · วิธีคิด</th><th class="k-sell">ค่าสีขาย เว็บ</th><th class="k-ref">ค่าสีขาย R3.9</th><th class="k-sell">ค่าสี เว็บ vs 3.9</th><th>กำไรสุทธิทั้งชุด (เว็บ)</th></tr>
       </thead><tbody>${rows}</tbody></table></div></section>`;
   }).join("") : `<div class="empty">ไม่เจอบานหรือสีที่ค้น</div>`;
-  $("#sum").innerHTML = `<div class="st hi"><div class="k">เว็บแพงกว่า R3.9 (เกิน 2%)</div><div class="v">${cnt.up}</div><div class="s">สี</div></div><div class="st lo"><div class="k">ถูกกว่า R3.9</div><div class="v">${cnt.down}</div><div class="s">สี</div></div><div class="st"><div class="k">ใกล้กัน ±2%</div><div class="v">${cnt.flat}</div><div class="s">สี</div></div>`;
+  $("#sum").innerHTML = `<div class="st hi"><div class="k">ค่าสีเว็บแพงกว่า 3.9 (เกิน 2%)</div><div class="v">${cnt.up}</div><div class="s">สี</div></div><div class="st lo"><div class="k">ค่าสีเว็บถูกกว่า 3.9</div><div class="v">${cnt.down}</div><div class="s">สี</div></div><div class="st"><div class="k">ใกล้กัน ±2%</div><div class="v">${cnt.flat}</div><div class="s">สี</div></div>`;
 }
 $("#groups").onclick = (e) => { const g = e.target.closest("[data-g]"); if (g) { group = g.dataset.g; render(); } };
 $("#q").oninput = (e) => { query = e.target.value; render(); };
