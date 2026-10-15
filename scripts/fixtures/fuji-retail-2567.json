@@ -1,0 +1,889 @@
+{
+ "_note": "ราคาปลีก KC Fuji Eurotech เริ่มใช้ 07/6/67 (ไฟล์ อลู/KC Fuji ฟูจิ ยูโรเทค ราคาปลีก 07-06-24.pdf) · บาท/เส้น ตามสี · ถอดด้วย dumppdf 15 ต.ค.69 · ใช้เทียบในหน้าตรวจราคาเท่านั้น",
+ "F7851": {
+  "name": "ตบเรียบร่องซีกรุ๊ป",
+  "price": {
+   "black": 120,
+   "white": 120,
+   "sahara": 150,
+   "sahara_black": 150,
+   "wood_teak": 170
+  }
+ },
+ "F7852": {
+  "name": "ตบเฟรมแบ่งบานคิวใน",
+  "price": {
+   "black": 760,
+   "white": 760,
+   "sahara": 815,
+   "sahara_black": 815,
+   "wood_teak": 1205
+  }
+ },
+ "F7853": {
+  "name": "คิวสําหรับกระจกมู่ลี",
+  "price": {
+   "black": 260,
+   "white": 260,
+   "sahara": 280,
+   "sahara_black": 280,
+   "wood_teak": 415
+  }
+ },
+ "F7854": {
+  "name": "เฟรมแบ่งบานคิวนอก",
+  "price": {
+   "black": 1320,
+   "white": 1320,
+   "sahara": 1420,
+   "sahara_black": 1420,
+   "wood_teak": 2095
+  }
+ },
+ "F7856": {
+  "name": "อแดปเตอร์ประตูดิจิตอล",
+  "price": {
+   "black": 880,
+   "white": 880,
+   "sahara": 945,
+   "sahara_black": 945,
+   "wood_teak": 1395
+  }
+ },
+ "F7858": {
+  "name": "เฟรมบานตายคิวในมีรูระบาย",
+  "price": {
+   "black": 1345,
+   "white": 1345,
+   "sahara": 1440,
+   "sahara_black": 1440,
+   "wood_teak": 2130
+  }
+ },
+ "F7859": {
+  "name": "เฟรมบานกระทุ้ง ไม่มีรูระบาย",
+  "price": {
+   "black": 1075,
+   "white": 1075,
+   "sahara": 1150,
+   "sahara_black": 1150,
+   "wood_teak": 1700
+  }
+ },
+ "F7860": {
+  "name": "คิวตบนอกในบานตาย",
+  "price": {
+   "black": 505,
+   "white": 505,
+   "sahara": 540,
+   "sahara_black": 540,
+   "wood_teak": 800
+  }
+ },
+ "F7861": {
+  "name": "ตบเฟรมแบ่งบาน",
+  "price": {
+   "black": 735,
+   "white": 735,
+   "sahara": 790,
+   "sahara_black": 790,
+   "wood_teak": 1165
+  }
+ },
+ "F7862": {
+  "name": "คิวตบนอกเฟรม",
+  "price": {
+   "black": 355,
+   "white": 355,
+   "sahara": 380,
+   "sahara_black": 380,
+   "wood_teak": 560
+  }
+ },
+ "F7863": {
+  "name": "อแดปเตอร์เสาประตูภายใน",
+  "price": {
+   "black": 390,
+   "white": 390,
+   "sahara": 415,
+   "sahara_black": 415,
+   "wood_teak": 615
+  }
+ },
+ "F7864": {
+  "name": "เสาประตู 100 มม.",
+  "price": {
+   "black": 1970,
+   "white": 1970,
+   "sahara": 2110,
+   "sahara_black": 2110,
+   "wood_teak": 3120
+  }
+ },
+ "F7865": {
+  "name": "แผงประตู",
+  "price": {
+   "black": 1485,
+   "white": 1485,
+   "sahara": 1595,
+   "sahara_black": 1595,
+   "wood_teak": 2355
+  }
+ },
+ "F7868": {
+  "name": "กล่องก้านสองทางคิวนอก (ติดมุ้ง)",
+  "price": {
+   "black": 1825,
+   "white": 1825,
+   "sahara": 1960,
+   "sahara_black": 1960,
+   "wood_teak": 2890
+  }
+ },
+ "F7871": {
+  "name": "เฟรมบานตายคิวใน (หนา)",
+  "price": {
+   "black": 1505,
+   "white": 1505,
+   "sahara": 1615,
+   "sahara_black": 1615,
+   "wood_teak": 2385
+  }
+ },
+ "F7872": {
+  "name": "เฟรมบานตายคิวในมีรูระบายนํา (หนา)",
+  "price": {
+   "black": 1705,
+   "white": 1705,
+   "sahara": 1830,
+   "sahara_black": 1830,
+   "wood_teak": 2705
+  }
+ },
+ "F7873": {
+  "name": "คิวตบนอกในบานตายกระจก 10-16 มม.",
+  "price": {
+   "black": 500,
+   "white": 500,
+   "sahara": 535,
+   "sahara_black": 535,
+   "wood_teak": 790
+  }
+ },
+ "F7935": {
+  "name": "",
+  "price": {
+   "black": 340,
+   "white": 340,
+   "sahara": 365,
+   "sahara_black": 365,
+   "wood_teak": 535
+  }
+ },
+ "F7937": {
+  "name": "เฟรมบานตายคิวใน",
+  "price": {
+   "black": 1180,
+   "white": 1180,
+   "sahara": 1270,
+   "sahara_black": 1270,
+   "wood_teak": 1875
+  }
+ },
+ "F7938B": {
+  "name": "เฟรมบานกระทุ้ง (ติดมุ้ง)",
+  "price": {
+   "black": 1350,
+   "white": 1350,
+   "sahara": 1450,
+   "sahara_black": 1450,
+   "wood_teak": 2140
+  }
+ },
+ "F7939B": {
+  "name": "เฟรมบานกระทุ้ง",
+  "price": {
+   "black": 1350,
+   "white": 1350,
+   "sahara": 1450,
+   "sahara_black": 1450,
+   "wood_teak": 2140
+  }
+ },
+ "F7940B": {
+  "name": "กล่องก้านคิวนอก",
+  "price": {
+   "black": 1780,
+   "white": 1780,
+   "sahara": 1915,
+   "sahara_black": 1915,
+   "wood_teak": 2825
+  }
+ },
+ "F7942": {
+  "name": "ตบเฟรมแบ่งบานคิวนอก",
+  "price": {
+   "black": 800,
+   "white": 800,
+   "sahara": 860,
+   "sahara_black": 860,
+   "wood_teak": 1270
+  }
+ },
+ "F7943B": {
+  "name": "กรอบบานกระทุ้ง",
+  "price": {
+   "black": 1370,
+   "white": 1370,
+   "sahara": 1470,
+   "sahara_black": 1470,
+   "wood_teak": 2170
+  }
+ },
+ "F7944B": {
+  "name": "กรอบมุ้งนิรภัย",
+  "price": {
+   "black": 1030,
+   "white": 1030,
+   "sahara": 1105,
+   "sahara_black": 1105,
+   "wood_teak": 1635
+  }
+ },
+ "F7945": {
+  "name": "เสารับล็อคเปิดกลาง",
+  "price": {
+   "black": 695,
+   "white": 695,
+   "sahara": 745,
+   "sahara_black": 745,
+   "wood_teak": 1100
+  }
+ },
+ "F7946": {
+  "name": "คิวตบในบานตาย",
+  "price": {
+   "black": 230,
+   "white": 230,
+   "sahara": 245,
+   "sahara_black": 245,
+   "wood_teak": 365
+  }
+ },
+ "F7947": {
+  "name": "คิวตบนอกบานตาย",
+  "price": {
+   "black": 260,
+   "white": 260,
+   "sahara": 280,
+   "sahara_black": 280,
+   "wood_teak": 415
+  }
+ },
+ "F7948": {
+  "name": "กันสาด",
+  "price": {
+   "black": 170,
+   "white": 170,
+   "sahara": 180,
+   "sahara_black": 180,
+   "wood_teak": 270
+  }
+ },
+ "F7949": {
+  "name": "คิวกระจก 10-16 มิล",
+  "price": {
+   "black": 285,
+   "white": 285,
+   "sahara": 310,
+   "sahara_black": 310,
+   "wood_teak": 455
+  }
+ },
+ "F7958": {
+  "name": "เสารับล็อคเปิดกลางบานมุ้ง",
+  "price": {
+   "black": 555,
+   "white": 555,
+   "sahara": 600,
+   "sahara_black": 600,
+   "wood_teak": 885
+  }
+ },
+ "F7959": {
+  "name": "กล่องคําบานมุ้ง",
+  "price": {
+   "black": 505,
+   "white": 505,
+   "sahara": 540,
+   "sahara_black": 540,
+   "wood_teak": 800
+  }
+ },
+ "F7960": {
+  "name": "ตบธรณี",
+  "price": {
+   "black": 550,
+   "white": 550,
+   "sahara": 590,
+   "sahara_black": 590,
+   "wood_teak": 870
+  }
+ },
+ "F7967": {
+  "name": "คิวตบในบานตาย ร่อง 22 มม.",
+  "price": {
+   "black": 230,
+   "white": 230,
+   "sahara": 245,
+   "sahara_black": 245,
+   "wood_teak": 360
+  }
+ },
+ "F7997": {
+  "name": "กล่องก้านสลับ",
+  "price": {
+   "black": 1680,
+   "white": 1680,
+   "sahara": 1805,
+   "sahara_black": 1805,
+   "wood_teak": 2665
+  }
+ },
+ "F7998": {
+  "name": "กล่องก้านบานตายคิวใน",
+  "price": {
+   "black": 1680,
+   "white": 1680,
+   "sahara": 1805,
+   "sahara_black": 1805,
+   "wood_teak": 2665
+  }
+ },
+ "F7999": {
+  "name": "เฟรมแบ่งบานคิวใน",
+  "price": {
+   "black": 1335,
+   "white": 1335,
+   "sahara": 1430,
+   "sahara_black": 1430,
+   "wood_teak": 2115
+  }
+ },
+ "F7855": {
+  "name": "",
+  "price": {
+   "black": 1200,
+   "white": 1200,
+   "sahara": 1285,
+   "sahara_black": 1285,
+   "wood_teak": 1900
+  }
+ },
+ "F7857": {
+  "name": "",
+  "price": {
+   "black": 665,
+   "white": 665,
+   "sahara": 715,
+   "sahara_black": 715,
+   "wood_teak": 1060
+  }
+ },
+ "F7902": {
+  "name": "เฟรมบานเลือน 3 รางเตีย",
+  "price": {
+   "black": 1130,
+   "white": 1130,
+   "sahara": 1215,
+   "sahara_black": 1215,
+   "wood_teak": 1795
+  }
+ },
+ "F7913B": {
+  "name": "ขาเสริมมุ้ง",
+  "price": {
+   "black": 340,
+   "white": 340,
+   "sahara": 365,
+   "sahara_black": 365,
+   "wood_teak": 535
+  }
+ },
+ "F7917": {
+  "name": "",
+  "price": {
+   "black": 160,
+   "white": 160,
+   "sahara": 170,
+   "sahara_black": 170,
+   "wood_teak": 255
+  }
+ },
+ "F7918B": {
+  "name": "เสาต่อหักมุม 90",
+  "price": {
+   "black": 775,
+   "white": 775,
+   "sahara": 835,
+   "sahara_black": 835,
+   "wood_teak": 1230
+  }
+ },
+ "F7919": {
+  "name": "คิวกรอบบาน",
+  "price": {
+   "black": 185,
+   "white": 185,
+   "sahara": 200,
+   "sahara_black": 200,
+   "wood_teak": 295
+  }
+ },
+ "F7923B": {
+  "name": "ตบสักกะหลาดเส้นมุ้ง",
+  "price": {
+   "black": 145,
+   "white": 145,
+   "sahara": 155,
+   "sahara_black": 155,
+   "wood_teak": 230
+  }
+ },
+ "F7925C": {
+  "name": "ต่อชนกลาง",
+  "price": {
+   "black": 395,
+   "white": 395,
+   "sahara": 425,
+   "sahara_black": 425,
+   "wood_teak": 630
+  }
+ },
+ "F7950B": {
+  "name": "",
+  "price": {
+   "black": 160,
+   "white": 160,
+   "sahara": 170,
+   "sahara_black": 170,
+   "wood_teak": 255
+  }
+ },
+ "F7951": {
+  "name": "เสารับแรงบานเลือน",
+  "price": {
+   "black": 1960,
+   "white": 1960,
+   "sahara": 2105,
+   "sahara_black": 2105,
+   "wood_teak": 3105
+  }
+ },
+ "F7952": {
+  "name": "แผ่นยึดเฟรมล่าง",
+  "price": {
+   "black": 540,
+   "white": 540,
+   "sahara": 580,
+   "sahara_black": 580,
+   "wood_teak": 855
+  }
+ },
+ "F7966B": {
+  "name": "",
+  "price": {
+   "black": 760,
+   "white": 760,
+   "sahara": 815,
+   "sahara_black": 815,
+   "wood_teak": 1205
+  }
+ },
+ "F7976": {
+  "name": "เฟรมบานเลือน 3 ราง",
+  "price": {
+   "black": 2110,
+   "white": 2110,
+   "sahara": 2265,
+   "sahara_black": 2265,
+   "wood_teak": 3350
+  }
+ },
+ "F7977": {
+  "name": "เฟรมบานเลือน ราง",
+  "price": {
+   "black": 1420,
+   "white": 1420,
+   "sahara": 1525,
+   "sahara_black": 1525,
+   "wood_teak": 2250
+  }
+ },
+ "F7978": {
+  "name": "เฟรมข้าง ราง",
+  "price": {
+   "black": 880,
+   "white": 880,
+   "sahara": 945,
+   "sahara_black": 945,
+   "wood_teak": 1395
+  }
+ },
+ "F7979": {
+  "name": "เฟรมข้าง ราง",
+  "price": {
+   "black": 650,
+   "white": 650,
+   "sahara": 700,
+   "sahara_black": 700,
+   "wood_teak": 1030
+  }
+ },
+ "F7980": {
+  "name": "กรอบบานเลือนประตู",
+  "price": {
+   "black": 1370,
+   "white": 1370,
+   "sahara": 1470,
+   "sahara_black": 1470,
+   "wood_teak": 2170
+  }
+ },
+ "F7981": {
+  "name": "กรอบบานเลือนหน้าต่าง",
+  "price": {
+   "black": 1075,
+   "white": 1075,
+   "sahara": 1150,
+   "sahara_black": 1150,
+   "wood_teak": 1700
+  }
+ },
+ "F7982": {
+  "name": "ตบเกียวทางเดียวหน้าต่าง",
+  "price": {
+   "black": 395,
+   "white": 395,
+   "sahara": 425,
+   "sahara_black": 425,
+   "wood_teak": 630
+  }
+ },
+ "F7983": {
+  "name": "ตบเกียวทางเดียวประตู",
+  "price": {
+   "black": 455,
+   "white": 455,
+   "sahara": 490,
+   "sahara_black": 490,
+   "wood_teak": 725
+  }
+ },
+ "F7984": {
+  "name": "ตบเกียวหน้าต่าง 2 ด้าน",
+  "price": {
+   "black": 625,
+   "white": 625,
+   "sahara": 670,
+   "sahara_black": 670,
+   "wood_teak": 990
+  }
+ },
+ "F7985": {
+  "name": "ตบเกียวประตู 2 ด้าน",
+  "price": {
+   "black": 750,
+   "white": 750,
+   "sahara": 805,
+   "sahara_black": 805,
+   "wood_teak": 1190
+  }
+ },
+ "F7986": {
+  "name": "ตบรับล๊อคเฟรมข้าง",
+  "price": {
+   "black": 270,
+   "white": 270,
+   "sahara": 290,
+   "sahara_black": 290,
+   "wood_teak": 430
+  }
+ },
+ "F7987": {
+  "name": "คิวมุ้งบานเลือน",
+  "price": {
+   "black": 170,
+   "white": 170,
+   "sahara": 180,
+   "sahara_black": 180,
+   "wood_teak": 270
+  }
+ },
+ "F7988": {
+  "name": "ตบปิดร่อง",
+  "price": {
+   "black": 120,
+   "white": 120,
+   "sahara": 150,
+   "sahara_black": 150,
+   "wood_teak": 170
+  }
+ },
+ "F7989": {
+  "name": "กล่องต่อเฟรมข้างบานเลือน",
+  "price": {
+   "black": 305,
+   "white": 305,
+   "sahara": 325,
+   "sahara_black": 325,
+   "wood_teak": 480
+  }
+ },
+ "F7990": {
+  "name": "ต่อเฟรมล่างบานเลือน",
+  "price": {
+   "black": 940,
+   "white": 940,
+   "sahara": 1005,
+   "sahara_black": 1005,
+   "wood_teak": 1485
+  }
+ },
+ "F7991": {
+  "name": "ตบธรณีบานเลือน",
+  "price": {
+   "black": 285,
+   "white": 285,
+   "sahara": 310,
+   "sahara_black": 310,
+   "wood_teak": 455
+  }
+ },
+ "F7992": {
+  "name": "ตบฝังเฟรมบานเลือน",
+  "price": {
+   "black": 490,
+   "white": 490,
+   "sahara": 525,
+   "sahara_black": 525,
+   "wood_teak": 775
+  }
+ },
+ "F7993": {
+  "name": "ตบปิดร่องรางเลือน",
+  "price": {
+   "black": 120,
+   "white": 120,
+   "sahara": 150,
+   "sahara_black": 150,
+   "wood_teak": 180
+  }
+ },
+ "F7994": {
+  "name": "เส้นรางเลือน ชุบขาว",
+  "price": {
+   "black": 130
+  }
+ },
+ "F7996": {
+  "name": "คิวลอยช่องแสง",
+  "price": {
+   "black": 455,
+   "white": 455,
+   "sahara": 490,
+   "sahara_black": 490,
+   "wood_teak": 725
+  }
+ },
+ "F7867": {
+  "name": "กรอบบานเลือน ประตู บาง",
+  "price": {
+   "black": 1105,
+   "white": 1105,
+   "sahara": 1185,
+   "sahara_black": 1185,
+   "wood_teak": 1755
+  }
+ },
+ "F7869": {
+  "name": "เฟรมล่างบานเลือน 3 ราง หนา",
+  "price": {
+   "black": 2525,
+   "white": 2525,
+   "sahara": 2710,
+   "sahara_black": 2710,
+   "wood_teak": 4005
+  }
+ },
+ "F7870": {
+  "name": "เฟรมข้างบานเลือน หนา",
+  "price": {
+   "black": 1030,
+   "white": 1030,
+   "sahara": 1105,
+   "sahara_black": 1105,
+   "wood_teak": 1635
+  }
+ },
+ "F7879": {
+  "name": "ตบธรณีกลาง",
+  "price": {
+   "black": 355,
+   "white": 355,
+   "sahara": 380,
+   "sahara_black": 380,
+   "wood_teak": 560
+  }
+ },
+ "F7880": {
+  "name": "ตบธรณีริม",
+  "price": {
+   "black": 355,
+   "white": 355,
+   "sahara": 380,
+   "sahara_black": 380,
+   "wood_teak": 560
+  }
+ },
+ "F7968": {
+  "name": "เฟรมบนบานเฟียม",
+  "price": {
+   "black": 3140,
+   "white": 3140,
+   "sahara": 3370,
+   "sahara_black": 3370,
+   "wood_teak": 4980
+  }
+ },
+ "F7969": {
+  "name": "เฟรมล่างบานเฟียม",
+  "price": {
+   "black": 1730,
+   "white": 1730,
+   "sahara": 1860,
+   "sahara_black": 1860,
+   "wood_teak": 2745
+  }
+ },
+ "F7970": {
+  "name": "เฟรมข้างบานเฟียม",
+  "price": {
+   "black": 1065,
+   "white": 1065,
+   "sahara": 1140,
+   "sahara_black": 1140,
+   "wood_teak": 1685
+  }
+ },
+ "F7961": {
+  "name": "รับล็อคเฟรมข้างบานคู่",
+  "price": {
+   "black": 590,
+   "white": 590,
+   "sahara": 635,
+   "sahara_black": 635,
+   "wood_teak": 935
+  }
+ },
+ "F7962": {
+  "name": "รับล็อคบานคู่-บานคี",
+  "price": {
+   "black": 965,
+   "white": 965,
+   "sahara": 1035,
+   "sahara_black": 1035,
+   "wood_teak": 1525
+  }
+ },
+ "F7963": {
+  "name": "รับล็อคเสาเข้ามุมบานคู่",
+  "price": {
+   "black": 505,
+   "white": 505,
+   "sahara": 545,
+   "sahara_black": 545,
+   "wood_teak": 805
+  }
+ },
+ "F7964": {
+  "name": "เสาเข้ามุม",
+  "price": {
+   "black": 1115,
+   "white": 1115,
+   "sahara": 1195,
+   "sahara_black": 1195,
+   "wood_teak": 1765
+  }
+ },
+ "F7965": {
+  "name": "ลูกฟักแบ่งบาน",
+  "price": {
+   "black": 995,
+   "white": 995,
+   "sahara": 1070,
+   "sahara_black": 1070,
+   "wood_teak": 1580
+  }
+ },
+ "F7971": {
+  "name": "คิวตบเฟรมข้าง",
+  "price": {
+   "black": 475,
+   "white": 475,
+   "sahara": 510,
+   "sahara_black": 510,
+   "wood_teak": 750
+  }
+ },
+ "F7972": {
+  "name": "กรอบบานเฟียม",
+  "price": {
+   "black": 1670,
+   "white": 1670,
+   "sahara": 1795,
+   "sahara_black": 1795,
+   "wood_teak": 2650
+  }
+ },
+ "F7973": {
+  "name": "ตบปิดเรียบบานเฟียม",
+  "price": {
+   "black": 230,
+   "white": 230,
+   "sahara": 245,
+   "sahara_black": 245,
+   "wood_teak": 360
+  }
+ },
+ "F7974": {
+  "name": "ชนกลางบานคู่",
+  "price": {
+   "black": 930,
+   "white": 930,
+   "sahara": 995,
+   "sahara_black": 995,
+   "wood_teak": 1475
+  }
+ },
+ "F7975": {
+  "name": "บังใบ",
+  "price": {
+   "black": 540,
+   "white": 540,
+   "sahara": 580,
+   "sahara_black": 580,
+   "wood_teak": 855
+  }
+ },
+ "F7932": {
+  "name": "รางยู",
+  "price": {
+   "black": 390,
+   "white": 390,
+   "sahara": 415,
+   "sahara_black": 415,
+   "wood_teak": 615
+  }
+ }
+}

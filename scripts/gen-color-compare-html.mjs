@@ -63,6 +63,22 @@ const webOpt = (key) => { const rc = resolveAluColor(key);
 const R = (v) => (typeof v === "number" && Number.isFinite(v) ? Math.round(v) : null);
 
 const data = [];
+// ราคาปลีก KC Fuji ปี 67 (บาท/เส้น ตามสี) — ไว้เทียบราคาเส้นลายไม้/ขาวในบล็อกค่าสี (15 ต.ค.69 เจ้าของ "ไม่มั่นใจว่าถูก ให้เช็คตัวเองด้วย")
+const FUJI_RETAIL = fs.existsSync("scripts/fixtures/fuji-retail-2567.json") ? JSON.parse(fs.readFileSync("scripts/fixtures/fuji-retail-2567.json", "utf8")) : {};
+const PDFCOL = { wood_teak: "wood_teak", wood_maho: "wood_maho", wood_whiteoak: "wood_whiteoak", sahara: "sahara", sahara_black: "sahara_black" };
+// ราคาเส้นอลูทีละเส้น สีนี้ vs สีขาว (สีสต็อกเท่านั้น — สีอบพิเศษ = ขาว + ค่าอบ ราคาเส้นไม่เปลี่ยน)
+//   [รหัส, ชื่อ, จำนวนเส้น, กก./เส้น, ขาว/เส้น, สีนี้/เส้น, PDF ขาว, PDF สีนี้]
+const barsOf = (c, wh, key) => {
+  const W = (wh.lines || []).filter((l) => l.cat === "alu"), C = (c.lines || []).filter((l) => l.cat === "alu");
+  const seen = new Set(), out = [];
+  C.forEach((l, i) => {
+    const w = W[i] && W[i].code === l.code ? W[i] : W.find((x) => x.code === l.code) || null;
+    const k = l.code + "|" + l.unitPrice; if (seen.has(k)) return; seen.add(k);
+    const pdf = FUJI_RETAIL[l.code];
+    out.push([l.code || "", String(l.name || "").replace(/\s*\([^)]*\)\s*$/, ""), Math.round((l.qty || 0) * 100) / 100, l.kg || 0,
+      w ? w.unitPrice : null, l.unitPrice, pdf?.price?.white ?? null, pdf?.price?.[PDFCOL[key]] ?? null]);
+  });
+  return out; };
 for (const it of items) {
   const id = IDOF[it.name], p = id && PRODUCTS[id];
   if (!p) continue;
@@ -89,6 +105,7 @@ for (const it of items) {
       a39: cr.add39, a40: cr.add40, aWeb: R((c.sell?.withInstall || 0) - (wh.sell?.withInstall || 0)),
       c40: cr.cost40, cWeb: R(c.cost.total - wh.cost.total),
       oven: (c.cost?.openOven || 0) > 0, swapped, cost: costOf(c),
+      ...(PDFCOL[k] && !swapped ? { bars: barsOf(c, wh, k) } : {}),
       // วิธีคิดค่าสีของเว็บ — ให้คนอ่านตรวจสูตรได้: ค่าอบ = กก.ที่อบ × เรต/กก. + ค่าเปิดตู้อบ · สีสต็อก = ซื้อเส้นสีสำเร็จแพงกว่าขาว
       bake: { kg: Math.round((c.aluKg || 0) * 100) / 100, rate: PB.BAKE?.[resolveAluColor(swapped ? "wood_special" : k).bake] ?? 0,
         // ทุกก้อนเป็น "ส่วนที่เพิ่มจากสีขาว" — รุ่นที่สีขาวก็อบ/เปิดตู้อยู่แล้ว (Velora · SlimLux · E-series) จะได้ไม่โชว์ตู้อบซ้ำ
