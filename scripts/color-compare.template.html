@@ -258,6 +258,8 @@ const colorBlock = (p) => {
   if (!p) return "";
   const base = p.rows.find((r) => r.base), live = p.rows.filter((r) => !r.base && !r.na), na = p.rows.filter((r) => r.na && r.color !== "—");
   if (!live.length) return "";
+  // กำไรสุทธิสีขาว/ดำ (ฐาน) โชว์ที่หัวคอลัมน์ ให้เทียบกับแต่ละสีได้ทันที (เจ้าของ 15 ต.ค.69)
+  const bk = base?.cost || {}, netBase = base ? netOf(base.tWeb, (bk.mat || 0) + (bk.lp || 0) + (bk.li || 0)) : null;
   const rows = live.map((r) => {
     const d = pct(r.aWeb, r.a39), k = r.cost || {}, cT = (k.mat || 0) + (k.lp || 0) + (k.li || 0);
     return `<tr><td class="c">${r.color}<span class="ty">${r.type}${r.swapped ? " · คิดเป็นลายไม้อบพิเศษ" : ""}</span></td>
@@ -267,7 +269,7 @@ const colorBlock = (p) => {
       <td class="num"><span class="v">${ppc(netOf(r.tWeb, cT))}</span><span class="ref">ขายรวม ${fmt(r.tWeb)}</span></td></tr>`; }).join("");
   return `<div class="clr"><h3>ค่าสีที่เพิ่มจากสีขาว · เทียบ R3.9 <span class="ref">ขนาด ${p.size} ซม.${/d/.test(p.panels) ? " · " + p.panels + " บาน" : ""} · สีขาวขาย ${fmt(base?.tWeb)} · อลูที่อบ ${p.kgWeb || "—"} กก.${na.length ? " · ไม่มีขาย: " + na.map((r) => r.color).join(", ") : ""}</span></h3>
     ${p.note ? `<div class="note ${p.note.level}">${p.note.text}</div>` : ""}
-    <div class="tbl"><table class="ct"><thead><tr><th class="c">สี</th><th class="k-cost">ทุนสีที่เพิ่ม · วิธีคิด</th><th class="k-sell">ค่าสีขาย เว็บ</th><th class="k-ref">ค่าสีขาย R3.9</th><th>กำไรสุทธิทั้งชุด</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+    <div class="tbl"><table class="ct"><thead><tr><th class="c">สี</th><th class="k-cost">ทุนสีที่เพิ่ม · วิธีคิด</th><th class="k-sell">ค่าสีขาย เว็บ</th><th class="k-ref">ค่าสีขาย R3.9</th><th>กำไรสุทธิทั้งชุด<br><span class="ref">สีขาว/ดำ ${ppc(netBase)}</span></th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
 };
 $("#foot").textContent = `ตาราง R4.1 = ★ ตารางราคาขาย R4.1.pdf · R3.9 = ไฟล์ เทียบค่าอบสี.xlsx · เว็บ = คิดราคา 4.0 ตอนนี้ + ราคาสโตร์จริง ${DATA.meta.nStock.toLocaleString("en-US")} แถว · สีขาว ค่าเริ่มต้นของรุ่น · คำนวณเมื่อ ${DATA.meta.builtAt}`;
 renderStats(); render41();
