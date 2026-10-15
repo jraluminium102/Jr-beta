@@ -199,6 +199,19 @@ function main() {
     }
   }
 
+  // 14 ต.ค.69 — ผนังแผ่นหลังคา (จากรุ่น wall_roofsheet · คิดราคา 4.0) · flatRate/ตร.ม. ปัดจาก engine ที่ผนัง 4×2.6
+  //   เติมในตัว generator ให้คงอยู่ทุก regen (ไฟล์ต้นฉบับ xlsx ยังไม่มีหมวดนี้) · ปรับเรตได้ถ้าราคา ROOFMAT เปลี่ยน
+  const ROOFSHEET_WALLS = [
+    ["โพลีตัน", 5000], ["ดีไลท์", 7350], ["ไวนิล", 4750], ["ชินโคร์ Shade 4มม", 5150], ["ชินโคร์ Sup", 7700],
+    ["ชินโคร์ HC", 9350], ["ชินโคร์ Prime 10มม", 13100], ["เมทัลชีท EPS 1 นิ้ว PVC", 3650], ["เมทัลชีท EPS 2 นิ้ว PVC", 3900], ["เมทัลชีท EPS 2 นิ้ว เหล็ก", 4250],
+  ];
+  ROOFSHEET_WALLS.forEach(([m, rate], i) => clean.push({
+    key: "pwrs" + (i + 1), category: "ผนัง/ฝ้า", unit: "sqm", priceMode: "per_sqm",
+    name: "ผนังแผ่นหลังคา " + m + " (รวมโครง)", brand: null, min: 13500, flatRate: rate,
+    tiers: [], perPanelAdd: null, tieredAdds: [], colorAdds: [], unitNote: null,
+    note: "ราคาประเมิน/ตร.ม. (รวมโครง+ค่าแรง) · คำนวณจากรุ่น wall_roofsheet คิดราคา 4.0",
+  }));
+
   const categories = catOrder
     .filter((cat) => clean.some((p) => p.category === cat))
     .map((cat) => ({ label: cat, count: clean.filter((p) => p.category === cat).length }));

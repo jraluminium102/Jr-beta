@@ -66,20 +66,25 @@ function fmtNum(n: number) {
 type Col = { key: number; pcs: Pane[] };
 // stash = จำข้อมูลของชนิดอื่นไว้ตอนสลับชนิดด้าน (กระจก/ผนัง/เปิดโล่ง) → สลับกลับมาไม่หาย (เจ้าของสั่ง 4ส.ค.69)
 // cols ของ wall/open (ประตู/หน้าต่างในด้านนี้ — เจ้าของสั่ง 5ส.ค.69) ก็ stash แยกตามชนิดด้วย (กันหายตอนสลับ)
-type WallData = { wallType: "light" | "smartboard" | "isowall"; aw: number; ah: number; addons: Record<string, any>; cols?: Col[] };
+type WallKind = "light" | "smartboard" | "isowall" | "roofsheet";
+type WallData = { wallType: WallKind; wmat?: string; aw: number; ah: number; addons: Record<string, any>; cols?: Col[] };
 type SideStash = { glass?: Col[]; wall?: WallData; open?: Col[] };
 type Side =
   | { kind: "glass"; cols: Col[]; stash?: SideStash }
-  | { kind: "wall"; wallType: "light" | "smartboard" | "isowall"; aw: number; ah: number; addons: Record<string, any>; cols?: Col[]; stash?: SideStash }
+  | { kind: "wall"; wallType: WallKind; wmat?: string; aw: number; ah: number; addons: Record<string, any>; cols?: Col[]; stash?: SideStash }
   | { kind: "open"; cols?: Col[]; stash?: SideStash };
 
 const WALL_RATE = 1350; // ผนังเบา ฿/ตร.ม. (R3.9 flat — ไม่มี R4.0 product คู่ตรง ๆ ของ "ผนังเบา" ชนิดบาง — ยังใช้ราคานี้ ติดป้าย (R3.9))
 
-const WALL_TYPES: { key: Side extends { kind: "wall" } ? Side["wallType"] : never; label: string }[] = [
+const WALL_TYPES: { key: WallKind; label: string }[] = [
   { key: "light", label: "ผนังเบา (R3.9)" },
   { key: "smartboard", label: "สมาร์ทบอร์ด 12มม. (R4.0)" },
   { key: "isowall", label: "ไอโซวอล 100มม. (R4.0)" },
+  { key: "roofsheet", label: "แผ่นหลังคา (R4.0)" },   // 14 ต.ค.69 — เลือกวัสดุผ่าน wmat
 ];
+// วัสดุแผ่นหลังคาที่ใช้เป็นผนัง (จากรุ่น wall_roofsheet) — label dropdown
+const ROOFSHEET_MATS: string[] = ((PRODUCTS as any).wall_roofsheet?.materials ?? []) as string[];
+const DEF_ROOFSHEET_MAT: string = ((PRODUCTS as any).wall_roofsheet?.defMaterial ?? ROOFSHEET_MATS[0] ?? "") as string;
 
 // ทรงหลังคาในห้อง (สลับ product จริงเหมือน G3) · มีผลราคา (คนละ BOM)
 const ROOF_SHAPES: [string, string][] = [["roof", "กันสาด"], ["roof_gable", "จั่ว"], ["roof_slide", "เลื่อน"]];
@@ -155,10 +160,12 @@ function wallPrice(s: Extract<Side, { kind: "wall" }>, pb: any, profitPct: numbe
   const paneArea = paneAreaSum(s);
   const netArea = Math.max(0, fullArea - paneArea); // clamp ≥0 กันบานใหญ่กว่าผนัง
   if (s.wallType === "light") return Math.round(netArea * WALL_RATE); // เรต/ตร.ม. ตรงตัว → net-area ตรง ๆ
-  const prod = (PRODUCTS as any)[s.wallType === "smartboard" ? "wall_smartboard" : "wall_isowall"];
+  const prodId = s.wallType === "smartboard" ? "wall_smartboard" : s.wallType === "isowall" ? "wall_isowall" : "wall_roofsheet";
+  const prod = (PRODUCTS as any)[prodId];
   if (!prod) return 0;
   const r: any = computeCost(pb, prod, {
     w: (s.aw || 3) * 100, h: (s.ah || 2.6) * 100, p: 1, form: prod.defForm, profitPct, installProfitPct: profitPct, addons: s.addons || {},
+    ...(s.wallType === "roofsheet" ? { material: s.wmat || prod.defMaterial } : {}),
     ...(pf && pf.manual ? { profitManual: true, profitMat: pf.mat ?? profitPct, profitProd: pf.prod ?? profitPct, profitInst: pf.inst ?? profitPct, installProfitPct: pf.inst ?? profitPct } : {}),
   });
   const fullCost = r.sell.withInstall;
@@ -369,10 +376,17 @@ function ColsEditor({
           className="rounded-lg border border-brand ring-2 ring-brand/30 bg-white/70 p-2.5 space-y-2 scroll-mt-2">
           <div className="text-[11px] font-semibold text-brand-dark">⚙️ ตั้งค่าบานที่เลือก</div>
           <div className="flex items-center gap-2 flex-wrap">
-            <select value={sel.typeKey} onChange={(e) => onPatchPane(sel.key, { typeKey: e.target.value, addons: {}, form: undefined, spec: undefined, cut: undefined })}
+            <select value={sel.typeKey} onChange={(e) => onPatchPane(sel.key, { typeKey: e.target.value, addons: {}, form: undefined, spec: undefined, cut: undefined, material: undefined })}
               className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 text-xs font-semibold outline-none">
               {PANE_TYPES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
             </select>
+            {/* วัสดุแผ่น (เฉพาะรุ่นที่มี materials เช่น ผนังแผ่นหลังคา) */}
+            {(prod?.materials?.length ?? 0) > 0 && (
+              <select value={sel.material || prod.defMaterial} onChange={(e) => onPatchPane(sel.key, { material: e.target.value })}
+                className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 text-xs font-semibold outline-none" title="วัสดุแผ่น">
+                {prod.materials.map((m: string) => <option key={m} value={m}>{m}</option>)}
+              </select>
+            )}
             {/* ตัวเลือกเดียว = ไม่ต้องโชว์ (ดู Calculator40Client) */}
             {(prod?.forms?.length ?? 0) > 1 && (
               <select value={sel.form || prod.defForm}
@@ -706,7 +720,7 @@ export default function RoomComposer({
   const sideDescs = useMemo(() => sides.map((s) => {
     // ผนัง: บอกชนิดผนัง + ของเสริมผนัง ไว้หน้าสุด (ขนาดไปรวมท้ายบรรทัดแล้ว ไม่ซ้ำตรงนี้)
     const wallLabel = s.kind === "wall"
-      ? `${WALL_TYPES.find((w) => w.key === s.wallType)?.label || "ผนัง"}${addonSummary(s.addons).replace(/^ \+ /, " ")}`
+      ? `${WALL_TYPES.find((w) => w.key === s.wallType)?.label || "ผนัง"}${s.wallType === "roofsheet" ? " " + (s.wmat || DEF_ROOFSHEET_MAT) : ""}${addonSummary(s.addons).replace(/^ \+ /, " ")}`
       : "";
     return sideDescQuote(s, wallLabel);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -802,7 +816,7 @@ export default function RoomComposer({
       // wall/open ก็ stash ไปด้วย (wall: ผูกกับ WallData เดียวกัน · open: เก็บแยก stash.open)
       const stash: SideStash = { ...(x.stash || {}) };
       if (x.kind === "glass") stash.glass = x.cols;
-      else if (x.kind === "wall") stash.wall = { wallType: x.wallType, aw: x.aw, ah: x.ah, addons: x.addons, cols: x.cols };
+      else if (x.kind === "wall") stash.wall = { wallType: x.wallType, wmat: x.wmat, aw: x.aw, ah: x.ah, addons: x.addons, cols: x.cols };
       else if (x.kind === "open") stash.open = x.cols;
       // สลับไปชนิดใหม่ → คืนค่าจาก stash ถ้าเคยตั้งไว้ · ไม่เคย = ค่าตั้งต้น
       if (kind === "glass") return { kind: "glass", cols: stash.glass ?? [freshCol()], stash };
@@ -964,12 +978,21 @@ export default function RoomComposer({
                 <div className="space-y-2.5">
                   <div className="flex flex-wrap gap-1.5">
                     {WALL_TYPES.map((t) => (
-                      <button key={t.key} type="button" onClick={() => patchWall(i, { wallType: t.key })}
+                      <button key={t.key} type="button" onClick={() => patchWall(i, { wallType: t.key, ...(t.key === "roofsheet" ? { wmat: s.wmat || DEF_ROOFSHEET_MAT } : {}) })}
                         className={`press text-xs font-semibold rounded-full px-3 py-1.5 min-h-[36px] ${s.wallType === t.key ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
                         {t.label}
                       </button>
                     ))}
                   </div>
+                  {s.wallType === "roofsheet" && (
+                    <div className="flex items-center gap-2 flex-wrap text-sm">
+                      <span className="text-xs text-ink-3">วัสดุแผ่น</span>
+                      <select value={s.wmat || DEF_ROOFSHEET_MAT} onChange={(e) => patchWall(i, { wmat: e.target.value })}
+                        className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 outline-none text-sm max-w-[240px]">
+                        {ROOFSHEET_MATS.map((m) => (<option key={m} value={m}>{m}</option>))}
+                      </select>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 flex-wrap text-sm">
                     <span className="text-xs text-ink-3">ขนาด</span>
                     <input type="number" step={0.1} value={s.aw || ""} onChange={(e) => patchWall(i, { aw: +e.target.value || 0 })}
@@ -1008,7 +1031,7 @@ export default function RoomComposer({
                       colorKey={mainColor}
                       form={prod.defForm}
                     />
-                  ) : null)((PRODUCTS as any)[s.wallType === "smartboard" ? "wall_smartboard" : "wall_isowall"])}
+                  ) : null)((PRODUCTS as any)[s.wallType === "smartboard" ? "wall_smartboard" : s.wallType === "isowall" ? "wall_isowall" : "wall_roofsheet"])}
 
                   {/* ประตู/หน้าต่างในด้านผนังนี้ — reuse ตัวแก้ไขบานเดียวกับด้านกระจก (หักพื้นที่ผนังสุทธิด้านบนอัตโนมัติ) */}
                   <div className="pt-2.5 border-t border-black/5">
@@ -1394,7 +1417,7 @@ export default function RoomComposer({
             const kindLabel = s.kind === "glass"
               ? `กระจก ${s.cols.length} ช่อง · ${s.cols.reduce((a, c) => a + c.pcs.length, 0)} บาน`
               : s.kind === "wall"
-                ? `ผนัง${s.wallType === "light" ? "เบา" : s.wallType === "smartboard" ? "สมาร์ทบอร์ด" : "ไอโซวอล"}${doorNote}`
+                ? `ผนัง${s.wallType === "light" ? "เบา" : s.wallType === "smartboard" ? "สมาร์ทบอร์ด" : s.wallType === "isowall" ? "ไอโซวอล" : "แผ่นหลังคา " + (s.wmat || DEF_ROOFSHEET_MAT)}${doorNote}`
                 : `เปิดโล่ง${doorNote}`;
             return (
               <div key={i} className="flex items-center justify-between">

@@ -17,7 +17,7 @@ import { mosquitoTypeLabel } from "./mosquito.mjs";
 
 export type PaneUse = "door" | "window" | "fixed";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type DescPane = { typeKey: string; form?: string; w: number; h: number; n: number; addons?: Record<string, any>; use?: PaneUse; sill?: string };
+export type DescPane = { typeKey: string; form?: string; w: number; h: number; n: number; addons?: Record<string, any>; use?: PaneUse; sill?: string; material?: string };
 export type DescCol = { pcs: DescPane[] };
 export type DescSide = { kind: "glass" | "wall" | "open"; cols?: DescCol[]; aw?: number; ah?: number };
 
@@ -131,8 +131,11 @@ export function paneDescQuote(p: DescPane): string {
   const mq = mosquitoTypeLabel(p.addons?.mosquito);
   // ของเสริมอื่น (ครอบวงกบ/โช้ค/มือจับ ฯลฯ) ยังต้องขึ้นใบ — ตัดมุ้งออกเพราะมีวงเล็บของตัวเองแล้ว
   const extras = addonSummary({ ...(p.addons || {}), mosquito: undefined }).replace(/^ \+ /, "");
+  // วัสดุแผ่น (รุ่นที่มี prod.materials เช่น ผนังแผ่นหลังคา) — ต้องขึ้นใบ เพราะราคาต่างกันมากต่อวัสดุ
+  const matLabel = prod?.materials ? (p.material || prod.defMaterial || "") : "";
   return [
     nm,
+    matLabel ? `(${matLabel})` : "",
     showForm ? `(${form})` : "",
     (p.n || 1) > 1 ? `(${p.n} บาน)` : "",
     use === "door" ? `(${paneSill(p)})` : "",
