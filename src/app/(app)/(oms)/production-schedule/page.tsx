@@ -288,13 +288,18 @@ export default function ProductionSchedulePage() {
       const paint = hasPaintWait(r) && (over || started(r));
       if (over || glass || paint) out.push({ r, over, glass, paint });
     }
-    // เลยกำหนดขึ้นก่อน แล้วเรียงตามวันกำหนดเสร็จ
+    // 15 ต.ค.69 (ตาราง): ติดหลายเรื่องขึ้นก่อน → เลยกำหนดก่อน → เรียงวันกำหนดเสร็จเก่าสุดก่อน
+    const n = (x: { over: boolean; glass: boolean; paint: boolean }) => (x.over ? 1 : 0) + (x.glass ? 1 : 0) + (x.paint ? 1 : 0);
     return out.sort((a, b) =>
-      a.over !== b.over ? (a.over ? -1 : 1) : (a.r.due_date ?? "9999").localeCompare(b.r.due_date ?? "9999"));
+      n(b) - n(a)
+      || (a.over !== b.over ? (a.over ? -1 : 1) : 0)
+      || (a.r.due_date ?? "9999").localeCompare(b.r.due_date ?? "9999"));
   }, [viewRows, factoryFilter]);
+  // นับครบทุกเรื่อง (งานที่ติดซ้อนนับในทุกเรื่องที่ติด) — เดิมรอกระจก/รออบสีไม่นับงานที่เลยกำหนดแล้ว ทำให้ตัวเลขไม่ตรงกับที่เห็น
   const overdueCount = stuckRows.filter((x) => x.over).length;
-  const glassWaitCount = stuckRows.filter((x) => x.glass && !x.over).length;
-  const paintWaitCount = stuckRows.filter((x) => x.paint && !x.over).length;
+  const glassWaitCount = stuckRows.filter((x) => x.glass).length;
+  const paintWaitCount = stuckRows.filter((x) => x.paint).length;
+  const multiIssueCount = stuckRows.filter((x) => (x.over ? 1 : 0) + (x.glass ? 1 : 0) + (x.paint ? 1 : 0) >= 2).length;
 
   const v = (r: SchedRow, k: keyof SchedRow) => (draft[r.id]?.[k] ?? r[k] ?? "") as string;
 
@@ -525,26 +530,62 @@ export default function ProductionSchedulePage() {
         <div className="rounded-xl px-4 py-3 mb-4" style={{ background: "#fdecec", border: "2px solid #e53935" }}>
           <div className="font-bold text-[15px] mb-2 flex items-center gap-2 flex-wrap" style={{ color: "#c0392b" }}>
             ⏰ งานค้าง {stuckRows.length} งาน — เร่งด่วน
-            {overdueCount > 0 && <span className="tnum text-[12px] rounded-full px-2 py-0.5" style={{ background: "#fff", color: "#c0392b", border: "1px solid #f1a9a0" }}>เลยกำหนด {overdueCount}</span>}
-            {glassWaitCount > 0 && <span className="tnum text-[12px] rounded-full px-2 py-0.5" style={{ background: "#fff", color: "#c2410c", border: "1px solid #f6c99a" }}>🪟 รอกระจก {glassWaitCount}</span>}
-            {paintWaitCount > 0 && <span className="tnum text-[12px] rounded-full px-2 py-0.5" style={{ background: "#fff", color: "#7e22ce", border: "1px solid #ddb8f0" }}>🎨 รออบสี {paintWaitCount}</span>}
+            {overdueCount > 0 && <span className="tnum text-[12.5px] rounded-full px-2.5 py-0.5" style={{ background: "#fff", color: "#c0392b", border: "1px solid #f1a9a0" }}>🔴 เลยกำหนด {overdueCount}</span>}
+            {glassWaitCount > 0 && <span className="tnum text-[12.5px] rounded-full px-2.5 py-0.5" style={{ background: "#fff", color: "#c2410c", border: "1px solid #f6c99a" }}>🪟 รอกระจก {glassWaitCount}</span>}
+            {paintWaitCount > 0 && <span className="tnum text-[12.5px] rounded-full px-2.5 py-0.5" style={{ background: "#fff", color: "#7e22ce", border: "1px solid #ddb8f0" }}>🎨 รออบสี {paintWaitCount}</span>}
           </div>
-          <div className="flex gap-1.5 flex-wrap">
-            {stuckRows.map(({ r, over, glass, paint }) => {
-              const overDays = over && r.due_date ? Math.floor((Date.parse(today()) - Date.parse(r.due_date)) / 86400000) : null;
-              return (
-                <button key={r.id} onClick={() => { setQuery(r.title); setPhaseFilter(""); }}
-                  title={`กดเพื่อดูงานนี้ · กำหนดเสร็จ ${thShort(r.due_date)}`}
-                  className="focusable pressable inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12.5px] font-semibold min-h-[34px]"
-                  style={{ background: "#fff", color: "#c0392b", border: `1px solid ${over ? "#f1a9a0" : "#f6c99a"}` }}>
-                  {r.title}
-                  {r.job_code && <span className="tnum text-[10px] rounded px-1 py-0.5" style={{ background: "#fdecec", color: "#c0392b" }}>{r.job_code}</span>}
-                  {over && <span className="tnum" style={{ color: "#e53935" }}>· {overDays != null ? `เลย ${overDays} วัน` : "เลยกำหนด"}</span>}
-                  {glass && <span className="text-[10px] rounded-full px-1.5 py-0.5 font-bold" style={{ background: "#fff0e0", color: "#c2410c" }}>🪟 รอกระจก</span>}
-                  {paint && <span className="text-[10px] rounded-full px-1.5 py-0.5 font-bold" style={{ background: "#f3e8ff", color: "#7e22ce" }}>🎨 รออบสี</span>}
-                </button>
-              );
-            })}
+          {multiIssueCount > 0 && (
+            <div className="text-[12px] mb-2" style={{ color: "#8a3a2f" }}>
+              * มี {multiIssueCount} งานที่ติดมากกว่า 1 เรื่อง — ตัวเลขแต่ละเรื่องรวมกันจึงมากกว่าจำนวนงาน (ดูช่องในตาราง)
+            </div>
+          )}
+          {/* ตาราง (เจ้าของสั่ง 15 ต.ค.69 "เรียงแบบชิปดูยาก") — 1 แถว = 1 งาน · แต่ละเรื่องที่ติดเป็นคอลัมน์ของตัวเอง
+              งานติดหลายเรื่องเห็นครบในแถวเดียว + ป้าย "ติด N เรื่อง" · แตะแถว = กรองไปที่งานนั้น */}
+          <div className="overflow-x-auto rounded-lg" style={{ background: "#fff", border: "1px solid #f1a9a0" }}>
+            <table className="w-full text-left" style={{ minWidth: 620, borderCollapse: "collapse" }}>
+              <thead>
+                <tr className="text-[12.5px]" style={{ background: "#fff5f4", color: "#8a3a2f" }}>
+                  <th className="px-3 py-2 font-bold">ลูกค้า</th>
+                  <th className="px-3 py-2 font-bold whitespace-nowrap">ต้องเสร็จ</th>
+                  <th className="px-3 py-2 font-bold whitespace-nowrap">ติดตั้ง</th>
+                  <th className="px-3 py-2 font-bold text-center whitespace-nowrap">🔴 เลยกำหนด</th>
+                  <th className="px-3 py-2 font-bold text-center whitespace-nowrap">🪟 กระจก</th>
+                  <th className="px-3 py-2 font-bold text-center whitespace-nowrap">🎨 อบสี</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stuckRows.map(({ r, over, glass, paint }) => {
+                  const overDays = over && r.due_date ? Math.floor((Date.parse(today()) - Date.parse(r.due_date)) / 86400000) : null;
+                  const issues = (over ? 1 : 0) + (glass ? 1 : 0) + (paint ? 1 : 0);
+                  const empty = <span style={{ color: "#d1d1d6" }}>—</span>;
+                  return (
+                    <tr key={r.id} onClick={() => { setQuery(r.title); setPhaseFilter(""); }}
+                      title="แตะเพื่อดูงานนี้"
+                      className="cursor-pointer hover:bg-[#fff8f7]"
+                      style={{ borderTop: "1px solid #fbe0dc", boxShadow: issues >= 2 ? "inset 4px 0 0 #e53935" : undefined }}>
+                      <td className="px-3 py-2.5 align-top">
+                        <div className="font-bold text-[15px] leading-tight" style={{ color: IOS.ink }}>{r.title}</div>
+                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                          {r.job_code && <span className="tnum text-[11px] rounded px-1.5 py-0.5" style={{ background: "#eaf3ff", color: IOS.blue }}>{r.job_code}</span>}
+                          {issues >= 2 && <span className="text-[11px] font-bold rounded px-1.5 py-0.5" style={{ background: "#e53935", color: "#fff" }}>ติด {issues} เรื่อง</span>}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2.5 align-top tnum text-[14.5px] font-semibold whitespace-nowrap" style={{ color: over ? "#e53935" : IOS.ink }}>{r.due_date ? thShort(r.due_date) : "—"}</td>
+                      <td className="px-3 py-2.5 align-top tnum text-[14.5px] whitespace-nowrap" style={{ color: IOS.ink2 }}>{r.install_date ? thShort(r.install_date) : "—"}</td>
+                      <td className="px-3 py-2.5 align-top text-center whitespace-nowrap">
+                        {over ? <span className="tnum text-[13.5px] font-bold rounded-full px-2.5 py-1" style={{ background: "#ffe5e5", color: "#d32f2f" }}>{overDays != null && overDays > 0 ? `เลย ${overDays} วัน` : "เลยกำหนด"}</span> : empty}
+                      </td>
+                      <td className="px-3 py-2.5 align-top text-center whitespace-nowrap">
+                        {glass ? <span className="text-[13.5px] font-bold rounded-full px-2.5 py-1" style={{ background: "#fff0e0", color: "#c2410c" }}>รอกระจก</span> : empty}
+                      </td>
+                      <td className="px-3 py-2.5 align-top text-center whitespace-nowrap">
+                        {paint ? <span className="text-[13.5px] font-bold rounded-full px-2.5 py-1" style={{ background: "#f3e8ff", color: "#7e22ce" }}>รออบสี</span> : empty}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
@@ -646,11 +687,18 @@ export default function ProductionSchedulePage() {
                           {r.sales_name && (
                             <span className="text-[12px] font-semibold rounded-md px-1.5 py-0.5 truncate" style={{ background: "#f0f7ff", color: IOS.blue }}>🧑‍💼 เซลล์: {r.sales_name}</span>
                           )}
+                          {/* 15 ต.ค.69 เจ้าของสั่งขยายตัวหนังสือ ต้องเสร็จ/ติดตั้ง/เลยกำหนด (เดิม 12px อ่านยาก) + ใส่ป้ายกำกับ */}
                           {r.due_date && (() => {
                             const late = r.due_date < today() && derivePhase(r) !== "พร้อม";
-                            return <span className="text-[12px] tnum font-semibold" style={{ color: late ? IOS.red : IOS.ink2 }}>⏰ {thShort(r.due_date)}{late ? " เลยกำหนด" : ""}</span>;
+                            const lateDays = late ? Math.floor((Date.parse(today()) - Date.parse(r.due_date)) / 86400000) : 0;
+                            return (
+                              <>
+                                <span className="text-[15px] tnum font-bold" style={{ color: late ? IOS.red : IOS.ink }}>⏰ ต้องเสร็จ {thShort(r.due_date)}</span>
+                                {late && <span className="text-[14px] tnum font-bold rounded-full px-2.5 py-0.5" style={{ background: "#ffe5e5", color: "#d32f2f" }}>🔴 เลยกำหนด{lateDays > 0 ? ` ${lateDays} วัน` : ""}</span>}
+                              </>
+                            );
                           })()}
-                          {r.install_date && <span className="text-[12px] tnum" style={{ color: IOS.ink3 }}>🔧 {thShort(r.install_date)}</span>}
+                          {r.install_date && <span className="text-[15px] tnum font-semibold" style={{ color: IOS.ink2 }}>🔧 ติดตั้ง {thShort(r.install_date)}</span>}
                           {factoryFilter && r.factoryStart && <span className="text-[12px] tnum font-semibold rounded-md px-1.5 py-0.5" style={{ background: "#eaf3ff", color: IOS.blue }}>▶ เริ่ม {thShort(r.factoryStart)}</span>}
                         </div>
                         {(() => {
@@ -951,7 +999,7 @@ function SetCard({ s, saving, mark, canMark }: {
     <div className="rounded-2xl p-3.5" style={{ background: IOS.inset, opacity: done ? 0.6 : 1 }}>
       <div className="flex items-center gap-2 flex-wrap mb-1.5">
         <span className="font-bold text-[16px]" style={{ color: IOS.ink }}>{s.set_label || "ชุดงาน"}</span>
-        <span className="text-[12.5px] font-bold px-2.5 py-1 rounded-full" style={{ background: tone.bg, color: tone.fg }}>
+        <span className="text-[14.5px] font-bold px-3 py-1 rounded-full" style={{ background: tone.bg, color: tone.fg }}>
           {dl.tone === "over" && "🔴 "}{dl.tone === "soon" && "⚠️ "}{dl.text}
         </span>
         {/* Hold (0131) — ชุดนี้พักรอ ไม่นับ gate ส่งติดตั้ง */}
@@ -961,9 +1009,9 @@ function SetCard({ s, saving, mark, canMark }: {
           </span>
         )}
       </div>
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2 text-[12.5px]">
-        {s.must_finish_date && <span className="tnum font-medium" style={{ color: IOS.ink }}>⏰ ต้องเสร็จ {thShort(s.must_finish_date)}</span>}
-        {s.install_date && <span className="tnum" style={{ color: IOS.ink2 }}>🔧 ติดตั้ง {thShort(s.install_date)}</span>}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2 text-[15px]">
+        {s.must_finish_date && <span className="tnum font-bold" style={{ color: dl.tone === "over" ? IOS.red : IOS.ink }}>⏰ ต้องเสร็จ {thShort(s.must_finish_date)}</span>}
+        {s.install_date && <span className="tnum font-semibold" style={{ color: IOS.ink2 }}>🔧 ติดตั้ง {thShort(s.install_date)}</span>}
       </div>
       <div className="flex flex-wrap items-center gap-1.5 mb-3">
         {hasScreen ? (
