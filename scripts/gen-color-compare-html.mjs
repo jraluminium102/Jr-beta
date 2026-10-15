@@ -61,6 +61,8 @@ for (const r of rows0) {
 const webOpt = (key) => { const rc = resolveAluColor(key);
   return { color: rc.bake, colorName: rc.label, stockColor: stockColorOfCalc(key), colorKey: key, profitPct: 100, profitMat: 100, profitProd: 100, profitInst: 200, profitManual: false }; };
 const R = (v) => (typeof v === "number" && Number.isFinite(v) ? Math.round(v) : null);
+// น้ำหนักอลูทั้งชุด (เส้นที่ซื้อ × กก./เส้น) — เทียบกับ "น้ำหนักที่อบแยก" (aluKg) ให้เห็นว่าเส้นไหนราคาสีรวมอบมาแล้ว (กล่อง/ฉาก) · เจ้าของ 15 ต.ค.69 "รางบน อบ 20.9 กก. ดูน้อย"
+const kgAllOf = (c) => Math.round((c.lines || []).filter((l) => l.cat === "alu").reduce((a, l) => a + (Number(l.qty) || 0) * (Number(l.kg) || 0), 0) * 10) / 10;
 
 const data = [];
 // ราคาปลีก KC Fuji ปี 67 (บาท/เส้น ตามสี) — ไว้เทียบราคาเส้นลายไม้/ขาวในบล็อกค่าสี (15 ต.ค.69 เจ้าของ "ไม่มั่นใจว่าถูก ให้เช็คตัวเองด้วย")
@@ -91,7 +93,7 @@ for (const it of items) {
       lp: R(L.prod), li: R(L.install), sMat: R(P.mat), sP: R(P.prod), sI: R(P.inst) }; };
   // id/vk = ผูกกับการ์ดรุ่นในตาราง R4.1 (15 ต.ค.69 รวมค่าสีเข้าหน้าเดียวกับราคา)
   const prod = { id: r41Key(id), vk: r41VariantKey(p, base.material, base.spec || {}, base.form), name: it.name, group: GROUP(it.name), size: it.size, panels: it.panels, spec: it.spec,
-    kgFile: it.kgFile, kgWeb: Math.round((ws.aluKg || 0) * 10) / 10, note: NOTE[it.name] || null,
+    kgFile: it.kgFile, kgWeb: Math.round((ws.aluKg || 0) * 10) / 10, kgAll: kgAllOf(ws), note: NOTE[it.name] || null,
     rows: [{ base: true, type: "มาตรฐาน", color: "อบขาว / ดำ", t39: it.base39, t40: it.base40, tWeb: R(wh.sell?.withInstall), costWeb: R(wh.cost.total), cost: costOf(wh) }] };
   for (const cr of it.rows) {
     const k = KEYOF(cr.color);
@@ -149,7 +151,7 @@ for (const it of items) {
     }
     if (rows.length < 2) continue;
     data.push({ id: r41Key(id), vk: vk0, name: p.name, group: GROUP(p.name), size: mid.w + " x " + mid.h, panels: mid.p ? String(mid.p) : "—",
-      kgWeb: Math.round((run("wood_special").aluKg || 0) * 10) / 10, note: null, noR39: true, rows });
+      kgWeb: Math.round((run("wood_special").aluKg || 0) * 10) / 10, kgAll: kgAllOf(run("wood_special")), note: null, noR39: true, rows });
   }
 }
 const meta = { builtAt: new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" }), nStock };
