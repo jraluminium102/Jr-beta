@@ -7,7 +7,7 @@
  */
 import fs from "node:fs";
 import { openXlsx, sheetList } from "./dumpxlsx.mjs";
-import { computeCost } from "../src/lib/calculator40/engine.mjs";
+import { computeCost, r41Key, r41VariantKey } from "../src/lib/calculator40/engine.mjs";
 import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
 import { resolveAluColor, aluColorKeysFor } from "../src/lib/calculator40/alu-colors.ts";
 import { stockColorOfCalc, buildPriceOverride, applyPriceOverride } from "../src/lib/calculator40/stock-link.ts";
@@ -73,7 +73,8 @@ for (const it of items) {
   const costOf = (c) => { const k = c.cost || {}, L = c.labor || {}, P = c.sell?.parts || {};
     return { mat: R(k.total), alu: R(k.alu), bake: R((k.bake || 0) + (k.openOven || 0)), glass: R(k.glass), hw: R((k.hardware || 0) + (k.consum || 0) + (k.frameColor || 0)),
       lp: R(L.prod), li: R(L.install), sMat: R(P.mat), sP: R(P.prod), sI: R(P.inst) }; };
-  const prod = { name: it.name, group: GROUP(it.name), size: it.size, panels: it.panels, spec: it.spec,
+  // id/vk = ผูกกับการ์ดรุ่นในตาราง R4.1 (15 ต.ค.69 รวมค่าสีเข้าหน้าเดียวกับราคา)
+  const prod = { id: r41Key(id), vk: r41VariantKey(p, base.material, base.spec || {}, base.form), name: it.name, group: GROUP(it.name), size: it.size, panels: it.panels, spec: it.spec,
     kgFile: it.kgFile, kgWeb: Math.round((ws.aluKg || 0) * 10) / 10, note: NOTE[it.name] || null,
     rows: [{ base: true, type: "มาตรฐาน", color: "อบขาว / ดำ", t39: it.base39, t40: it.base40, tWeb: R(wh.sell?.withInstall), costWeb: R(wh.cost.total), cost: costOf(wh) }] };
   for (const cr of it.rows) {
