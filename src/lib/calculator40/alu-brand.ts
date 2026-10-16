@@ -39,6 +39,34 @@ export const rateColorOf = (c?: string | null) => { const t = String(c ?? "").tr
 const BRAND_FALLBACK: Record<string, Record<string, string>> = ((PRICEBOOK as any).ALU_BRAND_FALLBACK ?? {}) as Record<string, Record<string, string>>;
 const RATES: Record<string, Record<string, number>> = ((PRICEBOOK as any).ALU_BRAND ?? {}) as Record<string, Record<string, number>>;
 
+// ── เพิ่มวัสดุอลูใหม่แบบ "เลือกแบรนด์+สี → ล็อกเรต" (เจ้าของสั่ง 16 ต.ค.69) — อ่านตาราง PB.ALU_BRAND แหล่งเดียว ──
+/** ชื่อสีในตารางเรต → ชื่อสีแบบสโตร์ (สโตร์สะกด "ไวท์โอ็ค" / "Aztec gray" · stock-match จับคู่ด้วยช่องสีนี้) */
+const STORE_COLOR: Record<string, string> = { "แอทแทคเกรย์": "Aztec gray", "ไวท์โอ๊ค": "ไวท์โอ็ค" };
+export const storeColorOf = (c?: string | null) => { const rc = rateColorOf(c); return STORE_COLOR[rc] ?? rc; };
+/** แบรนด์ที่เลือกได้ตอนเพิ่มวัสดุ (fixed = ซื้อเป็นเส้น ไม่คิดต่อโล → กรอกต้นทุน/เส้นเอง) */
+export const ALU_PICK_BRANDS: { key: string; label: string }[] = [
+  { key: "fuji", label: ALU_BRAND_LABEL.fuji }, { key: "sms", label: ALU_BRAND_LABEL.sms },
+  { key: "market", label: ALU_BRAND_LABEL.market }, { key: "fixed", label: ALU_BRAND_LABEL.fixed },
+];
+/** เรต ฿/กก. ของแบรนด์ × สี (รวมการตีข้ามแบรนด์ ALU_BRAND_FALLBACK) · rate 0 = แบรนด์นี้ไม่มีสีนี้ขาย */
+export function aluRateOf(brand?: string | null, color?: string | null): { rate: number; brandUsed: string } {
+  const b0 = String(brand ?? "");
+  const rc = rateColorOf(color);
+  if (!b0 || b0 === "fixed" || !rc) return { rate: 0, brandUsed: b0 };
+  const b = (BRAND_FALLBACK[b0] ?? {})[rc] || b0;
+  return { rate: Number((RATES[b] ?? {})[rc]) || 0, brandUsed: b };
+}
+/** สีที่เลือกได้ของแบรนด์ (ชื่อแบบสโตร์) + เรต · via = เรตมาจากแบรนด์อื่น (ตีข้ามแบรนด์) */
+export function aluBrandColorOptions(brand?: string | null): { color: string; rate: number; via?: string }[] {
+  const b = String(brand ?? "");
+  if (!b || b === "fixed") return [];
+  const keys = new Set([...Object.keys(RATES[b] ?? {}), ...Object.keys(BRAND_FALLBACK[b] ?? {})]);
+  return [...keys]
+    .map((rc) => { const r = aluRateOf(b, rc); return { color: STORE_COLOR[rc] ?? rc, rate: r.rate, ...(r.brandUsed !== b ? { via: r.brandUsed } : {}) }; })
+    .filter((x) => x.rate > 0);
+}
+const PICKED = new Set(["fuji", "sms", "market", "fixed"]);
+
 // กล่อง/ฉาก ไซส์ที่เป็นฟูจิ (ลิสต์เจ้าของ 8 ต.ค.69) — ไซส์นอกลิสต์/มีชื่อเรียก = ตลาด
 const FUJI_BOX = ["1X1", "1X1.6", "1X2", "1X4", "1.6X1.6", "1.6X3", "1.6X4", "2X2", "2X4", "4X4"];
 const FUJI_ANG = ["3หุน", "4หุน", "6หุน", "1", "2", "3", "4"];
@@ -77,9 +105,16 @@ export function guessAluBrand(sku: string, name: string): AluBrand {
 }
 
 /** แบรนด์ของแถวสโตร์ — สีเฉพาะ (ALU_BRAND_ALT) → ตาราง pricebook → เดาจากรหัส/ชื่อ */
-export function aluBrandOfRow(sku?: string | null, name?: string | null, color?: string | null): AluBrand {
-  const codes = aluCodesOfRow(String(sku ?? ""), String(name ?? ""));
+export function aluBrandOfRow(sku?: string | null, name?: string | null, color?: string | null, stored?: string | null): AluBrand {
   const rc = rateColorOf(color);
+  // แบรนด์ที่เลือกไว้ตอนเพิ่มวัสดุ (stock_items.alu_brand · 0157) ชนะการเดาเสมอ · fixed = ซื้อเป็นเส้น
+  const st = String(stored ?? "");
+  if (PICKED.has(st)) {
+    if (st === "fixed") return "";
+    const fbS = rc ? (BRAND_FALLBACK[st] ?? {})[rc] : "";
+    return (fbS || st) as AluBrand;
+  }
+  const codes = aluCodesOfRow(String(sku ?? ""), String(name ?? ""));
   if (rc) for (const c of codes) { const b = (BRAND_ALT[c] ?? {})[rc]; if (b) return b as AluBrand; }
   let brand: AluBrand = "";
   for (const c of codes) {
@@ -107,6 +142,6 @@ export function brandLacksColor(sku?: string | null, name?: string | null, color
 }
 
 /** ป้ายแบรนด์สำหรับโชว์บนจอ — "" = ซื้อเป็นเส้น */
-export function aluBrandLabel(sku?: string | null, name?: string | null, color?: string | null): string {
-  return ALU_BRAND_LABEL[aluBrandOfRow(sku, name, color)] ?? ALU_BRAND_LABEL[""];
+export function aluBrandLabel(sku?: string | null, name?: string | null, color?: string | null, stored?: string | null): string {
+  return ALU_BRAND_LABEL[aluBrandOfRow(sku, name, color, stored)] ?? ALU_BRAND_LABEL[""];
 }

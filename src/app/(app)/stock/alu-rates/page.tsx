@@ -20,13 +20,14 @@ export default async function AluRatesPage() {
   const supabase = createClient() as unknown as { from: (t: string) => any };
 
   // ⚠ อลูมี sku ~1,100+ แถว ใกล้/เกิน cap 1,000 ต่อ query — แบ่งหน้ากันแถวท้ายหายเงียบ
-  const [withWeight, { count: noWeight }, { data: rateLog }] = await Promise.all([
-    fetchAllPaged<Record<string, unknown>>((f, t) =>
-      supabase.from("stock_items")
-        .select("id, sku, name, color, supplier, weight_per_unit, unit_cost, price_per_kg")
-        .eq("is_active", true).gt("weight_per_unit", 0).neq("sku", "")
-        .order("sku", { ascending: true }).order("id", { ascending: true }).range(f, t),
-    ),
+  // alu_brand (0157) = แบรนด์ที่เลือกตอนเพิ่มของใหม่ · ยังไม่รัน 0157 → ดึงซ้ำแบบไม่มีคอลัมน์นี้
+  const COLS = "id, sku, name, color, supplier, weight_per_unit, unit_cost, price_per_kg";
+  const pull = (cols: string) => fetchAllPaged<Record<string, unknown>>((f, t) =>
+    supabase.from("stock_items").select(cols)
+      .eq("is_active", true).gt("weight_per_unit", 0).neq("sku", "")
+      .order("sku", { ascending: true }).order("id", { ascending: true }).range(f, t));
+  const [withBrand, { count: noWeight }, { data: rateLog }] = await Promise.all([
+    pull(COLS + ", alu_brand"),
     supabase.from("stock_items")
       .select("id", { count: "exact", head: true })
       .eq("is_active", true).eq("category", "อลูมิเนียม")
@@ -35,6 +36,8 @@ export default async function AluRatesPage() {
       .select("id, series, color, prev_rate, rate, item_count, changed_by_name, created_at")
       .order("created_at", { ascending: false }).limit(60),
   ]);
+
+  const withWeight = withBrand.length ? withBrand : await pull(COLS);
 
   return (
     <AluRatesClient

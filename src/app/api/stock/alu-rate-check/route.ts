@@ -18,6 +18,7 @@ type Sb = { from: (t: string) => any };
 type Row = {
   id: number; sku: string; name: string; color: string | null;
   weight_per_unit: number | null; price_per_kg: number | null; unit_cost: number | null; category: string | null;
+  alu_brand?: string | null;
 };
 
 // ชื่อสีในสโตร์ → ชื่อสีในตารางเรต (ตารางใช้ชื่อแบบไฟล์ถอดทุน)
@@ -35,10 +36,12 @@ export async function GET() {
   if (!canSeeCost(profile.role)) return FORBIDDEN();   // role สโตร์ = ตาบอดราคา
 
   const sb = createClient() as unknown as Sb;
-  const rows = await fetchAllPaged<Row>((f, t) =>
-    sb.from("stock_items")
-      .select("id, sku, name, color, weight_per_unit, price_per_kg, unit_cost, category")
-      .eq("is_active", true).order("id", { ascending: true }).range(f, t));
+  // alu_brand (0157) = แบรนด์ที่เลือกตอนเพิ่มของใหม่ · ยังไม่รัน 0157 → ดึงซ้ำแบบไม่มีคอลัมน์นี้
+  const COLS = "id, sku, name, color, weight_per_unit, price_per_kg, unit_cost, category";
+  const pull = (cols: string) => fetchAllPaged<Row>((f, t) =>
+    sb.from("stock_items").select(cols).eq("is_active", true).order("id", { ascending: true }).range(f, t));
+  let rows = await pull(COLS + ", alu_brand");
+  if (!rows.length) rows = await pull(COLS);
 
   const RATE = ((PRICEBOOK as any).ALU_BRAND ?? {}) as Record<string, Record<string, number>>;
   const alu = rows.filter((r) => /อลู/.test(String(r.category ?? "")));
@@ -53,7 +56,7 @@ export async function GET() {
     const w = Number(r.weight_per_unit) || 0;
     const k = Number(r.price_per_kg) || 0;
     const c = Number(r.unit_cost) || 0;
-    const brand = aluBrandOfRow(r.sku, r.name, r.color);
+    const brand = aluBrandOfRow(r.sku, r.name, r.color, r.alu_brand);
     const ck = COLOR_KEY[String(r.color ?? "").trim()] ?? "";
     const want = brand && ck ? Number((RATE[brand] ?? {})[ck]) || 0 : 0;
     const base = { sku: r.sku, name: r.name, color: r.color, brand: ALU_BRAND_LABEL[brand] ?? "", kg: w, rate: k, cost: c, rateWant: want };

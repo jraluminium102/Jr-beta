@@ -4,6 +4,8 @@ import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 import { computeTotals, lineTotal, sumDiscountLines } from "@/lib/money";
 import { getDocCutoff } from "@/lib/doc-cutoff";
 import type { Customer } from "@/lib/types";
+import { CHECKLIST_MARKER } from "@/lib/checklist-marker";
+import { audit } from "@/lib/bff/handler";
 
 // GET /api/quotations  → รายการใบเสนอราคา (ซ่อนเอกสารทดสอบก่อนวันตัด · ?includeTest=1 โชว์ทั้งหมด)
 export async function GET(req: Request) {
@@ -126,6 +128,8 @@ export async function POST(req: Request) {
   //      (ลูกค้าคนเดียวมีหลายออเดอร์ = คนละงาน · เดิม fallback auto-link งาน active ล่าสุด → อัดรวมกันมั่ว)
   //    ถ้าไม่เลือกงาน → jobId = null · ตอนวางบิลจะสร้างงานใหม่ให้เอง (POST /billing-notes) = แต่ละออเดอร์แยกงาน
   let jobId: string | null = null;
+  // ใบเดิมของงานที่จะถูกยกเลิกแทนที่ด้วยใบนี้ (ใบเบาเช็คลิสต์ / ผู้ใช้เลือกแทนใบเดิม) — ยกเลิกก่อน insert (DB ล็อก 1 งาน 1 ใบ)
+  let replaceQuotations: { id: number; code: string }[] = [];
   const requestedJobId = typeof body.job_id === "string" && body.job_id.trim() ? body.job_id.trim() : null;
   if (requestedJobId) {
     // validate: งานต้องเป็นของลูกค้านี้ + ยังไม่ COMPLETED/CANCELLED
@@ -138,33 +142,60 @@ export async function POST(req: Request) {
       .maybeSingle<{ id: string }>();
     if (requestedJob?.id) {
       jobId = requestedJob.id;
-      // ⚠ กัน "หลายออเดอร์ปนงานเดียว" (บัคคุณไอซ์ 30 ส.ค.69): งานที่มีใบวางบิล active อยู่แล้ว = ออเดอร์จริงไปแล้ว
-      //   ผูกใบเสนอใหม่เข้าไปอีก → ผลิต/ใบปะหน้า/ใบตัด ปนกัน (ผลิตเป็น 1 งาน=1 ออเดอร์)
-      //   → ไม่รวมเงียบ · ให้ยืนยันด้วย allow_merge_job (accountant: เตือน+ยืนยัน ไม่ hard-block เผื่อ revise/เพิ่มงวดที่ตั้งใจ)
-      if (body.allow_merge_job !== true) {
-        const { count: activeBills } = await supabase
+      // ═══ กติกา "1 งาน = 1 ใบเสนอที่ใช้งานอยู่" (เจ้าของสั่ง 16 ต.ค.69: "ไม่ต้องการให้ปนกันแต่แรก ระบบควรแยกให้เลย") ═══
+      //   เดิมยอมให้กด "ยืนยันผูกงานเดิม" ได้ → ใบเสนอหลายออเดอร์ค้างใต้งานเดียว → ผลิต/ใบปะหน้า/ใบตัด ต้องเดาใบ
+      //   ตอนนี้ไม่มีทางผูกใบที่ 2 เข้างานเดียวกันอีก (DB ล็อกซ้ำอีกชั้นที่ migration 0156):
+      //   · ใบเดิมเป็นแค่ "ใบเบาเช็คลิสต์" ไม่มีบิล → ใบจริงแทนที่ให้อัตโนมัติ (ยกเลิกใบเบา · ออเดอร์เดียวกัน)
+      //   · ใบเดิมเป็นใบจริง ไม่มีบิล 1 ใบ → ผู้ใช้เลือก: แทนใบเดิม (replace_quotation_id) หรือแยกเป็นออเดอร์ใหม่ (ส่งซ้ำโดยไม่ส่ง job_id)
+      //   · ใบเดิมมีบิลแล้ว / มีหลายใบ / มีบิลนอกระบบ → แยกเป็นออเดอร์ใหม่เท่านั้น (แก้ใบเดิมให้ใช้ Rev)
+      const { data: exQ } = await supabase
+        .from("quotations")
+        .select("id, code, note")
+        .eq("job_id", jobId)
+        .neq("status", "cancelled")
+        .order("created_at", { ascending: false });
+      const ex = (exQ ?? []) as { id: number; code: string; note: string | null }[];
+      const { data: exBn } = await supabase
+        .from("billing_notes")
+        .select("id, quotation_id")
+        .eq("job_id", jobId)
+        .neq("status", "cancelled");
+      const bns = (exBn ?? []) as { id: number; quotation_id: number | null }[];
+      // บิลเก่าบางใบ job_id ว่าง แต่ชี้ใบเสนอของงานนี้ → นับว่ามีบิลด้วย
+      if (ex.length) {
+        const { data: exBnQ } = await supabase
           .from("billing_notes")
-          .select("id", { count: "exact", head: true })
-          .eq("job_id", jobId)
+          .select("id, quotation_id")
+          .in("quotation_id", ex.map((q) => q.id))
           .neq("status", "cancelled");
-        if ((activeBills ?? 0) > 0) {
-          return fail("งานนี้มีออเดอร์ (ใบวางบิล) อยู่แล้ว — ถ้าเป็นออเดอร์ใหม่ ควรแยกเป็นงานใหม่ (กันงานปนกันในผลิต) · ถ้าตั้งใจผูกงานเดิม (เช่น แก้ราคาใบเดิม) กดยืนยันเพื่อดำเนินการต่อ", 409, { needs_confirm: true });
+        for (const b of (exBnQ ?? []) as { id: number; quotation_id: number | null }[]) {
+          if (!bns.some((x) => x.id === b.id)) bns.push(b);
         }
       }
-      // ⚠ 16 ต.ค.69 (บัค "ผลิตดึงมาทั้งลูกค้า"): แค่มี "ใบเสนอ" ค้างใต้งานอยู่แล้ว (ยังไม่ทันวางบิล) ก็เตือน
-      //   ต้นเหตุจริง: เช็คลิสต์ preselect งานเดิมให้ทุกใบ → ลูกค้าสั่ง 3 ออเดอร์จากแถวเดียว = 3 ใบใต้งานเดียว
-      //   → ผลิต/ใบปะหน้า/ใบตัด ต้องเดาว่าใบไหน · เตือน+ยืนยัน (ไม่ hard-block เผื่อเสนอใหม่/แก้ราคาใบเดิมโดยตั้งใจ)
-      if (body.allow_merge_job !== true) {
-        const { data: existingQuos } = await supabase
-          .from("quotations")
-          .select("code")
-          .eq("job_id", jobId)
-          .neq("status", "cancelled")
-          .order("created_at", { ascending: false })
-          .limit(3);
-        const codes = (existingQuos ?? []).map((q: { code: string }) => q.code).filter(Boolean);
-        if (codes.length > 0) {
-          return fail(`งานนี้มีใบเสนอราคาอยู่แล้ว (${codes.join(", ")}) — ถ้าเป็นออเดอร์ใหม่ ให้เลือก "งานใหม่" (กันออเดอร์ปนกันในผลิต) · ถ้าเป็นใบเดิมเสนอใหม่/แก้ราคา กดยืนยันเพื่อผูกงานเดิมต่อ`, 409, { needs_confirm: true });
+      const billedQ = new Set(bns.map((b) => b.quotation_id).filter((x): x is number => x != null));
+      const hasExternalBill = bns.some((b) => b.quotation_id == null);
+      if (ex.length > 0 || hasExternalBill) {
+        let lightOnly = false;
+        if (!hasExternalBill && ex.length === 1 && !billedQ.has(ex[0].id) && String(ex[0].note ?? "").startsWith(CHECKLIST_MARKER)) {
+          // ใบเบา = รายการเดียว "ใบเสนอราคา (ทำนอกระบบ)" · ถ้า Rev เป็นรายการจริงแล้ว = ใบจริง ต้องถามก่อน
+          const { data: li } = await supabase.from("quotation_items").select("name").eq("quotation_id", ex[0].id);
+          const names = ((li ?? []) as { name: string }[]).map((r) => r.name);
+          lightOnly = names.length <= 1 && names.every((n) => n === "ใบเสนอราคา (ทำนอกระบบ)");
+        }
+        const canReplaceId = !hasExternalBill && ex.length === 1 && !billedQ.has(ex[0].id) ? ex[0].id : null;
+        const replaceId = Number(body.replace_quotation_id) || 0;
+        if (lightOnly) {
+          replaceQuotations = ex.map((q) => ({ id: q.id, code: q.code }));
+        } else if (replaceId && canReplaceId === replaceId) {
+          replaceQuotations = [{ id: ex[0].id, code: ex[0].code }];
+        } else {
+          return fail(
+            canReplaceId
+              ? `งานนี้มีใบเสนอราคา ${ex[0].code} อยู่แล้ว (1 งาน = 1 ใบเสนอ) — เลือก: ใบนี้แทนใบเดิม หรือแยกเป็นออเดอร์ใหม่ (งานใหม่)`
+              : `งานนี้มี${billedQ.size || hasExternalBill ? "ออเดอร์ที่วางบิลแล้ว" : "ใบเสนอหลายใบอยู่แล้ว"} (${ex.map((q) => q.code).join(", ") || "บิลนอกระบบ"}) — ใบนี้จะถูกแยกเป็นออเดอร์ใหม่ (งานใหม่) · ถ้าจะแก้ใบเดิมให้ใช้ Rev ที่ใบเดิม`,
+            409,
+            { needs_choice: true, can_replace: canReplaceId, existing: ex.map((q) => ({ id: q.id, code: q.code, has_bill: billedQ.has(q.id) })) },
+          );
         }
       }
     } else {
@@ -205,6 +236,21 @@ export async function POST(req: Request) {
   const qCond: Record<string, unknown> = { discounts: discountLines };  // 0105 breakdown
   if (Array.isArray(body.conditions_work)) qCond.conditions_work = body.conditions_work;
   if (Array.isArray(body.conditions_quote)) qCond.conditions_quote = body.conditions_quote;
+  // แทนใบเดิม: ยกเลิกก่อน insert (DB ล็อก 1 งาน 1 ใบ) · ถ้า insert พลาด คืนสถานะเดิมให้
+  const prevStatus = new Map<number, string>();
+  const restoreReplaced = async () => {
+    for (const [id, st] of prevStatus) await supabase.from("quotations").update({ status: st }).eq("id", id);
+  };
+  for (const rq of replaceQuotations) {
+    const { data: cur } = await supabase.from("quotations").select("status").eq("id", rq.id).maybeSingle<{ status: string }>();
+    const { data: upd, error: cErr } = await supabase.from("quotations").update({ status: "cancelled" }).eq("id", rq.id).select("id");
+    // ไม่มีแถวกลับ = ไม่มีสิทธิ์แก้ใบนั้น (RLS) → ห้ามไปต่อ ไม่งั้นงานเดียวมี 2 ใบ
+    if (cErr || !(upd ?? []).length) {
+      await restoreReplaced();
+      return fail(`ยกเลิกใบเดิม ${rq.code} ไม่สำเร็จ${cErr ? ": " + cErr.message : " (ไม่มีสิทธิ์แก้ใบนี้)"}`, cErr ? 500 : 403);
+    }
+    prevStatus.set(rq.id, cur?.status ?? "draft");
+  }
   let { data: q, error: qErr } = await supabase
     .from("quotations").insert({ ...qBase, ...qCond }).select("id, code").single();
   // กันพัง: ถ้า migration 0076 (conditions_*) หรือ 0105 (discounts) ยังไม่รัน → insert ซ้ำแบบตัดคอลัมน์ใหม่ออก
@@ -212,7 +258,11 @@ export async function POST(req: Request) {
     ({ data: q, error: qErr } = await supabase
       .from("quotations").insert(qBase).select("id, code").single());
   }
-  if (qErr || !q) return fail("บันทึกใบเสนอไม่สำเร็จ: " + (qErr?.message ?? ""), 500);
+  if (qErr || !q) {
+    await restoreReplaced();
+    if (/ONE_QUOTATION_PER_JOB/.test(qErr?.message ?? "")) return fail("งานนี้มีใบเสนอราคาที่ใช้งานอยู่แล้ว (1 งาน = 1 ใบเสนอ) — แยกเป็นออเดอร์ใหม่ หรือใช้ Rev ที่ใบเดิม", 409, { needs_choice: true, can_replace: null, existing: [] });
+    return fail("บันทึกใบเสนอไม่สำเร็จ: " + (qErr?.message ?? ""), 500);
+  }
 
   // 5) insert รายการ — ถ้าพลาดให้ลบหัวเอกสารทิ้ง
   const rows = items.map((it: any, i: number) => ({
@@ -236,8 +286,22 @@ export async function POST(req: Request) {
   }
   if (iErr) {
     await supabase.from("quotations").delete().eq("id", q.id);
+    await restoreReplaced();
     return fail("บันทึกรายการไม่สำเร็จ: " + iErr.message, 500);
   }
 
-  return ok({ id: q.id, code: q.code }, 201);
+  // ย้อนรอยได้ว่าใบไหนถูกแทนด้วยใบไหน ใครทำ
+  for (const [id, st] of prevStatus) {
+    await audit({
+      jobId: jobId ?? null,
+      userId: profile.id,
+      action: "CANCEL_QUOTATION_REPLACED",
+      table: "quotations",
+      recordId: String(id),
+      oldValue: { status: st },
+      newValue: { status: "cancelled", replaced_by: q.code },
+    });
+  }
+
+  return ok({ id: q.id, code: q.code, replaced: replaceQuotations.map((r) => r.code) }, 201);
 }

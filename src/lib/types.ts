@@ -186,6 +186,7 @@ export interface StockItem {
   is_stocked?: boolean;       // 0125 — false = ของสั่งตามงาน (ไม่ได้สต็อกไว้) ใช้เป็นราคาอย่างเดียว ไม่หักสต็อก
   weight_per_unit: number;    // กก. ต่อ 1 หน่วย
   price_per_kg: number;       // ราคาต่อโลล่าสุด
+  alu_brand?: string;         // 0157 — แบรนด์ที่เลือกตอนเพิ่ม (fuji/sms/market/fixed · '' = เดาจากรหัส)
   created_at: string;
   updated_at: string;
 }

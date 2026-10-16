@@ -19,10 +19,18 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
   // ดึงสถานะปัจจุบัน
   const { data: q, error: qErr } = await ctx.supabase
     .from("quotations")
-    .select("id, status")
+    .select("id, status, job_id")
     .eq("id", qId)
-    .single<{ id: number; status: QuotationStatus }>();
+    .single<{ id: number; status: QuotationStatus; job_id: string | null }>();
   if (qErr || !q) return notFound("ไม่พบใบเสนอราคา");
+
+  // 1 งาน = 1 ใบเสนอ (16 ต.ค.69): กู้ใบที่ยกเลิกกลับมา ขณะงานมีใบอื่นใช้งานอยู่ = ปนอีก → ไม่ให้ (DB 0156 ล็อกซ้ำ)
+  if (q.status === "cancelled" && status !== "cancelled" && q.job_id) {
+    const { data: others } = await ctx.supabase.from("quotations").select("code")
+      .eq("job_id", q.job_id).neq("status", "cancelled").neq("id", qId).limit(3);
+    const codes = ((others ?? []) as { code: string }[]).map((o) => o.code);
+    if (codes.length) return err(`กู้ใบนี้กลับไม่ได้ — งานนี้มีใบเสนอ ${codes.join(", ")} ใช้งานอยู่แล้ว (1 งาน = 1 ใบเสนอ) · ยกเลิกใบนั้นก่อน หรือออกใบใหม่เป็นออเดอร์ใหม่`, 409);
+  }
 
   // บล็อกการถอย approved → (sent/draft) ถ้ามีบิล active
   // ถอยสถานะทั้งที่มีใบวางบิล — ไม่บล็อกแล้ว (เจ้าของสั่ง 1 ก.ย.69 · 0133)

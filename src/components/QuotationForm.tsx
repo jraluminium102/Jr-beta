@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card } from "./ui";
 import Icon from "./Icon";
@@ -38,6 +39,10 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
   const [condEdited, setCondEdited] = useState(false);
   const [condOpen, setCondOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  // หน้าต่างเลือกเมื่องานที่เลือกมีใบเสนออยู่แล้ว (1 งาน = 1 ใบเสนอ · 16 ต.ค.69) — resolve = ทางที่เลือก
+  type JobChoice = { message: string; canReplace: number | null; existing: { id: number; code: string; has_bill: boolean }[] };
+  const [jobChoice, setJobChoice] = useState<null | (JobChoice & { resolve: (v: "replace" | "new" | "cancel") => void })>(null);
+  const askJobChoice = (c: JobChoice) => new Promise<"replace" | "new" | "cancel">((resolve) => setJobChoice({ ...c, resolve }));
   const [err, setErr] = useState("");
   const [activeJobs, setActiveJobs] = useState<ActiveJob[]>([]);
   const [activeJobsLoading, setActiveJobsLoading] = useState(false);
@@ -262,8 +267,8 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
     const valid = items.filter((i) => i.name.trim() && Number(i.qty) > 0);
     if (valid.length === 0) { setErr("ต้องมีรายการอย่างน้อย 1 บรรทัด (ระบุชื่อ + จำนวน)"); return; }
     setBusy(true);
-    // allowMerge: ผูกใบเสนอเข้างานที่มีบิลแล้ว (ยืนยันแล้ว เช่น แก้ราคาใบเดิม) — retry หลัง 409 needs_confirm
-    async function post(allowMerge: boolean) {
+    // opt.replaceId = ใบนี้แทนใบเดิม (ยกเลิกใบเดิม) · opt.detachJob = แยกเป็นออเดอร์ใหม่ (ไม่ผูกงานเดิม → วางบิลแล้วได้งานใหม่)
+    async function post(opt: { replaceId?: number; detachJob?: boolean } = {}) {
       return fetch("/api/quotations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -272,7 +277,8 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
             ? { new_customer: { name: newCust.name.trim(), job: newCust.job.trim(), phone: newCust.phone.trim(), address: newCust.address.trim(), tax_id: newCust.tax_id.trim() } }
             : {
                 customer_id: customerId,
-                ...(selectedJobId ? { job_id: selectedJobId } : {}),
+                ...(selectedJobId && !opt.detachJob ? { job_id: selectedJobId } : {}),
+                ...(opt.replaceId ? { replace_quotation_id: opt.replaceId } : {}),
                 ...(billingProfileId ? { billing_profile_id: billingProfileId } : {}),
               }),
           issue_date: issueDate,
@@ -283,7 +289,6 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
           discount_label: discounts.length === 1 ? (discounts[0].label ?? "").trim() : "",
           wht_rate: wht,
           note,
-          ...(allowMerge ? { allow_merge_job: true } : {}),
           ...(hdr.name.trim() ? { header_override: hdr } : {}),
           ...(condEdited ? {
             conditions_work: condWork.map((s) => s.trim()).filter(Boolean),
@@ -293,15 +298,15 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
       });
     }
     try {
-      let res = await post(false);
+      let res = await post();
       let json = await res.json().catch(() => ({}));
-      // งานนี้มีบิลแล้ว → ถามยืนยันก่อนผูกงานเดิม (กันงานปนกันในผลิตโดยไม่ตั้งใจ)
-      if (res.status === 409 && json?.needs_confirm) {
-        if (!confirm(`${json.error}\n\nกด "ตกลง" = ผูกกับงานเดิม · "ยกเลิก" = ยังไม่บันทึก (ถ้าเป็นออเดอร์ใหม่ ให้เปลี่ยนเป็น "งานใหม่" ก่อน)`)) {
-          setBusy(false); return;
-        }
-        res = await post(true);
+      // งานที่เลือกมีใบเสนออยู่แล้ว → ให้เลือก (แทนใบเดิม / แยกออเดอร์ใหม่ / ยกเลิก) · ไม่มีทางผูกซ้อนอีกแล้ว
+      if (res.status === 409 && json?.needs_choice) {
+        const pick = await askJobChoice({ message: String(json.error ?? ""), canReplace: json.can_replace ?? null, existing: json.existing ?? [] });
+        if (pick === "cancel") { setBusy(false); return; }
+        res = await post(pick === "replace" ? { replaceId: Number(json.can_replace) } : { detachJob: true });
         json = await res.json().catch(() => ({}));
+        if (pick === "new") setSelectedJobId("");
       }
       if (!res.ok) { setErr(json.error ?? `บันทึกไม่สำเร็จ (${res.status}) — ลองอีกครั้ง`); return; }
       if (!json?.data?.id) { setErr("บันทึกแล้วแต่ไม่ได้รหัสกลับ — เปิดหน้าใบเสนอราคาเพื่อตรวจสอบ"); return; }
@@ -316,6 +321,42 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
 
   return (
     <div className="space-y-5">
+      {/* portal ไป body — กันบรรพบุรุษที่มี backdrop-filter/transform ทำให้ fixed อิงกล่องแทนจอ */}
+      {jobChoice && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl text-ink" role="dialog" aria-modal="true">
+            <div className="font-bold text-[16px] mb-1">งานนี้มีใบเสนอราคาอยู่แล้ว</div>
+            <div className="text-[13px] text-ink-2 mb-3 leading-relaxed">{jobChoice.message}</div>
+            {jobChoice.existing.length > 0 && (
+              <div className="mb-3 flex flex-wrap gap-1.5">
+                {jobChoice.existing.map((q) => (
+                  <span key={q.id} className="text-[12px] rounded-lg px-2 py-1 bg-gray-100 tabular-nums">
+                    {q.code}{q.has_bill ? " · 💰 มีบิลแล้ว" : ""}
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="flex flex-col gap-2">
+              <button type="button" onClick={() => { jobChoice.resolve("new"); setJobChoice(null); }}
+                className="press rounded-xl px-4 py-3 text-sm font-bold bg-brand text-white text-left min-h-[44px]">
+                🆕 เป็นออเดอร์ใหม่ — แยกงานใหม่
+                <span className="block text-[11px] font-normal opacity-85">ลูกค้าสั่งของเพิ่มอีกชุด · ใบเดิมยังอยู่ครบ · วางบิลแล้วได้งานใหม่ของตัวเอง</span>
+              </button>
+              {jobChoice.canReplace != null && (
+                <button type="button" onClick={() => { jobChoice.resolve("replace"); setJobChoice(null); }}
+                  className="press rounded-xl px-4 py-3 text-sm font-bold border border-gray-300 text-left min-h-[44px]">
+                  🔁 ใบนี้แทนใบเดิม {jobChoice.existing.find((q) => q.id === jobChoice.canReplace)?.code ?? ""}
+                  <span className="block text-[11px] font-normal text-ink-3">ออเดอร์เดียวกัน เสนอราคาใหม่ · ใบเดิมจะถูกยกเลิก (ยังไม่มีบิล)</span>
+                </button>
+              )}
+              <button type="button" onClick={() => { jobChoice.resolve("cancel"); setJobChoice(null); }}
+                className="press rounded-xl px-4 py-2.5 text-sm text-ink-3 min-h-[44px]">ยกเลิก (ยังไม่บันทึก)</button>
+            </div>
+            <div className="mt-3 text-[11px] text-ink-3">จะแก้ราคาใบเดิมที่มีบิลแล้ว ให้เข้าใบเดิมแล้วกด Rev แทน</div>
+          </div>
+        </div>,
+        document.body,
+      )}
       <h1 className="text-xl font-bold text-brand-dark flex items-center gap-2.5">
         <span className="text-white rounded-xl w-9 h-9 inline-flex items-center justify-center bg-brand shadow-brand">
           <Icon name="file" size={18} />
@@ -493,7 +534,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
                       ))}
                     </select>
                     <span className="text-xs text-ink-3 mt-0.5 block">
-                      ค่าเริ่มต้น = <b>งานใหม่</b> (ลูกค้ามี {activeJobs.length} งานอยู่แล้ว แต่จะไม่รวมให้) · เลือก "ผูกกับงานเดิม" เฉพาะเมื่อเป็นออเดอร์เดียวกัน เช่น แก้ราคาใบเดิม
+                      ค่าเริ่มต้น = <b>งานใหม่</b> (ลูกค้ามี {activeJobs.length} งานอยู่แล้ว แต่จะไม่รวมให้) · "ผูกกับงานเดิม" ใช้กับงานที่ยังไม่มีใบเสนอ (เช่น งานจากคิวประเมิน) · 1 งาน = 1 ใบเสนอ ถ้างานมีใบแล้วระบบจะให้เลือกแทนใบเดิมหรือแยกงาน · แก้ราคาใบเดิมใช้ Rev
                     </span>
                   </label>
                 )}

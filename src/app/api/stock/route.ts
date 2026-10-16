@@ -4,6 +4,8 @@ import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 import { colorFromName } from "@/lib/cutlist/stock-match";
 import { canSeeCost } from "@/lib/rbac";
 import { fetchAllPaged } from "@/lib/supabase/fetch-all";
+import { aluRateOf, storeColorOf, ALU_BRAND_LABEL } from "@/lib/calculator40/alu-brand";
+import { createServiceClient } from "@/lib/supabase/admin";
 
 // สโตร์/ผลิต บันทึกวัสดุได้ด้วย (0073) — ไม่ใช่แค่ ADMIN/SALES/ACCOUNTING
 const STORE_WRITE = ["ADMIN", "PRODUCTION", "SALES", "ACCOUNTING", "STORE"];
@@ -69,34 +71,54 @@ export async function POST(req: Request) {
     if (cat?.name) categoryName = cat.name;
   }
 
-  const isWeight = !!body.is_weight_based;
+  // ── อลูเลือกแบรนด์ (เจ้าของสั่ง 16 ต.ค.69) — เรต ฿/กก. ล็อกตามตาราง PB.ALU_BRAND (ไม่รับตัวเลขจากหน้าจอ) ──
+  //   fuji/sms/market = คิดต่อโล บังคับ · ต้องมีสีที่แบรนด์นั้นมีเรต + น้ำหนัก/หน่วย > 0
+  //   fixed = ซื้อเป็นเส้น ไม่คิดต่อโล (กรอกต้นทุน/เส้นเองตามเดิม)
+  const aluBrand = ["fuji", "sms", "market", "fixed"].includes(String(body.alu_brand ?? "")) ? String(body.alu_brand) : "";
+  const isAluCategory = /อลู/.test(categoryName);
+  if (isAluCategory && !aluBrand) return fail("วัสดุหมวดอลู ต้องเลือกแบรนด์ (Fuji / SMS / ตลาด / ซื้อเป็นเส้น)");
+  const brandLocked = aluBrand === "fuji" || aluBrand === "sms" || aluBrand === "market";
+  let lockedRate = 0;
+  let lockedColor = "";
+  if (brandLocked) {
+    if (!String(body.color ?? "").trim()) return fail("เลือกสีของเส้นอลูก่อน (เรตขึ้นกับแบรนด์ × สี)");
+    const r = aluRateOf(aluBrand, body.color);
+    if (!(r.rate > 0)) return fail(`แบรนด์ ${ALU_BRAND_LABEL[aluBrand]} ไม่มีสี "${body.color}" ในตารางเรต — เลือกสีจากรายการ หรือเลือก "ซื้อเป็นเส้น"`);
+    if (!(Number(body.weight_per_unit) > 0)) return fail("กรอกน้ำหนักต่อเส้น (กก.) — ราคาเส้น = น้ำหนัก × เรตแบรนด์");
+    lockedRate = r.rate;
+    lockedColor = storeColorOf(body.color);
+  }
+
+  const isWeight = brandLocked ? true : (aluBrand === "fixed" ? false : !!body.is_weight_based);
   const weightPerUnit = Number(body.weight_per_unit) || 0;
-  const pricePerKg = Number(body.price_per_kg) || 0;
+  const pricePerKg = brandLocked ? lockedRate : (Number(body.price_per_kg) || 0);
   // ต้นทุนต่อหน่วย: อลูคิดต่อโล → price_per_kg × น้ำหนัก/หน่วย · อื่นๆ → unit_cost ที่กรอกตรง
   const unitCost = isWeight ? Math.round(pricePerKg * weightPerUnit * 100) / 100 : (Number(body.unit_cost) || 0);
 
   // เริ่มที่ qty_on_hand=0 เสมอ — ถ้ามียอดยกมา ปล่อยให้ trigger บวกผ่าน stock_moves (มี log)
-  const { data: item, error } = await supabase
-    .from("stock_items")
-    .insert({
-      sku: body.sku ?? "",
-      name: body.name.trim(),
-      category: categoryName,
-      category_id: categoryId,
-      unit: body.unit ?? "",
-      min_qty: Number(body.min_qty) || 0,
-      qty_on_hand: 0,
-      note: body.note ?? "",
-      supplier: body.supplier ?? "",
-      image_url: body.image_url ?? "",
-      is_weight_based: isWeight,
-      is_stocked: body.is_stocked !== false,   // 0125 — ปิด = ของสั่งตามงาน ใช้เป็นราคาอย่างเดียว
-      weight_per_unit: weightPerUnit,
-      price_per_kg: pricePerKg,
-      unit_cost: unitCost,
-    })
-    .select("*")
-    .single();
+  const baseRow: Record<string, unknown> = {
+    sku: body.sku ?? "",
+    name: body.name.trim(),
+    category: categoryName,
+    category_id: categoryId,
+    unit: body.unit ?? "",
+    min_qty: Number(body.min_qty) || 0,
+    qty_on_hand: 0,
+    note: body.note ?? "",
+    supplier: body.supplier ?? "",
+    image_url: body.image_url ?? "",
+    is_weight_based: isWeight,
+    is_stocked: body.is_stocked !== false,   // 0125 — ปิด = ของสั่งตามงาน ใช้เป็นราคาอย่างเดียว
+    weight_per_unit: weightPerUnit,
+    price_per_kg: pricePerKg,
+    unit_cost: unitCost,
+  };
+  let { data: item, error } = await supabase
+    .from("stock_items").insert({ ...baseRow, ...(aluBrand ? { alu_brand: aluBrand } : {}) }).select("*").single();
+  // 0157 ยังไม่รัน (ไม่มีคอลัมน์ alu_brand) → บันทึกต่อได้ แต่แบรนด์ไม่ถูกเก็บ (เรตยังล็อกถูก)
+  if (error && /alu_brand/i.test(error.message ?? "")) {
+    ({ data: item, error } = await supabase.from("stock_items").insert(baseRow).select("*").single());
+  }
 
   if (error) return fail(error.message, 500);
 
@@ -109,22 +131,27 @@ export async function POST(req: Request) {
   }
 
   // สี (0106) — เขียนแยกแบบ non-fatal · ถ้าไม่กรอกสี แต่ชื่อมีสี (เช่น "...-อบขาว") → ดึงสีจากชื่อมาเติมอัตโนมัติ
-  const colorVal = String(body.color ?? "").trim() || colorFromName(body.name, item.sku);
+  const colorVal = lockedColor || String(body.color ?? "").trim() || colorFromName(body.name, item.sku);
   if (colorVal) {
     const { error: colErr } = await supabase.from("stock_items").update({ color: colorVal }).eq("id", item.id);
     if (!colErr) item.color = colorVal;
   }
 
   // บันทึกราคาเริ่มต้นเข้าประวัติ (ถ้ามี) — trigger sync unit_cost/price_per_kg ให้อยู่แล้ว
+  let priceWarn = "";
   if (unitCost > 0 || pricePerKg > 0) {
-    await supabase.from("stock_prices").insert({
+    // แบรนด์ล็อก: เรตมาจากตารางเรตแบรนด์ (ไม่ใช่ตัวเลขที่ผู้ใช้พิมพ์) → เขียนประวัติผ่าน service client ได้
+    //   (RLS stock_prices เขียนได้แค่ ADMIN/ACCOUNTING แต่ ผลิต/เซลส์ ก็เพิ่มวัสดุได้ — เดิมประวัติหายเงียบ)
+    const ph = brandLocked ? (createServiceClient() as unknown as typeof supabase) : supabase;
+    const { error: phErr } = await ph.from("stock_prices").insert({
       stock_item_id: item.id,
       price_per_kg: isWeight ? pricePerKg : null,
       unit_cost: unitCost,
       supplier: body.supplier ?? "",
-      note: "ราคาเริ่มต้น",
+      note: brandLocked ? `ราคาเริ่มต้น — เรตแบรนด์ ${ALU_BRAND_LABEL[aluBrand]} · ${lockedColor} ${pricePerKg} ฿/กก.` : "ราคาเริ่มต้น",
       created_by: profile.id,
     });
+    if (phErr) priceWarn = "บันทึกวัสดุแล้ว แต่ประวัติราคาไม่ถูกบันทึก: " + phErr.message;
   }
 
   // ยอดยกมา > 0 → บันทึกเป็น movement type 'in' (trigger ปรับ qty_on_hand ให้)
@@ -144,5 +171,5 @@ export async function POST(req: Request) {
     item.qty_on_hand = opening;
   }
 
-  return ok(item, 201);
+  return ok(priceWarn ? { ...item, warn: priceWarn } : item, 201);
 }

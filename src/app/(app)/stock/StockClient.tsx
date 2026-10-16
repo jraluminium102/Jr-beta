@@ -7,7 +7,7 @@ import { baht } from "@/lib/money";
 import { createClient } from "@/lib/supabase/client";
 import type { StockItem, StockMove, StockMoveType, StockCategory, StockPrice } from "@/lib/types";
 import { calcLink, isAluCode } from "@/lib/calculator40/stock-link";
-import { aluBrandOfRow, ALU_BRAND_LABEL } from "@/lib/calculator40/alu-brand";
+import { aluBrandOfRow, ALU_BRAND_LABEL, ALU_PICK_BRANDS, aluBrandColorOptions, aluRateOf } from "@/lib/calculator40/alu-brand";
 import { isInCutlist } from "@/lib/cutlist/codes";
 import { FAMILIES, skuInFamily } from "@/lib/cutlist/family-codes";
 import { colorFromName } from "@/lib/cutlist/stock-match";
@@ -42,7 +42,7 @@ type JobHit = StockJob;
 //   แบรนด์มาจากตัวกลาง lib/calculator40/alu-brand = แหล่งเดียวกับที่คิดราคา/หน้าเรตอลูใช้
 //   module scope เพราะใช้ทั้งในลิสต์ (StockClient) และการ์ดรายละเอียด (ItemDetail)
 const isAluRow = (c: StockItem) => /อลู/.test(String(c.category ?? "")) || isAluCode(c.sku);
-const brandOf = (c: StockItem) => (isAluRow(c) ? aluBrandOfRow(c.sku, c.name, c.color) : null);
+const brandOf = (c: StockItem) => (isAluRow(c) ? aluBrandOfRow(c.sku, c.name, c.color, c.alu_brand) : null);
 // เจ้าของเคาะสี 12 ต.ค.69: Euro Fuji เขียว · SMS ฟ้า · ตลาด แดง (ตัวหนังสือเข้ม-พื้นอ่อน อ่านชัดทั้งคู่)
 const BRAND_TONE: Record<string, string> = {
   fuji: "text-green-900 bg-green-100",
@@ -947,19 +947,34 @@ function ImageField({ label, url, onChange }: { label: string; url: string; onCh
 }
 
 // ── ฟอร์มเพิ่มวัสดุ ──
+// อลู (เจ้าของสั่ง 16 ต.ค.69): เลือกหมวดอลู → ต้องเลือกแบรนด์ · Fuji/SMS/ตลาด = คิดต่อโลอัตโนมัติ + เลือกสีจากที่แบรนด์มีเรต
+//   + ฿/กก. ล็อกตามตารางเรตแบรนด์ (PB.ALU_BRAND · แหล่งเดียวกับคิดราคา 4.0) · ซื้อเป็นเส้น = กรอกต้นทุน/เส้นเอง
+//   เซิร์ฟเวอร์คิดเรตซ้ำเอง (ไม่เชื่อตัวเลขจากหน้าจอ) — ตัวเลขบนจอนี้มีไว้ให้เห็นเท่านั้น
 function AddItemForm({ cats, canViewCost, onManageCat, onCancel, onSaved }: {
   cats: StockCategory[]; canViewCost: boolean; onManageCat: () => void; onCancel: () => void; onSaved: (it: StockItem) => void;
 }) {
   const [f, setF] = useState({
     name: "", sku: "", category_id: "", unit: "เส้น", min_qty: "", qty_on_hand: "",
     supplier: "", color: "", image_url: "", is_weight_based: false, weight_per_unit: "", price_per_kg: "", unit_cost: "",
+    alu_brand: "",
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
-  const computedCost = f.is_weight_based ? (Number(f.price_per_kg) || 0) * (Number(f.weight_per_unit) || 0) : (Number(f.unit_cost) || 0);
+  const catName = cats.find((c) => String(c.id) === String(f.category_id))?.name ?? "";
+  const isAluCat = /อลู/.test(catName);
+  const brandLocked = isAluCat && ["fuji", "sms", "market"].includes(f.alu_brand);
+  const isFixed = isAluCat && f.alu_brand === "fixed";
+  const colorOpts = brandLocked ? aluBrandColorOptions(f.alu_brand) : [];
+  const lockedRate = brandLocked ? aluRateOf(f.alu_brand, f.color).rate : 0;
+  const weightBased = brandLocked ? true : (isFixed ? false : f.is_weight_based);
+  const ratePerKg = brandLocked ? lockedRate : (Number(f.price_per_kg) || 0);
+  const computedCost = weightBased ? ratePerKg * (Number(f.weight_per_unit) || 0) : (Number(f.unit_cost) || 0);
 
   async function save() {
     if (!f.name.trim()) { setErr("ต้องระบุชื่อวัสดุ"); return; }
+    if (isAluCat && !f.alu_brand) { setErr("หมวดอลู ต้องเลือกแบรนด์ก่อน"); return; }
+    if (brandLocked && !f.color) { setErr("เลือกสีของเส้นอลู (เรตขึ้นกับแบรนด์ × สี)"); return; }
+    if (brandLocked && !(Number(f.weight_per_unit) > 0)) { setErr("กรอกน้ำหนักต่อเส้น (กก.) — ราคาเส้น = น้ำหนัก × เรตแบรนด์"); return; }
     setBusy(true); setErr("");
     const res = await fetch("/api/stock", {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -967,13 +982,15 @@ function AddItemForm({ cats, canViewCost, onManageCat, onCancel, onSaved }: {
         name: f.name, sku: f.sku, category_id: f.category_id || null, unit: f.unit,
         min_qty: Number(f.min_qty) || 0, qty_on_hand: Number(f.qty_on_hand) || 0,
         supplier: f.supplier, color: f.color, image_url: f.image_url,
-        is_weight_based: f.is_weight_based, weight_per_unit: Number(f.weight_per_unit) || 0,
-        price_per_kg: Number(f.price_per_kg) || 0, unit_cost: Number(f.unit_cost) || 0,
+        is_weight_based: weightBased, weight_per_unit: Number(f.weight_per_unit) || 0,
+        price_per_kg: brandLocked ? 0 : (Number(f.price_per_kg) || 0), unit_cost: Number(f.unit_cost) || 0,
+        ...(isAluCat ? { alu_brand: f.alu_brand } : {}),
       }),
     });
     const json = await res.json();
     setBusy(false);
     if (!res.ok) { setErr(json.error ?? "บันทึกไม่สำเร็จ"); return; }
+    if (json.data?.warn) alert(json.data.warn);
     onSaved(json.data as StockItem);
   }
 
@@ -987,16 +1004,44 @@ function AddItemForm({ cats, canViewCost, onManageCat, onCancel, onSaved }: {
             หมวดหมู่
             <button onClick={onManageCat} className="text-brand font-semibold">+ จัดการหมวด</button>
           </span>
-          <select value={f.category_id} onChange={(e) => setF({ ...f, category_id: e.target.value })}
+          <select value={f.category_id} onChange={(e) => setF({ ...f, category_id: e.target.value, alu_brand: "", color: "" })}
             className="w-full glass-soft rounded-lg px-3 py-2 mt-1 outline-none">
             <option value="">— เลือกหมวด —</option>
             {cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </label>
+        {isAluCat && (
+          <label className="block col-span-2">
+            <span className="text-xs font-medium text-ink-3">แบรนด์เส้นอลู *</span>
+            <select value={f.alu_brand} onChange={(e) => setF({ ...f, alu_brand: e.target.value, color: "" })}
+              className="w-full glass-soft rounded-lg px-3 py-2 mt-1 outline-none">
+              <option value="">— เลือกแบรนด์ —</option>
+              {ALU_PICK_BRANDS.map((b) => <option key={b.key} value={b.key}>{b.label}</option>)}
+            </select>
+          </label>
+        )}
         <Field label="SKU/รหัส" value={f.sku} onChange={(v) => setF({ ...f, sku: v })} placeholder="เว้นว่าง = สร้างอัตโนมัติ JR#####" />
-        <Field label="สี" value={f.color} onChange={(v) => setF({ ...f, color: v })} placeholder="เช่น ดำ / อบขาว" />
+        {brandLocked ? (
+          <label className="block">
+            <span className="text-xs font-medium text-ink-3">สี * (ตามที่แบรนด์มีเรต)</span>
+            <select value={f.color} onChange={(e) => setF({ ...f, color: e.target.value })}
+              className="w-full glass-soft rounded-lg px-3 py-2 mt-1 outline-none">
+              <option value="">— เลือกสี —</option>
+              {colorOpts.map((o) => (
+                <option key={o.color} value={o.color}>
+                  {o.color}{canViewCost ? ` — ${o.rate} ฿/กก.` : ""}{o.via ? ` (เรต ${ALU_BRAND_LABEL[o.via] ?? o.via})` : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <Field label="สี" value={f.color} onChange={(v) => setF({ ...f, color: v })} placeholder="เช่น ดำ / อบขาว" />
+        )}
         <Field label="หน่วย" value={f.unit} onChange={(v) => setF({ ...f, unit: v })} />
         <Field label="ร้าน/ผู้ขาย" value={f.supplier} onChange={(v) => setF({ ...f, supplier: v })} />
+        {brandLocked && (
+          <Field label={`น้ำหนักต่อ 1 ${f.unit} (กก.) *`} value={f.weight_per_unit} onChange={(v) => setF({ ...f, weight_per_unit: v })} type="number" />
+        )}
         <Field label="จุดเตือนขั้นต่ำ" value={f.min_qty} onChange={(v) => setF({ ...f, min_qty: v })} type="number" />
         <Field label="ยอดยกมา (คงเหลือเริ่มต้น)" value={f.qty_on_hand} onChange={(v) => setF({ ...f, qty_on_hand: v })} type="number" wide />
       </div>
@@ -1007,24 +1052,43 @@ function AddItemForm({ cats, canViewCost, onManageCat, onCancel, onSaved }: {
       {/* ราคา/ต้นทุน — เฉพาะคนที่เห็นราคาได้ (ฝ่ายสโตร์เพิ่มวัสดุได้ แต่ราคาให้บัญชีใส่ทีหลัง) */}
       {canViewCost ? (
         <div className="mt-4 rounded-xl border border-brand/15 bg-black/[0.02] p-3 space-y-2.5">
-          <label className="flex items-center gap-2 text-sm font-medium text-ink-1">
-            <input type="checkbox" checked={f.is_weight_based} onChange={(e) => setF({ ...f, is_weight_based: e.target.checked })} />
-            คิดราคาแบบชั่งน้ำหนัก (อลูมิเนียม — ต่อโล)
-          </label>
-          {f.is_weight_based ? (
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <Field label="ราคาต่อโล (฿/กก.)" value={f.price_per_kg} onChange={(v) => setF({ ...f, price_per_kg: v })} type="number" />
-              <Field label={`น้ำหนักต่อ 1 ${f.unit} (กก.)`} value={f.weight_per_unit} onChange={(v) => setF({ ...f, weight_per_unit: v })} type="number" />
+          {brandLocked ? (
+            <div className="text-sm space-y-1">
+              <div className="font-medium text-ink-1">🔒 คิดราคาแบบชั่งน้ำหนัก — เรตล็อกตามแบรนด์ {ALU_BRAND_LABEL[f.alu_brand]}</div>
+              <div className="text-ink-2">
+                ราคาต่อโล: <b className="tabular-nums">{lockedRate > 0 ? `${lockedRate} ฿/กก.` : "— เลือกสีก่อน"}</b>
+                <span className="text-xs text-ink-3"> (แก้ที่หน้า &quot;เรตอลู&quot; เท่านั้น · เปลี่ยนเรตแล้วราคาเส้นนี้ขยับตาม)</span>
+              </div>
+            </div>
+          ) : isFixed ? (
+            <div className="space-y-2">
+              <div className="text-sm font-medium text-ink-1">ซื้อเป็นเส้น — ไม่คิดต่อโล</div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <Field label="ต้นทุนต่อหน่วย (฿)" value={f.unit_cost} onChange={(v) => setF({ ...f, unit_cost: v })} type="number" />
+              </div>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <Field label="ต้นทุนต่อหน่วย (฿)" value={f.unit_cost} onChange={(v) => setF({ ...f, unit_cost: v })} type="number" />
-            </div>
+            <>
+              <label className="flex items-center gap-2 text-sm font-medium text-ink-1">
+                <input type="checkbox" checked={f.is_weight_based} onChange={(e) => setF({ ...f, is_weight_based: e.target.checked })} />
+                คิดราคาแบบชั่งน้ำหนัก (อลูมิเนียม — ต่อโล)
+              </label>
+              {f.is_weight_based ? (
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <Field label="ราคาต่อโล (฿/กก.)" value={f.price_per_kg} onChange={(v) => setF({ ...f, price_per_kg: v })} type="number" />
+                  <Field label={`น้ำหนักต่อ 1 ${f.unit} (กก.)`} value={f.weight_per_unit} onChange={(v) => setF({ ...f, weight_per_unit: v })} type="number" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <Field label="ต้นทุนต่อหน่วย (฿)" value={f.unit_cost} onChange={(v) => setF({ ...f, unit_cost: v })} type="number" />
+                </div>
+              )}
+            </>
           )}
-          {computedCost > 0 && <p className="text-xs text-ink-3">ต้นทุนต่อ {f.unit} ≈ <b>฿{baht(computedCost)}</b></p>}
+          {computedCost > 0 && <p className="text-xs text-ink-3">ต้นทุนต่อ {f.unit} ≈ <b>฿{baht(computedCost)}</b>{brandLocked ? ` (${f.weight_per_unit} กก. × ${lockedRate})` : ""}</p>}
         </div>
       ) : (
-        <p className="mt-3 text-xs text-ink-3">* ราคา/ต้นทุนให้ฝ่ายบัญชีเป็นผู้กรอกภายหลัง</p>
+        <p className="mt-3 text-xs text-ink-3">* ราคา/ต้นทุนให้ฝ่ายบัญชีเป็นผู้กรอกภายหลัง{brandLocked ? " · อลูแบรนด์นี้ระบบตั้งเรตต่อโลให้อัตโนมัติ" : ""}</p>
       )}
 
       {err && <p role="alert" className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2 mt-3">{err}</p>}
