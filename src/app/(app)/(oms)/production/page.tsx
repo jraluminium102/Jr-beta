@@ -157,10 +157,10 @@ function DeepLinkHandler({ rows, setOpen, setFilterKey }: {
 
 type AdhocJob = { id: string; title: string; customer_name: string | null; produce_date: string | null; install_date: string | null; producer_note: string | null; status: string };
 
-// ── ADMIN: "งานที่ปนหลายออเดอร์" (>1 ใบเสนอ/ใบวางบิล Active) — จุดที่ต้องใช้เครื่องมือ "แตกออเดอร์" (0129) ──
+// ── ADMIN: "งานที่ปนหลายออเดอร์" (บิล Active ผูกใบเสนอ ≥2 ใบคนละใบ = ลูกค้าจ่ายหลายออเดอร์จริง) — จุดที่ต้องใช้เครื่องมือ "แตกออเดอร์" (0129) ──
 type SplitCandidate = {
   id: string; job_code: string | null; customer_name: string; customer_area: string | null; status: string;
-  active_quotation_count: number; active_billing_count: number;
+  active_quotation_count: number; active_billing_count: number; billed_order_count?: number;
 };
 function SplitCandidatesBanner({ rows, onOpen }: { rows: Row[]; onOpen: (r: Row) => void }) {
   const [collapsed, setCollapsed] = useState(true);
@@ -187,7 +187,7 @@ function SplitCandidatesBanner({ rows, onOpen }: { rows: Row[]; onOpen: (r: Row)
               <div key={c.id} className="flex items-center justify-between gap-2 text-[12px] rounded-lg bg-white/5 px-2.5 py-2">
                 <div className="min-w-0 truncate text-amber-50">
                   <span className="tnum font-semibold">{c.job_code ?? "—"}</span> · {c.customer_name}
-                  <span className="text-amber-200/70 ml-1.5">({c.active_quotation_count} ใบเสนอ · {c.active_billing_count} บิล)</span>
+                  <span className="text-amber-200/70 ml-1.5">({c.billed_order_count ?? c.active_billing_count} ออเดอร์ที่มีบิล · {c.active_quotation_count} ใบเสนอ)</span>
                 </div>
                 {prodRow ? (
                   <button onClick={() => onOpen(prodRow)} className="focusable pressable shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-amber-100 bg-amber-500/20 border border-amber-300/30 min-h-[32px]">
