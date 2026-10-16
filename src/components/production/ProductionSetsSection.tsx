@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Plus, X, ChevronDown } from "@/components/ui/icons";
@@ -247,17 +248,52 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
     try { await api.post("/production-sets", { job_id: jobId, set_label: `ชุด ${sets.length + 1}` }); qc.invalidateQueries({ queryKey: key }); }
     finally { setBusy(false); }
   }
-  // ดึงข้อจากใบเสนอราคาล่าสุด → สร้างชุด + เติมสเปคอัตโนมัติ (ไม่ทับชุดที่ชื่อซ้ำ)
-  async function pullFromQuote() {
-    if (!confirm("ดึงข้อจากใบเสนอราคาล่าสุด มาสร้างชุด + เติมสเปค (กระจก/มุ้ง/สี) อัตโนมัติ?\nชุดที่มีชื่อซ้ำจะไม่ทับ · แก้รายชุดได้ทีหลัง")) return;
+  // ── ดึงจากใบเสนอ (16 ต.ค.69 แก้บัค "ดึงมาทั้งลูกค้า") ──────────────────────────────────────
+  //   งานที่มีใบเสนอหลายใบ (หลายออเดอร์ค้างใต้งานเดียว) ต้อง "ให้เลือกใบ" ไม่เดาให้
+  //   ชุดเดิมมาจากใบอื่น → API คืน other_quotation → ถามก่อน (แทนที่/ยกเลิก) ไม่ปนเงียบ ๆ
+  type PullOpt = { id: number; code: string; revision_no: number; revision_label: string | null; created_at: string; has_bill: boolean; work_items: number; is_current: boolean };
+  type PullRes = { created: number; skipped: number; reason?: string; current?: { code: string }[]; target?: { code: string } };
+  const [pull, setPull] = useState<null | { options: PullOpt[]; current_ids: number[]; picked: number | null; mode: "add" | "replace" }>(null);
+  const revTag = (n: number) => (n > 0 ? `Rev${String(n).padStart(2, "0")}` : "");
+  async function doPull(quotationId: number | null, mode: "add" | "replace", force = false) {
     setBusy(true);
     try {
-      const r = await api.post<{ created: number; skipped: number; reason?: string }>("/production-sets/from-quotation", { job_id: jobId });
-      qc.invalidateQueries({ queryKey: key });
+      const r = await api.post<PullRes>("/production-sets/from-quotation", { job_id: jobId, quotation_id: quotationId, mode, force });
       const d = r.data;
-      if (d?.reason === "no_quotation") alert("ยังไม่มีใบเสนอราคาในระบบสำหรับงานนี้");
-      else alert(`ดึงจากใบเสนอแล้ว — สร้าง ${d?.created ?? 0} ชุด${d?.skipped ? ` (ข้ามที่มีอยู่/ไม่ใช่งาน ${d.skipped})` : ""}`);
-    } catch { alert("ดึงจากใบเสนอไม่สำเร็จ"); }
+      if (d?.reason === "no_quotation") { alert("ยังไม่มีใบเสนอราคาในระบบสำหรับงานนี้"); return; }
+      if (d?.reason === "empty_quotation") { alert(`ใบ ${d.target?.code ?? ""} ไม่มีข้อที่เป็นงาน (ไม่มีสเปค/มีแต่ส่วนลด) — ไม่ได้แตะชุดเดิม`); return; }
+      if (d?.reason === "other_quotation") {
+        const cur = (d.current ?? []).map((c) => c.code).join(", ");
+        const tg = d.target?.code ?? "";
+        if (confirm(`ชุดในงานนี้ตอนนี้มาจากใบ ${cur} แต่กำลังจะดึงใบ ${tg}\n\nกด "ตกลง" = แทนที่ชุดที่ดึงจากใบเดิมทั้งหมดด้วยใบ ${tg} (ชุดที่เพิ่มมือยังอยู่)\n⚠ สถานะผลิต/ติดตั้ง/hold ของชุดที่ถูกแทนที่จะรีเซ็ต และใบติดตั้งที่ผูกชุดเดิมจะหลุดการผูก\nกด "ยกเลิก" = ไม่ทำอะไร`)) await doPull(quotationId, "replace");
+        return;
+      }
+      qc.invalidateQueries({ queryKey: key });
+      qc.invalidateQueries({ queryKey: ["production-schedule"] });
+      alert(`ดึงจากใบเสนอ ${d?.target?.code ?? ""} แล้ว — ${mode === "replace" ? "แทนที่ชุดเดิม · " : ""}สร้าง ${d?.created ?? 0} ชุด${d?.skipped ? ` (ข้ามที่มีอยู่/ไม่ใช่งาน ${d.skipped})` : ""}`);
+      setPull(null);
+    } catch (e) { alert("ดึงจากใบเสนอไม่สำเร็จ" + (e instanceof Error && e.message ? `\n${e.message}` : "")); }
+    finally { setBusy(false); }
+  }
+  async function pullFromQuote() {
+    setBusy(true);
+    try {
+      const o = (await api.get<{ options: PullOpt[]; suggested_id: number | null; current_ids: number[] }>(`/production-sets/from-quotation?job_id=${jobId}`)).data;
+      if (!o || o.options.length === 0) { alert("ยังไม่มีใบเสนอราคาในระบบสำหรับงานนี้"); return; }
+      const onlyOne = o.options.length === 1;
+      const noConflict = o.current_ids.length === 0 || (o.current_ids.length === 1 && o.current_ids[0] === o.options[0].id);
+      if (onlyOne && noConflict) {
+        // ใบเดียว ไม่กำกวม → ดึงเลย (พฤติกรรมเดิม)
+        if (!confirm(`ดึงข้อจากใบเสนอ ${o.options[0].code} มาสร้างชุด + เติมสเปค (กระจก/มุ้ง/สี) อัตโนมัติ?\nชุดที่มีชื่อซ้ำจะไม่ทับ · แก้รายชุดได้ทีหลัง`)) return;
+        await doPull(o.options[0].id, "add");
+        return;
+      }
+      // หลายใบ / ชุดเดิมมาจากใบอื่น → ให้เลือก
+      const picked = o.suggested_id ?? o.options[0].id;
+      // มีชุดจาก "ใบอื่น" ค้างอยู่ (รวมเคสปนหลายใบ ที่ใบที่เลือกเป็นหนึ่งในนั้น) → ค่าเริ่มต้น = แทนที่ (QA #2)
+      const switching = o.current_ids.some((id) => id !== picked);
+      setPull({ options: o.options, current_ids: o.current_ids, picked, mode: switching ? "replace" : "add" });
+    } catch { alert("โหลดรายการใบเสนอไม่สำเร็จ"); }
     finally { setBusy(false); }
   }
   async function del(id: number) {
@@ -474,8 +510,69 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
         </span>
         {canWrite && (
           <div className="flex items-center gap-2">
-            <button onClick={pullFromQuote} disabled={busy} title="สร้างชุดจากข้อในใบเสนอราคา + เติมสเปคอัตโนมัติ"
+            {/* ป้ายบอก "ชุดพวกนี้มาจากใบเสนอไหน" — มากกว่า 1 ใบ = หลายออเดอร์ปนกัน ต้องเคลียร์ */}
+            {(() => {
+              const qids = [...new Set(sets.map((s) => s.quotation_id).filter((x) => x != null))] as number[];
+              if (qids.length === 0) return null;
+              const revs = [...new Set(sets.filter((s) => s.quotation_id != null).map((s) => Number(s.quotation_rev_no) || 0))];
+              const mixed = qids.length > 1;
+              return (
+                <span className={"inline-flex items-center text-[12px] rounded-lg px-2 py-1 border " + (mixed ? "bg-red-500/25 border-red-300/50 text-red-100 font-bold" : "bg-white/10 border-sky-300/30 text-sky-100")}
+                  title={mixed ? "ชุดในงานนี้มาจากใบเสนอมากกว่า 1 ใบ = น่าจะมีหลายออเดอร์ปนกัน · กด ดึงจากใบเสนอ → เลือกใบ → แทนที่ ให้เหลือใบเดียว" : "ชุดในงานนี้ดึงมาจากใบเสนอ"}>
+                  {mixed ? `⚠ ชุดมาจากใบเสนอ ${qids.length} ใบ (ปนกัน)` : `📄 ชุดจากใบเสนอ ${revs.length === 1 ? revTag(revs[0]) : ""}`.trim()}
+                </span>
+              );
+            })()}
+            <button onClick={pullFromQuote} disabled={busy} title="สร้างชุดจากข้อในใบเสนอราคา + เติมสเปคอัตโนมัติ (งานที่มีหลายใบจะให้เลือกใบก่อน)"
               className="focusable pressable inline-flex items-center gap-1 text-[14px] bg-white/10 hover:bg-white/20 text-sky-100 border border-sky-300/30 rounded-lg px-3 py-2 min-h-[44px] disabled:opacity-50">📄 ดึงจากใบเสนอ</button>
+            {/* portal ไป body — การ์ดนี้มี backdrop-filter ทำให้ position:fixed อิงการ์ดแทน viewport (QA #3) */}
+            {pull && createPortal(
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => !busy && setPull(null)}>
+                <div className="w-full max-w-lg rounded-2xl bg-white text-ink p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+                  <div className="font-bold text-[16px] mb-1">📄 งานนี้มีใบเสนอราคาหลายใบ — จะดึงใบไหน?</div>
+                  <div className="text-[12px] text-ink-3 mb-3">ลูกค้าคนเดียวมีหลายออเดอร์ → แต่ละใบคือคนละออเดอร์ · เลือกใบที่เป็นงานนี้จริง ๆ (ใบที่มีบิล/มัดจำ = ใบที่ลูกค้าตกลงแล้ว)</div>
+                  <div className="space-y-1.5 max-h-72 overflow-y-auto">
+                    {pull.options.map((q) => (
+                      <label key={q.id} className={"flex items-start gap-2 rounded-xl border px-3 py-2 cursor-pointer " + (pull.picked === q.id ? "border-brand bg-brand/5" : "border-gray-200")}>
+                        <input type="radio" name="pullq" className="mt-1" checked={pull.picked === q.id}
+                          onChange={() => setPull({ ...pull, picked: q.id, mode: pull.current_ids.some((id) => id !== q.id) ? "replace" : "add" })} />
+                        <span className="flex-1 min-w-0 text-[13px] leading-relaxed">
+                          <span className="font-bold tabular-nums">{q.code}</span>
+                          {q.revision_no > 0 && <span className="ml-1 text-[11px] font-semibold text-ink-2">{revTag(q.revision_no)}{q.revision_label ? ` · ${q.revision_label}` : ""}</span>}
+                          <span className="ml-2 text-[12px] text-ink-3 tabular-nums">{new Date(q.created_at).toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "2-digit" })}</span>
+                          <span className="ml-2 text-[12px] text-ink-2">{q.work_items} ข้อ</span>
+                          {q.has_bill && <span className="ml-2 text-[11px] font-bold rounded px-1.5 py-0.5 bg-emerald-50 text-emerald-700">💰 มีบิล/มัดจำ</span>}
+                          {q.is_current && <span className="ml-2 text-[11px] font-bold rounded px-1.5 py-0.5 bg-sky-50 text-sky-700">ชุดปัจจุบันมาจากใบนี้</span>}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  {pull.current_ids.length > 0 && (
+                    <div className="mt-3 flex flex-col gap-1.5 text-[13px]">
+                      <label className="flex items-start gap-2"><input type="radio" name="pullmode" className="mt-1" checked={pull.mode === "replace"} onChange={() => setPull({ ...pull, mode: "replace" })} /><span>แทนที่ชุดที่ดึงจากใบเสนอทั้งหมดด้วยใบที่เลือก <span className="text-ink-3">(ชุดที่เพิ่มมือยังอยู่ · แนะนำเมื่อเปลี่ยนใบ)</span></span></label>
+                      <label className="flex items-start gap-2"><input type="radio" name="pullmode" className="mt-1" checked={pull.mode === "add"} onChange={() => setPull({ ...pull, mode: "add" })} /><span>เพิ่มเฉพาะข้อใหม่ คงชุดเดิมไว้ <span className="text-red-600">(ระวัง: ถ้าเป็นคนละออเดอร์ ชุดจะปนกัน)</span></span></label>
+                      {pull.mode === "replace" && (
+                        <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-[12px] text-amber-800">
+                          ⚠ ชุดที่ดึงจากใบเสนอจะถูก<b>สร้างใหม่ทั้งหมด</b> — สถานะผลิต/ติดตั้ง/hold และสเปคที่เคยแก้มือในชุดพวกนั้นจะรีเซ็ต · ใบติดตั้งที่ผูกชุดเดิมไว้จะหลุดการผูก (ต้องผูกใหม่) · ชุดที่ "เพิ่มชุด" เองไม่โดน
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {(pull.options.find((q) => q.id === pull.picked)?.work_items ?? 0) === 0 && (
+                    <div className="mt-3 text-[12px] text-red-600">ใบนี้ไม่มีข้อที่เป็นงาน (ไม่มีสเปค/มีแต่ส่วนลด) — ดึงไม่ได้ เลือกใบอื่น</div>
+                  )}
+                  <div className="mt-4 flex justify-end gap-2">
+                    <button type="button" onClick={() => setPull(null)} disabled={busy} className="press rounded-lg px-3 py-2 text-sm border border-gray-300 min-h-[44px]">ยกเลิก</button>
+                    <button type="button" disabled={busy || pull.picked == null || (pull.options.find((q) => q.id === pull.picked)?.work_items ?? 0) === 0}
+                      onClick={() => pull.picked != null && doPull(pull.picked, pull.mode, pull.mode === "add")}
+                      className="press rounded-lg px-4 py-2 text-sm font-bold bg-brand text-white disabled:opacity-50 min-h-[44px]">
+                      {pull.mode === "replace" ? "แทนที่แล้วดึงใบนี้" : "ดึงใบนี้"}
+                    </button>
+                  </div>
+                </div>
+              </div>,
+              document.body,
+            )}
             <button onClick={add} disabled={busy} className="focusable pressable inline-flex items-center gap-1 text-[14px] bg-sky-500/80 hover:bg-sky-400 text-white rounded-lg px-3 py-2 min-h-[44px] disabled:opacity-50"><Plus size={14} /> เพิ่มชุด</button>
           </div>
         )}

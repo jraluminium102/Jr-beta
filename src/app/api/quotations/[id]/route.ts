@@ -6,7 +6,7 @@ import { computeTotals, sumDiscountLines } from "@/lib/money";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { fail, UNAUTHORIZED } from "@/lib/bff";
-import { regenSetsFromQuotation, jobHasAutoSets } from "@/lib/production/regen-sets";
+import { regenSetsFromQuotation, currentAutoQuotations } from "@/lib/production/regen-sets";
 
 // บันทึกใบเสนอ = ~10 query ต่อกัน + ขึ้น Rev + สร้างชุดผลิตใหม่ (regen) — ค่าเริ่มต้นของ Vercel สั้น
 //   เคยโดนตัดกลางทางแล้วหน้าจอค้าง (เจ้าของแจ้ง 18 ก.ย.69) → ขยายเป็น 60 วินาที (เท่า backfill-geo)
@@ -240,8 +240,14 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
   const jobIdForSets = (fullQ as { job_id?: string | null } | null)?.job_id ?? null;
   if (bumpedRev && jobIdForSets) {
     try {
-      if (await jobHasAutoSets(sbRpc, jobIdForSets)) {
-        await regenSetsFromQuotation(sbRpc, jobIdForSets, ctx.user.id, { replace: true });
+      // 16 ต.ค.69 (QA R1/N2): regen เฉพาะเมื่อชุดปัจจุบันมาจาก "ใบที่กำลัง Rev ใบเดียว" และดึงใบนี้ตรง ๆ (ไม่ให้ pickJobQuotation เลือกใบอื่น)
+      //   Rev ใบ B ขณะชุดมาจากใบ A → ไม่แตะ (กันสลับออเดอร์) · ชุดปนหลายใบ (A+B) → ไม่แตะ (replace จะลบของ B เงียบ ๆ — ให้เคลียร์ที่หน้าผลิตก่อน)
+      //   ไม่มีชุด auto → ไม่ทำ (เหมือนเดิม)
+      const cur = await currentAutoQuotations(sbRpc, jobIdForSets);
+      if (cur.length === 1 && cur[0].id === Number(qId)) {
+        await regenSetsFromQuotation(sbRpc, jobIdForSets, ctx.user.id, { replace: true, quotationId: Number(qId) });
+      } else if (cur.length > 0) {
+        console.warn("[rev-regen-sets] skip: ชุดผลิตของงานมาจากใบอื่น", { job: jobIdForSets, rev: qId, current: cur.map((c) => c.code) });
       }
     } catch (e) { console.error("[rev-regen-sets]", e); }
   }
