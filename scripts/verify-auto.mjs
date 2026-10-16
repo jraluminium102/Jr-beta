@@ -953,10 +953,10 @@ console.log("\n═══ ⑳ ลำดับราคาสี — ขาว ≤
       return (r.lines || []).find((l) => /เฟรม 1/.test(l.name))?.unitPrice ?? 0;
     };
     ok("บานเกล็ด เฟรม 1\"×4\" ขาว = 905", bkFrame("white", "white") === 905, String(bkFrame("white", "white")));
-    ok("บานเกล็ด เฟรม ลายไม้สต็อค = 905×1.6 = 1,448", Math.abs(bkFrame("wood_teak", "woodStock") - 1448) < 0.5, String(bkFrame("wood_teak", "woodStock")));
-    ok("บานเกล็ด เฟรม เทาซาฮาร่า = 905×1.5208 = 1,376.4", Math.abs(bkFrame("sahara", "sahara") - 1376.35) < 1, String(bkFrame("sahara", "sahara")));
-    // 15 ต.ค.69 สีอบพิเศษ: เฟรม = ราคาขาว · ค่าอบไปกองค่าอบ (กล่อง 1"×4" 6.05 กก. × 173)
-    ok("บานเกล็ด เฟรม สีอบพิเศษ = ราคาขาว 905 (ค่าอบอยู่กองค่าอบ)", bkFrame("special", "special") === 905, String(bkFrame("special", "special")));
+    // 15 ต.ค.69 สีกล่องคิดตาม กก. (เจ้าของ "ต้องเปลี่ยนเป็นคิดค่าอบตาม กก. เหมือนเส้นอื่น") — เฟรม = กล่อง 1"×4" ฟูจิ 6.05 กก.
+    ok("บานเกล็ด เฟรม ลายไม้สต็อค = 905 + 6.05×(282−193) = 1,443.45", Math.abs(bkFrame("wood_teak", "woodStock") - 1443.45) < 0.5, String(bkFrame("wood_teak", "woodStock")));
+    ok("บานเกล็ด เฟรม เทาซาฮาร่า = 905 + 6.05×(205−193) = 977.6", Math.abs(bkFrame("sahara", "sahara") - 977.6) < 0.5, String(bkFrame("sahara", "sahara")));
+    ok("บานเกล็ด เฟรม สีอบพิเศษ = ราคาขาว 905 (ค่าอบไปอยู่กองค่าอบ 173/กก.)", bkFrame("special", "special") === 905, String(bkFrame("special", "special")));
     const bkAll = ["white", "sahara", "wood_teak", "special", "wood_special"].map((k, i) => {
       const p = PRODUCTS.banklet, color = ["white", "sahara", "woodStock", "special", "woodSpecial"][i];
       return computeCost(PB, p, { ...baseOf(p), color, colorKey: k }).cost.total;
@@ -1019,10 +1019,8 @@ console.log("\n═══ ⑳ ลำดับราคาสี — ขาว ≤
   }
   // ตัวคูณสีกล่องใน pricebook ต้องเท่ากับ CF_EXPR ในสูตร (แหล่งเดียวกัน)
   const prodSrc = fsx.readFileSync(new URL("../src/lib/calculator40/products.mjs", import.meta.url), "utf8");
-  // 16 ต.ค.69: CF_EXPR เหลือเฉพาะสีสต็อก (เทา/ลายไม้สต็อก) ต้องเท่า PB.BOX_CF · สีอบพิเศษคิดค่าอบตาม กก. ใน engine (ไม่มีตัวคูณในสูตร)
-  const cfm = /const CF_EXPR = "mult\*\(\(\((\{[^}]*\})\)/.exec(prodSrc);
-  const cfObj = cfm ? Function("return " + cfm[1])() : null;
-  ok("CF_EXPR สีสต็อก = PB.BOX_CF · ไม่มีสีอบพิเศษในสูตร", !!cfObj && ["sahara", "woodStock"].every((k) => Math.abs(cfObj[k] - PB.BOX_CF[k]) < 1e-9) && cfObj.special == null && cfObj.woodSpecial == null, JSON.stringify(cfObj));
+  // 15 ต.ค.69: CF ในสูตร = mult อย่างเดียว (ราคาขาว) — สีกล่องคิดตาม กก. ใน engine · ห้ามมีตัวคูณสีฝังในสูตรอีก
+  ok("CF_EXPR ในสูตร = mult (ไม่มีตัวคูณสีฝัง)", /const CF_EXPR = "mult";/.test(prodSrc), "");
 }
 
 // ── ⑪ บานติดตายดัดโค้ง — กล่องเปิด+ตบปิดเปิด คิดตามยาวจริง ไม่ใช่ซื้อเต็มเส้น ──────
