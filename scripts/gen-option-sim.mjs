@@ -8,8 +8,10 @@ const PRICE = {
   wave: { code: "JR01993", name: "ลูกฟูกเรียบ 2 หน้า (อบขาว) · แผ่นกว้าง 10 ซม.", per: 491 },
   comp: { name: "แผ่นคอมโพสิต", perM2: 1650 },
   glass: { name: "กระจกเขียว 6 มม.", perM2: 264 },
+  // คิ้วกรอบสี่เหลี่ยมบนแผ่นทึบ — ยังไม่รู้รุ่นที่ใช้จริง · ใช้ F7996 คิ้วลอยช่องแสง (455/เส้น 6.4 ม.) เป็นราคาตัวอย่าง
+  bead: { code: "F7996", name: "คิ้วลอยช่องแสง (ตัวอย่างราคา)", per: 455, bar: 6.4 },
 };
-const BAR = 6, WASTE = 1.3, PH = 0.8;   // เส้นเมืองทอง 6 ม. · เผื่อเศษ · ทึบล่างสูง 80 ซม.
+const BAR = 6, WASTE = 1.3, PH = 0.8, INSET = 0.10;   // เส้นเมืองทอง 6 ม. · เผื่อเศษ · ทึบล่างสูง 80 ซม. · คิ้วห่างขอบแผ่น 10 ซม. (เจ้าของ: 7-15 ซม.)
 const EX = [
   { id: "d1", kind: "door", name: "บานเปิด 90×240 · 1 บาน", W: 0.9, H: 2.4, p: 1, lw: 0.74, gh: 2.2, net: 31, src: "ช่องกระจกกว้าง 74 ซม. สูง 220 ซม. (ยาวคิ้วขวาง/คิ้วตั้งของบาน)" },
   { id: "d2", kind: "door", name: "บานเปิด 200×240 · 2 บาน", W: 2.0, H: 2.4, p: 2, lw: 0.86, gh: 2.2, net: 31, src: "ช่องกระจกบานละ 86 × 220 ซม. (ยาวคิ้วขวาง/คิ้วตั้งของบาน)" },
@@ -24,7 +26,7 @@ const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
 
 // คิดเส้น: ยาวรวม ÷ 6 × 1.3 = จำนวนเส้น × ราคา
 const barRow = (item, pieces, lenEach) => {
-  const total = pieces * lenEach, bars = (total / BAR) * WASTE, amt = bars * item.per;
+  const total = pieces * lenEach, bars = (total / (item.bar || BAR)) * WASTE, amt = bars * item.per;
   return { item, pieces, lenEach, total, bars, amt };
 };
 
@@ -44,7 +46,10 @@ function calc(e) {
   const strips = Math.ceil((e.lw * 100) / 10);
   const wave = barRow(PRICE.wave, strips * e.p, PH);
   const area = e.lw * PH * e.p, glassSave = area * PRICE.glass.perM2, compAmt = area * PRICE.comp.perM2;
-  const bead = barRow(PRICE.mid, 2 * e.p, e.lw);
+  // คิ้ว = กรอบสี่เหลี่ยมบนแผ่นทึบ ห่างขอบแผ่น INSET ทุกด้าน · 1 กรอบ/บาน/ฝั่ง × 2 ฝั่ง (เจ้าของ 17 ต.ค.69 "คิ้ววิ่งเป็นรูปสี่เหลี่ยม อยู่บนอลูทึบ เว้นขอบ 7-15 ซม.")
+  const bW = e.lw - 2 * INSET, bH = PH - 2 * INSET;
+  const beadH = barRow(PRICE.bead, 2 * 2 * e.p, bW), beadV = barRow(PRICE.bead, 2 * 2 * e.p, bH);
+  const bead = { amt: beadH.amt + beadV.amt, h: beadH, v: beadV, bW, bH };
   const r39Area = e.W * PH;
   o.panel = { strips, wave, area, glassSave, compAmt, bead,
     waveCost: wave.amt - glassSave, compCost: compAmt - glassSave,
@@ -71,7 +76,7 @@ function svgDoor(e, show) {
     if (show.panel) {
       g += `<rect x="${glx}" y="${gly + glh - panelH}" width="${glw}" height="${panelH}" class="panel ${show.panel}"/>`;
       if (show.panel === "wave") for (let k = 1; k < Math.ceil(e.lw * 10); k++) g += `<line x1="${glx + k * 10}" y1="${gly + glh - panelH}" x2="${glx + k * 10}" y2="${gly + glh}" class="strip"/>`;
-      if (show.bead) g += `<line x1="${glx}" y1="${gly + glh - panelH}" x2="${glx + glw}" y2="${gly + glh - panelH}" class="bead"/>`;
+      if (show.bead) g += `<rect x="${glx + INSET * S}" y="${gly + glh - panelH + INSET * S}" width="${glw - 2 * INSET * S}" height="${panelH - 2 * INSET * S}" class="bead"/>`;
     }
     if (show.grid) {
       const gTop = gly, gH = glh;
@@ -88,8 +93,8 @@ function svgDoor(e, show) {
   return `<svg viewBox="0 0 ${vw} ${vh}" class="door" role="img" aria-label="${esc(e.name)}">${g}</svg>`;
 }
 
-const bt = (r) => `<tr><td>${esc(r[0])}<span class="sub">${esc(r[1])}</span></td><td class="mono">${r[2].item.code || ""}</td><td class="n">${r[2].pieces} × ${cm(r[2].lenEach)}</td><td class="n">${f2(r[2].total)} ม.</td><td class="n">${f2(r[2].total)} ÷ 6 × 1.3 = <b>${f2(r[2].bars)}</b></td><td class="n">${f0(r[2].item.per)}</td><td class="n">${f0(r[2].amt)}</td></tr>`;
-const thead = `<thead><tr><th>ชิ้นงาน</th><th>รหัส</th><th class="n">ชิ้น × ยาว (ซม.)</th><th class="n">ยาวรวม</th><th class="n">เส้น 6 ม. (เผื่อเศษ)</th><th class="n">฿/เส้น</th><th class="n">บาท</th></tr></thead>`;
+const bt = (r) => `<tr><td>${esc(r[0])}<span class="sub">${esc(r[1])}</span></td><td class="mono">${r[2].item.code || ""}</td><td class="n">${r[2].pieces} × ${cm(r[2].lenEach)}</td><td class="n">${f2(r[2].total)} ม.</td><td class="n">${f2(r[2].total)} ÷ ${r[2].item.bar || 6} × 1.3 = <b>${f2(r[2].bars)}</b></td><td class="n">${f0(r[2].item.per)}</td><td class="n">${f0(r[2].amt)}</td></tr>`;
+const thead = `<thead><tr><th>ชิ้นงาน</th><th>รหัส</th><th class="n">ชิ้น × ยาว (ซม.)</th><th class="n">ยาวรวม</th><th class="n">เส้น (ยาวรวม ÷ ยาวเส้น × 1.3)</th><th class="n">฿/เส้น</th><th class="n">บาท</th></tr></thead>`;
 
 function result(costRows, cost, sell, r39Lines, r39Sell, e, div) {
   const diff = sell - r39Sell, pct = Math.round((sell / r39Sell - 1) * 100);
@@ -113,7 +118,8 @@ function section(e) {
     `<p class="note">กล่องเรียบ 1.6"×4" ครอบรอบวงกบ ยาวเท่าวงกบ (เส้นเมืองทอง 6 ม.)</p><div class="tw"><table>${thead}<tbody>${o.wrap.rows.map(bt).join("")}</tbody></table></div>`
     + result("", o.wrap.cost, sell(o.wrap.cost), o.wrap.r39.lines, o.wrap.r39.sell, e, div));
   const glassLine = `<tr class="minus"><td>หักกระจกที่ไม่ต้องใช้<span class="sub">ช่องล่าง ${cm(e.lw)}×80 ซม. × ${e.p} บาน = ${f2(P.area)} ตร.ม.</span></td><td></td><td></td><td></td><td class="n">${f2(P.area)} ตร.ม. × 264</td><td></td><td class="n">−${f0(P.glassSave)}</td></tr>`;
-  const beadLine = `<tr class="plus"><td>+ คิ้วคาดรอยต่อกระจก/แผ่น<span class="sub">1 เส้น/บาน × 2 ฝั่ง × ${e.p} บาน</span></td><td class="mono">${PRICE.mid.code}</td><td class="n">${P.bead.pieces} × ${cm(e.lw)}</td><td class="n">${f2(P.bead.total)} ม.</td><td class="n">${f2(P.bead.total)} ÷ 6 × 1.3 = <b>${f2(P.bead.bars)}</b></td><td class="n">150</td><td class="n">+${f0(P.bead.amt)}</td></tr>`;
+  const beadLine = bt(["+ คิ้วนอน (กรอบบนแผ่น)", `2 เส้น/กรอบ × 2 ฝั่ง × ${e.p} บาน · ยาว ${cm(e.lw)} − 10 − 10 = ${cm(P.bead.bW)} ซม.`, P.bead.h]).replace('<tr>','<tr class="plus">')
+    + bt(["+ คิ้วตั้ง (กรอบบนแผ่น)", `2 เส้น/กรอบ × 2 ฝั่ง × ${e.p} บาน · สูง 80 − 10 − 10 = ${cm(P.bead.bH)} ซม.`, P.bead.v]).replace('<tr>','<tr class="plus">');
   const r39Wave = [`กว้างทั้งชุด ${f2(e.W)} ม. × สูงแผ่น 0.8 ม. = ${f2(P.r39.area)} ตร.ม.`, `× 3,500 บาท/ตร.ม. (ลูกฟูก สีขาว)`, `R3.9 ไม่มีตัวเลือกคิ้ว → บวก/ไม่บวกคิ้ว ราคาเท่ากัน`];
   const r39Comp = [`กว้างทั้งชุด ${f2(e.W)} ม. × สูงแผ่น 0.8 ม. = ${f2(P.r39.area)} ตร.ม.`, `× 3,300 บาท/ตร.ม. (คอมโพสิต ไม่คิดสี)`, `R3.9 ไม่มีตัวเลือกคิ้ว → บวก/ไม่บวกคิ้ว ราคาเท่ากัน`];
   const waveRow = `<tr><td>ลูกฟูก 2 หน้า เรียงตั้ง<span class="sub">${P.strips} แผ่น/บาน (กว้าง ${cm(e.lw)} ÷ 10 ซม. ปัดขึ้น) × ${e.p} บาน · สูง 80</span></td><td class="mono">${PRICE.wave.code}</td><td class="n">${P.wave.pieces} × 80</td><td class="n">${f2(P.wave.total)} ม.</td><td class="n">${f2(P.wave.total)} ÷ 6 × 1.3 = <b>${f2(P.wave.bars)}</b></td><td class="n">491</td><td class="n">${f0(P.wave.amt)}</td></tr>`;
@@ -151,7 +157,7 @@ h1{font-size:26px;margin:0 0 6px;text-wrap:balance} h2{font-size:21px;margin:0} 
 svg.door{width:100%;height:auto;display:block}
 .frame{fill:none;stroke:var(--ink);stroke-width:3} .leaf{fill:none;stroke:var(--muted);stroke-width:1.5} .meet{stroke:var(--ink);stroke-width:2}
 .glass{fill:var(--glass);stroke:none} .panel{stroke:var(--ink);stroke-width:1} .panel.wave{fill:var(--panel)} .panel.comp{fill:var(--comp)}
-.strip{stroke:var(--ink);stroke-width:.5;opacity:.5} .bead{stroke:var(--hi);stroke-width:4} .grid{stroke:var(--old);stroke-width:2.5;stroke-dasharray:6 3}
+.strip{stroke:var(--ink);stroke-width:.5;opacity:.5} .bead{fill:none;stroke:var(--hi);stroke-width:3} .grid{stroke:var(--old);stroke-width:2.5;stroke-dasharray:6 3}
 .wrap{fill:none;stroke:var(--real);stroke-width:7} .knob{fill:var(--ink)} .arrow{fill:none;stroke:var(--muted);stroke-width:1.5} .dim{fill:var(--muted);font:11px var(--fd)}
 .note{margin:0 0 6px;color:var(--muted);font-size:14px}
 .tw{overflow-x:auto} table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
@@ -179,7 +185,8 @@ const html = `<title>จำลองออปชั่นบาน</title>
 <li><b style="color:var(--old)">R3.9 (เว็บตอนนี้)</b>: ราคาขายเหมาต่อเมตร/ตร.ม. ตามขนาดทั้งชุด บวกเข้าราคาขายตรง ๆ · ทุนในระบบ = ขาย ÷ 2 · ราคาเหมานี้น่าจะรวมค่าแรงแล้ว</li>
 </ul></div>
 <div class="box"><b>ราคาของที่ใช้ (สโตร์ · สีอบขาว)</b><ul>
-<li>เส้นกลาง JR01678 · 150 บาท/เส้น 6 ม. — ใช้ทำคาดตาราง และคิ้ว</li>
+<li>เส้นกลาง JR01678 · 150 บาท/เส้น 6 ม. — คาดตาราง</li>
+<li>คิ้วกรอบบนแผ่นทึบ · <span class="flag">ราคาตัวอย่าง</span> F7996 คิ้วลอยช่องแสง 455 บาท/เส้น 6.4 ม.</li>
 <li>กล่องเรียบ 1.6"×4" JR01984 · 996 บาท/เส้น 6 ม. — ครอบวงกบ</li>
 <li>ลูกฟูกเรียบ 2 หน้า JR01993 · 491 บาท/เส้น 6 ม. · แผ่นกว้าง 10 ซม. เรียงตั้งเต็มช่อง</li>
 <li>คอมโพสิต · <span class="flag">สมมติ</span> 1,650 บาท/ตร.ม. (สโตร์ยังไม่มีราคา · ใช้ครึ่งหนึ่งของขาย R3.9)</li>
@@ -189,7 +196,7 @@ const html = `<title>จำลองออปชั่นบาน</title>
 <nav class="nav">${EX.map((e) => `<a href="#${e.id}">${esc(e.name)}</a>`).join("")}</nav>
 ${EX.map(section).join("\n")}
 <div class="box"><b>สิ่งที่สมมติไว้ (รอเจ้าของยืนยัน)</b><ul>
-<li>"คิ้ว" ของทึบล่าง = เส้นกลางคาดทับรอยต่อกระจกกับแผ่น 2 ฝั่ง ยาวเท่าความกว้างบาน (เส้นแดงในรูป)</li>
+<li>คิ้วของทึบล่าง = กรอบสี่เหลี่ยมบนแผ่น ห่างขอบ 10 ซม. (เจ้าของบอก 7–15 ซม.) · ติด 2 ฝั่ง (ใน/นอก) · <span class="flag">ราคาตัวอย่าง</span> ใช้ F7996 คิ้วลอยช่องแสง 455 บาท/เส้น 6.4 ม. เพราะยังไม่รู้ว่าใช้คิ้วรุ่นไหน (สโตร์มี คิ้วลอยเทเหลี่ยม ตัวเดิน+ตัวตบ แต่ยังไม่มีราคา)</li>
 <li>คาดตาราง ติด 2 ฝั่ง (ใน/นอก) · เส้นยาวเท่าช่องกระจก</li>
 <li>ครอบวงกบใช้กล่องเรียบ 1.6"×4" แบบเดียวกับบานเปิด · ยังไม่ใส่บังใบ</li>
 <li>ราคาคอมโพสิต 1,650 บาท/ตร.ม.</li>
