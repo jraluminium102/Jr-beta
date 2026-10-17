@@ -19,7 +19,8 @@ const arg = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.a
 const DATA = JSON.parse(fs.readFileSync(arg("--data"), "utf8"));
 const OUTDIR = arg("--outdir") || "docs";
 const FX = JSON.parse(fs.readFileSync("scripts/fixtures/r41-rows.json", "utf8")).rows;
-const SKIP = new Set(["shower"]);
+// ไม่เอา: shower · บานเปลือย · บานเปิดดัดโค้ง (เจ้าของ 17 ต.ค.69)
+const SKIP = new Set(["shower", "frameless_door", "curve_open"]);
 
 const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const num = (v, d = 0) => (v == null || !Number.isFinite(Number(v)) ? "" : Number(v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }));
