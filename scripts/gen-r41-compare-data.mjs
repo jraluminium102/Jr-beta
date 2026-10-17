@@ -46,7 +46,9 @@ for (const r of FX.rows) {
         else if (C.mode === "full") { const fit = Math.floor(C.stock / C.seg); how = fit >= 1 ? `${pc} · ตัดได้ ${fit} ชิ้น/เส้น ${n2(C.stock)} ม. → ซื้อเต็ม ${n2(qty)} เส้น` : `${pc} ยาวกว่าเส้น ${n2(C.stock)} ม. → ${n2(qty)} เส้น`; }
         else how = `${pc} · รวมกับบรรทัดรหัสเดียวกันแล้วแบ่งเส้น = ${n2(qty)} เส้น`;
       }
-      return [l.cat, l.name + (fixed ? ` (ทุน · ขายแยก ${Math.round(sell).toLocaleString("en-US")} ไม่ผ่านกำไร)` : ""), l.code || l.sku || "", qty, l.unit || "", fixed ? r2(amt / qty) : r2(l.unitPrice), amt, how];
+      return [l.cat, l.name + (fixed ? ` (ทุน · ขายแยก ${Math.round(sell).toLocaleString("en-US")} ไม่ผ่านกำไร)` : ""), l.code || l.sku || "", qty, l.unit || "", fixed ? r2(amt / qty) : r2(l.unitPrice), amt, how,
+        // [8] วิธีนับเส้นดิบ (ใบตรวจราคาใช้: ยาวรวม ซม. + เผื่อเศษคูณตอนท้าย) — null = ไม่ใช่เส้นอลู
+        C ? { seg: C.seg, pieces: C.pieces, stock: C.stock, mode: C.mode, waste: C.waste } : null];
     });
   out.push({ ...base, key: r41Key ? r41Key(r.id) : r.id, bom,
     web: { cM: R(c.cost.total), sM: R(P.mat), cP: R(c.labor?.prod), sP: R(P.prod), cI: R(c.labor?.install), sI: R(P.inst),
