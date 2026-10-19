@@ -27,6 +27,7 @@ const DOC_NAV: NavItem[] = [
   { href: "/warranties", icon: "shield", label: "ใบรับประกัน" },
   { href: "/stock", icon: "boxes", label: "เช็คสต๊อก" },
   { href: "/stock/moves", icon: "clipboard", label: "สมุดสโตร์ (ประวัติ)" },
+  { href: "/stock/alu", icon: "boxes", label: "สโตร์อลู (ใบเบิกช่าง)" },
   { href: "/cutlist", icon: "box", label: "ใบตัด / BOQ" },
   { href: "/stats", icon: "chart", label: "สถิติ/รายงาน" },
 ];
@@ -92,7 +93,7 @@ export default function Shell({ profile, children }: { profile: Profile; childre
   // quotation-checklist = ADMIN/SALES (ต้องมีสิทธิ์ jobs:write ถึงจะกด action ได้)
   // ช่างผลิต = ไม่เห็นเมนูเอกสาร/บัญชีเลย
   // สโตร์ — เห็นเฉพาะเมนูสโตร์ 3 อัน (ไม่แตะ role อื่น)
-  const STORE_MENU = new Set(["/stock", "/stock/moves", "/cutlist"]);
+  const STORE_MENU = new Set(["/stock", "/stock/moves", "/stock/alu", "/cutlist"]);
   const docItems = isChang ? [] : DOC_NAV.filter((n) => {
     if (isStore)                              return STORE_MENU.has(n.href);
     if (n.href === "/queue")                  return can(role, "queue",      "read");

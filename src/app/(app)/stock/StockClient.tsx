@@ -178,6 +178,10 @@ export default function StockClient({
           เช็คสต๊อกวัสดุ
         </h1>
         <div className="flex items-center gap-2">
+          {/* สโตร์อลู (เจ้าของสั่ง 19 ต.ค.69) — ใบเบิกที่ช่างกดเอง + ตรวจ + นับเฉพาะที่เคลื่อนไหว */}
+          <a href="/stock/alu" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">
+            📦 สโตร์อลู
+          </a>
           <a href="/stock/moves" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark border border-brand/30 bg-white/60">
             <Icon name="calendar" size={16} /> สมุดเคลื่อนไหว
           </a>

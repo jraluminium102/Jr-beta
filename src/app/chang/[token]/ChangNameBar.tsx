@@ -24,9 +24,15 @@ export default function ChangNameBar({ token }: { token: string }) {
         style={{ borderColor: "#e5e5ea", color: "#1c1c1e" }}
       />
       {!name && <span className="text-[11.5px]" style={{ color: "#ff9500" }}>← ใส่ชื่อก่อนกดงาน</span>}
+      {/* เบิกอลู (เจ้าของสั่ง 19 ต.ค.69) — ช่างเบิกเส้นเองผ่านมือถือ ผูกงาน ตัดสต็อกทันที */}
+      <a href={`/chang/${token}/pick`}
+        className="ml-auto shrink-0 rounded-[10px] px-3 py-1.5 text-[13px] font-semibold min-h-[36px] inline-flex items-center text-white"
+        style={{ background: "#007aff" }}>
+        📦 เบิกอลู
+      </a>
       {/* ทางเข้าใบตัด/ตัดประกอบ แบบไม่ต้องมีงานลูกค้า (ช่างเข้าได้อิสระ) */}
       <a href={`/chang/${token}/cutlist`}
-        className="ml-auto shrink-0 rounded-[10px] px-3 py-1.5 text-[13px] font-semibold min-h-[36px] inline-flex items-center text-white"
+        className="shrink-0 rounded-[10px] px-3 py-1.5 text-[13px] font-semibold min-h-[36px] inline-flex items-center text-white"
         style={{ background: "#5856d6" }}>
         ✂️ ใบตัด
       </a>
