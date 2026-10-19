@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getProfile } from "@/lib/auth";
+import { can } from "@/lib/rbac";
 import StoreAluClient from "./StoreAluClient";
 
 export const dynamic = "force-dynamic";
@@ -15,5 +16,6 @@ export default async function StoreAluPage() {
   const profile = await getProfile();
   if (!profile) redirect("/login");
   const role = profile.role ?? "";
+  if (!can(role, "stock", "read")) redirect("/stock");
   return <StoreAluClient canWrite={STORE_WRITE.includes(role)} myName={profile.full_name ?? ""} />;
 }

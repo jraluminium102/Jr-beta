@@ -10,7 +10,8 @@ export const dynamic = "force-dynamic";
  *   ช่างกดชื่อลูกค้าจากตรงนี้ตอนเบิก · เรียงตามวันกำหนดเสร็จ
  */
 export const GET = withRoute(async (req: Request) => {
-  const ctx = await requireChangOr(req, "production", "read");
+  // สิทธิ์ "stock" (ไม่ใช่ production) — role สโตร์ไม่มี production แต่ต้องเห็นรายชื่องานตอนเบิกแทนช่าง
+  const ctx = await requireChangOr(req, "stock", "read");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rows = await buildScheduleRows(ctx.supabase as unknown as { from: (t: string) => any });
   const jobs = rows

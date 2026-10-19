@@ -104,6 +104,7 @@ function CountTab({ from, to, range, canWrite }: { from: string; to: string; ran
   async function adjust(it: (typeof items)[number]) {
     const v = Number(counts[it.sid]);
     if (!Number.isFinite(v) || counts[it.sid] === undefined || counts[it.sid] === "") return;
+    if (v < 0) { setMsg({ ...msg, [it.sid]: "นับได้ต้องเป็น 0 ขึ้นไป" }); return; }
     if (v === it.onHand) { setDoneIds(new Set([...doneIds, it.sid])); setMsg({ ...msg, [it.sid]: "ตรงกัน ✓" }); return; }
     const reason = window.prompt(`นับได้ ${v} ระบบมี ${fmtQty(it.onHand)} — ต่างกัน ${fmtQty(v - it.onHand)} เส้น\nเหตุผล (เช่น ช่างกดจำนวนผิด / เศษเส้นหัก):`, "");
     if (reason === null) return;

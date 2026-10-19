@@ -32,7 +32,8 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
   const [d, setD] = useState<Draft>(EMPTY);
   const [group, setGroup] = useState<string>("");
   const [color, setColor] = useState<string>("");
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState("");          // ค้นเส้น
+  const [jobQ, setJobQ] = useState("");    // ค้นงาน (แยกกัน กดย้อนแล้วคำค้นไม่ปนกัน)
   const [limit, setLimit] = useState(60);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -116,7 +117,7 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
   }
 
   return (
-    <div className="pb-[96px]">
+    <div style={{ paddingBottom: "calc(96px + env(safe-area-inset-bottom))" }}>
       {/* หัว: ชื่อ + แท็บ */}
       <div className="flex items-center gap-2 px-4 pt-3">
         <button onClick={() => !fixedName && setAskName(true)} className="rounded-full px-3 min-h-[36px] text-[13px] font-semibold" style={{ background: C.card, color: C.ink }}>
@@ -147,12 +148,12 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
         </Shell>
       ) : step === "job" ? (
         <Shell title="เบิกไปงานไหน?" sub="กดชื่อลูกค้า — งานที่อยู่ในตารางผลิตขึ้นให้เลย">
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นชื่อลูกค้า (ไม่บังคับ)" inputMode="search"
+          <input value={jobQ} onChange={(e) => setJobQ(e.target.value)} placeholder="ค้นชื่อลูกค้า (ไม่บังคับ)" inputMode="search"
             className="w-full rounded-[12px] px-3 min-h-[48px] text-[15px] bg-white outline-none mb-2.5" style={{ border: `1px solid ${C.line}`, color: C.ink }} />
           <div className="grid gap-2 mb-3">
             {jobsQ.isLoading && <p className="text-center py-6" style={{ color: C.ink2 }}>กำลังโหลดงาน…</p>}
-            {jobs.filter((j) => !q.trim() || `${j.title} ${j.job_code ?? ""}`.toLowerCase().includes(q.trim().toLowerCase())).slice(0, 40).map((j) => (
-              <button key={j.job_id} onClick={() => { setD({ ...d, job: { job_id: j.job_id, title: j.title, job_code: j.job_code }, reason: "", reasonNote: "" }); setQ(""); setStep("items"); }}
+            {jobs.filter((j) => !jobQ.trim() || `${j.title} ${j.job_code ?? ""}`.toLowerCase().includes(jobQ.trim().toLowerCase())).slice(0, 40).map((j) => (
+              <button key={j.job_id} onClick={() => { setD({ ...d, job: { job_id: j.job_id, title: j.title, job_code: j.job_code }, reason: "", reasonNote: "" }); setStep("items"); }}
                 className="min-h-[56px] rounded-[14px] px-4 text-left flex items-center justify-between gap-2" style={{ background: C.card }}>
                 <span className="text-[16px] font-bold truncate" style={{ color: C.ink }}>{j.title}</span>
                 <span className="text-[12px] shrink-0" style={{ color: C.ink2 }}>{j.job_code ?? ""}{j.due_date ? ` · เสร็จ ${j.due_date.slice(5).replace("-", "/")}` : ""}</span>
@@ -163,7 +164,7 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
             <div className="text-[14px] font-semibold mb-2" style={{ color: C.ink }}>ไม่มีชื่อลูกค้า</div>
             <div className="grid grid-cols-2 gap-2">
               {PICK_REASONS.map((r) => (
-                <button key={r.key} onClick={() => setD({ ...d, job: null, reason: r.key })} className="min-h-[48px] rounded-[12px] text-[15px] font-semibold"
+                <button key={r.key} onClick={() => setD({ ...d, job: null, reason: r.key, reasonNote: r.key === "other" ? d.reasonNote : "" })} className="min-h-[48px] rounded-[12px] text-[15px] font-semibold"
                   style={{ background: d.reason === r.key ? C.blue : C.bg, color: d.reason === r.key ? "#fff" : C.ink }}>{r.label}</button>
               ))}
             </div>
@@ -220,7 +221,7 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
 
       {/* แถบล่าง */}
       {tab === "new" && (step === "items" || step === "review") && (
-        <div className="fixed left-0 right-0 bottom-0 px-4 py-3 flex items-center gap-3" style={{ background: "rgba(242,242,247,.96)", borderTop: `1px solid ${C.line}`, backdropFilter: "blur(8px)" }}>
+        <div className="fixed left-0 right-0 bottom-0 px-4 py-3 flex items-center gap-3" style={{ background: "rgba(242,242,247,.96)", borderTop: `1px solid ${C.line}`, backdropFilter: "blur(8px)", paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}>
           <div className="min-w-0">
             <div className="text-[15px] font-bold" style={{ color: C.ink }}>{cartRows.length} รายการ · {fmtQty(totalBars)} เส้น</div>
             {step === "items" && cartRows.length > 0 && <button onClick={() => setD({ ...d, cart: {} })} className="text-[12px]" style={{ color: C.red }}>ล้างทั้งหมด</button>}

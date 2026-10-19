@@ -42,6 +42,7 @@ function PickCard({ p, isChang, canCheck, onChanged }: { p: Pick; isChang: boole
     finally { setBusy(false); }
   }
   const submitReturn = () => run(async () => {
+    if (p.items.some((it) => vals[it.id] && !Number.isFinite(Number(vals[it.id])))) throw new Error("จำนวนที่คืนต้องเป็นตัวเลข");
     const items = p.items.map((it) => ({ item_id: it.id, qty: Number(vals[it.id]) || 0 })).filter((x) => x.qty > 0);
     if (!items.length) throw new Error("ใส่จำนวนที่คืนอย่างน้อย 1 รายการ");
     await api.post(`/alu-picks/${p.id}/return`, { items });
@@ -50,6 +51,7 @@ function PickCard({ p, isChang, canCheck, onChanged }: { p: Pick; isChang: boole
     const items = p.items.map((it) => ({ item_id: it.id, qty: vals[it.id] === undefined || vals[it.id] === "" ? it.qty : Number(vals[it.id]) }))
       .filter((x, i) => x.qty !== p.items[i].qty);
     if (!items.length) throw new Error("ยังไม่ได้เปลี่ยนตัวเลข");
+    if (items.some((x) => !Number.isFinite(x.qty) || x.qty < 0)) throw new Error("จำนวนใหม่ต้องเป็นตัวเลข 0 ขึ้นไป");
     await api.patch(`/alu-picks/${p.id}`, { items });
   });
   const submitCancel = () => run(async () => { await api.del(`/alu-picks/${p.id}${reason ? `?reason=${encodeURIComponent(reason)}` : ""}`); });

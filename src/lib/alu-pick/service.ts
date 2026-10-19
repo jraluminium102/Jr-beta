@@ -10,6 +10,7 @@
  * ⚠ สต็อกห้ามติดลบ (0074 check) — เช็คคงเหลือก่อนทุกครั้ง แล้วบอกเป็นภาษาคนว่าเส้นไหนไม่พอ
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { pickGroupOf } from "./groups";
 export type Sb = { from: (t: string) => any };
 
 export type PickActor = { userId: string | null; name: string; isChang: boolean };
@@ -23,12 +24,12 @@ export class PickError extends Error {
 const r2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 const num = (v: unknown) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 
-type ItemRow = { id: number; sku: string; name: string; color: string | null; qty_on_hand: number; unit_cost: number | null; category: string | null; is_active: boolean };
+type ItemRow = { id: number; sku: string; name: string; color: string | null; qty_on_hand: number; unit_cost: number | null; category: string | null; is_active: boolean; is_stocked: boolean | null };
 
 async function loadItems(sb: Sb, ids: number[]): Promise<Map<number, ItemRow>> {
   if (!ids.length) return new Map();
   const { data, error } = await sb.from("stock_items")
-    .select("id, sku, name, color, qty_on_hand, unit_cost, category, is_active").in("id", ids);
+    .select("id, sku, name, color, qty_on_hand, unit_cost, category, is_active, is_stocked").in("id", ids);
   if (error) throw new PickError(error.message, 500);
   return new Map(((data ?? []) as ItemRow[]).map((r) => [r.id, r]));
 }
@@ -84,6 +85,8 @@ export async function createPick(sb: Sb, a: PickActor, input: {
   for (const it of items) {
     const row = map.get(it.stock_item_id);
     if (!row || !row.is_active) throw new PickError("มีเส้นที่ไม่อยู่ในสโตร์แล้ว — โหลดหน้าใหม่แล้วเลือกอีกครั้ง", 404);
+    // เบิกได้เฉพาะเส้นที่หน้าเบิกโชว์ (อลู · มีบนชั้น · ไม่ใช่หลังคาอย่างเดียว) — กันยิง API ตรงเบิกของหมวดอื่น
+    if (!pickGroupOf(row)) throw new PickError(`${label(row)} — ไม่ใช่เส้นอลูที่เบิกผ่านหน้านี้ได้`, 400);
     if (num(row.qty_on_hand) < it.qty) short.push(`${label(row)} เหลือ ${num(row.qty_on_hand)} ขอ ${it.qty}`);
   }
   if (short.length) throw new PickError("ระบบมีคงเหลือไม่พอ: " + short.join(" · ") + " — แจ้งสโตร์ปรับยอดก่อน หรือลดจำนวน", 409);
@@ -95,7 +98,8 @@ export async function createPick(sb: Sb, a: PickActor, input: {
   }).select("id").single();
   if (hErr || !head) throw new PickError("บันทึกใบเบิกไม่สำเร็จ: " + (hErr?.message ?? ""), 500);
   const code = `PK-${head.id}`;
-  await sb.from("alu_picks").update({ code }).eq("id", head.id);
+  const { error: cErr } = await sb.from("alu_picks").update({ code }).eq("id", head.id);
+  if (cErr) { await sb.from("alu_picks").delete().eq("id", head.id); throw new PickError("ตั้งเลขใบเบิกไม่สำเร็จ: " + cErr.message, 500); }
 
   const { error: iErr } = await sb.from("alu_pick_items").insert(
     items.map((it, i) => ({ pick_id: head.id, stock_item_id: it.stock_item_id, qty: it.qty, sort_order: i })),
@@ -136,6 +140,14 @@ async function loadPick(sb: Sb, id: number): Promise<{ head: PickHead; items: Pi
 function assertEditable(head: PickHead, a: PickActor) {
   if (head.status === "cancelled") throw new PickError("ใบนี้ถูกยกเลิกไปแล้ว", 409);
   if (a.isChang && head.status === "checked") throw new PickError("สโตร์ตรวจใบนี้แล้ว — แก้เองไม่ได้ ให้แจ้งสโตร์", 409);
+  // ช่างแก้ได้เฉพาะใบของตัวเอง (กันกดพลาดข้ามคน · ชื่อปลอมได้ระดับเดียวกับลิงก์ช่างเดิม)
+  if (a.isChang && head.picker_name !== a.name) throw new PickError(`ใบนี้เป็นของ ${head.picker_name || "คนอื่น"} — แก้ได้เฉพาะใบของตัวเอง`, 403);
+}
+/** ตัดรายการซ้ำ (item_id เดียวกันส่งมา 2 ครั้ง) — เอาตัวสุดท้าย */
+function dedupe<T extends { item_id: number }>(arr: T[]): T[] {
+  const m = new Map<number, T>();
+  for (const x of arr ?? []) if (Number(x.item_id)) m.set(Number(x.item_id), x);
+  return [...m.values()];
 }
 
 /** แก้จำนวนเบิก (ต่อรายการ) — เพิ่ม = ตัดเพิ่ม · ลด = คืนเข้า */
@@ -143,10 +155,12 @@ export async function editPickQty(sb: Sb, a: PickActor, pickId: number, changes:
   const { head, items } = await loadPick(sb, pickId);
   assertEditable(head, a);
   const map = await loadItems(sb, items.map((i) => i.stock_item_id));
-  for (const ch of changes ?? []) {
+  for (const ch of dedupe(changes)) {
     const row = items.find((i) => i.id === Number(ch.item_id));
     if (!row) continue;
-    const newQty = r2(num(ch.qty));
+    // ค่าว่าง/ตัวอักษร/ติดลบ = ห้าม (ไม่งั้น NaN→0 กลายเป็นคืนทั้งใบเงียบ ๆ)
+    if (ch.qty === null || ch.qty === undefined || !Number.isFinite(Number(ch.qty)) || Number(ch.qty) < 0) throw new PickError("จำนวนใหม่ต้องเป็นตัวเลข 0 ขึ้นไป");
+    const newQty = r2(Number(ch.qty));
     if (newQty < num(row.returned)) throw new PickError(`แก้ให้น้อยกว่าที่คืนไปแล้ว (${num(row.returned)}) ไม่ได้`);
     const diff = r2(newQty - num(row.qty));
     if (diff === 0) continue;
@@ -169,8 +183,9 @@ export async function returnPickItems(sb: Sb, a: PickActor, pickId: number, rets
   assertEditable(head, a);
   const map = await loadItems(sb, items.map((i) => i.stock_item_id));
   let any = false;
-  for (const rt of rets ?? []) {
+  for (const rt of dedupe(rets)) {
     const row = items.find((i) => i.id === Number(rt.item_id));
+    if (!Number.isFinite(Number(rt.qty))) throw new PickError("จำนวนที่คืนต้องเป็นตัวเลข");
     const q = r2(num(rt.qty));
     if (!row || q <= 0) continue;
     const left = r2(num(row.qty) - num(row.returned));
@@ -189,6 +204,11 @@ export async function returnPickItems(sb: Sb, a: PickActor, pickId: number, rets
 export async function cancelPick(sb: Sb, a: PickActor, pickId: number, reason: string) {
   const { head, items } = await loadPick(sb, pickId);
   assertEditable(head, a);
+  // claim ก่อนคืนของ: เปลี่ยนสถานะได้แค่คนเดียว (กด 2 ครั้ง/2 คนพร้อมกัน จะไม่คืนซ้ำ)
+  const { data: claimed } = await sb.from("alu_picks").update({
+    status: "cancelled", cancelled_at: new Date().toISOString(), cancel_reason: String(reason ?? "").slice(0, 200), cancelled_by_name: a.name,
+  }).eq("id", pickId).eq("status", head.status).select("id");
+  if (!(claimed ?? []).length) throw new PickError("ใบนี้เพิ่งถูกเปลี่ยนสถานะ — โหลดใหม่แล้วดูอีกครั้ง", 409);
   const map = await loadItems(sb, items.map((i) => i.stock_item_id));
   for (const row of items) {
     const left = r2(num(row.qty) - num(row.returned));
@@ -197,9 +217,6 @@ export async function cancelPick(sb: Sb, a: PickActor, pickId: number, reason: s
     await insertMove(sb, a, { item, type: "in", qty: left, ref: head.code, note: `ยกเลิกใบเบิก โดย ${a.name}${reason ? " — " + reason : ""}`, job_id: head.job_id });
     await sb.from("alu_pick_items").update({ returned: num(row.qty) }).eq("id", row.id);
   }
-  await sb.from("alu_picks").update({
-    status: "cancelled", cancelled_at: new Date().toISOString(), cancel_reason: String(reason ?? "").slice(0, 200), cancelled_by_name: a.name,
-  }).eq("id", pickId);
 }
 
 /** สโตร์กด "ตรวจแล้ว" / ยกเลิกการตรวจ (เฉพาะคนล็อกอิน) */
