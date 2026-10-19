@@ -204,5 +204,6 @@ ${EX.map(section).join("\n")}
 </ul></div>
 </div>`;
 
-fs.writeFileSync(process.argv[2], html);
-console.log("ok", process.argv[2]);
+// ใบตรวจ (gen-option-worksheet.mjs) import ตัวคิดชุดเดียวกัน — รันไฟล์นี้ตรง ๆ ถึงจะเขียนหน้า HTML
+if (process.argv[1] && process.argv[1].endsWith("gen-option-sim.mjs") && process.argv[2]) { fs.writeFileSync(process.argv[2], html); console.log("ok", process.argv[2]); }
+export { PRICE, EX, BAR, WASTE, PH, INSET, calc, svgDoor, css as simCss };
