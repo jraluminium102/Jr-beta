@@ -20,6 +20,7 @@ export const GET = withRoute(async (req: Request) => {
       job_id: r.job_id as string, title: r.title, job_code: r.job_code, subtitle: r.subtitle,
       due_date: r.due_date, install_date: r.install_date, status: r.status,
     }))
-    .sort((a, b) => String(a.due_date ?? "9999").localeCompare(String(b.due_date ?? "9999")));
+    // กำลังทำอยู่ขึ้นก่อน (ผลิตเสร็จแล้ว READY ไว้ท้าย) แล้วเรียงวันกำหนดเสร็จ
+    .sort((a, b) => (Number(a.status === "READY") - Number(b.status === "READY")) || String(a.due_date ?? "9999").localeCompare(String(b.due_date ?? "9999")));
   return ok(jobs);
 });

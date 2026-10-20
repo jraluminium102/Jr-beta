@@ -34,5 +34,7 @@ export const GET = withRoute(async (req: Request) => {
       image_url: r.image_url ?? "", group,
     }];
   });
+  // มีของบนชั้นขึ้นก่อน (เส้นที่ระบบมี 0 ยังโชว์ไว้ท้าย ๆ เผื่อยอดระบบผิด)
+  items.sort((a, b) => (Number(b.qty > 0) - Number(a.qty > 0)) || a.sku.localeCompare(b.sku) || a.name.localeCompare(b.name));
   return ok({ groups: PICK_GROUPS, items });
 });

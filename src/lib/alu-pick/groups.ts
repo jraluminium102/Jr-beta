@@ -52,8 +52,10 @@ export function pickGroupOf(r: PickSourceRow): PickGroupKey | null {
   if (!/อลู/.test(String(r.category ?? ""))) return null;
   if (r.is_stocked === false) return null;            // สีมิว/ของสั่งตามงาน ไม่มีบนชั้น
   const nm = bareName(String(r.name ?? ""));
-  if (BOX_RE.test(nm)) return "box";
-  if (ANGLE_RE.test(nm)) return "angle";
+  // โปรไฟล์ที่มีรหัส B/F (เช่น F7868 กล่องก้าน…) = เส้นประตู/หน้าต่างของแบรนด์ ไม่ใช่กล่อง/ฉากทั่วไป
+  const hasProfileCode = /^[BF][0-9]{3,5}[A-Z]?$/i.test(String(r.sku ?? "").trim()) || /^[BF][0-9]{3,5}[A-Z]?\s*-/i.test(String(r.name ?? "").trim());
+  if (!hasProfileCode && BOX_RE.test(nm)) return "box";
+  if (!hasProfileCode && ANGLE_RE.test(nm)) return "angle";
   const fams = FAMILIES.filter((f) => skuInFamily(r.sku, f.key, r.name)).map((f) => f.key);
   if (fams.length && fams.every((k) => ROOF_FAMILIES.has(k))) return null;   // หลังคาอย่างเดียว
   if (isAuxAluName(nm)) return "other";               // ลูกฟูก/เส้นกลาง/ตบร่อง… ใช้ได้ทุกรุ่น
