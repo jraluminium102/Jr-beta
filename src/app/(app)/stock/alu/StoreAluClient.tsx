@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import PickList, { Thumb } from "@/components/alu-pick/PickList";
 import PickFlow from "@/components/alu-pick/PickFlow";
+import AluSummary from "./AluSummary";
 import { fmtQty, type Pick, type PickableItem } from "@/components/alu-pick/types";
 
 /**
@@ -20,7 +21,7 @@ type LedgerRow = { id: number; at: string; type: "in" | "out" | "adjust"; sid: n
 
 export default function StoreAluClient({ canWrite, myName }: { canWrite: boolean; myName: string }) {
   const qc = useQueryClient();
-  const [tab, setTab] = useState<"picks" | "count" | "low" | "new">("picks");
+  const [tab, setTab] = useState<"picks" | "summary" | "count" | "low" | "new">("picks");
   const [from, setFrom] = useState(thaiToday());
   const [to, setTo] = useState(thaiToday());
   const [onlyOpen, setOnlyOpen] = useState(false);
@@ -54,7 +55,7 @@ export default function StoreAluClient({ canWrite, myName }: { canWrite: boolean
         </div>
       </div>
       <div className="flex gap-1.5 flex-wrap">
-        {([["picks", `ใบเบิกของช่าง${openCount ? ` (รอตรวจ ${openCount})` : ""}`], ["count", "นับเฉพาะที่เคลื่อนไหว"], ["low", "ใกล้หมด"], ["new", "เบิกแทนช่าง"]] as const).map(([k, l]) => (
+        {([["picks", `ใบเบิกของช่าง${openCount ? ` (รอตรวจ ${openCount})` : ""}`], ["summary", "สรุปคงเหลือ"], ["count", "นับเฉพาะที่เคลื่อนไหว"], ["low", "ใกล้หมด"], ["new", "เบิกแทนช่าง"]] as const).map(([k, l]) => (
           <button key={k} onClick={() => setTab(k)} className={`press rounded-xl px-4 py-2.5 text-sm font-semibold ${tab === k ? "bg-brand text-white shadow-brand" : "glass-soft text-ink-2"}`}>{l}</button>
         ))}
       </div>
@@ -71,6 +72,7 @@ export default function StoreAluClient({ canWrite, myName }: { canWrite: boolean
         </div>
       )}
 
+      {tab === "summary" && <AluSummary canWrite={canWrite} />}
       {tab === "count" && <CountTab from={from} to={to} range={range} canWrite={canWrite} />}
       {tab === "low" && <LowTab />}
       {tab === "new" && (
