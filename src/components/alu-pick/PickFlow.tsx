@@ -43,14 +43,15 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
   useEffect(() => {
     if (fixedName) return;
     try {
-      const n = localStorage.getItem(NAME_KEY) || "";
+      // ออฟฟิศเบิกแทนช่าง = เลือกชื่อช่างใหม่ทุกใบ (ไม่จำ) · มือถือช่าง = จำชื่อไว้
+      const n = isChang ? (localStorage.getItem(NAME_KEY) || "") : "";
       setName(n); if (!n) setAskName(true);
       const raw = localStorage.getItem(DRAFT_KEY);
       if (raw) { const dd = JSON.parse(raw) as Draft; if (dd && Object.keys(dd.cart ?? {}).length) { setD({ ...EMPTY, ...dd }); setStep(dd.job || dd.reason ? "items" : "job"); } }
     } catch { /* ignore */ }
-  }, [fixedName]);
+  }, [fixedName, isChang]);
   useEffect(() => { try { localStorage.setItem(DRAFT_KEY, JSON.stringify(d)); } catch { /* ignore */ } }, [d]);
-  const saveName = (v: string) => { setName(v); setAskName(false); try { localStorage.setItem(NAME_KEY, v); } catch { /* ignore */ } };
+  const saveName = (v: string) => { setName(v); setAskName(false); if (isChang) { try { localStorage.setItem(NAME_KEY, v); } catch { /* ignore */ } } };
 
   const itemsQ = useQuery({ queryKey: ["alu-pick-items"], queryFn: () => api.get<{ items: PickableItem[] }>("/alu-picks/items"), staleTime: 5 * 60 * 1000 });
   const jobsQ = useQuery({ queryKey: ["alu-pick-jobs"], queryFn: () => api.get<PickJob[]>("/alu-picks/jobs"), staleTime: 60 * 1000 });
@@ -99,12 +100,12 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
     } catch (e) { setErr(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ"); }
     finally { setBusy(false); }
   }
-  const restart = () => { setDone(null); setStep("job"); setD(EMPTY); setGroup(""); setColor(""); setQ(""); setErr(""); };
+  const restart = () => { setDone(null); setStep("job"); setD(EMPTY); setGroup(""); setColor(""); setQ(""); setErr(""); if (!isChang && !fixedName) { setName(""); setAskName(true); } };
 
   // ── จอเลือกชื่อ ──
   if (askName) {
     return (
-      <Shell title="คุณคือใคร?" sub="กดชื่อตัวเอง มือถือจะจำไว้ ไม่ต้องกดอีก">
+      <Shell title={isChang ? "คุณคือใคร?" : "ช่างคนไหนหยิบของ?"} sub={isChang ? "กดชื่อตัวเอง มือถือจะจำไว้ ไม่ต้องกดอีก" : "เลือกชื่อช่างที่หยิบเส้นจริง (เลือกใหม่ทุกใบ)"}>
         <div className="grid grid-cols-2 gap-2.5">
           {PICKER_NAMES.map((n) => (
             <button key={n} onClick={() => saveName(n)} className="min-h-[60px] rounded-[14px] text-[18px] font-bold"
