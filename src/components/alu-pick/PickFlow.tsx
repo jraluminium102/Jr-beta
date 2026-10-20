@@ -130,7 +130,7 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
   }
 
   return (
-    <div style={{ paddingBottom: "calc(96px + env(safe-area-inset-bottom))" }}>
+    <div className="overflow-x-hidden" style={{ paddingBottom: "calc(96px + env(safe-area-inset-bottom))" }}>
       {/* หัว: ชื่อ + แท็บ */}
       <div className="flex items-center gap-2 px-4 pt-3">
         <button onClick={() => !fixedName && setAskName(true)} className="rounded-full px-3 min-h-[36px] text-[13px] font-semibold" style={{ background: C.card, color: C.ink }}>
@@ -163,13 +163,13 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
         <Shell title="เบิกไปงานไหน?" sub="กดชื่อลูกค้า — งานที่อยู่ในตารางผลิตขึ้นให้เลย">
           <input value={jobQ} onChange={(e) => setJobQ(e.target.value)} placeholder="ค้นชื่อลูกค้า (ไม่บังคับ)" inputMode="search"
             className="w-full rounded-[12px] px-3 min-h-[48px] text-[15px] bg-white outline-none mb-2.5" style={{ border: `1px solid ${C.line}`, color: C.ink }} />
-          <div className="grid gap-2 mb-3">
+          <div className="grid grid-cols-1 gap-2 mb-3">
             {jobsQ.isLoading && <p className="text-center py-6" style={{ color: C.ink2 }}>กำลังโหลดงาน…</p>}
             {jobs.filter((j) => !jobQ.trim() || `${j.title} ${j.job_code ?? ""}`.toLowerCase().includes(jobQ.trim().toLowerCase())).slice(0, 40).map((j) => (
               <button key={j.job_id} onClick={() => { setD({ ...d, job: { job_id: j.job_id, title: j.title, job_code: j.job_code }, reason: "", reasonNote: "" }); setStep("items"); }}
-                className="min-h-[56px] rounded-[14px] px-4 text-left flex items-center justify-between gap-2" style={{ background: C.card }}>
-                <span className="text-[16px] font-bold truncate" style={{ color: C.ink }}>{j.title}</span>
-                <span className="text-[12px] shrink-0" style={{ color: C.ink2 }}>{j.job_code ?? ""}{j.due_date ? ` · เสร็จ ${j.due_date.slice(5).replace("-", "/")}` : ""}</span>
+                className="min-w-0 min-h-[56px] rounded-[14px] px-4 py-2 text-left flex flex-col justify-center" style={{ background: C.card }}>
+                <span className="block w-full text-[16px] font-bold truncate" style={{ color: C.ink }}>{j.title}</span>
+                <span className="block w-full text-[12px] truncate" style={{ color: C.ink2 }}>{j.job_code ?? ""}{j.due_date ? ` · เสร็จ ${j.due_date.slice(5).replace("-", "/")}` : ""}{j.subtitle ? ` · ${j.subtitle}` : ""}</span>
               </button>
             ))}
           </div>
@@ -214,7 +214,7 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
             : !group && !q.trim() ? <p className="text-center py-8 text-[14px]" style={{ color: C.ink3 }}>กดประเภทบานด้านบนก่อน</p>
               : profiles.length === 0 ? <p className="text-center py-8 text-[14px]" style={{ color: C.ink3 }}>ไม่พบเส้นในหมวดนี้</p>
                 : (
-                  <div className="grid gap-1.5">
+                  <div className="grid grid-cols-1 gap-1.5">
                     {profiles.slice(0, limit).map((pr) => (
                       <ProfileRow key={pr.pkey} p={pr} open={open === pr.pkey || pr.colors.length === 1}
                         onToggle={() => setOpen(open === pr.pkey ? "" : pr.pkey)} cart={d.cart} onQty={setQty} />
@@ -268,10 +268,10 @@ function Shell({ title, sub, onBack, children }: { title: string; sub?: string; 
 }
 function GroupBtn({ on, label, sub, onClick }: { on: boolean; label: string; sub?: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="min-h-[56px] rounded-[14px] px-2 flex flex-col items-center justify-center leading-tight"
+    <button onClick={onClick} className="min-w-0 min-h-[56px] rounded-[14px] px-1.5 py-1.5 flex flex-col items-center justify-center text-center leading-tight"
       style={{ background: on ? C.blue : C.card, color: on ? "#fff" : C.ink }}>
       {sub && <span className="text-[10.5px]" style={{ color: on ? "rgba(255,255,255,.8)" : C.ink2 }}>{sub}</span>}
-      <span className="text-[15px] font-bold">{label}</span>
+      <span className="text-[14.5px] font-bold break-words">{label}</span>
     </button>
   );
 }
@@ -303,7 +303,7 @@ function ProfileRow({ p, open, onToggle, cart, onQty }: {
   const picked = p.colors.reduce((s, c) => s + (cart[c.id] ?? 0), 0);
   const brandLabel = PICK_BRANDS.find((b) => b.key === p.brand)?.label ?? "";
   return (
-    <div className="rounded-[14px] overflow-hidden" style={{ background: C.card, outline: picked > 0 ? `2px solid ${C.blue}` : "none" }}>
+    <div className="min-w-0 rounded-[14px] overflow-hidden" style={{ background: C.card, outline: picked > 0 ? `2px solid ${C.blue}` : "none" }}>
       <button onClick={onToggle} className="w-full flex items-center gap-2.5 px-2.5 py-2 text-left min-h-[64px]">
         <Thumb url={p.image_url} size={48} />
         <div className="min-w-0 flex-1">
