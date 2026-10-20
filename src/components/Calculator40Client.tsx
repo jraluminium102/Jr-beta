@@ -95,6 +95,22 @@ const glassLine = (glassType: string): string => {
 
 // สเปก label-only ที่เป็น "ค่ามาตรฐาน" → ไม่ต้องพิมพ์ลงใบ [specOpt key, ค่าที่จะซ่อน]
 // เจ้าของสั่งซ่อนเพิ่มได้เรื่อย ๆ — เติมคู่ใหม่ที่นี่
+// ── สเปกที่ "พิมพ์ลงรายละเอียดงาน" ได้ (รายชื่อขาว) — เจ้าของ 20 ต.ค.69 ───────────────────
+//   "บานเปิด รายละเอียดงาน (ใช้เป็น/กรอบบาน/ช่องแสงข้าง/มุ้ง/สีอุปกรณ์/มือจับ/ตลับกุญแจ/ทิศเปิด) ไม่อยากให้เอามาใส่
+//    ยาวเว่อ นอกเหนือจากที่เคยสั่งให้ทำ · ไล่เช็คใหม่"
+//   เดิม: ทุกตัวเลือกของรุ่นพิมพ์ลงใบหมด → ตัวเลือกหลังบ้าน (มือจับ/บานพับ/สีอุปกรณ์/ใบตัด) หลุดไปถึงลูกค้า
+//   ตอนนี้: พิมพ์เฉพาะคีย์ในรายการนี้ · always = พิมพ์ทุกครั้ง · nondefault = พิมพ์เฉพาะเมื่อเลือกต่างจากค่าปกติของรุ่น
+//   ตัวเลือกที่คิดเงิน (priced) ยังขึ้น "รายการ" ตามเดิม · เพิ่มคีย์ใหม่ = เจ้าของสั่งให้พิมพ์เท่านั้น
+const QUOTE_SPEC: Record<string, "always" | "nondefault"> = {
+  // R3.9 label ที่ตั้งใจพิมพ์ลงใบ (คอมเมนต์ "พิมพ์ลงใบ" ในสเปกรุ่น)
+  folddir: "always", threshf: "nondefault", liftmode: "nondefault", barmat: "always",
+  ceilfinish: "always", ceilslope: "always", ceilframe: "always", smartthick: "always",
+  wallpaint: "always", wallpaintcolor: "always", wallframe: "always", isocolor: "always",
+  glassThick: "always", rail: "always", fabcolor: "always", frameColor: "always", glassfilm: "always", rfsample: "always",
+  // บานเปิด: ของที่ลูกค้าต้องเห็นเฉพาะเมื่อเลือกเพิ่ม (มุ้ง · ช่องแสงข้าง · ครอบวงกบ)
+  odmesh: "nondefault", odsiden: "nondefault", odwrap: "nondefault", odwrapcolor: "always",
+  bottomrail: "nondefault",
+};
 const SKIP_SPEC_DETAIL: [string, string][] = [
   ["bottomrail", "รางกันน้ำ"], // รางกันน้ำ = ค่าปกติ · "รางเตี้ย (งานใน)" ยังพิมพ์
   // บานเลื่อนรางบน: มือจับ "เมโทร/อบขาว" = ค่ามาตรฐาน ไม่ต้องขึ้นใบเสนอ · เลือก Align หรือสีดำ ค่อยพิมพ์
@@ -874,7 +890,13 @@ export default function Calculator40Client({ customers = [], priceOverride, line
       if (o.type === "number") return;
       if (NAME_OWNED_SPEC.has(o.key)) return;
       const v = spec[o.key];
-      if (v == null || v === "") return;
+      if (v == null || v === "" || v === "—") return;
+      // รายชื่อขาว (20 ต.ค.69): ตัวเลือกที่คิดเงิน → "รายการ" เหมือนเดิม · ที่ไม่คิดเงิน พิมพ์เฉพาะคีย์ใน QUOTE_SPEC
+      if (!o.priced) {
+        const rule = QUOTE_SPEC[o.key];
+        if (!rule) return;
+        if (rule === "nondefault" && v === (o.def ?? o.opts?.[0] ?? "")) return;
+      }
       // ค่ามาตรฐานที่ "เป็นค่าปกติอยู่แล้ว" ไม่ต้องพิมพ์ลงใบ (เจ้าของสั่ง 18 ก.ค.2569)
       //   ราง: รางกันน้ำ = ค่ามาตรฐาน ไม่ต้องขึ้น · แต่ "รางเตี้ย (งานใน)" ยังต้องขึ้น (งานในต้องระบุ)
       //   เติมคู่ [key, value] ใหม่ที่นี่ได้เรื่อย ๆ ถ้าเจ้าของสั่งซ่อนค่าอื่น
