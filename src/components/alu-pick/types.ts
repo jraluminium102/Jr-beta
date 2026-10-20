@@ -10,8 +10,20 @@ export type Pick = {
   job_code: string | null; customer_name: string | null; items: PickItem[];
 };
 export type PickableItem = {
-  id: number; sku: string; name: string; color: string; unit: string; qty: number; min_qty: number; image_url: string; group: string;
+  id: number; sku: string; name: string; color: string; unit: string; qty: number; min_qty: number; image_url: string;
+  /** ประเภทบาน (slide/swing/door/bifold/fixed/louver/box/angle/other) — เส้นเดียวอยู่ได้หลายประเภท */
+  types: string[];
+  /** ยี่ห้อ fuji/sms/market · "" = ไม่แยก */
+  brand: string;
+  /** คีย์โปรไฟล์ — ทุกสีของโปรไฟล์เดียวกันมีคีย์เดียวกัน */
+  pkey: string;
+  /** ชื่อโปรไฟล์ (ไม่มีสี) */
+  base: string;
+  /** รหัสโปรไฟล์ B/F (เส้นทั่วไปว่าง) */
+  code: string;
 };
+/** โปรไฟล์ = ทุกสีของเส้นเดียวกันรวมเป็นแถวเดียว */
+export type PickProfile = { pkey: string; code: string; base: string; image_url: string; brand: string; types: string[]; colors: PickableItem[]; total: number };
 export type PickJob = {
   job_id: string; title: string; job_code: string | null; subtitle: string | null;
   due_date: string | null; install_date: string | null; status: string;

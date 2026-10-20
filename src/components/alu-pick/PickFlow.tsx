@@ -2,13 +2,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { PICKER_NAMES, PICK_GROUPS, PICK_REASONS } from "@/lib/alu-pick/groups";
+import { PICKER_NAMES, PICK_TYPES, PICK_BRANDS, PICK_REASONS } from "@/lib/alu-pick/groups";
 import PickList, { Thumb } from "./PickList";
-import { fmtQty, type Pick, type PickJob, type PickableItem } from "./types";
+import { fmtQty, type Pick, type PickJob, type PickableItem, type PickProfile } from "./types";
 
 /**
  * หน้าเบิกอลูของช่าง (มือถือ) — เจ้าของเคาะ 19 ต.ค.69
- *   3 จอ: เลือกงาน → เลือกเส้น (หมวด → สี → เส้น ใส่จำนวน) → บันทึก (ตัดสต็อกทันที)
+ *   3 จอ: เลือกงาน → เลือกเส้น (ประเภทบาน → ยี่ห้อ → โปรไฟล์ 1 แถว → กดเข้าไปเลือกสี ใส่จำนวน) → บันทึก (ตัดสต็อกทันที)
+ *   เจ้าของเคาะ 20 ต.ค.69: "ขึ้นโปรไฟล์เดียว แล้วค่อยกดเข้าไปเลือกสีด้านใน" · "แยกหมวดบานเลื่อน บานเปิด ตามประเภท ไม่เอาตามยี่ห้ออย่างเดียว"
  *   + แถบล่าง "ของที่ฉันเบิก" (คืน/แก้/ยกเลิก ได้เองจนกว่าสโตร์ตรวจ)
  *   กติกา: พิมพ์แค่ตัวเลขจำนวนเส้น ที่เหลือกดเลือก · ปุ่มใหญ่ ≥44px · ชื่อช่างจำไว้ในมือถือ (localStorage chang_name)
  *
@@ -31,10 +32,11 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
   const [step, setStep] = useState<Step>("job");
   const [d, setD] = useState<Draft>(EMPTY);
   const [group, setGroup] = useState<string>("");
-  const [color, setColor] = useState<string>("");
+  const [brand, setBrand] = useState<string>("");   // กรองยี่ห้อในหมวด ("" = ทุกยี่ห้อ)
+  const [open, setOpen] = useState<string>("");     // โปรไฟล์ที่กางดูสีอยู่ (pkey)
   const [q, setQ] = useState("");          // ค้นเส้น
   const [jobQ, setJobQ] = useState("");    // ค้นงาน (แยกกัน กดย้อนแล้วคำค้นไม่ปนกัน)
-  const [limit, setLimit] = useState(60);
+  const [limit, setLimit] = useState(40);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [done, setDone] = useState<{ code: string; id: number } | null>(null);
@@ -68,17 +70,27 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
     return [...cnt].sort((a, b) => b[1] - a[1]).map(([id]) => byId.get(id)).filter((x): x is PickableItem => !!x).slice(0, 12);
   }, [mine, byId]);
 
-  const inGroup = useMemo(() => (group === "fav" ? frequent : group ? items.filter((i) => i.group === group) : []), [group, items, frequent]);
-  const colors = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const i of inGroup) m.set(i.color || "ไม่ระบุสี", (m.get(i.color || "ไม่ระบุสี") ?? 0) + 1);
-    return [...m].sort((a, b) => b[1] - a[1]);
-  }, [inGroup]);
-  const shown = useMemo(() => {
+  const favIds = useMemo(() => new Set(frequent.map((i) => i.id)), [frequent]);
+  const inGroup = useMemo(() => (group === "fav" ? items.filter((i) => favIds.has(i.id)) : group ? items.filter((i) => i.types.includes(group)) : []), [group, items, favIds]);
+  const brandsHere = useMemo(() => PICK_BRANDS.filter((b) => inGroup.some((i) => i.brand === b.key)), [inGroup]);
+  // รวมทุกสีของโปรไฟล์เดียวกันเป็นแถวเดียว (pkey จาก server) · มีของขึ้นก่อน
+  const profiles = useMemo(() => {
     const qq = q.trim().toLowerCase();
-    const base = qq ? items.filter((i) => `${i.sku} ${i.name} ${i.color}`.toLowerCase().includes(qq)) : inGroup;
-    return (color && !qq ? base.filter((i) => (i.color || "ไม่ระบุสี") === color) : base);
-  }, [q, items, inGroup, color]);
+    const src = qq
+      ? items.filter((i) => `${i.code} ${i.sku} ${i.base} ${i.name} ${i.color}`.toLowerCase().includes(qq))
+      : inGroup.filter((i) => !brand || i.brand === brand);
+    const m = new Map<string, PickProfile>();
+    for (const i of src) {
+      const pr = m.get(i.pkey) ?? { pkey: i.pkey, code: i.code, base: i.base, image_url: "", brand: i.brand, types: i.types, colors: [], total: 0 };
+      pr.colors.push(i); pr.total += Math.max(0, i.qty);
+      if (!pr.image_url && i.image_url) pr.image_url = i.image_url;
+      m.set(i.pkey, pr);
+    }
+    const arr = [...m.values()];
+    for (const pr of arr) pr.colors.sort((a, b) => (Number(b.qty > 0) - Number(a.qty > 0)) || a.color.localeCompare(b.color));
+    return arr.sort((a, b) => (Number(b.total > 0) - Number(a.total > 0)) || (a.code || "~").localeCompare(b.code || "~") || a.base.localeCompare(b.base));
+  }, [q, items, inGroup, brand]);
+  const pickGroup = (g: string) => { setGroup(g); setBrand(""); setOpen(""); setLimit(40); };
 
   const cartRows = useMemo(() => Object.entries(d.cart).map(([id, qty]) => ({ item: byId.get(Number(id)), id: Number(id), qty })).filter((r) => r.qty > 0), [d.cart, byId]);
   const totalBars = cartRows.reduce((s, r) => s + r.qty, 0);
@@ -94,13 +106,13 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
         job_id: d.job?.job_id ?? null, reason: d.reason, reason_note: d.reasonNote, note: d.note, picker_name: name,
         items: cartRows.map((r) => ({ stock_item_id: r.id, qty: r.qty })),
       });
-      setDone(r.data); setStep("done"); setD(EMPTY); setGroup(""); setColor(""); setQ("");
+      setDone(r.data); setStep("done"); setD(EMPTY); setGroup(""); setBrand(""); setOpen(""); setQ("");
       qc.invalidateQueries({ queryKey: ["alu-pick-items"] });
       qc.invalidateQueries({ queryKey: ["alu-picks-mine"] });
     } catch (e) { setErr(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ"); }
     finally { setBusy(false); }
   }
-  const restart = () => { setDone(null); setStep("job"); setD(EMPTY); setGroup(""); setColor(""); setQ(""); setErr(""); if (!isChang && !fixedName) { setName(""); setAskName(true); } };
+  const restart = () => { setDone(null); setStep("job"); setD(EMPTY); setGroup(""); setBrand(""); setOpen(""); setQ(""); setErr(""); if (!isChang && !fixedName) { setName(""); setAskName(true); } };
 
   // ── จอเลือกชื่อ ──
   if (askName) {
@@ -179,33 +191,35 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
           </div>
         </Shell>
       ) : step === "items" ? (
-        <Shell title={whoLabel} sub="กดหมวด → กดสี → กดเส้น แล้วใส่จำนวน" onBack={() => setStep("job")}>
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="หรือพิมพ์รหัส/ชื่อ เช่น B22" inputMode="search"
+        <Shell title={whoLabel} sub="กดประเภทบาน → กดโปรไฟล์ → เลือกสี ใส่จำนวน" onBack={() => setStep("job")}>
+          <input value={q} onChange={(e) => { setQ(e.target.value); setOpen(""); }} placeholder="หรือพิมพ์รหัส/ชื่อ เช่น B22" inputMode="search"
             className="w-full rounded-[12px] px-3 min-h-[48px] text-[15px] bg-white outline-none mb-2.5" style={{ border: `1px solid ${C.line}`, color: C.ink }} />
           {!q.trim() && (
             <>
               <div className="grid grid-cols-3 gap-2 mb-2.5">
-                {frequent.length > 0 && <GroupBtn on={group === "fav"} label="⭐ เบิกบ่อย" onClick={() => { setGroup("fav"); setColor(""); setLimit(60); }} />}
-                {PICK_GROUPS.map((g) => (
-                  <GroupBtn key={g.key} on={group === g.key} label={g.short} sub={g.key.startsWith("door") ? "ประตู/หน้าต่าง" : undefined}
-                    onClick={() => { setGroup(g.key); setColor(""); setLimit(60); }} />
+                {frequent.length > 0 && <GroupBtn on={group === "fav"} label="⭐ เบิกบ่อย" onClick={() => pickGroup("fav")} />}
+                {PICK_TYPES.filter((t) => items.some((i) => i.types.includes(t.key))).map((t) => (
+                  <GroupBtn key={t.key} on={group === t.key} label={t.label} onClick={() => pickGroup(t.key)} />
                 ))}
               </div>
-              {group && colors.length > 1 && (
+              {group && group !== "fav" && brandsHere.length > 1 && (
                 <div className="flex gap-1.5 overflow-x-auto pb-2 -mx-1 px-1">
-                  <Chip on={!color} label="ทุกสี" onClick={() => setColor("")} />
-                  {colors.map(([c, n]) => <Chip key={c} on={color === c} label={`${c} (${n})`} onClick={() => setColor(c)} />)}
+                  <Chip on={!brand} label="ทุกยี่ห้อ" onClick={() => { setBrand(""); setOpen(""); setLimit(40); }} />
+                  {brandsHere.map((b) => <Chip key={b.key} on={brand === b.key} label={b.label} onClick={() => { setBrand(b.key); setOpen(""); setLimit(40); }} />)}
                 </div>
               )}
             </>
           )}
           {itemsQ.isLoading ? <p className="text-center py-8" style={{ color: C.ink2 }}>กำลังโหลดรายการเส้น…</p>
-            : !group && !q.trim() ? <p className="text-center py-8 text-[14px]" style={{ color: C.ink3 }}>กดหมวดด้านบนก่อน</p>
-              : shown.length === 0 ? <p className="text-center py-8 text-[14px]" style={{ color: C.ink3 }}>ไม่พบเส้นในหมวด/สีนี้</p>
+            : !group && !q.trim() ? <p className="text-center py-8 text-[14px]" style={{ color: C.ink3 }}>กดประเภทบานด้านบนก่อน</p>
+              : profiles.length === 0 ? <p className="text-center py-8 text-[14px]" style={{ color: C.ink3 }}>ไม่พบเส้นในหมวดนี้</p>
                 : (
                   <div className="grid gap-1.5">
-                    {shown.slice(0, limit).map((it) => <ItemRow key={it.id} it={it} qty={d.cart[it.id] ?? 0} onQty={(v) => setQty(it.id, v)} />)}
-                    {shown.length > limit && <button onClick={() => setLimit(limit + 60)} className="min-h-[44px] rounded-[12px] text-[14px] font-semibold" style={{ background: C.card, color: C.blue }}>แสดงเพิ่ม ({shown.length - limit} รายการ)</button>}
+                    {profiles.slice(0, limit).map((pr) => (
+                      <ProfileRow key={pr.pkey} p={pr} open={open === pr.pkey || pr.colors.length === 1}
+                        onToggle={() => setOpen(open === pr.pkey ? "" : pr.pkey)} cart={d.cart} onQty={setQty} />
+                    ))}
+                    {profiles.length > limit && <button onClick={() => setLimit(limit + 40)} className="min-h-[44px] rounded-[12px] text-[14px] font-semibold" style={{ background: C.card, color: C.blue }}>แสดงเพิ่ม ({profiles.length - limit} โปรไฟล์)</button>}
                   </div>
                 )}
         </Shell>
@@ -279,6 +293,55 @@ function ItemRow({ it, qty, onQty }: { it: PickableItem; qty: number; onQty: (v:
           className="w-[52px] min-h-[44px] rounded-[10px] text-center text-[17px] font-bold outline-none" style={{ background: on ? "#e8f4ff" : C.bg, color: C.ink }} />
         <button onClick={() => onQty(qty + 1)} className="min-h-[44px] min-w-[44px] rounded-[10px] text-[22px] font-bold text-white" style={{ background: C.blue }}>+</button>
       </div>
+    </div>
+  );
+}
+/** 1 แถว = 1 โปรไฟล์ · กดแล้วกางสีด้านใน (โปรไฟล์ที่มีสีเดียว กางให้เลย) */
+function ProfileRow({ p, open, onToggle, cart, onQty }: {
+  p: PickProfile; open: boolean; onToggle: () => void; cart: Record<string, number>; onQty: (id: number, v: number) => void;
+}) {
+  const picked = p.colors.reduce((s, c) => s + (cart[c.id] ?? 0), 0);
+  const brandLabel = PICK_BRANDS.find((b) => b.key === p.brand)?.label ?? "";
+  return (
+    <div className="rounded-[14px] overflow-hidden" style={{ background: C.card, outline: picked > 0 ? `2px solid ${C.blue}` : "none" }}>
+      <button onClick={onToggle} className="w-full flex items-center gap-2.5 px-2.5 py-2 text-left min-h-[64px]">
+        <Thumb url={p.image_url} size={48} />
+        <div className="min-w-0 flex-1">
+          <div className="text-[15px] font-bold leading-tight" style={{ color: C.ink }}>{p.code ? `${p.code} ` : ""}{p.base}</div>
+          <div className="text-[12px]" style={{ color: C.ink2 }}>
+            {brandLabel ? `${brandLabel} · ` : ""}{p.colors.length} สี · มีรวม <b style={{ color: p.total > 0 ? C.ink2 : C.red }}>{fmtQty(p.total)}</b> {p.colors[0]?.unit ?? "เส้น"}
+          </div>
+        </div>
+        {picked > 0 && <span className="shrink-0 rounded-full px-2.5 py-1 text-[13px] font-bold text-white" style={{ background: C.blue }}>{fmtQty(picked)}</span>}
+        {p.colors.length > 1 && <span className="shrink-0 text-[20px]" style={{ color: C.ink3 }}>{open ? "▾" : "›"}</span>}
+      </button>
+      {open && (
+        <div className="px-2.5 pb-2 grid gap-1" style={{ borderTop: `1px solid ${C.line}` }}>
+          {p.colors.map((c) => {
+            const q = cart[c.id] ?? 0;
+            return (
+              <div key={c.id} className="flex items-center gap-2 pt-1.5">
+                <div className="min-w-0 flex-1">
+                  <div className="text-[15px] font-semibold" style={{ color: C.ink }}>{c.color || "ไม่ระบุสี"}</div>
+                  <div className="text-[12px]" style={{ color: C.ink2 }}>เหลือ <b style={{ color: c.qty <= 0 ? C.red : C.ink2 }}>{fmtQty(c.qty)}</b></div>
+                </div>
+                <Stepper qty={q} onQty={(v) => onQty(c.id, v)} />
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+function Stepper({ qty, onQty }: { qty: number; onQty: (v: number) => void }) {
+  const on = qty > 0;
+  return (
+    <div className="flex items-center gap-1 shrink-0">
+      <button onClick={() => onQty(qty - 1)} disabled={!on} className="min-h-[44px] min-w-[44px] rounded-[10px] text-[22px] font-bold disabled:opacity-30" style={{ background: C.bg, color: C.ink }}>−</button>
+      <input inputMode="decimal" value={on ? fmtQty(qty) : ""} placeholder="0" onChange={(e) => onQty(Number(e.target.value) || 0)}
+        className="w-[52px] min-h-[44px] rounded-[10px] text-center text-[17px] font-bold outline-none" style={{ background: on ? "#e8f4ff" : C.bg, color: C.ink }} />
+      <button onClick={() => onQty(qty + 1)} className="min-h-[44px] min-w-[44px] rounded-[10px] text-[22px] font-bold text-white" style={{ background: C.blue }}>+</button>
     </div>
   );
 }
