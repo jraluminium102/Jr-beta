@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getProfile } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import StoreAluClient from "./StoreAluClient";
+import { Providers } from "@/app/providers";
 
 export const dynamic = "force-dynamic";
 
@@ -17,5 +18,10 @@ export default async function StoreAluPage() {
   if (!profile) redirect("/login");
   const role = profile.role ?? "";
   if (!can(role, "stock", "read")) redirect("/stock");
-  return <StoreAluClient canWrite={STORE_WRITE.includes(role)} myName={profile.full_name ?? ""} />;
+  // /stock อยู่นอก (oms) → ไม่มี react-query provider จาก layout · ห่อเองเหมือนหน้าลิงก์ช่าง
+  return (
+    <Providers>
+      <StoreAluClient canWrite={STORE_WRITE.includes(role)} myName={profile.full_name ?? ""} />
+    </Providers>
+  );
 }
