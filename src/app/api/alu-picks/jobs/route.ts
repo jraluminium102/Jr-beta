@@ -30,7 +30,11 @@ function shortPlace(addr: string): string {
   // ชื่อโครงการ/ร้านที่ขึ้นต้นที่อยู่ (Jade Sathorn-Rama3 · ร้านบุญสว่างวานิช) ก่อนคำว่า เลขที่/ถนน/ซอย/เลขบ้าน
   const lead = a.split(/\s(?=เลขที่|ถนน|ถ\.|ซอย|ซ\.|แขวง|ตำบล|\d+\/)/)[0].trim();
   const leadName = lead && lead !== a && !/^(เลขที่|\d)/.test(lead) && lead.length <= 32 ? lead : "";
-  const village = a.match(/(หมู่บ้าน\s*[^\s,]+|ม\.\s*[^\s,]+)/)?.[1]?.replace(/\s+/g, "") ?? leadName;
+  // ชื่อหมู่บ้านมีเว้นวรรคได้ ("หมู่บ้านเดอะ แกรนด์ พระราม 2") → เอาจนกว่าจะเจอ เลขที่/ซอย/ถนน/ตำบล/เขต/วงเล็บ
+  const vm = a.match(/(?:หมู่บ้าน|ม\.)\s*(.+?)(?=\s*(?:\(|,|เลขที่|ซ\.|ซอย|ถ\.|ถนน|ตำบล|ต\.|แขวง|อำเภอ|อ\.|เขต|หมู่\s|\d+\/|$))/);
+  const fullV = vm ? `หมู่บ้าน${vm[1].trim()}` : "";
+  // ยาวเกิน → ตัดที่เว้นวรรค (ไม่ตัดกลางคำ เช่น "พหลโยธ")
+  const village = fullV ? (fullV.length <= 32 ? fullV : fullV.slice(0, fullV.lastIndexOf(" ", 32) > 8 ? fullV.lastIndexOf(" ", 32) : 32)) : leadName;
   const district = a.match(/(?:เขต|อำเภอ|อ\.)\s*([^\s,]+)/)?.[1] ?? "";
   const parts = [village, district].filter(Boolean);
   if (parts.length) return parts.join(" · ");
