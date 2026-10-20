@@ -46,6 +46,15 @@ const FAMILY_TYPE: Record<string, PickTypeKey> = {
   fixed: "fixed", fuji_fix: "fixed",
   louver: "louver",
 };
+/** ชื่อบอกประเภทชัด ๆ (ใช้เมื่อสูตรตัดไม่รู้จักโปรไฟล์นี้) — เช่น "เฟรมล่างบานเลื่อน" "10-เฟรมบานกระทุ้ง" */
+const NAME_TYPE: [RegExp, PickTypeKey][] = [
+  [/เลื่อน/, "slide"],
+  [/เฟี้ยม/, "bifold"],
+  [/ติดตาย|\bfix\b/i, "fixed"],
+  [/กระทุ้ง|บานเปิด|บานยก/, "swing"],
+  [/ประตู/, "door"],
+  [/ระแนง/, "louver"],
+];
 export const PICK_BRANDS: { key: string; label: string }[] = [
   { key: "fuji", label: "Euro Fuji" }, { key: "sms", label: "SMS" }, { key: "market", label: "ตลาด" },
 ];
@@ -111,6 +120,7 @@ export function pickInfoOf(r: PickSourceRow): PickInfo | null {
   // อลูเสริมทั่วไป (ไม่มีรหัส B/F) = ใช้ได้ทุกรุ่น ไม่แยกยี่ห้อ · ตัวที่มีรหัส B/F เป็นโปรไฟล์ของแบรนด์ เก็บยี่ห้อไว้
   if (!code && isAuxAluName(nm)) return { types: ["other"], brand: "", pkey, base, code };   // ลูกฟูก/เส้นกลาง/ตบร่อง… ใช้ได้ทุกรุ่น
   const types = [...new Set(fams.map((k) => FAMILY_TYPE[k]).filter(Boolean))] as PickTypeKey[];
+  if (!types.length) for (const [re, t] of NAME_TYPE) if (re.test(nm)) types.push(t);
   return { types: types.length ? types : ["other"], brand, pkey, base, code };
 }
 
