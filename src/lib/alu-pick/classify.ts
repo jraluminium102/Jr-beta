@@ -62,11 +62,13 @@ function calcTypesOf(code: string): Set<PickTypeKey> {
       if (Array.isArray(x)) { x.forEach((y) => walk(y, t)); return; }
       if (!x || typeof x !== "object") return;
       for (const [k, v] of Object.entries(x as Record<string, unknown>)) {
-        if (k === "code" && typeof v === "string" && /^[BF]\d{3,5}/i.test(v)) {
-          // สูตรคิดราคาเขียน F7938B / F7945C (ตัวแปร) แต่สโตร์เก็บ F7938 → ผูกทั้งสองแบบ
-          const full = v.toUpperCase();
-          for (const key of new Set([full, full.replace(/^([BF]\d{4,5})[A-Z]$/, "$1")])) {
-            const set = m.get(key) ?? new Set<PickTypeKey>(); set.add(t); m.set(key, set);
+        if (k === "code" && typeof v === "string") {
+          // code อาจเป็นเงื่อนไข เช่น "GMM>13?'F7917':'F7919'" → เก็บทุกรหัสในนั้น
+          // สูตรเขียน F7938B / F7945C (ตัวแปร) แต่สโตร์เก็บ F7938 → ผูกทั้งสองแบบ
+          for (const hit of v.toUpperCase().match(/[BF]\d{4,5}[A-Z]?/g) ?? []) {
+            for (const key of new Set([hit, hit.replace(/^([BF]\d{4,5})[A-Z]$/, "$1")])) {
+              const set = m.get(key) ?? new Set<PickTypeKey>(); set.add(t); m.set(key, set);
+            }
           }
         } else walk(v, t);
       }
