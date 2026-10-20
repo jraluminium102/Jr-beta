@@ -27,7 +27,22 @@ export type PickProfile = { pkey: string; code: string; base: string; image_url:
 export type PickJob = {
   job_id: string; title: string; job_code: string | null; subtitle: string | null;
   due_date: string | null; install_date: string | null; status: string;
+  /** ทำอะไร — ชื่อชุดงานแบบสั้น (กั้นห้องกระจก (หน้าบ้าน) · หลังคากันสาด …) */
+  what?: string[]; set_count?: number;
+  /** โรงที่ผลิต (โรงงาน 1 / โรงงาน 3) */
+  factories?: string[];
+  sales_name?: string | null;
+  /** ที่อยู่แบบสั้นที่ช่างจำได้ (หมู่บ้านนันทวัน · บางเขน) */
+  place?: string;
 };
+const TH_MON = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+/** "2026-10-19" → "19 ต.ค." */
+export const fmtDay = (iso?: string | null) => {
+  const m = String(iso ?? "").match(/^\d{4}-(\d{2})-(\d{2})/);
+  return m ? `${Number(m[2])} ${TH_MON[Number(m[1]) - 1]}` : "";
+};
+/** "โรงงาน 1" → "โรง 1" */
+export const shortFactory = (f: string) => f.replace(/โรงงาน\s*/, "โรง ");
 
 export const fmtWhen = (iso: string) => {
   const d = new Date(iso);

@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { PICKER_NAMES, PICK_TYPES, PICK_BRANDS, PICK_REASONS } from "@/lib/alu-pick/groups";
 import PickList, { Thumb } from "./PickList";
-import { fmtQty, type Pick, type PickJob, type PickableItem, type PickProfile } from "./types";
+import { fmtQty, fmtDay, shortFactory, type Pick, type PickJob, type PickableItem, type PickProfile } from "./types";
 
 /**
  * หน้าเบิกอลูของช่าง (มือถือ) — เจ้าของเคาะ 19 ต.ค.69
@@ -20,7 +20,7 @@ const NAME_KEY = "chang_name";
 const DRAFT_KEY = "alu_pick_draft_v1";
 
 type Step = "job" | "items" | "review" | "done";
-type Job = { job_id: string | null; title: string; job_code: string | null };
+type Job = { job_id: string | null; title: string; job_code: string | null; what?: string };
 type Draft = { job: Job | null; reason: string; reasonNote: string; cart: Record<string, number>; note: string };
 const EMPTY: Draft = { job: null, reason: "", reasonNote: "", cart: {}, note: "" };
 
@@ -62,7 +62,13 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
   const jobs = jobsQ.data?.data ?? [];
   // ชุดเดียวกับบอร์ดตารางผลิตฝั่งช่าง: งานที่ผลิตเสร็จแล้ว (READY = ส่งติดตั้ง) บอร์ดซ่อน → หน้าเบิกก็ซ่อน
   //   ค้นชื่อแล้วค่อยโชว์ (เผื่อเบิกเส้นไปแก้งานที่ส่งติดตั้งไปแล้ว) พร้อมป้าย "ผลิตเสร็จแล้ว"
-  const activeJobs = useMemo(() => jobs.filter((j) => j.status !== "READY"), [jobs]);
+  const myFactory = (name.match(/โรง\s*(\d+)/) ?? [])[1] ?? "";
+  const isMine = (j: PickJob) => !!myFactory && (j.factories ?? []).some((f) => (f.match(/(\d+)/) ?? [])[1] === myFactory);
+  const activeJobs = useMemo(() => {
+    const a = jobs.filter((j) => j.status !== "READY");
+    return myFactory ? [...a.filter(isMine), ...a.filter((j) => !isMine(j))] : a;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobs, myFactory]);
   // ชื่อลูกค้าซ้ำหลายงาน (เช่น คุณไอซ์ 3 งาน) → ป้ายเตือนให้ดูรหัสงาน/ที่อยู่ก่อนกด
   const nameCount = useMemo(() => {
     const m = new Map<string, number>();
@@ -72,7 +78,7 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
   const shownJobs = useMemo(() => {
     const qq = jobQ.trim().toLowerCase();
     if (!qq) return activeJobs;
-    return jobs.filter((j) => `${j.title} ${j.job_code ?? ""} ${j.subtitle ?? ""}`.toLowerCase().includes(qq));
+    return jobs.filter((j) => `${j.title} ${(j.what ?? []).join(" ")} ${j.place ?? ""} ${j.subtitle ?? ""} ${j.sales_name ?? ""}`.toLowerCase().includes(qq));
   }, [jobQ, jobs, activeJobs]);
   const mine = mineQ.data?.data ?? [];
   const byId = useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
@@ -110,7 +116,7 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
   const totalBars = cartRows.reduce((s, r) => s + r.qty, 0);
   const setQty = (id: number, qty: number) => setD((x) => ({ ...x, cart: { ...x.cart, [id]: Math.max(0, Math.round(qty * 100) / 100) } }));
 
-  const whoLabel = d.job ? `${d.job.title}${d.job.job_code ? " · " + d.job.job_code : ""}` : d.reason === "repair" ? "งานซ่อม" : d.reason === "other" ? `อื่นๆ: ${d.reasonNote}` : "";
+  const whoLabel = d.job ? `${d.job.title}${d.job.what ? " · " + d.job.what : ""}` : d.reason === "repair" ? "งานซ่อม" : d.reason === "other" ? `อื่นๆ: ${d.reasonNote}` : "";
 
   async function save() {
     if (!name.trim()) { setAskName(true); return; }
@@ -191,7 +197,7 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
               <button onClick={() => setStep("items")} className="w-full min-h-[48px] rounded-[12px] text-[15px] font-bold text-white mt-2" style={{ background: C.blue }}>ถัดไป → เลือกเส้น</button>
             )}
           </div>
-          <input value={jobQ} onChange={(e) => setJobQ(e.target.value)} placeholder="ค้นชื่อลูกค้า (ไม่บังคับ)" inputMode="search"
+          <input value={jobQ} onChange={(e) => setJobQ(e.target.value)} placeholder="ค้นชื่อลูกค้า / งาน / หมู่บ้าน (ไม่บังคับ)" inputMode="search"
             className="w-full rounded-[12px] px-3 min-h-[48px] text-[15px] bg-white outline-none mb-2.5" style={{ border: `1px solid ${C.line}`, color: C.ink }} />
           <div className="grid grid-cols-1 gap-2 mb-3">
             {jobsQ.isLoading && <p className="text-center py-6" style={{ color: C.ink2 }}>กำลังโหลดงาน…</p>}
@@ -201,14 +207,28 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
               const dup = (nameCount.get(j.title.replace(/\s+/g, "")) ?? 0) > 1;
               const done = j.status === "READY";
               return (
-                <button key={j.job_id} onClick={() => { setD({ ...d, job: { job_id: j.job_id, title: j.title, job_code: j.job_code }, reason: "", reasonNote: "" }); setStep("items"); }}
-                  className="min-w-0 min-h-[56px] rounded-[14px] px-4 py-2 text-left flex flex-col justify-center" style={{ background: C.card, opacity: done ? 0.75 : 1 }}>
+                <button key={j.job_id} onClick={() => { setD({ ...d, job: { job_id: j.job_id, title: j.title, job_code: j.job_code, what: (j.what ?? [])[0] ?? j.place ?? "" }, reason: "", reasonNote: "" }); setStep("items"); }}
+                  className="min-w-0 min-h-[56px] rounded-[14px] px-4 py-2.5 text-left flex flex-col justify-center gap-0.5" style={{ background: C.card, opacity: done ? 0.75 : 1 }}>
                   <span className="flex w-full items-center gap-1.5 min-w-0">
                     <span className="text-[16px] font-bold truncate" style={{ color: C.ink }}>{j.title}</span>
-                    {dup && <span className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: "#fff3e0", color: "#b26a00" }}>ชื่อซ้ำ ดูรหัสงาน</span>}
+                    {dup && <span className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: "#fff3e0", color: "#b26a00" }}>ชื่อซ้ำ ดูงาน/ที่อยู่</span>}
                     {done && <span className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: C.bg, color: C.ink2 }}>ผลิตเสร็จแล้ว</span>}
+                    {isMine(j) && !done && <span className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: "#e8f4ff", color: C.blue }}>โรงคุณ</span>}
                   </span>
-                  <span className="block w-full text-[12.5px] truncate" style={{ color: dup ? C.ink : C.ink2, fontWeight: dup ? 600 : 400 }}>{j.job_code ?? ""}{j.due_date ? ` · เสร็จ ${j.due_date.slice(5).replace("-", "/")}` : ""}{j.subtitle ? ` · ${j.subtitle}` : ""}</span>
+                  {/* ทำอะไร — สิ่งที่ช่างจำงานได้ (เจ้าของ: "ช่างไม่รู้รหัส") */}
+                  {(j.what ?? []).length > 0 && (
+                    <span className="block w-full text-[13.5px] font-semibold leading-snug" style={{ color: C.ink, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                      🔨 {(j.what ?? []).slice(0, 2).join(" · ")}{(j.what ?? []).length > 2 ? ` +อีก ${(j.what ?? []).length - 2} ชุด` : ""}
+                    </span>
+                  )}
+                  <span className="block w-full text-[12.5px] truncate" style={{ color: C.ink2 }}>
+                    {[
+                      j.place ? `📍 ${j.place}` : "",
+                      j.due_date ? `เสร็จ ${fmtDay(j.due_date)}` : "",
+                      (j.factories ?? []).length ? (j.factories ?? []).map(shortFactory).join(",") : "",
+                      j.sales_name ? `เซลล์ ${j.sales_name}` : "",
+                    ].filter(Boolean).join(" · ")}
+                  </span>
                 </button>
               );
             })}
