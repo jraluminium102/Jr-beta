@@ -48,7 +48,10 @@ export default function StoreAluClient({ canWrite, myName }: { canWrite: boolean
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-xl font-bold text-brand-dark">📦 สโตร์อลู</h1>
-        <a href="/stock" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark border border-brand/30 bg-white/60">← เช็คสต๊อกวัสดุ</a>
+        <div className="flex items-center gap-2 flex-wrap">
+          <PickLinkButton />
+          <a href="/stock" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark border border-brand/30 bg-white/60">← เช็คสต๊อกวัสดุ</a>
+        </div>
       </div>
       <div className="flex gap-1.5 flex-wrap">
         {([["picks", `ใบเบิกของช่าง${openCount ? ` (รอตรวจ ${openCount})` : ""}`], ["count", "นับเฉพาะที่เคลื่อนไหว"], ["low", "ใกล้หมด"], ["new", "เบิกแทนช่าง"]] as const).map(([k, l]) => (
@@ -77,6 +80,28 @@ export default function StoreAluClient({ canWrite, myName }: { canWrite: boolean
         </div>
       )}
     </div>
+  );
+}
+
+/** ลิงก์หน้าเบิกอลูของช่าง (ไม่ต้องล็อกอิน) — กดคัดลอกแล้ววางส่งในไลน์กลุ่มช่าง (เจ้าของขอ 20 ต.ค.69) */
+function PickLinkButton() {
+  const [msg, setMsg] = useState("");
+  async function copy() {
+    setMsg("");
+    try {
+      const r = await fetch("/api/chang-open?to=pick&format=json", { credentials: "include" });
+      const j = await r.json();
+      if (!r.ok || !j.url) throw new Error(j.error || "ไม่พบลิงก์ช่าง");
+      try { await navigator.clipboard.writeText(j.url); setMsg("คัดลอกแล้ว — วางส่งช่างได้เลย"); }
+      catch { window.prompt("คัดลอกลิงก์นี้ส่งช่าง:", j.url); }
+    } catch (e) { setMsg(e instanceof Error ? e.message : "ไม่สำเร็จ"); }
+  }
+  return (
+    <span className="inline-flex items-center gap-2">
+      <button onClick={copy} className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">🔗 คัดลอกลิงก์เบิกอลูของช่าง</button>
+      <a href="/api/chang-open?to=pick" target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-brand-dark underline">เปิดดู</a>
+      {msg && <span className="text-xs text-ink-2">{msg}</span>}
+    </span>
   );
 }
 
