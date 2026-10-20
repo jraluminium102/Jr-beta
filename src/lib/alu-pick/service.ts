@@ -39,11 +39,13 @@ const label = (it: ItemRow) => `${it.sku ? it.sku + " " : ""}${it.name}${it.colo
 /** ลง stock_moves 1 บรรทัด · in/out · trigger ปรับคงเหลือเอง */
 async function insertMove(sb: Sb, a: PickActor, p: {
   item: ItemRow; type: "in" | "out"; qty: number; ref: string; note: string; job_id: string | null;
+  /** ผู้เบิก (ช่างเจ้าของใบ) — แก้/คืน/ยกเลิก ต้องคงชื่อช่างเดิม ไม่ใช่คนที่กดแก้ (คนกดแก้อยู่ใน note + created_by) */
+  requester?: string;
 }) {
   const unitCost = num(p.item.unit_cost);
   const { error } = await sb.from("stock_moves").insert({
     stock_item_id: p.item.id, type: p.type, qty: r2(p.qty), ref: p.ref, note: p.note,
-    requester: a.name, job_id: p.job_id, unit_cost: unitCost, total_price: r2(p.qty * unitCost),
+    requester: p.requester ?? a.name, job_id: p.job_id, unit_cost: unitCost, total_price: r2(p.qty * unitCost),
     created_by: a.userId,
   });
   if (error) {
@@ -168,9 +170,9 @@ export async function editPickQty(sb: Sb, a: PickActor, pickId: number, changes:
     if (!item) continue;
     if (diff > 0) {
       if (num(item.qty_on_hand) < diff) throw new PickError(`${label(item)} — ระบบมีคงเหลือ ${num(item.qty_on_hand)} ไม่พอเพิ่มอีก ${diff}`, 409);
-      await insertMove(sb, a, { item, type: "out", qty: diff, ref: head.code, note: `แก้จำนวน ${num(row.qty)}→${newQty} โดย ${a.name}`, job_id: head.job_id });
+      await insertMove(sb, a, { item, type: "out", qty: diff, ref: head.code, note: `แก้จำนวน ${num(row.qty)}→${newQty} โดย ${a.name}`, job_id: head.job_id, requester: head.picker_name });
     } else {
-      await insertMove(sb, a, { item, type: "in", qty: -diff, ref: head.code, note: `แก้จำนวน ${num(row.qty)}→${newQty} โดย ${a.name}`, job_id: head.job_id });
+      await insertMove(sb, a, { item, type: "in", qty: -diff, ref: head.code, note: `แก้จำนวน ${num(row.qty)}→${newQty} โดย ${a.name}`, job_id: head.job_id, requester: head.picker_name });
     }
     await sb.from("alu_pick_items").update({ qty: newQty }).eq("id", row.id);
   }
@@ -192,7 +194,7 @@ export async function returnPickItems(sb: Sb, a: PickActor, pickId: number, rets
     if (q > left) throw new PickError(`คืนได้ไม่เกิน ${left} เส้น (เบิก ${num(row.qty)} คืนแล้ว ${num(row.returned)})`);
     const item = map.get(row.stock_item_id);
     if (!item) continue;
-    await insertMove(sb, a, { item, type: "in", qty: q, ref: head.code, note: `คืนเส้น โดย ${a.name}`, job_id: head.job_id });
+    await insertMove(sb, a, { item, type: "in", qty: q, ref: head.code, note: `คืนเส้น โดย ${a.name}`, job_id: head.job_id, requester: head.picker_name });
     await sb.from("alu_pick_items").update({ returned: r2(num(row.returned) + q) }).eq("id", row.id);
     any = true;
   }
@@ -214,7 +216,7 @@ export async function cancelPick(sb: Sb, a: PickActor, pickId: number, reason: s
     const left = r2(num(row.qty) - num(row.returned));
     const item = map.get(row.stock_item_id);
     if (left <= 0 || !item) continue;
-    await insertMove(sb, a, { item, type: "in", qty: left, ref: head.code, note: `ยกเลิกใบเบิก โดย ${a.name}${reason ? " — " + reason : ""}`, job_id: head.job_id });
+    await insertMove(sb, a, { item, type: "in", qty: left, ref: head.code, note: `ยกเลิกใบเบิก โดย ${a.name}${reason ? " — " + reason : ""}`, job_id: head.job_id, requester: head.picker_name });
     await sb.from("alu_pick_items").update({ returned: num(row.qty) }).eq("id", row.id);
   }
 }
