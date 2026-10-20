@@ -23,7 +23,9 @@ const COLOR_SHORT: Record<string, string> = {
   "อบขาว": "ขาว", "ดำ": "ดำ", "เทาซาฮาร่า": "เทา", "ดำซาฮาร่า": "ดำซฮ.", "Aztec gray": "แอทแทค",
   "ลายไม้สักทอง": "สักทอง", "มะฮอกกานี": "มะฮอก", "ไวท์โอ็ค": "ไวท์โอ๊ค", "ไวท์โอ๊ค": "ไวท์โอ๊ค", "มิว": "มิว",
 };
-const normColor = (c: string) => String(c ?? "").replace(/[()]/g, "").trim() || "ไม่ระบุสี";
+// สโตร์สะกดสีไม่เหมือนกัน (ไวท์โอ็ค/ไวท์โอ๊ค · Aztec gray/Aztecgray) → รวมเป็นคอลัมน์เดียว
+const COLOR_ALIAS: Record<string, string> = { "ไวท์โอ็ค": "ไวท์โอ๊ค", "Aztecgray": "Aztec gray", "aztec gray": "Aztec gray", "ขาว": "อบขาว" };
+const normColor = (c: string) => { const t = String(c ?? "").replace(/[()]/g, "").trim(); return COLOR_ALIAS[t] ?? (t || "ไม่ระบุสี"); };
 const colorRank = (c: string) => { const i = COLOR_ORDER.indexOf(c); return i < 0 ? 100 : i; };
 
 export default function AluSummary({ canWrite }: { canWrite: boolean }) {
@@ -69,7 +71,8 @@ export default function AluSummary({ canWrite }: { canWrite: boolean }) {
     const secs = order
       .map((k) => ({ key: k, label: types.find((t) => t.key === k)?.label ?? k, rows: list.filter((p) => p.type === k) }))
       .filter((s) => s.rows.length)
-      .map((s) => ({ ...s, rows: s.rows.sort((a, b) => (a.code || "~").localeCompare(b.code || "~") || a.base.localeCompare(b.base)) }));
+      // มีรหัส B/F ขึ้นก่อน เรียงตามรหัส · เส้นไม่มีรหัส (กล่อง/ฉาก/ต่อกลาง…) ตามหลัง เรียงตามชื่อ
+      .map((s) => ({ ...s, rows: s.rows.sort((a, b) => (Number(!a.code) - Number(!b.code)) || a.code.localeCompare(b.code) || a.base.localeCompare(b.base, "th", { numeric: true })) }));
     return { sections: secs, colors: cols };
   }, [items, type, brand, search, onlyHave, types]);
 
