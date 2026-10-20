@@ -56,10 +56,24 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
   const saveName = (v: string) => { setName(v); setAskName(false); if (isChang) { try { localStorage.setItem(NAME_KEY, v); } catch { /* ignore */ } } };
 
   const itemsQ = useQuery({ queryKey: ["alu-pick-items"], queryFn: () => api.get<{ items: PickableItem[] }>("/alu-picks/items"), staleTime: 5 * 60 * 1000 });
-  const jobsQ = useQuery({ queryKey: ["alu-pick-jobs"], queryFn: () => api.get<PickJob[]>("/alu-picks/jobs"), staleTime: 60 * 1000 });
+  const jobsQ = useQuery({ queryKey: ["alu-pick-jobs"], queryFn: () => api.get<PickJob[]>("/alu-picks/jobs"), staleTime: 30 * 1000, refetchInterval: 60 * 1000, refetchOnWindowFocus: true });
   const mineQ = useQuery({ queryKey: ["alu-picks-mine", name], queryFn: () => api.get<Pick[]>("/alu-picks?mine=1&days=60"), enabled: !!name });
   const items = itemsQ.data?.data.items ?? [];
   const jobs = jobsQ.data?.data ?? [];
+  // ชุดเดียวกับบอร์ดตารางผลิตฝั่งช่าง: งานที่ผลิตเสร็จแล้ว (READY = ส่งติดตั้ง) บอร์ดซ่อน → หน้าเบิกก็ซ่อน
+  //   ค้นชื่อแล้วค่อยโชว์ (เผื่อเบิกเส้นไปแก้งานที่ส่งติดตั้งไปแล้ว) พร้อมป้าย "ผลิตเสร็จแล้ว"
+  const activeJobs = useMemo(() => jobs.filter((j) => j.status !== "READY"), [jobs]);
+  // ชื่อลูกค้าซ้ำหลายงาน (เช่น คุณไอซ์ 3 งาน) → ป้ายเตือนให้ดูรหัสงาน/ที่อยู่ก่อนกด
+  const nameCount = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const j of jobs) { const k = j.title.replace(/\s+/g, ""); m.set(k, (m.get(k) ?? 0) + 1); }
+    return m;
+  }, [jobs]);
+  const shownJobs = useMemo(() => {
+    const qq = jobQ.trim().toLowerCase();
+    if (!qq) return activeJobs;
+    return jobs.filter((j) => `${j.title} ${j.job_code ?? ""} ${j.subtitle ?? ""}`.toLowerCase().includes(qq));
+  }, [jobQ, jobs, activeJobs]);
   const mine = mineQ.data?.data ?? [];
   const byId = useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
 
@@ -96,7 +110,7 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
   const totalBars = cartRows.reduce((s, r) => s + r.qty, 0);
   const setQty = (id: number, qty: number) => setD((x) => ({ ...x, cart: { ...x.cart, [id]: Math.max(0, Math.round(qty * 100) / 100) } }));
 
-  const whoLabel = d.job ? d.job.title : d.reason === "repair" ? "งานซ่อม" : d.reason === "other" ? `อื่นๆ: ${d.reasonNote}` : "";
+  const whoLabel = d.job ? `${d.job.title}${d.job.job_code ? " · " + d.job.job_code : ""}` : d.reason === "repair" ? "งานซ่อม" : d.reason === "other" ? `อื่นๆ: ${d.reasonNote}` : "";
 
   async function save() {
     if (!name.trim()) { setAskName(true); return; }
@@ -181,13 +195,26 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
             className="w-full rounded-[12px] px-3 min-h-[48px] text-[15px] bg-white outline-none mb-2.5" style={{ border: `1px solid ${C.line}`, color: C.ink }} />
           <div className="grid grid-cols-1 gap-2 mb-3">
             {jobsQ.isLoading && <p className="text-center py-6" style={{ color: C.ink2 }}>กำลังโหลดงาน…</p>}
-            {jobs.filter((j) => !jobQ.trim() || `${j.title} ${j.job_code ?? ""}`.toLowerCase().includes(jobQ.trim().toLowerCase())).slice(0, 40).map((j) => (
-              <button key={j.job_id} onClick={() => { setD({ ...d, job: { job_id: j.job_id, title: j.title, job_code: j.job_code }, reason: "", reasonNote: "" }); setStep("items"); }}
-                className="min-w-0 min-h-[56px] rounded-[14px] px-4 py-2 text-left flex flex-col justify-center" style={{ background: C.card }}>
-                <span className="block w-full text-[16px] font-bold truncate" style={{ color: C.ink }}>{j.title}</span>
-                <span className="block w-full text-[12px] truncate" style={{ color: C.ink2 }}>{j.job_code ?? ""}{j.due_date ? ` · เสร็จ ${j.due_date.slice(5).replace("-", "/")}` : ""}{j.subtitle ? ` · ${j.subtitle}` : ""}</span>
-              </button>
-            ))}
+            {!jobsQ.isLoading && jobsQ.isError && <p className="text-center py-4 text-[13px]" style={{ color: C.red }}>โหลดรายชื่องานไม่ได้ — ลองดึงหน้าลงเพื่อโหลดใหม่</p>}
+            {!jobsQ.isLoading && !jobsQ.isError && shownJobs.length === 0 && <p className="text-center py-4 text-[13px]" style={{ color: C.ink3 }}>{jobQ.trim() ? "ไม่พบงานชื่อนี้" : "ไม่มีงานในตารางผลิตตอนนี้"}</p>}
+            {shownJobs.slice(0, 60).map((j) => {
+              const dup = (nameCount.get(j.title.replace(/\s+/g, "")) ?? 0) > 1;
+              const done = j.status === "READY";
+              return (
+                <button key={j.job_id} onClick={() => { setD({ ...d, job: { job_id: j.job_id, title: j.title, job_code: j.job_code }, reason: "", reasonNote: "" }); setStep("items"); }}
+                  className="min-w-0 min-h-[56px] rounded-[14px] px-4 py-2 text-left flex flex-col justify-center" style={{ background: C.card, opacity: done ? 0.75 : 1 }}>
+                  <span className="flex w-full items-center gap-1.5 min-w-0">
+                    <span className="text-[16px] font-bold truncate" style={{ color: C.ink }}>{j.title}</span>
+                    {dup && <span className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: "#fff3e0", color: "#b26a00" }}>ชื่อซ้ำ ดูรหัสงาน</span>}
+                    {done && <span className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ background: C.bg, color: C.ink2 }}>ผลิตเสร็จแล้ว</span>}
+                  </span>
+                  <span className="block w-full text-[12.5px] truncate" style={{ color: dup ? C.ink : C.ink2, fontWeight: dup ? 600 : 400 }}>{j.job_code ?? ""}{j.due_date ? ` · เสร็จ ${j.due_date.slice(5).replace("-", "/")}` : ""}{j.subtitle ? ` · ${j.subtitle}` : ""}</span>
+                </button>
+              );
+            })}
+            {!jobQ.trim() && jobs.length > activeJobs.length && (
+              <p className="text-center text-[12px] py-1" style={{ color: C.ink3 }}>งานที่ผลิตเสร็จแล้ว ({jobs.length - activeJobs.length} งาน) ไม่โชว์ — พิมพ์ชื่อค้นได้</p>
+            )}
           </div>
         </Shell>
       ) : step === "items" ? (
