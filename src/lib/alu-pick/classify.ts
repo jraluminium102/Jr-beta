@@ -16,7 +16,7 @@ import type { PickTypeKey } from "./groups";
 /** ตระกูลรุ่นของใบตัด → หมวด */
 const FAMILY_TYPE: Record<string, PickTypeKey> = {
   sms_slide: "slide", fuji_slide: "slide", toprail: "slide", slimlux: "slimlux",
-  fuji_swing: "swing", fuji_hung: "swing", velora: "swing",
+  fuji_swing: "swing", fuji_hung: "lift", velora: "swing",
   fuji_door: "swing", pcdoor: "swing", solid: "swing", gate: "swing",     // ประตู = บานเปิด
   fixed: "swing", fuji_fix: "swing",                                      // บานติดตาย ยุบเข้าบานเปิด/กระทุ้ง
   sms_bifold: "bifold", euro_bifold: "bifold", euro_lift: "bifold",
@@ -27,7 +27,7 @@ const FAMILY_TYPE: Record<string, PickTypeKey> = {
 const CALC_TYPE: Record<string, PickTypeKey> = {
   sms_slide: "slide", euro_slide: "slide", topslide: "slide", eseries: "slide", gate: "slide",
   slimlux: "slimlux",
-  open_door: "swing", awning: "swing", fixed: "swing", velora: "swing", pcdoor: "swing", banyok: "swing",
+  open_door: "swing", awning: "swing", fixed: "swing", velora: "swing", pcdoor: "swing", banyok: "lift",
   curve_fixed: "swing", curve_open: "swing",
   folding: "bifold", fold_euro: "bifold",
   woodjamb: "muangthong",
@@ -35,10 +35,11 @@ const CALC_TYPE: Record<string, PickTypeKey> = {
 /** ชื่อบอกประเภท (ใช้เมื่อสูตรไม่รู้จักโปรไฟล์นี้) */
 const NAME_TYPE: [RegExp, PickTypeKey][] = [
   [/เมืองทอง|เสาบานพับ/, "muangthong"],
-  [/^OPK-|^XSW/i, "slimlux"],
+  [/^OPK-|^XSW|มือจับ\s*xj|รางสแตนเล/i, "slimlux"],   // มือจับ X-J + รางสแตนเลสโค้ง = ของ SlimLux (เจ้าของเคาะ 20 ต.ค.69)
   [/เลื่อน|เลือน|เกี่ยว/, "slide"],            // "เลือน" สโตร์พิมพ์ตกไม้เอก · ตบเกี่ยว/เสาเกี่ยว = บานเลื่อน
   [/เฟี้ยม/, "bifold"],
-  [/ติดตาย|บานตาย|กระทุ้ง|บานเปิด|บานยก|ประตู|แบ่งบาน|กล่องก้าน|บานมุ้ง|คิ้วกรอบบาน|คิ้วลอย|บังใบ/, "swing"],
+  [/บานยก/, "lift"],
+  [/ติดตาย|บานตาย|กระทุ้ง|บานเปิด|ประตู|แบ่งบาน|กล่องก้าน|บานมุ้ง|คิ้วกรอบบาน|คิ้วลอย|บังใบ/, "swing"],
   [/ระแนง/, "louver"],
 ];
 /** รหัสที่ยืนยันจากแคตตาล็อก/ราคาปลีกว่าเป็นชุดบานเลื่อน แต่ชื่อไม่บอก */
@@ -145,7 +146,7 @@ export function pickInfoOf(r: PickSourceRow): PickInfo | null {
   if (!types.size && isAuxAluName(nm)) return out(["other"]);   // ลูกฟูก/เส้นกลาง/ตบร่อง… ใช้ได้ทุกรุ่น
 
   // กติกาเจ้าของ: หมวดเฉพาะ (เมืองทอง/SlimLux/บานเลื่อน) ไม่ซ้ำหมวดอื่น
-  for (const only of ["muangthong", "slimlux", "slide"] as PickTypeKey[]) {
+  for (const only of ["muangthong", "slimlux", "slide", "lift"] as PickTypeKey[]) {
     if (types.has(only)) return out([only], brand);
   }
   return out(types.size ? [...types] : ["other"], brand);

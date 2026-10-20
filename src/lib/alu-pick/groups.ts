@@ -23,12 +23,14 @@ export const reasonLabel = (reason: string, note?: string | null) =>
  *   · ตามประเภทบาน ไม่ใช่ตามยี่ห้ออย่างเดียว → ชิปยี่ห้อด้านใน
  *   · ประตู + บานติดตาย ยุบเข้า "บานเปิด / กระทุ้ง" · SlimLux แยกหมวด · เมืองทอง แยกหมวด
  *   · เส้นบานเลื่อนขึ้นแค่หมวดบานเลื่อน · ลูกฟูก/ยู อยู่กับ ฉาก/Z · ไม่เอาหลังคา
+ *   · บานยก แยกหมวด (รอบ 3) · มือจับ xj + รางสแตนเลสโค้ง อยู่ SlimLux
  */
-export type PickTypeKey = "slide" | "slimlux" | "swing" | "bifold" | "muangthong" | "louver" | "box" | "angle" | "other";
+export type PickTypeKey = "slide" | "slimlux" | "swing" | "lift" | "bifold" | "muangthong" | "louver" | "box" | "angle" | "other";
 export const PICK_TYPES: { key: PickTypeKey; label: string }[] = [
   { key: "slide", label: "บานเลื่อน" },
   { key: "slimlux", label: "SlimLux" },
   { key: "swing", label: "บานเปิด / กระทุ้ง" },
+  { key: "lift", label: "บานยก" },
   { key: "bifold", label: "บานเฟี้ยม" },
   { key: "muangthong", label: "เมืองทอง" },
   { key: "louver", label: "บานระแนง" },
