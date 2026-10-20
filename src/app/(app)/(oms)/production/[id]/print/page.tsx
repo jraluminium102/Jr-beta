@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import Icon from "@/components/Icon";
 import PrintButton from "./PrintButton";
 import { PROD_STATUS } from "@/lib/constants";
+import { withNickname } from "@/lib/production/nickname";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +42,10 @@ export default async function ProductionPrintPage({
   params: { id: string };
 }) {
   const supabase = createClient();
+
+  // ชื่อเรียกในงานผลิต (0159) — query แยก (ยังไม่รัน migration = ไม่มีวงเล็บ ไม่ล่ม)
+  const nickRes = await (supabase as unknown as { from: (t: string) => any }).from("productions").select("nickname").eq("id", params.id).maybeSingle();
+  const nickname = (nickRes?.data?.nickname as string | undefined) ?? "";
 
   // 1) Fetch production row + job
   const { data: prod } = await supabase
@@ -183,7 +188,7 @@ export default async function ProductionPrintPage({
               ลูกค้า
             </span>
             <span className="font-semibold">
-              {job?.customer_name ?? "—"}
+              {withNickname(job?.customer_name, nickname) || "—"}
             </span>
 
             {job?.customer_area && (

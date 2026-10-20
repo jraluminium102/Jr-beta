@@ -43,12 +43,20 @@ const schema = z.object({
   producer_note: z.string().nullish(),
   notes:      z.string().nullish(),
   remark:     z.string().nullish(),
+  // ชื่อเรียกในงานผลิต (0159) — วงเล็บหลังชื่อลูกค้า · โน้ตเฉย ๆ ไม่แตะชื่อลูกค้า/ใบเสนอ
+  nickname:   z.string().max(60).nullish(),
 });
 
 // ช่างกด "เริ่มผลิต"/"ส่งติดตั้ง" ผ่านลิงก์ได้ (เหมือนที่ทำได้ในเว็บหลัก) — guard ธุรกิจอยู่ในหน้าเว็บ+ล่างนี้
 export const PATCH = withRoute(async (req: Request, { params }: Params) => {
   const ctx = await requireChangOr(req, "production", "write");
   const body = schema.parse(clean(await req.json()));
+  if (body.nickname !== undefined) {
+    // ช่างผ่านลิงก์ตั้งชื่อเรียกไม่ได้ (ออฟฟิศเป็นคนตั้ง)
+    if (ctx.isChang) return err("ชื่อเรียกในงานผลิต ตั้งได้จากหน้าผลิตของออฟฟิศเท่านั้น", 403);
+    // คอลัมน์ not null default '' → ลบ = "" (clean() แปลง "" เป็น null)
+    body.nickname = String(body.nickname ?? "").trim();
+  }
 
   // undo "พร้อมติดตั้ง": READY → กลับไปกำลังผลิต (กันกดผิด) — อนุญาตเฉพาะเส้นนี้เส้นเดียว
   const isUndoReady = body.status === "MANUFACTURING";
@@ -123,6 +131,7 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
 
   const { data, error } = await ctx.supabase
     .from("productions").update(body).eq("id", params.id).select().single();
+  if (error && /nickname/i.test(error.message ?? "")) return err("ยังไม่ได้รัน migration 0159 (ชื่อเรียกในงานผลิต) — รันก่อนใช้งาน", 400);
   if (error || !data) throw new Error(error?.message ?? "Update failed");
 
   // เจ้าของสั่ง 15 ก.ย.69: แก้วันติดตั้ง / วันกำหนดผลิตเสร็จ ระดับงาน → เติมให้ "ทุกชุด" (production_sets) อัตโนมัติ

@@ -14,6 +14,28 @@ import { FloorWorkBadge } from "@/components/ui/FloorWorkBadge";
 import { SplitOrdersPanel } from "@/components/production/SplitOrdersPanel";
 import type { BlockerNote } from "@/components/production/BlockerNotesInline";
 import type { ProdStatus } from "@/lib/database.types";
+import { withNickname } from "@/lib/production/nickname";
+
+/** ช่องตั้งชื่อเรียกในวงเล็บ — พิมพ์แล้วกดบันทึก (Enter ก็ได้) · ลบให้ว่าง = ไม่มีวงเล็บ */
+function NicknameEditor({ value, saving, saved, onSave }: { value: string; saving: boolean; saved: boolean; onSave: (v: string) => void }) {
+  const [v, setV] = useState(value);
+  useEffect(() => { setV(value); }, [value]);
+  const dirty = v.trim() !== (value ?? "").trim();
+  return (
+    <div className="mt-2 flex items-center gap-2 flex-wrap">
+      <span className="text-xs" style={{ color: "var(--t-mid)" }}>ชื่อในวงเล็บ</span>
+      <input value={v} onChange={(e) => setV(e.target.value)} maxLength={60}
+        onKeyDown={(e) => { if (e.key === "Enter" && dirty) onSave(v.trim()); }}
+        placeholder="เช่น บ้านอุตรดิตถ์ / หลังที่ 2 (ไม่บังคับ)"
+        className="focusable glass-card rounded-lg px-3 py-1.5 text-sm text-white outline-none placeholder-white/40 w-[260px] max-w-full min-h-[36px]" />
+      {dirty && (
+        <button onClick={() => onSave(v.trim())} disabled={saving}
+          className="focusable pressable rounded-lg px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600/80 disabled:opacity-50">บันทึก</button>
+      )}
+      {saved && !dirty && <span className="text-xs text-emerald-300">บันทึกแล้ว</span>}
+    </div>
+  );
+}
 
 export type ProdRow = {
   id: string; job_id: string; status: ProdStatus;
@@ -28,6 +50,7 @@ export type ProdRow = {
   cover_sheet_rev_stale?: boolean;                                       // (0136) ใบเสนอถูก Rev หลังสร้างใบปะหน้า — เตือนบนชิป
   drawing_rev_stale?: boolean;                                           // (0136) ใบเสนอถูก Rev หลังสร้าง/สแตมป์แบบ (แถวใดแถวหนึ่ง) — เตือนบนชิป
   measure_round_no?: number | null;                                      // รอบวัด (0130) — >1 = วัดซ้ำมาแล้ว
+  nickname?: string | null;                                              // ชื่อเรียกในงานผลิต (0159) — วงเล็บหลังชื่อลูกค้า
   job: {
     job_code: string; customer_name: string; customer_area: string | null; deposit_date: string | null;
     floor_work?: string | null; floor_note?: string | null;             // งานพื้น ผรม. (0090) — read-only marker
@@ -554,7 +577,11 @@ export function ProductionStepModal({
                 </span>
               )}
             </div>
-            <div className="text-sm truncate" style={{ color: "var(--t-mid)" }}>{prod.job?.customer_name} · {prod.job?.customer_area ?? "—"}</div>
+            <div className="text-sm truncate" style={{ color: "var(--t-mid)" }}>
+              {withNickname(prod.job?.customer_name, row.nickname)} · {prod.job?.customer_area ?? "—"}
+            </div>
+            {/* ชื่อเรียกในงานผลิต (เจ้าของสั่ง 20 ต.ค.69) — โน้ตเฉย ๆ ขึ้นในวงเล็บหลังชื่อ หน้าผลิต/ช่าง/ติดตั้ง · ไม่แตะชื่อลูกค้าเดิม */}
+            {canWrite && <NicknameEditor value={row.nickname ?? ""} saving={saving} onSave={(v) => patch({ nickname: v }, { close: false, feedbackKey: "nickname" })} saved={savedField === "nickname"} />}
           </div>
           <button onClick={onClose} aria-label="ปิด" className="focusable pressable w-11 h-11 inline-flex items-center justify-center rounded-xl text-white/75 hover:bg-white/10 shrink-0"><X size={22} /></button>
         </div>

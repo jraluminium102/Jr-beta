@@ -360,8 +360,11 @@ export default function InstallationPage() {
                     const items = byDate.get(ds) || [];
                     const crewCount = crewCountsByDate.get(ds) ?? 0;
                     // ลูกค้าจากจัดทีมรายวัน ที่ยังไม่ได้โชว์อยู่ในแผนปฏิทิน (กันชื่อซ้ำ 2 บรรทัด)
+                    // เทียบแบบตัด "(ชื่อเรียกในงานผลิต)" ท้ายชื่อออก — จัดทีมรายวันเก็บชื่อเดิม ส่วนแผนติดตั้งต่อวงเล็บแล้ว (0159)
+                    const bare = (s: string) => s.trim().replace(/\s*\([^()]*\)\s*$/, "").trim();
                     const planNames = new Set(items.map((a) => nameOf(a).trim()));
-                    const crewOnly = (crewCustsByDate.get(ds) ?? []).filter((c) => !planNames.has(c.name.trim()));
+                    const planBare = new Set(items.map((a) => bare(nameOf(a))));
+                    const crewOnly = (crewCustsByDate.get(ds) ?? []).filter((c) => !planNames.has(c.name.trim()) && !planBare.has(bare(c.name)));
                     // "จองจากผลิต" ที่ยังไม่ได้ลงคิวจริง/ไม่ซ้ำกับที่โชว์แล้ว
                     const bookedItems = (bookedByDate.get(ds) ?? []).filter((b) => !planNames.has((b.customer_name || "").trim()));
                     return (

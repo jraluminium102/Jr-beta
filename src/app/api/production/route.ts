@@ -2,6 +2,7 @@ import { requirePermission } from "@/lib/bff/context";
 import { withRoute } from "@/lib/bff/handler";
 import { ok } from "@/lib/bff/response";
 import { can } from "@/lib/rbac";
+import { nicknamesByJob, withNickname } from "@/lib/production/nickname";
 
 // GET /api/production — ตารางงานผลิตทั้งหมด (สำหรับช่าง) + ข้อมูลงาน + วันสำคัญ
 export const GET = withRoute(async () => {
@@ -92,13 +93,16 @@ export const GET = withRoute(async () => {
   const isStale = (quotationId: number | null, storedRev: number) =>
     quotationId != null && (revByQuoteId[quotationId] ?? 0) > storedRev;
 
+  // ชื่อเรียกในงานผลิต (0159) — query แยก: ยังไม่รัน migration = ว่าง ไม่กระทบตารางหลัก
+  const nickByJob = await nicknamesByJob(ctx.supabase as unknown as { from: (t: string) => any }, jobIds);
+
   // งานที่ "ซ่อนจากผลิต" (0152 soft delete) → แยกไปลิสต์ hidden (กู้คืนได้) ไม่โชว์ในตารางหลัก
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const hidden = (data ?? [])
     .filter((p: any) => p.job && p.job.status !== "CANCELLED" && p.job.hidden_from_production === true)
     .map((p: any) => ({
       production_id: p.id, job_id: p.job_id,
-      job_code: p.job?.job_code ?? null, customer_name: p.job?.customer_name ?? null,
+      job_code: p.job?.job_code ?? null, customer_name: withNickname(p.job?.customer_name, nickByJob[p.job_id]) || null,
       customer_area: p.job?.customer_area ?? null, hidden_at: p.job?.hidden_at ?? null,
     }));
 
@@ -121,6 +125,8 @@ export const GET = withRoute(async () => {
       const drawingRows = p.job_id ? (drawingByJob[p.job_id as string] ?? []) : [];
       return {
         ...p,
+        // ชื่อเรียกในวงเล็บ (โชว์หลังชื่อ · แก้ได้ในโมดัลงาน) — job.customer_name คงชื่อเดิมไว้
+        nickname: p.job_id ? (nickByJob[p.job_id as string] ?? "") : "",
         job: jobRest,
         cutlists: p.job_id ? (cutsByJob[p.job_id as string] ?? []) : [],
         cover_sheet_exists: !!cover,

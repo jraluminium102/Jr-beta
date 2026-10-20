@@ -16,6 +16,7 @@
  */
 
 import { buildSalesResolver } from "@/lib/sales-resolve";
+import { withNickname } from "./nickname";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Sb = { from: (t: string) => any };
@@ -27,6 +28,8 @@ export type ScheduleRow = {
   id: string;
   job_id: string | null;
   title: string;
+  /** ชื่อลูกค้าเดิม ไม่มีวงเล็บชื่อเรียก (title = ชื่อ + "(ชื่อเรียก)") — ใช้ตอนต้องบันทึกชื่อลงที่อื่น */
+  customer_name?: string | null;
   subtitle: string | null;
   job_code: string | null;
   customer_area: string | null;
@@ -58,10 +61,15 @@ export const SET_COLS =
  * @param sb  client ที่มีสิทธิ์อ่านแล้ว (ctx.supabase ของคนล็อกอิน หรือ service client ของลิงก์ช่าง)
  */
 export async function buildScheduleRows(sb: Sb): Promise<ScheduleRow[]> {
+  // nickname (0159 · ชื่อเรียกในวงเล็บหลังชื่อลูกค้า) — ถ้ายังไม่รัน migration → ดึงซ้ำแบบไม่มีคอลัมน์ (บอร์ดห้ามว่างทั้งหน้า)
+  const PROD_COLS = "id, job_id, status, production_queued, production_due_date, planned_install_date, producer_note, job:job_id(job_code, customer_name, customer_area, status)";
+  const pullProds = async () => {
+    const withNick = await sb.from("productions").select(PROD_COLS + ", nickname").in("status", SCHEDULE_STATUSES as unknown as string[]);
+    if (!withNick.error) return withNick;
+    return sb.from("productions").select(PROD_COLS).in("status", SCHEDULE_STATUSES as unknown as string[]);
+  };
   const [{ data: prods }, { data: adhoc }, resolveSales] = await Promise.all([
-    sb.from("productions")
-      .select("id, job_id, status, production_queued, production_due_date, planned_install_date, producer_note, job:job_id(job_code, customer_name, customer_area, status)")
-      .in("status", SCHEDULE_STATUSES as unknown as string[]),
+    pullProds(),
     sb.from("adhoc_production_tasks").select("*").neq("status", "DONE"),
     // เซลล์ต่องาน — resolver คืน (job)=>ชื่อเซลล์ · ถ้า RLS อ่านคิวไม่ได้ก็คืน null (ไม่ล้มบอร์ด)
     buildSalesResolver(sb).catch(() => (() => null)),
@@ -111,7 +119,9 @@ export async function buildScheduleRows(sb: Sb): Promise<ScheduleRow[]> {
         kind: "job" as const,
         id: p.id as string,
         job_id: jobId,
-        title: job?.customer_name ?? "—",
+        // ชื่อลูกค้า (ชื่อเรียกในงานผลิต) — ต่อวงเล็บที่ withNickname ที่เดียว · ชื่อเดิมไม่เปลี่ยน
+        title: withNickname(job?.customer_name, p.nickname as string | null) || "—",
+        customer_name: job?.customer_name ?? null,
         subtitle: job?.customer_area ?? null,
         job_code: job?.job_code ?? null,
         customer_area: job?.customer_area ?? null,
@@ -122,6 +132,7 @@ export async function buildScheduleRows(sb: Sb): Promise<ScheduleRow[]> {
         status: p.status as string,
         sets: p.job_id ? (setsByJob[p.job_id as string] ?? []) : [],
         cutlists: p.job_id ? (cutsByJob[p.job_id as string] ?? []) : [],
+        // หาเซลล์ด้วยชื่อลูกค้าเดิม (ไม่มีวงเล็บ)
         sales_name: jobId ? resolveSales({ id: jobId, customer_name: job?.customer_name ?? null }) : null,
       };
     });

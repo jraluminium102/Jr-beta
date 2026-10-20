@@ -18,6 +18,7 @@ import CutlistChip, { type CutBrief } from "@/components/production/CutlistChip"
 import CoverSheetChip from "@/components/cover-sheet/CoverSheetChip";
 import DrawingChip from "@/components/cover-sheet/DrawingChip";
 import AddProductionJobModal from "@/components/production/AddProductionJobModal";
+import { withNickname } from "@/lib/production/nickname";
 
 type Row = ProdRow & {
   status_updated_at: string | null; created_at: string;
@@ -266,6 +267,7 @@ export default function ProductionPage() {
     if (term) list = list.filter((r) =>
       (r.job?.job_code ?? "").toLowerCase().includes(term) ||
       (r.job?.customer_name ?? "").toLowerCase().includes(term) ||
+      String((r as { nickname?: string | null }).nickname ?? "").toLowerCase().includes(term) ||
       (r.job?.customer_area ?? "").toLowerCase().includes(term));
     // ภายใน PENDING_MEASURE: รอจัดคิว (ยังไม่นัด) มาก่อน รอวัดจริง (นัดแล้ว)
     const schedRank = (r: Row) => (r.status === "PENDING_MEASURE" && r.measure_scheduled ? 1 : 0);
@@ -441,7 +443,7 @@ export default function ProductionPage() {
                     {(r.measure_round_no ?? 1) > 1 && (
                       <span className="text-[11px] font-bold rounded-full px-2 py-0.5 bg-sky-500/25 border border-sky-300/35 text-sky-100">🔁 วัดรอบ {r.measure_round_no}</span>
                     )}
-                    <span className="text-[13px]" style={{ color: "var(--t-mid)" }}>{r.job?.customer_name}</span>
+                    <span className="text-[13px]" style={{ color: "var(--t-mid)" }}>{withNickname(r.job?.customer_name, (r as { nickname?: string | null }).nickname)}</span>
                     {/* โน้ตเด่น "ทำไมยังวัด/ผลิตไม่ได้" (0098) — กดใส่/เอาออกเร็วจากรายการ */}
                     <BlockerNotesInline jobId={r.job_id} customerName={r.job?.customer_name ?? ""} notes={r.job?.job_blocker_notes ?? []} canWrite={canWrite} onChanged={invalidateAll} />
                     {/* ใบตัดของงาน (0094) — กดเปิด/สร้างผูกลูกค้า · เชื่อมกับหน้าช่าง */}

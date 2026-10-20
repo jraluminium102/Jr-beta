@@ -1,6 +1,7 @@
 import { requirePermission } from "@/lib/bff/context";
 import { withRoute } from "@/lib/bff/handler";
 import { ok, err } from "@/lib/bff/response";
+import { nicknamesByJob, withNickname } from "@/lib/production/nickname";
 
 // GET /api/install-plan?from=YYYY-MM-DD&to=YYYY-MM-DD
 // คืน { teams, assignments(ในช่วง+ข้อมูลงาน), ready(งานผลิตเสร็จ รอจัดคิว) }
@@ -132,18 +133,30 @@ export const GET = withRoute(async (req: Request) => {
       customer_name: p.job.customer_name, job_code: p.job.job_code, customer_area: p.job.customer_area,
     }));
 
+  // ── ชื่อเรียกในงานผลิต (0159) → วงเล็บหลังชื่อลูกค้า ทุกจุดของหน้าติดตั้ง (เจ้าของสั่ง 20 ต.ค.69) ──
+  //   ต่อที่ชื่อที่ส่งออกเท่านั้น (jobs.customer_name ในฐานข้อมูลไม่แตะ) · ทุกลิสต์ต่อเหมือนกัน → ตัวกันซ้ำที่เทียบชื่อยังตรงกัน
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const asgRows = ((asgR.data ?? []) as any[]).filter((a) => notHidden(a.job_id));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const readyRows = ((readyR.data ?? []) as any[]).filter((r) => hasQuote(r.job_id) && notHidden(r.job_id));
+  const nick = await nicknamesByJob(sb, [
+    ...asgRows.map((a) => a.job_id), ...readyRows.map((r) => r.job_id), ...jobIdsAll,
+    ...hiddenJobs.map((h) => h.id),
+  ]);
+  const deco = (name: string | null | undefined, jobId: string | null | undefined) => (jobId && nick[jobId] ? withNickname(name, nick[jobId]) : (name ?? ""));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const decoJob = (row: any) => (row?.jobs ? { ...row, jobs: { ...row.jobs, customer_name: deco(row.jobs.customer_name, row.job_id) } } : row);
+
   return ok({
     teams: teamsR.data ?? [],
     // การ์ดในปฏิทิน — ตัดงานที่ซ่อนออกด้วย (ลูกค้าขึ้นผิดที่เผลอลงคิวไปแล้ว) · คิวนอกระบบ (ไม่มี job) ไม่แตะ
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    assignments: ((asgR.data ?? []) as any[]).filter((a) => notHidden(a.job_id)),
+    assignments: asgRows.map(decoJob),
     // ready = งานพร้อมติดตั้ง เฉพาะที่มีใบเสนอในระบบ (ซ่อนงานไม่มีใบเสนอ)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ready: ((readyR.data ?? []) as any[]).filter((r) => hasQuote(r.job_id) && notHidden(r.job_id)),
+    ready: readyRows.map(decoJob),
     jobSets,   // ชุดของแต่ละงาน (option ป้ายคิว — เลือกในโมดัลได้ ไม่บังคับ)
-    readyToClose,   // งานที่ติดตั้งจบแล้ว รอปิดงาน (name-based)
-    booked,
-    producing,
-    hidden: hiddenJobs,   // งานที่ซ่อน (ลูกค้าขึ้นผิด) — ไว้กู้คืน
+    readyToClose: readyToClose.map((r) => ({ ...r, customer_name: deco(r.customer_name, r.job_id) })),   // งานที่ติดตั้งจบแล้ว รอปิดงาน (name-based)
+    booked: booked.map((b) => ({ ...b, customer_name: deco(b.customer_name, b.job_id) })),
+    producing: producing.map((p) => ({ ...p, customer_name: deco(p.customer_name, p.job_id) })),
+    hidden: hiddenJobs.map((h) => ({ ...h, customer_name: deco(h.customer_name, h.id) })),   // งานที่ซ่อน (ลูกค้าขึ้นผิด) — ไว้กู้คืน
   });
 });

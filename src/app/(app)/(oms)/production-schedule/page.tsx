@@ -769,7 +769,7 @@ export default function ProductionSchedulePage() {
                       {/* ใบตัดของงาน (0094) — กดเปิด/สร้างผูกลูกค้า · เชื่อมกับหน้าผลิตออฟฟิศ (เจ้าของสั่ง 22 ก.ค.69) */}
                       {r.kind === "job" && (
                         <div onClick={(e) => e.stopPropagation()}>
-                          <CutlistChip jobId={r.job_id} customerName={r.title} cutlists={(r as { cutlists?: CutBrief[] }).cutlists} canWrite={canWrite} />
+                          <CutlistChip jobId={r.job_id} customerName={(r as { customer_name?: string | null }).customer_name || r.title} cutlists={(r as { cutlists?: CutBrief[] }).cutlists} canWrite={canWrite} />
                         </div>
                       )}
 
