@@ -2,7 +2,8 @@ import { withRoute } from "@/lib/bff/handler";
 import { ok } from "@/lib/bff/response";
 import { fetchAllPaged } from "@/lib/supabase/fetch-all";
 import { pickCtx } from "@/lib/alu-pick/route-helpers";
-import { pickInfoOf, PICK_TYPES, PICK_BRANDS } from "@/lib/alu-pick/groups";
+import { PICK_TYPES, PICK_BRANDS } from "@/lib/alu-pick/groups";
+import { pickInfoOf } from "@/lib/alu-pick/classify";
 import { stockDisplayName } from "@/lib/stock/display-name";
 
 export const dynamic = "force-dynamic";

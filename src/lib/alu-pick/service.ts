@@ -10,7 +10,7 @@
  * ⚠ สต็อกห้ามติดลบ (0074 check) — เช็คคงเหลือก่อนทุกครั้ง แล้วบอกเป็นภาษาคนว่าเส้นไหนไม่พอ
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { pickGroupOf } from "./groups";
+import { pickGroupOf } from "./classify";
 export type Sb = { from: (t: string) => any };
 
 export type PickActor = { userId: string | null; name: string; isChang: boolean };
