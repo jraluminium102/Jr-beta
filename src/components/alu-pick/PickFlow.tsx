@@ -161,19 +161,7 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
         </Shell>
       ) : step === "job" ? (
         <Shell title="เบิกไปงานไหน?" sub="กดชื่อลูกค้า — งานที่อยู่ในตารางผลิตขึ้นให้เลย">
-          <input value={jobQ} onChange={(e) => setJobQ(e.target.value)} placeholder="ค้นชื่อลูกค้า (ไม่บังคับ)" inputMode="search"
-            className="w-full rounded-[12px] px-3 min-h-[48px] text-[15px] bg-white outline-none mb-2.5" style={{ border: `1px solid ${C.line}`, color: C.ink }} />
-          <div className="grid grid-cols-1 gap-2 mb-3">
-            {jobsQ.isLoading && <p className="text-center py-6" style={{ color: C.ink2 }}>กำลังโหลดงาน…</p>}
-            {jobs.filter((j) => !jobQ.trim() || `${j.title} ${j.job_code ?? ""}`.toLowerCase().includes(jobQ.trim().toLowerCase())).slice(0, 40).map((j) => (
-              <button key={j.job_id} onClick={() => { setD({ ...d, job: { job_id: j.job_id, title: j.title, job_code: j.job_code }, reason: "", reasonNote: "" }); setStep("items"); }}
-                className="min-w-0 min-h-[56px] rounded-[14px] px-4 py-2 text-left flex flex-col justify-center" style={{ background: C.card }}>
-                <span className="block w-full text-[16px] font-bold truncate" style={{ color: C.ink }}>{j.title}</span>
-                <span className="block w-full text-[12px] truncate" style={{ color: C.ink2 }}>{j.job_code ?? ""}{j.due_date ? ` · เสร็จ ${j.due_date.slice(5).replace("-", "/")}` : ""}{j.subtitle ? ` · ${j.subtitle}` : ""}</span>
-              </button>
-            ))}
-          </div>
-          <div className="rounded-[14px] p-3" style={{ background: C.card }}>
+          <div className="rounded-[14px] p-3 mb-3" style={{ background: C.card }}>
             <div className="text-[14px] font-semibold mb-2" style={{ color: C.ink }}>ไม่มีชื่อลูกค้า</div>
             <div className="grid grid-cols-2 gap-2">
               {PICK_REASONS.map((r) => (
@@ -189,6 +177,18 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
               <button onClick={() => setStep("items")} className="w-full min-h-[48px] rounded-[12px] text-[15px] font-bold text-white mt-2" style={{ background: C.blue }}>ถัดไป → เลือกเส้น</button>
             )}
           </div>
+          <input value={jobQ} onChange={(e) => setJobQ(e.target.value)} placeholder="ค้นชื่อลูกค้า (ไม่บังคับ)" inputMode="search"
+            className="w-full rounded-[12px] px-3 min-h-[48px] text-[15px] bg-white outline-none mb-2.5" style={{ border: `1px solid ${C.line}`, color: C.ink }} />
+          <div className="grid grid-cols-1 gap-2 mb-3">
+            {jobsQ.isLoading && <p className="text-center py-6" style={{ color: C.ink2 }}>กำลังโหลดงาน…</p>}
+            {jobs.filter((j) => !jobQ.trim() || `${j.title} ${j.job_code ?? ""}`.toLowerCase().includes(jobQ.trim().toLowerCase())).slice(0, 40).map((j) => (
+              <button key={j.job_id} onClick={() => { setD({ ...d, job: { job_id: j.job_id, title: j.title, job_code: j.job_code }, reason: "", reasonNote: "" }); setStep("items"); }}
+                className="min-w-0 min-h-[56px] rounded-[14px] px-4 py-2 text-left flex flex-col justify-center" style={{ background: C.card }}>
+                <span className="block w-full text-[16px] font-bold truncate" style={{ color: C.ink }}>{j.title}</span>
+                <span className="block w-full text-[12px] truncate" style={{ color: C.ink2 }}>{j.job_code ?? ""}{j.due_date ? ` · เสร็จ ${j.due_date.slice(5).replace("-", "/")}` : ""}{j.subtitle ? ` · ${j.subtitle}` : ""}</span>
+              </button>
+            ))}
+          </div>
         </Shell>
       ) : step === "items" ? (
         <Shell title={whoLabel} sub="กดประเภทบาน → กดโปรไฟล์ → เลือกสี ใส่จำนวน" onBack={() => setStep("job")}>
@@ -196,16 +196,25 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
             className="w-full rounded-[12px] px-3 min-h-[48px] text-[15px] bg-white outline-none mb-2.5" style={{ border: `1px solid ${C.line}`, color: C.ink }} />
           {!q.trim() && (
             <>
-              <div className="grid grid-cols-3 gap-2 mb-2.5">
-                {frequent.length > 0 && <GroupBtn on={group === "fav"} label="⭐ เบิกบ่อย" onClick={() => pickGroup("fav")} />}
-                {PICK_TYPES.filter((t) => items.some((i) => i.types.includes(t.key))).map((t) => (
-                  <GroupBtn key={t.key} on={group === t.key} label={t.label} onClick={() => pickGroup(t.key)} />
-                ))}
-              </div>
+              {!group ? (
+                <div className="grid grid-cols-3 gap-2 mb-2.5">
+                  {frequent.length > 0 && <GroupBtn on={false} label="⭐ เบิกบ่อย" onClick={() => pickGroup("fav")} />}
+                  {PICK_TYPES.filter((t) => items.some((i) => i.types.includes(t.key))).map((t) => (
+                    <GroupBtn key={t.key} on={false} label={t.label} onClick={() => pickGroup(t.key)} />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex gap-1.5 overflow-x-auto pb-2 -mx-1 px-1">
+                  {frequent.length > 0 && <Chip on={group === "fav"} label="⭐ เบิกบ่อย" onClick={() => pickGroup("fav")} />}
+                  {PICK_TYPES.filter((t) => items.some((i) => i.types.includes(t.key))).map((t) => (
+                    <Chip key={t.key} on={group === t.key} label={t.label} onClick={() => pickGroup(t.key)} />
+                  ))}
+                </div>
+              )}
               {group && group !== "fav" && brandsHere.length > 1 && (
                 <div className="flex gap-1.5 overflow-x-auto pb-2 -mx-1 px-1">
-                  <Chip on={!brand} label="ทุกยี่ห้อ" onClick={() => { setBrand(""); setOpen(""); setLimit(40); }} />
-                  {brandsHere.map((b) => <Chip key={b.key} on={brand === b.key} label={b.label} onClick={() => { setBrand(b.key); setOpen(""); setLimit(40); }} />)}
+                  <Chip tone="brand" on={!brand} label="ทุกยี่ห้อ" onClick={() => { setBrand(""); setOpen(""); setLimit(40); }} />
+                  {brandsHere.map((b) => <Chip tone="brand" key={b.key} on={brand === b.key} label={b.label} onClick={() => { setBrand(b.key); setOpen(""); setLimit(40); }} />)}
                 </div>
               )}
             </>
@@ -275,8 +284,9 @@ function GroupBtn({ on, label, sub, onClick }: { on: boolean; label: string; sub
     </button>
   );
 }
-function Chip({ on, label, onClick }: { on: boolean; label: string; onClick: () => void }) {
-  return <button onClick={onClick} className="shrink-0 rounded-full px-3.5 min-h-[38px] text-[13.5px] font-semibold" style={{ background: on ? C.ink : C.card, color: on ? "#fff" : C.ink }}>{label}</button>;
+function Chip({ on, label, onClick, tone }: { on: boolean; label: string; onClick: () => void; tone?: "brand" }) {
+  const onBg = tone === "brand" ? C.ink : C.blue;   // หมวด = ฟ้า · ยี่ห้อ = ดำ
+  return <button onClick={onClick} className="shrink-0 whitespace-nowrap rounded-full px-3.5 min-h-[40px] text-[14px] font-semibold" style={{ background: on ? onBg : C.card, color: on ? "#fff" : C.ink }}>{label}</button>;
 }
 function ItemRow({ it, qty, onQty }: { it: PickableItem; qty: number; onQty: (v: number) => void }) {
   const on = qty > 0;
