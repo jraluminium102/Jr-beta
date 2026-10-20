@@ -43,6 +43,7 @@ export default function AluSummary({ canWrite }: { canWrite: boolean }) {
   const [search, setSearch] = useState("");
   const [onlyHave, setOnlyHave] = useState(false);
   const [edit, setEdit] = useState<PickableItem | null>(null);
+  const { favs, toggleFav, favLocal } = useFavorites(canWrite);
 
   // หน้าตัด (รวมทุกสี) · "ทุกประเภท" = จัดเข้าประเภทแรกของเส้น (ไม่ซ้ำแถว) · เลือกประเภท = ทุกเส้นที่ใช้กับประเภทนั้น
   const { sections, colors } = useMemo(() => {
@@ -73,8 +74,11 @@ export default function AluSummary({ canWrite }: { canWrite: boolean }) {
       .filter((s) => s.rows.length)
       // มีรหัส B/F ขึ้นก่อน เรียงตามรหัส · เส้นไม่มีรหัส (กล่อง/ฉาก/ต่อกลาง…) ตามหลัง เรียงตามชื่อ
       .map((s) => ({ ...s, rows: s.rows.sort((a, b) => (Number(!a.code) - Number(!b.code)) || a.code.localeCompare(b.code) || a.base.localeCompare(b.base, "th", { numeric: true })) }));
-    return { sections: secs, colors: cols };
-  }, [items, type, brand, search, onlyHave, types]);
+    const favRows = list.filter((p) => favs.has(p.pkey)).sort((a, b) => (Number(!a.code) - Number(!b.code)) || a.code.localeCompare(b.code) || a.base.localeCompare(b.base, "th", { numeric: true }));
+    // เฟบไว้ = ซ้ำคีย์กับหมวดเดิม → key แถวต้องต่างกัน (ใส่ prefix)
+    const favSec = favRows.length ? [{ key: "__fav", label: "⭐ เฟบไว้", rows: favRows }] : [];
+    return { sections: [...favSec, ...secs], colors: cols };
+  }, [items, type, brand, search, onlyHave, types, favs]);
 
   const totalBars = sections.reduce((s, sec) => s + sec.rows.reduce((t, p) => t + [...p.byColor.values()].reduce((u, x) => u + Math.max(0, x.qty), 0), 0), 0);
   const brandsHere = brands.filter((b) => items.some((i) => i.brand === b.key && (!type || i.types.includes(type))));
@@ -104,7 +108,7 @@ export default function AluSummary({ canWrite }: { canWrite: boolean }) {
         </div>
         <p className="text-xs text-ink-3">
           {sections.reduce((s, x) => s + x.rows.length, 0)} หน้าตัด · รวม {fmtQty(totalBars)} เส้น · ช่องเทา = หน้าตัดนี้ไม่มีสีนั้นในสโตร์
-          {canWrite ? " · กดตัวเลขเพื่อแก้จำนวน" : ""}
+          {canWrite ? " · กดตัวเลขเพื่อแก้จำนวน · กด ☆ เฟบไว้บนสุด" : ""}{favLocal ? " · (เฟบเก็บในเครื่องนี้ชั่วคราว — ยังไม่ได้รัน 0160)" : ""}
         </p>
       </div>
 
@@ -121,7 +125,7 @@ export default function AluSummary({ canWrite }: { canWrite: boolean }) {
                       <div className="rounded-xl bg-white/95 shadow-sm px-3 py-2 text-[14px] font-bold text-brand-dark">{sec.label} <span className="font-normal text-ink-3">({sec.rows.length})</span></div>
                     </div>
                     <div className="space-y-2 mt-1">
-                      {sec.rows.map((p) => <ProfileCard key={p.pkey} p={p} canWrite={canWrite} onEdit={setEdit} />)}
+                      {sec.rows.map((p) => <ProfileCard key={sec.key + "|" + p.pkey} p={p} canWrite={canWrite} onEdit={setEdit} fav={favs.has(p.pkey)} onFav={() => toggleFav(p.pkey)} />)}
                     </div>
                   </div>
                 ))}
@@ -141,7 +145,7 @@ export default function AluSummary({ canWrite }: { canWrite: boolean }) {
                   </thead>
                   <tbody>
                     {sections.map((sec) => (
-                      <SectionRows key={sec.key} label={sec.label} rows={sec.rows} colors={colors} canWrite={canWrite} onEdit={setEdit} />
+                      <SectionRows key={sec.key} secKey={sec.key} label={sec.label} rows={sec.rows} colors={colors} canWrite={canWrite} onEdit={setEdit} favs={favs} onFav={toggleFav} />
                     ))}
                   </tbody>
                 </table>
@@ -155,7 +159,7 @@ export default function AluSummary({ canWrite }: { canWrite: boolean }) {
 }
 
 /** มือถือ: 1 การ์ด = 1 หน้าตัด · ชิปสีละช่อง (3 ช่องต่อแถว) กดแก้จำนวน · สีที่ไม่มี = ชิปเทาจาง */
-function ProfileCard({ p, canWrite, onEdit }: { p: Profile; canWrite: boolean; onEdit: (it: PickableItem) => void }) {
+function ProfileCard({ p, canWrite, onEdit, fav, onFav }: { p: Profile; canWrite: boolean; onEdit: (it: PickableItem) => void; fav: boolean; onFav: () => void }) {
   const present = [...p.byColor.entries()].sort((a, b) => colorRank(a[0]) - colorRank(b[0]) || a[0].localeCompare(b[0]));
   const total = present.reduce((s, [, it]) => s + Math.max(0, it.qty), 0);
   return (
@@ -166,6 +170,7 @@ function ProfileCard({ p, canWrite, onEdit }: { p: Profile; canWrite: boolean; o
           <div className="text-[15px] font-bold text-ink">{p.code ? `${p.code} ` : ""}{p.base}</div>
           <div className="text-[12px] text-ink-3">{present.length} สี · รวม <b className={total > 0 ? "text-ink-2" : "text-red-500"}>{fmtQty(total)}</b> เส้น</div>
         </div>
+        <FavStar on={fav} onClick={onFav} />
       </div>
       <div className="grid grid-cols-3 gap-1.5 mt-2">
         {present.map(([c, it]) => {
@@ -187,8 +192,9 @@ function ProfileCard({ p, canWrite, onEdit }: { p: Profile; canWrite: boolean; o
   );
 }
 
-function SectionRows({ label, rows, colors, canWrite, onEdit }: {
-  label: string; rows: Profile[]; colors: string[]; canWrite: boolean; onEdit: (it: PickableItem) => void;
+function SectionRows({ secKey, label, rows, colors, canWrite, onEdit, favs, onFav }: {
+  secKey: string; label: string; rows: Profile[]; colors: string[]; canWrite: boolean; onEdit: (it: PickableItem) => void;
+  favs: Set<string>; onFav: (pkey: string) => void;
 }) {
   return (
     <>
@@ -199,9 +205,10 @@ function SectionRows({ label, rows, colors, canWrite, onEdit }: {
         </td>
       </tr>
       {rows.map((p) => (
-        <tr key={p.pkey}>
-          <td className="sticky left-0 z-10 bg-white px-2 py-1.5 border-b border-r border-black/10 align-middle min-w-[150px] max-w-[190px]">
-            <div className="flex items-center gap-2 min-w-0">
+        <tr key={secKey + "|" + p.pkey}>
+          <td className="sticky left-0 z-10 bg-white px-2 py-1.5 border-b border-r border-black/10 align-middle min-w-[180px] max-w-[220px]">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <FavStar on={favs.has(p.pkey)} onClick={() => onFav(p.pkey)} small />
               <Thumb url={p.image_url} size={40} />
               <div className="min-w-0 leading-tight">
                 {p.code && <div className="text-[12px] font-bold text-ink">{p.code}</div>}
@@ -279,6 +286,41 @@ function EditQty({ item, onClose, onSaved }: { item: PickableItem; onClose: () =
     </div>,
     document.body,
   );
+}
+
+function FavStar({ on, onClick, small }: { on: boolean; onClick: () => void; small?: boolean }) {
+  return (
+    <button onClick={(e) => { e.stopPropagation(); onClick(); }} aria-label={on ? "เอาออกจากเฟบ" : "เฟบไว้บนสุด"} title={on ? "เอาออกจากเฟบ" : "เฟบไว้บนสุด"}
+      className={`press shrink-0 inline-flex items-center justify-center rounded-full ${small ? "w-8 h-8 text-[18px]" : "w-11 h-11 text-[24px]"} ${on ? "text-amber-500" : "text-gray-300 hover:text-amber-400"}`}>
+      {on ? "★" : "☆"}
+    </button>
+  );
+}
+
+const FAV_LS = "alu_fav_pkeys";
+/** เฟบ — เก็บกลาง (/api/alu-picks/favorites · 0160) · ตารางยังไม่มี → localStorage ชั่วคราว · กดแล้วเห็นทันที (optimistic) */
+function useFavorites(canWrite: boolean) {
+  const qc = useQueryClient();
+  const fq = useQuery({ queryKey: ["alu-favs"], queryFn: () => api.get<string[]>("/alu-picks/favorites"), staleTime: 60 * 1000 });
+  const favLocal = !!(fq.data?.meta as { missing?: boolean } | undefined)?.missing;
+  const [local, setLocal] = useState<string[]>(() => { try { return JSON.parse(localStorage.getItem(FAV_LS) || "[]"); } catch { return []; } });
+  const favs = useMemo(() => new Set(favLocal ? local : (fq.data?.data ?? [])), [favLocal, local, fq.data]);
+  const toggleFav = async (pkey: string) => {
+    if (!canWrite) return;
+    const on = !favs.has(pkey);
+    if (favLocal) {
+      const next = on ? [...local, pkey] : local.filter((k) => k !== pkey);
+      setLocal(next); try { localStorage.setItem(FAV_LS, JSON.stringify(next)); } catch { /* ignore */ }
+      return;
+    }
+    // optimistic: อัปเดตแคชก่อน แล้วค่อยยิง · พลาดก็โหลดกลับ
+    qc.setQueryData(["alu-favs"], (old: { data: string[]; meta?: unknown } | undefined) =>
+      ({ ...(old ?? { data: [] }), data: on ? [...(old?.data ?? []), pkey] : (old?.data ?? []).filter((k) => k !== pkey) }));
+    try { await api.post("/alu-picks/favorites", { pkey, on }); }
+    catch { /* ignore */ }
+    finally { qc.invalidateQueries({ queryKey: ["alu-favs"] }); }
+  };
+  return { favs, toggleFav, favLocal };
 }
 
 function Chip({ on, dark, onClick, children }: { on: boolean; dark?: boolean; onClick: () => void; children: React.ReactNode }) {
