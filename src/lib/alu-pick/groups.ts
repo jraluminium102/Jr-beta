@@ -48,9 +48,9 @@ const FAMILY_TYPE: Record<string, PickTypeKey> = {
 };
 /** ชื่อบอกประเภทชัด ๆ (ใช้เมื่อสูตรตัดไม่รู้จักโปรไฟล์นี้) — เช่น "เฟรมล่างบานเลื่อน" "10-เฟรมบานกระทุ้ง" */
 const NAME_TYPE: [RegExp, PickTypeKey][] = [
-  [/เลื่อน/, "slide"],
+  [/เลื่อน|เลือน|^OPK-|^XSW/i, "slide"],   // OPK/XSW = รหัส SlimLux · "เลือน" สโตร์พิมพ์ตกไม้เอก
   [/เฟี้ยม/, "bifold"],
-  [/ติดตาย|\bfix\b/i, "fixed"],
+  [/ติดตาย|บานตาย|\bfix\b/i, "fixed"],
   [/กระทุ้ง|บานเปิด|บานยก/, "swing"],
   [/ประตู/, "door"],
   [/ระแนง/, "louver"],
