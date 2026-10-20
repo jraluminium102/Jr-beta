@@ -23,36 +23,35 @@ export const reasonLabel = (reason: string, note?: string | null) =>
 /**
  * หมวดในหน้าเบิก — เจ้าของเคาะ 20 ต.ค.69: "แยกหมวดบานเลื่อน บานเปิด ตามประเภท ไม่เอาตามยี่ห้ออย่างเดียว"
  *   ประเภทบานก่อน → กรองยี่ห้อด้านใน (ชิป) · กล่อง/ฉาก/อื่นๆ ไม่แยกยี่ห้อ · ไม่เอาหลังคา
- *   เส้นเดียวใช้ได้หลายประเภท (เช่น เฟรมที่ใช้ทั้งบานเปิดและประตู) → โผล่ทุกหมวดที่ใช้
+ *   20 ต.ค.69 รอบ 2: ประตู + บานติดตาย ยุบเข้า "บานเปิด / กระทุ้ง" · เส้นของบานเลื่อนขึ้นแค่หมวดบานเลื่อน (ไม่ซ้ำหมวดอื่น)
+ *   · ฉาก → "ฉาก / Z"
  */
-export type PickTypeKey = "slide" | "swing" | "door" | "bifold" | "fixed" | "louver" | "box" | "angle" | "other";
+export type PickTypeKey = "slide" | "swing" | "bifold" | "louver" | "box" | "angle" | "other";
 export const PICK_TYPES: { key: PickTypeKey; label: string }[] = [
   { key: "slide", label: "บานเลื่อน" },
   { key: "swing", label: "บานเปิด / กระทุ้ง" },
-  { key: "door", label: "ประตู" },
   { key: "bifold", label: "บานเฟี้ยม" },
-  { key: "fixed", label: "บานติดตาย" },
   { key: "louver", label: "บานระแนง" },
   { key: "box", label: "กล่อง" },
-  { key: "angle", label: "ฉาก" },
+  { key: "angle", label: "ฉาก / Z" },
   { key: "other", label: "อื่นๆ" },
 ];
 /** ตระกูลรุ่น (FAMILIES ของใบตัด) → ประเภทบาน */
 const FAMILY_TYPE: Record<string, PickTypeKey> = {
   sms_slide: "slide", fuji_slide: "slide", slimlux: "slide", toprail: "slide",
   fuji_swing: "swing", fuji_hung: "swing", velora: "swing", woodjamb: "swing",
-  fuji_door: "door", pcdoor: "door", solid: "door", gate: "door",
+  fuji_door: "swing", pcdoor: "swing", solid: "swing", gate: "swing",   // ประตู = บานเปิด
   sms_bifold: "bifold", euro_bifold: "bifold", euro_lift: "bifold",
-  fixed: "fixed", fuji_fix: "fixed",
+  fixed: "swing", fuji_fix: "swing",                                    // บานติดตาย ยุบเข้าบานเปิด/กระทุ้ง
   louver: "louver",
 };
 /** ชื่อบอกประเภทชัด ๆ (ใช้เมื่อสูตรตัดไม่รู้จักโปรไฟล์นี้) — เช่น "เฟรมล่างบานเลื่อน" "10-เฟรมบานกระทุ้ง" */
 const NAME_TYPE: [RegExp, PickTypeKey][] = [
   [/เลื่อน|เลือน|^OPK-|^XSW/i, "slide"],   // OPK/XSW = รหัส SlimLux · "เลือน" สโตร์พิมพ์ตกไม้เอก
   [/เฟี้ยม/, "bifold"],
-  [/ติดตาย|บานตาย|\bfix\b/i, "fixed"],
+  [/ติดตาย|บานตาย|\bfix\b/i, "swing"],
   [/กระทุ้ง|บานเปิด|บานยก/, "swing"],
-  [/ประตู/, "door"],
+  [/ประตู/, "swing"],
   [/ระแนง/, "louver"],
 ];
 export const PICK_BRANDS: { key: string; label: string }[] = [
@@ -120,7 +119,9 @@ export function pickInfoOf(r: PickSourceRow): PickInfo | null {
   // อลูเสริมทั่วไป (ไม่มีรหัส B/F) = ใช้ได้ทุกรุ่น ไม่แยกยี่ห้อ · ตัวที่มีรหัส B/F เป็นโปรไฟล์ของแบรนด์ เก็บยี่ห้อไว้
   if (!code && isAuxAluName(nm)) return { types: ["other"], brand: "", pkey, base, code };   // ลูกฟูก/เส้นกลาง/ตบร่อง… ใช้ได้ทุกรุ่น
   const types = [...new Set(fams.map((k) => FAMILY_TYPE[k]).filter(Boolean))] as PickTypeKey[];
-  if (!types.length) for (const [re, t] of NAME_TYPE) if (re.test(nm)) types.push(t);
+  if (!types.length) for (const [re, t] of NAME_TYPE) if (re.test(nm) && !types.includes(t)) types.push(t);
+  // เส้นของบานเลื่อน ขึ้นแค่หมวดบานเลื่อน (เจ้าของ: "ซ้ำกับบานเลื่อน ก็มาโชว์อีกทำไม")
+  if (types.includes("slide")) types.splice(0, types.length, "slide");
   return { types: types.length ? types : ["other"], brand, pkey, base, code };
 }
 
