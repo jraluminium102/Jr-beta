@@ -83,14 +83,14 @@ export default function AluSummary({ canWrite }: { canWrite: boolean }) {
     <div className="space-y-3">
       {/* ตัวกรอง: ประเภท (ฟ้า) · ยี่ห้อ · ค้น · เฉพาะที่มีของ */}
       <div className="glass-card rounded-2xl p-3 space-y-2">
-        <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+        <div className="flex flex-wrap gap-1.5">
           <Chip on={!type} onClick={() => { setType(""); setBrand(""); }}>ทุกประเภท</Chip>
           {types.filter((t) => items.some((i) => i.types.includes(t.key))).map((t) => (
             <Chip key={t.key} on={type === t.key} onClick={() => { setType(t.key); setBrand(""); }}>{t.label}</Chip>
           ))}
         </div>
         {brandsHere.length > 1 && (
-          <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+          <div className="flex flex-wrap gap-1.5">
             <Chip dark on={!brand} onClick={() => setBrand("")}>ทุกยี่ห้อ</Chip>
             {brandsHere.map((b) => <Chip dark key={b.key} on={brand === b.key} onClick={() => setBrand(b.key)}>{b.label}</Chip>)}
           </div>
@@ -112,8 +112,22 @@ export default function AluSummary({ canWrite }: { canWrite: boolean }) {
         : q.isError ? <p className="text-center py-10 text-red-600">โหลดไม่สำเร็จ — ลองกดรีเฟรช</p>
           : sections.length === 0 ? <p className="text-center py-10 text-ink-3">ไม่พบเส้นตามตัวกรองนี้</p>
             : (
-              // กล่องเลื่อนเอง (สูงไม่เกินจอ) → หัวตาราง sticky บน + คอลัมน์รูป sticky ซ้าย ทำงานทั้งคอมและมือถือ
-              <div className="rounded-2xl bg-white shadow-sm overflow-auto max-h-[calc(100dvh-220px)]" style={{ WebkitOverflowScrolling: "touch" }}>
+              <>
+              {/* มือถือ (เจ้าของ 20 ต.ค.69 "ไม่ถนัดเลื่อนซ้ายขวา"): การ์ดต่อหน้าตัด เลื่อนลงอย่างเดียว · หัวประเภทติดบน */}
+              <div className="md:hidden space-y-2">
+                {sections.map((sec) => (
+                  <div key={sec.key}>
+                    <div className="sticky top-0 z-20 py-1">
+                      <div className="rounded-xl bg-white/95 shadow-sm px-3 py-2 text-[14px] font-bold text-brand-dark">{sec.label} <span className="font-normal text-ink-3">({sec.rows.length})</span></div>
+                    </div>
+                    <div className="space-y-2 mt-1">
+                      {sec.rows.map((p) => <ProfileCard key={p.pkey} p={p} canWrite={canWrite} onEdit={setEdit} />)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* จอกว้าง: ตารางหน้าตัด × สี · หัวตาราง sticky บน + คอลัมน์รูป sticky ซ้าย */}
+              <div className="hidden md:block rounded-2xl bg-white shadow-sm overflow-auto max-h-[calc(100dvh-220px)]" style={{ WebkitOverflowScrolling: "touch" }}>
                 <table className="border-separate border-spacing-0 text-[13px] tabular-nums" style={{ minWidth: "100%" }}>
                   <thead>
                     <tr>
@@ -132,9 +146,43 @@ export default function AluSummary({ canWrite }: { canWrite: boolean }) {
                   </tbody>
                 </table>
               </div>
+              </>
             )}
 
       {edit && <EditQty item={edit} onClose={() => setEdit(null)} onSaved={() => { setEdit(null); qc.invalidateQueries({ queryKey: ["alu-pick-items"] }); qc.invalidateQueries({ queryKey: ["alu-ledger"] }); }} />}
+    </div>
+  );
+}
+
+/** มือถือ: 1 การ์ด = 1 หน้าตัด · ชิปสีละช่อง (3 ช่องต่อแถว) กดแก้จำนวน · สีที่ไม่มี = ชิปเทาจาง */
+function ProfileCard({ p, canWrite, onEdit }: { p: Profile; canWrite: boolean; onEdit: (it: PickableItem) => void }) {
+  const present = [...p.byColor.entries()].sort((a, b) => colorRank(a[0]) - colorRank(b[0]) || a[0].localeCompare(b[0]));
+  const total = present.reduce((s, [, it]) => s + Math.max(0, it.qty), 0);
+  return (
+    <div className="rounded-2xl bg-white shadow-sm p-3">
+      <div className="flex items-center gap-2.5">
+        <Thumb url={p.image_url} size={48} />
+        <div className="min-w-0 flex-1 leading-tight">
+          <div className="text-[15px] font-bold text-ink">{p.code ? `${p.code} ` : ""}{p.base}</div>
+          <div className="text-[12px] text-ink-3">{present.length} สี · รวม <b className={total > 0 ? "text-ink-2" : "text-red-500"}>{fmtQty(total)}</b> เส้น</div>
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-1.5 mt-2">
+        {present.map(([c, it]) => {
+          const zero = !(it.qty > 0);
+          const low = !zero && it.min_qty > 0 && it.qty <= it.min_qty;
+          const num = zero ? "text-red-500" : low ? "text-amber-600" : "text-ink";
+          const inner = (
+            <>
+              <span className="block text-[11.5px] text-ink-3 truncate">{COLOR_SHORT[c] ?? c}</span>
+              <span className={`block text-[18px] font-bold leading-tight tabular-nums ${num}`}>{fmtQty(it.qty)}</span>
+            </>
+          );
+          return canWrite
+            ? <button key={c} onClick={() => onEdit(it)} className="press min-h-[52px] rounded-xl bg-gray-50 border border-black/5 px-2 py-1 text-center">{inner}</button>
+            : <div key={c} className="min-h-[52px] rounded-xl bg-gray-50 border border-black/5 px-2 py-1 text-center">{inner}</div>;
+        })}
+      </div>
     </div>
   );
 }
