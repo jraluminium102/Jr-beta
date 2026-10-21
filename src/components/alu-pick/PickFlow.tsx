@@ -41,18 +41,17 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
   const [err, setErr] = useState("");
   const [done, setDone] = useState<{ code: string; id: number } | null>(null);
 
-  // ชื่อช่าง + ร่างที่ค้าง (เผื่อหน้าโหลดใหม่กลางทาง)
+  // ชื่อช่างที่จำไว้ · เปิดหน้ามาต้องเริ่มที่ "เบิกไปงานไหน" เสมอ
+  //   (เจ้าของ 21 ต.ค.69: เคยจำร่างค้างแล้วเด้งเข้าหน้าเลือกเส้นของลูกค้าเดิม ช่างงง → เลิกจำร่าง)
   useEffect(() => {
     if (fixedName) return;
     try {
       // ออฟฟิศเบิกแทนช่าง = เลือกชื่อช่างใหม่ทุกใบ (ไม่จำ) · มือถือช่าง = จำชื่อไว้
       const n = isChang ? (localStorage.getItem(NAME_KEY) || "") : "";
       setName(n); if (!n) setAskName(true);
-      const raw = localStorage.getItem(DRAFT_KEY);
-      if (raw) { const dd = JSON.parse(raw) as Draft; if (dd && Object.keys(dd.cart ?? {}).length) { setD({ ...EMPTY, ...dd }); setStep(dd.job || dd.reason ? "items" : "job"); } }
+      localStorage.removeItem(DRAFT_KEY);   // ล้างร่างเก่าที่เครื่องช่างเคยเก็บไว้
     } catch { /* ignore */ }
   }, [fixedName, isChang]);
-  useEffect(() => { try { localStorage.setItem(DRAFT_KEY, JSON.stringify(d)); } catch { /* ignore */ } }, [d]);
   const saveName = (v: string) => { setName(v); setAskName(false); if (isChang) { try { localStorage.setItem(NAME_KEY, v); } catch { /* ignore */ } } };
 
   const itemsQ = useQuery({ queryKey: ["alu-pick-items"], queryFn: () => api.get<{ items: PickableItem[] }>("/alu-picks/items"), staleTime: 5 * 60 * 1000 });
