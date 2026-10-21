@@ -76,7 +76,7 @@ function LoginCard({ onDone }: { onDone: (w: { code: string; name: string }) => 
           <input autoFocus inputMode="numeric" pattern="[0-9]*" value={num} maxLength={4}
             onChange={(e) => { setNum(e.target.value.replace(/\D/g, "")); setErr(""); }}
             onKeyDown={(e) => { if (e.key === "Enter") login(); }}
-            placeholder="002" aria-label="รหัสพนักงาน"
+            aria-label="รหัสพนักงาน"
             className="flex-1 min-w-0 h-[60px] px-3 text-[28px] font-bold tracking-widest outline-none" style={{ color: C.ink }} />
         </div>
         {err && <p role="alert" className="text-[14px] mt-2" style={{ color: C.red }}>{err}</p>}
