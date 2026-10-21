@@ -49,6 +49,12 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     "image_url", "is_weight_based", "weight_per_unit", "is_stocked"];
   const patch: Record<string, unknown> = {};
   for (const k of allowed) if (k in body) patch[k] = body[k];
+  // แบรนด์เส้นอลู (0157) — แก้ของเดิมได้ (เจ้าของ 21 ต.ค.69: ของทั่วไปใช้แบรนด์ตลาด) · ค่าอื่นนอกชุดนี้ไม่รับ
+  if ("alu_brand" in body) {
+    const b = String(body.alu_brand ?? "").trim();
+    if (!["", "fuji", "sms", "market", "fixed"].includes(b)) return fail("แบรนด์ต้องเป็น fuji / sms / market / fixed หรือว่าง");
+    patch.alu_brand = b;
+  }
 
   const supabase = createClient() as unknown as Sb;
 
