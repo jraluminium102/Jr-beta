@@ -57,6 +57,9 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
   const itemsQ = useQuery({ queryKey: ["alu-pick-items"], queryFn: () => api.get<{ items: PickableItem[] }>("/alu-picks/items"), staleTime: 5 * 60 * 1000 });
   const jobsQ = useQuery({ queryKey: ["alu-pick-jobs"], queryFn: () => api.get<PickJob[]>("/alu-picks/jobs"), staleTime: 30 * 1000, refetchInterval: 60 * 1000, refetchOnWindowFocus: true });
   const mineQ = useQuery({ queryKey: ["alu-picks-mine", name], queryFn: () => api.get<Pick[]>("/alu-picks?mine=1&days=60"), enabled: !!name });
+  // ประวัติ "อื่นๆ (ระบุ)" ที่เคยกรอก (ทุกช่าง) — กดเติมได้ (เจ้าของสั่ง 21 ต.ค.69)
+  const reasonsQ = useQuery({ queryKey: ["alu-pick-reasons"], queryFn: () => api.get<string[]>("/alu-picks/reasons"), staleTime: 60 * 1000 });
+  const pastReasons = reasonsQ.data?.data ?? [];
   const items = itemsQ.data?.data.items ?? [];
   const jobs = jobsQ.data?.data ?? [];
   // ชุดเดียวกับบอร์ดตารางผลิตฝั่งช่าง: งานที่ผลิตเสร็จแล้ว (READY = ส่งติดตั้ง) บอร์ดซ่อน → หน้าเบิกก็ซ่อน
@@ -128,6 +131,7 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
       setDone(r.data); setStep("done"); setD(EMPTY); setGroup(""); setBrand(""); setOpen(""); setQ("");
       qc.invalidateQueries({ queryKey: ["alu-pick-items"] });
       qc.invalidateQueries({ queryKey: ["alu-picks-mine"] });
+      qc.invalidateQueries({ queryKey: ["alu-pick-reasons"] });
     } catch (e) { setErr(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ"); }
     finally { setBusy(false); }
   }
@@ -189,8 +193,22 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
               ))}
             </div>
             {d.reason === "other" && (
-              <input value={d.reasonNote} onChange={(e) => setD({ ...d, reasonNote: e.target.value })} placeholder="เบิกไปทำอะไร เช่น ทำตัวอย่างหน้าร้าน"
-                className="w-full rounded-[12px] px-3 min-h-[48px] text-[15px] bg-white outline-none mt-2" style={{ border: `1px solid ${C.line}`, color: C.ink }} />
+              <>
+                <input value={d.reasonNote} onChange={(e) => setD({ ...d, reasonNote: e.target.value })} placeholder="เบิกไปทำอะไร เช่น ทำตัวอย่างหน้าร้าน" list="alu-pick-reason-list"
+                  className="w-full rounded-[12px] px-3 min-h-[48px] text-[15px] bg-white outline-none mt-2" style={{ border: `1px solid ${C.line}`, color: C.ink }} />
+                <datalist id="alu-pick-reason-list">{pastReasons.map((r) => <option key={r} value={r} />)}</datalist>
+                {pastReasons.length > 0 && (
+                  <div className="mt-2">
+                    <div className="text-[12px] mb-1" style={{ color: C.ink2 }}>ที่เคยกรอก — กดเพื่อใช้</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {pastReasons.filter((r) => !d.reasonNote.trim() || r.toLowerCase().includes(d.reasonNote.trim().toLowerCase())).slice(0, 12).map((r) => (
+                        <button key={r} onClick={() => setD({ ...d, reasonNote: r })} className="rounded-full px-3 min-h-[38px] text-[13.5px] font-semibold"
+                          style={{ background: d.reasonNote.trim() === r ? C.blue : C.bg, color: d.reasonNote.trim() === r ? "#fff" : C.ink }}>{r}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
             {d.reason && (d.reason !== "other" || d.reasonNote.trim()) && (
               <button onClick={() => setStep("items")} className="w-full min-h-[48px] rounded-[12px] text-[15px] font-bold text-white mt-2" style={{ background: C.blue }}>ถัดไป → เลือกเส้น</button>
