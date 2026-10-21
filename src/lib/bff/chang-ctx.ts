@@ -4,6 +4,7 @@ import { createServiceClient } from "@/lib/supabase/admin";
 import { getChangToken } from "@/lib/chang-token";
 import { getContext, Http, type Ctx } from "./context";
 import { can, type Action, type Resource } from "@/lib/rbac";
+import { changIdentity } from "@/lib/chang-staff";
 
 /**
  * "ช่างผ่านลิงก์" ให้ทำงานกับ API เดิมได้ โดยไม่ต้อง login และไม่ต้องโคลน endpoint
@@ -26,8 +27,10 @@ import { can, type Action, type Resource } from "@/lib/rbac";
 export type ChangCtx = Omit<Ctx, "profile"> & {
   /** true = มาจากลิงก์ช่าง (ไม่มี session) */
   isChang: boolean;
-  /** ชื่อที่ช่างพิมพ์ไว้ (ไว้ทำ audit) */
+  /** ชื่อคนกด — ลิงก์ช่าง: จากรหัสพนักงาน (0161) · ไม่มีรหัส = ชื่อที่ส่งมาเดิม */
   actorName: string;
+  /** รหัสพนักงานที่ล็อกอินลิงก์ช่าง ("" = ไม่ได้ล็อกอินด้วยรหัส / คนในออฟฟิศ) */
+  actorCode?: string;
   profile: Ctx["profile"] | null;
 };
 
@@ -67,12 +70,16 @@ export async function requireChangOr(
   // ไม่มี session → ลิงก์ช่าง
   if (!(await tokenOk(req))) throw Http.unauthorized();
   if (action !== "read" && changAction !== "write") throw Http.forbidden();
+  const who = await changIdentity(req);
+  // รหัสพนักงานไม่มีในระบบ/ถูกปิด → 401 (หน้าเว็บจะให้ล็อกอินใหม่)
+  if (who.invalid) throw Http.unauthorized();
   return {
     supabase: createServiceClient() as unknown as SupabaseClient<Database>,
     user: { id: "", email: null },
     profile: null,
     role: "CHANG",
     isChang: true,
-    actorName: changActorName(req),
+    actorName: who.name,
+    actorCode: who.code,
   };
 }

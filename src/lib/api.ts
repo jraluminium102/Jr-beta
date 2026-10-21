@@ -19,9 +19,10 @@ function changHeaders(): Record<string, string> {
   if (typeof window === "undefined") return {};
   const m = window.location.pathname.match(/^\/chang\/([^/]+)/);
   if (!m) return {};
-  let who = "";
-  try { who = localStorage.getItem("chang_name") || ""; } catch { /* ignore */ }
-  return { "x-chang-token": m[1], "x-chang-name": encodeURIComponent(who) };
+  let who = "", code = "";
+  try { who = localStorage.getItem("chang_name") || ""; code = localStorage.getItem("chang_code") || ""; } catch { /* ignore */ }
+  // รหัสพนักงาน (0161) — server แปลงเป็นชื่อเอง · ชื่อส่งไปด้วยเผื่อ server ยังไม่รู้จักรหัส
+  return { "x-chang-token": m[1], "x-chang-name": encodeURIComponent(who), ...(code ? { "x-chang-code": code } : {}) };
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<{ data: T; meta?: Record<string, unknown> }> {

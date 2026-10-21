@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { PICKER_NAMES, PICK_TYPES, PICK_BRANDS, PICK_REASONS } from "@/lib/alu-pick/groups";
+import { PICK_TYPES, PICK_BRANDS, PICK_REASONS } from "@/lib/alu-pick/groups";
 import PickList, { Thumb } from "./PickList";
 import { fmtQty, fmtDay, shortFactory, type Pick, type PickJob, type PickableItem, type PickProfile } from "./types";
 
@@ -47,8 +47,9 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
     if (fixedName) return;
     try {
       // ออฟฟิศเบิกแทนช่าง = เลือกชื่อช่างใหม่ทุกใบ (ไม่จำ) · มือถือช่าง = จำชื่อไว้
+      // ลิงก์ช่าง = ล็อกอินด้วยรหัสพนักงานแล้ว (ChangGate · 0161) → ชื่อมาจากตรงนั้น · ออฟฟิศเลือกชื่อช่างใหม่ทุกใบ
       const n = isChang ? (localStorage.getItem(NAME_KEY) || "") : "";
-      setName(n); if (!n) setAskName(true);
+      setName(n); if (!n && !isChang) setAskName(true);
       localStorage.removeItem(DRAFT_KEY);   // ล้างร่างเก่าที่เครื่องช่างเคยเก็บไว้
     } catch { /* ignore */ }
   }, [fixedName, isChang]);
@@ -58,6 +59,9 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
   const jobsQ = useQuery({ queryKey: ["alu-pick-jobs"], queryFn: () => api.get<PickJob[]>("/alu-picks/jobs"), staleTime: 30 * 1000, refetchInterval: 60 * 1000, refetchOnWindowFocus: true });
   const mineQ = useQuery({ queryKey: ["alu-picks-mine", name], queryFn: () => api.get<Pick[]>("/alu-picks?mine=1&days=60"), enabled: !!name });
   // ประวัติ "อื่นๆ (ระบุ)" ที่เคยกรอก (ทุกช่าง) — กดเติมได้ (เจ้าของสั่ง 21 ต.ค.69)
+  // รายชื่อช่าง (บัญชี 0161) — ออฟฟิศเลือกตอน "เบิกแทนช่าง"
+  const staffQ = useQuery({ queryKey: ["chang-staff"], queryFn: () => api.get<{ code: string; name: string }[]>("/chang-login"), enabled: !isChang, staleTime: 5 * 60 * 1000 });
+  const staff = (staffQ.data?.data ?? []).filter((x) => x.code !== "JR000" && x.code !== "JR999");
   const reasonsQ = useQuery({ queryKey: ["alu-pick-reasons"], queryFn: () => api.get<string[]>("/alu-picks/reasons"), staleTime: 60 * 1000 });
   const pastReasons = reasonsQ.data?.data ?? [];
   const items = itemsQ.data?.data.items ?? [];
@@ -121,7 +125,10 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
   const whoLabel = d.job ? `${d.job.title}${d.job.what ? " · " + d.job.what : ""}` : d.reason === "repair" ? "งานซ่อม" : d.reason === "other" ? `อื่นๆ: ${d.reasonNote}` : "";
 
   async function save() {
-    if (!name.trim()) { setAskName(true); return; }
+    if (!name.trim()) {
+      if (isChang) { try { localStorage.removeItem("chang_code"); } catch { /* ignore */ } location.reload(); return; }
+      setAskName(true); return;
+    }
     setBusy(true); setErr("");
     try {
       const r = await api.post<{ id: number; code: string }>("/alu-picks", {
@@ -140,11 +147,14 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
   // ── จอเลือกชื่อ ──
   if (askName) {
     return (
-      <Shell title={isChang ? "คุณคือใคร?" : "ช่างคนไหนหยิบของ?"} sub={isChang ? "กดชื่อตัวเอง มือถือจะจำไว้ ไม่ต้องกดอีก" : "เลือกชื่อช่างที่หยิบเส้นจริง (เลือกใหม่ทุกใบ)"}>
+      <Shell title="ช่างคนไหนหยิบของ?" sub="เลือกชื่อช่างที่หยิบเส้นจริง (เลือกใหม่ทุกใบ)">
         <div className="grid grid-cols-2 gap-2.5">
-          {PICKER_NAMES.map((n) => (
-            <button key={n} onClick={() => saveName(n)} className="min-h-[60px] rounded-[14px] text-[18px] font-bold"
-              style={{ background: n === name ? C.blue : C.card, color: n === name ? "#fff" : C.ink }}>{n}</button>
+          {staffQ.isLoading && <p className="col-span-2 text-center py-4" style={{ color: C.ink2 }}>กำลังโหลดรายชื่อ…</p>}
+          {staff.map((x) => (
+            <button key={x.code} onClick={() => saveName(x.name)} className="min-h-[60px] rounded-[14px] text-[18px] font-bold leading-tight"
+              style={{ background: x.name === name ? C.blue : C.card, color: x.name === name ? "#fff" : C.ink }}>
+              {x.name}<span className="block text-[11.5px] font-normal" style={{ color: x.name === name ? "rgba(255,255,255,.8)" : C.ink2 }}>{x.code}</span>
+            </button>
           ))}
         </div>
         <NameOther onPick={saveName} />
@@ -156,9 +166,11 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
     <div className="overflow-x-hidden" style={{ paddingBottom: "calc(96px + env(safe-area-inset-bottom))" }}>
       {/* หัว: ชื่อ + แท็บ */}
       <div className="flex items-center gap-2 px-4 pt-3">
-        <button onClick={() => !fixedName && setAskName(true)} className="rounded-full px-3 min-h-[36px] text-[13px] font-semibold" style={{ background: C.card, color: C.ink }}>
-          👤 {name || "เลือกชื่อ"}{!fixedName && <span style={{ color: C.blue }}> · เปลี่ยน</span>}
-        </button>
+        {!isChang ? (
+          <button onClick={() => !fixedName && setAskName(true)} className="rounded-full px-3 min-h-[36px] text-[13px] font-semibold" style={{ background: C.card, color: C.ink }}>
+            👤 {name || "เลือกชื่อ"}{!fixedName && <span style={{ color: C.blue }}> · เปลี่ยน</span>}
+          </button>
+        ) : <span />}
         <div className="ml-auto flex rounded-full p-0.5" style={{ background: "#e5e5ea" }}>
           {(["new", "mine"] as const).map((t) => (
             <button key={t} onClick={() => setTab(t)} className="rounded-full px-3.5 min-h-[34px] text-[13.5px] font-semibold"

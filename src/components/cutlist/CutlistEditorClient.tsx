@@ -70,7 +70,9 @@ export default function CutlistEditorClient({
     let who = changName ?? "";
     if (!who) { try { who = localStorage.getItem("chang_name") || ""; } catch { /* ignore */ } }
     // encode ก่อนใส่ header — ชื่อไทยดิบ ๆ ทำ fetch throw (header รับแค่ ISO-8859-1)
-    return { ...(extra ?? {}), "x-chang-token": changToken, "x-chang-name": encodeURIComponent(who) };
+    // รหัสพนักงาน (0161) — server แปลงเป็นชื่อเอง
+    let code = ""; try { code = localStorage.getItem("chang_code") || ""; } catch { /* ignore */ }
+    return { ...(extra ?? {}), "x-chang-token": changToken, "x-chang-name": encodeURIComponent(who), ...(code ? { "x-chang-code": code } : {}) };
   };
   const stockOf = (c: string, color?: string) => resolveStock(stock, c, color);
   // รูปโชว์อย่างเดียว (ไม่กระทบการตัดสต็อก): ถ้าตัวที่จับคู่ไม่มีรูป → ยืมรูปจากพี่น้องรหัสเดียวกันที่มีรูป

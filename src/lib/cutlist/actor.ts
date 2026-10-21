@@ -2,6 +2,7 @@ import { getProfile } from "@/lib/auth";
 import { getChangToken } from "@/lib/chang-token";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/admin";
+import { changIdentity } from "@/lib/chang-staff";
 
 /**
  * ใครกำลังใช้ใบตัด — คนล็อกอิน หรือ "ช่างผ่านลิงก์โทเคน" (ไม่ต้องล็อกอิน)
@@ -59,9 +60,10 @@ export async function cutlistActor(req: Request): Promise<CutActor | null> {
     // ⚠ HTTP header ใส่ได้แต่ ISO-8859-1 — ชื่อช่างเป็นไทยทุกคน (เนียน/กุ้ง/เป)
     //   ถ้าใส่ดิบ ๆ fetch ฝั่ง client จะ throw ทั้งคำขอเลย ("String contains non ISO-8859-1 code point")
     //   → ฝั่งหน้าเว็บ encodeURIComponent มา ที่นี่ถอดกลับ (เจอตอนเทสจริงกับชื่อไทย 16 ก.ค.2569)
-    const raw = req.headers.get("x-chang-name") ?? "";
-    let name = "";
-    try { name = decodeURIComponent(raw); } catch { name = raw; }
+    // ชื่อจากรหัสพนักงาน (0161) · ไม่มีรหัส = header ชื่อเดิม (decode แล้ว)
+    const who = await changIdentity(req);
+    if (who.invalid) return null;   // รหัสไม่มี/ถูกปิด → ไม่ให้ใช้
+    const name = who.name;
     return {
       kind: "chang",
       canWrite: true,        // ช่างสร้าง/แก้ใบตัดได้ (เจ้าของเคาะ)

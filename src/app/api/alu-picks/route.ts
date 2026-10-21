@@ -60,11 +60,12 @@ export const GET = withRoute(async (req: Request) => {
 });
 
 export const POST = withRoute(async (req: Request) => {
-  const { sb, actor } = await pickCtx(req, "write");
+  const { ctx, sb, actor } = await pickCtx(req, "write");
   const b = await req.json().catch(() => ({}));
   // ชื่อช่างที่หยิบของจริง มาจาก body (ช่างเลือกชื่อในหน้าเบิก · สโตร์เบิกแทนช่างก็เลือกชื่อช่าง) · ไม่ส่งมา = ชื่อคนกด
   //   created_by ยังเป็นคนกด (สโตร์) → สมุดสโตร์เห็นทั้ง "ผู้เบิก" และ "คนกรอก"
-  const name = String(b.picker_name ?? "").trim() || actor.name;
+  //   ช่างที่ล็อกอินด้วยรหัสพนักงาน (0161) → ใช้ชื่อตามรหัสเท่านั้น (ปลอมชื่อใน body ไม่ได้)
+  const name = (ctx.isChang && ctx.actorCode) ? actor.name : (String(b.picker_name ?? "").trim() || actor.name);
   return runPick(async () => {
     const res = await createPick(sb, { ...actor, name }, {
       job_id: typeof b.job_id === "string" && b.job_id ? b.job_id : null,
