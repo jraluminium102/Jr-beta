@@ -41,12 +41,26 @@ export const PRINT_THEME = {
   mut: "#6d616a",       // ตัวหนังสือรอง (label) — เข้มพออ่านชัด
 } as const;
 
-// สีหัวเอกสาร — โรสละมุนทุกใบ (ฟอร์มเดียวกัน ใบเสนอ/ใบวางบิล/ใบเสร็จ)
+// สกินน้ำเงินฟ้า — ใบเสร็จ (เจ้าของ 21 ต.ค.69 "ใบเสร็จ อยากเปลี่ยนสีเอกสาร เอาเป็นน้ำเงินฟ้าแบบสวย ๆ")
+//   คีย์เดียวกับ PRINT_THEME ทุกตัว → สลับทั้งชุดได้ · ตำแหน่ง/เลย์เอาท์เหมือนเดิมทุกจุด
+export type PrintTheme = { [K in keyof typeof PRINT_THEME]: string } & { copy: string };
+export const PRINT_THEME_ROSE: PrintTheme = { ...PRINT_THEME, copy: "#b58e99" };
+export const PRINT_THEME_BLUE: PrintTheme = {
+  rose: "#1f5fa6",      // สีหลัก น้ำเงินฟ้า
+  blush: "#e6f0fa",     // พื้นหัวคอลัมน์
+  blushSoft: "#f2f7fd", // พื้นบล็อกลูกค้า
+  line: "#d5e3f2",      // เส้นตาราง
+  lineHead: "#d3e2f3",  // เส้นคั่นหัวเอกสาร
+  mut: "#5c6a7b",       // ตัวหนังสือรอง
+  copy: "#7f9dc2",      // ป้าย ต้นฉบับ/สำเนา
+};
+
+// สีหัวเอกสาร — ใบเสนอ/ใบวางบิล/ใบรับประกัน โรสละมุน · ใบเสร็จ น้ำเงินฟ้า
 const BRAND = PRINT_THEME.rose;
 export const DOC_COLORS = {
   quotation: BRAND,
   billing: BRAND,
-  receipt: BRAND,
+  receipt: PRINT_THEME_BLUE.rose,
   warranty: BRAND,
 } as const;
 
@@ -62,10 +76,10 @@ export function taxInvoiceMissing(c: CustomerSnapshot): string[] {
 
 // บล็อกข้อมูลลูกค้า/ผู้ซื้อ — โชว์ (สำนักงานใหญ่/สาขา) เฉพาะนิติบุคคล
 // สกินละมุน: การ์ดชมพูนวลมีแถบโรสซ้าย (ตำแหน่ง/เนื้อหาเดิม แต่งกรอบอย่างเดียว)
-export function PrintCustomerBlock({ c, color }: { c: CustomerSnapshot; color?: string }) {
+export function PrintCustomerBlock({ c, color, theme = PRINT_THEME_ROSE }: { c: CustomerSnapshot; color?: string; theme?: PrintTheme }) {
   return (
-    <div style={{ fontSize: 13, marginTop: 14, borderLeft: `3px solid ${color ?? PRINT_THEME.rose}`, background: PRINT_THEME.blushSoft, borderRadius: "0 12px 12px 0", padding: "10px 16px" }}>
-      <span className="font-bold" style={{ color: color ?? PRINT_THEME.rose }}>ลูกค้า</span>
+    <div style={{ fontSize: 13, marginTop: 14, borderLeft: `3px solid ${color ?? theme.rose}`, background: theme.blushSoft, borderRadius: "0 12px 12px 0", padding: "10px 16px" }}>
+      <span className="font-bold" style={{ color: color ?? theme.rose }}>ลูกค้า</span>
       {/* word-break: keep-all → ตัดบรรทัดเฉพาะช่องว่าง คำไทย (กรุงเทพมหานคร / (สำนักงานใหญ่) / ชื่อเขต-แขวง) ไม่ถูกตัดกลางคำ */}
       <div className="mt-0.5" style={{ lineHeight: 1.55, wordBreak: "keep-all" }}>
         <div className="font-semibold" style={{ color: "#1f2937" }}>
@@ -89,6 +103,7 @@ export function PrintLetterhead({
   contactRows,
   customer,
   hideCustomer = false,
+  theme = PRINT_THEME_ROSE,
 }: {
   docTitle: string;
   docColor?: string;
@@ -107,6 +122,8 @@ export function PrintLetterhead({
    * (ดู scripts/verify-quote-print.mjs — วัดเพดานนี้ไว้แล้ว)
    */
   hideCustomer?: boolean;
+  /** ชุดสีเอกสาร (ตั้งต้น โรสละมุน · ใบเสร็จ = PRINT_THEME_BLUE) */
+  theme?: PrintTheme;
 }) {
   const c = customer;
   // แถวผู้ติดต่อ — โชว์แพลตฟอร์มที่คุย (LINE) + ชื่อ · แล้วเบอร์โทร
@@ -123,7 +140,7 @@ export function PrintLetterhead({
       <tbody>
         {rows.map((r, i) => (
           <tr key={i}>
-            <td style={{ color: PRINT_THEME.mut, textAlign: "right", paddingRight: 14, paddingTop: 2, paddingBottom: 2, whiteSpace: "nowrap", verticalAlign: "top" }}>{r.label}</td>
+            <td style={{ color: theme.mut, textAlign: "right", paddingRight: 14, paddingTop: 2, paddingBottom: 2, whiteSpace: "nowrap", verticalAlign: "top" }}>{r.label}</td>
             <td style={{ color: "#1f2937", textAlign: "left", paddingTop: 2, paddingBottom: 2 }}>{r.value}</td>
           </tr>
         ))}
@@ -133,7 +150,7 @@ export function PrintLetterhead({
 
   return (
     // สกินละมุน: เส้นคั่นชมพูนวลใต้หัวเอกสาร (สูงขึ้น ~3mm — thead รวมยังต่ำกว่าเพดาน 74.25mm ที่ Chrome ยอมซ้ำ)
-    <div style={{ marginBottom: 14, paddingBottom: 12, borderBottom: `2px solid ${PRINT_THEME.lineHead}` }}>
+    <div style={{ marginBottom: 14, paddingBottom: 12, borderBottom: `2px solid ${theme.lineHead}` }}>
       <div className="flex justify-between items-start" style={{ gap: 24 }}>
         {/* ซ้าย: โลโก้ + บริษัท + ลูกค้า */}
         <div style={{ flex: 1, maxWidth: "56%" }}>
@@ -146,14 +163,14 @@ export function PrintLetterhead({
             โทร. {COMPANY.phone}<br />
             {COMPANY.website}
           </div>
-          {!hideCustomer && <PrintCustomerBlock c={c} color={docColor} />}
+          {!hideCustomer && <PrintCustomerBlock c={c} color={docColor} theme={theme} />}
         </div>
 
         {/* ขวา: ชื่อเอกสาร + ต้นฉบับ + ข้อมูลเอกสาร + ผู้ติดต่อ */}
         <div className="text-right" style={{ minWidth: "40%" }}>
           <div style={{ fontSize: 22, fontWeight: 700, color: docColor, lineHeight: 1.1 }}>{docTitle}</div>
-          <div style={{ fontSize: 12, color: "#b58e99", marginBottom: 8 }}>{copyLabel}</div>
-          <div style={{ borderTop: `1px solid ${PRINT_THEME.lineHead}`, paddingTop: 8 }}>
+          <div style={{ fontSize: 12, color: theme.copy, marginBottom: 8 }}>{copyLabel}</div>
+          <div style={{ borderTop: `1px solid ${theme.lineHead}`, paddingTop: 8 }}>
             <LabelTable rows={infoRows} />
           </div>
           {contacts.length > 0 && (
