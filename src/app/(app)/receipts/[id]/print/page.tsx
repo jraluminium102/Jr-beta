@@ -55,9 +55,9 @@ export default async function ReceiptPrintPage({ params }: { params: { id: strin
         theme={T}
         copyLabel={copyLabel}
         infoRows={[
-          { label: "เลขที่", value: <span className="font-mono font-semibold">{rc.code}</span> },
+          { label: "เลขที่", value: <span className="font-semibold tabular-nums">{rc.code}</span> },
           { label: "วันที่", value: rc.issue_date },
-          ...(refCode ? [{ label: "อ้างอิงใบวางบิล", value: <span className="font-mono">{refCode}</span> }] : []),
+          ...(refCode ? [{ label: "อ้างอิงใบวางบิล", value: <span className="tabular-nums">{refCode}</span> }] : []),
         ]}
         customer={c}
       />

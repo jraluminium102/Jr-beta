@@ -148,7 +148,7 @@ export default async function BillingPrintPage({
         docColor={DOC_COLORS.billing}
         copyLabel={copyLabel}
         infoRows={[
-          { label: "เลขที่", value: <span className="font-mono font-semibold">{bn.code}</span> },
+          { label: "เลขที่", value: <span className="font-semibold tabular-nums">{bn.code}</span> },
           { label: "วันที่", value: bn.issue_date },
           {
             label: "สถานะ",

@@ -67,7 +67,7 @@ export function QuotationDoc({
         {
           label: "เลขที่",
           value: (
-            <span className="font-mono font-semibold">
+            <span className="font-semibold tabular-nums">
               {q.code}
               {/* ป้าย Rev (0093) — แก้ใบแล้วเลือกนับ Rev → พิมพ์ต่อท้ายเลขที่ */}
               {String(anyQ.revision_label ?? "").trim() ? ` · ${String(anyQ.revision_label).trim()}` : ""}

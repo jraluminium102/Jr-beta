@@ -62,7 +62,7 @@ export default function QuoteFormPreview({
         docColor={DOC_COLORS.quotation}
         customer={customer}
         infoRows={[
-          { label: "เลขที่", value: <span className="font-mono font-semibold">{code || "(ออกอัตโนมัติเมื่อบันทึก)"}</span> },
+          { label: "เลขที่", value: <span className="font-semibold tabular-nums">{code || "(ออกอัตโนมัติเมื่อบันทึก)"}</span> },
           { label: "วันที่", value: issueDate },
         ]}
       />

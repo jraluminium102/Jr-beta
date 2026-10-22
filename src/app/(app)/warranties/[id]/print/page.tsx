@@ -51,7 +51,7 @@ export default async function WarrantyPrintPage({ params }: { params: { id: stri
                 <div className="text-xs text-gray-400">Warranty Certificate</div>
                 <table className="text-xs mt-2 ml-auto">
                   <tbody>
-                    <tr><td className="text-gray-500 pr-3 text-left">เลขที่</td><td className="font-mono font-semibold">{w.code}</td></tr>
+                    <tr><td className="text-gray-500 pr-3 text-left">เลขที่</td><td className="font-semibold tabular-nums">{w.code}</td></tr>
                     <tr><td className="text-gray-500 pr-3 text-left">วันที่ออก</td><td>{w.issue_date}</td></tr>
                   </tbody>
                 </table>

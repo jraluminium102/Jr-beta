@@ -133,7 +133,7 @@ export default async function ProductionPrintPage({
                   >
                     เลขที่งาน
                   </td>
-                  <td className="font-mono font-semibold">
+                  <td className="font-semibold tabular-nums">
                     {job?.job_code ?? "—"}
                   </td>
                 </tr>
