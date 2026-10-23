@@ -22,7 +22,7 @@ td.code { font-size: 6.6pt; color: #34425a; word-break: break-all; }
 .mini td, .mini th { height: 4.1mm; font-size: 7.2pt; padding: 0 2px; line-height: 1.1; } .mini td:nth-child(2), .mini td:nth-child(3), .mini td:nth-child(5), .mini td:nth-child(6) { text-align: right; }
 .todo { margin: 0; padding-left: 5mm; font-size: 8.2pt; } .todo li { margin: .3mm 0; }
 .job { margin-top: 6px; border-top: 1.5px solid var(--ink); padding-top: 3px; } tr { break-inside: avoid; } .cover-end { break-after: page; }
-.jh h2 { font-size: 10.5pt; margin: 0 0 1px; } .no { font-size: 7.6pt; color: #fff; background: var(--ink); border-radius: 3px; padding: 0 4px; vertical-align: 1px; }
+.jh h2 { font-size: 10.5pt; margin: 0 0 1px; } .blank { font-size: 7.6pt; color: #b26a00; background: #fff3e0; border-radius: 3px; padding: 0 5px; vertical-align: 1px; font-weight: 600; } .no { font-size: 7.6pt; color: #fff; background: var(--ink); border-radius: 3px; padding: 0 4px; vertical-align: 1px; }
 .meta { display: flex; flex-wrap: wrap; gap: 0 10px; font-size: 7.5pt; margin-bottom: 2px; } .meta b { color: var(--muted); font-weight: 600; margin-right: 2px; }
 th.m, td.m { background-color: rgba(59,91,140,.045); } th.b, td.b { background-color: rgba(176,112,20,.05); }
 col.c1 { width: 5.5mm; } col.c2 { width: auto; } col.c3 { width: 12mm; } col.cp { width: 10.5mm; } col.cq { width: 16mm; } col.ca { width: 14.5mm; }
@@ -74,7 +74,7 @@ tr.tot td { font-weight: 700; background-color: #eef1f6; } tr.sub1 td { font-wei
 <li>บานเปิด 2 บาน เสากรอบบานต้องนับ 4 ต้น (เว็บ) ใช่ไหม</li>
 <li>ซิลิโคน 3 หลอด / มือจับล็อค 2 ชุด ต่อบานเลื่อน จะคงไว้หรือลด</li>
 <li>ต่อกลางเฟี้ยม B24009 ราคาจริง 810 หรือ 320</li>
-<li>บานที่ยังว่าง 27 บาน จะให้คนตรวจกรอกต่อไหม (รายชื่อท้ายเอกสาร)</li>
+<li>บานที่ยังว่าง 27 บาน จะให้คนตรวจกรอกต่อไหม (ตารางอยู่ต่อท้ายบานที่กรอกแล้ว · ช่องขาวว่างไว้ให้เขียน)</li>
 </ol><div class="cover-end"></div><section class="job"><div class="jh"><h2><span class="no">2/32</span> บานเลื่อน ยูโร</h2>
   <div class="meta"><span><b>กลาง</b> 400×280 ซม. 2 บาน</span><span><b>ใหญ่</b> 500×280 ซม. 4 บาน</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = คนตรวจเขียน · ช่องเทา = เว็บ · <span class="dd">ตัวแดง</span> = ไม่ตรงกัน</span></div></div>
   <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
@@ -354,4 +354,844 @@ tr.tot td { font-weight: 700; background-color: #eef1f6; } tr.sub1 td { font-wei
       <td class="w">8</td><td class="a">8</td>
       <td class="w d">1040</td><td class="a d">8.78</td><td class="w d">83.20</td><td class="a d">70.24</td><td class="w d">3000</td><td class="a d">26.27</td><td class="w d">240</td><td class="a d">210.16</td></tr><tr><td class="c">23</td><td class="nm">ยางรอง</td><td class="code">JR00258</td>
       <td class="w">8</td><td class="a">8</td>
-      <td class="w"></td><td class="a">8.78</td><td class="w d">72.20</td><td class="a d">70.24</td><td class="w"></td><td class="a">26.27</td><td class="w d">270.76</td><td class="a d">210.16</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w d">10,754.05</td><td colspan="2" class="a d">15,838<span class="pd">เว็บแพงกว่า 47%</span></td><td class="w d">22,950.56</td><td class="a d">24,751<span class="pd">เว็บแพงกว่า 8%</span></td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w d">22,404.27</td><td colspan="2" class="a d">37,104<span class="pd">เว็บแพงกว่า 66%</span></td><td class="w d">47,813.66</td><td class="a d">57,904<span class="pd">เว็บแพงกว่า 21%</span></td></tr></tbody></table><p class="note"><b>คนตรวจเขียนไว้:</b> ไม่มีใน ERP</p></section><section class="job"><h2 class="h" style="border:0;margin-top:0">บานที่คนตรวจยังไม่ได้กรอก (27 บาน)</h2><p class="lead">1/32 บานเลื่อน SMS · 3/32 บานเลื่อน E-series · 4/32 บานเลื่อนรางบน · 6/32 ระแนงเลื่อน (ลูกฟูกเรียบ 2 ทาง · ข้อ 38.2) · 8/32 บานหมุน (Pivot) · 9/32 ประตูบานเปิด PC Door · 10/32 Velora บานเปิด · 11/32 บานโซลิด · โซลิด 2 ชั้น · 12/32 บานโซลิด · โซลิด 1 ชั้น · 13/32 บานกระทุ้ง · 14/32 บานยก · 15/32 บานเกล็ด · 18/32 บานเฟี้ยมยก · 19/32 บานติดตาย · 20/32 บานติดตายดัดโค้ง · 21/32 หลังคา · ไวนิล · 22/32 หลังคาจั่ว · ไวนิล · 23/32 หลังคาเลื่อน (เปิด-ปิดได้) · ไวนิล · 24/32 ระแนงบังตา · 1x5 · 25/32 ระแนงบังตา · 1x4 · 26/32 ระแนงบังตา · 1x1.6 · 27/32 ประตูรั้วบานเลื่อน · ระแนง · 28/32 ระแนงสลับ (คละกล่อง 2 แบบ) · 29/32 ระแนงปรับหมุนได้ · 30/32 ประตูรั้วบานเลื่อน · ระแนงสลับ · 31/32 ฝาตู้ Future Tech (เฉพาะบานหน้า) · 32/32 ราวกันตก/ราวบันได กระจก</p></section></body></html>
+      <td class="w"></td><td class="a">8.78</td><td class="w d">72.20</td><td class="a d">70.24</td><td class="w"></td><td class="a">26.27</td><td class="w d">270.76</td><td class="a d">210.16</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w d">10,754.05</td><td colspan="2" class="a d">15,838<span class="pd">เว็บแพงกว่า 47%</span></td><td class="w d">22,950.56</td><td class="a d">24,751<span class="pd">เว็บแพงกว่า 8%</span></td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w d">22,404.27</td><td colspan="2" class="a d">37,104<span class="pd">เว็บแพงกว่า 66%</span></td><td class="w d">47,813.66</td><td class="a d">57,904<span class="pd">เว็บแพงกว่า 21%</span></td></tr></tbody></table><p class="note"><b>คนตรวจเขียนไว้:</b> ไม่มีใน ERP</p></section>
+<section class="job"><div class="jh"><h2><span class="no">1/32</span> บานเลื่อน SMS <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 400×280 ซม. 2 บาน</span><span><b>ใหญ่</b> 500×280 ซม. 4 บาน</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 400×280</th><th colspan="4" class="b">ขนาดใหญ่ 500×280</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">อลูมิเนียม — คิดตามยาว (ซม.)</td></tr><tr><td class="c">1</td><td class="nm">เฟรมบน</td><td class="code">B20001</td>
+      <td class="w"></td><td class="a">1,336</td>
+      <td class="w"></td><td class="a">396<span class="sub">1×396</span></td><td class="w"></td><td class="a">825.82</td><td class="w"></td><td class="a">496<span class="sub">1×496</span></td><td class="w"></td><td class="a">1,034.56</td></tr><tr><td class="c">2</td><td class="nm">เฟรมข้าง</td><td class="code">B20003</td>
+      <td class="w"></td><td class="a">1,133</td>
+      <td class="w"></td><td class="a">560<span class="sub">2×280</span></td><td class="w"></td><td class="a">991.38</td><td class="w"></td><td class="a">560<span class="sub">2×280</span></td><td class="w"></td><td class="a">991.38</td></tr><tr><td class="c">3</td><td class="nm">เฟรมล่างกันน้ำ (รางนอก)</td><td class="code">B20041</td>
+      <td class="w"></td><td class="a">2,289</td>
+      <td class="w"></td><td class="a">396<span class="sub">1×396</span></td><td class="w"></td><td class="a">1,414.88</td><td class="w"></td><td class="a">496<span class="sub">1×496</span></td><td class="w"></td><td class="a">1,772.55</td></tr><tr><td class="c">4</td><td class="nm">เสากุญแจ ML</td><td class="code">B20051</td>
+      <td class="w"></td><td class="a">1,029</td>
+      <td class="w"></td><td class="a">548<span class="sub">2×274</span></td><td class="w"></td><td class="a">880.76</td><td class="w"></td><td class="a">548<span class="sub">2×274</span></td><td class="w"></td><td class="a">880.76</td></tr><tr><td class="c">5</td><td class="nm">เสาเกี่ยวธรรมดา</td><td class="code">B20009</td>
+      <td class="w"></td><td class="a">769</td>
+      <td class="w"></td><td class="a">274<span class="sub">1×274</span></td><td class="w"></td><td class="a">329.11</td><td class="w"></td><td class="a">822<span class="sub">3×274</span></td><td class="w"></td><td class="a">987.32</td></tr><tr><td class="c">6</td><td class="nm">เสาเกี่ยวรับแรง</td><td class="code">B20010</td>
+      <td class="w"></td><td class="a">1,367</td>
+      <td class="w"></td><td class="a">274<span class="sub">1×274</span></td><td class="w"></td><td class="a">585.03</td><td class="w"></td><td class="a">822<span class="sub">3×274</span></td><td class="w"></td><td class="a">1,755.10</td></tr><tr><td class="c">7</td><td class="nm">ขวางบน/ล่าง</td><td class="code">B20054</td>
+      <td class="w"></td><td class="a">1,241</td>
+      <td class="w"></td><td class="a">760<span class="sub">4×190</span></td><td class="w"></td><td class="a">1,475.24</td><td class="w"></td><td class="a">944<span class="sub">8×118</span></td><td class="w"></td><td class="a">1,830.48</td></tr><tr><td class="c">8</td><td class="nm">ตบปิดเฟรม</td><td class="code">B20019</td>
+      <td class="w"></td><td class="a">166</td>
+      <td class="w"></td><td class="a">1,100<span class="sub">4×275</span></td><td class="w"></td><td class="a">285.32</td><td class="w"></td><td class="a">1,100<span class="sub">4×275</span></td><td class="w"></td><td class="a">285.32</td></tr><tr><td class="c">9</td><td class="nm">ตบรางล้อ (รางนอก)</td><td class="code">F7994</td>
+      <td class="w"></td><td class="a">102</td>
+      <td class="w"></td><td class="a">800<span class="sub">2×400</span></td><td class="w"></td><td class="a">127.50</td><td class="w"></td><td class="a">2,000<span class="sub">4×500</span></td><td class="w"></td><td class="a">318.75</td></tr><tr><td class="c">10</td><td class="nm">ตบเฟรมบน/ล่าง ร่องใน</td><td class="code">B20019</td>
+      <td class="w"></td><td class="a">166</td>
+      <td class="w"></td><td class="a">786<span class="sub">2×393</span></td><td class="w"></td><td class="a">203.87</td><td class="w"></td><td class="a">—</td><td class="w"></td><td class="a">—</td></tr><tr class="gh"><td colspan="11">กระจก / แผ่น</td></tr><tr><td class="c">11</td><td class="nm">กระจก เขียว 6มม.</td><td class="code"></td>
+      <td class="w"></td><td class="a">264</td>
+      <td class="w"></td><td class="a">11.48</td><td class="w"></td><td class="a">3,030.72</td><td class="w"></td><td class="a">14.84</td><td class="w"></td><td class="a">3,917.76</td></tr><tr class="gh"><td colspan="11">อุปกรณ์</td></tr><tr><td class="c">12</td><td class="nm">ล้อ 27 (16x27x190)</td><td class="code">JR00576</td>
+      <td class="w"></td><td class="a">80</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">320</td><td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">640</td></tr><tr><td class="c">13</td><td class="nm">มือจับ กุญแจ Align</td><td class="code">JR00377</td>
+      <td class="w"></td><td class="a">99</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">99</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">99</td></tr><tr><td class="c">14</td><td class="nm">มือจับ ล็อค Align</td><td class="code">JR00378</td>
+      <td class="w"></td><td class="a">69</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">138</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">138</td></tr><tr><td class="c">15</td><td class="nm">มือจับ ดัมมี่ Align</td><td class="code">JR00379</td>
+      <td class="w"></td><td class="a">62</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">62</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">62</td></tr><tr><td class="c">16</td><td class="nm">แกนมือจับ A</td><td class="code">JR00478</td>
+      <td class="w"></td><td class="a">18</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">72</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">72</td></tr><tr><td class="c">17</td><td class="nm">แกนมือจับ B</td><td class="code">JR00479</td>
+      <td class="w"></td><td class="a">18</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">36</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">36</td></tr><tr><td class="c">18</td><td class="nm">ปลายมือจับ ดำ</td><td class="code">JR00476</td>
+      <td class="w"></td><td class="a">30</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">120</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">120</td></tr><tr><td class="c">19</td><td class="nm">ก้ามปูรับล็อค</td><td class="code">JR00477</td>
+      <td class="w"></td><td class="a">9</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">36</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">36</td></tr><tr><td class="c">20</td><td class="nm">ตัวที เงิน</td><td class="code">JR00475</td>
+      <td class="w"></td><td class="a">30</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">60</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">60</td></tr><tr><td class="c">21</td><td class="nm">น็อต 6 หุน (ยึดล้อ)</td><td class="code">JR00863</td>
+      <td class="w"></td><td class="a">1</td>
+      <td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">16</td><td class="w"></td><td class="a">16</td></tr><tr><td class="c">22</td><td class="nm">ยางรูน้ำ</td><td class="code">JR00589</td>
+      <td class="w"></td><td class="a">5</td>
+      <td class="w"></td><td class="a">7</td><td class="w"></td><td class="a">35</td><td class="w"></td><td class="a">9</td><td class="w"></td><td class="a">45</td></tr><tr><td class="c">23</td><td class="nm">วาวรูน้ำ</td><td class="code">JR00485</td>
+      <td class="w"></td><td class="a">14</td>
+      <td class="w"></td><td class="a">7</td><td class="w"></td><td class="a">98</td><td class="w"></td><td class="a">9</td><td class="w"></td><td class="a">126</td></tr><tr class="gh"><td colspan="11">โครง / วัสดุอื่น</td></tr><tr><td class="c">24</td><td class="nm">สักหลาด 5×3</td><td class="code">JR00794</td>
+      <td class="w"></td><td class="a">1.50</td>
+      <td class="w"></td><td class="a">69.60</td><td class="w"></td><td class="a">104.40</td><td class="w"></td><td class="a">89.80</td><td class="w"></td><td class="a">134.70</td></tr><tr><td class="c">25</td><td class="nm">น็อต 1"</td><td class="code">JR00864</td>
+      <td class="w"></td><td class="a">1</td>
+      <td class="w"></td><td class="a">16</td><td class="w"></td><td class="a">16</td><td class="w"></td><td class="a">24</td><td class="w"></td><td class="a">24</td></tr><tr><td class="c">26</td><td class="nm">ซิลิโคน</td><td class="code">JR00504</td>
+      <td class="w"></td><td class="a">90</td>
+      <td class="w"></td><td class="a">3</td><td class="w"></td><td class="a">270</td><td class="w"></td><td class="a">3</td><td class="w"></td><td class="a">270</td></tr><tr class="sub1"><td colspan="5">รวมค่าเส้น (ยังไม่เผื่อเศษ)</td><td colspan="2" class="w"></td><td colspan="2" class="a">7,118.91</td><td class="w"></td><td class="a">9,856.22</td></tr><tr class="sub1"><td colspan="5">× 1.3 เผื่อเศษ = ค่าเส้นรวม</td><td colspan="2" class="w"></td><td colspan="2" class="a">9,254.58</td><td class="w"></td><td class="a">12,813.09</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">13,760</td><td class="w"></td><td class="a">18,610</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">37,140</td><td class="w"></td><td class="a">50,230</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">3/32</span> บานเลื่อน E-series <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 400×280 ซม. 2 บาน</span><span><b>ใหญ่</b> 500×280 ซม. 4 บาน</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 400×280</th><th colspan="4" class="b">ขนาดใหญ่ 500×280</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">อลูมิเนียม — คิดตามยาว (ซม.)</td></tr><tr><td class="c">1</td><td class="nm">เฟรมบน E-01</td><td class="code">E-01</td>
+      <td class="w"></td><td class="a">2,235</td>
+      <td class="w"></td><td class="a">400<span class="sub">1×400</span></td><td class="w"></td><td class="a">1,396.88</td><td class="w"></td><td class="a">500<span class="sub">1×500</span></td><td class="w"></td><td class="a">1,746.09</td></tr><tr><td class="c">2</td><td class="nm">เฟรมล่างกันน้ำ E-03</td><td class="code">E-03</td>
+      <td class="w"></td><td class="a">2,152</td>
+      <td class="w"></td><td class="a">400<span class="sub">1×400</span></td><td class="w"></td><td class="a">1,345</td><td class="w"></td><td class="a">500<span class="sub">1×500</span></td><td class="w"></td><td class="a">1,681.25</td></tr><tr><td class="c">3</td><td class="nm">เฟรมข้าง E-02C</td><td class="code">E-02C</td>
+      <td class="w"></td><td class="a">1,995</td>
+      <td class="w"></td><td class="a">560<span class="sub">2×280</span></td><td class="w"></td><td class="a">1,745.62</td><td class="w"></td><td class="a">560<span class="sub">2×280</span></td><td class="w"></td><td class="a">1,745.62</td></tr><tr><td class="c">4</td><td class="nm">เสากุญแจสลิม E-04e</td><td class="code">E-04E</td>
+      <td class="w"></td><td class="a">1,080</td>
+      <td class="w"></td><td class="a">560<span class="sub">2×280</span></td><td class="w"></td><td class="a">945</td><td class="w"></td><td class="a">560<span class="sub">2×280</span></td><td class="w"></td><td class="a">945</td></tr><tr><td class="c">5</td><td class="nm">เสาเกี่ยวสลิม E-05e</td><td class="code">E-05E</td>
+      <td class="w"></td><td class="a">1,072</td>
+      <td class="w"></td><td class="a">560<span class="sub">2×280</span></td><td class="w"></td><td class="a">938</td><td class="w"></td><td class="a">1,680<span class="sub">6×280</span></td><td class="w"></td><td class="a">2,814</td></tr><tr><td class="c">6</td><td class="nm">ขวางบน/ล่าง E-07e</td><td class="code">E-07E</td>
+      <td class="w"></td><td class="a">1,162</td>
+      <td class="w"></td><td class="a">800<span class="sub">4×200</span></td><td class="w"></td><td class="a">1,452.50</td><td class="w"></td><td class="a">1,000<span class="sub">8×125</span></td><td class="w"></td><td class="a">1,815.62</td></tr><tr class="gh"><td colspan="11">อลูมิเนียม — เส้นเต็ม</td></tr><tr><td class="c">7</td><td class="nm">ถาดลองน้ำ E-03B</td><td class="code">E-03B</td>
+      <td class="w"></td><td class="a">742</td>
+      <td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">742</td><td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">742</td></tr><tr><td class="c">8</td><td class="nm">ตบปิดเฟรมบน E-01A</td><td class="code">E-01A</td>
+      <td class="w"></td><td class="a">270</td>
+      <td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">540</td><td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">540</td></tr><tr><td class="c">9</td><td class="nm">ตบธรณีเฟรมล่าง E-03C</td><td class="code">E-03C</td>
+      <td class="w"></td><td class="a">450</td>
+      <td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">900</td><td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">900</td></tr><tr class="gh"><td colspan="11">กระจก / แผ่น</td></tr><tr><td class="c">10</td><td class="nm">กระจก เขียว 6มม.</td><td class="code"></td>
+      <td class="w"></td><td class="a">264</td>
+      <td class="w"></td><td class="a">11.48</td><td class="w"></td><td class="a">3,030.72</td><td class="w"></td><td class="a">14.84</td><td class="w"></td><td class="a">3,917.76</td></tr><tr class="gh"><td colspan="11">อุปกรณ์</td></tr><tr><td class="c">11</td><td class="nm">ล้อ ehr-80 (2/บานเลื่อน)</td><td class="code"></td>
+      <td class="w"></td><td class="a">135</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">540</td><td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">1,080</td></tr><tr><td class="c">12</td><td class="nm">ล็อคก้นหอย</td><td class="code">JR00456</td>
+      <td class="w"></td><td class="a">100</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">200</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">200</td></tr><tr class="gh"><td colspan="11">โครง / วัสดุอื่น</td></tr><tr><td class="c">13</td><td class="nm">สักหลาด 5×3</td><td class="code">JR00794</td>
+      <td class="w"></td><td class="a">1.50</td>
+      <td class="w"></td><td class="a">69.60</td><td class="w"></td><td class="a">104.40</td><td class="w"></td><td class="a">89.80</td><td class="w"></td><td class="a">134.70</td></tr><tr><td class="c">14</td><td class="nm">น็อต 1"</td><td class="code">JR00864</td>
+      <td class="w"></td><td class="a">1</td>
+      <td class="w"></td><td class="a">16</td><td class="w"></td><td class="a">16</td><td class="w"></td><td class="a">24</td><td class="w"></td><td class="a">24</td></tr><tr><td class="c">15</td><td class="nm">ซิลิโคน</td><td class="code">JR00504</td>
+      <td class="w"></td><td class="a">90</td>
+      <td class="w"></td><td class="a">3</td><td class="w"></td><td class="a">270</td><td class="w"></td><td class="a">3</td><td class="w"></td><td class="a">270</td></tr><tr class="gh"><td colspan="11">ค่าอบสี</td></tr><tr><td class="c">16</td><td class="nm">ค่าอบสี (อบขาว/ดำ 100/กก. × 68.62กก.)</td><td class="code"></td>
+      <td class="w"></td><td class="a">100</td>
+      <td class="w"></td><td class="a">68.62</td><td class="w"></td><td class="a">6,862.17</td><td class="w"></td><td class="a">—</td><td class="w"></td><td class="a">—</td></tr><tr><td class="c">17</td><td class="nm">ค่าเปิดตู้อบ</td><td class="code"></td>
+      <td class="w"></td><td class="a">2,000</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">2,000</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">2,000</td></tr><tr><td class="c">18</td><td class="nm">ค่าอบสี (อบขาว/ดำ 100/กก. × 89.74กก.)</td><td class="code"></td>
+      <td class="w"></td><td class="a">100</td>
+      <td class="w"></td><td class="a">—</td><td class="w"></td><td class="a">—</td><td class="w"></td><td class="a">89.74</td><td class="w"></td><td class="a">8,974.38</td></tr><tr class="sub1"><td colspan="5">รวมค่าเส้น (ยังไม่เผื่อเศษ)</td><td colspan="2" class="w"></td><td colspan="2" class="a">7,823</td><td class="w"></td><td class="a">10,747.58</td></tr><tr class="sub1"><td colspan="5">× 1.3 เผื่อเศษ = ค่าเส้นรวม</td><td colspan="2" class="w"></td><td colspan="2" class="a">10,169.90</td><td class="w"></td><td class="a">13,971.85</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">25,375</td><td class="w"></td><td class="a">32,755</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">48,217</td><td class="w"></td><td class="a">62,365</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">4/32</span> บานเลื่อนรางบน <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 450×240 ซม. 3 บาน</span><span><b>ใหญ่</b> 500×280 ซม. 4 บาน</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 450×240</th><th colspan="4" class="b">ขนาดใหญ่ 500×280</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">อลูมิเนียม — คิดตามยาว (ซม.)</td></tr><tr><td class="c">1</td><td class="nm">คานรับราง (กล่อง 2"x4")<span class="sub">เส้น 6 ม.</span></td><td class="code">JR01859</td>
+      <td class="w"></td><td class="a">1,406.97</td>
+      <td class="w"></td><td class="a">450<span class="sub">1×450</span></td><td class="w"></td><td class="a">1,055.23</td><td class="w"></td><td class="a">500<span class="sub">1×500</span></td><td class="w"></td><td class="a">1,172.48</td></tr><tr><td class="c">2</td><td class="nm">เสารับบาน (กล่อง 1"x4")<span class="sub">เส้น 6 ม.</span></td><td class="code">JR01841</td>
+      <td class="w"></td><td class="a">1,167.65</td>
+      <td class="w"></td><td class="a">470<span class="sub">2×235</span></td><td class="w"></td><td class="a">914.66</td><td class="w"></td><td class="a">550<span class="sub">2×275</span></td><td class="w"></td><td class="a">1,070.35</td></tr><tr><td class="c">3</td><td class="nm">ชนกลางรับบาน<span class="sub">เส้น 6 ม.</span></td><td class="code">JR03125</td>
+      <td class="w"></td><td class="a">404</td>
+      <td class="w"></td><td class="a">235<span class="sub">1×235</span></td><td class="w"></td><td class="a">158.23</td><td class="w"></td><td class="a">275<span class="sub">1×275</span></td><td class="w"></td><td class="a">185.17</td></tr><tr><td class="c">4</td><td class="nm">ฉาก 4" ปิดราง<span class="sub">เส้น 6 ม.</span></td><td class="code">ฉาก 4"</td>
+      <td class="w"></td><td class="a">426</td>
+      <td class="w"></td><td class="a">900<span class="sub">2×450</span></td><td class="w"></td><td class="a">639</td><td class="w"></td><td class="a">1,000<span class="sub">2×500</span></td><td class="w"></td><td class="a">710</td></tr><tr><td class="c">5</td><td class="nm">เสากุญแจ ML</td><td class="code">B20051</td>
+      <td class="w"></td><td class="a">1,029</td>
+      <td class="w"></td><td class="a">460<span class="sub">2×230</span></td><td class="w"></td><td class="a">739.27</td><td class="w"></td><td class="a">540<span class="sub">2×270</span></td><td class="w"></td><td class="a">867.90</td></tr><tr><td class="c">6</td><td class="nm">เสาเกี่ยว</td><td class="code">B20009</td>
+      <td class="w"></td><td class="a">769</td>
+      <td class="w"></td><td class="a">690<span class="sub">3×230</span></td><td class="w"></td><td class="a">828.72</td><td class="w"></td><td class="a">1,080<span class="sub">4×270</span></td><td class="w"></td><td class="a">1,297.21</td></tr><tr><td class="c">7</td><td class="nm">ขวางบน/ล่าง</td><td class="code">B20054</td>
+      <td class="w"></td><td class="a">1,241</td>
+      <td class="w"></td><td class="a">852<span class="sub">6×142</span></td><td class="w"></td><td class="a">1,648.98</td><td class="w"></td><td class="a">944<span class="sub">8×118</span></td><td class="w"></td><td class="a">1,827.37</td></tr><tr class="gh"><td colspan="11">กระจก / แผ่น</td></tr><tr><td class="c">8</td><td class="nm">กระจก เขียว 6มม.</td><td class="code"></td>
+      <td class="w"></td><td class="a">264</td>
+      <td class="w"></td><td class="a">10.80</td><td class="w"></td><td class="a">2,851.20</td><td class="w"></td><td class="a">14</td><td class="w"></td><td class="a">3,696</td></tr><tr class="gh"><td colspan="11">อุปกรณ์</td></tr><tr><td class="c">9</td><td class="nm">รางบน Hafele</td><td class="code">JR03141</td>
+      <td class="w"></td><td class="a">2,010</td>
+      <td class="w"></td><td class="a">3</td><td class="w"></td><td class="a">6,030</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">8,040</td></tr><tr><td class="c">10</td><td class="nm">ล้อรางบน Hafele 100kg</td><td class="code">JR00544</td>
+      <td class="w"></td><td class="a">1,170</td>
+      <td class="w"></td><td class="a">3</td><td class="w"></td><td class="a">3,510</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">4,680</td></tr><tr><td class="c">11</td><td class="nm">มือจับ กุญแจ (เมโทร)</td><td class="code">JR00368</td>
+      <td class="w"></td><td class="a">745</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">745</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">745</td></tr><tr><td class="c">12</td><td class="nm">มือจับ ล็อค (เมโทร)</td><td class="code">JR00369</td>
+      <td class="w"></td><td class="a">410</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">820</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">820</td></tr><tr><td class="c">13</td><td class="nm">มือจับ ดัมมี่ (เมโทร)</td><td class="code">JR00370</td>
+      <td class="w"></td><td class="a">310</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">310</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">310</td></tr><tr><td class="c">14</td><td class="nm">แกนมือจับ A</td><td class="code">JR00478</td>
+      <td class="w"></td><td class="a">18</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">72</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">72</td></tr><tr><td class="c">15</td><td class="nm">แกนมือจับ B</td><td class="code">JR00479</td>
+      <td class="w"></td><td class="a">18</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">36</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">36</td></tr><tr><td class="c">16</td><td class="nm">ปลายมือจับ ดำ</td><td class="code">JR00476</td>
+      <td class="w"></td><td class="a">30</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">120</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">120</td></tr><tr><td class="c">17</td><td class="nm">ตัวที เงิน</td><td class="code">JR00475</td>
+      <td class="w"></td><td class="a">30</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">60</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">60</td></tr><tr><td class="c">18</td><td class="nm">ก้ามปูรับล็อค</td><td class="code">JR00477</td>
+      <td class="w"></td><td class="a">9</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">36</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">36</td></tr><tr><td class="c">19</td><td class="nm">น็อตประกอบบาน 1"</td><td class="code">JR00864</td>
+      <td class="w"></td><td class="a">1</td>
+      <td class="w"></td><td class="a">12</td><td class="w"></td><td class="a">12</td><td class="w"></td><td class="a">16</td><td class="w"></td><td class="a">16</td></tr><tr class="gh"><td colspan="11">โครง / วัสดุอื่น</td></tr><tr><td class="c">20</td><td class="nm">สักหลาด 5×3</td><td class="code">JR00794</td>
+      <td class="w"></td><td class="a">1.50</td>
+      <td class="w"></td><td class="a">49.40</td><td class="w"></td><td class="a">74.10</td><td class="w"></td><td class="a">67.60</td><td class="w"></td><td class="a">101.40</td></tr><tr><td class="c">21</td><td class="nm">ซิลิโคน</td><td class="code">JR00504</td>
+      <td class="w"></td><td class="a">90</td>
+      <td class="w"></td><td class="a">3</td><td class="w"></td><td class="a">270</td><td class="w"></td><td class="a">3</td><td class="w"></td><td class="a">270</td></tr><tr class="sub1"><td colspan="5">รวมค่าเส้น (ยังไม่เผื่อเศษ)</td><td colspan="2" class="w"></td><td colspan="2" class="a">5,984.09</td><td class="w"></td><td class="a">7,130.48</td></tr><tr class="sub1"><td colspan="5">× 1.3 เผื่อเศษ = ค่าเส้นรวม</td><td colspan="2" class="w"></td><td colspan="2" class="a">7,779.32</td><td class="w"></td><td class="a">9,269.62</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">22,726</td><td class="w"></td><td class="a">28,272</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">47,150</td><td class="w"></td><td class="a">58,760</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">6/32</span> ระแนงเลื่อน (ลูกฟูกเรียบ 2 ทาง · ข้อ 38.2) <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 400×280 ซม. 2 บาน</span><span><b>ใหญ่</b> 500×280 ซม. 4 บาน</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 400×280</th><th colspan="4" class="b">ขนาดใหญ่ 500×280</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">อลูมิเนียม — คิดตามยาว (ซม.)</td></tr><tr><td class="c">1</td><td class="nm">เฟรมบน B22001</td><td class="code">B22001</td>
+      <td class="w"></td><td class="a">1,419</td>
+      <td class="w"></td><td class="a">400<span class="sub">1×400</span></td><td class="w"></td><td class="a">886.88</td><td class="w"></td><td class="a">500<span class="sub">1×500</span></td><td class="w"></td><td class="a">1,108.59</td></tr><tr><td class="c">2</td><td class="nm">เฟรมข้าง B22002</td><td class="code">B22002</td>
+      <td class="w"></td><td class="a">1,113</td>
+      <td class="w"></td><td class="a">560<span class="sub">2×280</span></td><td class="w"></td><td class="a">973.88</td><td class="w"></td><td class="a">560<span class="sub">2×280</span></td><td class="w"></td><td class="a">973.88</td></tr><tr><td class="c">3</td><td class="nm">เฟรมล่างกันน้ำ (ภายนอก) B20041</td><td class="code">B20041</td>
+      <td class="w"></td><td class="a">2,289</td>
+      <td class="w"></td><td class="a">400<span class="sub">1×400</span></td><td class="w"></td><td class="a">1,430.62</td><td class="w"></td><td class="a">500<span class="sub">1×500</span></td><td class="w"></td><td class="a">1,788.28</td></tr><tr><td class="c">4</td><td class="nm">เสากุญแจ ML B20051</td><td class="code">B20051</td>
+      <td class="w"></td><td class="a">1,029</td>
+      <td class="w"></td><td class="a">560<span class="sub">2×280</span></td><td class="w"></td><td class="a">900.38</td><td class="w"></td><td class="a">560<span class="sub">2×280</span></td><td class="w"></td><td class="a">900.38</td></tr><tr><td class="c">5</td><td class="nm">เสาเกี่ยวธรรมดา B20009</td><td class="code">B20009</td>
+      <td class="w"></td><td class="a">769</td>
+      <td class="w"></td><td class="a">280<span class="sub">1×280</span></td><td class="w"></td><td class="a">336.44</td><td class="w"></td><td class="a">840<span class="sub">3×280</span></td><td class="w"></td><td class="a">1,009.32</td></tr><tr><td class="c">6</td><td class="nm">เสาเกี่ยวรับแรง B20010</td><td class="code">B20010</td>
+      <td class="w"></td><td class="a">1,367</td>
+      <td class="w"></td><td class="a">280<span class="sub">1×280</span></td><td class="w"></td><td class="a">598.06</td><td class="w"></td><td class="a">840<span class="sub">3×280</span></td><td class="w"></td><td class="a">1,794.18</td></tr><tr><td class="c">7</td><td class="nm">ขวางบน/ล่าง B20054</td><td class="code">B20054</td>
+      <td class="w"></td><td class="a">1,241</td>
+      <td class="w"></td><td class="a">800<span class="sub">4×200</span></td><td class="w"></td><td class="a">1,551.25</td><td class="w"></td><td class="a">1,000<span class="sub">8×125</span></td><td class="w"></td><td class="a">1,939.06</td></tr><tr><td class="c">8</td><td class="nm">ตบปิดเฟรม B20019</td><td class="code">B20019</td>
+      <td class="w"></td><td class="a">166</td>
+      <td class="w"></td><td class="a">1,120<span class="sub">4×280</span></td><td class="w"></td><td class="a">290.50</td><td class="w"></td><td class="a">1,120<span class="sub">4×280</span></td><td class="w"></td><td class="a">290.50</td></tr><tr class="gh"><td colspan="11">อลูมิเนียม — เส้นเต็ม</td></tr><tr><td class="c">9</td><td class="nm">ตบราง (ภายนอก) B20050</td><td class="code">B20050</td>
+      <td class="w"></td><td class="a">137</td>
+      <td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">274</td><td class="w"></td><td class="a">4 เส้น</td><td class="w"></td><td class="a">548</td></tr><tr><td class="c">10</td><td class="nm">ลูกฟูก2ทาง (แทนกระจก)<span class="sub">เส้น 6 ม.</span></td><td class="code">JR01994</td>
+      <td class="w"></td><td class="a">491</td>
+      <td class="w"></td><td class="a">20 เส้น</td><td class="w"></td><td class="a">9,820</td><td class="w"></td><td class="a">25 เส้น</td><td class="w"></td><td class="a">12,275</td></tr><tr class="gh"><td colspan="11">อุปกรณ์</td></tr><tr><td class="c">11</td><td class="nm">ล้อ 27 (16x27x190)</td><td class="code">JR00576</td>
+      <td class="w"></td><td class="a">80</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">320</td><td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">640</td></tr><tr><td class="c">12</td><td class="nm">มือจับ กุญแจ Align</td><td class="code">JR00377</td>
+      <td class="w"></td><td class="a">99</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">99</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">99</td></tr><tr><td class="c">13</td><td class="nm">มือจับ ล็อค Align</td><td class="code">JR00378</td>
+      <td class="w"></td><td class="a">69</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">138</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">138</td></tr><tr><td class="c">14</td><td class="nm">มือจับ ดัมมี่ Align</td><td class="code">JR00379</td>
+      <td class="w"></td><td class="a">62</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">62</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">62</td></tr><tr><td class="c">15</td><td class="nm">แกนมือจับ A</td><td class="code">JR00478</td>
+      <td class="w"></td><td class="a">18</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">72</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">72</td></tr><tr><td class="c">16</td><td class="nm">แกนมือจับ B</td><td class="code">JR00479</td>
+      <td class="w"></td><td class="a">18</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">36</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">36</td></tr><tr><td class="c">17</td><td class="nm">ปลายมือจับ ดำ</td><td class="code">JR00476</td>
+      <td class="w"></td><td class="a">30</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">120</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">120</td></tr><tr><td class="c">18</td><td class="nm">ก้ามปูรับล็อค</td><td class="code">JR00477</td>
+      <td class="w"></td><td class="a">9</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">36</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">36</td></tr><tr><td class="c">19</td><td class="nm">ตัวที เงิน</td><td class="code">JR00475</td>
+      <td class="w"></td><td class="a">30</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">60</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">60</td></tr><tr><td class="c">20</td><td class="nm">น็อต 1"</td><td class="code">JR00864</td>
+      <td class="w"></td><td class="a">1</td>
+      <td class="w"></td><td class="a">16</td><td class="w"></td><td class="a">16</td><td class="w"></td><td class="a">24</td><td class="w"></td><td class="a">24</td></tr><tr><td class="c">21</td><td class="nm">ล้อลูกฟูก (=จำนวนลูกฟูก)</td><td class="code">JR00209</td>
+      <td class="w"></td><td class="a">7</td>
+      <td class="w"></td><td class="a">40</td><td class="w"></td><td class="a">280</td><td class="w"></td><td class="a">50</td><td class="w"></td><td class="a">350</td></tr><tr><td class="c">22</td><td class="nm">ดาม กล่อง1×1 (นอก+ใน กลาง)</td><td class="code">JR01704</td>
+      <td class="w"></td><td class="a">310</td>
+      <td class="w"></td><td class="a">1.33</td><td class="w"></td><td class="a">413.33</td><td class="w"></td><td class="a">1.67</td><td class="w"></td><td class="a">516.67</td></tr><tr class="gh"><td colspan="11">โครง / วัสดุอื่น</td></tr><tr><td class="c">23</td><td class="nm">สักหลาด 5×3</td><td class="code">JR00794</td>
+      <td class="w"></td><td class="a">1.50</td>
+      <td class="w"></td><td class="a">69.60</td><td class="w"></td><td class="a">104.40</td><td class="w"></td><td class="a">89.80</td><td class="w"></td><td class="a">134.70</td></tr><tr><td class="c">24</td><td class="nm">ซิลิโคน</td><td class="code">JR00504</td>
+      <td class="w"></td><td class="a">90</td>
+      <td class="w"></td><td class="a">3</td><td class="w"></td><td class="a">270</td><td class="w"></td><td class="a">3</td><td class="w"></td><td class="a">270</td></tr><tr class="sub1"><td colspan="5">รวมค่าเส้น (ยังไม่เผื่อเศษ)</td><td colspan="2" class="w"></td><td colspan="2" class="a">6,968.01</td><td class="w"></td><td class="a">9,804.19</td></tr><tr class="sub1"><td colspan="5">× 1.3 เผื่อเศษ = ค่าเส้นรวม</td><td colspan="2" class="w"></td><td colspan="2" class="a">9,058.41</td><td class="w"></td><td class="a">12,745.45</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">21,179</td><td class="w"></td><td class="a">28,127</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">44,290</td><td class="w"></td><td class="a">58,810</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">8/32</span> บานหมุน (Pivot) <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 200×240 ซม. 1 บาน</span><span><b>ใหญ่</b> 300×280 ซม. 1 บาน</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 200×240</th><th colspan="4" class="b">ขนาดใหญ่ 300×280</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">อลูมิเนียม — เส้นเต็ม</td></tr><tr><td class="c">1</td><td class="nm">วงกบ 3 ด้าน F7859</td><td class="code">F7859</td>
+      <td class="w"></td><td class="a">1,280</td>
+      <td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">2,560</td><td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">2,560</td></tr><tr><td class="c">2</td><td class="nm">ธรณี F7938B</td><td class="code">F7938B</td>
+      <td class="w"></td><td class="a">1,472</td>
+      <td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">1,472</td><td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">1,472</td></tr><tr><td class="c">3</td><td class="nm">ตบธรณี F7960</td><td class="code">F7960</td>
+      <td class="w"></td><td class="a">603</td>
+      <td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">603</td><td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">603</td></tr><tr><td class="c">4</td><td class="nm">กรอบประตู 7864</td><td class="code">F7864</td>
+      <td class="w"></td><td class="a">2,186</td>
+      <td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">4,372</td><td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">4,372</td></tr><tr><td class="c">5</td><td class="nm">คิ้ว F7935</td><td class="code">F7935</td>
+      <td class="w"></td><td class="a">352</td>
+      <td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">704</td><td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">704</td></tr><tr class="gh"><td colspan="11">กระจก / แผ่น</td></tr><tr><td class="c">6</td><td class="nm">กระจก เขียว 6มม.</td><td class="code"></td>
+      <td class="w"></td><td class="a">264</td>
+      <td class="w"></td><td class="a">4.80</td><td class="w"></td><td class="a">1,267.20</td><td class="w"></td><td class="a">8.40</td><td class="w"></td><td class="a">2,217.60</td></tr><tr class="gh"><td colspan="11">อุปกรณ์</td></tr><tr><td class="c">7</td><td class="nm">จุดหมุน (2 ตัว/บาน)</td><td class="code">JR00269</td>
+      <td class="w"></td><td class="a">450</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">900</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">900</td></tr><tr><td class="c">8</td><td class="nm">มือจับ+ล็อค ใบหลัก</td><td class="code">JR00233</td>
+      <td class="w"></td><td class="a">1,045</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">1,045</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">1,045</td></tr><tr><td class="c">9</td><td class="nm">น็อตเฟรม</td><td class="code">JR00212</td>
+      <td class="w"></td><td class="a">1</td>
+      <td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">8</td></tr><tr class="gh"><td colspan="11">โครง / วัสดุอื่น</td></tr><tr><td class="c">10</td><td class="nm">ยาง (epdm sponge)</td><td class="code">JR00771</td>
+      <td class="w"></td><td class="a">11</td>
+      <td class="w"></td><td class="a">9</td><td class="w"></td><td class="a">99</td><td class="w"></td><td class="a">12</td><td class="w"></td><td class="a">132</td></tr><tr><td class="c">11</td><td class="nm">ซิลิโคน</td><td class="code">JR00504</td>
+      <td class="w"></td><td class="a">90</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">180</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">180</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">13,210</td><td class="w"></td><td class="a">14,194</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">30,160</td><td class="w"></td><td class="a">32,370</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">9/32</span> ประตูบานเปิด PC Door <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 200×240 ซม. 2 บาน</span><span><b>ใหญ่</b> 240×260 ซม. 2 บาน</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 200×240</th><th colspan="4" class="b">ขนาดใหญ่ 240×260</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">อลูมิเนียม — คิดตามยาว (ซม.)</td></tr><tr><td class="c">1</td><td class="nm">คาน (กล่อง 1"x4")<span class="sub">เส้น 6 ม.</span></td><td class="code">JR01840</td>
+      <td class="w"></td><td class="a">905</td>
+      <td class="w"></td><td class="a">200<span class="sub">1×200</span></td><td class="w"></td><td class="a">301.67</td><td class="w"></td><td class="a">240<span class="sub">1×240</span></td><td class="w"></td><td class="a">362</td></tr><tr><td class="c">2</td><td class="nm">ฝาครอบรางบน<span class="sub">เส้น 6 ม.</span></td><td class="code">JR03136</td>
+      <td class="w"></td><td class="a">600</td>
+      <td class="w"></td><td class="a">194<span class="sub">1×194</span></td><td class="w"></td><td class="a">194.20</td><td class="w"></td><td class="a">234<span class="sub">1×234</span></td><td class="w"></td><td class="a">234.20</td></tr><tr><td class="c">3</td><td class="nm">รางบนบานเลื่อน Hafele<span class="sub">เส้น 6 ม.</span></td><td class="code">JR03141</td>
+      <td class="w"></td><td class="a">2,010</td>
+      <td class="w"></td><td class="a">193<span class="sub">1×193</span></td><td class="w"></td><td class="a">646.55</td><td class="w"></td><td class="a">233<span class="sub">1×233</span></td><td class="w"></td><td class="a">780.55</td></tr><tr><td class="c">4</td><td class="nm">วงกบบานเปิด เมืองทอง<span class="sub">เส้น 6 ม.</span></td><td class="code">JR03129</td>
+      <td class="w"></td><td class="a">1,236</td>
+      <td class="w"></td><td class="a">238<span class="sub">1×238</span></td><td class="w"></td><td class="a">489.25</td><td class="w"></td><td class="a">258<span class="sub">1×258</span></td><td class="w"></td><td class="a">530.45</td></tr><tr><td class="c">5</td><td class="nm">เสารับบานเลื่อน (กล่อง 1"x4")<span class="sub">เส้น 6 ม.</span></td><td class="code">JR01840</td>
+      <td class="w"></td><td class="a">905</td>
+      <td class="w"></td><td class="a">238<span class="sub">1×238</span></td><td class="w"></td><td class="a">358.23</td><td class="w"></td><td class="a">258<span class="sub">1×258</span></td><td class="w"></td><td class="a">388.39</td></tr><tr><td class="c">6</td><td class="nm">ชนกลางรับบานเลื่อน เมืองทอง<span class="sub">เส้น 6 ม.</span></td><td class="code">JR03125</td>
+      <td class="w"></td><td class="a">404</td>
+      <td class="w"></td><td class="a">234<span class="sub">1×234</span></td><td class="w"></td><td class="a">157.22</td><td class="w"></td><td class="a">254<span class="sub">1×254</span></td><td class="w"></td><td class="a">170.69</td></tr><tr><td class="c">7</td><td class="nm">กรอบบานเปิด เมืองทอง (สูง)<span class="sub">เส้น 6 ม.</span></td><td class="code">JR03126</td>
+      <td class="w"></td><td class="a">1,258</td>
+      <td class="w"></td><td class="a">462<span class="sub">2×231</span></td><td class="w"></td><td class="a">969.50</td><td class="w"></td><td class="a">502<span class="sub">2×251</span></td><td class="w"></td><td class="a">1,053.36</td></tr><tr><td class="c">8</td><td class="nm">กรอบบานเปิด เมืองทอง (กว้าง)<span class="sub">เส้น 6 ม.</span></td><td class="code">JR03126</td>
+      <td class="w"></td><td class="a">1,258</td>
+      <td class="w"></td><td class="a">198<span class="sub">2×99</span></td><td class="w"></td><td class="a">416.40</td><td class="w"></td><td class="a">238<span class="sub">2×119</span></td><td class="w"></td><td class="a">500.26</td></tr><tr><td class="c">9</td><td class="nm">เสากุญแจ (บานเลื่อน) B20051</td><td class="code">B20051</td>
+      <td class="w"></td><td class="a">1,029</td>
+      <td class="w"></td><td class="a">227<span class="sub">1×227</span></td><td class="w"></td><td class="a">365.29</td><td class="w"></td><td class="a">247<span class="sub">1×247</span></td><td class="w"></td><td class="a">397.45</td></tr><tr><td class="c">10</td><td class="nm">เสาเกี่ยว (บานเลื่อน) B20009</td><td class="code">B20009</td>
+      <td class="w"></td><td class="a">769</td>
+      <td class="w"></td><td class="a">227<span class="sub">1×227</span></td><td class="w"></td><td class="a">272.99</td><td class="w"></td><td class="a">247<span class="sub">1×247</span></td><td class="w"></td><td class="a">297.02</td></tr><tr><td class="c">11</td><td class="nm">ขวางบน/ล่าง (บานเลื่อน) B20054</td><td class="code">B20054</td>
+      <td class="w"></td><td class="a">1,241</td>
+      <td class="w"></td><td class="a">178<span class="sub">2×89</span></td><td class="w"></td><td class="a">343.60</td><td class="w"></td><td class="a">218<span class="sub">2×109</span></td><td class="w"></td><td class="a">421.16</td></tr><tr class="gh"><td colspan="11">กระจก / แผ่น</td></tr><tr><td class="c">12</td><td class="nm">กระจก เขียว 6มม.</td><td class="code"></td>
+      <td class="w"></td><td class="a">264</td>
+      <td class="w"></td><td class="a">4.80</td><td class="w"></td><td class="a">1,267.20</td><td class="w"></td><td class="a">6.24</td><td class="w"></td><td class="a">1,647.36</td></tr><tr class="gh"><td colspan="11">อุปกรณ์</td></tr><tr><td class="c">13</td><td class="nm">บานพับไม่บาก PBM</td><td class="code">JR00473</td>
+      <td class="w"></td><td class="a">82</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">328</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">328</td></tr><tr><td class="c">14</td><td class="nm">ล้อรางบน Hafele + ซอฟโค้ด (ชุด)</td><td class="code">JR00544</td>
+      <td class="w"></td><td class="a">1,170</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">1,170</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">1,170</td></tr><tr><td class="c">15</td><td class="nm">มือจับ กุญแจ (เมโทร)</td><td class="code">JR00368</td>
+      <td class="w"></td><td class="a">745</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">745</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">745</td></tr><tr><td class="c">16</td><td class="nm">มือจับ ล็อค (เมโทร)</td><td class="code">JR00369</td>
+      <td class="w"></td><td class="a">410</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">820</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">820</td></tr><tr><td class="c">17</td><td class="nm">มือจับ ดัมมี่ (เมโทร)</td><td class="code">JR00370</td>
+      <td class="w"></td><td class="a">310</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">310</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">310</td></tr><tr><td class="c">18</td><td class="nm">แกนมือจับ A</td><td class="code">JR00478</td>
+      <td class="w"></td><td class="a">18</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">72</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">72</td></tr><tr><td class="c">19</td><td class="nm">แกนมือจับ B</td><td class="code">JR00479</td>
+      <td class="w"></td><td class="a">18</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">36</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">36</td></tr><tr><td class="c">20</td><td class="nm">ปลายมือจับ ดำ</td><td class="code">JR00476</td>
+      <td class="w"></td><td class="a">30</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">120</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">120</td></tr><tr><td class="c">21</td><td class="nm">ตัวที เงิน</td><td class="code">JR00475</td>
+      <td class="w"></td><td class="a">30</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">60</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">60</td></tr><tr><td class="c">22</td><td class="nm">ก้ามปูรับล็อค</td><td class="code">JR00477</td>
+      <td class="w"></td><td class="a">9</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">36</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">36</td></tr><tr><td class="c">23</td><td class="nm">กลอนบานลอง</td><td class="code">JR00630</td>
+      <td class="w"></td><td class="a">450</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">450</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">450</td></tr><tr><td class="c">24</td><td class="nm">ปลายกลอน</td><td class="code">JR00598</td>
+      <td class="w"></td><td class="a">80</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">80</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">80</td></tr><tr><td class="c">25</td><td class="nm">น็อตประกอบบาน 1"</td><td class="code">JR00864</td>
+      <td class="w"></td><td class="a">1</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">4</td></tr><tr><td class="c">26</td><td class="nm">น็อตเฟรม</td><td class="code">JR00864</td>
+      <td class="w"></td><td class="a">1</td>
+      <td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">8</td></tr><tr><td class="c">27</td><td class="nm">ยาง (epdm sponge)</td><td class="code">JR00771</td>
+      <td class="w"></td><td class="a">11</td>
+      <td class="w"></td><td class="a">18</td><td class="w"></td><td class="a">198</td><td class="w"></td><td class="a">20</td><td class="w"></td><td class="a">220</td></tr><tr><td class="c">28</td><td class="nm">สักหลาด 5×3</td><td class="code">JR00794</td>
+      <td class="w"></td><td class="a">1.50</td>
+      <td class="w"></td><td class="a">17.40</td><td class="w"></td><td class="a">26.10</td><td class="w"></td><td class="a">19.40</td><td class="w"></td><td class="a">29.10</td></tr><tr class="gh"><td colspan="11">โครง / วัสดุอื่น</td></tr><tr><td class="c">29</td><td class="nm">ซิลิโคน ใน+นอก</td><td class="code">JR00504</td>
+      <td class="w"></td><td class="a">90</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">180</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">180</td></tr><tr class="sub1"><td colspan="5">รวมค่าเส้น (ยังไม่เผื่อเศษ)</td><td colspan="2" class="w"></td><td colspan="2" class="a">4,514.90</td><td class="w"></td><td class="a">5,135.53</td></tr><tr class="sub1"><td colspan="5">× 1.3 เผื่อเศษ = ค่าเส้นรวม</td><td colspan="2" class="w"></td><td colspan="2" class="a">5,869.37</td><td class="w"></td><td class="a">6,676.19</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">11,780</td><td class="w"></td><td class="a">12,992</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">27,548</td><td class="w"></td><td class="a">31,004</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">10/32</span> Velora บานเปิด <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 90×240 ซม. 1 บาน</span><span><b>ใหญ่</b> 120×280 ซม. 1 บาน</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 90×240</th><th colspan="4" class="b">ขนาดใหญ่ 120×280</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">อลูมิเนียม — คิดตามยาว (ซม.)</td></tr><tr><td class="c">1</td><td class="nm">วงกบบน<span class="sub">เส้น 6 ม.</span></td><td class="code">JR02885</td>
+      <td class="w"></td><td class="a">1,500</td>
+      <td class="w"></td><td class="a">90<span class="sub">1×90</span></td><td class="w"></td><td class="a">225</td><td class="w"></td><td class="a">120<span class="sub">1×120</span></td><td class="w"></td><td class="a">300</td></tr><tr><td class="c">2</td><td class="nm">วงกบข้าง<span class="sub">เส้น 6 ม.</span></td><td class="code">JR02885</td>
+      <td class="w"></td><td class="a">1,500</td>
+      <td class="w"></td><td class="a">480<span class="sub">2×240</span></td><td class="w"></td><td class="a">1,200</td><td class="w"></td><td class="a">560<span class="sub">2×280</span></td><td class="w"></td><td class="a">1,400</td></tr><tr><td class="c">3</td><td class="nm">กรอบบาน แนวนอน<span class="sub">เส้น 6 ม.</span></td><td class="code">JR02886</td>
+      <td class="w"></td><td class="a">1,000</td>
+      <td class="w"></td><td class="a">168<span class="sub">2×84</span></td><td class="w"></td><td class="a">281</td><td class="w"></td><td class="a">228<span class="sub">2×114</span></td><td class="w"></td><td class="a">381</td></tr><tr><td class="c">4</td><td class="nm">กรอบบาน แนวตั้ง<span class="sub">เส้น 6 ม.</span></td><td class="code">JR02886</td>
+      <td class="w"></td><td class="a">1,000</td>
+      <td class="w"></td><td class="a">474<span class="sub">2×237</span></td><td class="w"></td><td class="a">789</td><td class="w"></td><td class="a">554<span class="sub">2×277</span></td><td class="w"></td><td class="a">922.33</td></tr><tr><td class="c">5</td><td class="nm">ลูกฟูก 2 ทาง แนวตั้ง (ยัดในช่อง)<span class="sub">เส้น 6 ม.</span></td><td class="code">JR01994</td>
+      <td class="w"></td><td class="a">491</td>
+      <td class="w"></td><td class="a">480<span class="sub">2×240</span></td><td class="w"></td><td class="a">392.80</td><td class="w"></td><td class="a">560<span class="sub">2×280</span></td><td class="w"></td><td class="a">458.27</td></tr><tr><td class="c">6</td><td class="nm">ลูกฟูก 2 ทาง แนวนอน (ยัดในช่อง)<span class="sub">เส้น 6 ม.</span></td><td class="code">JR01994</td>
+      <td class="w"></td><td class="a">491</td>
+      <td class="w"></td><td class="a">90<span class="sub">1×90</span></td><td class="w"></td><td class="a">73.65</td><td class="w"></td><td class="a">120<span class="sub">1×120</span></td><td class="w"></td><td class="a">98.20</td></tr><tr class="gh"><td colspan="11">กระจก / แผ่น</td></tr><tr><td class="c">7</td><td class="nm">กระจก เทมเปอร์ใส 6มม.</td><td class="code"></td>
+      <td class="w"></td><td class="a">403</td>
+      <td class="w"></td><td class="a">2.16</td><td class="w"></td><td class="a">870.48</td><td class="w"></td><td class="a">3.36</td><td class="w"></td><td class="a">1,354.08</td></tr><tr class="gh"><td colspan="11">อุปกรณ์</td></tr><tr><td class="c">8</td><td class="nm">บานพับ (4 ตัว/บาน)</td><td class="code">JR00561</td>
+      <td class="w"></td><td class="a">110</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">440</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">440</td></tr><tr><td class="c">9</td><td class="nm">มือจับ</td><td class="code">JR00355</td>
+      <td class="w"></td><td class="a">450</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">450</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">450</td></tr><tr class="gh"><td colspan="11">โครง / วัสดุอื่น</td></tr><tr><td class="c">10</td><td class="nm">ซิลิโคน</td><td class="code">JR00504</td>
+      <td class="w"></td><td class="a">90</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">180</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">180</td></tr><tr class="gh"><td colspan="11">ค่าอบสี</td></tr><tr><td class="c">11</td><td class="nm">ค่าอบสี (อบขาว/ดำ 100/กก. × 8.43กก.)</td><td class="code"></td>
+      <td class="w"></td><td class="a">100</td>
+      <td class="w"></td><td class="a">8.43</td><td class="w"></td><td class="a">843.08</td><td class="w"></td><td class="a">—</td><td class="w"></td><td class="a">—</td></tr><tr><td class="c">12</td><td class="nm">ค่าเปิดตู้อบ</td><td class="code"></td>
+      <td class="w"></td><td class="a">2,000</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">2,000</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">2,000</td></tr><tr><td class="c">13</td><td class="nm">ค่าอบสี (อบขาว/ดำ 100/กก. × 10.16กก.)</td><td class="code"></td>
+      <td class="w"></td><td class="a">100</td>
+      <td class="w"></td><td class="a">—</td><td class="w"></td><td class="a">—</td><td class="w"></td><td class="a">10.16</td><td class="w"></td><td class="a">1,015.85</td></tr><tr class="sub1"><td colspan="5">รวมค่าเส้น (ยังไม่เผื่อเศษ)</td><td colspan="2" class="w"></td><td colspan="2" class="a">2,961.45</td><td class="w"></td><td class="a">3,559.80</td></tr><tr class="sub1"><td colspan="5">× 1.3 เผื่อเศษ = ค่าเส้นรวม</td><td colspan="2" class="w"></td><td colspan="2" class="a">3,849.89</td><td class="w"></td><td class="a">4,627.74</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">8,633</td><td class="w"></td><td class="a">10,068</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">20,806</td><td class="w"></td><td class="a">24,882</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">11/32</span> บานโซลิด · โซลิด 2 ชั้น <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 90×240 ซม. 1 บาน</span><span><b>ใหญ่</b> 120×280 ซม. 1 บาน</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 90×240</th><th colspan="4" class="b">ขนาดใหญ่ 120×280</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">อลูมิเนียม — เส้นเต็ม</td></tr><tr><td class="c">1</td><td class="nm">วงกบ 3 ด้าน F7859</td><td class="code">F7859</td>
+      <td class="w"></td><td class="a">1,280</td>
+      <td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">1,280</td><td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">2,560</td></tr><tr><td class="c">2</td><td class="nm">ธรณี F7938B</td><td class="code">F7938B</td>
+      <td class="w"></td><td class="a">1,472</td>
+      <td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">1,472</td><td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">1,472</td></tr><tr><td class="c">3</td><td class="nm">ตบธรณี F7960</td><td class="code">F7960</td>
+      <td class="w"></td><td class="a">603</td>
+      <td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">603</td><td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">603</td></tr><tr><td class="c">4</td><td class="nm">กรอบประตู 7864</td><td class="code">F7864</td>
+      <td class="w"></td><td class="a">2,186</td>
+      <td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">4,372</td><td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">4,372</td></tr><tr><td class="c">5</td><td class="nm">คิ้ว F7935</td><td class="code">F7935</td>
+      <td class="w"></td><td class="a">352</td>
+      <td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">352</td><td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">704</td></tr><tr><td class="c">6</td><td class="nm">ลูกฟูก2ทาง 2 ฝั่ง<span class="sub">เส้น 6 ม.</span></td><td class="code">JR01994</td>
+      <td class="w"></td><td class="a">491</td>
+      <td class="w"></td><td class="a">9 เส้น</td><td class="w"></td><td class="a">4,419</td><td class="w"></td><td class="a">12 เส้น</td><td class="w"></td><td class="a">5,892</td></tr><tr><td class="c">7</td><td class="nm">เส้นคาดตาราง 2 ฝั่ง<span class="sub">เส้น 6 ม.</span></td><td class="code">เส้นกลาง</td>
+      <td class="w"></td><td class="a">150</td>
+      <td class="w"></td><td class="a">18 เส้น</td><td class="w"></td><td class="a">2,700</td><td class="w"></td><td class="a">26 เส้น</td><td class="w"></td><td class="a">3,900</td></tr><tr class="gh"><td colspan="11">อุปกรณ์</td></tr><tr><td class="c">8</td><td class="nm">บานพับ hyda</td><td class="code">JR00489</td>
+      <td class="w"></td><td class="a">117</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">468</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">468</td></tr><tr><td class="c">9</td><td class="nm">มือจับ ล็อค+กุญแจ (คิงโบ)</td><td class="code">JR00315</td>
+      <td class="w"></td><td class="a">330</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">330</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">330</td></tr><tr><td class="c">10</td><td class="nm">ตลับกุญแจไฮด้า</td><td class="code">JR00551</td>
+      <td class="w"></td><td class="a">285</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">285</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">285</td></tr><tr><td class="c">11</td><td class="nm">ไส้กุญแจ</td><td class="code">JR00499</td>
+      <td class="w"></td><td class="a">429</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">429</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">429</td></tr><tr><td class="c">12</td><td class="nm">แผ่นรับล็อค</td><td class="code">JR00562</td>
+      <td class="w"></td><td class="a">15</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">15</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">15</td></tr><tr><td class="c">13</td><td class="nm">สปิงก็อท</td><td class="code">JR00592</td>
+      <td class="w"></td><td class="a">12</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">48</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">48</td></tr><tr><td class="c">14</td><td class="nm">ฉากประคองมุม</td><td class="code">JR00480</td>
+      <td class="w"></td><td class="a">5</td>
+      <td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">40</td><td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">40</td></tr><tr><td class="c">15</td><td class="nm">น็อตเฟรม 1"</td><td class="code">JR00864</td>
+      <td class="w"></td><td class="a">1</td>
+      <td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">8</td></tr><tr class="gh"><td colspan="11">โครง / วัสดุอื่น</td></tr><tr><td class="c">16</td><td class="nm">ยางกรอบบาน</td><td class="code">JR00771</td>
+      <td class="w"></td><td class="a">11</td>
+      <td class="w"></td><td class="a">6.60</td><td class="w"></td><td class="a">72.60</td><td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">88</td></tr><tr><td class="c">17</td><td class="nm">ยางวงกบ</td><td class="code">JR00771</td>
+      <td class="w"></td><td class="a">11</td>
+      <td class="w"></td><td class="a">6.60</td><td class="w"></td><td class="a">72.60</td><td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">88</td></tr><tr><td class="c">18</td><td class="nm">ซิลิโคน</td><td class="code">JR00504</td>
+      <td class="w"></td><td class="a">90</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">180</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">180</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">17,146</td><td class="w"></td><td class="a">21,482</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">40,400</td><td class="w"></td><td class="a">50,680</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">12/32</span> บานโซลิด · โซลิด 1 ชั้น <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 90×240 ซม. 1 บาน</span><span><b>ใหญ่</b> 120×280 ซม. 1 บาน</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 90×240</th><th colspan="4" class="b">ขนาดใหญ่ 120×280</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">อลูมิเนียม — เส้นเต็ม</td></tr><tr><td class="c">1</td><td class="nm">วงกบ 3 ด้าน F7859</td><td class="code">F7859</td>
+      <td class="w"></td><td class="a">1,280</td>
+      <td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">1,280</td><td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">2,560</td></tr><tr><td class="c">2</td><td class="nm">ธรณี F7938B</td><td class="code">F7938B</td>
+      <td class="w"></td><td class="a">1,472</td>
+      <td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">1,472</td><td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">1,472</td></tr><tr><td class="c">3</td><td class="nm">ตบธรณี F7960</td><td class="code">F7960</td>
+      <td class="w"></td><td class="a">603</td>
+      <td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">603</td><td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">603</td></tr><tr><td class="c">4</td><td class="nm">กรอบประตู 7864</td><td class="code">F7864</td>
+      <td class="w"></td><td class="a">2,186</td>
+      <td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">4,372</td><td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">4,372</td></tr><tr><td class="c">5</td><td class="nm">คิ้ว F7935</td><td class="code">F7935</td>
+      <td class="w"></td><td class="a">352</td>
+      <td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">352</td><td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">704</td></tr><tr><td class="c">6</td><td class="nm">ลูกฟูก2ทาง 2 ฝั่ง<span class="sub">เส้น 6 ม.</span></td><td class="code">JR01994</td>
+      <td class="w"></td><td class="a">491</td>
+      <td class="w"></td><td class="a">5 เส้น</td><td class="w"></td><td class="a">2,455</td><td class="w"></td><td class="a">6 เส้น</td><td class="w"></td><td class="a">2,946</td></tr><tr><td class="c">7</td><td class="nm">เส้นคาดตาราง 2 ฝั่ง<span class="sub">เส้น 6 ม.</span></td><td class="code">เส้นกลาง</td>
+      <td class="w"></td><td class="a">150</td>
+      <td class="w"></td><td class="a">18 เส้น</td><td class="w"></td><td class="a">2,700</td><td class="w"></td><td class="a">26 เส้น</td><td class="w"></td><td class="a">3,900</td></tr><tr class="gh"><td colspan="11">อุปกรณ์</td></tr><tr><td class="c">8</td><td class="nm">บานพับ hyda</td><td class="code">JR00489</td>
+      <td class="w"></td><td class="a">117</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">468</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">468</td></tr><tr><td class="c">9</td><td class="nm">มือจับ ล็อค+กุญแจ (คิงโบ)</td><td class="code">JR00315</td>
+      <td class="w"></td><td class="a">330</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">330</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">330</td></tr><tr><td class="c">10</td><td class="nm">ตลับกุญแจไฮด้า</td><td class="code">JR00551</td>
+      <td class="w"></td><td class="a">285</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">285</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">285</td></tr><tr><td class="c">11</td><td class="nm">ไส้กุญแจ</td><td class="code">JR00499</td>
+      <td class="w"></td><td class="a">429</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">429</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">429</td></tr><tr><td class="c">12</td><td class="nm">แผ่นรับล็อค</td><td class="code">JR00562</td>
+      <td class="w"></td><td class="a">15</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">15</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">15</td></tr><tr><td class="c">13</td><td class="nm">สปิงก็อท</td><td class="code">JR00592</td>
+      <td class="w"></td><td class="a">12</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">48</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">48</td></tr><tr><td class="c">14</td><td class="nm">ฉากประคองมุม</td><td class="code">JR00480</td>
+      <td class="w"></td><td class="a">5</td>
+      <td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">40</td><td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">40</td></tr><tr><td class="c">15</td><td class="nm">น็อตเฟรม 1"</td><td class="code">JR00864</td>
+      <td class="w"></td><td class="a">1</td>
+      <td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">8</td></tr><tr class="gh"><td colspan="11">โครง / วัสดุอื่น</td></tr><tr><td class="c">16</td><td class="nm">ยางกรอบบาน</td><td class="code">JR00771</td>
+      <td class="w"></td><td class="a">11</td>
+      <td class="w"></td><td class="a">6.60</td><td class="w"></td><td class="a">72.60</td><td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">88</td></tr><tr><td class="c">17</td><td class="nm">ยางวงกบ</td><td class="code">JR00771</td>
+      <td class="w"></td><td class="a">11</td>
+      <td class="w"></td><td class="a">6.60</td><td class="w"></td><td class="a">72.60</td><td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">88</td></tr><tr><td class="c">18</td><td class="nm">ซิลิโคน</td><td class="code">JR00504</td>
+      <td class="w"></td><td class="a">90</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">180</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">180</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">15,182</td><td class="w"></td><td class="a">18,536</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">35,740</td><td class="w"></td><td class="a">43,670</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">13/32</span> บานกระทุ้ง <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 60×120 ซม. 1 บาน</span><span><b>ใหญ่</b> 80×160 ซม. 1 บาน</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 60×120</th><th colspan="4" class="b">ขนาดใหญ่ 80×160</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">อลูมิเนียม — คิดตามยาว (ซม.)</td></tr><tr><td class="c">1</td><td class="nm">วงกบ 3 ด้าน F7859</td><td class="code">F7859</td>
+      <td class="w"></td><td class="a">1,280</td>
+      <td class="w"></td><td class="a">295<span class="sub">1×295</span></td><td class="w"></td><td class="a">590</td><td class="w"></td><td class="a">395<span class="sub">1×395</span></td><td class="w"></td><td class="a">790</td></tr><tr><td class="c">2</td><td class="nm">ธรณี F7939B</td><td class="code">F7939B</td>
+      <td class="w"></td><td class="a">1,563</td>
+      <td class="w"></td><td class="a">55<span class="sub">1×55</span></td><td class="w"></td><td class="a">134.32</td><td class="w"></td><td class="a">75<span class="sub">1×75</span></td><td class="w"></td><td class="a">183.16</td></tr><tr><td class="c">3</td><td class="nm">กรอบบาน เสา F7943B</td><td class="code">F7943B</td>
+      <td class="w"></td><td class="a">1,456</td>
+      <td class="w"></td><td class="a">232<span class="sub">2×116</span></td><td class="w"></td><td class="a">529.16</td><td class="w"></td><td class="a">312<span class="sub">2×156</span></td><td class="w"></td><td class="a">711.16</td></tr><tr><td class="c">4</td><td class="nm">กรอบบาน ขวาง F7943B</td><td class="code">F7943B</td>
+      <td class="w"></td><td class="a">1,456</td>
+      <td class="w"></td><td class="a">112<span class="sub">2×56</span></td><td class="w"></td><td class="a">256.16</td><td class="w"></td><td class="a">152<span class="sub">2×76</span></td><td class="w"></td><td class="a">347.16</td></tr><tr><td class="c">5</td><td class="nm">คิ้ว ตั้ง F7935</td><td class="code">F7935</td>
+      <td class="w"></td><td class="a">352</td>
+      <td class="w"></td><td class="a">200<span class="sub">2×100</span></td><td class="w"></td><td class="a">110.33</td><td class="w"></td><td class="a">280<span class="sub">2×140</span></td><td class="w"></td><td class="a">154.33</td></tr><tr><td class="c">6</td><td class="nm">คิ้ว ขวาง F7935</td><td class="code">F7935</td>
+      <td class="w"></td><td class="a">352</td>
+      <td class="w"></td><td class="a">88<span class="sub">2×44</span></td><td class="w"></td><td class="a">48.73</td><td class="w"></td><td class="a">128<span class="sub">2×64</span></td><td class="w"></td><td class="a">70.73</td></tr><tr class="gh"><td colspan="11">กระจก / แผ่น</td></tr><tr><td class="c">7</td><td class="nm">กระจก เขียว 6มม.</td><td class="code"></td>
+      <td class="w"></td><td class="a">264</td>
+      <td class="w"></td><td class="a">0.72</td><td class="w"></td><td class="a">190.08</td><td class="w"></td><td class="a">1.28</td><td class="w"></td><td class="a">337.92</td></tr><tr class="gh"><td colspan="11">อุปกรณ์</td></tr><tr><td class="c">8</td><td class="nm">มือจับหลบมุ้ง KINGBO-FH3016</td><td class="code">JR00318</td>
+      <td class="w"></td><td class="a">140</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">140</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">140</td></tr><tr><td class="c">9</td><td class="nm">วิทโก้ (บานพับ SC-304P)</td><td class="code">JR00559</td>
+      <td class="w"></td><td class="a">200</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">400</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">400</td></tr><tr><td class="c">10</td><td class="nm">CDQ Kingbo</td><td class="code">JR00564</td>
+      <td class="w"></td><td class="a">150</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">150</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">150</td></tr><tr><td class="c">11</td><td class="nm">รับล็อคลูกเบี้ยว</td><td class="code">JR00483</td>
+      <td class="w"></td><td class="a">15</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">30</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">30</td></tr><tr><td class="c">12</td><td class="nm">ลูกเบี้ยวล็อค</td><td class="code">JR00486</td>
+      <td class="w"></td><td class="a">17</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">34</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">34</td></tr><tr><td class="c">13</td><td class="nm">สปิงก็อท</td><td class="code">JR00592</td>
+      <td class="w"></td><td class="a">12</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">48</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">48</td></tr><tr><td class="c">14</td><td class="nm">ฉากประคองมุม</td><td class="code">JR00480</td>
+      <td class="w"></td><td class="a">5</td>
+      <td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">40</td><td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">40</td></tr><tr><td class="c">15</td><td class="nm">แกนล็อค</td><td class="code">JR03133</td>
+      <td class="w"></td><td class="a">63</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">126</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">126</td></tr><tr><td class="c">16</td><td class="nm">วาวล์ระบายน้ำ</td><td class="code">JR00485</td>
+      <td class="w"></td><td class="a">14</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">28</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">28</td></tr><tr><td class="c">17</td><td class="nm">น็อตเฟรม 1"</td><td class="code">JR00864</td>
+      <td class="w"></td><td class="a">1</td>
+      <td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">8</td></tr><tr class="gh"><td colspan="11">โครง / วัสดุอื่น</td></tr><tr><td class="c">18</td><td class="nm">ยางกรอบบาน</td><td class="code">JR00770</td>
+      <td class="w"></td><td class="a">11</td>
+      <td class="w"></td><td class="a">3.60</td><td class="w"></td><td class="a">39.60</td><td class="w"></td><td class="a">4.80</td><td class="w"></td><td class="a">52.80</td></tr><tr><td class="c">19</td><td class="nm">ยางวงกบ</td><td class="code">JR00770</td>
+      <td class="w"></td><td class="a">11</td>
+      <td class="w"></td><td class="a">3.60</td><td class="w"></td><td class="a">39.60</td><td class="w"></td><td class="a">4.80</td><td class="w"></td><td class="a">52.80</td></tr><tr><td class="c">20</td><td class="nm">ซิลิโคน</td><td class="code">JR00504</td>
+      <td class="w"></td><td class="a">90</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">90</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">90</td></tr><tr class="sub1"><td colspan="5">รวมค่าเส้น (ยังไม่เผื่อเศษ)</td><td colspan="2" class="w"></td><td colspan="2" class="a">1,668.70</td><td class="w"></td><td class="a">2,256.54</td></tr><tr class="sub1"><td colspan="5">× 1.3 เผื่อเศษ = ค่าเส้นรวม</td><td colspan="2" class="w"></td><td colspan="2" class="a">2,169.31</td><td class="w"></td><td class="a">2,933.50</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">3,533</td><td class="w"></td><td class="a">4,471</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">8,150</td><td class="w"></td><td class="a">10,160</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">14/32</span> บานยก <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 80×200 ซม. 1 บาน</span><span><b>ใหญ่</b> 100×240 ซม. 1 บาน</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 80×200</th><th colspan="4" class="b">ขนาดใหญ่ 100×240</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">อลูมิเนียม — คิดตามยาว (ซม.)</td></tr><tr><td class="c">1</td><td class="nm">เฟรมบน (HEAD)</td><td class="code">B28009</td>
+      <td class="w"></td><td class="a">1,079</td>
+      <td class="w"></td><td class="a">75<span class="sub">1×75</span></td><td class="w"></td><td class="a">126.45</td><td class="w"></td><td class="a">95<span class="sub">1×95</span></td><td class="w"></td><td class="a">160.16</td></tr><tr><td class="c">2</td><td class="nm">ตบปิดเฟรมบน (COVER HEAD)</td><td class="code">B28010</td>
+      <td class="w"></td><td class="a">421</td>
+      <td class="w"></td><td class="a">71<span class="sub">1×71</span></td><td class="w"></td><td class="a">46.44</td><td class="w"></td><td class="a">91<span class="sub">1×91</span></td><td class="w"></td><td class="a">59.60</td></tr><tr><td class="c">3</td><td class="nm">กรอบบาน แนวนอน (SASH↔)</td><td class="code">B28011</td>
+      <td class="w"></td><td class="a">635</td>
+      <td class="w"></td><td class="a">260<span class="sub">4×65</span></td><td class="w"></td><td class="a">256.38</td><td class="w"></td><td class="a">340<span class="sub">4×85</span></td><td class="w"></td><td class="a">335.75</td></tr><tr><td class="c">4</td><td class="nm">กรอบบาน แนวตั้ง (SASH↕)</td><td class="code">B28011</td>
+      <td class="w"></td><td class="a">635</td>
+      <td class="w"></td><td class="a">392<span class="sub">4×98</span></td><td class="w"></td><td class="a">387.35</td><td class="w"></td><td class="a">472<span class="sub">4×118</span></td><td class="w"></td><td class="a">466.72</td></tr><tr><td class="c">5</td><td class="nm">คิ้วยึดเสาเกี่ยว (ADAPTOR)</td><td class="code">B28012</td>
+      <td class="w"></td><td class="a">61</td>
+      <td class="w"></td><td class="a">134<span class="sub">2×67</span></td><td class="w"></td><td class="a">12.73</td><td class="w"></td><td class="a">174<span class="sub">2×87</span></td><td class="w"></td><td class="a">16.55</td></tr><tr><td class="c">6</td><td class="nm">เสาเกี่ยว (INTERLOCK)</td><td class="code">B28013</td>
+      <td class="w"></td><td class="a">206</td>
+      <td class="w"></td><td class="a">138<span class="sub">2×69</span></td><td class="w"></td><td class="a">44.29</td><td class="w"></td><td class="a">178<span class="sub">2×89</span></td><td class="w"></td><td class="a">57.16</td></tr><tr><td class="c">7</td><td class="nm">เฟรมล่าง (SILL)</td><td class="code">B28014</td>
+      <td class="w"></td><td class="a">885</td>
+      <td class="w"></td><td class="a">75<span class="sub">1×75</span></td><td class="w"></td><td class="a">103.71</td><td class="w"></td><td class="a">95<span class="sub">1×95</span></td><td class="w"></td><td class="a">131.37</td></tr><tr><td class="c">8</td><td class="nm">เสาเสริมเฟรมข้าง (JAMB ADAPTOR)</td><td class="code">B28015</td>
+      <td class="w"></td><td class="a">1,236</td>
+      <td class="w"></td><td class="a">386<span class="sub">2×193</span></td><td class="w"></td><td class="a">745.85</td><td class="w"></td><td class="a">466<span class="sub">2×233</span></td><td class="w"></td><td class="a">900.35</td></tr><tr><td class="c">9</td><td class="nm">เฟรมข้าง (NARROW FRAME)</td><td class="code">B10004</td>
+      <td class="w"></td><td class="a">1,195</td>
+      <td class="w"></td><td class="a">400<span class="sub">2×200</span></td><td class="w"></td><td class="a">746.88</td><td class="w"></td><td class="a">480<span class="sub">2×240</span></td><td class="w"></td><td class="a">896.25</td></tr><tr><td class="c">10</td><td class="nm">กล่องร่องมีสกรู</td><td class="code"></td>
+      <td class="w"></td><td class="a">995</td>
+      <td class="w"></td><td class="a">80<span class="sub">1×80</span></td><td class="w"></td><td class="a">124.38</td><td class="w"></td><td class="a">100<span class="sub">1×100</span></td><td class="w"></td><td class="a">155.47</td></tr><tr class="gh"><td colspan="11">กระจก / แผ่น</td></tr><tr><td class="c">11</td><td class="nm">กระจก เขียว 6มม.</td><td class="code"></td>
+      <td class="w"></td><td class="a">264</td>
+      <td class="w"></td><td class="a">1.60</td><td class="w"></td><td class="a">422.40</td><td class="w"></td><td class="a">2.40</td><td class="w"></td><td class="a">633.60</td></tr><tr class="gh"><td colspan="11">อุปกรณ์</td></tr><tr><td class="c">12</td><td class="nm">กล่องอุปกรณ์</td><td class="code"></td>
+      <td class="w"></td><td class="a">1,350</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">1,350</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">1,350</td></tr><tr><td class="c">13</td><td class="nm">มือจับ</td><td class="code"></td>
+      <td class="w"></td><td class="a">60</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">60</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">60</td></tr><tr><td class="c">14</td><td class="nm">ล๊อคกลาง</td><td class="code"></td>
+      <td class="w"></td><td class="a">70</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">70</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">70</td></tr><tr><td class="c">15</td><td class="nm">คอยสปริง</td><td class="code"></td>
+      <td class="w"></td><td class="a">160</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">320</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">320</td></tr><tr><td class="c">16</td><td class="nm">ฝาปิดฝุ่น</td><td class="code"></td>
+      <td class="w"></td><td class="a">10</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">20</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">20</td></tr><tr><td class="c">17</td><td class="nm">ตลับตะขอเกี่ยว</td><td class="code"></td>
+      <td class="w"></td><td class="a">130</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">520</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">520</td></tr><tr><td class="c">18</td><td class="nm">กิ๊ปล็อค</td><td class="code"></td>
+      <td class="w"></td><td class="a">20</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">80</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">80</td></tr><tr><td class="c">19</td><td class="nm">กล่องใส่สปริง</td><td class="code"></td>
+      <td class="w"></td><td class="a">30</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">60</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">60</td></tr><tr class="gh"><td colspan="11">โครง / วัสดุอื่น</td></tr><tr><td class="c">20</td><td class="nm">ซิลิโคน</td><td class="code">JR00504</td>
+      <td class="w"></td><td class="a">90</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">90</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">180</td></tr><tr class="sub1"><td colspan="5">รวมค่าเส้น (ยังไม่เผื่อเศษ)</td><td colspan="2" class="w"></td><td colspan="2" class="a">2,594.46</td><td class="w"></td><td class="a">3,179.38</td></tr><tr class="sub1"><td colspan="5">× 1.3 เผื่อเศษ = ค่าเส้นรวม</td><td colspan="2" class="w"></td><td colspan="2" class="a">3,372.80</td><td class="w"></td><td class="a">4,133.19</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">6,365</td><td class="w"></td><td class="a">7,427</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">16,600</td><td class="w"></td><td class="a">19,410</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">15/32</span> บานเกล็ด <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 80×200 ซม. 1 บาน</span><span><b>ใหญ่</b> 100×240 ซม. 1 บาน</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 80×200</th><th colspan="4" class="b">ขนาดใหญ่ 100×240</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">อุปกรณ์</td></tr><tr><td class="c">1</td><td class="nm">เฟรม 1"×4" (รอบ+เสาแบ่ง)</td><td class="code"></td>
+      <td class="w"></td><td class="a">905</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">905</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">1,810</td></tr><tr><td class="c">2</td><td class="nm">ขาเกล็ดโยก</td><td class="code"></td>
+      <td class="w"></td><td class="a">1</td>
+      <td class="w"></td><td class="a">1,980</td><td class="w"></td><td class="a">1,980</td><td class="w"></td><td class="a">2,340</td><td class="w"></td><td class="a">2,340</td></tr><tr><td class="c">3</td><td class="nm">ใบเกล็ด</td><td class="code"></td>
+      <td class="w"></td><td class="a">572</td>
+      <td class="w"></td><td class="a">3.99</td><td class="w"></td><td class="a">2,280.37</td><td class="w"></td><td class="a">5.85</td><td class="w"></td><td class="a">3,346.20</td></tr><tr><td class="c">4</td><td class="nm">ยู4หุน เกล็ดติดตาย</td><td class="code"></td>
+      <td class="w"></td><td class="a">1</td>
+      <td class="w"></td><td class="a">0.70</td><td class="w"></td><td class="a">0.70</td><td class="w"></td><td class="a">2.90</td><td class="w"></td><td class="a">2.90</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">5,166</td><td class="w"></td><td class="a">7,499</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">10,909</td><td class="w"></td><td class="a">15,944</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">18/32</span> บานเฟี้ยมยก <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 240×200 ซม. 2 บาน</span><span><b>ใหญ่</b> 240×280 ซม. 2 บาน</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 240×200</th><th colspan="4" class="b">ขนาดใหญ่ 240×280</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">อลูมิเนียม — เส้นเต็ม</td></tr><tr><td class="c">1</td><td class="nm">F7968 เฟรมข้าง (เดิมเฟรมบน)</td><td class="code">F7968</td>
+      <td class="w"></td><td class="a">3,418</td>
+      <td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">3,418</td><td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">3,418</td></tr><tr><td class="c">2</td><td class="nm">F7969 เฟรมล่าง</td><td class="code">F7969</td>
+      <td class="w"></td><td class="a">1,894</td>
+      <td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">1,894</td><td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">1,894</td></tr><tr><td class="c">3</td><td class="nm">F7970 เฟรมบน (เดิมเฟรมข้าง)</td><td class="code">F7970</td>
+      <td class="w"></td><td class="a">1,154</td>
+      <td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">1,154</td><td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">1,154</td></tr><tr><td class="c">4</td><td class="nm">F7971 คิ้วเฟรมบน</td><td class="code">F7971</td>
+      <td class="w"></td><td class="a">494</td>
+      <td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">494</td><td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">494</td></tr><tr><td class="c">5</td><td class="nm">F7973 ตบปิดเฟรม ตั้ง (ข้าง) + F7973 ตบปิดเฟรม นอน (ล่าง)</td><td class="code">F7973</td>
+      <td class="w"></td><td class="a">235</td>
+      <td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">235</td><td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">470</td></tr><tr><td class="c">6</td><td class="nm">F7972 กรอบบาน ตั้ง + F7972 กรอบบาน นอน</td><td class="code">F7972</td>
+      <td class="w"></td><td class="a">1,842</td>
+      <td class="w"></td><td class="a">3 เส้น</td><td class="w"></td><td class="a">5,526</td><td class="w"></td><td class="a">3 เส้น</td><td class="w"></td><td class="a">5,526</td></tr><tr><td class="c">7</td><td class="nm">F7935 คิ้วกระจก ตั้ง + F7935 คิ้วกระจก นอน</td><td class="code">F7935</td>
+      <td class="w"></td><td class="a">352</td>
+      <td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">704</td><td class="w"></td><td class="a">3 เส้น</td><td class="w"></td><td class="a">1,056</td></tr><tr class="gh"><td colspan="11">กระจก / แผ่น</td></tr><tr><td class="c">8</td><td class="nm">กระจก เขียว 6มม.</td><td class="code"></td>
+      <td class="w"></td><td class="a">264</td>
+      <td class="w"></td><td class="a">3.56</td><td class="w"></td><td class="a">939.31</td><td class="w"></td><td class="a">5.28</td><td class="w"></td><td class="a">1,392.60</td></tr><tr class="gh"><td colspan="11">อุปกรณ์</td></tr><tr><td class="c">9</td><td class="nm">HD-640 บานพับล้อบน</td><td class="code">JR00198</td>
+      <td class="w"></td><td class="a">299</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">598</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">598</td></tr><tr><td class="c">10</td><td class="nm">HD-641 บานพับเฟี้ยม</td><td class="code">JR00252</td>
+      <td class="w"></td><td class="a">72</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">144</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">144</td></tr><tr><td class="c">11</td><td class="nm">HD-642 บานพับมือจับ</td><td class="code">JR00203</td>
+      <td class="w"></td><td class="a">109</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">109</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">109</td></tr><tr><td class="c">12</td><td class="nm">HD-643 บานพับไกด์ล่าง</td><td class="code">JR00239</td>
+      <td class="w"></td><td class="a">199</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">199</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">199</td></tr><tr><td class="c">13</td><td class="nm">HD-474 มือจับกลอน</td><td class="code">JR00213</td>
+      <td class="w"></td><td class="a">85</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">85</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">85</td></tr><tr><td class="c">14</td><td class="nm">HD-312 ตลับกลอนล็อค</td><td class="code">JR03185</td>
+      <td class="w"></td><td class="a">88</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">88</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">88</td></tr><tr><td class="c">15</td><td class="nm">HD-1180 ก้านสไลด์</td><td class="code">JR03122</td>
+      <td class="w"></td><td class="a">73</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">146</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">146</td></tr><tr><td class="c">16</td><td class="nm">HD-213 ฉากเข้ามุม</td><td class="code">JR03186</td>
+      <td class="w"></td><td class="a">15</td>
+      <td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">120</td><td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">120</td></tr><tr><td class="c">17</td><td class="nm">HD-200 ฉากประคองมุม</td><td class="code">JR03187</td>
+      <td class="w"></td><td class="a">1.50</td>
+      <td class="w"></td><td class="a">24</td><td class="w"></td><td class="a">36</td><td class="w"></td><td class="a">24</td><td class="w"></td><td class="a">36</td></tr><tr class="gh"><td colspan="11">โครง / วัสดุอื่น</td></tr><tr><td class="c">18</td><td class="nm">ยางอัด</td><td class="code">JR00204</td>
+      <td class="w"></td><td class="a">8</td>
+      <td class="w"></td><td class="a">11.90</td><td class="w"></td><td class="a">95.20</td><td class="w"></td><td class="a">13.50</td><td class="w"></td><td class="a">108</td></tr><tr><td class="c">19</td><td class="nm">ยางรอง</td><td class="code">JR00258</td>
+      <td class="w"></td><td class="a">8</td>
+      <td class="w"></td><td class="a">11.90</td><td class="w"></td><td class="a">95.20</td><td class="w"></td><td class="a">13.50</td><td class="w"></td><td class="a">108</td></tr><tr><td class="c">20</td><td class="nm">ยางลูกโป่ง 6mm</td><td class="code">JR00273</td>
+      <td class="w"></td><td class="a">7</td>
+      <td class="w"></td><td class="a">34.53</td><td class="w"></td><td class="a">241.71</td><td class="w"></td><td class="a">39.33</td><td class="w"></td><td class="a">275.31</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">16,321</td><td class="w"></td><td class="a">17,421</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">43,280</td><td class="w"></td><td class="a">45,801</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">19/32</span> บานติดตาย <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 150×150 ซม. 1 บาน</span><span><b>ใหญ่</b> 240×240 ซม. 1 บาน</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 150×150</th><th colspan="4" class="b">ขนาดใหญ่ 240×240</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">อลูมิเนียม — เส้นเต็ม</td></tr><tr><td class="c">1</td><td class="nm">กล่อง 1.6×3 — ตั้ง<span class="sub">เส้น 6 ม.</span></td><td class="code">กล่อง 1.6"x3"</td>
+      <td class="w"></td><td class="a">1,107</td>
+      <td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">1,107</td><td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">1,107</td></tr><tr><td class="c">2</td><td class="nm">กล่อง 1.6×3 — นอน<span class="sub">เส้น 6 ม.</span></td><td class="code">กล่อง 1.6"x3"</td>
+      <td class="w"></td><td class="a">1,107</td>
+      <td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">1,107</td><td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">1,107</td></tr><tr><td class="c">3</td><td class="nm">9014 คัลเทิลวอล — ตั้ง<span class="sub">เส้น 6 ม.</span></td><td class="code">9014</td>
+      <td class="w"></td><td class="a">638</td>
+      <td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">638</td><td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">638</td></tr><tr><td class="c">4</td><td class="nm">9014 คัลเทิลวอล — นอน<span class="sub">เส้น 6 ม.</span></td><td class="code">9014</td>
+      <td class="w"></td><td class="a">638</td>
+      <td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">638</td><td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">638</td></tr><tr class="gh"><td colspan="11">กระจก / แผ่น</td></tr><tr><td class="c">5</td><td class="nm">กระจก เขียว 6มม.</td><td class="code"></td>
+      <td class="w"></td><td class="a">264</td>
+      <td class="w"></td><td class="a">2.25</td><td class="w"></td><td class="a">594</td><td class="w"></td><td class="a">5.76</td><td class="w"></td><td class="a">1,520.64</td></tr><tr class="gh"><td colspan="11">อุปกรณ์</td></tr><tr><td class="c">6</td><td class="nm">ฉากเข้ามุม (4 มุม/ช่อง)</td><td class="code">JR00557</td>
+      <td class="w"></td><td class="a">5</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">20</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">20</td></tr><tr class="gh"><td colspan="11">โครง / วัสดุอื่น</td></tr><tr><td class="c">7</td><td class="nm">เทปนอร์ตัน (หนุนกระจก)</td><td class="code">JR02937</td>
+      <td class="w"></td><td class="a">10</td>
+      <td class="w"></td><td class="a">6</td><td class="w"></td><td class="a">60</td><td class="w"></td><td class="a">9.60</td><td class="w"></td><td class="a">96</td></tr><tr><td class="c">8</td><td class="nm">ซิลิโคน ใน+นอก</td><td class="code">JR00504</td>
+      <td class="w"></td><td class="a">90</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">90</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">180</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">4,254</td><td class="w"></td><td class="a">5,307</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">9,158</td><td class="w"></td><td class="a">11,473</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">20/32</span> บานติดตายดัดโค้ง <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 150×150 ซม. 1 บาน</span><span><b>ใหญ่</b> 240×240 ซม. 1 บาน</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 150×150</th><th colspan="4" class="b">ขนาดใหญ่ 240×240</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">กระจก / แผ่น</td></tr><tr><td class="c">1</td><td class="nm">กระจก เขียว 6มม.</td><td class="code"></td>
+      <td class="w"></td><td class="a">264</td>
+      <td class="w"></td><td class="a">2.25</td><td class="w"></td><td class="a">594</td><td class="w"></td><td class="a">5.76</td><td class="w"></td><td class="a">1,520.64</td></tr><tr class="gh"><td colspan="11">โครง / วัสดุอื่น</td></tr><tr><td class="c">2</td><td class="nm">ค่าดัดโค้ง (อลูทั้งชุด รวมกล่อง)</td><td class="code"></td>
+      <td class="w"></td><td class="a">1</td>
+      <td class="w"></td><td class="a">2,548</td><td class="w"></td><td class="a">2,548</td><td class="w"></td><td class="a">3,102</td><td class="w"></td><td class="a">3,102</td></tr><tr><td class="c">3</td><td class="nm">ซิลิโคน (ใน+นอก)</td><td class="code">JR00504</td>
+      <td class="w"></td><td class="a">90</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">90</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">180</td></tr><tr><td class="c">4</td><td class="nm">กล่องเปิด+ตบปิดเปิด</td><td class="code"></td>
+      <td class="w"></td><td class="a">1,849</td>
+      <td class="w"></td><td class="a">0.33</td><td class="w"></td><td class="a">600.93</td><td class="w"></td><td class="a">0.52</td><td class="w"></td><td class="a">961.48</td></tr><tr><td class="c">5</td><td class="nm">ปัดขึ้นหลักร้อย</td><td class="code"></td>
+      <td class="w"></td><td class="a">1</td>
+      <td class="w"></td><td class="a">67.07</td><td class="w"></td><td class="a">67.07</td><td class="w"></td><td class="a">35.88</td><td class="w"></td><td class="a">35.88</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">3,900</td><td class="w"></td><td class="a">5,800</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">8,953</td><td class="w"></td><td class="a">13,438</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">21/32</span> หลังคา · ไวนิล <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 400×200 ซม.</span><span><b>ใหญ่</b> 600×250 ซม.</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 400×200</th><th colspan="4" class="b">ขนาดใหญ่ 600×250</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">อลูมิเนียม — คิดตามยาว (ซม.)</td></tr><tr><td class="c">1</td><td class="nm">จันทันรัดรอบ ฝั่งบ้าน (ยัดในช่อง)<span class="sub">เส้น 6 ม.</span></td><td class="code">กล่อง 1.6"x4"</td>
+      <td class="w"></td><td class="a">1,347</td>
+      <td class="w"></td><td class="a">376<span class="sub">4×94</span></td><td class="w"></td><td class="a">847.48</td><td class="w"></td><td class="a">570<span class="sub">6×95</span></td><td class="w"></td><td class="a">1,276.28</td></tr><tr><td class="c">2</td><td class="nm">จันทันรัดรอบ (ยื่น ข้าง)<span class="sub">เส้น 6 ม.</span></td><td class="code">กล่อง 1.6"x4"</td>
+      <td class="w"></td><td class="a">1,347</td>
+      <td class="w"></td><td class="a">382<span class="sub">2×191</span></td><td class="w"></td><td class="a">856.69</td><td class="w"></td><td class="a">482<span class="sub">2×241</span></td><td class="w"></td><td class="a">1,080.29</td></tr><tr><td class="c">3</td><td class="nm">จันทันซอย 1.6×4<span class="sub">เส้น 6 ม.</span></td><td class="code">กล่อง 1.6"x4"</td>
+      <td class="w"></td><td class="a">1,347</td>
+      <td class="w"></td><td class="a">558<span class="sub">3×186</span></td><td class="w"></td><td class="a">1,254.73</td><td class="w"></td><td class="a">1,180<span class="sub">5×236</span></td><td class="w"></td><td class="a">2,650.22</td></tr><tr><td class="c">4</td><td class="nm">จันทันรัดรอบ ฝั่งปลาย<span class="sub">เส้น 6 ม.</span></td><td class="code">กล่อง 1.6"x4"</td>
+      <td class="w"></td><td class="a">1,347</td>
+      <td class="w"></td><td class="a">400<span class="sub">1×400</span></td><td class="w"></td><td class="a">897.10</td><td class="w"></td><td class="a">600<span class="sub">1×600</span></td><td class="w"></td><td class="a">1,346.10</td></tr><tr><td class="c">5</td><td class="nm">แป (ยัดในช่อง) — เดี่ยว<span class="sub">เส้น 6 ม.</span></td><td class="code">กล่อง 1.6"x1.6"</td>
+      <td class="w"></td><td class="a">757</td>
+      <td class="w"></td><td class="a">1,880<span class="sub">20×94</span></td><td class="w"></td><td class="a">2,381.39</td><td class="w"></td><td class="a">3,420<span class="sub">36×95</span></td><td class="w"></td><td class="a">4,303.55</td></tr><tr><td class="c">6</td><td class="nm">กล่องครอบเพลท 1.6×4<span class="sub">เส้น 6 ม.</span></td><td class="code">กล่อง 1.6"x4"</td>
+      <td class="w"></td><td class="a">1,347</td>
+      <td class="w"></td><td class="a">250<span class="sub">5×50</span></td><td class="w"></td><td class="a">563.49</td><td class="w"></td><td class="a">441<span class="sub">7×63</span></td><td class="w"></td><td class="a">984.55</td></tr><tr><td class="c">7</td><td class="nm">ฉาก 6 หุน<span class="sub">เส้น 6 ม.</span></td><td class="code">ฉาก 6 หุน</td>
+      <td class="w"></td><td class="a">193</td>
+      <td class="w"></td><td class="a">400<span class="sub">1×400</span></td><td class="w"></td><td class="a">128.67</td><td class="w"></td><td class="a">600<span class="sub">1×600</span></td><td class="w"></td><td class="a">193</td></tr><tr><td class="c">8</td><td class="nm">แซด 4"<span class="sub">เส้น 6 ม.</span></td><td class="code">แซด 4"</td>
+      <td class="w"></td><td class="a">764</td>
+      <td class="w"></td><td class="a">400<span class="sub">1×400</span></td><td class="w"></td><td class="a">509.33</td><td class="w"></td><td class="a">600<span class="sub">1×600</span></td><td class="w"></td><td class="a">764</td></tr><tr class="gh"><td colspan="11">โครง / วัสดุอื่น</td></tr><tr><td class="c">9</td><td class="nm">กล่องเหล็ก 1"×1"</td><td class="code">BOX1</td>
+      <td class="w"></td><td class="a">170</td>
+      <td class="w"></td><td class="a">2.17</td><td class="w"></td><td class="a">368.33</td><td class="w"></td><td class="a">3.79</td><td class="w"></td><td class="a">644.58</td></tr><tr><td class="c">10</td><td class="nm">เพลทเหล็ก</td><td class="code">PLATE</td>
+      <td class="w"></td><td class="a">15</td>
+      <td class="w"></td><td class="a">10</td><td class="w"></td><td class="a">150</td><td class="w"></td><td class="a">14</td><td class="w"></td><td class="a">210</td></tr><tr><td class="c">11</td><td class="nm">แผ่นไวนิล (7ม.)</td><td class="code">JR00134</td>
+      <td class="w"></td><td class="a">1,848</td>
+      <td class="w"></td><td class="a">6</td><td class="w"></td><td class="a">11,088</td><td class="w"></td><td class="a">12</td><td class="w"></td><td class="a">22,176</td></tr><tr><td class="c">12</td><td class="nm">ฝาครอบไวนิล</td><td class="code">JR00138</td>
+      <td class="w"></td><td class="a">245</td>
+      <td class="w"></td><td class="a">6</td><td class="w"></td><td class="a">1,470</td><td class="w"></td><td class="a">12</td><td class="w"></td><td class="a">2,940</td></tr><tr class="sub1"><td colspan="5">รวมค่าเส้น (ยังไม่เผื่อเศษ)</td><td colspan="2" class="w"></td><td colspan="2" class="a">7,438.88</td><td class="w"></td><td class="a">12,597.99</td></tr><tr class="sub1"><td colspan="5">× 1.3 เผื่อเศษ = ค่าเส้นรวม</td><td colspan="2" class="w"></td><td colspan="2" class="a">9,670.54</td><td class="w"></td><td class="a">16,377.39</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">22,747</td><td class="w"></td><td class="a">42,348</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">40,283</td><td class="w"></td><td class="a">74,809</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">22/32</span> หลังคาจั่ว · ไวนิล <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 400×200 ซม.</span><span><b>ใหญ่</b> 600×250 ซม.</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 400×200</th><th colspan="4" class="b">ขนาดใหญ่ 600×250</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">อลูมิเนียม — เส้นเต็ม</td></tr><tr><td class="c">1</td><td class="nm">จันทันสันจั่ว 1.6×4 + จันทันชายคา 1.6×4 (2 ด้าน) + จันทันเฉียง 1.6×4 (2 ด้าน)<span class="sub">เส้น 6 ม.</span></td><td class="code">กล่อง 1.6"x4"</td>
+      <td class="w"></td><td class="a">1,347</td>
+      <td class="w"></td><td class="a">4 เส้น</td><td class="w"></td><td class="a">5,388</td><td class="w"></td><td class="a">10 เส้น</td><td class="w"></td><td class="a">13,470</td></tr><tr><td class="c">2</td><td class="nm">แป (ยัดในช่อง) — เดี่ยว<span class="sub">เส้น 6 ม.</span></td><td class="code">กล่อง 1.6"x1.6"</td>
+      <td class="w"></td><td class="a">757</td>
+      <td class="w"></td><td class="a">4 เส้น</td><td class="w"></td><td class="a">3,028</td><td class="w"></td><td class="a">8 เส้น</td><td class="w"></td><td class="a">6,056</td></tr><tr><td class="c">3</td><td class="nm">คาน 4"×4" T (เสารับสัน)<span class="sub">เส้น 6 ม.</span></td><td class="code">กล่อง 4"x4"</td>
+      <td class="w"></td><td class="a">2,500</td>
+      <td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">5,000</td><td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">5,000</td></tr><tr><td class="c">4</td><td class="nm">ฉาก 6 หุน (2 ชายคา)<span class="sub">เส้น 6 ม.</span></td><td class="code">ฉาก 6 หุน</td>
+      <td class="w"></td><td class="a">193</td>
+      <td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">193</td><td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">193</td></tr><tr class="gh"><td colspan="11">โครง / วัสดุอื่น</td></tr><tr><td class="c">5</td><td class="nm">กล่องเหล็ก 1"×1" (ยัดในจันทันเฉียง)</td><td class="code">BOX1</td>
+      <td class="w"></td><td class="a">170</td>
+      <td class="w"></td><td class="a">3.25</td><td class="w"></td><td class="a">552.50</td><td class="w"></td><td class="a">6.77</td><td class="w"></td><td class="a">1,150.67</td></tr><tr><td class="c">6</td><td class="nm">เพลทเหล็ก</td><td class="code">PLATE</td>
+      <td class="w"></td><td class="a">15</td>
+      <td class="w"></td><td class="a">12</td><td class="w"></td><td class="a">180</td><td class="w"></td><td class="a">16</td><td class="w"></td><td class="a">240</td></tr><tr><td class="c">7</td><td class="nm">แผ่นไวนิล (2 ด้าน)</td><td class="code">JR00134</td>
+      <td class="w"></td><td class="a">1,848</td>
+      <td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">14,784</td><td class="w"></td><td class="a">20</td><td class="w"></td><td class="a">36,960</td></tr><tr><td class="c">8</td><td class="nm">ฝาครอบไวนิล (2 ด้าน)</td><td class="code">JR00138</td>
+      <td class="w"></td><td class="a">245</td>
+      <td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">1,960</td><td class="w"></td><td class="a">20</td><td class="w"></td><td class="a">4,900</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">31,086</td><td class="w"></td><td class="a">67,970</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">62,592</td><td class="w"></td><td class="a">134,551</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">23/32</span> หลังคาเลื่อน (เปิด-ปิดได้) · ไวนิล <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 600×300 ซม.</span><span><b>ใหญ่</b> 1000×400 ซม.</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 600×300</th><th colspan="4" class="b">ขนาดใหญ่ 1000×400</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">อลูมิเนียม — คิดตามยาว (ซม.)</td></tr><tr><td class="c">1</td><td class="nm">จันทันรัดรอบ ฝั่งบ้าน (ติดตาย)<span class="sub">เส้น 6 ม.</span></td><td class="code">กล่อง 1.6"x4"</td>
+      <td class="w"></td><td class="a">1,347</td>
+      <td class="w"></td><td class="a">186<span class="sub">2×93</span></td><td class="w"></td><td class="a">418.69</td><td class="w"></td><td class="a">308<span class="sub">4×77</span></td><td class="w"></td><td class="a">690.34</td></tr><tr><td class="c">2</td><td class="nm">จันทันรัดรอบ ยื่นข้าง (ติดตาย)<span class="sub">เส้น 6 ม.</span></td><td class="code">กล่อง 1.6"x4"</td>
+      <td class="w"></td><td class="a">1,347</td>
+      <td class="w"></td><td class="a">582<span class="sub">2×291</span></td><td class="w"></td><td class="a">1,304.35</td><td class="w"></td><td class="a">780<span class="sub">2×390</span></td><td class="w"></td><td class="a">1,752.89</td></tr><tr><td class="c">3</td><td class="nm">จันทันซอย 1.6×4 (ติดตาย)<span class="sub">เส้น 6 ม.</span></td><td class="code">กล่อง 1.6"x4"</td>
+      <td class="w"></td><td class="a">1,347</td>
+      <td class="w"></td><td class="a">286<span class="sub">1×286</span></td><td class="w"></td><td class="a">642.07</td><td class="w"></td><td class="a">1,158<span class="sub">3×386</span></td><td class="w"></td><td class="a">2,599.04</td></tr><tr><td class="c">4</td><td class="nm">จันทันรัดรอบ ฝั่งปลาย (ติดตาย)<span class="sub">เส้น 6 ม.</span></td><td class="code">กล่อง 1.6"x4"</td>
+      <td class="w"></td><td class="a">1,347</td>
+      <td class="w"></td><td class="a">200<span class="sub">1×200</span></td><td class="w"></td><td class="a">448.10</td><td class="w"></td><td class="a">330<span class="sub">1×330</span></td><td class="w"></td><td class="a">739.95</td></tr><tr><td class="c">5</td><td class="nm">แป (ติดตาย) — เดี่ยว<span class="sub">เส้น 6 ม.</span></td><td class="code">กล่อง 1.6"x1.6"</td>
+      <td class="w"></td><td class="a">757</td>
+      <td class="w"></td><td class="a">1,302<span class="sub">14×93</span></td><td class="w"></td><td class="a">1,647.11</td><td class="w"></td><td class="a">2,772<span class="sub">36×77</span></td><td class="w"></td><td class="a">3,491.66</td></tr><tr><td class="c">6</td><td class="nm">กล่องครอบเพลท 1.6×4 (ติดตาย)<span class="sub">เส้น 6 ม.</span></td><td class="code">กล่อง 1.6"x4"</td>
+      <td class="w"></td><td class="a">1,347</td>
+      <td class="w"></td><td class="a">225<span class="sub">3×75</span></td><td class="w"></td><td class="a">505.97</td><td class="w"></td><td class="a">500<span class="sub">5×100</span></td><td class="w"></td><td class="a">1,123.62</td></tr><tr><td class="c">7</td><td class="nm">ฉาก 6 หุน (ติดตาย)<span class="sub">เส้น 6 ม.</span></td><td class="code">ฉาก 6 หุน</td>
+      <td class="w"></td><td class="a">193</td>
+      <td class="w"></td><td class="a">200<span class="sub">1×200</span></td><td class="w"></td><td class="a">64.33</td><td class="w"></td><td class="a">330<span class="sub">1×330</span></td><td class="w"></td><td class="a">106.15</td></tr><tr><td class="c">8</td><td class="nm">แซด 4" (ติดตาย)<span class="sub">เส้น 6 ม.</span></td><td class="code">แซด 4"</td>
+      <td class="w"></td><td class="a">764</td>
+      <td class="w"></td><td class="a">200<span class="sub">1×200</span></td><td class="w"></td><td class="a">254.67</td><td class="w"></td><td class="a">330<span class="sub">1×330</span></td><td class="w"></td><td class="a">420.20</td></tr><tr class="gh"><td colspan="11">โครง / วัสดุอื่น</td></tr><tr><td class="c">9</td><td class="nm">กล่องเหล็ก 1×1 (ติดตาย)</td><td class="code">BOX1</td>
+      <td class="w"></td><td class="a">170</td>
+      <td class="w"></td><td class="a">1.95</td><td class="w"></td><td class="a">331.50</td><td class="w"></td><td class="a">4.33</td><td class="w"></td><td class="a">736.67</td></tr><tr><td class="c">10</td><td class="nm">เพลทเหล็ก (ติดตาย)</td><td class="code">PLATE</td>
+      <td class="w"></td><td class="a">15</td>
+      <td class="w"></td><td class="a">6</td><td class="w"></td><td class="a">90</td><td class="w"></td><td class="a">10</td><td class="w"></td><td class="a">150</td></tr><tr><td class="c">11</td><td class="nm">แผ่นไวนิล (ติดตาย)</td><td class="code">JR00134</td>
+      <td class="w"></td><td class="a">1,848</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">7,392</td><td class="w"></td><td class="a">14</td><td class="w"></td><td class="a">25,872</td></tr><tr><td class="c">12</td><td class="nm">ฝาครอบไวนิล (ติดตาย)</td><td class="code">JR00138</td>
+      <td class="w"></td><td class="a">245</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">980</td><td class="w"></td><td class="a">14</td><td class="w"></td><td class="a">3,430</td></tr><tr><td class="c">13</td><td class="nm">จันทัน 1.6×4 (เลื่อน)</td><td class="code">JR01749</td>
+      <td class="w"></td><td class="a">1,220</td>
+      <td class="w"></td><td class="a">5.63</td><td class="w"></td><td class="a">6,872.67</td><td class="w"></td><td class="a">11.57</td><td class="w"></td><td class="a">14,115.40</td></tr><tr><td class="c">14</td><td class="nm">แป กล่อง (เลื่อน) — เดี่ยว</td><td class="code">JR01731</td>
+      <td class="w"></td><td class="a">770</td>
+      <td class="w"></td><td class="a">6.07</td><td class="w"></td><td class="a">4,671.33</td><td class="w"></td><td class="a">13.07</td><td class="w"></td><td class="a">10,060.05</td></tr><tr><td class="c">15</td><td class="nm">ฉาก 6 หุน (เลื่อน)</td><td class="code">JR01893</td>
+      <td class="w"></td><td class="a">158</td>
+      <td class="w"></td><td class="a">0.87</td><td class="w"></td><td class="a">136.93</td><td class="w"></td><td class="a">1.45</td><td class="w"></td><td class="a">229.36</td></tr><tr><td class="c">16</td><td class="nm">แซด 4" (เลื่อน)</td><td class="code">JR02988</td>
+      <td class="w"></td><td class="a">616</td>
+      <td class="w"></td><td class="a">0.87</td><td class="w"></td><td class="a">533.87</td><td class="w"></td><td class="a">1.45</td><td class="w"></td><td class="a">894.23</td></tr><tr><td class="c">17</td><td class="nm">เพลทเหล็ก (เลื่อน)</td><td class="code">PLATE</td>
+      <td class="w"></td><td class="a">15</td>
+      <td class="w"></td><td class="a">12</td><td class="w"></td><td class="a">180</td><td class="w"></td><td class="a">20</td><td class="w"></td><td class="a">300</td></tr><tr><td class="c">18</td><td class="nm">แผ่นไวนิล (เลื่อน)</td><td class="code">JR00134</td>
+      <td class="w"></td><td class="a">1,848</td>
+      <td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">14,784</td><td class="w"></td><td class="a">28</td><td class="w"></td><td class="a">51,744</td></tr><tr><td class="c">19</td><td class="nm">ฝาครอบไวนิล (เลื่อน)</td><td class="code">JR00138</td>
+      <td class="w"></td><td class="a">245</td>
+      <td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">1,960</td><td class="w"></td><td class="a">28</td><td class="w"></td><td class="a">6,860</td></tr><tr><td class="c">20</td><td class="nm">ราง (2 ฝั่ง)</td><td class="code"></td>
+      <td class="w"></td><td class="a">4,080</td>
+      <td class="w"></td><td class="a">5.33</td><td class="w"></td><td class="a">21,760</td><td class="w"></td><td class="a">8.93</td><td class="w"></td><td class="a">36,448</td></tr><tr><td class="c">21</td><td class="nm">ชุดล้อหลังคาเลื่อน</td><td class="code"></td>
+      <td class="w"></td><td class="a">600</td>
+      <td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">4,800</td><td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">4,800</td></tr><tr><td class="c">22</td><td class="nm">อุปกรณ์ลากจูง</td><td class="code"></td>
+      <td class="w"></td><td class="a">2,000</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">4,000</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">4,000</td></tr><tr class="gh"><td colspan="11">ของเสริม</td></tr><tr><td class="c">23</td><td class="nm">มอเตอร์หลังคาเลื่อน 80 กก. (รวมค่าส่ง · ระบบสั่งงาน: รีโมท) (ทุน · ขายแยก 30,000 ไม่ผ่านกำไร)</td><td class="code"></td>
+      <td class="w"></td><td class="a">6,200</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">6,200</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">6,200</td></tr><tr class="sub1"><td colspan="5">รวมค่าเส้น (ยังไม่เผื่อเศษ)</td><td colspan="2" class="w"></td><td colspan="2" class="a">5,285.29</td><td class="w"></td><td class="a">10,923.85</td></tr><tr class="sub1"><td colspan="5">× 1.3 เผื่อเศษ = ค่าเส้นรวม</td><td colspan="2" class="w"></td><td colspan="2" class="a">6,870.88</td><td class="w"></td><td class="a">14,201.01</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">81,563</td><td class="w"></td><td class="a">180,041</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">173,348</td><td class="w"></td><td class="a">364,477</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">24/32</span> ระแนงบังตา · 1x5 <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 200×240 ซม.</span><span><b>ใหญ่</b> 600×280 ซม.</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 200×240</th><th colspan="4" class="b">ขนาดใหญ่ 600×280</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">โครง / วัสดุอื่น</td></tr><tr><td class="c">1</td><td class="nm">ใบระแนง (กล่อง)</td><td class="code">JR02941</td>
+      <td class="w"></td><td class="a">500</td>
+      <td class="w"></td><td class="a">15</td><td class="w"></td><td class="a">7,500</td><td class="w"></td><td class="a">43</td><td class="w"></td><td class="a">21,500</td></tr><tr><td class="c">2</td><td class="nm">โครงดาม 1"×1.6" (รวมโครง)</td><td class="code">JR01803</td>
+      <td class="w"></td><td class="a">485</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">485</td><td class="w"></td><td class="a">3</td><td class="w"></td><td class="a">1,455</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">7,985</td><td class="w"></td><td class="a">22,955</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">20,785</td><td class="w"></td><td class="a">58,378</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">25/32</span> ระแนงบังตา · 1x4 <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 200×240 ซม.</span><span><b>ใหญ่</b> 600×280 ซม.</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 200×240</th><th colspan="4" class="b">ขนาดใหญ่ 600×280</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">โครง / วัสดุอื่น</td></tr><tr><td class="c">1</td><td class="nm">ใบระแนง (กล่อง)</td><td class="code">JR01839</td>
+      <td class="w"></td><td class="a">905</td>
+      <td class="w"></td><td class="a">9</td><td class="w"></td><td class="a">8,145</td><td class="w"></td><td class="a">25</td><td class="w"></td><td class="a">22,625</td></tr><tr><td class="c">2</td><td class="nm">โครงดาม 1"×1.6" (รวมโครง)</td><td class="code">JR01803</td>
+      <td class="w"></td><td class="a">485</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">485</td><td class="w"></td><td class="a">3</td><td class="w"></td><td class="a">1,455</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">8,630</td><td class="w"></td><td class="a">24,080</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">22,439</td><td class="w"></td><td class="a">61,052</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">26/32</span> ระแนงบังตา · 1x1.6 <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 200×240 ซม.</span><span><b>ใหญ่</b> 600×280 ซม.</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 200×240</th><th colspan="4" class="b">ขนาดใหญ่ 600×280</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">โครง / วัสดุอื่น</td></tr><tr><td class="c">1</td><td class="nm">ใบระแนง (กล่อง)</td><td class="code">JR01803</td>
+      <td class="w"></td><td class="a">485</td>
+      <td class="w"></td><td class="a">17</td><td class="w"></td><td class="a">8,245</td><td class="w"></td><td class="a">50</td><td class="w"></td><td class="a">24,250</td></tr><tr><td class="c">2</td><td class="nm">โครงดาม 1"×1.6" (รวมโครง)</td><td class="code">JR01803</td>
+      <td class="w"></td><td class="a">485</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">485</td><td class="w"></td><td class="a">3</td><td class="w"></td><td class="a">1,455</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">8,730</td><td class="w"></td><td class="a">25,705</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">22,623</td><td class="w"></td><td class="a">65,081</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">27/32</span> ประตูรั้วบานเลื่อน · ระแนง <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 400×200 ซม.</span><span><b>ใหญ่</b> 600×220 ซม.</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 400×200</th><th colspan="4" class="b">ขนาดใหญ่ 600×220</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">อลูมิเนียม — เส้นเต็ม</td></tr><tr><td class="c">1</td><td class="nm">เสาตั้งข้าง (2×4) + เสานอนบน (2×4, รวมหาง) + เสานอนล่าง (2×4, รวมหาง) + เสาตั้งท้ายหาง (2×4) + เส้นทแยงค้ำมุมบน (2×4)<span class="sub">เส้น 6 ม.</span></td><td class="code">กล่อง 2"x4"</td>
+      <td class="w"></td><td class="a">1,407</td>
+      <td class="w"></td><td class="a">3 เส้น</td><td class="w"></td><td class="a">4,220.99</td><td class="w"></td><td class="a">4.01 เส้น</td><td class="w"></td><td class="a">5,628</td></tr><tr><td class="c">2</td><td class="nm">ใบระแนง A (กล่อง 1.6×4″)<span class="sub">เส้น 6 ม.</span></td><td class="code">กล่อง 1.6"x4"</td>
+      <td class="w"></td><td class="a">1,347</td>
+      <td class="w"></td><td class="a">11 เส้น</td><td class="w"></td><td class="a">14,817</td><td class="w"></td><td class="a">17 เส้น</td><td class="w"></td><td class="a">22,899</td></tr><tr><td class="c">3</td><td class="nm">เสารับไกด์ (4×4) — เสาแยก<span class="sub">เส้น 6 ม.</span></td><td class="code">กล่อง 4"x4"</td>
+      <td class="w"></td><td class="a">2,500</td>
+      <td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">2,500</td><td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">2,500</td></tr><tr><td class="c">4</td><td class="nm">ราง ฉากเหล็ก 1.5"+เพลา 4หุน (ชุด 6 ม.)<span class="sub">เส้น 6 ม.</span></td><td class="code"></td>
+      <td class="w"></td><td class="a">1,090</td>
+      <td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">2,180</td><td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">2,180</td></tr><tr class="gh"><td colspan="11">อุปกรณ์</td></tr><tr><td class="c">5</td><td class="nm">เหล็กยัดเสา 4"×4"</td><td class="code"></td>
+      <td class="w"></td><td class="a">860</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">860</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">860</td></tr><tr><td class="c">6</td><td class="nm">ล้อวิ่ง 3"</td><td class="code">JR02942</td>
+      <td class="w"></td><td class="a">299</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">598</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">1,196</td></tr><tr><td class="c">7</td><td class="nm">ล้อไกด์ประคองหลัง</td><td class="code">JR02943</td>
+      <td class="w"></td><td class="a">30</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">120</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">120</td></tr><tr><td class="c">8</td><td class="nm">มอเตอร์ (ทุน · ขายแยก 25,000 ไม่ผ่านกำไร)</td><td class="code">JR00163</td>
+      <td class="w"></td><td class="a">10,000</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">10,000</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">10,000</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">35,296</td><td class="w"></td><td class="a">45,383</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">87,084</td><td class="w"></td><td class="a">111,483</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">28/32</span> ระแนงสลับ (คละกล่อง 2 แบบ) <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 200×240 ซม. 1 บาน</span><span><b>ใหญ่</b> 600×280 ซม. 1 บาน</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 200×240</th><th colspan="4" class="b">ขนาดใหญ่ 600×280</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">โครง / วัสดุอื่น</td></tr><tr><td class="c">1</td><td class="nm">กล่อง A (ใบระแนง)</td><td class="code">JR01839</td>
+      <td class="w"></td><td class="a">905</td>
+      <td class="w"></td><td class="a">5</td><td class="w"></td><td class="a">4,525</td><td class="w"></td><td class="a">14</td><td class="w"></td><td class="a">12,670</td></tr><tr><td class="c">2</td><td class="nm">กล่อง B (ใบระแนง)</td><td class="code">JR01731</td>
+      <td class="w"></td><td class="a">770</td>
+      <td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">6,160</td><td class="w"></td><td class="a">23</td><td class="w"></td><td class="a">17,710</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">10,685</td><td class="w"></td><td class="a">30,380</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">25,865</td><td class="w"></td><td class="a">73,114</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">29/32</span> ระแนงปรับหมุนได้ <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 200×240 ซม. 1 บาน</span><span><b>ใหญ่</b> 250×260 ซม. 1 บาน</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 200×240</th><th colspan="4" class="b">ขนาดใหญ่ 250×260</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">โครง / วัสดุอื่น</td></tr><tr><td class="c">1</td><td class="nm">ใบระแนง (กล่อง 1"×4" โชว์ 4")</td><td class="code">JR01839</td>
+      <td class="w"></td><td class="a">905</td>
+      <td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">7,240</td><td class="w"></td><td class="a">13</td><td class="w"></td><td class="a">11,765</td></tr><tr><td class="c">2</td><td class="nm">เพลาหมุน กล่อง 4"×4"</td><td class="code">JR01875</td>
+      <td class="w"></td><td class="a">2,208</td>
+      <td class="w"></td><td class="a">0.43</td><td class="w"></td><td class="a">956.80</td><td class="w"></td><td class="a">0.54</td><td class="w"></td><td class="a">1,196</td></tr><tr><td class="c">3</td><td class="nm">มอเตอร์ระแนงหมุน (ทุน · ขายแยก 12,000 ไม่ผ่านกำไร)</td><td class="code">JR00164</td>
+      <td class="w"></td><td class="a">1,800</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">1,800</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">1,800</td></tr><tr><td class="c">4</td><td class="nm">อุปกรณ์หมุน+จุดหมุน</td><td class="code"></td>
+      <td class="w"></td><td class="a">1</td>
+      <td class="w"></td><td class="a">4,240</td><td class="w"></td><td class="a">4,240</td><td class="w"></td><td class="a">4,660</td><td class="w"></td><td class="a">4,660</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">14,237</td><td class="w"></td><td class="a">19,421</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">28,582</td><td class="w"></td><td class="a">38,722</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">30/32</span> ประตูรั้วบานเลื่อน · ระแนงสลับ <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 400×200 ซม. 1 บาน</span><span><b>ใหญ่</b> 600×220 ซม. 1 บาน</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 400×200</th><th colspan="4" class="b">ขนาดใหญ่ 600×220</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">อลูมิเนียม — เส้นเต็ม</td></tr><tr><td class="c">1</td><td class="nm">เสาตั้งข้าง (2×4) + เสานอนบน (2×4, รวมหาง) + เสานอนล่าง (2×4, รวมหาง) + เสาตั้งท้ายหาง (2×4) + เส้นทแยงค้ำมุมบน (2×4)<span class="sub">เส้น 6 ม.</span></td><td class="code">กล่อง 2"x4"</td>
+      <td class="w"></td><td class="a">1,407</td>
+      <td class="w"></td><td class="a">3 เส้น</td><td class="w"></td><td class="a">4,220.99</td><td class="w"></td><td class="a">4.01 เส้น</td><td class="w"></td><td class="a">5,628</td></tr><tr><td class="c">2</td><td class="nm">ใบระแนง A (กล่อง 1×4″)<span class="sub">เส้น 6 ม.</span></td><td class="code">กล่อง 1"x4"</td>
+      <td class="w"></td><td class="a">1,168</td>
+      <td class="w"></td><td class="a">6 เส้น</td><td class="w"></td><td class="a">7,008</td><td class="w"></td><td class="a">9 เส้น</td><td class="w"></td><td class="a">10,512</td></tr><tr><td class="c">3</td><td class="nm">ใบระแนง B (กล่อง 1.6×1.6″)<span class="sub">เส้น 6 ม.</span></td><td class="code">กล่อง 1.6"x1.6"</td>
+      <td class="w"></td><td class="a">757</td>
+      <td class="w"></td><td class="a">10 เส้น</td><td class="w"></td><td class="a">7,570</td><td class="w"></td><td class="a">15 เส้น</td><td class="w"></td><td class="a">11,355</td></tr><tr><td class="c">4</td><td class="nm">เสารับไกด์ (4×4) — เสาแยก<span class="sub">เส้น 6 ม.</span></td><td class="code">กล่อง 4"x4"</td>
+      <td class="w"></td><td class="a">2,500</td>
+      <td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">2,500</td><td class="w"></td><td class="a">1 เส้น</td><td class="w"></td><td class="a">2,500</td></tr><tr><td class="c">5</td><td class="nm">ราง ฉากเหล็ก 1.5"+เพลา 4หุน (ชุด 6 ม.)<span class="sub">เส้น 6 ม.</span></td><td class="code"></td>
+      <td class="w"></td><td class="a">1,090</td>
+      <td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">2,180</td><td class="w"></td><td class="a">2 เส้น</td><td class="w"></td><td class="a">2,180</td></tr><tr class="gh"><td colspan="11">อุปกรณ์</td></tr><tr><td class="c">6</td><td class="nm">เหล็กยัดเสา 4"×4"</td><td class="code"></td>
+      <td class="w"></td><td class="a">860</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">860</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">860</td></tr><tr><td class="c">7</td><td class="nm">ล้อวิ่ง 3"</td><td class="code">JR02942</td>
+      <td class="w"></td><td class="a">299</td>
+      <td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">598</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">1,196</td></tr><tr><td class="c">8</td><td class="nm">ล้อไกด์ประคองหลัง</td><td class="code">JR02943</td>
+      <td class="w"></td><td class="a">30</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">120</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">120</td></tr><tr><td class="c">9</td><td class="nm">มอเตอร์ (ทุน · ขายแยก 25,000 ไม่ผ่านกำไร)</td><td class="code">JR00163</td>
+      <td class="w"></td><td class="a">10,000</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">10,000</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">10,000</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">35,057</td><td class="w"></td><td class="a">44,351</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">86,452</td><td class="w"></td><td class="a">109,131</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">31/32</span> ฝาตู้ Future Tech (เฉพาะบานหน้า) <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 60×120 ซม. 1 บาน</span><span><b>ใหญ่</b> 80×200 ซม. 1 บาน</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 60×120</th><th colspan="4" class="b">ขนาดใหญ่ 80×200</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">กระจก / แผ่น</td></tr><tr><td class="c">1</td><td class="nm">กระจก ใส 5มม.</td><td class="code"></td>
+      <td class="w"></td><td class="a">205</td>
+      <td class="w"></td><td class="a">0.72</td><td class="w"></td><td class="a">147.60</td><td class="w"></td><td class="a">1.60</td><td class="w"></td><td class="a">328</td></tr><tr class="gh"><td colspan="11">อุปกรณ์</td></tr><tr><td class="c">2</td><td class="nm">เฟรม (บน+ล่าง+ข้าง) อบขาว/ดำ</td><td class="code">JR00245</td>
+      <td class="w"></td><td class="a">975</td>
+      <td class="w"></td><td class="a">0.40</td><td class="w"></td><td class="a">390</td><td class="w"></td><td class="a">0.60</td><td class="w"></td><td class="a">585</td></tr><tr><td class="c">3</td><td class="nm">เสามือจับ อบขาว/ดำ</td><td class="code">JR00230</td>
+      <td class="w"></td><td class="a">1,500</td>
+      <td class="w"></td><td class="a">0.20</td><td class="w"></td><td class="a">300</td><td class="w"></td><td class="a">0.33</td><td class="w"></td><td class="a">500</td></tr><tr><td class="c">4</td><td class="nm">ฉากประกอบมุม</td><td class="code">JR00480</td>
+      <td class="w"></td><td class="a">12</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">48</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">48</td></tr><tr><td class="c">5</td><td class="nm">สกรู (8/บาน)</td><td class="code">JR00224</td>
+      <td class="w"></td><td class="a">0.50</td>
+      <td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">8</td><td class="w"></td><td class="a">4</td></tr><tr><td class="c">6</td><td class="nm">ชุดล้อ (4ล้อ)</td><td class="code">JR00214</td>
+      <td class="w"></td><td class="a">100</td>
+      <td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">100</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">100</td></tr><tr><td class="c">7</td><td class="nm">รางยู</td><td class="code">JR00270</td>
+      <td class="w"></td><td class="a">180</td>
+      <td class="w"></td><td class="a">0.20</td><td class="w"></td><td class="a">36</td><td class="w"></td><td class="a">0.27</td><td class="w"></td><td class="a">48</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">1,026</td><td class="w"></td><td class="a">1,613</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">3,741</td><td class="w"></td><td class="a">5,923</td></tr></tbody></table></section>
+<section class="job"><div class="jh"><h2><span class="no">32/32</span> ราวกันตก/ราวบันได กระจก <span class="blank">ยังไม่ได้กรอก</span></h2>
+  <div class="meta"><span><b>กลาง</b> 500×90 ซม.</span><span><b>ใหญ่</b> 600×90 ซม.</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ</span></div></div>
+  <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
+  <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง 500×90</th><th colspan="4" class="b">ขนาดใหญ่ 600×90</th></tr>
+  <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
+  <tbody><tr class="gh"><td colspan="11">กระจก / แผ่น</td></tr><tr><td class="c">1</td><td class="nm">กระจก เทมเปอร์ใส 10มม.</td><td class="code"></td>
+      <td class="w"></td><td class="a">695</td>
+      <td class="w"></td><td class="a">4.50</td><td class="w"></td><td class="a">3,127.50</td><td class="w"></td><td class="a">5.40</td><td class="w"></td><td class="a">3,753</td></tr><tr class="gh"><td colspan="11">อุปกรณ์</td></tr><tr><td class="c">2</td><td class="nm">ยูเหล็กฐาน 6หุน×1½</td><td class="code">JR00216</td>
+      <td class="w"></td><td class="a">225</td>
+      <td class="w"></td><td class="a">0.83</td><td class="w"></td><td class="a">187.50</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">225</td></tr><tr><td class="c">3</td><td class="nm">เพลท 2 ฝั่ง</td><td class="code">JR00241</td>
+      <td class="w"></td><td class="a">600</td>
+      <td class="w"></td><td class="a">1.67</td><td class="w"></td><td class="a">1,000</td><td class="w"></td><td class="a">2</td><td class="w"></td><td class="a">1,200</td></tr><tr><td class="c">4</td><td class="nm">อลูครอบ 2"×6"</td><td class="code">JR00266</td>
+      <td class="w"></td><td class="a">3,207</td>
+      <td class="w"></td><td class="a">0.83</td><td class="w"></td><td class="a">2,672.50</td><td class="w"></td><td class="a">1</td><td class="w"></td><td class="a">3,207</td></tr><tr class="gh"><td colspan="11">โครง / วัสดุอื่น</td></tr><tr><td class="c">5</td><td class="nm">PU ยิงร่อง (2ฝั่ง)</td><td class="code">JR00257</td>
+      <td class="w"></td><td class="a">90</td>
+      <td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">360</td><td class="w"></td><td class="a">4</td><td class="w"></td><td class="a">360</td></tr><tr class="tot"><td colspan="5">รวมทุนวัสดุ</td><td colspan="2" class="w"></td><td colspan="2" class="a">7,348</td><td class="w"></td><td class="a">8,745</td></tr><tr class="tot"><td colspan="5">ราคาขายค่าของ (กำไร 52%)</td><td colspan="2" class="w"></td><td colspan="2" class="a">29,923</td><td class="w"></td><td class="a">35,904</td></tr></tbody></table></section></body></html>

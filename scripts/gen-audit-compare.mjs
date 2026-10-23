@@ -68,8 +68,8 @@ function jobHtml(t) {
   foot += tot("ราคาขายค่าของ (กำไร 52%)", num(t.summary?.mat?.mS), W.sM, num(t.summary?.mat?.bS), B.sM);
   const notes = [...(t.side || []).map((s) => s.replace(/\s*\(.*$/, "")), ...(t.remarks ? [] : [])].filter((s) => !/^\d[\d,.]*$/.test(s)).filter((s) => !/ปากกา|เครื่องหมาย|loose|scan/i.test(s));
   const noteTxt = notes.length ? `<p class="note"><b>คนตรวจเขียนไว้:</b> ${notes.map(esc).join(" · ")}</p>` : "";
-  return { html: `<section class="job"><div class="jh"><h2><span class="no">${t.job}/32</span> ${esc(k.name)}</h2>
-  <div class="meta"><span><b>กลาง</b> ${k.mid.w}×${k.mid.h} ซม.${k.mid.p ? " " + k.mid.p + " บาน" : ""}</span><span><b>ใหญ่</b> ${k.big.w}×${k.big.h} ซม.${k.big.p ? " " + k.big.p + " บาน" : ""}</span><span><b>สี</b> อบขาว</span><span>ช่องขาว = คนตรวจเขียน · ช่องเทา = เว็บ · <span class="dd">ตัวแดง</span> = ไม่ตรงกัน</span></div></div>
+  return { html: `<section class="job"><div class="jh"><h2><span class="no">${t.job}/32</span> ${esc(k.name)}${t.filled ? "" : ` <span class="blank">ยังไม่ได้กรอก</span>`}</h2>
+  <div class="meta"><span><b>กลาง</b> ${k.mid.w}×${k.mid.h} ซม.${k.mid.p ? " " + k.mid.p + " บาน" : ""}</span><span><b>ใหญ่</b> ${k.big.w}×${k.big.h} ซม.${k.big.p ? " " + k.big.p + " บาน" : ""}</span><span><b>สี</b> อบขาว</span><span>${t.filled ? `ช่องขาว = คนตรวจเขียน · ช่องเทา = เว็บ · <span class="dd">ตัวแดง</span> = ไม่ตรงกัน` : "ช่องขาว = ว่างไว้ให้กรอก · ช่องเทา = เว็บ"}</span></div></div>
   <table class="bom"><colgroup><col class="c1"><col class="c2"><col class="c3"><col class="cp"><col class="cp"><col class="cq"><col class="cq"><col class="ca"><col class="ca"><col class="cq"><col class="cq"><col class="ca"><col class="ca"></colgroup>
   <thead><tr><th rowspan="2" class="c">#</th><th rowspan="2">รายการ</th><th rowspan="2">รหัส</th><th colspan="2">ราคา/หน่วย</th><th colspan="4" class="m">ขนาดกลาง ${k.mid.w}×${k.mid.h}</th><th colspan="4" class="b">ขนาดใหญ่ ${k.big.w}×${k.big.h}</th></tr>
   <tr><th>คนตรวจ</th><th class="a">เว็บ</th><th class="m">จำนวน คนตรวจ</th><th class="a m">จำนวน เว็บ</th><th class="m">บาท คนตรวจ</th><th class="a m">บาท เว็บ</th><th class="b">จำนวน คนตรวจ</th><th class="a b">จำนวน เว็บ</th><th class="b">บาท คนตรวจ</th><th class="a b">บาท เว็บ</th></tr></thead>
@@ -123,11 +123,13 @@ const cover = `<div class="top"><h1>ผลตรวจเทียบ ใบต�
 <li>บานเปิด 2 บาน เสากรอบบานต้องนับ 4 ต้น (เว็บ) ใช่ไหม</li>
 <li>ซิลิโคน 3 หลอด / มือจับล็อค 2 ชุด ต่อบานเลื่อน จะคงไว้หรือลด</li>
 <li>ต่อกลางเฟี้ยม B24009 ราคาจริง 810 หรือ 320</li>
-<li>บานที่ยังว่าง ${unfilled.length} บาน จะให้คนตรวจกรอกต่อไหม (รายชื่อท้ายเอกสาร)</li>
+<li>บานที่ยังว่าง ${unfilled.length} บาน จะให้คนตรวจกรอกต่อไหม (ตารางอยู่ต่อท้ายบานที่กรอกแล้ว · ช่องขาวว่างไว้ให้เขียน)</li>
 </ol><div class="cover-end"></div>`;
-const tail = `<section class="job"><h2 class="h" style="border:0;margin-top:0">บานที่คนตรวจยังไม่ได้กรอก (${unfilled.length} บาน)</h2><p class="lead">${unfilled.map((k) => `${k.no}/32 ${esc(k.name)}`).join(" · ")}</p></section>`;
 
-const jobsHtml = filled.map((t) => jobHtml(t).html).join("\n");
+// บานที่กรอกแล้วขึ้นก่อน · บานที่ยังว่างต่อท้าย (ช่องคนตรวจว่าง ไม่ขึ้นแดง) — เจ้าของ 23 ต.ค.69 "เอาช่องเปล่าที่ยังไม่เคยเขียนด้วย"
+const all = [...filled, ...unfilled.map((k) => ({ job: k.no, filled: false, rows: {} }))];
+const jobsHtml = all.map((t) => jobHtml(t).html).join("\n");
+const tail = "";
 
 const css = `
 @page { size: A4 portrait; margin: 8mm 8mm 9mm; }
@@ -153,7 +155,7 @@ td.code { font-size: 6.6pt; color: #34425a; word-break: break-all; }
 .mini td, .mini th { height: 4.1mm; font-size: 7.2pt; padding: 0 2px; line-height: 1.1; } .mini td:nth-child(2), .mini td:nth-child(3), .mini td:nth-child(5), .mini td:nth-child(6) { text-align: right; }
 .todo { margin: 0; padding-left: 5mm; font-size: 8.2pt; } .todo li { margin: .3mm 0; }
 .job { margin-top: 6px; border-top: 1.5px solid var(--ink); padding-top: 3px; } tr { break-inside: avoid; } .cover-end { break-after: page; }
-.jh h2 { font-size: 10.5pt; margin: 0 0 1px; } .no { font-size: 7.6pt; color: #fff; background: var(--ink); border-radius: 3px; padding: 0 4px; vertical-align: 1px; }
+.jh h2 { font-size: 10.5pt; margin: 0 0 1px; } .blank { font-size: 7.6pt; color: #b26a00; background: #fff3e0; border-radius: 3px; padding: 0 5px; vertical-align: 1px; font-weight: 600; } .no { font-size: 7.6pt; color: #fff; background: var(--ink); border-radius: 3px; padding: 0 4px; vertical-align: 1px; }
 .meta { display: flex; flex-wrap: wrap; gap: 0 10px; font-size: 7.5pt; margin-bottom: 2px; } .meta b { color: var(--muted); font-weight: 600; margin-right: 2px; }
 th.m, td.m { background-color: rgba(59,91,140,.045); } th.b, td.b { background-color: rgba(176,112,20,.05); }
 col.c1 { width: 5.5mm; } col.c2 { width: auto; } col.c3 { width: 12mm; } col.cp { width: 10.5mm; } col.cq { width: 16mm; } col.ca { width: 14.5mm; }
