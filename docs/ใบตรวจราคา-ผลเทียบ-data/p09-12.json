@@ -1,0 +1,42 @@
+{
+  "pages": [9, 10, 11, 12],
+  "note": "Pages 9-12 contain no handwriting at all: every cell (price, qty, amounts, aluSum, matTotal, summary), the side box and หมายเหตุผู้ตรวจ are blank on all four pages. The grey horizontal band seen in the right-hand 'รายการที่ขาด / เกิน' box on p09 and p11 (same position on both) is a scan/render artifact, not writing.",
+  "jobs": [
+    {
+      "job": 8,
+      "name": "บานหมุน (Pivot)",
+      "pagesSeen": [9],
+      "filled": false,
+      "side": [],
+      "remarks": "",
+      "unsure": []
+    },
+    {
+      "job": 9,
+      "name": "ประตูบานเปิด PC Door",
+      "pagesSeen": [10, 11],
+      "filled": false,
+      "side": [],
+      "remarks": "Job spans p10 (rows 1-29, รวมทุนวัสดุ, summary rows ค่าของ/ค่าแรงผลิต/ค่าแรงติดตั้ง) and top of p11 (รวมทั้งชุด row + หมายเหตุผู้ตรวจ). All blank.",
+      "unsure": []
+    },
+    {
+      "job": 10,
+      "name": "Velora บานเปิด",
+      "pagesSeen": [11],
+      "filled": false,
+      "side": [],
+      "remarks": "",
+      "unsure": []
+    },
+    {
+      "job": 11,
+      "name": "บานโซลิด · โซลิด 2 ชั้น",
+      "pagesSeen": [12],
+      "filled": false,
+      "side": [],
+      "remarks": "",
+      "unsure": []
+    }
+  ]
+}

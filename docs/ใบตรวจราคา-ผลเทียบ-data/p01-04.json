@@ -1,0 +1,71 @@
+{
+ "pages": [1, 2, 3, 4],
+ "jobs": [
+  { "job": 1, "name": "บานเลื่อน SMS", "pagesSeen": [1], "filled": false,
+    "side": [], "remarks": "", "unsure": [] },
+
+  { "job": 2, "name": "บานเลื่อน ยูโร", "pagesSeen": [2, 3], "filled": true,
+    "rows": {
+      "1":  {"price":"1370", "mQty":"560×2", "mAmt":"2397.5",  "bQty":"560×4",          "bAmt":"4795"},
+      "2":  {"price":"1370", "mQty":"400×2", "mAmt":"1712.5",  "bQty":"625×1 / 375×1",  "bAmt":"2140.62"},
+      "3":  {"price":"185",  "mQty":"560×2", "mAmt":"323.75",  "bQty":"560×4",          "bAmt":"647.5"},
+      "4":  {"price":"185",  "mQty":"400×2", "mAmt":"231.25",  "bQty":"625×1 / 375×1",  "bAmt":"289.06"},
+      "5":  {"price":"2525", "mQty":"400×2", "mAmt":"3156.25", "bQty":"500×2",          "bAmt":"3945.31", "note":"bracketed with row 6 (one combined qty/amount for rows 5+6)"},
+      "6":  {"price":"2525", "mQty":"",      "mAmt":"",        "bQty":"",               "bAmt":"",        "note":"bracketed with row 5"},
+      "7":  {"price":"880",  "mQty":"560×1", "mAmt":"770",     "bQty":"560×1",          "bAmt":"770"},
+      "8":  {"price":"270",  "mQty":"560×1", "mAmt":"236.25",  "bQty":"560×1",          "bAmt":"236.25"},
+      "9":  {"price":"455",  "mQty":"560×1", "mAmt":"398.12",  "bQty":"560×3",          "bAmt":"1194.37"},
+      "10": {"price":"120",  "mQty":"560×2 / 400×1", "mAmt":"180", "bQty":"560×4 / 500×1", "bAmt":"513.75", "note":"bracketed with row 11 (one combined qty/amount for rows 10+11)"},
+      "11": {"price":"120",  "mQty":"",      "mAmt":"",        "bQty":"",               "bAmt":"",        "note":"bracketed with row 10"},
+      "12": {"price":"120",  "mQty":"400×2", "mAmt":"150",     "bQty":"500×4",          "bAmt":"375"},
+      "13": {"price":"130",  "mQty":"400×2", "mAmt":"162.5",   "bQty":"500×4",          "bAmt":"406.25"},
+      "14": {"price":"490",  "mQty":"400×1", "mAmt":"306.25",  "bQty":"500×1",          "bAmt":"382.81"},
+      "15": {"price":"–",    "mQty":"–",     "mAmt":"–",       "bQty":"–",              "bAmt":"–"},
+      "16": {"price":"1420", "mQty":"–",     "mAmt":"–",       "bQty":"500×1",          "bAmt":"1109.37"},
+      "17": {"price":"–",    "mQty":"–",     "mAmt":"–",       "bQty":"–",              "bAmt":"–"},
+      "18": {"price":"305",  "mQty":"–",     "mAmt":"–",       "bQty":"280×2",          "bAmt":"266.87"},
+      "19": {"price":"940",  "mQty":"–",     "mAmt":"–",       "bQty":"500×1",          "bAmt":"734.37"},
+      "20": {"price":"264",  "mQty":"11.2",  "mAmt":"2956.8",  "bQty":"14",             "bAmt":"3696"},
+      "21": {"price":"100",  "mQty":"4",     "mAmt":"400",     "bQty":"8",              "bAmt":"800"},
+      "22": {"price":"745",  "mQty":"1",     "mAmt":"745",     "bQty":"1",              "bAmt":"745"},
+      "23": {"price":"410",  "mQty":"1",     "mAmt":"410",     "bQty":"1",              "bAmt":"410"},
+      "24": {"price":"310",  "mQty":"1",     "mAmt":"310",     "bQty":"1",              "bAmt":"310"},
+      "25": {"price":"18",   "mQty":"4",     "mAmt":"72",      "bQty":"4",              "bAmt":"72"},
+      "26": {"price":"18",   "mQty":"1",     "mAmt":"18",      "bQty":"1",              "bAmt":"18"},
+      "27": {"price":"30",   "mQty":"4",     "mAmt":"120",     "bQty":"4",              "bAmt":"120"},
+      "28": {"price":"30",   "mQty":"2",     "mAmt":"60",      "bQty":"2",              "bAmt":"60"},
+      "29": {"price":"9",    "mQty":"4",     "mAmt":"36",      "bQty":"4",              "bAmt":"36"},
+      "30": {"price":"2.5",  "mQty":"24",    "mAmt":"60",      "bQty":"48",             "bAmt":"120"},
+      "31": {"price":"29",   "mQty":"8",     "mAmt":"232",     "bQty":"16",             "bAmt":"494",     "note":"green squiggle/arrow mark drawn to the right of bAmt cell"},
+      "32": {"price":"",     "mQty":"8",     "mAmt":"8",       "bQty":"16",             "bAmt":"8",       "note":"price blank; mAmt and bAmt written in black pen (not blue/green)"},
+      "33": {"price":"5",    "mQty":"3",     "mAmt":"15",      "bQty":"3",              "bAmt":"15"},
+      "34": {"price":"5",    "mQty":"3",     "mAmt":"15",      "bQty":"3",              "bAmt":"15"},
+      "35": {"price":"1.5",  "mQty":"4960",  "mAmt":"74.4",    "bQty":"9840",           "bAmt":"147.6"},
+      "36": {"price":"",     "mQty":"16",    "mAmt":"16",      "bQty":"24",             "bAmt":"24",      "note":"price blank; mAmt and bAmt written in black pen"},
+      "37": {"price":"90",   "mQty":"1",     "mAmt":"90",      "bQty":"2",              "bAmt":"180"}
+    },
+    "aluSum": {"mRaw":"9974.37", "mW":"12966.68", "bRaw":"17756.53", "bW":"23068.42"},
+    "matTotal": {"m":"18,580.88", "b":"30307.02"},
+    "summary": {
+      "mat":   {"mC":"18580.88", "mS":"38710.16", "mP":"52", "bC":"30307.02", "bS":"63140.87", "bP":"52"},
+      "prod":  {"mC":"",         "mS":"43130",    "mP":"",   "bC":"",         "bS":"66220",    "bP":""},
+      "inst":  {"mC":"",         "mS":"",         "mP":"",   "bC":"",         "bS":"",         "bP":""},
+      "total": {"mC":"",         "mS":"",         "mP":"",   "bC":"",         "bS":"",         "bP":""}
+    },
+    "side": ["เสาเสริมแรง (no numbers)"],
+    "remarks": "Black number written in the ราคา/หน่วย column of the '× 1.3 เผื่อเศษ' row (not in a numeric cell): looks like '16445.41' (see unsure). Loose black number '23760.63' written in the right-hand side box area, level with the '× 1.3 เผื่อเศษ' row (page 2). Summary ค่าแรงผลิต has only ราคาขาย filled (black pen) for both sizes; ทุน and กำไร% blank. ค่าแรงติดตั้ง and รวมทั้งชุด rows fully blank. หมายเหตุผู้ตรวจ line empty. Rows 32 and 36 amounts written in black pen look like they were added separately.",
+    "unsure": [
+      "× 1.3 row loose black number: could be 16445.41 / 14445.41 / 16965.41 (digits overwritten, messy)",
+      "row 31 bAmt could be 494 or 464",
+      "row 9 price 455 (digits slightly overwritten; could be 456)",
+      "matTotal m '18,580.88' last digit could be 7 (18,580.87); summary mat mC '18580.88' same ambiguity (7 vs 8)",
+      "summary mat bS '63140.87' could be 62140.87 (second digit overwritten in green)",
+      "summary prod mS '43130' could be 43170 or 43190 (digits overwritten in black)",
+      "row 35 mQty '4960' and bQty '9840' (digits overwritten, written over something)"
+    ]
+  },
+
+  { "job": 3, "name": "บานเลื่อน E-series", "pagesSeen": [4], "filled": false,
+    "side": [], "remarks": "", "unsure": [] }
+ ]
+}

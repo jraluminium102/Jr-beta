@@ -1,0 +1,134 @@
+{
+ "pages": [17, 18, 19, 20],
+ "jobs": [
+  {
+   "job": 16,
+   "name": "บานเฟี้ยม",
+   "pagesSeen": [17],
+   "filled": true,
+   "rows": {
+    "1": {"price": "1430", "mQty": "600×1", "mAmt": "1340.62", "bQty": "600×2", "bAmt": "2681.25"},
+    "2": {"price": "1430", "mQty": "", "mAmt": "", "bQty": "", "bAmt": "", "note": "bracketed with rows 3-4 (blue { for กลาง, green { for ใหญ่); combined amount written at row 3"},
+    "3": {"price": "1430", "mQty": "480×5", "mAmt": "5362.5", "bQty": "560×10", "bAmt": "12512.5", "note": "combined value for bracketed rows 2-4"},
+    "4": {"price": "1430", "mQty": "", "mAmt": "", "bQty": "", "bAmt": "", "note": "bracketed with rows 2-3"},
+    "5": {"price": "325", "mQty": "600×1", "mAmt": "304.68", "bQty": "600×2", "bAmt": "609.37"},
+    "6": {"price": "325", "mQty": "480×5", "mAmt": "1218.75", "bQty": "560×10", "bAmt": "2843.75"},
+    "7": {"price": "810", "mQty": "–", "mAmt": "–", "bQty": "280×1", "bAmt": "354.37", "note": "price 810 circled in yellow with yellow note 'ไม่มีใน ERP' below it"},
+    "8": {"price": "2590", "mQty": "300×1", "mAmt": "1214.06", "bQty": "600×1", "bAmt": "2428.12"},
+    "9": {"price": "385", "mQty": "300×1", "mAmt": "180.46", "bQty": "600×1", "bAmt": "360.93"},
+    "10": {"price": "1760", "mQty": "300×1", "mAmt": "820.31", "bQty": "600×1", "bAmt": "1650"},
+    "11": {"price": "685", "mQty": "300×1", "mAmt": "321.09", "bQty": "600×1", "bAmt": "642.18"},
+    "12": {"price": "1240", "mQty": "480×1", "mAmt": "930", "bQty": "560×1", "bAmt": "1085"},
+    "13": {"price": "355", "mQty": "480×1", "mAmt": "266.25", "bQty": "560×1", "bAmt": "310.62"},
+    "14": {"price": "264", "mQty": "7.2", "mAmt": "1900.8", "bQty": "16.8", "bAmt": "4435.2"},
+    "15": {"price": "1460", "mQty": "2", "mAmt": "2920", "bQty": "2", "bAmt": "2920"},
+    "16": {"price": "1460", "mQty": "–", "mAmt": "–", "bQty": "2", "bAmt": "2920"},
+    "17": {"price": "2154", "mQty": "1", "mAmt": "2154", "bQty": "1", "bAmt": "2154"},
+    "18": {"price": "2890", "mQty": "2", "mAmt": "5780", "bQty": "4", "bAmt": "11560"},
+    "19": {"price": "295", "mQty": "2", "mAmt": "590", "bQty": "4", "bAmt": "1180"},
+    "20": {"price": "1", "mQty": "128", "mAmt": "128", "bQty": "248", "bAmt": "248", "note": "price '1' and both amounts written in yellow pen; side box has black 'ไม่มีใน ERP' with arrow pointing to this row"},
+    "21": {"price": "15", "mQty": "1080", "mAmt": "162", "bQty": "1760", "bAmt": "264"},
+    "22": {"price": "15", "mQty": "6000", "mAmt": "900", "bQty": "13600", "bAmt": "2040"},
+    "23": {"price": "2154", "mQty": "–", "mAmt": "–", "bQty": "1", "bAmt": "2154"},
+    "24": {"price": "90", "mQty": "1", "mAmt": "90", "bQty": "1", "bAmt": "90", "note": "yellow tick mark to the right of the row"}
+   },
+   "aluSum": {"mRaw": "11958.72", "mW": "15546.33", "bRaw": "25408.09", "bW": "33030.51"},
+   "matTotal": {"m": "65200", "b": "72390"},
+   "summary": {
+    "mat": {"mC": "33775.3", "mS": "70365.20", "mP": "52", "bC": "69224.56", "bS": "144217.83", "bP": "52"},
+    "prod": {"mC": "", "mS": "", "mP": "53", "bC": "", "bS": "", "bP": "53"},
+    "inst": {"mC": "", "mS": "", "mP": "62", "bC": "", "bS": "", "bP": "62"},
+    "total": {"mC": "", "mS": "", "mP": "", "bC": "", "bS": "", "bP": ""}
+   },
+   "side": ["ไม่มีใน ERP (black, with arrow pointing at row 20 น็อต 1\")"],
+   "remarks": "Yellow circles on the printed names of row 1 'ขวางบน+ล่าง', row 5 and row 6 'คิ้ว'. Yellow 'ไม่มีใน ERP' under circled price 810 of row 7. Black loose numbers written in the section header band 'อลูมิเนียม — ซื้อเป็นเส้นเต็ม' (just under the ×1.3 row): '10101.77' (under กลาง columns) and '23224.22' (under ใหญ่ columns). รวมทุนวัสดุ row: black '65200' written large over กลาง/ทุน header area and black '72390' written large over ใหญ่ header area (not inside the printed cells). Summary: ทุน in red, ราคาขาย กลาง in blue, ราคาขาย ใหญ่ in green, กำไร% in red. หมายเหตุผู้ตรวจ blank.",
+   "unsure": [
+    "matTotal b '72390' — last digits could be 72370 (black large handwriting over header)",
+    "loose number '10101.77' could be '10101.74'",
+    "loose number '23224.22' could be '23229.22' (digit overwritten)",
+    "row 1 bAmt '2681.25' could be '2641.25' (second digit smudged)",
+    "summary mat mS '70365.20' could be '70345.20'"
+   ]
+  },
+  {
+   "job": 17,
+   "name": "บานเฟี้ยม ยูโร",
+   "pagesSeen": [18],
+   "filled": true,
+   "rows": {
+    "1": {"price": "3140", "mQty": "120×1", "mAmt": "588.75", "bQty": "300×1", "bAmt": "1471.87"},
+    "2": {"price": "1730", "mQty": "120×1", "mAmt": "324.37", "bQty": "300×1", "bAmt": "810.93"},
+    "3": {"price": "1065", "mQty": "400×1", "mAmt": "665.62", "bQty": "480×1", "bAmt": "799.53"},
+    "4": {"price": "475", "mQty": "400×1", "mAmt": "296.87", "bQty": "480×1", "bAmt": "356.25"},
+    "5": {"price": "230", "mQty": "520×1 / 120×1", "mAmt": "230", "bQty": "600×1 / 480×1", "bAmt": "388.12", "note": "quantities written on two lines"},
+    "6": {"price": "1670", "mQty": "600×1 / 520×1 / 120×1", "mAmt": "3235.62", "bQty": "600×5", "bAmt": "7828.12", "note": "กลาง quantity written on three lines"},
+    "7": {"price": "–", "mQty": "–", "mAmt": "–", "bQty": "–", "bAmt": "–"},
+    "8": {"price": "590", "mQty": "200×1", "mAmt": "184.37", "bQty": "240×1", "bAmt": "221.25"},
+    "9": {"price": "340", "mQty": "600×1 / 520×1 / 120×1", "mAmt": "658.75", "bQty": "600×5", "bAmt": "1593.75", "note": "กลาง quantity written on three lines"},
+    "10": {"price": "–", "mQty": "–", "mAmt": "–", "bQty": "–", "bAmt": "–", "note": "black arrow drawn from the right edge of this row down to side-box text 'ไม่มีใน ERP'"},
+    "11": {"price": "264", "mQty": "2.4", "mAmt": "633.6", "bQty": "7.2", "bAmt": "1900.8"},
+    "12": {"price": "299", "mQty": "2", "mAmt": "598", "bQty": "3", "bAmt": "897"},
+    "13": {"price": "72", "mQty": "5", "mAmt": "360", "bQty": "12", "bAmt": "864"},
+    "14": {"price": "109", "mQty": "1", "mAmt": "109", "bQty": "2", "bAmt": "218"},
+    "15": {"price": "199", "mQty": "2", "mAmt": "398", "bQty": "3", "bAmt": "597"},
+    "16": {"price": "85", "mQty": "1", "mAmt": "85", "bQty": "2", "bAmt": "170"},
+    "17": {"price": "88", "mQty": "–", "mAmt": "–", "bQty": "1", "bAmt": "88"},
+    "18": {"price": "73", "mQty": "2", "mAmt": "146", "bQty": "4", "bAmt": "292"},
+    "19": {"price": "15", "mQty": "8", "mAmt": "120", "bQty": "20", "bAmt": "300"},
+    "20": {"price": "1.5", "mQty": "24", "mAmt": "36", "bQty": "60", "bAmt": "90"},
+    "21": {"price": "7", "mQty": "2080", "mAmt": "145.6", "bQty": "6000", "bAmt": "420"},
+    "22": {"price": "8", "mQty": "1040", "mAmt": "83.2", "bQty": "3000", "bAmt": "240"},
+    "23": {"price": "8", "mQty": "", "mAmt": "72.20", "bQty": "", "bAmt": "270.76", "note": "both amounts written in red pen, quantities blank"}
+   },
+   "aluSum": {"mRaw": "", "mW": "", "bRaw": "", "bW": ""},
+   "matTotal": {"m": "10754.05", "b": "22950.56"},
+   "summary": {
+    "mat": {"mC": "10754.05", "mS": "22404.27", "mP": "52%", "bC": "22950.56", "bS": "47813.66", "bP": "52%"},
+    "prod": {"mC": "", "mS": "25099.41", "mP": "57%", "bC": "", "bS": "53373.39", "bP": "57"},
+    "inst": {"mC": "37104", "mS": "", "mP": "", "bC": "57904", "bS": "", "bP": ""},
+    "total": {"mC": "", "mS": "", "mP": "", "bC": "", "bS": "", "bP": ""}
+   },
+   "side": [
+    "6184.35 (blue, loose number, level with rows 7-8)",
+    "8039.65 (blue, loose number, level with row 8)",
+    "12979.82 (green, loose number, level with row 9-10)",
+    "16873.76 (green, loose number, level with row 10)",
+    "ไม่มีใน ERP (black, two lines, with arrow from row 10 F7975 บังใบ)",
+    "24751 (black, level with รวมทุนวัสดุ row)"
+   ],
+   "remarks": "This job has no printed รวมค่าเส้น/×1.3 rows (all aluminium is per-เส้น), so aluSum left blank. รวมทุนวัสดุ: red 10754.05 (กลาง) and red 22950.56 (ใหญ่); black '15030' written in the ราคา/หน่วย column of that row. Summary: ค่าแรงผลิต ราคาขาย values written in yellow pen (25099.41 กลาง, 53373.39 ใหญ่), กำไร% 57% in black with a tick mark (กลาง) and '57' with an arrow (ใหญ่); ใหญ่ ค่าของ กำไร% '52%' in red also has a black arrow beside it. ค่าแรงติดตั้ง row: black loose numbers '37104' in กลาง/ทุน cell and '57904' in ใหญ่/ทุน cell. หมายเหตุผู้ตรวจ blank.",
+   "unsure": [
+    "row 1 price '3140' — first digit written like 'ɔ', could be 3140 or 2140",
+    "row 1 mAmt '588.75' — first digit smudged, could be 088.75/588.75",
+    "row 1 bAmt '1471.87' could be '1491.87'",
+    "row 3 bAmt '799.53' could be '299.53'",
+    "row 13 mQty '5' could be '8'",
+    "prod mS yellow '25099.41' could be '25009.41' or '25099.61'",
+    "black '15030' in รวมทุนวัสดุ row could be '15070'",
+    "side-box black text read as 'ไม่มีใน ERP' (written as two lines '9ไ ERP' / 'ส์มีใน')",
+    "inst mC '37104' / bC '57904' — black, could be 37704 / 57704"
+   ]
+  },
+  {
+   "job": 18,
+   "name": "บานเฟี้ยมยก",
+   "pagesSeen": [19],
+   "filled": false,
+   "remarks": "Entirely blank — no handwriting in rows, totals, summary, side box or หมายเหตุผู้ตรวจ."
+  },
+  {
+   "job": 19,
+   "name": "บานติดตาย",
+   "pagesSeen": [20],
+   "filled": false,
+   "remarks": "Entirely blank — no handwriting."
+  },
+  {
+   "job": 20,
+   "name": "บานติดตายดัดโค้ง",
+   "pagesSeen": [20],
+   "filled": false,
+   "remarks": "Entirely blank — no handwriting."
+  }
+ ]
+}
