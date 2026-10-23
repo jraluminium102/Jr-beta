@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfile, canWrite } from "@/lib/auth";
 import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
-import { baht, isNoVatBill, type BillVatSource } from "@/lib/money";
+import { baht, isNoVatBill, lastInstallmentWht, type BillVatSource } from "@/lib/money";
 import { ddmy } from "@/lib/format";
 import BillingActions from "./BillingActions";
 import { VoidBillingNoteButton, InstallmentEditor, EditBillingTotalButton, EditBillingBreakdownButton, IssueReceiptButton, EditBillingStatusButton, EditBillingDateButton } from "./BillingFinanceActions";
@@ -145,6 +145,10 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
     if (rr.installment_id != null) receiptByInst.set(Number(rr.installment_id), { id: Number(rr.id), code: rr.code });
   });
 
+  // หัก ณ ที่จ่ายงวดสุดท้าย (บิลบริษัท+VAT · เจ้าของสั่ง 22 ต.ค.69) — โชว์อย่างเดียว ไม่แตะยอดงวด · แหล่งเดียวกับหน้าพิมพ์
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const lastWht = lastInstallmentWht(bnAny, installments as any);
+
   // ป้ายเตือน "ใบนี้อ้าง Rev เก่า" (0133) — เตือนอย่างเดียว ไม่ล็อกอะไรทั้งสิ้น
   const rw = revWarning(bn as unknown as { source_revision_no?: number | null; ack_revision_no?: number | null }, quoteRev);
 
@@ -275,6 +279,9 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
                   <td className="p-2">{it.seq}</td>
                   <td>
                     <div className="font-medium whitespace-pre-line">{it.label}</div>
+                    {lastWht && it.seq === lastWht.seq && (
+                      <div className="text-xs text-ink-2 tabular-nums">หักภาษี ณ ที่จ่าย {lastWht.rate}% <span className="text-red-700">-฿{baht(lastWht.wht)}</span> · ชำระสุทธิงวดนี้ ฿{baht(Math.round(((Number(it.amount) || 0) - lastWht.wht) * 100) / 100)}</div>
+                    )}
                     {it.status === "paid" && (
                       <div className="text-xs text-emerald-700">รับแล้ว ฿{baht(it.paid_amount)} · {ddmy(it.paid_date)}</div>
                     )}
@@ -335,7 +342,6 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
           const b = bn as any;
           const ov = (b.footer_override && typeof b.footer_override.net === "number") ? b.footer_override : null;
           const sub = ov ? Number(ov.subtotal) || 0 : (Number(b.subtotal) || Number(bn.total) || 0);
-          const disPct = ov ? Number(ov.discount_pct) || 0 : (Number(b.discount_pct) || 0);
           const dis = ov ? Number(ov.discount_amt) || 0 : (Number(b.discount_amt) || 0);
           const vaRate = ov ? Number(ov.vat_rate) || 0 : (Number(b.vat_rate) || 0);
           const va = ov ? Number(ov.vat_amt) || 0 : (Number(b.vat_amt) || 0);
@@ -343,14 +349,21 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
           const wh = ov ? Number(ov.wht_amt) || 0 : (Number(b.wht_amt) || 0);
           const netShown = ov ? (Number(ov.net) || 0) : Number(bn.total) || 0;
           if (sub <= 0 && !ov) return null;
+          // ใบวางบิลไม่โชว์ส่วนลด (เจ้าของสั่ง 22 ต.ค.69 — โชว์แค่ใบเสนอราคา) → "รวมเป็นเงิน" = ยอดหลังหักส่วนลด
+          const afterDis = Math.round((sub - dis) * 100) / 100;
           return (
             <div className="mt-5 flex justify-end">
               <div className="w-full sm:w-72 text-sm space-y-1">
-                <div className="flex justify-between"><span className="text-ink-3">รวมเป็นเงิน</span><span className="tabular-nums">฿{baht(sub)}</span></div>
-                {dis > 0 && <div className="flex justify-between"><span className="text-ink-3">ส่วนลด {disPct > 0 ? `${disPct}%` : ""}</span><span className="tabular-nums text-red-700">-฿{baht(dis)}</span></div>}
+                <div className="flex justify-between"><span className="text-ink-3">รวมเป็นเงิน</span><span className="tabular-nums">฿{baht(afterDis)}</span></div>
                 {va > 0 && <div className="flex justify-between"><span className="text-ink-3">ภาษีมูลค่าเพิ่ม {vaRate > 0 ? `${vaRate}%` : ""}</span><span className="tabular-nums">฿{baht(va)}</span></div>}
                 {wh > 0 && <div className="flex justify-between"><span className="text-ink-3">หักภาษี ณ ที่จ่าย {whRate > 0 ? `${whRate}%` : ""}</span><span className="tabular-nums text-red-700">-฿{baht(wh)}</span></div>}
-                <div className="flex justify-between font-bold border-t border-gray-300/70 pt-1"><span className="text-ink">ยอดชำระสุทธิ</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(netShown)}</span></div>
+                {lastWht && !(wh > 0) && (
+                  <>
+                    <div className="flex justify-between font-semibold"><span className="text-ink-2">จำนวนเงินรวมทั้งสิ้น</span><span className="tabular-nums">฿{baht(netShown)}</span></div>
+                    <div className="flex justify-between"><span className="text-ink-3">หักภาษี ณ ที่จ่าย {lastWht.rate}% (งวดที่ {lastWht.seq})</span><span className="tabular-nums text-red-700">-฿{baht(lastWht.wht)}</span></div>
+                  </>
+                )}
+                <div className="flex justify-between font-bold border-t border-gray-300/70 pt-1"><span className="text-ink">ยอดชำระสุทธิ</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(lastWht && !(wh > 0) ? Math.round((netShown - lastWht.wht) * 100) / 100 : netShown)}</span></div>
                 <div className="text-[11px] text-ink-3 pt-0.5">
                   แก้ footer (ส่วนลด/VAT/หัก ณ ที่จ่าย) ได้ที่หน้า <b>พิมพ์ / PDF</b> {ov ? "· แก้แล้ว ✎" : ""}
                 </div>

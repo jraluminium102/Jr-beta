@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
-import { computeTotals, suggestInstallments } from "@/lib/money";
+import { computeTotals, suggestInstallments, isCompanyName } from "@/lib/money";
 import { nextDocumentCode } from "@/lib/doc-code";
 import { businessDateIssue } from "@/lib/date-guard";
 
@@ -78,7 +78,7 @@ export async function POST(req: Request) {
   const customerSnapshot = { ...b.customer, line_id: "" };
 
   // งวดชำระ: ใช้ตัวแบ่งกลางตัวเดียวกับบิลปกติ (มัดจำ/ระหว่างผลิต/ก่อนติดตั้ง ฯลฯ)
-  const plan = suggestInstallments(money.net, vatRate);
+  const plan = suggestInstallments(money.net, vatRate, { company: isCompanyName(b.customer?.name) });
   const billTotal = plan.reduce((s, p) => s + p.amount, 0);
 
   const bnBase: Record<string, unknown> = {

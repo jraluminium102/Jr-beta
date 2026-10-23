@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { baht, footerSnapshot } from "@/lib/money";
+import { baht, footerSnapshot, lastInstallmentWht } from "@/lib/money";
 import { BILLING_STATUS_LABEL, type BillingNote, type InstallmentFooter } from "@/lib/types";
 import Icon from "@/components/Icon";
 import BillingPrintControls from "./BillingPrintControls";
@@ -60,6 +60,13 @@ export default async function BillingPrintPage({
   //  · แยกงวด = ถ้ามี footer_override ต่องวด (display-only) ใช้ net นั้น ไม่งั้น = ยอดงวด (แก้บั๊กเดิมที่ไม่สะท้อน net)
   const instFooter = isSingle ? validFooter(selected!.footer_override) : null;
   const effTotal = isSingle ? (instFooter ? Number(instFooter.net) || 0 : grandTotal) : billTotal;
+  // หัก ณ ที่จ่ายงวดสุดท้าย (บิลบริษัท+VAT · 22 ต.ค.69) — โชว์อย่างเดียว · งวดเดียวที่แก้ footer ใส่หักเองแล้ว = footer โชว์อยู่แล้ว
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const lw = lastInstallmentWht(bn as any, allInstallments as any);
+  //   งวดเดียว: เฉพาะงวดสุดท้ายที่ยังไม่เคยแก้ footer (แก้แล้ว = footer ของงวดนั้นคุมยอดเอง)
+  //   คงเหลือ = คิดจากยอดก่อนหักเหมือนเดิม (ใบเสร็จปิดงวดเต็มยอด → ไม่ให้ติดลบเท่ายอดหัก)
+  const extraWht = lw && (!isSingle || (selected!.seq === lw.seq && !lw.fromOverride && !instFooter)) ? lw : null;
+  const payable = round2(effTotal - (extraWht?.wht ?? 0));
   const effRemaining = round2(effTotal - totalPaid);
   const overpaid = effRemaining < -0.01;                                          // คงเหลือติดลบ (รับเกิน) — ใช้ทำเลขแดงเฉย ๆ ไม่เตือน
 
@@ -186,6 +193,9 @@ export default async function BillingPrintPage({
                       ? <PrintLabelEditor installmentId={it.id!} label={it.label} />
                       : <span className="font-medium whitespace-pre-line">{it.label}</span>}
                   </div>
+                  {!isSingle && extraWht && it.seq === extraWht.seq && (
+                    <div className="text-xs text-gray-600 mt-0.5 tabular-nums">หักภาษี ณ ที่จ่าย {extraWht.rate}% -{baht(extraWht.wht)} · ชำระสุทธิงวดนี้ {baht(round2((Number(it.amount) || 0) - extraWht.wht))}</div>
+                  )}
                   {it.status === "paid" && (
                     <div className="text-xs text-gray-500">รับชำระแล้ว ฿{baht(it.paid_amount)}{it.paid_date ? ` · ${it.paid_date}` : ""}</div>
                   )}
@@ -206,6 +216,12 @@ export default async function BillingPrintPage({
             {footer && (editable && footer.editable
               ? <PrintFooterEditor apiUrl={footer.apiUrl} suffix={footer.suffix} def={footer.def} current={footer.current} real={footer.real} />
               : <FooterDisplayRows v={footer.current ?? footer.def} suffix={footer.suffix} />)}
+            {extraWht && (
+              <>
+                <tr className="font-semibold"><td className={cellL}>จำนวนเงินรวมทั้งสิ้น</td><td className={cellR}>{baht(effTotal)}</td></tr>
+                <tr><td className={cellL}>หักภาษี ณ ที่จ่าย {extraWht.rate}%{isSingle ? "" : ` (งวดที่ ${extraWht.seq})`}</td><td className={`${cellR} text-red-700`}>-{baht(extraWht.wht)}</td></tr>
+              </>
+            )}
             {/* รับชำระแล้ว/คงเหลือ — โชว์เฉพาะเมื่อมีรับชำระบางส่วนแล้ว (ใบใหม่ยอด 0 ไม่โชว์) · คงเหลือติดลบ = แดง */}
             {hasPaid && (
               <>
@@ -214,7 +230,7 @@ export default async function BillingPrintPage({
               </>
             )}
             {/* effWht>0 ทั้งใบ → "ยอดชำระสุทธิ" (กันชนกับบรรทัด "จำนวนเงินรวมทั้งสิ้น" ก่อนหัก ณ ที่จ่าย) */}
-            <tr className="font-bold text-lg" style={{ color: "#a8425a" }}><td className="pr-10 py-1 border-t text-left">{isSingle ? "ยอดชำระ" : (effWht > 0 ? "ยอดชำระสุทธิ" : "ยอดรวมทั้งสิ้น")}</td><td className="text-right border-t tabular-nums">฿{baht(effTotal)}</td></tr>
+            <tr className="font-bold text-lg" style={{ color: "#a8425a" }}><td className="pr-10 py-1 border-t text-left">{isSingle ? "ยอดชำระ" : (effWht > 0 || extraWht ? "ยอดชำระสุทธิ" : "ยอดรวมทั้งสิ้น")}</td><td className="text-right border-t tabular-nums">฿{baht(payable)}</td></tr>
           </tbody>
         </table>
       </div>

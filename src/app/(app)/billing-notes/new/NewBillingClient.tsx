@@ -88,7 +88,7 @@ export default function NewBillingClient({
   const plan = useMemo(() => {
     if (!selected) return [] as { seq: number; label: string; amount: number }[];
     if (t.labor_amt > 0.005) return planInstallments({ material_amt: t.material_amt, labor_amt: t.labor_amt, vat_rate: locked ? 0 : vat, wht_rate: locked ? 0 : wht, hasRetention, company: isCompanyName(selected.customer_snapshot?.name) }).installments;
-    return suggestInstallments(t.net, locked ? 0 : vat);
+    return suggestInstallments(t.net, locked ? 0 : vat, { company: isCompanyName(selected.customer_snapshot?.name) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, t, vat, wht, hasRetention, locked]);
 

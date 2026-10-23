@@ -144,7 +144,7 @@ export async function POST(req: Request) {
     : null;
   const plan = taxPlan
     ? taxPlan.map((i) => ({ seq: i.seq, label: i.label, amount: i.amount }))
-    : suggestInstallments(net, bVat);   // ส่ง VAT → label ขึ้นบรรทัด "ค่าวัสดุ (รวมVat)" (22 ก.ค.69)
+    : suggestInstallments(net, bVat, { company: bIsCompany });   // ส่ง VAT → label ขึ้นบรรทัด "ค่าวัสดุ (รวมVat)" (22 ก.ค.69) · บริษัท → งวดสุดท้ายระบุหัก 3%
   const billTotal = plan.reduce((s, p) => s + p.amount, 0);
 
   // issue_date คุมทั้งเลขเอกสาร (next_document_code p_date) และ header — คำนวณครั้งเดียวใช้ร่วมกัน

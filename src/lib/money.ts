@@ -267,6 +267,35 @@ const RETENTION = 40000; // เงินประกันงวดท้าย 
 export const isCompanyName = (name?: string | null): boolean =>
   /บริษัท|จำกัด|หจก|ห้างหุ้นส่วน|บมจ|บจก/.test(String(name ?? ""));
 
+// ── หัก ณ ที่จ่าย "งวดสุดท้าย" ของบิลบริษัท (เจ้าของสั่ง 22 ต.ค.69) — โชว์บนใบวางบิลอย่างเดียว ไม่แตะยอด booked ──
+//   เข้าเมื่อ: นามออกบิลเป็นบริษัท + บิลมี VAT + ยังไม่มี WHT ที่ไหนในบิลเลย (ทั้งใบ / งวด booked / footer งวดที่แก้แล้ว)
+//   ฐาน = ยอดงวดสุดท้าย (รวม VAT) ถอด VAT ออก × 3% · ยอดเงินจริงยังเป็นยอดงวดเดิม — ลูกค้าหักเองตอนจ่าย (ติ๊ก 3% ตอนออกใบเสร็จ)
+export const LAST_INST_WHT_RATE = 3;
+type WhtInst = { seq: number; amount: number; sort_order: number; base_amt?: number | null; wht_rate?: number | null; footer_override?: { wht_amt?: number; wht_rate?: number; net?: number } | null };
+export function lastInstallmentWht(
+  bill: BillVatSource & { customer_snapshot?: { name?: string | null } | null; wht_amt?: number | null; footer_override?: { wht_amt?: number; net?: number } | null },
+  installments: WhtInst[],
+): { seq: number; rate: number; wht: number; fromOverride: boolean } | null {
+  if (!isCompanyName(bill.customer_snapshot?.name)) return null;
+  // VAT ต้อง "รู้ชัด" (billVatDecision) — กันใบเก่า import ที่ vat_rate=7 ค้างแต่ไม่มี VAT จริง
+  const vd = billVatDecision(bill);
+  const vr = vd.known ? vd.rate : 0;
+  if (!(vr > 0) || (Number(bill.wht_amt) || 0) > 0 || installments.length === 0) return null;
+  if (bill.footer_override && typeof bill.footer_override.net === "number" && (Number(bill.footer_override.wht_amt) || 0) > 0) return null;
+  const sorted = installments.slice().sort((a, b) => a.sort_order - b.sort_order);
+  const last = sorted[sorted.length - 1];
+  const ovWht = (i: WhtInst) => (i.footer_override && typeof i.footer_override.net === "number") ? Number(i.footer_override.wht_amt) || 0 : 0;
+  // บิลค่าแรง (ภาษี booked ต่องวด) = ระบบคุม WHT เองแล้ว (งวดท้ายอาจเป็นเงินประกัน) · งวดอื่นแก้ footer ให้หักไว้แล้ว → ไม่เติม
+  if (installments.some((i) => i.base_amt != null)) return null;
+  if (sorted.slice(0, -1).some((i) => ovWht(i) > 0)) return null;
+  // งวดสุดท้ายเคยแก้ footer ใส่หักเองแล้ว → ใช้ยอดนั้น (หน้าพิมพ์งวดนั้นโชว์จาก footer อยู่แล้ว)
+  if (ovWht(last) > 0) return { seq: last.seq, rate: Number(last.footer_override?.wht_rate) || LAST_INST_WHT_RATE, wht: ovWht(last), fromOverride: true };
+  const amt = Number(last.amount) || 0;
+  if (amt <= 0) return null;
+  const base = round2(amt / (1 + vr / 100));
+  return { seq: last.seq, rate: LAST_INST_WHT_RATE, wht: round2(base * LAST_INST_WHT_RATE / 100), fromOverride: false };
+}
+
 export function billInstallmentLabel(
   i: number, n: number, kind: "material" | "labor" | "retention", vatRate: number,
   opts?: { company?: boolean; whtRate?: number },
@@ -297,6 +326,7 @@ const SUGGEST_MID: Record<number, { p: number; first?: boolean }[]> = {
 };
 export function suggestLabel(
   i: number, n: number, kind: "material" | "retention", vatRate: number,
+  opts?: { company?: boolean },
 ): string {
   let head: string;
   if (i === 0) head = "งวดแรก  เบิกมัดจำลูกค้าตกลงว่าจ้างงาน";
@@ -309,15 +339,17 @@ export function suggestLabel(
   }
   if (!(Number(vatRate) > 0)) return head;   // ไม่มี VAT = ไม่มีบรรทัดย่อยชนิดเงิน
   // เจ้าของเคาะ 24 ก.ค.69: งวดสุดท้าย = "ค่าแรง (รวมVat)" เสมอ ไม่ว่าแบ่งกี่งวด (เดิมเฉพาะแผนมีเงินประกัน) · งวดอื่น = ค่าวัสดุ
+  // บริษัท → งวดสุดท้ายระบุหัก ณ ที่จ่าย (เจ้าของสั่ง 22 ต.ค.69 · ยอดแสดงจาก lastInstallmentWht)
+  if (i === n - 1 && opts?.company) return `${head}\n- ค่าแรงติดตั้ง (รวมVat + หักภาษี ณ ที่จ่าย ${LAST_INST_WHT_RATE}%)`;
   const sub = i === n - 1 ? "ค่าแรง" : "ค่าวัสดุ";
   return `${head}\n- ${sub} (รวมVat)`;
 }
 
-export function suggestInstallments(net: number, vatRate = 0): InstallmentPlan[] {
+export function suggestInstallments(net: number, vatRate = 0, opts?: { company?: boolean }): InstallmentPlan[] {
   // round2 (ไม่ใช่ Math.round) — คงสตางค์ไว้ ไม่ปัดเป็นบาทเต็ม
   const a = Math.max(0, round2(Number(net) || 0));
   const mk = (parts: number[], kinds: ("material" | "retention")[]): InstallmentPlan[] =>
-    parts.map((amt, i) => ({ seq: i + 1, label: suggestLabel(i, parts.length, kinds[i], vatRate), amount: amt }));
+    parts.map((amt, i) => ({ seq: i + 1, label: suggestLabel(i, parts.length, kinds[i], vatRate, opts), amount: amt }));
 
   if (a <= 100000) {
     // 2 งวด: 70% / 30% (งวด 2 = เหลือ → อุ้มเศษ · ผลรวม = a เป๊ะ)

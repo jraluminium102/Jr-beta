@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui";
 import Icon from "@/components/Icon";
 import DateField from "@/components/ui/DateField";
-import { baht, computeTotals, suggestInstallments } from "@/lib/money";
+import { baht, computeTotals, suggestInstallments, isCompanyName } from "@/lib/money";
 import { todayISO } from "@/lib/date-guard";
 
 // ใบวางบิล "ลูกค้านอกระบบ" — ยังไม่มีใบเสนอราคา/งานในระบบ
@@ -54,7 +54,7 @@ export default function ExternalBillingForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [items, vat, wht, disc, discAmt, discMode],
   );
-  const plan = useMemo(() => (t.net > 0 ? suggestInstallments(t.net, vat) : []), [t.net, vat]);
+  const plan = useMemo(() => (t.net > 0 ? suggestInstallments(t.net, vat, { company: isCompanyName(name) }) : []), [t.net, vat, name]);
 
   const setRow = (key: number, patch: Partial<Row>) =>
     setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)));
