@@ -26,7 +26,8 @@ export default function StoreAluClient({ canWrite, myName }: { canWrite: boolean
   const [to, setTo] = useState(thaiToday());
   const [onlyOpen, setOnlyOpen] = useState(false);
 
-  const picksQ = useQuery({ queryKey: ["alu-picks", from, to], queryFn: () => api.get<Pick[]>(`/alu-picks?from=${from}&to=${to}`) });
+  // ช่างกดเบิกจากมือถือ → หน้าสโตร์ที่เปิดค้างต้องเห็นเอง (ดึงใหม่ทุก 1 นาที + ตอนกลับมาที่แท็บ)
+  const picksQ = useQuery({ queryKey: ["alu-picks", from, to], queryFn: () => api.get<Pick[]>(`/alu-picks?from=${from}&to=${to}`), refetchInterval: 60 * 1000, refetchOnWindowFocus: true });
   const picks = picksQ.data?.data ?? [];
   const shownPicks = onlyOpen ? picks.filter((p) => p.status === "open") : picks;
   const openCount = picks.filter((p) => p.status === "open").length;
