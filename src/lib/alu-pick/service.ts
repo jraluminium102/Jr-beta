@@ -49,8 +49,9 @@ async function insertMove(sb: Sb, a: PickActor, p: {
     created_by: a.userId,
   });
   if (error) {
+    // อลูติดลบได้ (0110) · ถ้ายังชนกฎ = แถวนี้ไม่ได้อยู่หมวดอลูมิเนียมในสโตร์ → ให้สโตร์แก้หมวด
     if (/qty_nonneg|check constraint/i.test(error.message ?? "")) {
-      throw new PickError(`${label(p.item)} — ระบบมีคงเหลือไม่พอ (แจ้งสโตร์ให้ปรับยอดก่อน)`, 409);
+      throw new PickError(`${label(p.item)} — ระบบมีคงเหลือไม่พอ และรายการนี้ไม่ได้อยู่หมวดอลูมิเนียม (ติดลบไม่ได้) แจ้งสโตร์แก้หมวด/ปรับยอด`, 409);
     }
     throw new PickError(error.message, 500);
   }
@@ -83,15 +84,16 @@ export async function createPick(sb: Sb, a: PickActor, input: {
   }
 
   const map = await loadItems(sb, items.map((i) => i.stock_item_id));
-  const short: string[] = [];
+  // ระบบบอกเหลือไม่พอ → ยังเบิกได้ ให้ยอดสโตร์ติดลบ (เจ้าของเคาะ 23 ต.ค.69 "เอาให้เบิกได้อยู่ดี ให้ไปขึ้นติดลบในสโตร์ มาแก้เอง")
+  //   สอดคล้องใบตัด (0110 อลูติดลบได้) · ส่งรายการที่ติดลบกลับไปโชว์เตือนช่าง/สโตร์
+  const negatives: string[] = [];
   for (const it of items) {
     const row = map.get(it.stock_item_id);
     if (!row || !row.is_active) throw new PickError("มีเส้นที่ไม่อยู่ในสโตร์แล้ว — โหลดหน้าใหม่แล้วเลือกอีกครั้ง", 404);
     // เบิกได้เฉพาะเส้นที่หน้าเบิกโชว์ (อลู · มีบนชั้น · ไม่ใช่หลังคาอย่างเดียว) — กันยิง API ตรงเบิกของหมวดอื่น
     if (!pickGroupOf(row)) throw new PickError(`${label(row)} — ไม่ใช่เส้นอลูที่เบิกผ่านหน้านี้ได้`, 400);
-    if (num(row.qty_on_hand) < it.qty) short.push(`${label(row)} เหลือ ${num(row.qty_on_hand)} ขอ ${it.qty}`);
+    if (num(row.qty_on_hand) < it.qty) negatives.push(`${label(row)} ระบบมี ${num(row.qty_on_hand)} เบิก ${it.qty} → เหลือ ${r2(num(row.qty_on_hand) - it.qty)}`);
   }
-  if (short.length) throw new PickError("ระบบมีคงเหลือไม่พอ: " + short.join(" · ") + " — แจ้งสโตร์ปรับยอดก่อน หรือลดจำนวน", 409);
 
   const { data: head, error: hErr } = await sb.from("alu_picks").insert({
     job_id: input.job_id, reason, reason_note: String(input.reason_note ?? "").trim().slice(0, 200),
@@ -125,7 +127,7 @@ export async function createPick(sb: Sb, a: PickActor, input: {
     await sb.from("alu_picks").delete().eq("id", head.id);
     throw e;
   }
-  return { id: head.id as number, code };
+  return { id: head.id as number, code, negatives };
 }
 
 type PickHead = { id: number; code: string; job_id: string | null; status: string; picker_name: string };
@@ -168,7 +170,7 @@ export async function editPickQty(sb: Sb, a: PickActor, pickId: number, changes:
     if (diff === 0) continue;
     const item = map.get(row.stock_item_id);
     if (!item) continue;
-    if (diff > 0 && num(item.qty_on_hand) < diff) throw new PickError(`${label(item)} — ระบบมีคงเหลือ ${num(item.qty_on_hand)} ไม่พอเพิ่มอีก ${diff}`, 409);
+    // แก้เพิ่มเกินที่ระบบมี = ยอมให้ติดลบ (เหมือนตอนสร้างใบ · เจ้าของ 23 ต.ค.69)
     // จองแถวก่อนลง move: อัปเดตได้ต่อเมื่อจำนวนยังเป็นค่าที่อ่านมา (กดซ้ำ/2 คนแก้พร้อมกัน → คนหลังโดน 409 ไม่ตัด/คืนซ้ำ)
     const { data: won, error: uErr } = await sb.from("alu_pick_items").update({ qty: newQty }).eq("id", row.id).eq("qty", row.qty).select("id");
     if (uErr) throw new PickError("บันทึกจำนวนใหม่ไม่สำเร็จ: " + uErr.message, 500);

@@ -39,7 +39,7 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
   const [limit, setLimit] = useState(40);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
-  const [done, setDone] = useState<{ code: string; id: number } | null>(null);
+  const [done, setDone] = useState<{ code: string; id: number; negatives?: string[] } | null>(null);
 
   // ชื่อช่างที่จำไว้ · เปิดหน้ามาต้องเริ่มที่ "เบิกไปงานไหน" เสมอ
   //   (เจ้าของ 21 ต.ค.69: เคยจำร่างค้างแล้วเด้งเข้าหน้าเลือกเส้นของลูกค้าเดิม ช่างงง → เลิกจำร่าง)
@@ -190,6 +190,13 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
         </div>
       ) : step === "done" && done ? (
         <Shell title="บันทึกแล้ว ✓" sub={`ใบเบิก ${done.code} ตัดสต็อกเรียบร้อย สโตร์จะเห็นทันที`}>
+          {/* ระบบมีไม่พอแต่ยอมให้เบิก (ติดลบ) — บอกช่างไว้ ไม่ต้องทำอะไร สโตร์จะปรับ */}
+          {(done.negatives ?? []).length > 0 && (
+            <div className="rounded-[14px] px-3.5 py-3 mb-3 text-[14px]" style={{ background: "#fff3e0", color: "#7a4a00" }}>
+              <div className="font-bold mb-1">ยอดในระบบติดลบ (บันทึกให้แล้ว ไม่ต้องทำอะไร สโตร์จะปรับยอดเอง)</div>
+              {done.negatives!.map((s) => <div key={s} className="text-[13px]">• {s}</div>)}
+            </div>
+          )}
           <div className="grid gap-2.5">
             <button onClick={restart} className="min-h-[56px] rounded-[14px] text-[17px] font-bold text-white" style={{ background: C.blue }}>เบิกอีกใบ</button>
             <button onClick={() => { setTab("mine"); restart(); }} className="min-h-[56px] rounded-[14px] text-[17px] font-semibold" style={{ background: C.card, color: C.ink }}>ดู / แก้ ของที่ฉันเบิก</button>
