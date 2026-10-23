@@ -168,13 +168,13 @@ export async function editPickQty(sb: Sb, a: PickActor, pickId: number, changes:
     if (diff === 0) continue;
     const item = map.get(row.stock_item_id);
     if (!item) continue;
-    if (diff > 0) {
-      if (num(item.qty_on_hand) < diff) throw new PickError(`${label(item)} — ระบบมีคงเหลือ ${num(item.qty_on_hand)} ไม่พอเพิ่มอีก ${diff}`, 409);
-      await insertMove(sb, a, { item, type: "out", qty: diff, ref: head.code, note: `แก้จำนวน ${num(row.qty)}→${newQty} โดย ${a.name}`, job_id: head.job_id, requester: head.picker_name });
-    } else {
-      await insertMove(sb, a, { item, type: "in", qty: -diff, ref: head.code, note: `แก้จำนวน ${num(row.qty)}→${newQty} โดย ${a.name}`, job_id: head.job_id, requester: head.picker_name });
-    }
-    await sb.from("alu_pick_items").update({ qty: newQty }).eq("id", row.id);
+    if (diff > 0 && num(item.qty_on_hand) < diff) throw new PickError(`${label(item)} — ระบบมีคงเหลือ ${num(item.qty_on_hand)} ไม่พอเพิ่มอีก ${diff}`, 409);
+    // จองแถวก่อนลง move: อัปเดตได้ต่อเมื่อจำนวนยังเป็นค่าที่อ่านมา (กดซ้ำ/2 คนแก้พร้อมกัน → คนหลังโดน 409 ไม่ตัด/คืนซ้ำ)
+    const { data: won, error: uErr } = await sb.from("alu_pick_items").update({ qty: newQty }).eq("id", row.id).eq("qty", row.qty).select("id");
+    if (uErr) throw new PickError("บันทึกจำนวนใหม่ไม่สำเร็จ: " + uErr.message, 500);
+    if (!(won ?? []).length) throw new PickError("รายการนี้เพิ่งถูกแก้โดยคนอื่น — โหลดใหม่แล้วดูอีกครั้ง", 409);
+    if (diff > 0) await insertMove(sb, a, { item, type: "out", qty: diff, ref: head.code, note: `แก้จำนวน ${num(row.qty)}→${newQty} โดย ${a.name}`, job_id: head.job_id, requester: head.picker_name });
+    else await insertMove(sb, a, { item, type: "in", qty: -diff, ref: head.code, note: `แก้จำนวน ${num(row.qty)}→${newQty} โดย ${a.name}`, job_id: head.job_id, requester: head.picker_name });
   }
   await sb.from("alu_picks").update({ updated_at: new Date().toISOString() }).eq("id", pickId);
 }
@@ -194,8 +194,11 @@ export async function returnPickItems(sb: Sb, a: PickActor, pickId: number, rets
     if (q > left) throw new PickError(`คืนได้ไม่เกิน ${left} เส้น (เบิก ${num(row.qty)} คืนแล้ว ${num(row.returned)})`);
     const item = map.get(row.stock_item_id);
     if (!item) continue;
+    // จองก่อนลง move (เหมือนแก้จำนวน): returned ต้องยังเป็นค่าที่อ่านมา — กดคืนซ้ำตอนเน็ตช้า จะไม่คืนเข้าสต็อก 2 รอบ
+    const { data: won, error: uErr } = await sb.from("alu_pick_items").update({ returned: r2(num(row.returned) + q) }).eq("id", row.id).eq("returned", row.returned).select("id");
+    if (uErr) throw new PickError("บันทึกการคืนไม่สำเร็จ: " + uErr.message, 500);
+    if (!(won ?? []).length) throw new PickError("รายการนี้เพิ่งถูกคืน/แก้โดยคนอื่น — โหลดใหม่แล้วดูอีกครั้ง", 409);
     await insertMove(sb, a, { item, type: "in", qty: q, ref: head.code, note: `คืนเส้น โดย ${a.name}`, job_id: head.job_id, requester: head.picker_name });
-    await sb.from("alu_pick_items").update({ returned: r2(num(row.returned) + q) }).eq("id", row.id);
     any = true;
   }
   if (!any) throw new PickError("ยังไม่ได้ใส่จำนวนที่คืน");
@@ -211,13 +214,17 @@ export async function cancelPick(sb: Sb, a: PickActor, pickId: number, reason: s
     status: "cancelled", cancelled_at: new Date().toISOString(), cancel_reason: String(reason ?? "").slice(0, 200), cancelled_by_name: a.name,
   }).eq("id", pickId).eq("status", head.status).select("id");
   if (!(claimed ?? []).length) throw new PickError("ใบนี้เพิ่งถูกเปลี่ยนสถานะ — โหลดใหม่แล้วดูอีกครั้ง", 409);
-  const map = await loadItems(sb, items.map((i) => i.stock_item_id));
-  for (const row of items) {
+  // อ่านรายการ "หลัง" claim — ถ้ามีคืน/แก้แทรกก่อนหน้านี้ จะคืนเฉพาะที่เหลือจริง
+  const { data: fresh } = await sb.from("alu_pick_items").select("id, pick_id, stock_item_id, qty, returned").eq("pick_id", pickId).order("sort_order");
+  const rows = ((fresh ?? []) as PickItemRow[]).length ? (fresh as PickItemRow[]) : items;
+  const map = await loadItems(sb, rows.map((i) => i.stock_item_id));
+  for (const row of rows) {
     const left = r2(num(row.qty) - num(row.returned));
     const item = map.get(row.stock_item_id);
     if (left <= 0 || !item) continue;
+    const { data: won } = await sb.from("alu_pick_items").update({ returned: num(row.qty) }).eq("id", row.id).eq("returned", row.returned).select("id");
+    if (!(won ?? []).length) continue;   // ถูกคืนแทรกพอดี → ข้าม (ไม่คืนซ้ำ)
     await insertMove(sb, a, { item, type: "in", qty: left, ref: head.code, note: `ยกเลิกใบเบิก โดย ${a.name}${reason ? " — " + reason : ""}`, job_id: head.job_id, requester: head.picker_name });
-    await sb.from("alu_pick_items").update({ returned: num(row.qty) }).eq("id", row.id);
   }
 }
 
@@ -225,7 +232,9 @@ export async function cancelPick(sb: Sb, a: PickActor, pickId: number, reason: s
 export async function setPickChecked(sb: Sb, a: PickActor, pickId: number, checked: boolean) {
   const { head } = await loadPick(sb, pickId);
   if (head.status === "cancelled") throw new PickError("ใบนี้ถูกยกเลิกไปแล้ว", 409);
-  await sb.from("alu_picks").update(checked
+  // เปลี่ยนได้เฉพาะจากสถานะที่อ่านมา — ช่างกดยกเลิกใบแทรกพอดี จะไม่ถูกทับกลับเป็น "ตรวจแล้ว"
+  const { data: won } = await sb.from("alu_picks").update(checked
     ? { status: "checked", checked_at: new Date().toISOString(), checked_by: a.userId, checked_by_name: a.name }
-    : { status: "open", checked_at: null, checked_by: null, checked_by_name: "" }).eq("id", pickId);
+    : { status: "open", checked_at: null, checked_by: null, checked_by_name: "" }).eq("id", pickId).eq("status", head.status).select("id");
+  if (!(won ?? []).length) throw new PickError("ใบนี้เพิ่งถูกเปลี่ยนสถานะ — โหลดใหม่แล้วดูอีกครั้ง", 409);
 }

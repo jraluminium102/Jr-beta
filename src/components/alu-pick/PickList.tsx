@@ -38,7 +38,8 @@ function PickCard({ p, isChang, canCheck, onChanged }: { p: Pick; isChang: boole
   async function run(fn: () => Promise<unknown>, okMsg?: string) {
     setBusy(true); setErr("");
     try { await fn(); setMode(""); onChanged(); if (okMsg) setErr(""); }
-    catch (e) { setErr(e instanceof Error ? e.message : "ไม่สำเร็จ"); }
+    // พลาด (เช่น สโตร์ตรวจไปแล้ว / คนอื่นแก้ก่อน) → โหลดใบใหม่ด้วย ให้ป้ายสถานะบนการ์ดตรงกับเหตุผลที่ขึ้น
+    catch (e) { setErr(e instanceof Error ? e.message : "ไม่สำเร็จ"); onChanged(); }
     finally { setBusy(false); }
   }
   const submitReturn = () => run(async () => {
@@ -48,7 +49,7 @@ function PickCard({ p, isChang, canCheck, onChanged }: { p: Pick; isChang: boole
     await api.post(`/alu-picks/${p.id}/return`, { items });
   });
   const submitEdit = () => run(async () => {
-    const items = p.items.map((it) => ({ item_id: it.id, qty: vals[it.id] === undefined || vals[it.id] === "" ? it.qty : Number(vals[it.id]) }))
+    const items = p.items.map((it) => ({ item_id: it.id, qty: vals[it.id] === undefined || vals[it.id].trim() === "" ? it.qty : Number(vals[it.id]) }))
       .filter((x, i) => x.qty !== p.items[i].qty);
     if (!items.length) throw new Error("ยังไม่ได้เปลี่ยนตัวเลข");
     if (items.some((x) => !Number.isFinite(x.qty) || x.qty < 0)) throw new Error("จำนวนใหม่ต้องเป็นตัวเลข 0 ขึ้นไป");

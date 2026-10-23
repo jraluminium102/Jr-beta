@@ -57,7 +57,8 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
 
   const itemsQ = useQuery({ queryKey: ["alu-pick-items"], queryFn: () => api.get<{ items: PickableItem[] }>("/alu-picks/items"), staleTime: 5 * 60 * 1000 });
   const jobsQ = useQuery({ queryKey: ["alu-pick-jobs"], queryFn: () => api.get<PickJob[]>("/alu-picks/jobs"), staleTime: 30 * 1000, refetchInterval: 60 * 1000, refetchOnWindowFocus: true });
-  const mineQ = useQuery({ queryKey: ["alu-picks-mine", name], queryFn: () => api.get<Pick[]>("/alu-picks?mine=1&days=60"), enabled: !!name });
+  // ลิงก์ช่าง = ใบของฉัน (server รู้ชื่อจากรหัส) · ออฟฟิศเบิกแทนช่าง = ใบของช่างที่เลือกอยู่ (ไม่ใช่ชื่อคนล็อกอิน)
+  const mineQ = useQuery({ queryKey: ["alu-picks-mine", name, isChang], queryFn: () => api.get<Pick[]>(isChang ? "/alu-picks?mine=1&days=60" : `/alu-picks?picker=${encodeURIComponent(name)}&days=60`), enabled: !!name });
   // ประวัติ "อื่นๆ (ระบุ)" ที่เคยกรอก (ทุกช่าง) — กดเติมได้ (เจ้าของสั่ง 21 ต.ค.69)
   // รายชื่อช่าง (บัญชี 0161) — ออฟฟิศเลือกตอน "เบิกแทนช่าง"
   const staffQ = useQuery({ queryKey: ["chang-staff"], queryFn: () => api.get<{ code: string; name: string }[]>("/chang-login"), enabled: !isChang, staleTime: 5 * 60 * 1000 });

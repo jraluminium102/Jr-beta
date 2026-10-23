@@ -62,13 +62,16 @@ export async function requireChangOr(
   changAction: Action = "write",
 ): Promise<ChangCtx> {
   // คนล็อกอินก่อนเสมอ (ได้ ctx จริง + RLS ของตัวเอง)
+  //   ⚠ 23 ต.ค.69: ล็อกอินอยู่แต่ role ไม่มีสิทธิ์ (เช่น ช่างที่เคยล็อกอินเว็บเป็น CHANG/VIEWER ค้างในมือถือ)
+  //   เดิม 403 ทันที → ลิงก์ช่างใช้ไม่ได้เลย · ตอนนี้ถ้าคำขอมากับลิงก์ช่างที่ถูกต้อง ให้ถอยไปใช้ตัวตนช่างแทน
   const ctx = await getContext();
+  const viaChang = await tokenOk(req);
   if (ctx) {
-    if (!can(ctx.role, resource, action)) throw Http.forbidden();
-    return { ...ctx, isChang: false, actorName: ctx.profile.full_name ?? "" };
+    if (can(ctx.role, resource, action)) return { ...ctx, isChang: false, actorName: ctx.profile.full_name ?? "" };
+    if (!viaChang) throw Http.forbidden();
   }
-  // ไม่มี session → ลิงก์ช่าง
-  if (!(await tokenOk(req))) throw Http.unauthorized();
+  // ไม่มี session (หรือ session ไม่มีสิทธิ์) → ลิงก์ช่าง
+  if (!viaChang) throw Http.unauthorized();
   if (action !== "read" && changAction !== "write") throw Http.forbidden();
   const who = await changIdentity(req);
   // รหัสพนักงานไม่มีในระบบ/ถูกปิด → 401 (หน้าเว็บจะให้ล็อกอินใหม่)
