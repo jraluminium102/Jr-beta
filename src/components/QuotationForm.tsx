@@ -284,6 +284,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
             : {
                 customer_id: customerId,
                 ...(selectedJobId && !opt.detachJob ? { job_id: selectedJobId } : {}),
+                ...(opt.detachJob ? { new_order: true } : {}),   // เลือก "ออเดอร์ใหม่" เอง → เซิร์ฟเวอร์ห้ามผูกงานคิวประเมินให้อัตโนมัติ
                 ...(opt.replaceId ? { replace_quotation_id: opt.replaceId } : {}),
                 ...(billingProfileId ? { billing_profile_id: billingProfileId } : {}),
               }),

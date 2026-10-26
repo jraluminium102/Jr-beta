@@ -204,6 +204,31 @@ export async function POST(req: Request) {
     }
   }
 
+  // 2b) ไม่ได้เลือกงานมา → ผูกงานจากคิวประเมินที่ "ยังรอใบเสนอ" ให้อัตโนมัติ (เจ้าของ 26 ต.ค.69)
+  //   "สร้างใบเสนอจากคิวประเมินตามปกติ ส่วนมากก็ผูกงาน แต่บางใบไม่ผูก"
+  //   ต้นเหตุ: เดิม trigger trg_quotation_link (DB) ยัดใบที่ไม่มีงานเข้างานล่าสุดของลูกค้าให้เงียบ ๆ → 0156 ปิดไป (กันออเดอร์ปน)
+  //     ใบที่ไม่ได้เข้าผ่านปุ่มจากเช็คลิสต์ (ส่ง job_id มาเอง) เลยหลุดงานคิวประเมินทั้งหมด
+  //   ตอนนี้: ผูกเฉพาะงาน active ที่ "ยังว่าง" (ไม่มีใบเสนอที่ใช้งานอยู่ + ไม่มีบิล) และมีงานแบบนี้ "งานเดียว" เท่านั้น
+  //     = งานที่เปิดจากคิวประเมินรอใบเสนอ → ไม่มีทางปนออเดอร์ (งานว่าง) · มีหลายงานว่าง = ไม่เดา ปล่อยไว้ (วางบิลแล้วได้งานใหม่)
+  //   body.new_order = ผู้ใช้กด "ออเดอร์ใหม่" เอง → ไม่ผูก
+  if (!jobId && !requestedJobId && body.new_order !== true) {
+    const { data: cj } = await supabase
+      .from("jobs")
+      .select("id")
+      .eq("customer_id", cust.id)
+      .not("status", "in", "(COMPLETED,CANCELLED)");
+    const jobIds = ((cj ?? []) as { id: string }[]).map((j) => j.id);
+    if (jobIds.length) {
+      const [{ data: usedQ }, { data: usedB }] = await Promise.all([
+        supabase.from("quotations").select("job_id").in("job_id", jobIds).neq("status", "cancelled"),
+        supabase.from("billing_notes").select("job_id").in("job_id", jobIds).neq("status", "cancelled"),
+      ]);
+      const used = new Set([...((usedQ ?? []) as { job_id: string }[]), ...((usedB ?? []) as { job_id: string }[])].map((r) => r.job_id));
+      const empty = jobIds.filter((id) => !used.has(id));
+      if (empty.length === 1) jobId = empty[0];
+    }
+  }
+
   // 3) คำนวณยอด (แหล่งความจริงเดียว · ส่งบาทมา = ใช้ตรง ๆ ชนะ %)
   const subtotalCalc = items.reduce((a: number, i: { qty: number; unit_price: number }) => a + (Number(i.qty) || 0) * (Number(i.unit_price) || 0), 0);
   const discount_amt_use = discountLines.length ? sumDiscountLines(subtotalCalc, discountLines) : discount_amt_in;
