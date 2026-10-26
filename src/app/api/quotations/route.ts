@@ -213,6 +213,27 @@ export async function POST(req: Request) {
     : discount_pct;
   const headerLabel = discountLines.length ? (discountLines.length === 1 ? discountLines[0].label : "") : discount_label;
 
+  // กันบันทึกซ้ำ (เจ้าของ 26 ต.ค.69 "กดบันทึกซ้ำ ละจะเซฟซ้ำทำไม" — QT2569100080/0081 ยอดเดียวกัน 2 ใบ)
+  //   คนเดิม + ลูกค้าเดิม + ยอดสุทธิเดิม + จำนวนรายการเท่ากัน ภายใน 2 นาที = กดซ้ำ → คืนใบเดิม ไม่ออกเลขใหม่
+  //   (หน้าฟอร์มล็อกปุ่มแล้ว · ชั้นนี้กันกรณีเน็ตช้า/ส่งซ้ำ/เปิด 2 แท็บ)
+  if (!replaceQuotations.length) {
+    const since = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+    const { data: recent } = await supabase
+      .from("quotations")
+      .select("id, code, quotation_items(count)")
+      .eq("customer_id", cust.id)
+      .eq("created_by", profile.id)
+      .eq("net", t.net)
+      .neq("status", "cancelled")
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    const dup = (recent ?? [])[0] as { id: number; code: string; quotation_items?: { count: number }[] } | undefined;
+    if (dup && (dup.quotation_items?.[0]?.count ?? -1) === items.length) {
+      return ok({ id: dup.id, code: dup.code, replaced: [], duplicate: true }, 200);
+    }
+  }
+
   // 3) ออกรหัสอัตโนมัติ (พ.ศ. · reset รายเดือน) ผ่าน RPC
   const { data: code, error: codeErr } = await supabase.rpc("next_document_code", { p_doc_type: "QT" });
   if (codeErr || !code) return fail("ออกรหัสไม่สำเร็จ: " + (codeErr?.message ?? ""), 500);

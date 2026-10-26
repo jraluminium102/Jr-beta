@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card } from "./ui";
@@ -39,6 +39,9 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
   const [condEdited, setCondEdited] = useState(false);
   const [condOpen, setCondOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  // กันกดบันทึกซ้ำ (เจ้าของ 26 ต.ค.69 "กดบันทึกซ้ำ ละจะเซฟซ้ำทำไม" — QT2569100080/0081 ใบเดียวกัน 2 ใบ)
+  //   ① ล็อกทันทีที่กด (state busy ยังไม่ทันอัปเดตตอนดับเบิลคลิก) ② บันทึกสำเร็จแล้วไม่ปลดล็อก จนกว่าจะเปลี่ยนหน้า
+  const submitLock = useRef(false);
   // หน้าต่างเลือกเมื่องานที่เลือกมีใบเสนออยู่แล้ว (1 งาน = 1 ใบเสนอ · 16 ต.ค.69) — resolve = ทางที่เลือก
   type JobChoice = { message: string; canReplace: number | null; existing: { id: number; code: string; has_bill: boolean }[] };
   const [jobChoice, setJobChoice] = useState<null | (JobChoice & { resolve: (v: "replace" | "new" | "cancel") => void })>(null);
@@ -256,6 +259,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
   }
 
   async function submit() {
+    if (submitLock.current) return;
     setErr("");
     if (custMode === "new") {
       if (!newCust.name.trim()) { setErr("กรอกชื่อลูกค้าใหม่ก่อน (ช่องบนสุด) แล้วกดบันทึกอีกครั้ง"); return; }
@@ -266,7 +270,9 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
     }
     const valid = items.filter((i) => i.name.trim() && Number(i.qty) > 0);
     if (valid.length === 0) { setErr("ต้องมีรายการอย่างน้อย 1 บรรทัด (ระบุชื่อ + จำนวน)"); return; }
+    submitLock.current = true;
     setBusy(true);
+    let saved = false;
     // opt.replaceId = ใบนี้แทนใบเดิม (ยกเลิกใบเดิม) · opt.detachJob = แยกเป็นออเดอร์ใหม่ (ไม่ผูกงานเดิม → วางบิลแล้วได้งานใหม่)
     async function post(opt: { replaceId?: number; detachJob?: boolean } = {}) {
       return fetch("/api/quotations", {
@@ -310,12 +316,14 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
       }
       if (!res.ok) { setErr(json.error ?? `บันทึกไม่สำเร็จ (${res.status}) — ลองอีกครั้ง`); return; }
       if (!json?.data?.id) { setErr("บันทึกแล้วแต่ไม่ได้รหัสกลับ — เปิดหน้าใบเสนอราคาเพื่อตรวจสอบ"); return; }
+      saved = true;
       router.push(`/quotations/${json.data.id}`);
     } catch {
       // เน็ตสะดุด/หลุด → ไม่ปล่อยปุ่มค้าง ต้องแจ้งให้กดใหม่ได้
       setErr("เชื่อมต่อไม่สำเร็จ (เน็ตสะดุด?) — ตรวจอินเทอร์เน็ตแล้วกดบันทึกอีกครั้ง");
     } finally {
-      setBusy(false);
+      // บันทึกสำเร็จ = คงปุ่มล็อกไว้ระหว่างเปลี่ยนหน้า (เดิมปลดล็อกทันที → หน้ายังค้าง กดซ้ำได้ใบที่ 2)
+      if (!saved) { submitLock.current = false; setBusy(false); }
     }
   }
 
