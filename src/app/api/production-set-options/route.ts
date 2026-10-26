@@ -14,7 +14,7 @@ export type SetOption = { id: number; field_key: string; value: string; sort_ord
 /** ฟิลด์ที่แก้ตัวเลือกได้ — กันคนยิง field_key มั่วมาสร้างขยะในตาราง */
 export const OPTION_FIELDS = [
   "design_received", "frame_status", "mat_equipment", "mat_alu_normal", "mat_alu_painted",
-  "glass_order", "glass_installed", "screen_type", "screen_installed",
+  "glass_order", "glass_installed", "screen_type", "screen_installed", "screen_order",
   "qc_before_glass", "qc_after_glass",
 ] as const;
 

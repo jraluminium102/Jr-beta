@@ -18,6 +18,7 @@ export type ProdSet = {
   design_received: string; frame_done: string; glass_installed: string;
   qc_before_glass: string; qc_after_glass: string;
   glass_spec: string; screen_type: string; screen_installed: string;
+  screen_order?: string;   // สั่งมุ้งจีบ (0162)
   glass_order: string; mat_equipment: string; mat_alu_normal: string; mat_alu_painted: string;
   frame_status: string; measurer_name: string; measure_actual: string | null;
   must_finish_date: string | null; glass_done_date: string | null;
@@ -1157,6 +1158,7 @@ function SetCard({ s, saving, mark, canMark }: {
           <RoRow label="วันวัด" v={s.measure_actual ? thShort(s.measure_actual) : ""} />
           <RoRow label="โครง/โรงงาน" v={s.frame_status} />
           <RoRow label="สั่งกระจก" v={s.glass_order} />
+          <RoRow label="สั่งมุ้งจีบ" v={s.screen_order ?? ""} />
           <RoRow label="อุปกรณ์" v={s.mat_equipment} />
           <RoRow label="อลู ปกติ" v={s.mat_alu_normal} />
           <RoRow label="อลู อบสี" v={s.mat_alu_painted} />

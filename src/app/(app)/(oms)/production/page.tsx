@@ -482,9 +482,10 @@ export default function ProductionPage() {
                           <Icon name="calendar" size={11} /> ยังไม่นัด
                         </span>
                       )}
+                      {/* วันติดตั้งตัวใหญ่ (เจ้าของ 26 ต.ค.69 "ขยายตัวหนังสือวันที่ติดตั้ง") */}
                       {r.planned_install_date && (
-                        <span className={`text-[12px] tnum inline-flex items-center gap-1 ${installSoon ? "text-amber-200" : ""}`} style={installSoon ? undefined : { color: "var(--t-low)" }}>
-                          <Icon name="wrench" size={11} />
+                        <span className={`text-[15px] font-bold tnum inline-flex items-center gap-1.5 ${installSoon ? "text-amber-200" : "text-white"}`}>
+                          <Icon name="wrench" size={14} />
                           ติดตั้ง: {thDate(r.planned_install_date)}
                         </span>
                       )}

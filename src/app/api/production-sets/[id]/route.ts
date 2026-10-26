@@ -20,6 +20,7 @@ const patchSchema = z.object({
   glass_spec: t, glass_order: t, frame_done: t, glass_installed: t, qc_before_glass: t,
   frame_status: t, screen_type: t, screen_installed: t, qc_after_glass: t,
   screen_type_2: t, screen_installed_2: t,  // มุ้งอันที่ 2 (0119) — เช่น มุ้งจีบ + มุ้ง JR
+  screen_order: t,                           // สถานะสั่งมุ้งจีบ (0162) — ตัวเลือกเหมือนสั่งกระจก
   install_date: d, note: t,
   factories: z.array(z.string()).optional(),   // โรงงานผลิต (หลายโรงต่อชุด · 0114)
   factory_start: z.record(z.string(), z.string().nullable()).optional(),  // วันเริ่มผลิตแยกโรง (0115)
@@ -42,7 +43,7 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
   const NOT_NULL_TEXT = new Set([
     "set_label", "measurer_name", "design_received", "mat_equipment", "mat_alu_normal", "mat_alu_painted",
     "glass_spec", "glass_order", "glass_installed", "qc_before_glass", "frame_status", "screen_type",
-    "screen_installed", "qc_after_glass", "note", "frame_done",
+    "screen_installed", "qc_after_glass", "note", "frame_done", "screen_order",
   ]);
   // "" ในช่องวันที่ (nullable) → null · ช่อง text NOT NULL คง "" ไว้ (กัน 23502)
   const clean: Record<string, unknown> = {};

@@ -83,8 +83,13 @@ export async function buildScheduleRows(sb: Sb): Promise<ScheduleRow[]> {
   if (jobIds.length) {
     // ★ ดึง glass_items ด้วย (0154 · กระจกหลายแผ่น) แบบกันพัง: ถ้าคอลัมน์ยังไม่มี (migration ไม่รัน) → ถอยไป SET_COLS เดิม
     //   (ห้ามให้ board ทั้งหน้าว่างเพราะ select คอลัมน์ที่ยังไม่มี)
-    let sets = (await sb.from("production_sets").select(SET_COLS + ", glass_items")
+    //   screen_order (0162 · สั่งมุ้งจีบ) ก็อยู่ในชั้น "เสริม" เดียวกัน — ยังไม่รัน 0162 → ถอย 2 ชั้น
+    let sets = (await sb.from("production_sets").select(SET_COLS + ", glass_items, screen_order")
       .in("job_id", jobIds).order("seq", { ascending: true }).order("id", { ascending: true })).data;
+    if (!sets) {
+      sets = (await sb.from("production_sets").select(SET_COLS + ", glass_items")
+        .in("job_id", jobIds).order("seq", { ascending: true }).order("id", { ascending: true })).data;
+    }
     if (!sets) {
       sets = (await sb.from("production_sets").select(SET_COLS)
         .in("job_id", jobIds).order("seq", { ascending: true }).order("id", { ascending: true })).data;

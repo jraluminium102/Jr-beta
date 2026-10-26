@@ -21,6 +21,7 @@ const FALLBACK: Record<string, string[]> = {
   glass_installed: ["ใส่แล้ว", "ยังไม่ใส่"],
   screen_type: ["มุ้งจีบ", "มุ้ง JR", "มุ้งจีบ+มุ้ง JR", "มุ้งนิรภัย"],
   screen_installed: ["มาแล้ว", "ใส่แล้ว", "ใส่ไม่ครบ"],
+  screen_order: ["รอวัด", "วัดแล้ว", "สั่งแล้ว รอของ", "มาแล้ว", "มายังไม่ครบ"],   // สั่งมุ้งจีบ = ชุดเดียวกับสั่งกระจก (0162)
   qc_before_glass: ["ผ่าน", "ไม่ผ่าน"],
   qc_after_glass: ["ผ่าน", "ไม่ผ่าน"],
 };
@@ -697,6 +698,8 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
                 </Group>
 
                 <Group title="มุ้ง & QC หลังใส่กระจก">
+                  {/* สั่งมุ้งจีบ (0162) — มุ้งจีบสั่งเอาเหมือนกระจก สถานะชุดเดียวกับ "สั่งกระจก" (เจ้าของ 26 ต.ค.69) */}
+                  <F label="สั่งมุ้งจีบ" onEditOpts={openOpts("screen_order", "สั่งมุ้งจีบ")}>{sel(s, "screen_order", valuesOf("screen_order"))}</F>
                   <F label="มุ้ง" onEditOpts={openOpts("screen_type", "มุ้ง")}>{sel(s, "screen_type", valuesOf("screen_type"))}</F>
                   <F label="ใส่มุ้ง" onEditOpts={openOpts("screen_installed", "ใส่มุ้ง")}>{sel(s, "screen_installed", valuesOf("screen_installed"))}</F>
                   {/* มุ้งอันที่ 2 (0119) — 1 ชุดใส่มุ้งได้ 2 แบบ เช่น มุ้งจีบ + มุ้ง JR · เสริมเท่านั้น ไม่ผูก gate ส่งติดตั้ง */}
