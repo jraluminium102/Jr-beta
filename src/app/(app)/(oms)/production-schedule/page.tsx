@@ -579,15 +579,14 @@ export default function ProductionSchedulePage() {
           {/* ตาราง (เจ้าของสั่ง 15 ต.ค.69 "เรียงแบบชิปดูยาก") — 1 แถว = 1 งาน · แต่ละเรื่องที่ติดเป็นคอลัมน์ของตัวเอง
               งานติดหลายเรื่องเห็นครบในแถวเดียว + ป้าย "ติด N เรื่อง" · แตะแถว = กรองไปที่งานนั้น */}
           <div className="overflow-x-auto rounded-lg" style={{ background: "#fff", border: "1px solid #f1a9a0" }}>
-            <table className="w-full text-left" style={{ minWidth: 700, borderCollapse: "collapse" }}>
+            <table className="w-full text-left" style={{ minWidth: 640, borderCollapse: "collapse" }}>
               <thead>
                 <tr className="text-[12.5px]" style={{ background: "#fff5f4", color: "#8a3a2f" }}>
                   <th className="px-3 py-2 font-bold">ลูกค้า</th>
                   <th className="px-3 py-2 font-bold whitespace-nowrap">ต้องเสร็จ</th>
                   <th className="px-3 py-2 font-bold whitespace-nowrap">ติดตั้ง</th>
                   <th className="px-3 py-2 font-bold text-center whitespace-nowrap">🔴 เลยกำหนด</th>
-                  <th className="px-3 py-2 font-bold text-center whitespace-nowrap">🪟 กระจก</th>
-                  <th className="px-3 py-2 font-bold text-center whitespace-nowrap">🕸 มุ้งจีบ</th>
+                  <th className="px-3 py-2 font-bold text-center whitespace-nowrap">🪟 กระจก · 🕸 มุ้งจีบ</th>
                   <th className="px-3 py-2 font-bold text-center whitespace-nowrap">🎨 อบสี</th>
                 </tr>
               </thead>
@@ -638,15 +637,18 @@ export default function ProductionSchedulePage() {
                           ? <span className="tnum text-[13.5px] font-bold rounded-full px-2.5 py-1" style={{ background: "#ffe5e5", color: "#d32f2f" }}>{l.overDays > 0 ? `เลย ${l.overDays} วัน` : "เลยกำหนด"}</span>
                           : empty, true)}
                       </td>
+                      {/* กระจก + มุ้งจีบ คอลัมน์เดียว (เจ้าของ 27 ต.ค.69) — ติดทั้งคู่ = 2 บับเบิ้ลเรียงกัน · สีต่างกันกันงง */}
                       <td className="px-3 py-2.5 align-top whitespace-nowrap">
-                        {stack((l) => glass && l.glass
-                          ? <span className="text-[13.5px] font-bold rounded-full px-2.5 py-1" style={{ background: "#fff0e0", color: "#c2410c" }}>รอกระจก</span>
-                          : empty, true)}
-                      </td>
-                      <td className="px-3 py-2.5 align-top whitespace-nowrap">
-                        {stack((l) => screen && l.screen
-                          ? <span className="text-[13.5px] font-bold rounded-full px-2.5 py-1" style={{ background: "#e6f6f3", color: "#0f766e" }}>รอมุ้งจีบ</span>
-                          : empty, true)}
+                        {stack((l) => {
+                          const g = glass && l.glass, sc = screen && l.screen;
+                          if (!g && !sc) return empty;
+                          return (
+                            <span className="inline-flex items-center gap-1.5 justify-center">{/* ไม่ตัดบรรทัด — คงความสูงแถวให้ตรงกับคอลัมน์อื่น (บรรทัดละโรง) */}
+                              {g && <span className="text-[13.5px] font-bold rounded-full px-2.5 py-1" style={{ background: "#fff0e0", color: "#c2410c", border: "1px solid #f6c99a" }}>🪟 รอกระจก</span>}
+                              {sc && <span className="text-[13.5px] font-bold rounded-full px-2.5 py-1" style={{ background: "#e6f6f3", color: "#0f766e", border: "1px solid #99d5cc" }}>🕸 รอมุ้งจีบ</span>}
+                            </span>
+                          );
+                        }, true)}
                       </td>
                       <td className="px-3 py-2.5 align-top whitespace-nowrap">
                         {stack((l) => paint && l.paint
