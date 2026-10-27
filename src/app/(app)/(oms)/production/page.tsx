@@ -187,7 +187,7 @@ function SplitCandidatesBanner({ rows, onOpen }: { rows: Row[]; onOpen: (r: Row)
             return (
               <div key={c.id} className="flex items-center justify-between gap-2 text-[12px] rounded-lg bg-white/5 px-2.5 py-2">
                 <div className="min-w-0 truncate text-amber-50">
-                  <span className="tnum font-semibold">{c.job_code ?? "—"}</span> · {c.customer_name}
+                  <span className="font-semibold">{c.customer_name}</span> <span className="tnum opacity-60">{c.job_code ?? ""}</span>
                   <span className="text-amber-200/70 ml-1.5">({c.billed_order_count ?? c.active_billing_count} ออเดอร์ที่มีบิล · {c.active_quotation_count} ใบเสนอ)</span>
                 </div>
                 {prodRow ? (
@@ -436,14 +436,15 @@ export default function ProductionPage() {
                 className={`focusable pressable w-full text-left glass-card rounded-2xl p-4 flex items-center gap-3 cursor-pointer ${stale ? "ring-1 ring-rose-300/40" : ""}`}>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-white font-semibold tnum">{r.job?.job_code}</span>
+                    {/* ชื่อลูกค้าตัวใหญ่ขึ้นก่อน · เลขงานตัวเล็กจาง (เจ้าของ 27 ต.ค.69 "คนจำชื่อลูกค้า ไม่ได้จำเลขงาน") */}
+                    <span className="text-white text-[17px] font-bold leading-tight">{withNickname(r.job?.customer_name, (r as { nickname?: string | null }).nickname)}</span>
+                    <span className="tnum text-[11.5px]" style={{ color: "var(--t-low)" }}>{r.job?.job_code}</span>
                     {/* มีงาน ผรม. (0090) — read-only marker ต่อเลขงาน */}
                     <FloorWorkBadge floorWork={r.job?.floor_work} floorNote={r.job?.floor_note} dark />
                     {/* ป้ายวัดรอบ (0130) — วัดซ้ำมาแล้ว */}
                     {(r.measure_round_no ?? 1) > 1 && (
                       <span className="text-[11px] font-bold rounded-full px-2 py-0.5 bg-sky-500/25 border border-sky-300/35 text-sky-100">🔁 วัดรอบ {r.measure_round_no}</span>
                     )}
-                    <span className="text-[13px]" style={{ color: "var(--t-mid)" }}>{withNickname(r.job?.customer_name, (r as { nickname?: string | null }).nickname)}</span>
                     {/* โน้ตเด่น "ทำไมยังวัด/ผลิตไม่ได้" (0098) — กดใส่/เอาออกเร็วจากรายการ */}
                     <BlockerNotesInline jobId={r.job_id} customerName={r.job?.customer_name ?? ""} notes={r.job?.job_blocker_notes ?? []} canWrite={canWrite} onChanged={invalidateAll} />
                     {/* ใบตัดของงาน (0094) — กดเปิด/สร้างผูกลูกค้า · เชื่อมกับหน้าช่าง */}

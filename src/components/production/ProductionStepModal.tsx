@@ -568,7 +568,9 @@ export function ProductionStepModal({
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="text-white font-bold text-xl tnum">{prod.job?.job_code}</div>
+              {/* ชื่อลูกค้าเป็นหัวใหญ่ · เลขงานตัวเล็ก (เจ้าของ 27 ต.ค.69 "คนจำชื่อลูกค้า ไม่ได้จำเลขงาน") */}
+              <div className="text-white font-bold text-xl leading-tight">{withNickname(prod.job?.customer_name, row.nickname)}</div>
+              <span className="tnum text-[12px]" style={{ color: "var(--t-low)" }}>{prod.job?.job_code}</span>
               <FloorWorkBadge floorWork={prod.job?.floor_work} floorNote={prod.job?.floor_note} dark />
               {/* ป้ายวัดรอบ (0130) — ไม่ถอย current_stage แค่บอกว่าวัดซ้ำมาแล้ว */}
               {(row.measure_round_no ?? 1) > 1 && (
@@ -578,7 +580,7 @@ export function ProductionStepModal({
               )}
             </div>
             <div className="text-sm truncate" style={{ color: "var(--t-mid)" }}>
-              {withNickname(prod.job?.customer_name, row.nickname)} · {prod.job?.customer_area ?? "—"}
+              📍 {prod.job?.customer_area ?? "—"}
             </div>
             {/* ชื่อเรียกในงานผลิต (เจ้าของสั่ง 20 ต.ค.69) — โน้ตเฉย ๆ ขึ้นในวงเล็บหลังชื่อ หน้าผลิต/ช่าง/ติดตั้ง · ไม่แตะชื่อลูกค้าเดิม */}
             {canWrite && <NicknameEditor value={row.nickname ?? ""} saving={saving} onSave={(v) => patch({ nickname: v }, { close: false, feedbackKey: "nickname" })} saved={savedField === "nickname"} />}
