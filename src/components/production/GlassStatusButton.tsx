@@ -6,6 +6,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { pleatedOf } from "@/lib/production/pleated";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Bucket = "waiting" | "unordered" | "arrived";
@@ -20,11 +21,10 @@ const sheetsOfSet = (s: any): Sheet[] => {
   return (spec || order || installed) ? [{ spec, order, installed }] : [];
 };
 // มุ้งจีบ (0162 · เจ้าของ 27 ต.ค.69 "ขึ้นสถานะเหมือนกระจก") — 1 ชุด = 1 รายการ
-//   ⚠ มุ้งจีบไม่ได้มีทุกงาน: "สั่งมุ้งจีบ" ว่าง = ไม่มีมุ้งจีบ → ไม่โชว์ (ไม่นับเป็น "ยังไม่สั่ง")
+//   มีมุ้งจีบ = ช่อง "มุ้ง" เลือกมุ้งจีบไว้ (ดู pleatedOf) · ไม่มี = ไม่โชว์
 const screensOfSet = (s: any): Sheet[] => {
-  const order = String(s?.screen_order ?? "").trim();
-  if (!order) return [];
-  return [{ spec: String(s?.screen_type ?? "").trim() || "มุ้งจีบ", order, installed: String(s?.screen_installed ?? "").trim() }];
+  const p = pleatedOf(s);
+  return p ? [{ spec: p.type, order: p.order, installed: p.installed }] : [];
 };
 type Mode = "glass" | "screen";
 const MODE: Record<Mode, { icon: string; name: string; of: (s: any) => Sheet[]; noSpec: string }> = {
@@ -137,7 +137,7 @@ export default function GlassStatusButton({ className }: { className?: string })
               <span className="text-[11px] w-full sm:w-auto sm:ml-1" style={{ color: "#a1a1a8" }}>
                 {mode === "glass"
                   ? "* ตัวเลข = จำนวนรายการกระจก (ไม่ใช่จำนวนลูกค้า) · ตัดงานที่ส่งติดตั้งแล้วออก"
-                  : "* ตัวเลข = จำนวนชุดที่มีมุ้งจีบ · ชุดที่ไม่ได้เลือก \"สั่งมุ้งจีบ\" = ไม่มีมุ้งจีบ ไม่โชว์ · ใส่มุ้งแล้วตัดออก"}
+                  : "* ตัวเลข = จำนวนชุดที่ช่อง \"มุ้ง\" เลือกมุ้งจีบ · ใส่มุ้งแล้วตัดออก · ตัดงานที่ส่งติดตั้งแล้วออก"}
               </span>
             </div>
             {/* รายการ: ลูกค้า → ชุด → กระจก */}

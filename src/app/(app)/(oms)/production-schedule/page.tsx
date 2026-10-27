@@ -12,6 +12,7 @@ import type { ProdStatus } from "@/lib/database.types";
 import CutlistChip, { type CutBrief } from "@/components/production/CutlistChip";
 import AddProductionJobModal from "@/components/production/AddProductionJobModal";
 import GlassStatusButton from "@/components/production/GlassStatusButton";
+import { pleatedOf } from "@/lib/production/pleated";
 
 export type ProdSet = {
   id: number; set_label: string; seq: number;
@@ -19,6 +20,7 @@ export type ProdSet = {
   qc_before_glass: string; qc_after_glass: string;
   glass_spec: string; screen_type: string; screen_installed: string;
   screen_order?: string;   // สั่งมุ้งจีบ (0162)
+  screen_type_2?: string | null; screen_installed_2?: string | null;   // มุ้งอันที่ 2 (0119) — มุ้งจีบอาจอยู่ช่องนี้
   glass_order: string; mat_equipment: string; mat_alu_normal: string; mat_alu_painted: string;
   frame_status: string; measurer_name: string; measure_actual: string | null;
   must_finish_date: string | null; glass_done_date: string | null;
@@ -140,10 +142,11 @@ export const setWaitingGlass = (s: ProdSet) =>
   !setIsDone(s) && glassOrdersOf(s).some((o) => GLASS_WAITING.has(o));
 
 // ── "รอมุ้งจีบ" (เจ้าของสั่ง 27 ต.ค.69) — สั่งมุ้งจีบแล้วรอของ ฟีลเดียวกับรอกระจก ──
-//   ⚠ มุ้งจีบไม่ได้มีทุกงาน: ช่อง "สั่งมุ้งจีบ" ว่าง = งานนี้ไม่มีมุ้งจีบ → ไม่นับ · ใส่มุ้งแล้ว = จบ
-export const setWaitingScreen = (s: ProdSet) =>
-  !setIsDone(s) && String(s.screen_installed ?? "").trim() !== "ใส่แล้ว"
-  && GLASS_WAITING.has(String(s.screen_order ?? "").trim());
+//   มีมุ้งจีบ = ช่อง "มุ้ง" เลือกมุ้งจีบ (pleatedOf · แหล่งเดียว) · ใส่มุ้งแล้ว = จบ
+export const setWaitingScreen = (s: ProdSet) => {
+  const p = pleatedOf(s);
+  return !!p && !p.done && !setIsDone(s) && GLASS_WAITING.has(p.order);
+};
 
 // ── "รออบสี" (เจ้าของสั่ง 2 ต.ค.69) — อลูอบสี "สั่งแล้ว รอของ" = สั่งอบสีไปแล้วรอของมาส่ง (ฟีลเดียวกับรอกระจก) ──
 export const setWaitingPaint = (s: ProdSet) =>
@@ -1174,7 +1177,7 @@ function SetCard({ s, saving, mark, canMark }: {
           <RoRow label="วันวัด" v={s.measure_actual ? thShort(s.measure_actual) : ""} />
           <RoRow label="โครง/โรงงาน" v={s.frame_status} />
           <RoRow label="สั่งกระจก" v={s.glass_order} />
-          <RoRow label="สั่งมุ้งจีบ" v={s.screen_order ?? ""} />
+          {pleatedOf(s) && <RoRow label="สั่งมุ้งจีบ" v={pleatedOf(s)!.order || "ยังไม่สั่ง"} />}
           <RoRow label="อุปกรณ์" v={s.mat_equipment} />
           <RoRow label="อลู ปกติ" v={s.mat_alu_normal} />
           <RoRow label="อลู อบสี" v={s.mat_alu_painted} />

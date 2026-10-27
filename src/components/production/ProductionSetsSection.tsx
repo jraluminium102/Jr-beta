@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Plus, X, ChevronDown } from "@/components/ui/icons";
 import OptionsEditor from "./OptionsEditor";
+import { pleatedSlot } from "@/lib/production/pleated";
 import type { SetOption } from "@/app/api/production-set-options/route";
 
 // ── ตัวเลือกดรอปดาวน์ ──────────────────────────────────────────────────────
@@ -178,11 +179,13 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
 }
 
 // ดรอปดาวน์ที่อ่านง่าย — พื้นเข้มทึบ + ลูกศรชัดเจน (ปุ่มลูกศรของเบราว์เซอร์เดิมจางมากบนพื้นมืด)
-function SelectField({ value, disabled, onChange, options }: { value: unknown; disabled?: boolean; onChange: (v: string) => void; options: string[] }) {
+function SelectField({ value, disabled, onChange, options, placeholder }: { value: unknown; disabled?: boolean; onChange: (v: string) => void; options: string[]; placeholder?: string }) {
+  // placeholder = ข้อความของค่าว่าง (เช่น "ยังไม่สั่ง") · ไม่ส่ง = "—"
+  const opts = placeholder && !options.includes("") ? ["", ...options] : options;
   return (
     <div className="relative">
       <select defaultValue={(value as string) ?? ""} disabled={disabled} onChange={(e) => onChange(e.target.value)} className={selectCls}>
-        {options.map((o) => <option key={o} value={o} style={optStyle}>{o || "—"}</option>)}
+        {opts.map((o) => <option key={o} value={o} style={optStyle}>{o || placeholder || "—"}</option>)}
       </select>
       <ChevronDown size={18} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-white/50" />
     </div>
@@ -396,6 +399,13 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
   };
   const sel = (s: SetRow, f: string, opts: string[]) => (
     <SelectField value={s[f] ?? ""} disabled={!canWrite} onChange={(v) => save(s.id, f, v)} options={withCurrent(opts, s[f])} />
+  );
+  // สถานะสั่งมุ้งจีบ — ช่องว่าง = "ยังไม่สั่ง" (ชุดที่เลือกมุ้งจีบไว้ก่อนมีช่องนี้ ขึ้นในหน้าต่างสถานะเองโดยไม่ต้องกรอกใหม่)
+  const pleatedOrderField = (s: SetRow) => (
+    <F label="สถานะมุ้งจีบ (สั่ง)" onEditOpts={openOpts("screen_order", "สถานะมุ้งจีบ")}>
+      <SelectField value={s.screen_order ?? ""} disabled={!canWrite} onChange={(v) => save(s.id, "screen_order", v)}
+        options={withCurrent(valuesOf("screen_order"), s.screen_order)} placeholder="ยังไม่สั่ง" />
+    </F>
   );
   // กระจกหลายแผ่นต่อชุด — seed จาก glass_items (0154) หรือคอลัมน์เดิม (ชุดก่อนรัน migration)
   const glassSeed = (s: SetRow): GlassItem[] => {
@@ -698,12 +708,14 @@ export function ProductionSetsSection({ jobId, canWrite }: { jobId: string; canW
                 </Group>
 
                 <Group title="มุ้ง & QC หลังใส่กระจก">
-                  {/* สั่งมุ้งจีบ (0162) — มุ้งจีบสั่งเอาเหมือนกระจก สถานะชุดเดียวกับ "สั่งกระจก" (เจ้าของ 26 ต.ค.69) */}
-                  <F label="สั่งมุ้งจีบ" onEditOpts={openOpts("screen_order", "สั่งมุ้งจีบ")}>{sel(s, "screen_order", valuesOf("screen_order"))}</F>
+                  {/* สั่งมุ้งจีบ (0162 · เจ้าของ 27 ต.ค.69) — ไม่ต้องเลือกมุ้งจีบ 2 ที่: ขึ้นเองต่อท้ายช่อง "มุ้ง" ที่เลือกมุ้งจีบไว้
+                      ไม่ได้เลือกมุ้งจีบ = ไม่มีช่องนี้ (ยกเว้นเคยกรอกไว้แล้ว — โชว์ต่อท้ายมุ้งช่องแรก ไม่ให้ข้อมูลหาย) */}
                   <F label="มุ้ง" onEditOpts={openOpts("screen_type", "มุ้ง")}>{sel(s, "screen_type", valuesOf("screen_type"))}</F>
+                  {(pleatedSlot(s) === 1 || (!pleatedSlot(s) && String(s.screen_order ?? "").trim())) && pleatedOrderField(s)}
                   <F label="ใส่มุ้ง" onEditOpts={openOpts("screen_installed", "ใส่มุ้ง")}>{sel(s, "screen_installed", valuesOf("screen_installed"))}</F>
                   {/* มุ้งอันที่ 2 (0119) — 1 ชุดใส่มุ้งได้ 2 แบบ เช่น มุ้งจีบ + มุ้ง JR · เสริมเท่านั้น ไม่ผูก gate ส่งติดตั้ง */}
                   <F label="มุ้ง (2)">{sel(s, "screen_type_2", valuesOf("screen_type"))}</F>
+                  {pleatedSlot(s) === 2 && pleatedOrderField(s)}
                   <F label="ใส่มุ้ง (2)">{sel(s, "screen_installed_2", valuesOf("screen_installed"))}</F>
                   <F label="QC หลังใส่กระจก 👷 (ช่างกด)" onEditOpts={openOpts("qc_after_glass", "QC หลังใส่กระจก")}>{markRO(s, "qc_after_glass", "qc_after_by", "qc_after_at", valuesOf("qc_after_glass"))}</F>
                 </Group>

@@ -10,7 +10,8 @@ type Sb = { from: (t: string) => any };
 type Params = { params: { id: string } };
 
 const d = z.string().nullish();   // วันที่ YYYY-MM-DD หรือ null
-const t = z.string().optional();  // ข้อความ
+// ข้อความ — รับ null ด้วย: หน้าผลิตเลือก "—" (ล้างค่า) ส่ง null มา · เดิม z.string().optional() ตอบ 400 เงียบ = ล้างค่าไม่ได้เลย (27 ต.ค.69)
+const t = z.string().nullish();
 // ทุก field ของ worksheet แก้ inline ได้ (ส่งมาเฉพาะที่เปลี่ยน)
 const patchSchema = z.object({
   set_label: t, seq: z.number().int().optional(),
@@ -47,7 +48,10 @@ export const PATCH = withRoute(async (req: Request, { params }: Params) => {
   ]);
   // "" ในช่องวันที่ (nullable) → null · ช่อง text NOT NULL คง "" ไว้ (กัน 23502)
   const clean: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(body)) clean[k] = (v === "" && !NOT_NULL_TEXT.has(k)) ? null : v;
+  for (const [k, v] of Object.entries(body)) {
+    if (NOT_NULL_TEXT.has(k)) clean[k] = v ?? "";          // ล้างค่าช่อง NOT NULL = "" (null → 23502)
+    else clean[k] = v === "" ? null : v;
+  }
 
   const sb = ctx.supabase as unknown as Sb;
   // ── กระจกหลายแผ่น (0154): glass_items = แหล่งจริง → คิด roll-up ระดับชุดลงคอลัมน์เดิม ──
