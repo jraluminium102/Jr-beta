@@ -19,6 +19,18 @@ const sheetsOfSet = (s: any): Sheet[] => {
   const spec = String(s?.glass_spec ?? "").trim(), order = String(s?.glass_order ?? "").trim(), installed = String(s?.glass_installed ?? "").trim();
   return (spec || order || installed) ? [{ spec, order, installed }] : [];
 };
+// มุ้งจีบ (0162 · เจ้าของ 27 ต.ค.69 "ขึ้นสถานะเหมือนกระจก") — 1 ชุด = 1 รายการ
+//   ⚠ มุ้งจีบไม่ได้มีทุกงาน: "สั่งมุ้งจีบ" ว่าง = ไม่มีมุ้งจีบ → ไม่โชว์ (ไม่นับเป็น "ยังไม่สั่ง")
+const screensOfSet = (s: any): Sheet[] => {
+  const order = String(s?.screen_order ?? "").trim();
+  if (!order) return [];
+  return [{ spec: String(s?.screen_type ?? "").trim() || "มุ้งจีบ", order, installed: String(s?.screen_installed ?? "").trim() }];
+};
+type Mode = "glass" | "screen";
+const MODE: Record<Mode, { icon: string; name: string; of: (s: any) => Sheet[]; noSpec: string }> = {
+  glass: { icon: "🪟", name: "กระจก", of: sheetsOfSet, noSpec: "(ยังไม่ระบุสเปคกระจก)" },
+  screen: { icon: "🕸", name: "มุ้งจีบ", of: screensOfSet, noSpec: "มุ้งจีบ" },
+};
 // คืน null = ใส่แล้ว (จบ ไม่ต้องตาม)
 const bucketOf = (sh: Sheet): Bucket | null =>
   sh.installed === "ใส่แล้ว" ? null
@@ -38,7 +50,11 @@ type Cust = { customer: string; code: string | null; sets: SetGrp[] };
 
 export default function GlassStatusButton({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<Mode>("glass");
   const [filter, setFilter] = useState<Bucket | "">("");
+  const M = MODE[mode];
+  // ป้าย "รอ…" ตามโหมด (รอกระจก / รอมุ้งจีบ)
+  const labelOf = (b: Bucket) => (b === "waiting" ? `รอ${M.name}` : BK[b].label);
   const { data, isFetching, refetch } = useQuery({
     queryKey: ["production-schedule"],
     queryFn: () => api.get<any[]>("/production-schedule"),
@@ -56,7 +72,7 @@ export default function GlassStatusButton({ className }: { className?: string })
     const setGrps: SetGrp[] = [];
     for (const s of (r.allSets ?? r.sets ?? [])) {
       const lines: Line[] = [];
-      for (const sh of sheetsOfSet(s)) {
+      for (const sh of M.of(s)) {
         const b = bucketOf(sh);
         if (!b) continue;
         counts[b]++;
@@ -86,10 +102,10 @@ export default function GlassStatusButton({ className }: { className?: string })
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} title="ดูสถานะกระจกทุกงาน (ลูกค้า → งาน → กระจก)"
+      <button type="button" onClick={() => setOpen(true)} title="ดูสถานะกระจก / มุ้งจีบ ทุกงาน (ลูกค้า → งาน → รายการ)"
         className={className ?? "focusable inline-flex items-center gap-1.5 rounded-[10px] px-3.5 py-2 text-sm font-semibold min-h-[34px] border"}
         style={className ? undefined : { background: "#fff", color: "#c2410c", borderColor: "#f6c99a" }}>
-        🪟 สถานะกระจก
+        🪟 สถานะกระจก · มุ้งจีบ
       </button>
 
       {open && (
@@ -99,7 +115,16 @@ export default function GlassStatusButton({ className }: { className?: string })
             onClick={(e) => e.stopPropagation()}>
             {/* หัว */}
             <div className="flex items-center gap-2 px-4 py-3 border-b flex-wrap" style={{ background: "#fff", borderColor: "#e5e5ea" }}>
-              <span className="text-[16px] font-bold" style={{ color: "#1c1c1e" }}>🪟 สถานะกระจกทุกงาน</span>
+              {/* สลับ กระจก / มุ้งจีบ — สถานะชุดเดียวกัน */}
+              <div className="inline-flex rounded-full p-0.5" style={{ background: "#e5e5ea" }}>
+                {(["glass", "screen"] as Mode[]).map((k) => (
+                  <button key={k} type="button" onClick={() => { setMode(k); setFilter(""); }}
+                    className="focusable rounded-full px-3.5 min-h-[34px] text-[14px] font-bold"
+                    style={{ background: mode === k ? "#fff" : "transparent", color: mode === k ? "#1c1c1e" : "#636366" }}>
+                    {MODE[k].icon} {MODE[k].name}
+                  </button>
+                ))}
+              </div>
               <span className="text-[12px] rounded-full px-2 py-0.5" style={{ background: "#f4f4f7", color: "#636366" }}>ดูอย่างเดียว · อัปเดตทุก 30 วิ</span>
               {isFetching && <span className="text-[12px]" style={{ color: "#a1a1a8" }}>⟳</span>}
               <button type="button" onClick={() => refetch()} className="ml-auto focusable rounded-lg px-2.5 py-1.5 text-[13px] font-semibold border" style={{ background: "#fff", color: "#1c1c1e", borderColor: "#e5e5ea" }}>⟳ รีเฟรช</button>
@@ -108,13 +133,17 @@ export default function GlassStatusButton({ className }: { className?: string })
             {/* ชิปกรองสถานะ */}
             <div className="flex items-center gap-1.5 flex-wrap px-4 py-2.5 border-b" style={{ background: "#fff", borderColor: "#e5e5ea" }}>
               {chip("", "ทั้งหมด", counts.waiting + counts.unordered + counts.arrived, "#1c1c1e", "#e5e5ea")}
-              {ORDER.map((b) => chip(b, `${BK[b].dot} ${BK[b].label}`, counts[b], BK[b].fg, BK[b].bd))}
-              <span className="text-[11px] w-full sm:w-auto sm:ml-1" style={{ color: "#a1a1a8" }}>* ตัวเลข = จำนวนรายการกระจก (ไม่ใช่จำนวนลูกค้า) · ตัดงานที่ส่งติดตั้งแล้วออก</span>
+              {ORDER.map((b) => chip(b, `${BK[b].dot} ${labelOf(b)}`, counts[b], BK[b].fg, BK[b].bd))}
+              <span className="text-[11px] w-full sm:w-auto sm:ml-1" style={{ color: "#a1a1a8" }}>
+                {mode === "glass"
+                  ? "* ตัวเลข = จำนวนรายการกระจก (ไม่ใช่จำนวนลูกค้า) · ตัดงานที่ส่งติดตั้งแล้วออก"
+                  : "* ตัวเลข = จำนวนชุดที่มีมุ้งจีบ · ชุดที่ไม่ได้เลือก \"สั่งมุ้งจีบ\" = ไม่มีมุ้งจีบ ไม่โชว์ · ใส่มุ้งแล้วตัดออก"}
+              </span>
             </div>
             {/* รายการ: ลูกค้า → ชุด → กระจก */}
             <div className="overflow-y-auto p-3 sm:p-4 space-y-3">
               {vis.length === 0 ? (
-                <div className="text-[14px] text-center py-10" style={{ color: "#a1a1a8" }}>— ไม่มีงานกระจกในสถานะนี้ —</div>
+                <div className="text-[14px] text-center py-10" style={{ color: "#a1a1a8" }}>— ไม่มีงาน{M.name}ในสถานะนี้ —</div>
               ) : vis.map((c, ci) => (
                 <div key={ci} className="rounded-xl border overflow-hidden" style={{ background: "#fff", borderColor: "#e5e5ea" }}>
                   {/* หัวข้อใหญ่ = ชื่อลูกค้า */}
@@ -133,12 +162,13 @@ export default function GlassStatusButton({ className }: { className?: string })
                         <div className="space-y-1">
                           {s.lines.map((l, li) => {
                             const m = BK[l.bucket];
-                            const extra = l.order && l.order !== "มาแล้ว" && l.order !== m.label ? l.order : "";
+                            const lb = labelOf(l.bucket);
+                            const extra = l.order && l.order !== "มาแล้ว" && l.order !== lb ? l.order : "";
                             return (
                               <div key={li} className="flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 border" style={{ background: m.bg, borderColor: m.bd }}>
-                                <span className="text-[13.5px]" style={{ color: "#1c1c1e" }}>{l.spec || <span style={{ color: "#a1a1a8" }}>(ยังไม่ระบุสเปคกระจก)</span>}</span>
+                                <span className="text-[13.5px]" style={{ color: "#1c1c1e" }}>{l.spec || <span style={{ color: "#a1a1a8" }}>{M.noSpec}</span>}</span>
                                 <span className="shrink-0 text-[12px] font-bold rounded-full px-2 py-0.5 whitespace-nowrap" style={{ background: "#fff", color: m.fg, border: `1px solid ${m.bd}` }}>
-                                  {m.dot} {m.label}{extra ? ` · ${extra}` : ""}
+                                  {m.dot} {lb}{extra ? ` · ${extra}` : ""}
                                 </span>
                               </div>
                             );
