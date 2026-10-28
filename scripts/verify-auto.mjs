@@ -1345,5 +1345,24 @@ console.log("\n═══ บานตู้ Futuretech — ความยาว
   ok("สีชุบ เฟรม = 720 ÷ 300 = 2.4 เส้น (3 ม.)", Math.abs(q(gold, /เฟรม.*ชุบ/) - 2.4) < 0.01, String(q(gold, /เฟรม.*ชุบ/)));
   ok("สีชุบ มือจับ = 480 ÷ 300 = 1.6 เส้น (3 ม.)", Math.abs(q(gold, /มือจับ สีชุบ/) - 1.6) < 0.01, String(q(gold, /มือจับ สีชุบ/)));
 }
+
+// ── ระแนงบังตา เลือก "ระแนงสลับ" ได้ทุกรูปแบบ (เจ้าของ 28 ต.ค.69 "ระแนงต้องใส่สลับได้ทุกอัน") ──
+//   ติดตาย แนวตั้ง = รุ่นระแนงสลับเป๊ะ (ของ/ค่าแรง/ราคาขาย) · ไม่เลือกสลับ = ราคาเดิมไม่ขยับ
+console.log("\n═══ ระแนงบังตา + ระแนงสลับ ═══");
+{
+  const sl = { rnBox: "1.6x4", rnFace: "10.16", rnGap: "2.5", rnFrame: "ไม่รวมโครง", panelform: "ติดตาย", gslat: "ระแนงสลับ", gboxB: "1x1.6", gfaceB: "4.06", gaRun: "3", gbRun: "5" };
+  for (const [w, h] of [[200, 200], [400, 200], [600, 250]]) {
+    const a = computeCost(PB, PRODUCTS.louver, { w, h, p: 1, form: "ตั้ง", color: "white", colorKey: "white", spec: sl });
+    const b = computeCost(PB, PRODUCTS.louver_slip, { w, h, p: 1, form: "นอน", color: "white", colorKey: "white",
+      spec: { boxA: "1.6x4", showA: "10.16", cntA: "3", boxB: "1x1.6", showB: "4.06", cntB: "5", rnGap: "2.5", rnFrame: "ไม่รวมโครง" } });
+    ok(`${w}×${h} ระแนงบังตา-สลับ = ระแนงสลับ (ขาย ${b.sell.withInstall})`,
+      a.sell.withInstall === b.sell.withInstall && Math.abs(a.cost.total - b.cost.total) < 0.5 && Math.abs(a.labor.install - b.labor.install) < 0.5,
+      `${a.sell.withInstall} vs ${b.sell.withInstall}`);
+  }
+  const plain = computeCost(PB, PRODUCTS.louver, { w: 200, h: 240, p: 1, form: "นอน", color: "white", colorKey: "white", spec: { rnBox: "1.6x4", rnFace: "4.06", rnGap: "5", rnFrame: "ไม่รวมโครง", panelform: "ติดตาย" } });
+  ok("ระแนงบังตาปกติ 200×240 ไม่ขยับ (ทุน 10,980)", Math.abs(plain.cost.total - 10980) < 1, String(plain.cost.total));
+  const ns = computeCost(PB, PRODUCTS.louver, { w: 400, h: 200, p: 1, form: "นอน", color: "white", colorKey: "white", spec: sl });
+  ok("สลับ แนวนอน มีใบ B (สลับได้ทั้งนอน/ตั้ง)", (ns.lines || []).some((l) => /ใบระแนง B/.test(l.name) && l.qty > 0), "");
+}
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);

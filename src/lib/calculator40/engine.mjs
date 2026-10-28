@@ -222,7 +222,9 @@ export function computeCost(PB, prod, opt) {
 
   // ตารางสูตรราคาขายของรุ่นนี้ (มาจากไฟล์ถอดทุน — ดู scripts/extract-sell-model.mjs)
   //   opt.profitManual = true → ผู้ใช้กดปรับกำไรเอง ให้ใช้ % ที่กรอก (ของเดิม) ไม่ใช้เป้าจากไฟล์
-  const SELL_RAW = (PB.SELL && PB.SELL.products && PB.SELL.products[prod.id]) || null;
+  // prod.r41IdIf = ใช้ตาราง R4.1 ของรุ่นอื่นตามตัวเลือก (ระแนงบังตา เลือกสลับ → กำไร/ค่าแรงขายของ "ระแนงสลับ" · 28 ต.ค.69)
+  const r41Id = (prod.r41IdIf && val(prod.r41IdIf.when)) ? prod.r41IdIf.id : prod.id;
+  const SELL_RAW = (PB.SELL && PB.SELL.products && PB.SELL.products[r41Id]) || null;
   // ── R4.1 (เจ้าของเคาะ 10 ก.ย.69) — รุ่นที่มีใน ★ ตารางราคาขาย R4.1 ใช้โมเดลนี้แทนสูตรเป้ากำไร ──
   //   ค่าผลิต/ค่าติดตั้ง (ขาย) = ช่อง "ขาย" ในตาราง R4.1 เป๊ะ · ขนาดที่ไม่มีในตาราง = ตัวคูณของขนาดใกล้สุด
   //   ค่าของ (ขาย) = ทุน × (1 + % ตั้งต้นของรุ่น) · % ตั้งต้นจูนให้ยอดรวมชน "ราคาขาย รวมทั้งชุด"
@@ -230,7 +232,7 @@ export function computeCost(PB, prod, opt) {
   //   กด +/- ทีละก้อน (opt.profitEdit) → เฉพาะก้อนนั้นใช้ % ที่กรอก · ก้อนที่ไม่ได้แตะคงตามตาราง
   //   % ทุกช่อง = ตัวที่เอาทุนคูณแล้วได้ราคาขายที่เห็นจริง (รวมค่าดำเนินการแล้ว ไม่มีชั้นซ่อน)
   //     🐞 เดิมโชว์ 47% แต่ราคา 2,500 จากทุน 1,273 (เจ้าของจับได้ 10 ก.ย.69 "คูณกำไรผิด งง")
-  const R41N = r41Nodes(PB, prod.id);
+  const R41N = r41Nodes(PB, r41Id);
   const r41Edit = opt.profitEdit
     ? { mat: !!opt.profitEdit.mat, prod: !!opt.profitEdit.prod, inst: !!opt.profitEdit.inst }
     : (opt.profitManual ? { mat: true, prod: true, inst: true } : { mat: false, prod: false, inst: false });
@@ -868,7 +870,9 @@ export function computeCost(PB, prod, opt) {
   // (4) ค่าแรง = ฐาน + เรต × ตร.ม.  (บางรุ่นคิดต่อบาน → ×จำนวนบาน)
   // พื้นที่ 0 = ยังไม่กรอกขนาด (หลังคาหลายด้านที่ยังไม่ใส่ด้าน) → ค่าแรงต้องเป็น 0
   //   ตาราง v20.1 มี "ค่าแรงฐาน" ทุกรุ่น ถ้าไม่กัน จะโชว์ค่าแรงลอย ๆ ทั้งที่ยังไม่มีงาน (QA 27 ส.ค.69)
-  const L = (area > 0 ? PB.LABOR[prod.laborKey] : null) || { pBase: 0, pRate: 0, iBase: 0, iRate: 0 };
+  // prod.laborKeyIf = เปลี่ยนตารางค่าแรงตามตัวเลือก (ระแนงบังตา เลือกสลับ → ค่าแรง "ระแนงสลับ" · 28 ต.ค.69)
+  const laborKey = (prod.laborKeyIf && val(prod.laborKeyIf.when)) ? prod.laborKeyIf.key : prod.laborKey;
+  const L = (area > 0 ? PB.LABOR[laborKey] : null) || { pBase: 0, pRate: 0, iBase: 0, iRate: 0 };
   let laborProd, laborInstall;
   // laborShow = ตัวเลขดิบของสูตรค่าแรง — หน้าจอเอาไปกาง "วิธีคิด" ให้ผู้ใช้เห็น (ไม่ได้ใช้คำนวณ)
   let laborShow = { mode: 'rate', mult: 1, pBase: 0, pRate: 0, iBase: 0, iRate: 0 };
@@ -1068,7 +1072,7 @@ export function computeCost(PB, prod, opt) {
     //   เจ้าของเจอ 5 ต.ค.69 ว่ามีของเข้าไปในราคาเป็น 0 โดยไม่มีใครเตือน → ขึ้นคำเตือนให้เห็นที่หน้าคิดราคา
     if (!(rate > 0)) lines.push({ cat: 'warn', name: '⚠️ ยังไม่ได้กรอกราคาขาย/ตร.ม. ของรุ่นนี้ — ราคาจะออกเป็น 0', amount: 0 });
   } else if (R41N) {
-    const vk = r41VariantKey(prod, material, opt.spec || {}, form);
+    const vk = r41VariantKey(r41Id === prod.id ? prod : { ...prod, id: r41Id }, material, opt.spec || {}, form);
     const small = !r41AnyEdit && !!(SELL_RAW && SELL_RAW.small && area > 0 && area < SELL_RAW.small.maxArea);
     const nP = r41Pick(R41N, vk, small, 'cP', laborProd, area, P), nI = r41Pick(R41N, vk, small, 'cI', laborInstall, area, P);
     const eff = (sell, cost) => (cost > 0 ? Math.round((sell / cost - 1) * 100) : 0);
@@ -1084,7 +1088,7 @@ export function computeCost(PB, prod, opt) {
     //   ฐานใช้ค่าแรงขาย "ตามตาราง" เสมอ — กด +/- ก้อนค่าแรงเอง ราคาก้อนนั้นต้องขยับจริง ไม่ให้ค่าของดูดกลับ
     //   มอเตอร์ที่ฝังในสูตรบาน (ระแนงหมุน/ประตูรั้ว — ตารางคิดผ่านกำไรสุทธิ) → ทุนเข้าฐาน แล้วหักราคาขายฟิกที่บวกทีหลังออก
     //     ยอดรวมจึงได้กำไรสุทธิเท่าตารางทั้งชุด · มอเตอร์ที่เป็นออปชั่น (หลังคาเลื่อน: ตาราง = ตัวหลังคา 25% + มอเตอร์ 35,000) อยู่นอกฐาน
-    const netT = r41Edit.mat ? null : r41Net(PB, prod.id, vk);
+    const netT = r41Edit.mat ? null : r41Net(PB, r41Id, vk);
     const netDiv = netT != null ? 1 - 30 / 130 - netT / 100 : 0;
     let mPct;
     if (netDiv > 0 && costTotal > 0) {
@@ -1104,7 +1108,7 @@ export function computeCost(PB, prod, opt) {
       colourExtraInfo = colourExtra > 0 ? { cost: colourExtra, sell: round2(colourExtra * STOCK_COLOR_SELL_MULT), mult: STOCK_COLOR_SELL_MULT } : null;
       // ปัดขึ้นทีละ 0.1% — % ที่โชว์ × ทุน = ราคาจริงเป๊ะ และกำไรสุทธิไม่ต่ำกว่าเป้าจากการปัด
       mPct = Math.ceil((((costTotal - colourExtra + bomFixCost + laborProd + laborInstall) / netDiv - baseLab - labDef - bomFixSell + colourExtra * STOCK_COLOR_SELL_MULT) / costTotal - 1) * 1000 - 1e-9) / 10;
-    } else mPct = r41Edit.mat ? pctMat : r41MatPct(PB, prod.id, vk, area, P);
+    } else mPct = r41Edit.mat ? pctMat : r41MatPct(PB, r41Id, vk, area, P);
     const matRaw = costTotal * (1 + mPct / 100);
     sellBeforeLabor = ceil100(matRaw);
     sellMfgOnly = ceil100(matRaw + labP);
@@ -1112,7 +1116,7 @@ export function computeCost(PB, prod, opt) {
     sellParts_ = { mat: 0, prod: labP, inst: labI };   // ค่าของเติมทีหลัง = ยอดรวม − ค่าแรง 2 ก้อน
     sellPct = { mat: mPct, prod: r41Edit.prod ? pctProd : eff(labP, laborProd), inst: r41Edit.inst ? pctInst : eff(labI, laborInstall) };
     const ref = (n, c, sk) => (n ? { w: n.w, h: n.h, p: n.p, vk: n.vk, cost: n[c], sell: n[sk] } : null);
-    r41Info = { vk, small: small && !r41NetLock, matPct: mPct, net: netT, parts: r41Parts(PB, prod.id, vk), colourExtra: colourExtraInfo, edit: r41Edit,refProd: r41Edit.prod ? null : ref(nP, 'cP', 'sP'), refInst: r41Edit.inst ? null : ref(nI, 'cI', 'sI') };
+    r41Info = { vk, small: small && !r41NetLock, matPct: mPct, net: netT, parts: r41Parts(PB, r41Id, vk), colourExtra: colourExtraInfo, edit: r41Edit,refProd: r41Edit.prod ? null : ref(nP, 'cP', 'sP'), refInst: r41Edit.inst ? null : ref(nI, 'cI', 'sI') };
   } else if (SELLM) {
     // ── สูตรราคาขายตามไฟล์ถอดทุน v20.1 (เป้ากำไรสุทธิ + ค่าดำเนินการ 30%) ──
     //   เจ้าของสั่ง 3 ก.ย.69 "เอาตามไฟล์ ทำทั้งหมด" · ยันด้วยชุด ส่งต่อ-เว็บ (tests.json)
@@ -1319,7 +1323,7 @@ export function computeCost(PB, prod, opt) {
       .map((it) => ({ sku: String(it.sku || '').toUpperCase(), name: it.name })),
     costPerSqm: area > 0 ? round2(costTotal / area) : 0,
     labor: { prod: round2(laborProd), install: round2(laborInstall) },
-    laborCalc: { ...laborShow, key: prod.laborKey || '', area: round2(area), panels: P },
+    laborCalc: { ...laborShow, key: laborKey || '', area: round2(area), panels: P },
     // mfgOnly = ตามสูตรชีตคิดทุน (อย่าเอาไปโชว์/ขึ้นใบตรง ๆ) · mfgOnlyNet = ราคาขายส่งจริงหลังลด wholesalePct
     sell: { beforeLabor: sellBeforeLabor, mfgOnly: sellMfgOnly, mfgOnlyNet: sellMfgOnlyNet, withInstall: sellWithInstall, wholesalePct: wsPct,
       // 3 ก้อนสำหรับแสดงผล — ค่าแรงตรงสูตรเป๊ะ · ค่าของรับเศษปัดร้อย (ดู sellParts)

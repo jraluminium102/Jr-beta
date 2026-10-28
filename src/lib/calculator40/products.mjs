@@ -1353,6 +1353,18 @@ export const PRODUCTS = {
         opts: ['1', '5', '2.54', '3.81', '4.06', '10.16'],
         labels: { '1': '1 ซม.', '5': '5 ซม.', '2.54': '1″', '3.81': '1.5″', '4.06': '1.6″', '10.16': '4″' }, priced: true },
       { key: 'rnGap', label: 'ระยะ@ ช่องห่างระแนง (ซม.)', type: 'number', def: '5', step: 0.5, placeholder: '5' },   // ห่างมาก = ใช้ใบน้อยลง = ถูกลง
+      // ระแนงสลับ (เจ้าของ 28 ต.ค.69 "ระแนงติดตายไม่มีสูตรระแนงสลับ · ระแนงต้องใส่สลับได้ทุกอัน")
+      //   กล่อง/ด้านโชว์ด้านบน = A · [สลับ] = B · คีย์เดียวกับประตูรั้ว (gslat/gboxB/gfaceB/gaRun/gbRun) → หน้าจอล็อกฟิลด์ [สลับ] เองเมื่อไม่ได้เลือกสลับ
+      //   นับใบแบบใบตัด "บานระแนง" (lvCounts): เรียง A×ท่อน แล้ว B×ท่อน วนไป จนเต็มช่วง · ใช้ได้ทุกรูปแบบ (ติดตาย/เลื่อน/เฟี้ยม/เปิด) ทั้งนอนและตั้ง
+      { key: 'gslat', label: 'ชนิดใบ', opts: ['ระแนง', 'ระแนงสลับ'], def: 'ระแนง', priced: true },
+      { key: 'gboxB', label: '[สลับ] กล่อง B', def: '1x1.6',
+        opts: ['1x5', '1x1', '1x1.5', '1x1.6', '1x4', '1.6x1.6', '1.6x4'],
+        labels: { '1x5': '1×5″ · 500', '1x1': '1×1″ · 310', '1x1.5': '1×1.5″ · 395', '1x1.6': '1×1.6″ · 485', '1x4': '1×4″ · 905', '1.6x1.6': '1.6×1.6″ · 770', '1.6x4': '1.6×4″ · 1,220' }, priced: true },
+      { key: 'gfaceB', label: '[สลับ] ด้านโชว์ B', def: '4.06',
+        opts: ['1', '5', '2.54', '3.81', '4.06', '10.16'],
+        labels: { '1': '1 ซม.', '5': '5 ซม.', '2.54': '1″', '3.81': '1.5″', '4.06': '1.6″', '10.16': '4″' }, priced: true },
+      { key: 'gaRun', label: '[สลับ] A กี่ท่อน/ชุด', type: 'number', def: '3', step: 1 },
+      { key: 'gbRun', label: '[สลับ] B กี่ท่อน/ชุด', type: 'number', def: '5', step: 1 },
       { key: 'rnFrame', label: 'โครงดาม', opts: ['ไม่รวมโครง', 'รวมโครง'], def: 'ไม่รวมโครง', priced: true },
       { key: 'panelform', label: 'รูปแบบ', opts: ['ติดตาย', 'บานเลื่อน', 'บานเฟี้ยม', 'บานเปิด'], def: 'ติดตาย', priced: true },   // ทำเป็นบาน เลื่อน/เฟี้ยม/เปิด = +ค่าทำบาน R3.9 (addon louver_door)
       { key: 'foldDir', label: 'ทิศเปิด (ถ้าเลื่อน/เฟี้ยม/เปิด)', opts: ['เปิดซ้าย', 'เปิดขวา', 'แยกกลาง'], def: 'เปิดซ้าย' },
@@ -1368,17 +1380,34 @@ export const PRODUCTS = {
       //   ⚠ ไฟล์ v1 ขัดกันเอง: ชีต "คิดทุน ระแนง" E7 = INT(ช่วง/pitch)+1 = 34 ใบ · ใบตัด E12 = 33 ใบ
       //     (คิดทุนไม่ลบช่องห่างก่อนหาร) → เจ้าของต้องแก้ชีตคิดทุน E7 ให้ = ระแนง_ตัด E12
       //   ที่ขนาดตั้งต้น 200×240 จำนวน "เส้นใบ" เท่าเดิม (17) → ทุน 21,225 ไม่ขยับ
-      NLEAF: 'Math.max(Math.floor((SPREAD-GAPL)/PITCH)+1, 2)',                          // จำนวนใบ (ตรงใบตัด)
-      NLINE: 'Math.ceil(NLEAF / Math.max(Math.floor(600/LONGV),1))',                    // เส้นใบ (สต็อก 6ม.)
+      NLEAF1: 'Math.max(Math.floor((SPREAD-GAPL)/PITCH)+1, 2)',                         // จำนวนใบ ระแนงปกติ (ตรงใบตัด)
+      // ── ระแนงสลับ (28 ต.ค.69) — ตรงใบตัด "บานระแนง" lvCounts: สะสม ด้านโชว์ + ช่องห่าง จนเกินช่วง ──
+      ALT: "spec.gslat==='ระแนงสลับ' ? 1 : 0",
+      FACEB: '(+spec.gfaceB || 4.06)',
+      ARUN: 'Math.max(1, Math.round(+spec.gaRun || 3))',
+      BRUN: 'Math.max(1, Math.round(+spec.gbRun || 5))',
+      SLIP: '(function(){var P=0,a=0,b=0;for(var k=1;k<=999;k++){var isA=((k-1)%(ARUN+BRUN))<ARUN;P+=isA?(+spec.rnFace||4.06):FACEB;if(P+(k-1)*GAPL>SPREAD+1e-9)break;if(isA)a++;else b++;}return [a,b];})()',
+      NLEAF: 'ALT ? SLIP[0] : NLEAF1',                                                  // ใบ A (ไม่สลับ = ทุกใบ)
+      NLEAFB: 'ALT ? SLIP[1] : 0',                                                      // ใบ B
+      PERBAR: 'Math.max(Math.floor(600/LONGV),1)',                                      // ใบต่อเส้น 6 ม.
+      NLINE: 'Math.ceil(NLEAF / PERBAR)',                                               // เส้นใบ A (สต็อก 6ม.)
+      NLINEB: 'Math.ceil(NLEAFB / PERBAR)',                                             // เส้นใบ B
       CF: CF_EXPR,   // ปัจจัยสีกล่อง (R3.9)
       BOXP: "Math.round((({'1x5':500,'1x1':310,'1x1.5':395,'1x1.6':485,'1x4':905,'1.6x1.6':770,'1.6x4':1220})[spec.rnBox]||1220)*CF/5)*5",   // ราคากล่อง/เส้น × ปัจจัยสี
-      NFRAME: "(spec.rnFrame==='รวมโครง' ? Math.ceil((H*100<=250?2:3)/Math.max(Math.floor(600/(W*100)),1)) : 0)",   // เส้นโครงดาม (เฉพาะรวมโครง)
+      // ระแนงสลับ = โครงดาม 2 หน้า (ตรงใบตัด "บานระแนง": สลับ ×2)
+      NFRAME: "(spec.rnFrame==='รวมโครง' ? Math.ceil((H*100<=250?2:3)*(ALT?2:1)/Math.max(Math.floor(600/(W*100)),1)) : 0)",   // เส้นโครงดาม (เฉพาะรวมโครง)
       FRAMEP: 'Math.round(485*CF/5)*5',                                                 // โครงดาม 1"×1.6" × ปัจจัยสี
+      BOXPB: "Math.round((({'1x5':500,'1x1':310,'1x1.5':395,'1x1.6':485,'1x4':905,'1.6x1.6':770,'1.6x4':1220})[spec.gboxB]||485)*CF/5)*5",   // ราคากล่อง B/เส้น
     },
+    // ค่าแรง: เลือกสลับ = ตารางค่าแรง "ระแนงสลับ" (ชั่วโมงมากกว่า · เท่ารุ่นระแนงสลับ) — engine อ่าน laborKeyIf
+    laborKeyIf: { when: "spec.gslat==='ระแนงสลับ'", key: 'ระแนงสลับ' },
+    // ราคาขาย: เลือกสลับ = ใช้ตาราง R4.1 ของ "ระแนงสลับ" (กำไรสุทธิ/ค่าแรงขาย) → ติดตายตั้ง = ราคาเท่ารุ่นระแนงสลับเป๊ะ
+    r41IdIf: { when: "spec.gslat==='ระแนงสลับ'", id: 'louver_slip' },
     alu: [], glass: null,
     hardware: [],
     consum: [
       { box: "'กล่อง|'+(spec.rnBox?String(spec.rnBox).toUpperCase():'1.6X4')", name: 'ใบระแนง (กล่อง)', price: 'BOXP', unit: 'เส้น', count: 'NLINE' },
+      { box: "'กล่อง|'+(spec.gboxB?String(spec.gboxB).toUpperCase():'1X1.6')", name: 'ใบระแนง B (สลับ)', price: 'BOXPB', unit: 'เส้น', count: 'NLINEB' },
       { box: 'กล่อง|1X1.6', name: 'โครงดาม 1"×1.6" (รวมโครง)', price: 'FRAMEP', unit: 'เส้น', count: 'NFRAME' },
       // ชีต "คิดทุน ระแนง" C18 = IF(สีพิเศษ) × 2,000 → ผูกกับสีที่เลือกจริง (เดิมผูก spec.rnCustomColor ที่ไม่มีในระบบ = ไม่เคยคิดเลย)
       { labor: true, name: 'สีพิเศษ (ค่าเปิดตู้อบ)', price: 2000, unit: 'งาน', count: "(color==='special'||color==='woodSpecial') ? 1 : 0" },
