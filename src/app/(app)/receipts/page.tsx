@@ -8,6 +8,7 @@ import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
 import { getDocCutoff } from "@/lib/doc-cutoff";
 import { TestDocsToggle } from "@/components/TestDocsToggle";
+import { DocSearchBox, docSearchFilter } from "@/components/DocSearchBox";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ const PAYMENT_LABEL: Record<string, string> = {
   transfer: "โอนเงิน", cash: "เงินสด", cheque: "เช็ค", other: "อื่นๆ",
 };
 
-export default async function ReceiptsPage({ searchParams }: { searchParams?: { includeTest?: string } }) {
+export default async function ReceiptsPage({ searchParams }: { searchParams?: { includeTest?: string; q?: string } }) {
   const profile = await getProfile();
   const includeTest = searchParams?.includeTest === "1";
   const cutoff = includeTest ? "" : await getDocCutoff();
@@ -27,6 +28,10 @@ export default async function ReceiptsPage({ searchParams }: { searchParams?: { 
     //   (เดิมเรียง created_at → ใบ backdate/ยกเลิกที่สร้างทีหลังลอยขึ้นบน เลขสลับ) · code = INV<พ.ศ.><เดือน><run4>
     .order("code", { ascending: false });
   if (cutoff) rq = rq.gte("issue_date", cutoff);
+  // ช่องค้นหา (28 ต.ค.69) — เลขที่ · ชื่อลูกค้า · ชื่องาน · ยอดเงิน
+  const search = String(searchParams?.q ?? "").trim();
+  const searchOr = docSearchFilter(search, "net");
+  if (searchOr) rq = rq.or(searchOr);
   const { data } = await rq;
 
   const rows = (data ?? []) as {
@@ -61,10 +66,12 @@ export default async function ReceiptsPage({ searchParams }: { searchParams?: { 
         </div>
       </div>
 
+      <DocSearchBox q={search} includeTest={includeTest} basePath="/receipts" />
+
       <Card className="p-5">
         {rows.length === 0 ? (
           <div className="text-center py-12 text-ink-3">
-            <p>ยังไม่มีใบเสร็จ</p>
+            <p>{search ? <>ไม่พบเอกสารที่ตรงกับ “{search}”</> : "ยังไม่มีใบเสร็จ"}</p>
             <Link href="/receipts/new" className="text-brand font-semibold text-sm">+ สร้างใบแรก</Link>
           </div>
         ) : (

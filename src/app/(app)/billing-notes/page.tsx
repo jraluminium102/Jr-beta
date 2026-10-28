@@ -6,6 +6,7 @@ import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
 import { getDocCutoff } from "@/lib/doc-cutoff";
 import { TestDocsToggle } from "@/components/TestDocsToggle";
+import { DocSearchBox, docSearchFilter } from "@/components/DocSearchBox";
 import { BILLING_STATUS_LABEL, type BillingStatus } from "@/lib/types";
 import { RelatedDocs, type RelatedDoc } from "@/components/documents/RelatedDocs";
 
@@ -15,7 +16,7 @@ const STATUS_TONE: Record<BillingStatus, "gray" | "amber" | "emerald" | "red"> =
   unpaid: "gray", partial: "amber", paid: "emerald", cancelled: "red",
 };
 
-export default async function BillingNotesPage({ searchParams }: { searchParams?: { includeTest?: string } }) {
+export default async function BillingNotesPage({ searchParams }: { searchParams?: { includeTest?: string; q?: string } }) {
   const profile = await getProfile();
   const includeTest = searchParams?.includeTest === "1";
   const cutoff = includeTest ? "" : await getDocCutoff();
@@ -25,6 +26,10 @@ export default async function BillingNotesPage({ searchParams }: { searchParams?
     .select("id, code, customer_snapshot, issue_date, total, status, created_at, quotation_id, doc_kind")
     .order("created_at", { ascending: false });
   if (cutoff) bq = bq.gte("issue_date", cutoff);
+  // ช่องค้นหา (28 ต.ค.69) — เลขที่ · ชื่อลูกค้า · ชื่องาน · ยอดเงิน
+  const search = String(searchParams?.q ?? "").trim();
+  const searchOr = docSearchFilter(search, "total");
+  if (searchOr) bq = bq.or(searchOr);
   const { data } = await bq;
 
   const rows = (data ?? []) as {
@@ -82,10 +87,12 @@ export default async function BillingNotesPage({ searchParams }: { searchParams?
         </div>
       </div>
 
+      <DocSearchBox q={search} includeTest={includeTest} basePath="/billing-notes" />
+
       <Card className="p-5">
         {rows.length === 0 ? (
           <div className="text-center py-12 text-ink-3">
-            <p>ยังไม่มีใบวางบิล</p>
+            <p>{search ? <>ไม่พบเอกสารที่ตรงกับ “{search}”</> : "ยังไม่มีใบวางบิล"}</p>
             {canWrite(profile?.role) && (
               <Link href="/billing-notes/new" className="text-brand font-semibold text-sm">+ สร้างใบแรก</Link>
             )}

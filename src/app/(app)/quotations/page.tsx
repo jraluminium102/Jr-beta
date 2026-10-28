@@ -7,12 +7,13 @@ import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
 import { getDocCutoff } from "@/lib/doc-cutoff";
 import { TestDocsToggle } from "@/components/TestDocsToggle";
+import { DocSearchBox, docSearchFilter } from "@/components/DocSearchBox";
 import type { QuotationStatus } from "@/lib/types";
 import { RelatedDocs, type RelatedDoc } from "@/components/documents/RelatedDocs";
 
 export const dynamic = "force-dynamic";
 
-export default async function QuotationsPage({ searchParams }: { searchParams?: { includeTest?: string } }) {
+export default async function QuotationsPage({ searchParams }: { searchParams?: { includeTest?: string; q?: string } }) {
   const profile = await getProfile();
   const includeTest = searchParams?.includeTest === "1";
   const cutoff = includeTest ? "" : await getDocCutoff();
@@ -22,6 +23,10 @@ export default async function QuotationsPage({ searchParams }: { searchParams?: 
     .select("id, code, customer_snapshot, issue_date, status, net, job_id, jobs:job_id(job_code, floor_work, floor_note)")
     .order("created_at", { ascending: false });
   if (cutoff) q = q.gte("issue_date", cutoff);
+  // ช่องค้นหา (28 ต.ค.69) — เลขที่ · ชื่อลูกค้า · ชื่องาน · ยอดเงิน
+  const search = String(searchParams?.q ?? "").trim();
+  const searchOr = docSearchFilter(search, "net");
+  if (searchOr) q = q.or(searchOr);
   const { data } = await q;
 
   const rows = (data ?? []) as {
@@ -86,10 +91,12 @@ export default async function QuotationsPage({ searchParams }: { searchParams?: 
         </div>
       </div>
 
+      <DocSearchBox q={search} includeTest={includeTest} basePath="/quotations" />
+
       <Card className="p-5">
         {rows.length === 0 ? (
           <div className="text-center py-12 text-ink-3">
-            <p>ยังไม่มีใบเสนอราคา</p>
+            <p>{search ? <>ไม่พบเอกสารที่ตรงกับ “{search}”</> : "ยังไม่มีใบเสนอราคา"}</p>
             <div className="flex items-center justify-center gap-3 mt-1">
               <Link href="/calculator40" className="text-brand font-semibold text-sm">+ คิดราคา + สร้างใบแรก</Link>
               <span className="text-ink-3">·</span>
