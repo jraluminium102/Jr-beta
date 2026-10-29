@@ -20,6 +20,9 @@ export type SqAvail = { sales_id: string; date: string; kind: string; half: "AM"
 
 const ALL = "all";
 const LS_KEY = "sq.sales";
+// เจ้าของสั่ง 29 ต.ค.69: ซ่อนชื่อที่ไม่ใช้ในลิงก์เซลล์ (ยังอยู่ในหน้าคิวงานออฟฟิศตามเดิม) · ไล้/แม็ก ไว้หน้าสุด
+const HIDDEN = new Set(["แอม", "แอมป์", "บาส"]);
+const PINNED = ["ไล้", "แม็ก"];
 
 const STATUS: Record<SqEntry["status"], { th: string; cls: string }> = {
   PENDING:   { th: "รอจัด",          cls: "bg-stone-100 text-stone-600" },
@@ -87,9 +90,13 @@ export default function SalesQueueView({ today, sales, entries, avail }: {
   }, []);
 
   const salesById = useMemo(() => new Map(sales.map((s) => [s.id, s])), [sales]);
-  // เซลล์หลักก่อน (กทม. → ภูเก็ต) แล้วผู้ช่วย
-  const mains = sales.filter((s) => s.role === "MAIN");
-  const assistants = sales.filter((s) => s.role === "ASSISTANT");
+  // แถบชื่อ: ตัดชื่อที่เจ้าของสั่งซ่อน · ไล้/แม็ก ไว้หน้าสุด (ใช้บ่อย) · เซลล์หลักก่อน แล้วผู้ช่วย
+  const shown = useMemo(() => {
+    const rank = (s: SqSales) => { const i = PINNED.indexOf(s.name.trim()); return i < 0 ? PINNED.length : i; };
+    return sales.filter((s) => !HIDDEN.has(s.name.trim())).sort((a, b) => rank(a) - rank(b));
+  }, [sales]);
+  const mains = shown.filter((s) => s.role === "MAIN");
+  const assistants = shown.filter((s) => s.role === "ASSISTANT");
 
   // จำคนที่เลือกไว้ในเครื่อง + ?s= ในลิงก์ (ส่งลิงก์เจาะชื่อได้)
   useEffect(() => {
@@ -300,7 +307,9 @@ function EntryCard({ e, showSales, salesById }: { e: SqEntry; showSales: boolean
   const map = mapHref(e);
   const tel = e.tel?.trim();
   const telDigits = tel?.replace(/[^\d+]/g, "");
-  const size = e.job_size ? JOB_SIZE_META[e.job_size] + (e.job_size === "MULTI" && e.job_count ? ` ${e.job_count} จุด` : "") : "";
+  // ขนาดงาน/จำนวนงาน โชว์เสมอ — ไม่ได้กรอก = "ไม่ระบุ" (เจ้าของ 29 ต.ค.69)
+  const size = e.job_size ? JOB_SIZE_META[e.job_size] : "ไม่ระบุ";
+  const count = e.job_count != null ? `${e.job_count} งาน` : "ไม่ระบุ";
   const salesName = e.sales_id ? salesById.get(e.sales_id)?.name : "";
   const asstName = e.assistant_id ? salesById.get(e.assistant_id)?.name : "";
   const done = e.status === "DONE";
@@ -325,12 +334,16 @@ function EntryCard({ e, showSales, salesById }: { e: SqEntry; showSales: boolean
             <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${st.cls}`}>{st.th}</span>
           </div>
           <div className="mt-0.5 text-[13.5px] text-stone-600">
-            {[e.job_type || "ประเมินหน้างาน", size].filter(Boolean).join(" · ")}
+            {e.job_type || "ประเมินหน้างาน"}
             {showSales && salesName && <span className="ml-1.5 rounded bg-stone-100 px-1.5 py-0.5 text-[12px] font-semibold text-stone-700">{salesName}</span>}
           </div>
           {e.address?.trim() && <p className="mt-1.5 text-[14px] leading-snug text-stone-800 whitespace-pre-line">{e.address.trim()}</p>}
 
           <dl className="mt-2 grid gap-1 text-[13px]">
+            <div className="flex gap-x-3 flex-wrap">
+              <span className="flex gap-1.5"><dt className="text-stone-500">ขนาดงาน</dt><dd className={e.job_size ? "font-semibold" : "text-stone-400"}>{size}</dd></span>
+              <span className="flex gap-1.5"><dt className="text-stone-500">จำนวนงาน</dt><dd className={e.job_count != null ? "font-semibold" : "text-stone-400"}>{count}</dd></span>
+            </div>
             {e.assess_fee != null && (
               <div className="flex gap-1.5">
                 <dt className="text-stone-500">ค่าประเมิน</dt>

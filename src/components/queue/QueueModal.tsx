@@ -102,6 +102,7 @@ type FormState = {
   address: string;
   location_url: string;
   job_size: "" | JobSize;
+  job_count: string;   // จำนวนงาน/จุด (ช่องว่าง = ไม่ระบุ) — หน้าคิวเซลล์โชว์ (29 ต.ค.69)
   assess_fee: string;
   feeCustom: boolean;
   payment: string;
@@ -163,6 +164,7 @@ function initForm(e?: QueueEntry | null): FormState {
     address: e?.address ?? "",
     location_url: e?.location_url ?? "",
     job_size: (e?.job_size ?? "") as "" | JobSize,
+    job_count: e?.job_count != null ? String(e.job_count) : "",
     assess_fee: fee != null ? String(fee) : "",
     feeCustom: fee != null && !FEE_OPTIONS.includes(fee),
     payment: e?.payment ?? "",
@@ -1038,6 +1040,7 @@ export function QueueModal({
       lat: coords?.lat ?? null,
       lng: coords?.lng ?? null,
       job_size: f.job_size || null,
+      job_count: f.job_count !== "" && Number.isInteger(Number(f.job_count)) ? Number(f.job_count) : null,
       assess_fee: f.assess_fee && Number.isFinite(Number(f.assess_fee)) ? Number(f.assess_fee) : null,
       payment: f.payment || null,
       receipt_done: f.receipt_done,
@@ -1928,12 +1931,17 @@ export function QueueModal({
           )}
 
           <Field label="ขนาดงาน">
-            <select value={f.job_size} onChange={(e) => set("job_size", e.target.value as "" | JobSize)} className={inp}>
-              <option value="">— เลือก —</option>
-              {(Object.keys(JOB_SIZE_META) as JobSize[]).map((k) => (
-                <option key={k} value={k}>{JOB_SIZE_META[k]}</option>
-              ))}
-            </select>
+            <div className="flex gap-1.5">
+              <select value={f.job_size} onChange={(e) => set("job_size", e.target.value as "" | JobSize)} className={inp}>
+                <option value="">— เลือก —</option>
+                {(Object.keys(JOB_SIZE_META) as JobSize[]).map((k) => (
+                  <option key={k} value={k}>{JOB_SIZE_META[k]}</option>
+                ))}
+              </select>
+              <input type="number" min={1} inputMode="numeric" value={f.job_count} placeholder="จำนวนงาน"
+                title="จำนวนงาน/จุดที่ต้องประเมิน (ไม่ใส่ = ไม่ระบุ)"
+                onChange={(e) => set("job_count", e.target.value)} className={`${inp} w-24 shrink-0`} />
+            </div>
           </Field>
 
           <Field label="ค่าประเมิน">
