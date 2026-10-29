@@ -1364,5 +1364,18 @@ console.log("\n═══ ระแนงบังตา + ระแนงสล�
   const ns = computeCost(PB, PRODUCTS.louver, { w: 400, h: 200, p: 1, form: "นอน", color: "white", colorKey: "white", spec: sl });
   ok("สลับ แนวนอน มีใบ B (สลับได้ทั้งนอน/ตั้ง)", (ns.lines || []).some((l) => /ใบระแนง B/.test(l.name) && l.qty > 0), "");
 }
+
+// ── กันสาด/จั่วหลายด้าน มีหลังคาผสม (วัสดุที่ 2) เหมือนหลังคาปกติ (เจ้าของทัก 29 ต.ค.69) ──
+console.log("\n═══ หลายด้าน + หลังคาผสม ═══");
+{
+  const mix = { roof_2nd: { mat: "โพลีตัน", len: 4, proj: 1.5, rate: 1200 } };   // 4×1.5 = 6 ตร.ม. × 1,200 = 7,200
+  for (const id of ["roof", "roof_gable", "roof_multi", "gable_multi"]) {
+    ok(`${PRODUCTS[id].name} มีให้เลือกหลังคาผสม`, PRODUCTS[id].addons.includes("roof_2nd"));
+    const base = C(id, { w: 400, h: 200, p: 1 });
+    const r = C(id, { w: 400, h: 200, p: 1, addons: mix });
+    ok(`${PRODUCTS[id].name} หลังคาผสม 6 ตร.ม. × 1,200 = 7,200 ขึ้นในรายการ`, addonSell(r, /หลังคาผสม/) === 7200 && r.sell.withInstall > base.sell.withInstall, `${addonSell(r, /หลังคาผสม/)}`);
+  }
+  ok("กลาสเฮ้าส์หลายด้าน ไม่ได้เพิ่ม (ไม่ได้สั่ง)", !PRODUCTS.glasshouse_multi.addons.includes("roof_2nd"));
+}
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);

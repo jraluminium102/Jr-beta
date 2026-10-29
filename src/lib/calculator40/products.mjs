@@ -196,6 +196,9 @@ const MULTI_SHEET_COLORS = { 'ไวนิล': SC_VINYL, 'ดีไลท์': 
 const MULTI_MATERIALS = ['ไวนิล', 'ดีไลท์', 'โพลีตัน', 'ชินโคร์ HC', 'ชินโคร์ Sup', 'ชินโคร์ Shade 4มม', 'ชินโคร์ Prime 10มม', 'เมทัลชีท EPS 2 นิ้ว เหล็ก', 'เมทัลชีท EPS 2 นิ้ว PVC', 'เมทัลชีท EPS 1 นิ้ว PVC', 'กระจก 4+4', 'กระจก 5+5'];
 const MULTI_MATERIAL_ALIAS = { 'เมทัลชีท': 'เมทัลชีท EPS 2 นิ้ว เหล็ก' };
 const MULTI_ADDONS = ['slide_motor', 'roof_pole', 'truss_beam', 'roof_eave', 'gutter', 'chain_drain', 'pipe_cover', 'gutter_cover', 'beam_cover', 'hide_slope', 'roof_sealer', 'roof_film', 'ceil_under', 'demolish'];
+// กันสาด/จั่วหลายด้าน = ชุดเดียวกับหลังคาปกติ → มีหลังคาผสม (roof_2nd) ด้วย (เจ้าของทัก 29 ต.ค.69 "ทำไมไม่มีให้เลือกหลังคาผสม")
+//   กลาสเฮ้าส์ยังใช้ MULTI_ADDONS เดิม (ไม่ได้สั่ง)
+const MULTI_ROOF_ADDONS = [...MULTI_ADDONS.slice(0, -2), 'roof_2nd', ...MULTI_ADDONS.slice(-2)];
 
 export const PRODUCTS = {
 
@@ -2236,7 +2239,7 @@ export const PRODUCTS = {
   roof_multi: {
     id: 'roof_multi', group: 3, name: 'กันสาดหลายด้าน', brand: 'MTONG', laborKey: 'หลังคา', roofShape: true, pickerHide: true, multiSide: 'wp',
     icon: '🏠', defForm: 'กันสาดหลายด้าน', forms: ['กันสาดหลายด้าน'],
-    addons: MULTI_ADDONS,
+    addons: MULTI_ROOF_ADDONS,
     materialLabel: 'วัสดุมุง',
     materials: MULTI_MATERIALS, materialAlias: MULTI_MATERIAL_ALIAS, defMaterial: 'ไวนิล', sheetColors: MULTI_SHEET_COLORS,
     defaults: { w: 400, h: 200, p: 1 }, defGlass: null, minP: 1, maxP: 1,
@@ -2301,7 +2304,7 @@ export const PRODUCTS = {
   gable_multi: {
     id: 'gable_multi', group: 3, name: 'จั่วหลายด้าน', brand: 'MTONG', laborKey: 'หลังคาจั่ว', roofShape: true, pickerHide: true, multiSide: 'd',
     icon: '🏠', defForm: 'จั่วหลายด้าน', forms: ['จั่วหลายด้าน'],
-    addons: MULTI_ADDONS,
+    addons: MULTI_ROOF_ADDONS,
     materialLabel: 'วัสดุมุง',
     materials: MULTI_MATERIALS, materialAlias: MULTI_MATERIAL_ALIAS, defMaterial: 'ไวนิล', sheetColors: MULTI_SHEET_COLORS,
     defaults: { w: 400, h: 200, p: 1 }, defGlass: null, minP: 1, maxP: 1,
