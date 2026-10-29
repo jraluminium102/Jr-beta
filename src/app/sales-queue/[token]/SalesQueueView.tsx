@@ -22,7 +22,7 @@ const ALL = "all";
 const LS_KEY = "sq.sales";
 // เจ้าของสั่ง 29 ต.ค.69: ซ่อนชื่อที่ไม่ใช้ในลิงก์เซลล์ (ยังอยู่ในหน้าคิวงานออฟฟิศตามเดิม) · ไล้/แม็ก ไว้หน้าสุด
 const HIDDEN = new Set(["แอม", "แอมป์", "บาส"]);
-const PINNED = ["ไล้", "แม็ก"];
+const PINNED = ["ไล้", "แม็ก", "ส้ม", "มด", "คุณจรูญ", "เนตร", "พี่คุกกี้"];
 
 const STATUS: Record<SqEntry["status"], { th: string; cls: string }> = {
   PENDING:   { th: "รอจัด",          cls: "bg-stone-100 text-stone-600" },
