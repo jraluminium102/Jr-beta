@@ -86,7 +86,8 @@ export function barsNeeded(segLen, count, stockLen = STOCK_LEN, waste = false, a
 // ── สร้าง evaluator ของ expression strings ในสเปกสินค้า ──────────────────────
 function buildEvaluator(extraVarNames) {
   // TBL = ตารางค่าคงที่ของรุ่น (prod.tables) — เช่น จำนวนเสา/บังใบ ต่อ config พับ ที่ลอกมาจากใบตัด
-  const base = ['W', 'H', 'P', 'form', 'area', 'color', 'material', 'ROW', 'spec', 'mult', 'GMM', 'CKEY', 'TBL'];
+  // ADD = ออปชั่นเสริมที่เลือก (opt.addons) — สูตร BOM อ้างได้ เช่น บานโซลิดเลือก Digital lock แล้วตัดชุดล็อคมาตรฐาน (29 ต.ค.69)
+  const base = ['W', 'H', 'P', 'form', 'area', 'color', 'material', 'ROW', 'spec', 'mult', 'GMM', 'CKEY', 'TBL', 'ADD'];
   const names = [...base, ...extraVarNames];
   const cache = new Map();
   const compile = (expr) => {
@@ -205,7 +206,7 @@ export function computeCost(PB, prod, opt) {
   // mult ฉีดเข้า scope → สูตรราคา consum (โครงเมืองทอง roof/ระแนง) อ้าง mult ได้ → ขยับตามราคาอลู/กก. (ตั้งต้น mult=1 ไม่กระทบ anchor)
   // GMM = ความหนากระจก (มม.) จากชื่อกระจก — สูตรบางรุ่นเลือกคิ้วตามความหนา (F7919 6-13 · F7917 13-15)
   const GMM = Number((/(\d+)\s*มม/.exec(String(glassType)) || [])[1]) || 6;
-  const scope = { W, H, P, form, area, color, material, ROW: prod.lut ? (prod.lut[material] || {}) : {}, spec: opt.spec || {}, mult, GMM, CKEY: String(opt.colorKey ?? ''), TBL: prod.tables || {} };
+  const scope = { W, H, P, form, area, color, material, ROW: prod.lut ? (prod.lut[material] || {}) : {}, spec: opt.spec || {}, ADD: opt.addons || {}, mult, GMM, CKEY: String(opt.colorKey ?? ''), TBL: prod.tables || {} };
   for (const [k, expr] of Object.entries(varDefs)) {
     scope[k] = ev.compile(expr)(scope);
   }

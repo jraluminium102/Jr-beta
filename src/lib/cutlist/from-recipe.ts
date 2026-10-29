@@ -159,6 +159,8 @@ export function cutInputFromRecipe(recipe: any, opts?: { rawCompare?: boolean })
         gridSide: String(recipe.spec?.gridSide ?? "2 ฝั่ง (นอก+ใน)"),
         gridPat: recipe.spec?.gridPat === "ระบุจำนวนแถบ" ? "ระบุจำนวนแถบ" : "เต็มบาน",
         gridN: Math.max(0, Math.round(Number(recipe.spec?.gridN) || 0)),
+        // Digital door lock (29 ต.ค.69) — คิดราคาเก็บใน addons.digihandle (= ราคารุ่น) → ใบตัดใช้ "Digital lock" (ตลับ/ไส้/รับล็อค = 0)
+        motherHandle: Number(recipe.addons?.digihandle) > 0 ? "Digital lock" : "คิงโบ ล็อค+กุญแจ",
       } };
       break;
     }

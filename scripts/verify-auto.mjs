@@ -1405,5 +1405,22 @@ console.log("\n═══ บานโซลิด เส้นคาดตาร
   ok("ช่องจำนวนแถบ ผูกกับ ลายคาดตาราง=ระบุจำนวนแถบ", gn && gn.showIf && gn.showIf.key === "gridPat" && gn.showIf.val === "ระบุจำนวนแถบ");
   void two;
 }
+
+// ── บานโซลิด Digital door lock (เจ้าของสั่ง 29 ต.ค.69) — ราคามือจับดิจิตอล + ตัดชุดล็อคมาตรฐาน 4 ชิ้น ──
+console.log("\n═══ บานโซลิด Digital door lock ═══");
+{
+  const LOCK = /มือจับ ล็อค\+กุญแจ \(คิงโบ\)|ตลับกุญแจไฮด้า|ไส้กุญแจ|แผ่นรับล็อค/;
+  const lockQty = (r) => r.lines.filter((l) => l.cat !== "addon" && LOCK.test(l.name)).reduce((s, l) => s + (Number(l.qty) || 0), 0);
+  const base = C("bansolid", { w: 150, h: 200, p: 1, form: "มีธรณี" });
+  const dg = C("bansolid", { w: 150, h: 200, p: 1, form: "มีธรณี", addons: { handleType: "digihandle", digihandle: "10000" } });
+  ok("บานโซลิด มี Digital door lock ให้เลือก", PRODUCTS.bansolid.addons.includes("digihandle"));
+  ok("ไม่เลือก = ชุดล็อคมาตรฐานครบ 4 ชิ้น", lockQty(base) === 4, String(lockQty(base)));
+  ok("เลือกดิจิตอล = ชุดล็อคมาตรฐาน 0 ชิ้น", lockQty(dg) === 0, String(lockQty(dg)));
+  ok("ขึ้นบรรทัด มือจับดิจิตอล 10,000", addonSell(dg, /มือจับดิจิตอล/) === 10000, String(addonSell(dg, /มือจับดิจิตอล/)));
+  // ทุนชุดล็อคมาตรฐาน 1,059 (330+285+429+15) หายไป · ส่วนทุนรวมจะบวกทุนดิจิตอล (R3.9 ทุน≈ขาย÷2) แทน
+  const lockAmt = (r) => r.lines.filter((l) => l.cat !== "addon" && LOCK.test(l.name)).reduce((s, l) => s + (Number(l.amount) || 0), 0);
+  ok("ทุนชุดล็อคมาตรฐาน 1,059 → 0", Math.abs(lockAmt(base) - 1059) < 0.5 && lockAmt(dg) === 0, `${lockAmt(base)} → ${lockAmt(dg)}`);
+  ok("ทุนรวม = ของเดิม − 1,059 + ทุนดิจิตอล 5,000", Math.abs((dg.cost.total - base.cost.total) - (5000 - 1059)) < 0.5, String(dg.cost.total - base.cost.total));
+}
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);

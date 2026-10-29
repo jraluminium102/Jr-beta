@@ -2922,10 +2922,13 @@ export const PRODUCTS = {
       { key: 'gridN', label: 'จำนวนแถบ (เส้น/ฝั่ง/บาน)', type: 'number', def: '3', step: 1, priced: true, showIf: { key: 'gridPat', val: 'ระบุจำนวนแถบ' } },
     ],
     icon: '🚪', defForm: 'มีธรณี', forms: ['มีธรณี', 'ไม่มีธรณี'],
-    addons: ['stainless', 'frame_wrap', 'demolish'],
+    // digihandle (เจ้าของสั่ง 29 ต.ค.69): Digital door lock — ราคาตามตารางมือจับดิจิตอล · เลือกแล้วตัดชุดล็อคมาตรฐานออก (ตรงใบตัด "Digital lock")
+    addons: ['stainless', 'digihandle', 'frame_wrap', 'demolish'],
     defaults: { w: 150, h: 200, p: 1 }, defGlass: null, minP: 1, maxP: 2,
     vars: {
       S: "form==='มีธรณี'?1:0", HG: '(H>3||(W/P)>1.2)?5:4', SIDES: "spec.solidLayer==='โซลิด 1 ชั้น'?1:2",
+      // DIGI = เลือก Digital door lock → มือจับคิงโบ/ตลับ/ไส้กุญแจ/แผ่นรับล็อค = 0 (ใบตัด ⑤.1 แถว 69-71 ทำแบบเดียวกัน)
+      DIGI: '(+ADD.digihandle>0)?1:0',
       // เส้นคาด: GSIDES = กี่ฝั่ง · GN = เส้นต่อฝั่งต่อบาน (เต็มบาน = สูตรเดิม (กว้างบาน−18)÷3.8 ปัดทิ้ง)
       GSIDES: "(spec.gridSide==='ฝั่งนอก'||spec.gridSide==='ฝั่งใน')?1:2",
       GN: "spec.gridPat==='ระบุจำนวนแถบ' ? Math.max(0, Math.round(+spec.gridN || 0)) : Math.trunc(Math.max(0, (W*100/P-18))/3.8)",
@@ -2955,10 +2958,11 @@ export const PRODUCTS = {
     //   ⚠ ห้ามยุบกลับเป็นชุดโดยไม่ถามเจ้าของ
     hardware: [
       { name: 'บานพับ hyda', sku: 'JR00489', price: 117, unit: 'ตัว', count: 'HG*P' },   // ราคา ERP v1 (PB.PARTS ทับเป็น 117 อยู่แล้ว)
-      { name: 'มือจับ ล็อค+กุญแจ (คิงโบ)', sku: 'JR00315', price: 330, unit: 'ชุด', count: '1' },
-      { name: 'ตลับกุญแจไฮด้า', sku: 'JR00551', price: 285, unit: 'ตัว', count: '1' },   // ราคา ERP v1 (ชีทอุปกรณ์ D52) เดิม 180
-      { name: 'ไส้กุญแจ', sku: 'JR00499', price: 429, unit: 'ตัว', count: '1' },         // ราคา ERP v1 (D53) เดิม 400
-      { name: 'แผ่นรับล็อค', sku: 'JR00562', price: 15, unit: 'ชุด', count: '1' },       // ราคา ERP v1 (D64) เดิม 62
+      // ชุดล็อคมาตรฐาน 4 ชิ้น — เลือก Digital door lock (DIGI) แล้วเป็น 0 ทั้งชุด
+      { name: 'มือจับ ล็อค+กุญแจ (คิงโบ)', sku: 'JR00315', price: 330, unit: 'ชุด', count: 'DIGI?0:1' },
+      { name: 'ตลับกุญแจไฮด้า', sku: 'JR00551', price: 285, unit: 'ตัว', count: 'DIGI?0:1' },   // ราคา ERP v1 (ชีทอุปกรณ์ D52) เดิม 180
+      { name: 'ไส้กุญแจ', sku: 'JR00499', price: 429, unit: 'ตัว', count: 'DIGI?0:1' },         // ราคา ERP v1 (D53) เดิม 400
+      { name: 'แผ่นรับล็อค', sku: 'JR00562', price: 15, unit: 'ชุด', count: 'DIGI?0:1' },       // ราคา ERP v1 (D64) เดิม 62
       // v1 สลับรหัส 2 ตัวตามใบตัด โซลิด_ตัด ⑤.1 C63/C64 + ราคา ERP: สปิงก็อท JR00482 (12) · ฉาก JR00557 (5)
       // 21 ก.ย.69: รหัสยึดสโตร์ · ราคายึดไฟล์ 12/5 ผ่าน HWPRICE_BY_PROD (ดู note ในไฟล์ราคา)
       { name: 'สปิงก็อท', sku: 'JR00592', price: 12, unit: 'ตัว', count: '4*P' },        // เดิม JR00592 @29 (สปริงก็อตยูโร คนละตัว)
