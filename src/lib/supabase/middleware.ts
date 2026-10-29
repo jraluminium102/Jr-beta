@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 // หน้า public (ไม่ต้อง login) — มี gate ของตัวเอง (token/PIN) ไม่ผ่าน auth layout ของ (app)
 //   /quote = คิดราคาประเมิน (PIN gate) · /chang = ลิงก์ช่าง (token gate)
-const PUBLIC_PATHS = ["/login", "/auth", "/quote", "/chang"];
+const PUBLIC_PATHS = ["/login", "/auth", "/quote", "/chang", "/sales-queue"];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });

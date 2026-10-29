@@ -58,6 +58,31 @@ function buildSalesDayCopy(date: string, salesName: string, entries: QueueEntry[
   return head + "\n\n" + blocks.join("\n\n\n");
 }
 
+// ลิงก์คิวประเมิน (มือถือ) ให้เซลล์ดูอย่างเดียว — กดแล้วคัดลอกลิงก์ + เปิดดู (/sales-queue/<token> · 0165)
+function SalesLinkButton() {
+  const [msg, setMsg] = useState("");
+  async function go() {
+    const w = window.open("", "_blank");
+    try {
+      const r = await fetch("/api/sales-open?format=json", { credentials: "include" });
+      const j = await r.json();
+      if (!r.ok || !j.url) throw new Error(j.error || "เปิดลิงก์ไม่ได้");
+      try { await navigator.clipboard.writeText(j.url); setMsg("คัดลอกลิงก์แล้ว"); } catch { setMsg(""); }
+      if (w) w.location.href = j.url; else window.open(j.url, "_blank");
+    } catch (err) {
+      w?.close();
+      setMsg(err instanceof Error ? err.message : "เปิดลิงก์ไม่ได้");
+    }
+    setTimeout(() => setMsg(""), 3000);
+  }
+  return (
+    <button onClick={go} title="ลิงก์คิวประเมินสำหรับมือถือ ให้เซลล์เปิดดูอย่างเดียว (กดแล้วคัดลอกลิงก์ให้เลย)"
+      className="press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold glass-soft text-ink-2">
+      <Icon name="external" size={16} /> {msg || "ลิงก์เซลล์ (มือถือ)"}
+    </button>
+  );
+}
+
 // แปลงเวลาเป็นนาที — รองรับทั้ง "09:30", "9:30", "14.00", "9.30" (ข้อมูล import เก่าใช้ "." + ชม.หลักเดียว)
 // คืน 99999 ถ้าไม่มี/พาร์สไม่ได้ → คิวไม่ระบุเวลาตกท้ายเซลล์
 function timeToMin(t: string | null): number {
@@ -638,6 +663,7 @@ export default function QueuePage() {
           </button>
           {canWrite && (
             <>
+              <SalesLinkButton />
               <button onClick={() => setLeaveOpen(true)}
                 className="press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold glass-soft text-ink-2">
                 <Icon name="calendar" size={16} /> วันลา
