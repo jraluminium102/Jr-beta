@@ -11,7 +11,8 @@ function specFromBullets(bullets: string[]) {
   const glass = bullets.find((b) => /กระจก/.test(b)) ?? "";
   const screen = bullets.find((b) => /มุ้ง/.test(b)) ?? "";
   const rest = bullets.filter((b) => b !== glass && b !== screen);
-  return { glass_spec: glass, screen_type: screen, note: rest.join(" · ") };
+  // หมายเหตุ = บูลเลททีละบรรทัด (เจ้าของ 29 ต.ค.69 · เดิมต่อด้วย " · " บรรทัดเดียว อ่านยาก)
+  return { glass_spec: glass, screen_type: screen, note: rest.map((b) => `- ${b}`).join("\n") };
 }
 
 // ข้อในใบเสนอที่ "เป็นงานจริง" (ไม่ใช่ส่วนลด · มีสเปค) — กฎเดียวกับตอนสร้างชุด ใช้ทั้งนับและสร้าง

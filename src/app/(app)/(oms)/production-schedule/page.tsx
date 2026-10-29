@@ -1186,7 +1186,7 @@ function SetCard({ s, saving, mark, canMark }: {
           <RoRow label="ใส่กระจกเสร็จ" v={s.glass_done_date ? thShort(s.glass_done_date) : ""} />
           <RoRow label="เสร็จจริง" v={s.actual_done_date ? thShort(s.actual_done_date) : ""} />
           <RoRow label="ติดตั้ง (แยกชุด)" v={s.install_status === "INSTALLED" ? "ติดตั้งแล้ว" : "ยังไม่ติดตั้ง"} />
-          {s.note && <div className="col-span-2"><RoRow label="หมายเหตุ" v={s.note} /></div>}
+          {s.note && <div className="col-span-2"><RoRow label="หมายเหตุ" v={"\n" + s.note} /></div>}
         </div>
       )}
     </div>
@@ -1240,7 +1240,8 @@ function StatusPill({ ok, label }: { ok: boolean; label: string }) {
 }
 
 function RoRow({ label, v }: { label: string; v: string }) {
-  return <div><span style={{ color: "#a1a1a8" }}>{label}: </span><span style={{ color: "#1c1c1e" }}>{v || "—"}</span></div>;
+  // whitespace-pre-line — หมายเหตุชุดงานเป็นบูลเลททีละบรรทัด (29 ต.ค.69)
+  return <div><span style={{ color: "#a1a1a8" }}>{label}: </span><span className="whitespace-pre-line" style={{ color: "#1c1c1e" }}>{v || "—"}</span></div>;
 }
 
 // ── Modal เพิ่มงานผลิต (จดเอง / เลือกจากงานในระบบ) ──
