@@ -432,7 +432,20 @@ export function computeCost(PB, prod, opt) {
   //   → บรรทัดละเศษเส้น แต่รวมทั้งรหัสเท่าใบตัดเป๊ะ (ไม่มีบรรทัด ฿0 ให้งง)
   // opt.aluLines = บรรทัดอลูที่ผู้เรียกคิดมาจาก 'ใบตัด' แล้ว (หลังคาหลายด้าน — ดู alu-from-cutlist.ts)
   //   รูปแบบเดียวกับ prod.alu แต่ seg/count เป็นตัวเลขสำเร็จ ไม่ใช่สูตร → ทางเดินราคา/สี/นับเส้น ใช้ของเดิมทั้งหมด
-  const ALU = (opt.aluLines && opt.aluLines.length) ? opt.aluLines : (prod.alu || []);
+  // ── อลูลูกฟูก = ของจริง (เจ้าของสั่ง 29 ต.ค.69 "อลูลูกฟูกที่เป็นออปชั่น ก็ต้องคิดเป็นของ") ──
+  //   เดิม ทึบล่างลูกฟูก (solid_panel look) และ แผ่นลูกฟูกแทนกระจก คิดเหมา R3.9 3,500/ตร.ม. (+ค่าสี) ทุน=ขาย÷2
+  //   ตอนนี้ = เส้นลูกฟูก 2 หน้า JR01994 (กว้างแผ่น 10 ซม. · เส้น 6 ม. · ราคาตามสีจากชีตราคาสี) เหมือนบานโซลิด
+  //   จำนวนเส้น = ceil(กว้างแผ่น ÷ 10 ซม.) · ยาว = สูงแผ่น · เข้ากองอลู → ค่าของ × กำไร ตามปกติ · หักกระจกส่วนที่ไม่ใช้
+  //   คอมโพสิต / เกล็ด Z ยังเหมาแบบเดิม (ยังไม่มีทุนของจริงในไฟล์)
+  const LOOK_LINE = { code: 'JR01994', price: 432, kg: 0, stockLen: 6.0, lookPanel: true };
+  const _spSel = (opt.addons || {}).solid_panel || {};
+  const lookLow = _spSel.type === 'look' && (+_spSel.h || 0) > 0
+    ? { w: (+_spSel.w > 0 ? +_spSel.w : W), h: +_spSel.h } : null;
+  const lookGlass = glassType === 'แผ่นลูกฟูก' && prod.glass ? Math.max(0, Number(val(prod.glass)) || 0) : 0;
+  const lookLines = [];
+  if (lookLow) lookLines.push({ ...LOOK_LINE, name: 'ลูกฟูก2ทาง (ทึบล่าง)', seg: lookLow.h, count: Math.ceil(lookLow.w * 100 / 10 - 1e-9) });
+  if (lookGlass > 0 && H > 0) lookLines.push({ ...LOOK_LINE, name: 'ลูกฟูก2ทาง (แทนกระจก)', seg: H, count: Math.ceil(lookGlass / (H * 0.1) - 1e-9) });
+  const ALU = [...((opt.aluLines && opt.aluLines.length) ? opt.aluLines : (prod.alu || [])), ...lookLines];
   const poolShare = new Map();
   if (prod.poolBars || prod.packBars) {
     const sum = new Map();
@@ -619,9 +632,12 @@ export function computeCost(PB, prod, opt) {
   const isPanelGlass = glassType === 'แผ่นคอมโพสิต' || glassType === 'แผ่นลูกฟูก' || !!zGlassSize;
   if (prod.glass) {
     glassArea = val(prod.glass);
+    // ทึบล่างลูกฟูก (ของจริง) แทนกระจกช่วงล่าง → หักพื้นที่กระจกส่วนนั้นออก (29 ต.ค.69)
+    if (lookLow && !isPanelGlass) glassArea = Math.max(0, glassArea - lookLow.w * lookLow.h);
     if (isPanelGlass) {
-      //   13 ต.ค.69 (Excel/R3.9): ลูกฟูก = 3,500 + ค่าสีตามสีอลูหลัก (rn90FinRate 400–2,200) · คอมโพสิตไม่คิดสี
-      const rate = zGlassSize ? zRate(zGlassSize, color) : (glassType === 'แผ่นคอมโพสิต' ? 3300 : 3500 + corrugatedFinRate(color, opt.colorKey));
+      //   13 ต.ค.69 (Excel/R3.9): คอมโพสิต 3,300 · เกล็ด Z ตามสี — เหมาราคาขาย
+      //   29 ต.ค.69: แผ่นลูกฟูก = เส้นจริงในกองอลู (lookLines) → ไม่เหมาแล้ว (panelSell 0)
+      const rate = glassType === 'แผ่นลูกฟูก' ? 0 : zGlassSize ? zRate(zGlassSize, color) : 3300;
       panelSell = round2(glassArea * rate);   // บวกเข้ายอดขายทีหลัง (sell-based) · ไม่คิดกระจก (glassCost=0)
       // ไม่ push บรรทัดกระจก — คำอธิบายไปอยู่ที่ "รายละเอียดงาน" (glassLine) · ราคาแฝงในราคาสินค้า (เหมือนกระจก)
     } else {
@@ -1200,7 +1216,8 @@ export function computeCost(PB, prod, opt) {
     missing: [
       ...(gMM === 0 && glassArea > 0 && !isPanelGlass ? ['กระจก "' + glassType + '" อ่านความหนาไม่ออก'] : []),
       // แผ่นแทนกระจก (คอมโพสิต/ลูกฟูก/เกล็ด Z) — ไฟล์ถอดทุนมีแต่ราคา ไม่มีน้ำหนัก/ตร.ม. เหมือนแผ่นมุงหลังคา
-      ...(isPanelGlass && glassArea > 0 ? ['แผ่น "' + glassType + '" ยังไม่มีน้ำหนัก/ตร.ม. ในไฟล์'] : []),
+      //   29 ต.ค.69: แผ่นลูกฟูก = เส้น JR01994 ในกองอลู มีน้ำหนักแล้ว → ไม่ต้องเตือน
+      ...(isPanelGlass && glassArea > 0 && glassType !== 'แผ่นลูกฟูก' ? ['แผ่น "' + glassType + '" ยังไม่มีน้ำหนัก/ตร.ม. ในไฟล์'] : []),
       ...sheetNoKg,   // ข้อความเต็มมาแล้วจากจุดที่เจอ (แผ่นมุง / โครงกล่อง / เหล็ก)
       ...(kgMissing.length ? ['เส้นอลูไม่มี กก./เส้น ' + kgMissing.length + ' บรรทัด'] : []),
     ],
@@ -2109,12 +2126,12 @@ export function computeAddon(id, sel, ctx) {
   // ── อุปกรณ์เสริมบาน (R3.9 COMMON_OPTS index.html:1357 + แผ่นทึบ rn89-92) ──
   if (id === 'solid_panel') {           // แผ่นทึบล่าง คอมโพสิต 3,300 / ลูกฟูก 3,500 / เกล็ด Z (ตามสีอลูหลัก) ฿/ตร.ม. × กว้าง×สูงแผ่น
     const g = sel || {}; const t = g.type; if (!t || t === 'none') return null;
+    // ลูกฟูก (look) = ของจริงในกองอลู (lookLines ใน computeCost · 29 ต.ค.69) — ไม่ใช่บรรทัดเหมาตรงนี้แล้ว
+    if (t === 'look') return null;
     const sw = +g.w > 0 ? +g.w : W, sh = +g.h || 0; if (!(sh > 0)) return null;
     const zsz = t === 'z1' ? '1' : t === 'z16' ? '1.6' : null;   // เกล็ด Z ล่างทึบ — ราคาตามสีอลูหลัก (21ก.ค.69)
-    // ลูกฟูก (look) = 3,500 + ค่าสีตามสีอลูหลัก (R3.9 rn90FinRate · 13 ต.ค.69) · คอมโพสิตไม่คิดสี
-    const fin = (!zsz && t !== 'comp') ? corrugatedFinRate((ctx.opt || {}).color || 'white', (ctx.opt || {}).colorKey) : 0;
-    const rate = zsz ? zRate(zsz, (ctx.opt || {}).color || 'white') : (t === 'comp' ? 3300 : 3500 + fin);
-    const lbl = zsz ? Z_LOUVRE[zsz].label : ((t === 'comp' ? 'คอมโพสิต' : 'อลูลูกฟูก' + (fin > 0 ? ' +สี ' + fin : '')) + ' (R3.9)');
+    const rate = zsz ? zRate(zsz, (ctx.opt || {}).color || 'white') : 3300;   // คอมโพสิตไม่คิดสี
+    const lbl = zsz ? Z_LOUVRE[zsz].label : 'คอมโพสิต (R3.9)';
     return { label: 'แผ่นทึบล่าง ' + lbl, qty: round2(sw * sh), unit: 'ตร.ม.', unitPrice: rate, amount: round2(sw * sh * rate) };
   }
   if (id === 'elec') {                   // งานไฟ พัดลม+หน้ากาก+สวิตซ์ (เจ้าของเคาะ 17ก.ค.69 · ราคา "ขาย" ตรง ๆ · sell-based เหมือน add-on R3.9)

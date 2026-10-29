@@ -1293,30 +1293,32 @@ console.log("\n═══ ㉓ ออปชั่นตาม Excel — ครอ�
     ok("UI คาดตาราง ส่ง colorKey ให้ gridRateFor (ตารางเดียวกับ engine)", /gridRateFor\(color, colorKey\)/.test(ui));
   }
 
-  // ── ข้อ 8: ทึบล่างลูกฟูก / แผ่นลูกฟูกแทนกระจก บวกค่าสีตาม R3.9 rn90FinRate ──
+  // ── ข้อ 8: ทึบล่างลูกฟูก / แผ่นลูกฟูกแทนกระจก = ของจริง (เจ้าของสั่ง 29 ต.ค.69 "อลูลูกฟูกที่เป็นออปชั่น ก็ต้องคิดเป็นของ") ──
+  //   เส้นลูกฟูก 2 หน้า JR01994 กว้าง 10 ซม. · จำนวน = ceil(กว้างแผ่น ÷ 10 ซม.) · ยาว = สูงแผ่น · ราคาตามสี (ชีตราคาสี) เหมือนบานโซลิด
+  //   คอมโพสิต / เกล็ด Z ยังเหมา R3.9 (ยังไม่มีทุนของจริง)
   {
-    const FIN = [["white", "white", 0], ["black", "white", 0], ["sahara", "sahara", 400], ["sahara_black", "sahara", 400], ["aztec", "sahara", 950],
-      ["wood_teak", "woodStock", 1500], ["wood_maho", "woodStock", 1500], ["wood_whiteoak", "woodStock", 1500], ["special", "special", 1600], ["plated", "special", 1600],
-      ["wood_special", "woodSpecial", 2200], ["wood_fuji_oak", "woodSpecial", 2200], ["wood_fuji_makha", "woodSpecial", 2200]];
     const OP = { w: 150, h: 220, p: 1, form: "มีธรณี" };
-    // solid_panel เป็นปุ่ม universal (withUniversalAddons ใส่ตอนรันจริง) — จำลองด้วยการเติมเข้า addons ของรุ่น
     const ODP = { ...PRODUCTS.open_door, addons: [...PRODUCTS.open_door.addons, "solid_panel"] };
-    const sp = (key, bake, type) => computeCost(PF, ODP, { ...OP, color: bake, colorKey: key, spec: {}, addons: { solid_panel: { type, w: 1.5, h: 0.6 } } }).lines.find((l) => l.cat === "addon" && /แผ่นทึบล่าง/.test(l.name));
-    for (const [key, bake, fin] of FIN) {
-      const l = sp(key, bake, "look");
-      ok(`ทึบล่างลูกฟูก สี ${key}: ${3500 + fin}/ตร.ม. (3,500 + ค่าสี ${fin})`, l && l.unitPrice === 3500 + fin && Math.abs(l.amount - 0.9 * (3500 + fin)) < 0.5, l ? `${l.unitPrice}` : "ไม่มีบรรทัด");
-    }
-    ok("ทึบล่างคอมโพสิต: 3,300 ทุกสี (ไม่คิดค่าสี)", ["white", "sahara", "special", "wood_fuji_oak"].every((k, i) => sp(k, ["white", "sahara", "special", "woodSpecial"][i], "comp").unitPrice === 3300));
-    // แผ่นลูกฟูกแทนกระจก — ส่วนต่างขายจากคอมโพสิต (ไม่คิดสี) = พื้นที่ × (3,500 + ค่าสี − 3,300)
-    const glassDiff = (key, bake) => {
-      const f = (gt) => computeCost(PF, PRODUCTS.fixed, { w: 150, h: 150, p: 1, glassType: gt, color: bake, colorKey: key, spec: {}, addons: {} }).sell.withInstall;
-      return f("แผ่นลูกฟูก") - f("แผ่นคอมโพสิต");
-    };
-    ok("แผ่นลูกฟูกแทนกระจก: ขาว = +200/ตร.ม. จากคอมโพสิต · สีอบพิเศษ +1,800/ตร.ม. · ลายไม้อบพิเศษ Fuji +2,400/ตร.ม. (150×150 = 2.25 ตร.ม.)",
-      Math.abs(glassDiff("white", "white") - 450) < 1 && Math.abs(glassDiff("special", "special") - 4050) < 1 && Math.abs(glassDiff("wood_fuji_oak", "woodSpecial") - 5400) < 1,
-      [glassDiff("white", "white"), glassDiff("special", "special"), glassDiff("wood_fuji_oak", "woodSpecial")].join("/"));
+    const run = (key, bake, type, extra) => computeCost(PF, ODP, { ...OP, color: bake, colorKey: key, spec: {}, addons: { solid_panel: { type, w: 1.5, h: 0.6 } }, ...(extra || {}) });
+    const base = computeCost(PF, ODP, { ...OP, color: "white", colorKey: "white", spec: {}, addons: {} });
+    const lk = run("white", "white", "look");
+    const ln = lk.lines.find((l) => l.cat === "alu" && /ลูกฟูก2ทาง \(ทึบล่าง\)/.test(l.name));
+    ok("ทึบล่างลูกฟูก 1.5×0.6 → เส้นลูกฟูก 15 ชิ้น × 0.6 ม. ในกองอลู", ln && ln.pieces === 15 && Math.abs(ln.count.seg - 0.6) < 0.01, ln ? `${ln.pieces} × ${ln.count.seg}` : "ไม่มีบรรทัด");
+    ok("ไม่มีบรรทัดเหมา 'แผ่นทึบล่าง' แล้ว", !lk.lines.some((l) => l.cat === "addon" && /แผ่นทึบล่าง/.test(l.name)));
+    ok("ราคาเส้นสีขาว = 432 (JR01994 เหมือนบานโซลิด)", ln && ln.unitPrice === 432, ln ? String(ln.unitPrice) : "");
+    const gBase = base.lines.find((l) => l.cat === "glass"), gLk = lk.lines.find((l) => l.cat === "glass");
+    ok("หักกระจกส่วนทึบ 0.9 ตร.ม. ออก", gBase && gLk && Math.abs((gBase.qty - gLk.qty) - 0.9) < 0.01, gBase && gLk ? `${gBase.qty} → ${gLk.qty}` : "");
+    ok("ทุนของขึ้น (เส้นลูกฟูก) · ขายขึ้นตาม", lk.cost.total > base.cost.total - 0.9 * 264 && lk.sell.withInstall > base.sell.withInstall, `${base.sell.withInstall} → ${lk.sell.withInstall}`);
+    const sah = run("sahara", "sahara", "look").lines.find((l) => l.cat === "alu" && /ทึบล่าง/.test(l.name));
+    ok("สีเทาซาฮาร่า: ราคาเส้นตามชีตราคาสี 687", sah && sah.unitPrice === 687, sah ? String(sah.unitPrice) : "");
+    ok("ทึบล่างคอมโพสิต: ยังเหมา 3,300 ทุกสี", ["white", "sahara"].every((k, i) => { const l = run(k, ["white", "sahara"][i], "comp").lines.find((x) => x.cat === "addon" && /แผ่นทึบล่าง/.test(x.name)); return l && l.unitPrice === 3300; }));
+    // แผ่นลูกฟูกแทนกระจก (ทั้งบาน) — ติดตาย 150×150 = กระจก 2.25 ตร.ม. → 2.25 ÷ (1.5 × 0.1) = 15 เส้น × 1.5 ม.
+    const fx = computeCost(PF, PRODUCTS.fixed, { w: 150, h: 150, p: 1, glassType: "แผ่นลูกฟูก", color: "white", colorKey: "white", spec: {}, addons: {} });
+    const fl = fx.lines.find((l) => l.cat === "alu" && /ลูกฟูก2ทาง \(แทนกระจก\)/.test(l.name));
+    ok("แผ่นลูกฟูกแทนกระจก ติดตาย 150×150 → 15 เส้น × 1.5 ม. · ไม่มีบรรทัดกระจก", fl && fl.pieces === 15 && Math.abs(fl.count.seg - 1.5) < 0.01 && !fx.lines.some((l) => l.cat === "glass"), fl ? `${fl.pieces} × ${fl.count.seg}` : "ไม่มีบรรทัด");
+    ok("แผ่นลูกฟูกแทนกระจก ไม่เตือน 'ยังไม่มีน้ำหนัก'", !(fx.weight && fx.weight.missing || []).some((m) => /แผ่นลูกฟูก/.test(m)));
     const ui = fs.readFileSync("src/components/calculator40/AddonsSection.tsx", "utf8");
-    ok("UI ทึบล่าง ใช้ corrugatedFinRate ตัวเดียวกับ engine (ป้ายราคาตรง)", /corrugatedFinRate\(color, colorKey\)/.test(ui) && /3500 \+ fin/.test(ui));
+    ok("UI ทึบล่าง: ลูกฟูกบอกว่าถอดเส้นจริง", /อลูลูกฟูก \(ถอดเส้นจริง\)/.test(ui));
   }
 
   // ── ข้อ 9: Shower เข้ามุม/อุปกรณ์ดำ บวกหลังขั้นต่ำ · ราวจับยู 5 หุน ซ่อนเมื่อแบบเสาตั้งมีราวจับแล้ว ──

@@ -315,7 +315,7 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, co
     return (
       <Field label="บานล่างทึบ (คอมโพสิต/ลูกฟูก/เกล็ด Z แทนกระจกช่วงล่าง)">
         <ChipRow
-          items={[{ val: "none", label: "ไม่มี (กระจกเต็มบาน)" }, { val: "comp", label: "คอมโพสิต (3,300/ตร.ม.)" }, { val: "look", label: fin > 0 ? `อลูลูกฟูก (3,500 + สี ${fin.toLocaleString("th-TH")}/ตร.ม.)` : "อลูลูกฟูก (3,500/ตร.ม.)" }, { val: "z1", label: "เกล็ด Z 1\" (ตามสีอลู)" }, { val: "z16", label: "เกล็ด Z 1.6\" (ตามสีอลู)" }]}
+          items={[{ val: "none", label: "ไม่มี (กระจกเต็มบาน)" }, { val: "comp", label: "คอมโพสิต (3,300/ตร.ม.)" }, { val: "look", label: "อลูลูกฟูก (ถอดเส้นจริง)" }, { val: "z1", label: "เกล็ด Z 1\" (ตามสีอลู)" }, { val: "z16", label: "เกล็ด Z 1.6\" (ตามสีอลู)" }]}
           value={t} onChange={(v) => setObj("solid_panel", { type: v })}
         />
         {t !== "none" && (
@@ -330,8 +330,11 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, co
                 <NumberInput value={g.h || 0} onChange={(v) => setObj("solid_panel", { h: v })} placeholder="0" />
               </div>
             </div>
+            {/* ลูกฟูก = ของจริง (29 ต.ค.69): เส้นลูกฟูก 2 หน้า กว้าง 10 ซม. ยาวเท่าสูงแผ่น · ราคาตามสีจากชีตราคาสี · เข้า "ค่าของ" × กำไร · หักกระจกส่วนนั้นออก */}
             {ph > 0
-              ? <p className="text-[11px] text-ink-3 mt-1.5">แผ่น {fmtNum(pw)}×{fmtNum(ph)} = {fmtNum(pw * ph)} ตร.ม. × {rate} = {fmt(pw * ph * rate)} บาท</p>
+              ? (t === "look"
+                ? <p className="text-[11px] text-ink-3 mt-1.5">ลูกฟูก 2 หน้า กว้างเส้น 10 ซม. → {Math.ceil(pw * 100 / 10 - 1e-9)} เส้น × ยาว {fmtNum(ph)} ม. (เข้า &quot;ค่าของ&quot; ราคาตามสี · หักกระจก {fmtNum(pw * ph)} ตร.ม.)</p>
+                : <p className="text-[11px] text-ink-3 mt-1.5">แผ่น {fmtNum(pw)}×{fmtNum(ph)} = {fmtNum(pw * ph)} ตร.ม. × {rate} = {fmt(pw * ph * rate)} บาท</p>)
               : <p className="text-[11px] text-amber-600 mt-1.5">กรอกสูงแผ่นล่าง (ม.) เพื่อคิดราคา</p>}
           </>
         )}
