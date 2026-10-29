@@ -843,7 +843,7 @@ console.log('\n═══ ③ สวิตช์ค่าแรงในหน้
   // ⚠ ต้องใช้ mfgOnlyNet (ราคาหลังลดขายส่ง) ไม่ใช่ mfgOnly (ค่าดิบตามชีต) — ใช้ผิด = ลืมลด 10%
   has('ราคาต่อหน่วยที่ขึ้นใบ = ราคาขายส่งหลังลด', /perUnit:\s*\(laborMode === "mfg" \? result\.sell\.mfgOnlyNet : result\.sell\.withInstall\)/);
   has('หลังคาช่วงเพิ่ม (subLines) ใช้ราคาหลังลดด้วย', /laborMode === "mfg" \? sr\.sell\.mfgOnlyNet : sr\.sell\.withInstall/);
-  has('การ์ดราคาโชว์ราคาขายส่งหลังลด', /baht\(result\.sell\.mfgOnlyNet\)/);
+  has('การ์ดราคาโชว์ราคาขายส่งหลังลด', /baht\(result\.sell\.mfgOnlyNet\b/);   // 29 ต.ค.69: การ์ดบวกบานย่อย (ผสมบาน) ต่อท้ายได้
   has('ยอดรวม (มีรายการเสริม) ใช้ราคาหลังลด', /laborMode === "mfg" \? result\.sell\.mfgOnlyNet : result\.sell\.withInstall\) \+ \(\(result as any\)\.subSell/);
   has('เลือก "ผลิตอย่างเดียว" แล้วเขียนกำกับลงใบว่าไม่รวมติดตั้ง', /laborMode === "mfg"\)\s*jobLines\.push\("- ราคานี้ไม่รวมค่าติดตั้ง/);
   has('บันทึกลงสูตร (recipe) เพื่อกลับมาแก้ข้อได้', /profit, profitProd, profitInst, profitManual, profitEdit, laborMode,/);

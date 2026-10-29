@@ -2,83 +2,24 @@
 
 /**
  * ➕ ผสมบาน (sub-panes) — เพิ่มบานหลายชนิดในชุด/รายการเดียว คิดราคาตามชนิดจริง (สี/กระจกตามบานหลัก)
- * Port ตรงจาก mockup app.js บรรทัด 1296-1423 (SUB_GROUPS, subPrice, renderSubPanes, renderSubRow)
- * แบบง่าย (พี่สั่ง: "addons ย่อยเอาแบบ simplified ได้") — ไม่มี popup "ตั้งค่าบาน (G1)" เต็มรูปแบบเหมือน mockup
- * (door-picker A ที่เปิด renderConfig ของรุ่นย่อยแบบเต็ม) ใช้ทางลัด "จัดเต็ม" (มุ้ง/วัสดุเสริม/คาดตาราง) แทน
- * เหมือน app.js legacy branch (mat: frame/pleat/solid + gridmark) ซึ่งเป็นเส้นทางเดิมที่ยังใช้ subPrice ได้ตรงกับ engine
  *
- * ราคาบานย่อย = subPrice() ก๊อปตรง app.js บรรทัด 1305-1322:
- *   fprice override > computeCost(รุ่นจริง, w,h,n, form, สี/กระจกตามบานหลัก) + extra (มุ้ง/วัสดุ/คาดตาราง แบบ flat legacy)
- * ผลรวม subSell/subCost คำนวณใน Calculator40Client.tsx (เหมือน roofSegs) แล้วบวกเข้า sell ตอนขึ้นใบ
+ * 29 ต.ค.69 (เจ้าของสั่ง "ยังคิดเป็นตารางเมตร ไม่คิดเป็นของ · กดเพิ่มแล้วไม่ขึ้นค่าของ"):
+ *   - ตัวคิด (ขาย/ทุน/ค่าแรง/รายการของ) ย้ายไป lib/calculator40/sub-pane.ts (subCalc) — ไฟล์นี้เหลือแต่ UI
+ *   - "จัดเต็ม" = <AddonsSection> ของรุ่นนั้นจริง ๆ (มุ้ง R4.0 · คาดตาราง · ทึบล่าง · มือจับ ฯลฯ) ชุดเดียวกับหน้า G1/ห้องกระจก
+ *     แทนปุ่มเหมา มุ้ง +3,000 / อลูทึบ ตร.ม.×3,500 / คาดตาราง +2,000 (ใบเก่าที่บันทึกแบบเหมาไว้ยังเปิดได้ราคาเดิม)
+ *   - การ์ดบานย่อยโชว์ ทุนของ/ค่าแรง เมื่อเปิด 💰 ดูทุน
  */
-import { panePrice, type PaneProfit } from "@/lib/calculator40/pane-calc";
-// @ts-expect-error — products เป็น ESM JS ล้วน
-import { PRODUCTS } from "@/lib/calculator40/products.mjs";
+import AddonsSection from "@/components/calculator40/AddonsSection";
+import { resolveAluColor } from "@/lib/calculator40/alu-colors";
+import { subCalc, subProd, subIsLegacy, SUB_GROUPS, SUB_WORKING, type SubPane } from "@/lib/calculator40/sub-pane";
+import type { PaneProfit } from "@/lib/calculator40/pane-calc";
+// ตัวคิด/ข้อความ export ต่อให้โค้ดเดิมที่ import จากไฟล์นี้ยังใช้ได้
+export { subCalc, subPrice, subDesc, SUB_GROUPS, type SubPane } from "@/lib/calculator40/sub-pane";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-export type SubPane = {
-  key: number;
-  pid: string; // product id หรือ '_custom'
-  label: string;
-  w: number; h: number; n: number; // เมตร, เมตร, จำนวนบาน
-  form?: string; // รูปแบบบานย่อย (เลือกให้ต่างจากบานหลักได้) — เว้น = defForm ของชนิดนั้น
-  desc?: string; price?: number; // เฉพาะ _custom
-  openCt?: number; fixCt?: number; // แบ่งบาน (เฉพาะ SUB_WORKING)
-  mat?: "none" | "frame" | "pleat" | "solid"; // มุ้ง/วัสดุเสริม (legacy simplified)
-  gridmark?: "none" | "yes";
-  note?: string;
-  fprice?: number; // ราคาแยก override
-  _open?: boolean; // ขยาย "ปรับ"
-  _full?: boolean; // ขยาย "จัดเต็ม"
-};
-
-// 2 กลุ่มปุ่มเพิ่ม — ตรง app.js SUB_GROUPS เป๊ะ (pid, label, w, h เริ่มต้นเป็นเมตร)
-export const SUB_GROUPS: { g: string; items: [string, string, number, number][] }[] = [
-  { g: "บานทำงาน", items: [["open_door", "บานเปิด", 0.9, 2.2], ["sms_slide", "บานเลื่อน", 1.8, 2.2], ["folding", "เฟี้ยม", 2.4, 2.2], ["awning", "กระทุ้ง", 0.6, 0.6]] },
-  { g: "ติดตาย / ช่องแสง", items: [["fixed", "ช่องแสงบน", 1.2, 0.4], ["fixed", "บานข้างติดตาย", 0.6, 2.2], ["fixed", "ช่องแสงติดตาย", 1.0, 0.5], ["_custom", "อื่นๆ (กรอกเอง)", 1.0, 1.0]] },
-];
-// บานที่แบ่งเปิด/ติดตายได้ (ปุ่ม "ปรับ" → แบ่งบาน)
-const SUB_WORKING = ["open_door", "sms_slide", "folding", "awning"];
-
 function fmtBaht(n: number) {
   return Math.round(n || 0).toLocaleString("th-TH");
-}
-
-// ราคาบานย่อย — ตรง app.js subPrice() เป๊ะ (ตัดทางที่ไม่รองรับในเวอร์ชัน simplified: s.opt popup ออก เหลือ legacy mat/gridmark)
-export function subPrice(s: SubPane, pb: any, mainColor: string, mainGlass: string, profitPct: number, profitOpt?: PaneProfit): number {
-  if (s.pid === "_custom") return +s.price! || 0;
-  const sp = (PRODUCTS as any)[s.pid];
-  if (!sp) return 0;
-  // รูปแบบบานย่อย: ใช้ที่ผู้ใช้เลือก (ถ้ามีในลิสต์ของชนิดนั้น) ไม่งั้น defForm — คิดราคาผ่าน computeCost ตามรูปแบบจริง
-  const sForm = s.form && (sp.forms ?? []).includes(s.form) ? s.form : sp.defForm;
-  let base = 0;
-  if (s.fprice! > 0) base = +s.fprice!;
-  // ใช้ตัวคิดราคาก้อนเดียวกับหน้า G1 / ห้องกระจก (pane-calc) — ได้ spec (ราง/มือจับ) + อุปกรณ์จากใบตัด
-  //   + ราคาเส้นตามสีจริงจากสโตร์ ครบเหมือนกดที่หน้า G1 (เจ้าของสั่ง 21 ส.ค.69 "ทำให้เป็นก้อนเดียวกัน")
-  //   ⚠ mainColor = "คีย์สี" (white/sahara/wood_teak) ไม่ใช่หมวดค่าอบ — pane-calc แปลงเอง
-  //      เดิมการ์ดในหน้าจอส่งคีย์สี แต่ตอนลงใบเสนอส่งหมวดค่าอบ = ตัวเลขสองที่ไม่ตรงกัน
-  else base = panePrice({ key: 0, typeKey: s.pid, w: s.w || 1, h: s.h || 1, n: s.n || 1, form: sForm, addons: {} },
-    pb, mainColor, mainGlass, profitPct, undefined, profitOpt).amount;
-  let extra = 0;
-  if (s.mat === "frame" || s.mat === "pleat") extra += 3000;
-  else if (s.mat === "solid") extra += Math.ceil(((s.w || 1) * (s.h || 1) * 3500) / 100) * 100;
-  if (s.gridmark === "yes") extra += 2000;
-  return base + extra;
-}
-
-export function subDesc(s: SubPane): string {
-  if (s.pid === "_custom") return (s.desc || "บานอื่นๆ") + " (กรอกเอง)";
-  const sp = (PRODUCTS as any)[s.pid];
-  const formTxt = s.form && sp && (sp.forms ?? []).includes(s.form) && s.form !== sp.defForm ? ` แบบ${s.form}` : "";
-  let d = `${s.label}${formTxt} ${s.w || 1}×${s.h || 1}ม.${(s.n || 1) > 1 ? ` ${s.n}บาน` : ""}`;
-  if ((s.openCt || 0) + (s.fixCt || 0) > 0) d += ` (เปิด ${s.openCt || 0}/ติดตาย ${s.fixCt || 0})`;
-  if (s.mat === "frame") d += " +มุ้งเฟรม";
-  else if (s.mat === "pleat") d += " +มุ้งจีบ";
-  else if (s.mat === "solid") d += " +อลูทึบ";
-  if (s.gridmark === "yes") d += " +คาดตาราง";
-  if (s.note) d += " · " + s.note;
-  return d;
 }
 
 function NumInput({ value, onChange, placeholder, step, className }: { value: number | string; onChange: (v: number) => void; placeholder?: string; step?: number; className?: string }) {
@@ -107,7 +48,7 @@ function Stepper({ value, onChange, min = 0, max = 20 }: { value: number; onChan
   );
 }
 
-export default function SubPanesSection({ subs, setSubs, pb, mainColor, mainGlass, profitPct, profitOpt }: {
+export default function SubPanesSection({ subs, setSubs, pb, mainColor, mainGlass, profitPct, profitOpt, laborMode = "all", showCost = false }: {
   subs: SubPane[];
   setSubs: (fn: (s: SubPane[]) => SubPane[]) => void;
   pb: any;
@@ -116,12 +57,16 @@ export default function SubPanesSection({ subs, setSubs, pb, mainColor, mainGlas
   profitPct: number;
   /** กำไร 3 ก้อนแยก + โหมดกรอกเอง (เดิมส่งแต่ profitPct ตัวเดียว — ช่องค่าผลิต/ติดตั้งจึงไม่มีผล) */
   profitOpt?: PaneProfit;
+  /** ขายส่ง (ผลิตอย่างเดียว) — ราคาบานย่อยต้องเป็นยอดเดียวกับบานหลัก */
+  laborMode?: "all" | "mfg";
+  /** เปิด 💰 ดูทุน → โชว์ทุนของ/ค่าแรงของบานย่อยด้วย */
+  showCost?: boolean;
 }) {
   function addSub(pid: string, label: string, w: number, h: number, key: number) {
     if (pid === "_custom") {
       setSubs((s) => [...s, { key, pid, label, desc: "", price: 0, w, h, n: 1 }]);
     } else {
-      setSubs((s) => [...s, { key, pid, label, w, h, n: 1 }]);
+      setSubs((s) => [...s, { key, pid, label, w, h, n: 1, addons: {} }]);
     }
   }
   function patch(key: number, p: Partial<SubPane>) {
@@ -130,11 +75,12 @@ export default function SubPanesSection({ subs, setSubs, pb, mainColor, mainGlas
   function remove(key: number) {
     setSubs((s) => s.filter((x) => x.key !== key));
   }
+  const rc = resolveAluColor(mainColor);
 
   return (
     <div className="mt-4 space-y-3 rounded-2xl glass-soft p-4">
       <div className="text-sm font-bold text-brand-dark flex items-center gap-1.5">
-        ➕ ผสมบาน <span className="text-xs font-normal text-ink-3">(เพิ่มบานในชุดเดียว · กดเพิ่ม → ปรับ/จัดเต็มได้ต่อบาน)</span>
+        ➕ ผสมบาน <span className="text-xs font-normal text-ink-3">(เพิ่มบานในชุดเดียว · กดเพิ่ม → ปรับ/จัดเต็มได้ต่อบาน · คิดจากของจริงเหมือนบานหลัก)</span>
       </div>
       {SUB_GROUPS.map((grp) => (
         <div key={grp.g} className="space-y-1.5">
@@ -156,7 +102,9 @@ export default function SubPanesSection({ subs, setSubs, pb, mainColor, mainGlas
 
       {subs.map((s) => {
         const isCustom = s.pid === "_custom";
-        const price = subPrice(s, pb, mainColor, mainGlass, profitPct, profitOpt);
+        const c = subCalc(s, pb, mainColor, mainGlass, profitPct, profitOpt, laborMode);
+        const prod = isCustom ? null : subProd(s.pid);
+        const legacy = subIsLegacy(s);
         return (
           <div key={s.key} className="rounded-xl border border-black/5 bg-white/60 p-3 space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
@@ -173,7 +121,8 @@ export default function SubPanesSection({ subs, setSubs, pb, mainColor, mainGlas
                   <NumInput value={s.w} onChange={(v) => patch(s.key, { w: v })} placeholder="กว้าง(ม.)" step={0.1} />
                   <NumInput value={s.h} onChange={(v) => patch(s.key, { h: v })} placeholder="สูง(ม.)" step={0.1} />
                   <NumInput value={s.n || 1} onChange={(v) => patch(s.key, { n: Math.max(1, Math.round(v)) })} placeholder="บาน" />
-                  <span className="text-sm font-semibold text-brand-dark tabular-nums">{fmtBaht(price)} ฿</span>
+                  <span className="text-sm font-semibold text-brand-dark tabular-nums">{fmtBaht(c.amount)} ฿</span>
+                  {s.fprice! > 0 && <span className="text-[11px] text-amber-700">ราคาแยก</span>}
                 </>
               )}
               <button type="button" onClick={() => patch(s.key, { _open: !s._open })}
@@ -188,19 +137,24 @@ export default function SubPanesSection({ subs, setSubs, pb, mainColor, mainGlas
               )}
               <button type="button" onClick={() => remove(s.key)} className="press text-ink-3 hover:text-red-600 ml-auto">✕</button>
             </div>
+            {/* ทุนบานย่อย — ของจริงจาก BOM (เปิด 💰 ดูทุน) */}
+            {showCost && !isCustom && (
+              <div className="text-[11px] text-ink-3 tabular-nums">
+                ทุนของ ฿{fmtBaht(c.cost)} · ค่าผลิต ฿{fmtBaht(c.labor.prod)}{laborMode === "mfg" ? "" : ` · ค่าติดตั้ง ฿${fmtBaht(c.labor.install)}`} · ของ {c.lines.length} รายการ (ดูในตาราง &quot;ค่าของ&quot; ของชุดนี้)
+              </div>
+            )}
 
             {/* ชั้น 2: ปรับ (รูปแบบ + แบ่งบาน + หมายเหตุ) */}
             {s._open && !isCustom && (
               <div className="pl-2 border-l-2 border-brand/20 space-y-2">
                 {/* รูปแบบบานนี้ (ต่างจากบานหลักได้) — เฉพาะชนิดที่มีหลายรูปแบบ */}
                 {(() => {
-                  const sp = (PRODUCTS as any)[s.pid];
-                  const forms: string[] = sp?.forms ?? [];
+                  const forms: string[] = prod?.forms ?? [];
                   if (forms.length <= 1) return null;
                   return (
                     <label className="flex items-center gap-2">
                       <span className="text-xs font-medium text-ink-3 min-w-[52px]">รูปแบบ:</span>
-                      <select value={s.form || sp.defForm || forms[0]} onChange={(e) => patch(s.key, { form: e.target.value })}
+                      <select value={s.form || prod.defForm || forms[0]} onChange={(e) => patch(s.key, { form: e.target.value })}
                         className="min-h-[40px] glass-soft rounded-lg px-2.5 py-1.5 outline-none text-sm flex-1">
                         {forms.map((f) => <option key={f} value={f}>{f}</option>)}
                       </select>
@@ -226,31 +180,34 @@ export default function SubPanesSection({ subs, setSubs, pb, mainColor, mainGlas
               </div>
             )}
 
-            {/* ชั้น 3: จัดเต็ม (มุ้ง/วัสดุเสริม + คาดตาราง + ราคาแยก) */}
+            {/* ชั้น 3: จัดเต็ม = ของเสริมจริงของรุ่นนี้ (ชุดเดียวกับหน้า G1) + ราคาแยก */}
             {s._full && !isCustom && (
               <div className="pl-2 border-l-2 border-brand/20 space-y-2">
-                <div>
-                  <span className="text-xs font-medium text-ink-3">มุ้ง / วัสดุเสริม</span>
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {[["none", "ไม่มี"], ["frame", "มุ้งเฟรม +3,000"], ["pleat", "มุ้งจีบ +3,000"], ["solid", "อลูทึบ (พื้นที่×3,500)"]].map(([v, l]) => (
-                      <button key={v} type="button" onClick={() => patch(s.key, { mat: v as SubPane["mat"] })}
-                        className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${(s.mat || "none") === v ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
-                        {l}
-                      </button>
-                    ))}
+                {legacy && (
+                  <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-[11px] text-amber-800 flex items-center gap-2 flex-wrap">
+                    <span>
+                      ใบเก่า: คิดของเสริมแบบเหมา ({s.mat === "frame" ? "มุ้งเฟรม +3,000" : s.mat === "pleat" ? "มุ้งจีบ +3,000" : s.mat === "solid" ? "อลูทึบ ตร.ม.×3,500" : ""}{s.gridmark === "yes" ? " คาดตาราง +2,000" : ""}) — กดล้างเพื่อเลือกของเสริมจากของจริงแทน
+                    </span>
+                    <button type="button" onClick={() => patch(s.key, { mat: "none", gridmark: "none", addons: {} })}
+                      className="press text-[11px] font-semibold rounded-lg px-2 py-1 bg-white border border-amber-300">ล้าง</button>
                   </div>
-                </div>
-                <div>
-                  <span className="text-xs font-medium text-ink-3">คาดตาราง</span>
-                  <div className="flex flex-wrap gap-1.5 mt-1">
-                    {[["none", "ไม่มี"], ["yes", "มี +2,000"]].map(([v, l]) => (
-                      <button key={v} type="button" onClick={() => patch(s.key, { gridmark: v as SubPane["gridmark"] })}
-                        className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${(s.gridmark || "none") === v ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
-                        {l}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                )}
+                {prod && (prod.addons || []).length > 0 ? (
+                  <AddonsSection
+                    prod={prod}
+                    addons={s.addons || {}}
+                    setAddons={(fn) => patch(s.key, { addons: fn(s.addons || {}), mat: "none", gridmark: "none" })}
+                    area={(s.w || 1) * (s.h || 1)}
+                    W={s.w || 1}
+                    size={{ W: s.w || 1, H: s.h || 1, P: s.n || 1 }}
+                    movePanes={Math.max(1, (s.n || 1) - (s.fixCt || 0))}
+                    color={rc.bake}
+                    colorKey={mainColor}
+                    form={s.form || prod.defForm}
+                  />
+                ) : (
+                  <p className="text-[11px] text-ink-3">รุ่นนี้ไม่มีของเสริมให้เลือก</p>
+                )}
                 <label className="block">
                   <span className="text-xs font-medium text-ink-3">ราคาแยก (override · เว้น=คิดตามชนิด)</span>
                   <NumInput value={s.fprice || 0} onChange={(v) => patch(s.key, { fprice: v })} placeholder="บาท" className="w-full min-h-[44px] glass-soft rounded-lg px-3 py-2 mt-1 outline-none tabular-nums text-sm" />
@@ -261,7 +218,7 @@ export default function SubPanesSection({ subs, setSubs, pb, mainColor, mainGlas
         );
       })}
       {subs.length > 0 && (
-        <p className="text-[11px] text-ink-3">บานย่อยคิดราคาตามชนิดจริง (สี/กระจกตามบานหลัก) · ขึ้นใบเป็นบรรทัดย่อยในรายการเดียว</p>
+        <p className="text-[11px] text-ink-3">บานย่อยถอดของจริงตามชนิด (สี/กระจกตามบานหลัก) · ราคา/ทุน/ของ รวมเข้ากับบานหลัก · ขึ้นใบเป็นบรรทัดย่อยในรายการเดียว</p>
       )}
     </div>
   );
