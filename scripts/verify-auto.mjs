@@ -304,8 +304,9 @@ console.log(NL + "═══ ⑭ ห้องกระจก G6 — กำไร 
   ok("หน้าคิดราคา: ส่งกำไร 3 ก้อนให้ห้องกระจก + ผสมบานครบ",
     cnt(cc, "<RoomComposer") + cnt(cc, "<SubPanesSection") === cnt(cc, "profitOpt={{ manual: profitManual"),
     (cnt(cc, "<RoomComposer") + cnt(cc, "<SubPanesSection")) + " vs " + cnt(cc, "profitOpt={{ manual: profitManual"));
-  ok("ผสมบาน (G1): subPrice ส่งกำไร 3 ก้อนต่อ",
-    cnt(cc, "subPrice(") === cnt(cc, "manual: profitManual, edit: profitEdit, mat: profitPct"),
+  // 29 ต.ค.69: หน้าคิดราคาเรียก subCalc (ขาย/ทุน/ของ ทั้งก้อน) แทน subPrice — ยังต้องส่งกำไร 3 ก้อนเหมือนเดิม
+  ok("ผสมบาน (G1): subCalc ส่งกำไร 3 ก้อนต่อ",
+    cnt(cc, "subCalc(") > 0 && cnt(cc, "subCalc(") === cnt(cc, "manual: profitManual, edit: profitEdit, mat: profitPct"),
     cnt(cc, "subPrice(") + " จุด");
 }
 
