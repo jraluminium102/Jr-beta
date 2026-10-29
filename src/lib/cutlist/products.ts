@@ -1428,8 +1428,11 @@ const sMother = (o: CutInput) => (o.N === 1 ? o.W : o.doorSplit === "แม่-�
 const sChild = (o: CutInput) => (o.N === 1 ? 0 : o.doorSplit === "แม่-ลูก" ? o.W - (o.motherW ?? 0) : o.W / o.N);
 const sChildN = (o: CutInput) => Math.max(o.N - 1, 0);
 const sFrameH = (o: CutInput) => o.H - 3.7;
-const sBattenM = (o: CutInput) => Math.max(0, Math.trunc((sMother(o) - 18) / 3.8));
-const sBattenC = (o: CutInput) => (sChild(o) > 0 ? Math.max(0, Math.trunc((sChild(o) - 18) / 3.8)) : 0);
+// เส้นคาด (เจ้าของสั่ง 29 ต.ค.69): เต็มบาน = (กว้างบาน−18)÷3.8 ปัดทิ้ง · ระบุจำนวนแถบ = กรอกเอง (ต่อฝั่งต่อบาน) · ฝั่ง 2/นอก/ใน
+const sGridN = (o: CutInput) => (o.gridPat === "ระบุจำนวนแถบ" ? Math.max(0, Math.round(Number(o.gridN) || 0)) : -1);
+const sGridSides = (o: CutInput) => (o.gridSide === "ฝั่งนอก" || o.gridSide === "ฝั่งใน" ? 1 : 2);
+const sBattenM = (o: CutInput) => (sGridN(o) >= 0 ? sGridN(o) : Math.max(0, Math.trunc((sMother(o) - 18) / 3.8)));
+const sBattenC = (o: CutInput) => (sChild(o) > 0 ? (sGridN(o) >= 0 ? sGridN(o) : Math.max(0, Math.trunc((sChild(o) - 18) / 3.8))) : 0);
 const sCorrM = (o: CutInput) => Math.ceil(sMother(o) / 10);
 const sCorrC = (o: CutInput) => (sChild(o) > 0 ? Math.ceil(sChild(o) / 10) : 0);
 const sHasSill = (o: CutInput) => o.sill === "มี";
@@ -1441,6 +1444,9 @@ export const SOLID_DOOR: CutSpec = {
   id: "solid_door", name: "บานโซลิด (เปิดทึบ+ลูกฟูก · แม่-ลูก)", stockLen: 600, rails: [],
   opts: [
     { key: "solidLayer", label: "แบบโซลิด", choices: ["โซลิด 2 ชั้น", "โซลิด 1 ชั้น"] },
+    { key: "gridSide", label: "เส้นคาด ติดฝั่ง", choices: ["2 ฝั่ง (นอก+ใน)", "ฝั่งนอก", "ฝั่งใน"] },
+    { key: "gridPat", label: "ลายคาดตาราง", choices: ["เต็มบาน", "ระบุจำนวนแถบ"] },
+    { key: "gridN", label: "จำนวนแถบ (เส้น/ฝั่ง/บาน · เมื่อระบุแถบ)", type: "number" },
     { key: "sill", label: "ธรณี", choices: ["มี", "ไม่มี"] },
     { key: "doorSplit", label: "แบ่งบาน", choices: ["แม่-ลูก", "เท่ากัน"] },
     { key: "motherW", label: "บานแม่ กว้าง (ซม.)", type: "number" },
@@ -1452,7 +1458,7 @@ export const SOLID_DOOR: CutSpec = {
     { key: "childHandle", label: "มือจับใบลูก", choices: ["ไม่ใส่", "คิงโบ ล็อค+กุญแจ", "คิงโบ ดัมมี่+ดัมมี่", "Cmech ล็อค+กุญแจ", "Cmech ดัมมี่+ดัมมี่", "อื่นๆ"] },
     { key: "corrColor", label: "สีลูกฟูก+เส้นคาด", choices: ["ดำ", "ขาว"] },
   ],
-  defaults: { W: 120, H: 279, N: 2, rail: "", honk: false, sill: "มี", doorSplit: "แม่-ลูก", motherW: 80, hwColor: "ขาว", lockType: "ล็อคปกติ", openDir: "เปิดออก", motherHandle: "คิงโบ ล็อค+กุญแจ", childHandle: "ไม่ใส่", corrColor: "ดำ", solidLayer: "โซลิด 2 ชั้น" },
+  defaults: { W: 120, H: 279, N: 2, rail: "", honk: false, sill: "มี", doorSplit: "แม่-ลูก", motherW: 80, gridSide: "2 ฝั่ง (นอก+ใน)", gridPat: "เต็มบาน", gridN: 3, hwColor: "ขาว", lockType: "ล็อคปกติ", openDir: "เปิดออก", motherHandle: "คิงโบ ล็อค+กุญแจ", childHandle: "ไม่ใส่", corrColor: "ดำ", solidLayer: "โซลิด 2 ชั้น" },
   profiles: [
     { name: "วงกบบน F7859", code: "F7859", len: (o) => o.W - 5, qty: () => 1 },
     { name: "วงกบข้าง F7859", code: "F7859", len: (o) => o.H, qty: () => 2 },
@@ -1475,8 +1481,8 @@ export const SOLID_DOOR: CutSpec = {
     // เจ้าของสั่ง 10 ต.ค.69: "เส้นคาดตาราง" = "เส้นกลาง" ซึ่งสโตร์มีครบ 8 สี (JR01677-JR01684)
     //   เดิมผูก sku ดำ/ขาว ตามช่อง "สีลูกฟูก" → งานสีอื่น (เทาซาฮาร่า/ลายไม้) หักของผิดสีเงียบ ๆ
     //   รหัสกลาง "เส้นกลาง" ให้ matchStock ไล่ชื่อแล้วกรองด้วย "สีของงาน" เองตามปกติ
-    { name: "เส้นคาด บานแม่ (2ฝั่ง)", code: "เส้นกลาง", len: sFrameH, qty: (o) => sBattenM(o) * 2 },
-    { name: "เส้นคาด บานลูก (2ฝั่ง)", code: "เส้นกลาง", len: sFrameH, qty: (o) => sBattenC(o) * 2 * sChildN(o) },
+    { name: (o) => "เส้นคาด บานแม่ (" + sGridSides(o) + "ฝั่ง)", code: "เส้นกลาง", len: sFrameH, qty: (o) => sBattenM(o) * sGridSides(o) },
+    { name: (o) => "เส้นคาด บานลูก (" + sGridSides(o) + "ฝั่ง)", code: "เส้นกลาง", len: sFrameH, qty: (o) => sBattenC(o) * sGridSides(o) * sChildN(o) },
   ],
   // ⑤ อุปกรณ์ บานโซลิด (มี SKU · เงื่อนไขสี ดำ↔ขาว + ตลับ/ทิศ/มือจับแม่-ลูก) — พอร์ตตรงไฟล์
   hardware: [

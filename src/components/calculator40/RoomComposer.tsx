@@ -460,7 +460,8 @@ function ColsEditor({
               {(prod?.specOpts ?? []).map((o: any) => {
                 // ฟิลด์ label ขึ้นต้น "[สลับ]" ใช้เฉพาะตอนเลือก gslat='ระแนงสลับ' — ไม่งั้นล็อกไว้กันกดมั่ว (25 ส.ค.69)
                 const isAltField = typeof o.label === "string" && o.label.startsWith("[สลับ]");
-                const altLocked = isAltField && paneSpec(prod, sel).gslat !== "ระแนงสลับ";
+                // showIf: {key,val} — ล็อกช่องจนกว่าช่องแม่จะเป็นค่านั้น (ชุดเดียวกับหน้า G1)
+                const altLocked = (isAltField && paneSpec(prod, sel).gslat !== "ระแนงสลับ") || (o.showIf && paneSpec(prod, sel)[o.showIf.key] !== o.showIf.val);
                 // specOpts ตัวเลข (ขนาดประตู/ช่องปูนของ Shower) — ต้องกรอกได้เหมือน G1 ไม่งั้นคิดจากค่าตั้งต้นเสมอ
                 if (o.type === "number") {
                   return (

@@ -1377,5 +1377,33 @@ console.log("\n═══ หลายด้าน + หลังคาผสม 
   }
   ok("กลาสเฮ้าส์หลายด้าน ไม่ได้เพิ่ม (ไม่ได้สั่ง)", !PRODUCTS.glasshouse_multi.addons.includes("roof_2nd"));
 }
+
+// ── บานโซลิด เส้นคาดตาราง เลือกฝั่ง/ลายได้ (เจ้าของสั่ง 29 ต.ค.69) ──
+//   150×200 1 บาน: เต็มบาน = trunc((150−18)÷3.8) = 34 เส้น/ฝั่ง · 2 ฝั่ง = 68 · ฝั่งเดียว = 34 · ระบุ 3 แถบ 2 ฝั่ง = 6
+console.log("\n═══ บานโซลิด เส้นคาดตาราง ═══");
+{
+  // นับ "ชิ้น" (pieces) ไม่ใช่ "เส้นสต็อก 6 ม." (qty)
+  const grid = (r) => r.lines.filter((l) => /เส้นคาดตาราง/.test(l.name)).reduce((s, l) => s + (Number(l.pieces) || 0), 0);
+  const run = (spec) => C("bansolid", { w: 150, h: 200, p: 1, form: "มีธรณี", spec: { solidLayer: "โซลิด 2 ชั้น", ...spec } });
+  const base = run({});
+  ok("ค่าตั้งต้น (เต็มบาน 2 ฝั่ง) = 68 เส้น (สูตรเดิม)", grid(base) === 68, String(grid(base)));
+  const one = run({ gridSide: "ฝั่งนอก" });
+  ok("ฝั่งนอก อย่างเดียว = 34 เส้น · ทุนถูกลง", grid(one) === 34 && one.cost.total < base.cost.total, `${grid(one)} / ${one.cost.total}`);
+  const inn = run({ gridSide: "ฝั่งใน" });
+  ok("ฝั่งใน = ฝั่งนอก ราคาเท่ากัน", grid(inn) === 34 && inn.cost.total === one.cost.total, `${inn.cost.total} vs ${one.cost.total}`);
+  const n3 = run({ gridPat: "ระบุจำนวนแถบ", gridN: "3" });
+  ok("ระบุ 3 แถบ 2 ฝั่ง = 6 เส้น", grid(n3) === 6, String(grid(n3)));
+  const n5one = run({ gridPat: "ระบุจำนวนแถบ", gridN: "5", gridSide: "ฝั่งใน" });
+  ok("ระบุ 5 แถบ ฝั่งเดียว = 5 เส้น", grid(n5one) === 5, String(grid(n5one)));
+  const l1 = run({ solidLayer: "โซลิด 1 ชั้น", gridPat: "ระบุจำนวนแถบ", gridN: "2", gridSide: "ฝั่งนอก" });
+  ok("โซลิด 1 ชั้น ก็เลือกได้ (2 แถบ ฝั่งนอก = 2 เส้น)", grid(l1) === 2, String(grid(l1)));
+  const two = run({ p: 2 });
+  const n3p2 = C("bansolid", { w: 150, h: 200, p: 2, form: "มีธรณี", spec: { gridPat: "ระบุจำนวนแถบ", gridN: "3" } });
+  ok("2 บาน ระบุ 3 แถบ 2 ฝั่ง = 3×2×2 = 12 เส้น", grid(n3p2) === 12, String(grid(n3p2)));
+  // ช่องจำนวนแถบ ล็อกไว้จนกว่าจะเลือก "ระบุจำนวนแถบ"
+  const gn = PRODUCTS.bansolid.specOpts.find((o) => o.key === "gridN");
+  ok("ช่องจำนวนแถบ ผูกกับ ลายคาดตาราง=ระบุจำนวนแถบ", gn && gn.showIf && gn.showIf.key === "gridPat" && gn.showIf.val === "ระบุจำนวนแถบ");
+  void two;
+}
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);

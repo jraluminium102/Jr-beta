@@ -113,6 +113,8 @@ const QUOTE_SPEC: Record<string, "always" | "nondefault"> = {
 };
 const SKIP_SPEC_DETAIL: [string, string][] = [
   ["bottomrail", "รางกันน้ำ"], // รางกันน้ำ = ค่าปกติ · "รางเตี้ย (งานใน)" ยังพิมพ์
+  // บานโซลิด: เส้นคาดเต็มบาน 2 ฝั่ง = ค่าปกติ · ฝั่งเดียว/ระบุแถบ ยังพิมพ์ (29 ต.ค.69)
+  ["gridSide", "2 ฝั่ง (นอก+ใน)"], ["gridPat", "เต็มบาน"],
   // บานเลื่อนรางบน: มือจับ "เมโทร/อบขาว" = ค่ามาตรฐาน ไม่ต้องขึ้นใบเสนอ · เลือก Align หรือสีดำ ค่อยพิมพ์
   ["tsHandleBrand", "เมโทร"], ["tsHandleColor", "อบขาว"],
   // หลังคาเลื่อน: ส่วนติดตาย 0 = ผืนเลื่อนล้วน (ค่าปกติ) ไม่ต้องขึ้นใบเสนอ · กรอกมากกว่า 0 ค่อยพิมพ์
@@ -906,8 +908,11 @@ export default function Calculator40Client({ customers = [], priceOverride, line
       // ฟิลด์ "[สลับ]" ใช้เฉพาะระแนงสลับ — ไม่ใช่ระแนงผสมแล้วยังพิมพ์ลงใบ = ลูกค้าอ่านแล้วงง (และสูตรก็ไม่ได้คิดเงินให้)
       const isAlt = typeof o.label === "string" && o.label.startsWith("[สลับ]");
       if (isAlt && spec.gslat !== "ระแนงสลับ") return;
+      if (o.showIf && spec[o.showIf.key] !== o.showIf.val) return;   // ช่องลูกที่ถูกล็อกอยู่ ไม่พิมพ์
       const lb = String(o.label).replace(/^\[สลับ\]\s*/, "");   // ป้าย [สลับ] เป็นของหลังบ้าน ไม่ต้องพิมพ์ให้ลูกค้าเห็น
-      const vt = o.labels?.[v] ?? v;                            // โชว์หน่วยตามที่ตั้งไว้ (กล่อง 1×1.6″ · 1×5 ซม.) ไม่ใช่คีย์ดิบ
+      let vt = o.labels?.[v] ?? v;                              // โชว์หน่วยตามที่ตั้งไว้ (กล่อง 1×1.6″ · 1×5 ซม.) ไม่ใช่คีย์ดิบ
+      // บานโซลิด ลายคาดตาราง "ระบุจำนวนแถบ" → พิมพ์เป็นจำนวนจริง (ช่องตัวเลข gridN ไม่พิมพ์เอง)
+      if (prod.id === "bansolid" && o.key === "gridPat" && v === "ระบุจำนวนแถบ") vt = `${Math.max(0, Math.round(Number(spec.gridN) || 0))} แถบ`;
       if (o.priced) workLines.push(`- ${lb}: ${vt}`);
       else specDetailLines.push(`- ${lb}: ${vt}`);
     });
@@ -1432,7 +1437,8 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                 {(prod.specOpts ?? []).filter((o: any) => !/^(side\d|joint\d)/.test(o.key)).map((o: any) => {
                   // ฟิลด์ label ขึ้นต้น "[สลับ]" ใช้เฉพาะตอนเลือก gslat='ระแนงสลับ' — ไม่งั้นล็อกไว้กันกดมั่ว (25 ส.ค.69)
                   const isAltField = typeof o.label === "string" && o.label.startsWith("[สลับ]");
-                  const altLocked = isAltField && spec.gslat !== "ระแนงสลับ";
+                  // showIf: {key,val} — ล็อกช่องจนกว่าช่องแม่จะเป็นค่านั้น (เช่น จำนวนแถบ เฉพาะ ลายคาดตาราง=ระบุจำนวนแถบ)
+                  const altLocked = (isAltField && spec.gslat !== "ระแนงสลับ") || (o.showIf && spec[o.showIf.key] !== o.showIf.val);
                   // specOpts type:'number' → ช่องกรอกตัวเลข (มิติเพิ่ม เช่น บานเปิด/ช่องปูน Shower · ลึกตู้)
                   if (o.type === 'number') {
                     return (

@@ -155,6 +155,10 @@ export function cutInputFromRecipe(recipe: any, opts?: { rawCompare?: boolean })
         doorSplit: "เท่ากัน",
         motherW: Math.round((W / Math.max(1, N)) * 10) / 10,
         solidLayer: recipe.spec?.solidLayer === "โซลิด 1 ชั้น" ? "โซลิด 1 ชั้น" : "โซลิด 2 ชั้น",   // ใบเก่าไม่มี = 2 ชั้น (แบบเดียวที่เคยมี)
+        // เส้นคาด (29 ต.ค.69) — ใบเก่าไม่มี = เต็มบาน 2 ฝั่ง (สูตรเดิม)
+        gridSide: String(recipe.spec?.gridSide ?? "2 ฝั่ง (นอก+ใน)"),
+        gridPat: recipe.spec?.gridPat === "ระบุจำนวนแถบ" ? "ระบุจำนวนแถบ" : "เต็มบาน",
+        gridN: Math.max(0, Math.round(Number(recipe.spec?.gridN) || 0)),
       } };
       break;
     }
