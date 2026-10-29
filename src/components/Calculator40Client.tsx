@@ -15,6 +15,14 @@ import { useUnsavedWarning } from "@/lib/useUnsavedWarning";
 
 /** ตัวเลขจำนวน — ตัดทศนิยมเหลือ 2 ตำแหน่ง (จำนวนเส้นอลูเป็นทศนิยมได้ เช่น 1.22 เส้น) */
 const r2 = (n: unknown) => Math.round((Number(n) || 0) * 100) / 100;
+// ทุนของบรรทัดในตาราง "ค่าของ" — ออปชั่นเหมา R3.9 (est) ทุน = ขาย ÷ 2 · ออปชั่นที่มีทุนจริง (มอเตอร์) ใช้ cost · ของทั่วไป = amount
+//   เจ้าของสั่ง 29 ต.ค.69: ของที่ยังเหมา (คอมโพสิต/เกล็ด Z ฯลฯ) "ไม่แก้ไม่ว่า แต่ต้องเขียนแจกแจงในราคาทุน"
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const lineCost = (l: any) => (l?.cat === "addon" || l?.cat === "panel") ? (Number(l.cost) || 0) : (Number(l?.amount) || 0);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const lineUnitCost = (l: any) => { const q = Number(l?.qty) || 0; return q > 0 ? lineCost(l) / q : lineCost(l); };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const lineTag = (l: any) => l?.est ? ` — เหมา ทุนประมาณ = ขาย ${Math.round(Number(l.amount) || 0).toLocaleString("th-TH")} ÷ 2` : (l?.cat === "addon" && l?.cost != null) ? " — ทุนจริงออปชั่น" : "";
 import type { Customer } from "@/lib/types";
 // @ts-expect-error — engine เป็น ESM JS ล้วน (คงไฟล์เดิมเป๊ะเพื่อ parity 63/63)
 import { computeCost, r41Nodes } from "@/lib/calculator40/engine.mjs";
@@ -1864,14 +1872,14 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                                 const code = l.sku || l.code || "";
                                 const noPrice = !(Number(l.unitPrice) > 0);
                                 return (
-                                  <tr key={i} className={"border-t border-line/50 " + (noPrice ? "bg-amber-50" : "")}>
-                                    <td className="py-1 pr-2">{l.name}</td>
+                                  <tr key={i} className={"border-t border-line/50 " + (noPrice ? "bg-amber-50" : l.est ? "bg-violet-50" : "")}>
+                                    <td className="py-1 pr-2">{l.name}{lineTag(l) && <span className="text-[11px] text-violet-700">{lineTag(l)}</span>}</td>
                                     <td className="font-mono text-[11px] text-ink-3">{code || "—"}</td>
                                     <td className="text-right tabular-nums">{r2(l.qty)} {l.unit || ""}</td>
                                     <td className={"text-right tabular-nums " + (noPrice ? "text-red-600 font-bold" : "")}>
-                                      ฿{baht(l.unitPrice)}
+                                      ฿{baht(lineUnitCost(l))}
                                     </td>
-                                    <td className="text-right tabular-nums">฿{baht(l.amount)}</td>
+                                    <td className="text-right tabular-nums">฿{baht(lineCost(l))}</td>
                                   </tr>
                                 );
                               })}
@@ -1885,12 +1893,12 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                                   const code = l.sku || l.code || "";
                                   const noPrice = !(Number(l.unitPrice) > 0);
                                   return (
-                                    <tr key={`sb${si}-${i}`} className={"border-t border-line/50 " + (noPrice ? "bg-amber-50" : "")}>
-                                      <td className="py-1 pr-2 pl-3">{l.name}</td>
+                                    <tr key={`sb${si}-${i}`} className={"border-t border-line/50 " + (noPrice ? "bg-amber-50" : l.est ? "bg-violet-50" : "")}>
+                                      <td className="py-1 pr-2 pl-3">{l.name}{lineTag(l) && <span className="text-[11px] text-violet-700">{lineTag(l)}</span>}</td>
                                       <td className="font-mono text-[11px] text-ink-3">{code || "—"}</td>
                                       <td className="text-right tabular-nums">{r2(l.qty)} {l.unit || ""}</td>
-                                      <td className={"text-right tabular-nums " + (noPrice ? "text-red-600 font-bold" : "")}>฿{baht(l.unitPrice)}</td>
-                                      <td className="text-right tabular-nums">฿{baht(l.amount)}</td>
+                                      <td className={"text-right tabular-nums " + (noPrice ? "text-red-600 font-bold" : "")}>฿{baht(lineUnitCost(l))}</td>
+                                      <td className="text-right tabular-nums">฿{baht(lineCost(l))}</td>
                                     </tr>
                                   );
                                 }),
@@ -1904,6 +1912,11 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                             </tfoot>
                           </table>
                         </div>
+                        {result.lines.some((l: any) => l.est) && (
+                          <p className="text-[11px] text-violet-700 mt-1.5">
+                            แถวสีม่วง = ของที่ยังคิดแบบเหมา (ยังไม่มีทุนของจริงในไฟล์ เช่น คอมโพสิต / เกล็ด Z / ของเสริม R3.9) — ทุนในตารางนี้ประมาณจากราคาขาย ÷ 2
+                          </p>
+                        )}
                         {(result as any)?.hwMissing?.length > 0 && (
                           <p className="text-[11px] text-red-700 mt-1.5">
                             ⚠ แถวสีเหลือง = ยังไม่มีราคาในสโตร์ คิดเป็น ฿0 (ค่าของต่ำกว่าจริง) — ไปตั้งราคาที่หน้าสโตร์
@@ -2025,20 +2038,20 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                             <thead><tr className="text-left text-ink-3"><th className="py-1">รายการ</th><th className="text-right">จำนวน</th><th className="text-right">฿</th></tr></thead>
                             <tbody>
                               {result.lines.map((l: any, i: number) => (
-                                <tr key={i} className="border-t border-black/5">
-                                  <td className="py-1">{l.name} <span className="text-ink-3">({l.cat})</span></td>
+                                <tr key={i} className={"border-t border-black/5" + (l.est ? " bg-violet-50" : "")}>
+                                  <td className="py-1">{l.name} <span className="text-ink-3">({l.cat})</span>{lineTag(l) && <span className="text-[11px] text-violet-700">{lineTag(l)}</span>}</td>
                                   <td className="text-right tabular-nums">{baht(l.qty)} {l.unit}</td>
-                                  <td className="text-right tabular-nums">{baht(l.amount)}</td>
+                                  <td className="text-right tabular-nums">{baht(lineCost(l))}</td>
                                 </tr>
                               ))}
                               {/* BOM ของบานย่อย (ผสมบาน) */}
                               {subLinesAll.map((sb, si) => (sb.lines?.length ? [
                                 <tr key={`sbh${si}`} className="bg-sky-50"><td className="py-1 font-semibold text-sky-900" colSpan={2}>บานย่อย: {sb.desc}</td><td className="text-right tabular-nums font-semibold text-sky-900">{baht(sb.cost)}</td></tr>,
                                 ...sb.lines.map((l: any, i: number) => (
-                                  <tr key={`sb${si}-${i}`} className="border-t border-black/5">
-                                    <td className="py-1 pl-3">{l.name} <span className="text-ink-3">({l.cat})</span></td>
+                                  <tr key={`sb${si}-${i}`} className={"border-t border-black/5" + (l.est ? " bg-violet-50" : "")}>
+                                    <td className="py-1 pl-3">{l.name} <span className="text-ink-3">({l.cat})</span>{lineTag(l) && <span className="text-[11px] text-violet-700">{lineTag(l)}</span>}</td>
                                     <td className="text-right tabular-nums">{baht(l.qty)} {l.unit}</td>
-                                    <td className="text-right tabular-nums">{baht(l.amount)}</td>
+                                    <td className="text-right tabular-nums">{baht(lineCost(l))}</td>
                                   </tr>
                                 )),
                               ] : null))}

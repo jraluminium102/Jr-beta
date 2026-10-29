@@ -1242,15 +1242,20 @@ export function computeCost(PB, prod, opt) {
         if (r.cost != null) addonCostExplicit += r.cost;     // ทุนจริง (มอเตอร์ ฯลฯ)
         else addonSellImplicit += r.amount;                  // R3.9 → ÷2
         // cost = ทุนจริงของชุดออโต้ (ชีตราคาออโต้) — ติดไปกับบรรทัดด้วย ให้หน้าจอ/เทสตรวจได้ว่าตรงไฟล์
-        lines.push({ cat: 'addon', name: r.label, qty: r.qty || 1, unit: r.unit || '', unitPrice: r.unitPrice || r.amount, amount: round2(r.amount), ...(r.cost != null ? { cost: round2(r.cost) } : {}) });
+        //   ไม่มีทุนจริง (เหมา R3.9) → cost = ขาย ÷ 2 + est:true — ตาราง "ค่าของ" ต้องแจกแจงให้เห็น (เจ้าของสั่ง 29 ต.ค.69)
+        lines.push({ cat: 'addon', name: r.label, qty: r.qty || 1, unit: r.unit || '', unitPrice: r.unitPrice || r.amount, amount: round2(r.amount), ...(r.cost != null ? { cost: round2(r.cost) } : { cost: round2(r.amount / 2), est: true }) });
       }
     }
   }
   // (6b) ค่าทาสีผนังเพิ่มเติม (R3.9 wallpaintprice · กรอกมือ · sell-based · default 0 = ไม่มีผล) — ผนัง G3
   const _wpp = +((opt.spec || {}).wallpaintprice) || 0;
-  if (_wpp > 0) { lines.push({ cat: 'addon', name: 'ค่าทาสีผนังเพิ่มเติม (R3.9)', qty: 1, unit: 'งาน', unitPrice: _wpp, amount: _wpp }); addonTotal += _wpp; addonSellImplicit += _wpp; }
-  // #1 แผ่นคอมโพสิต/ลูกฟูก แทนกระจก (sell-based) — บวกเข้ายอดขาย + ถอดทุนที่ markup กลาง (เหมือน add-on R3.9)
-  if (panelSell > 0) { addonTotal += panelSell; addonSellImplicit += panelSell; }
+  if (_wpp > 0) { lines.push({ cat: 'addon', name: 'ค่าทาสีผนังเพิ่มเติม (R3.9)', qty: 1, unit: 'งาน', unitPrice: _wpp, amount: _wpp, cost: round2(_wpp / 2), est: true }); addonTotal += _wpp; addonSellImplicit += _wpp; }
+  // #1 แผ่นคอมโพสิต/เกล็ด Z แทนกระจก (sell-based) — บวกเข้ายอดขาย + ถอดทุนที่ markup กลาง (เหมือน add-on R3.9)
+  //   29 ต.ค.69: ต้องมีบรรทัดในตาราง "ค่าของ" (cat 'panel' ไม่ใช่ 'addon' → ไม่ไปโผล่เป็นรายการบนใบเสนอ · ราคาแฝงในราคาสินค้าเหมือนเดิม)
+  if (panelSell > 0) {
+    addonTotal += panelSell; addonSellImplicit += panelSell;
+    lines.push({ cat: 'panel', name: glassType + ' แทนกระจก (เหมา R3.9)', qty: round2(glassArea), unit: 'ตร.ม.', unitPrice: round2(panelSell / Math.max(glassArea, 1e-9)), amount: round2(panelSell), cost: round2(panelSell / 2), est: true });
+  }
   //   รุ่นที่มี "ขายขั้นต่ำ/ชุด" (Shower) → บวกออปชั่นหลังเช็คขั้นต่ำ (R3.9) ไม่ให้ขั้นต่ำ 14,000 ดูดส่วนของออปชั่น (เข้ามุม +3,000 / อุปกรณ์ดำ +4,000)
   //   13 ต.ค.69 ตาม R3.9: เดิมบวกก่อนเช็คขั้นต่ำ → บานตาย 80×200 เลือกเข้ามุมได้ขายเพิ่มแค่ 2,000
   const addonAfterFloor = !!((R41N ? (r41AnyEdit ? null : SELL_RAW) : SELLM) || {}).floor;
