@@ -75,7 +75,9 @@ export function packBars(lengths, stockLen) {
 export function barsNeeded(segLen, count, stockLen = STOCK_LEN, waste = false, alwaysWaste = false) {
   if (!(segLen > 0) || !(count > 0)) return 0;
   if (waste) {
-    if (!alwaysWaste && Math.abs(segLen - stockLen) < 1e-9) return count;
+    // 30 ต.ค.69 เจ้าของเคาะ: ท่อนยาวเท่าเส้นพอดี (6.40 ม.) ก็เผื่อเศษ 1.3 เหมือนขนาดอื่น ("เอากฎเหมือนบานส่วนมาก")
+    //   เดิมยกเว้นไม่คูณ → กว้าง 6.40 ถูกกว่า 6.39 (E-series −9%) · alwaysWaste คงไว้เพื่อความเข้ากันได้ (ผลเท่ากันแล้ว)
+    void alwaysWaste;
     return (segLen * count / stockLen) * WASTE_FACTOR;
   }
   const fit = Math.floor(stockLen / segLen);
@@ -450,6 +452,16 @@ export function computeCost(PB, prod, opt) {
   const lookLines = [];
   if (lookLow) lookLines.push({ ...LOOK_LINE, name: 'ลูกฟูก2ทาง (ทึบล่าง)', seg: lookLow.h, count: Math.ceil(lookLow.w * 100 / 10 - 1e-9) });
   if (lookGlass > 0 && H > 0) lookLines.push({ ...LOOK_LINE, name: 'ลูกฟูก2ทาง (แทนกระจก)', seg: H, count: Math.ceil(lookGlass / (H * 0.1) - 1e-9) });
+  // ── คาดตาราง = ของจริง (เจ้าของเคาะ 30 ต.ค.69 "ถอดจริง") — เส้นกลาง (รหัสกลาง 'เส้นกลาง' · ราคาตามสี JR01677-84) ติด 2 ฝั่ง (ใน/นอก)
+  //   เดิมเหมา R3.9 ฿/ม. ตามสี (200–350) · จำนวนเส้นนอน/ตั้ง + ความยาว กรอกเหมือนเดิม · เส้นโค้งยังเหมา 3,000/เส้น (computeAddon grid)
+  //   รุ่นขายเหมา (lookLump) คงเหมาเดิมทั้งหมด
+  const _gA = (opt.addons || {}).grid || {};
+  if (lookReal && ((_gA.nh | 0) > 0 || (_gA.nv | 0) > 0)) {
+    const gh = +_gA.hLen > 0 ? +_gA.hLen : W, gv = +_gA.vLen > 0 ? +_gA.vLen : H;
+    const GRID_LINE = { code: 'เส้นกลาง', priceCode: 'JR01679', price: 140, kg: 0, stockLen: 6.0, gridLine: true };
+    if ((_gA.nh | 0) > 0 && gh > 0) lookLines.push({ ...GRID_LINE, name: 'เส้นคาดตาราง แนวนอน (2 ฝั่ง)', seg: gh, count: (_gA.nh | 0) * 2 });
+    if ((_gA.nv | 0) > 0 && gv > 0) lookLines.push({ ...GRID_LINE, name: 'เส้นคาดตาราง แนวตั้ง (2 ฝั่ง)', seg: gv, count: (_gA.nv | 0) * 2 });
+  }
   const ALU = [...((opt.aluLines && opt.aluLines.length) ? opt.aluLines : (prod.alu || [])), ...lookLines];
   const poolShare = new Map();
   if (prod.poolBars || prod.packBars) {
@@ -1118,6 +1130,7 @@ export function computeCost(PB, prod, opt) {
     const netT = r41Edit.mat ? null : r41Net(PB, r41Id, vk);
     const netDiv = netT != null ? 1 - 30 / 130 - netT / 100 : 0;
     let mPct;
+    let netMatBase = null;   // ฐานค่าของขาย (ยังไม่ปัด) ตามสูตรกำไรสุทธิ — ใช้ปัดรอบเดียวที่ยอดรวม (30 ต.ค.69)
     if (netDiv > 0 && costTotal > 0) {
       r41NetLock = true;
       const baseLab = r41Sell(nP, 'cP', 'sP', laborProd) + r41Sell(nI, 'cI', 'sI', laborInstall);
@@ -1134,9 +1147,14 @@ export function computeCost(PB, prod, opt) {
       }
       colourExtraInfo = colourExtra > 0 ? { cost: colourExtra, sell: round2(colourExtra * STOCK_COLOR_SELL_MULT), mult: STOCK_COLOR_SELL_MULT } : null;
       // ปัดขึ้นทีละ 0.1% — % ที่โชว์ × ทุน = ราคาจริงเป๊ะ และกำไรสุทธิไม่ต่ำกว่าเป้าจากการปัด
-      mPct = Math.ceil((((costTotal - colourExtra + bomFixCost + laborProd + laborInstall) / netDiv - baseLab - labDef - bomFixSell + colourExtra * STOCK_COLOR_SELL_MULT) / costTotal - 1) * 1000 - 1e-9) / 10;
+      netMatBase = (costTotal - colourExtra + bomFixCost + laborProd + laborInstall) / netDiv - baseLab - labDef - bomFixSell + colourExtra * STOCK_COLOR_SELL_MULT;
+      mPct = Math.ceil((netMatBase / costTotal - 1) * 1000 - 1e-9) / 10;
     } else mPct = r41Edit.mat ? pctMat : r41MatPct(PB, r41Id, vk, area, P);
-    const matRaw = costTotal * (1 + mPct / 100);
+    // 30 ต.ค.69 เจ้าของเคาะ "ปัดรอบเดียว": ฐานค่าของขายใช้ค่าเป๊ะจากสูตรกำไรสุทธิ (ไม่ปัด % ขึ้น 0.1 ก่อน)
+    //   แล้วปัดร้อยครั้งเดียวที่ยอดรวม → ขายรวม = ceil100(ทุนรวม ÷ ตัวหาร) (เดิมปัดซ้อน แพงเกินสูตร 100 บางเคส)
+    //   % ค่าของที่โชว์ = ถอยจากฐานจริง (ทศนิยม 1 ตำแหน่ง · ไว้ดู ไม่ใช่ตัวกำหนดราคา) · แก้ % ค่าแรงเอง ค่าของยังนิ่ง
+    const matRaw = netMatBase != null ? netMatBase : costTotal * (1 + mPct / 100);
+    if (netMatBase != null && costTotal > 0) mPct = Math.round((matRaw / costTotal - 1) * 1000) / 10;
     sellBeforeLabor = ceil100(matRaw);
     sellMfgOnly = ceil100(matRaw + labP);
     sellWithInstall = ceil100(matRaw + labP + labI);
@@ -1260,6 +1278,17 @@ export function computeCost(PB, prod, opt) {
   // (6b) ค่าทาสีผนังเพิ่มเติม (R3.9 wallpaintprice · กรอกมือ · sell-based · default 0 = ไม่มีผล) — ผนัง G3
   const _wpp = +((opt.spec || {}).wallpaintprice) || 0;
   if (_wpp > 0) { lines.push({ cat: 'addon', name: 'ค่าทาสีผนังเพิ่มเติม (R3.9)', qty: 1, unit: 'งาน', unitPrice: _wpp, amount: _wpp, cost: round2(_wpp / 2), est: true }); addonTotal += _wpp; addonSellImplicit += _wpp; }
+  // ผนังอลูลูกฟูก (prod.sheetBakeFin): คิดค่าอบสีเฉพาะ "สีที่ต้องอบ" (สีอบพิเศษ/ลายไม้อบพิเศษ) ด้วยเรต R3.9 ค่าสีลูกฟูก/ตร.ม. · คอมโพสิตไม่คิด
+  //   เจ้าของเคาะ 30 ต.ค.69 "ลูกฟูกคิดค่าอบสีถ้ามีอบ ส่วนคอมโพสิตไม่คิด" — ใช้ทั้งหน้าหลักและห้องกระจก (G6 เลิกบวก frameColorRate ให้สองรุ่นนี้)
+  //   cat 'panel' = อยู่ในตารางค่าของ แต่ไม่ขึ้นเป็นรายการบนใบเสนอ (สีขึ้นที่ "อลูมิเนียม สี…" อยู่แล้ว)
+  if (prod.sheetBakeFin && (color === 'special' || color === 'woodSpecial') && area > 0) {
+    const fin = corrugatedFinRate(color, opt.colorKey);
+    if (fin > 0) {
+      const amt = round2(fin * area);
+      lines.push({ cat: 'panel', name: 'ค่าอบสีแผ่นลูกฟูก ' + colorDisp + ' (เหมา R3.9)', qty: round2(area), unit: 'ตร.ม.', unitPrice: fin, amount: amt, cost: round2(amt / 2), est: true });
+      addonTotal += amt; addonSellImplicit += amt;
+    }
+  }
   // #1 แผ่นคอมโพสิต/เกล็ด Z แทนกระจก (sell-based) — บวกเข้ายอดขาย + ถอดทุนที่ markup กลาง (เหมือน add-on R3.9)
   //   29 ต.ค.69: ต้องมีบรรทัดในตาราง "ค่าของ" (cat 'panel' ไม่ใช่ 'addon' → ไม่ไปโผล่เป็นรายการบนใบเสนอ · ราคาแฝงในราคาสินค้าเหมือนเดิม)
   if (panelSell > 0) {
@@ -1321,7 +1350,8 @@ export function computeCost(PB, prod, opt) {
   //   คิดจากยอด "ขายผลิตอย่างเดียว" ที่รวมของเสริมแล้ว → ราคาที่ลูกค้าเห็น = ราคาผลิต − 10%
   //   ⚠ sellMfgOnly ตัวเดิมต้องคงไว้เป็นค่าตามชีตคิดทุน (ด่าน verify-r40 เทียบตัวนี้) — ส่วนลดเป็นชั้นนโยบาย แยกกัน
   const wsPct = PB.WHOLESALE_DISCOUNT_PCT != null ? Number(PB.WHOLESALE_DISCOUNT_PCT) : 0;
-  const sellMfgOnlyNet = wsPct > 0 ? ceil100(sellMfgOnly * (1 - wsPct / 100)) : sellMfgOnly;
+  //   30 ต.ค.69 เจ้าของเคาะ: ส่วนลดขายส่ง "ยกเว้นมอเตอร์" — ก้อนมอเตอร์ขายฟิก (fixedSellTotal) ไม่โดนลด
+  const sellMfgOnlyNet = wsPct > 0 ? ceil100((sellMfgOnly - fixedSellTotal) * (1 - wsPct / 100)) + fixedSellTotal : sellMfgOnly;
   // ทุนออปชั่น = ทุนจริง(มอเตอร์) + ถอดทุนจากราคาขาย R3.9 ตาม markup กลาง (÷(1+กำไร%) · เดิม ÷2 ตายตัว=ผูก 100% · แก้ 1ก.ค. ให้ขยับ markup ไม่เพี้ยน) · ที่ 100% = เท่าเดิม
   //   13 ต.ค.69 (ออดิตออปชั่น): กลับไป ÷2 ตายตัวทุกรุ่น — ตั้งแต่ขายด้วยตาราง R4.1 แล้ว PB.PROFIT.mat ไม่ใช่กำไรค่าของจริงอีก
   //   (ของจริงอยู่ที่ R41.matPct) ทำให้ "ทุน" ของออปชั่นเหมาตัวเดียวกันต่างกันตามรุ่น (ยูโร ÷1.8 · SlimLux ÷2.2 · SMS ÷2) ทั้งที่เป็นของชิ้นเดียวกัน
@@ -1784,6 +1814,11 @@ export function computeAddon(id, sel, ctx) {
     // เรตตามสีเฟรมอัตโนมัติ จนกว่าผู้ใช้กดเลือกเอง (rateTouched) — บั๊กเดิม 13 ต.ค.69: UI โชว์ 300 สีพิเศษ แต่ engine คิด 200 เสมอ
     //   (UI ส่ง rate มาเฉพาะตอนกดเลือก · engine เลย fallback 200 ทุกสี) → ตารางเรตย้ายมาอยู่ที่นี่แหล่งเดียว UI import ไปใช้
     const nh = (sel.nh | 0), nv = (sel.nv | 0), nc = (sel.nc | 0);
+    // 30 ต.ค.69: เส้นนอน/ตั้ง = ของจริงในกองอลู (gridLines ใน computeCost) → ตรงนี้เหลือแค่เส้นโค้ง (เหมา 3,000) · รุ่นขายเหมายังเหมาทั้งชุด
+    if (!ctx.lookLump) {
+      if (nc <= 0) return null;
+      return { label: 'คาดตาราง เส้นโค้ง ' + nc + ' เส้น (R3.9)', qty: nc, unit: 'เส้น', unitPrice: 3000, amount: nc * 3000 };
+    }
     const rate = sel.rateTouched && sel.rate > 0 ? +sel.rate : gridRateFor((ctx.opt && ctx.opt.color) || 'white', ctx.opt && ctx.opt.colorKey);
     // custom ความยาวเส้น (ม.) — เจ้าของเคาะ 17ก.ค.69: ตั้งขนาดเองได้ · ไม่ตั้ง = อัตโนมัติตามกว้าง/สูงบาน (พฤติกรรมเดิม · parity)
     const hLen = +sel.hLen > 0 ? +sel.hLen : W;

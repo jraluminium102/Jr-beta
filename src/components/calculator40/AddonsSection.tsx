@@ -266,10 +266,17 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, co
             <NumberInput value={g.vLen || 0} onChange={(v) => setObj("grid", { vLen: v })} placeholder={fmtNum(hM)} />
           </div>
         </div>
+        {/* 30 ต.ค.69 เจ้าของเคาะ "ถอดจริง": เส้นนอน/ตั้ง = เส้นกลางจริง ติด 2 ฝั่ง เข้า "ค่าของ" ราคาตามสี · รุ่นขายเหมา (R3.9 สำรอง/ตู้/ม่านซิป) ยังเหมา ฿/ม. */}
+        {!(prod?.sellR39 || prod?.sellDirect || prod?.sellCabinet || prod?.sellZip) ? (
+          <p className="text-[11px] text-ink-3 mt-1.5">
+            ถอดเส้นจริง: เส้นกลาง นอน {g.nh || 0}×{fmtNum(hLen)} ม. + ตั้ง {g.nv || 0}×{fmtNum(vLen)} ม. × 2 ฝั่ง = {fmtNum(len * 2)} ม. (เข้า &quot;ค่าของ&quot; ราคาเส้นตามสี){(g.nc || 0) > 0 ? ` · เส้นโค้ง ${g.nc} × 3,000` : ""}
+          </p>
+        ) : (
         <p className="text-[11px] text-ink-3 mt-1.5">
           สูตร: (นอน {g.nh || 0}×{fmtNum(hLen)} + ตั้ง {g.nv || 0}×{fmtNum(vLen)}) = {fmtNum(len)} ม. × {rate} = {fmt(len * rate)} บาท
         </p>
-        <div className="mt-2">
+        )}
+        <div className={"mt-2" + (!(prod?.sellR39 || prod?.sellDirect || prod?.sellCabinet || prod?.sellZip) ? " hidden" : "")}>
           <ChipRow
             items={[{ val: "200", label: "อบขาว/ดำ/ซาฮาร่า" }, { val: "250", label: "ลายไม้สต็อก (+50/ม.)" }, { val: "300", label: "อบพิเศษ/Fuji (+100/ม.)" }, { val: "350", label: "ลายไม้อบพิเศษ (+150/ม.)" }]}
             value={String(rate)}

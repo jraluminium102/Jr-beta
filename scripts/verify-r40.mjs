@@ -389,8 +389,11 @@ for (const a of ANCHORS) {
     //   ค่าแรงขาย = ตาราง · % ค่าของ = ส่วนที่เหลือ ÷ ทุน (ปัดขึ้น 0.1%) — คิดเองแยกจากเอนจิน
     const NT = PB.R41.net && PB.R41.net[rk];
     const net = NT == null ? null : typeof NT === 'number' ? NT : (vk && NT[vk] != null ? NT[vk] : (NT._ ?? null));
-    if (net != null && a.cost > 0) m = Math.ceil((((a.cost + wProd + wInst) / (1 - 30 / 130 - net / 100) - lp - li) / a.cost - 1) * 1000 - 1e-9) / 10;
-    const matRaw = a.cost * (1 + m / 100);
+    //   30 ต.ค.69 เจ้าของเคาะ "ปัดรอบเดียว": ฐานค่าของขายใช้ค่าเป๊ะ ไม่ปัด % ขึ้น 0.1 ก่อน → ยอดรวม = ceil100(ทุนรวม ÷ ตัวหาร)
+    //   (ชีตเดิมปัดซ้อน → E-series 600×300 ชีต 68,400 เว็บ 68,300 = ตั้งใจ ต่างได้ไม่เกิน 100)
+    const netBase = (net != null && a.cost > 0) ? ((a.cost + wProd + wInst) / (1 - 30 / 130 - net / 100) - lp - li) : null;
+    if (netBase != null) m = Math.round((netBase / a.cost - 1) * 1000) / 10;
+    const matRaw = netBase != null ? netBase : a.cost * (1 + m / 100);
     wantMfg = ceil100(matRaw + lp); wantInst = ceil100(matRaw + lp + li);
     // 14 ต.ค.69 ล็อกกำไรสุทธิแล้ว ราคาตายตัวไซซ์เล็กไม่ทับ (เจ้าของ "ดึงค่าของ×กำไรให้เข้าเป้า ทุกบาน")
     if (small && wantInst > 0 && net == null) { wantMfg = ceil100(wantMfg * (SR.small.price / wantInst)); wantInst = SR.small.price; }

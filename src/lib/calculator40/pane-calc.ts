@@ -65,7 +65,8 @@ export const PANE_BY_KEY: Record<string, any> = Object.fromEntries(
 /** สีอบพิเศษ/ตร.ม. (ราคาขาย) — ใช้กับผนังแผ่นอลู (ลูกฟูก/คอมโพ · prod.showColor) */
 export const SHEET_FIN: Record<string, number> = { white: 0, sahara: 300, special: 1700, woodSpecial: 2400, woodStock: 2400 };
 /** รุ่นที่ใช้ "สีโครงพิเศษ/ตร.ม." (R3.9) — เฉพาะผนังแผ่นที่ BOM ไม่คิดสีเอง · รุ่นอื่น (ระแนง/รั้ว/ราว/ฯลฯ) คิดสีจากเส้น/กล่องใน BOM แล้ว ห้ามบวกซ้ำ */
-export const SHEET_FIN_PRODS = new Set(["wall_corrugated", "wall_composite", "wall_smartboard", "wall_roofsheet", "aluwave"]);
+//   30 ต.ค.69 เจ้าของเคาะ: ลูกฟูกคิดค่าอบสีเฉพาะสีที่ต้องอบ (engine prod.sheetBakeFin) · คอมโพสิตไม่คิดสี → สองรุ่นนี้ออกจากชุดนี้ (G6 = G1)
+export const SHEET_FIN_PRODS = new Set(["wall_smartboard", "wall_roofsheet", "aluwave"]);
 
 export type Pane = {
   key: number;

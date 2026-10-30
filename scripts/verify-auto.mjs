@@ -585,7 +585,8 @@ console.log("\n═══ ⑩ % กำไรค่าของตั้งต้�
   for (const [id, o] of [["sms_slide", { w: 300, h: 250, p: 2, form: "อิสระ" }], ["slimlux", { w: 250, h: 240, p: 2, form: "อิสระ", color: "white", colorKey: "white" }],
     ["open_door", {}], ["awning", {}], ["banyok", {}], ["fold_euro", {}], ["curve_fixed", {}], ["fixed", {}], ["bansolid", {}], ["roof", { w: 400, h: 200, material: "ไวนิล" }]]) {
     const r = R(id, o), tag = id + " " + (o.w || 200) + "×" + (o.h || 200);
-    ok(tag + ": ค่าของขาย = ปัดร้อย(ทุน × (1 + % ที่โชว์))", r.sell.beforeLabor === Math.ceil(r.cost.total * (1 + r.profit3.mat / 100) / 100) * 100, r.sell.beforeLabor + " (%=" + r.profit3.mat + ")");
+    // 30 ต.ค.69 ปัดรอบเดียว: % ที่โชว์ถอยจากฐานจริง (ทศนิยม 1 ตำแหน่ง) → คูณกลับคลาดได้ไม่เกิน 1 ช่องร้อย
+    ok(tag + ": ค่าของขาย ≈ ปัดร้อย(ทุน × (1 + % ที่โชว์)) (±100)", Math.abs(r.sell.beforeLabor - Math.ceil(r.cost.total * (1 + r.profit3.mat / 100) / 100) * 100) <= 100, r.sell.beforeLabor + " (%=" + r.profit3.mat + ")");
     ok(tag + ": % ค่าผลิต = ขาย ÷ ทุน − 1", !(r.labor.prod > 0) || r.profit3.prod === Math.round((r.sell.parts.prod / r.labor.prod - 1) * 100), r.profit3.prod + " · " + r.sell.parts.prod + "/" + r.labor.prod);
     ok(tag + ": % ค่าติดตั้ง = ขาย ÷ ทุน − 1", !(r.labor.install > 0) || r.profit3.inst === Math.round((r.sell.parts.inst / r.labor.install - 1) * 100), r.profit3.inst + " · " + r.sell.parts.inst + "/" + r.labor.install);
   }
@@ -1157,14 +1158,19 @@ console.log("\n═══ เส้นราคารวมสี (colorIn) ต�
 {
   const G = { ...PRODUCTS.sms_slide, addons: ["grid", "mosquito"] };   // bootstrap เป็นคนเติม grid ให้ตอนรันจริง — จำลองที่นี่
   const run = (prod, color, colorKey, addons) => computeCost(PB, prod, { w: 200, h: 220, p: 2, spec: {}, addons, color, colorKey });
-  const gridLine = (c) => (c.lines || []).find((l) => l.cat === "addon" && /คาดตาราง/.test(l.name));
-  // เรตคาดตารางต้องตามสีเฟรมอัตโนมัติ (เดิม UI โชว์ 300 แต่ engine คิด 200 ทุกสี)
-  for (const [color, key, want] of [["white", "white", 200], ["woodStock", "wood_teak", 250], ["special", "special", 300], ["woodSpecial", "wood_mahogany", 350]]) {
-    const l = gridLine(run(G, color, key, { grid: { nh: 2, nv: 1 } }));
-    ok(`คาดตาราง auto สี ${color} = ${want}/ม.`, l && l.unitPrice === want, l ? String(l.unitPrice) : "ไม่มีบรรทัด");
+  // 30 ต.ค.69 เจ้าของเคาะ "ถอดจริง": คาดตาราง = เส้นกลาง (รหัสกลาง · ราคาตามสี) ติด 2 ฝั่ง ในกองอลู — ไม่เหมา ฿/ม. แล้ว
+  const gridAlu = (c, re) => (c.lines || []).find((l) => l.cat === "alu" && re.test(l.name));
+  for (const [color, key] of [["white", "white"], ["sahara", "sahara"], ["woodStock", "wood_teak"]]) {
+    // ราคาเส้นต้องเท่าเส้นคาดตารางของบานโซลิด (รหัสกลาง 'เส้นกลาง' ตัวเดียวกัน ทางเดินราคาเดียวกัน)
+    const want = (computeCost(PB, PRODUCTS.bansolid, { w: 150, h: 200, p: 1, form: "มีธรณี", color, colorKey: key, spec: {}, addons: {} }).lines.find((l) => /เส้นคาดตาราง/.test(l.name)) || {}).unitPrice;
+    const c = run(G, color, key, { grid: { nh: 2, nv: 1 } });
+    const hz = gridAlu(c, /เส้นคาดตาราง แนวนอน/), vt = gridAlu(c, /เส้นคาดตาราง แนวตั้ง/);
+    ok(`คาดตาราง สี ${color}: เส้นกลาง นอน 2×2 ฝั่ง = 4 ชิ้น · ตั้ง 1×2 = 2 ชิ้น · ราคาเส้น ${want}`,
+      hz && vt && hz.pieces === 4 && vt.pieces === 2 && hz.unitPrice === want && !(c.lines || []).some((l) => l.cat === "addon" && /คาดตาราง/.test(l.name)),
+      hz && vt ? `${hz.pieces}/${vt.pieces} @${hz.unitPrice}` : "ไม่มีบรรทัดเส้นกลาง");
   }
-  const lt = gridLine(run(G, "special", "special", { grid: { nh: 2, nv: 1, rate: 250, rateTouched: true } }));
-  ok("คาดตาราง กดเลือกเรตเอง 250 → ใช้ 250 ไม่ทับด้วยสี", lt && lt.unitPrice === 250, lt ? String(lt.unitPrice) : "ไม่มีบรรทัด");
+  const gc = run(G, "white", "white", { grid: { nh: 0, nv: 0, nc: 2 } });
+  ok("คาดตาราง เส้นโค้ง 2 เส้น = เหมา 6,000 (ยังเหมา)", (gc.lines || []).some((l) => l.cat === "addon" && /เส้นโค้ง/.test(l.name) && l.amount === 6000));
   // ทุนออปชั่นเหมา (ขาย R3.9) = ขาย ÷ 2 เท่ากันทุกรุ่น — ไม่ขึ้นกับ PB.PROFIT.mat ของรุ่น (ยูโร 80 · SlimLux 120 เคยทำให้ต่างกัน)
   for (const id of ["sms_slide", "euro_slide", "slimlux"]) {
     const P = { ...PRODUCTS[id], addons: ["mosquito"] };
@@ -1283,12 +1289,16 @@ console.log("\n═══ ㉓ ออปชั่นตาม Excel — ครอ�
       && near(dCost("shower", { w: 90, h: 210, p: 1, form: "บานตาย+บานเปิด", material: "อลูมิเนียม", spec: { dw: "60", dh: "200", cw: "150" } }, { colorKey: "sahara", color: "sahara" }), 56, 1.5), String(g));
   }
 
-  // ── ข้อ 7: คาดตาราง ลายไม้ Fuji = 300 (R3.9) ──
+  // ── ข้อ 7 (แก้ 30 ต.ค.69): รุ่นขายเหมา (R3.9 สำรอง) คาดตารางยังเหมา ฿/ม. ตามสี · UI ใช้ gridRateFor ตารางเดียวกับ engine ──
   {
-    const G = { ...PRODUCTS.sms_slide, addons: ["grid"] };
-    const gl = (color, key) => (computeCost(PB, G, { w: 200, h: 220, p: 2, spec: {}, addons: { grid: { nh: 2, nv: 1 } }, color, colorKey: key }).lines.find((l) => l.cat === "addon" && /คาดตาราง/.test(l.name)) || {}).unitPrice;
-    ok("คาดตาราง ลายไม้ Fuji Oak/Makha = 300 (R3.9 อบพิเศษ/Fuji)", gl("woodSpecial", "wood_fuji_oak") === 300 && gl("woodSpecial", "wood_fuji_makha") === 300, `${gl("woodSpecial", "wood_fuji_oak")}/${gl("woodSpecial", "wood_fuji_makha")}`);
-    ok("คาดตาราง ลายไม้อบพิเศษ (ระบุรหัส) ยัง 350 · อบพิเศษ 300 · ลายไม้สต็อก 250", gl("woodSpecial", "wood_special") === 350 && gl("special", "special") === 300 && gl("woodStock", "wood_teak") === 250);
+    // รุ่น R3.9 สำรอง (sellR39) เกิดจาก bootstrap — ทำบนสำเนา ไม่แตะ PRODUCTS จริง
+    const P4 = JSON.parse(JSON.stringify(PRODUCTS, (k, v) => (typeof v === "function" ? undefined : v)));
+    applyBootstrap(P4, R39DATA);
+    const L = Object.values(P4).find((p) => p && p.sellR39 && p.group === 1) || Object.values(P4).find((p) => p && p.sellR39);
+    const LG = { ...L, addons: [...(L.addons || []), "grid"] };
+    const gl = (color, key) => (computeCost(PB, LG, { w: 200, h: 220, p: 2, form: LG.defForm, spec: {}, addons: { grid: { nh: 2, nv: 1 } }, color, colorKey: key }).lines.find((l) => l.cat === "addon" && /คาดตาราง/.test(l.name)) || {}).unitPrice;
+    ok(`รุ่นขายเหมา (${L.id}) คาดตาราง ลายไม้ Fuji = 300 · อบพิเศษ 300 · ลายไม้สต็อก 250 · ขาว 200`, gl("woodSpecial", "wood_fuji_oak") === 300 && gl("special", "special") === 300 && gl("woodStock", "wood_teak") === 250 && gl("white", "white") === 200,
+      [gl("woodSpecial", "wood_fuji_oak"), gl("special", "special"), gl("woodStock", "wood_teak"), gl("white", "white")].join("/"));
     const ui = fs.readFileSync("src/components/calculator40/AddonsSection.tsx", "utf8");
     ok("UI คาดตาราง ส่ง colorKey ให้ gridRateFor (ตารางเดียวกับ engine)", /gridRateFor\(color, colorKey\)/.test(ui));
   }

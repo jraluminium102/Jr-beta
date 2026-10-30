@@ -954,6 +954,13 @@ export default function Calculator40Client({ customers = [], priceOverride, line
         const pw = Number(sp.w) > 0 ? Number(sp.w) : (Number(w) || 0) / 100;
         workLines.push(`- บานล่างทึบ อลูลูกฟูก กว้าง ${r2(pw)} × สูง ${r2(Number(sp.h))} ม. (แทนกระจกช่วงล่าง)`);
       }
+      // คาดตาราง = เส้นกลางจริง (30 ต.ค.69) ไม่มีบรรทัด addon แล้ว → เขียนลงใบเอง (รุ่นขายเหมายังมีบรรทัด addon เดิม)
+      const gr = (addons as any)?.grid;
+      const lump = !!(prod.sellR39 || prod.sellDirect || prod.sellCabinet || prod.sellZip);
+      if (!lump && gr && ((gr.nh | 0) > 0 || (gr.nv | 0) > 0)) {
+        const parts = [(gr.nh | 0) > 0 ? `แนวนอน ${gr.nh | 0} เส้น` : "", (gr.nv | 0) > 0 ? `แนวตั้ง ${gr.nv | 0} เส้น` : ""].filter(Boolean).join(" + ");
+        workLines.push(`- คาดตาราง ${parts} (ติด 2 ฝั่ง)`);
+      }
     }
     // specOpts ที่ผู้ใช้เลือกทุกตัว (รวมค่า default = สเปกที่ลูกค้าควรเห็น) → priced เข้า "รายการ" · label-only เข้า "รายละเอียดงาน"
     // ยกเว้น type:'number' (ช่องกรอกราคาเอง ฿/ตร.ม. — ไม่ใช่ option ลูกค้า · ไปเป็นบรรทัดราคาแล้ว)
