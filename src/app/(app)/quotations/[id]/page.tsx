@@ -16,7 +16,7 @@ import type { Quotation } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export default async function QuotationDetail({ params }: { params: { id: string } }) {
+export default async function QuotationDetail({ params, searchParams }: { params: { id: string }; searchParams?: { dup?: string } }) {
   const profile = await getProfile();
   const supabase = createClient();
   const { data } = await supabase
@@ -63,6 +63,12 @@ export default async function QuotationDetail({ params }: { params: { id: string
 
   return (
     <div className="space-y-5">
+      {/* กดบันทึกซ้ำภายใน 2 นาที → server คืนใบเดิม (ไม่ออกใบใหม่) ต้องบอกให้รู้ ไม่ใช่เด้งเงียบ ๆ (QA 30 ต.ค.69) */}
+      {searchParams?.dup === "1" && (
+        <div className="rounded-xl px-4 py-3 bg-amber-50 border border-amber-200 text-sm text-amber-900">
+          ใบนี้ถูกบันทึกไว้แล้วเมื่อสักครู่ (รายการเดียวกัน ยอดเท่ากัน) ระบบจึงเปิดใบเดิมให้ ไม่ได้ออกใบใหม่ซ้ำ — ถ้าตั้งใจออกใบแยก ให้แก้รายการ/ยอดให้ต่างกัน หรือรอเกิน 2 นาทีแล้วบันทึกใหม่
+        </div>
+      )}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3">
           <Link href="/quotations" aria-label="ย้อนกลับ" className="press glass-soft w-9 h-9 rounded-xl inline-flex items-center justify-center text-brand-dark">

@@ -326,7 +326,8 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
       if (!res.ok) { setErr(json.error ?? `บันทึกไม่สำเร็จ (${res.status}) — ลองอีกครั้ง`); return; }
       if (!json?.data?.id) { setErr("บันทึกแล้วแต่ไม่ได้รหัสกลับ — เปิดหน้าใบเสนอราคาเพื่อตรวจสอบ"); return; }
       saved = true;
-      router.push(`/quotations/${json.data.id}`);
+      // server ตอบ duplicate = ใบเดียวกันถูกบันทึกไปแล้วภายใน 2 นาที (กดซ้ำ/2 แท็บ) → เปิดใบเดิม + บอกให้รู้ (QA 30 ต.ค.69: เดิมเด้งเงียบ ๆ)
+      router.push(`/quotations/${json.data.id}${json.data.duplicate ? "?dup=1" : ""}`);
     } catch {
       // เน็ตสะดุด/หลุด → ไม่ปล่อยปุ่มค้าง ต้องแจ้งให้กดใหม่ได้
       setErr("เชื่อมต่อไม่สำเร็จ (เน็ตสะดุด?) — ตรวจอินเทอร์เน็ตแล้วกดบันทึกอีกครั้ง");

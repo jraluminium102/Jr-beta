@@ -245,7 +245,7 @@ export async function POST(req: Request) {
     const since = new Date(Date.now() - 2 * 60 * 1000).toISOString();
     const { data: recent } = await supabase
       .from("quotations")
-      .select("id, code, quotation_items(count)")
+      .select("id, code, quotation_items(name, qty, unit_price)")
       .eq("customer_id", cust.id)
       .eq("created_by", profile.id)
       .eq("net", t.net)
@@ -253,8 +253,12 @@ export async function POST(req: Request) {
       .gte("created_at", since)
       .order("created_at", { ascending: false })
       .limit(1);
-    const dup = (recent ?? [])[0] as { id: number; code: string; quotation_items?: { count: number }[] } | undefined;
-    if (dup && (dup.quotation_items?.[0]?.count ?? -1) === items.length) {
+    const dup = (recent ?? [])[0] as { id: number; code: string; quotation_items?: { name: string; qty: number; unit_price: number }[] } | undefined;
+    // QA 30 ต.ค.69: เดิมเทียบแค่ "จำนวนข้อเท่ากัน" → ใบที่ตั้งใจออกใหม่ (แก้ชื่อ/ราคาต่อข้อ แต่ยอดสุทธิเท่าเดิม) ถูกกลืน
+    //   → เทียบ ชื่อ+จำนวน+ราคาต่อหน่วย ทุกข้อ (เรียงแล้ว) ต้องตรงกันทั้งชุดถึงถือว่ากดซ้ำ
+    const sig = (xs: { name?: unknown; qty?: unknown; unit_price?: unknown }[]) =>
+      xs.map((x) => `${String(x.name ?? "").trim()}|${Number(x.qty) || 0}|${Number(x.unit_price) || 0}`).sort().join("\n");
+    if (dup && Array.isArray(dup.quotation_items) && dup.quotation_items.length === items.length && sig(dup.quotation_items) === sig(items)) {
       return ok({ id: dup.id, code: dup.code, replaced: [], duplicate: true }, 200);
     }
   }

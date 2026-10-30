@@ -848,7 +848,8 @@ console.log('\n═══ ③ สวิตช์ค่าแรงในหน้
   has('เลือก "ผลิตอย่างเดียว" แล้วเขียนกำกับลงใบว่าไม่รวมติดตั้ง', /laborMode === "mfg"\)\s*jobLines\.push\("- ราคานี้ไม่รวมค่าติดตั้ง/);
   has('บันทึกลงสูตร (recipe) เพื่อกลับมาแก้ข้อได้', /profit, profitProd, profitInst, profitManual, profitEdit, laborMode,/);
   // โหมดกำไร (กด % เอง) ต้องถูกเก็บ+คืน ไม่งั้นเปิดกลับมาแก้แล้วราคาเด้งไปใช้สูตรไฟล์ (QA จับ 9 ก.ย.69)
-  has('สูตรเก็บโหมดกำไรเอง (profitManual)', /color, glassType, profit, profitManual, g6HideSidePrice/);
+  // 30 ต.ค.69: สูตรห้องเก็บกำไร 3 ก้อน + profitEdit ด้วย
+  has('สูตรเก็บโหมดกำไรเอง (profitManual)', /color, glassType, profit, profitProd, profitInst, profitManual, profitEdit, g6HideSidePrice/);
   has('เปิดข้อกลับมาแก้ คืนโหมดกำไรเดิม', /setProfitManual\(r\.profitManual === true\);/);
   has('มีช่องกรอกกำไรแยก 3 ส่วนบนหน้าจอ', /กำไร ค่าของ %[\s\S]*กำไร ค่าผลิต %[\s\S]*กำไร ค่าติดตั้ง %/);
   has('เปลี่ยนรุ่นแล้วตั้งกำไรตั้งต้นของรุ่นนั้นให้', /setProfitProd\(String\(dp\.prod\)\)/);

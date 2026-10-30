@@ -373,6 +373,11 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     const dp = defProfit(x.id);
     setProfit(String(dp.mat)); setProfitProd(String(dp.prod)); setProfitInst(String(dp.inst));
     setProfitEdit(null);
+    // 🐞 QA 30 ต.ค.69: โหมด "กรอกกำไรเอง" ค้างข้ามรุ่น — แก้ % ที่รุ่นนอกตาราง (ฝ้า/ผนัง/มุ้ง) แล้วสลับไปรุ่น R4.1
+    //   ราคาถูกคิดด้วย % ที่กรอกไว้แทนตาราง (SMS 600×300: 63,000 → 48,300) โดยไม่เตือน → เปลี่ยนรุ่น = กลับไปตามไฟล์เสมอ
+    setProfitManual(false);
+    setCutSel(Object.fromEntries(HANDLE_FIELDS.map((f) => [f.key, f.def])));   // มือจับจากใบตัดของรุ่นเดิม ห้ามติดมา
+    setRoomInitial(null);   // ห้องกระจกที่เคย ✏️ ไว้ ห้ามไปเติมห้องใหม่
     setW(String(x.defaults?.w ?? 200));
     setH(String(x.defaults?.h ?? 200));
     setP(String(x.defaults?.p ?? 1));
@@ -491,6 +496,10 @@ export default function Calculator40Client({ customers = [], priceOverride, line
       const pInst = Number(profitInst) || 0;
       // สีอลู: ผู้ใช้เลือก "ชื่อสีจริง" (13 สี) → แปลงเป็นหมวดค่าอบ (bake) สำหรับคิดราคา + ชื่อสีพิมพ์ลงใบ
       const rc = resolveAluColor(color);
+      // บานเปิด: มุ้งเลือกได้ 2 ทาง (spec "มุ้ง (กรอบ FUJI)" = ของจริงตามไฟล์ · ปุ่มมุ้งบวกบาน = R3.9) เลือกทั้งคู่ = คิดซ้ำ (QA 30 ต.ค.69: 23,100 → 32,600)
+      //   → ถ้าเลือกมุ้งในสเปกแล้ว ปุ่มมุ้งบวกบานไม่คิดเงิน
+      const addonsForCalc: Record<string, any> = (prod.id === "open_door" && String(spec?.odmesh ?? "ไม่มี") !== "ไม่มี" && addons?.mosquito && addons.mosquito !== "none")
+        ? { ...addons, mosquito: "none" } : addons;
       const opt: any = {
         w: wCm,
         h: hCm,
@@ -505,7 +514,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
         profitManual,   // false = ใช้เป้ากำไรจากไฟล์ (PB.SELL) · true = ใช้ % ที่กรอกเอง
         ...(profitEdit ? { profitEdit } : {}),   // R4.1: แก้ทีละก้อน (ไม่ส่ง = ใบเก่า/ไม่ได้แตะ)
         spec: specForCalc,
-        addons,
+        addons: addonsForCalc,
         // มอเตอร์คิดแยกจากกำไรค่าของ — กรอกราคาขาย (บาท) หรือ % กำไรมอเตอร์ ก็ได้
         ...(motorSell !== "" && Number(motorSell) > 0 ? { motorSell: Number(motorSell) } : {}),
         ...(motorSell === "" && motorPct !== "" && Number.isFinite(Number(motorPct)) ? { motorPct: Number(motorPct) } : {}),
@@ -552,7 +561,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
       // ตรง app.js ~232-235: computeMosquitoR4(c.addons||{}, {wCm,hCm,movePanes,form}, pb, profitPct, installProfitPct)
       const mqR4 = computeMosquitoR4(
         PRODUCTS,
-        addons || {},
+        addonsForCalc || {},
         { wCm, hCm, movePanes: Math.max(1, pCount - (fixedPanes || 0)), form: formVal },
         pb,
         profitPct,
@@ -686,7 +695,20 @@ export default function Calculator40Client({ customers = [], priceOverride, line
 
 
 
-  const ok = result && !("error" in result);
+  // กันอินพุตเพี้ยนเข้าเครื่องคิด (QA 30 ต.ค.69: กว้าง −200 ได้ราคา 14,900 · จำนวนบาน 50 ทั้งที่รุ่นรับ 2–6 · กว้าง 100000 ได้ 6.5 ล้าน)
+  //   ช่องว่าง = ใช้ค่าตั้งต้นของรุ่น (พฤติกรรมเดิม) · กรอกแล้วต้อง > 0 · จำนวนบานต้องเป็นจำนวนเต็มในช่วงของรุ่น
+  const inputErr = (() => {
+    if (!prod || prod.composite) return "";
+    const nw = w === "" ? null : Number(w), nh = h === "" ? null : Number(h), np = p === "" ? null : Number(p);
+    if (nw != null && !(nw > 0)) return "กว้าง (ซม.) ต้องมากกว่า 0";
+    if (nh != null && !(nh > 0)) return "สูง (ซม.) ต้องมากกว่า 0";
+    if (nw != null && nw > 5000) return "กว้างเกิน 50 ม. — เช็คหน่วย (ต้องเป็น ซม.)";
+    if (nh != null && nh > 5000) return "สูงเกิน 50 ม. — เช็คหน่วย (ต้องเป็น ซม.)";
+    const minP = Number(prod.minP) || 1, maxP = Number(prod.maxP) || 99;
+    if (np != null && (!Number.isInteger(np) || np < minP || np > maxP)) return `จำนวนบานต้องเป็นจำนวนเต็ม ${minP}–${maxP}`;
+    return "";
+  })();
+  const ok = result && !("error" in result) && !inputErr;
   // ราคาที่ "กำลังเลือกอยู่" — ต้องเป็นสูตรเดียวกับตอนกดเพิ่มเข้ารายการ (pushQuoteItem)
   //   ขายส่ง (ผลิตอย่างเดียว) ใช้ยอดหลังลด mfgOnlyNet · รวมบานย่อย (ผสมบาน/หลังคาหลายช่วง) ด้วย
   const stickyPrice = ok
@@ -732,7 +754,8 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     if (prod.composite) {
       return {
         v: 1, kind: "room", prodId: prod.id, group: prod.group,
-        color, glassType, profit, profitManual, g6HideSidePrice,
+        // กำไร 3 ก้อน + แก้ทีละก้อน ต้องเก็บด้วย (QA 30 ต.ค.69: เดิมเก็บแค่ profit → ✏️ แล้วค่าผลิต/ติดตั้งกลายเป็นค่าของ)
+        color, glassType, profit, profitProd, profitInst, profitManual, profitEdit, g6HideSidePrice,
         room: roomStateRef.current ?? null, // state ทั้งห้อง (ด้าน/ช่อง/บาน/หลังคา/ฝ้า/พื้น ฯลฯ) จาก RoomComposer
       };
     }
@@ -741,6 +764,8 @@ export default function Calculator40Client({ customers = [], priceOverride, line
       w, h, p, form, color, glassType, material,
       spec, addons, motorSell, motorPct, fixedPanes, profit, profitProd, profitInst, profitManual, profitEdit, laborMode, useSel, sillSel, cutSel,
       kindOpts: kind, faceColorCode, depth, shelves, cabSides, sheetColor, roofSegs, subs,
+      // หลังคาหลายด้าน: ด้าน/รอยต่อ (QA 30 ต.ค.69: เดิมไม่เก็บ → ใบที่บันทึกเหลือแต่ค่าตั้งต้น 2 ด้าน พื้นที่ 29.5 → 9 ตร.ม.)
+      ...(prod.multiSide ? { roofSides } : {}),
     };
   }
 
@@ -750,7 +775,8 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     if (editingKey != null) {
       const stillThere = quote.some((x) => x.key === editingKey);
       if (stillThere) {
-        setQuote((q) => q.map((x) => (x.key === editingKey ? { ...item, key: editingKey } : x)));
+        // คง heading (หัวข้อชุด group_label) ของข้อเดิมไว้ — item ใหม่จากเครื่องคิดไม่มีฟิลด์นี้ (QA 30 ต.ค.69: ✏️ แล้วหัวข้อหาย)
+        setQuote((q) => q.map((x) => (x.key === editingKey ? { ...x, ...item, key: editingKey } : x)));
       } else {
         setQuote((q) => [...q, { ...item, key: keySeq }]);
         setKeySeq((k) => k + 1);
@@ -898,7 +924,14 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     }
     // ดึงบรรทัดออปชั่นจาก engine (คิดเงินแล้ว) — normal: เฉพาะ addon · override: ทั้งหมด (ยกเว้น warn/ค่าแรง)
     const isOverride = !!(prod.sellCabinet || prod.sellZip || prod.sellR39 || prod.sellDirect);
-    const cleanTag = (s: string) => String(s ?? "").replace(/\s*\((?:R3\.9|R4\.0)\)\s*$/, "").trim();
+    // ตัดคำหลังบ้านออกจากข้อความที่ลูกค้าเห็น — QA 30 ต.ค.69: เดิมตัดแค่ "(R3.9)" ท้ายข้อความ
+    //   ยังหลุด "(R3.9 4,000/บาน · รางโค้งรอเคาะ …)" · "(รางบน · R3.9)" · "(รอราคา)" · "· ราคา R3.9"
+    const cleanTag = (s: string) => String(s ?? "")
+      .replace(/\s*\([^()]*(?:R3\.9|R4\.0|รอราคา|รอเคาะ|matrix)[^()]*\)/g, "")
+      .replace(/\s*·\s*ราคา\s*R3\.9\s*$/, "")
+      .replace(/\s*\((?:R3\.9|R4\.0)\)\s*$/, "")
+      .replace(/\s{2,}/g, " ")
+      .trim();
     // มุ้ง — ย้ายไปเขียนใน "รายละเอียดงาน" (พร้อมผ้ามุ้ง/ชนิด) + ขึ้นในชื่อ "(มีมุ้ง...)" · ไม่ซ้ำเป็นบุลเล็ตงาน
     const mqLineObj = ((result as any).lines || []).find((l: any) => l?.cat === "addon" && /^(มุ้ง|ม่าน)/.test(l.name || ""));
     const mqDetail = mqLineObj ? cleanTag(mqLineObj.name) : "";
@@ -919,8 +952,12 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     // ยกเว้น type:'number' (ช่องกรอกราคาเอง ฿/ตร.ม. — ไม่ใช่ option ลูกค้า · ไปเป็นบรรทัดราคาแล้ว)
     const specDetailLines: string[] = [];
     // ออปชั่นที่ "ขึ้นในชื่อสินค้าแล้ว" (ราง/คานซัพพอร์ท ของบานเลื่อน) — ไม่ต้องซ้ำเป็นบุลเล็ตรายละเอียดงาน
-    const NAME_OWNED_SPEC = new Set(["bottomrail", "slxrail", "slxbeam",
-      "batten", "roofframe", "roofend", "drainsys", "rfplate", "rfpull", "rfleaf", "hideslopemat"]);   // หลังคา: ขึ้นในชื่อแล้ว
+    //   ⚠ นับเฉพาะรุ่นที่ "สร้างชื่อจากคีย์นั้นจริง" — ราง: SLIDE_SALE (SMS/ยูโร/SlimLux) · หลังคา: roof เท่านั้น
+    //   QA 30 ต.ค.69: เดิมตัดทุกรุ่น → หลังคาจั่ว/หลังคาเลื่อน (แป/ปลายหลังคา) และ E-series (ราง) หายจากใบทั้งที่คิดเงิน
+    const NAME_OWNED_SPEC = new Set([
+      ...(SLIDE_SALE.has(prod.id) ? ["bottomrail", "slxrail", "slxbeam"] : []),
+      ...(prod.id === "roof" ? ["batten", "roofframe", "roofend", "drainsys", "rfplate", "rfpull", "rfleaf", "hideslopemat"] : []),
+    ]);
     (prod.specOpts ?? []).forEach((o: any) => {
       if (o.type === "number") return;
       if (NAME_OWNED_SPEC.has(o.key)) return;
@@ -1015,6 +1052,12 @@ export default function Calculator40Client({ customers = [], priceOverride, line
       setCabSides(r.cabSides ?? { left: { on: true, mat: "alu" }, right: { on: true, mat: "alu" }, back: { on: false, mat: "alu" } });
       setSheetColor(r.sheetColor ?? "");
       setRoofSegs(Array.isArray(r.roofSegs) ? r.roofSegs : []);
+    // หลังคาหลายด้าน: คืนด้าน/รอยต่อจากสูตร (ใบเก่าที่ไม่ได้เก็บ = ค่าตั้งต้นของรุ่น) — QA 30 ต.ค.69
+    setRoofSides(
+      r.roofSides && Array.isArray(r.roofSides.sides)
+        ? r.roofSides
+        : (px.multiSide ? parseSides(r.spec ?? {}, px.multiSide, px.multiSide === "d" ? "ติดบ้าน" : "ชนผนัง") : { sides: [], joints: [] }),
+    );
       setSubs(Array.isArray(r.subs) ? r.subs : []);
     }
     setEditingKey(it.key);
@@ -2085,7 +2128,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                   )}
                 </div>
               ) : (
-                <p className="mt-5 text-sm text-red-700 bg-red-50 rounded-xl px-4 py-3">คิดราคาไม่ได้: {(result as any)?.error ?? "ตรวจอินพุต"}</p>
+                <p className="mt-5 text-sm text-red-700 bg-red-50 rounded-xl px-4 py-3">คิดราคาไม่ได้: {inputErr || (result as any)?.error || "ตรวจอินพุต"}</p>
               ))}
 
               {/* สรุปบานย่อย/ช่วงเพิ่ม (ผสมบาน G1 + หลังคาหลายช่วง G3) — บวกรวมยอดขาย+ทุน แยกจาก main แต่รวมเป็นรายการเดียวตอนขึ้นใบ */}
