@@ -346,6 +346,12 @@ export default function Calculator40Client({ customers = [], priceOverride, line
   //   - "ม่านซิปบนหลังคา"(roof_zip) เฉพาะรุ่นหลังคา (roof/roof_gable/roof_slide)
   const prodRaw: any = (PRODUCTS as any)[prodId];
   const prod: any = withUniversalAddons(prodRaw);
+  // กระจกตั้งต้น: state เริ่มเป็น "" (ตั้งจริงเฉพาะตอนกดเลือกรุ่นใน picker) → รุ่นแรกตอนเปิดหน้า/ใบเก่าที่เก็บ "" ไว้
+  //   เอนจินใช้ defGlass อยู่แล้ว แต่ช่องเลือกโชว์ว่าง + สูตรที่บันทึกไม่มีกระจก → เติมให้ตรงกับที่คิดจริง (30 ต.ค.69)
+  useEffect(() => {
+    if (!glassType && prod?.defGlass) setGlassType(prod.defGlass);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prod?.id]);
   // pickerHide: true = รุ่นที่ไม่โผล่การ์ดแยกในลิสต์ (เข้าถึงผ่านกลไกอื่น เช่น roofShape switcher ของ "หลังคา"
   // หรือ screen_ready ที่ใช้เฉพาะภายใน computeMosquitoR4) — ตรง mockup app.js markActive()/renderList (กรอง p.pickerHide)
   const prodList = useMemo(
@@ -900,6 +906,14 @@ export default function Calculator40Client({ customers = [], priceOverride, line
       if (l.cat === "addon" && /^(มุ้ง|ม่าน)/.test(l.name)) return; // มุ้ง จัดการแยก (ชื่อ + รายละเอียดงาน)
       if (isOverride || l.cat === "addon") workLines.push(`- ${cleanTag(l.name)}`);
     });
+    // ทึบล่างอลูลูกฟูก = ของจริงในกองอลู (29 ต.ค.69) ไม่มีบรรทัด addon แล้ว → ต้องเขียนลงใบเอง ไม่งั้นลูกค้าไม่รู้ว่ามีทึบล่าง (เจอตอนเทสสด 30 ต.ค.69)
+    {
+      const sp = (addons as any)?.solid_panel;
+      if (sp && sp.type === "look" && Number(sp.h) > 0) {
+        const pw = Number(sp.w) > 0 ? Number(sp.w) : (Number(w) || 0) / 100;
+        workLines.push(`- บานล่างทึบ อลูลูกฟูก กว้าง ${r2(pw)} × สูง ${r2(Number(sp.h))} ม. (แทนกระจกช่วงล่าง)`);
+      }
+    }
     // specOpts ที่ผู้ใช้เลือกทุกตัว (รวมค่า default = สเปกที่ลูกค้าควรเห็น) → priced เข้า "รายการ" · label-only เข้า "รายละเอียดงาน"
     // ยกเว้น type:'number' (ช่องกรอกราคาเอง ฿/ตร.ม. — ไม่ใช่ option ลูกค้า · ไปเป็นบรรทัดราคาแล้ว)
     const specDetailLines: string[] = [];
@@ -936,7 +950,10 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     });
     // ── "รายละเอียดงาน" (ล่าง · คุณสมบัติวัสดุ/ผิว) ──
     const jobLines = [aluColorLine(color)];
-    if (glassType) jobLines.push(glassLine(glassType));
+    // กระจก: state ว่าง ("" ตอนเพิ่งเปิดหน้า/ใบเก่า) = เอนจินใช้กระจกตั้งต้นของรุ่นคิดราคาอยู่แล้ว → ใบต้องเขียนตัวเดียวกัน
+    //   🐞 เจอตอนเทสสด 30 ต.ค.69: เพิ่มรายการโดยไม่แตะช่องกระจก → ใบเสนอไม่มีบรรทัดกระจกเลย
+    const glassForDoc = glassType || (prod.defGlass ?? "");
+    if (glassForDoc) jobLines.push(glassLine(glassForDoc));
     if (material) jobLines.push(`- วัสดุ: ${prod.materialLabels?.[material] ?? material}`);
     if (sheetColor) jobLines.push(`- วัสดุมุง: ${sheetColor}`);
     if (mqDetail) jobLines.push(`- ${mqDetail}`); // มุ้ง + ผ้ามุ้ง (ตามที่เลือก)
@@ -1770,7 +1787,8 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                     {subLinesAll.length > 0 && laborMode === "all" && (
                       <div className={"text-[11px] " + (laborMode === "all" ? "text-red-100" : "text-ink-3")}>บานหลัก ฿{baht(result.sell.withInstall)} + บานย่อย {subLinesAll.length} บาน ฿{baht(subSellAll)}</div>
                     )}
-                    <div className={"text-[11px] mt-0.5 " + (laborMode === "all" ? "text-red-100" : "text-ink-3")}>พื้นที่ {result.input.area} ตร.ม. · อลู {result.aluKg} กก.</div>
+                    {/* 30 ต.ค.69: result.aluKg = กก.ที่เข้ากองอบสี (สีขาว = 0) ไม่ใช่น้ำหนักอลูจริง → การ์ดโชว์ "อลู 0 กก." ทั้งที่บานหนัก 54 กก. · ใช้ weight.alu (ความยาวตัดจริง × กก./ม.) */}
+                    <div className={"text-[11px] mt-0.5 " + (laborMode === "all" ? "text-red-100" : "text-ink-3")}>พื้นที่ {result.input.area} ตร.ม. · อลู {baht((result as any).weight?.alu ?? result.aluKg)} กก.</div>
                   </button>
                   {/* ── แยก 3 ก้อน: ค่าของ / ค่าผลิต / ค่าติดตั้ง + กดเพิ่มกำไรได้ (เจ้าของสั่ง 19 ส.ค.69)
                        โครงตามไฟล์ถอดทุน v9 บล็อก "⚙ ตั้งค่ากำไร" — คูณกำไรแยกก้อน ปัดร้อยแยกก้อน */}
