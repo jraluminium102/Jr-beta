@@ -89,6 +89,12 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
       const payload = JSON.parse(raw) as { items?: Array<{ name?: string; detail?: string; qty?: number; unit_price?: number; category?: string; product_id?: string; group_label?: string; calc_recipe?: unknown }>; customer?: string; customer_id?: number | null; job_id?: string; discounts?: DiscountLine[] };
       if (payload.job_id) setBridgeJobId(String(payload.job_id));
       if (Array.isArray(payload.discounts) && payload.discounts.length) setDiscounts(payload.discounts); // ส่วนลดจากเครื่องคิด (0105)
+      // VAT / หัก ณ ที่จ่าย จากหน้าคิดราคา (30 ต.ค.69) — ไม่ส่งมา = ค่าตั้งต้นเดิม (7% / ไม่หัก)
+      {
+        const px = payload as unknown as { vat_rate?: unknown; wht_rate?: unknown };
+        if (px.vat_rate != null && Number.isFinite(Number(px.vat_rate))) setVat(Number(px.vat_rate));
+        if (px.wht_rate != null && Number.isFinite(Number(px.wht_rate))) setWht(Number(px.wht_rate));
+      }
       const bridged = (payload.items ?? [])
         .filter((it) => it && (it.name || it.unit_price))
         .map<Item>((it) => ({
@@ -198,9 +204,11 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [billingProfileId, billingProfiles]);
 
-  const subtotalRaw = useMemo(() => items.reduce((s, it) => s + (Number(it.qty) || 0) * (Number(it.unit_price) || 0), 0), [items]);
+  // ยอดพรีวิวต้องนับแถวชุดเดียวกับตอนบันทึก (ชื่อ + จำนวน > 0) — 30 ต.ค.69 นักบัญชีตรวจ: เดิมพรีวิวนับแถวไม่มีชื่อด้วย แต่ตอนบันทึกตัดทิ้ง → ยอดที่บันทึกต่ำกว่าที่เห็น
+  const validItems = useMemo(() => items.filter((i) => i.name.trim() && Number(i.qty) > 0), [items]);
+  const subtotalRaw = useMemo(() => validItems.reduce((s, it) => s + (Number(it.qty) || 0) * (Number(it.unit_price) || 0), 0), [validItems]);
   const discountTotal = useMemo(() => sumDiscountLines(subtotalRaw, discounts), [subtotalRaw, discounts]);
-  const t = useMemo(() => computeTotals({ items, vat_rate: vat, discount_pct: 0, discount_amt: discountTotal, wht_rate: wht }), [items, vat, discountTotal, wht]);
+  const t = useMemo(() => computeTotals({ items: validItems, vat_rate: vat, discount_pct: 0, discount_amt: discountTotal, wht_rate: wht }), [validItems, vat, discountTotal, wht]);
 
   const setItem = (i: number, k: keyof Item, v: string | number) =>
     setItems(items.map((it, idx) => (idx === i ? { ...it, [k]: v } : it)));

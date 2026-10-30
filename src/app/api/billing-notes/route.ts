@@ -99,7 +99,11 @@ export async function POST(req: Request) {
     bWht = body.wht_rate != null ? Number(body.wht_rate) : qWht;
     bDisc = body.discount_pct != null ? Number(body.discount_pct) : (Number(q.discount_pct) || 0);
     // สืบ "จำนวนเงินส่วนลด" จากใบเสนอตรง ๆ (ตัวตั้งจริง) กัน drift · body override ได้ · ไม่มี = คิดจาก %
-    bDiscAmt = body.discount_amt != null ? Number(body.discount_amt) : (q.discount_amt != null ? Number(q.discount_amt) : undefined);
+    //   🐞 30 ต.ค.69 (นักบัญชีตรวจ): หน้าจอส่งแค่ discount_pct (เช่น 5%) แต่ใบเสนอไม่มีส่วนลด → q.discount_amt = 0 ถูกหยิบมาเป็นโหมดบาท
+    //   ซึ่งชนะ % เสมอใน computeTotals → บิลไม่ลดเลย (หน้าจอโชว์ 101,650 แต่บันทึก 107,000) · ส่ง % มา = ใช้ % ไม่หยิบบาทจากใบเสนอ
+    bDiscAmt = body.discount_amt != null ? Number(body.discount_amt)
+      : body.discount_pct != null ? undefined
+      : (q.discount_amt != null ? Number(q.discount_amt) : undefined);
     breakdownKnown = true;
   } else if ((qVat > 0 || qWht > 0) && Number(q.net) > 0) {
     // 🔧 subtotal ว่างแต่ใบเสนอมี VAT/WHT → ถอดภาษีออกจาก net ได้ยอดก่อน VAT

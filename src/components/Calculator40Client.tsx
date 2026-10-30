@@ -596,7 +596,8 @@ export default function Calculator40Client({ customers = [], priceOverride, line
             w: sw, h: sh, p: 1, form: formVal, material, color: rc.bake, stockColor: stockColorOfCalc(color), colorKey: color, addons: {}, profitPct, installProfitPct: profitPct,
           });
           const sAmt = laborMode === "mfg" ? sr.sell.mfgOnlyNet : sr.sell.withInstall;   // ขายส่ง = ราคาหลังลด
-          sl.push({ desc: `หลังคาช่วง ${i + 2} (${sg.w || 0}×${sg.h || 0}ม. · ${material})`, amt: sAmt, cost: Number(sr.cost?.total) || 0, labor: 0, lines: Array.isArray(sr.lines) ? sr.lines : [] });
+          const sLab = (Number(sr.labor?.prod) || 0) + (laborMode === "mfg" ? 0 : (Number(sr.labor?.install) || 0));
+          sl.push({ desc: `หลังคาช่วง ${i + 2} (${sg.w || 0}×${sg.h || 0}ม. · ${material})`, amt: sAmt, cost: Number(sr.cost?.total) || 0, labor: sLab, lines: Array.isArray(sr.lines) ? sr.lines : [] });
           sSell += sAmt;
           sCost += sr.cost.total;
         });
@@ -1110,6 +1111,8 @@ export default function Calculator40Client({ customers = [], priceOverride, line
       customer: selectedCustomer?.name ?? "",
       customer_id: customerId,
       ...(qDiscounts.length ? { discounts: qDiscounts } : {}), // ส่วนลดหลายรายการ (0105) — ยกไปใบใหม่ด้วย
+      // VAT / หัก ณ ที่จ่าย ที่ตั้งไว้ในหน้าคิดราคา ต้องตามไปใบใหม่ด้วย (30 ต.ค.69 นักบัญชีตรวจ: เดิมฟอร์มใหม่เด้งกลับ VAT 7%/ไม่หัก เงียบ ๆ)
+      vat_rate: qVat, wht_rate: qWht,
       ...(bridgeJobId ? { job_id: bridgeJobId } : {}), // ผูกงานที่ส่งมาจากเช็คลิสต์ (ถ้ามี)
     };
     try {
@@ -1804,8 +1807,9 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                     {/* บรรทัดสรุปกำไรแบบหัวตาราง R4.1 "กำไรสุทธิ 40% · ของ/ผลิต/ติดตั้ง 63/65/62%" (เจ้าของ 14 ต.ค.69 ชินแบบนี้)
                         สุทธิ = (ขายรวม − ค่าดำเนินการ 30/130 − ทุนรวม) ÷ ขายรวม · แยกก้อน = (ขาย − ทุน) ÷ ขาย — คิดจากราคาที่เห็นจริง */}
                     {(() => {
-                      const sT = Number(result.sell.withInstall) || 0;
-                      const cT = (Number(result.cost.total) || 0) + (Number(result.labor.prod) || 0) + (Number(result.labor.install) || 0);
+                      // ขายส่ง (ผลิตอย่างเดียว) = ราคาหลังลด 10% ไม่มีค่าติดตั้ง → กำไรสุทธิต้องคิดจากยอดนั้น (30 ต.ค.69 นักบัญชีตรวจ: เดิมโชว์ % ของราคารวมติดตั้งเสมอ)
+                      const sT = (laborMode === "mfg" ? Number(result.sell.mfgOnlyNet) : Number(result.sell.withInstall)) || 0;
+                      const cT = (Number(result.cost.total) || 0) + (Number(result.labor.prod) || 0) + (laborMode === "mfg" ? 0 : (Number(result.labor.install) || 0));
                       const mg = (sv: number, c: number) => (sv > 0 ? Math.round(((sv - c) / sv) * 100) + "%" : "—");
                       if (!(sT > 0)) return null;
                       const net = Math.round(((sT - (sT * 30) / 130 - cT) / sT) * 100);
