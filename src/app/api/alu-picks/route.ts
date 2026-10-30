@@ -5,6 +5,7 @@ import { pickCtx, runPick } from "@/lib/alu-pick/route-helpers";
 import { createPick } from "@/lib/alu-pick/service";
 import { stockDisplayName } from "@/lib/stock/display-name";
 import { changIdentity } from "@/lib/chang-staff";
+import { profileBaseName } from "@/lib/alu-pick/classify";
 
 export const dynamic = "force-dynamic";
 
@@ -66,14 +67,19 @@ export const GET = withRoute(async (req: Request) => {
     status: r.status, checked_at: r.checked_at, checked_by_name: r.checked_by_name, cancelled_at: r.cancelled_at, cancel_reason: r.cancel_reason,
     note: r.note, created_at: r.created_at, updated_at: r.updated_at,
     job_code: r.jobs?.job_code ?? null, customer_name: r.jobs?.customer_name ?? null,
-    items: [...(r.alu_pick_items ?? [])].sort((a, b) => a.sort_order - b.sort_order).map((it) => ({
+    items: [...(r.alu_pick_items ?? [])].sort((a, b) => a.sort_order - b.sort_order).map((it) => {
+      const sp = String(it.special_color ?? "").trim();
+      const sku = it.stock_items?.sku ?? "";
+      return {
       id: it.id, stock_item_id: it.stock_item_id, qty: Number(it.qty) || 0, returned: Number(it.returned) || 0,
-      special_color: String(it.special_color ?? "").trim(),
-      sku: it.stock_items?.sku ?? "", name: stockDisplayName(it.stock_items ?? {}),
-      // สีพิเศษ = สั่งอบ ไม่ใช่สีของแถวอ้างอิง → โชว์ชื่อสีที่ช่างพิมพ์แทน
-      color: String(it.special_color ?? "").trim() ? `สีพิเศษ: ${String(it.special_color).trim()} (สั่งอบ · ไม่ตัดสต็อก)` : (it.stock_items?.color ?? ""),
+      special_color: sp,
+      // สีพิเศษ = สั่งอบ ไม่ใช่สีของแถวอ้างอิง → ชื่อโปรไฟล์ล้วน (ไม่มี "-อบขาว") + รหัสเฉพาะ B/F (JR##### ผูกกับสี ไม่โชว์) + ชื่อสีที่ช่างพิมพ์
+      sku: sp ? (/^[BF]\d/i.test(sku) ? sku : "") : sku,
+      name: sp ? profileBaseName(it.stock_items ?? {}) : stockDisplayName(it.stock_items ?? {}),
+      color: sp ? `สีพิเศษ: ${sp} (สั่งอบ · ไม่ตัดสต็อก)` : (it.stock_items?.color ?? ""),
       image_url: it.stock_items?.image_url ?? "", unit: it.stock_items?.unit ?? "เส้น", on_hand: Number(it.stock_items?.qty_on_hand) || 0,
-    })),
+      };
+    }),
   }));
   return ok(out, { me });
 });
