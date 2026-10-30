@@ -206,7 +206,7 @@ export function computeCost(PB, prod, opt) {
   // mult ฉีดเข้า scope → สูตรราคา consum (โครงเมืองทอง roof/ระแนง) อ้าง mult ได้ → ขยับตามราคาอลู/กก. (ตั้งต้น mult=1 ไม่กระทบ anchor)
   // GMM = ความหนากระจก (มม.) จากชื่อกระจก — สูตรบางรุ่นเลือกคิ้วตามความหนา (F7919 6-13 · F7917 13-15)
   const GMM = Number((/(\d+)\s*มม/.exec(String(glassType)) || [])[1]) || 6;
-  const scope = { W, H, P, form, area, color, material, ROW: prod.lut ? (prod.lut[material] || {}) : {}, spec: opt.spec || {}, ADD: opt.addons || {}, mult, GMM, CKEY: String(opt.colorKey ?? ''), TBL: prod.tables || {} };
+  const scope = { W, H, P, form, area, color, material, ROW: prod.lut ? (prod.lut[material] || prod.lut[prod.defMaterial] || {}) : {}, spec: opt.spec || {}, ADD: opt.addons || {}, mult, GMM, CKEY: String(opt.colorKey ?? ''), TBL: prod.tables || {} };
   for (const [k, expr] of Object.entries(varDefs)) {
     scope[k] = ev.compile(expr)(scope);
   }
@@ -252,6 +252,8 @@ export function computeCost(PB, prod, opt) {
   // ⚠ กันคิดต่ำกว่าจริงเงียบ ๆ — เก็บทุกบรรทัดที่ราคาออกมา 0 (สโตร์ยังไม่ตั้งราคา + สูตรไม่มีราคาสำรอง)
   //   ใช้ทั้งฝั่งอลูและฝั่งอุปกรณ์ · หน้าจอเอาไปขึ้นเตือนว่าต้องไปตั้งราคารหัสไหนบ้าง
   const hwMissing = [];
+  // วัสดุที่ไฟล์ไม่มีแล้ว (ใบเก่า) — ROW ถอยไปใช้วัสดุตั้งต้น + เตือน แทนที่จะคิดออกมาเป็น NaN (QA 30 ต.ค.69: ceil_wood)
+  if (prod.lut && material && !prod.lut[material]) hwMissing.push({ sku: '', name: `วัสดุ "${material}" ไม่มีในไฟล์ถอดทุนแล้ว — คิดด้วย "${prod.defMaterial}" ไปก่อน เลือกวัสดุใหม่` });
   // วัสดุมุงที่บันทึกไว้ในใบเสนอเก่า แต่ไฟล์ถอดทุนล่าสุดไม่มีแล้ว (และไม่ใช่แค่เปลี่ยนชื่อ ดู materialAlias)
   //   บรรทัดแผ่นทุกบรรทัดจะไม่เข้าเงื่อนไข → ทุนแผ่นหายทั้งก้อนแบบเงียบ ๆ (เคยเจอจริง −54,442)
   //   → ขึ้นเตือนบนหน้าจอให้เลือกวัสดุใหม่ (3 ก.ย.69 ตัด Nature/Grand + เมทัล PU ตามไฟล์ v20.1)
@@ -438,10 +440,13 @@ export function computeCost(PB, prod, opt) {
   //   จำนวนเส้น = ceil(กว้างแผ่น ÷ 10 ซม.) · ยาว = สูงแผ่น · เข้ากองอลู → ค่าของ × กำไร ตามปกติ · หักกระจกส่วนที่ไม่ใช้
   //   คอมโพสิต / เกล็ด Z ยังเหมาแบบเดิม (ยังไม่มีทุนของจริงในไฟล์)
   const LOOK_LINE = { code: 'JR01994', price: 432, kg: 0, stockLen: 6.0, lookPanel: true };
+  // รุ่นที่ "ขายเหมา" (R3.9 สำรอง / ขายตรง / ตู้ / ม่านซิป) ไม่เอาทุนมาคิดราคา → ของจริงในกองอลูจะเพิ่มแต่ทุน ขายไม่ขยับ
+  //   (QA 30 ต.ค.69: aluwave/r39_* เลือกลูกฟูกแล้วราคาเท่าเดิม) → รุ่นพวกนี้ยังใช้บรรทัดเหมา 3,500/ตร.ม. เดิม
+  const lookReal = !(prod.sellR39 || prod.sellDirect || prod.sellCabinet || prod.sellZip);
   const _spSel = (opt.addons || {}).solid_panel || {};
-  const lookLow = _spSel.type === 'look' && (+_spSel.h || 0) > 0
+  const lookLow = lookReal && _spSel.type === 'look' && (+_spSel.h || 0) > 0
     ? { w: (+_spSel.w > 0 ? +_spSel.w : W), h: +_spSel.h } : null;
-  const lookGlass = glassType === 'แผ่นลูกฟูก' && prod.glass ? Math.max(0, Number(val(prod.glass)) || 0) : 0;
+  const lookGlass = lookReal && glassType === 'แผ่นลูกฟูก' && prod.glass ? Math.max(0, Number(val(prod.glass)) || 0) : 0;
   const lookLines = [];
   if (lookLow) lookLines.push({ ...LOOK_LINE, name: 'ลูกฟูก2ทาง (ทึบล่าง)', seg: lookLow.h, count: Math.ceil(lookLow.w * 100 / 10 - 1e-9) });
   if (lookGlass > 0 && H > 0) lookLines.push({ ...LOOK_LINE, name: 'ลูกฟูก2ทาง (แทนกระจก)', seg: H, count: Math.ceil(lookGlass / (H * 0.1) - 1e-9) });
@@ -637,7 +642,7 @@ export function computeCost(PB, prod, opt) {
     if (isPanelGlass) {
       //   13 ต.ค.69 (Excel/R3.9): คอมโพสิต 3,300 · เกล็ด Z ตามสี — เหมาราคาขาย
       //   29 ต.ค.69: แผ่นลูกฟูก = เส้นจริงในกองอลู (lookLines) → ไม่เหมาแล้ว (panelSell 0)
-      const rate = glassType === 'แผ่นลูกฟูก' ? 0 : zGlassSize ? zRate(zGlassSize, color) : 3300;
+      const rate = glassType === 'แผ่นลูกฟูก' ? (lookReal ? 0 : 3500 + corrugatedFinRate(color, opt.colorKey)) : zGlassSize ? zRate(zGlassSize, color) : 3300;
       panelSell = round2(glassArea * rate);   // บวกเข้ายอดขายทีหลัง (sell-based) · ไม่คิดกระจก (glassCost=0)
       // ไม่ push บรรทัดกระจก — คำอธิบายไปอยู่ที่ "รายละเอียดงาน" (glassLine) · ราคาแฝงในราคาสินค้า (เหมือนกระจก)
     } else {
@@ -1046,9 +1051,14 @@ export function computeCost(PB, prod, opt) {
     if (fabMissing) zWarn.push('⚠️ รุ่น ' + ser + ' ไม่มีผ้า ' + fab + ' — คิดเรตผ้า 5% แทน');
     if (W * H > 0 && W * H < (S.minA || 3)) zWarn.push('ℹ️ คิดพื้นที่ขั้นต่ำ ' + (S.minA || 3) + ' ตร.ม. (กรอก ' + round2(W * H) + ')');
     if (H > 0 && H < (S.minH || 1.5)) zWarn.push('ℹ️ สูงต่ำสุด ' + (S.minH || 1.5) + ' ม. (คิดที่ขั้นต่ำ)');
-    let motorKey = opt.motor || (ser === 'Z120W' ? (W > 15 ? 'uwdual' : 'uw') : ((ser === 'Z100S' || ser === 'Z120S') ? 'sky' : 'dooya'));
+    // มอเตอร์/รีโมท ม่านซิป: หน้าคิดราคาเก็บไว้ใน addons.zip_motor / addons.zip_noremote (AddonsSection) — ต้องอ่านจากตรงนั้นด้วย
+    //   🐞 QA 30 ต.ค.69: เดิมอ่านแค่ opt.motor/opt.noRemote ซึ่งหน้าเว็บไม่เคยส่ง → เลือกโซลาร์/ไม่เอารีโมท ราคาไม่ขยับ
+    const zA = opt.addons || {};
+    const zipMotorSel = opt.motor || (zA.zip_motor && zA.zip_motor !== 'none' ? zA.zip_motor : '');
+    const zipNoRemote = !!opt.noRemote || zA.zip_noremote === 'yes';
+    let motorKey = zipMotorSel || (ser === 'Z120W' ? (W > 15 ? 'uwdual' : 'uw') : ((ser === 'Z100S' || ser === 'Z120S') ? 'sky' : 'dooya'));
     const motorSell = Z.motor[motorKey] || 0;
-    const remoteSell = opt.noRemote ? 0 : (Z.acc.remote1 || 0);
+    const remoteSell = zipNoRemote ? 0 : (Z.acc.remote1 || 0);
     const sell = Math.round(fabSell + motorSell + remoteSell);
     sellBeforeLabor = sellMfgOnly = sellWithInstall = sell;
     sellCostOverride = sell / (Z.mult || 2);                // ทุนนำเข้า = ขาย ÷ ตัวคูณ
@@ -1222,7 +1232,7 @@ export function computeCost(PB, prod, opt) {
       ...(kgMissing.length ? ['เส้นอลูไม่มี กก./เส้น ' + kgMissing.length + ' บรรทัด'] : []),
     ],
   };
-  const addonCtx = { W, H, P, area, opt, PB, prodId: prod.id, prodAddons: prod.addons || [], motorAdded: false, weight };
+  const addonCtx = { W, H, P, area, opt, PB, prodId: prod.id, prodAddons: prod.addons || [], motorAdded: false, weight, lookLump: !lookReal };
   // prod.noAddons = ปุ่มที่เอาออกจากรุ่นนี้แล้ว (ขายซ้ำกับตัวเลือกที่เป็นวัสดุจริงในรุ่น เช่น ครอบวงกบอลูเหมา R3.9 ใน บานเปิด/ครอบวงกบไม้)
   //   ใบเสนอเก่าที่เลือกไว้ "ยังคิดราคาเดิม" (ไม่ให้ราคาใบเก่าหายเงียบตอนเปิดแก้) — UI ไม่ให้กดใหม่
   const addonIds = [...(prod.addons || []), ...(prod.noAddons || []).filter((a) => selAddons[a] && selAddons[a] !== 'none' && !(prod.addons || []).includes(a))];
@@ -2132,11 +2142,13 @@ export function computeAddon(id, sel, ctx) {
   if (id === 'solid_panel') {           // แผ่นทึบล่าง คอมโพสิต 3,300 / ลูกฟูก 3,500 / เกล็ด Z (ตามสีอลูหลัก) ฿/ตร.ม. × กว้าง×สูงแผ่น
     const g = sel || {}; const t = g.type; if (!t || t === 'none') return null;
     // ลูกฟูก (look) = ของจริงในกองอลู (lookLines ใน computeCost · 29 ต.ค.69) — ไม่ใช่บรรทัดเหมาตรงนี้แล้ว
-    if (t === 'look') return null;
+    //   ยกเว้นรุ่นขายเหมา (ctx.lookLump) ที่ทุนไม่มีผลต่อราคา → คงเหมา 3,500 + ค่าสี เหมือนเดิม
+    if (t === 'look' && !ctx.lookLump) return null;
     const sw = +g.w > 0 ? +g.w : W, sh = +g.h || 0; if (!(sh > 0)) return null;
     const zsz = t === 'z1' ? '1' : t === 'z16' ? '1.6' : null;   // เกล็ด Z ล่างทึบ — ราคาตามสีอลูหลัก (21ก.ค.69)
-    const rate = zsz ? zRate(zsz, (ctx.opt || {}).color || 'white') : 3300;   // คอมโพสิตไม่คิดสี
-    const lbl = zsz ? Z_LOUVRE[zsz].label : 'คอมโพสิต (R3.9)';
+    const fin = t === 'look' ? corrugatedFinRate((ctx.opt || {}).color || 'white', (ctx.opt || {}).colorKey) : 0;
+    const rate = zsz ? zRate(zsz, (ctx.opt || {}).color || 'white') : t === 'look' ? 3500 + fin : 3300;   // คอมโพสิตไม่คิดสี
+    const lbl = zsz ? Z_LOUVRE[zsz].label : t === 'look' ? ('อลูลูกฟูก' + (fin > 0 ? ' +สี ' + fin : '') + ' (R3.9)') : 'คอมโพสิต (R3.9)';
     return { label: 'แผ่นทึบล่าง ' + lbl, qty: round2(sw * sh), unit: 'ตร.ม.', unitPrice: rate, amount: round2(sw * sh * rate) };
   }
   if (id === 'elec') {                   // งานไฟ พัดลม+หน้ากาก+สวิตซ์ (เจ้าของเคาะ 17ก.ค.69 · ราคา "ขาย" ตรง ๆ · sell-based เหมือน add-on R3.9)

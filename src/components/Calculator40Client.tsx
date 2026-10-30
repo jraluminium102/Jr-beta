@@ -15,6 +15,8 @@ import { useUnsavedWarning } from "@/lib/useUnsavedWarning";
 
 /** ตัวเลขจำนวน — ตัดทศนิยมเหลือ 2 ตำแหน่ง (จำนวนเส้นอลูเป็นทศนิยมได้ เช่น 1.22 เส้น) */
 const r2 = (n: unknown) => Math.round((Number(n) || 0) * 100) / 100;
+// % กำไรจากช่องกรอก: ว่าง/ไม่ใช่ตัวเลข = ค่าตั้งต้น · กรอก 0 = 0 จริง (QA 30 ต.ค.69: `Number(x) || 100` ทำให้ 0% เด้งเป็น 100% ในห้องกระจก/ผสมบาน)
+const pctOr = (v: unknown, def: number) => { const s = String(v ?? "").trim(); if (s === "") return def; const n = Number(s); return Number.isFinite(n) ? n : def; };
 // ทุนของบรรทัดในตาราง "ค่าของ" — ออปชั่นเหมา R3.9 (est) ทุน = ขาย ÷ 2 · ออปชั่นที่มีทุนจริง (มอเตอร์) ใช้ cost · ของทั่วไป = amount
 //   เจ้าของสั่ง 29 ต.ค.69: ของที่ยังเหมา (คอมโพสิต/เกล็ด Z ฯลฯ) "ไม่แก้ไม่ว่า แต่ต้องเขียนแจกแจงในราคาทุน"
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -498,8 +500,13 @@ export default function Calculator40Client({ customers = [], priceOverride, line
       const rc = resolveAluColor(color);
       // บานเปิด: มุ้งเลือกได้ 2 ทาง (spec "มุ้ง (กรอบ FUJI)" = ของจริงตามไฟล์ · ปุ่มมุ้งบวกบาน = R3.9) เลือกทั้งคู่ = คิดซ้ำ (QA 30 ต.ค.69: 23,100 → 32,600)
       //   → ถ้าเลือกมุ้งในสเปกแล้ว ปุ่มมุ้งบวกบานไม่คิดเงิน
-      const addonsForCalc: Record<string, any> = (prod.id === "open_door" && String(spec?.odmesh ?? "ไม่มี") !== "ไม่มี" && addons?.mosquito && addons.mosquito !== "none")
+      let addonsForCalc: Record<string, any> = (prod.id === "open_door" && String(spec?.odmesh ?? "ไม่มี") !== "ไม่มี" && addons?.mosquito && addons.mosquito !== "none")
         ? { ...addons, mosquito: "none" } : addons;
+      // ระแนงบังตา: ช่อง "รูปแบบ" (ติดตาย/บานเลื่อน/บานเฟี้ยม/บานเปิด) กับปุ่ม "ทำเป็นบาน" (louver_door) คือเรื่องเดียวกัน
+      //   🐞 QA 30 ต.ค.69: เลือกรูปแบบ=บานเลื่อน ราคาเท่าติดตาย (43,900) แต่ใบพิมพ์ "บานเลื่อน" → ต่ำกว่าจริง 30,500 · ให้ช่องรูปแบบคิดเงินผ่าน louver_door
+      if (prod.id === "louver" && spec?.panelform && spec.panelform !== "ติดตาย" && !(addonsForCalc?.louver_door && addonsForCalc.louver_door !== "ติดตาย")) {
+        addonsForCalc = { ...addonsForCalc, louver_door: spec.panelform };
+      }
       const opt: any = {
         w: wCm,
         h: hCm,
@@ -1725,10 +1732,10 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                   pb={pb}
                   mainColor={color}
                   mainGlass={glassType}
-                  profitPct={Number(profit) || 100}
+                  profitPct={pctOr(profit, 100)}
                   // กำไร 3 ก้อน + โหมดกรอกเอง — เดิมส่งแต่ profitPct ตัวเดียว ช่องค่าผลิต/ค่าติดตั้งเลยกดแล้วราคาไม่ขยับ
                   //   (เจ้าของจับได้ 10 ก.ย.69 · หน้าจอมี 3 ช่องแต่มีผลจริงช่องเดียว)
-                  profitOpt={{ manual: profitManual, edit: profitEdit, mat: Number(shownPct.mat) || 100, prod: Number(shownPct.prod) || 100, inst: Number(shownPct.inst) || 200 }}
+                  profitOpt={{ manual: profitManual, edit: profitEdit, mat: pctOr(shownPct.mat, 100), prod: pctOr(shownPct.prod, 100), inst: pctOr(shownPct.inst, 200) }}
                   initial={roomInitial}
                   onTotal={(t) => { setRoomTotals(t); roomStateRef.current = (t as any).state ?? roomStateRef.current; }}
                 />
@@ -1790,10 +1797,10 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                   pb={pb}
                   mainColor={color}
                   mainGlass={glassType}
-                  profitPct={Number(profit) || 100}
+                  profitPct={pctOr(profit, 100)}
                   // กำไร 3 ก้อน + โหมดกรอกเอง — เดิมส่งแต่ profitPct ตัวเดียว ช่องค่าผลิต/ค่าติดตั้งเลยกดแล้วราคาไม่ขยับ
                   //   (เจ้าของจับได้ 10 ก.ย.69 · หน้าจอมี 3 ช่องแต่มีผลจริงช่องเดียว)
-                  profitOpt={{ manual: profitManual, edit: profitEdit, mat: Number(shownPct.mat) || 100, prod: Number(shownPct.prod) || 100, inst: Number(shownPct.inst) || 200 }}
+                  profitOpt={{ manual: profitManual, edit: profitEdit, mat: pctOr(shownPct.mat, 100), prod: pctOr(shownPct.prod, 100), inst: pctOr(shownPct.inst, 200) }}
                   laborMode={laborMode}
                   showCost={showCost}
                 />

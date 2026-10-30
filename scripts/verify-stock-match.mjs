@@ -181,10 +181,11 @@ console.log("\n═══ ⑧ เส้นกลาง — หักตามส�
   const prods = fs.readFileSync(path.join(ROOT, "src/lib/calculator40/products.mjs"), "utf8");
   const cuts = fs.readFileSync(path.join(ROOT, "src/lib/cutlist/products.ts"), "utf8");
   ok("คิดราคา: บรรทัดเส้นคาดตาราง ใช้รหัสกลาง + priceCode เดิม",
-    /เส้นคาดตาราง 2 ฝั่ง', code: 'เส้นกลาง', priceCode: 'JR01679'/.test(prods), "");
+    /เส้นคาดตาราง', code: 'เส้นกลาง', priceCode: 'JR01679'/.test(prods), "");   // 29 ต.ค.69 ชื่อบรรทัดตัด "2 ฝั่ง" (เลือกฝั่งได้แล้ว)
   ok("ใบตัด: เส้นคาด บานแม่/บานลูก ใช้รหัสกลาง ไม่ผูก sku สีเดียว",
-    /name: "เส้นคาด บานแม่ \(2ฝั่ง\)", code: "เส้นกลาง"/.test(cuts)
-    && /name: "เส้นคาด บานลูก \(2ฝั่ง\)", code: "เส้นกลาง"/.test(cuts), "");
+    // 29 ต.ค.69: ชื่อบรรทัดเป็นฟังก์ชัน (จำนวนฝั่งเลือกได้) แต่ยังต้องใช้รหัสกลาง "เส้นกลาง"
+    /name: \(o\) => "เส้นคาด บานแม่ \(" \+ sGridSides\(o\) \+ "ฝั่ง\)", code: "เส้นกลาง"/.test(cuts)
+    && /name: \(o\) => "เส้นคาด บานลูก \(" \+ sGridSides\(o\) \+ "ฝั่ง\)", code: "เส้นกลาง"/.test(cuts), "");
   // ตัดคอมเมนต์ + ช่อง priceCode (ตัวนั้นใช้หาราคาอย่างเดียว ไม่ได้ใช้หักสต็อก) แล้วค่อยตรวจ
   const noCmt = (t) => t.replace(/\/\/[^\n]*/g, "").replace(/priceCode:\s*'[^']*'/g, "");
   ok("ไม่มีบรรทัดไหนหักสต็อกด้วย sku เส้นกลางสีเดียวอีก",

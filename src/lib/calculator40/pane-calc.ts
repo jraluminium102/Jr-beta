@@ -64,6 +64,8 @@ export const PANE_BY_KEY: Record<string, any> = Object.fromEntries(
 
 /** สีอบพิเศษ/ตร.ม. (ราคาขาย) — ใช้กับผนังแผ่นอลู (ลูกฟูก/คอมโพ · prod.showColor) */
 export const SHEET_FIN: Record<string, number> = { white: 0, sahara: 300, special: 1700, woodSpecial: 2400, woodStock: 2400 };
+/** รุ่นที่ใช้ "สีโครงพิเศษ/ตร.ม." (R3.9) — เฉพาะผนังแผ่นที่ BOM ไม่คิดสีเอง · รุ่นอื่น (ระแนง/รั้ว/ราว/ฯลฯ) คิดสีจากเส้น/กล่องใน BOM แล้ว ห้ามบวกซ้ำ */
+export const SHEET_FIN_PRODS = new Set(["wall_corrugated", "wall_composite", "wall_smartboard", "wall_roofsheet", "aluwave"]);
 
 export type Pane = {
   key: number;
@@ -131,7 +133,11 @@ export function panePrice(
     } : {}),
     spec: paneSpec(prod, pane),                                  // ราง/มือจับ ฯลฯ — ชุดเดียวกับ G1
     // finRate เป็นราคาขาย → ÷(1+กำไร%) เป็นทุน แล้วเอนจิน ×(1+กำไร%) กลับ (ไม่ขึ้นกับกำไร%)
-    frameColorRate: prod.showColor ? ((SHEET_FIN[rc.bake] || 0) / (1 + (profitPct || 100) / 100)) : 0,
+    // สีโครงพิเศษ/ตร.ม. (R3.9) — เฉพาะรุ่นแผ่นที่ "ไม่มีเส้นอลูใน BOM" (ผนังลูกฟูก/คอมโพสิต) เท่านั้น
+    //   🐞 QA 30 ต.ค.69: รุ่นที่ BOM คิดสีจากเส้นแล้ว (ระแนง/ประตูรั้ว/ราว/บานเลื่อนระแนง/วงกบไม้/Velora) ถูกบวกซ้ำ → ห้องกระจกแพงกว่าหน้า G1 11–44%
+    //   กำไร 0% ต้องเป็น 0 ไม่ใช่เด้งเป็น 100 (`|| 100` เดิม)
+    frameColorRate: (prod.showColor && SHEET_FIN_PRODS.has(prod.id))
+      ? ((SHEET_FIN[rc.bake] || 0) / (1 + (Number.isFinite(profitPct) ? profitPct : 100) / 100)) : 0,
   };
   const movePanes = movePanesOverride ?? Math.max(1, (pane.n || 1) - (pane.fixedPanes || 0));
   const mq = computeMosquitoR4(PRODUCTS, pane.addons || {}, { wCm, hCm, movePanes, form: formVal }, pb, profitPct, profitPct);

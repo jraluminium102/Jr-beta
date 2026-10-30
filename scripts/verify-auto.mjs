@@ -1409,6 +1409,27 @@ console.log("\n═══ บานโซลิด เส้นคาดตาร
   void two;
 }
 
+// ── QA 30 ต.ค.69 (เทสก่อนใช้จริง): ม่านซิป มอเตอร์/รีโมท จาก addons · ห้องกระจกไม่คิดสีซ้ำ · ลูกฟูกในรุ่นขายเหมายังเหมา ──
+console.log("\n═══ QA 30 ต.ค.69 ═══");
+{
+  const Z = (addons) => computeCost(PB, PRODUCTS.zipscreen, { w: 300, h: 240, p: 1, form: PRODUCTS.zipscreen.defForm, color: "white", colorKey: "white", spec: {}, addons });
+  const zb = Z({}), zs = Z({ zip_motor: "solar" }), zn = Z({ zip_noremote: "yes" });
+  ok("ม่านซิป เลือกมอเตอร์โซลาร์ (addons.zip_motor) ราคาขึ้น", zs.sell.withInstall > zb.sell.withInstall, `${zb.sell.withInstall} → ${zs.sell.withInstall}`);
+  ok("ม่านซิป ไม่เอารีโมท (addons.zip_noremote) ราคาลง", zn.sell.withInstall < zb.sell.withInstall, `${zb.sell.withInstall} → ${zn.sell.withInstall}`);
+  const { panePrice } = await import("../src/lib/calculator40/pane-calc.ts");
+  for (const [id, w, h] of [["louver", 2, 2.4], ["gate", 4, 2], ["louver_slip", 2, 2.4]]) {
+    const g1 = computeCost(PB, PRODUCTS[id], { w: w * 100, h: h * 100, p: 1, form: PRODUCTS[id].defForm, color: "woodSpecial", colorKey: "wood_fuji_oak", stockColor: "ลายไม้อบพิเศษ", spec: {}, addons: {}, profitPct: 100, installProfitPct: 100 });
+    const g6 = panePrice({ key: 0, typeKey: id, w, h, n: 1, addons: {} }, PB, "wood_fuji_oak", "", 100);
+    ok(`ห้องกระจก ${PRODUCTS[id].name} ลายไม้ Fuji Oak = หน้า G1 (ไม่บวกสีโครงซ้ำ)`, !g6.r.lines.some((l) => /สีโครงพิเศษ/.test(l.name)) && Math.abs(g6.amount - g1.sell.withInstall) <= 100, `${g6.amount} vs ${g1.sell.withInstall}`);
+  }
+  const AW = { ...PRODUCTS.aluwave, addons: [...(PRODUCTS.aluwave.addons || []), "solid_panel"] };
+  const a0 = computeCost(PB, AW, { w: 300, h: 240, p: 1, form: AW.defForm, color: "white", colorKey: "white", spec: {}, addons: {} });
+  const a1 = computeCost(PB, AW, { w: 300, h: 240, p: 1, form: AW.defForm, color: "white", colorKey: "white", spec: {}, addons: { solid_panel: { type: "look", w: 3, h: 0.8 } } });
+  ok("รุ่นขายเหมา (aluwave) เลือกลูกฟูก → ราคาขึ้นแบบเหมา 3,500/ตร.ม. (ไม่ใช่ทุนขึ้นแต่ขายนิ่ง)", Math.abs((a1.sell.withInstall - a0.sell.withInstall) - 3 * 0.8 * 3500) < 1, `${a0.sell.withInstall} → ${a1.sell.withInstall}`);
+  const cw = computeCost(PB, PRODUCTS.ceil_wood, { w: 300, h: 300, p: 1, form: PRODUCTS.ceil_wood.defForm, material: "วัสดุที่ไม่มีแล้ว", color: "white", colorKey: "white", spec: {}, addons: {} });
+  ok("ฝ้าไม้เทียม วัสดุที่ไฟล์ไม่มีแล้ว → ไม่เป็น NaN + มีคำเตือน", Number.isFinite(cw.sell.withInstall) && cw.sell.withInstall > 0 && (cw.hwMissing || []).some((m) => /ไม่มีในไฟล์/.test(m.name)), String(cw.sell.withInstall));
+}
+
 // ── บานโซลิด Digital door lock (เจ้าของสั่ง 29 ต.ค.69) — ราคามือจับดิจิตอล + ตัดชุดล็อคมาตรฐาน 4 ชิ้น ──
 console.log("\n═══ บานโซลิด Digital door lock ═══");
 {
