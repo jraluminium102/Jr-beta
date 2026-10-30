@@ -15,7 +15,10 @@ export type Sb = { from: (t: string) => any };
 
 export type PickActor = { userId: string | null; name: string; isChang: boolean };
 
-export type PickItemIn = { stock_item_id: number; qty: number };
+/** special_color = "สีพิเศษ" (สีอบพิเศษไม่เข้าสต็อก · 0166) — ไม่ตัดสต็อก · stock_item_id แค่บอกว่าโปรไฟล์ไหน */
+export type PickItemIn = { stock_item_id: number; qty: number; special_color?: string };
+const SPECIAL_MAX = 60;
+const specialOf = (v: unknown) => String(v ?? "").trim().slice(0, SPECIAL_MAX);
 
 export class PickError extends Error {
   constructor(message: string, public status = 400) { super(message); }
@@ -58,13 +61,16 @@ async function insertMove(sb: Sb, a: PickActor, p: {
 }
 
 function cleanItems(items: PickItemIn[]): PickItemIn[] {
-  const m = new Map<number, number>();
+  // รวมรายการซ้ำ (เส้นเดียวกัน + สีพิเศษชื่อเดียวกัน) · เส้นปกติกับสีพิเศษของเส้นเดียวกันแยกบรรทัด
+  const m = new Map<string, PickItemIn>();
   for (const it of items ?? []) {
-    const id = Number(it.stock_item_id), q = r2(num(it.qty));
+    const id = Number(it.stock_item_id), q = r2(num(it.qty)), sp = specialOf(it.special_color);
     if (!id || q <= 0) continue;
-    m.set(id, r2((m.get(id) ?? 0) + q));
+    const key = `${id}|${sp.toLowerCase()}`;
+    const prev = m.get(key);
+    m.set(key, { stock_item_id: id, qty: r2((prev?.qty ?? 0) + q), special_color: sp });
   }
-  return [...m].map(([stock_item_id, qty]) => ({ stock_item_id, qty }));
+  return [...m.values()];
 }
 
 /** สร้างใบเบิก + ตัดสต็อกทันที */
@@ -90,6 +96,11 @@ export async function createPick(sb: Sb, a: PickActor, input: {
   for (const it of items) {
     const row = map.get(it.stock_item_id);
     if (!row || !row.is_active) throw new PickError("มีเส้นที่ไม่อยู่ในสโตร์แล้ว — โหลดหน้าใหม่แล้วเลือกอีกครั้ง", 404);
+    // สีพิเศษ: แค่ต้องเป็นเส้นอลู (แถวอ้างอิงอาจเป็นแถวมิวที่ไม่ขึ้นหน้าเบิกก็ได้) · ไม่ตัดสต็อก
+    if (it.special_color) {
+      if (!/อลู/.test(String(row.category ?? ""))) throw new PickError(`${label(row)} — ไม่ใช่เส้นอลู`, 400);
+      continue;
+    }
     // เบิกได้เฉพาะเส้นที่หน้าเบิกโชว์ (อลู · มีบนชั้น · ไม่ใช่หลังคาอย่างเดียว) — กันยิง API ตรงเบิกของหมวดอื่น
     if (!pickGroupOf(row)) throw new PickError(`${label(row)} — ไม่ใช่เส้นอลูที่เบิกผ่านหน้านี้ได้`, 400);
     if (num(row.qty_on_hand) < it.qty) negatives.push(`${label(row)} ระบบมี ${num(row.qty_on_hand)} เบิก ${it.qty} → เหลือ ${r2(num(row.qty_on_hand) - it.qty)}`);
@@ -105,18 +116,26 @@ export async function createPick(sb: Sb, a: PickActor, input: {
   const { error: cErr } = await sb.from("alu_picks").update({ code }).eq("id", head.id);
   if (cErr) { await sb.from("alu_picks").delete().eq("id", head.id); throw new PickError("ตั้งเลขใบเบิกไม่สำเร็จ: " + cErr.message, 500); }
 
-  const { error: iErr } = await sb.from("alu_pick_items").insert(
-    items.map((it, i) => ({ pick_id: head.id, stock_item_id: it.stock_item_id, qty: it.qty, sort_order: i })),
+  const hasSpecial = items.some((it) => it.special_color);
+  let { error: iErr } = await sb.from("alu_pick_items").insert(
+    items.map((it, i) => ({ pick_id: head.id, stock_item_id: it.stock_item_id, qty: it.qty, sort_order: i, special_color: it.special_color ?? "" })),
   );
+  // ยังไม่รัน 0166 → ใบปกติบันทึกได้ตามเดิม · ใบที่มีสีพิเศษต้องรอ migration
+  if (iErr && /special_color/i.test(iErr.message ?? "") && !hasSpecial) {
+    ({ error: iErr } = await sb.from("alu_pick_items").insert(
+      items.map((it, i) => ({ pick_id: head.id, stock_item_id: it.stock_item_id, qty: it.qty, sort_order: i })),
+    ));
+  }
   if (iErr) {
     await sb.from("alu_picks").delete().eq("id", head.id);
     throw new PickError("บันทึกรายการไม่สำเร็จ: " + iErr.message, 500);
   }
 
-  // ตัดสต็อกทีละเส้น · ถ้าพลาดกลางทาง คืนของที่ตัดไปแล้ว + ลบใบ
+  // ตัดสต็อกทีละเส้น (สีพิเศษไม่ตัด — ของสั่งอบ) · ถ้าพลาดกลางทาง คืนของที่ตัดไปแล้ว + ลบใบ
   const done: PickItemIn[] = [];
   try {
     for (const it of items) {
+      if (it.special_color) continue;
       await insertMove(sb, a, { item: map.get(it.stock_item_id)!, type: "out", qty: it.qty, ref: code, note: "เบิกอลู", job_id: input.job_id });
       done.push(it);
     }
@@ -131,13 +150,23 @@ export async function createPick(sb: Sb, a: PickActor, input: {
 }
 
 type PickHead = { id: number; code: string; job_id: string | null; status: string; picker_name: string };
-type PickItemRow = { id: number; pick_id: number; stock_item_id: number; qty: number; returned: number };
+type PickItemRow = { id: number; pick_id: number; stock_item_id: number; qty: number; returned: number; special_color?: string | null };
+
+/** รายการในใบ — อ่าน special_color ด้วย (ยังไม่รัน 0166 = อ่านแบบเดิม) */
+async function loadPickItems(sb: Sb, pickId: number): Promise<PickItemRow[]> {
+  let { data, error } = await sb.from("alu_pick_items").select("id, pick_id, stock_item_id, qty, returned, special_color").eq("pick_id", pickId).order("sort_order");
+  if (error && /special_color/i.test(error.message ?? "")) {
+    ({ data } = await sb.from("alu_pick_items").select("id, pick_id, stock_item_id, qty, returned").eq("pick_id", pickId).order("sort_order"));
+  }
+  return (data ?? []) as PickItemRow[];
+}
+/** สีพิเศษ = ไม่มีของบนชั้น → แก้/คืน/ยกเลิก แค่แก้ตัวเลขในใบ ไม่ลง stock_moves */
+const isSpecial = (row: PickItemRow) => Boolean(String(row.special_color ?? "").trim());
 
 async function loadPick(sb: Sb, id: number): Promise<{ head: PickHead; items: PickItemRow[] }> {
   const { data: head } = await sb.from("alu_picks").select("id, code, job_id, status, picker_name").eq("id", id).maybeSingle();
   if (!head) throw new PickError("ไม่พบใบเบิก", 404);
-  const { data: items } = await sb.from("alu_pick_items").select("id, pick_id, stock_item_id, qty, returned").eq("pick_id", id).order("sort_order");
-  return { head: head as PickHead, items: (items ?? []) as PickItemRow[] };
+  return { head: head as PickHead, items: await loadPickItems(sb, id) };
 }
 
 /** ช่างแก้ได้เฉพาะใบที่ยังไม่ถูกตรวจ · สโตร์/ออฟฟิศแก้ได้ตลอด (ยกเว้นใบที่ยกเลิกแล้ว) */
@@ -175,6 +204,7 @@ export async function editPickQty(sb: Sb, a: PickActor, pickId: number, changes:
     const { data: won, error: uErr } = await sb.from("alu_pick_items").update({ qty: newQty }).eq("id", row.id).eq("qty", row.qty).select("id");
     if (uErr) throw new PickError("บันทึกจำนวนใหม่ไม่สำเร็จ: " + uErr.message, 500);
     if (!(won ?? []).length) throw new PickError("รายการนี้เพิ่งถูกแก้โดยคนอื่น — โหลดใหม่แล้วดูอีกครั้ง", 409);
+    if (isSpecial(row)) continue;
     if (diff > 0) await insertMove(sb, a, { item, type: "out", qty: diff, ref: head.code, note: `แก้จำนวน ${num(row.qty)}→${newQty} โดย ${a.name}`, job_id: head.job_id, requester: head.picker_name });
     else await insertMove(sb, a, { item, type: "in", qty: -diff, ref: head.code, note: `แก้จำนวน ${num(row.qty)}→${newQty} โดย ${a.name}`, job_id: head.job_id, requester: head.picker_name });
   }
@@ -200,7 +230,7 @@ export async function returnPickItems(sb: Sb, a: PickActor, pickId: number, rets
     const { data: won, error: uErr } = await sb.from("alu_pick_items").update({ returned: r2(num(row.returned) + q) }).eq("id", row.id).eq("returned", row.returned).select("id");
     if (uErr) throw new PickError("บันทึกการคืนไม่สำเร็จ: " + uErr.message, 500);
     if (!(won ?? []).length) throw new PickError("รายการนี้เพิ่งถูกคืน/แก้โดยคนอื่น — โหลดใหม่แล้วดูอีกครั้ง", 409);
-    await insertMove(sb, a, { item, type: "in", qty: q, ref: head.code, note: `คืนเส้น โดย ${a.name}`, job_id: head.job_id, requester: head.picker_name });
+    if (!isSpecial(row)) await insertMove(sb, a, { item, type: "in", qty: q, ref: head.code, note: `คืนเส้น โดย ${a.name}`, job_id: head.job_id, requester: head.picker_name });
     any = true;
   }
   if (!any) throw new PickError("ยังไม่ได้ใส่จำนวนที่คืน");
@@ -217,8 +247,8 @@ export async function cancelPick(sb: Sb, a: PickActor, pickId: number, reason: s
   }).eq("id", pickId).eq("status", head.status).select("id");
   if (!(claimed ?? []).length) throw new PickError("ใบนี้เพิ่งถูกเปลี่ยนสถานะ — โหลดใหม่แล้วดูอีกครั้ง", 409);
   // อ่านรายการ "หลัง" claim — ถ้ามีคืน/แก้แทรกก่อนหน้านี้ จะคืนเฉพาะที่เหลือจริง
-  const { data: fresh } = await sb.from("alu_pick_items").select("id, pick_id, stock_item_id, qty, returned").eq("pick_id", pickId).order("sort_order");
-  const rows = ((fresh ?? []) as PickItemRow[]).length ? (fresh as PickItemRow[]) : items;
+  const fresh = await loadPickItems(sb, pickId);
+  const rows = fresh.length ? fresh : items;
   const map = await loadItems(sb, rows.map((i) => i.stock_item_id));
   for (const row of rows) {
     const left = r2(num(row.qty) - num(row.returned));
@@ -226,6 +256,7 @@ export async function cancelPick(sb: Sb, a: PickActor, pickId: number, reason: s
     if (left <= 0 || !item) continue;
     const { data: won } = await sb.from("alu_pick_items").update({ returned: num(row.qty) }).eq("id", row.id).eq("returned", row.returned).select("id");
     if (!(won ?? []).length) continue;   // ถูกคืนแทรกพอดี → ข้าม (ไม่คืนซ้ำ)
+    if (isSpecial(row)) continue;
     await insertMove(sb, a, { item, type: "in", qty: left, ref: head.code, note: `ยกเลิกใบเบิก โดย ${a.name}${reason ? " — " + reason : ""}`, job_id: head.job_id, requester: head.picker_name });
   }
 }

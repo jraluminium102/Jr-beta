@@ -23,8 +23,10 @@ const DRAFT_KEY = "alu_pick_draft_v1";
 
 type Step = "job" | "items" | "review" | "done";
 type Job = { job_id: string | null; title: string; job_code: string | null; what?: string };
-type Draft = { job: Job | null; reason: string; reasonNote: string; cart: Record<string, number>; note: string };
-const EMPTY: Draft = { job: null, reason: "", reasonNote: "", cart: {}, note: "" };
+/** cart key = stock_item_id ("123") · สีพิเศษ = "sp:123" (แถวอ้างอิงของโปรไฟล์) + ชื่อสีใน special[key] (0166 · เจ้าของ 30 ต.ค.69) */
+const SP = "sp:";
+type Draft = { job: Job | null; reason: string; reasonNote: string; cart: Record<string, number>; special: Record<string, string>; note: string };
+const EMPTY: Draft = { job: null, reason: "", reasonNote: "", cart: {}, special: {}, note: "" };
 
 export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fixedName?: string }) {
   const qc = useQueryClient();
@@ -122,9 +124,14 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
   }, [q, items, inGroup, brand]);
   const pickGroup = (g: string) => { setGroup(g); setBrand(""); setOpen(""); setLimit(40); };
 
-  const cartRows = useMemo(() => Object.entries(d.cart).map(([id, qty]) => ({ item: byId.get(Number(id)), id: Number(id), qty })).filter((r) => r.qty > 0), [d.cart, byId]);
+  const cartRows = useMemo(() => Object.entries(d.cart).map(([key, qty]) => {
+    const isSp = key.startsWith(SP);
+    const id = Number(isSp ? key.slice(SP.length) : key);
+    return { key, item: byId.get(id), id, qty, special: isSp ? (d.special?.[key] ?? "") : "", isSp };
+  }).filter((r) => r.qty > 0), [d.cart, d.special, byId]);
   const totalBars = cartRows.reduce((s, r) => s + r.qty, 0);
-  const setQty = (id: number, qty: number) => setD((x) => ({ ...x, cart: { ...x.cart, [id]: Math.max(0, Math.round(qty * 100) / 100) } }));
+  const setQty = (key: string, qty: number) => setD((x) => ({ ...x, cart: { ...x.cart, [key]: Math.max(0, Math.round(qty * 100) / 100) } }));
+  const setSpecial = (key: string, text: string) => setD((x) => ({ ...x, special: { ...(x.special ?? {}), [key]: text } }));
 
   const whoLabel = d.job ? `${d.job.title}${d.job.what ? " · " + d.job.what : ""}` : d.reason === "repair" ? "งานซ่อม" : d.reason === "other" ? `อื่นๆ: ${d.reasonNote}` : "";
 
@@ -133,11 +140,13 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
       if (isChang) { try { localStorage.removeItem("chang_code"); } catch { /* ignore */ } location.reload(); return; }
       setAskName(true); return;
     }
+    const noName = cartRows.find((r) => r.isSp && !r.special.trim());
+    if (noName) { setErr(`พิมพ์ชื่อสีพิเศษของ ${noName.item?.name ?? "เส้นที่เลือก"} ก่อน`); return; }
     setBusy(true); setErr("");
     try {
       const r = await api.post<{ id: number; code: string }>("/alu-picks", {
         job_id: d.job?.job_id ?? null, reason: d.reason, reason_note: d.reasonNote, note: d.note, picker_name: name,
-        items: cartRows.map((r) => ({ stock_item_id: r.id, qty: r.qty })),
+        items: cartRows.map((r) => ({ stock_item_id: r.id, qty: r.qty, ...(r.isSp ? { special_color: r.special.trim() } : {}) })),
       });
       setDone(r.data); setStep("done"); setD(EMPTY); setGroup(""); setBrand(""); setOpen(""); setQ("");
       qc.invalidateQueries({ queryKey: ["alu-pick-items"] });
@@ -313,7 +322,7 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
                   <div className="grid grid-cols-1 gap-1.5">
                     {profiles.slice(0, limit).map((pr) => (
                       <ProfileRow key={pr.pkey} p={pr} open={open === pr.pkey || pr.colors.length === 1}
-                        onToggle={() => setOpen(open === pr.pkey ? "" : pr.pkey)} cart={d.cart} onQty={setQty} />
+                        onToggle={() => setOpen(open === pr.pkey ? "" : pr.pkey)} cart={d.cart} onQty={setQty} special={d.special ?? {}} onSpecial={setSpecial} />
                     ))}
                     {profiles.length > limit && <button onClick={() => setLimit(limit + 40)} className="min-h-[44px] rounded-[12px] text-[14px] font-semibold" style={{ background: C.card, color: C.blue }}>แสดงเพิ่ม ({profiles.length - limit} โปรไฟล์)</button>}
                   </div>
@@ -322,7 +331,7 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
       ) : (
         <Shell title="ตรวจก่อนบันทึก" sub={whoLabel} onBack={() => setStep("items")}>
           <div className="rounded-[14px] p-2" style={{ background: C.card }}>
-            {cartRows.map((r) => r.item && <ItemRow key={r.id} it={r.item} qty={r.qty} onQty={(v) => setQty(r.id, v)} />)}
+            {cartRows.map((r) => r.item && <ItemRow key={r.key} it={r.item} qty={r.qty} special={r.isSp ? r.special : undefined} onQty={(v) => setQty(r.key, v)} />)}
           </div>
           <input value={d.note} onChange={(e) => setD({ ...d, note: e.target.value })} placeholder="หมายเหตุ (ไม่บังคับ)"
             className="w-full rounded-[12px] px-3 min-h-[48px] text-[15px] bg-white outline-none mt-2.5" style={{ border: `1px solid ${C.line}`, color: C.ink }} />
@@ -335,7 +344,7 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
         <div className="fixed left-0 right-0 bottom-0 px-4 py-3 flex items-center gap-3" style={{ background: "rgba(242,242,247,.96)", borderTop: `1px solid ${C.line}`, backdropFilter: "blur(8px)", paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}>
           <div className="min-w-0">
             <div className="text-[15px] font-bold" style={{ color: C.ink }}>{cartRows.length} รายการ · {fmtQty(totalBars)} เส้น</div>
-            {step === "items" && cartRows.length > 0 && <button onClick={() => setD({ ...d, cart: {} })} className="text-[12px]" style={{ color: C.red }}>ล้างทั้งหมด</button>}
+            {step === "items" && cartRows.length > 0 && <button onClick={() => setD({ ...d, cart: {}, special: {} })} className="text-[12px]" style={{ color: C.red }}>ล้างทั้งหมด</button>}
           </div>
           {step === "items" ? (
             <button disabled={!cartRows.length} onClick={() => { setErr(""); setStep("review"); }} className="ml-auto min-h-[52px] rounded-[14px] px-6 text-[16px] font-bold text-white disabled:opacity-40" style={{ background: C.blue }}>ถัดไป →</button>
@@ -375,14 +384,17 @@ function Chip({ on, label, onClick, tone }: { on: boolean; label: string; onClic
   const onBg = tone === "brand" ? C.ink : C.blue;   // หมวด = ฟ้า · ยี่ห้อ = ดำ
   return <button onClick={onClick} className="shrink-0 whitespace-nowrap rounded-full px-3.5 min-h-[40px] text-[14px] font-semibold" style={{ background: on ? onBg : C.card, color: on ? "#fff" : C.ink }}>{label}</button>;
 }
-function ItemRow({ it, qty, onQty }: { it: PickableItem; qty: number; onQty: (v: number) => void }) {
+function ItemRow({ it, qty, special, onQty }: { it: PickableItem; qty: number; special?: string; onQty: (v: number) => void }) {
   const on = qty > 0;
+  const isSp = special !== undefined;
   return (
     <div className="flex items-center gap-2.5 rounded-[14px] px-2.5 py-2" style={{ background: C.card, outline: on ? `2px solid ${C.blue}` : "none" }} onClick={() => { if (!on) onQty(1); }}>
       <Thumb url={it.image_url} size={48} />
       <div className="min-w-0 flex-1">
-        <div className="text-[14.5px] font-semibold leading-tight" style={{ color: C.ink }}>{it.name}</div>
-        <div className="text-[12px]" style={{ color: C.ink2 }}>{it.sku}{it.color && !it.name.includes(it.color) ? ` · ${it.color}` : ""} · เหลือ <b style={{ color: it.qty <= 0 ? C.red : C.ink2 }}>{fmtQty(it.qty)}</b></div>
+        <div className="text-[14.5px] font-semibold leading-tight" style={{ color: C.ink }}>{isSp ? `${it.code ? it.code + " " : ""}${it.base}` : it.name}</div>
+        {isSp
+          ? <div className="text-[12px]" style={{ color: "#b26a00" }}>สีพิเศษ: <b>{special || "ยังไม่ได้พิมพ์ชื่อสี"}</b> · สั่งอบ ไม่ตัดสต็อก</div>
+          : <div className="text-[12px]" style={{ color: C.ink2 }}>{it.sku}{it.color && !it.name.includes(it.color) ? ` · ${it.color}` : ""} · เหลือ <b style={{ color: it.qty <= 0 ? C.red : C.ink2 }}>{fmtQty(it.qty)}</b></div>}
       </div>
       <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
         <button onClick={() => onQty(qty - 1)} disabled={!on} className="min-h-[44px] min-w-[44px] rounded-[10px] text-[22px] font-bold disabled:opacity-30" style={{ background: C.bg, color: C.ink }}>−</button>
@@ -394,10 +406,14 @@ function ItemRow({ it, qty, onQty }: { it: PickableItem; qty: number; onQty: (v:
   );
 }
 /** 1 แถว = 1 โปรไฟล์ · กดแล้วกางสีด้านใน (โปรไฟล์ที่มีสีเดียว กางให้เลย) */
-function ProfileRow({ p, open, onToggle, cart, onQty }: {
-  p: PickProfile; open: boolean; onToggle: () => void; cart: Record<string, number>; onQty: (id: number, v: number) => void;
+function ProfileRow({ p, open, onToggle, cart, onQty, special, onSpecial }: {
+  p: PickProfile; open: boolean; onToggle: () => void; cart: Record<string, number>; onQty: (key: string, v: number) => void;
+  special: Record<string, string>; onSpecial: (key: string, text: string) => void;
 }) {
-  const picked = p.colors.reduce((s, c) => s + (cart[c.id] ?? 0), 0);
+  // สีพิเศษ (สั่งอบ · ไม่เข้าสต็อก) มีให้ทุกโปรไฟล์ — ผูกกับแถวแรกของโปรไฟล์ไว้บอกว่าเส้นไหน
+  const spKey = SP + p.colors[0]?.id;
+  const spQty = cart[spKey] ?? 0;
+  const picked = p.colors.reduce((s, c) => s + (cart[c.id] ?? 0), 0) + spQty;
   const brandLabel = PICK_BRANDS.find((b) => b.key === p.brand)?.label ?? "";
   return (
     <div className="min-w-0 rounded-[14px] overflow-hidden" style={{ background: C.card, outline: picked > 0 ? `2px solid ${C.blue}` : "none" }}>
@@ -425,10 +441,26 @@ function ProfileRow({ p, open, onToggle, cart, onQty }: {
                   </div>
                   <div className="text-[12px]" style={{ color: C.ink2 }}>เหลือ <b style={{ color: c.qty <= 0 ? C.red : C.ink2 }}>{fmtQty(c.qty)}</b></div>
                 </div>
-                <Stepper qty={q} onQty={(v) => onQty(c.id, v)} />
+                <Stepper qty={q} onQty={(v) => onQty(String(c.id), v)} />
               </div>
             );
           })}
+          <div className="pt-2 mt-1" style={{ borderTop: `1px dashed ${C.line}` }}>
+            <div className="flex items-center gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="text-[15px] font-semibold" style={{ color: C.ink2 }}>
+                  สีพิเศษ
+                  <span className="ml-1.5 rounded-full px-1.5 py-0.5 text-[11px] font-semibold align-middle" style={{ background: "#fff3e0", color: "#b26a00" }}>สั่งอบ · ไม่ตัดสต็อก</span>
+                </div>
+                <div className="text-[12px]" style={{ color: C.ink3 }}>สีอบพิเศษที่ไม่มีในสต็อก</div>
+              </div>
+              <Stepper qty={spQty} onQty={(v) => onQty(spKey, v)} />
+            </div>
+            {spQty > 0 && (
+              <input value={special[spKey] ?? ""} onChange={(e) => onSpecial(spKey, e.target.value)} placeholder="พิมพ์ชื่อสี เช่น น้ำตาลเข้ม / RAL 7016" maxLength={60} autoFocus
+                className="w-full rounded-[10px] px-3 min-h-[44px] text-[15px] bg-white outline-none mt-1.5" style={{ border: `1px solid ${special[spKey]?.trim() ? C.line : "#b26a00"}`, color: C.ink }} />
+            )}
+          </div>
         </div>
       )}
     </div>
