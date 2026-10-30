@@ -6,7 +6,7 @@ import { PICK_TYPES, PICK_BRANDS, PICK_REASONS } from "@/lib/alu-pick/groups";
 import PickList, { Thumb } from "./PickList";
 import { fmtQty, fmtDay, shortFactory, type Pick, type PickJob, type PickableItem, type PickProfile } from "./types";
 // สีมิว (อลูเปลือยไม่อบสี) = ของสั่งตามงาน — ไว้ท้ายลิสต์สี + ติดป้าย (เจ้าของ 30 ต.ค.69)
-const isMiu = (c: string) => /^(?s*มิวs*)?$/.test(String(c ?? "").trim());
+const isMiu = (c: string) => /^\(?\s*มิว\s*\)?$/.test(String(c ?? "").trim());
 
 /**
  * หน้าเบิกอลูของช่าง (มือถือ) — เจ้าของเคาะ 19 ต.ค.69
