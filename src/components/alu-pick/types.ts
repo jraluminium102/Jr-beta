@@ -2,6 +2,8 @@
 export type PickItem = {
   id: number; stock_item_id: number; qty: number; returned: number;
   sku: string; name: string; color: string; image_url: string; unit: string; on_hand: number;
+  /** สีพิเศษ (สั่งอบ · ไม่ตัดสต็อก) — "" = เส้นสีปกติจากชั้น */
+  special_color?: string;
 };
 export type Pick = {
   id: number; code: string; job_id: string | null; reason: string; reason_note: string; picker_name: string;

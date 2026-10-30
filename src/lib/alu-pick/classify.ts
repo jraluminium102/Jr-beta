@@ -152,5 +152,10 @@ export function pickInfoOf(r: PickSourceRow): PickInfo | null {
   return out(types.size ? [...types] : ["other"], brand);
 }
 
+/** ชื่อโปรไฟล์ไม่มีรหัส/ไม่มีสี ("B20001 - เฟรมบน-อบขาว" → "เฟรมบน") — ใช้กับบรรทัดสีพิเศษ ที่ไม่ควรโชว์สีของแถวอ้างอิง */
+export function profileBaseName(r: PickSourceRow): string {
+  return stripColor(bareName(String(r.name ?? "")), String(r.color ?? "").trim()) || String(r.name ?? "").trim();
+}
+
 /** ใช้เช็คฝั่ง server ว่าเส้นนี้เบิกผ่านหน้านี้ได้ไหม */
 export const pickGroupOf = (r: PickSourceRow) => (pickInfoOf(r) ? "ok" : null);

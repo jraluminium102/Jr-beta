@@ -18,6 +18,9 @@ type Row = {
 };
 const COLS = "id, sku, name, color, category, unit, qty_on_hand, min_qty, image_url, is_stocked";
 
+// สีในสโตร์บางแถวพิมพ์ "( อบขาว )" (เจอ กล่อง 1"x1.6" 30 ต.ค.69) → หน้าเบิกเห็นเป็นคนละสีกับ "อบขาว" · ตัดวงเล็บ/ช่องว่างให้ตรงกัน
+const normColor = (c: unknown) => String(c ?? "").trim().replace(/^\(\s*(.+?)\s*\)$/, "$1").trim();
+
 export const GET = withRoute(async (req: Request) => {
   const { sb } = await pickCtx(req, "read");
   const pull = (cols: string) => fetchAllPaged<Row>((f, t) =>
@@ -30,7 +33,7 @@ export const GET = withRoute(async (req: Request) => {
     const info = pickInfoOf(r);
     if (!info) return [];
     return [{
-      id: r.id, sku: r.sku ?? "", name: stockDisplayName(r), color: String(r.color ?? "").trim(),
+      id: r.id, sku: r.sku ?? "", name: stockDisplayName(r), color: normColor(r.color),
       unit: r.unit || "เส้น", qty: Number(r.qty_on_hand) || 0, min_qty: Number(r.min_qty) || 0,
       image_url: r.image_url ?? "", types: info.types, brand: info.brand, pkey: info.pkey, base: info.base, code: info.code,
     }];
