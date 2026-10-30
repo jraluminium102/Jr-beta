@@ -5,6 +5,8 @@ import { api } from "@/lib/api";
 import { PICK_TYPES, PICK_BRANDS, PICK_REASONS } from "@/lib/alu-pick/groups";
 import PickList, { Thumb } from "./PickList";
 import { fmtQty, fmtDay, shortFactory, type Pick, type PickJob, type PickableItem, type PickProfile } from "./types";
+// สีมิว (อลูเปลือยไม่อบสี) = ของสั่งตามงาน — ไว้ท้ายลิสต์สี + ติดป้าย (เจ้าของ 30 ต.ค.69)
+const isMiu = (c: string) => /^(?s*มิวs*)?$/.test(String(c ?? "").trim());
 
 /**
  * หน้าเบิกอลูของช่าง (มือถือ) — เจ้าของเคาะ 19 ต.ค.69
@@ -114,7 +116,8 @@ export default function PickFlow({ isChang, fixedName }: { isChang: boolean; fix
       m.set(i.pkey, pr);
     }
     const arr = [...m.values()];
-    for (const pr of arr) pr.colors.sort((a, b) => (Number(b.qty > 0) - Number(a.qty > 0)) || a.color.localeCompare(b.color));
+    // สีมิว = ของสั่งตามงาน → ไว้ท้ายสุดเสมอ ไม่ปนกับ ขาว/ดำ/เทา (เจ้าของ 30 ต.ค.69)
+    for (const pr of arr) pr.colors.sort((a, b) => (Number(isMiu(a.color)) - Number(isMiu(b.color))) || (Number(b.qty > 0) - Number(a.qty > 0)) || a.color.localeCompare(b.color));
     return arr.sort((a, b) => (Number(b.total > 0) - Number(a.total > 0)) || (a.code || "~").localeCompare(b.code || "~") || a.base.localeCompare(b.base));
   }, [q, items, inGroup, brand]);
   const pickGroup = (g: string) => { setGroup(g); setBrand(""); setOpen(""); setLimit(40); };
@@ -414,9 +417,12 @@ function ProfileRow({ p, open, onToggle, cart, onQty }: {
           {p.colors.map((c) => {
             const q = cart[c.id] ?? 0;
             return (
-              <div key={c.id} className="flex items-center gap-2 pt-1.5">
+              <div key={c.id} className="flex items-center gap-2 pt-1.5" style={isMiu(c.color) ? { borderTop: `1px dashed ${C.line}`, marginTop: 4, paddingTop: 8 } : undefined}>
                 <div className="min-w-0 flex-1">
-                  <div className="text-[15px] font-semibold" style={{ color: C.ink }}>{c.color || "ไม่ระบุสี"}</div>
+                  <div className="text-[15px] font-semibold" style={{ color: isMiu(c.color) ? C.ink2 : C.ink }}>
+                    {c.color || "ไม่ระบุสี"}
+                    {isMiu(c.color) && <span className="ml-1.5 rounded-full px-1.5 py-0.5 text-[11px] font-semibold align-middle" style={{ background: "#fff3e0", color: "#b26a00" }}>สั่งตามงาน</span>}
+                  </div>
                   <div className="text-[12px]" style={{ color: C.ink2 }}>เหลือ <b style={{ color: c.qty <= 0 ? C.red : C.ink2 }}>{fmtQty(c.qty)}</b></div>
                 </div>
                 <Stepper qty={q} onQty={(v) => onQty(c.id, v)} />
