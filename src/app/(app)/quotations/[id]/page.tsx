@@ -82,6 +82,10 @@ export default async function QuotationDetail({ params, searchParams }: { params
           <Link href={`/quotations/${q.id}/print`} className="press inline-flex items-center gap-1.5 glass-soft rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark">
             <Icon name="printer" size={16} /> พิมพ์ / PDF
           </Link>
+          {/* ใบเสนอราคาภาษาอังกฤษ — ป้ายระบบ + เงื่อนไขท้ายใบเป็นอังกฤษ (เนื้อหารายการพิมพ์ตามที่กรอก) */}
+          <Link href={`/quotations/${q.id}/print?lang=en`} className="press inline-flex items-center gap-1.5 glass-soft rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark" title="พิมพ์ใบเสนอราคาเป็นภาษาอังกฤษ">
+            <Icon name="printer" size={16} /> English
+          </Link>
           {/* สร้างใบวางบิล — วางได้จากทุกสถานะ (ยกเว้น cancelled) ไม่ต้องเลื่อนเป็น approved ก่อน · สร้างบิลจะ auto-approve ให้เอง */}
           {writable && !hasActiveBilling && q.status !== "cancelled" && (
             <Link href={`/billing-notes/new?quotation=${q.id}`} className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">

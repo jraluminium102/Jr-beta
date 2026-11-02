@@ -69,3 +69,39 @@ export function bahtText(amount: number): string {
 
   return (amount < 0 ? "ลบ" : "") + result;
 }
+
+// ── จำนวนเงินเป็นตัวหนังสืออังกฤษ (ใบเสนอราคาภาษาอังกฤษ) ─────────────────────
+//   512765.40 → "Five hundred twelve thousand seven hundred sixty-five baht and forty satang"
+const EN_ONES = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+  "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+const EN_TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+
+function enBelowThousand(n: number): string {
+  const parts: string[] = [];
+  const h = Math.floor(n / 100), r = n % 100;
+  if (h) parts.push(`${EN_ONES[h]} hundred`);
+  if (r < 20) { if (r) parts.push(EN_ONES[r]); }
+  else parts.push(EN_TENS[Math.floor(r / 10)] + (r % 10 ? `-${EN_ONES[r % 10]}` : ""));
+  return parts.join(" ");
+}
+function enInteger(n: number): string {
+  if (n === 0) return "zero";
+  const scales = ["", " thousand", " million", " billion"];
+  const parts: string[] = [];
+  let i = 0;
+  while (n > 0 && i < scales.length) {
+    const chunk = n % 1000;
+    if (chunk) parts.unshift(enBelowThousand(chunk) + scales[i]);
+    n = Math.floor(n / 1000); i++;
+  }
+  return parts.join(" ");
+}
+export function bahtTextEn(amount: number): string {
+  const n = Math.round(Math.abs(amount) * 100);
+  const satang = n % 100, baht = Math.floor(n / 100);
+  let s = `${enInteger(baht)} baht`;
+  if (satang > 0) s += ` and ${enInteger(satang)} satang`;
+  else s += " only";
+  s = s.charAt(0).toUpperCase() + s.slice(1);
+  return (amount < 0 ? "Minus " : "") + s;
+}
