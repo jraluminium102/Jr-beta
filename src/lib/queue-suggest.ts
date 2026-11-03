@@ -2,7 +2,7 @@
 //   ตรรกะย้ายมาจาก src/app/api/queue/suggest/route.ts แบบคงเดิม 100%
 import { HttpError } from "@/lib/bff/context";
 import { dbError } from "@/lib/bff/db-error";
-import { detectTeam, estimateMinutes } from "@/lib/queue";
+import { detectTeam, estimateMinutes, haversineKm } from "@/lib/queue";
 import { resolveMapLink } from "@/lib/queue-geo";
 import { drivingMinutes } from "@/lib/ors";
 
@@ -48,19 +48,27 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
   }
 
   // Load queue_settings for max_pair_min / avg_speed_kmh / detour_factor
-  const { data: settingsRaw } = await sb
+  type Settings = {
+    max_pair_min?: number | null; avg_speed_kmh?: number | null; detour_factor?: number | null;
+    max_pair_km?: number | null; traffic_factor?: number | null;
+  };
+  // 0167 เพิ่ม max_pair_km/traffic_factor — ยังไม่รัน = อ่านคอลัมน์เดิมแล้วใช้ค่าเริ่มต้น
+  let { data: settingsRaw, error: sErr } = await sb
     .from("queue_settings")
-    .select("max_pair_min,avg_speed_kmh,detour_factor")
+    .select("max_pair_min,avg_speed_kmh,detour_factor,max_pair_km,traffic_factor")
     .eq("id", 1)
     .maybeSingle();
-  const settings = (settingsRaw ?? {}) as {
-    max_pair_min?: number | null;
-    avg_speed_kmh?: number | null;
-    detour_factor?: number | null;
-  };
-  const maxPairMin = settings.max_pair_min ?? 45;
-  const avgSpeedKmh = settings.avg_speed_kmh ?? 40;
-  const detourFactor = settings.detour_factor ?? 1.3;
+  if (sErr) {
+    ({ data: settingsRaw } = await sb.from("queue_settings").select("max_pair_min,avg_speed_kmh,detour_factor").eq("id", 1).maybeSingle());
+  }
+  const settings = (settingsRaw ?? {}) as Settings;
+  const maxPairMin = Number(settings.max_pair_min) || 45;
+  const avgSpeedKmh = Number(settings.avg_speed_kmh) || 40;
+  const detourFactor = Number(settings.detour_factor) || 1.3;
+  // กันจับคู่ไกล (เจ้าของ 3 พ.ย.69 "ระยะทางบัคมาตลอด แก้ให้หายขาด"): ระยะเส้นตรงห้ามเกิน + เวลา ORS × ตัวคูณรถติด
+  //   เคสที่พลาด: นนทบุรี→สาทร เส้นตรง 11.3 กม. ORS ~30 นาที (ถนนโล่ง) ผ่านเกณฑ์ 45 ทั้งที่จริงชั่วโมงกว่า
+  const maxPairKm = Number(settings.max_pair_km) || 8;
+  const trafficFactor = Number(settings.traffic_factor) || 1.5;
 
   // R-Zone + R-Balance: load only MAIN sales reps (ASSISTANT not auto-assigned)
   const { data: salesAll, error: e1 } = await sb
@@ -201,34 +209,37 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
       const freeSlot = slots.find((t) => !usedSlots.has(t));
       if (!freeSlot) continue;
 
-      // R-45min: ถ้าเป็นคิวที่ 2 ในวันเดียว → เช็คเวลาเดินทาง
-      if (dayEntries.length === 1) {
-        const existing = dayEntries[0];
+      // R-45min + R-Km: ถ้ามีคิวอื่นในวันเดียวกันอยู่แล้ว → หน้างานใหม่ต้อง "ใกล้" ทุกคิวในวันนั้น
+      //   ชั้น 1 ระยะเส้นตรง ≤ max_pair_km (ไม่ต้องพึ่ง ORS) · ชั้น 2 เวลาขับ ORS × traffic_factor ≤ max_pair_min
+      //   พิกัดไม่ครบ (คิวเดิมหรืองานใหม่) = ไม่จับคู่วันนั้น (ข้ามไปวันที่ว่างทั้งวัน) — กันเดาแล้วพลาด
+      let pairNote = "";
+      if (dayEntries.length > 0) {
         const newLat = body.lat ?? null;
         const newLng = body.lng ?? null;
-        const haveBoth = existing.lat != null && existing.lng != null && newLat != null && newLng != null;
-        if (!haveBoth) continue;
-        const ck = `${existing.lat},${existing.lng}`;
-        let travelMin: number | null;
-        if (driveCache.has(ck)) {
-          travelMin = driveCache.get(ck) ?? null;
-        } else {
-          travelMin = await drivingMinutes(
-            { lat: existing.lat!, lng: existing.lng! },
-            { lat: newLat!, lng: newLng! },
-          );
-          driveCache.set(ck, travelMin);
+        if (newLat == null || newLng == null) continue;
+        let ok = true;
+        for (const existing of dayEntries) {
+          if (existing.lat == null || existing.lng == null) { ok = false; break; }
+          const a = { lat: existing.lat, lng: existing.lng };
+          const b = { lat: newLat, lng: newLng };
+          const km = haversineKm(a, b);
+          if (km > maxPairKm) { ok = false; break; }
+          const ck = `${a.lat},${a.lng}`;
+          let orsMin: number | null;
+          if (driveCache.has(ck)) orsMin = driveCache.get(ck) ?? null;
+          else { orsMin = await drivingMinutes(a, b); driveCache.set(ck, orsMin); }
+          let travelMin: number;
+          if (orsMin == null) {
+            // ORS ใช้ไม่ได้ → ประมาณการแบบ "ระมัดระวัง" (เมืองรถติดช้ากว่า 40 km/h มาก)
+            travelMin = estimateMinutes(a, b, { avgSpeedKmh: Math.min(avgSpeedKmh, 24), detourFactor: Math.max(detourFactor, 1.45) });
+            console.warn("[queue/suggest] ORS ใช้ไม่ได้ — ใช้ประมาณการระยะแบบระมัดระวัง (กันจับคู่ไกล)");
+          } else {
+            travelMin = orsMin * trafficFactor;   // ORS = เวลาถนนโล่ง → คูณรถติดก่อนเทียบเกณฑ์
+          }
+          if (travelMin > maxPairMin) { ok = false; break; }
+          pairNote = ` · คู่กับคิว ${String(existing.queue_time ?? "").slice(0, 5)} ห่าง ${km.toFixed(1)} กม. ~${Math.round(travelMin)} นาที`;
         }
-        if (travelMin == null) {
-          // ORS ใช้ไม่ได้ → ประมาณการแบบ "ระมัดระวัง" (เมืองรถติดช้ากว่า 40 km/h มาก)
-          travelMin = estimateMinutes(
-            { lat: existing.lat!, lng: existing.lng! },
-            { lat: newLat!, lng: newLng! },
-            { avgSpeedKmh: Math.min(avgSpeedKmh, 24), detourFactor: Math.max(detourFactor, 1.45) }
-          );
-          console.warn("[queue/suggest] ORS ใช้ไม่ได้ — ใช้ประมาณการระยะแบบระมัดระวัง (กันจับคู่ไกล)");
-        }
-        if (travelMin > maxPairMin) continue;
+        if (!ok) continue;
       }
 
       return {
@@ -236,7 +247,7 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
         queue_time: freeSlot,
         sales_id: s.id,
         sales_name: s.name,
-        reason: `${s.name} ว่างเร็วสุด ${DOW_TH[dow]} ${dateStr} ${freeSlot.slice(0, 5)}`,
+        reason: `${s.name} ว่างเร็วสุด ${DOW_TH[dow]} ${dateStr} ${freeSlot.slice(0, 5)}${pairNote}`,
       };
     }
   }
