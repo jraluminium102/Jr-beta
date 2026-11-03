@@ -40,7 +40,9 @@ const copyDateBE = (iso: string) => {
 };
 // ฟอร์มตามที่เจ้าของกำหนด — ไม่มีข้อมูลส่วนไหนใส่ "-"
 function buildSalesDayCopy(date: string, salesName: string, entries: QueueEntry[]): string {
-  const head = `คิวประเมิน ${dayLabel(date)} ${copyDateBE(date)} (${salesName})`;
+  // มีผู้ช่วยไปด้วย → หัวข้อความเขียน (แม็ก+ส้ม) (เจ้าของ 3 พ.ย.69) · ผู้ช่วยต่างกันหลายคนในวันเดียว = ต่อกันหมด
+  const assistants = Array.from(new Set(entries.map((e) => e.assistant?.name?.trim()).filter((n): n is string => !!n && n !== salesName)));
+  const head = `คิวประเมิน ${dayLabel(date)} ${copyDateBE(date)} (${[salesName, ...assistants].join("+")})`;
   const blocks = entries.map((e) => {
     const fee = e.assess_fee != null ? `ค่าประเมิน ${e.assess_fee.toLocaleString("th-TH")} บาท` : "-";
     // ท้ายบล็อก (เจ้าของ 3 พ.ย.69): ลูกค้าเก่า (ทั้งมี/ไม่มีในระบบ) + ออกใบเสนอราคาในนามอื่น — ใส่เฉพาะที่มี
