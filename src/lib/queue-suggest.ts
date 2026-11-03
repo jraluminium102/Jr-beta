@@ -172,11 +172,20 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
       if (slots.length === 0) continue;
 
       const dayEntries = entries.filter((e) => e.sales_id === s.id && e.queue_date === dateStr);
-      const usedTimes = dayEntries.map((e) => e.queue_time);
+      // slot ที่ถูกใช้แล้ว — ดูตาม "ครึ่งวัน" ไม่ใช่เทียบข้อความเวลาตรง ๆ
+      //   ⚠ บั๊กเดิม (เจ้าของเจอ 3 พ.ย.69): ไล้มีคิวเคลียร์แบบ 09:30 + 15:00 วันที่ 4/11 แต่ระบบเสนอ 10:00 ให้
+      //   เพราะเทียบ usedTimes.includes("10:00") ตรง ๆ → เวลาอื่นที่ไม่ใช่ 10:00/14:00 เป๊ะ ถูกมองว่าว่าง
+      //   กติกา: ก่อน 13:00 = กันช่องเช้า (10:00) · ตั้งแต่ 13:00 = กันช่องบ่าย (14:00) · ไม่มีเวลา = กันทั้งวัน
+      const usedSlots = new Set<string>();
+      for (const e of dayEntries) {
+        const m = String(e.queue_time ?? "").match(/(\d{1,2})[:.](\d{2})/);
+        if (!m) { usedSlots.add("10:00"); usedSlots.add("14:00"); continue; }
+        usedSlots.add(Number(m[1]) * 60 + Number(m[2]) < 13 * 60 ? "10:00" : "14:00");
+      }
 
       // FULLDAY: ต้องว่างทั้ง 2 slot
       if (body.job_size === "FULLDAY") {
-        if (usedTimes.length === 0 && slots.length === 2) {
+        if (usedSlots.size === 0 && slots.length === 2) {
           return {
             queue_date: dateStr,
             queue_time: "10:00",
@@ -189,7 +198,7 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
       }
 
       // R-2slot: slot ว่างแรก (ตามลำดับที่จัด — MULTI=บ่ายก่อน)
-      const freeSlot = slots.find((t) => !usedTimes.includes(t));
+      const freeSlot = slots.find((t) => !usedSlots.has(t));
       if (!freeSlot) continue;
 
       // R-45min: ถ้าเป็นคิวที่ 2 ในวันเดียว → เช็คเวลาเดินทาง

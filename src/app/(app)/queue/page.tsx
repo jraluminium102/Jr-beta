@@ -20,6 +20,7 @@ import {
 
 // ---- helpers ----------------------------------------------------------------
 
+const OVERDUE_OPEN_KEY = "queue.overdueOpen";   // พับ/กางกล่องค้าง-เลยกำหนด
 const isMapUrl = (v: string) => /(maps\.app\.goo\.gl|google\.[^/]+\/maps|\/maps\/)/i.test(v);
 const fmtBaht = (n: number | null) => (n == null ? "" : n.toLocaleString("th-TH"));
 
@@ -224,6 +225,9 @@ export default function QueuePage() {
   const [sales, setSales] = useState<QueueSales[]>([]);
   const [canWrite, setCanWrite] = useState(false);
   const [unlinked, setUnlinked] = useState(false);
+  // กล่องค้าง/เลยกำหนด พับได้ — ค่าเริ่มต้นกาง · จำที่เครื่อง (localStorage)
+  const [overdueOpen, setOverdueOpen] = useState(true);
+  useEffect(() => { try { if (localStorage.getItem(OVERDUE_OPEN_KEY) === "0") setOverdueOpen(false); } catch { /* ignore */ } }, []);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [q, setQ] = useState("");
@@ -961,19 +965,27 @@ export default function QueuePage() {
             {/* กล่อง "ค้าง/เลยกำหนด" — คิวเดือนก่อนที่ยังไม่ปิด (แยกออกจากวันของเดือนนี้ · กันโผล่ปนข้ามเดือน) */}
             {overdueRows.length > 0 && filterDow == null && !filterDate && (
               <div className="mb-5">
+                {/* กดหัวกล่องเพื่อพับ/กาง — กล่องค้างยาวมาก ต้องเลื่อนผ่านทุกครั้ง (เจ้าของ 3 พ.ย.69) · จำสถานะไว้ในเครื่อง */}
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm font-semibold">
+                  <button type="button" onClick={() => setOverdueOpen((v) => { try { localStorage.setItem(OVERDUE_OPEN_KEY, v ? "0" : "1"); } catch { /* ignore */ } return !v; })}
+                    className="press inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 border border-red-200 text-red-800 text-sm font-semibold"
+                    title={overdueOpen ? "กดเพื่อซ่อนรายการค้าง" : "กดเพื่อแสดงรายการค้าง"}>
                     <Icon name="calendar" size={14} />
                     ค้าง / เลยกำหนด (เดือนก่อน · ยังไม่ปิด)
                     <span className="tabular-nums ml-1 bg-red-200/70 rounded-md px-1.5 py-0.5 text-xs">{overdueRows.length}</span>
-                  </span>
+                    <span className="ml-1 text-red-500">{overdueOpen ? "▾ ซ่อน" : "▸ แสดง"}</span>
+                  </button>
                 </div>
-                <div className="xl:hidden space-y-2">
-                  {overdueRows.map((e) => <MobileCard key={e.id} e={e} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} canWrite={canWrite} />)}
-                </div>
-                <div className="hidden xl:block overflow-x-auto rounded-xl border border-red-100">
-                  <DesktopTable rows={overdueRows} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} canWrite={canWrite} slotLabel={slotLabel} />
-                </div>
+                {overdueOpen && (
+                  <>
+                    <div className="xl:hidden space-y-2">
+                      {overdueRows.map((e) => <MobileCard key={e.id} e={e} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} canWrite={canWrite} />)}
+                    </div>
+                    <div className="hidden xl:block overflow-x-auto rounded-xl border border-red-100">
+                      <DesktopTable rows={overdueRows} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} canWrite={canWrite} slotLabel={slotLabel} />
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
