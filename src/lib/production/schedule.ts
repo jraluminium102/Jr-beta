@@ -15,6 +15,7 @@
  *   → รวมไว้ที่เดียว เพิ่มฟีลด์ทีเดียวได้ทั้ง 2 ทางพร้อมกันเสมอ
  */
 
+import { loadRevInfo } from "@/lib/production/rev-review";
 import { buildSalesResolver } from "@/lib/sales-resolve";
 import { withNickname } from "./nickname";
 
@@ -44,6 +45,9 @@ export type ScheduleRow = {
   cutlists: { id: number; code: string | null; name: string; status: string }[];
   /** เซลล์ที่ดูแลงาน (เจ้าของสั่ง 16 ก.ย.69 · โชว์บนการ์ดให้ช่างรู้ว่าใครดูแล) */
   sales_name: string | null;
+  /** (0169) Rev ปัจจุบันของใบเสนอ — ป้าย "Rev N" บนชื่อ · rev_pending = ฝ่ายผลิตยังไม่รับทราบ Rev หลังมัดจำ */
+  rev_no?: number;
+  rev_pending?: boolean;
 };
 
 /** สถานะที่ถือว่า "อยู่ในตารางผลิต" */
@@ -111,6 +115,9 @@ export async function buildScheduleRows(sb: Sb): Promise<ScheduleRow[]> {
     }, {});
   }
 
+  // Rev ใบเสนอ + Rev หลังมัดจำรอตรวจ (0169) — ช่างต้องเห็นว่างานนี้มี Rev (query แยก พังไม่กระทบ)
+  const revByJob = jobIds.length ? await loadRevInfo(sb, jobIds).catch(() => ({} as Awaited<ReturnType<typeof loadRevInfo>>)) : {};
+
   // ตัดงานที่ job ถูกยกเลิก (CANCELLED) หรือจบงานแล้ว (COMPLETED) — งานจบแล้วไม่ควรค้างในบอร์ดผลิต
   const jobRows: ScheduleRow[] = (prods ?? [])
     .filter((p: Record<string, unknown>) => {
@@ -139,6 +146,8 @@ export async function buildScheduleRows(sb: Sb): Promise<ScheduleRow[]> {
         cutlists: p.job_id ? (cutsByJob[p.job_id as string] ?? []) : [],
         // หาเซลล์ด้วยชื่อลูกค้าเดิม (ไม่มีวงเล็บ)
         sales_name: jobId ? resolveSales({ id: jobId, customer_name: job?.customer_name ?? null }) : null,
+        rev_no: jobId ? (revByJob[jobId]?.rev_no ?? 0) : 0,
+        rev_pending: jobId ? !!revByJob[jobId]?.pending : false,
       };
     });
 

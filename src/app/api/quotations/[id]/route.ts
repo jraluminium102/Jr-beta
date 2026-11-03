@@ -7,6 +7,10 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { fail, UNAUTHORIZED } from "@/lib/bff";
 import { regenSetsFromQuotation, currentAutoQuotations } from "@/lib/production/regen-sets";
+import { createServiceClient } from "@/lib/supabase/admin";
+import { diffQuotationItems, type DiffItem } from "@/lib/quotation-diff";
+import { autoSyncCoverSheet } from "@/lib/cover-sheet/auto-sync";
+import { createRevReview, AFTER_DEPOSIT, IN_PROGRESS } from "@/lib/production/rev-review";
 
 // บันทึกใบเสนอ = ~10 query ต่อกัน + ขึ้น Rev + สร้างชุดผลิตใหม่ (regen) — ค่าเริ่มต้นของ Vercel สั้น
 //   เคยโดนตัดกลางทางแล้วหน้าจอค้าง (เจ้าของแจ้ง 18 ก.ย.69) → ขยายเป็น 60 วินาที (เท่า backfill-geo)
@@ -238,18 +242,53 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
   //   replace = ลบชุด auto แล้วดึงใหม่จาก Rev ล่าสุด (คงชุดที่เพิ่มมือ) · best-effort ไม่ให้ล้ม Rev
   const bumpedRev = (revUpdate as { revision_no?: number }).revision_no != null;
   const jobIdForSets = (fullQ as { job_id?: string | null } | null)?.job_id ?? null;
+  let revReviewCreated = false;
   if (bumpedRev && jobIdForSets) {
+    // ── Rev. หลังมัดจำ (0169 · เจ้าของ 3 พ.ย.69): งานมัดจำแล้ว → ต้องให้ฝ่ายผลิตตรวจทุกครั้ง ──
+    //   1) ชุดผลิต: ยังไม่ลงมือ (เฟสออฟฟิศ) = ดึงใหม่ให้เลยเหมือนเดิม · ลงมือแล้ว (QUEUED ขึ้นไป) = "รอฝ่ายผลิตตัดสิน"
+    //      (เดิม replace ลบทุกชุด auto → ความคืบหน้าช่าง/วัสดุ/QC หายเงียบ ๆ กลางคัน — อันตราย)
+    //   2) ใบปะหน้า: ไม่มีใครแก้มือ = อัปเดตตาม Rev ให้เอง · แก้มือแล้ว = ปล่อยป้ายเตือน (rev_stale) ให้คนดู
+    //   3) บันทึก job_rev_reviews = ป้าย "⚠ Rev รอตรวจ" บนหน้าผลิต/ตารางช่าง จนกว่าฝ่ายผลิตกดรับทราบ
     try {
+      const { data: jobRow } = await ctx.supabase.from("jobs").select("status").eq("id", jobIdForSets).maybeSingle<{ status: string }>();
+      const { data: prodRow } = await ctx.supabase.from("productions").select("status").eq("job_id", jobIdForSets).maybeSingle<{ status: string }>();
+      const afterDeposit = AFTER_DEPOSIT.has(String(jobRow?.status ?? ""));
+      const prodStatus = String(prodRow?.status ?? "");
+
+      let setsRegen = "none";
       // 16 ต.ค.69 (QA R1/N2): regen เฉพาะเมื่อชุดปัจจุบันมาจาก "ใบที่กำลัง Rev ใบเดียว" และดึงใบนี้ตรง ๆ (ไม่ให้ pickJobQuotation เลือกใบอื่น)
       //   Rev ใบ B ขณะชุดมาจากใบ A → ไม่แตะ (กันสลับออเดอร์) · ชุดปนหลายใบ (A+B) → ไม่แตะ (replace จะลบของ B เงียบ ๆ — ให้เคลียร์ที่หน้าผลิตก่อน)
-      //   ไม่มีชุด auto → ไม่ทำ (เหมือนเดิม)
       const cur = await currentAutoQuotations(sbRpc, jobIdForSets);
       if (cur.length === 1 && cur[0].id === Number(qId)) {
-        await regenSetsFromQuotation(sbRpc, jobIdForSets, ctx.user.id, { replace: true, quotationId: Number(qId) });
+        if (afterDeposit && IN_PROGRESS.has(prodStatus)) {
+          setsRegen = "deferred";
+        } else {
+          await regenSetsFromQuotation(sbRpc, jobIdForSets, ctx.user.id, { replace: true, quotationId: Number(qId) });
+          setsRegen = "auto";
+        }
       } else if (cur.length > 0) {
+        setsRegen = "skipped";
         console.warn("[rev-regen-sets] skip: ชุดผลิตของงานมาจากใบอื่น", { job: jobIdForSets, rev: qId, current: cur.map((c) => c.code) });
       }
-    } catch (e) { console.error("[rev-regen-sets]", e); }
+
+      if (afterDeposit) {
+        const svc = createServiceClient() as unknown as { from: (t: string) => any };
+        const oldItems = ((fullQ as { quotation_items?: unknown[] } | null)?.quotation_items ?? []) as DiffItem[];
+        const newItems = lineItems as unknown as DiffItem[];
+        const summary = diffQuotationItems(oldItems, newItems);
+        const newRevNo = Number((revUpdate as { revision_no?: number }).revision_no);
+        const coverSync = await autoSyncCoverSheet(svc, { jobId: jobIdForSets, quotationId: Number(qId), newRevNo, oldItems, newItems, userId: ctx.user.id }).catch(() => "manual" as const);
+        revReviewCreated = await createRevReview(svc, {
+          job_id: jobIdForSets, quotation_id: Number(qId), rev_no: newRevNo,
+          rev_label: String((revUpdate as { revision_label?: string }).revision_label ?? ""),
+          from_status: prodStatus, job_status: String(jobRow?.status ?? ""), summary,
+          sets_regen: setsRegen, cover_sync: coverSync,
+          created_by: ctx.user.id, created_by_name: ctx.profile.full_name ?? "",
+        });
+        await audit({ jobId: jobIdForSets, userId: ctx.user.id, action: "QUOTE_REV_AFTER_DEPOSIT", table: "quotations", recordId: qId,
+          newValue: { rev_no: newRevNo, from_status: prodStatus, sets_regen: setsRegen, cover_sync: coverSync, changes: summary.length } });
+      }
+    } catch (e) { console.error("[rev-after-deposit]", e); }
   }
 
   // 6) audit — เก็บ oldValue (ยอดเดิม) ด้วย เพื่อตรวจย้อนหลังได้แม้ไม่ได้ snapshot (บัญชีสั่ง)
@@ -268,5 +307,6 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
   return ok({
     id: Number(qId), ...money,
     staleBillingNotes: affectedBn.map((b) => b.code),
+    revReview: revReviewCreated,   // true = ส่งเข้า "Rev. หลังมัดจำ" ให้ฝ่ายผลิตตรวจแล้ว
   });
 });

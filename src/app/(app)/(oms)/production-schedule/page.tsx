@@ -1,4 +1,5 @@
 "use client";
+import { RevBadge } from "@/components/production/RevReviewPanel";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -47,6 +48,8 @@ type SchedRow = {
   install_date: string | null;
   producer_note: string | null;
   sales_name?: string | null;   // เซลล์ที่ดูแลงาน (โชว์บนการ์ด · เจ้าของสั่ง 16 ก.ย.69)
+  rev_no?: number;              // (0169) Rev ใบเสนอ — ป้าย RevBadge
+  rev_pending?: boolean;
   status: string;
   sets?: ProdSet[];
   allSets?: ProdSet[];   // ชุดเต็มของงาน (ก่อนกรองโรง) — ใช้ตัดสิน "ส่งติดตั้ง" ให้ครบทั้งงานเสมอ
@@ -621,6 +624,7 @@ export default function ProductionSchedulePage() {
                         <div className="font-bold text-[15px] leading-tight" style={{ color: IOS.ink }}>{r.title}</div>
                         <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                           {r.job_code && <span className="tnum text-[11px] rounded px-1.5 py-0.5" style={{ background: "#eaf3ff", color: IOS.blue }}>{r.job_code}</span>}
+                          <RevBadge revNo={r.rev_no} pending={!!r.rev_pending} dark={false} />
                           {issues >= 2 && <span className="text-[11px] font-bold rounded px-1.5 py-0.5" style={{ background: "#e53935", color: "#fff" }}>ติด {issues} เรื่อง</span>}
                         </div>
                       </td>
@@ -748,6 +752,8 @@ export default function ProductionSchedulePage() {
                           ) : (
                             <span className="text-[10px] rounded-md px-1.5 py-0.5 font-semibold" style={{ background: "#fff3e0", color: IOS.orange }}>จดเอง</span>
                           )}
+                          {/* ป้าย Rev ใบเสนอ (0169) */}
+                          {r.kind === "job" && <RevBadge revNo={r.rev_no} pending={!!r.rev_pending} dark={false} />}
                           {/* ป้าย hold (0131) — เตือนแม้เฟสรวมเป็น "พร้อม" (ชุด active ครบแต่มี hold ค้าง) */}
                           {r.kind === "job" && holdCountOf(r) > 0 && (
                             <span className="text-[10px] font-bold rounded-md px-1.5 py-0.5" style={{ background: "#fff0e0", color: IOS.orange }}>⏸ Hold {holdCountOf(r)}</span>
@@ -956,6 +962,7 @@ export default function ProductionSchedulePage() {
                           <div className="flex items-center gap-1.5">
                             <span className="font-bold text-[14px] truncate" style={{ color: IOS.ink }}>{r.title}</span>
                             {r.job_code && <span className="text-[10px] tnum rounded px-1 py-0.5" style={{ background: "#eaf3ff", color: IOS.blue }}>{r.job_code}</span>}
+                            {r.kind === "job" && <RevBadge revNo={r.rev_no} pending={!!r.rev_pending} dark={false} />}
                             {r.kind === "job" && holdCountOf(r) > 0 && (
                               <span className="text-[10px] font-bold rounded px-1 py-0.5" style={{ background: "#fff0e0", color: IOS.orange }}>⏸ Hold {holdCountOf(r)}</span>
                             )}

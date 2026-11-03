@@ -19,6 +19,7 @@ import CoverSheetChip from "@/components/cover-sheet/CoverSheetChip";
 import DrawingChip from "@/components/cover-sheet/DrawingChip";
 import AddProductionJobModal from "@/components/production/AddProductionJobModal";
 import { withNickname } from "@/lib/production/nickname";
+import RevReviewPanel, { RevBadge } from "@/components/production/RevReviewPanel";
 
 type Row = ProdRow & {
   status_updated_at: string | null; created_at: string;
@@ -308,6 +309,9 @@ export default function ProductionPage() {
       {/* ADMIN: หา "งานที่ปนหลายออเดอร์" — จุดที่ควรใช้เครื่องมือ "แตกออเดอร์" (0129) */}
       {isAdmin && <SplitCandidatesBanner rows={rows} onOpen={(r) => setOpen(r)} />}
 
+      {/* Rev. หลังมัดจำ — รอฝ่ายผลิตตรวจ (0169) · สถานะพิเศษแยกจากเฟส งานยังอยู่ในบอร์ดตามเฟสเดิม */}
+      <RevReviewPanel rows={rows} canWrite={canWrite} onChanged={invalidateAll} onOpen={(r) => setOpen(r as Row)} />
+
       {/* ป้ายบอกหน้า + ปุ่มเปิดตารางผลิตช่าง (ลิงก์แยก · เปิดแท็บใหม่) — ยุบหน้าตารางผลิตออฟฟิศแล้ว เจ้าของสั่ง 23 ก.ค.69 */}
       <div className="flex flex-wrap items-center gap-2 mb-4 rounded-xl px-3.5 py-2.5" style={{ background: "rgba(55,138,221,.12)", border: "1px solid rgba(55,138,221,.28)" }}>
         <span className="text-base">🏢</span>
@@ -441,6 +445,8 @@ export default function ProductionPage() {
                     <span className="tnum text-[11.5px]" style={{ color: "var(--t-low)" }}>{r.job?.job_code}</span>
                     {/* มีงาน ผรม. (0090) — read-only marker ต่อเลขงาน */}
                     <FloorWorkBadge floorWork={r.job?.floor_work} floorNote={r.job?.floor_note} dark />
+                    {/* ป้าย Rev ใบเสนอ (0169) — แดง = Rev หลังมัดจำยังไม่รับทราบ · ฟ้า = Rev ปัจจุบัน */}
+                    <RevBadge revNo={r.rev_no} pending={!!r.rev_pending} />
                     {/* ป้ายวัดรอบ (0130) — วัดซ้ำมาแล้ว */}
                     {(r.measure_round_no ?? 1) > 1 && (
                       <span className="text-[11px] font-bold rounded-full px-2 py-0.5 bg-sky-500/25 border border-sky-300/35 text-sky-100">🔁 วัดรอบ {r.measure_round_no}</span>

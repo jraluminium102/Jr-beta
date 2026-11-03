@@ -1,3 +1,4 @@
+import { loadRevInfo } from "@/lib/production/rev-review";
 import { requirePermission } from "@/lib/bff/context";
 import { withRoute } from "@/lib/bff/handler";
 import { ok } from "@/lib/bff/response";
@@ -95,6 +96,8 @@ export const GET = withRoute(async () => {
 
   // ชื่อเรียกในงานผลิต (0159) — query แยก: ยังไม่รัน migration = ว่าง ไม่กระทบตารางหลัก
   const nickByJob = await nicknamesByJob(ctx.supabase as unknown as { from: (t: string) => any }, jobIds);
+  // Rev ใบเสนอ + "Rev หลังมัดจำ รอตรวจ" (0169) — query แยก ยังไม่รันก็แค่ไม่มีป้าย
+  const revByJob = await loadRevInfo(ctx.supabase as unknown as { from: (t: string) => any }, jobIds);
 
   // งานที่ "ซ่อนจากผลิต" (0152 soft delete) → แยกไปลิสต์ hidden (กู้คืนได้) ไม่โชว์ในตารางหลัก
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -133,6 +136,10 @@ export const GET = withRoute(async () => {
         cover_sheet_rev_stale: cover ? isStale(cover.quotation_id, cover.quotation_rev_no) : false,
         drawing_exists: drawingRows.length > 0,
         drawing_rev_stale: drawingRows.some((d) => isStale(d.quotation_id, d.quotation_rev_no)),
+        rev_no: p.job_id ? (revByJob[p.job_id as string]?.rev_no ?? 0) : 0,
+        rev_label: p.job_id ? (revByJob[p.job_id as string]?.rev_label ?? "") : "",
+        rev_pending: p.job_id ? (revByJob[p.job_id as string]?.pending ?? null) : null,
+        rev_pending_count: p.job_id ? (revByJob[p.job_id as string]?.pending_count ?? 0) : 0,
       };
     });
 
