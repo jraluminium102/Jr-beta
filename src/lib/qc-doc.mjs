@@ -23,9 +23,10 @@ export const QC_FIELDS = {
   phone:    { x: 455, y: 703, size: 10, maxW: 120 },   // เบอร์โทรศัพท์
   address:  { x: 112, y: 683, size: 9.5, maxW: 440, lineH: 17, lines: 2 },   // ที่อยู่หน้างาน (2 บรรทัด)
   // ออกเอกสารตาม… (กล่องติ๊ก 3 กล่อง)
-  tickSite:    { x: 46,  y: 637, size: 8 },
-  tickHouse:   { x: 222, y: 637, size: 8 },
-  tickCompany: { x: 401, y: 637, size: 8 },
+  // กล่องติ๊ก "ออกเอกสารตาม…" (ตำแหน่งกล่อง: มุมล่างซ้าย + ขนาด) — วาดเครื่องหมายถูกเป็นเส้น (ฟอนต์ย่อยไม่มีกลิฟ ✓)
+  tickSite:    { x: 43,  y: 634, w: 12, h: 12 },
+  tickHouse:   { x: 219, y: 634, w: 12, h: 12 },
+  tickCompany: { x: 398, y: 634, w: 12, h: 12 },
   company:  { x: 112, y: 615, size: 10, maxW: 280 },   // ชื่อบริษัท
   taxId:    { x: 458, y: 615, size: 10, maxW: 115 },   // เลขประจำตัวผู้เสียภาษี
   billAddr: { x: 86,  y: 596, size: 9.5, maxW: 470, lineH: 15, lines: 2 },   // ที่อยู่ (ออกเอกสาร)
@@ -107,10 +108,28 @@ function stripPageText(pdf, page) {
       if (!sub || sub.toString() !== "/Form") continue;
       if (seen.has(ref.toString())) continue;
       seen.add(ref.toString());
-      const latin = Buffer.from(decodePDFRawStream(s).decode()).toString("latin1");
+      let latin = Buffer.from(decodePDFRawStream(s).decode()).toString("latin1");
+      latin = stripText(latin);
+      // รูปสติ๊กเกอร์ตัวอย่าง (อุ้งแมวติ๊กกล่องแรก) ฝังเป็นรูปแยก — เก็บไว้แค่รูปใหญ่สุด (= พื้นหลังฟอร์มทั้งหน้า) รูปอื่นลบ
+      const innerRes = s.dict.lookup(PDFName.of("Resources"));
+      const innerXo = innerRes && innerRes.lookup(PDFName.of("XObject"));
+      if (innerXo) {
+        const imgs = [];
+        for (const [k2, r2] of innerXo.entries()) {
+          const s2 = pdf.context.lookup(r2);
+          const st = s2 && s2.dict && s2.dict.get(PDFName.of("Subtype"));
+          if (st && st.toString() === "/Image") {
+            const w = Number(String(s2.dict.get(PDFName.of("Width")))) || 0;
+            const h = Number(String(s2.dict.get(PDFName.of("Height")))) || 0;
+            imgs.push({ name: k2.decodeText(), area: w * h });
+          }
+        }
+        const keep = imgs.sort((a, b) => b.area - a.area)[0]?.name;
+        for (const im of imgs) if (im.name !== keep) latin = latin.replace(new RegExp(`/${im.name}\\s+Do`, "g"), "");
+      }
       const dictEntries = {};
       for (const [k, v] of s.dict.entries()) if (!STRIP_KEYS.has(k.decodeText())) dictEntries[k.decodeText()] = v;
-      const ns = pdf.context.flateStream(Buffer.from(stripText(latin), "latin1"), dictEntries);
+      const ns = pdf.context.flateStream(Buffer.from(latin, "latin1"), dictEntries);
       xo.set(key, pdf.context.register(ns));
       cleanResources(ns.dict.lookup(PDFName.of("Resources")));
     }
@@ -161,7 +180,14 @@ export async function buildQcDoc(e) {
     if (!t) return;
     wrap(fonts, t, f.size, f.maxW, f.lines).forEach((ln, i) => drawMixed(page, fonts, ln, f.x, f.y - i * f.lineH, f.size));
   };
-  const tick = (f) => page.drawText("X", { x: f.x, y: f.y, size: f.size, font: fonts.la, color: rgb(0.1, 0.1, 0.1) });
+  const tick = (f) => {
+    const c = rgb(0.05, 0.05, 0.05);
+    const p1 = { x: f.x + f.w * 0.18, y: f.y + f.h * 0.5 };
+    const p2 = { x: f.x + f.w * 0.42, y: f.y + f.h * 0.2 };
+    const p3 = { x: f.x + f.w * 0.88, y: f.y + f.h * 0.88 };
+    page.drawLine({ start: p1, end: p2, thickness: 1.4, color: c });
+    page.drawLine({ start: p2, end: p3, thickness: 1.4, color: c });
+  };
 
   const salesName = [e.sales?.name, e.assistant?.name].filter(Boolean).join("+");
   one(F.sales, salesName);
