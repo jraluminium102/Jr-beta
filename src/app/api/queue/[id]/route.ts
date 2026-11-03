@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { syncCustomerContact } from "@/lib/customer-contact-sync";
 import { requirePermission, HttpError } from "@/lib/bff/context";
 import { withRoute, audit } from "@/lib/bff/handler";
 import { ok } from "@/lib/bff/response";
@@ -175,17 +176,10 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
   //   เดิมค่าพวกนี้ค้างอยู่ที่ queue_entries อย่างเดียว → ใบเสนอ/ใบวางบิล/ใบเสร็จ
   //   ไม่รู้ว่าเป็น FB เลยพิมพ์ "LINE:" ตายตัว (เจ้าของแจ้ง 6 ส.ค.69)
   if (body.contact_channel !== undefined || body.line_contact !== undefined) {
-    const cid = (data as { customer_id?: number | null }).customer_id ?? null;
-    if (cid != null) {
-      const patch: Record<string, string> = {};
-      if (body.contact_channel !== undefined) patch.contact_channel = String(body.contact_channel);
-      if (body.line_contact !== undefined) patch.line_id = String(body.line_contact ?? "").trim();
-      if (Object.keys(patch).length) {
-        // non-fatal: ยังไม่รัน 0122 ก็ให้บันทึกคิวผ่านตามปกติ (แค่เอกสารยังไม่รู้ช่องทาง)
-        const { error: cErr } = await sb.from("customers").update(patch).eq("id", cid);
-        if (cErr && !/column|does not exist|schema cache/i.test(cErr.message ?? "")) throw dbError(cErr);
-      }
-    }
+    const d = data as { customer_id?: number | null; target_customer_id?: number | null };
+    const cid = d.customer_id ?? d.target_customer_id ?? null;
+    // (0170) ไลน์ใหม่ไม่ทับไลน์เดิม — ของเดิมย้ายไป line_id_prev · กรอกว่าง = ไม่แตะ
+    if (cid != null) await syncCustomerContact(sb, cid, { line_contact: body.line_contact, contact_channel: body.contact_channel });
   }
 
   // ─── DONE handling ──────────────────────────────────────────────────────────

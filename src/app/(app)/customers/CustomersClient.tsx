@@ -13,7 +13,7 @@ type CustJob = {
   status: string; current_stage: number; design_state: string;
 };
 
-const EMPTY = { name: "", job: "", address: "", tax_id: "", line_id: "", phone: "", contact_person: "" };
+const EMPTY = { name: "", job: "", address: "", tax_id: "", line_id: "", line_id_prev: "", phone: "", contact_person: "" };
 // นามออกบิลเริ่มต้น (นามหลัก) — กรอกได้ตั้งแต่ตอนสร้างลูกค้าใหม่ (นิติบุคคล/สาขา/ที่อยู่จัดส่ง)
 type BillingDraft = { kind: "INDIVIDUAL" | "COMPANY"; bill_name: string; branch: string; ship_address: string };
 const EMPTY_BILLING: BillingDraft = { kind: "INDIVIDUAL", bill_name: "", branch: "สำนักงานใหญ่", ship_address: "" };
@@ -52,12 +52,12 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
   }, [sel]);
 
   const filtered = list.filter((c) =>
-    [c.name, c.job, c.phone, c.line_id].join(" ").toLowerCase().includes(q.toLowerCase())
+    [c.name, c.job, c.phone, c.line_id, c.line_id_prev ?? ""].join(" ").toLowerCase().includes(q.toLowerCase())
   );
 
   function startAdd() { setForm(EMPTY); setBilling(EMPTY_BILLING); setEditId(null); setAdding(true); setSel(null); setErr(""); }
   function startEdit(c: Customer) {
-    setForm({ name: c.name, job: c.job, address: c.address, tax_id: c.tax_id, line_id: c.line_id, phone: c.phone, contact_person: c.contact_person });
+    setForm({ name: c.name, job: c.job, address: c.address, tax_id: c.tax_id, line_id: c.line_id, line_id_prev: c.line_id_prev ?? "", phone: c.phone, contact_person: c.contact_person });
     setEditId(c.id); setAdding(true); setErr("");
   }
   function cancelForm() { setAdding(false); setEditId(null); setErr(""); }
@@ -184,7 +184,8 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
                 <FormField label="ที่อยู่ออกบิล" value={form.address} onChange={(v) => setForm({ ...form, address: v })} wide />
                 <FormField label="เลขผู้เสียภาษี" value={form.tax_id} onChange={(v) => setForm({ ...form, tax_id: v })} />
                 <FormField label="ผู้ติดต่อ" value={form.contact_person} onChange={(v) => setForm({ ...form, contact_person: v })} />
-                <FormField label="Line" value={form.line_id} onChange={(v) => setForm({ ...form, line_id: v })} />
+                <FormField label="Line (ปัจจุบัน)" value={form.line_id} onChange={(v) => setForm({ ...form, line_id: v })} />
+                <FormField label="Line เดิมที่เคยใช้ (หลายอันคั่นด้วย / )" value={form.line_id_prev} onChange={(v) => setForm({ ...form, line_id_prev: v })} />
                 <FormField label="เบอร์โทร" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
               </div>
 
@@ -255,7 +256,8 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
                 <Detail label="ที่อยู่ออกบิล" val={sel.address} wide />
                 <Detail label="เลขผู้เสียภาษี" val={sel.tax_id} />
                 <Detail label="ผู้ติดต่อ" val={sel.contact_person} />
-                <Detail label="Line" val={sel.line_id} />
+                <Detail label="Line (ปัจจุบัน)" val={sel.line_id} />
+                {!!sel.line_id_prev && <Detail label="Line เดิมที่เคยใช้" val={sel.line_id_prev} />}
                 <Detail label="เบอร์โทร" val={sel.phone} />
               </div>
               <div className="mt-5 glass-soft rounded-xl p-3.5 text-sm flex gap-2 text-ink-2">

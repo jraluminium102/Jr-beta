@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import Icon from "@/components/Icon";
 
@@ -493,6 +493,8 @@ export function QueueModal({
   const [changingSite, setChangingSite] = useState(false);
   // เก็บงานที่ auto-pick ล่าสุด (ใช้กดยกเลิกเปลี่ยนไซต์กลับมา)
   const lastAutoJobRef = useRef<JobSearchResult | null>(null);
+  // งานทั้งหมดของลูกค้าเก่า (ล่าสุดก่อน) — ไว้ให้เลือก "ไซต์" ตรง ๆ เมื่อลูกค้ามีหลายหน้างาน (เจ้าของ 3 พ.ย.69 เคสคุณภาวิณี)
+  const [custJobs, setCustJobs] = useState<JobSearchResult[]>([]);
 
   // debounce ค้นงาน (เคลียร์แบบ หรือ ลูกค้าเก่าหน้างานเดิม + กำลังเปลี่ยนไซต์)
   const needsJobSearch = jobCat === "เคลียร์แบบ" || (jobCat === "ประเมินหน้างาน" && f.oldCustomerMode === "existing_site" && changingSite);
@@ -549,15 +551,15 @@ export function QueueModal({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [custSearch, f.custMode, jobCat]);
 
-  async function selectTargetJob(j: JobSearchResult) {
+  async function selectTargetJob(j: JobSearchResult, opts?: { existingSiteCustId?: number }) {
     setSelectedJob(j);
     setJobSearch("");
     setJobSearchResults([]);
 
     // โหมด: เคลียร์แบบ (ผูกงานเดิม target_job_id) vs ประเมินหน้างานเดิม (สร้างงานใหม่ target_customer_id)
     const isClearDesign = jobCat === "เคลียร์แบบ";
-    const isExistingSite =
-      jobCat === "ประเมินหน้างาน" && f.oldCustomerMode === "existing_site" && !!selectedCust;
+    const existingCustId = opts?.existingSiteCustId ?? (f.oldCustomerMode === "existing_site" ? selectedCust?.id : undefined);
+    const isExistingSite = jobCat === "ประเมินหน้างาน" && existingCustId != null;
     if (isExistingSite) setChangingSite(false);
 
     // ทั้ง 2 โหมด: ดึง site-info ของงานนั้นมา auto-fill ให้ครบ (ที่อยู่/โลเคชั่น/เบอร์/Line)
@@ -571,7 +573,7 @@ export function QueueModal({
       const info = r.data;
       const target = {
         target_job_id: isClearDesign ? j.id : null,
-        target_customer_id: isExistingSite && selectedCust ? selectedCust.id : null,
+        target_customer_id: isExistingSite ? existingCustId ?? null : null,
       };
       if (info) {
         setF((s) => ({
@@ -601,7 +603,7 @@ export function QueueModal({
         tel: j.customer_tel ? formatThaiPhone(j.customer_tel) : s.tel,
         address: j.customer_area ?? s.address,
         target_job_id: isClearDesign ? j.id : null,
-        target_customer_id: isExistingSite && selectedCust ? selectedCust.id : null,
+        target_customer_id: isExistingSite ? existingCustId ?? null : null,
       }));
     } finally {
       setSiteInfoBusy(false);
@@ -651,6 +653,7 @@ export function QueueModal({
     setNoJobsForCust(false);
     setChangingSite(false);
     lastAutoJobRef.current = null;
+    setCustJobs([]);
   }
 
   function clearCustomer() {
@@ -661,6 +664,7 @@ export function QueueModal({
     setNoJobsForCust(false);
     setChangingSite(false);
     lastAutoJobRef.current = null;
+    setCustJobs([]);
     setF((s) => ({
       ...s,
       customer_name: "",
@@ -705,21 +709,22 @@ export function QueueModal({
     }
   }
 
-  // auto-load งานล่าสุดของลูกค้า → autoFillFromJob ถ้ามี
+  // auto-load งานของลูกค้า: มีงาน → เลือกงานล่าสุดเป็นไซต์อ้างอิง + ดึง site-info ของงานนั้น (ไม่ปนที่อยู่ไซต์อื่น)
+  //   ลูกค้ามีหลายไซต์ → โชว์รายการไซต์ให้กดเลือกได้เลย (เดิมซ่อนไว้หลัง "เปลี่ยนไซต์" ที่ต้องพิมพ์ค้น)
+  //   ไม่มีงานเลย → เติมจากทะเบียน/คิวเดิมของลูกค้า แล้วให้กรอกเอง
   async function autoLoadLatestJob(customerId: number) {
     setSiteInfoBusy(true);
     try {
-      // (1) งานล่าสุด — โชว์เป็นไซต์อ้างอิง (เปลี่ยนไซต์เฉพาะได้)
       const jr = await api.get<JobSearchResult[]>(`/jobs/search?customer_id=${customerId}`);
       const jobs = jr.data ?? [];
+      setCustJobs(jobs);
       if (jobs.length > 0) {
-        setSelectedJob(jobs[0]);
         lastAutoJobRef.current = jobs[0];
         setChangingSite(false);
-      } else {
-        setNoJobsForCust(true);
+        await selectTargetJob(jobs[0], { existingSiteCustId: customerId });
+        return;
       }
-      // (2) เติมจาก "ไซต์รวมของลูกค้า" (ครบสุด — ดึง location จากงานใดก็ได้ที่มีแผนที่)
+      setNoJobsForCust(true);
       const cr = await api.get<{
         customer_name: string; tel: string | null; address: string | null;
         location_url: string | null; lat: number | null; lng: number | null;
@@ -749,6 +754,18 @@ export function QueueModal({
       setSiteInfoBusy(false);
     }
   }
+
+  // ไซต์ของลูกค้า = งานที่ที่อยู่ (customer_area) ต่างกัน — รวมงานที่อยู่เดียวกันเป็นไซต์เดียว
+  const custSites = useMemo(() => {
+    const norm = (a: string | null | undefined) => String(a ?? "").replace(/\s+/g, " ").replace(/\s*\d{5}\s*$/, "").trim();
+    const groups: { key: string; area: string; jobs: JobSearchResult[] }[] = [];
+    for (const j of custJobs) {
+      const key = norm(j.customer_area) || `#${j.id}`;
+      const g = groups.find((x) => x.key === key);
+      if (g) g.jobs.push(j); else groups.push({ key, area: j.customer_area?.trim() || "(ไม่มีที่อยู่)", jobs: [j] });
+    }
+    return groups;
+  }, [custJobs]);
 
   // "เพิ่มผู้ช่วยเอง" inline form state
   const [addingAssistant, setAddingAssistant] = useState(false);
@@ -1518,8 +1535,37 @@ export function QueueModal({
                             onClick={clearTargetJob}
                             className="press shrink-0 text-xs text-ink-3 hover:text-sky-600 px-1.5 py-1 rounded-lg"
                           >
-                            [เปลี่ยนไซต์]
+                            [ค้นงานอื่น]
                           </button>
+                        </div>
+                      )}
+
+                      {/* ลูกค้ามีหลายไซต์ → เลือกไซต์ตรง ๆ (ไม่ต้องพิมพ์ค้น) */}
+                      {custSites.length > 1 && !changingSite && (
+                        <div className="space-y-1">
+                          <p className="text-[11px] text-ink-3">ลูกค้านี้มี {custSites.length} หน้างาน — เลือกไซต์ที่จะไป:</p>
+                          <div className="glass-soft rounded-xl overflow-hidden">
+                            {custSites.map((g) => {
+                              const active = !!selectedJob && g.jobs.some((j) => j.id === selectedJob.id);
+                              return (
+                                <button
+                                  key={g.key}
+                                  type="button"
+                                  disabled={siteInfoBusy}
+                                  onClick={() => { if (!active && selectedCust) void selectTargetJob(g.jobs[0], { existingSiteCustId: selectedCust.id }); }}
+                                  className={`w-full text-left px-3 py-2 border-b border-gray-100 last:border-0 transition-colors flex items-start gap-2 ${active ? "bg-sky-600 text-white" : "hover:bg-white/60"}`}
+                                >
+                                  <span className={`shrink-0 mt-0.5 text-[11px] font-bold ${active ? "text-white" : "text-sky-600"}`}>{active ? "●" : "○"}</span>
+                                  <span className="flex-1 min-w-0">
+                                    <span className={`block text-xs leading-snug ${active ? "text-white" : "text-brand-dark"}`}>{g.area}</span>
+                                    <span className={`block text-[11px] mt-0.5 ${active ? "text-white/80" : "text-ink-3"}`}>
+                                      {g.jobs.map((j) => j.job_code ?? "—").join(", ")}{g.jobs[0].customer_tel ? ` · ${g.jobs[0].customer_tel}` : ""}
+                                    </span>
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
                       )}
 

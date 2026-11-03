@@ -15,7 +15,7 @@ export async function GET(req: Request) {
     .eq("is_active", true)
     .order("created_at", { ascending: false });
 
-  if (q) query = query.or(`name.ilike.%${q}%,job.ilike.%${q}%,phone.ilike.%${q}%,line_id.ilike.%${q}%`);
+  if (q) query = query.or(`name.ilike.%${q}%,job.ilike.%${q}%,phone.ilike.%${q}%,line_id.ilike.%${q}%,line_id_prev.ilike.%${q}%`);
 
   const { data, error } = await query;
   if (error) return fail(error.message, 500);

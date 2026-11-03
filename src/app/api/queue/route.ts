@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { syncCustomerContact } from "@/lib/customer-contact-sync";
 import { requirePermission, HttpError } from "@/lib/bff/context";
 import { withRoute } from "@/lib/bff/handler";
 import { ok, created } from "@/lib/bff/response";
@@ -184,6 +185,11 @@ export const POST = withRoute(async (req: Request) => {
   }
   if (error) throw dbError(error);
   if (!data) throw new HttpError(400, "สร้างคิวไม่สำเร็จ");
+  // ลูกค้าเก่า: ช่องทาง/ไลน์ที่กรอกในคิว → ทะเบียน (0170 ไลน์ใหม่ไม่ทับ ของเดิมย้ายไป "ไลน์เดิม")
+  if (body.target_customer_id != null && (body.line_contact || body.contact_channel)) {
+    try { await syncCustomerContact(sb, body.target_customer_id, { line_contact: body.line_contact, contact_channel: body.contact_channel }); }
+    catch (e) { console.warn("[queue POST] sync customer contact:", e instanceof Error ? e.message : e); }
+  }
   return created(data);
 });
 
