@@ -30,12 +30,24 @@ export type SuggestParams = {
   fixed_time?: "10:00" | "14:00" | null;
 };
 
+/** คิวที่เซลล์คนนั้นมีอยู่แล้วในวันที่เสนอ — ให้เจ้าของเช็คเองได้โดยไม่ต้องไปเปิดตารางวันนั้น (เจ้าของ 3 พ.ย.69) */
+export type DayPlanItem = {
+  queue_time: string | null;
+  customer_name: string;
+  address: string | null;
+  job_type: string | null;
+  job_size: string | null;
+  km: number | null;      // ระยะเส้นตรงจากหน้างานใหม่ (null = พิกัดไม่ครบ)
+  min: number | null;     // เวลาขับโดยประมาณ (คูณรถติดแล้ว)
+};
 export type SuggestResult = {
   queue_date: string;
   queue_time: string;
   sales_id: string;
   sales_name: string;
   reason: string;
+  day_plan: DayPlanItem[];   // คิวเดิมของเซลล์วันนั้น (เรียงตามเวลา)
+  day_notes: string[];       // ช่องที่ถูกกันไว้วันนั้น เช่น "เช้า: วันออฟฟิศ"
 };
 
 export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<SuggestResult> {
@@ -108,17 +120,34 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
   // Load existing bookings: include lat/lng for R-45min check
   const { data: entriesRaw } = await sb
     .from("queue_entries")
-    .select("sales_id,queue_date,queue_time,status,lat,lng")
+    .select("id,sales_id,queue_date,queue_time,status,lat,lng,customer_name,address,job_type,job_size")
     .not("queue_date", "is", null)
     .neq("status", "CANCELLED")
     .gte("queue_date", today);
   const entries = (entriesRaw ?? []) as {
+    id: string;
     sales_id: string | null;
     queue_date: string;
     queue_time: string | null;
     lat: number | null;
     lng: number | null;
+    customer_name: string | null;
+    address: string | null;
+    job_type: string | null;
+    job_size: string | null;
   }[];
+  type Entry = (typeof entries)[number];
+  const timeMin = (t: unknown) => { const m = String(t ?? "").match(/(\d{1,2})[:.](\d{2})/); return m ? Number(m[1]) * 60 + Number(m[2]) : 9999; };
+  const toPlan = (rows: Entry[], dist: Map<string, { km: number | null; min: number | null }>): DayPlanItem[] =>
+    [...rows].sort((a, b) => timeMin(a.queue_time) - timeMin(b.queue_time)).map((e) => ({
+      queue_time: e.queue_time ? String(e.queue_time).slice(0, 5) : null,
+      customer_name: e.customer_name ?? "",
+      address: e.address ?? null,
+      job_type: e.job_type ?? null,
+      job_size: e.job_size ?? null,
+      km: dist.get(e.id)?.km ?? null,
+      min: dist.get(e.id)?.min ?? null,
+    }));
 
   // R-Leave: load sales_availability
   const { data: availRaw } = await sb
@@ -172,6 +201,9 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
       const halfLeave = av.find((a) => a.kind === "LEAVE_HALF");
       if (halfLeave) blocked.add(half2slot(halfLeave.half));
 
+      const dayNotes: string[] = [];
+      if (blocked.has("10:00")) dayNotes.push(halfLeave?.half !== "PM" && halfLeave ? "เช้า: ลาครึ่งวัน" : "เช้า: วันออฟฟิศ");
+      if (blocked.has("14:00")) dayNotes.push(halfLeave?.half === "PM" ? "บ่าย: ลาครึ่งวัน" : "บ่าย: วันออฟฟิศ");
       let slots = ["10:00", "14:00"].filter((t) => !blocked.has(t));
       if (body.job_size === "MULTI")
         slots = [...slots].sort((a, b) => (a === "14:00" ? -1 : 1) - (b === "14:00" ? -1 : 1));
@@ -200,6 +232,8 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
             sales_id: s.id,
             sales_name: s.name,
             reason: `งานเต็มวัน → ${s.name} ว่างทั้งวัน ${DOW_TH[dow]} ${dateStr}`,
+            day_plan: [],
+            day_notes: dayNotes,
           };
         }
         continue;
@@ -213,6 +247,7 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
       //   ชั้น 1 ระยะเส้นตรง ≤ max_pair_km (ไม่ต้องพึ่ง ORS) · ชั้น 2 เวลาขับ ORS × traffic_factor ≤ max_pair_min
       //   พิกัดไม่ครบ (คิวเดิมหรืองานใหม่) = ไม่จับคู่วันนั้น (ข้ามไปวันที่ว่างทั้งวัน) — กันเดาแล้วพลาด
       let pairNote = "";
+      const dist = new Map<string, { km: number | null; min: number | null }>();
       if (dayEntries.length > 0) {
         const newLat = body.lat ?? null;
         const newLng = body.lng ?? null;
@@ -236,6 +271,7 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
           } else {
             travelMin = orsMin * trafficFactor;   // ORS = เวลาถนนโล่ง → คูณรถติดก่อนเทียบเกณฑ์
           }
+          dist.set(existing.id, { km: Math.round(km * 10) / 10, min: Math.round(travelMin) });
           if (travelMin > maxPairMin) { ok = false; break; }
           pairNote = ` · คู่กับคิว ${String(existing.queue_time ?? "").slice(0, 5)} ห่าง ${km.toFixed(1)} กม. ~${Math.round(travelMin)} นาที`;
         }
@@ -248,6 +284,8 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
         sales_id: s.id,
         sales_name: s.name,
         reason: `${s.name} ว่างเร็วสุด ${DOW_TH[dow]} ${dateStr} ${freeSlot.slice(0, 5)}${pairNote}`,
+        day_plan: toPlan(dayEntries, dist),
+        day_notes: dayNotes,
       };
     }
   }

@@ -300,6 +300,12 @@ export function QueueModal({
   const coords = manualCoords ?? parseLatLng(f.location_url) ?? resolved;
   const [suggesting, setSuggesting] = useState(false);
   const [suggestMsg, setSuggestMsg] = useState("");
+  // ตารางของเซลล์ในวันที่ระบบเสนอ — ให้เจ้าของเช็คได้ทันทีว่าเสนอถูกไหม (เจ้าของ 3 พ.ย.69 "ปกติเช็ค 2 รอบ")
+  const [suggestPlan, setSuggestPlan] = useState<{
+    date: string; time: string; sales: string;
+    items: { queue_time: string | null; customer_name: string; address: string | null; job_type: string | null; job_size: string | null; km: number | null; min: number | null }[];
+    notes: string[];
+  } | null>(null);
 
   // แกะลิงก์แผนที่ผ่าน server (รองรับ maps.app.goo.gl) เมื่อ parse ตรงๆ ไม่ได้
   async function resolveLink() {
@@ -787,7 +793,7 @@ export function QueueModal({
     const controller = new AbortController();
     suggestAbortRef.current = controller;
 
-    setSuggesting(true); setSuggestMsg("");
+    setSuggesting(true); setSuggestMsg(""); setSuggestPlan(null);
     // timeout 10 วินาที
     const timeoutId = setTimeout(() => controller.abort(), 10000);
     try {
@@ -805,6 +811,8 @@ export function QueueModal({
       const r = await api.post<{
         queue_date: string; queue_time: string;
         sales_id: string; sales_name: string; reason: string;
+        day_plan?: { queue_time: string | null; customer_name: string; address: string | null; job_type: string | null; job_size: string | null; km: number | null; min: number | null }[];
+        day_notes?: string[];
       }>("/queue/suggest", {
         sales_id: f.sales_id || null,
         job_size: f.job_size || null,
@@ -829,6 +837,7 @@ export function QueueModal({
         sales_id: s.sales_id || r.data.sales_id,
       }));
       setSuggestMsg("✓ " + r.data.reason);
+      setSuggestPlan({ date: r.data.queue_date, time: r.data.queue_time, sales: r.data.sales_name, items: r.data.day_plan ?? [], notes: r.data.day_notes ?? [] });
     } catch (e) {
       clearTimeout(timeoutId);
       if (controller.signal.aborted) {
@@ -1796,6 +1805,36 @@ export function QueueModal({
                 เลือกเซลล์/เวลาเองไว้ก่อนได้ → ระบบจะหาแค่วันที่ใกล้สุด · งานหลายจุดจะจัดบ่ายให้อัตโนมัติ
               </p>
               {suggestMsg && <p className="text-[11px] mt-1 text-ink-2">{suggestMsg}</p>}
+              {suggestPlan && (
+                <div className="mt-2 rounded-xl border border-sky-200 bg-sky-50/70 px-3 py-2.5">
+                  <div className="text-[12px] font-semibold text-sky-800">
+                    ตารางของ {suggestPlan.sales} วัน {suggestPlan.date.split("-").reverse().join("/")} — {suggestPlan.items.length ? `มีคิวอยู่แล้ว ${suggestPlan.items.length} คิว` : "ยังไม่มีคิวอื่น (ว่างทั้งวัน)"}
+                  </div>
+                  {suggestPlan.notes.length > 0 && (
+                    <div className="text-[11px] text-amber-700 mt-0.5">{suggestPlan.notes.join(" · ")}</div>
+                  )}
+                  <ul className="mt-1.5 space-y-1">
+                    {[...suggestPlan.items.map((it) => ({ ...it, isNew: false })), { queue_time: suggestPlan.time, customer_name: f.customer_name || "(คิวใหม่นี้)", address: f.address || null, job_type: jobCat || null, job_size: f.job_size || null, km: null, min: null, isNew: true }]
+                      .sort((a, b) => {
+                        const tm = (t: string | null) => { const m = String(t ?? "").match(/(\d{1,2})[:.](\d{2})/); return m ? Number(m[1]) * 60 + Number(m[2]) : 9999; };
+                        return tm(a.queue_time) - tm(b.queue_time);
+                      })
+                      .map((it, i) => (
+                        <li key={i} className={`flex items-start gap-2 text-[11.5px] leading-snug rounded-lg px-2 py-1 ${it.isNew ? "bg-sky-600 text-white" : "bg-white/70 text-ink-1"}`}>
+                          <span className="shrink-0 font-bold tabular-nums w-[42px]">{it.queue_time ?? "—:—"}</span>
+                          <span className="flex-1 min-w-0">
+                            <span className="font-semibold">{it.isNew ? "← คิวใหม่: " : ""}{it.customer_name || "—"}</span>
+                            {it.job_type && it.job_type !== "ประเมินหน้างาน" ? <span className={it.isNew ? " text-white/80" : " text-ink-3"}> · {it.job_type}</span> : null}
+                            {it.address ? <span className={`block truncate ${it.isNew ? "text-white/80" : "text-ink-3"}`}>{it.address}</span> : null}
+                            {!it.isNew && it.km != null ? <span className="block text-emerald-700">ห่างจากงานใหม่ {it.km} กม. ~{it.min} นาที</span> : null}
+                            {!it.isNew && it.km == null && suggestPlan.items.length > 0 ? <span className="block text-amber-700">ไม่มีพิกัดเทียบระยะ</span> : null}
+                          </span>
+                        </li>
+                      ))}
+                  </ul>
+                  <p className="text-[10.5px] text-ink-3 mt-1.5">ไม่ถูกใจ → เปลี่ยนวัน/เวลา/เซลล์เองได้เลยด้านล่าง</p>
+                </div>
+              )}
             </Field>
           )}
 
