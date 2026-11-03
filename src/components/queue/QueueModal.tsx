@@ -14,7 +14,7 @@ import { api } from "@/lib/api";
 import DateField from "@/components/ui/DateField";
 import { formatThaiPhone } from "@/lib/phone";
 import {
-  FEE_OPTIONS, JOB_SIZE_META, STATUS_META, STATUS_ORDER, parseLatLng, estimateMinutes,
+  FEE_OPTIONS, JOB_SIZE_META, STATUS_META, STATUS_ORDER, parseLatLng, estimateMinutes, isOfficeOn,
   type QueueEntry, type QueueSales, type JobSize, type QueueStatus, type QueueTeam,
 } from "@/lib/queue";
 import type { JobSearchResult } from "@/app/api/jobs/search/route";
@@ -354,21 +354,24 @@ export function QueueModal({
         const av = (availRes.data ?? []).filter((a) => a.sales_id === f.sales_id && a.date === date);
         const isFullLeave = av.some((a) => a.kind === "LEAVE_FULL" || a.kind === "HOLIDAY" || a.kind === "WFH");
         const isWfh = av.some((a) => a.kind === "WFH");
-        const isAMLeave = av.some((a) => (a.kind === "LEAVE_HALF" && a.half === "AM") || a.kind === "OFFICE_HALF");
+        // ลา = บล็อก · "อยู่ออฟฟิศ" (OFFICE_HALF จากวันลา) = เตือนอย่างเดียว ลงได้ (เจ้าของ 3 พ.ย.69 "เตือนเหมือนลูกค้าไกล แต่ยังลงได้")
+        const isAMLeave = av.some((a) => a.kind === "LEAVE_HALF" && a.half === "AM");
         const isPMLeave = av.some((a) => a.kind === "LEAVE_HALF" && a.half === "PM");
+        const isOfficeAMAvail = av.some((a) => a.kind === "OFFICE_HALF");
 
         if (isFullLeave) found.push({ kind: "leave", msg: isWfh ? "เซลล์ WFH ทำงานที่บ้านวันนี้ (ปกติไม่ออกประเมิน)" : "เซลล์ลา/วันหยุดทั้งวันในวันนี้" });
-        else if (isAMLeave && isAMSlot) found.push({ kind: "leave", msg: "เซลล์ลา/อยู่ออฟฟิศช่วงเช้า — เลือกเวลาบ่าย" });
+        else if (isAMLeave && isAMSlot) found.push({ kind: "leave", msg: "เซลล์ลาช่วงเช้า — เลือกเวลาบ่าย" });
         else if (isPMLeave && isPMSlot) found.push({ kind: "leave", msg: "เซลล์ลาช่วงบ่าย — เลือกเวลาเช้า" });
 
-        // (0030) วันอยู่ออฟฟิศประจำ — soft warn (ลงทับได้แต่ปกติไม่ออกประเมิน) · เฉพาะวันนี้เป็นต้นไป
+        // วันออฟฟิศ (ประจำสัปดาห์ office_slots + ย้ายรายวัน office_overrides + OFFICE_HALF ในวันลา) — เตือนอย่างเดียว ลงได้
+        //   ⚠ เดิมดูแค่ตารางประจำสัปดาห์ ไม่ดูวันที่ย้าย/เพิ่มรายวัน → ลงทับวันออฟฟิศโดยไม่เตือน
         const half = isAMSlot ? "AM" : isPMSlot ? "PM" : null;
-        const nowStr = (() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`; })();
-        if (half && date >= nowStr) {
+        if (half && !isFullLeave) {
           const selSales = salesList.find((s) => s.id === f.sales_id);
           const wd = new Date(date + "T00:00:00").getDay();
-          if ((selSales?.office_slots ?? []).some((o) => o.weekday === wd && o.half === half)) {
-            found.push({ kind: "warn", msg: `${selSales?.name ?? "เซลล์"} อยู่ออฟฟิศประจำช่วง${isAMSlot ? "เช้า" : "บ่าย"}วันนี้ — ปกติไม่ออกประเมิน` });
+          const onOffice = (selSales ? isOfficeOn(selSales, date, wd, half) : false) || (half === "AM" && isOfficeAMAvail);
+          if (onOffice) {
+            found.push({ kind: "warn", msg: `⚠ ตรงกับวันออฟฟิศของ ${selSales?.name ?? "เซลล์"} ช่วง${isAMSlot ? "เช้า" : "บ่าย"} — ปกติไม่ออกประเมิน (ลงได้ถ้าจำเป็น)` });
           }
         }
 
