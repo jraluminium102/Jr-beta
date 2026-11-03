@@ -31,8 +31,9 @@ alter table public.job_rev_reviews enable row level security;
 drop policy if exists job_rev_reviews_read on public.job_rev_reviews;
 create policy job_rev_reviews_read on public.job_rev_reviews for select using (public.is_active());
 drop policy if exists job_rev_reviews_write on public.job_rev_reviews;
+-- CHANG มี production:write ใน rbac (กดรับทราบจากหน้าผลิตได้) — ต้องอยู่ใน policy ด้วย (บทเรียน 0058/0098/0111)
 create policy job_rev_reviews_write on public.job_rev_reviews for all
-  using (public.has_role('ADMIN','PRODUCTION','SALES','ACCOUNTING'))
-  with check (public.has_role('ADMIN','PRODUCTION','SALES','ACCOUNTING'));
+  using (public.has_role('ADMIN','PRODUCTION','SALES','ACCOUNTING','CHANG'))
+  with check (public.has_role('ADMIN','PRODUCTION','SALES','ACCOUNTING','CHANG'));
 
 notify pgrst, 'reload schema';

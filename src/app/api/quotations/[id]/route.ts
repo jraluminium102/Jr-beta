@@ -258,23 +258,28 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
       let setsRegen = "none";
       // 16 ต.ค.69 (QA R1/N2): regen เฉพาะเมื่อชุดปัจจุบันมาจาก "ใบที่กำลัง Rev ใบเดียว" และดึงใบนี้ตรง ๆ (ไม่ให้ pickJobQuotation เลือกใบอื่น)
       //   Rev ใบ B ขณะชุดมาจากใบ A → ไม่แตะ (กันสลับออเดอร์) · ชุดปนหลายใบ (A+B) → ไม่แตะ (replace จะลบของ B เงียบ ๆ — ให้เคลียร์ที่หน้าผลิตก่อน)
-      const cur = await currentAutoQuotations(sbRpc, jobIdForSets);
-      if (cur.length === 1 && cur[0].id === Number(qId)) {
-        if (afterDeposit && IN_PROGRESS.has(prodStatus)) {
-          setsRegen = "deferred";
-        } else {
-          await regenSetsFromQuotation(sbRpc, jobIdForSets, ctx.user.id, { replace: true, quotationId: Number(qId) });
-          setsRegen = "auto";
+      //   regen พัง/ดึงไม่ได้ (QA HIGH-2/3) → ห้ามกลืนทั้งก้อน ต้องบันทึกรีวิวต่อเสมอ (ไม่งั้น "งานหลุด" เหมือนเดิม)
+      try {
+        const cur = await currentAutoQuotations(sbRpc, jobIdForSets);
+        if (cur.length === 1 && cur[0].id === Number(qId)) {
+          if (afterDeposit && IN_PROGRESS.has(prodStatus)) {
+            setsRegen = "deferred";
+          } else {
+            const res = await regenSetsFromQuotation(sbRpc, jobIdForSets, ctx.user.id, { replace: true, quotationId: Number(qId) });
+            setsRegen = res.reason ? "deferred" : "auto";   // ดึงไม่ได้ (เช่น Rev ตัดสเปคหมด) → ให้ฝ่ายผลิตตัดสินเอง
+          }
+        } else if (cur.length > 0) {
+          setsRegen = "skipped";
+          console.warn("[rev-regen-sets] skip: ชุดผลิตของงานมาจากใบอื่น", { job: jobIdForSets, rev: qId, current: cur.map((c) => c.code) });
         }
-      } else if (cur.length > 0) {
-        setsRegen = "skipped";
-        console.warn("[rev-regen-sets] skip: ชุดผลิตของงานมาจากใบอื่น", { job: jobIdForSets, rev: qId, current: cur.map((c) => c.code) });
-      }
+      } catch (e) { setsRegen = "error"; console.error("[rev-regen-sets]", e); }
 
       if (afterDeposit) {
         const svc = createServiceClient() as unknown as { from: (t: string) => any };
-        const oldItems = ((fullQ as { quotation_items?: unknown[] } | null)?.quotation_items ?? []) as DiffItem[];
-        const newItems = lineItems as unknown as DiffItem[];
+        // เรียงทั้งสองฝั่งก่อนเทียบ (QA MED-8): embed ไม่การันตีลำดับ · ชื่อซ้ำ 2 ชุดจะจับคู่ผิดถ้าไม่เรียง
+        const bySort = (a: DiffItem & { id?: number }, b: DiffItem & { id?: number }) => (Number(a.sort_order) - Number(b.sort_order)) || (Number(a.id ?? 0) - Number(b.id ?? 0));
+        const oldItems = ([...((fullQ as { quotation_items?: unknown[] } | null)?.quotation_items ?? [])] as (DiffItem & { id?: number })[]).sort(bySort);
+        const newItems = ([...lineItems] as unknown as (DiffItem & { id?: number })[]).sort(bySort);
         const summary = diffQuotationItems(oldItems, newItems);
         const newRevNo = Number((revUpdate as { revision_no?: number }).revision_no);
         const coverSync = await autoSyncCoverSheet(svc, { jobId: jobIdForSets, quotationId: Number(qId), newRevNo, oldItems, newItems, userId: ctx.user.id }).catch(() => "manual" as const);

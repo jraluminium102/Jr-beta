@@ -24,6 +24,7 @@ const SETS_TH: Record<string, { text: string; tone: string }> = {
   deferred: { text: "ชุดผลิตยังไม่ดึง — กำลังผลิตอยู่ รอคุณตัดสิน", tone: "bg-rose-500/25 text-rose-100 border-rose-300/40" },
   skipped: { text: "ชุดผลิตมาจากใบเสนอใบอื่น — ไม่แตะ", tone: "bg-amber-500/20 text-amber-100 border-amber-300/30" },
   none: { text: "งานยังไม่มีชุดผลิตจากใบเสนอ", tone: "bg-white/10 text-white/70 border-white/15" },
+  error: { text: "ดึงชุดผลิตอัตโนมัติไม่สำเร็จ — ดึงเองที่หน้าชุดงาน", tone: "bg-rose-500/25 text-rose-100 border-rose-300/40" },
 };
 const COVER_TH: Record<string, { text: string; tone: string }> = {
   auto: { text: "ใบปะหน้าอัปเดตตาม Rev ให้แล้ว", tone: "bg-emerald-500/20 text-emerald-100 border-emerald-300/30" },
@@ -60,6 +61,7 @@ export default function RevReviewPanel({ rows, canWrite, onChanged, onOpen }: {
       onChanged();
     } catch (e) {
       alert(e instanceof ApiError ? e.message : "รับทราบไม่สำเร็จ");
+      onChanged();   // 409 (คนอื่นปิดแล้ว) → โหลดใหม่ให้ป้ายตรงกับจริง
     } finally { setBusy(""); }
   }
 

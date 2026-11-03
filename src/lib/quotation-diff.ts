@@ -45,9 +45,9 @@ export function diffQuotationItems(oldItems: DiffItem[], newItems: DiffItem[]): 
     const pool = (oldByKey.get(key(n)) ?? []).filter((o) => !matchedOld.has(o));
     if (!pool.length) { unmatchedNew.push(n); continue; }
     const o = pool[0]; matchedOld.add(o);
+    // ⚠ ไม่ใส่ราคาใน summary — ไปถึงช่าง/ติดตั้ง (production:read) ที่ไม่ควรเห็นราคา (QA MED-7) · ฝ่ายผลิตดูราคาที่ใบเสนอเอง
     const ch: string[] = [];
     if (Number(o.qty) !== Number(n.qty)) ch.push(`จำนวน ${fmtNum(o.qty)} → ${fmtNum(n.qty)}`);
-    if (Number(o.unit_price) !== Number(n.unit_price)) ch.push(`ราคา ${fmtNum(o.unit_price)} → ${fmtNum(n.unit_price)}`);
     ch.push(...specChanges(o.detail, n.detail));
     if (ch.length) out.push({ kind: "changed", name: norm(n.name) || "(ไม่มีชื่อ)", changes: ch });
   }
@@ -57,9 +57,8 @@ export function diffQuotationItems(oldItems: DiffItem[], newItems: DiffItem[]): 
     const o = leftOld.find((x) => !matchedOld.has(x) && Number(x.sort_order) === Number(n.sort_order));
     if (o) {
       matchedOld.add(o);
-      const ch = [`ชื่อรายการ: ${norm(o.name)} → ${norm(n.name)}`];
+      const ch = norm(o.name) !== norm(n.name) ? [`ชื่อรายการ: ${norm(o.name)} → ${norm(n.name)}`] : [`หัวข้อชุด: ${norm(o.group_label) || "—"} → ${norm(n.group_label) || "—"}`];
       if (Number(o.qty) !== Number(n.qty)) ch.push(`จำนวน ${fmtNum(o.qty)} → ${fmtNum(n.qty)}`);
-      if (Number(o.unit_price) !== Number(n.unit_price)) ch.push(`ราคา ${fmtNum(o.unit_price)} → ${fmtNum(n.unit_price)}`);
       ch.push(...specChanges(o.detail, n.detail));
       out.push({ kind: "changed", name: norm(n.name) || "(ไม่มีชื่อ)", changes: ch });
     } else out.push({ kind: "added", name: norm(n.name) || "(ไม่มีชื่อ)" });

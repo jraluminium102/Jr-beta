@@ -8,7 +8,9 @@ import { buildGroups, toLeftLines, buildSideColumns } from "@/lib/cover-sheet/ge
 
 type Sb = { from: (t: string) => any };
 type Item = { name?: string | null; detail?: string | null; group_label?: string | null; sort_order?: number | null };
-type Line = { text: string; color?: string; hl?: boolean; kind?: string; n?: number };
+type Line = { text: string; color?: string; hl?: boolean; hlc?: string; kind?: string; n?: number };
+// คีย์จับคู่สไตล์: ตัดท้าย "(ชุด 1–3)" ออก — จำนวนชุดเปลี่ยนแล้วสี/ไฮไลต์ที่ตั้งไว้ต้องไม่หาย (QA MED-9)
+const styleKey = (t: unknown) => String(t ?? "").replace(/\s*\(ชุด[^)]*\)\s*$/, "").trim();
 
 export type CoverSyncResult = "auto" | "manual" | "none";
 
@@ -41,11 +43,11 @@ export async function autoSyncCoverSheet(sb: Sb, args: {
 
   // สร้างใหม่จาก Rev ใหม่ — สี/ไฮไลต์ที่เคยตั้งต่อบรรทัดเดิม คงไว้ถ้าข้อความเดิมยังอยู่
   const genNew = toLeftLines(buildGroups(args.newItems), mode) as Line[];
-  const styleByText = new Map<string, { color?: string; hl?: boolean }>();
-  for (const l of (Array.isArray(content.left) ? content.left : []) as Line[]) styleByText.set(String(l.text ?? "").trim(), { color: l.color, hl: l.hl });
+  const styleByText = new Map<string, { color?: string; hl?: boolean; hlc?: string }>();
+  for (const l of (Array.isArray(content.left) ? content.left : []) as Line[]) styleByText.set(styleKey(l.text), { color: l.color, hl: l.hl, hlc: l.hlc });
   const left = genNew.map((l) => {
-    const st = styleByText.get(String(l.text ?? "").trim());
-    return st ? { ...l, color: st.color ?? l.color ?? "", hl: st.hl ?? l.hl ?? false } : l;
+    const st = styleByText.get(styleKey(l.text));
+    return st ? { ...l, color: st.color ?? l.color ?? "", hl: st.hl ?? l.hl ?? false, ...(st.hlc !== undefined ? { hlc: st.hlc } : {}) } : l;
   });
   const { mid, right } = buildSideColumns(args.newItems) as unknown as { mid: Line[]; right: Line[] };
   const next = { ...content, left, mid: dedupAppend(content.mid, mid), right: dedupAppend(content.right, right) };
