@@ -106,7 +106,9 @@ export default function RevReviewPanel({ rows, canWrite, onChanged, onOpen }: {
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     <span className={`text-[11.5px] rounded-full px-2 py-0.5 border ${sets.tone}`}>{sets.text}</span>
                     <span className={`text-[11.5px] rounded-full px-2 py-0.5 border ${cover.tone}`}>{cover.text}</span>
-                    {r.drawing_exists && <span className={`text-[11.5px] rounded-full px-2 py-0.5 border ${r.drawing_rev_stale ? COVER_TH.manual.tone : COVER_TH.auto.tone}`}>{r.drawing_rev_stale ? "แบบช่างสแตมป์สเปคอ้าง Rev เก่า — ต้องดู" : "แบบช่างตรง Rev"}</span>}
+                    {r.drawing_exists
+                      ? <span className={`text-[11.5px] rounded-full px-2 py-0.5 border ${r.drawing_rev_stale ? COVER_TH.manual.tone : COVER_TH.auto.tone}`}>{r.drawing_rev_stale ? "แบบช่างสแตมป์สเปคอ้าง Rev เก่า — ต้องดู" : "แบบช่างตรง Rev"}</span>
+                      : <span className={`text-[11.5px] rounded-full px-2 py-0.5 border ${COVER_TH.manual.tone}`}>แบบลูกค้าเดิมถูกลบตอน Rev — ต้องสแตมป์แบบใหม่</span>}
                   </div>
                   <div className="mt-2.5 flex flex-wrap gap-2 items-center">
                     <Link href={`/quotations?job=${r.job_id}`} className="text-[12.5px] font-semibold rounded-lg px-2.5 py-1.5 bg-white/10 text-white hover:bg-white/15">ดูใบเสนอ</Link>

@@ -11,6 +11,7 @@ import { createServiceClient } from "@/lib/supabase/admin";
 import { diffQuotationItems, type DiffItem } from "@/lib/quotation-diff";
 import { autoSyncCoverSheet } from "@/lib/cover-sheet/auto-sync";
 import { createRevReview, AFTER_DEPOSIT, IN_PROGRESS } from "@/lib/production/rev-review";
+import { purgeJobDrawings } from "@/lib/job-drawings/purge";
 
 // บันทึกใบเสนอ = ~10 query ต่อกัน + ขึ้น Rev + สร้างชุดผลิตใหม่ (regen) — ค่าเริ่มต้นของ Vercel สั้น
 //   เคยโดนตัดกลางทางแล้วหน้าจอค้าง (เจ้าของแจ้ง 18 ก.ย.69) → ขยายเป็น 60 วินาที (เท่า backfill-geo)
@@ -249,6 +250,15 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
     //      (เดิม replace ลบทุกชุด auto → ความคืบหน้าช่าง/วัสดุ/QC หายเงียบ ๆ กลางคัน — อันตราย)
     //   2) ใบปะหน้า: ไม่มีใครแก้มือ = อัปเดตตาม Rev ให้เอง · แก้มือแล้ว = ปล่อยป้ายเตือน (rev_stale) ให้คนดู
     //   3) บันทึก job_rev_reviews = ป้าย "⚠ Rev รอตรวจ" บนหน้าผลิต/ตารางช่าง จนกว่าฝ่ายผลิตกดรับทราบ
+    //   4) แบบลูกค้า (job_drawings): ลบทิ้งทั้งหมดทุกครั้งที่ขึ้น Rev (เจ้าของ 3 พ.ย.69) — แบบเก่าค้างทำให้คนทำลืม ต้องสแตมป์ใหม่จาก Rev ล่าสุด
+    try {
+      const svcPurge = createServiceClient() as unknown as { from: (t: string) => any; storage?: any };
+      const purged = await purgeJobDrawings(svcPurge, jobIdForSets);
+      if (purged.count > 0) {
+        await audit({ jobId: jobIdForSets, userId: ctx.user.id, action: "JOB_DRAWINGS_PURGED_ON_REV", table: "job_drawings", recordId: jobIdForSets,
+          newValue: { rev_no: (revUpdate as { revision_no?: number }).revision_no ?? null, removed: purged.count, names: purged.names } });
+      }
+    } catch (e) { console.error("[rev-purge-drawings]", e); }
     try {
       const { data: jobRow } = await ctx.supabase.from("jobs").select("status").eq("id", jobIdForSets).maybeSingle<{ status: string }>();
       const { data: prodRow } = await ctx.supabase.from("productions").select("status").eq("job_id", jobIdForSets).maybeSingle<{ status: string }>();
