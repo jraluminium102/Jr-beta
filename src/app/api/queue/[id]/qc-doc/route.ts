@@ -24,8 +24,10 @@ export const GET = withRoute(async (_req: Request, { params }: { params: { id: s
   if (!data) return notFound("ไม่พบคิวนี้");
 
   const bytes = await buildQcDoc(data);
-  const name = `QC-${String((data as { customer_name?: string }).customer_name ?? "").trim() || params.id.slice(0, 8)}.pdf`;
-  // header ต้องเป็น ASCII — ชื่อไทยใส่แบบ percent-encode ใน filename* เท่านั้น
+  // ชื่อไฟล์ = "<ชื่อลูกค้า> เอกสารควบคุมคุณภาพงาน.pdf" ตามแบบที่เจ้าของตั้งไว้ (เช่น "คุณวริศ เอกสารควบคุมคุณภาพงาน")
+  const cust = String((data as { customer_name?: string }).customer_name ?? "").replace(/[\\/:*?"<>|]+/g, " ").trim() || "ลูกค้า";
+  const name = `${cust} เอกสารควบคุมคุณภาพงาน.pdf`;
+  // header ต้องเป็น ASCII — ชื่อไทยใส่แบบ percent-encode ใน filename* เท่านั้น (เบราว์เซอร์ใช้ตัวนี้ตอนเซฟ)
   const ascii = `QC-${params.id.slice(0, 8)}.pdf`;
   return new Response(Buffer.from(bytes), {
     status: 200,

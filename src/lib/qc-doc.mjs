@@ -211,5 +211,7 @@ export async function buildQcDoc(e) {
     const n = Number(e.assess_fee);
     one(F.fee, Number.isFinite(n) ? `${n.toLocaleString("th-TH")} บาท` : String(e.assess_fee));
   }
+  // ชื่อเอกสาร (โชว์บนแท็บ/หัวโปรแกรมอ่าน PDF) = ชื่อลูกค้า + ชื่อเอกสาร
+  pdf.setTitle(`${String(e.customer_name ?? "").trim() || "ลูกค้า"} เอกสารควบคุมคุณภาพงาน`);
   return pdf.save();
 }
