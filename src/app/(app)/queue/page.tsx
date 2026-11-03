@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { api } from "@/lib/api";
-import { QueueModal } from "@/components/queue/QueueModal";
+import { QueueModal, isAssessJobType } from "@/components/queue/QueueModal";
 import { LeaveModal } from "@/components/queue/LeaveModal";
 import { OfficeScheduleModal } from "@/components/queue/OfficeScheduleModal";
 import { LeaveSummaryModal } from "@/components/queue/LeaveSummaryModal";
@@ -1281,6 +1281,14 @@ function QueueRow({ e, onOpen, onToggleReceipt, onToggleFeePaid, onNote, canWrit
               title="ออกใบเสร็จ / ใบกำกับภาษี ค่าประเมิน (VAT 7%)"
               className="press text-brand hover:text-brand-dark inline-flex">
               <Icon name="receipt" size={15} />
+            </a>
+          )}
+          {/* เอกสารควบคุมคุณภาพงาน (PDF ต้นฉบับ เติมข้อมูลลูกค้าหน้า 1) — ส่งให้เซลล์ก่อนเข้าหน้างาน · สร้างสด ไม่เก็บไฟล์ */}
+          {isAssessJobType(e.job_type) && (
+            <a href={`/api/queue/${e.id}/qc-doc`} target="_blank" rel="noopener noreferrer"
+              title="เอกสารควบคุมคุณภาพงาน (PDF) — เติมชื่อ/เบอร์/ที่อยู่/เซลล์/วันที่ ลงหน้าแรกให้แล้ว"
+              className="press inline-flex items-center gap-0.5 text-[11px] font-semibold rounded-md px-1.5 py-0.5 border border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100">
+              <Icon name="file" size={12} /> QC
             </a>
           )}
         </div>
