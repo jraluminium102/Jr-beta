@@ -14,7 +14,7 @@ import {
 } from "@/components/queue/QueueCalendarView";
 import {
   STATUS_META, STATUS_ORDER, JOB_SIZE_META, dayLabel, dayColor, thaiDate,
-  detectTeam, isOfficeOn,
+  detectTeam, isOfficeOn, isOldCustomer, OLD_CUSTOMER_LABEL, billingNameLine,
   type QueueEntry, type QueueSales, type QueueStatus, type QueueTeam, type OfficeHalf,
 } from "@/lib/queue";
 
@@ -43,6 +43,8 @@ function buildSalesDayCopy(date: string, salesName: string, entries: QueueEntry[
   const head = `คิวประเมิน ${dayLabel(date)} ${copyDateBE(date)} (${salesName})`;
   const blocks = entries.map((e) => {
     const fee = e.assess_fee != null ? `ค่าประเมิน ${e.assess_fee.toLocaleString("th-TH")} บาท` : "-";
+    // ท้ายบล็อก (เจ้าของ 3 พ.ย.69): ลูกค้าเก่า (ทั้งมี/ไม่มีในระบบ) + ออกใบเสนอราคาในนามอื่น — ใส่เฉพาะที่มี
+    const tail = [isOldCustomer(e) ? `(${OLD_CUSTOMER_LABEL})` : "", billingNameLine(e)].filter(Boolean);
     return [
       `${copyTime(e.queue_time)} น. ${copyVerb(e.job_type)}${e.customer_name}`,
       "",
@@ -54,6 +56,7 @@ function buildSalesDayCopy(date: string, salesName: string, entries: QueueEntry[
       e.location_url?.trim() || "-",
       "",
       fee,
+      ...tail,
     ].join("\n");
   });
   return head + "\n\n" + blocks.join("\n\n\n");

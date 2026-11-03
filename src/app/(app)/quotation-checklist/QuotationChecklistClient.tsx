@@ -9,6 +9,7 @@ import { api } from "@/lib/api";
 import { baht } from "@/lib/money";
 import DateField from "@/components/ui/DateField";
 import type { ChecklistData, ChecklistItem, ChecklistQuotation, SentHistoryItem } from "@/app/api/quotation-checklist/route";
+import OldCustomerTag from "@/components/OldCustomerTag";
 import { HoldModal } from "@/components/jobs/HoldModal";
 
 // ---------- types ----------
@@ -373,7 +374,7 @@ function SentJobCard({
     <div className="glass rounded-2xl p-4 space-y-2.5">
       <div className="flex items-start gap-2">
         <div className="flex-1 min-w-0">
-          <div className="font-semibold text-ink truncate">{item.customer_name}</div>
+          <div className="font-semibold text-ink truncate">{item.customer_name} <OldCustomerTag show={item.old_customer} small /></div>
           {item.job_code && (
             <div className="text-xs text-ink-3 font-mono mt-0.5">{item.job_code}</div>
           )}
@@ -511,7 +512,7 @@ function ActiveTableRow({
     <tr className={`border-b border-gray-100 hover:bg-white/60 transition-colors ${item.stage === "sent" ? "bg-emerald-50/50" : ""}`}>
       {/* ลูกค้า/เซลล์ */}
       <td className="px-3 py-3 align-top">
-        <div className="font-semibold text-ink text-sm leading-snug">{item.customer_name}</div>
+        <div className="font-semibold text-ink text-sm leading-snug">{item.customer_name} <OldCustomerTag show={item.old_customer} small /></div>
         {item.job_code && (
           <div className="text-xs text-ink-3 font-mono">{item.job_code}</div>
         )}
@@ -702,7 +703,7 @@ function ActiveMobileCard({
       {/* Header */}
       <div className="flex items-start gap-2">
         <div className="flex-1 min-w-0">
-          <div className="font-semibold text-ink truncate">{item.customer_name}</div>
+          <div className="font-semibold text-ink truncate">{item.customer_name} <OldCustomerTag show={item.old_customer} small /></div>
           {item.job_code && (
             <div className="text-xs text-ink-3 font-mono mt-0.5">{item.job_code}</div>
           )}

@@ -13,6 +13,8 @@ import CustomerHeaderEditButton from "./CustomerHeaderEditButton";
 import IssueDateEditButton from "./IssueDateEditButton";
 import RevisionHistory from "./RevisionHistory";
 import type { Quotation } from "@/lib/types";
+import OldCustomerTag from "@/components/OldCustomerTag";
+import { isOldCustomer, type OldCustomerSrc } from "@/lib/queue";
 
 export const dynamic = "force-dynamic";
 
@@ -21,12 +23,12 @@ export default async function QuotationDetail({ params, searchParams }: { params
   const supabase = createClient();
   const { data } = await supabase
     .from("quotations")
-    .select("*, quotation_items(*), job:job_id(floor_work, floor_note)")
+    .select("*, quotation_items(*), job:job_id(floor_work, floor_note, queue_entry:queue_entry_id(old_customer, target_customer_id, target_job_id))")
     .eq("id", params.id)
     .single();
   if (!data) notFound();
 
-  const q = data as Quotation & { job: { floor_work: string | null; floor_note: string | null } | null };
+  const q = data as Quotation & { job: { floor_work: string | null; floor_note: string | null; queue_entry?: OldCustomerSrc } | null };
   const items = (q.quotation_items ?? []).slice().sort((a, b) => a.sort_order - b.sort_order);
   const c = q.customer_snapshot;
   const writable = canWrite(profile?.role);
@@ -76,6 +78,8 @@ export default async function QuotationDetail({ params, searchParams }: { params
           </Link>
           <h1 className="text-xl font-bold text-brand-dark font-mono">{q.code}</h1>
           <FloorWorkBadge floorWork={q.job?.floor_work} floorNote={q.job?.floor_note} />
+          {/* แท็กลูกค้าเก่า — มาจากคิวประเมิน (0168 · เจ้าของ 3 พ.ย.69) */}
+          <OldCustomerTag show={isOldCustomer(q.job?.queue_entry)} />
           <StatusBadge status={q.status} />
         </div>
         <div className="flex gap-2 flex-wrap">

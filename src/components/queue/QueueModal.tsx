@@ -85,7 +85,9 @@ type ExistingSlot = {
 // ประเภทงาน: หมวด
 type JobCat = "ประเมินหน้างาน" | "โชว์รูม" | "เคลียร์แบบ" | "อื่นๆ";
 
-type CustMode = "new" | "old";
+// old = ลูกค้าเก่ามีในระบบ (ผูกทะเบียน) · old_ext = ลูกค้าเก่าไม่มีในระบบ (0168 · กรอกเองเหมือนลูกค้าใหม่ แค่ติดแท็ก)
+type CustMode = "new" | "old" | "old_ext";
+const CUST_MODE_LABEL: Record<CustMode, string> = { new: "ลูกค้าใหม่", old: "ลูกค้าเก่า (มีในระบบ)", old_ext: "ลูกค้าเก่า (ไม่มีในระบบ)" };
 type OldCustomerMode = "" | "existing_site" | "new_site";
 
 type FormState = {
@@ -138,6 +140,7 @@ function initForm(e?: QueueEntry | null): FormState {
   let initCustMode: CustMode = "new";
   let initOldCustomerMode: OldCustomerMode = "";
   if (e && isAssess) {
+    if (e.old_customer) initCustMode = "old_ext";
     if (e.target_customer_id != null || e.target_job_id != null) {
       initCustMode = "old";
       // ข้อมูลเก่า: target_job_id ที่ไม่ใช่เคลียร์แบบ = existing_site (backward compat)
@@ -980,7 +983,7 @@ export function QueueModal({
 
         // เตือนถ้าไม่มีเบอร์โทร (เฉพาะลูกค้าใหม่ เพราะลูกค้าเก่าอาจไม่มีเบอร์ใหม่)
         const telRaw = f.tel.trim();
-        if (!telRaw && f.custMode === "new") {
+        if (!telRaw && f.custMode !== "old") {
           const telOk = window.confirm(
             "ยังไม่ได้ใส่เบอร์โทร ระบบจะถือเป็นลูกค้าใหม่เสมอ (เสี่ยงลูกค้าซ้ำ) — ยืนยัน?"
           );
@@ -1049,6 +1052,7 @@ export function QueueModal({
       target_job_id: f.target_job_id || null,        // (0044) เคลียร์แบบเท่านั้น
       clear_revise: f.clear_revise,                  // (0044) — stripped server-side ก่อน .update()
       target_customer_id: f.target_customer_id ?? null, // (0045) ลูกค้าเก่าหน้างานใหม่ + หน้างานเดิม
+      old_customer: jobCat === "ประเมินหน้างาน" && f.custMode === "old_ext", // (0168) ลูกค้าเก่าไม่มีในระบบ
       // (0070) ออกเอกสารในนาม
       bill_choice: f.bill_choice,
       bill_kind: f.bill_choice === "COMPANY" ? "COMPANY" : "INDIVIDUAL",
@@ -1313,7 +1317,7 @@ export function QueueModal({
             <Field label="ลูกค้า *" wide>
               {/* toggle ลูกค้าใหม่ / ลูกค้าเก่า */}
               <div className="flex gap-2 mb-2">
-                {(["new", "old"] as CustMode[]).map((mode) => {
+                {(["new", "old", "old_ext"] as CustMode[]).map((mode) => {
                   const isActive = f.custMode === mode;
                   return (
                     <button
@@ -1343,13 +1347,18 @@ export function QueueModal({
                           : "glass-soft text-ink-2 hover:bg-white/60"
                         }`}
                     >
-                      {mode === "new" ? "ลูกค้าใหม่" : "ลูกค้าเก่า"}
+                      {CUST_MODE_LABEL[mode]}
                     </button>
                   );
                 })}
               </div>
+              {f.custMode === "old_ext" && (
+                <div className="text-xs text-violet-800 bg-violet-50 rounded-lg px-2.5 py-1.5 mb-2">
+                  ลูกค้าเก่าที่ไม่มีชื่อในทะเบียน — กรอกข้อมูลเหมือนลูกค้าใหม่ ระบบจะติดแท็ก "ลูกค้าเก่า" ให้คนทำใบเสนอ/เช็คลิสต์/แบบเห็น
+                </div>
+              )}
 
-              {f.custMode === "new" ? (
+              {f.custMode !== "old" ? (
                 /* ลูกค้าใหม่ — พิมพ์ชื่อเอง */
                 <input
                   value={f.customer_name}

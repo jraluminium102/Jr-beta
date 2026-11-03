@@ -1,3 +1,4 @@
+import { isOldCustomer, type OldCustomerSrc } from "@/lib/queue";
 import { requirePermission } from "@/lib/bff/context";
 import { withRoute } from "@/lib/bff/handler";
 import { ok } from "@/lib/bff/response";
@@ -45,6 +46,7 @@ export type ChecklistItem = {
   floor_work: string;     // none | jr | customer (งานพื้น ผรม. — 0090)
   floor_note: string;     // ผรม.ใคร / รายละเอียดงานพื้น
   floor_quote_sent: boolean; // ส่งใบเสนอราคางานพื้นแล้ว (เฉพาะ jr — 0091)
+  old_customer: boolean;     // ลูกค้าเก่า (ทั้งมี/ไม่มีในระบบ) จากคิวประเมิน — 0168
 };
 
 // ประวัติใบเสนอที่ส่งแล้ว (ถาวร · รวมที่มัดจำ/ปิดงานไปแล้ว) — ไล่เช็คงานพื้นได้ ไม่หาย
@@ -110,7 +112,7 @@ export const GET = withRoute(async () => {
   const { data: jobs, error: jErr } = await sb
     .from("jobs")
     .select(
-      "id, job_code, customer_id, customer_name, customer_area, assess_date, design_state, design_end, design_revise_count, quoted_revise_count, status, designer_ref, quote_sent_date, queue_entry_id, onsite_deposit, on_hold, on_hold_reason, floor_work, floor_note, floor_quote_sent, estimator:estimator_id(full_name), designer_lookup:designer_ref(name)"
+      "id, job_code, customer_id, customer_name, customer_area, assess_date, design_state, design_end, design_revise_count, quoted_revise_count, status, designer_ref, quote_sent_date, queue_entry_id, onsite_deposit, on_hold, on_hold_reason, floor_work, floor_note, floor_quote_sent, estimator:estimator_id(full_name), designer_lookup:designer_ref(name), queue_entry:queue_entry_id(old_customer, target_customer_id, target_job_id)"
     )
     .or(
       "status.not.in.(DEPOSITED,IN_PRODUCTION,INSTALLING,COMPLETED,CANCELLED)," +
@@ -144,6 +146,7 @@ export const GET = withRoute(async () => {
     floor_work: string | null;
     floor_note: string | null;
     floor_quote_sent: boolean | null;
+    queue_entry?: OldCustomerSrc;   // (0168) แท็กลูกค้าเก่า
     estimator: EstimatorJoin;
     designer_lookup: DesignerJoin;
   };
@@ -260,6 +263,7 @@ export const GET = withRoute(async () => {
         floor_work: j.floor_work ?? "none",
         floor_note: j.floor_note ?? "",
         floor_quote_sent: j.floor_quote_sent ?? false,
+        old_customer: isOldCustomer(j.queue_entry),
         on_hold: true,
         on_hold_reason: j.on_hold_reason ?? null,
       });
@@ -323,6 +327,7 @@ export const GET = withRoute(async () => {
       floor_work: j.floor_work ?? "none",
       floor_note: j.floor_note ?? "",
       floor_quote_sent: j.floor_quote_sent ?? false,
+      old_customer: isOldCustomer(j.queue_entry),
       on_hold: false,
       on_hold_reason: null,
     };

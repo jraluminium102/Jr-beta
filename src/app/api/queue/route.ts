@@ -57,6 +57,7 @@ const entrySchema = z.object({
   note_ai: z.string().nullish(),
   target_job_id: z.string().uuid().nullish(),      // (0044) เคลียร์แบบ / ลูกค้าเก่าหน้างานเดิม
   target_customer_id: z.number().int().nullish(),  // (0045) ลูกค้าเก่าหน้างานใหม่
+  old_customer: z.boolean().optional(),            // (0168) ลูกค้าเก่าไม่มีในระบบ (รีมาร์ค)
   // (0070) ออกเอกสารในนาม: ตามหน้างาน / ที่อยู่อื่น / ในนามบริษัท
   bill_choice: z.enum(["SITE", "OTHER_ADDR", "COMPANY"]).optional(),
   bill_kind: z.enum(["INDIVIDUAL", "COMPANY"]).optional(),
