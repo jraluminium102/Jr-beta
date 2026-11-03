@@ -19,8 +19,8 @@ const COLOR_LABEL: Record<CoverColor, string> = { "": "ดำ", red: "แดง"
 const nextN = (left: CoverLine[]) => left.reduce((m, l) => Math.max(m, l.kind === "group" ? (l.n ?? 0) : 0), 0) + 1;
 
 // ── บรรทัด spec (บุลเลท) ในคอลัมน์ซ้าย — พื้นขาว อ่านออกชัด ──
-function SpecRow({ line, onChange, onRemove }: {
-  line: CoverLine; onChange: (p: Partial<CoverLine>) => void; onRemove: () => void;
+function SpecRow({ line, onChange, onRemove, onEnter, placeholder = "พิมพ์รายการ…" }: {
+  line: CoverLine; onChange: (p: Partial<CoverLine>) => void; onRemove: () => void; onEnter?: () => void; placeholder?: string;
 }) {
   const hl = effectiveHl(line);
   return (
@@ -29,7 +29,8 @@ function SpecRow({ line, onChange, onRemove }: {
       <input
         value={line.text}
         onChange={(e) => onChange({ text: e.target.value })}
-        placeholder="พิมพ์รายการ…"
+        placeholder={placeholder}
+        onKeyDown={(e) => { if (e.key === "Enter" && onEnter) { e.preventDefault(); onEnter(); } }}
         style={{ color: COLOR_HEX[line.color ?? ""], background: hl ? HIGHLIGHT_HEX[hl] : "#fff" }}
         className="flex-1 min-w-0 rounded-md border border-gray-300 px-2.5 py-2 text-[15px] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-300"
       />
@@ -129,6 +130,18 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
   const sideText = (key: "mid" | "right") => content[key].map((l) => l.text).join("\n");
   const setSideText = (key: "mid" | "right", v: string) =>
     setContent((c) => ({ ...c, [key]: v.split("\n").map((t) => ({ text: t, color: "" as CoverColor, hl: false })) }));
+
+  // ── right = รายบรรทัด (สี/ไฮไลต์ได้เหมือนคอลัมน์ซ้าย — เจ้าของ 3 พ.ย.69) ──
+  const updateRight = (i: number, p: Partial<CoverLine>) =>
+    setContent((c) => ({ ...c, right: c.right.map((l, j) => (j === i ? { ...l, ...p } : l)) }));
+  const removeRight = (i: number) =>
+    setContent((c) => ({ ...c, right: c.right.filter((_, j) => j !== i) }));
+  const addRight = (after?: number) =>
+    setContent((c) => {
+      const next = [...c.right];
+      next.splice(after == null ? next.length : after + 1, 0, { text: "", color: "", hl: false });
+      return { ...c, right: next };
+    });
 
   // ── คำเตือนมุมซ้ายบน ──
   const toggleWarn = (w: string) => setContent((c) => {
@@ -420,13 +433,17 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
               {/* คอลัมน์ 3: แจ้งลูกค้า (textarea) */}
               <div className="rounded-2xl bg-white border border-black/10 shadow-sm p-4">
                 <div className="font-bold text-[#c00000] text-[13.5px] mb-1 underline underline-offset-2">แจ้งลูกค้า + เตรียมของติดตั้ง</div>
-                <div className="text-[11px] text-gray-400 mb-2">กรอกเอง — 1 บรรทัด/โน้ต (เช่น สีเก็บงาน)</div>
-                <textarea
-                  value={sideText("right")}
-                  onChange={(e) => setSideText("right", e.target.value)}
-                  placeholder="สีเก็บงาน"
-                  rows={10}
-                  className="w-full min-h-[220px] resize-y rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-[15px] text-gray-900 leading-relaxed focus:outline-none focus:ring-2 focus:ring-sky-300" />
+                <div className="text-[11px] text-gray-400 mb-2">กรอกเอง — 1 บรรทัด/โน้ต (เช่น สีเก็บงาน) · เลือกสีตัวอักษร/ไฮไลต์ได้ทีละบรรทัด · Enter = บรรทัดใหม่</div>
+                <div className="space-y-1.5">
+                  {content.right.map((l, i) => (
+                    <SpecRow key={i} line={l} placeholder="สีเก็บงาน"
+                      onChange={(p) => updateRight(i, p)} onRemove={() => removeRight(i)} onEnter={() => addRight(i)} />
+                  ))}
+                  <button type="button" onClick={() => addRight()}
+                    className="rounded-md border border-dashed border-gray-300 bg-white px-3 py-2 text-[13px] text-gray-600 hover:border-sky-300 hover:text-sky-700">
+                    + เพิ่มบรรทัด
+                  </button>
+                </div>
               </div>
             </div>
           </div>
