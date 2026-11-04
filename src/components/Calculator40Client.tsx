@@ -54,7 +54,9 @@ import { formRule, formNote, allowedPanes, snapPanes } from "@/lib/calculator40/
 import { stockColorOfCalc } from "@/lib/calculator40/stock-link";
 // อุปกรณ์ "ค่าของ" ดึงรายการจากใบตัดชุดเดียวกัน (รหัสสโตร์ตรงกับที่ช่างเบิกจริง)
 import { cutHardwareLines, HANDLE_FIELDS, HW_FROM_CUTLIST } from "@/lib/calculator40/hardware-from-cutlist";
-import { groupGlass, allGlassKeys } from "@/lib/calculator40/glass-cats";
+// ชื่อโชว์/ลำดับกระจกตามลิสต์เจ้าของ (4 พ.ย.69) — แหล่งเดียวทั้งดรอปดาวน์ ใบเสนอ และ engine
+// @ts-expect-error — ESM JS ล้วน
+import { glassOptionGroups, glassDisplayName, glassCanonical } from "@/lib/calculator40/glass-catalog.mjs";
 import { computeServices, EMPTY_SERVICES, type ServiceInput } from "@/lib/calculator40/services";
 import SubPanesSection from "@/components/calculator40/SubPanesSection";
 // ผสมบาน: ตัวคิดอยู่ lib (ไม่มี JSX) — subCalc คืน ขาย/ทุนของ/ค่าแรง/รายการของ ทั้งก้อน (29 ต.ค.69)
@@ -101,8 +103,9 @@ const glassLine = (glassType: string): string => {
   if (s === "แผ่นคอมโพสิต") return "- แผ่นคอมโพสิต แทนกระจก";
   if (s === "แผ่นลูกฟูก") return "- แผ่นอลูลูกฟูก แทนกระจก";
   if (s === 'เกล็ด Z 1"' || s === 'เกล็ด Z 1.6"') return "- " + s + " แทนกระจก";  // 21ก.ค.69: เกล็ด Z แทนกระจก (ราคาตามสีอลูหลัก)
-  const withThk = s.replace(/\s*(\d+(?:\.\d+)?)\s*มม\.?/g, " หนา $1 มม.").replace(/\s+/g, " ").trim();
-  return `- กระจก${withThk}`;
+  // 4 พ.ย.69: ชื่อบนใบ = ชื่อโชว์ตามลิสต์เจ้าของ (glass-catalog) — ค่าที่เก็บอาจเป็นชื่อโชว์หรือคีย์ราคาเดิม (ใบเก่า)
+  const nm = glassDisplayName(s);
+  return /^[A-Za-z]/.test(nm) ? `- กระจก ${nm}` : `- กระจก${nm}`;
 };
 
 // สเปก label-only ที่เป็น "ค่ามาตรฐาน" → ไม่ต้องพิมพ์ลงใบ [specOpt key, ค่าที่จะซ่อน]
@@ -753,7 +756,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
   //   ไม่เลือก = ค่าตั้งต้นตามชนิดรุ่น · ⚠ ไม่ดูขนาดเลย (เจ้าของสั่ง — หน้าต่างบางอันก็สูง)
   const paneKind = paneKindOn ? paneUseOf(prod.id, useSel === "auto" ? undefined : useSel) : "fixed";
   // #1 (17ก.ค.69): เพิ่มตัวเลือก "แผ่นคอมโพสิต/ลูกฟูก แทนกระจก" ทุกที่ที่เลือกกระจก · engine special-case (ไม่คิดกระจก)
-  const glassKeys = useMemo(() => allGlassKeys(pb), [pb]);
+  const glassGroups = useMemo(() => glassOptionGroups(pb) as { cat: string; items: { value: string; label: string }[] }[], [pb]);
 
   // "สูตร" ของข้อปัจจุบัน (0093) — เก็บทุก input เพื่อโหลดกลับมาแก้ทีหลัง (คลิก ✏️ ในรายการ)
   function buildRecipe(): any {
@@ -1523,7 +1526,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                 <Select label="สีอลูมิเนียม" value={color} onChange={setColor}
                   opts={aluColorKeysFor(prod?.id)} labels={ALU_COLOR_LABEL} />
                 {(prod.defGlass || prod.composite) && (
-                  <GlassSelect label="กระจก (ทั้งห้อง)" value={glassType} onChange={setGlassType} opts={glassKeys} />
+                  <GlassSelect label="กระจก (ทั้งห้อง)" value={glassType} onChange={setGlassType} groups={glassGroups} />
                 )}
                 {prod.materials?.length > 0 && (
                   <Select label={prod.materialLabel || "วัสดุ"} value={material} onChange={setMaterial} opts={prod.materials} labels={prod.materialLabels} />
@@ -2664,18 +2667,20 @@ function Select({ label, value, onChange, opts, labels, disabled }: {
 }
 
 // เลือกกระจกแบบจัดหมวด (optgroup: ทั่วไป/เทมเปอร์/ลามิเนต/อินซูเลท/ดัดโค้ง/อื่นๆ) — พาริตี้ drill-down R3.9
-function GlassSelect({ label, value, onChange, opts }: {
-  label: string; value: string; onChange: (v: string) => void; opts: string[];
+// ดรอปดาวน์กระจก — เรียงตามลิสต์เจ้าของ (4 พ.ย.69) · ตัวที่ไม่ได้ตั้งชื่อต่อท้าย · ชื่อที่เห็น = ชื่อที่ขึ้นใบเสนอ
+//   value ที่เก็บเป็นคีย์ราคาเดิม (ใบเก่า) → glassCanonical แปลงเป็นชื่อโชว์ให้ตัวเลือกตรง
+function GlassSelect({ label, value, onChange, groups }: {
+  label: string; value: string; onChange: (v: string) => void; groups: { cat: string; items: { value: string; label: string }[] }[];
 }) {
-  const groups = useMemo(() => groupGlass(opts), [opts]);
+  const n = groups.reduce((s, g) => s + g.items.length, 0);
   return (
     <label className="block">
-      <span className="text-xs font-medium text-ink-3">{label} <span className="text-ink-3/70 font-normal">({opts.length} รุ่น · จัดหมวด)</span></span>
-      <select value={value} onChange={(e) => onChange(e.target.value)}
+      <span className="text-xs font-medium text-ink-3">{label} <span className="text-ink-3/70 font-normal">({n} รุ่น · เรียงตามลิสต์)</span></span>
+      <select value={glassCanonical(value)} onChange={(e) => onChange(e.target.value)}
         className="w-full glass-soft rounded-lg px-3 py-2 mt-1 outline-none">
         {groups.map((g) => (
           <optgroup key={g.cat} label={g.cat}>
-            {g.items.map((o) => <option key={o} value={o}>{o}</option>)}
+            {g.items.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </optgroup>
         ))}
       </select>

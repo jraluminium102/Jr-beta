@@ -10,14 +10,20 @@ import type { CutInput } from "./engine.ts";
 import { calcColorToStock } from "./stock-match.ts";
 // ค่าตั้งต้นรายด้านของหลังคาหลายด้าน — ดึงจากฝั่งคิดราคา แหล่งเดียว ห้ามพิมพ์ซ้ำสองที่
 import { MULTI_SIDE_DEF } from "../calculator40/products.mjs";
+// @ts-expect-error — ESM JS ล้วน
+import { glassMM } from "../calculator40/engine.mjs";
+// @ts-expect-error — ESM JS ล้วน
+import { glassPriceKey } from "../calculator40/glass-catalog.mjs";
 
 // multiplier = ตัวคูณจำนวนชุด (เช่น Velora: ใบตัด 1 บาน/ชุด แต่ใบเสนอสั่ง N บาน → sets ×N) — ผู้เรียกต้องคูณเข้า sets
 export type RecipeCutMap = { spec_id: string; input: Partial<CutInput> & Record<string, unknown>; multiplier?: number };
 
 // ดึงความหนากระจก (มม.) จากชื่อกระจกในใบเสนอ เช่น "เทมเปอร์ใส 10มม." → 10 (ไม่เจอ = 6)
+// ความหนากระจก (มม.) จากค่าที่คิดราคาเก็บ — ใช้ตัวอ่านเดียวกับ engine (รองรับ "หนา 4+4 มม." = 8 · ชื่อโชว์ใหม่ 4 พ.ย.69 · คีย์ราคาเดิม)
+//   เดิม regex อ่าน "4+4 มม." เป็น 4 และคีย์ลามิเนตที่ไม่มีคำว่า มม. เป็น 6 เสมอ
 const glassMm = (s: unknown): number => {
-  const m = /(\d+)\s*มม/.exec(String(s ?? ""));
-  return m ? Number(m[1]) : 6;
+  const mm = glassMM(glassPriceKey(s));
+  return mm > 0 ? mm : (glassMM(s) > 0 ? glassMM(s) : 6);
 };
 
 // opts.rawCompare = อนุญาต "รุ่นดิบ" ที่ยังไม่ยกเครื่อง BOM (กันสาด/roof) ให้ map ได้ — ใช้เฉพาะหน้าเทียบ (read-only)

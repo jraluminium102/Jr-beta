@@ -28,7 +28,9 @@ import Icon from "@/components/Icon";
 import { fmt } from "@/lib/calculator40/fmt";
 import AddonsSection from "@/components/calculator40/AddonsSection";
 import { ALU_COLOR_LABEL, resolveAluColor, aluColorKeysFor } from "@/lib/calculator40/alu-colors";
-import { groupGlass, allGlassKeys } from "@/lib/calculator40/glass-cats";
+// ชื่อโชว์/ลำดับกระจกตามลิสต์เจ้าของ (4 พ.ย.69) — ชุดเดียวกับหน้า G1
+// @ts-expect-error — ESM JS ล้วน
+import { glassOptionGroups, glassDisplayName, glassCanonical } from "@/lib/calculator40/glass-catalog.mjs";
 // @ts-expect-error — engine เป็น ESM JS ล้วน
 import { computeCost, ceil100, CEIL_RATE } from "@/lib/calculator40/engine.mjs";
 import { stockColorOfCalc } from "@/lib/calculator40/stock-link";
@@ -318,7 +320,7 @@ function ColsEditor({
   const prod = sel ? PANE_BY_KEY[sel.typeKey] : null;
   const { amount: price, mosqLabel } = sel ? panePrice(sel, pb, color, glassFallback, profitPct, undefined, profitOpt) : { amount: 0, mosqLabel: undefined as string | undefined };
   const movePanes = sel ? Math.max(1, (sel.n || 1) - (sel.fixedPanes || 0)) : 1;
-  const glassKeys = allGlassKeys(pb);
+  const glassGroups = glassOptionGroups(pb) as { cat: string; items: { value: string; label: string }[] }[];
 
   return (
     <div className="space-y-2">
@@ -512,12 +514,12 @@ function ColsEditor({
             {prod?.defGlass && (
               <>
                 <span className="text-ink-3">กระจก</span>
-                <select value={sel.glassOvr || ""} onChange={(e) => onPatchPane(sel.key, { glassOvr: e.target.value })}
+                <select value={glassCanonical(sel.glassOvr || "")} onChange={(e) => onPatchPane(sel.key, { glassOvr: e.target.value })}
                   className="min-h-[32px] glass-soft rounded-lg px-2 py-1 outline-none text-xs">
-                  <option value="">ตามด้าน ({glassFallback || prod.defGlass})</option>
-                  {groupGlass(glassKeys).map((gp) => (
+                  <option value="">ตามด้าน ({glassDisplayName(glassFallback || prod.defGlass)})</option>
+                  {glassGroups.map((gp) => (
                     <optgroup key={gp.cat} label={gp.cat}>
-                      {gp.items.map((g) => <option key={g} value={g}>{g}</option>)}
+                      {gp.items.map((g) => <option key={g.value} value={g.value}>{g.label}</option>)}
                     </optgroup>
                   ))}
                 </select>
@@ -1106,10 +1108,10 @@ export default function RoomComposer({
               </select>
               <select value={sideColorOvr[i]?.glass || ""} onChange={(e) => setSideColorOvr((m) => ({ ...m, [i]: { color: m[i]?.color || "", glass: e.target.value } }))}
                 className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 outline-none text-xs">
-                <option value="">กระจกตามห้อง ({mainGlass || "—"})</option>
-                {groupGlass(allGlassKeys(pb)).map((gp) => (
+                <option value="">กระจกตามห้อง ({mainGlass ? glassDisplayName(mainGlass) : "—"})</option>
+                {glassOptionGroups(pb).map((gp: { cat: string; items: { value: string; label: string }[] }) => (
                   <optgroup key={gp.cat} label={gp.cat}>
-                    {gp.items.map((g) => <option key={g} value={g}>{g}</option>)}
+                    {gp.items.map((g) => <option key={g.value} value={g.value}>{g.label}</option>)}
                   </optgroup>
                 ))}
               </select>

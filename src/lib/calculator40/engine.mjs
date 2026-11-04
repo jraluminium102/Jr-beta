@@ -27,6 +27,8 @@ export function glassMM(type) {
 export const GLASS_KG_PER_M2_MM = 2.5;
 
 export const STOCK_LEN = 6.4; // ความยาวเส้นอลู stock มาตรฐาน (ม.) — บางรุ่นใช้ 6.0 (ตั้ง prod.stockLen)
+// ชื่อโชว์กระจก (ลิสต์เจ้าของ 4 พ.ย.69) → คีย์ราคาใน PB.GLASS
+import { glassPriceKey } from './glass-catalog.mjs';
 
 export function ceil100(x) { return Math.ceil(x / 100) * 100; }
 // ค่าสีสต็อก (ลายไม้สต็อก/ซาฮาร่า ฯลฯ) ที่เพิ่มจากสีขาว ขาย = ทุนสีที่เพิ่ม × 1.6 (เจ้าของเคาะ 15 ต.ค.69 · สีอบพิเศษไม่ใช้)
@@ -658,7 +660,8 @@ export function computeCost(PB, prod, opt) {
       panelSell = round2(glassArea * rate);   // บวกเข้ายอดขายทีหลัง (sell-based) · ไม่คิดกระจก (glassCost=0)
       // ไม่ push บรรทัดกระจก — คำอธิบายไปอยู่ที่ "รายละเอียดงาน" (glassLine) · ราคาแฝงในราคาสินค้า (เหมือนกระจก)
     } else {
-      const gp = PB.GLASS[glassType] ?? 0;
+      // glassType อาจเป็น "ชื่อโชว์" ตามลิสต์เจ้าของ (4 พ.ย.69) → แปลงเป็นคีย์ราคาก่อน (คีย์เดิมผ่านตรง)
+      const gp = PB.GLASS[glassPriceKey(glassType)] ?? 0;
       // กระจกที่ไฟล์ถอดทุนล่าสุดไม่มีแล้ว (ใบเสนอเก่าเลือกไว้) → เตือน ไม่ใช่คิดเป็น 0 เงียบ ๆ
       if (!(gp > 0) && glassArea > 0) hwMissing.push({ sku: '', name: `กระจก "${glassType}" ไม่มีในไฟล์ถอดทุนล่าสุดแล้ว — เลือกกระจกใหม่` });
       glassCost = glassArea * gp;
