@@ -62,12 +62,21 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
 
   // ชื่อซ้ำในทะเบียน (ตัด "คุณ"/ช่องว่าง) → ติดป้ายให้เห็น + ปุ่มรวม (เคสคุณป้อ 4 พ.ย.69: 2 แถว คนเดียวกัน)
   const normName = (s: string) => String(s ?? "").replace(/^คุณ\s*/, "").replace(/\s+/g, "").toLowerCase();
-  const dupKeys = (() => {
-    const cnt = new Map<string, number>();
-    for (const c of list) { const k = normName(c.name); if (k) cnt.set(k, (cnt.get(k) ?? 0) + 1); }
-    return new Set([...cnt.entries()].filter(([, n]) => n > 1).map(([k]) => k));
+  //   ชื่อเล่นซ้ำกันคนละคนมีเยอะ (คุณเอ/คุณเล็ก) → ติดป้ายเฉพาะคู่ที่ "เบอร์ไม่ขัดกัน" (เบอร์ตรงกัน หรือฝั่งหนึ่งไม่มีเบอร์)
+  const digits = (s: string | null | undefined) => String(s ?? "").replace(/\D/g, "");
+  const dupIds = (() => {
+    const groups = new Map<string, Customer[]>();
+    for (const c of list) { const k = normName(c.name); if (!k) continue; const g = groups.get(k) ?? []; g.push(c); groups.set(k, g); }
+    const ids = new Set<number>();
+    for (const g of groups.values()) {
+      if (g.length < 2) continue;
+      for (const a of g) {
+        if (g.some((b) => b !== a && (!digits(a.phone) || !digits(b.phone) || digits(a.phone) === digits(b.phone)))) ids.add(a.id);
+      }
+    }
+    return ids;
   })();
-  const isDup = (c: Customer) => dupKeys.has(normName(c.name));
+  const isDup = (c: Customer) => dupIds.has(c.id);
   const mergeCandidates = sel
     ? list.filter((c) => c.id !== sel.id && (
         mergeQ.trim()
