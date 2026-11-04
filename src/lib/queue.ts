@@ -59,9 +59,29 @@ export type QueueEntry = {
   note_ai: string | null;
   target_job_id: string | null;      // (0044) เคลียร์แบบ / ลูกค้าเก่าหน้างานเดิม
   target_customer_id: number | null; // (0045) ลูกค้าเก่าหน้างานใหม่: customer_id เดิม
+  old_customer?: boolean | null;     // (0168) ลูกค้าเก่าที่ไม่มีในระบบ (รีมาร์คอย่างเดียว)
+  bill_choice?: string | null;       // (0070) SITE | OTHER_ADDR | COMPANY
+  bill_kind?: string | null;         // (0070) INDIVIDUAL | COMPANY
+  bill_name?: string | null;         // (0070) ชื่อที่ออกเอกสาร
   created_at: string;
   updated_at: string;
 };
+
+// ---------- ลูกค้าเก่า (เจ้าของ 3 พ.ย.69: แท็กเดียวกันทั้งมีและไม่มีในระบบ) ----------
+//   มีในระบบ = ผูก target_customer_id (หน้างานใหม่/เดิม) หรือ target_job_id (เคลียร์แบบ) · ไม่มีในระบบ = old_customer (0168)
+export type OldCustomerSrc = { old_customer?: boolean | null; target_customer_id?: number | null; target_job_id?: string | null } | null | undefined;
+export const isOldCustomer = (e: OldCustomerSrc): boolean =>
+  !!e && (!!e.old_customer || e.target_customer_id != null || e.target_job_id != null);
+export const OLD_CUSTOMER_LABEL = "ลูกค้าเก่า";
+
+// ---------- ออกใบเสนอราคาในนามอื่น (0070) — บรรทัดท้ายข้อความก๊อปคิว (เจ้าของ 3 พ.ย.69) ----------
+export function billingNameLine(e: { bill_choice?: string | null; bill_kind?: string | null; bill_name?: string | null }): string {
+  const choice = String(e.bill_choice ?? "SITE");
+  if (choice === "SITE") return "";
+  const name = String(e.bill_name ?? "").trim() || "-";
+  const kind = String(e.bill_kind ?? "") === "COMPANY" || choice === "COMPANY" ? "นามบริษัท" : "นามบุคคล (ที่อยู่อื่น)";
+  return `ออกใบเสนอราคาใน${kind}: ${name}`;
+}
 
 // ---------- สถานะ ----------
 export const STATUS_META: Record<QueueStatus, { th: string; tone: "gray" | "amber" | "sky" | "emerald" | "red" }> = {

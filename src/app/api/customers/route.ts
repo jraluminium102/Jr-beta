@@ -9,15 +9,22 @@ export async function GET(req: Request) {
 
   const q = new URL(req.url).searchParams.get("q")?.trim() ?? "";
   const supabase = createClient();
-  let query = supabase
-    .from("customers")
-    .select("*")
-    .eq("is_active", true)
-    .order("created_at", { ascending: false });
+  // ค้นเบอร์: ทะเบียนเก็บแบบมีขีด "081-804-8405" — พิมพ์ตัวเลขล้วนต้องเจอด้วย → แทรก % ระหว่างตัวเลข (ขีด/ช่องว่างคั่นได้)
+  const digits = q.replace(/[^0-9]/g, "");
+  const phoneLoose = digits.length >= 4 ? digits.split("").join("%") : "";
+  const build = (withPrev: boolean) => {
+    let query = supabase.from("customers").select("*").eq("is_active", true).order("created_at", { ascending: false });
+    if (q) {
+      const parts = [`name.ilike.%${q}%`, `job.ilike.%${q}%`, `phone.ilike.%${q}%`, `line_id.ilike.%${q}%`];
+      if (phoneLoose) parts.push(`phone.ilike.%${phoneLoose}%`);
+      if (withPrev) parts.push(`line_id_prev.ilike.%${q}%`);   // ไลน์เดิมที่เคยใช้ (0170)
+      query = query.or(parts.join(","));
+    }
+    return query;
+  };
 
-  if (q) query = query.or(`name.ilike.%${q}%,job.ilike.%${q}%,phone.ilike.%${q}%,line_id.ilike.%${q}%`);
-
-  const { data, error } = await query;
+  let { data, error } = await build(true);
+  if (error && /line_id_prev/i.test(error.message ?? "")) ({ data, error } = await build(false));   // ยังไม่รัน 0170
   if (error) return fail(error.message, 500);
   return ok(data);
 }

@@ -1,4 +1,5 @@
 "use client";
+import type { RevPending } from "@/lib/production/rev-review";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -51,6 +52,10 @@ export type ProdRow = {
   drawing_rev_stale?: boolean;                                           // (0136) ใบเสนอถูก Rev หลังสร้าง/สแตมป์แบบ (แถวใดแถวหนึ่ง) — เตือนบนชิป
   measure_round_no?: number | null;                                      // รอบวัด (0130) — >1 = วัดซ้ำมาแล้ว
   nickname?: string | null;                                              // ชื่อเรียกในงานผลิต (0159) — วงเล็บหลังชื่อลูกค้า
+  rev_no?: number;                                                       // (0169) Rev ปัจจุบันของใบเสนองานนี้ — ป้าย "Rev N"
+  rev_label?: string;
+  rev_pending?: RevPending | null;                                       // (0169) Rev หลังมัดจำที่ฝ่ายผลิตยังไม่รับทราบ
+  rev_pending_count?: number;
   job: {
     job_code: string; customer_name: string; customer_area: string | null; deposit_date: string | null;
     floor_work?: string | null; floor_note?: string | null;             // งานพื้น ผรม. (0090) — read-only marker

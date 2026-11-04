@@ -1,11 +1,12 @@
 import { Fragment } from "react";
 import { baht } from "@/lib/money";
-import { bahtText } from "@/lib/baht-text";
+import { bahtText, bahtTextEn } from "@/lib/baht-text";
 import type { Quotation } from "@/lib/types";
 import { PrintLetterhead, PrintCustomerBlock, DOC_COLORS } from "@/components/print/PrintLetterhead";
 import { PrintSignature } from "@/components/print/PrintSignature";
 import { detailLines, renderDetailLine } from "@/components/print/DetailLines";
 import { COMPANY } from "./quote-constants";
+import { COMPANY_EN, docText, type DocLang } from "@/lib/doc-lang";
 
 /**
  * เนื้อเอกสารใบเสนอราคา (ส่วนที่พิมพ์) — แยกจาก page.tsx เพื่อทดสอบการแบ่งหน้าได้
@@ -43,29 +44,38 @@ export function QuotationDoc({
   q,
   condWork,
   condQuote,
+  lang = "th",
 }: {
   q: Quotation;
   condWork: string[];
   condQuote: string[];
+  /** en = ใบเสนอราคาภาษาอังกฤษ — ป้ายของระบบทุกจุดจาก docText · เนื้อหาที่กรอกพิมพ์ตามเดิม */
+  lang?: DocLang;
 }) {
   const items = (q.quotation_items ?? []).slice().sort((a, b) => a.sort_order - b.sort_order);
   const c = q.customer_snapshot;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const anyQ = q as any;
+  const t = docText(lang);
+  const en = lang === "en";
+  const cur = t.currency;
+  const coName = en ? COMPANY_EN.name : COMPANY.name;
   const total = q.wht_amt > 0 ? q.net : q.total;
-  const totalLabel = q.wht_amt > 0 ? "ยอดรับสุทธิ" : "จำนวนเงินรวมทั้งสิ้น";
+  const totalLabel = q.wht_amt > 0 ? t.netReceive : t.grandTotal;
 
   // หัวบิล — ตัวเดียวกันทั้งเอกสาร (ใช้ซ้ำใน thead ของทั้ง 2 ตาราง)
   const letterhead = (
     <PrintLetterhead
-      docTitle="ใบเสนอราคา"
+      docTitle={t.quotation}
+      copyLabel={t.original}
+      lang={lang}
       docColor={DOC_COLORS.quotation}
       customer={c}
       // หัวบิลต้องเตี้ยพอที่ Chrome จะพิมพ์ซ้ำทุกหน้า (เพดาน ~74mm) → บล็อกลูกค้าไปอยู่หน้าแรกแยกต่างหาก
       hideCustomer
       infoRows={[
         {
-          label: "เลขที่",
+          label: t.docNo,
           value: (
             <span className="font-semibold tabular-nums">
               {q.code}
@@ -74,7 +84,7 @@ export function QuotationDoc({
             </span>
           ),
         },
-        { label: "วันที่", value: q.issue_date },
+        { label: t.date, value: q.issue_date },
       ]}
     />
   );
@@ -84,7 +94,7 @@ export function QuotationDoc({
       className="text-center"
       style={{ fontSize: 10, color: "#6b7280", borderTop: "1px solid #e5e7eb", paddingTop: 4 }}
     >
-      {COMPANY.name} ({COMPANY.branch}) · เลขประจำตัวผู้เสียภาษี {COMPANY.taxId} · โทร. {COMPANY.phone} · {q.code}
+      {coName} ({en ? COMPANY_EN.branch : COMPANY.branch}) · {t.taxId} {COMPANY.taxId} · {t.tel} {COMPANY.phone} · {q.code}
     </div>
   );
 
@@ -107,17 +117,17 @@ export function QuotationDoc({
           {/* บล็อกลูกค้า — เหนือหัวคอลัมน์ (แบบใบเสนอปกติ) · หน้าแรกหน้าเดียว */}
           <tr>
             <td colSpan={5} className="qdoc-tail" style={{ paddingBottom: 8 }}>
-              <PrintCustomerBlock c={c} color={DOC_COLORS.quotation} />
+              <PrintCustomerBlock c={c} color={DOC_COLORS.quotation} lang={lang} />
             </td>
           </tr>
 
           {/* แถบหัวคอลัมน์ — อยู่ใต้บล็อกลูกค้า · จัด center ทุกช่อง · ข้อมูลในแถวคงชิดเดิม (ชื่อซ้าย/ตัวเลขขวา) */}
           <tr style={{ background: "#faedf0", color: "#a8425a" }}>
-            <th className="p-2 text-center border border-[#f0dde3]" style={{ width: "5%" }}>#</th>
-            <th className="p-2 text-center border border-[#f0dde3]" style={{ width: "55%" }}>รายละเอียด</th>
-            <th className="p-2 text-center border border-[#f0dde3]" style={{ width: "10%" }}>จำนวน</th>
-            <th className="p-2 text-center border border-[#f0dde3]" style={{ width: "15%" }}>ราคาต่อหน่วย</th>
-            <th className="p-2 text-center border border-[#f0dde3]" style={{ width: "15%" }}>ยอดรวม</th>
+            <th className="p-2 text-center border border-[#f0dde3]" style={{ width: "5%" }}>{t.colNo}</th>
+            <th className="p-2 text-center border border-[#f0dde3]" style={{ width: "55%" }}>{t.colDesc}</th>
+            <th className="p-2 text-center border border-[#f0dde3]" style={{ width: "10%" }}>{t.colQty}</th>
+            <th className="p-2 text-center border border-[#f0dde3]" style={{ width: "15%" }}>{t.colUnitPrice}</th>
+            <th className="p-2 text-center border border-[#f0dde3]" style={{ width: "15%" }}>{t.colAmount}</th>
           </tr>
 
           {items.map((it, i) => {
@@ -182,7 +192,7 @@ export function QuotationDoc({
               <div style={{ breakInside: "avoid", pageBreakInside: "avoid" }}>
                 {/* ===== Total amount in words ===== */}
                 <div className="mt-2 tabular-nums" style={{ fontSize: 13, color: "#a8425a" }}>
-                  ({bahtText(total)})
+                  ({en ? bahtTextEn(total) : bahtText(total)})
                 </div>
 
                 {/* ===== Summary totals — matches genQuote qtot ===== */}
@@ -190,8 +200,8 @@ export function QuotationDoc({
                   <table style={{ fontSize: 13 }}>
                     <tbody>
                       <tr>
-                        <td className="pr-10 py-0.5 text-right" style={{ color: "#6b7280" }}>รวมเป็นเงิน</td>
-                        <td className="text-right tabular-nums">{baht(q.subtotal)} บาท</td>
+                        <td className="pr-10 py-0.5 text-right" style={{ color: "#6b7280" }}>{t.subtotal}</td>
+                        <td className="text-right tabular-nums">{baht(q.subtotal)} {cur}</td>
                       </tr>
 
                       {q.discount_amt > 0 && (
@@ -199,43 +209,43 @@ export function QuotationDoc({
                           ? anyQ.discounts.filter((d: { amt?: number }) => (Number(d?.amt) || 0) > 0).map((d: { label?: string; amt?: number }, i: number) => (
                             <tr key={i}>
                               <td className="pr-10 py-0.5 text-right" style={{ color: "#6b7280" }}>
-                                ส่วนลด {(d.label ?? "").trim() ? `(${(d.label ?? "").trim()})` : (q.subtotal > 0 ? `${Number((((Number(d.amt) || 0) / q.subtotal) * 100).toFixed(2))}%` : "")}
+                                {t.discount} {(d.label ?? "").trim() ? `(${(d.label ?? "").trim()})` : (q.subtotal > 0 ? `${Number((((Number(d.amt) || 0) / q.subtotal) * 100).toFixed(2))}%` : "")}
                               </td>
-                              <td className="text-right tabular-nums">-{baht(Number(d.amt) || 0)} บาท</td>
+                              <td className="text-right tabular-nums">-{baht(Number(d.amt) || 0)} {cur}</td>
                             </tr>
                           ))
                           : (
                             <tr>
                               <td className="pr-10 py-0.5 text-right" style={{ color: "#6b7280" }}>
-                                ส่วนลด {anyQ.discount_label ? `(${anyQ.discount_label})` : (q.discount_pct > 0 ? `${q.discount_pct}%` : "")}
+                                {t.discount} {anyQ.discount_label ? `(${anyQ.discount_label})` : (q.discount_pct > 0 ? `${q.discount_pct}%` : "")}
                               </td>
-                              <td className="text-right tabular-nums">-{baht(q.discount_amt)} บาท</td>
+                              <td className="text-right tabular-nums">-{baht(q.discount_amt)} {cur}</td>
                             </tr>
                           )
                       )}
 
                       {q.discount_amt > 0 && (
                         <tr>
-                          <td className="pr-10 py-0.5 text-right" style={{ color: "#6b7280" }}>จำนวนเงินหลังหักส่วนลด</td>
-                          <td className="text-right tabular-nums">{baht(q.subtotal - q.discount_amt)} บาท</td>
+                          <td className="pr-10 py-0.5 text-right" style={{ color: "#6b7280" }}>{t.afterDiscount}</td>
+                          <td className="text-right tabular-nums">{baht(q.subtotal - q.discount_amt)} {cur}</td>
                         </tr>
                       )}
 
                       <tr>
-                        <td className="pr-10 py-0.5 text-right" style={{ color: "#6b7280" }}>ภาษีมูลค่าเพิ่ม {q.vat_rate}%</td>
-                        <td className="text-right tabular-nums">{baht(q.vat_amt)} บาท</td>
+                        <td className="pr-10 py-0.5 text-right" style={{ color: "#6b7280" }}>{t.vat} {q.vat_rate}%</td>
+                        <td className="text-right tabular-nums">{baht(q.vat_amt)} {cur}</td>
                       </tr>
 
                       {q.wht_amt > 0 && (
                         <tr>
-                          <td className="pr-10 py-0.5 text-right" style={{ color: "#6b7280" }}>หัก ณ ที่จ่าย {q.wht_rate}%</td>
-                          <td className="text-right tabular-nums">-{baht(q.wht_amt)} บาท</td>
+                          <td className="pr-10 py-0.5 text-right" style={{ color: "#6b7280" }}>{t.wht} {q.wht_rate}%</td>
+                          <td className="text-right tabular-nums">-{baht(q.wht_amt)} {cur}</td>
                         </tr>
                       )}
 
                       <tr className="font-bold border-t" style={{ color: "#a8425a" }}>
                         <td className="pr-10 py-1 text-right border-t">{totalLabel}</td>
-                        <td className="text-right tabular-nums border-t">{baht(total)} บาท</td>
+                        <td className="text-right tabular-nums border-t">{baht(total)} {cur}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -245,12 +255,12 @@ export function QuotationDoc({
               {/* ===== Note field (if any) ===== */}
               {q.note && (
                 <div className="mt-4" style={{ fontSize: 12, color: "#4b5563", borderLeft: "3px solid #e5e7eb", paddingLeft: 10, breakInside: "avoid", pageBreakInside: "avoid" }}>
-                  หมายเหตุ: {q.note}
+                  {t.note}: {q.note}
                 </div>
               )}
 
               {/* ===== Signature block — ฟอร์มกลาง (ในนามลูกค้า | ในนามบริษัท + บทบาท/วันที่) ===== */}
-              <PrintSignature customerName={c.name} customerRole="ผู้สั่งซื้อสินค้า" companyRole="ผู้อนุมัติ" />
+              <PrintSignature customerName={c.name} customerRole={t.buyer} companyRole={t.approver} lang={lang} />
             </td>
           </tr>
         </tbody>
@@ -277,7 +287,7 @@ export function QuotationDoc({
               {/* หน้าเงื่อนไขสัญญา — ไม่ใส่บล็อกลูกค้า เอาแค่หัวบิลบริษัทมุมซ้าย (เจ้าของสั่ง 17 ก.ค.2569 "ดูเกะกะ")
                   ชื่อลูกค้ายังอยู่ในช่องลงนามท้ายเงื่อนไข + หน้าแรกใบเสนออยู่แล้ว */}
               <h4 className="font-bold mb-2" style={{ color: "#a8425a", breakAfter: "avoid", pageBreakAfter: "avoid" }}>
-                เงื่อนไขการเข้าทำงาน
+                {t.condWork}
               </h4>
               <ol className="list-decimal ml-5 mb-3 space-y-1">
                 {condWork.map((cond, idx) => (
@@ -296,7 +306,7 @@ export function QuotationDoc({
           <tr>
             <td className="qdoc-tail">
               <h4 className="font-bold mt-2 mb-2" style={{ color: "#a8425a", breakAfter: "avoid", pageBreakAfter: "avoid" }}>
-                เงื่อนไขแบบและใบเสนอราคา
+                {t.condQuote}
               </h4>
               <ol className="list-none ml-0 mb-3 space-y-1">
                 {condQuote.map((cond, idx) => (
@@ -322,15 +332,15 @@ export function QuotationDoc({
               {/* Confirm + signature at bottom of conditions — ไปทั้งก้อน */}
               <div style={{ breakInside: "avoid", pageBreakInside: "avoid" }}>
                 <div className="mt-4 text-center font-semibold" style={{ color: "#a8425a" }}>
-                  ขอยืนยันการสั่งซื้อภายใต้เงื่อนไข&nbsp;&nbsp;ขอแสดงความนับถือ
+                  {t.confirm}
                 </div>
                 <div className="mt-3 flex justify-between" style={{ color: "#a8425a", fontSize: 12 }}>
                   <div>
-                    ลงนาม ............................................... ผู้สั่งซื้อ
+                    {t.signLine}
                     <br />
-                    <span style={{ fontSize: 11 }}>วันที่ ........../........../.......... (สำหรับลูกค้า)</span>
+                    <span style={{ fontSize: 11 }}>{t.signDate}</span>
                   </div>
-                  <div className="text-right">{COMPANY.name}</div>
+                  <div className="text-right">{coName}</div>
                 </div>
               </div>
             </td>

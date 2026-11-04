@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { syncCustomerContact } from "@/lib/customer-contact-sync";
 import { requirePermission, HttpError } from "@/lib/bff/context";
 import { withRoute } from "@/lib/bff/handler";
 import { ok, created } from "@/lib/bff/response";
@@ -57,6 +58,7 @@ const entrySchema = z.object({
   note_ai: z.string().nullish(),
   target_job_id: z.string().uuid().nullish(),      // (0044) เคลียร์แบบ / ลูกค้าเก่าหน้างานเดิม
   target_customer_id: z.number().int().nullish(),  // (0045) ลูกค้าเก่าหน้างานใหม่
+  old_customer: z.boolean().optional(),            // (0168) ลูกค้าเก่าไม่มีในระบบ (รีมาร์ค)
   // (0070) ออกเอกสารในนาม: ตามหน้างาน / ที่อยู่อื่น / ในนามบริษัท
   bill_choice: z.enum(["SITE", "OTHER_ADDR", "COMPANY"]).optional(),
   bill_kind: z.enum(["INDIVIDUAL", "COMPANY"]).optional(),
@@ -183,6 +185,11 @@ export const POST = withRoute(async (req: Request) => {
   }
   if (error) throw dbError(error);
   if (!data) throw new HttpError(400, "สร้างคิวไม่สำเร็จ");
+  // ลูกค้าเก่า: ช่องทาง/ไลน์ที่กรอกในคิว → ทะเบียน (0170 ไลน์ใหม่ไม่ทับ ของเดิมย้ายไป "ไลน์เดิม")
+  if (body.target_customer_id != null && (body.line_contact || body.contact_channel)) {
+    try { await syncCustomerContact(sb, body.target_customer_id, { line_contact: body.line_contact, contact_channel: body.contact_channel }); }
+    catch (e) { console.warn("[queue POST] sync customer contact:", e instanceof Error ? e.message : e); }
+  }
   return created(data);
 });
 

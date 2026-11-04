@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { COMPANY } from "@/app/(app)/quotations/[id]/print/quote-constants";
+import { COMPANY_EN, branchLabel, docText, type DocLang } from "@/lib/doc-lang";
 
 // หัวเอกสารพิมพ์กลาง — ดีไซน์แนว FlowAccount (สามเหลี่ยมมุม + label สีตามเอกสาร + บล็อกผู้ติดต่อ)
 // ใช้ร่วม ใบเสนอราคา/ใบวางบิล/ใบเสร็จ — ฟอร์มเดียวกันทุกใบ
@@ -27,8 +28,11 @@ export type CustomerSnapshot = {
 export const CONTACT_CHANNEL_LABEL: Record<string, string> = {
   LINE: "LINE", FB: "Facebook", FACEBOOK: "Facebook", IG: "Instagram", INSTAGRAM: "Instagram", OTHER: "ติดต่อ",
 };
-export const channelLabel = (ch?: string | null) =>
-  CONTACT_CHANNEL_LABEL[String(ch ?? "").trim().toUpperCase()] ?? "LINE";
+export const channelLabel = (ch?: string | null, lang: DocLang = "th") => {
+  const key = String(ch ?? "").trim().toUpperCase();
+  if (key === "OTHER") return docText(lang).contactOther;
+  return CONTACT_CHANNEL_LABEL[key] ?? "LINE";
+};
 
 // สกินพิมพ์ "ละมุน" (เจ้าของเลือก 5 ส.ค.2569) — โทนโรสมนนุ่ม อ่านชัด
 // ⭐ ตำแหน่ง/เลย์เอาท์ตัวหนังสือคงเดิมทุกจุด เปลี่ยนเฉพาะสี/เส้น/พื้นหลัง (ห้ามย้ายตำแหน่ง)
@@ -76,19 +80,20 @@ export function taxInvoiceMissing(c: CustomerSnapshot): string[] {
 
 // บล็อกข้อมูลลูกค้า/ผู้ซื้อ — โชว์ (สำนักงานใหญ่/สาขา) เฉพาะนิติบุคคล
 // สกินละมุน: การ์ดชมพูนวลมีแถบโรสซ้าย (ตำแหน่ง/เนื้อหาเดิม แต่งกรอบอย่างเดียว)
-export function PrintCustomerBlock({ c, color, theme = PRINT_THEME_ROSE }: { c: CustomerSnapshot; color?: string; theme?: PrintTheme }) {
+export function PrintCustomerBlock({ c, color, theme = PRINT_THEME_ROSE, lang = "th" }: { c: CustomerSnapshot; color?: string; theme?: PrintTheme; lang?: DocLang }) {
+  const t = docText(lang);
   return (
     <div style={{ fontSize: 13, marginTop: 14, borderLeft: `3px solid ${color ?? theme.rose}`, background: theme.blushSoft, borderRadius: "0 12px 12px 0", padding: "10px 16px" }}>
-      <span className="font-bold" style={{ color: color ?? theme.rose }}>ลูกค้า</span>
+      <span className="font-bold" style={{ color: color ?? theme.rose }}>{t.customer}</span>
       {/* word-break: keep-all → ตัดบรรทัดเฉพาะช่องว่าง คำไทย (กรุงเทพมหานคร / (สำนักงานใหญ่) / ชื่อเขต-แขวง) ไม่ถูกตัดกลางคำ */}
       <div className="mt-0.5" style={{ lineHeight: 1.55, wordBreak: "keep-all" }}>
         <div className="font-semibold" style={{ color: "#1f2937" }}>
           {c.name || "—"}
-          {c.kind === "COMPANY" && c.branch ? <span style={{ fontWeight: 400 }}> ({c.branch})</span> : null}
+          {c.kind === "COMPANY" && c.branch ? <span style={{ fontWeight: 400 }}> ({branchLabel(c.branch, lang)})</span> : null}
         </div>
         {c.address && <div style={{ color: "#374151" }}>{c.address}{c.postal_code ? ` ${c.postal_code}` : ""}</div>}
-        {c.tax_id && <div style={{ color: "#374151" }}>เลขประจำตัวผู้เสียภาษี {c.tax_id}</div>}
-        {c.job && <div style={{ color: "#6b7280", fontSize: 12 }}>งาน: {c.job}</div>}
+        {c.tax_id && <div style={{ color: "#374151" }}>{t.taxId} {c.tax_id}</div>}
+        {c.job && <div style={{ color: "#6b7280", fontSize: 12 }}>{t.job}: {c.job}</div>}
       </div>
     </div>
   );
@@ -104,6 +109,7 @@ export function PrintLetterhead({
   customer,
   hideCustomer = false,
   theme = PRINT_THEME_ROSE,
+  lang = "th",
 }: {
   docTitle: string;
   docColor?: string;
@@ -124,15 +130,21 @@ export function PrintLetterhead({
   hideCustomer?: boolean;
   /** ชุดสีเอกสาร (ตั้งต้น โรสละมุน · ใบเสร็จ = PRINT_THEME_BLUE) */
   theme?: PrintTheme;
+  /** ภาษาของป้ายในหัวเอกสาร + บล็อกบริษัท (en = ใบเสนอราคาภาษาอังกฤษ) */
+  lang?: DocLang;
 }) {
   const c = customer;
+  const t = docText(lang);
+  const co = lang === "en"
+    ? { nameFull: COMPANY_EN.nameFull, branch: COMPANY_EN.branch, address: COMPANY_EN.address }
+    : { nameFull: COMPANY.nameFull, branch: COMPANY.branch, address: COMPANY.address };
   // แถวผู้ติดต่อ — โชว์แพลตฟอร์มที่คุย (LINE) + ชื่อ · แล้วเบอร์โทร
   const who = c.contact_person || "";
   const contacts: InfoRow[] = contactRows ?? [
     ...(c.line_id
-      ? [{ label: "ผู้ติดต่อ", value: (who ? who + " · " : "") + channelLabel(c.contact_channel) + ": " + c.line_id }]
-      : who ? [{ label: "ผู้ติดต่อ", value: who }] : []),
-    ...(c.phone ? [{ label: "เบอร์โทร", value: c.phone }] : []),
+      ? [{ label: t.contact, value: (who ? who + " · " : "") + channelLabel(c.contact_channel, lang) + ": " + c.line_id }]
+      : who ? [{ label: t.contact, value: who }] : []),
+    ...(c.phone ? [{ label: t.phone, value: c.phone }] : []),
   ];
   void pageNo;
   const LabelTable = ({ rows }: { rows: InfoRow[] }) => (
@@ -157,13 +169,13 @@ export function PrintLetterhead({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/jr-logo.png" alt="JR Aluminium" style={{ height: 38 }} />
           <div className="mt-1.5" style={{ fontSize: 12, lineHeight: 1.5 }}>
-            <span className="font-semibold" style={{ color: "#1f2937" }}>{COMPANY.nameFull}</span> ({COMPANY.branch})<br />
-            {COMPANY.address}<br />
-            เลขประจำตัวผู้เสียภาษี {COMPANY.taxId}<br />
-            โทร. {COMPANY.phone}<br />
+            <span className="font-semibold" style={{ color: "#1f2937" }}>{co.nameFull}</span> ({co.branch})<br />
+            {co.address}<br />
+            {t.taxId} {COMPANY.taxId}<br />
+            {t.tel} {COMPANY.phone}<br />
             {COMPANY.website}
           </div>
-          {!hideCustomer && <PrintCustomerBlock c={c} color={docColor} theme={theme} />}
+          {!hideCustomer && <PrintCustomerBlock c={c} color={docColor} theme={theme} lang={lang} />}
         </div>
 
         {/* ขวา: ชื่อเอกสาร + ต้นฉบับ + ข้อมูลเอกสาร + ผู้ติดต่อ */}

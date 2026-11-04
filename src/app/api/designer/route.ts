@@ -1,3 +1,4 @@
+import { isOldCustomer, type OldCustomerSrc } from "@/lib/queue";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
@@ -26,6 +27,8 @@ type DesignerRow = {
   on_hold: boolean;
   on_hold_reason: string | null;
   queue_entry_id: string | null;
+  quote_sent_date: string | null;
+  queue_entry?: OldCustomerSrc;   // (0168) แท็กลูกค้าเก่า
   estimator: { full_name: string } | null;
   designer_lookup: { name: string } | null; // join on designer_ref → designers(name)
 };
@@ -48,7 +51,7 @@ export async function GET(req: Request) {
   let query = supabase
     .from("jobs")
     .select(
-      "id, job_code, customer_name, designer_id, designer_ref, design_state, design_due_date, design_received_date, design_start, design_end, design_revise_count, current_stage, assess_date, onsite_deposit, on_hold, on_hold_reason, quote_sent_date, queue_entry_id, estimator:estimator_id(full_name), designer_lookup:designer_ref(name)"
+      "id, job_code, customer_name, designer_id, designer_ref, design_state, design_due_date, design_received_date, design_start, design_end, design_revise_count, current_stage, assess_date, onsite_deposit, on_hold, on_hold_reason, quote_sent_date, queue_entry_id, estimator:estimator_id(full_name), designer_lookup:designer_ref(name), queue_entry:queue_entry_id(old_customer, target_customer_id, target_job_id)"
     )
     .neq("status", "CANCELLED")
     // safety cap: เก็บงานล่าสุดสุด 3000 รายการ (กัน payload บานปลายเมื่อสะสมหลายปี)
@@ -132,6 +135,7 @@ export async function GET(req: Request) {
     designer_ref: r.designer_ref,
     designer_name: (r.designer_lookup as { name: string } | null)?.name ?? null,
     sales_name: salesOf({ id: r.id, queue_entry_id: r.queue_entry_id, customer_name: r.customer_name, estimator_name: (r.estimator as { full_name: string } | null)?.full_name ?? null }),
+    old_customer: isOldCustomer(r.queue_entry),
     design_state: r.design_state,
     design_due_date: r.design_due_date,
     design_received_date: r.design_received_date,

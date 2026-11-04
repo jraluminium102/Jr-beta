@@ -250,6 +250,7 @@ export interface Customer {
   address: string;
   tax_id: string;
   line_id: string;            // ชื่อ/handle ที่ใช้ติดต่อ (ชื่อคอลัมน์เก่า — ไม่ได้แปลว่าเป็น LINE เสมอ)
+  line_id_prev?: string;      // ไลน์เดิมที่เคยใช้ (คั่น " / ") — 0170
   contact_channel?: string;   // (0122) LINE | FB | IG | OTHER — หัวเอกสารพิมพ์ป้ายตามช่องนี้
   phone: string;
   contact_person: string;

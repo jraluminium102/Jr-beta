@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import Icon from "@/components/Icon";
 
@@ -14,7 +14,7 @@ import { api } from "@/lib/api";
 import DateField from "@/components/ui/DateField";
 import { formatThaiPhone } from "@/lib/phone";
 import {
-  FEE_OPTIONS, JOB_SIZE_META, STATUS_META, STATUS_ORDER, parseLatLng, estimateMinutes,
+  FEE_OPTIONS, JOB_SIZE_META, STATUS_META, STATUS_ORDER, parseLatLng, estimateMinutes, isOfficeOn,
   type QueueEntry, type QueueSales, type JobSize, type QueueStatus, type QueueTeam,
 } from "@/lib/queue";
 import type { JobSearchResult } from "@/app/api/jobs/search/route";
@@ -29,6 +29,8 @@ type CustomerSearchResult = {
 };
 
 // ---- helpers ----------------------------------------------------------------
+// เทียบชื่อลูกค้าแบบหลวม (ตัด "คุณ"/ช่องว่าง) — ใช้เตือน "ชื่อนี้มีในทะเบียนแล้ว" ตอนเพิ่มลูกค้าใหม่
+const normCustName = (s: string) => String(s ?? "").replace(/^คุณ\s*/, "").replace(/\s+/g, "").toLowerCase();
 
 // เวลา "HH:MM"/"H.MM" → นาที (รองรับข้อมูล import จุด) · null ถ้าพาร์สไม่ได้
 function timeToMin(t: string | null): number | null {
@@ -85,7 +87,9 @@ type ExistingSlot = {
 // ประเภทงาน: หมวด
 type JobCat = "ประเมินหน้างาน" | "โชว์รูม" | "เคลียร์แบบ" | "อื่นๆ";
 
-type CustMode = "new" | "old";
+// old = ลูกค้าเก่ามีในระบบ (ผูกทะเบียน) · old_ext = ลูกค้าเก่าไม่มีในระบบ (0168 · กรอกเองเหมือนลูกค้าใหม่ แค่ติดแท็ก)
+type CustMode = "new" | "old" | "old_ext";
+const CUST_MODE_LABEL: Record<CustMode, string> = { new: "ลูกค้าใหม่", old: "ลูกค้าเก่า (มีในระบบ)", old_ext: "ลูกค้าเก่า (ไม่มีในระบบ)" };
 type OldCustomerMode = "" | "existing_site" | "new_site";
 
 type FormState = {
@@ -138,6 +142,7 @@ function initForm(e?: QueueEntry | null): FormState {
   let initCustMode: CustMode = "new";
   let initOldCustomerMode: OldCustomerMode = "";
   if (e && isAssess) {
+    if (e.old_customer) initCustMode = "old_ext";
     if (e.target_customer_id != null || e.target_job_id != null) {
       initCustMode = "old";
       // ข้อมูลเก่า: target_job_id ที่ไม่ใช่เคลียร์แบบ = existing_site (backward compat)
@@ -297,6 +302,12 @@ export function QueueModal({
   const coords = manualCoords ?? parseLatLng(f.location_url) ?? resolved;
   const [suggesting, setSuggesting] = useState(false);
   const [suggestMsg, setSuggestMsg] = useState("");
+  // ตารางของเซลล์ในวันที่ระบบเสนอ — ให้เจ้าของเช็คได้ทันทีว่าเสนอถูกไหม (เจ้าของ 3 พ.ย.69 "ปกติเช็ค 2 รอบ")
+  const [suggestPlan, setSuggestPlan] = useState<{
+    date: string; time: string; sales: string;
+    items: { queue_time: string | null; customer_name: string; address: string | null; job_type: string | null; job_size: string | null; km: number | null; min: number | null }[];
+    notes: string[];
+  } | null>(null);
 
   // แกะลิงก์แผนที่ผ่าน server (รองรับ maps.app.goo.gl) เมื่อ parse ตรงๆ ไม่ได้
   async function resolveLink() {
@@ -351,21 +362,24 @@ export function QueueModal({
         const av = (availRes.data ?? []).filter((a) => a.sales_id === f.sales_id && a.date === date);
         const isFullLeave = av.some((a) => a.kind === "LEAVE_FULL" || a.kind === "HOLIDAY" || a.kind === "WFH");
         const isWfh = av.some((a) => a.kind === "WFH");
-        const isAMLeave = av.some((a) => (a.kind === "LEAVE_HALF" && a.half === "AM") || a.kind === "OFFICE_HALF");
+        // ลา = บล็อก · "อยู่ออฟฟิศ" (OFFICE_HALF จากวันลา) = เตือนอย่างเดียว ลงได้ (เจ้าของ 3 พ.ย.69 "เตือนเหมือนลูกค้าไกล แต่ยังลงได้")
+        const isAMLeave = av.some((a) => a.kind === "LEAVE_HALF" && a.half === "AM");
         const isPMLeave = av.some((a) => a.kind === "LEAVE_HALF" && a.half === "PM");
+        const isOfficeAMAvail = av.some((a) => a.kind === "OFFICE_HALF");
 
         if (isFullLeave) found.push({ kind: "leave", msg: isWfh ? "เซลล์ WFH ทำงานที่บ้านวันนี้ (ปกติไม่ออกประเมิน)" : "เซลล์ลา/วันหยุดทั้งวันในวันนี้" });
-        else if (isAMLeave && isAMSlot) found.push({ kind: "leave", msg: "เซลล์ลา/อยู่ออฟฟิศช่วงเช้า — เลือกเวลาบ่าย" });
+        else if (isAMLeave && isAMSlot) found.push({ kind: "leave", msg: "เซลล์ลาช่วงเช้า — เลือกเวลาบ่าย" });
         else if (isPMLeave && isPMSlot) found.push({ kind: "leave", msg: "เซลล์ลาช่วงบ่าย — เลือกเวลาเช้า" });
 
-        // (0030) วันอยู่ออฟฟิศประจำ — soft warn (ลงทับได้แต่ปกติไม่ออกประเมิน) · เฉพาะวันนี้เป็นต้นไป
+        // วันออฟฟิศ (ประจำสัปดาห์ office_slots + ย้ายรายวัน office_overrides + OFFICE_HALF ในวันลา) — เตือนอย่างเดียว ลงได้
+        //   ⚠ เดิมดูแค่ตารางประจำสัปดาห์ ไม่ดูวันที่ย้าย/เพิ่มรายวัน → ลงทับวันออฟฟิศโดยไม่เตือน
         const half = isAMSlot ? "AM" : isPMSlot ? "PM" : null;
-        const nowStr = (() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`; })();
-        if (half && date >= nowStr) {
+        if (half && !isFullLeave) {
           const selSales = salesList.find((s) => s.id === f.sales_id);
           const wd = new Date(date + "T00:00:00").getDay();
-          if ((selSales?.office_slots ?? []).some((o) => o.weekday === wd && o.half === half)) {
-            found.push({ kind: "warn", msg: `${selSales?.name ?? "เซลล์"} อยู่ออฟฟิศประจำช่วง${isAMSlot ? "เช้า" : "บ่าย"}วันนี้ — ปกติไม่ออกประเมิน` });
+          const onOffice = (selSales ? isOfficeOn(selSales, date, wd, half) : false) || (half === "AM" && isOfficeAMAvail);
+          if (onOffice) {
+            found.push({ kind: "warn", msg: `⚠ ตรงกับวันออฟฟิศของ ${selSales?.name ?? "เซลล์"} ช่วง${isAMSlot ? "เช้า" : "บ่าย"} — ปกติไม่ออกประเมิน (ลงได้ถ้าจำเป็น)` });
           }
         }
 
@@ -479,6 +493,9 @@ export function QueueModal({
   const [selectedCust, setSelectedCust] = useState<CustomerSearchResult | null>(null);
   const custSearchAbortRef = useRef<AbortController | null>(null);
   const custSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // เตือนชื่อซ้ำตอน "ลูกค้าใหม่" — promote เช็คซ้ำด้วยเบอร์เท่านั้น ถ้าแถวเดิมไม่มีเบอร์จะได้ลูกค้าซ้ำ (เคสคุณป้อ 4 พ.ย.69)
+  const [nameDup, setNameDup] = useState<CustomerSearchResult[]>([]);
+  const nameDupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // loading state สำหรับดึงข้อมูลไซต์เดิม (existing_site)
   const [siteInfoBusy, setSiteInfoBusy] = useState(false);
   // ลูกค้านี้ไม่มีงานในระบบ (existing_site auto-load คืน 0 งาน)
@@ -487,6 +504,8 @@ export function QueueModal({
   const [changingSite, setChangingSite] = useState(false);
   // เก็บงานที่ auto-pick ล่าสุด (ใช้กดยกเลิกเปลี่ยนไซต์กลับมา)
   const lastAutoJobRef = useRef<JobSearchResult | null>(null);
+  // งานทั้งหมดของลูกค้าเก่า (ล่าสุดก่อน) — ไว้ให้เลือก "ไซต์" ตรง ๆ เมื่อลูกค้ามีหลายหน้างาน (เจ้าของ 3 พ.ย.69 เคสคุณภาวิณี)
+  const [custJobs, setCustJobs] = useState<JobSearchResult[]>([]);
 
   // debounce ค้นงาน (เคลียร์แบบ หรือ ลูกค้าเก่าหน้างานเดิม + กำลังเปลี่ยนไซต์)
   const needsJobSearch = jobCat === "เคลียร์แบบ" || (jobCat === "ประเมินหน้างาน" && f.oldCustomerMode === "existing_site" && changingSite);
@@ -516,6 +535,22 @@ export function QueueModal({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobSearch, needsJobSearch]);
 
+  // debounce เช็คชื่อซ้ำในทะเบียน (ลูกค้าใหม่ / ลูกค้าเก่าไม่มีในระบบ)
+  useEffect(() => {
+    if (jobCat !== "ประเมินหน้างาน" || f.custMode === "old") { setNameDup([]); return; }
+    const key = normCustName(f.customer_name);
+    if (key.length < 2) { setNameDup([]); return; }
+    if (nameDupTimerRef.current) clearTimeout(nameDupTimerRef.current);
+    nameDupTimerRef.current = setTimeout(async () => {
+      try {
+        const r = await api.get<CustomerSearchResult[]>(`/customers?q=${encodeURIComponent(f.customer_name.trim())}`);
+        setNameDup((r.data ?? []).filter((c) => normCustName(c.name) === key).slice(0, 3));
+      } catch { setNameDup([]); }
+    }, 450);
+    return () => { if (nameDupTimerRef.current) clearTimeout(nameDupTimerRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [f.customer_name, f.custMode, jobCat]);
+
   // debounce ค้นลูกค้าเดิม (0045)
   useEffect(() => {
     if (jobCat !== "ประเมินหน้างาน" || f.custMode !== "old") return;
@@ -543,15 +578,15 @@ export function QueueModal({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [custSearch, f.custMode, jobCat]);
 
-  async function selectTargetJob(j: JobSearchResult) {
+  async function selectTargetJob(j: JobSearchResult, opts?: { existingSiteCustId?: number }) {
     setSelectedJob(j);
     setJobSearch("");
     setJobSearchResults([]);
 
     // โหมด: เคลียร์แบบ (ผูกงานเดิม target_job_id) vs ประเมินหน้างานเดิม (สร้างงานใหม่ target_customer_id)
     const isClearDesign = jobCat === "เคลียร์แบบ";
-    const isExistingSite =
-      jobCat === "ประเมินหน้างาน" && f.oldCustomerMode === "existing_site" && !!selectedCust;
+    const existingCustId = opts?.existingSiteCustId ?? (f.oldCustomerMode === "existing_site" ? selectedCust?.id : undefined);
+    const isExistingSite = jobCat === "ประเมินหน้างาน" && existingCustId != null;
     if (isExistingSite) setChangingSite(false);
 
     // ทั้ง 2 โหมด: ดึง site-info ของงานนั้นมา auto-fill ให้ครบ (ที่อยู่/โลเคชั่น/เบอร์/Line)
@@ -565,7 +600,7 @@ export function QueueModal({
       const info = r.data;
       const target = {
         target_job_id: isClearDesign ? j.id : null,
-        target_customer_id: isExistingSite && selectedCust ? selectedCust.id : null,
+        target_customer_id: isExistingSite ? existingCustId ?? null : null,
       };
       if (info) {
         setF((s) => ({
@@ -595,7 +630,7 @@ export function QueueModal({
         tel: j.customer_tel ? formatThaiPhone(j.customer_tel) : s.tel,
         address: j.customer_area ?? s.address,
         target_job_id: isClearDesign ? j.id : null,
-        target_customer_id: isExistingSite && selectedCust ? selectedCust.id : null,
+        target_customer_id: isExistingSite ? existingCustId ?? null : null,
       }));
     } finally {
       setSiteInfoBusy(false);
@@ -645,6 +680,7 @@ export function QueueModal({
     setNoJobsForCust(false);
     setChangingSite(false);
     lastAutoJobRef.current = null;
+    setCustJobs([]);
   }
 
   function clearCustomer() {
@@ -655,6 +691,7 @@ export function QueueModal({
     setNoJobsForCust(false);
     setChangingSite(false);
     lastAutoJobRef.current = null;
+    setCustJobs([]);
     setF((s) => ({
       ...s,
       customer_name: "",
@@ -699,21 +736,22 @@ export function QueueModal({
     }
   }
 
-  // auto-load งานล่าสุดของลูกค้า → autoFillFromJob ถ้ามี
+  // auto-load งานของลูกค้า: มีงาน → เลือกงานล่าสุดเป็นไซต์อ้างอิง + ดึง site-info ของงานนั้น (ไม่ปนที่อยู่ไซต์อื่น)
+  //   ลูกค้ามีหลายไซต์ → โชว์รายการไซต์ให้กดเลือกได้เลย (เดิมซ่อนไว้หลัง "เปลี่ยนไซต์" ที่ต้องพิมพ์ค้น)
+  //   ไม่มีงานเลย → เติมจากทะเบียน/คิวเดิมของลูกค้า แล้วให้กรอกเอง
   async function autoLoadLatestJob(customerId: number) {
     setSiteInfoBusy(true);
     try {
-      // (1) งานล่าสุด — โชว์เป็นไซต์อ้างอิง (เปลี่ยนไซต์เฉพาะได้)
       const jr = await api.get<JobSearchResult[]>(`/jobs/search?customer_id=${customerId}`);
       const jobs = jr.data ?? [];
+      setCustJobs(jobs);
       if (jobs.length > 0) {
-        setSelectedJob(jobs[0]);
         lastAutoJobRef.current = jobs[0];
         setChangingSite(false);
-      } else {
-        setNoJobsForCust(true);
+        await selectTargetJob(jobs[0], { existingSiteCustId: customerId });
+        return;
       }
-      // (2) เติมจาก "ไซต์รวมของลูกค้า" (ครบสุด — ดึง location จากงานใดก็ได้ที่มีแผนที่)
+      setNoJobsForCust(true);
       const cr = await api.get<{
         customer_name: string; tel: string | null; address: string | null;
         location_url: string | null; lat: number | null; lng: number | null;
@@ -744,6 +782,18 @@ export function QueueModal({
     }
   }
 
+  // ไซต์ของลูกค้า = งานที่ที่อยู่ (customer_area) ต่างกัน — รวมงานที่อยู่เดียวกันเป็นไซต์เดียว
+  const custSites = useMemo(() => {
+    const norm = (a: string | null | undefined) => String(a ?? "").replace(/\s+/g, " ").replace(/\s*\d{5}\s*$/, "").trim();
+    const groups: { key: string; area: string; jobs: JobSearchResult[] }[] = [];
+    for (const j of custJobs) {
+      const key = norm(j.customer_area) || `#${j.id}`;
+      const g = groups.find((x) => x.key === key);
+      if (g) g.jobs.push(j); else groups.push({ key, area: j.customer_area?.trim() || "(ไม่มีที่อยู่)", jobs: [j] });
+    }
+    return groups;
+  }, [custJobs]);
+
   // "เพิ่มผู้ช่วยเอง" inline form state
   const [addingAssistant, setAddingAssistant] = useState(false);
   const [managingAssist, setManagingAssist] = useState(false); // (ข้อ 1) โหมดลบรายชื่อผู้ช่วย
@@ -764,7 +814,7 @@ export function QueueModal({
     const controller = new AbortController();
     suggestAbortRef.current = controller;
 
-    setSuggesting(true); setSuggestMsg("");
+    setSuggesting(true); setSuggestMsg(""); setSuggestPlan(null);
     // timeout 10 วินาที
     const timeoutId = setTimeout(() => controller.abort(), 10000);
     try {
@@ -782,6 +832,8 @@ export function QueueModal({
       const r = await api.post<{
         queue_date: string; queue_time: string;
         sales_id: string; sales_name: string; reason: string;
+        day_plan?: { queue_time: string | null; customer_name: string; address: string | null; job_type: string | null; job_size: string | null; km: number | null; min: number | null }[];
+        day_notes?: string[];
       }>("/queue/suggest", {
         sales_id: f.sales_id || null,
         job_size: f.job_size || null,
@@ -806,6 +858,7 @@ export function QueueModal({
         sales_id: s.sales_id || r.data.sales_id,
       }));
       setSuggestMsg("✓ " + r.data.reason);
+      setSuggestPlan({ date: r.data.queue_date, time: r.data.queue_time, sales: r.data.sales_name, items: r.data.day_plan ?? [], notes: r.data.day_notes ?? [] });
     } catch (e) {
       clearTimeout(timeoutId);
       if (controller.signal.aborted) {
@@ -980,7 +1033,7 @@ export function QueueModal({
 
         // เตือนถ้าไม่มีเบอร์โทร (เฉพาะลูกค้าใหม่ เพราะลูกค้าเก่าอาจไม่มีเบอร์ใหม่)
         const telRaw = f.tel.trim();
-        if (!telRaw && f.custMode === "new") {
+        if (!telRaw && f.custMode !== "old") {
           const telOk = window.confirm(
             "ยังไม่ได้ใส่เบอร์โทร ระบบจะถือเป็นลูกค้าใหม่เสมอ (เสี่ยงลูกค้าซ้ำ) — ยืนยัน?"
           );
@@ -1049,6 +1102,7 @@ export function QueueModal({
       target_job_id: f.target_job_id || null,        // (0044) เคลียร์แบบเท่านั้น
       clear_revise: f.clear_revise,                  // (0044) — stripped server-side ก่อน .update()
       target_customer_id: f.target_customer_id ?? null, // (0045) ลูกค้าเก่าหน้างานใหม่ + หน้างานเดิม
+      old_customer: jobCat === "ประเมินหน้างาน" && f.custMode === "old_ext", // (0168) ลูกค้าเก่าไม่มีในระบบ
       // (0070) ออกเอกสารในนาม
       bill_choice: f.bill_choice,
       bill_kind: f.bill_choice === "COMPANY" ? "COMPANY" : "INDIVIDUAL",
@@ -1313,7 +1367,7 @@ export function QueueModal({
             <Field label="ลูกค้า *" wide>
               {/* toggle ลูกค้าใหม่ / ลูกค้าเก่า */}
               <div className="flex gap-2 mb-2">
-                {(["new", "old"] as CustMode[]).map((mode) => {
+                {(["new", "old", "old_ext"] as CustMode[]).map((mode) => {
                   const isActive = f.custMode === mode;
                   return (
                     <button
@@ -1343,20 +1397,48 @@ export function QueueModal({
                           : "glass-soft text-ink-2 hover:bg-white/60"
                         }`}
                     >
-                      {mode === "new" ? "ลูกค้าใหม่" : "ลูกค้าเก่า"}
+                      {CUST_MODE_LABEL[mode]}
                     </button>
                   );
                 })}
               </div>
+              {f.custMode === "old_ext" && (
+                <div className="text-xs text-violet-800 bg-violet-50 rounded-lg px-2.5 py-1.5 mb-2">
+                  ลูกค้าเก่าที่ไม่มีชื่อในทะเบียน — กรอกข้อมูลเหมือนลูกค้าใหม่ ระบบจะติดแท็ก "ลูกค้าเก่า" ให้คนทำใบเสนอ/เช็คลิสต์/แบบเห็น
+                </div>
+              )}
 
-              {f.custMode === "new" ? (
-                /* ลูกค้าใหม่ — พิมพ์ชื่อเอง */
-                <input
-                  value={f.customer_name}
-                  onChange={(e) => set("customer_name", e.target.value)}
-                  placeholder="คุณ…"
-                  className={inp}
-                />
+              {f.custMode !== "old" ? (
+                /* ลูกค้าใหม่ — พิมพ์ชื่อเอง (+ เตือนถ้าทะเบียนมีชื่อนี้อยู่แล้ว) */
+                <div className="space-y-1.5">
+                  <input
+                    value={f.customer_name}
+                    onChange={(e) => set("customer_name", e.target.value)}
+                    placeholder="คุณ…"
+                    className={inp}
+                  />
+                  {nameDup.length > 0 && (
+                    <div className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 space-y-1.5">
+                      <p className="text-xs text-amber-800 font-semibold">ทะเบียนมีชื่อนี้อยู่แล้ว — ถ้าเป็นคนเดียวกัน กดใช้แถวเดิม (กันลูกค้าซ้ำ)</p>
+                      {nameDup.map((c) => (
+                        <div key={c.id} className="flex items-center gap-2">
+                          <div className="flex-1 min-w-0 text-xs text-amber-900 truncate">
+                            {c.name} <span className="text-amber-700">#{c.id}</span>{c.phone ? ` · ${formatThaiPhone(c.phone)}` : " · ไม่มีเบอร์"}{c.address ? ` · ${c.address}` : ""}
+                          </div>
+                          <button type="button"
+                            onClick={() => {
+                              setF((s) => ({ ...s, custMode: "old", oldCustomerMode: "", target_job_id: null, target_customer_id: null }));
+                              setNameDup([]);
+                              selectCustomer(c);
+                            }}
+                            className="press shrink-0 rounded-lg bg-amber-600 text-white px-2.5 py-1 text-[11px] font-semibold">
+                            ใช้ลูกค้าเดิมนี้
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ) : (
                 /* ลูกค้าเก่า — ค้น → เลือก → เลือก mode หน้างาน */
                 <div className="space-y-2.5">
@@ -1506,8 +1588,37 @@ export function QueueModal({
                             onClick={clearTargetJob}
                             className="press shrink-0 text-xs text-ink-3 hover:text-sky-600 px-1.5 py-1 rounded-lg"
                           >
-                            [เปลี่ยนไซต์]
+                            [ค้นงานอื่น]
                           </button>
+                        </div>
+                      )}
+
+                      {/* ลูกค้ามีหลายไซต์ → เลือกไซต์ตรง ๆ (ไม่ต้องพิมพ์ค้น) */}
+                      {custSites.length > 1 && !changingSite && (
+                        <div className="space-y-1">
+                          <p className="text-[11px] text-ink-3">ลูกค้านี้มี {custSites.length} หน้างาน — เลือกไซต์ที่จะไป:</p>
+                          <div className="glass-soft rounded-xl overflow-hidden">
+                            {custSites.map((g) => {
+                              const active = !!selectedJob && g.jobs.some((j) => j.id === selectedJob.id);
+                              return (
+                                <button
+                                  key={g.key}
+                                  type="button"
+                                  disabled={siteInfoBusy}
+                                  onClick={() => { if (!active && selectedCust) void selectTargetJob(g.jobs[0], { existingSiteCustId: selectedCust.id }); }}
+                                  className={`w-full text-left px-3 py-2 border-b border-gray-100 last:border-0 transition-colors flex items-start gap-2 ${active ? "bg-sky-600 text-white" : "hover:bg-white/60"}`}
+                                >
+                                  <span className={`shrink-0 mt-0.5 text-[11px] font-bold ${active ? "text-white" : "text-sky-600"}`}>{active ? "●" : "○"}</span>
+                                  <span className="flex-1 min-w-0">
+                                    <span className={`block text-xs leading-snug ${active ? "text-white" : "text-brand-dark"}`}>{g.area}</span>
+                                    <span className={`block text-[11px] mt-0.5 ${active ? "text-white/80" : "text-ink-3"}`}>
+                                      {g.jobs.map((j) => j.job_code ?? "—").join(", ")}{g.jobs[0].customer_tel ? ` · ${g.jobs[0].customer_tel}` : ""}
+                                    </span>
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
                       )}
 
@@ -1738,6 +1849,36 @@ export function QueueModal({
                 เลือกเซลล์/เวลาเองไว้ก่อนได้ → ระบบจะหาแค่วันที่ใกล้สุด · งานหลายจุดจะจัดบ่ายให้อัตโนมัติ
               </p>
               {suggestMsg && <p className="text-[11px] mt-1 text-ink-2">{suggestMsg}</p>}
+              {suggestPlan && (
+                <div className="mt-2 rounded-xl border border-sky-200 bg-sky-50/70 px-3 py-2.5">
+                  <div className="text-[12px] font-semibold text-sky-800">
+                    ตารางของ {suggestPlan.sales} วัน {suggestPlan.date.split("-").reverse().join("/")} — {suggestPlan.items.length ? `มีคิวอยู่แล้ว ${suggestPlan.items.length} คิว` : "ยังไม่มีคิวอื่น (ว่างทั้งวัน)"}
+                  </div>
+                  {suggestPlan.notes.length > 0 && (
+                    <div className="text-[11px] text-amber-700 mt-0.5">{suggestPlan.notes.join(" · ")}</div>
+                  )}
+                  <ul className="mt-1.5 space-y-1">
+                    {[...suggestPlan.items.map((it) => ({ ...it, isNew: false })), { queue_time: suggestPlan.time, customer_name: f.customer_name || "(คิวใหม่นี้)", address: f.address || null, job_type: jobCat || null, job_size: f.job_size || null, km: null, min: null, isNew: true }]
+                      .sort((a, b) => {
+                        const tm = (t: string | null) => { const m = String(t ?? "").match(/(\d{1,2})[:.](\d{2})/); return m ? Number(m[1]) * 60 + Number(m[2]) : 9999; };
+                        return tm(a.queue_time) - tm(b.queue_time);
+                      })
+                      .map((it, i) => (
+                        <li key={i} className={`flex items-start gap-2 text-[11.5px] leading-snug rounded-lg px-2 py-1 ${it.isNew ? "bg-sky-600 text-white" : "bg-white/70 text-ink-1"}`}>
+                          <span className="shrink-0 font-bold tabular-nums w-[42px]">{it.queue_time ?? "—:—"}</span>
+                          <span className="flex-1 min-w-0">
+                            <span className="font-semibold">{it.isNew ? "← คิวใหม่: " : ""}{it.customer_name || "—"}</span>
+                            {it.job_type && it.job_type !== "ประเมินหน้างาน" ? <span className={it.isNew ? " text-white/80" : " text-ink-3"}> · {it.job_type}</span> : null}
+                            {it.address ? <span className={`block truncate ${it.isNew ? "text-white/80" : "text-ink-3"}`}>{it.address}</span> : null}
+                            {!it.isNew && it.km != null ? <span className="block text-emerald-700">ห่างจากงานใหม่ {it.km} กม. ~{it.min} นาที</span> : null}
+                            {!it.isNew && it.km == null && suggestPlan.items.length > 0 ? <span className="block text-amber-700">ไม่มีพิกัดเทียบระยะ</span> : null}
+                          </span>
+                        </li>
+                      ))}
+                  </ul>
+                  <p className="text-[10.5px] text-ink-3 mt-1.5">ไม่ถูกใจ → เปลี่ยนวัน/เวลา/เซลล์เองได้เลยด้านล่าง</p>
+                </div>
+              )}
             </Field>
           )}
 

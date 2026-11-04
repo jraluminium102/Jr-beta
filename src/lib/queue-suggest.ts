@@ -2,7 +2,7 @@
 //   ตรรกะย้ายมาจาก src/app/api/queue/suggest/route.ts แบบคงเดิม 100%
 import { HttpError } from "@/lib/bff/context";
 import { dbError } from "@/lib/bff/db-error";
-import { detectTeam, estimateMinutes } from "@/lib/queue";
+import { detectTeam, estimateMinutes, haversineKm } from "@/lib/queue";
 import { resolveMapLink } from "@/lib/queue-geo";
 import { drivingMinutes } from "@/lib/ors";
 
@@ -30,12 +30,24 @@ export type SuggestParams = {
   fixed_time?: "10:00" | "14:00" | null;
 };
 
+/** คิวที่เซลล์คนนั้นมีอยู่แล้วในวันที่เสนอ — ให้เจ้าของเช็คเองได้โดยไม่ต้องไปเปิดตารางวันนั้น (เจ้าของ 3 พ.ย.69) */
+export type DayPlanItem = {
+  queue_time: string | null;
+  customer_name: string;
+  address: string | null;
+  job_type: string | null;
+  job_size: string | null;
+  km: number | null;      // ระยะเส้นตรงจากหน้างานใหม่ (null = พิกัดไม่ครบ)
+  min: number | null;     // เวลาขับโดยประมาณ (คูณรถติดแล้ว)
+};
 export type SuggestResult = {
   queue_date: string;
   queue_time: string;
   sales_id: string;
   sales_name: string;
   reason: string;
+  day_plan: DayPlanItem[];   // คิวเดิมของเซลล์วันนั้น (เรียงตามเวลา)
+  day_notes: string[];       // ช่องที่ถูกกันไว้วันนั้น เช่น "เช้า: วันออฟฟิศ"
 };
 
 export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<SuggestResult> {
@@ -48,19 +60,27 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
   }
 
   // Load queue_settings for max_pair_min / avg_speed_kmh / detour_factor
-  const { data: settingsRaw } = await sb
+  type Settings = {
+    max_pair_min?: number | null; avg_speed_kmh?: number | null; detour_factor?: number | null;
+    max_pair_km?: number | null; traffic_factor?: number | null;
+  };
+  // 0167 เพิ่ม max_pair_km/traffic_factor — ยังไม่รัน = อ่านคอลัมน์เดิมแล้วใช้ค่าเริ่มต้น
+  let { data: settingsRaw, error: sErr } = await sb
     .from("queue_settings")
-    .select("max_pair_min,avg_speed_kmh,detour_factor")
+    .select("max_pair_min,avg_speed_kmh,detour_factor,max_pair_km,traffic_factor")
     .eq("id", 1)
     .maybeSingle();
-  const settings = (settingsRaw ?? {}) as {
-    max_pair_min?: number | null;
-    avg_speed_kmh?: number | null;
-    detour_factor?: number | null;
-  };
-  const maxPairMin = settings.max_pair_min ?? 45;
-  const avgSpeedKmh = settings.avg_speed_kmh ?? 40;
-  const detourFactor = settings.detour_factor ?? 1.3;
+  if (sErr) {
+    ({ data: settingsRaw } = await sb.from("queue_settings").select("max_pair_min,avg_speed_kmh,detour_factor").eq("id", 1).maybeSingle());
+  }
+  const settings = (settingsRaw ?? {}) as Settings;
+  const maxPairMin = Number(settings.max_pair_min) || 45;
+  const avgSpeedKmh = Number(settings.avg_speed_kmh) || 40;
+  const detourFactor = Number(settings.detour_factor) || 1.3;
+  // กันจับคู่ไกล (เจ้าของ 3 พ.ย.69 "ระยะทางบัคมาตลอด แก้ให้หายขาด"): ระยะเส้นตรงห้ามเกิน + เวลา ORS × ตัวคูณรถติด
+  //   เคสที่พลาด: นนทบุรี→สาทร เส้นตรง 11.3 กม. ORS ~30 นาที (ถนนโล่ง) ผ่านเกณฑ์ 45 ทั้งที่จริงชั่วโมงกว่า
+  const maxPairKm = Number(settings.max_pair_km) || 8;
+  const trafficFactor = Number(settings.traffic_factor) || 1.5;
 
   // R-Zone + R-Balance: load only MAIN sales reps (ASSISTANT not auto-assigned)
   const { data: salesAll, error: e1 } = await sb
@@ -100,17 +120,34 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
   // Load existing bookings: include lat/lng for R-45min check
   const { data: entriesRaw } = await sb
     .from("queue_entries")
-    .select("sales_id,queue_date,queue_time,status,lat,lng")
+    .select("id,sales_id,queue_date,queue_time,status,lat,lng,customer_name,address,job_type,job_size")
     .not("queue_date", "is", null)
     .neq("status", "CANCELLED")
     .gte("queue_date", today);
   const entries = (entriesRaw ?? []) as {
+    id: string;
     sales_id: string | null;
     queue_date: string;
     queue_time: string | null;
     lat: number | null;
     lng: number | null;
+    customer_name: string | null;
+    address: string | null;
+    job_type: string | null;
+    job_size: string | null;
   }[];
+  type Entry = (typeof entries)[number];
+  const timeMin = (t: unknown) => { const m = String(t ?? "").match(/(\d{1,2})[:.](\d{2})/); return m ? Number(m[1]) * 60 + Number(m[2]) : 9999; };
+  const toPlan = (rows: Entry[], dist: Map<string, { km: number | null; min: number | null }>): DayPlanItem[] =>
+    [...rows].sort((a, b) => timeMin(a.queue_time) - timeMin(b.queue_time)).map((e) => ({
+      queue_time: e.queue_time ? String(e.queue_time).slice(0, 5) : null,
+      customer_name: e.customer_name ?? "",
+      address: e.address ?? null,
+      job_type: e.job_type ?? null,
+      job_size: e.job_size ?? null,
+      km: dist.get(e.id)?.km ?? null,
+      min: dist.get(e.id)?.min ?? null,
+    }));
 
   // R-Leave: load sales_availability
   const { data: availRaw } = await sb
@@ -164,6 +201,9 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
       const halfLeave = av.find((a) => a.kind === "LEAVE_HALF");
       if (halfLeave) blocked.add(half2slot(halfLeave.half));
 
+      const dayNotes: string[] = [];
+      if (blocked.has("10:00")) dayNotes.push(halfLeave?.half !== "PM" && halfLeave ? "เช้า: ลาครึ่งวัน" : "เช้า: วันออฟฟิศ");
+      if (blocked.has("14:00")) dayNotes.push(halfLeave?.half === "PM" ? "บ่าย: ลาครึ่งวัน" : "บ่าย: วันออฟฟิศ");
       let slots = ["10:00", "14:00"].filter((t) => !blocked.has(t));
       if (body.job_size === "MULTI")
         slots = [...slots].sort((a, b) => (a === "14:00" ? -1 : 1) - (b === "14:00" ? -1 : 1));
@@ -172,54 +212,70 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
       if (slots.length === 0) continue;
 
       const dayEntries = entries.filter((e) => e.sales_id === s.id && e.queue_date === dateStr);
-      const usedTimes = dayEntries.map((e) => e.queue_time);
+      // slot ที่ถูกใช้แล้ว — ดูตาม "ครึ่งวัน" ไม่ใช่เทียบข้อความเวลาตรง ๆ
+      //   ⚠ บั๊กเดิม (เจ้าของเจอ 3 พ.ย.69): ไล้มีคิวเคลียร์แบบ 09:30 + 15:00 วันที่ 4/11 แต่ระบบเสนอ 10:00 ให้
+      //   เพราะเทียบ usedTimes.includes("10:00") ตรง ๆ → เวลาอื่นที่ไม่ใช่ 10:00/14:00 เป๊ะ ถูกมองว่าว่าง
+      //   กติกา: ก่อน 13:00 = กันช่องเช้า (10:00) · ตั้งแต่ 13:00 = กันช่องบ่าย (14:00) · ไม่มีเวลา = กันทั้งวัน
+      const usedSlots = new Set<string>();
+      for (const e of dayEntries) {
+        const m = String(e.queue_time ?? "").match(/(\d{1,2})[:.](\d{2})/);
+        if (!m) { usedSlots.add("10:00"); usedSlots.add("14:00"); continue; }
+        usedSlots.add(Number(m[1]) * 60 + Number(m[2]) < 13 * 60 ? "10:00" : "14:00");
+      }
 
       // FULLDAY: ต้องว่างทั้ง 2 slot
       if (body.job_size === "FULLDAY") {
-        if (usedTimes.length === 0 && slots.length === 2) {
+        if (usedSlots.size === 0 && slots.length === 2) {
           return {
             queue_date: dateStr,
             queue_time: "10:00",
             sales_id: s.id,
             sales_name: s.name,
             reason: `งานเต็มวัน → ${s.name} ว่างทั้งวัน ${DOW_TH[dow]} ${dateStr}`,
+            day_plan: [],
+            day_notes: dayNotes,
           };
         }
         continue;
       }
 
       // R-2slot: slot ว่างแรก (ตามลำดับที่จัด — MULTI=บ่ายก่อน)
-      const freeSlot = slots.find((t) => !usedTimes.includes(t));
+      const freeSlot = slots.find((t) => !usedSlots.has(t));
       if (!freeSlot) continue;
 
-      // R-45min: ถ้าเป็นคิวที่ 2 ในวันเดียว → เช็คเวลาเดินทาง
-      if (dayEntries.length === 1) {
-        const existing = dayEntries[0];
+      // R-45min + R-Km: ถ้ามีคิวอื่นในวันเดียวกันอยู่แล้ว → หน้างานใหม่ต้อง "ใกล้" ทุกคิวในวันนั้น
+      //   ชั้น 1 ระยะเส้นตรง ≤ max_pair_km (ไม่ต้องพึ่ง ORS) · ชั้น 2 เวลาขับ ORS × traffic_factor ≤ max_pair_min
+      //   พิกัดไม่ครบ (คิวเดิมหรืองานใหม่) = ไม่จับคู่วันนั้น (ข้ามไปวันที่ว่างทั้งวัน) — กันเดาแล้วพลาด
+      let pairNote = "";
+      const dist = new Map<string, { km: number | null; min: number | null }>();
+      if (dayEntries.length > 0) {
         const newLat = body.lat ?? null;
         const newLng = body.lng ?? null;
-        const haveBoth = existing.lat != null && existing.lng != null && newLat != null && newLng != null;
-        if (!haveBoth) continue;
-        const ck = `${existing.lat},${existing.lng}`;
-        let travelMin: number | null;
-        if (driveCache.has(ck)) {
-          travelMin = driveCache.get(ck) ?? null;
-        } else {
-          travelMin = await drivingMinutes(
-            { lat: existing.lat!, lng: existing.lng! },
-            { lat: newLat!, lng: newLng! },
-          );
-          driveCache.set(ck, travelMin);
+        if (newLat == null || newLng == null) continue;
+        let ok = true;
+        for (const existing of dayEntries) {
+          if (existing.lat == null || existing.lng == null) { ok = false; break; }
+          const a = { lat: existing.lat, lng: existing.lng };
+          const b = { lat: newLat, lng: newLng };
+          const km = haversineKm(a, b);
+          if (km > maxPairKm) { ok = false; break; }
+          const ck = `${a.lat},${a.lng}`;
+          let orsMin: number | null;
+          if (driveCache.has(ck)) orsMin = driveCache.get(ck) ?? null;
+          else { orsMin = await drivingMinutes(a, b); driveCache.set(ck, orsMin); }
+          let travelMin: number;
+          if (orsMin == null) {
+            // ORS ใช้ไม่ได้ → ประมาณการแบบ "ระมัดระวัง" (เมืองรถติดช้ากว่า 40 km/h มาก)
+            travelMin = estimateMinutes(a, b, { avgSpeedKmh: Math.min(avgSpeedKmh, 24), detourFactor: Math.max(detourFactor, 1.45) });
+            console.warn("[queue/suggest] ORS ใช้ไม่ได้ — ใช้ประมาณการระยะแบบระมัดระวัง (กันจับคู่ไกล)");
+          } else {
+            travelMin = orsMin * trafficFactor;   // ORS = เวลาถนนโล่ง → คูณรถติดก่อนเทียบเกณฑ์
+          }
+          dist.set(existing.id, { km: Math.round(km * 10) / 10, min: Math.round(travelMin) });
+          if (travelMin > maxPairMin) { ok = false; break; }
+          pairNote = ` · คู่กับคิว ${String(existing.queue_time ?? "").slice(0, 5)} ห่าง ${km.toFixed(1)} กม. ~${Math.round(travelMin)} นาที`;
         }
-        if (travelMin == null) {
-          // ORS ใช้ไม่ได้ → ประมาณการแบบ "ระมัดระวัง" (เมืองรถติดช้ากว่า 40 km/h มาก)
-          travelMin = estimateMinutes(
-            { lat: existing.lat!, lng: existing.lng! },
-            { lat: newLat!, lng: newLng! },
-            { avgSpeedKmh: Math.min(avgSpeedKmh, 24), detourFactor: Math.max(detourFactor, 1.45) }
-          );
-          console.warn("[queue/suggest] ORS ใช้ไม่ได้ — ใช้ประมาณการระยะแบบระมัดระวัง (กันจับคู่ไกล)");
-        }
-        if (travelMin > maxPairMin) continue;
+        if (!ok) continue;
       }
 
       return {
@@ -227,7 +283,9 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
         queue_time: freeSlot,
         sales_id: s.id,
         sales_name: s.name,
-        reason: `${s.name} ว่างเร็วสุด ${DOW_TH[dow]} ${dateStr} ${freeSlot.slice(0, 5)}`,
+        reason: `${s.name} ว่างเร็วสุด ${DOW_TH[dow]} ${dateStr} ${freeSlot.slice(0, 5)}${pairNote}`,
+        day_plan: toPlan(dayEntries, dist),
+        day_notes: dayNotes,
       };
     }
   }

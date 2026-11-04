@@ -9,6 +9,7 @@ import type { DesignerOption } from "@/app/(app)/designer/page";
 import AddDesignWorkModal from "@/components/designer/AddDesignWorkModal";
 import DesignerSchedule from "@/components/designer/DesignerSchedule";
 import { HoldModal } from "@/components/jobs/HoldModal";
+import OldCustomerTag from "@/components/OldCustomerTag";
 
 // ─── Column config + Thai labels ─────────────────────────────────────────────
 const COLUMNS: { state: DesignState; th: string; dot: string }[] = [
@@ -34,6 +35,7 @@ type Job = {
   designer_ref: number | null;
   designer_name: string | null;
   sales_name: string | null;   // เซลล์ที่ไปดูหน้างาน
+  old_customer?: boolean;      // ลูกค้าเก่า (จากคิวประเมิน — 0168)
   design_state: DesignState;
   design_due_date: string | null;
   design_received_date: string | null;
@@ -827,7 +829,7 @@ function JobRow({
             )}
           </div>
           <div className="text-ink-2 mt-0.5 truncate" title={job.customer_name}>
-            {job.customer_name}
+            {job.customer_name} <OldCustomerTag show={job.old_customer} small />
           </div>
           <div className="text-[11px] text-ink-3 mt-0.5 truncate">
             {job.sales_name ? `เซลล์ ${job.sales_name}` : "—"}

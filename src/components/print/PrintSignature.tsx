@@ -1,17 +1,20 @@
 import { COMPANY } from "@/app/(app)/quotations/[id]/print/quote-constants";
+import { COMPANY_EN, docText, type DocLang } from "@/lib/doc-lang";
 
 // บล็อกลายเซ็นกลาง — ฟอร์มเดียวทุกเอกสาร (ใบเสนอ/ใบวางบิล/ใบเสร็จ)
 // ซ้าย = ในนามลูกค้า · ขวา = ในนามบริษัท · แต่ละฝั่งมี 2 ช่อง: บทบาท + วันที่
 export function PrintSignature({
-  customerName, customerRole, companyRole,
+  customerName, customerRole, companyRole, lang = "th",
 }: {
   customerName?: string;
   customerRole: string;  // ฝั่งลูกค้า เช่น ผู้สั่งซื้อสินค้า / ผู้รับวางบิล / ผู้จ่ายเงิน
   companyRole: string;   // ฝั่งบริษัท เช่น ผู้อนุมัติ / ผู้วางบิล / ผู้รับเงิน
+  lang?: DocLang;        // en = ใบเสนอราคาภาษาอังกฤษ (ป้าย ในนาม/วันที่ + ชื่อบริษัทอังกฤษ)
 }) {
+  const t = docText(lang);
   const halves = [
-    { name: customerName || "ลูกค้า", role: customerRole },
-    { name: COMPANY.name, role: companyRole },
+    { name: customerName || t.customer, role: customerRole },
+    { name: lang === "en" ? COMPANY_EN.name : COMPANY.name, role: companyRole },
   ];
   return (
     // break-inside/page-break-inside: avoid — กันบล็อกเซ็นถูกตัดครึ่งข้ามหน้าเวลาพิมพ์ (ต้องไปทั้งก้อน)
@@ -21,13 +24,13 @@ export function PrintSignature({
     >
       {halves.map((h, i) => (
         <div key={i} className="flex-1" style={{ breakInside: "avoid", pageBreakInside: "avoid" }}>
-          <div className="font-semibold text-center mb-14">ในนาม {h.name}</div>
+          <div className="font-semibold text-center mb-14">{t.onBehalf} {h.name}</div>
           <div className="flex gap-6" style={{ breakInside: "avoid", pageBreakInside: "avoid" }}>
             <div className="flex-1 text-center">
               <div style={{ borderTop: "1px solid #9ca3af", paddingTop: 4 }}>{h.role}</div>
             </div>
             <div className="flex-1 text-center">
-              <div style={{ borderTop: "1px solid #9ca3af", paddingTop: 4 }}>วันที่</div>
+              <div style={{ borderTop: "1px solid #9ca3af", paddingTop: 4 }}>{t.sigDate}</div>
             </div>
           </div>
         </div>
