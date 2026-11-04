@@ -29,6 +29,8 @@ type CustomerSearchResult = {
 };
 
 // ---- helpers ----------------------------------------------------------------
+// เทียบชื่อลูกค้าแบบหลวม (ตัด "คุณ"/ช่องว่าง) — ใช้เตือน "ชื่อนี้มีในทะเบียนแล้ว" ตอนเพิ่มลูกค้าใหม่
+const normCustName = (s: string) => String(s ?? "").replace(/^คุณ\s*/, "").replace(/\s+/g, "").toLowerCase();
 
 // เวลา "HH:MM"/"H.MM" → นาที (รองรับข้อมูล import จุด) · null ถ้าพาร์สไม่ได้
 function timeToMin(t: string | null): number | null {
@@ -491,6 +493,9 @@ export function QueueModal({
   const [selectedCust, setSelectedCust] = useState<CustomerSearchResult | null>(null);
   const custSearchAbortRef = useRef<AbortController | null>(null);
   const custSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // เตือนชื่อซ้ำตอน "ลูกค้าใหม่" — promote เช็คซ้ำด้วยเบอร์เท่านั้น ถ้าแถวเดิมไม่มีเบอร์จะได้ลูกค้าซ้ำ (เคสคุณป้อ 4 พ.ย.69)
+  const [nameDup, setNameDup] = useState<CustomerSearchResult[]>([]);
+  const nameDupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // loading state สำหรับดึงข้อมูลไซต์เดิม (existing_site)
   const [siteInfoBusy, setSiteInfoBusy] = useState(false);
   // ลูกค้านี้ไม่มีงานในระบบ (existing_site auto-load คืน 0 งาน)
@@ -529,6 +534,22 @@ export function QueueModal({
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobSearch, needsJobSearch]);
+
+  // debounce เช็คชื่อซ้ำในทะเบียน (ลูกค้าใหม่ / ลูกค้าเก่าไม่มีในระบบ)
+  useEffect(() => {
+    if (jobCat !== "ประเมินหน้างาน" || f.custMode === "old") { setNameDup([]); return; }
+    const key = normCustName(f.customer_name);
+    if (key.length < 2) { setNameDup([]); return; }
+    if (nameDupTimerRef.current) clearTimeout(nameDupTimerRef.current);
+    nameDupTimerRef.current = setTimeout(async () => {
+      try {
+        const r = await api.get<CustomerSearchResult[]>(`/customers?q=${encodeURIComponent(f.customer_name.trim())}`);
+        setNameDup((r.data ?? []).filter((c) => normCustName(c.name) === key).slice(0, 3));
+      } catch { setNameDup([]); }
+    }, 450);
+    return () => { if (nameDupTimerRef.current) clearTimeout(nameDupTimerRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [f.customer_name, f.custMode, jobCat]);
 
   // debounce ค้นลูกค้าเดิม (0045)
   useEffect(() => {
@@ -1388,13 +1409,36 @@ export function QueueModal({
               )}
 
               {f.custMode !== "old" ? (
-                /* ลูกค้าใหม่ — พิมพ์ชื่อเอง */
-                <input
-                  value={f.customer_name}
-                  onChange={(e) => set("customer_name", e.target.value)}
-                  placeholder="คุณ…"
-                  className={inp}
-                />
+                /* ลูกค้าใหม่ — พิมพ์ชื่อเอง (+ เตือนถ้าทะเบียนมีชื่อนี้อยู่แล้ว) */
+                <div className="space-y-1.5">
+                  <input
+                    value={f.customer_name}
+                    onChange={(e) => set("customer_name", e.target.value)}
+                    placeholder="คุณ…"
+                    className={inp}
+                  />
+                  {nameDup.length > 0 && (
+                    <div className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 space-y-1.5">
+                      <p className="text-xs text-amber-800 font-semibold">ทะเบียนมีชื่อนี้อยู่แล้ว — ถ้าเป็นคนเดียวกัน กดใช้แถวเดิม (กันลูกค้าซ้ำ)</p>
+                      {nameDup.map((c) => (
+                        <div key={c.id} className="flex items-center gap-2">
+                          <div className="flex-1 min-w-0 text-xs text-amber-900 truncate">
+                            {c.name} <span className="text-amber-700">#{c.id}</span>{c.phone ? ` · ${formatThaiPhone(c.phone)}` : " · ไม่มีเบอร์"}{c.address ? ` · ${c.address}` : ""}
+                          </div>
+                          <button type="button"
+                            onClick={() => {
+                              setF((s) => ({ ...s, custMode: "old", oldCustomerMode: "", target_job_id: null, target_customer_id: null }));
+                              setNameDup([]);
+                              selectCustomer(c);
+                            }}
+                            className="press shrink-0 rounded-lg bg-amber-600 text-white px-2.5 py-1 text-[11px] font-semibold">
+                            ใช้ลูกค้าเดิมนี้
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ) : (
                 /* ลูกค้าเก่า — ค้น → เลือก → เลือก mode หน้างาน */
                 <div className="space-y-2.5">

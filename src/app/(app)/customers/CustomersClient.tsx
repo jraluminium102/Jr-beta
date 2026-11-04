@@ -38,6 +38,11 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
   const [areaDraft, setAreaDraft] = useState("");
   const [areaSaving, setAreaSaving] = useState(false);
   const [areaErr, setAreaErr] = useState("");
+  // รวมลูกค้าซ้ำ (0171 merge_customers) — เลือก "ตัวที่เก็บ" แล้วย้ายงาน/คิว/ใบเสนอของตัวที่เลือกอยู่ไปใต้ตัวนั้น
+  const [merging, setMerging] = useState(false);
+  const [mergeQ, setMergeQ] = useState("");
+  const [mergeBusy, setMergeBusy] = useState(false);
+  const [mergeErr, setMergeErr] = useState("");
 
   useEffect(() => {
     if (!sel) { setCustJobs([]); return; }
@@ -54,6 +59,48 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
   const filtered = list.filter((c) =>
     [c.name, c.job, c.phone, c.line_id, c.line_id_prev ?? ""].join(" ").toLowerCase().includes(q.toLowerCase())
   );
+
+  // ชื่อซ้ำในทะเบียน (ตัด "คุณ"/ช่องว่าง) → ติดป้ายให้เห็น + ปุ่มรวม (เคสคุณป้อ 4 พ.ย.69: 2 แถว คนเดียวกัน)
+  const normName = (s: string) => String(s ?? "").replace(/^คุณ\s*/, "").replace(/\s+/g, "").toLowerCase();
+  const dupKeys = (() => {
+    const cnt = new Map<string, number>();
+    for (const c of list) { const k = normName(c.name); if (k) cnt.set(k, (cnt.get(k) ?? 0) + 1); }
+    return new Set([...cnt.entries()].filter(([, n]) => n > 1).map(([k]) => k));
+  })();
+  const isDup = (c: Customer) => dupKeys.has(normName(c.name));
+  const mergeCandidates = sel
+    ? list.filter((c) => c.id !== sel.id && (
+        mergeQ.trim()
+          ? [c.name, c.phone, c.line_id, String(c.id)].join(" ").toLowerCase().includes(mergeQ.trim().toLowerCase())
+          : normName(c.name) === normName(sel.name)
+      )).slice(0, 8)
+    : [];
+
+  async function doMerge(target: Customer) {
+    if (!sel) return;
+    const okGo = window.confirm(
+      `รวม "${sel.name}" (#${sel.id}) เข้ากับ "${target.name}" (#${target.id})?\n\n` +
+      `• งาน/คิว/ใบเสนอ/นามออกบิลทั้งหมดของ "${sel.name}" จะย้ายไปอยู่ใต้ "${target.name}"\n` +
+      `• ชื่อในผลิต/คิวของงานที่ย้ายจะเป็น "${target.name}" (เอกสารที่ออกแล้วคงชื่อเดิมต่อใบ)\n` +
+      `• "${sel.name}" (#${sel.id}) จะถูกลบออกจากทะเบียน — ย้อนกลับไม่ได้`,
+    );
+    if (!okGo) return;
+    setMergeBusy(true); setMergeErr("");
+    const res = await fetch(`/api/customers/${sel.id}/merge`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ into: target.id }),
+    });
+    const json = await res.json().catch(() => null);
+    setMergeBusy(false);
+    if (!res.ok) { setMergeErr(json?.error ?? "รวมไม่สำเร็จ"); return; }
+    // ดึงตัวที่เก็บมาใหม่ (ช่องว่างถูกเติมจากตัวที่ลบ) แล้วเอาตัวที่ลบออกจากรายการ
+    const fresh = await fetch(`/api/customers/${target.id}`).then((r) => r.json()).catch(() => null);
+    const kept: Customer = (fresh?.data as Customer) ?? target;
+    const removedId = sel.id;
+    setList((ls) => ls.filter((c) => c.id !== removedId).map((c) => (c.id === kept.id ? kept : c)));
+    setSel(kept); setMerging(false); setMergeQ("");
+    const r = (json?.data ?? {}) as { jobs?: number; queues?: number; quotations?: number };
+    window.alert(`รวมแล้ว — ย้ายงาน ${r.jobs ?? 0} · คิว ${r.queues ?? 0} · ใบเสนอ ${r.quotations ?? 0} ไปใต้ "${kept.name}"`);
+  }
 
   function startAdd() { setForm(EMPTY); setBilling(EMPTY_BILLING); setEditId(null); setAdding(true); setSel(null); setErr(""); }
   function startEdit(c: Customer) {
@@ -163,7 +210,12 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
             {filtered.map((c) => (
               <button key={c.id} onClick={() => { setSel(c); setAdding(false); }} aria-current={sel?.id === c.id}
                 className={`press w-full text-left rounded-xl px-3 py-2.5 ${sel?.id === c.id ? "text-white bg-brand shadow-brand" : "glass-soft hover:bg-white/70"}`}>
-                <div className="font-semibold text-sm">{c.name}</div>
+                <div className="font-semibold text-sm flex items-center gap-1.5">
+                  <span className="truncate">{c.name}</span>
+                  {isDup(c) && (
+                    <span className={`shrink-0 rounded-full px-1.5 py-px text-[10px] font-semibold ${sel?.id === c.id ? "bg-white/25 text-white" : "bg-amber-100 text-amber-800"}`} title="มีชื่อซ้ำในทะเบียน — เปิดดูแล้วกด 'รวมลูกค้าซ้ำ' ถ้าเป็นคนเดียวกัน">ชื่อซ้ำ</span>
+                  )}
+                </div>
                 <div className={`text-xs ${sel?.id === c.id ? "text-red-50" : "text-ink-3"}`}>{c.job || "—"}</div>
                 {c.address && (
                   <div className={`text-[11px] truncate ${sel?.id === c.id ? "text-red-50/80" : "text-ink-3"}`}>📍 {c.address}</div>
@@ -249,9 +301,45 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
                       <Icon name="file" size={14} /> แก้ไข
                     </button>
                   )}
+                  {canWrite && (
+                    <button onClick={() => { setMerging((v) => !v); setMergeQ(""); setMergeErr(""); }}
+                      className={`press inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold ${isDup(sel) ? "bg-amber-100 text-amber-900" : "glass-soft text-ink-2"}`}
+                      title="ลูกค้าคนเดียวกันมี 2 แถว → ย้ายทุกอย่างของแถวนี้ไปรวมกับอีกแถว แล้วลบแถวนี้">
+                      <Icon name="refresh" size={14} /> รวมลูกค้าซ้ำ
+                    </button>
+                  )}
                   <Badge tone="violet">ลูกค้า #{String(sel.id).padStart(4, "0")}</Badge>
                 </div>
               </div>
+
+              {merging && (
+                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/70 p-3.5 text-sm">
+                  <div className="font-semibold text-amber-900">รวม &ldquo;{sel.name}&rdquo; (#{sel.id}) เข้ากับลูกค้าอีกแถว</div>
+                  <p className="text-xs text-amber-800 mt-1">
+                    เลือก &ldquo;แถวที่จะเก็บไว้&rdquo; — งาน/คิว/ใบเสนอ/นามออกบิลของแถวนี้จะย้ายไปอยู่ใต้แถวนั้น ชื่อในผลิต/คิวจะเป็นชื่อแถวที่เก็บ แล้วแถวนี้ถูกลบ · เอกสารที่ออกไปแล้วไม่เปลี่ยนชื่อ
+                  </p>
+                  <input value={mergeQ} onChange={(e) => setMergeQ(e.target.value)} placeholder="ค้นหาแถวที่จะเก็บ (ชื่อ / เบอร์ / รหัส) — ว่าง = โชว์ชื่อซ้ำ"
+                    className="mt-2 w-full glass-soft rounded-lg px-3 py-2 text-sm outline-none border border-amber-200" />
+                  <div className="mt-2 space-y-1.5 max-h-56 overflow-y-auto">
+                    {mergeCandidates.length === 0 && (
+                      <p className="text-xs text-ink-3">{mergeQ.trim() ? "ไม่พบ" : "ไม่มีชื่อซ้ำ — พิมพ์ค้นหาแถวที่จะเก็บ"}</p>
+                    )}
+                    {mergeCandidates.map((c) => (
+                      <div key={c.id} className="flex items-center gap-2 rounded-lg bg-white/80 px-3 py-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-brand-dark truncate">{c.name} <span className="text-ink-3 font-normal text-xs">#{c.id}</span></div>
+                          <div className="text-[11px] text-ink-3 truncate">{[c.phone, c.line_id, c.address].filter(Boolean).join(" · ") || "—"}</div>
+                        </div>
+                        <button type="button" disabled={mergeBusy} onClick={() => doMerge(c)}
+                          className="press shrink-0 rounded-lg bg-amber-600 text-white px-3 py-1.5 text-xs font-semibold disabled:opacity-60">
+                          {mergeBusy ? "…" : "เก็บแถวนี้ → รวม"}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  {mergeErr && <p role="alert" className="text-xs text-red-700 mt-2">{mergeErr}</p>}
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4 mt-5 text-sm">
                 <Detail label="ที่อยู่ออกบิล" val={sel.address} wide />
                 <Detail label="เลขผู้เสียภาษี" val={sel.tax_id} />
