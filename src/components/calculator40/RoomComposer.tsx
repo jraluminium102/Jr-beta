@@ -54,6 +54,15 @@ import { computeDoorZipR4 } from "@/lib/calculator40/door-zip.mjs";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+/** โหมดค่าแรง (เหมือนหน้า G1): "all" = ผลิต+ติดตั้ง · "mfg" = ผลิตอย่างเดียว (ส่งของ ไม่ไปติดตั้ง · ยอดหลังลดขายส่งของรุ่น)
+ *  5 พ.ย.69 เจ้าของสั่ง "งานกั้นห้องให้ดูราคาผลิต แยกติดตั้งได้" — ทุกชิ้นที่คิดผ่าน engine มี sell.mfgOnlyNet อยู่แล้ว แค่หยิบมาใช้
+ *  ชิ้นที่เป็นเรตเหมา (ผนังเบา/ฝ้า R3.9/พื้น/พัดลม/บริการ) ไม่มีค่าแรงแยก → ราคาเท่ากันทั้ง 2 โหมด */
+export type LaborMode = "all" | "mfg";
+function sellOf(r: any, mode: LaborMode = "all"): number {
+  if (!r?.sell) return 0;
+  return mode === "mfg" ? (Number(r.sell.mfgOnlyNet) || 0) : (Number(r.sell.withInstall) || 0);
+}
+
 function fmtBaht(n: number) {
   return "฿" + Math.round(n || 0).toLocaleString("th-TH");
 }
@@ -157,7 +166,7 @@ function paneAreaSum(s: Side): number {
 // ไอโซวอลทับพื้นที่ที่เป็นประตู/หน้าต่างไปแล้ว (เจ้าของย้ำ "คิดเต็มไม่ได้" 5ส.ค.69)
 // วิธี: คิดต้นทุนผนังเต็ม (BOM จริงรวมโครง/PERIM) แล้วสเกลลงตามสัดส่วนพื้นที่สุทธิ/พื้นที่เต็ม — เป็น app-layer
 // approximation (ไม่แตะ engine) ที่สเกล "รวมโครง" ไปด้วย ไม่ใช่แค่แผ่นบอร์ด แต่เจ้าของรับได้ (ระบุชัดในคอมเมนต์)
-function wallPrice(s: Extract<Side, { kind: "wall" }>, pb: any, profitPct: number, pf?: PaneProfit): number {
+function wallPrice(s: Extract<Side, { kind: "wall" }>, pb: any, profitPct: number, pf?: PaneProfit, mode: LaborMode = "all"): number {
   const fullArea = (s.aw || 3) * (s.ah || 2.6);
   const paneArea = paneAreaSum(s);
   const netArea = Math.max(0, fullArea - paneArea); // clamp ≥0 กันบานใหญ่กว่าผนัง
@@ -170,20 +179,21 @@ function wallPrice(s: Extract<Side, { kind: "wall" }>, pb: any, profitPct: numbe
     ...(s.wallType === "roofsheet" ? { material: s.wmat || prod.defMaterial } : {}),
     ...(pf && pf.manual ? { profitManual: true, profitMat: pf.mat ?? profitPct, profitProd: pf.prod ?? profitPct, profitInst: pf.inst ?? profitPct, installProfitPct: pf.inst ?? profitPct } : {}),
   });
-  const fullCost = r.sell.withInstall;
+  const fullCost = sellOf(r, mode);
   if (fullArea <= 0) return 0;
   return Math.round(fullCost * netArea / fullArea);
 }
 
-function sideTotal(s: Side, pb: any, color: string, glassType: string, profitPct: number, pf?: PaneProfit): number {
+function sideTotal(s: Side, pb: any, color: string, glassType: string, profitPct: number, pf?: PaneProfit, mode: LaborMode = "all"): number {
   // ราคาบาน (ประตู/หน้าต่าง) ในด้านนี้ — glass ใช้ cols เดิม · wall/open ก็คิดจาก cols เหมือนกัน (0 ถ้าไม่มีบาน)
-  const paneCost = sidePanes(s).reduce((a, p) => a + panePrice(p, pb, color, glassType, profitPct, undefined, pf).amount, 0);
-  if (s.kind === "wall") return wallPrice(s, pb, profitPct, pf) + paneCost; // ผนัง(สุทธิหักช่องบาน) + บานที่เจาะ
+  //   mode "mfg" = ผลิตอย่างเดียว (sell.mfgOnlyNet ของแต่ละบาน) · ไม่มี r (รุ่นหาย) = 0 เท่า amount เดิม
+  const paneCost = sidePanes(s).reduce((a, p) => { const pr = panePrice(p, pb, color, glassType, profitPct, undefined, pf); return a + (pr.r ? sellOf(pr.r, mode) : pr.amount); }, 0);
+  if (s.kind === "wall") return wallPrice(s, pb, profitPct, pf, mode) + paneCost; // ผนัง(สุทธิหักช่องบาน) + บานที่เจาะ
   return paneCost; // glass = Σบาน · open = Σบาน (ไม่มีบาน = 0, เปิดโล่งจริง)
 }
 
 // ฝ้า — ใช้ ceil_* product จริง (w/h = กว้าง/ยาวห้องจริง ซม. ตรง PERIM_VARS ของ products.mjs) หรือ flat CEIL_RATE ถ้าไม่มี product ตรง
-function ceilPrice(typeKey: string, w: number, l: number, insul: boolean, pb: any, profitPct: number, pf?: PaneProfit): number {
+function ceilPrice(typeKey: string, w: number, l: number, insul: boolean, pb: any, profitPct: number, pf?: PaneProfit, mode: LaborMode = "all"): number {
   const area = w * l;
   if (area <= 0) return 0;
   const t = CEIL_TYPES.find((x) => x.key === typeKey);
@@ -193,7 +203,7 @@ function ceilPrice(typeKey: string, w: number, l: number, insul: boolean, pb: an
     const material = t.key === "wood" ? "ไม้ทิพย์|สีพื้น" : undefined;
     const r: any = computeCost(pb, prod, { w: w * 100, h: l * 100, p: 1, form, material, profitPct, installProfitPct: profitPct, addons: {},
       ...(pf && pf.manual ? { profitManual: true, profitMat: pf.mat ?? profitPct, profitProd: pf.prod ?? profitPct, profitInst: pf.inst ?? profitPct, installProfitPct: pf.inst ?? profitPct } : {}) });
-    return r.sell.withInstall;
+    return sellOf(r, mode);
   }
   // ไม่มี R4.0 product ตรง → flat CEIL_RATE (engine.mjs, แหล่งเดียวกับเครื่องเดิม + G3) — ติดป้าย (R3.9)
   const label = CEIL_FLAT_LABEL[typeKey] || "ฉาบเรียบ";
@@ -221,8 +231,24 @@ function svcDemoTotal(demo: { roof: number; floor: number; rail: number; railLen
   return t;
 }
 
+/** คู่ตัวเลข 2 คอลัมน์ในหน้าสรุป (ผลิตอย่างเดียว | ผลิต+ติดตั้ง) — คอลัมน์ของโหมดที่เลือกอยู่เข้ม อีกคอลัมน์จาง */
+function Pair({ mfg, all, isMfg, bold }: { mfg: number; all: number; isMfg: boolean; bold?: boolean }) {
+  const on = (bold ? "text-base " : "font-medium ") + "tabular-nums text-right w-24";
+  const off = "tabular-nums text-right w-24 text-ink-3/70 font-normal";
+  return (
+    <span className="flex items-center gap-3">
+      <span className={isMfg ? on : off}>{fmtBaht(mfg)}</span>
+      <span className={!isMfg ? on : off}>{fmtBaht(all)}</span>
+    </span>
+  );
+}
+
 // state = สแนป state ทั้งห้อง (0093) — เก็บเป็น "สูตร" ในใบเสนอ แล้วโหลดกลับมาแก้ได้ (ผ่าน prop initial)
-export type RoomTotals = { total: number; sides: number[]; sideDescs?: string[]; roofDesc?: string; ceilDesc?: string; specLines?: string[]; roof: number; ceil: number; floor: number; fan: number; services: number; svc: number; state?: any };
+export type RoomTotals = {
+  total: number; sides: number[]; sideDescs?: string[]; roofDesc?: string; ceilDesc?: string; specLines?: string[]; roof: number; ceil: number; floor: number; fan: number; services: number; svc: number; state?: any;
+  /** ราคาผลิตอย่างเดียว (ไม่รวมติดตั้ง · ไม่รวมรื้อ/ป้องกันหน้างาน) — คู่กับ total/sides/roof/ceil */
+  mfgTotal: number; sidesMfg: number[]; roofMfg: number; ceilMfg: number;
+};
 
 // ── รูปด้านผนัง (elevation) — วาดผนังลายทแยง + ประตู/หน้าต่างเจาะในผนัง + ป้ายชนิดผนัง/พื้นที่สุทธิ (เจ้าของสั่ง 5ส.ค.69 · แบบรูปด้านจริง)
 //   คลิกบานในรูป = เลือกบานนั้น (ไฮไลต์แดง · เชื่อม selKey เดียวกับ ColsEditor) · บานวางชิดพื้นเรียงซ้าย→ขวา ที่เหลือเป็นเนื้อผนัง (ลายทแยง)
@@ -291,7 +317,7 @@ function WallElevation({
 //   รูปด้าน 2 มิติ (ช่องซ้าย→ขวา · ในช่องซ้อนบน→ล่าง) + แถบจัดเรียง ◀▶▲▼＋บน/ล่าง/ช่อง + การ์ดตั้งค่าบานที่เลือกเต็ม (พาริตี้ R3.9 G6R)
 //   cols=[] ใช้ได้ (เช่น เปิดโล่งที่ยังไม่ใส่บาน) — ปุ่ม ＋ช่อง ยังโชว์ให้เริ่มใส่บานแรกได้เสมอ
 function ColsEditor({
-  cols, selKey, onSelect, cardRefs, pb, color, glassFallback, profitPct, profitOpt,
+  cols, selKey, onSelect, cardRefs, pb, color, glassFallback, profitPct, profitOpt, laborMode,
   onPatchPane, onRemovePane, onAddColumn, onAddPiece, onMoveCol, onMovePc,
 }: {
   cols: Col[];
@@ -303,6 +329,7 @@ function ColsEditor({
   glassFallback: string;
   profitPct: number;
   profitOpt?: PaneProfit;
+  laborMode?: LaborMode;
   onPatchPane: (key: number, p: Partial<Pane>) => void;
   onRemovePane: (key: number) => void;
   onAddColumn: () => void;
@@ -318,7 +345,9 @@ function ColsEditor({
   const totalW = cols.reduce((a, c) => a + Math.max(0.3, ...c.pcs.map((p) => p.w || 0)), 0);
   const arrCls = "press min-h-[32px] min-w-[34px] px-2 rounded-lg text-xs font-bold glass-soft text-ink-2 hover:bg-white/80";
   const prod = sel ? PANE_BY_KEY[sel.typeKey] : null;
-  const { amount: price, mosqLabel } = sel ? panePrice(sel, pb, color, glassFallback, profitPct, undefined, profitOpt) : { amount: 0, mosqLabel: undefined as string | undefined };
+  const pr = sel ? panePrice(sel, pb, color, glassFallback, profitPct, undefined, profitOpt) : null;
+  const price = pr ? (pr.r ? sellOf(pr.r, laborMode) : pr.amount) : 0;   // ราคาบานที่เลือก ตามโหมดค่าแรง (ผลิต / ผลิต+ติดตั้ง)
+  const mosqLabel = pr?.mosqLabel;
   const movePanes = sel ? Math.max(1, (sel.n || 1) - (sel.fixedPanes || 0)) : 1;
   const glassGroups = glassOptionGroups(pb) as { cat: string; items: { value: string; label: string }[] }[];
 
@@ -558,7 +587,7 @@ function ColsEditor({
 }
 
 export default function RoomComposer({
-  pb, mainColor, mainGlass, profitPct, profitOpt, onTotal, initial,
+  pb, mainColor, mainGlass, profitPct, profitOpt, onTotal, initial, laborMode: laborModeProp, onLaborMode,
 }: {
   pb: any;
   mainColor: string;
@@ -569,8 +598,13 @@ export default function RoomComposer({
   profitOpt?: PaneProfit;
   onTotal?: (t: RoomTotals) => void;
   initial?: any; // state ที่บันทึกไว้ (0093) — ตั้งต้นทุกช่องตามสูตรเดิม (parent remount ด้วย key ตอนโหลด)
+  /** โหมดค่าแรงที่หน้าหลักถืออยู่ (ตัวเดียวกับหน้า G1) — ราคาที่โชว์ทุกจุดในห้องตามโหมดนี้ · กดสลับได้จากการ์ดล่าง */
+  laborMode?: LaborMode;
+  onLaborMode?: (m: LaborMode) => void;
 }) {
   const ini: any = initial || {};
+  const laborMode: LaborMode = laborModeProp === "mfg" ? "mfg" : "all";
+  const isMfg = laborMode === "mfg";
   const [sides, setSides] = useState<Side[]>(() => (Array.isArray(ini.sides) && ini.sides.length ? ini.sides : [freshGlassSide(), freshGlassSide()]));
   const [tab, setTab] = useState<number>(0); // 0..sides.length-1 = ด้าน, +1 สี/กระจก, +2 หลังคา/ฝ้า, +3 งานเสริม, +4 สรุป
   const [selKey, setSelKey] = useState<number | null>(null); // บานที่เลือกในรูปด้าน (ไฮไลต์ + เลื่อนไปการ์ดตั้งค่า)
@@ -648,10 +682,16 @@ export default function RoomComposer({
   function sideColor(i: number) { return sideColorOvr[i]?.color || mainColor; }
   function sideGlass(i: number) { return sideColorOvr[i]?.glass || mainGlass; }
 
-  const sideTotals = useMemo(
-    () => sides.map((s, i) => sideTotal(s, pb, sideColor(i), sideGlass(i), profitPct, profitOpt)),
+  // คิดคู่เสมอ (ผลิต+ติดตั้ง / ผลิตอย่างเดียว) — หน้าสรุปโชว์ทั้ง 2 คอลัมน์ · ยอดที่ส่งขึ้นใบตามโหมดที่หน้าหลักเลือก
+  const sideTotalsAll = useMemo(
+    () => sides.map((s, i) => sideTotal(s, pb, sideColor(i), sideGlass(i), profitPct, profitOpt, "all")),
     [sides, pb, sideColorOvr, mainColor, mainGlass, profitPct]
   );
+  const sideTotalsMfg = useMemo(
+    () => sides.map((s, i) => sideTotal(s, pb, sideColor(i), sideGlass(i), profitPct, profitOpt, "mfg")),
+    [sides, pb, sideColorOvr, mainColor, mainGlass, profitPct]
+  );
+  const sideTotals = isMfg ? sideTotalsMfg : sideTotalsAll;
 
   const roofArea = useMemo(() => {
     const base = (Number(roofW) || 0) * (Number(roofL) || 0);
@@ -659,10 +699,10 @@ export default function RoomComposer({
     return base + extra;
   }, [roofW, roofL, roofSegs]);
 
-  const roofTotal = useMemo(() => {
-    if (!roofOn) return 0;
+  const roofTotals = useMemo((): { all: number; mfg: number } => {
+    if (!roofOn) return { all: 0, mfg: 0 };
     const prod = roofProd;
-    if (!prod) return 0;
+    if (!prod) return { all: 0, mfg: 0 };
     const w = Number(roofW) || 4, l = Number(roofL) || 3;
     // เลื่อน (roof_slide) จำนวนบานเริ่ม 2 · อื่น ๆ 1
     const pnl = prod.defaults?.p ?? 1;
@@ -674,22 +714,29 @@ export default function RoomComposer({
     const rzR4 = computeRoofZipR4(roofAddons, { wCm: w * 100, hCm: l * 100 }, pb, profitPct);
     if (rzR4) rOpt.roofZipR4 = rzR4;
     const r: any = computeCost(pb, prod, rOpt);
-    let t = r.sell.withInstall;
+    let t = r.sell.withInstall, tm = sellOf(r, "mfg");
     // หลังคาหลายช่วง (ขยัก) — เฉพาะกันสาด · ช่วงเพิ่มคิดตามขนาดจริง วัสดุ/สีตามช่วงหลัก
     if (roofIsAwning) roofSegs.forEach((sg) => {
       const sw = (Number(sg.w) || 0) * 100, sh = (Number(sg.l) || 0) * 100;
       if (!(sw > 0 && sh > 0)) return;
       const sr: any = computeCost(pb, prod, { w: sw, h: sh, p: 1, form: prod.defForm, material: roofMaterial, profitPct, installProfitPct: profitPct, addons: {},
         ...(profitOpt && profitOpt.manual ? { profitManual: true, profitMat: profitOpt.mat ?? profitPct, profitProd: profitOpt.prod ?? profitPct, profitInst: profitOpt.inst ?? profitPct, installProfitPct: profitOpt.inst ?? profitPct } : {}) });
-      t += sr.sell.withInstall;
+      t += sr.sell.withInstall; tm += sellOf(sr, "mfg");
     });
-    return t;
+    return { all: t, mfg: tm };
   }, [roofOn, roofShapeId, roofW, roofL, roofMaterial, roofSegs, roofAddons, pb, profitPct]);
+  const roofTotalAll = roofTotals.all, roofTotalMfg = roofTotals.mfg;
+  const roofTotal = isMfg ? roofTotalMfg : roofTotalAll;
 
-  const ceilTotal = useMemo(() => {
+  const ceilTotalAll = useMemo(() => {
     if (!ceilOn) return 0;
-    return ceilPrice(ceilType, Number(ceilW) || 0, Number(ceilL) || 0, ceilInsul, pb, profitPct, profitOpt);
+    return ceilPrice(ceilType, Number(ceilW) || 0, Number(ceilL) || 0, ceilInsul, pb, profitPct, profitOpt, "all");
   }, [ceilOn, ceilType, ceilW, ceilL, ceilInsul, pb, profitPct]);
+  const ceilTotalMfg = useMemo(() => {
+    if (!ceilOn) return 0;
+    return ceilPrice(ceilType, Number(ceilW) || 0, Number(ceilL) || 0, ceilInsul, pb, profitPct, profitOpt, "mfg");
+  }, [ceilOn, ceilType, ceilW, ceilL, ceilInsul, pb, profitPct]);
+  const ceilTotal = isMfg ? ceilTotalMfg : ceilTotalAll;
 
   const floorTotal = useMemo(() => {
     if (!floorOn) return 0;
@@ -714,10 +761,16 @@ export default function RoomComposer({
 
   // ส่วนเพิ่มราคาระดับห้อง (สี/กระจกหลัก) — เฉพาะด้านที่ "ไม่ได้" override ต่อด้าน (ด้าน override คิดราคาแล้วใน sideTotal ตรงๆ)
   // หมายเหตุ: sideColor()/sideGlass() ผูกกับ mainColor/mainGlass อยู่แล้วเมื่อไม่ override → ไม่มี premium ซ้ำซ้อนให้คิดเพิ่มที่นี่ (ต่างจากเครื่องเดิมที่แยก mode real/opt)
-  const roomTotal = useMemo(() => {
-    const t = sideTotals.reduce((a, b) => a + b, 0) + roofTotal + ceilTotal + floorTotal + fanTotal + servicesTotal + svcTotal;
+  const roomTotalAll = useMemo(() => {
+    const t = sideTotalsAll.reduce((a, b) => a + b, 0) + roofTotalAll + ceilTotalAll + floorTotal + fanTotal + servicesTotal + svcTotal;
     return ceil100(t);
-  }, [sideTotals, roofTotal, ceilTotal, floorTotal, fanTotal, servicesTotal, svcTotal]);
+  }, [sideTotalsAll, roofTotalAll, ceilTotalAll, floorTotal, fanTotal, servicesTotal, svcTotal]);
+  // ผลิตอย่างเดียว = ส่งของ ไม่ไปหน้างาน → ไม่มี "รื้อของเดิม/ป้องกันหน้างาน" (svcTotal) · พื้น/พัดลม/บริการที่กรอกเองคงไว้ตามที่เลือก
+  const roomTotalMfg = useMemo(() => {
+    const t = sideTotalsMfg.reduce((a, b) => a + b, 0) + roofTotalMfg + ceilTotalMfg + floorTotal + fanTotal + servicesTotal;
+    return ceil100(t);
+  }, [sideTotalsMfg, roofTotalMfg, ceilTotalMfg, floorTotal, fanTotal, servicesTotal]);
+  const roomTotal = isMfg ? roomTotalMfg : roomTotalAll;
 
   // รายละเอียดรายด้าน (ชนิดบาน+รูปแบบ+ขนาด+กระจก) — ไปขึ้นใบเสนอราคาให้ครบ (แก้ปัญหา G6 ปริ้นไม่มีรายละเอียด)
   const sideDescs = useMemo(() => sides.map((s) => {
@@ -760,10 +813,13 @@ export default function RoomComposer({
   // แจ้ง parent (Calculator40Client เอาไปโชว์เป็นราคาหลัก + เพิ่มลงใบเสนอราคา)
   // dep รวม savedKey — state เปลี่ยนแม้ยอดเท่าเดิม (เช่น สลับตำแหน่ง/หมายเหตุ) สูตรก็ตามทัน
   useMemo(() => {
-    onTotal?.({ total: roomTotal, sides: sideTotals, sideDescs, roofDesc, ceilDesc, specLines, roof: roofTotal, ceil: ceilTotal, floor: floorTotal, fan: fanTotal, services: servicesTotal, svc: svcTotal, state: savedState });
+    onTotal?.({
+      total: roomTotalAll, sides: sideTotalsAll, sideDescs, roofDesc, ceilDesc, specLines, roof: roofTotalAll, ceil: ceilTotalAll, floor: floorTotal, fan: fanTotal, services: servicesTotal, svc: svcTotal, state: savedState,
+      mfgTotal: roomTotalMfg, sidesMfg: sideTotalsMfg, roofMfg: roofTotalMfg, ceilMfg: ceilTotalMfg,
+    });
     return null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomTotal, savedKey]);
+  }, [roomTotalAll, roomTotalMfg, savedKey]);
 
   function addSide() {
     setSides((s) => [...s, freshGlassSide()]);
@@ -954,6 +1010,7 @@ export default function RoomComposer({
               <div className="space-y-2">
                 {/* 🖼️ รูปด้าน (2 มิติ) — ช่องซ้าย→ขวา · ในช่องซ้อนบน→ล่าง · คลิกเลือกบาน แล้วใช้แถบจัดเรียง ◀▶▲▼ ＋บน/ล่าง/ช่อง (พาริตี้ R3.9 G6R) */}
                 <ColsEditor
+                  laborMode={laborMode}
                   cols={s.cols}
                   selKey={selKey}
                   onSelect={selectPane}
@@ -1004,7 +1061,7 @@ export default function RoomComposer({
                     <input type="number" step={0.1} value={s.ah || ""} onChange={(e) => patchWall(i, { ah: +e.target.value || 0 })}
                       className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-20 outline-none tabular-nums" />
                     <span className="text-ink-3">ม.</span>
-                    <span className="ml-2 font-semibold text-brand-dark tabular-nums">{fmtBaht(wallPrice(s, pb, profitPct, profitOpt))}</span>
+                    <span className="ml-2 font-semibold text-brand-dark tabular-nums">{fmtBaht(wallPrice(s, pb, profitPct, profitOpt, laborMode))}</span>
                   </div>
                   {/* รูปด้านผนัง — วาดประตู/หน้าต่างเจาะในผนัง (ลายทแยง) + ป้ายชนิดผนัง + พื้นที่สุทธิ (หักช่องบาน) */}
                   <WallElevation
@@ -1042,6 +1099,7 @@ export default function RoomComposer({
                       <Icon name="door-open" size={13} /> ประตู/หน้าต่างในด้านนี้
                     </div>
                     <ColsEditor
+                      laborMode={laborMode}
                       cols={sideCols(s)}
                       selKey={selKey}
                       onSelect={selectPane}
@@ -1071,6 +1129,7 @@ export default function RoomComposer({
                     <Icon name="door-open" size={13} /> ประตู/หน้าต่างในด้านนี้
                   </div>
                   <ColsEditor
+                    laborMode={laborMode}
                     cols={sideCols(s)}
                     selKey={selKey}
                     onSelect={selectPane}
@@ -1414,6 +1473,11 @@ export default function RoomComposer({
       {/* หน้าสรุป */}
       {tab === TAB_SUMMARY && (
         <div className="rounded-xl border border-black/5 bg-white/60 p-3 space-y-1.5 text-sm">
+          {/* หัวคอลัมน์ — ผลิตอย่างเดียว / ผลิต+ติดตั้ง · คอลัมน์ที่เลือกอยู่ (โหมดหน้าหลัก) เข้ม */}
+          <div className="flex items-center justify-end gap-3 text-[11px] text-ink-3 pb-1 border-b border-black/5">
+            <span className={"w-24 text-right " + (isMfg ? "font-bold text-brand-dark" : "")}>ผลิตอย่างเดียว</span>
+            <span className={"w-24 text-right " + (!isMfg ? "font-bold text-brand-dark" : "")}>ผลิต+ติดตั้ง</span>
+          </div>
           {sides.map((s, i) => {
             const doorCount = sidePanes(s).length;
             const doorNote = (s.kind === "wall" || s.kind === "open") && doorCount ? ` + ${doorCount} บาน` : "";
@@ -1425,58 +1489,68 @@ export default function RoomComposer({
             return (
               <div key={i} className="flex items-center justify-between">
                 <span className="text-ink-2">ด้าน {L(i)} ({kindLabel})</span>
-                <span className="tabular-nums font-medium">{fmtBaht(sideTotals[i] || 0)}</span>
+                <Pair mfg={sideTotalsMfg[i] || 0} all={sideTotalsAll[i] || 0} isMfg={isMfg} />
               </div>
             );
           })}
           {roofOn && (
             <div className="flex items-center justify-between">
               <span className="text-ink-2">หลังคา ({roofMaterial} · {fmtNum(roofArea)} ตร.ม.)</span>
-              <span className="tabular-nums font-medium">{fmtBaht(roofTotal)}</span>
+              <Pair mfg={roofTotalMfg} all={roofTotalAll} isMfg={isMfg} />
             </div>
           )}
           {ceilOn && (
             <div className="flex items-center justify-between">
               <span className="text-ink-2">ฝ้า ({CEIL_TYPES.find((t) => t.key === ceilType)?.label})</span>
-              <span className="tabular-nums font-medium">{fmtBaht(ceilTotal)}</span>
+              <Pair mfg={ceilTotalMfg} all={ceilTotalAll} isMfg={isMfg} />
             </div>
           )}
           {floorOn && (
             <div className="flex items-center justify-between">
               <span className="text-ink-2">พื้น</span>
-              <span className="tabular-nums font-medium">{fmtBaht(floorTotal)}</span>
+              <Pair mfg={floorTotal} all={floorTotal} isMfg={isMfg} />
             </div>
           )}
           {fanOn && (
             <div className="flex items-center justify-between">
               <span className="text-ink-2">พัดลม × {fanQty}</span>
-              <span className="tabular-nums font-medium">{fmtBaht(fanTotal)}</span>
+              <Pair mfg={fanTotal} all={fanTotal} isMfg={isMfg} />
             </div>
           )}
           {servicesTotal > 0 && (
             <div className="flex items-center justify-between">
               <span className="text-ink-2">งานบริการเพิ่มเติม</span>
-              <span className="tabular-nums font-medium">{fmtBaht(servicesTotal)}</span>
+              <Pair mfg={servicesTotal} all={servicesTotal} isMfg={isMfg} />
             </div>
           )}
           {svcTotal > 0 && (
             <div className="flex items-center justify-between">
-              <span className="text-ink-2">รื้อของเดิม/ป้องกันหน้างาน</span>
-              <span className="tabular-nums font-medium">{fmtBaht(svcTotal)}</span>
+              <span className="text-ink-2">รื้อของเดิม/ป้องกันหน้างาน <span className="text-[10px] text-ink-3">(งานหน้างาน · ไม่อยู่ในราคาผลิต)</span></span>
+              <Pair mfg={0} all={svcTotal} isMfg={isMfg} />
             </div>
           )}
           <div className="pt-1.5 mt-1.5 border-t border-black/10 flex items-center justify-between font-bold text-brand-dark">
             <span>รวมทั้งห้อง</span>
-            <span className="tabular-nums text-base">{fmtBaht(roomTotal)}</span>
+            <Pair mfg={roomTotalMfg} all={roomTotalAll} isMfg={isMfg} bold />
           </div>
           {remarks && <p className="text-[11px] text-ink-3 pt-1.5 border-t border-black/5">หมายเหตุ: {remarks}</p>}
         </div>
       )}
 
-      {/* ราคารวมห้อง — โชว์ล่างสุดตลอด (ตามเครื่องเดิม) */}
-      <div className="flex items-center justify-between rounded-xl px-4 py-3 bg-brand text-white shadow-brand">
-        <span className="text-sm font-medium text-red-100">รวมทั้งห้อง (ทุกด้าน + ฝ้า + หลังคา + พื้น/พัดลม/บริการ)</span>
-        <span className="text-xl font-bold tabular-nums">{fmtBaht(roomTotal)}</span>
+      {/* ราคารวมห้อง — โชว์ล่างสุดตลอด (ตามเครื่องเดิม) · 5 พ.ย.69 แยก 2 การ์ด ผลิตอย่างเดียว / ผลิต+ติดตั้ง กดเลือกโหมดได้ (ตัวเดียวกับหน้า G1 → ราคาที่ขึ้นใบตามการ์ดที่เลือก) */}
+      <div className="grid grid-cols-2 gap-3">
+        <button type="button" onClick={() => onLaborMode?.("mfg")} disabled={!onLaborMode}
+          className={"press text-left rounded-2xl px-4 py-3 transition " + (isMfg ? "bg-brand text-white shadow-brand" : "glass-soft")} aria-pressed={isMfg}>
+          <div className={"text-xs font-medium " + (isMfg ? "text-red-100" : "text-ink-3")}>{isMfg ? "✓ " : ""}ขายผลิตอย่างเดียว</div>
+          <div className={"font-bold leading-tight tabular-nums " + (isMfg ? "text-2xl" : "text-xl text-brand-dark")}>{fmtBaht(roomTotalMfg)}</div>
+          <div className={"text-[11px] mt-0.5 " + (isMfg ? "text-red-100" : "text-ink-3")}>ส่งของ · ไม่ไปติดตั้ง{svcTotal > 0 ? " · ไม่รวมรื้อ/ป้องกันหน้างาน" : ""}</div>
+        </button>
+        <button type="button" onClick={() => onLaborMode?.("all")} disabled={!onLaborMode}
+          className={"press text-left rounded-2xl px-4 py-3 transition " + (!isMfg ? "bg-brand text-white shadow-brand" : "glass-soft")} aria-pressed={!isMfg}>
+          <div className={"text-xs font-medium " + (!isMfg ? "text-red-100" : "text-ink-3")}>{!isMfg ? "✓ " : ""}ขาย + ติดตั้ง</div>
+          <div className={"font-bold leading-tight tabular-nums " + (!isMfg ? "text-2xl" : "text-xl text-brand-dark")}>{fmtBaht(roomTotalAll)}</div>
+          <div className={"text-[11px] mt-0.5 " + (!isMfg ? "text-red-100" : "text-ink-3")}>ทุกด้าน + ฝ้า + หลังคา + พื้น/พัดลม/บริการ</div>
+        </button>
       </div>
 
       <p className="text-[11px] text-ink-3">

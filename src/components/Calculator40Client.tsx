@@ -475,9 +475,11 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     // RoomComposer callback (onTotal) → roomTotals · ที่นี่แค่ห่อผลลัพธ์ให้เข้ากับ shape { sell, cost } เดิมที่ UI ใช้ร่วม
     if (prod.composite) {
       if (!roomTotals || roomTotals.total <= 0) return { error: "กำลังตั้งค่าห้อง — ใส่ขนาด/เลือกชนิดบานอย่างน้อย 1 ด้านก่อน" } as any;
+      // 5 พ.ย.69: ห้องมีราคา "ผลิตอย่างเดียว" แยก (mfgTotal) → sell.mfgOnlyNet ให้ laborMode/stickyPrice/pushQuoteItem ใช้สูตรเดียวกับรุ่นปกติ
+      const roomMfg = Number(roomTotals.mfgTotal) > 0 ? Number(roomTotals.mfgTotal) : roomTotals.total;
       return {
         input: { area: 0 }, aluKg: 0,
-        sell: { beforeLabor: roomTotals.total, mfgOnly: roomTotals.total, mfgOnlyNet: roomTotals.total, withInstall: roomTotals.total },
+        sell: { beforeLabor: roomTotals.total, mfgOnly: roomMfg, mfgOnlyNet: roomMfg, withInstall: roomTotals.total },
         cost: { total: 0, alu: 0, bake: 0, openOven: 0, glass: 0, hardware: 0, consum: 0 },
         profit: 0, labor: { prod: 0, install: 0 }, lines: [],
         isRoom: true,
@@ -766,6 +768,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
         v: 1, kind: "room", prodId: prod.id, group: prod.group,
         // กำไร 3 ก้อน + แก้ทีละก้อน ต้องเก็บด้วย (QA 30 ต.ค.69: เดิมเก็บแค่ profit → ✏️ แล้วค่าผลิต/ติดตั้งกลายเป็นค่าของ)
         color, glassType, profit, profitProd, profitInst, profitManual, profitEdit, g6HideSidePrice,
+        laborMode,   // ผลิตอย่างเดียว / ผลิต+ติดตั้ง (5 พ.ย.69) — ✏️ แล้วต้องกลับมาโหมดเดิม ไม่งั้นราคาเด้ง
         room: roomStateRef.current ?? null, // state ทั้งห้อง (ด้าน/ช่อง/บาน/หลังคา/ฝ้า/พื้น ฯลฯ) จาก RoomComposer
       };
     }
@@ -807,22 +810,31 @@ export default function Calculator40Client({ customers = [], priceOverride, line
       // โครงเหมือน G1: "งานรายด้าน/หลังคา/ฝ้า" เป็นบุลเล็ตหลักก่อน → แล้วหัว "รายละเอียดงาน" = สี/กระจก (สเปค)
       const dd = rt.sideDescs ?? [];
       const showP = !g6HideSidePrice; // ปุ่มซ่อนราคารายด้าน
+      // ผลิตอย่างเดียว (5 พ.ย.69): ราคารายด้าน/หลังคา/ฝ้า ใช้ชุด mfg · ไม่มีรื้อ/ป้องกันหน้างาน · ยอดรวม = mfgTotal
+      const mfg = laborMode === "mfg";
+      const sidesP = mfg ? (rt.sidesMfg ?? rt.sides) : rt.sides;
+      const roofP = mfg ? (rt.roofMfg ?? rt.roof) : rt.roof;
+      const ceilP = mfg ? (rt.ceilMfg ?? rt.ceil) : rt.ceil;
+      const svcP = mfg ? 0 : rt.svc;
+      const totalP = mfg ? (Number(rt.mfgTotal) > 0 ? Number(rt.mfgTotal) : rt.total) : rt.total;
       // ไม่ใส่ ":" หลังชื่อด้าน — เจ้าของสั่ง 7 ส.ค.69 ให้เว้นวรรคแทน
-      const lines: string[] = rt.sides.map((s, i) => `- ด้าน ${String.fromCharCode(65 + i)} ${dd[i] || "—"}${showP && s > 0 ? ` (ราคา ${baht(s)}฿)` : ""}`);
-      if (rt.roof > 0) lines.push(`- ${rt.roofDesc || "หลังคา"}${showP ? ` (${baht(rt.roof)}฿)` : ""}`);
-      if (rt.ceil > 0) lines.push(`- ${rt.ceilDesc || "ฝ้า"}${showP ? ` (${baht(rt.ceil)}฿)` : ""}`);
+      const lines: string[] = rt.sides.map((_s, i) => { const s = sidesP[i] ?? 0; return `- ด้าน ${String.fromCharCode(65 + i)} ${dd[i] || "—"}${showP && s > 0 ? ` (ราคา ${baht(s)}฿)` : ""}`; });
+      if (roofP > 0) lines.push(`- ${rt.roofDesc || "หลังคา"}${showP ? ` (${baht(roofP)}฿)` : ""}`);
+      if (ceilP > 0) lines.push(`- ${rt.ceilDesc || "ฝ้า"}${showP ? ` (${baht(ceilP)}฿)` : ""}`);
       if (rt.floor > 0) lines.push(`- พื้น${showP ? ` (${baht(rt.floor)}฿)` : ""}`);
       if (rt.fan > 0) lines.push(`- พัดลม/ระบายอากาศ${showP ? ` (${baht(rt.fan)}฿)` : ""}`);
       if (rt.services > 0) lines.push(`- งานบริการเพิ่มเติม${showP ? ` (${baht(rt.services)}฿)` : ""}`);
-      if (rt.svc > 0) lines.push(`- รื้อ/ป้องกันหน้างาน${showP ? ` (${baht(rt.svc)}฿)` : ""}`);
+      if (svcP > 0) lines.push(`- รื้อ/ป้องกันหน้างาน${showP ? ` (${baht(svcP)}฿)` : ""}`);
       lines.push("รายละเอียดงาน");
       lines.push(aluColorLine(color));
       lines.push(glassLine(glassType));
       (rt.specLines ?? []).forEach((s) => lines.push(`- ${s}`)); // มุ้ง / หลังคา / รางน้ำ ฯลฯ
+      // ขายส่ง (ไม่ไปติดตั้ง) — ต้องเขียนลงใบให้ชัด เหมือนรุ่นปกติ
+      if (mfg) lines.push("- ราคานี้ไม่รวมค่าติดตั้ง (ส่งของอย่างเดียว)");
       pushQuoteItem({
         name: prod.name,
         desc: lines.join("\n"),
-        qty: n, perUnit: rt.total, cost: 0,
+        qty: n, perUnit: totalP, cost: 0,
         prodId: prod.id, groupLabel: "ห้องกระจก",
         recipe: buildRecipe(),
       });
@@ -1748,6 +1760,8 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                   profitOpt={{ manual: profitManual, edit: profitEdit, mat: pctOr(shownPct.mat, 100), prod: pctOr(shownPct.prod, 100), inst: pctOr(shownPct.inst, 200) }}
                   initial={roomInitial}
                   onTotal={(t) => { setRoomTotals(t); roomStateRef.current = (t as any).state ?? roomStateRef.current; }}
+                  laborMode={laborMode}
+                  onLaborMode={setLaborMode}
                 />
               )}
 

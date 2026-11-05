@@ -1456,5 +1456,33 @@ console.log("\n═══ บานโซลิด Digital door lock ═══");
   ok("ทุนชุดล็อคมาตรฐาน 1,059 → 0", Math.abs(lockAmt(base) - 1059) < 0.5 && lockAmt(dg) === 0, `${lockAmt(base)} → ${lockAmt(dg)}`);
   ok("ทุนรวม = ของเดิม − 1,059 + ทุนดิจิตอล 5,000", Math.abs((dg.cost.total - base.cost.total) - (5000 - 1059)) < 0.5, String(dg.cost.total - base.cost.total));
 }
+
+// ── 🏠 งานกั้นห้อง (G6): ราคา "ผลิตอย่างเดียว" แยกจาก "ผลิต+ติดตั้ง" (เจ้าของสั่ง 5 พ.ย.69) ──
+//   ทุกชิ้นที่คิดผ่าน engine มี sell.mfgOnlyNet อยู่แล้ว → RoomComposer คิดคู่ ส่ง mfgTotal ให้หน้าหลัก
+//   หน้าหลักใช้ laborMode ตัวเดียวกับรุ่นปกติ (การ์ดกดสลับ · ราคาที่ขึ้นใบ · บรรทัด "ไม่รวมค่าติดตั้ง" · recipe)
+console.log(NL + "═══ 🏠 ห้องกระจก G6 — ราคาผลิตอย่างเดียว แยกติดตั้ง ═══");
+{
+  const rc = fs.readFileSync("src/components/calculator40/RoomComposer.tsx", "utf8");
+  const cc = fs.readFileSync("src/components/Calculator40Client.tsx", "utf8");
+  const has = (t, re) => re.test(t);
+  ok("RoomComposer: sellOf ใช้ sell.mfgOnlyNet ของ engine · sideTotal/ceilPrice คิดโหมด mfg ด้วย",
+    has(rc, /mode === "mfg" \? \(Number\(r\.sell\.mfgOnlyNet\)/) && has(rc, /sideTotal\(.*, "mfg"\)/) && has(rc, /ceilPrice\(.*, "mfg"\)/));
+  ok("RoomComposer: ส่ง mfgTotal/sidesMfg/roofMfg/ceilMfg ให้หน้าหลัก",
+    has(rc, /mfgTotal: roomTotalMfg, sidesMfg: sideTotalsMfg, roofMfg: roofTotalMfg, ceilMfg: ceilTotalMfg/));
+  ok("ราคาผลิตอย่างเดียว ไม่รวมรื้อ/ป้องกันหน้างาน (svcTotal)",
+    has(rc, /roomTotalMfg = useMemo[\s\S]*?floorTotal \+ fanTotal \+ servicesTotal;\s*return ceil100/));
+  ok("การ์ดล่าง 2 ใบ กดสลับโหมดได้ (onLaborMode mfg/all)",
+    rc.split('onLaborMode?.("mfg")').length - 1 === 1 && rc.split('onLaborMode?.("all")').length - 1 === 1);
+  ok("หน้าหลัก: sell.mfgOnlyNet ของห้อง = mfgTotal (ไม่ใช่ราคารวมติดตั้ง)",
+    has(cc, /mfgOnly: roomMfg, mfgOnlyNet: roomMfg, withInstall: roomTotals\.total/));
+  ok("หน้าหลัก: ส่ง laborMode + onLaborMode ให้ RoomComposer",
+    has(cc, /<RoomComposer[\s\S]*?laborMode=\{laborMode\}\s*onLaborMode=\{setLaborMode\}/));
+  ok("ขึ้นใบ: ห้องโหมดผลิตอย่างเดียว ใช้ mfgTotal + เขียน 'ไม่รวมค่าติดตั้ง'",
+    has(cc, /const totalP = mfg \? \(Number\(rt\.mfgTotal\) > 0/) && has(cc, /if \(mfg\) lines\.push\("- ราคานี้ไม่รวมค่าติดตั้ง \(ส่งของอย่างเดียว\)"\)/));
+  ok("สูตรห้อง (recipe kind room) เก็บ laborMode", has(cc, /kind: "room"[\s\S]*?\n\s*laborMode,\s*\/\/ ผลิตอย่างเดียว/));
+  // engine: บานติดตาย 150×200 → ผลิตอย่างเดียวต้องถูกกว่ารวมติดตั้ง (ค่าติดตั้งหาย + ลดขายส่งถ้ามี)
+  const r = computeCost(PB, PRODUCTS.fixed, { w: 150, h: 200, p: 1, glassType: "เขียว 6มม." });
+  ok("engine: บานติดตาย mfgOnlyNet < withInstall", r.sell.mfgOnlyNet < r.sell.withInstall, r.sell.mfgOnlyNet + " vs " + r.sell.withInstall);
+}
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);
