@@ -17,7 +17,12 @@
  */
 export function glassMM(type) {
   const t = String(type || '');
-  if (/อินซูเลท/.test(t)) { const m = t.match(/(\d+)\s*\+\s*(\d+)\s*\+\s*(\d+)/); return m ? (+m[1] + +m[3]) : 0; }
+  if (/อินซูเลท/.test(t)) {
+    const m = t.match(/(\d+)\s*\+\s*(\d+)\s*\+\s*(\d+)/); if (m) return +m[1] + +m[3];
+    // ชื่อแบบใหม่ "อินซูเลทใส 6 มม. + A18 + กระจกใส 6 มม." → รวมทุกตัวเลขที่มี "มม." (ช่องอากาศ A18/Air12 ไม่นับ)
+    const mm = [...t.matchAll(/(\d+(?:\.\d+)?)\s*มม/g)].map((x) => +x[1]);
+    return mm.length ? mm.reduce((s, v) => s + v, 0) : 0;
+  }
   const p = t.match(/(\d+)\s*\+\s*(\d+)/);
   if (p) return +p[1] + +p[2];
   const m = t.match(/(\d+(?:\.\d+)?)\s*มม/);
