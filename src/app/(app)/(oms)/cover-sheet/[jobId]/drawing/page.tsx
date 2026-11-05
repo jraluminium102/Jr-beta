@@ -1,7 +1,8 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Upload, Save, Printer, Trash2, FileText, Pencil, Check, X, TriangleAlert } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { thDate } from "@/lib/format";
@@ -32,6 +33,12 @@ function seedHeaderAnnotations(anns: DrawingAnnotation[], pageCount: number, nam
       out.push({ id: `hdr-name-${p}`, page: p, xf: 0.05, yf: 0.006, size: 0.018, text: nm, color: "", align: "center" });
       added = true;
     }
+    // เลขหน้า "n/N" มุมขวาบน (เจ้าของ 5 พ.ย.69) — เฉพาะแบบที่มีหลายหน้า · เป็น annotation ลาก/แก้ได้เหมือนหัวแบบ
+    const pgText = `${p + 1}/${pageCount}`;
+    if (pageCount > 1 && !onPage.some((a) => a.id === `pg-${p}`) && !onPage.some((a) => (a.text ?? "").trim() === pgText)) {
+      out.push({ id: `pg-${p}`, page: p, xf: 0.955, yf: 0.006, size: 0.014, text: pgText, color: "", align: "right" });
+      added = true;
+    }
   }
   return { annotations: out, added };
 }
@@ -45,12 +52,26 @@ function hydrateDrawing(d: JobDrawing): JobDrawing {
   };
 }
 
-export default function DrawingEditorPage({ params }: { params: { jobId: string } }) {
+// useSearchParams ต้องอยู่ใต้ Suspense (Next 14) — ไม่งั้น build เตือน/พัง (แบบเดียวกับหน้าผลิต)
+export default function DrawingEditorPage(props: { params: { jobId: string } }) {
+  return (
+    <Suspense fallback={<div className="max-w-[1500px] mx-auto pb-10"><Spinner /></div>}>
+      <DrawingEditorInner {...props} />
+    </Suspense>
+  );
+}
+
+function DrawingEditorInner({ params }: { params: { jobId: string } }) {
   const jobId = params.jobId;
   const qc = useQueryClient();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  // แบบที่กำลังดู — เริ่มจาก ?d= ใน URL (หน้าพิมพ์ส่งกลับมา / กด back ของเบราว์เซอร์) ไม่งั้นเด้งไปแบบแรกเสมอ (เจ้าของ 5 พ.ย.69)
+  const initialD = Number(searchParams.get("d"));
+  const [selectedId, setSelectedId] = useState<number | null>(Number.isFinite(initialD) && initialD > 0 ? initialD : null);
+  const saveRef = useRef<(() => Promise<boolean>) | null>(null);
 
   // (0136) ส่ง drawing_id ของแบบที่กำลังดู — server ใช้หา pin/rev_stale ต่อแถว (แต่ละแบบเก็บใบเสนอที่ pin ไว้ของตัวเอง)
   const { data, isLoading, error } = useQuery({
@@ -81,10 +102,26 @@ export default function DrawingEditorPage({ params }: { params: { jobId: string 
   const [clip, setClip] = useState<Pick<DrawingAnnotation, "text" | "color" | "hl" | "size" | "align"> | null>(null);
   const [copyMsg, setCopyMsg] = useState<string | null>(null);
 
-  // เลือกแบบแรกให้อัตโนมัติเมื่อโหลดเสร็จ (ครั้งแรกเท่านั้น — ไม่ทับตอนแก้ต่อ)
+  // เลือกแบบแรกให้อัตโนมัติเมื่อโหลดเสร็จ (ครั้งแรกเท่านั้น — ไม่ทับตอนแก้ต่อ) · ?d= ชี้แบบที่ถูกลบไปแล้ว → ถอยไปแบบแรก
   useEffect(() => {
-    if (selectedId === null && drawings.length > 0) setSelectedId(drawings[0].id);
+    if (drawings.length > 0 && (selectedId === null || !drawings.some((d) => d.id === selectedId))) setSelectedId(drawings[0].id);
   }, [drawings, selectedId]);
+  // จำแบบที่ดูไว้ใน URL (?d=) — กด back/refresh/กลับจากหน้าพิมพ์ แล้วยังอยู่แบบเดิม
+  useEffect(() => {
+    if (selectedId == null || typeof window === "undefined") return;
+    const u = new URL(window.location.href);
+    if (u.searchParams.get("d") === String(selectedId)) return;
+    u.searchParams.set("d", String(selectedId));
+    window.history.replaceState(window.history.state, "", u.toString());
+  }, [selectedId]);
+  // Ctrl+S / Cmd+S = บันทึก (กันเบราว์เซอร์เปิด "บันทึกหน้าเว็บ")
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S")) { e.preventDefault(); void saveRef.current?.(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const selected = drawings.find((d) => d.id === selectedId) ?? null;
 
@@ -175,8 +212,9 @@ export default function DrawingEditorPage({ params }: { params: { jobId: string 
     setDirty(true);
   };
 
-  const doSave = async () => {
-    if (!selected) return;
+  const doSave = async (): Promise<boolean> => {
+    if (!selected || !canWrite) return true;
+    if (!dirty) return true;
     setSaving(true);
     try {
       await api.patch(`/job-drawings/${selected.id}`, { annotations });
@@ -184,9 +222,18 @@ export default function DrawingEditorPage({ params }: { params: { jobId: string 
       setSaveMsg("บันทึกแล้ว ✓");
       qc.invalidateQueries({ queryKey: ["job-drawings", jobId] });
       setTimeout(() => setSaveMsg(null), 2500);
+      return true;
     } catch (e) {
       alert(e instanceof ApiError ? e.message : "บันทึกไม่สำเร็จ");
+      return false;
     } finally { setSaving(false); }
+  };
+  saveRef.current = doSave;
+  // พิมพ์ = บันทึกของที่ค้างให้ก่อน (หน้าพิมพ์อ่านจาก DB — ไม่งั้นเลย์เอาท์ที่เพิ่งขยับไม่ขึ้น) แล้วไปหน้าพิมพ์พร้อม ?d= ให้กลับมาแบบเดิม
+  const doPrint = async () => {
+    if (!selected) return;
+    if (dirty) { const okSaved = await doSave(); if (!okSaved) return; }
+    router.push(`/cover-sheet/${jobId}/drawing/print?d=${selected.id}`);
   };
 
   // (0136) สลับใบเสนอ/rev ที่ pin ไว้ของแบบที่กำลังดู — ไม่แตะ annotations เดิม แค่เปลี่ยนใบอ้างอิง (ไว้ดึง prefill/เทียบ rev)
@@ -274,9 +321,9 @@ export default function DrawingEditorPage({ params }: { params: { jobId: string 
                   <Save size={15} /> {saving ? "กำลังบันทึก…" : dirty ? "บันทึก" : "บันทึกแล้ว"}
                 </button>
               )}
-              <Link href={`/cover-sheet/${jobId}/drawing/print?d=${selected.id}`} className={`${btn} text-gray-900 bg-white`}>
-                <Printer size={15} /> พิมพ์
-              </Link>
+              <button type="button" onClick={doPrint} disabled={saving} title={dirty ? "บันทึกของที่แก้ค้างให้ก่อน แล้วเปิดหน้าพิมพ์" : "เปิดหน้าพิมพ์"} className={`${btn} text-gray-900 bg-white`}>
+                <Printer size={15} /> {dirty && canWrite ? "บันทึก + พิมพ์" : "พิมพ์"}
+              </button>
             </>
           )}
         </div>

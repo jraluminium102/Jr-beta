@@ -54,7 +54,7 @@ export type CoverBubble = {
   text: string;
   color: AnnotColor;
   hl: HighlightColor;
-  kind: "spec" | "group";
+  kind: "spec" | "group" | "warn";   // warn = คำเตือน/งานพื้น ที่ติ๊กไว้ในใบปะหน้า (เจ้าของ 5 พ.ย.69) — แดง
   n?: number;
 };
 
