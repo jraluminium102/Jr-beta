@@ -1967,11 +1967,15 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                               {result.lines.map((l: any, i: number) => {
                                 const code = l.sku || l.code || "";
                                 const noPrice = !(Number(l.unitPrice) > 0);
+                                // เส้นอลูที่นับ "รวมรหัสเดียวกัน" (pool): บรรทัดโชว์เศษเส้นตามสัดส่วน → บอกยอดรวมต่อรหัสให้เห็นว่าซื้อกี่เส้นจริง (5 พ.ย.69)
+                                const poolTot = l.cat === "alu" && l.count?.mode === "pool"
+                                  ? result.lines.filter((x: any) => x.cat === "alu" && x.code === l.code && x.count?.mode === "pool").reduce((s: number, x: any) => s + (Number(x.qty) || 0), 0)
+                                  : 0;
                                 return (
                                   <tr key={i} className={"border-t border-line/50 " + (noPrice ? "bg-amber-50" : l.est ? "bg-violet-50" : "")}>
                                     <td className="py-1 pr-2">{l.name}{lineTag(l) && <span className="text-[11px] text-violet-700">{lineTag(l)}</span>}</td>
                                     <td className="font-mono text-[11px] text-ink-3">{code || "—"}</td>
-                                    <td className="text-right tabular-nums">{r2(l.qty)} {l.unit || ""}</td>
+                                    <td className="text-right tabular-nums">{r2(l.qty)} {l.unit || ""}{poolTot > 0 && <span className="text-[10px] text-ink-3"> (รหัสนี้รวม {r2(poolTot)} เส้น)</span>}</td>
                                     <td className={"text-right tabular-nums " + (noPrice ? "text-red-600 font-bold" : "")}>
                                       ฿{baht(lineUnitCost(l))}
                                     </td>

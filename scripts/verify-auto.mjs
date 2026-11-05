@@ -1484,5 +1484,42 @@ console.log(NL + "═══ 🏠 ห้องกระจก G6 — ราคา
   const r = computeCost(PB, PRODUCTS.fixed, { w: 150, h: 200, p: 1, glassType: "เขียว 6มม." });
   ok("engine: บานติดตาย mfgOnlyNet < withInstall", r.sell.mfgOnlyNet < r.sell.withInstall, r.sell.mfgOnlyNet + " vs " + r.sell.withInstall);
 }
+
+// ── 📏 นับเส้นอลู "รวมรหัสเดียวกัน" (เจ้าของเจอ 5 พ.ย.69: ติดตาย 140×35 กล่องตั้ง 1 + นอน 1 = 2 เส้น ทั้งที่ใช้เส้นเดียว) ──
+//   8 รุ่นที่เคยนับแยกบรรทัด: ติดตาย/หมุน/โซลิด/ครอบวงกบเมืองทอง → packBars (จัดชิ้นลงเส้นจริง)
+//   กันสาดหลายด้าน/กลาสเฮ้าส์/กลาสเฮ้าส์หลายด้าน/จั่วหลายด้าน (เส้นจากใบตัด) → poolBars (= ใบตัด barsByCode)
+//   รุ่นเผื่อเศษ ×1.3 ไม่แตะ (ไม่มีการปัดขึ้นรายบรรทัดอยู่แล้ว)
+console.log(NL + "═══ 📏 นับเส้นอลูรวมรหัสเดียวกัน (5 พ.ย.69) ═══");
+{
+  const bars = (r, code) => Math.round(r.lines.filter((l) => l.cat === "alu" && l.code === code).reduce((s, l) => s + (Number(l.qty) || 0), 0) * 100) / 100;
+  const fx = C("fixed", { w: 140, h: 35, p: 1, form: "กระจกล้วน", glassType: "เขียว 6มม." });
+  ok("ติดตาย 140×35: กล่อง 1.6×3 ตั้ง+นอน รวม 1 เส้น · 9014 รวม 1 เส้น (เดิม 2+2)", bars(fx, 'กล่อง 1.6"x3"') === 1 && bars(fx, "9014") === 1, bars(fx, 'กล่อง 1.6"x3"') + "/" + bars(fx, "9014"));
+  ok("ติดตาย: ทุกบรรทัดอลูเป็นโหมด pool (แบ่งเศษเส้นตามสัดส่วนยาว · รวมเท่าใบตัด)", fx.lines.filter((l) => l.cat === "alu").every((l) => l.count?.mode === "pool"));
+  const fx2 = C("fixed", { w: 600, h: 250, p: 4, form: "กระจกล้วน", glassType: "เขียว 6มม." });
+  ok("ติดตาย 600×250×4: จัดชิ้นลงเส้นจริง = 5 เส้น/รหัส (ท่อนตั้ง 2.5 ม. ลงเส้น 6 ม. ได้ 2 ท่อน — รวมยาวหารเส้นจะได้ 4 ซึ่งตัดจริงไม่ได้)", bars(fx2, 'กล่อง 1.6"x3"') === 5, bars(fx2, 'กล่อง 1.6"x3"'));
+  const wj = C("woodjamb", { w: 130, h: 210, p: 2 });
+  ok("ครอบวงกบเมืองทอง 130×210×2: กรอบบาน JR03131 ตั้ง+นอนบาน1+นอนบาน2 รวม 1 เส้น (เดิม 3) · กล่องเรียบ JR01985 รวม 1 (เดิม 2)", bars(wj, "JR03131") === 1 && bars(wj, "JR01985") === 1, bars(wj, "JR03131") + "/" + bars(wj, "JR01985"));
+  const pv = C("pivot", { w: 150, h: 200, p: 1 });
+  ok("บานหมุน: กรอบประตู F7864 ยาวรวม 7 ม. (lenTotal) → แตกเป็น 6.4 + 0.6 = 2 เส้น (ไม่ใช่ 'ชิ้นยาวเกินเส้น' 1 เส้น)", bars(pv, "F7864") === 2, bars(pv, "F7864"));
+  ok("บานหมุน 150×200 ทุนไม่ขยับ (ไม่มีรหัสซ้ำบรรทัด)", Math.round(pv.cost.total) === 11433, Math.round(pv.cost.total));
+  for (const id of ["fixed", "pivot", "bansolid", "woodjamb"]) ok(`${id}: packBars เปิด`, PRODUCTS[id].packBars === true && !PRODUCTS[id].aluWaste);
+  for (const id of ["roof_multi", "glasshouse", "glasshouse_multi", "gable_multi"]) ok(`${id}: poolBars เปิด (ตรงใบตัด barsByCode)`, PRODUCTS[id].poolBars === true && !PRODUCTS[id].aluWaste);
+  // เส้นจากใบตัด: จำนวนเส้นรวมต่อรหัสในคิดราคา = สรุปเส้นต่อรหัสของใบตัดตัวเดียวกัน
+  const { cutAluLines, ALU_FROM_CUTLIST } = await import("../src/lib/calculator40/alu-from-cutlist.ts");
+  const { computeCutList } = await import("../src/lib/cutlist/engine.ts");
+  const { CUT_SPEC_BY_ID } = await import("../src/lib/cutlist/products.ts");
+  for (const id of ["roof_multi", "glasshouse", "glasshouse_multi", "gable_multi"]) {
+    const spec = CUT_SPEC_BY_ID[ALU_FROM_CUTLIST[id]];
+    const cut = computeCutList(spec, { ...spec.defaults }, 1);
+    const al = cutAluLines({ prodId: id, cutInput: {} });
+    const d = PRODUCTS[id].defaults || {};
+    const r = computeCost(PB, PRODUCTS[id], { w: d.w || 400, h: d.h || 200, p: d.p || 1, form: PRODUCTS[id].defForm, color: "white", colorKey: "white", spec: {}, addons: {}, aluLines: al });
+    const bad = cut.barsByCode.filter((b) => r.lines.some((l) => l.cat === "alu" && l.code === b.code) && bars(r, b.code) !== b.bars).map((b) => `${b.code} คิดราคา ${bars(r, b.code)} ≠ ใบตัด ${b.bars}`);
+    ok(`${id} ค่าตั้งต้น: เส้นต่อรหัสในคิดราคา = ใบตัด (${cut.barsByCode.length} รหัส)`, bad.length === 0, bad.join(" · "));
+  }
+  // หน้าเว็บ: ตารางค่าของ ขึ้น "(รหัสนี้รวม N เส้น)" ให้บรรทัด pool
+  const cc = fs.readFileSync("src/components/Calculator40Client.tsx", "utf8");
+  ok("หน้าคิดราคา: บรรทัดเส้นโหมด pool โชว์ยอดรวมต่อรหัส", cc.includes("รหัสนี้รวม {r2(poolTot)} เส้น"));
+}
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);

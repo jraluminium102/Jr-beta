@@ -480,7 +480,13 @@ export function computeCost(PB, prod, opt) {
       if (!key || !(seg > 0) || !(count > 0)) continue;
       const e = sum.get(key) || { len: 0, stock: Number(it.stockLen) || stockLen, lens: [] };
       e.len += seg * count;
-      for (let i = 0; i < Math.round(count); i++) e.lens.push(seg);
+      // it.lenTotal = บรรทัดเขียนเป็น "ความยาวรวมทุกท่อน" (วงกบ 3 ด้าน = W+2H · กรอบบาน = รอบบาน) ไม่ใช่ชิ้นเดียวยาว 7 ม.
+      //   จัดลงเส้นจริง (packBars) ต้องแตกเป็น เต็มเส้น × n + เศษ ก่อน — ไม่งั้นท่อน 7 ม. ถูกนับ "เส้นของมันเอง" = 1 เส้น (ขาด)
+      if (it.lenTotal) {
+        let left = seg * count;
+        while (left > e.stock + 1e-9) { e.lens.push(e.stock); left -= e.stock; }
+        if (left > 1e-9) e.lens.push(left);
+      } else for (let i = 0; i < Math.round(count); i++) e.lens.push(seg);
       sum.set(key, e);
     }
     for (const [key, e] of sum) {
