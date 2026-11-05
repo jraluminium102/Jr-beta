@@ -34,11 +34,26 @@ function CoverBubbleSection({ bubbles, onAddCover, disabled }: {
   return (
     <div className="space-y-1.5 border-t border-white/12 pt-3">
       <div className="flex items-center gap-1.5 text-[13px] font-bold text-white">
-        <FileText size={13} className="shrink-0 opacity-70" /> จากใบปะหน้า (สั่งของเตรียมผลิต)
+        <FileText size={13} className="shrink-0 opacity-70" /> จากใบปะหน้า (คำเตือน · สั่งของเตรียมผลิต)
       </div>
-      <div className="text-[11px]" style={{ color: "var(--t-low)" }}>บับเบิ้ลที่ทำไว้ในใบปะหน้า — กด + ลงแบบได้เลย (มาพร้อมสี/ไฮไลต์)</div>
+      <div className="text-[11px]" style={{ color: "var(--t-low)" }}>คำเตือนที่ติ๊ก/งานพื้น + บับเบิ้ลที่ทำไว้ในใบปะหน้า — กด + ลงแบบได้เลย (มาพร้อมสี/ไฮไลต์)</div>
       <div className="space-y-1">
-        {bubbles.map((b, i) => b.kind === "group" ? (
+        {bubbles.map((b, i) => b.kind === "warn" ? (
+          <div key={i}
+            draggable={!disabled}
+            onDragStart={(e) => e.dataTransfer.setData("text/plain", b.text)}
+            className={`flex items-center gap-1.5 text-[12.5px] font-semibold rounded-lg px-2 py-1.5 bg-rose-500/25 text-rose-50 border border-rose-300/40 ${disabled ? "" : "cursor-grab active:cursor-grabbing hover:bg-rose-500/35"}`}
+          >
+            <span className="shrink-0">⚠</span>
+            <span className="flex-1 min-w-0">{b.text}</span>
+            {!disabled && (
+              <button type="button" title="เพิ่มลงแบบ (ตัวแดง)" onClick={() => onAddCover(b)}
+                className="shrink-0 w-6 h-6 grid place-items-center rounded bg-black/20 hover:bg-black/35">
+                <Plus size={11} className="text-white" />
+              </button>
+            )}
+          </div>
+        ) : b.kind === "group" ? (
           <div key={i} className="text-[12px] font-bold text-sky-100 pt-1.5">{b.n ? `${b.n}. ` : ""}{b.text}</div>
         ) : (
           <div key={i}

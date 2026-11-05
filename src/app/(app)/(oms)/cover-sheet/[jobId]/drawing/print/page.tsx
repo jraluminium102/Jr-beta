@@ -21,7 +21,7 @@ const HALO = "0 0 3px #fff, 0 0 3px #fff, 0 0 4px #fff, 0 0 5px #fff";
 // เผื่อความสูง 3มม กัน "บล็อกเต็มหน้าเป๊ะ" แล้ว browser แถมหน้าเปล่า
 const SAFETY_MM = 3;
 
-function PagePrint({ page, pageIndex, annotations, pageWmm, pageHmm, customerName, address }: { page: DrawingPage; pageIndex: number; annotations: DrawingAnnotation[]; pageWmm: number; pageHmm: number; customerName: string; address: string }) {
+function PagePrint({ page, pageIndex, pageCount, annotations, pageWmm, pageHmm, customerName, address }: { page: DrawingPage; pageIndex: number; pageCount: number; annotations: DrawingAnnotation[]; pageWmm: number; pageHmm: number; customerName: string; address: string }) {
   // พิมพ์แบบ "เต็มหน้าเหมือนต้นฉบับ" — ไม่ใส่ขอบขาว ไม่ย่อ · แค่ให้พอดีกรอบกระดาษ (กว้าง + สูงเผื่อกันหน้าเปล่า)
   const availW = pageWmm;
   const availH = pageHmm - SAFETY_MM;
@@ -34,6 +34,9 @@ function PagePrint({ page, pageIndex, annotations, pageWmm, pageHmm, customerNam
   const pageAnns = annotations.filter((a) => a.page === pageIndex);
   const hasAddr = !!address && pageAnns.some((a) => a.id === `hdr-addr-${pageIndex}` || (a.text ?? "").trim() === address.trim());
   const hasName = !!customerName && pageAnns.some((a) => a.id === `hdr-name-${pageIndex}` || (a.text ?? "").trim() === customerName.trim());
+  // เลขหน้า n/N มุมขวาบน (เจ้าของ 5 พ.ย.69) — fallback เฉพาะแบบหลายหน้าที่ยังไม่มี annotation pg-* (ลาก+บันทึกแล้วจะใช้ตัวนั้นแทน)
+  const pgText = `${pageIndex + 1}/${pageCount}`;
+  const hasPg = pageCount <= 1 || pageAnns.some((a) => a.id === `pg-${pageIndex}` || (a.text ?? "").trim() === pgText);
   // จัดกึ่งกลางแนวตั้ง: ดันลงครึ่งนึงของช่องว่างด้วย "padding" (ไม่ใช่ margin — margin โดนตัดตอนขึ้นหน้าใหม่ · padding ไม่โดน)
   //   ความสูงบล็อกรวม = topPad + imgH = (pageHmm+imgH)/2 < pageHmm → ไม่เต็มหน้าเป๊ะ = ไม่มีหน้าเปล่า
   const topPad = Math.max(0, (pageHmm - imgH) / 2);
@@ -68,6 +71,15 @@ function PagePrint({ page, pageIndex, annotations, pageWmm, pageHmm, customerNam
           textShadow: HALO, pointerEvents: "none",
         }}>
           {customerName}
+        </div>
+      )}
+      {!hasPg && (
+        <div style={{
+          position: "absolute", top: "1mm", right: "2mm", textAlign: "right",
+          fontSize: "2.9mm", lineHeight: 1.2, color: "#000", fontWeight: 600,
+          textShadow: HALO, pointerEvents: "none",
+        }}>
+          {pgText}
         </div>
       )}
       {annotations.filter((a) => a.page === pageIndex).map((a) => (
@@ -137,7 +149,7 @@ export default async function DrawingPrintPage({
       {/* บังคับแนวกระดาษให้ตรงกับแบบ (ไม่งั้น browser default = แนวตั้ง แล้วแบบแนวนอนแหก) */}
       <style dangerouslySetInnerHTML={{ __html: `@page { size: A4 ${landscape ? "landscape" : "portrait"}; margin: 0; }` }} />
       <div className="no-print sticky top-0 z-10 bg-white border-b px-4 py-3 flex items-center justify-between">
-        <Link href={`/cover-sheet/${jobId}/drawing`} className="press inline-flex items-center gap-1.5 text-sm text-ink-2">
+        <Link href={drawing ? `/cover-sheet/${jobId}/drawing?d=${drawing.id}` : `/cover-sheet/${jobId}/drawing`} className="press inline-flex items-center gap-1.5 text-sm text-ink-2">
           <Icon name="arrowLeft" size={16} /> กลับ
         </Link>
         <PrintButton />
@@ -150,7 +162,7 @@ export default async function DrawingPrintPage({
       ) : (
         <div className="mx-auto my-6 shadow-lg print:shadow-none print:my-0" style={{ width: `${pageWmm}mm` }}>
           {drawing.pages.map((p, i) => (
-            <PagePrint key={i} page={p} pageIndex={i} annotations={drawing.annotations ?? []} pageWmm={pageWmm} pageHmm={pageHmm} customerName={job.customer_name ?? ""} address={address} />
+            <PagePrint key={i} page={p} pageIndex={i} pageCount={drawing.pages.length} annotations={drawing.annotations ?? []} pageWmm={pageWmm} pageHmm={pageHmm} customerName={job.customer_name ?? ""} address={address} />
           ))}
         </div>
       )}

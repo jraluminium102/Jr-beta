@@ -59,7 +59,14 @@ export const GET = withRoute(async (req: Request) => {
 
   // บับเบิ้ลจากใบปะหน้า (ช่อง 1 · left) — คงข้อความ+สี+ไฮไลต์ (map ตรงกับ annotation ของแบบช่าง)
   type CoverLineRow = { text?: string; color?: string; hl?: boolean; hlc?: string; kind?: string; n?: number };
-  const leftRaw = ((coverR?.data as { content?: { left?: CoverLineRow[] } } | null)?.content?.left ?? []) as CoverLineRow[];
+  type CoverContentRow = { left?: CoverLineRow[]; warnings?: string[]; floorNote?: string };
+  const coverContent = ((coverR?.data as { content?: CoverContentRow } | null)?.content ?? {}) as CoverContentRow;
+  const leftRaw = (coverContent.left ?? []) as CoverLineRow[];
+  // คำเตือนที่ติ๊ก (ระวังอลูคนละสี ฯลฯ) + งานพื้น จากใบปะหน้า → บับเบิ้ลสีแดงให้หยิบลงแบบ (เจ้าของ 5 พ.ย.69)
+  const warnBubbles = [
+    ...(coverContent.warnings ?? []).map((w) => String(w ?? "").trim()).filter(Boolean),
+    ...(String(coverContent.floorNote ?? "").trim() ? [`งานพื้น: ${String(coverContent.floorNote).trim()}`] : []),
+  ].map((text) => ({ text, color: "red", hl: "", kind: "warn", n: undefined as number | undefined }));
   const coverBubbles = leftRaw
     .filter((l) => String(l.text ?? "").trim())
     .map((l) => ({
@@ -69,6 +76,7 @@ export const GET = withRoute(async (req: Request) => {
       kind: l.kind === "group" ? "group" : "spec",
       n: typeof l.n === "number" ? l.n : undefined,
     }));
+  coverBubbles.unshift(...warnBubbles);
 
   // ที่อยู่บ้านลูกค้า — ทะเบียนลูกค้าก่อน (เต็ม) ไม่งั้น customer_area ของงาน
   const jobRow = jobR.data as { customer_area: string | null; customer_id: number | null };
