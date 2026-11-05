@@ -33,10 +33,15 @@ function seedHeaderAnnotations(anns: DrawingAnnotation[], pageCount: number, nam
       out.push({ id: `hdr-name-${p}`, page: p, xf: 0.05, yf: 0.006, size: 0.018, text: nm, color: "", align: "center" });
       added = true;
     }
-    // เลขหน้า "n/N" มุมขวาบน (เจ้าของ 5 พ.ย.69) — เฉพาะแบบที่มีหลายหน้า · เป็น annotation ลาก/แก้ได้เหมือนหัวแบบ
+    // เลขหน้า "n/N" มุมขวาบน (เจ้าของ 5 พ.ย.69) — เฉพาะแบบที่มีหลายหน้า · เป็น annotation ลาก/แก้ได้เหมือนหัวแบบ · ฟอนต์สีแดง (เจ้าของสั่ง 5 พ.ย.69)
     const pgText = `${p + 1}/${pageCount}`;
-    if (pageCount > 1 && !onPage.some((a) => a.id === `pg-${p}`) && !onPage.some((a) => (a.text ?? "").trim() === pgText)) {
-      out.push({ id: `pg-${p}`, page: p, xf: 0.955, yf: 0.006, size: 0.014, text: pgText, color: "", align: "right" });
+    const pgIdx = out.findIndex((a) => a.page === p && a.id === `pg-${p}`);
+    if (pageCount > 1 && pgIdx < 0 && !onPage.some((a) => (a.text ?? "").trim() === pgText)) {
+      out.push({ id: `pg-${p}`, page: p, xf: 0.955, yf: 0.006, size: 0.014, text: pgText, color: "red", align: "right" });
+      added = true;
+    } else if (pgIdx >= 0 && !out[pgIdx].color && (out[pgIdx].text ?? "").trim() === pgText) {
+      // เลขหน้าที่ระบบเติมไว้ก่อนหน้า (ยังเป็นสีดำ ยังไม่ได้แก้ข้อความ) → ปรับเป็นแดงให้
+      out[pgIdx] = { ...out[pgIdx], color: "red" };
       added = true;
     }
   }

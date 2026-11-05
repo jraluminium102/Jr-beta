@@ -76,7 +76,7 @@ function PagePrint({ page, pageIndex, pageCount, annotations, pageWmm, pageHmm, 
       {!hasPg && (
         <div style={{
           position: "absolute", top: "1mm", right: "2mm", textAlign: "right",
-          fontSize: "2.9mm", lineHeight: 1.2, color: "#000", fontWeight: 600,
+          fontSize: "2.9mm", lineHeight: 1.2, color: "#c00000", fontWeight: 600,
           textShadow: HALO, pointerEvents: "none",
         }}>
           {pgText}
@@ -91,7 +91,8 @@ function PagePrint({ page, pageIndex, pageCount, annotations, pageWmm, pageHmm, 
             top: `${a.yf * imgH}mm`,
             fontSize: `${Math.max(2, a.size * imgH)}mm`,
             lineHeight: 1.25,
-            color: COLOR_HEX[a.color ?? ""],
+            // เลขหน้าที่ระบบเติมไว้ (ยังไม่ได้เลือกสี) พิมพ์เป็นแดงเสมอ (เจ้าของสั่ง 5 พ.ย.69)
+            color: COLOR_HEX[a.color || (a.id === `pg-${pageIndex}` && (a.text ?? "").trim() === pgText ? "red" : "")],
             textAlign: a.align ?? "left",
             textShadow: a.hl ? "none" : HALO,
             background: a.hl ? HIGHLIGHT_HEX[a.hl] : undefined,
