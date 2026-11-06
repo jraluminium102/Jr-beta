@@ -574,7 +574,8 @@ export default function Calculator40Client({ customers = [], priceOverride, line
       const mqR4 = computeMosquitoR4(
         PRODUCTS,
         addonsForCalc || {},
-        { wCm, hCm, movePanes: Math.max(1, pCount - (fixedPanes || 0)), form: formVal },
+        { wCm, hCm, movePanes: Math.max(1, pCount - (fixedPanes || 0)), form: formVal,
+          colorOpt: { color: opt.color, colorKey: opt.colorKey, stockColor: opt.stockColor } },   // กรอบมุ้งสีเดียวกับบาน
         pb,
         profitPct,
         profitPct

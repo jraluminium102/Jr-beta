@@ -1521,5 +1521,50 @@ console.log(NL + "═══ 📏 นับเส้นอลูรวมรห�
   const cc = fs.readFileSync("src/components/Calculator40Client.tsx", "utf8");
   ok("หน้าคิดราคา: บรรทัดเส้นโหมด pool โชว์ยอดรวมต่อรหัส", cc.includes("รหัสนี้รวม {r2(poolTot)} เส้น"));
 }
+
+// ── 🦟 มุ้งเฟรมเล็ก/ใหญ่ คิดราคาตามสีกรอบ เหมือนบานเลื่อน (เจ้าของเจอ 6 พ.ย.69: เปลี่ยนสีแล้วราคาเท่าเดิม) ──
+//   เดิมเส้นกรอบอยู่หมวด "ของสิ้นเปลือง" ซึ่งไม่คิดสี → ย้ายเข้าเส้นอลู ผูกรหัสจากใบตัด (เล็ก B30006 · ใหญ่ B20051) นับยาวจริง ÷ 6 ม.
+console.log(NL + "═══ 🦟 มุ้งเฟรมเล็ก/ใหญ่ ราคาตามสีกรอบ (6 พ.ย.69) ═══");
+{
+  const sw = (id, ck) => C(id, { w: 200, h: 200, p: 2, material: "ไฟเบอร์", color: ck, colorKey: ck }).sell.withInstall;
+  for (const id of ["screen", "screen_big"]) {
+    const w = sw(id, "white"), s = sw(id, "sahara"), wd = sw(id, "wood_teak"), sp = sw(id, "special");
+    ok(`${id} 200×200×2: ขาว < เทา/ซาฮาร่า < ลายไม้ (${w} / ${s} / ${wd} / พิเศษ ${sp})`, w < s && s < wd && w < sp, [w, s, wd, sp].join("/"));
+    const alu = PRODUCTS[id].alu || [];
+    ok(`${id}: เส้นกรอบอยู่หมวดอลู มีรหัส นับยาวจริง (fracBars)`, alu.length === 2 && alu.every((a) => a.code && a.fracBars), alu.map((a) => a.code).join(","));
+    ok(`${id}: ไม่มีเส้นกรอบค้างในของสิ้นเปลือง (กันนับซ้ำ)`, !(PRODUCTS[id].consum || []).some((c) => /เสา|ขวาง/.test(c.name)));
+    ok(`${id}: ถอดปุ่ม "สีมุ้ง" เหมา (สีตามกรอบจริงแล้ว)`, !(PRODUCTS[id].addons || []).includes("ms_color"));
+  }
+  ok("มุ้งเฟรมเล็ก ขาว 200×200×2 = 6,000 (เส้น 625 เท่าเดิม)", sw("screen", "white") === 6000, sw("screen", "white"));
+  const fr = C("screen", { w: 200, h: 200, p: 2, material: "ไฟเบอร์" }).lines.filter((l) => l.cat === "alu");
+  ok("มุ้งเฟรมเล็ก 200×200×2: เส้นเสา 4×2ม.÷6 = 1.33 เส้น (ไม่ปัดขึ้น ไม่เผื่อเศษ)", fr.some((l) => Math.abs(l.qty - 4 * 2 / 6) < 0.01), fr.map((l) => l.qty).join("/"));
+  const { computeMosquitoR4 } = await import("../src/lib/calculator40/mosquito.mjs");
+  const mq = (ck) => computeMosquitoR4(PRODUCTS, { mosquito: "small" }, { wCm: 200, hCm: 200, movePanes: 2, form: "2 บาน", colorOpt: { color: ck, colorKey: ck } }, PB).amount;
+  ok(`มุ้งเสริมบนบาน: กรอบตามสีบาน (ขาว ${mq("white")} < ลายไม้ ${mq("wood_teak")})`, mq("white") < mq("wood_teak"));
+  for (const f2 of ["src/components/Calculator40Client.tsx", "src/lib/calculator40/pane-calc.ts"]) ok(`${f2}: ส่งสีบานให้มุ้ง (colorOpt)`, /computeMosquitoR4\([\s\S]{0,400}colorOpt/.test(fs.readFileSync(f2, "utf8")));
+}
+
+// ── ⚡ งานไฟส่องสว่าง กันสาด/ราวกันตก/กลาสเฮ้าส์ (เจ้าของสั่ง 6 พ.ย.69) ──
+console.log(NL + "═══ ⚡ งานไฟ: ไฟเส้น LED / ดาวน์ไลท์ / ปลั๊ก / สวิตซ์ / โคม (6 พ.ย.69) ═══");
+{
+  const { elecRows, ELEC_RATES, ELEC_LIGHT_PRODS, ELEC_LAMPS } = await import("../src/lib/calculator40/engine.mjs");
+  const sum = (s, a) => elecRows(s, a).reduce((x, r) => x + r.amount, 0);
+  ok("ไฟเส้น LED ภายใน 600/ตร.ม. × พื้นที่งาน 10", sum({ led: "in" }, 10) === 6000, sum({ led: "in" }, 10));
+  ok("ไฟเส้น LED ภายนอก IP65 900/ตร.ม. · กรอกพื้นที่เองทับพื้นที่งาน", sum({ led: "out", ledArea: 4 }, 10) === 3600, sum({ led: "out", ledArea: 4 }, 10));
+  ok("ป้าย LED บอก รวมรางไฟ/พ่วงปลั๊ก · ไม่รวมเดินไฟเข้าตู้เมน", /รางไฟ/.test(elecRows({ led: "in" }, 1)[0].label) && /ไม่รวมเดินไฟเข้าตู้เมน/.test(elecRows({ led: "in" }, 1)[0].label));
+  ok("ดาวน์ไลท์ 1-2 ดวง = 3,000 เหมา", sum({ dl: 1 }, 0) === 3000 && sum({ dl: 2 }, 0) === 3000);
+  ok("ดาวน์ไลท์ 5 ดวง = 3,000 + 3×1,000 = 6,000", sum({ dl: 5 }, 0) === 6000, sum({ dl: 5 }, 0));
+  ok("ปลั๊กธรรมดา 1,000 · มีฝาครอบ 2,000 · สวิตซ์ 1,000 (เดิม 500)", sum({ plug: 2, plugCover: 1, sw: 1 }, 0) === 5000 && ELEC_RATES.sw === 1000);
+  ok("ชุดโคม 6 แบบ (กระบอก/ซาลาเปา/ฝังฝ้ากลม × ขาว/ดำ) จุดละ 500", ELEC_LAMPS.length === 6 && sum(Object.fromEntries(ELEC_LAMPS.map(([k]) => [k, 1])), 0) === 3000);
+  ok("พัดลม/ฝาครอบเดิมยังอยู่ (3,000/1,000)", sum({ fan8: 1, fan10: 1, cover: 1 }, 0) === 7000);
+  ok("รุ่นที่โชว์ไฟส่องสว่าง: กันสาด/หลังคาทุกทรง + ราวกันตก + กลาสเฮ้าส์", ["roof", "roof_multi", "roof_slide", "roof_gable", "gable_multi", "glasshouse", "glasshouse_multi", "handrail"].every((id) => ELEC_LIGHT_PRODS.includes(id) && PRODUCTS[id]));
+  const { withUniversalAddons } = await import("../src/lib/calculator40/universal-addons.ts");
+  const rp = withUniversalAddons(PRODUCTS.roof);
+  const o = { w: 400, h: 200, p: 1, form: rp.defForm, color: "white", colorKey: "white", spec: {} };
+  const d0 = computeCost(PB, rp, { ...o, addons: {} }).sell.withInstall, d1 = computeCost(PB, rp, { ...o, addons: { elec: { led: "in", dl: 3, sw: 1 } } }).sell.withInstall;
+  ok("กันสาด 4×2 ม. + LED ภายใน + ดาวน์ไลท์ 3 + สวิตซ์ 1 = +9,800 (4,800 + 4,000 + 1,000)", d1 - d0 === 9800, d1 - d0);
+  const ui = fs.readFileSync("src/components/calculator40/AddonsSection.tsx", "utf8");
+  ok("หน้าจอ: ราคางานไฟอ่านจาก ELEC_RATES/elecRows ใน engine ที่เดียว (ไม่พิมพ์เลขซ้ำ)", ui.includes("elecRows(e, area)") && ui.includes("ELEC_LIGHT_PRODS.includes(prod?.id)") && !/n\("sw"\) \* 500/.test(ui));
+}
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);

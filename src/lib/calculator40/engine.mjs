@@ -511,7 +511,10 @@ export function computeCost(PB, prod, opt) {
     const code = (rawCode && PB.ALUCODE_ALIAS && PB.ALUCODE_ALIAS[rawCode]) || rawCode;
     // it.stockLen = ความยาวเส้นเฉพาะบรรทัดนี้ (เช่น มือจับ X-J ขายเป็นท่อน 2.8 ม. ไม่ใช่ 6 ม.)
     const pool = poolShare.get(rawCode);
-    const bars = pool && pool.len > 0
+    // it.fracBars = นับ "ยาวที่ใช้ ÷ ความยาวเส้น" ตรง ๆ ไม่ปัด ไม่เผื่อเศษ (กรอบมุ้งผลิตเอง ชีตราคามุ้งคิดแบบนี้ · 6 พ.ย.69)
+    const bars = it.fracBars && seg > 0 && count > 0
+      ? seg * count / (Number(it.stockLen) || stockLen)
+      : pool && pool.len > 0
       ? pool.bars * (seg * count) / pool.len
       : barsNeeded(seg, count, Number(it.stockLen) || stockLen, !!prod.aluWaste && !it.noWaste, !!it.alwaysWaste);
     if (bars <= 0) continue;
@@ -1758,6 +1761,42 @@ export const CMECH_TIERS = {
 };
 export const STAINLESS_TIERS = { '30': { p: 1500, l: '30.5 ซม.' }, '45': { p: 2000, l: '45 ซม.' }, '60': { p: 2000, l: '60 ซม.' }, '80': { p: 2500, l: '80 ซม.' }, '100': { p: 3000, l: '100 ซม.' }, '120': { p: 3200, l: '120 ซม.' } };
 // เรตออปชั่นราคาคงที่ (แหล่งเดียว · ใช้ทั้ง engine คิดเงิน + ป้ายปุ่ม UI) — แก้ที่นี่ที่เดียว ป้าย+ราคาขยับตรงกัน (ป้องกันป้ายโกหก)
+// ── งานไฟ (ปุ่ม elec) — ราคาขายตรง (sell-based · ทุน = ขาย ÷ 2 แบบปุ่มเสริม R3.9) · แหล่งเดียวทั้ง engine + หน้าจอ ──
+//   17 ก.ค.69 พัดลม/ฝาครอบ/สวิตซ์ (ทุกรุ่น) · 6 พ.ย.69 เจ้าของเพิ่ม ไฟเส้น LED / ดาวน์ไลท์ / ปลั๊ก / ชุดโคม (กันสาด ราวกันตก กลาสเฮ้าส์)
+//   + สวิตซ์ไฟ 500 → 1,000/จุด ตามราคาใหม่ของเจ้าของ
+export const ELEC_RATES = { fan8: 3000, fan10: 3000, cover: 1000, sw: 1000, ledIn: 600, ledOut: 900, dlBase: 3000, dlBaseN: 2, dlExtra: 1000, plug: 1000, plugCover: 2000, lamp: 500 };
+export const ELEC_LAMPS = [
+  ['lampTubeW', 'ชุดดวงโคมกระบอก สีขาว'], ['lampTubeB', 'ชุดดวงโคมกระบอก สีดำ'],
+  ['lampBunW', 'ชุดดวงโคมซาลาเปา สีขาว'], ['lampBunB', 'ชุดดวงโคมซาลาเปา สีดำ'],
+  ['lampRecW', 'ชุดดวงโคมฝังฝ้ากลม สีขาว'], ['lampRecB', 'ชุดดวงโคมฝังฝ้ากลม สีดำ'],
+];
+// รุ่นที่โชว์ช่องไฟส่องสว่าง (LED/ดาวน์ไลท์/ปลั๊ก/โคม) — กันสาด/หลังคาทุกทรง · ราวกันตก · กลาสเฮ้าส์
+export const ELEC_LIGHT_PRODS = ['roof', 'roof_multi', 'roof_slide', 'roof_gable', 'gable_multi', 'glasshouse', 'glasshouse_multi', 'handrail'];
+export const LED_NOTE = 'รวมรางไฟ + พ่วงปลั๊กไฟใกล้เคียง · ไม่รวมเดินไฟเข้าตู้เมน';
+/** แถวงานไฟจากค่าที่กรอก (sel = { fan8, fan10, cover, sw, led:'in'|'out', ledArea, dl, plug, plugCover, lamp*… }) · area = พื้นที่งาน (ตร.ม.) */
+export function elecRows(sel, area) {
+  const s = sel || {}, R = ELEC_RATES, n = (k) => Math.max(0, Math.round(Number(s[k]) || 0));
+  const rows = [
+    { q: n('fan8'), label: 'พัดลมดูดอากาศ 8"', price: R.fan8, unit: 'ตัว' },
+    { q: n('fan10'), label: 'พัดลมดูดอากาศ 10"', price: R.fan10, unit: 'ตัว' },
+    { q: n('cover'), label: 'ฝาครอบกันแมลง 8"/10"', price: R.cover, unit: 'ตัว' },
+  ];
+  if (s.led === 'in' || s.led === 'out') {
+    const a = Number(s.ledArea) > 0 ? Number(s.ledArea) : Number(area) || 0;
+    rows.push({ q: Math.round(a * 100) / 100, label: (s.led === 'out' ? 'ไฟเส้น LED ภายนอก กันน้ำ IP65' : 'ไฟเส้น LED ภายใน') + ' (' + LED_NOTE + ')', price: s.led === 'out' ? R.ledOut : R.ledIn, unit: 'ตร.ม.' });
+  }
+  const dl = n('dl');
+  if (dl > 0) {
+    rows.push({ q: 1, label: 'เดินไฟดาวน์ไลท์ ' + Math.min(dl, R.dlBaseN) + ' ดวง (ใช้สวิตซ์ไฟเดิม)', price: R.dlBase, unit: 'ชุด' });
+    if (dl > R.dlBaseN) rows.push({ q: dl - R.dlBaseN, label: 'เดินไฟดาวน์ไลท์เพิ่ม ' + (dl - R.dlBaseN) + ' จุด', price: R.dlExtra, unit: 'จุด' });
+  }
+  rows.push({ q: n('plug'), label: 'ปลั๊กไฟ แบบธรรมดา (ไม่มีฝาครอบ) ' + n('plug') + ' จุด', price: R.plug, unit: 'จุด' });
+  rows.push({ q: n('plugCover'), label: 'ปลั๊กไฟ แบบมีฝาครอบ ' + n('plugCover') + ' จุด', price: R.plugCover, unit: 'จุด' });
+  rows.push({ q: n('sw'), label: 'สวิตซ์ไฟ', price: R.sw, unit: 'จุด' });
+  for (const [k, lbl] of ELEC_LAMPS) rows.push({ q: n(k), label: lbl + ' ' + n(k) + ' จุด', price: R.lamp, unit: 'จุด' });
+  return rows.filter((x) => x.q > 0).map((x) => ({ ...x, amount: Math.round(x.q * x.price * 100) / 100 }));
+}
+
 export const ADDON_FLAT = { soft_close: 4000, sling: 2000, hide_beam: 4000, u_track: 4000, beam_support: 4000, hide_track: 4000, gate_curve: 4000, shower_black: 4000, shower_gold: 6000 };
 // เรตฝ้าใต้หลังคา/ฝ้าในห้อง ฿/ตร.ม. ตามชนิด (R3.9 · +ฉนวน 600) — แหล่งเดียว ใช้ทั้ง engine (ceil_under) + app (G3/G6) · global หลัง deModule
 export const CEIL_RATE = { 'ฉาบเรียบ': 480, 'อลูตัวซี': 2100, 'อลูไทยทิพย์': 2100, 'ไม้เทียม remood': 2600, 'ระแนงอลู 1×5': 3300, 'ระแนงอลู เว้นร่อง': 3700 };
@@ -2201,15 +2240,9 @@ export function computeAddon(id, sel, ctx) {
     return { label: 'แผ่นทึบล่าง ' + lbl, qty: round2(sw * sh), unit: 'ตร.ม.', unitPrice: rate, amount: round2(sw * sh * rate) };
   }
   if (id === 'elec') {                   // งานไฟ พัดลม+หน้ากาก+สวิตซ์ (เจ้าของเคาะ 17ก.ค.69 · ราคา "ขาย" ตรง ๆ · sell-based เหมือน add-on R3.9)
-    const s = sel || {};                 // sel = { fan8, fan10, cover, sw } (จำนวนตัว/จุด)
-    const rows = [
-      { q: s.fan8 | 0, label: 'พัดลมดูดอากาศ 8"', price: 3000, unit: 'ตัว' },
-      { q: s.fan10 | 0, label: 'พัดลมดูดอากาศ 10"', price: 3000, unit: 'ตัว' },
-      { q: s.cover | 0, label: 'ฝาครอบกันแมลง 8"/10"', price: 1000, unit: 'ตัว' },
-      { q: s.sw | 0, label: 'สวิตซ์ไฟ', price: 500, unit: 'จุด' },
-    ].filter((x) => x.q > 0);
+    const rows = elecRows(sel, ctx.area);   // แหล่งเดียวกับหน้าจอ (ELEC_RATES)
     if (!rows.length) return null;
-    return rows.map((x) => ({ label: x.label + ' (งานไฟ)', qty: x.q, unit: x.unit, unitPrice: x.price, amount: x.q * x.price }));
+    return rows.map((x) => ({ label: x.label + ' (งานไฟ)', qty: x.q, unit: x.unit, unitPrice: x.price, amount: x.amount }));
   }
   if (id === 'u_track') {               // ฝังรางยู U-Track · ฟรี ≤2ม. + 500/ม.เกิน
     if (sel !== 'yes') return null;

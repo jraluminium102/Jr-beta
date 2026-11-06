@@ -2641,19 +2641,24 @@ export const PRODUCTS = {
     materialLabel: 'ผ้ามุ้ง',
     materials: ['ไฟเบอร์', 'ไนล่อน', 'สแตนเลส', 'กันแมว', 'กันหนู'],
     defMaterial: 'ไฟเบอร์',
-    addons: ['ms_color', 'screen_demo', 'screen_existing', 'frame_wrap'],
+    addons: ['screen_demo', 'screen_existing', 'frame_wrap'],   // 6 พ.ย.69 ถอด ms_color (เรต 0 รอราคา) — สีกรอบคิดจากช่อง "สีอลูมิเนียม" แล้ว
     specOpts: [FAB_SPEC],
     vars: {
       N: "(form==='อิสระ2บาน'?1:P)",
       SW: '(W/P)',
       FABQ: 'Math.round(N*SW*H*100)/100',  // พื้นที่ผ้ารวม (ตร.ม.)
     },
-    alu: [],
+    // 6 พ.ย.69 เจ้าของเจอ "เปลี่ยนสีเฟรมมุ้งแล้วราคาเท่าเดิม ต้องเปลี่ยนเหมือนบานเลื่อน"
+    //   เดิมกรอบอยู่ในกอง consum (ไม่ผูกสี) → ย้ายเข้า alu[] ผูกรหัสโปรไฟล์จริงตามใบตัด SMS (มุ้งเล็ก B30006 · มุ้งใหญ่ B20051)
+    //   ราคาขาวคงเดิม (priceLocked 625 / 885 ตามชีตราคามุ้ง) · สีอื่นใช้ราคาสีของรหัสนั้น (เทา/ลายไม้สต็อก) หรือ ขาว + ค่าอบ×กก. (สีพิเศษ) เหมือนบานเลื่อน
+    //   จำนวนเส้นคงสูตรชีต ยาว ÷ 6 ม. ไม่ปัด (fracBars)
+    alu: [
+      { name: 'เสามุ้ง B30006', code: 'B30006', price: 625, priceLocked: true, fracBars: true, stockLen: 6.0, seg: 'H', count: 'N*2' },
+      { name: 'ขวางมุ้ง B30006', code: 'B30006', price: 625, priceLocked: true, fracBars: true, stockLen: 6.0, seg: 'SW', count: 'N*2' },
+    ],
     glass: null,
     hardware: [],
     consum: [
-      { name: 'เสา (เส้น 6ม.)', needCode: true, price: 625, unit: 'เส้น', count: 'Math.round(N*2*H/6*100)/100' },
-      { name: 'ขวาง (เส้น 6ม.)', needCode: true, price: 625, unit: 'เส้น', count: 'Math.round(N*2*SW/6*100)/100' },
       { name: 'ยางอัด (ม.)', needCode: true, price: 5, unit: 'ม.', count: 'Math.round(N*2*(SW+H)*100)/100' },
       ...SCREEN_FABRIC_ROWS,
     ],
@@ -2668,17 +2673,23 @@ export const PRODUCTS = {
     materialLabel: 'ผ้ามุ้ง',
     materials: ['ไฟเบอร์', 'ไนล่อน', 'สแตนเลส', 'กันแมว', 'กันหนู', 'นิรภัยสแตน 304'],   // นิรภัย = ผ้าตัวเลือกของเฟรมใหญ่ (R3.9 imp23 · พี่สั่ง 1ก.ค.) ไม่ใช่รุ่นแยก
     defMaterial: 'ไฟเบอร์',
-    addons: ['ms_color', 'screen_demo', 'screen_existing', 'frame_wrap'],
+    addons: ['screen_demo', 'screen_existing', 'frame_wrap'],   // 6 พ.ย.69 ถอด ms_color — สีกรอบคิดจากช่อง "สีอลูมิเนียม" แล้ว
     specOpts: [FAB_SPEC],
     vars: { N: "(form==='อิสระ2บาน'?1:P)", SW: '(W/P)', FABQ: 'Math.round(N*SW*H*100)/100' },
-    alu: [],
+    // 6 พ.ย.69 เจ้าของเจอ "เปลี่ยนสีเฟรมมุ้งแล้วราคาเท่าเดิม ต้องเปลี่ยนเหมือนบานเลื่อน"
+    //   เดิมกรอบอยู่ในกอง consum (ไม่ผูกสี) → ย้ายเข้า alu[] ผูกรหัสโปรไฟล์จริงตามใบตัด SMS (มุ้งเล็ก B30006 · มุ้งใหญ่ B20051)
+    //   ราคาขาวคงเดิม (priceLocked 625 / 885 ตามชีตราคามุ้ง) · สีอื่นใช้ราคาสีของรหัสนั้น (เทา/ลายไม้สต็อก) หรือ ขาว + ค่าอบ×กก. (สีพิเศษ) เหมือนบานเลื่อน
+    //   จำนวนเส้นคงสูตรชีต ยาว ÷ 6 ม. ไม่ปัด (fracBars)
+    alu: [
+      // B20051 อยู่ในตารางราคาตามน้ำหนัก (แบรนด์ SMS) → ราคาขาวเท่าเสากุญแจของบานเลื่อน SMS (ไม่ใช่ 885 ในชีตราคามุ้ง)
+      { name: 'เสากุญแจบาน B20051', code: 'B20051', price: 885, fracBars: true, stockLen: 6.0, seg: 'H', count: 'N*2' },
+      { name: 'ขวาง B20051', code: 'B20051', price: 885, fracBars: true, stockLen: 6.0, seg: 'SW', count: 'N*2' },
+    ],
     glass: null,
     hardware: [],
     consum: [
       // 6 ต.ค.69 ถอดรหัส JR00256 ออก — ไม่มีแถวนี้ในสโตร์เลย (404 · ไม่เคยเคลื่อนไหว)
       //   ของจริงเป็นเส้นอลู B20051 แยกสี (บานระแนงเลื่อนก็ไม่ผูกรหัสเหมือนกัน) · ราคายังคิดจาก price ในสูตร
-      { name: 'เสากุญแจบาน 20051 (เส้น 6ม.)', price: 885, unit: 'เส้น', count: 'Math.round(N*2*H/6*100)/100' },
-      { name: 'ขวาง 20051 (เส้น 6ม.)', needCode: true, price: 885, unit: 'เส้น', count: 'Math.round(N*2*SW/6*100)/100' },
       { name: 'ยางอัด (ม.)', needCode: true, price: 5, unit: 'ม.', count: 'Math.round(N*2*(SW+H)*100)/100' },
       ...SCREEN_FABRIC_ROWS,
       { name: 'ผ้าสแตนเลสนิรภัย 304', needCode: true, price: 650, unit: 'ตร.ม.', count: "material==='นิรภัยสแตน 304'?FABQ:0" },   // ⚠️ทุน 650/ตร.ม. · R3.9 ขายเป็น tier 3500/3200/3000 ตามพื้นที่ — รอพี่เคาะใน Excel ทุนรวม

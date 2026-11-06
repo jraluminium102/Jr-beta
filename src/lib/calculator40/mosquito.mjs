@@ -49,7 +49,8 @@ export function computeMosquitoR4(PRODUCTS, A, d, PB, profitPct, installProfitPc
   // ผ้านิรภัย = ตัวเลือกผ้าของเฟรมเล็ก/ใหญ่ → คิดฐานด้วยไฟเบอร์ + upcharge tier R3.9 (safety08 · บวกบนฐาน ไม่ใช่แทนผ้า · พี่สั่ง 1ก.ค.) · ทุนมด 650/ตร.ม. คงไว้ (markup ≈4.6-5.4×)
   const isSafety = ['small', 'big'].includes(mq) && A.mqFabric === 'safety';
   const baseMat = ['small', 'big'].includes(mq) ? (isSafety ? 'ไฟเบอร์' : ({ fiber: 'ไฟเบอร์', cat: 'กันแมว', rat: 'กันหนู' }[A.mqFabric] || 'ไฟเบอร์')) : (M[1] || mp.defMaterial);
-  const mr = computeCost(PB, mp, { w: mw, h: mh, p: mpan, form: mp.defForm, material: baseMat, profitPct, installProfitPct });
+  // d.colorOpt = สีของบานที่มุ้งติดอยู่ ({color, colorKey, stockColor}) → กรอบมุ้งเฟรมเล็ก/ใหญ่คิดราคาตามสีเดียวกับบาน (6 พ.ย.69)
+  const mr = computeCost(PB, mp, { w: mw, h: mh, p: mpan, form: mp.defForm, material: baseMat, profitPct, installProfitPct, ...(d.colorOpt || {}) });
   let safetyExtra = 0, safetyLbl = '';
   if (isSafety) {
     const aM = (mw / 100) * (mh / 100);

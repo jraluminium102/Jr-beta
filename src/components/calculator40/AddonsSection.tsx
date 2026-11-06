@@ -23,7 +23,7 @@ import { MOSQ_CHIPS, mosqVariants } from "@/lib/calculator40/mosquito.mjs";
 // @ts-expect-error — products เป็น ESM JS ล้วน (ใช้ดึง screen_ready.materials สำหรับรุ่นย่อยมุ้ง)
 import { PRODUCTS } from "@/lib/calculator40/products.mjs";
 // @ts-expect-error — engine เป็น ESM JS ล้วน (ตาราง CMECH_TIERS/STAINLESS_TIERS/ADDON_FLAT/CEIL_RATE แหล่งเดียวกับที่ computeAddon ใช้คิดเงิน — import ตรง กันป้าย/ราคาหลุดกัน)
-import { CMECH_TIERS, STAINLESS_TIERS, ADDON_FLAT as ADDON_FLAT_RAW, CEIL_RATE as CEIL_RATE_RAW, zRate as zRateFn, gridRateFor, corrugatedFinRate, handrailHasGrip, motorSizeOk, pickMotorByWeight, awnMotorPick } from "@/lib/calculator40/engine.mjs";
+import { CMECH_TIERS, STAINLESS_TIERS, ADDON_FLAT as ADDON_FLAT_RAW, CEIL_RATE as CEIL_RATE_RAW, zRate as zRateFn, gridRateFor, corrugatedFinRate, handrailHasGrip, motorSizeOk, pickMotorByWeight, awnMotorPick, ELEC_RATES, ELEC_LAMPS, ELEC_LIGHT_PRODS, LED_NOTE, elecRows } from "@/lib/calculator40/engine.mjs";
 import PB_JSON from "@/lib/calculator40/pricebook.json";
 const ADDON_FLAT: Record<string, number> = ADDON_FLAT_RAW;
 const CEIL_RATE: Record<string, number> = CEIL_RATE_RAW;
@@ -288,23 +288,55 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, co
   }
   if (ad === "elec") {
     // งานไฟ (เจ้าของเคาะ 17ก.ค.69) — พัดลม/ฝาครอบ/สวิตซ์ · ราคาขายตรง ๆ · กดเพิ่มจำนวนตัว
+    //   6 พ.ย.69: กันสาด/ราวกันตก/กลาสเฮ้าส์ (ELEC_LIGHT_PRODS) มีช่องไฟเส้น LED · ดาวน์ไลท์ · ปลั๊ก · ชุดโคม เพิ่ม · ราคาจาก ELEC_RATES ใน engine ที่เดียว
     const e = A.elec || {};
+    const R = ELEC_RATES;
     const n = (k: string) => Math.max(0, Math.round(Number(e[k]) || 0));
-    const total = n("fan8") * 3000 + n("fan10") * 3000 + n("cover") * 1000 + n("sw") * 500;
+    const total = elecRows(e, area).reduce((s: number, x: any) => s + x.amount, 0);
+    const light = ELEC_LIGHT_PRODS.includes(prod?.id);
     const row = (k: string, label: string) => (
-      <div>
+      <div key={k}>
         <div className="text-[11px] text-ink-3 mb-0.5">{label}</div>
         <NumberInput value={n(k)} onChange={(v) => setObj("elec", { [k]: Math.max(0, Math.round(v)) })} placeholder="0" />
       </div>
     );
+    const ledOn = e.led === "in" || e.led === "out";
+    const areaTxt = (Math.round((Number(area) || 0) * 100) / 100).toLocaleString("th-TH");
     return (
-      <Field label="⚡ งานไฟ (พัดลม / หน้ากาก / สวิตซ์)">
+      <Field label={light ? "⚡ งานไฟ (ไฟเส้น LED / ดาวน์ไลท์ / ปลั๊ก / สวิตซ์ / โคม / พัดลม)" : "⚡ งานไฟ (พัดลม / หน้ากาก / สวิตซ์)"}>
+        {light && (
+          <div className="mb-2">
+            <div className="text-[11px] text-ink-3 mb-0.5">ไฟเส้น LED (ราคาต่อ ตร.ม. ของงาน)</div>
+            <ChipRow items={[{ val: "none", label: "ไม่มี" }, { val: "in", label: `ภายใน (${fmt(R.ledIn)}/ตร.ม.)` }, { val: "out", label: `ภายนอก กันน้ำ IP65 (${fmt(R.ledOut)}/ตร.ม.)` }]}
+              value={ledOn ? e.led : "none"} onChange={(v) => setObj("elec", { led: v === "none" ? "" : v })} />
+            {ledOn && (
+              <div className="mt-1.5 grid grid-cols-2 gap-2 items-end">
+                <div>
+                  <div className="text-[11px] text-ink-3 mb-0.5">พื้นที่ไฟ LED (ตร.ม. · เว้น = ทั้งงาน {areaTxt})</div>
+                  <NumberInput value={Number(e.ledArea) || 0} onChange={(v) => setObj("elec", { ledArea: Math.max(0, v) })} placeholder={areaTxt} />
+                </div>
+                <p className="text-[11px] text-ink-3">{LED_NOTE}</p>
+              </div>
+            )}
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-2">
-          {row("fan8", 'พัดลมดูดอากาศ 8" (3,000/ตัว)')}
-          {row("fan10", 'พัดลมดูดอากาศ 10" (3,000/ตัว)')}
-          {row("cover", 'ฝาครอบกันแมลง 8"/10" (1,000/ตัว)')}
-          {row("sw", "สวิตซ์ไฟ (500/จุด)")}
+          {light && row("dl", `ดาวน์ไลท์ (ดวง · ${R.dlBaseN} ดวงแรก ${fmt(R.dlBase)} ใช้สวิตซ์เดิม · เกินจุดละ ${fmt(R.dlExtra)})`)}
+          {light && row("plug", `ปลั๊กไฟ ธรรมดา ไม่มีฝาครอบ (${fmt(R.plug)}/จุด)`)}
+          {light && row("plugCover", `ปลั๊กไฟ มีฝาครอบ (${fmt(R.plugCover)}/จุด)`)}
+          {row("sw", `สวิตซ์ไฟ (${fmt(R.sw)}/จุด)`)}
+          {row("fan8", `พัดลมดูดอากาศ 8" (${fmt(R.fan8)}/ตัว)`)}
+          {row("fan10", `พัดลมดูดอากาศ 10" (${fmt(R.fan10)}/ตัว)`)}
+          {row("cover", `ฝาครอบกันแมลง 8"/10" (${fmt(R.cover)}/ตัว)`)}
         </div>
+        {light && (
+          <div className="mt-2">
+            <div className="text-[11px] text-ink-3 mb-0.5">ชุดโคมไฟ ({fmt(R.lamp)}/จุด)</div>
+            <div className="grid grid-cols-2 gap-2">
+              {(ELEC_LAMPS as [string, string][]).map(([k, lbl]) => row(k, lbl.replace("ชุดดวงโคม", "โคม")))}
+            </div>
+          </div>
+        )}
         {total > 0 && <p className="text-[11px] text-ink-3 mt-1.5">รวมงานไฟ = {fmt(total)} บาท</p>}
       </Field>
     );

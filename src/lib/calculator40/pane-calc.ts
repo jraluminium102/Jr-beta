@@ -141,7 +141,8 @@ export function panePrice(
       ? ((SHEET_FIN[rc.bake] || 0) / (1 + (Number.isFinite(profitPct) ? profitPct : 100) / 100)) : 0,
   };
   const movePanes = movePanesOverride ?? Math.max(1, (pane.n || 1) - (pane.fixedPanes || 0));
-  const mq = computeMosquitoR4(PRODUCTS, pane.addons || {}, { wCm, hCm, movePanes, form: formVal }, pb, profitPct, profitPct);
+  const mq = computeMosquitoR4(PRODUCTS, pane.addons || {}, { wCm, hCm, movePanes, form: formVal,
+    colorOpt: { color: opt.color, colorKey: opt.colorKey, stockColor: opt.stockColor } }, pb, profitPct, profitPct);   // กรอบมุ้งสีเดียวกับบาน
   if (mq) opt.mosquitoR4 = mq;
   if (pane.addons?.dgNc) opt.digiNc = true;
   if (pane.addons?.handleQty > 1) opt.handleQty = pane.addons.handleQty;   // จำนวนชุดมือจับ (เจ้าของเคาะ 24ส.ค.69) — เว้น/1 = พฤติกรรมเดิม
