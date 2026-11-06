@@ -2653,8 +2653,8 @@ export const PRODUCTS = {
     //   ราคาขาวคงเดิม (priceLocked 625 / 885 ตามชีตราคามุ้ง) · สีอื่นใช้ราคาสีของรหัสนั้น (เทา/ลายไม้สต็อก) หรือ ขาว + ค่าอบ×กก. (สีพิเศษ) เหมือนบานเลื่อน
     //   จำนวนเส้นคงสูตรชีต ยาว ÷ 6 ม. ไม่ปัด (fracBars)
     alu: [
-      { name: 'เสามุ้ง B30006', code: 'B30006', price: 625, priceLocked: true, fracBars: true, stockLen: 6.0, seg: 'H', count: 'N*2' },
-      { name: 'ขวางมุ้ง B30006', code: 'B30006', price: 625, priceLocked: true, fracBars: true, stockLen: 6.0, seg: 'SW', count: 'N*2' },
+      { name: 'เสามุ้ง B30006', code: 'B30006', price: 625, priceLocked: true, fracBars: true, stockLen: 6.0, kgFile: 3.255, seg: 'H', count: 'N*2' },   // kgFile = 0.5425 กก./ม. (ตารางน้ำหนัก 3.472/6.4) × เส้น 6 ม. — ให้สีพิเศษคิดค่าอบตามน้ำหนักเหมือนบานเลื่อน + เลิกเตือน "ไม่มี กก./เส้น" (6 พ.ย.69)
+      { name: 'ขวางมุ้ง B30006', code: 'B30006', price: 625, priceLocked: true, fracBars: true, stockLen: 6.0, kgFile: 3.255, seg: 'SW', count: 'N*2' },
     ],
     glass: null,
     hardware: [],
