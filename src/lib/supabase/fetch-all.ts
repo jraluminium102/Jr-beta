@@ -11,11 +11,13 @@
 export async function fetchAllPaged<T>(
   build: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>,
   pageSize = 1000,
+  /** (ไม่บังคับ) เรียกเมื่อ query หน้าใดหน้าหนึ่งพัง — ผู้เรียกจะได้รู้ว่าข้อมูล "ไม่ครบ" แทนที่จะเงียบ (หน้าสถิติใช้ส่ง warning ขึ้นจอ) */
+  onError?: (error: unknown, pageFrom: number) => void,
 ): Promise<T[]> {
   const all: T[] = [];
   for (let i = 0; ; i += pageSize) {
     const { data, error } = await build(i, i + pageSize - 1);
-    if (error || !data) break; // ได้เท่าที่ได้ ดีกว่าล้มทั้งหน้า (พฤติกรรมเดิมของหน้าพวกนี้ก็ไม่เช็ค error)
+    if (error || !data) { onError?.(error ?? new Error("no data"), i); break; } // ได้เท่าที่ได้ ดีกว่าล้มทั้งหน้า — แต่บอกผู้เรียกผ่าน onError
     all.push(...data);
     if (data.length < pageSize) break;
   }
