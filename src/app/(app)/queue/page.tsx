@@ -1227,6 +1227,60 @@ const QueueTableHead = () => (
   </thead>
 );
 
+// ---- ข้อความคอนเฟิร์มนัดกับลูกค้า (เจ้าของ 9 พ.ย.69) — กดก๊อปจากการ์ด/แถวคิวได้เลย ไม่ต้องเปิดฟอร์ม ----
+//   ปกติกดคอนเฟิร์ม 1 วันก่อนนัด → "วันพรุ่งนี้" · คิววันจันทร์ส่งตั้งแต่เสาร์ → "วันจันทร์" · ส่งล่วงหน้าหลายวัน → "วันพุธที่ 18/11/69"
+//   คำว่าวันคิดจาก "วันนี้" ตอนกดปุ่ม เทียบกับวันนัด — ไม่ต้องเลือกเอง
+const CONFIRM_DOW = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
+export function confirmDayWord(queueDate: string, now: Date = new Date()): string {
+  const m = String(queueDate ?? "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return "วัน....";
+  const q = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  const t = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diff = Math.round((q.getTime() - t.getTime()) / 86400000);
+  if (diff === 0) return "วันนี้";
+  if (diff === 1) return "วันพรุ่งนี้";
+  if (diff === 2 && q.getDay() === 1 && t.getDay() === 6) return "วันจันทร์";
+  const be2 = String(Number(m[1]) + 543).slice(-2);
+  return `วัน${CONFIRM_DOW[q.getDay()]}ที่ ${Number(m[3])}/${Number(m[2])}/${be2}`;
+}
+export function buildConfirmCopy(e: Pick<QueueEntry, "queue_date" | "queue_time" | "job_type">, now: Date = new Date()): string {
+  const day = e.queue_date ? confirmDayWord(e.queue_date, now) : "วัน....";
+  const tm = String(e.queue_time ?? "").match(/(\d{1,2})[:.](\d{2})/);
+  const time = tm ? `${tm[1].padStart(2, "0")}.${tm[2]}` : "....";
+  if (isAssessJobType(e.job_type)) {
+    return [
+      `สวัสดีค่ะ ทางลูกค้ามีนัดประเมินหน้างาน${day} เวลาประมาณ ${time} น. ไม่ทราบว่าทางลูกค้ามีให้เซลล์ดูส่วนไหนเพิ่มเติม หรือ`,
+      "ต้องการดูตัวอย่างวัสดุไหนเป็นพิเศษหรือป่าวคะ😊",
+      "",
+      "** รบกวนคุณลูกค้าอยู่หน้างานเพื่อเจอเซลล์ด้วยนะคะ **",
+      "เพื่อทำการสรุปแบบ ราคา และทราบวันเวลาการเข้าทำงานค่ะ",
+    ].join("\n");
+  }
+  // เคลียร์แบบ และอื่น ๆ
+  return `สวัสดีค่ะ ทางลูกค้ามีนัด${day} เวลาประมาณ ${time} น. นะคะ`;
+}
+function ConfirmCopyButton({ e, compact }: { e: QueueEntry; compact?: boolean }) {
+  const [copied, setCopied] = useState(false);
+  if (!e.queue_date) return null;
+  const onCopy = async (ev: React.MouseEvent) => {
+    ev.preventDefault(); ev.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(buildConfirmCopy(e));
+      setCopied(true); setTimeout(() => setCopied(false), 1500);
+    } catch { alert("คัดลอกไม่สำเร็จ ลองใหม่"); }
+  };
+  const label = copied ? "ก๊อปแล้ว ✓" : "คอนเฟิร์ม";
+  return (
+    <button type="button" onClick={onCopy}
+      title={`คัดลอกข้อความคอนเฟิร์มนัดส่งลูกค้า (${confirmDayWord(e.queue_date)})`}
+      className={compact
+        ? `press inline-flex items-center gap-0.5 text-[11px] font-semibold rounded-md px-1.5 py-0.5 border ${copied ? "border-emerald-300 bg-emerald-50 text-emerald-800" : "border-sky-300 bg-sky-50 text-sky-800 hover:bg-sky-100"}`
+        : `press inline-flex items-center gap-1 text-xs font-semibold min-h-[44px] ${copied ? "text-emerald-700" : "text-sky-700"}`}>
+      <Icon name={copied ? "check" : "copy"} size={compact ? 12 : 14} /> {label}
+    </button>
+  );
+}
+
 function QueueRow({ e, onOpen, onToggleReceipt, onToggleFeePaid, onNote, canWrite, slotLabel }: {
   e: QueueEntry; onOpen: (s: { entry: QueueEntry }) => void;
   onToggleReceipt: (e: QueueEntry, v: boolean) => void;
@@ -1284,6 +1338,7 @@ function QueueRow({ e, onOpen, onToggleReceipt, onToggleFeePaid, onNote, canWrit
             </a>
           )}
           {/* เอกสารควบคุมคุณภาพงาน (PDF ต้นฉบับ เติมข้อมูลลูกค้าหน้า 1) — ส่งให้เซลล์ก่อนเข้าหน้างาน · สร้างสด ไม่เก็บไฟล์ */}
+          <ConfirmCopyButton e={e} compact />
           {isAssessJobType(e.job_type) && (
             <a href={`/api/queue/${e.id}/qc-doc`} target="_blank" rel="noopener noreferrer"
               title="เอกสารควบคุมคุณภาพงาน (PDF) — เติมชื่อ/เบอร์/ที่อยู่/เซลล์/วันที่ ลงหน้าแรกให้แล้ว"
@@ -1425,6 +1480,7 @@ function MobileCard({ e, onOpen, onToggleReceipt, onToggleFeePaid, onNote, canWr
           </a>
         ) : <span className="text-ink-3 text-sm">—</span>}
         <div className="flex items-center gap-3 ml-auto" onClick={(ev) => ev.stopPropagation()}>
+          <ConfirmCopyButton e={e} />
           <label className="flex items-center gap-1.5 text-xs text-ink-2 cursor-pointer min-h-[44px]">
             <input type="checkbox" checked={e.fee_paid ?? false} disabled={!canWrite}
               onChange={(ev) => onToggleFeePaid(e, ev.target.checked)}
