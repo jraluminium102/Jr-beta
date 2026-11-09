@@ -18,7 +18,7 @@ type Money = number | null;
 type Kind = "NEW" | "OLD" | "ADDON" | "SPECIAL";
 type Row = {
   id: string; job_code: string | null; customer_name: string; date: string | null; net: Money; net_vat: Money; sales: string; area: string; src: "bill" | "quote" | "none"; stage: string; days?: number | null; note?: string;
-  line: string; assess_date: string | null; deposit: Money; fee: Money; vat: boolean; kind: Kind; kind_auto: boolean; onsite: boolean; ledger_note: string; cancelled: boolean;
+  line: string; assess_date: string | null; deposit: Money; deposit_gross: Money; fee: Money; vat: boolean; kind: Kind; kind_auto: boolean; onsite: boolean; ledger_note: string; cancelled: boolean;
 };
 type Stats = {
   range: { from: string; to: string; today: string; span_days: number };
@@ -27,7 +27,7 @@ type Stats = {
   summary: {
     assessed: number; quoted: number; quoted_amount: Money; deposited: number; revenue: Money; revenue_vat: Money;
     revenue_from_quote: number; revenue_zero: number; revenue_multi_quote: number; cancelled_after_deposit: number; cancelled_after_deposit_amount: Money; avg_ticket: Money;
-    deposit_sum: Money; fee_sum: Money; kinds: Record<Kind, number>; kinds_amount: Record<Kind, Money>; onsite: number; vat_count: number; kind_auto: number;
+    deposit_sum: Money; deposit_gross_sum: Money; fee_sum: Money; kinds: Record<Kind, number>; kinds_amount: Record<Kind, Money>; onsite: number; vat_count: number; kind_auto: number;
     onsite_by_sales: { name: string; n: number }[]; goal_monthly: Money; period: "calendar" | "acct";
     prev: { from: string; to: string; assessed: number; quoted: number; deposited: number; revenue: Money; quoted_amount: Money };
     cohort: { assessed: number; quoted: number; won: number; lost: number; pending: number; quote_rate: number; close_rate: number; close_rate_of_quoted: number; won_amount: Money; pending_amount: Money; lag_median_days: number; immature: boolean };
@@ -277,7 +277,7 @@ function StatsTab({ data, open, reload }: { data: Stats; open: Open; reload: () 
       <div>
         <div className="text-xs font-semibold text-ink-3 mb-1.5">ตามสมุดบัญชี: ลูกค้าที่มัดจำในช่วงนี้ ({s.deposited} งาน · ไม่รวมที่ยกเลิกมัดจำ)</div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {canFin && <Kpi label="ยอดมัดจำที่รับ" value={`฿${baht(s.deposit_sum ?? 0)}`} color="#0f7a38" sub={<>ค่าประเมิน/3D ฿{baht(s.fee_sum ?? 0)}</>} />}
+          {canFin && <Kpi label="ยอดมัดจำที่รับ · ก่อน VAT" value={`฿${baht(s.deposit_sum ?? 0)}`} color="#0f7a38" sub={<>เงินรับจริงรวม VAT ฿{baht(s.deposit_gross_sum ?? 0)} · ค่าประเมิน/3D ฿{baht(s.fee_sum ?? 0)}</>} />}
           <Kpi label="ลูกค้าใหม่ / เก่า" value={<>{s.kinds.NEW} <span className="text-ink-3 text-base">/</span> {s.kinds.OLD}</>} color="#1F4E78"
             sub={<>ใหม่ {pctOf(s.kinds.NEW, s.kinds.NEW + s.kinds.OLD)}% · เก่า {pctOf(s.kinds.OLD, s.kinds.NEW + s.kinds.OLD)}%{canFin ? <> · ฿{baht(s.kinds_amount.NEW ?? 0)} / ฿{baht(s.kinds_amount.OLD ?? 0)}</> : null}</>} />
           <Kpi label="งานเพิ่ม / พิเศษ" value={<>{s.kinds.ADDON} <span className="text-ink-3 text-base">/</span> {s.kinds.SPECIAL}</>}
@@ -739,14 +739,14 @@ function LedgerTable({ rows, canFin, onChanged, title }: { rows: Row[]; canFin: 
     if (v == null) return; patch(r.id, { ledger_note: v.trim() });
   }
   function exportCsv() {
-    const head = ["ลำดับ", "ชื่อลูกค้า", "ไลน์/ชื่อติดต่อ", "รหัสงาน", "เข้าประเมิน", "วันที่มัดจำ", "ยอดมัดจำ", "ค่าประเมิน/3D", "ยอดงานทั้งหมด (ก่อน VAT)", "VAT", "ใหม่/เก่า", "เซลล์", "พื้นที่", "มัดจำหน้างาน", "ที่มายอด", "หมายเหตุ", "สถานะ"];
+    const head = ["ลำดับ", "ชื่อลูกค้า", "ไลน์/ชื่อติดต่อ", "รหัสงาน", "เข้าประเมิน", "วันที่มัดจำ", "ยอดมัดจำ (ก่อน VAT)", "เงินมัดจำรับจริง (รวม VAT)", "ค่าประเมิน/3D", "ยอดงานทั้งหมด (ก่อน VAT)", "VAT", "ใหม่/เก่า", "เซลล์", "พื้นที่", "มัดจำหน้างาน", "ที่มายอด", "หมายเหตุ", "สถานะ"];
     const esc = (v: unknown) => { const t = String(v ?? ""); return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
     const lines = [head.join(",")];
     let n = 0;
     for (const r of shown) {
-      lines.push([r.cancelled ? "" : ++n, r.customer_name, r.line, r.job_code ?? "", r.assess_date ?? "", r.date ?? "", canFin ? r.deposit ?? 0 : "", canFin ? r.fee ?? 0 : "", canFin ? r.net ?? 0 : "", r.vat ? "Vat" : "", KIND_TH[r.kind].short + (r.kind_auto ? "?" : ""), r.sales, r.area, r.onsite ? "มัดจำหน้างาน" : "", SRC_TH[r.src], r.ledger_note + (r.cancelled ? (r.ledger_note ? " · " : "") + "ยกเลิกมัดจำ: " + (r.note ?? "") : ""), r.cancelled ? "ยกเลิกมัดจำ" : ""].map(esc).join(","));
+      lines.push([r.cancelled ? "" : ++n, r.customer_name, r.line, r.job_code ?? "", r.assess_date ?? "", r.date ?? "", canFin ? r.deposit ?? 0 : "", canFin ? r.deposit_gross ?? 0 : "", canFin ? r.fee ?? 0 : "", canFin ? r.net ?? 0 : "", r.vat ? "Vat" : "", KIND_TH[r.kind].short + (r.kind_auto ? "?" : ""), r.sales, r.area, r.onsite ? "มัดจำหน้างาน" : "", SRC_TH[r.src], r.ledger_note + (r.cancelled ? (r.ledger_note ? " · " : "") + "ยกเลิกมัดจำ: " + (r.note ?? "") : ""), r.cancelled ? "ยกเลิกมัดจำ" : ""].map(esc).join(","));
     }
-    if (canFin) lines.push(["", "รวม (ไม่รวมยกเลิก)", "", "", "", "", sum((r) => r.deposit ?? 0), sum((r) => r.fee ?? 0), sum((r) => r.net ?? 0), "", `N ${kinds.NEW} · O ${kinds.OLD} · เพิ่ม ${kinds.ADDON} · พิเศษ ${kinds.SPECIAL}`, "", "", `หน้างาน ${live.filter((r) => r.onsite).length}`, "", "", ""].map(esc).join(","));
+    if (canFin) lines.push(["", "รวม (ไม่รวมยกเลิก)", "", "", "", "", sum((r) => r.deposit ?? 0), sum((r) => r.deposit_gross ?? 0), sum((r) => r.fee ?? 0), sum((r) => r.net ?? 0), "", `N ${kinds.NEW} · O ${kinds.OLD} · เพิ่ม ${kinds.ADDON} · พิเศษ ${kinds.SPECIAL}`, "", "", `หน้างาน ${live.filter((r) => r.onsite).length}`, "", "", ""].map(esc).join(","));
     const blob = new Blob(["\ufeff" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `ยอดมัดจำ-${new Date().toISOString().slice(0, 10)}.csv`; a.click(); URL.revokeObjectURL(a.href);
   }
@@ -761,7 +761,7 @@ function LedgerTable({ rows, canFin, onChanged, title }: { rows: Row[]; canFin: 
           <button onClick={() => setOpenTbl((v) => !v)} className="press text-xs text-ink-3">{openTbl ? "ซ่อนตาราง" : "แสดงตาราง"}</button>
         </div>
       </div>
-      <p className="text-[11px] text-ink-3 mb-3">คอลัมน์ตามสมุดบัญชี · ยอดทุกตัวก่อน VAT · ใหม่/เก่า กดเปลี่ยนได้ทันที (ตัวจาง = ระบบเดา ยังไม่มีคนยืนยัน) · หมายเหตุกดที่ช่องเพื่อแก้ · งานที่ยกเลิกหลังมัดจำขึ้นขีดฆ่า ไม่รวมในยอดรวม/จำนวน</p>
+      <p className="text-[11px] text-ink-3 mb-3">คอลัมน์ตามสมุดบัญชี · ยอดทุกตัวก่อน VAT (ยอดมัดจำของงานที่มี VAT ถอด VAT ออกให้ตรงสมุด · เงินรับจริงดูได้ตอนชี้ที่ตัวเลข/ใน CSV) · ใหม่/เก่า กดเปลี่ยนได้ทันที (ตัวจาง = ระบบเดา ยังไม่มีคนยืนยัน) · หมายเหตุกดที่ช่องเพื่อแก้ · งานที่ยกเลิกหลังมัดจำขึ้นขีดฆ่า ไม่รวมในยอดรวม/จำนวน</p>
       {openTbl && (
         <div className="overflow-x-auto">
           <table className="w-full text-[12.5px] min-w-[1100px]">
@@ -771,7 +771,7 @@ function LedgerTable({ rows, canFin, onChanged, title }: { rows: Row[]; canFin: 
               <th className="font-semibold">ไลน์</th>
               <th className="font-semibold text-center">เข้าประเมิน</th>
               <th className="font-semibold text-center">วันมัดจำ</th>
-              {canFin && <th className="font-semibold text-right">ยอดมัดจำ</th>}
+              {canFin && <th className="font-semibold text-right" title="แบบสมุดบัญชี: มัดจำก่อน VAT (เงินรับจริงรวม VAT ดูใน CSV)">ยอดมัดจำ</th>}
               {canFin && <th className="font-semibold text-right">ค่าประเมิน</th>}
               {canFin && <th className="font-semibold text-right">ยอดงาน</th>}
               <th className="font-semibold text-center">VAT</th>
@@ -793,7 +793,7 @@ function LedgerTable({ rows, canFin, onChanged, title }: { rows: Row[]; canFin: 
                     <td className="text-ink-3 max-w-[160px] truncate" title={r.line}>{r.line || "–"}</td>
                     <td className="text-center tabular-nums text-ink-3">{fmtDate(r.assess_date)}</td>
                     <td className="text-center tabular-nums">{fmtDate(r.date)}</td>
-                    {canFin && <td className="text-right tabular-nums">{baht(r.deposit ?? 0)}</td>}
+                    {canFin && <td className="text-right tabular-nums" title={r.vat ? `รับจริงรวม VAT ฿${baht(r.deposit_gross ?? 0)}` : undefined}>{baht(r.deposit ?? 0)}</td>}
                     {canFin && <td className="text-right tabular-nums text-ink-3">{(r.fee ?? 0) ? baht(r.fee ?? 0) : "–"}</td>}
                     {canFin && <td className="text-right tabular-nums font-semibold">{baht(r.net ?? 0)}{r.src !== "bill" && <span className={`ml-1 text-[9.5px] font-normal ${r.src === "quote" ? "text-amber-700" : "text-red-700"}`}>{r.src === "quote" ? "ใบเสนอ" : "ไม่มียอด"}</span>}</td>}
                     <td className="text-center text-[11px] text-ink-3">{r.vat ? "Vat" : ""}</td>

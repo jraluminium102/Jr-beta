@@ -297,7 +297,10 @@ export const GET = withRoute(async (req: Request) => {
   // VAT: บิลมี vat หรือใบเสนอล่าสุด vat_rate > 0
   const vatOf = (j: JobRow) => { const b = billByJob.get(j.id); if (b && b.n > 0) return bills.some((x) => x.job_id === j.id && x.status !== "cancelled" && num(x.vat_amt) > 0); const q = latestQuoteByJob.get(j.id); return !!q && (num(q.vat_rate) > 0 || num(q.vat_amt) > 0); };
   // ยอดมัดจำ: jobs.deposit_amount → Σ finance DEPOSIT → 0
-  const depositOf = (j: JobRow) => num(j.deposit_amount) || depFinByJob.get(j.id) || 0;
+  // ยอดมัดจำ "รับจริง" (รวม VAT ถ้างานมี VAT — งวดบิลเป็นยอดรวม VAT) vs "ก่อน VAT" (แบบที่บัญชีจดในสมุด: มัดจำ = % ของยอดงานก่อน VAT)
+  const depositGrossOf = (j: JobRow) => num(j.deposit_amount) || depFinByJob.get(j.id) || 0;
+  const vatRateOf = (j: JobRow) => { const q = latestQuoteByJob.get(j.id); const r = num(q?.vat_rate); return r > 0 ? r : 7; };
+  const depositOf = (j: JobRow) => { const g = depositGrossOf(j); return vatOf(j) ? Math.round((g / (1 + vatRateOf(j) / 100)) * 100) / 100 : g; };
   const feeOf = (j: JobRow) => num(queueOf(j)?.assess_fee);
   const lineOf = (j: JobRow) => String(queueOf(j)?.line_contact ?? "").trim();
 
@@ -323,6 +326,7 @@ export const GET = withRoute(async (req: Request) => {
       cancelled_after_deposit_amount: cancelledAfterDepositIn(a, b).reduce((s, j) => s + num(j.deposit_amount), 0),
       // แบบสมุดบัญชี
       deposit_sum: dep.reduce((s, j) => s + depositOf(j), 0),
+      deposit_gross_sum: dep.reduce((s, j) => s + depositGrossOf(j), 0),
       fee_sum: dep.reduce((s, j) => s + feeOf(j), 0),
       kinds: dep.reduce((acc, j) => { acc[kindOf(j)]++; return acc; }, { NEW: 0, OLD: 0, ADDON: 0, SPECIAL: 0 } as Record<Kind, number>),
       kinds_amount: dep.reduce((acc, j) => { acc[kindOf(j)] += valueOf(j).net; return acc; }, { NEW: 0, OLD: 0, ADDON: 0, SPECIAL: 0 } as Record<Kind, number>),
@@ -378,7 +382,7 @@ export const GET = withRoute(async (req: Request) => {
     deposited: cur.deposited, revenue: mask(cur.revenue), revenue_vat: mask(cur.revenue_vat),
     revenue_from_quote: cur.from_quote, revenue_zero: cur.zero, revenue_multi_quote: cur.multi_quote,
     // แบบสมุดบัญชี (ไฟล์ "ยอดมัดจำ" ของบัญชี)
-    deposit_sum: mask(cur.deposit_sum), fee_sum: mask(cur.fee_sum),
+    deposit_sum: mask(cur.deposit_sum), deposit_gross_sum: mask(cur.deposit_gross_sum), fee_sum: mask(cur.fee_sum),
     kinds: cur.kinds, kinds_amount: { NEW: mask(cur.kinds_amount.NEW), OLD: mask(cur.kinds_amount.OLD), ADDON: mask(cur.kinds_amount.ADDON), SPECIAL: mask(cur.kinds_amount.SPECIAL) },
     onsite: cur.onsite, vat_count: cur.vat, kind_auto: cur.kind_auto,
     onsite_by_sales: Object.entries(depositedIn(from, to).filter(onsiteOf).reduce((acc, j) => { const n = salesOf(j); acc[n] = (acc[n] ?? 0) + 1; return acc; }, {} as Record<string, number>)).map(([name, n]) => ({ name, n })).sort((a, b) => b.n - a.n),
@@ -408,14 +412,14 @@ export const GET = withRoute(async (req: Request) => {
   type Row = {
     id: string; job_code: string | null; customer_name: string; date: string | null; net: number | null; net_vat: number | null; sales: string; area: string; src: "bill" | "quote" | "none"; stage: string; days?: number | null; note?: string;
     // แบบสมุดบัญชี
-    line: string; assess_date: string | null; deposit: number | null; fee: number | null; vat: boolean; kind: Kind; kind_auto: boolean; onsite: boolean; ledger_note: string; cancelled: boolean;
+    line: string; assess_date: string | null; deposit: number | null; deposit_gross: number | null; fee: number | null; vat: boolean; kind: Kind; kind_auto: boolean; onsite: boolean; ledger_note: string; cancelled: boolean;
   };
   const stageOf = (j: JobRow) => (won(j) ? "WON" : isCancelled(j) ? "LOST" : qsd(j) ? "QUOTED" : "ASSESSED");
   const rowOf = (j: JobRow, date: string | null, v: Val | null, extra?: Partial<Row>): Row => ({
     id: j.id, job_code: j.job_code ?? null, customer_name: j.customer_name ?? "", date: d10(date) || null,
     net: mask(v?.net ?? 0), net_vat: mask(v?.total ?? 0), sales: salesOf(j), area: areaLabel(addressOf(j)) || "-",
     src: v?.src ?? "none", stage: stageOf(j),
-    line: lineOf(j), assess_date: d10(j.assess_date) || null, deposit: mask(depositOf(j)), fee: mask(feeOf(j)), vat: vatOf(j),
+    line: lineOf(j), assess_date: d10(j.assess_date) || null, deposit: mask(depositOf(j)), deposit_gross: mask(depositGrossOf(j)), fee: mask(feeOf(j)), vat: vatOf(j),
     kind: kindOf(j), kind_auto: kindAuto(j), onsite: onsiteOf(j), ledger_note: String(j.ledger_note ?? "").trim(), cancelled: isCancelled(j),
     ...extra,
   });
