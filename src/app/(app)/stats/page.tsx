@@ -18,7 +18,7 @@ type Money = number | null;
 type Kind = "NEW" | "OLD" | "ADDON" | "SPECIAL";
 type Row = {
   id: string; job_code: string | null; customer_name: string; date: string | null; net: Money; net_vat: Money; sales: string; area: string; src: "bill" | "quote" | "none"; stage: string; days?: number | null; note?: string;
-  line: string; assess_date: string | null; deposit: Money; deposit_gross: Money; fee: Money; vat: boolean; kind: Kind; kind_auto: boolean; onsite: boolean; ledger_note: string; cancelled: boolean;
+  line: string; assess_date: string | null; deposit: Money; deposit_gross: Money; fee: Money; vat: boolean; kind: Kind; kind_auto: boolean; kind_guess: Kind; onsite: boolean; ledger_note: string; cancelled: boolean;
 };
 type Stats = {
   range: { from: string; to: string; today: string; span_days: number };
@@ -280,7 +280,6 @@ function StatsTab({ data, open, reload, goLedger }: { data: Stats; open: Open; r
             <div className="text-sm text-ink-2 mt-0.5 tabular-nums">
               มัดจำ <b>{s.deposited}</b> งาน · ใหม่ {s.kinds.NEW} / เก่า {s.kinds.OLD}{s.kinds.ADDON ? ` / งานเพิ่ม ${s.kinds.ADDON}` : ""}{s.kinds.SPECIAL ? ` / พิเศษ ${s.kinds.SPECIAL}` : ""} · มัดจำหน้างาน {s.onsite}
               {canFin && <> · ยอดมัดจำรับ <b>฿{baht(s.deposit_sum ?? 0)}</b></>}
-              {s.kind_auto > 0 && <span className="text-amber-700"> · {s.kind_auto} งานรอยืนยันใหม่/เก่า</span>}
             </div>
           </div>
           <span className="text-sm font-semibold text-brand inline-flex items-center gap-1">เปิดตารางแจกแจง <Icon name="external" size={14} /></span>
@@ -730,8 +729,7 @@ function LedgerTab({ data, reload }: { data: Stats; reload: () => void }) {
           <GoalBar goal={s.goal_monthly ?? 0} got={s.revenue ?? 0} label={acct ? `รอบบัญชี ${acctLabel(data.byMonth[0].month)}` : monthLabel(data.byMonth[0].month)} onSaved={reload} />
         )}
         <p className="text-[11px] text-ink-3 mt-1.5 leading-relaxed">
-          ใหม่/เก่า ระบบเดาให้ก่อน (คิวติ๊กลูกค้าเก่า หรือเคยมัดจำงานก่อนหน้า = เก่า · ไม่มีคิวประเมิน = งานเพิ่ม) — แก้ได้ในตารางด้านล่าง ค่าที่แก้เองจะไม่ถูกทับ
-          {s.kind_auto > 0 && <> · <span className="text-amber-700">{s.kind_auto} งานยังเป็นค่าที่ระบบเดา (ยังไม่มีคนยืนยัน)</span></>}
+          ใหม่/เก่า ระบบตัดสินจากประวัติลูกค้า (คิวติ๊กลูกค้าเก่า · ลูกค้าคนเดิมตามทะเบียน/เบอร์/ชื่อ เคยมีงานก่อนหน้า = เก่า · ไม่มีคิวประเมินและเคยเป็นลูกค้า = งานเพิ่ม · ช่าง/พาร์ตเนอร์ = พิเศษ) — แก้ได้ในตารางด้านล่างถ้าไม่ตรง
           {s.vat_count > 0 && <> · มี VAT {s.vat_count} งาน (บอกเฉย ๆ ยอดทุกตัวเป็นก่อน VAT)</>}
         </p>
       </div>
@@ -792,7 +790,7 @@ function LedgerTable({ rows, canFin, onChanged, title, period }: { rows: Row[]; 
     for (const g of groups) {
       let n = 0;
       for (const r of g.list) {
-        lines.push([monthLabel(g.key), r.cancelled ? "" : ++n, r.customer_name, r.line, r.job_code ?? "", r.assess_date ?? "", r.date ?? "", canFin ? r.deposit ?? 0 : "", canFin ? r.deposit_gross ?? 0 : "", canFin ? r.fee ?? 0 : "", canFin ? r.net ?? 0 : "", r.vat ? "Vat" : "", KIND_TH[r.kind].short + (r.kind_auto ? "?" : ""), r.sales, r.area, r.onsite ? "มัดจำหน้างาน" : "", SRC_TH[r.src], r.ledger_note + (r.cancelled ? (r.ledger_note ? " · " : "") + "ยกเลิกมัดจำ: " + (r.note ?? "") : ""), r.cancelled ? "ยกเลิกมัดจำ" : ""].map(esc).join(","));
+        lines.push([monthLabel(g.key), r.cancelled ? "" : ++n, r.customer_name, r.line, r.job_code ?? "", r.assess_date ?? "", r.date ?? "", canFin ? r.deposit ?? 0 : "", canFin ? r.deposit_gross ?? 0 : "", canFin ? r.fee ?? 0 : "", canFin ? r.net ?? 0 : "", r.vat ? "Vat" : "", KIND_TH[r.kind].short, r.sales, r.area, r.onsite ? "มัดจำหน้างาน" : "", SRC_TH[r.src], r.ledger_note + (r.cancelled ? (r.ledger_note ? " · " : "") + "ยกเลิกมัดจำ: " + (r.note ?? "") : ""), r.cancelled ? "ยกเลิกมัดจำ" : ""].map(esc).join(","));
       }
       const lv = g.list.filter((r) => !r.cancelled), kk = kindsOf(lv);
       if (canFin) lines.push([monthLabel(g.key), "", `รวม ${lv.length} งาน`, "", "", "", "", sum(lv, (r) => r.deposit ?? 0), sum(lv, (r) => r.deposit_gross ?? 0), sum(lv, (r) => r.fee ?? 0), sum(lv, (r) => r.net ?? 0), "", `N ${kk.NEW} · O ${kk.OLD} · เพิ่ม ${kk.ADDON} · พิเศษ ${kk.SPECIAL}`, "", "", `หน้างาน ${lv.filter((r) => r.onsite).length}`, "", "", ""].map(esc).join(","));
@@ -830,9 +828,8 @@ function LedgerTable({ rows, canFin, onChanged, title, period }: { rows: Row[]; 
           {chip("ADDON", `งานเพิ่ม ${tot.ADDON}`)}
           {chip("SPECIAL", `พิเศษ ${tot.SPECIAL}`)}
           {chip("ONSITE", `มัดจำหน้างาน ${live.filter((r) => r.onsite).length}`)}
-          {chip("AUTO", `รอยืนยันใหม่/เก่า ${live.filter((r) => r.kind_auto).length}`, "text-amber-800")}
         </div>
-        <p className="text-[12px] text-ink-3 mt-2">ยอดทุกตัวก่อน VAT · ยอดมัดจำของงานที่มี VAT ถอด VAT ออกให้ตรงสมุด (เงินรับจริงดูตอนชี้ที่ตัวเลข / ใน CSV) · <b>ใหม่/เก่า</b> เปลี่ยนได้ในช่อง (ตัวจาง = ระบบเดา กดเลือกเพื่อยืนยัน) · <b>หมายเหตุ</b> กดที่ช่องเพื่อพิมพ์ · งานที่ยกเลิกหลังมัดจำขึ้นขีดฆ่า ไม่รวมยอด/จำนวน</p>
+        <p className="text-[12px] text-ink-3 mt-2">ยอดทุกตัวก่อน VAT · ยอดมัดจำของงานที่มี VAT ถอด VAT ออกให้ตรงสมุด (เงินรับจริงดูตอนชี้ที่ตัวเลข / ใน CSV) · <b>ใหม่/เก่า</b> ระบบตัดสินให้จากประวัติลูกค้า (เปลี่ยนได้ในช่องถ้าไม่ตรง) · <b>หมายเหตุ</b> กดที่ช่องเพื่อพิมพ์ · งานที่ยกเลิกหลังมัดจำขึ้นขีดฆ่า ไม่รวมยอด/จำนวน</p>
       </div>
 
       <div className="overflow-x-auto">
@@ -882,8 +879,8 @@ function LedgerTable({ rows, canFin, onChanged, title, period }: { rows: Row[]; 
                       <td className={`${td} text-center`}>
                         {r.cancelled ? <span className="text-[12px]">{KIND_TH[r.kind].short}</span> : (
                           <select value={r.kind} disabled={saving === r.id} onChange={(e) => patch(r.id, { customer_kind: e.target.value })}
-                            title={r.kind_auto ? "ระบบเดา — เลือกเพื่อยืนยัน" : KIND_TH[r.kind].th}
-                            className={`rounded-lg px-2 py-1 text-[13px] font-bold border-0 cursor-pointer ${KIND_TH[r.kind].cls} ${r.kind_auto ? "opacity-55 ring-1 ring-amber-400/60" : ""}`}>
+                            title={r.kind_auto ? `ระบบตัดสินจากประวัติลูกค้า: ${KIND_TH[r.kind].th}` : `ตั้งเอง: ${KIND_TH[r.kind].th}`}
+                            className={`rounded-lg px-2 py-1 text-[13px] font-bold border-0 cursor-pointer ${KIND_TH[r.kind].cls}`}>
                             {(Object.keys(KIND_TH) as Kind[]).map((k) => <option key={k} value={k}>{KIND_TH[k].short} — {KIND_TH[k].th}</option>)}
                           </select>
                         )}

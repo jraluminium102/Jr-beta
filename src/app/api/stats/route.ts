@@ -110,7 +110,7 @@ function areaLabel(raw?: string | null): string {
 type JobRow = {
   id: string; job_code: string | null; status: string; assess_date: string | null; quote_sent_date: string | null; deposit_date: string | null;
   deposit_amount: number | null; design_state: string | null; design_start: string | null; design_end: string | null; design_due_date: string | null;
-  customer_area: string | null; customer_id: number | string | null; customer_name: string | null; channel: string | null; external_intake: boolean | null;
+  customer_area: string | null; customer_id: number | string | null; customer_name: string | null; customer_tel: string | null; channel: string | null; external_intake: boolean | null;
   cancel_reason: string | null; estimator: { full_name: string | null } | null; designer_ref: number | null; designer_lookup: { name: string | null } | null;
   queue_entry_id: string | null;
   // 0044 / 0172 — ธงตามบัญชี
@@ -154,7 +154,7 @@ export const GET = withRoute(async (req: Request) => {
   const paged = <T,>(label: string, build: (f: number, t: number) => any) =>
     fetchAllPaged<T>(build, 1000, (e) => warnings.push(`${label}: ${(e as { message?: string })?.message ?? "โหลดไม่สำเร็จ"}`));
 
-  const JOB_COLS_BASE = "id, job_code, status, assess_date, quote_sent_date, deposit_date, deposit_amount, design_state, design_start, design_end, design_due_date, customer_area, customer_id, customer_name, channel, external_intake, cancel_reason, estimator:estimator_id(full_name), designer_ref, designer_lookup:designer_ref(name), queue_entry_id, onsite_deposit";
+  const JOB_COLS_BASE = "id, job_code, status, assess_date, quote_sent_date, deposit_date, deposit_amount, design_state, design_start, design_end, design_due_date, customer_area, customer_id, customer_name, customer_tel, channel, external_intake, cancel_reason, estimator:estimator_id(full_name), designer_ref, designer_lookup:designer_ref(name), queue_entry_id, onsite_deposit";
   const fetchJobs = async (): Promise<JobRow[]> => {
     let colErr = "";
     const rows = await fetchAllPaged<JobRow>((f, t) => sb.from("jobs").select(JOB_COLS_BASE + ", customer_kind, ledger_note").order("id", { ascending: true }).range(f, t), 1000, (e) => { colErr = (e as { message?: string })?.message ?? "โหลดไม่สำเร็จ"; });
@@ -280,18 +280,40 @@ export const GET = withRoute(async (req: Request) => {
     normCh(queueOf(j)?.contact_channel) ?? (j.customer_id != null ? custById.get(String(j.customer_id))?.channel ?? null : null) ?? normCh(j.channel) ?? "OTHER";
 
   // ── ข้อมูลแบบสมุดบัญชี ต่องาน ──
-  //   ประเภทลูกค้า: ตั้งเอง (customer_kind) ชนะ → เดา: คิวบอกลูกค้าเก่า (old_customer / ผูกลูกค้า-งานเดิม) หรือ ลูกค้าคนเดียวกันเคยมัดจำงานก่อนหน้า → OLD · ไม่มีคิวประเมินเลย → ADDON (งานเพิ่ม/วัดจริง) · ไม่งั้น NEW
-  const firstDepositByCust = new Map<string, string>(); // customer_id → วันมัดจำแรกสุด
-  for (const j of J) { if (j.customer_id == null || !j.deposit_date || isCancelled(j)) continue; const k = String(j.customer_id), d = d10(j.deposit_date); const cur = firstDepositByCust.get(k); if (!cur || d < cur) firstDepositByCust.set(k, d); }
-  const kindOf = (j: JobRow): Kind => {
-    if (j.customer_kind) return j.customer_kind;
+  //   ประเภทลูกค้า: ระบบตัดสินเอง (เจ้าของ 9 พ.ย.69 "เอไอตรวจแม่นกว่าคน") · ค่าที่คนตั้งเอง (customer_kind) ยังชนะถ้ามี
+  //   กฎ: 1) ชื่อขึ้นต้น "ช่าง" หรือเซลล์เป็นพาร์ตเนอร์ (คุกกี้/จรูญ/นัท) → SPECIAL
+  //        2) คิวบอกลูกค้าเก่า (old_customer / ผูกลูกค้า-งานเดิม) → OLD
+  //        3) "เคยเป็นลูกค้ามาก่อน" = มีงานอื่นของคนเดียวกัน (customer_id · เบอร์โทร · ชื่อ) ที่มัดจำ/ประเมินก่อนงานนี้ →
+  //              ไม่มีคิวประเมิน (ช่างวัดจริง) = ADDON (งานเพิ่ม) · มีคิว = OLD
+  //        4) ที่เหลือ NEW
+  const normName = (n: unknown) => String(n ?? "").replace(/\(.*?\)|—.*$/g, "").replace(/คุ+ณ|^K\.|^k\./g, "").replace(/[\s\u200b\u00a0]+/g, "").toLowerCase();
+  const normTel = (t: unknown) => { const d = String(t ?? "").replace(/\D/g, ""); return d.length >= 9 ? d.slice(-9) : ""; };
+  const GENERIC_NAME = new Set(["ลูกค้า", "ทดสอบ", "test", ""]);
+  // ดัชนี: key → รายการ (วันอ้างอิง = วันมัดจำ ถ้าไม่มีใช้วันประเมิน) ของงานที่ไม่ยกเลิก
+  const custIdx = new Map<string, { id: string; date: string }[]>();
+  const addIdx = (k: string, j: JobRow) => { if (!k) return; const a = custIdx.get(k) ?? []; a.push({ id: j.id, date: d10(j.deposit_date) || d10(j.assess_date) }); custIdx.set(k, a); };
+  for (const j of J) {
+    if (isCancelled(j) || j.external_intake) continue;
+    if (j.customer_id != null) addIdx("c:" + j.customer_id, j);
+    const t = normTel(j.customer_tel); if (t) addIdx("t:" + t, j);
+    const n = normName(j.customer_name); if (n.length >= 3 && !GENERIC_NAME.has(n)) addIdx("n:" + n, j);
+  }
+  const hadPriorJob = (j: JobRow): boolean => {
+    const ref = d10(j.deposit_date) || d10(j.assess_date); if (!ref) return false;
+    const keys = [j.customer_id != null ? "c:" + j.customer_id : "", "t:" + normTel(j.customer_tel), (() => { const n = normName(j.customer_name); return n.length >= 3 && !GENERIC_NAME.has(n) ? "n:" + n : ""; })()];
+    return keys.some((k) => k.length > 2 && (custIdx.get(k) ?? []).some((x) => x.id !== j.id && x.date && x.date < ref));
+  };
+  const PARTNER_RE = /คุกกี้|จรูญ|นัท/;
+  const kindGuess = (j: JobRow): Kind => {
+    if (/^ช่าง/.test(String(j.customer_name ?? "").trim()) || PARTNER_RE.test(salesOf(j))) return "SPECIAL";
     const q = queueOf(j);
     if (q && (q.old_customer || q.target_customer_id != null || q.target_job_id != null)) return "OLD";
-    if (j.customer_id != null && j.deposit_date) { const f = firstDepositByCust.get(String(j.customer_id)); if (f && f < d10(j.deposit_date)) return "OLD"; }
-    if (!q) return "ADDON";
-    return "NEW";
+    const prior = hadPriorJob(j);
+    if (!q) return prior ? "ADDON" : "NEW";
+    return prior ? "OLD" : "NEW";
   };
-  const kindAuto = (j: JobRow) => !j.customer_kind; // true = ระบบเดา (หน้าโชว์จาง ๆ ให้คนยืนยัน)
+  const kindOf = (j: JobRow): Kind => j.customer_kind ?? kindGuess(j);
+  const kindAuto = (j: JobRow) => !j.customer_kind; // true = ระบบตัดสินเอง (ไม่ต้องยืนยัน · โชว์เป็นข้อมูลเฉย ๆ)
   // มัดจำหน้างาน: ธง 0044 หรือ วันมัดจำ = วันประเมิน (บัญชีจดแบบนี้)
   const onsiteOf = (j: JobRow) => !!j.onsite_deposit || (!!j.deposit_date && !!j.assess_date && d10(j.deposit_date) === d10(j.assess_date) && !!queueOf(j));
   // VAT: บิลมี vat หรือใบเสนอล่าสุด vat_rate > 0
@@ -412,7 +434,7 @@ export const GET = withRoute(async (req: Request) => {
   type Row = {
     id: string; job_code: string | null; customer_name: string; date: string | null; net: number | null; net_vat: number | null; sales: string; area: string; src: "bill" | "quote" | "none"; stage: string; days?: number | null; note?: string;
     // แบบสมุดบัญชี
-    line: string; assess_date: string | null; deposit: number | null; deposit_gross: number | null; fee: number | null; vat: boolean; kind: Kind; kind_auto: boolean; onsite: boolean; ledger_note: string; cancelled: boolean;
+    line: string; assess_date: string | null; deposit: number | null; deposit_gross: number | null; fee: number | null; vat: boolean; kind: Kind; kind_auto: boolean; kind_guess: Kind; onsite: boolean; ledger_note: string; cancelled: boolean;
   };
   const stageOf = (j: JobRow) => (won(j) ? "WON" : isCancelled(j) ? "LOST" : qsd(j) ? "QUOTED" : "ASSESSED");
   const rowOf = (j: JobRow, date: string | null, v: Val | null, extra?: Partial<Row>): Row => ({
@@ -420,7 +442,7 @@ export const GET = withRoute(async (req: Request) => {
     net: mask(v?.net ?? 0), net_vat: mask(v?.total ?? 0), sales: salesOf(j), area: areaLabel(addressOf(j)) || "-",
     src: v?.src ?? "none", stage: stageOf(j),
     line: lineOf(j), assess_date: d10(j.assess_date) || null, deposit: mask(depositOf(j)), deposit_gross: mask(depositGrossOf(j)), fee: mask(feeOf(j)), vat: vatOf(j),
-    kind: kindOf(j), kind_auto: kindAuto(j), onsite: onsiteOf(j), ledger_note: String(j.ledger_note ?? "").trim(), cancelled: isCancelled(j),
+    kind: kindOf(j), kind_auto: kindAuto(j), kind_guess: kindGuess(j), onsite: onsiteOf(j), ledger_note: String(j.ledger_note ?? "").trim(), cancelled: isCancelled(j),
     ...extra,
   });
   const byDateDesc = (a: Row, b: Row) => String(b.date ?? "").localeCompare(String(a.date ?? ""));
