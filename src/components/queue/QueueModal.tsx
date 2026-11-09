@@ -1810,8 +1810,8 @@ export function QueueModal({
             )}
           </Field>
 
-          {/* Assistant (role=ASSISTANT) */}
-          <Field label="ผู้ช่วยเซลล์">
+          {/* Assistant (role=ASSISTANT) หรือเซลล์หลักคนอื่นที่ไปด้วย (เซลล์รอง · เจ้าของ 9 พ.ย.69) — เก็บช่องเดียว assistant_id */}
+          <Field label="ผู้ช่วย / เซลล์รอง (ไปด้วย)">
             {addingAssistant ? (
               <div className="space-y-1.5">
                 <div className="flex gap-1.5">
@@ -1856,10 +1856,19 @@ export function QueueModal({
               <div className="flex gap-1.5">
                 <select value={f.assistant_id} onChange={(e) => set("assistant_id", e.target.value)}
                   className={`${inp} flex-1`}>
-                  <option value="">— ไม่มีผู้ช่วย —</option>
-                  {localAssistants.map((s) => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
-                  ))}
+                  <option value="">— ไม่มีผู้ช่วย/เซลล์รอง —</option>
+                  {localAssistants.length > 0 && (
+                    <optgroup label="ผู้ช่วย">
+                      {localAssistants.map((s) => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  <optgroup label="เซลล์รอง (เซลล์อีกคนไปด้วย)">
+                    {localMain.filter((s) => s.id !== f.sales_id).map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}{s.team === "PHUKET" ? " (ภูเก็ต)" : ""}</option>
+                    ))}
+                  </optgroup>
                 </select>
                 {!readOnly && localAssistants.length > 0 && (
                   <button type="button" onClick={() => setManagingAssist(true)}
