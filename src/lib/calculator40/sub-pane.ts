@@ -42,9 +42,11 @@ export type SubPane = {
 export const SUB_GROUPS: { g: string; items: [string, string, number, number][] }[] = [
   { g: "บานทำงาน", items: [["open_door", "บานเปิด", 0.9, 2.2], ["sms_slide", "บานเลื่อน", 1.8, 2.2], ["folding", "เฟี้ยม", 2.4, 2.2], ["awning", "กระทุ้ง", 0.6, 0.6]] },
   { g: "ติดตาย / ช่องแสง", items: [["fixed", "ช่องแสงบน", 1.2, 0.4], ["fixed", "บานข้างติดตาย", 0.6, 2.2], ["fixed", "ช่องแสงติดตาย", 1.0, 0.5], ["_custom", "อื่นๆ (กรอกเอง)", 1.0, 1.0]] },
+  // โซลิด (ลูกฟูก + เส้นคาด) — บานเปิด + แบบเลื่อน ยูโร/SMS (เจ้าของสั่ง 9 พ.ย.69 "ห้องกระจก/ผสมบาน เอา")
+  { g: "โซลิด", items: [["bansolid", "โซลิด บานเปิด", 0.9, 2.2], ["solid_slide_euro", "โซลิดเลื่อน ยูโร", 1.8, 2.2], ["solid_slide_sms", "โซลิดเลื่อน SMS", 1.8, 2.2]] },
 ];
 // บานที่แบ่งเปิด/ติดตายได้ (ปุ่ม "ปรับ" → แบ่งบาน)
-export const SUB_WORKING = ["open_door", "sms_slide", "folding", "awning"];
+export const SUB_WORKING = ["open_door", "sms_slide", "folding", "awning", "solid_slide_euro", "solid_slide_sms"];
 
 /** รุ่นของบานย่อย (รวมของเสริม universal เหมือนห้องกระจก) — ใช้ทั้งคิดราคาและกล่อง AddonsSection */
 export function subProd(pid: string): any {

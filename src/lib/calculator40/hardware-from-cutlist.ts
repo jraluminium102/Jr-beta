@@ -34,6 +34,7 @@ import { PRODUCTS } from "./products.mjs";
 export const HW_FROM_CUTLIST = new Set<string>([
   "sms_slide", "euro_slide", "folding", "pcdoor",   // เปิดมาก่อน (19–24 ส.ค.69)
   "slimlux", "fixed", "velora", "fold_euro", "gate", "fold_lift",   // เปิดเพิ่ม 2 ก.ย.69 ตามที่เจ้าของเคาะ
+  "solid_slide_euro", "solid_slide_sms",   // โซลิดแบบเลื่อน → ยืมใบตัดบานเลื่อน (HW_ALIAS) 9 พ.ย.69
   "woodjamb",   // เวฟ 6: รุ่นใหม่ ใบตัดตรงไฟล์ v1 ทุกบรรทัด + ทุกรหัสมีราคาในสโตร์แล้ว
 ]);
 
@@ -92,10 +93,13 @@ export function calcHwSkusViaCutlist(): Set<string> {
   return set;
 }
 
+// รุ่นที่ "ยืม" ใบตัดอุปกรณ์ของรุ่นอื่น — โซลิดแบบเลื่อน = เส้น/อุปกรณ์บานเลื่อนรุ่นนั้นทั้งชุด (9 พ.ย.69)
+export const HW_ALIAS: Record<string, string> = { solid_slide_euro: "euro_slide", solid_slide_sms: "sms_slide" };
 export function cutHardwareLines(inp: CalcHwInput): HwLine[] | null {
-  if (!HW_FROM_CUTLIST.has(inp.prodId)) return null;
+  const pid = HW_ALIAS[inp.prodId] || inp.prodId;
+  if (!HW_FROM_CUTLIST.has(pid)) return null;
   const map = cutInputFromRecipe({
-    kind: "std", prodId: inp.prodId,
+    kind: "std", prodId: pid,
     w: inp.w, h: inp.h, p: inp.p, form: inp.form ?? "", spec: inp.spec ?? {},
   });
   if (!map) return null;

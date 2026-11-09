@@ -854,7 +854,7 @@ console.log("\n═══ ⑳ ลำดับราคาสี — ขาว ≤
   ok("อ่านรายชื่อรุ่นยูโรที่มีสีพิเศษได้", special.has("open_door") && special.has("fold_euro"), [...special].join(","));
   // เจ้าของ 11 ก.ย.69: Aztec gray / มะฮอกกานี / ไวท์โอ๊ค มีแค่ บานเปิดยูโร · บานเลื่อนยูโร · บานโซลิด · PC Door (E-series ใบเก่า aztec = สีอบพิเศษ ⑲)
   // เจ้าของยืนยันซ้ำ 17 ก.ย.69: เฟี้ยมยูโรมี · บานโซลิดไม่มี (ของเดิมสลับกัน)
-  ok("3 สีพิเศษเลือกได้ 4 รุ่นเท่านั้น", [...special].sort().join(",") === "euro_slide,fold_euro,open_door,pcdoor", [...special].join(","));
+  ok("3 สีพิเศษเลือกได้ 5 รุ่นเท่านั้น (4 → 5 · 9 พ.ย.69: โซลิดเลื่อนยูโร = เส้นยูโรทั้งชุด สีเท่า euro_slide)", [...special].sort().join(",") === "euro_slide,fold_euro,open_door,pcdoor,solid_slide_euro", [...special].join(","));
   ok("ธง euroColors ในสูตร = รายชื่อใน alu-colors", Object.values(PRODUCTS).filter((p) => p.euroColors).map((p) => p.id).sort().join(",") === [...special].sort().join(","),
     Object.values(PRODUCTS).filter((p) => p.euroColors).map((p) => p.id).join(","));
   const AC = await import("../src/lib/calculator40/alu-colors.ts");
@@ -1582,6 +1582,38 @@ console.log(NL + "═══ 🦟 มุ้งนิรภัย ชิปแย�
   ok("เลือกรุ่นเองทับค่าตั้งต้นได้", /สักทอง/.test(mq(200, "white", { mqVariant: "มุ้งจีบนิรภัย ≤3ม. สักทอง" }).label));
   const ui = fs.readFileSync("src/components/calculator40/AddonsSection.tsx", "utf8");
   ok("หน้าจอ: รุ่นตั้งต้นนิรภัยใช้ mosqSafetyDefault ตัวเดียวกับ engine", ui.includes("mosqSafetyDefault(") && ui.includes("A.mqVariant || varDef"));
+}
+
+// ── 🚪 บานโซลิดแบบเลื่อน ยูโร/SMS (เจ้าของเคาะ 9 พ.ย.69: เส้นบานเลื่อนทั้งชุด · กระจก→ลูกฟูก 1/2 ชั้น + เส้นคาด ยาวเท่าสูงบาน · ค่าแรง/กำไรเท่าโซลิด) ──
+console.log(NL + "═══ 🚪 บานโซลิดแบบเลื่อน ยูโร/SMS (9 พ.ย.69) ═══");
+{
+  const { r41Key } = await import("../src/lib/calculator40/engine.mjs");
+  const { PANE_TYPES } = await import("../src/lib/calculator40/pane-calc.ts");
+  const { SUB_GROUPS } = await import("../src/lib/calculator40/sub-pane.ts");
+  const { cutHardwareLines } = await import("../src/lib/calculator40/hardware-from-cutlist.ts");
+  const SP = (o = {}) => ({ bottomrail: "รางกันน้ำ", solidLayer: "โซลิด 2 ชั้น", gridSide: "2 ฝั่ง (นอก+ใน)", gridPat: "เต็มบาน", gridN: "3", ...o });
+  const S = (id, o = {}) => computeCost(PB, PRODUCTS[id], { w: 240, h: 220, p: 2, form: "อิสระ", color: "white", colorKey: "white", spec: SP(o.spec), addons: {}, ...(o.opt || {}) });
+  for (const [id, base] of [["solid_slide_sms", "sms_slide"], ["solid_slide_euro", "euro_slide"]]) {
+    const p = PRODUCTS[id], b = PRODUCTS[base];
+    ok(`${id}: มีรุ่น · เส้น = ${base} ทั้งชุด + ลูกฟูก + เส้นคาด (${p.alu.length} = ${b.alu.length}+2) · ไม่มีกระจก`, p && p.alu.length === b.alu.length + 2 && p.glass == null && p.alu.slice(0, b.alu.length).every((a, i) => a.code === b.alu[i].code));
+    ok(`${id}: รูปแบบ/ราง/ของเสริม เหมือนบานเลื่อน + แบบโซลิด/เส้นคาด เหมือนบานโซลิด · ไม่มีปุ่มคาดตารางซ้ำ`, JSON.stringify(p.forms) === JSON.stringify(b.forms) && p.specOpts.some((s) => s.key === "bottomrail") && ["solidLayer", "gridSide", "gridPat", "gridN"].every((k) => p.specOpts.some((s) => s.key === k)) && !p.addons.includes("grid") && p.addons.includes("mosquito"));
+    const r = S(id);
+    ok(`${id} 240×220×2: ค่าแรงตาราง "บานโซลิด" + กำไร R4.1 ของโซลิด (r41Key→bansolid)`, r.laborCalc.key === "บานโซลิด" && r41Key(id) === "bansolid" && r.labor.prod === S("bansolid", { opt: { w: 240, h: 220, p: 2, form: "มีธรณี" } }).labor.prod, r.laborCalc.key + " " + r.labor.prod);
+    const lk = r.lines.find((l) => /ลูกฟูก/.test(l.name)), gd = r.lines.find((l) => /เส้นคาด/.test(l.name));
+    ok(`${id}: ลูกฟูก 12 แผ่น/บาน × 2 บาน × 2 ชั้น = 48 ชิ้น ยาว 2.2 (เท่าสูงบาน ไม่หักกรอบ) · เส้นคาด 26/ฝั่ง/บาน × 2 × 2 = 104 ชิ้น ยาว 2.2`, lk && lk.count.pieces === 48 && Math.abs(lk.count.seg - 2.2) < 1e-9 && gd && gd.count.pieces === 104 && Math.abs(gd.count.seg - 2.2) < 1e-9, `${lk?.count.pieces}/${lk?.count.seg} · ${gd?.count.pieces}/${gd?.count.seg}`);
+    ok(`${id}: ไม่มีบรรทัดกระจก · ราคาสูงกว่าบานเลื่อนกระจกรุ่นเดียวกัน`, !r.lines.some((l) => l.cat === "glass") && r.sell.withInstall > computeCost(PB, b, { w: 240, h: 220, p: 2, form: "อิสระ", color: "white", colorKey: "white", spec: SP(), addons: {} }).sell.withInstall);
+    const one = S(id, { spec: { solidLayer: "โซลิด 1 ชั้น" } }), out = S(id, { spec: { gridSide: "ฝั่งนอก" } }), n2 = S(id, { spec: { gridPat: "ระบุจำนวนแถบ", gridN: "2" } });
+    ok(`${id}: 1 ชั้น < 2 ชั้น · เส้นคาดฝั่งเดียว < 2 ฝั่ง · ระบุ 2 แถบ < เต็มบาน`, one.sell.withInstall < r.sell.withInstall && out.sell.withInstall < r.sell.withInstall && n2.sell.withInstall < r.sell.withInstall, [one.sell.withInstall, out.sell.withInstall, n2.sell.withInstall, r.sell.withInstall].join("/"));
+    const sa = S(id, { opt: { color: "sahara", colorKey: "sahara" } }).sell.withInstall, wd = S(id, { opt: { color: "wood_teak", colorKey: "wood_teak" } }).sell.withInstall;
+    ok(`${id}: ราคาตามสี ขาว < ซาฮาร่า < ลายไม้ (${r.sell.withInstall} / ${sa} / ${wd})`, r.sell.withInstall < sa && sa < wd);
+    const hw1 = cutHardwareLines({ prodId: id, w: 240, h: 220, p: 2, form: "อิสระ", spec: SP() }), hw2 = cutHardwareLines({ prodId: base, w: 240, h: 220, p: 2, form: "อิสระ", spec: SP() });
+    ok(`${id}: อุปกรณ์จากใบตัด = ของ ${base} (HW_ALIAS)`, hw1 && hw2 && JSON.stringify(hw1) === JSON.stringify(hw2));
+    ok(`${id}: ห้องกระจกเลือกได้ (PANE_TYPES) · ผสมบานมีปุ่ม (SUB_GROUPS) · ไม่ขึ้นการ์ดแยกใน G1 (listHide)`, PANE_TYPES.some((t) => t.key === id) && SUB_GROUPS.some((g) => g.items.some((it) => it[0] === id)) && p.listHide === true && !p.pickerHide);
+  }
+  ok("ยูโรโซลิดเลื่อน: อยู่ในรายชื่อสีพิเศษยูโร (SPECIAL_COLOR_PRODUCTS) เหมือน euro_slide", PRODUCTS.solid_slide_euro.euroColors === true);
+  const cc = fs.readFileSync("src/components/Calculator40Client.tsx", "utf8");
+  ok("หน้า G1: แถบ ชนิดบาน (SOLID_KINDS) ในหน้าบานโซลิด · การ์ดกรอง listHide", cc.includes("prod.solidFamily && (") && cc.includes("SOLID_KINDS as [string, string][]") && cc.includes("!x.pickerHide && !x.listHide"));
+  ok("บานโซลิด (เปิด) ติดธง solidFamily — แถบชนิดบานโผล่", PRODUCTS.bansolid.solidFamily === true && PRODUCTS.bansolid.glass == null);
 }
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);

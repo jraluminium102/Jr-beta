@@ -1459,7 +1459,8 @@ function sellParts(total, labProd, labInst, pP, pI, oh) {
 //   ข้อมูลอยู่ใน PB.R41 (สร้างด้วย scripts/gen-r41-table.mjs จาก PDF ของเจ้าของ)
 //   หลังคาหลายด้าน/กลาสเฮ้าส์ = โครงเดียวกับหลังคาเพิง/จั่ว → ใช้จุดอ้างอิงของรุ่นแม่
 // woodjamb (ครอบวงกบไม้ · รุ่นใหม่ v1) ใช้เรตค่าแรง "บานเปิด (ยูโร)" ตามชีตคิดทุน → ยืมแถว R4.1 ของบานเปิดมาใช้
-const R41_ALIAS = { roof_multi: 'roof', glasshouse: 'roof', glasshouse_multi: 'roof', gable_multi: 'roof_gable' };
+const R41_ALIAS = { roof_multi: 'roof', glasshouse: 'roof', glasshouse_multi: 'roof', gable_multi: 'roof_gable',
+  solid_slide_euro: 'bansolid', solid_slide_sms: 'bansolid' };   // โซลิดแบบเลื่อน: ค่าแรง/กำไร "คิดเท่าโซลิด" (เจ้าของเคาะ 9 พ.ย.69)
 export function r41Key(id) { return R41_ALIAS[id] || id; }
 // ยืมแถวค่าแรงของรุ่นอื่น (ไม่ยืม % ค่าของ): ครอบวงกบไม้ = บานเปิด (ยูโร) — 16 ก.ย.69 เคยใส่ใน R41_ALIAS แล้วหลุดตอน merge
 //   ⚠ ถ้าไม่มี → sellModel ว่าง ค่าแรงขาย = ทุน (กำไร 0%) เจ้าของเจอ 13 ต.ค.69

@@ -3170,6 +3170,47 @@ export const PRODUCTS = {
 
 };
 
+// ── บานโซลิดแบบเลื่อน (เจ้าของสั่ง 9 พ.ย.69 "บานโซลิดเปลี่ยนเป็นบานเลื่อนได้ด้วย ยูโร/เซมิยูโร(SMS)") ──
+//   กติกาที่เจ้าของเคาะ 9 พ.ย.69:
+//   ① เส้น = บานเลื่อนรุ่นนั้น "ทุกอย่าง" (เฟรม ราง เสา ขวาง คิ้ว ล้อ มือจับ รูปแบบ 4 แบบ ราง 2 แบบ ของเสริม) ยกเว้นกระจก
+//   ② กระจก → ลูกฟูก 2 ทาง JR01994 (แผ่น 10 ซม. · ราคาตามสีเหมือนบานโซลิด) เลือก 1 หรือ 2 ชั้น + เส้นคาดตาราง (เส้นกลาง) ตัวเลือกเดียวกับบานโซลิด
+//   ③ ยาวลูกฟูก/เส้นคาด = "เท่าความสูงบานไปเลย ไม่ต้องหักกรอบ" (เผื่อ ๆ) · กว้างบาน = กว้างช่อง ÷ จำนวนบาน
+//   ④ ค่าแรง + กำไรตาราง R4.1 คิดเท่าบานโซลิด (laborKey 'บานโซลิด' · engine R41_ALIAS → bansolid)
+//   ⑤ ปุ่ม "ชนิดบาน" อยู่ในหน้าบานโซลิด (listHide = ไม่ขึ้นการ์ดแยกใน G1) · ห้องกระจก/ผสมบาน เลือกได้ (ไม่ใช่ pickerHide)
+//   ⚠ ใบตัดยังไม่มีสูตรของรุ่นนี้ (from-recipe ไม่แมป) — ช่างกรอกมือไปก่อน
+export const SOLID_KINDS = [['bansolid', 'บานเปิด'], ['solid_slide_euro', 'บานเลื่อน ยูโร'], ['solid_slide_sms', 'บานเลื่อน SMS (เซมิยูโร)']];
+function solidSlideOf(base, id, name) {
+  const solidSpec = PRODUCTS.bansolid.specOpts;   // แบบโซลิด (1/2 ชั้น) · เส้นคาด ฝั่ง/ลาย/จำนวนแถบ — ตัวเดียวกับบานโซลิด
+  const p = {
+    ...base, id, name, solidFamily: true, listHide: true,
+    laborKey: 'บานโซลิด',
+    hwFrom: base.id,   // อุปกรณ์จากใบตัด = ของบานเลื่อนรุ่นนั้น (hardware-from-cutlist HW_ALIAS)
+    specOpts: [...(base.specOpts || []), ...solidSpec],
+    noAddons: ['grid'],   // เส้นคาดตารางมีในตัว (specOpts ฝั่ง/ลาย/แถบ) — ปุ่มคาดตารางกรอกเองซ้ำ ไม่ให้มี
+    defaults: { w: 240, h: 220, p: 2 },
+    defGlass: null, glass: null,
+    vars: {
+      ...(base.vars || {}),
+      SIDES: "spec.solidLayer==='โซลิด 1 ชั้น'?1:2",
+      GSIDES: "(spec.gridSide==='ฝั่งนอก'||spec.gridSide==='ฝั่งใน')?1:2",
+      // เต็มบาน = (กว้างบาน−18)÷3.8 ปัดทิ้ง เหมือนบานโซลิด · กว้างบาน = กว้างช่อง÷บาน (ไม่หักกรอบ ตามเจ้าของ)
+      GN: "spec.gridPat==='ระบุจำนวนแถบ' ? Math.max(0, Math.round(+spec.gridN || 0)) : Math.trunc(Math.max(0, (W*100/P-18))/3.8)",
+    },
+    alu: [
+      ...(base.alu || []),
+      // ลูกฟูก: แผ่นละ 10 ซม. ต่อบาน × จำนวนบาน × ชั้น · ยาว = สูงบาน (ไม่หักกรอบ) · นับเส้นแบบบานเลื่อน (Σยาว ÷ 6 ม. × เผื่อเศษ 1.3)
+      { name: 'ลูกฟูก2ทาง (แทนกระจก)', code: 'JR01994', price: 432, kg: 0, stockLen: 6.0, seg: 'H', count: 'Math.ceil((W*100/P)/10) * P * SIDES' },
+      { name: 'เส้นคาดตาราง', code: 'เส้นกลาง', priceCode: 'JR01679', price: 140, kg: 0, stockLen: 6.0, seg: 'H', count: 'GN * P * GSIDES' },
+    ],
+    note: 'บานโซลิดแบบเลื่อน — เส้น/อุปกรณ์/รูปแบบ = ' + base.name + ' ทั้งชุด · กระจกเปลี่ยนเป็นลูกฟูก 2 ทาง (1/2 ชั้น) + เส้นคาดตาราง ยาวเท่าสูงบาน · ค่าแรงคิดเท่าบานโซลิด (เจ้าของเคาะ 9 พ.ย.69)',
+  };
+  delete p.saleName;   // ชื่อลงใบเสนอ = ชื่อรุ่นนี้ (ไม่ใช่ "ประตูบานเลื่อน ... รางล่าง" ของ SMS)
+  return p;
+}
+PRODUCTS.solid_slide_euro = solidSlideOf(PRODUCTS.euro_slide, 'solid_slide_euro', 'บานโซลิด เลื่อน ยูโร');
+PRODUCTS.solid_slide_sms = solidSlideOf(PRODUCTS.sms_slide, 'solid_slide_sms', 'บานโซลิด เลื่อน SMS (เซมิยูโร)');
+PRODUCTS.bansolid.solidFamily = true;
+
 // รุ่นที่ยังไม่ลงระบบ — แสดงเป็นป้าย TODO ใต้กลุ่ม (ดู TODO.md)
 // (ว่างแล้ว: ตู้ G4 = cabinet/cabinet_face · ม่านซิป G7 = zipscreen ลงระบบจริงแล้ว มีทุน R4.0)
 export const PRODUCTS_TODO = [];

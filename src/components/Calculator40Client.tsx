@@ -29,7 +29,7 @@ import type { Customer } from "@/lib/types";
 // @ts-expect-error — engine เป็น ESM JS ล้วน (คงไฟล์เดิมเป๊ะเพื่อ parity 63/63)
 import { computeCost, r41Nodes } from "@/lib/calculator40/engine.mjs";
 // @ts-expect-error — products เป็น ESM JS ล้วน
-import { PRODUCTS, PRODUCTS_TODO } from "@/lib/calculator40/products.mjs";
+import { PRODUCTS, PRODUCTS_TODO, SOLID_KINDS } from "@/lib/calculator40/products.mjs";
 import PRICEBOOK from "@/lib/calculator40/pricebook.json";
 import { applyPriceOverride, type PriceOverride } from "@/lib/calculator40/stock-link";
 // ชั้นทับค่าสูตร (0134/หน้า /calculator40/link) — mutate PRODUCTS singleton ในที่ (ดูคอมเมนต์หัว line-overrides.ts)
@@ -360,7 +360,8 @@ export default function Calculator40Client({ customers = [], priceOverride, line
   // pickerHide: true = รุ่นที่ไม่โผล่การ์ดแยกในลิสต์ (เข้าถึงผ่านกลไกอื่น เช่น roofShape switcher ของ "หลังคา"
   // หรือ screen_ready ที่ใช้เฉพาะภายใน computeMosquitoR4) — ตรง mockup app.js markActive()/renderList (กรอง p.pickerHide)
   const prodList = useMemo(
-    () => Object.values(PRODUCTS as Record<string, any>).filter((x: any) => x && x.group === group && !x.pickerHide),
+    // listHide: ไม่ขึ้นการ์ดแยก แต่ห้องกระจก/ผสมบานยังเลือกได้ (โซลิดแบบเลื่อน เข้าผ่านแถบ "ชนิดบาน" ในหน้าบานโซลิด · 9 พ.ย.69)
+    () => Object.values(PRODUCTS as Record<string, any>).filter((x: any) => x && x.group === group && !x.pickerHide && !x.listHide),
     [group]
   );
   const todoList = useMemo(
@@ -1442,6 +1443,31 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                 </h3>
                 {prod.note && <span className="text-[11px] text-ink-3 max-w-[45%] text-right">{prod.note.slice(0, 90)}</span>}
               </div>
+
+              {/* บานโซลิด: แถบ "ชนิดบาน" (บานเปิด / เลื่อน ยูโร / เลื่อน SMS) — สลับ prodId ในตระกูลโซลิด (เจ้าของสั่ง 9 พ.ย.69)
+                  เก็บ กว้าง/สูง/สี ไว้ · จำนวนบานบีบเข้าช่วง min/max ของรุ่นใหม่ (โซลิดเปิด 1-2 · เลื่อน 2-6) */}
+              {prod.solidFamily && (
+                <div className="mt-4">
+                  <div className="text-xs font-bold text-brand-dark mb-1.5">
+                    🚪 ชนิดบาน <span className="text-xs font-normal text-ink-3">(บานเลื่อน = เส้น/อุปกรณ์บานเลื่อนรุ่นนั้นทั้งชุด · กระจกเปลี่ยนเป็นลูกฟูก + เส้นคาดตาราง · ค่าแรงคิดเท่าโซลิด)</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(SOLID_KINDS as [string, string][]).filter(([pid]) => (PRODUCTS as any)[pid]).map(([pid, label]) => (
+                      <button key={pid} type="button"
+                        onClick={() => {
+                          if (pid === prodId) return;
+                          const x = (PRODUCTS as any)[pid];
+                          const kw = w, kh = h, kc = color, kp = Math.min(Math.max(Number(p) || 1, x.minP || 1), x.maxP || 99);
+                          pickProduct(x);
+                          setW(kw); setH(kh); setColor(kc); setP(String(kp));
+                        }}
+                        className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${prodId === pid ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* หลังคา: แถบเลือกทรง (กันสาด/จั่ว/เลื่อน) — สลับ prodId ไปยังรุ่นจริงที่ pickerHide (roof/roof_gable/roof_slide)
                   ตรง app.js renderRoofShapeBar ~1601-1611 (เลือกก่อน→วัสดุ) */}

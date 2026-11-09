@@ -45,7 +45,7 @@ export const SPECIAL_COLOR_KEYS = ["aztec", "wood_maho", "wood_whiteoak"] as con
 //   (19 ส.ค.69 เคยเปิด Aztec ให้ กระทุ้ง/บานหมุน/เฟี้ยมยูโร/เฟี้ยมยก ด้วย — ยกเลิกแล้ว)
 //   รุ่นอื่นลูกค้าอยากได้ = สีอบพิเศษ / ลายไม้อบพิเศษ (แพงกว่า)
 //   ⚠ ต้องตรงกับธง prod.euroColors ใน products.mjs (engine ใช้คิดใบเก่า · verify-auto ⑳ ตรวจ)
-export const SPECIAL_COLOR_PRODUCTS = new Set(["open_door", "euro_slide", "fold_euro", "pcdoor"]);
+export const SPECIAL_COLOR_PRODUCTS = new Set(["open_door", "euro_slide", "fold_euro", "pcdoor", "solid_slide_euro"]);   // solid_slide_euro = เส้นยูโรทั้งชุด (9 พ.ย.69)
 // ── รุ่นที่เปิดเฉพาะ "ลายไม้สต็อก มะฮอกกานี/ไวท์โอ๊ค" (ไม่มี Aztec) ──
 //   เจ้าของสั่ง 12 ต.ค.69: บานโซลิดเปิดมะฮอกกานี/ไวท์โอ๊คแบบสีสต็อก (เดิมคิดเป็นลายไม้อบพิเศษ แพงขึ้น ~20,000)
 //   ⚠ ต้องตรงกับธง prod.woodStockColors ใน products.mjs (engine ใช้ · verify-auto ⑳ ตรวจ)
