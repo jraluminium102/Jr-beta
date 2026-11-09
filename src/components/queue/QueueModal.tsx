@@ -33,6 +33,24 @@ type CustomerSearchResult = {
 const normCustName = (s: string) => String(s ?? "").replace(/^คุณ\s*/, "").replace(/\s+/g, "").toLowerCase();
 
 // เวลา "HH:MM"/"H.MM" → นาที (รองรับข้อมูล import จุด) · null ถ้าพาร์สไม่ได้
+// ข้อความเสนอคิวให้ลูกค้า (ฟอร์มที่เจ้าของให้ 9 พ.ย.69) — ก๊อปจากฟอร์มคิวไปวางแชทได้เลย
+//   "วัน__ที่ วัน/เดือน/ปี69" → "วันพุธที่ 18/11/69" · เวลา "14.00 น." · ค่าประเมินเติมเมื่อกรอก >0 ไม่งั้นเว้น "__" ให้พิมพ์เอง
+const DOW_FULL = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
+export function buildCustomerOfferText(dateIso: string, time: string, fee: string | number | null | undefined): string {
+  const m = String(dateIso ?? "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  let dayTxt = "__ที่ วัน/เดือน/ปี69";
+  if (m) {
+    const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    const be2 = String(Number(m[1]) + 543).slice(-2);
+    dayTxt = `${DOW_FULL[d.getDay()]}ที่ ${Number(m[3])}/${Number(m[2])}/${be2}`;
+  }
+  const tm = String(time ?? "").match(/(\d{1,2})[:.](\d{2})/);
+  const timeTxt = tm ? `${tm[1].padStart(2, "0")}.${tm[2]}` : "__";
+  const feeNum = Number(fee);
+  const feeTxt = fee !== "" && fee != null && Number.isFinite(feeNum) && feeNum > 0 ? feeNum.toLocaleString("th-TH") : "__";
+  return `มีคิวประเมินหน้างานเร็วสุดได้วัน${dayTxt} เวลาประมาณ ${timeTxt} น. ค่ะ\n\nประเมินหน้างาน จะมีค่าใช้จ่าย ${feeTxt} บาท แต่หักคืนให้ลูกค้าเมื่อตกลงงานกับเรา\nลูกค้าชำระเงินสดกับทางช่างในวันประเมินได้เลยนะคะ`;
+}
+
 function timeToMin(t: string | null): number | null {
   if (!t) return null;
   const m = String(t).match(/(\d{1,2})[:.](\d{2})/);
@@ -319,6 +337,13 @@ export function QueueModal({
   const coords = manualCoords ?? parseLatLng(f.location_url) ?? resolved;
   const [suggesting, setSuggesting] = useState(false);
   const [suggestMsg, setSuggestMsg] = useState("");
+  const [offerCopied, setOfferCopied] = useState(false);
+  async function copyOfferText() {
+    try {
+      await navigator.clipboard.writeText(buildCustomerOfferText(f.queue_date, f.queue_time, f.assess_fee));
+      setOfferCopied(true); setTimeout(() => setOfferCopied(false), 1500);
+    } catch { alert("คัดลอกไม่สำเร็จ ลองใหม่"); }
+  }
   // ตารางของเซลล์ในวันที่ระบบเสนอ — ให้เจ้าของเช็คได้ทันทีว่าเสนอถูกไหม (เจ้าของ 3 พ.ย.69 "ปกติเช็ค 2 รอบ")
   const [suggestPlan, setSuggestPlan] = useState<{
     date: string; time: string; sales: string;
@@ -1896,6 +1921,26 @@ export function QueueModal({
                   <p className="text-[10.5px] text-ink-3 mt-1.5">ไม่ถูกใจ → เปลี่ยนวัน/เวลา/เซลล์เองได้เลยด้านล่าง</p>
                 </div>
               )}
+            </Field>
+          )}
+
+          {/* ข้อความเสนอคิวให้ลูกค้า (เจ้าของ 9 พ.ย.69) — เติมวัน/เวลา/ค่าประเมินจากฟอร์มให้ กดคัดลอกไปวางแชท */}
+          {jobCat === "ประเมินหน้างาน" && f.queue_date && (
+            <Field label="ข้อความเสนอคิวให้ลูกค้า (ก๊อปไปวางแชท)" wide>
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 px-3 py-2.5">
+                <pre className="whitespace-pre-wrap font-sans text-[12.5px] leading-relaxed text-ink-1">{buildCustomerOfferText(f.queue_date, f.queue_time, f.assess_fee)}</pre>
+                <div className="flex items-center gap-2 mt-2">
+                  <button type="button" onClick={copyOfferText}
+                    className={`press inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-semibold text-white ${offerCopied ? "bg-emerald-600" : "bg-brand"}`}>
+                    <Icon name={offerCopied ? "check" : "copy"} size={15} />
+                    {offerCopied ? "คัดลอกแล้ว ✓" : "คัดลอกข้อความ"}
+                  </button>
+                  <span className="text-[11px] text-ink-3">
+                    {!f.queue_time ? "ยังไม่ได้เลือกเวลา → เวลาเป็น __ " : ""}
+                    {!(Number(f.assess_fee) > 0) ? "ยังไม่ได้ใส่ค่าประเมิน → ยอดเป็น __ (ไปแก้ช่องค่าประเมินด้านล่างแล้วข้อความจะเปลี่ยนให้)" : ""}
+                  </span>
+                </div>
+              </div>
             </Field>
           )}
 
