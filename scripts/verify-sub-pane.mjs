@@ -46,6 +46,23 @@ console.log("\n═══ ③ ของเสริมจริง (มุ้ง)
   ok("ไม่มีของเสริม = ข้อความไม่มี +", !/\+/.test(subDesc(base)), subDesc(base));
 }
 
+console.log("\n═══ ③.1 กระจกแยกต่อบานย่อย + มุ้งนิรภัย (9 พ.ย.69) ═══");
+{
+  // เจ้าของ: "บานเปิดคู่ บานหลักใส่แค่ลูกฟูก แต่บานรองใส่กระจก" — บานย่อยเลือกกระจกเองได้ เว้น = ตามบานหลัก
+  const base = { key: 1, pid: "open_door", label: "บานเปิด", w: 0.9, h: 2.2, n: 1, addons: {} };
+  const follow = subCalc(base, PB, "white", "แผ่นลูกฟูก", 100, PO);
+  const own = subCalc({ ...base, glass: GLASS }, PB, "white", "แผ่นลูกฟูก", 100, PO);
+  const direct = subCalc(base, PB, "white", GLASS, 100, PO);
+  ok("เว้นกระจก = ตามบานหลัก (ลูกฟูก) · มีเส้นลูกฟูกในของ", follow.lines.some((l) => /ลูกฟูก/.test(l.name || "")) && !follow.lines.some((l) => l.cat === "glass"));
+  ok("เลือกกระจกเอง (เขียว 6) = ราคาเท่าคิดด้วยกระจกนั้นตรง ๆ", own.amount === direct.amount && own.lines.some((l) => l.cat === "glass"), `${own.amount} vs ${direct.amount}`);
+  ok("ข้อความลงใบบอกกระจกที่เลือก", /กระจกเขียว/.test(subDesc({ ...base, glass: GLASS })), subDesc({ ...base, glass: GLASS }));
+  ok("ไม่เลือก = ข้อความไม่พูดถึงกระจก (เหมือนเดิม)", !/กระจก/.test(subDesc(base)), subDesc(base));
+  const sf = subCalc({ ...base, addons: { mosquito: "safety" } }, PB, "white", GLASS, 100, PO);
+  ok("มุ้งนิรภัยในบานย่อย: ขายขึ้น + ข้อความ + มุ้งจีบนิรภัย", sf.amount > direct.amount && /มุ้งจีบนิรภัย/.test(subDesc({ ...base, addons: { mosquito: "safety" } })), `${direct.amount} → ${sf.amount}`);
+  const ui = fs.readFileSync(path.join(__dirname, "../src/components/calculator40/SubPanesSection.tsx"), "utf8");
+  ok("หน้าจอ ปรับ: มีช่องกระจก (ตามบานหลัก/เลือกเอง) + ปุ่มมุ้งชุดเดียวกับจัดเต็ม (MOSQ_CHIPS → addons.mosquito)", ui.includes('patch(s.key, { glass: e.target.value || undefined })') && ui.includes("mosquito: c2.val"));
+}
+
 console.log("\n═══ ④ ใบเก่า (แบบเหมา) ราคาเดิม ═══");
 {
   const old = { key: 1, pid: "open_door", label: "บานเปิด", w: 0.9, h: 2.2, n: 1, mat: "frame", gridmark: "yes" };   // ไม่มี addons = ใบเก่า

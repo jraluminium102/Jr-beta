@@ -1566,5 +1566,22 @@ console.log(NL + "═══ ⚡ งานไฟ: ไฟเส้น LED / ดา
   const ui = fs.readFileSync("src/components/calculator40/AddonsSection.tsx", "utf8");
   ok("หน้าจอ: ราคางานไฟอ่านจาก ELEC_RATES/elecRows ใน engine ที่เดียว (ไม่พิมพ์เลขซ้ำ)", ui.includes("elecRows(e, area)") && ui.includes("ELEC_LIGHT_PRODS.includes(prod?.id)") && !/n\("sw"\) \* 500/.test(ui));
 }
+
+// ── 🦟 มุ้งนิรภัย = ชิปของตัวเอง (เจ้าของสั่ง 9 พ.ย.69) ──
+console.log(NL + "═══ 🦟 มุ้งนิรภัย ชิปแยก + รุ่นตั้งต้นตามกว้าง/สี (9 พ.ย.69) ═══");
+{
+  const { MOSQ_CHIPS, MOSQ_TYPE_LABEL, mosqVariants, mosqSafetyDefault, computeMosquitoR4 } = await import("../src/lib/calculator40/mosquito.mjs");
+  ok("ชิปมุ้งบวกบานมี 'มุ้งนิรภัย' (safety) ต่อท้าย", MOSQ_CHIPS.some((c) => c.val === "safety" && c.label === "มุ้งนิรภัย") && MOSQ_TYPE_LABEL.safety);
+  ok("รุ่นนิรภัย 6 รุ่น (≤3/>3 ม. × ขาว/ดำ·ซาฮาร่า·สักทอง) จาก G5 จริง", mosqVariants(PRODUCTS, "safety").length === 6);
+  ok("รุ่นตั้งต้น: กว้าง ≤300 ซม. = ≤3ม. · >300 = >3ม. · สีซาฮาร่า→ซาฮาร่า · ลายไม้→สักทอง · อื่น→ขาว/ดำ",
+    mosqSafetyDefault(300, "white") === "มุ้งจีบนิรภัย ≤3ม. ขาว/ดำ" && mosqSafetyDefault(301, "sahara") === "มุ้งจีบนิรภัย >3ม. ซาฮาร่า" && mosqSafetyDefault(200, "wood_teak") === "มุ้งจีบนิรภัย ≤3ม. สักทอง");
+  const mq = (w, ck, extra = {}) => computeMosquitoR4(PRODUCTS, { mosquito: "safety", ...extra }, { wCm: w, hCm: 220, movePanes: 2, form: "อิสระ", colorOpt: { colorKey: ck, color: "white" } }, PB);
+  ok("บานเลื่อน 250×220 2 บาน + มุ้งนิรภัย ขาว = 2,750/ตร.ม. + ติดตั้ง 180 → 16,200", mq(250, "white").amount === 16200 && /≤3ม\. ขาว/.test(mq(250, "white").label), mq(250, "white").amount + " " + mq(250, "white").label);
+  ok("กว้าง 350 ซาฮาร่า → รุ่น >3ม. ซาฮาร่า (4,450/ตร.ม.)", /＞3ม\.|>3ม\. ซาฮาร่า/.test(mq(350, "sahara").label) && mq(350, "sahara").amount > mq(250, "white").amount);
+  ok("กรอกขนาดเอง 3.5 ม. → ใช้รุ่น >3ม. ตามขนาดที่กรอก", />3ม\./.test(mq(200, "white", { mqSize: "custom", mqW: 3.5, mqH: 2 }).label));
+  ok("เลือกรุ่นเองทับค่าตั้งต้นได้", /สักทอง/.test(mq(200, "white", { mqVariant: "มุ้งจีบนิรภัย ≤3ม. สักทอง" }).label));
+  const ui = fs.readFileSync("src/components/calculator40/AddonsSection.tsx", "utf8");
+  ok("หน้าจอ: รุ่นตั้งต้นนิรภัยใช้ mosqSafetyDefault ตัวเดียวกับ engine", ui.includes("mosqSafetyDefault(") && ui.includes("A.mqVariant || varDef"));
+}
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);

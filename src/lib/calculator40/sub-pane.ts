@@ -17,6 +17,8 @@
 import { PRODUCTS } from "./products.mjs";
 import { panePrice, PANE_BY_KEY, type PaneProfit } from "./pane-calc.ts";
 import { addonSummary } from "./room-desc.ts";
+// @ts-expect-error — glass-catalog เป็น ESM JS ล้วน
+import { glassDisplayName } from "./glass-catalog.mjs";
 
 export type SubPane = {
   key: number;
@@ -24,6 +26,7 @@ export type SubPane = {
   label: string;
   w: number; h: number; n: number; // เมตร, เมตร, จำนวนบาน
   form?: string; // รูปแบบบานย่อย (เลือกให้ต่างจากบานหลักได้) — เว้น = defForm ของชนิดนั้น
+  glass?: string; // กระจกบานย่อย (9 พ.ย.69 เจ้าของ: "บานหลักใส่ลูกฟูก บานรองใส่กระจก") — เว้น = ตามบานหลัก
   desc?: string; price?: number; // เฉพาะ _custom
   openCt?: number; fixCt?: number; // แบ่งบาน (เฉพาะ SUB_WORKING)
   addons?: Record<string, any>; // ของเสริมจริงของรุ่น (ชุดเดียวกับหน้า G1 / ห้องกระจก)
@@ -78,9 +81,10 @@ export function subCalc(
   const prod = subProd(s.pid);
   if (!prod) return none;
   const sForm = s.form && (prod.forms ?? []).includes(s.form) ? s.form : prod.defForm;
+  const sGlass = s.glass || mainGlass;   // กระจกบานย่อย — เว้น = ตามบานหลัก (ของเดิม)
   const x = panePrice(
     { key: 0, typeKey: s.pid, w: s.w || 1, h: s.h || 1, n: s.n || 1, form: sForm, fixedPanes: s.fixCt || 0, addons: s.addons || {} },
-    pb, mainColor, mainGlass, profitPct, undefined, profitOpt,
+    pb, mainColor, sGlass, profitPct, undefined, profitOpt,
   );
   const r: any = x.r;
   if (!r || !r.sell) return none;
@@ -115,6 +119,7 @@ export function subDesc(s: SubPane): string {
   const formTxt = s.form && sp && (sp.forms ?? []).includes(s.form) && s.form !== sp.defForm ? ` แบบ${s.form}` : "";
   let d = `${s.label}${formTxt} ${s.w || 1}×${s.h || 1}ม.${(s.n || 1) > 1 ? ` ${s.n}บาน` : ""}`;
   if ((s.openCt || 0) + (s.fixCt || 0) > 0) d += ` (เปิด ${s.openCt || 0}/ติดตาย ${s.fixCt || 0})`;
+  if (s.glass) d += ` กระจก${glassDisplayName(s.glass)}`;   // เลือกกระจกต่างจากบานหลัก → บอกในใบด้วย
   if (subIsLegacy(s)) {
     if (s.mat === "frame") d += " +มุ้งเฟรม";
     else if (s.mat === "pleat") d += " +มุ้งจีบ";

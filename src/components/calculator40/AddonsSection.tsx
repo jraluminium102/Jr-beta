@@ -19,7 +19,7 @@
 import { useEffect } from "react";
 import { fmt } from "@/lib/calculator40/fmt";
 // @ts-expect-error — mosquito helper เป็น ESM JS ล้วน
-import { MOSQ_CHIPS, mosqVariants } from "@/lib/calculator40/mosquito.mjs";
+import { MOSQ_CHIPS, mosqVariants, mosqSafetyDefault } from "@/lib/calculator40/mosquito.mjs";
 // @ts-expect-error — products เป็น ESM JS ล้วน (ใช้ดึง screen_ready.materials สำหรับรุ่นย่อยมุ้ง)
 import { PRODUCTS } from "@/lib/calculator40/products.mjs";
 // @ts-expect-error — engine เป็น ESM JS ล้วน (ตาราง CMECH_TIERS/STAINLESS_TIERS/ADDON_FLAT/CEIL_RATE แหล่งเดียวกับที่ computeAddon ใช้คิดเงิน — import ตรง กันป้าย/ราคาหลุดกัน)
@@ -691,6 +691,8 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, co
     const fabrics: [string, string][] = [["fiber", "ไฟเบอร์ (ดำ/เทา)"], ["cat", "กันแมว (ขาว)"], ["rat", "กันหนู สแตนเลส"]];
     if (mq === "big") fabrics.push(["safety", "นิรภัย 304 (ดำ)"]); // R3.9: นิรภัยเฉพาะเฟรมใหญ่
     const vars: string[] = (mq !== "none" && !isFrame) ? mosqVariants(PRODUCTS, mq) : [];
+    // มุ้งนิรภัย: รุ่นตั้งต้นตามกว้างช่อง (≤3/>3 ม.) + สีบาน — ต้องเป็นตัวเดียวกับที่ engine ใช้ (mosqSafetyDefault) ไม่งั้นหน้าจอโชว์รุ่นหนึ่ง คิดเงินอีกรุ่น
+    const varDef = mq === "safety" ? mosqSafetyDefault((A.mqSize === "custom" ? (+A.mqW || 1) : (Number(W) || 1)) * 100, colorKey) : vars[0];
     return (
       <Field label="มุ้งบวกบาน">
         <div className="space-y-2.5">
@@ -703,7 +705,7 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, co
           {mq !== "none" && !isFrame && vars.length > 0 && (
             <Field label="รุ่นมุ้ง" hint="(รุ่นจริง G5 · มีผลกับราคา)">
               <select
-                value={A.mqVariant || vars[0]}
+                value={A.mqVariant || varDef}
                 onChange={(e) => set("mqVariant", e.target.value)}
                 className="w-full min-h-[44px] glass-soft rounded-lg px-3 py-2 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
               >

@@ -8,10 +8,19 @@ import { computeCost } from "./engine.mjs";
 export const MOSQ_CHIPS = [
   { val: 'none', label: 'ไม่มี' }, { val: 'small', label: 'เฟรมเล็ก' }, { val: 'big', label: 'เฟรมใหญ่' },
   { val: 'pleat', label: 'จีบ' }, { val: 'honey', label: 'จีบม่านรังผึ้ง' }, { val: 'roll', label: 'ม้วน' },
+  // 9 พ.ย.69 เจ้าของสั่ง "มุ้งเพิ่มมุ้งนิรภัย" — ชิปของตัวเอง (เดิมซ่อนอยู่ในดรอปดาวน์รุ่นของ "จีบ") · รุ่น = มุ้งจีบนิรภัย ≤3ม./>3ม. × ขาว/ดำ·ซาฮาร่า·สักทอง (G5 screen_ready)
+  { val: 'safety', label: 'มุ้งนิรภัย' },
 ];
 
+// รุ่นมุ้งนิรภัยตั้งต้น = เลือกตามกว้างช่อง (≤3 ม. / >3 ม.) + สีบาน (ซาฮาร่า / ลายไม้ → สักทอง / อื่น → ขาว/ดำ) · ผู้ใช้เปลี่ยนในดรอปดาวน์ได้
+export function mosqSafetyDefault(wCm, colorKey) {
+  const ck = String(colorKey || '');
+  const col = /sahara/.test(ck) ? 'ซาฮาร่า' : /wood/.test(ck) ? 'สักทอง' : 'ขาว/ดำ';
+  return 'มุ้งจีบนิรภัย ' + ((Number(wCm) || 0) > 300 ? '>3ม.' : '≤3ม.') + ' ' + col;
+}
+
 // ชื่อชนิดมุ้งลงใบเสนอราคา — แหล่งเดียว ใช้ทั้ง G1 (Calculator40Client) + G6 (RoomComposer) · แก้ที่นี่ที่เดียว มีผลทั้งคู่
-export const MOSQ_TYPE_LABEL = { small: 'เฟรมเล็ก', big: 'เฟรมใหญ่', pleat: 'จีบ', honey: 'จีบม่านรังผึ้ง', roll: 'ม้วน' };
+export const MOSQ_TYPE_LABEL = { small: 'เฟรมเล็ก', big: 'เฟรมใหญ่', pleat: 'จีบ', honey: 'จีบม่านรังผึ้ง', roll: 'ม้วน', safety: 'จีบนิรภัย' };
 export function mosquitoTypeLabel(sel) {
   if (!sel || sel === 'none') return '';
   return MOSQ_TYPE_LABEL[sel] || '';
@@ -23,6 +32,7 @@ export function mosqVariants(PRODUCTS, cat) {
   if (cat === 'pleat') return mats.filter((m) => /จีบ|แม่เหล็ก/.test(m) && !/รังผึ้ง/.test(m));
   if (cat === 'honey') return mats.filter((m) => /รังผึ้ง/.test(m));
   if (cat === 'roll') return mats.filter((m) => /ม้วน/.test(m));
+  if (cat === 'safety') return mats.filter((m) => /นิรภัย/.test(m));
   return [];
 }
 
@@ -32,17 +42,18 @@ export function computeMosquitoR4(PRODUCTS, A, d, PB, profitPct, installProfitPc
   if (!mq || mq === 'none') return null;
   // รุ่นย่อย (variant) จาก dropdown A.mqVariant (ลิงค์ screen_ready.materials จริง) · fallback = ตัวแรกของหมวด
   const _mqV = A.mqVariant;
+  const custom = A.mqSize === 'custom';
+  const mw = custom ? Math.round((+A.mqW || 1) * 100) : d.wCm;
+  const mh = custom ? Math.round((+A.mqH || 1) * 100) : d.hCm;
   const M = {
     small: ['screen'], big: ['screen_big'],
     pleat: ['screen_ready', (_mqV && /จีบ|แม่เหล็ก/.test(_mqV) && !/รังผึ้ง/.test(_mqV)) ? _mqV : 'มุ้งจีบ'],
     honey: ['screen_ready', (_mqV && /รังผึ้ง/.test(_mqV)) ? _mqV : 'ม่านรังผึ้ง Blackout'],
     roll: ['screen_ready', (_mqV && /ม้วน/.test(_mqV)) ? _mqV : 'มุ้งม้วน ขาว/ดำ/น้ำตาล'],
+    safety: ['screen_ready', (_mqV && /นิรภัย/.test(_mqV)) ? _mqV : mosqSafetyDefault(mw, (d.colorOpt || {}).colorKey)],
   }[mq];
   const mp = M && PRODUCTS[M[0]];
   if (!mp) return null;
-  const custom = A.mqSize === 'custom';
-  const mw = custom ? Math.round((+A.mqW || 1) * 100) : d.wCm;
-  const mh = custom ? Math.round((+A.mqH || 1) * 100) : d.hCm;
   let movePanes = d.movePanes;
   if (d.form === 'สลับ' && mq === 'roll') movePanes = Math.ceil(movePanes / 2);   // R3.9: บานเลื่อนสลับ + มุ้งม้วน คิดครึ่งช่องเปิด
   const mpan = Math.max(1, +A.mqPanels || movePanes);

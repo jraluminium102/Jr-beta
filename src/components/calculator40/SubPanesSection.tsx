@@ -13,6 +13,10 @@ import AddonsSection from "@/components/calculator40/AddonsSection";
 import { resolveAluColor } from "@/lib/calculator40/alu-colors";
 import { subCalc, subProd, subIsLegacy, SUB_GROUPS, SUB_WORKING, type SubPane } from "@/lib/calculator40/sub-pane";
 import type { PaneProfit } from "@/lib/calculator40/pane-calc";
+// @ts-expect-error — glass-catalog / mosquito เป็น ESM JS ล้วน
+import { glassOptionGroups, glassDisplayName } from "@/lib/calculator40/glass-catalog.mjs";
+// @ts-expect-error — mosquito helper เป็น ESM JS ล้วน
+import { MOSQ_CHIPS } from "@/lib/calculator40/mosquito.mjs";
 // ตัวคิด/ข้อความ export ต่อให้โค้ดเดิมที่ import จากไฟล์นี้ยังใช้ได้
 export { subCalc, subPrice, subDesc, SUB_GROUPS, type SubPane } from "@/lib/calculator40/sub-pane";
 
@@ -76,6 +80,7 @@ export default function SubPanesSection({ subs, setSubs, pb, mainColor, mainGlas
     setSubs((s) => s.filter((x) => x.key !== key));
   }
   const rc = resolveAluColor(mainColor);
+  const glassGroups = glassOptionGroups(pb) as { cat: string; items: { value: string; label: string }[] }[];
 
   return (
     <div className="mt-4 space-y-3 rounded-2xl glass-soft p-4">
@@ -174,6 +179,41 @@ export default function SubPanesSection({ subs, setSubs, pb, mainColor, mainGlas
                     </div>
                   </div>
                 )}
+                {/* กระจกบานนี้ (9 พ.ย.69 เจ้าของ: "บานหลักใส่แค่ลูกฟูก บานรองใส่กระจก") — เว้น = ตามบานหลัก */}
+                {prod?.glass && (
+                  <label className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-ink-3 min-w-[52px]">กระจก:</span>
+                    <select value={s.glass || ""} onChange={(e) => patch(s.key, { glass: e.target.value || undefined })}
+                      className="min-h-[40px] glass-soft rounded-lg px-2.5 py-1.5 outline-none text-sm flex-1">
+                      <option value="">ตามบานหลัก ({glassDisplayName(mainGlass) || "—"})</option>
+                      {glassGroups.map((gp) => (
+                        <optgroup key={gp.cat} label={gp.cat}>
+                          {gp.items.map((it) => <option key={it.value} value={it.value}>{it.label}</option>)}
+                        </optgroup>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                {/* มุ้งบานนี้ — ปุ่มเดียวกับใน "จัดเต็ม" (เก็บที่ addons.mosquito ตัวเดียวกัน) · ผ้า/รุ่น/ขนาดมุ้ง ไปปรับต่อใน จัดเต็ม */}
+                {(prod?.addons || []).includes("mosquito") && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-medium text-ink-3 min-w-[52px]">มุ้ง:</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(MOSQ_CHIPS as { val: string; label: string }[]).map((c2) => {
+                        const cur = (s.addons || {}).mosquito || "none";
+                        const on = cur === c2.val;
+                        return (
+                          <button key={c2.val} type="button"
+                            onClick={() => patch(s.key, { addons: { ...(s.addons || {}), mosquito: c2.val }, mat: "none", gridmark: "none" })}
+                            className={`press text-xs font-semibold rounded-full px-3 py-1.5 ${on ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+                            {c2.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <span className="text-[11px] text-ink-3">(ผ้า/รุ่น/ขนาดมุ้ง ปรับใน จัดเต็ม)</span>
+                  </div>
+                )}
                 <input type="text" placeholder="หมายเหตุบานนี้ (เช่น เปิดออกนอก / ต่อเปลือยข้าง)" value={s.note || ""}
                   onChange={(e) => patch(s.key, { note: e.target.value })}
                   className="w-full min-h-[44px] glass-soft rounded-lg px-3 py-2 outline-none text-sm" />
@@ -218,7 +258,7 @@ export default function SubPanesSection({ subs, setSubs, pb, mainColor, mainGlas
         );
       })}
       {subs.length > 0 && (
-        <p className="text-[11px] text-ink-3">บานย่อยถอดของจริงตามชนิด (สี/กระจกตามบานหลัก) · ราคา/ทุน/ของ รวมเข้ากับบานหลัก · ขึ้นใบเป็นบรรทัดย่อยในรายการเดียว</p>
+        <p className="text-[11px] text-ink-3">บานย่อยถอดของจริงตามชนิด (สีตามบานหลัก · กระจกเลือกแยกได้ใน ปรับ) · ราคา/ทุน/ของ รวมเข้ากับบานหลัก · ขึ้นใบเป็นบรรทัดย่อยในรายการเดียว</p>
       )}
     </div>
   );
