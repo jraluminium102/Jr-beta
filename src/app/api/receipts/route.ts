@@ -7,6 +7,7 @@ import { effectiveBillVat, splitCashReceived, billVatDecision } from "@/lib/mone
 import { getDocCutoff } from "@/lib/doc-cutoff";
 import { nextDocumentCode } from "@/lib/doc-code";
 import { businessDateIssue } from "@/lib/date-guard";
+import { setJobOnsiteDeposit } from "@/lib/onsite-deposit";
 import type { BillingNote } from "@/lib/types";
 
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
@@ -228,6 +229,9 @@ export async function POST(req: Request) {
     });
     // best-effort: ไม่ fail ใบเสร็จถ้า finance_entry insert พลาด
   }
+
+  // ติ๊ก "มัดจำหน้างาน" ตอนออกใบเสร็จ → ตั้งธง jobs.onsite_deposit (ล้ม = log เฉยๆ ไม่กระทบใบเสร็จ)
+  await setJobOnsiteDeposit(bn.job_id, body.onsite_deposit, true); // ออกใบเสร็จ = มีใบเสนอ/บิลแล้ว → ตั้งวันส่งใบด้วยถ้าว่าง
 
   return ok({ id: rc.id, code: rc.code }, 201);
 }

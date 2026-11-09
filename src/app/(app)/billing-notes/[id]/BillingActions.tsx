@@ -6,13 +6,15 @@ import { baht } from "@/lib/money";
 import DateField from "@/components/ui/DateField";
 
 export default function BillingActions({
-  billingNoteId, installmentId, amount,
-}: { billingNoteId: number; installmentId: number; amount: number }) {
+  billingNoteId, installmentId, amount, showOnsite = false, onsiteDeposit = false,
+}: { billingNoteId: number; installmentId: number; amount: number; showOnsite?: boolean; onsiteDeposit?: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [paidAmount, setPaidAmount] = useState(String(amount));
   const [paidDate, setPaidDate] = useState(new Date().toISOString().slice(0, 10));
+  // มัดจำหน้างาน (เฉพาะงวดแรก) — ตั้งต้นตามธงปัจจุบันของงาน
+  const [onsite, setOnsite] = useState(onsiteDeposit);
 
   async function submit(force = false) {
     const amt = Number(paidAmount) || 0;
@@ -21,7 +23,7 @@ export default function BillingActions({
     const res = await fetch(`/api/billing-notes/${billingNoteId}/pay`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ installment_id: installmentId, paid_amount: amt, paid_date: paidDate, force }),
+      body: JSON.stringify({ installment_id: installmentId, paid_amount: amt, paid_date: paidDate, force, ...(showOnsite ? { onsite_deposit: onsite } : {}) }),
     });
     const j = await res.json().catch(() => null);
     setBusy(false);
@@ -58,6 +60,13 @@ export default function BillingActions({
       </button>
       <button onClick={() => setOpen(false)} disabled={busy}
         className="press rounded-lg px-2 py-1.5 text-xs text-ink-2 glass-soft">ยกเลิก</button>
+      {showOnsite && (
+        <label className="basis-full flex items-center justify-end gap-2 text-xs text-ink-2 min-h-[44px] cursor-pointer">
+          <input type="checkbox" checked={onsite} onChange={(e) => setOnsite(e.target.checked)}
+            className="w-5 h-5 accent-brand focus-visible:ring-2" />
+          มัดจำหน้างาน (ลูกค้าจ่ายมัดจำที่หน้างานตอนประเมิน)
+        </label>
+      )}
     </div>
   );
 }

@@ -73,6 +73,10 @@ const fieldsSchema = z.object({
   remark:         z.string().optional(),
   on_hold:        z.boolean().optional(),
   on_hold_reason: z.string().nullish(),
+  onsite_deposit: z.boolean().optional(),
+  // customer_kind / ledger_note — คอลัมน์มากับ migration 0172 (สมุดบัญชีนับต่อเซลล์)
+  customer_kind:  z.enum(["NEW", "OLD", "ADDON", "SPECIAL"]).nullable().optional(),
+  ledger_note:    z.string().nullable().optional(),
 });
 
 // PATCH /api/jobs/:id

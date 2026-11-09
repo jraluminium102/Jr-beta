@@ -169,6 +169,7 @@ export function JobDrawer({ jobId, canFinance, canWriteProd = false, readOnly = 
                   {depAmtOpen && (
                     <DepositAmountForm
                       jobId={jobId}
+                      initialOnsite={job.onsite_deposit === true}
                       onDone={() => { setDepAmtOpen(false); refetch(); onChanged(); }}
                       onCancel={() => setDepAmtOpen(false)}
                     />
@@ -365,8 +366,9 @@ function DepositForm({ jobId, onDone, onCancel }: { jobId: string; onDone: () =>
 
 // ── ฟอร์มใส่ยอดมัดจำย้อนหลัง (มัดจำเบา: status=DEPOSITED แต่ deposit_amount=null) ──
 // POST /api/jobs/[id]/deposit-amount → อัปเดต jobs + สร้าง finance_entry (DEPOSIT)
-function DepositAmountForm({ jobId, onDone, onCancel }: { jobId: string; onDone: () => void; onCancel: () => void }) {
+function DepositAmountForm({ jobId, initialOnsite = false, onDone, onCancel }: { jobId: string; initialOnsite?: boolean; onDone: () => void; onCancel: () => void }) {
   const [amount, setAmount] = useState("");
+  const [onsite, setOnsite] = useState(initialOnsite); // มัดจำหน้างาน — ตั้งต้นตามธงปัจจุบันของงาน
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [method, setMethod] = useState<"TRANSFER" | "CASH" | "CHEQUE">("TRANSFER");
   const [errMsg, setErrMsg] = useState<string | null>(null);
@@ -382,7 +384,7 @@ function DepositAmountForm({ jobId, onDone, onCancel }: { jobId: string; onDone:
     if (!date) { setErrMsg("ระบุวันมัดจำ"); return; }
     setSaving(true);
     try {
-      await api.post(`/jobs/${jobId}/deposit-amount`, { amount: amt, date, method });
+      await api.post(`/jobs/${jobId}/deposit-amount`, { amount: amt, date, method, onsite_deposit: onsite });
       onDone();
     } catch (e) {
       setErrMsg(e instanceof ApiError ? e.message : "บันทึกไม่สำเร็จ");
@@ -440,6 +442,11 @@ function DepositAmountForm({ jobId, onDone, onCancel }: { jobId: string; onDone:
             ))}
           </div>
         </div>
+        <label className="flex items-center gap-2.5 min-h-[44px] text-[13px] text-white cursor-pointer">
+          <input type="checkbox" checked={onsite} onChange={(e) => setOnsite(e.target.checked)}
+            className="focusable w-5 h-5 accent-sky-300" />
+          มัดจำหน้างาน (ลูกค้าจ่ายมัดจำที่หน้างานตอนประเมิน)
+        </label>
       </div>
       {errMsg && <p role="alert" className="mt-2.5 text-[12px] text-rose-200 bg-rose-500/15 border border-rose-300/25 rounded-lg px-3 py-2">{errMsg}</p>}
       <div className="flex gap-2 mt-3">

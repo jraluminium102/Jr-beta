@@ -24,6 +24,8 @@ const schema = z.object({
   date: z.string().min(1, "ระบุวันมัดจำ"),
   // channel default TRANSFER — ตรงกับ tg_on_deposit ที่ใช้ 'TRANSFER' เป็น default
   method: z.enum(["TRANSFER", "CASH", "CHEQUE"]).default("TRANSFER"),
+  // ติ๊ก "มัดจำหน้างาน" → ตั้งธง jobs.onsite_deposit พร้อมยอด (ไม่ส่ง = ไม่แตะ)
+  onsite_deposit: z.boolean().optional(),
 });
 
 export const POST = withRoute(async (req: Request, { params }: Params) => {
@@ -31,7 +33,7 @@ export const POST = withRoute(async (req: Request, { params }: Params) => {
   const ctx = await requirePermission("jobs", "write");
 
   const body = schema.parse(await req.json());
-  const { amount, date, method } = body;
+  const { amount, date, method, onsite_deposit } = body;
 
   // 1) โหลด job — ต้อง status=DEPOSITED เท่านั้น
   const { data: job, error: jobErr } = await ctx.supabase
@@ -72,7 +74,7 @@ export const POST = withRoute(async (req: Request, { params }: Params) => {
   // 3) update jobs.deposit_amount + deposit_date
   const { data: updatedJob, error: updateErr } = await ctx.supabase
     .from("jobs")
-    .update({ deposit_amount: amount, deposit_date: date })
+    .update({ deposit_amount: amount, deposit_date: date, ...(onsite_deposit !== undefined ? { onsite_deposit } : {}) })
     .eq("id", params.id)
     .select()
     .single();

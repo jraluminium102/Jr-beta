@@ -3,6 +3,7 @@ import { getProfile } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 import { applyInstallmentPayment } from "@/lib/billing";
+import { setJobOnsiteDeposit } from "@/lib/onsite-deposit";
 
 // PATCH /api/billing-notes/[id]/pay  → บันทึกรับชำระงวด + recompute สถานะใบวางบิล
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
@@ -32,6 +33,14 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     // ต้องยืนยันก่อน (มัดจำเดิมน้อยกว่ายอดงวด) → 409 + flag ให้หน้าจอถามยืนยัน แล้วส่ง force มาใหม่
     if (res.needsConfirm) return fail(res.error, 409, { needs_confirm: true, suggested: res.suggested });
     return fail("บันทึกรับชำระไม่สำเร็จ: " + res.error, 500);
+  }
+
+  // ติ๊ก "มัดจำหน้างาน" → ตั้งธง jobs.onsite_deposit (ล้ม = log เฉยๆ ไม่ทำให้การชำระพัง)
+  if (typeof body.onsite_deposit === "boolean") {
+    const { data: bn } = await supabase
+      .from("billing_notes").select("job_id").eq("id", params.id)
+      .maybeSingle<{ job_id: string | null }>();
+    await setJobOnsiteDeposit(bn?.job_id, body.onsite_deposit, true); // มีบิล = มีใบเสนอแล้ว → ตั้งวันส่งใบด้วยถ้าว่าง
   }
 
   return ok({ ok: true });

@@ -7,7 +7,7 @@ import { Search, X } from "@/components/ui/icons";
 import DateField from "@/components/ui/DateField";
 import type { PaymentType, PaymentChannel } from "@/lib/database.types";
 
-type JobOpt = { id: string; job_code: string; customer_name: string; total_amount?: number | null; status: string };
+type JobOpt = { id: string; job_code: string; customer_name: string; total_amount?: number | null; status: string; onsite_deposit?: boolean | null };
 
 const TYPES: { v: PaymentType; th: string }[] = [
   { v: "DEPOSIT", th: "มัดจำ" }, { v: "INSTALLMENT_2", th: "งวด 2" },
@@ -50,6 +50,10 @@ export function RecordPaymentModal({ presetJobId, onClose, onSaved }: {
 
   const selected = (jobs ?? []).find((j) => j.id === jobId);
 
+  // มัดจำหน้างาน — ตั้งต้นตามธงปัจจุบันของงานที่เลือก (ถ้าเป็น true อยู่แล้วให้ติ๊กไว้ล่วงหน้า)
+  const [onsite, setOnsite] = useState(false);
+  useEffect(() => { setOnsite(selected?.onsite_deposit === true); }, [selected?.id, selected?.onsite_deposit]);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr(null);
@@ -58,6 +62,7 @@ export function RecordPaymentModal({ presetJobId, onClose, onSaved }: {
     try {
       await api.post("/finance", {
         job_id: jobId, payment_date: date, amount: Number(amount), type, channel, note: note || undefined,
+        ...(type === "DEPOSIT" ? { onsite_deposit: onsite } : {}),
       });
       onSaved();
     } catch (e) {
@@ -141,6 +146,13 @@ export function RecordPaymentModal({ presetJobId, onClose, onSaved }: {
             <label className={lbl} style={{ color: "var(--t-low)" }} htmlFor="nt">หมายเหตุ</label>
             <input id="nt" value={note} onChange={(e) => setNote(e.target.value)} className={field} placeholder="(ถ้ามี)" />
           </div>
+          {type === "DEPOSIT" && (
+            <label className="flex items-center gap-2.5 min-h-[44px] text-[13px] text-white cursor-pointer">
+              <input type="checkbox" checked={onsite} onChange={(e) => setOnsite(e.target.checked)}
+                className="focusable w-5 h-5 accent-sky-300" />
+              มัดจำหน้างาน (ลูกค้าจ่ายมัดจำที่หน้างานตอนประเมิน)
+            </label>
+          )}
         </div>
 
         {err && <p role="alert" className="mt-3 text-[13px] text-rose-200 bg-rose-500/15 border border-rose-300/25 rounded-xl px-3 py-2">{err}</p>}

@@ -630,8 +630,8 @@ const RECEIPT_PAY_METHODS = [
 ];
 
 export function IssueReceiptButton({
-  billingNoteId, installmentId, amount, defaultVat = 7, defaultWht = 0,
-}: { billingNoteId: number; installmentId: number; amount: number; defaultVat?: number; defaultWht?: number }) {
+  billingNoteId, installmentId, amount, defaultVat = 7, defaultWht = 0, showOnsite = false, onsiteDeposit = false,
+}: { billingNoteId: number; installmentId: number; amount: number; defaultVat?: number; defaultWht?: number; showOnsite?: boolean; onsiteDeposit?: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -644,6 +644,8 @@ export function IssueReceiptButton({
   // (เจ้าของสั่ง 3 ก.ย.69) เลือก VAT/WHT ที่จะโชว์บนใบเสร็จได้ (default = ของบิล) — ถอดจากยอดที่รวม VAT มาแล้ว
   const [vat, setVat] = useState<0 | 7>(defaultVat === 0 ? 0 : 7);
   const [wht, setWht] = useState<0 | 3>(defaultWht === 3 ? 3 : 0);
+  // มัดจำหน้างาน (เฉพาะงวดแรก) — ตั้งต้นตามธงปัจจุบันของงาน
+  const [onsite, setOnsite] = useState(onsiteDeposit);
   const t = splitCashReceived(Number(amt) || 0, vat, wht); // { base, vat, wht, gross } — พรีวิวยอดแยกบนใบเสร็จ
 
   async function submit(e: React.FormEvent) {
@@ -665,6 +667,7 @@ export function IssueReceiptButton({
         note,
         vat_rate: vat,
         wht_rate: wht,
+        ...(showOnsite ? { onsite_deposit: onsite } : {}),
       }),
     });
     const json = await res.json().catch(() => null);
@@ -765,6 +768,14 @@ export function IssueReceiptButton({
             placeholder="ข้อความเพิ่มเติม (ถ้ามี)"
             className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none resize-none focus-visible:ring-2 focus-visible:ring-brand" />
         </label>
+
+        {showOnsite && (
+          <label className="flex items-center gap-2 text-sm text-gray-700 min-h-[44px] cursor-pointer">
+            <input type="checkbox" checked={onsite} onChange={(e) => setOnsite(e.target.checked)}
+              className="w-5 h-5 accent-emerald-600 focus-visible:ring-2" />
+            มัดจำหน้างาน (ลูกค้าจ่ายมัดจำที่หน้างานตอนประเมิน)
+          </label>
+        )}
 
         {error && <p role="alert" className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2">{error}</p>}
 

@@ -25,6 +25,8 @@ export type BillingNoteOption = {
   job_vat_rate?: 0 | 7;   // อัตราที่ "ใช้จริง" ของใบนี้ (effectiveBillVat — ไม่ใช่ของงานเสมอไป)
   bill_wht_rate?: number; // หัก ณ ที่จ่ายระดับใบ → ต้อง gross-up ตอนถอดฐาน ไม่งั้นฐานต่ำกว่าจริง
   billing_installments?: InstallmentOption[];
+  job_id?: string | null;            // งานที่ผูกกับบิล (ถ้ามี) — ต้องมีถึงจะติ๊ก "มัดจำหน้างาน" ได้
+  job_onsite_deposit?: boolean;      // ธงมัดจำหน้างานปัจจุบันของงาน (ค่าตั้งต้น checkbox)
 };
 
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
@@ -96,6 +98,15 @@ export default function NewReceiptClient({ notes }: { notes: BillingNoteOption[]
   // บิลที่มีงวด (pending อยู่) บังคับเลือกงวด
   const hasInstallments = installments.length > 0;
 
+  // "มัดจำหน้างาน": โชว์เมื่อบิลผูกงาน และ (เลือกงวดแรกของบิล หรือบิลไม่มีงวด) · ค่าตั้งต้น = ธงปัจจุบันของงาน
+  const firstInstId = useMemo(() => {
+    const all = (selected?.billing_installments ?? []).slice().sort((a, b) => a.sort_order - b.sort_order);
+    return all[0]?.id ?? null;
+  }, [selected]);
+  const showOnsite = !!selected?.job_id && (hasInstallments ? (!!installmentId && installmentId === firstInstId) : true);
+  const [onsite, setOnsite] = useState(false);
+  useEffect(() => { setOnsite(selected?.job_onsite_deposit === true); }, [selected]);
+
   const busyRef = useRef(false);
   async function submit() {
     if (busyRef.current) return; // กันกดรัว/ดับเบิลแท็ป (synchronous ก่อน state busy re-render)
@@ -116,6 +127,7 @@ export default function NewReceiptClient({ notes }: { notes: BillingNoteOption[]
           vat_rate: vatRate,
           payment_method: paymentMethod,
           note,
+          ...(showOnsite ? { onsite_deposit: onsite } : {}),
         }),
       });
       const json = await res.json();
@@ -214,6 +226,14 @@ export default function NewReceiptClient({ notes }: { notes: BillingNoteOption[]
                 <input type="text" value={note} onChange={(e) => setNote(e.target.value)}
                   className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none" />
               </label>
+
+              {showOnsite && (
+                <label className="flex items-center gap-2 text-sm text-ink-2 min-h-[44px] cursor-pointer">
+                  <input type="checkbox" checked={onsite} onChange={(e) => setOnsite(e.target.checked)}
+                    className="w-5 h-5 accent-brand focus-visible:ring-2" />
+                  มัดจำหน้างาน (ลูกค้าจ่ายมัดจำที่หน้างานตอนประเมิน)
+                </label>
+              )}
             </Card>
           </div>
 

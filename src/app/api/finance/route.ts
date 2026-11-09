@@ -3,6 +3,7 @@ import { requirePermission } from "@/lib/bff/context";
 import { withRoute } from "@/lib/bff/handler";
 import { ok, created, err } from "@/lib/bff/response";
 import { can } from "@/lib/rbac";
+import { setJobOnsiteDeposit } from "@/lib/onsite-deposit";
 
 // GET /api/finance — list (filter job, date range)
 export const GET = withRoute(async (req: Request) => {
@@ -36,12 +37,14 @@ const schema = z.object({
   type: z.enum(["DEPOSIT", "INSTALLMENT_2", "INSTALLMENT_3", "FINAL"]),
   channel: z.enum(["TRANSFER", "CASH", "CHEQUE"]),
   note: z.string().optional(),
+  // ติ๊ก "มัดจำหน้างาน" (เฉพาะ type=DEPOSIT) → ตั้งธง jobs.onsite_deposit
+  onsite_deposit: z.boolean().optional(),
 });
 
 // POST /api/finance — บันทึกรับเงิน (งวด 2/3/สุดท้าย)
 export const POST = withRoute(async (req: Request) => {
   const ctx = await requirePermission("finance", "write");
-  const body = schema.parse(await req.json());
+  const { onsite_deposit, ...body } = schema.parse(await req.json()); // แยกออก — ไม่ใช่คอลัมน์ finance_entries
 
   // กันมัดจำซ้ำ: มัดจำถูกสร้างอัตโนมัติตอนงาน DEPOSITED แล้ว
   if (body.type === "DEPOSIT") {
@@ -60,5 +63,6 @@ export const POST = withRoute(async (req: Request) => {
     .select()
     .single();
   if (error || !data) throw new Error(error?.message ?? "Insert failed");
+  if (body.type === "DEPOSIT") await setJobOnsiteDeposit(body.job_id, onsite_deposit);
   return created(data);
 });

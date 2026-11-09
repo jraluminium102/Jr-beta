@@ -131,6 +131,14 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
   //   (เจ้าของสั่ง 3 ก.ย.69) กฎร้าน: บิลไม่มี VAT (vat_rate 0/ไม่ตั้ง) = No-VAT → รับชำระแค่ "ติ๊กชำระ" ไม่เด้งใบเสร็จ
   //   ครอบคลุมบิลเก่า/ไม่มี vat_rate_set ด้วย (เดิม isNoVatBill เข้มเกิน ต้องมี flag → บิล No-VAT ของคุณปัณณพรหลุดไปโชว์ปุ่มออกใบเสร็จ)
   //   *เฉพาะการตัดสินโชว์ปุ่มบนหน้านี้ — ถ้ากดออกใบเสร็จเองยังคิด VAT ตามจริงฝั่ง server เหมือนเดิม
+  // ธง "มัดจำหน้างาน" ปัจจุบันของงาน → ค่าตั้งต้นของ checkbox ในปุ่ม "บันทึกชำระ" (โชว์เฉพาะงวดแรกที่บิลผูกงานแล้ว)
+  const billJobId = (bn as unknown as { job_id?: string | null }).job_id ?? null;
+  let jobOnsite = false;
+  if (billJobId) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: oj } = await (supabase as any).from("jobs").select("onsite_deposit").eq("id", billJobId).maybeSingle();
+    jobOnsite = oj?.onsite_deposit === true;
+  }
   const noVatBill = isNoVatBill(bnAny as BillVatSource) || (Number(bnAny.vat_rate) || 0) <= 0;
 
   // ใบเสร็จที่ผูกกับแต่ละงวด (ไม่นับใบที่ void) — โชว์ลิงก์ "ดูใบเสร็จ"
@@ -322,11 +330,13 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
                           </span>
                         ) : (
                           <IssueReceiptButton billingNoteId={bn.id} installmentId={it.id!} amount={it.amount}
-                            defaultVat={Number(bnAny.vat_rate) || 0} defaultWht={Number(bnAny.wht_rate) || 0} />
+                            defaultVat={Number(bnAny.vat_rate) || 0} defaultWht={Number(bnAny.wht_rate) || 0}
+                            showOnsite={!!billJobId && it.seq === installments[0]?.seq} onsiteDeposit={jobOnsite} />
                         )
                       ) : (
                         // ยังไม่จ่าย → บันทึกชำระอย่างเดียว (ออกใบเสร็จงวดยังไม่จ่ายไม่ได้)
-                        <BillingActions billingNoteId={bn.id} installmentId={it.id!} amount={it.amount} />
+                        <BillingActions billingNoteId={bn.id} installmentId={it.id!} amount={it.amount}
+                          showOnsite={!!billJobId && it.seq === installments[0]?.seq} onsiteDeposit={jobOnsite} />
                       )}
                     </td>
                   )}

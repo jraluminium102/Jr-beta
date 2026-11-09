@@ -55,6 +55,18 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
     .single();
   if (error) throw new Error(error.message);
 
+  // ส่งใบเสนอแล้ว (sent/approved) → ตั้ง jobs.quote_sent_date ให้งานถ้ายังว่าง (9 พ.ย.69)
+  //   เดิมตั้งเฉพาะทางใบเสนอด่วน/เช็คลิสต์ → งานที่ส่งใบผ่านหน้าใบเสนอปกติไม่มีวันส่ง → สถิติ "ส่งใบเสนอ" หายเกือบหมดตั้งแต่ ส.ค.69
+  //   ไม่ทับวันเดิม · ล้ม = log เฉย ๆ ไม่ทำให้เปลี่ยนสถานะพัง
+  if ((status === "sent" || status === "approved") && q.job_id) {
+    try {
+      const { data: jq } = await ctx.supabase.from("quotations").select("issue_date").eq("id", qId).maybeSingle<{ issue_date: string | null }>();
+      const today = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
+      const sentDate = (jq?.issue_date && jq.issue_date <= today) ? jq.issue_date : today;
+      await ctx.supabase.from("jobs").update({ quote_sent_date: sentDate }).eq("id", q.job_id).is("quote_sent_date", null);
+    } catch (e) { console.error("[quotation status] set quote_sent_date failed", e); }
+  }
+
   await audit({
     userId: ctx.user.id,
     action: "STATUS_QUOTATION",
