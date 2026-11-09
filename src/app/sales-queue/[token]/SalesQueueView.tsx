@@ -90,20 +90,54 @@ export default function SalesQueueView({ today, sales, entries, avail }: {
   }, []);
 
   const salesById = useMemo(() => new Map(sales.map((s) => [s.id, s])), [sales]);
+  // คนเดียวกันอาจมีหลายแถวใน queue_sales (เช่น "ส้ม" มีทั้งแถวเซลล์หลักและแถวผู้ช่วย) → รวมเป็นคนเดียว
+  //   กดชิป "ส้ม" แล้วเห็นทั้งคิวที่ส้มเป็นเซลล์หลัก และคิวที่ส้มไปเป็นเซลล์รอง/ผู้ช่วยกับคนอื่น (เจ้าของ 9 พ.ย.69)
+  //   นับว่าคนเดียวกันเมื่อ ชื่อตรงกัน (trim) หรือ parent_sales_id ชี้หากัน
+  const personIds = useMemo(() => {
+    const byName = new Map<string, Set<string>>();
+    for (const x of sales) {
+      const k = x.name.trim();
+      if (!byName.has(k)) byName.set(k, new Set());
+      byName.get(k)!.add(x.id);
+    }
+    const out = new Map<string, Set<string>>();
+    for (const x of sales) {
+      const set = new Set(byName.get(x.name.trim()) ?? [x.id]);
+      if (x.parent_sales_id) set.add(x.parent_sales_id);
+      for (const y of sales) if (y.parent_sales_id === x.id) set.add(y.id);
+      out.set(x.id, set);
+    }
+    return out;
+  }, [sales]);
+  const idsOf = (id: string): Set<string> => personIds.get(id) ?? new Set([id]);
+  const belongs = (e: SqEntry, id: string) => {
+    const ids = idsOf(id);
+    return (!!e.sales_id && ids.has(e.sales_id)) || (!!e.assistant_id && ids.has(e.assistant_id));
+  };
   // แถบชื่อ: ตัดชื่อที่เจ้าของสั่งซ่อน · ไล้/แม็ก ไว้หน้าสุด (ใช้บ่อย) · เซลล์หลักก่อน แล้วผู้ช่วย
   const shown = useMemo(() => {
     const rank = (s: SqSales) => { const i = PINNED.indexOf(s.name.trim()); return i < 0 ? PINNED.length : i; };
     return sales.filter((s) => !HIDDEN.has(s.name.trim())).sort((a, b) => rank(a) - rank(b));
   }, [sales]);
   const mains = shown.filter((s) => s.role === "MAIN");
-  const assistants = shown.filter((s) => s.role === "ASSISTANT");
+  // ชิปผู้ช่วย: ตัดคนที่มีชิปเซลล์หลักอยู่แล้ว (รวมเป็นคนเดียวแล้ว ไม่ต้องขึ้น 2 ชิป)
+  const mainNames = new Set(mains.map((s) => s.name.trim()));
+  const assistants = shown.filter((s) => s.role === "ASSISTANT" && !mainNames.has(s.name.trim()));
 
   // จำคนที่เลือกไว้ในเครื่อง + ?s= ในลิงก์ (ส่งลิงก์เจาะชื่อได้)
   useEffect(() => {
     let pick: string | null = new URLSearchParams(window.location.search).get("s");
     if (!pick) { try { pick = localStorage.getItem(LS_KEY); } catch { /* private mode */ } }
-    if (pick && (pick === ALL || salesById.has(pick))) setWho(pick);
-  }, [salesById]);
+    if (!pick || (pick !== ALL && !salesById.has(pick))) return;
+    if (pick !== ALL) {
+      const row = salesById.get(pick)!;
+      if (row.role === "ASSISTANT") {
+        const main = sales.find((x) => x.role === "MAIN" && x.name.trim() === row.name.trim());
+        if (main) pick = main.id;
+      }
+    }
+    setWho(pick);
+  }, [salesById, sales]);
 
   // ชื่อที่เลือกอยู่ท้ายแถว (เลื่อนข้าง) → เลื่อนให้เห็น
   useEffect(() => {
@@ -132,14 +166,15 @@ export default function SalesQueueView({ today, sales, entries, avail }: {
   }, [router]);
 
   const mine = useMemo(
-    () => (who === ALL ? entries : entries.filter((e) => e.sales_id === who || e.assistant_id === who)),
-    [entries, who],
+    () => (who === ALL ? entries : entries.filter((e) => belongs(e, who))),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [entries, who, personIds],
   );
 
   const tomorrow = addDays(today, 1);
   const weekEnd = addDays(today, 6);
   const countNext = (id: string) =>
-    entries.filter((e) => e.queue_date && e.queue_date >= today && (e.sales_id === id || e.assistant_id === id)).length;
+    entries.filter((e) => e.queue_date && e.queue_date >= today && belongs(e, id)).length;
   const summary = {
     today: mine.filter((e) => e.queue_date === today).length,
     tomorrow: mine.filter((e) => e.queue_date === tomorrow).length,
@@ -166,7 +201,7 @@ export default function SalesQueueView({ today, sales, entries, avail }: {
   const undated = view === "next" && who !== ALL ? mine.filter((e) => !e.queue_date) : [];
 
   const availFor = (date: string) =>
-    avail.filter((a) => a.date === date && (who === ALL ? true : a.sales_id === who));
+    avail.filter((a) => a.date === date && (who === ALL ? true : idsOf(who).has(a.sales_id)));
 
   const whoName = who === ALL ? "ทุกคน" : salesById.get(who)?.name ?? "";
 
@@ -253,7 +288,7 @@ export default function SalesQueueView({ today, sales, entries, avail }: {
                 )}
               </div>
               <div className="flex flex-col gap-2.5">
-                {list.map((e) => <EntryCard key={e.id} e={e} showSales={who === ALL} salesById={salesById} />)}
+                {list.map((e) => <EntryCard key={e.id} e={e} showSales={who === ALL} salesById={salesById} viewerIds={who === ALL ? null : idsOf(who)} />)}
               </div>
             </section>
           );
@@ -263,7 +298,7 @@ export default function SalesQueueView({ today, sales, entries, avail }: {
           <section className="mt-6" aria-label="ยังไม่ลงวัน">
             <div className="py-2 text-[16px] font-bold text-stone-600">ยังไม่ลงวัน · {undated.length}</div>
             <div className="flex flex-col gap-2.5">
-              {undated.map((e) => <EntryCard key={e.id} e={e} showSales={false} salesById={salesById} />)}
+              {undated.map((e) => <EntryCard key={e.id} e={e} showSales={false} salesById={salesById} viewerIds={who === ALL ? null : idsOf(who)} />)}
             </div>
           </section>
         )}
@@ -300,7 +335,11 @@ function Stat({ label, n, hot }: { label: string; n: number; hot?: boolean }) {
   );
 }
 
-function EntryCard({ e, showSales, salesById }: { e: SqEntry; showSales: boolean; salesById: Map<string, SqSales> }) {
+function EntryCard({ e, showSales, salesById, viewerIds }: {
+  e: SqEntry; showSales: boolean; salesById: Map<string, SqSales>;
+  /** id ทุกแถวของคนที่กำลังดู (null = ดูทุกคน) — ใช้บอกว่าคิวนี้เขาเป็นเซลล์หลักหรือไปเป็นเซลล์รอง */
+  viewerIds: Set<string> | null;
+}) {
   const [copied, setCopied] = useState(false);
   const t = fmtTime(e.queue_time);
   const st = STATUS[e.status];
@@ -312,6 +351,8 @@ function EntryCard({ e, showSales, salesById }: { e: SqEntry; showSales: boolean
   const count = e.job_count != null ? `${e.job_count} งาน` : "ไม่ระบุ";
   const salesName = e.sales_id ? salesById.get(e.sales_id)?.name : "";
   const asstName = e.assistant_id ? salesById.get(e.assistant_id)?.name : "";
+  // คนที่ดูอยู่เป็นเซลล์รองของคิวนี้ (ไม่ใช่เซลล์หลัก) → โชว์ "ไปกับ <เซลล์หลัก>" แทน
+  const asSecondary = !!viewerIds && !(e.sales_id && viewerIds.has(e.sales_id)) && !!e.assistant_id && viewerIds.has(e.assistant_id);
   const done = e.status === "DONE";
   const line = e.line_contact?.trim() ?? "";
   const channel = e.contact_channel === "FB" ? "FB" : "LINE";
@@ -336,6 +377,11 @@ function EntryCard({ e, showSales, salesById }: { e: SqEntry; showSales: boolean
           <div className="mt-0.5 text-[13.5px] text-stone-600">
             {e.job_type || "ประเมินหน้างาน"}
             {showSales && salesName && <span className="ml-1.5 rounded bg-stone-100 px-1.5 py-0.5 text-[12px] font-semibold text-stone-700">{salesName}</span>}
+            {asSecondary && (
+              <span className="ml-1.5 rounded bg-sky-100 px-1.5 py-0.5 text-[12px] font-semibold text-sky-800">
+                เซลล์รอง · ไปกับ{salesName ? ` ${salesName}` : ""}
+              </span>
+            )}
           </div>
           {e.address?.trim() && <p className="mt-1.5 text-[14px] leading-snug text-stone-800 whitespace-pre-line">{e.address.trim()}</p>}
 
@@ -357,7 +403,9 @@ function EntryCard({ e, showSales, salesById }: { e: SqEntry; showSales: boolean
             {line && (
               <div className="flex gap-1.5 min-w-0"><dt className="text-stone-500">{channel}</dt><dd className="font-semibold break-all">{line}</dd></div>
             )}
-            {asstName && (
+            {asSecondary ? (
+              salesName && <div className="flex gap-1.5"><dt className="text-stone-500">เซลล์หลัก</dt><dd className="font-semibold">{salesName}</dd></div>
+            ) : asstName && (
               <div className="flex gap-1.5"><dt className="text-stone-500">ไปกับ</dt><dd className="font-semibold">{asstName}</dd></div>
             )}
           </dl>

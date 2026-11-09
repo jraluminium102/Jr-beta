@@ -132,3 +132,74 @@ function clamp(lat: number, lng: number): { lat: number; lng: number } | null {
   }
   return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180 ? { lat, lng } : null;
 }
+
+// ============================================================
+// แปลง "ที่อยู่ตัวหนังสือ" → พิกัดโดยประมาณ (Nominatim / OpenStreetMap ฟรี ไม่ต้องมี key · ≤1 req/วินาที)
+//   เจ้าของ 9 พ.ย.69: ลงคิวที่มีแค่ที่อยู่ (ไม่มีลิงก์แมพ/ไม่ได้ปักหมุด) → ระบบเสนอวัน "ไม่ยอมจับคู่" กับคิวใกล้ ๆ
+//   เพราะกฎระยะต้องมีพิกัดทั้งสองฝั่ง (พิกัดไม่ครบ = ข้ามวันนั้น) · ตัวนี้เติมพิกัดระดับ "ถนน/แขวง" ให้พอจับคู่ได้
+//   ⚠ บ้านเลขที่ไทยค้นไม่เจอแทบทุกเคส (ทดสอบ 6 ที่อยู่จริง: เต็ม = 0/6 · ตัดเลขที่/ซอย/โครงการ = 5/6 คลาด 0.3–2.4 กม.)
+//      → ค้นแบบย่อก่อน แล้วค่อยถอยไปแค่ แขวง/เขต/จังหวัด · ไม่เจอ = null (ไม่เดา) · ผลเป็น approx เสมอ ให้ UI บอกชัด
+// ============================================================
+export type GeocodeResult = { lat: number; lng: number; label: string; approx: true };
+
+const GEO_CACHE = new Map<string, GeocodeResult | null>();
+const GEO_HEADERS: Record<string, string> = {
+  "User-Agent": "JR-OMS queue geocoder/1.0 (jr.aluminium102@gmail.com)",
+  "Accept-Language": "th,en;q=0.8",
+  Accept: "application/json",
+};
+
+/** ตัดส่วนที่ Nominatim หาไม่เจอออก: เลขที่ · เลข ม. · ซอย · ชื่อโครงการ/หมู่บ้าน/คอนโด/อาคาร · รหัสไปรษณีย์คงไว้ */
+export function simplifyThaiAddress(a: string): string {
+  return a
+    .replace(/เลขที่\s*\S+/g, " ")
+    .replace(/\b\d+\/\d+\b/g, " ")
+    .replace(/\bม\.\s*\d+|หมู่\s*(ที่)?\s*\d+/g, " ")
+    .replace(/ซอย\S*\s*\d*|ซ\.\s*\S+\s*\d*/g, " ")
+    .replace(/(โครงการ|หมู่บ้าน|คอนโด\S*|อาคาร|ตึก|ห้อง|ชั้น|ยูนิต|Unit)\s*\S*/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** เหลือเฉพาะหน่วยปกครอง: แขวง/ตำบล · เขต/อำเภอ · จังหวัด/กรุงเทพ (ทางถอยสุดท้าย) */
+function adminOnly(a: string): string {
+  const m = a.match(/(แขวง|ตำบล|ต\.)\s*\S+|(เขต|อำเภอ|อ\.)\s*\S+|(จังหวัด|จ\.)\s*\S+|กรุงเทพ\S*|นนทบุรี|ปทุมธานี|สมุทรปราการ|สมุทรสาคร|นครปฐม|ชลบุรี|ระยอง|ฉะเชิงเทรา|ภูเก็ต/g);
+  return m ? [...new Set(m)].join(" ") : "";
+}
+
+async function nominatim(q: string): Promise<GeocodeResult | null> {
+  if (!q || q.length < 4) return null;
+  if (GEO_CACHE.has(q)) return GEO_CACHE.get(q) ?? null;
+  const url = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=th&q=" + encodeURIComponent(q);
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), 6_000);
+  try {
+    const res = await fetch(url, { headers: GEO_HEADERS, signal: ac.signal, cache: "no-store" });
+    if (!res.ok) { GEO_CACHE.set(q, null); return null; }
+    const arr = (await res.json()) as { lat: string; lon: string; display_name?: string }[];
+    const hit = arr?.[0];
+    const co = hit ? clamp(Number(hit.lat), Number(hit.lon)) : null;
+    // พิกัดต้องอยู่ในไทย (กันผลหลุดโลก)
+    const out: GeocodeResult | null = co && co.lat >= 5 && co.lat <= 21 && co.lng >= 95 && co.lng <= 110
+      ? { lat: co.lat, lng: co.lng, label: String(hit!.display_name ?? "").split(",").slice(0, 3).join(",").trim(), approx: true }
+      : null;
+    GEO_CACHE.set(q, out);
+    return out;
+  } catch {
+    return null; // timeout/เน็ต → ไม่ cache ให้ลองใหม่ได้
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** ที่อยู่ → พิกัดโดยประมาณ (null = หาไม่เจอ · ห้ามเดา) */
+export async function geocodeAddress(address: string | null | undefined): Promise<GeocodeResult | null> {
+  const raw = String(address ?? "").replace(/\s+/g, " ").trim();
+  if (raw.length < 6) return null;
+  const tries = [simplifyThaiAddress(raw), adminOnly(raw)].filter((q, i, arr) => q && arr.indexOf(q) === i);
+  for (const q of tries) {
+    const r = await nominatim(q);
+    if (r) return r;
+  }
+  return null;
+}

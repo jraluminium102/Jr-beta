@@ -3,7 +3,7 @@
 import { HttpError } from "@/lib/bff/context";
 import { dbError } from "@/lib/bff/db-error";
 import { detectTeam, estimateMinutes, haversineKm } from "@/lib/queue";
-import { resolveMapLink } from "@/lib/queue-geo";
+import { geocodeAddress, resolveMapLink } from "@/lib/queue-geo";
 import { drivingMinutes } from "@/lib/ors";
 
 type Sb = { from: (t: string) => any };
@@ -57,6 +57,19 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
   if ((body.lat == null || body.lng == null) && body.location_url) {
     const co = await resolveMapLink(body.location_url);
     if (co) { body.lat = co.lat; body.lng = co.lng; }
+  }
+  // ยังไม่มีพิกัด แต่มีที่อยู่ตัวหนังสือ → หาพิกัดโดยประมาณจากที่อยู่ (เจ้าของ 9 พ.ย.69: คิวที่อยู่อย่างเดียวต้องจับคู่กับคิวใกล้ ๆ ได้)
+  //   เดิม: พิกัดไม่ครบ = ไม่จับคู่เลย → ระบบเสนอ "วันว่างทั้งวัน" ไกลออกไป ทั้งที่มีคิวข้าง ๆ กันอยู่
+  let geoNote = "";
+  if ((body.lat == null || body.lng == null) && body.address) {
+    const g = await geocodeAddress(body.address);
+    if (g) {
+      body.lat = g.lat; body.lng = g.lng;
+      geoNote = `ใช้พิกัดโดยประมาณจากที่อยู่ (${g.label}) — อยากให้แม่นกว่านี้ วางลิงก์แมพ/ปักหมุดแล้วกดเสนอใหม่`;
+    }
+  }
+  if (body.lat == null || body.lng == null) {
+    geoNote = "ไม่มีพิกัดหน้างาน → ไม่จับคู่กับคิวอื่นในวันเดียวกัน (เลือกวันที่ว่างทั้งวัน) — วางลิงก์แมพ/ปักหมุดแล้วกดเสนอใหม่ถ้าอยากให้จับคู่";
   }
 
   // Load queue_settings for max_pair_min / avg_speed_kmh / detour_factor
@@ -233,7 +246,7 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
             sales_name: s.name,
             reason: `งานเต็มวัน → ${s.name} ว่างทั้งวัน ${DOW_TH[dow]} ${dateStr}`,
             day_plan: [],
-            day_notes: dayNotes,
+            day_notes: geoNote ? [...dayNotes, geoNote] : dayNotes,
           };
         }
         continue;
@@ -258,13 +271,21 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
           const a = { lat: existing.lat, lng: existing.lng };
           const b = { lat: newLat, lng: newLng };
           const km = haversineKm(a, b);
-          if (km > maxPairKm) { ok = false; break; }
+          // ชั้น 1 เส้นตรง (เจ้าของ 9 พ.ย.69 — รามคำแหง 24 → ร่มเกล้า เส้นตรง 12 กม. แต่ขับจริง 16 นาที ต้องจับคู่ได้):
+          //   ≤ maxPairKm (8)        = "ใกล้"           → ใช้เกณฑ์เวลาปกติ (45 นาที)
+          //   maxPairKm–2× (8–16 กม.) = "ไกลแต่ถนนเร็ว" → ต้องขับถึงไวกว่า = 2/3 ของเกณฑ์ (30 นาที) และต้องมี ORS ยืนยัน (ไม่ใช้ประมาณการ)
+          //   > 2× (16 กม.)          = ไม่จับคู่
+          //   เคส 3 พ.ย. นนทบุรี→สาทร 11 กม. ORS 30 นาที ×1.5 = 45 > 30 → ยังไม่จับคู่ (ถูกต้องตามที่เจ้าของต้องการ)
+          if (km > maxPairKm * 2) { ok = false; break; }
+          const farButFast = km > maxPairKm;
+          const minCap = farButFast ? Math.round((maxPairMin * 2) / 3) : maxPairMin;
           const ck = `${a.lat},${a.lng}`;
           let orsMin: number | null;
           if (driveCache.has(ck)) orsMin = driveCache.get(ck) ?? null;
           else { orsMin = await drivingMinutes(a, b); driveCache.set(ck, orsMin); }
           let travelMin: number;
           if (orsMin == null) {
+            if (farButFast) { ok = false; break; } // ไกลเส้นตรง + ไม่มีเวลาขับจริงยืนยัน → ไม่เสี่ยงจับคู่
             // ORS ใช้ไม่ได้ → ประมาณการแบบ "ระมัดระวัง" (เมืองรถติดช้ากว่า 40 km/h มาก)
             travelMin = estimateMinutes(a, b, { avgSpeedKmh: Math.min(avgSpeedKmh, 24), detourFactor: Math.max(detourFactor, 1.45) });
             console.warn("[queue/suggest] ORS ใช้ไม่ได้ — ใช้ประมาณการระยะแบบระมัดระวัง (กันจับคู่ไกล)");
@@ -272,8 +293,8 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
             travelMin = orsMin * trafficFactor;   // ORS = เวลาถนนโล่ง → คูณรถติดก่อนเทียบเกณฑ์
           }
           dist.set(existing.id, { km: Math.round(km * 10) / 10, min: Math.round(travelMin) });
-          if (travelMin > maxPairMin) { ok = false; break; }
-          pairNote = ` · คู่กับคิว ${String(existing.queue_time ?? "").slice(0, 5)} ห่าง ${km.toFixed(1)} กม. ~${Math.round(travelMin)} นาที`;
+          if (travelMin > minCap) { ok = false; break; }
+          pairNote = ` · คู่กับคิว ${String(existing.queue_time ?? "").slice(0, 5)} ห่าง ${km.toFixed(1)} กม. ~${Math.round(travelMin)} นาที${farButFast ? " (ไกลเส้นตรงแต่ถนนเร็ว)" : ""}`;
         }
         if (!ok) continue;
       }
@@ -285,7 +306,7 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
         sales_name: s.name,
         reason: `${s.name} ว่างเร็วสุด ${DOW_TH[dow]} ${dateStr} ${freeSlot.slice(0, 5)}${pairNote}`,
         day_plan: toPlan(dayEntries, dist),
-        day_notes: dayNotes,
+        day_notes: geoNote ? [...dayNotes, geoNote] : dayNotes,
       };
     }
   }
