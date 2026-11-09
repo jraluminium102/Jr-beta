@@ -62,7 +62,7 @@ export default function MergeHistory({ onClose }: { onClose: () => void }) {
               <div className="mt-1 flex flex-wrap gap-1.5">
                 {r.result.newSku && <span className="text-[11px] rounded-full px-2 py-0.5 bg-emerald-100 text-emerald-700">ย้ายรหัส → {r.result.newSku}</span>}
                 {r.result.newName && <span className="text-[11px] rounded-full px-2 py-0.5 bg-sky-100 text-sky-700">เปลี่ยนชื่อ → {r.result.newName}</span>}
-                {r.result.pricedTo != null && <span className="text-[11px] rounded-full px-2 py-0.5 bg-amber-100 text-amber-700">ตั้งราคา ฿{baht(r.result.pricedTo)}</span>}
+                {r.result.pricedTo != null && <span className="text-[11px] rounded-full px-2 py-0.5 bg-amber-100 text-amber-700">ตั้งราคา {baht(r.result.pricedTo)} บาท</span>}
                 {!!r.result.boqMoved && <span className="text-[11px] rounded-full px-2 py-0.5 bg-black/5 text-ink-2">ย้าย BOQ {r.result.boqMoved} แถว</span>}
               </div>
             </div>

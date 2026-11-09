@@ -208,10 +208,10 @@ export default async function QuotationDetail({ params, searchParams }: { params
                 : <tr><td className="pr-8 py-0.5 text-ink-3">ส่วนลด{(q as { discount_label?: string }).discount_label ? ` (${(q as { discount_label?: string }).discount_label})` : (q.discount_pct > 0 ? ` ${q.discount_pct}%` : "")}</td><td className="text-right tabular-nums text-brand">-{baht(q.discount_amt)}</td></tr>)}
               {q.discount_amt > 0 && <tr><td className="pr-8 py-0.5 text-ink-3">จำนวนเงินหลังหักส่วนลด</td><td className="text-right tabular-nums">{baht(q.subtotal - q.discount_amt)}</td></tr>}
               <tr><td className="pr-8 py-0.5 text-ink-3">VAT {q.vat_rate}%</td><td className="text-right tabular-nums">{baht(q.vat_amt)}</td></tr>
-              <tr className="font-bold text-brand-dark"><td className="pr-8 py-1 border-t">ยอดรวมสุทธิ</td><td className="text-right border-t tabular-nums">฿{baht(q.total)}</td></tr>
+              <tr className="font-bold text-brand-dark"><td className="pr-8 py-1 border-t">ยอดรวมสุทธิ</td><td className="text-right border-t tabular-nums">{baht(q.total)} บาท</td></tr>
               {q.wht_amt > 0 && (<>
                 <tr><td className="pr-8 py-0.5 text-ink-3">หัก ณ ที่จ่าย {q.wht_rate}%</td><td className="text-right tabular-nums text-brand">-{baht(q.wht_amt)}</td></tr>
-                <tr className="font-bold text-brand-dark text-lg"><td className="pr-8 py-1">ยอดรับสุทธิ</td><td className="text-right tabular-nums">฿{baht(q.net)}</td></tr>
+                <tr className="font-bold text-brand-dark text-lg"><td className="pr-8 py-1">ยอดรับสุทธิ</td><td className="text-right tabular-nums">{baht(q.net)} บาท</td></tr>
               </>)}
             </tbody>
           </table>

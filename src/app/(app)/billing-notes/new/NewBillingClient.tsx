@@ -171,7 +171,7 @@ export default function NewBillingClient({
                   {quotations.map((q) => (
                     <option key={q.id} value={q.id}>
                       {q.code} · {q.customer_snapshot?.name}
-                      {q.customer_snapshot?.job ? ` · ${q.customer_snapshot.job}` : ""} · ฿{baht(q.net)}
+                      {q.customer_snapshot?.job ? ` · ${q.customer_snapshot.job}` : ""} · {baht(q.net)} บาท
                       {q.status !== "approved" ? ` [${STATUS_LABEL[q.status] ?? q.status}]` : ""}
                     </option>
                   ))}
@@ -218,7 +218,7 @@ export default function NewBillingClient({
                       <tr key={p.seq} className="border-b border-gray-100">
                         <td className="p-2">{p.seq}</td>
                         <td>{p.label}</td>
-                        <td className="text-right p-2 font-semibold tabular-nums">฿{baht(p.amount)}</td>
+                        <td className="text-right p-2 font-semibold tabular-nums">{baht(p.amount)} บาท</td>
                       </tr>
                     ))}
                   </tbody>
@@ -237,7 +237,7 @@ export default function NewBillingClient({
                 </p>
               )}
               <div className="space-y-1.5 text-sm">
-                <div className="flex justify-between"><span className="text-ink-3">รวมเป็นเงิน</span><span className="tabular-nums">฿{baht(t.subtotal)}</span></div>
+                <div className="flex justify-between"><span className="text-ink-3">รวมเป็นเงิน</span><span className="tabular-nums">{baht(t.subtotal)} บาท</span></div>
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-ink-3 flex items-center gap-1">ส่วนลด
                     {/* กรอกได้ทั้ง % และบาท · พิมพ์ช่องไหน = ใช้ช่องนั้น (โหมดบาทเก็บยอดตรง ไม่แปลงกลับเป็น % กัน drift) */}
@@ -247,27 +247,27 @@ export default function NewBillingClient({
                       onChange={(e) => { setDiscMode("pct"); setDisc(Math.max(0, Number(e.target.value) || 0)); }}
                       className="w-14 glass-soft rounded px-1 py-1 text-right outline-none tabular-nums disabled:opacity-50" aria-label="ส่วนลด %" />%
                   </span>
-                  <span className="flex items-center gap-1 tabular-nums text-red-700">-฿
+                  <span className="flex items-center gap-1 tabular-nums text-red-700">-
                     <input type="number" min={0} step="any" disabled={locked}
                       value={discMode === "baht" ? discAmt : (t.discount_amt || "")}
                       onChange={(e) => { setDiscMode("baht"); setDiscAmt(e.target.value); }}
-                      className="w-20 glass-soft rounded px-1 py-1 text-right outline-none tabular-nums disabled:opacity-50" aria-label="ส่วนลด บาท" />
+                      className="w-20 glass-soft rounded px-1 py-1 text-right outline-none tabular-nums disabled:opacity-50" aria-label="ส่วนลด บาท" /> บาท
                   </span>
                 </div>
-                <div className="flex justify-between"><span className="text-ink-3">ราคาหลังหักส่วนลด</span><span className="tabular-nums">฿{baht(t.after_discount)}</span></div>
+                <div className="flex justify-between"><span className="text-ink-3">ราคาหลังหักส่วนลด</span><span className="tabular-nums">{baht(t.after_discount)} บาท</span></div>
                 <label className="flex items-center justify-between gap-2 cursor-pointer">
                   <span className="text-ink-3 flex items-center gap-1.5"><input type="checkbox" disabled={locked} checked={vat === 7} onChange={(e) => setVat(e.target.checked ? 7 : 0)} /> ภาษีมูลค่าเพิ่ม 7%</span>
-                  <span className="tabular-nums">฿{baht(t.vat_amt)}</span>
+                  <span className="tabular-nums">{baht(t.vat_amt)} บาท</span>
                 </label>
                 <div className="border-t border-gray-300/70 my-1.5" />
-                <div className="flex justify-between font-bold"><span className="text-ink">จำนวนเงินรวมทั้งสิ้น</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(t.total)}</span></div>
+                <div className="flex justify-between font-bold"><span className="text-ink">จำนวนเงินรวมทั้งสิ้น</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>{baht(t.total)} บาท</span></div>
                 <label className="flex items-center justify-between gap-2 cursor-pointer">
                   <span className="text-ink-3 flex items-center gap-1.5"><input type="checkbox" disabled={locked} checked={wht > 0} onChange={(e) => setWht(e.target.checked ? 3 : 0)} /> หักภาษี ณ ที่จ่าย
                     <select value={wht || 3} disabled={locked || wht === 0} onChange={(e) => setWht(Number(e.target.value))} className="glass-soft rounded px-1 py-1 outline-none text-xs disabled:opacity-50">
                       <option value={1}>1%</option><option value={2}>2%</option><option value={3}>3%</option><option value={5}>5%</option>
                     </select>
                   </span>
-                  <span className="tabular-nums text-red-700">-฿{baht(t.wht_amt)}</span>
+                  <span className="tabular-nums text-red-700">-{baht(t.wht_amt)} บาท</span>
                 </label>
 
                 {/* ค่าแรง (ฐานหัก ณ ที่จ่าย) — โชว์เมื่อมี WHT · หัก 3% เฉพาะค่าแรง (17 ก.ค.69) */}
@@ -283,9 +283,9 @@ export default function NewBillingClient({
                         </span>
                       </span>
                       {laborMode === "baht" ? (
-                        <span className="flex items-center gap-1 tabular-nums">฿
+                        <span className="flex items-center gap-1 tabular-nums">
                           <input type="number" min={0} step="any" value={laborBaht} onChange={(e) => setLaborBaht(e.target.value)}
-                            className="w-24 glass-soft rounded px-1 py-1 text-right outline-none tabular-nums" aria-label="ค่าแรง บาท" />
+                            className="w-24 glass-soft rounded px-1 py-1 text-right outline-none tabular-nums" aria-label="ค่าแรง บาท" /> บาท
                         </span>
                       ) : (
                         <span className="flex items-center gap-1 tabular-nums">
@@ -295,8 +295,8 @@ export default function NewBillingClient({
                       )}
                     </div>
                     <div className="flex justify-between text-[12px] text-ink-3">
-                      <span>ค่าของ ฿{baht(t.material_amt)} · ค่าแรง ฿{baht(t.labor_amt)}</span>
-                      <span>หัก 3% เฉพาะค่าแรง = -฿{baht(t.wht_amt)}</span>
+                      <span>ค่าของ {baht(t.material_amt)} บาท · ค่าแรง {baht(t.labor_amt)} บาท</span>
+                      <span>หัก 3% เฉพาะค่าแรง = -{baht(t.wht_amt)} บาท</span>
                     </div>
                     <label className="flex items-center gap-1.5 text-[12px] text-ink-2 cursor-pointer">
                       <input type="checkbox" checked={hasRetention} onChange={(e) => setHasRetention(e.target.checked)} />
@@ -308,12 +308,12 @@ export default function NewBillingClient({
                   </div>
                 )}
 
-                <div className="flex justify-between font-bold text-base border-t border-gray-300/70 pt-1.5"><span className="text-ink">ยอดชำระ · แบ่ง {plan.length} งวด</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(t.net)}</span></div>
+                <div className="flex justify-between font-bold text-base border-t border-gray-300/70 pt-1.5"><span className="text-ink">ยอดชำระ · แบ่ง {plan.length} งวด</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>{baht(t.net)} บาท</span></div>
                 {/* พรีวิวงวด (ค่าของ → ค่าแรง → เงินประกัน) */}
                 {plan.length > 1 && (
                   <div className="text-[11.5px] text-ink-3 space-y-0.5 pt-1">
                     {plan.map((p) => (
-                      <div key={p.seq} className="flex justify-between gap-2"><span className="truncate">{p.label}</span><span className="tabular-nums shrink-0">฿{baht(p.amount)}</span></div>
+                      <div key={p.seq} className="flex justify-between gap-2"><span className="truncate">{p.label}</span><span className="tabular-nums shrink-0">{baht(p.amount)} บาท</span></div>
                     ))}
                   </div>
                 )}

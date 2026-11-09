@@ -59,7 +59,7 @@ export default async function DashboardPage() {
               </span>
             </div>
             <div className="text-2xl font-extrabold mt-2" style={{ color: k.color }}>
-              {k.money ? "฿" + baht(k.val) : k.val}
+              {k.money ? baht(k.val) + " บาท" : k.val}
             </div>
           </Card>
         ))}
@@ -95,7 +95,7 @@ export default async function DashboardPage() {
                       <div className="text-xs text-ink-3">{r.customer_snapshot?.job}</div>
                     </td>
                     <td className="text-ink-2">{r.issue_date}</td>
-                    <td className="text-right font-semibold">฿{baht(r.net)}</td>
+                    <td className="text-right font-semibold">{baht(r.net)} บาท</td>
                     <td><StatusBadge status={r.status} /></td>
                   </tr>
                 ))}

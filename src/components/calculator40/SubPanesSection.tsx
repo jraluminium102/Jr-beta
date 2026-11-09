@@ -126,7 +126,7 @@ export default function SubPanesSection({ subs, setSubs, pb, mainColor, mainGlas
                   <NumInput value={s.w} onChange={(v) => patch(s.key, { w: v })} placeholder="กว้าง(ม.)" step={0.1} />
                   <NumInput value={s.h} onChange={(v) => patch(s.key, { h: v })} placeholder="สูง(ม.)" step={0.1} />
                   <NumInput value={s.n || 1} onChange={(v) => patch(s.key, { n: Math.max(1, Math.round(v)) })} placeholder="บาน" />
-                  <span className="text-sm font-semibold text-brand-dark tabular-nums">{fmtBaht(c.amount)} ฿</span>
+                  <span className="text-sm font-semibold text-brand-dark tabular-nums">{fmtBaht(c.amount)} บาท</span>
                   {s.fprice! > 0 && <span className="text-[11px] text-amber-700">ราคาแยก</span>}
                 </>
               )}
@@ -145,7 +145,7 @@ export default function SubPanesSection({ subs, setSubs, pb, mainColor, mainGlas
             {/* ทุนบานย่อย — ของจริงจาก BOM (เปิด 💰 ดูทุน) */}
             {showCost && !isCustom && (
               <div className="text-[11px] text-ink-3 tabular-nums">
-                ทุนของ ฿{fmtBaht(c.cost)} · ค่าผลิต ฿{fmtBaht(c.labor.prod)}{laborMode === "mfg" ? "" : ` · ค่าติดตั้ง ฿${fmtBaht(c.labor.install)}`} · ของ {c.lines.length} รายการ (ดูในตาราง &quot;ค่าของ&quot; ของชุดนี้)
+                ทุนของ {fmtBaht(c.cost)} บาท · ค่าผลิต {fmtBaht(c.labor.prod)} บาท{laborMode === "mfg" ? "" : ` · ค่าติดตั้ง ${fmtBaht(c.labor.install)} บาท`} · ของ {c.lines.length} รายการ (ดูในตาราง &quot;ค่าของ&quot; ของชุดนี้)
               </div>
             )}
 

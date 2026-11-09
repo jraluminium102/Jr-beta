@@ -149,7 +149,7 @@ export default function CompareClient({ pb, stockCount }: { pb: any; stockCount:
               {noCode > 0 && <Badge tone="gray">ยังไม่ผูกรหัสสโตร์ {noCode} รายการ</Badge>}
               <Badge tone="gray">สูตรใบตัด: {r.cutSpecName || "—"}</Badge>
               <Badge tone="gray">
-                เรตอลู {r.aluRate.brand} {baht(r.aluRate.rate)} ฿/กก.
+                เรตอลู {r.aluRate.brand} {baht(r.aluRate.rate)} บาท/กก.
                 {r.aluRate.mult !== 1 && ` · ตัวคูณ ${r.aluRate.mult}`}
               </Badge>
               {/* 3 สถานะ ไม่ใช่ 2 — "ตั้งให้ใช้ใบตัดแล้วแต่รอราคา" ต่างจาก "ไม่ได้ตั้งเลย" คนละงานกัน */}
@@ -181,14 +181,14 @@ export default function CompareClient({ pb, stockCount }: { pb: any; stockCount:
               ] as [string, number][]).map(([k, v]) => (
                 <div key={k} className="glass-soft rounded-lg px-3 py-2">
                   <div className="text-[11px] text-ink-3">{k}</div>
-                  <div className="font-bold tabular-nums">฿{baht(v)}</div>
+                  <div className="font-bold tabular-nums">{baht(v)} บาท</div>
                 </div>
               ))}
             </div>
             <p className="mt-2 text-xs text-ink-3">
               น้ำหนักอลูที่เข้ากองคิดค่าอบ {n1(r.totals.aluKg)} กก. ·
               เส้นรวม คิดราคา <b>{n1(r.totals.calcAluBars)}</b> เส้น · ใบตัด <b>{r.totals.cutBarsByCode}</b> เส้น ·
-              ค่าแรง ผลิต ฿{baht(r.totals.laborProd)} + ติดตั้ง ฿{baht(r.totals.laborInstall)}
+              ค่าแรง ผลิต {baht(r.totals.laborProd)} บาท + ติดตั้ง {baht(r.totals.laborInstall)} บาท
             </p>
           </Card>
 
@@ -211,8 +211,8 @@ export default function CompareClient({ pb, stockCount }: { pb: any; stockCount:
                     <th className="text-right">ใบตัด<br /><span className="font-normal text-[11px]">ชิ้น</span></th>
                     <th className="text-right">คิดราคา<br /><span className="font-normal text-[11px]">เส้น</span></th>
                     <th className="text-right">ใบตัด<br /><span className="font-normal text-[11px]">เส้น</span></th>
-                    <th className="text-right">฿/เส้น</th><th className="text-right">กก./เส้น</th>
-                    <th className="text-right">฿/กก.</th><th className="text-right">รวม ฿</th>
+                    <th className="text-right">บาท/เส้น</th><th className="text-right">กก./เส้น</th>
+                    <th className="text-right">บาท/กก.</th><th className="text-right">รวม บาท</th>
                     <th className="text-right">ใบตัด ยาวรวม (ซม.)</th>
                     <th className="p-2 rounded-r-lg">สถานะ</th>
                   </tr>
@@ -280,7 +280,7 @@ export default function CompareClient({ pb, stockCount }: { pb: any; stockCount:
                   <tr className="text-left bg-brand-soft text-brand-dark">
                     <th className="p-2 rounded-l-lg">รหัสสโตร์</th><th>ชื่อ</th>
                     <th className="text-right">คิดราคา</th><th className="text-right">ใบตัด</th>
-                    <th>หน่วย</th><th className="text-right">ราคา/หน่วย</th><th className="text-right">รวม ฿</th>
+                    <th>หน่วย</th><th className="text-right">ราคา/หน่วย</th><th className="text-right">รวม บาท</th>
                     <th className="p-2 rounded-r-lg">สถานะ</th>
                   </tr>
                 </thead>

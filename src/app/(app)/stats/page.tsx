@@ -157,8 +157,8 @@ function StatsTab({ data, onDeposits }: { data: Stats; onDeposits: (title: strin
               <div className="text-[10px] text-brand mt-0.5">กดดูรายชื่อ</div>
             </Card>
           </button>
-          {canFin && <Kpi label="ยอดขายที่ปิดได้ · ก่อน VAT (฿)" value={baht(s.revenue_deposited ?? 0)} color="#1F4E78" sub={<>หลัง VAT ฿{baht(s.revenue_deposited_vat ?? 0)}</>} />}
-          {canFin && <Kpi label="เก็บเงินเข้าจริง (฿)" value={baht(s.collected ?? 0)} color="#7d0f15" />}
+          {canFin && <Kpi label="ยอดขายที่ปิดได้ · ก่อน VAT (บาท)" value={baht(s.revenue_deposited ?? 0)} color="#1F4E78" sub={<>หลัง VAT {baht(s.revenue_deposited_vat ?? 0)} บาท</>} />}
+          {canFin && <Kpi label="เก็บเงินเข้าจริง (บาท)" value={baht(s.collected ?? 0)} color="#7d0f15" />}
           {!canFin && <div />}
         </div>
         {canFin && <p className="text-[11px] text-ink-3 mt-1"><b>ยอดขายที่ปิดได้</b> = มูลค่างานที่ลูกค้ามัดจำในช่วงนี้ อิงยอดจากใบวางบิล (ก่อน/หลัง VAT · เต็มมูลค่า ไม่สนเก็บครบงวดยัง) · <b>เก็บเงินเข้าจริง</b> = เงินสดที่รับเข้ามาจริง</p>}
@@ -217,7 +217,7 @@ function StatsTab({ data, onDeposits }: { data: Stats; onDeposits: (title: strin
             <div className="space-y-2">
               {data.byMonth.map((m) => (
                 <div key={m.month} className="text-xs">
-                  <div className="flex justify-between text-ink-3 mb-0.5"><span>{monthLabel(m.month)}</span><span className="tabular-nums">ปิด ฿{baht(m.closed ?? 0)}</span></div>
+                  <div className="flex justify-between text-ink-3 mb-0.5"><span>{monthLabel(m.month)}</span><span className="tabular-nums">ปิด {baht(m.closed ?? 0)} บาท</span></div>
                   <div className="relative h-3 rounded-full bg-gray-100 overflow-hidden">
                     <div className="absolute inset-y-0 left-0 bg-sky-300" style={{ width: `${((m.quoted ?? 0) / monthMax) * 100}%` }} />
                     <div className="absolute inset-y-0 left-0 bg-brand rounded-full" style={{ width: `${((m.closed ?? 0) / monthMax) * 100}%` }} />
@@ -276,7 +276,7 @@ function StatsTab({ data, onDeposits }: { data: Stats; onDeposits: (title: strin
                 <th className="font-semibold text-center text-emerald-700">ขาย (ชุด)</th>
                 <th className="font-semibold text-center">% ปิด</th>
                 {canFin && <th className="font-semibold text-right">ราคาเฉลี่ย/ชุด</th>}
-                {canFin && <th className="font-semibold text-right text-emerald-700">ยอดขาย (฿)</th>}
+                {canFin && <th className="font-semibold text-right text-emerald-700">ยอดขาย (บาท)</th>}
               </tr></thead>
               <tbody>
                 {data.byCategory.map((c) => (
@@ -344,8 +344,8 @@ function KpiTab({ data, onDeposits }: { data: Stats; onDeposits: (title: string,
               <th className="font-semibold text-center">มัดจำจากประเมิน</th>
               <th className="font-semibold text-center">% ปิด</th>
               <th className="font-semibold text-center text-emerald-700">มัดจำในช่วง</th>
-              {canFin && <th className="font-semibold text-right">ยอดเสนอ (฿)</th>}
-              {canFin && <th className="font-semibold text-right text-emerald-700">ยอดขาย (฿)</th>}
+              {canFin && <th className="font-semibold text-right">ยอดเสนอ (บาท)</th>}
+              {canFin && <th className="font-semibold text-right text-emerald-700">ยอดขาย (บาท)</th>}
             </tr></thead>
             <tbody>
               {data.bySales.map((s, i) => (
@@ -456,8 +456,8 @@ function DepositsModal({ title, rows, canFin, onClose }: { title: string; rows: 
                 <th className="font-semibold">พื้นที่</th>
                 <th className="font-semibold">เซลล์</th>
                 <th className="font-semibold text-center">วันมัดจำ</th>
-                {canFin && <th className="font-semibold text-right">ก่อน VAT (฿)</th>}
-                {canFin && <th className="font-semibold text-right">หลัง VAT (฿)</th>}
+                {canFin && <th className="font-semibold text-right">ก่อน VAT (บาท)</th>}
+                {canFin && <th className="font-semibold text-right">หลัง VAT (บาท)</th>}
               </tr></thead>
               <tbody>
                 {rows.map((d) => (
@@ -476,7 +476,7 @@ function DepositsModal({ title, rows, canFin, onClose }: { title: string; rows: 
         </div>
         <div className="px-4 py-2.5 border-t border-black/10 text-xs text-ink-3 flex justify-between">
           <span>รวม {rows.length} งาน</span>
-          {canFin && <span className="tabular-nums">ก่อน VAT ฿{baht(rows.reduce((a, d) => a + (d.net ?? 0), 0))} · หลัง VAT ฿{baht(rows.reduce((a, d) => a + (d.net_vat ?? 0), 0))}</span>}
+          {canFin && <span className="tabular-nums">ก่อน VAT {baht(rows.reduce((a, d) => a + (d.net ?? 0), 0))} บาท · หลัง VAT {baht(rows.reduce((a, d) => a + (d.net_vat ?? 0), 0))} บาท</span>}
         </div>
       </div>
     </div>

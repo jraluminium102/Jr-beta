@@ -335,7 +335,7 @@ function FinanceSection({ jobId, summary }: { jobId: string; summary: DocSummary
             <div className="flex items-center justify-between gap-2 bg-white/6 border border-white/10 rounded-xl px-3 py-2.5">
               <div className="min-w-0">
                 <span className="text-[13px] font-medium text-white tnum">{quotation.code}</span>
-                <span className="ml-2 text-[12px] text-white/60 tnum">฿{baht(quotation.net)}</span>
+                <span className="ml-2 text-[12px] text-white/60 tnum">{baht(quotation.net)} บาท</span>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <StatusBadge map={QUOTE_STATUS} status={quotation.status} />
@@ -373,7 +373,7 @@ function FinanceSection({ jobId, summary }: { jobId: string; summary: DocSummary
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
                       <span className="text-[13px] font-medium text-white tnum">{bn.code}</span>
-                      <span className="ml-2 text-[12px] text-white/60 tnum">฿{baht(bn.total)}</span>
+                      <span className="ml-2 text-[12px] text-white/60 tnum">{baht(bn.total)} บาท</span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <StatusBadge map={BILLING_STATUS} status={bn.status} />
@@ -433,7 +433,7 @@ function FinanceSection({ jobId, summary }: { jobId: string; summary: DocSummary
                     <span className={`text-[13px] font-medium tnum ${rc.is_voided ? "line-through text-white/50" : "text-white"}`}>
                       {rc.code}
                     </span>
-                    <span className="ml-2 text-[12px] text-white/60 tnum">฿{baht(rc.net)}</span>
+                    <span className="ml-2 text-[12px] text-white/60 tnum">{baht(rc.net)} บาท</span>
                     {rc.issue_date && (
                       <span className="ml-2 text-[11px] text-white/40">{thDate(rc.issue_date)}</span>
                     )}

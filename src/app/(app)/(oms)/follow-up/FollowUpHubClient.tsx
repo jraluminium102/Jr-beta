@@ -489,7 +489,7 @@ function SentTable({ rows, canWrite, onRefetch, onHold }: { rows: ClosureRow[]; 
                   )}>
                     <td className="px-4 py-3"><JobCell row={row} /></td>
                     <td className="px-4 py-3 text-right tnum text-white/90">
-                      {row.net != null ? `${baht(row.net)} ฿` : <span style={{ color: "var(--t-low)" }}>—</span>}
+                      {row.net != null ? `${baht(row.net)} บาท` : <span style={{ color: "var(--t-low)" }}>—</span>}
                     </td>
                     <td className="px-4 py-3">
                       {row.days_waiting != null && (
@@ -542,7 +542,7 @@ function SentTable({ rows, canWrite, onRefetch, onHold }: { rows: ClosureRow[]; 
                   <div className="text-white/80 text-sm mt-0.5">{row.customer_name}</div>
                 </div>
                 {row.net != null && (
-                  <span className="text-[13px] tnum text-white/90 shrink-0">{baht(row.net)} ฿</span>
+                  <span className="text-[13px] tnum text-white/90 shrink-0">{baht(row.net)} บาท</span>
                 )}
               </div>
               <div className="flex items-center gap-2 flex-wrap">
@@ -845,7 +845,7 @@ function ClosureTab({ isSales, filters, onFilterChange }: {
       {/* ยอดรวม (เฉพาะ sent) */}
       {activeStage === "sent" && netSum > 0 && (
         <p className="text-[12px] mb-3 tnum" style={{ color: "var(--t-low)" }}>
-          ยอดรวมใบเสนอราคา: <span className="text-sky-200 font-semibold">{baht(netSum)} ฿</span>
+          ยอดรวมใบเสนอราคา: <span className="text-sky-200 font-semibold">{baht(netSum)} บาท</span>
         </p>
       )}
 

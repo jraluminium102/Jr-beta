@@ -222,15 +222,15 @@ export default function NewFeeClient({ initial }: { initial?: FeePrefill }) {
           <Card className="p-5 sticky top-4">
             <h3 className="font-bold text-brand-dark mb-3">สรุปยอด</h3>
             <div className="space-y-1.5 text-sm">
-              <div className="flex justify-between"><span className="text-ink-3">รวมเป็นเงิน</span><span className="tabular-nums">฿{baht(t.subtotal)}</span></div>
-              <div className="flex justify-between"><span className="text-ink-3">ภาษีมูลค่าเพิ่ม {vat}%</span><span className="tabular-nums">฿{baht(t.vat_amt)}</span></div>
+              <div className="flex justify-between"><span className="text-ink-3">รวมเป็นเงิน</span><span className="tabular-nums">{baht(t.subtotal)} บาท</span></div>
+              <div className="flex justify-between"><span className="text-ink-3">ภาษีมูลค่าเพิ่ม {vat}%</span><span className="tabular-nums">{baht(t.vat_amt)} บาท</span></div>
               <div className="border-t border-gray-300/70 my-1.5" />
-              <div className="flex justify-between font-bold"><span className="text-ink">จำนวนเงินรวมทั้งสิ้น</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(t.total)}</span></div>
+              <div className="flex justify-between font-bold"><span className="text-ink">จำนวนเงินรวมทั้งสิ้น</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>{baht(t.total)} บาท</span></div>
               {wht > 0 && (
-                <div className="flex justify-between"><span className="text-ink-3">หักภาษี ณ ที่จ่าย {wht}%</span><span className="tabular-nums text-red-700">-฿{baht(t.wht_amt)}</span></div>
+                <div className="flex justify-between"><span className="text-ink-3">หักภาษี ณ ที่จ่าย {wht}%</span><span className="tabular-nums text-red-700">-{baht(t.wht_amt)} บาท</span></div>
               )}
               <div className="flex justify-between font-bold text-base border-t border-gray-300/70 pt-1.5">
-                <span className="text-ink">ยอดชำระ</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(t.net)}</span>
+                <span className="text-ink">ยอดชำระ</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>{baht(t.net)} บาท</span>
               </div>
             </div>
 

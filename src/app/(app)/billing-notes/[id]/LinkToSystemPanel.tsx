@@ -115,7 +115,7 @@ export default function LinkToSystemPanel({
                   {quotations.map((q) => (
                     <option key={q.id} value={q.id}>
                       {q.code} · {q.customer_snapshot?.name ?? "-"}
-                      {q.customer_snapshot?.job ? ` · ${q.customer_snapshot.job}` : ""} · ฿{baht(q.net)}
+                      {q.customer_snapshot?.job ? ` · ${q.customer_snapshot.job}` : ""} · {baht(q.net)} บาท
                       {q.job_id ? "" : " [ยังไม่ผูกงาน]"}
                     </option>
                   ))}
@@ -129,7 +129,7 @@ export default function LinkToSystemPanel({
               )}
               {mismatch && (
                 <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                  ⚠ ยอดไม่ตรงกัน — บิล ฿{baht(billTotal)} · ใบเสนอ ฿{baht(selected!.net)} ·
+                  ⚠ ยอดไม่ตรงกัน — บิล {baht(billTotal)} บาท · ใบเสนอ {baht(selected!.net)} บาท ·
                   ระบบจะ<b>ไม่แก้ยอดบิล</b> (ส่งลูกค้าไปแล้ว) ผูกได้แต่ตรวจสอบเอง
                 </p>
               )}

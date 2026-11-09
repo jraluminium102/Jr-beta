@@ -64,7 +64,7 @@ function sellOf(r: any, mode: LaborMode = "all"): number {
 }
 
 function fmtBaht(n: number) {
-  return "฿" + Math.round(n || 0).toLocaleString("th-TH");
+  return Math.round(n || 0).toLocaleString("th-TH") + " บาท";
 }
 function fmtNum(n: number) {
   return (n || 0).toLocaleString("th-TH", { maximumFractionDigits: 2 });
@@ -1351,7 +1351,7 @@ export default function RoomComposer({
                 </div>
                 {floorMat === "spc" && (
                   <label className="block">
-                    <span className="text-xs font-medium text-ink-3">เรต SPC/ลามิเนต (฿/ตร.ม.)</span>
+                    <span className="text-xs font-medium text-ink-3">เรต SPC/ลามิเนต (บาท/ตร.ม.)</span>
                     <input type="number" value={floorRate} onChange={(e) => setFloorRate(e.target.value)} placeholder="กรอกเรต"
                       className="w-full min-h-[40px] glass-soft rounded-lg px-2 py-1.5 mt-1 outline-none tabular-nums text-sm" />
                   </label>
@@ -1380,7 +1380,7 @@ export default function RoomComposer({
                 <span className="text-xs text-ink-3">จำนวน</span>
                 <input type="number" min={1} value={fanQty} onChange={(e) => setFanQty(e.target.value)}
                   className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-16 outline-none tabular-nums" />
-                <span className="text-xs text-ink-3">฿/ตัว</span>
+                <span className="text-xs text-ink-3">บาท/ตัว</span>
                 <input type="number" value={fanPrice} onChange={(e) => setFanPrice(e.target.value)}
                   className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-24 outline-none tabular-nums" />
                 <span className="ml-2 font-semibold text-brand-dark tabular-nums">{fmtBaht(fanTotal)}</span>

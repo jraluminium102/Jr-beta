@@ -235,7 +235,7 @@ export default function ExternalBillingForm() {
                   <tr key={p.seq} className="border-b border-gray-100">
                     <td className="p-2">{p.seq}</td>
                     <td className="whitespace-pre-line">{p.label}</td>
-                    <td className="text-right tabular-nums p-2">฿{baht(p.amount)}</td>
+                    <td className="text-right tabular-nums p-2">{baht(p.amount)} บาท</td>
                   </tr>
                 ))}
               </tbody>
@@ -248,12 +248,12 @@ export default function ExternalBillingForm() {
         <Card className="p-5 sticky top-4">
           <h3 className="font-bold text-brand-dark mb-3">สรุปยอด</h3>
           <dl className="text-sm space-y-1.5">
-            <div className="flex justify-between"><dt className="text-ink-3">ยอดก่อนภาษี</dt><dd className="tabular-nums">฿{baht(t.subtotal)}</dd></div>
-            {t.discount_amt > 0 && <div className="flex justify-between"><dt className="text-ink-3">ส่วนลด</dt><dd className="tabular-nums text-red-600">-฿{baht(t.discount_amt)}</dd></div>}
-            {vat > 0 && <div className="flex justify-between"><dt className="text-ink-3">VAT {vat}%</dt><dd className="tabular-nums">฿{baht(t.vat_amt)}</dd></div>}
-            {wht > 0 && <div className="flex justify-between"><dt className="text-ink-3">หัก ณ ที่จ่าย {wht}%</dt><dd className="tabular-nums text-red-600">-฿{baht(t.wht_amt)}</dd></div>}
+            <div className="flex justify-between"><dt className="text-ink-3">ยอดก่อนภาษี</dt><dd className="tabular-nums">{baht(t.subtotal)} บาท</dd></div>
+            {t.discount_amt > 0 && <div className="flex justify-between"><dt className="text-ink-3">ส่วนลด</dt><dd className="tabular-nums text-red-600">-{baht(t.discount_amt)} บาท</dd></div>}
+            {vat > 0 && <div className="flex justify-between"><dt className="text-ink-3">VAT {vat}%</dt><dd className="tabular-nums">{baht(t.vat_amt)} บาท</dd></div>}
+            {wht > 0 && <div className="flex justify-between"><dt className="text-ink-3">หัก ณ ที่จ่าย {wht}%</dt><dd className="tabular-nums text-red-600">-{baht(t.wht_amt)} บาท</dd></div>}
             <div className="flex justify-between pt-2 border-t border-black/10 font-bold text-brand-dark">
-              <dt>ยอดสุทธิ</dt><dd className="tabular-nums text-lg">฿{baht(t.net)}</dd>
+              <dt>ยอดสุทธิ</dt><dd className="tabular-nums text-lg">{baht(t.net)} บาท</dd>
             </div>
           </dl>
 

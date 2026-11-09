@@ -132,10 +132,10 @@ export function JobDrawer({ jobId, canFinance, canWriteProd = false, readOnly = 
                     <Row l="ช่างประเมิน" v={job.estimator?.full_name} />
                     <Row l="คนทำแบบ" v={job.designer?.full_name} />
                     {canFinance && <>
-                      <Row l="ยอดงาน (ก่อน VAT)" v={job.net_amount ? `${baht(job.net_amount)} ฿` : "—"} num />
-                      <Row l="VAT 7%" v={job.vat_amount ? `${baht(job.vat_amount)} ฿` : "—"} num />
-                      <Row l="ยอดรวม" v={job.total_amount ? `${baht(job.total_amount)} ฿` : "—"} num />
-                      <Row l="มัดจำ" v={job.deposit_amount ? `${baht(job.deposit_amount)} ฿` : "—"} num />
+                      <Row l="ยอดงาน (ก่อน VAT)" v={job.net_amount ? `${baht(job.net_amount)} บาท` : "—"} num />
+                      <Row l="VAT 7%" v={job.vat_amount ? `${baht(job.vat_amount)} บาท` : "—"} num />
+                      <Row l="ยอดรวม" v={job.total_amount ? `${baht(job.total_amount)} บาท` : "—"} num />
+                      <Row l="มัดจำ" v={job.deposit_amount ? `${baht(job.deposit_amount)} บาท` : "—"} num />
                     </>}
                   </div>
                   {job.issues?.some((i) => i.status !== "CLOSED") && (
@@ -243,7 +243,7 @@ export function JobDrawer({ jobId, canFinance, canWriteProd = false, readOnly = 
                     {fin.map((f) => (
                       <div key={f.id} className="flex items-center justify-between bg-white/8 border border-white/10 rounded-xl px-3 py-2.5">
                         <div><span className="text-white text-sm">{f.type}</span>{f.is_auto_created && <span className="ml-2"><Tag tone="sky">auto</Tag></span>}<div className="text-[12px] mt-0.5 tnum" style={{ color: "var(--t-low)" }}>{thDate(f.payment_date)} · {f.channel}</div></div>
-                        <span className="text-white font-semibold text-sm tnum">{baht(f.amount)} ฿</span>
+                        <span className="text-white font-semibold text-sm tnum">{baht(f.amount)} บาท</span>
                       </div>
                     ))}
                   </div>
@@ -347,7 +347,7 @@ function DepositForm({ jobId, onDone, onCancel }: { jobId: string; onDone: () =>
     <div className="mt-4 glass-card rounded-xl p-4">
       <div className="text-sm font-semibold text-white mb-3">บันทึกมัดจำ → สร้าง Production + บัญชี อัตโนมัติ</div>
       <div className="grid grid-cols-2 gap-3">
-        <div><label className="text-[12px] block mb-1.5" style={{ color: "var(--t-low)" }}>ยอดมัดจำ (฿)</label><input inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} className="focusable w-full glass-card rounded-lg px-3 py-2.5 text-sm text-white outline-none tnum min-h-[44px]" /></div>
+        <div><label className="text-[12px] block mb-1.5" style={{ color: "var(--t-low)" }}>ยอดมัดจำ (บาท)</label><input inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} className="focusable w-full glass-card rounded-lg px-3 py-2.5 text-sm text-white outline-none tnum min-h-[44px]" /></div>
         <div><label className="text-[12px] block mb-1.5" style={{ color: "var(--t-low)" }}>วันมัดจำ</label><DateField value={date} onChange={(iso) => setDate(iso)} className="focusable w-full glass-card rounded-lg px-3 py-2.5 text-sm text-white outline-none min-h-[44px]" aria-label="วันมัดจำ" /></div>
       </div>
       {err && <p role="alert" className="mt-2 text-[12px] text-rose-200">{err}</p>}
@@ -403,7 +403,7 @@ function DepositAmountForm({ jobId, onDone, onCancel }: { jobId: string; onDone:
       <p className="text-[11px] mb-3" style={{ color: "var(--t-low)" }}>บันทึกยอด + สร้างรายการการเงิน (DEPOSIT) อัตโนมัติ</p>
       <div className="space-y-3">
         <div>
-          <label className="text-[12px] block mb-1.5" style={{ color: "var(--t-low)" }}>ยอดมัดจำ (฿) <span className="text-rose-300">*</span></label>
+          <label className="text-[12px] block mb-1.5" style={{ color: "var(--t-low)" }}>ยอดมัดจำ (บาท) <span className="text-rose-300">*</span></label>
           <input
             inputMode="numeric"
             value={amount}

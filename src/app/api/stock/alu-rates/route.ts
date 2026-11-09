@@ -48,7 +48,7 @@ export async function POST(req: Request) {
     unit_cost: round2(Number(r.weight_per_unit) * rate),
     effective_date: today,
     supplier: "",
-    note: `ตั้งเรตต่อโล ${rate} ฿/กก. — ${series} · ${color}`,
+    note: `ตั้งเรตต่อโล ${rate} บาท/กก. — ${series} · ${color}`,
     created_by: profile.id,
   })));
   if (e1) return fail(`บันทึกประวัติราคาไม่สำเร็จ — ยังไม่มีอะไรเปลี่ยน: ${e1.message}`, 500);

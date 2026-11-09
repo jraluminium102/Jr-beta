@@ -85,8 +85,8 @@ export default function EditReceiptAmountsButton({
           <input type="number" step="0.01" value={mWht} onChange={(e) => setMWht(e.target.value)} className={inp} aria-label="ยอดหัก ณ ที่จ่าย" /></label>
 
         <div className="rounded-xl bg-gray-50 border border-gray-200 px-3 py-2 text-sm space-y-0.5">
-          <div className="flex justify-between text-gray-500"><span>จำนวนเงินรวมทั้งสิ้น (ฐาน+VAT)</span><b className="tabular-nums text-ink">฿{baht(gross)}</b></div>
-          <div className="flex justify-between text-gray-500"><span>เงินสดรับสุทธิ (หลังหัก ณ ที่จ่าย)</span><b className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(net)}</b></div>
+          <div className="flex justify-between text-gray-500"><span>จำนวนเงินรวมทั้งสิ้น (ฐาน+VAT)</span><b className="tabular-nums text-ink">{baht(gross)} บาท</b></div>
+          <div className="flex justify-between text-gray-500"><span>เงินสดรับสุทธิ (หลังหัก ณ ที่จ่าย)</span><b className="tabular-nums" style={{ color: "#7d0f15" }}>{baht(net)} บาท</b></div>
         </div>
 
         {err && <p role="alert" className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2">{err}</p>}

@@ -54,7 +54,7 @@ export default function JobSummary({ jobId }: { jobId: string }) {
     <div className="mt-1 rounded-xl bg-white border border-black/[0.08] px-3.5 shadow-sm">
       <Row icon="💰" label="มัดจำ">
         {j?.deposit_date
-          ? <>{thDate(j.deposit_date)}{j.deposit_amount != null && <> · <b className="text-emerald-700">฿{baht(Number(j.deposit_amount))}</b></>}</>
+          ? <>{thDate(j.deposit_date)}{j.deposit_amount != null && <> · <b className="text-emerald-700">{baht(Number(j.deposit_amount))} บาท</b></>}</>
           : <span className="text-ink-3">ยังไม่มัดจำ</span>}
       </Row>
 
@@ -66,7 +66,7 @@ export default function JobSummary({ jobId }: { jobId: string }) {
               return (
                 <a key={q.id} href={`/quotations/${q.id}`} className="press flex items-baseline justify-between gap-2 hover:text-brand-dark">
                   <span className="font-mono text-brand-dark">{q.code}</span>
-                  <span className="text-ink-2 tabular-nums shrink-0">{amt != null ? `฿${baht(Number(amt))} ` : ""}<span className="text-ink-3 text-[11px]">{thDate(q.issue_date)}</span></span>
+                  <span className="text-ink-2 tabular-nums shrink-0">{amt != null ? `${baht(Number(amt))} บาท ` : ""}<span className="text-ink-3 text-[11px]">{thDate(q.issue_date)}</span></span>
                 </a>
               );
             })}

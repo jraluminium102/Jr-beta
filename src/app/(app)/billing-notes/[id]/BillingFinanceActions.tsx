@@ -72,7 +72,7 @@ export function EditBillingTotalButton({
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true" aria-label="แจ้งเตือนรับเงินเกิน">
         <div className="relative w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl space-y-4">
           <div className="text-sm text-red-800 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5 space-y-1">
-            <p className="font-bold flex items-center gap-1.5"><Icon name="warn" size={16} /> รับเงินเกิน ฿{baht(overpaidNotice)}</p>
+            <p className="font-bold flex items-center gap-1.5"><Icon name="warn" size={16} /> รับเงินเกิน {baht(overpaidNotice)} บาท</p>
             <p>ยอดบิลใหม่ต่ำกว่าเงินที่ลูกค้าจ่ายมาแล้ว — <b>ต้องคืนเงินหรือออกเครดิตให้ลูกค้า</b> (บันทึก Rev สำเร็จแล้ว แต่ยอดนี้ยังค้างต้องจัดการ)</p>
             <p className="mt-1.5 text-[12px]">⚠ ใบวางบิลนี้มีบรรทัดปรับยอด — <b>อย่าออกใบกำกับภาษีจากใบนี้</b> · ให้ออก<b>ใบลดหนี้</b>/คืนเงินในระบบบัญชี (FlowAccount)</p>
           </div>
@@ -112,7 +112,7 @@ export function EditBillingTotalButton({
 
         <div className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
           ยอดปัจจุบัน:{" "}
-          <b className="tabular-nums">฿{baht(currentTotal)}</b>
+          <b className="tabular-nums">{baht(currentTotal)} บาท</b>
           <br />
           {rev
             ? "งวดที่จ่ายแล้ว/มีใบเสร็จผูกอยู่จะถูกตรึงไว้เป๊ะ — ระบบ re-split เฉพาะงวดที่เหลือให้อัตโนมัติ"
@@ -121,7 +121,7 @@ export function EditBillingTotalButton({
 
         {willOverpay && (
           <div className="text-sm text-red-800 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">
-            ⚠ ยอดใหม่นี้ต่ำกว่าเงินที่รับมาแล้ว (฿{baht(paidLocked ?? 0)}) — จะถือเป็น <b>&quot;รับเงินเกิน&quot;</b> ต้องคืน/เครดิตลูกค้า
+            ⚠ ยอดใหม่นี้ต่ำกว่าเงินที่รับมาแล้ว ({baht(paidLocked ?? 0)} บาท) — จะถือเป็น <b>&quot;รับเงินเกิน&quot;</b> ต้องคืน/เครดิตลูกค้า
           </div>
         )}
 
@@ -265,7 +265,7 @@ export function EditBillingBreakdownButton({
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true" aria-label="แจ้งเตือนรับเงินเกิน">
         <div className="relative w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl space-y-4">
           <div className="text-sm text-red-800 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5 space-y-1">
-            <p className="font-bold flex items-center gap-1.5"><Icon name="warn" size={16} /> รับเงินเกิน ฿{baht(overpaidNotice)}</p>
+            <p className="font-bold flex items-center gap-1.5"><Icon name="warn" size={16} /> รับเงินเกิน {baht(overpaidNotice)} บาท</p>
             <p>ยอดบิลใหม่ต่ำกว่าเงินที่ลูกค้าจ่ายมาแล้ว — <b>ต้องคืนเงินหรือออกเครดิตให้ลูกค้า</b> (บันทึก Rev สำเร็จแล้ว แต่ยอดนี้ยังค้างต้องจัดการ)</p>
             <p className="mt-1.5 text-[12px]">⚠ ใบวางบิลนี้มีบรรทัดปรับยอด — <b>อย่าออกใบกำกับภาษีจากใบนี้</b> · ให้ออก<b>ใบลดหนี้</b>/คืนเงินในระบบบัญชี (FlowAccount)</p>
           </div>
@@ -308,13 +308,13 @@ export function EditBillingBreakdownButton({
         </div>
 
         <div className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
-          คิดใหม่จากยอดก่อนภาษี <b className="tabular-nums">฿{baht(base)}</b> ·{" "}
+          คิดใหม่จากยอดก่อนภาษี <b className="tabular-nums">{baht(base)} บาท</b> ·{" "}
           {rev ? "งวด locked ตรึงไว้ + re-split เฉพาะที่เหลือ" : "งวดชำระจะ re-split อัตโนมัติตามยอดใหม่"}
         </div>
 
         {willOverpay && (
           <div className="text-sm text-red-800 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">
-            ⚠ ยอดใหม่นี้ต่ำกว่าเงินที่รับมาแล้ว (฿{baht(paidLocked ?? 0)}) — จะถือเป็น <b>&quot;รับเงินเกิน&quot;</b> ต้องคืน/เครดิตลูกค้า
+            ⚠ ยอดใหม่นี้ต่ำกว่าเงินที่รับมาแล้ว ({baht(paidLocked ?? 0)} บาท) — จะถือเป็น <b>&quot;รับเงินเกิน&quot;</b> ต้องคืน/เครดิตลูกค้า
           </div>
         )}
 
@@ -331,34 +331,34 @@ export function EditBillingBreakdownButton({
 
         {/* footer เดียวกับตอนสร้าง */}
         <div className="space-y-1.5 text-sm">
-          <div className="flex justify-between"><span className="text-ink-3">รวมเป็นเงิน</span><span className="tabular-nums">฿{baht(t.subtotal)}</span></div>
+          <div className="flex justify-between"><span className="text-ink-3">รวมเป็นเงิน</span><span className="tabular-nums">{baht(t.subtotal)} บาท</span></div>
           <div className="flex items-center justify-between gap-2">
             <span className="text-ink-3 flex items-center gap-1">ส่วนลด
               <input type="number" min={0} step="any" value={disc || ""} onChange={(e) => setDisc(Math.max(0, Number(e.target.value) || 0))}
                 className="w-12 border border-gray-200 rounded px-1 py-1 text-right outline-none tabular-nums" aria-label="ส่วนลด %" />%
             </span>
-            <span className="flex items-center gap-1 tabular-nums text-red-700">-฿
+            <span className="flex items-center gap-1 tabular-nums text-red-700">-
               <input type="number" min={0} step="any" value={t.discount_amt || ""}
                 onChange={(e) => setDisc(base > 0 ? Math.max(0, Math.round(((Number(e.target.value) || 0) / base) * 10000) / 100) : 0)}
-                className="w-20 border border-gray-200 rounded px-1 py-1 text-right outline-none tabular-nums" aria-label="ส่วนลด บาท" />
+                className="w-20 border border-gray-200 rounded px-1 py-1 text-right outline-none tabular-nums" aria-label="ส่วนลด บาท" /> บาท
             </span>
           </div>
-          <div className="flex justify-between"><span className="text-ink-3">ราคาหลังหักส่วนลด</span><span className="tabular-nums">฿{baht(t.after_discount)}</span></div>
+          <div className="flex justify-between"><span className="text-ink-3">ราคาหลังหักส่วนลด</span><span className="tabular-nums">{baht(t.after_discount)} บาท</span></div>
           <label className="flex items-center justify-between gap-2 cursor-pointer">
             <span className="text-ink-3 flex items-center gap-1.5"><input type="checkbox" checked={vat === 7} onChange={(e) => setVat(e.target.checked ? 7 : 0)} /> ภาษีมูลค่าเพิ่ม 7%</span>
-            <span className="tabular-nums">฿{baht(t.vat_amt)}</span>
+            <span className="tabular-nums">{baht(t.vat_amt)} บาท</span>
           </label>
           <div className="border-t border-gray-300/70 my-1.5" />
-          <div className="flex justify-between font-bold"><span className="text-ink">จำนวนเงินรวมทั้งสิ้น</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(t.total)}</span></div>
+          <div className="flex justify-between font-bold"><span className="text-ink">จำนวนเงินรวมทั้งสิ้น</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>{baht(t.total)} บาท</span></div>
           <label className="flex items-center justify-between gap-2 cursor-pointer">
             <span className="text-ink-3 flex items-center gap-1.5"><input type="checkbox" checked={wht > 0} onChange={(e) => setWht(e.target.checked ? 3 : 0)} /> หักภาษี ณ ที่จ่าย
               <select value={wht || 3} disabled={wht === 0} onChange={(e) => setWht(Number(e.target.value))} className="border border-gray-200 rounded px-1 py-1 outline-none text-xs disabled:opacity-50">
                 <option value={1}>1%</option><option value={2}>2%</option><option value={3}>3%</option><option value={5}>5%</option>
               </select>
             </span>
-            <span className="tabular-nums text-red-700">-฿{baht(t.wht_amt)}</span>
+            <span className="tabular-nums text-red-700">-{baht(t.wht_amt)} บาท</span>
           </label>
-          <div className="flex justify-between font-bold text-base border-t border-gray-300/70 pt-1.5"><span className="text-ink">ยอดชำระ</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(t.net)}</span></div>
+          <div className="flex justify-between font-bold text-base border-t border-gray-300/70 pt-1.5"><span className="text-ink">ยอดชำระ</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>{baht(t.net)} บาท</span></div>
         </div>
 
 
@@ -728,9 +728,9 @@ export function IssueReceiptButton({
           <div className="space-y-0.5 text-xs text-gray-500 border-t border-gray-100 pt-2">
             <div className="flex justify-between"><span>ยอดก่อน VAT</span><span className="tabular-nums">{baht(t.base)}</span></div>
             <div className="flex justify-between"><span>VAT {vat}%</span><span className="tabular-nums">{baht(t.vat)}</span></div>
-            <div className="flex justify-between font-semibold text-gray-700"><span>รวมทั้งสิ้น</span><span className="tabular-nums">฿{baht(t.gross)}</span></div>
+            <div className="flex justify-between font-semibold text-gray-700"><span>รวมทั้งสิ้น</span><span className="tabular-nums">{baht(t.gross)} บาท</span></div>
             {wht > 0 && <div className="flex justify-between text-red-600"><span>หัก ณ ที่จ่าย {wht}%</span><span className="tabular-nums">-{baht(t.wht)}</span></div>}
-            {wht > 0 && <div className="flex justify-between font-semibold text-gray-700"><span>เงินสดรับสุทธิ</span><span className="tabular-nums">฿{baht((Number(amt) || 0))}</span></div>}
+            {wht > 0 && <div className="flex justify-between font-semibold text-gray-700"><span>เงินสดรับสุทธิ</span><span className="tabular-nums">{baht((Number(amt) || 0))} บาท</span></div>}
           </div>
         </div>
 
@@ -1019,7 +1019,7 @@ export function InstallmentEditor({
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true" aria-label="แจ้งเตือนรับเงินเกิน">
         <div className="relative w-full max-w-sm bg-white rounded-2xl p-6 shadow-2xl space-y-4">
           <div className="text-sm text-red-800 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5 space-y-1">
-            <p className="font-bold flex items-center gap-1.5"><Icon name="warn" size={16} /> รับเงินเกิน ฿{baht(overpaidNotice)}</p>
+            <p className="font-bold flex items-center gap-1.5"><Icon name="warn" size={16} /> รับเงินเกิน {baht(overpaidNotice)} บาท</p>
             <p>ยอดบิลใหม่ต่ำกว่าเงินที่ลูกค้าจ่ายมาแล้ว — <b>ต้องคืนเงินหรือออกเครดิตให้ลูกค้า</b> (บันทึก Rev สำเร็จแล้ว แต่ยอดนี้ยังค้างต้องจัดการ)</p>
             <p className="mt-1.5 text-[12px]">⚠ ใบวางบิลนี้มีบรรทัดปรับยอด — <b>อย่าออกใบกำกับภาษีจากใบนี้</b> · ให้ออก<b>ใบลดหนี้</b>/คืนเงินในระบบบัญชี (FlowAccount)</p>
           </div>
@@ -1072,11 +1072,11 @@ export function InstallmentEditor({
           {hasPaid && (
             <>ล็อกไว้ (ตรึง ไม่แตะ) <b className="tabular-nums">{baht(lockedSum)}</b>{" · "}งวดที่แก้ได้รวม <b className="tabular-nums">{baht(sum)}</b>{" · "}</>
           )}
-          ยอดบิลใหม่ (ตามงวด): <b className="tabular-nums">฿{baht(newTotalComputed)}</b>
+          ยอดบิลใหม่ (ตามงวด): <b className="tabular-nums">{baht(newTotalComputed)} บาท</b>
         </div>
         {hasPaid && overpaidPreview > 0.01 && (
           <div className="text-sm px-3 py-2 rounded-xl border bg-red-50 border-red-200 text-red-800">
-            <b className="flex items-center gap-1.5"><Icon name="warn" size={15} /> รับเงินเกิน ฿{baht(overpaidPreview)}</b>
+            <b className="flex items-center gap-1.5"><Icon name="warn" size={15} /> รับเงินเกิน {baht(overpaidPreview)} บาท</b>
             ยอดบิลใหม่ต่ำกว่าเงินที่รับมาแล้ว — บันทึกได้ แต่ต้องคืนเงิน/ออกใบลดหนี้ในระบบบัญชี (ห้ามออกใบกำกับภาษีจากใบนี้)
           </div>
         )}
@@ -1086,7 +1086,7 @@ export function InstallmentEditor({
           <div key={`locked-${p.id}`} className="grid grid-cols-12 gap-2 items-center bg-emerald-50/60 border border-emerald-100 rounded-lg px-1 py-1.5">
             <div className="col-span-1 text-xs text-gray-400 text-center">{p.seq}</div>
             <div className="col-span-4 text-sm text-ink-2 truncate px-1">{p.label}</div>
-            <div className="col-span-3 text-sm text-right tabular-nums font-medium px-1">฿{baht(p.amount)}</div>
+            <div className="col-span-3 text-sm text-right tabular-nums font-medium px-1">{baht(p.amount)} บาท</div>
             <div className="col-span-4 text-xs text-emerald-700 font-medium text-center inline-flex items-center justify-center gap-1">
               <Icon name="shield" size={13} /> ล็อก
             </div>

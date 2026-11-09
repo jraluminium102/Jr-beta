@@ -103,7 +103,7 @@ export function RecordPaymentModal({ presetJobId, onClose, onSaved }: {
                     <button type="button" key={j.id} onClick={() => setJobId(j.id)}
                       className="focusable pressable w-full text-left bg-white/8 hover:bg-white/16 border border-white/10 rounded-xl px-3 py-2.5 flex items-center justify-between">
                       <span><span className="text-white text-sm font-medium tnum">{j.job_code}</span><span className="text-[12px] ml-2" style={{ color: "var(--t-low)" }}>{j.customer_name}</span></span>
-                      {j.total_amount ? <span className="text-[12px] tnum" style={{ color: "var(--t-mid)" }}>{baht(j.total_amount)} ฿</span> : null}
+                      {j.total_amount ? <span className="text-[12px] tnum" style={{ color: "var(--t-mid)" }}>{baht(j.total_amount)} บาท</span> : null}
                     </button>
                   ))}
                 </div>
@@ -115,7 +115,7 @@ export function RecordPaymentModal({ presetJobId, onClose, onSaved }: {
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={lbl} style={{ color: "var(--t-low)" }} htmlFor="amt">ยอดรับ (฿) <span className="text-rose-300">*</span></label>
+              <label className={lbl} style={{ color: "var(--t-low)" }} htmlFor="amt">ยอดรับ (บาท) <span className="text-rose-300">*</span></label>
               <input id="amt" required inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} className={`${field} tnum`} placeholder="0" />
             </div>
             <div>

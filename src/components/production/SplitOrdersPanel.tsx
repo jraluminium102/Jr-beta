@@ -48,10 +48,10 @@ function SnapshotRow({ label, snap }: { label: string; snap: JobSnapshot }) {
         <div className="text-[11px] tnum" style={{ color: "var(--t-low)" }}>{snap.job_code ?? "—"} · {snap.status}</div>
       </div>
       <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 text-[12px] tnum">
-        <div style={{ color: "var(--t-low)" }}>ยอดสุทธิ (net) <span className="text-white ml-1">฿{baht(snap.net_amount)}</span></div>
-        <div style={{ color: "var(--t-low)" }}>รวม VAT <span className="text-white ml-1">฿{baht(snap.total_amount)}</span></div>
-        <div style={{ color: "var(--t-low)" }}>รับแล้ว <span className="text-emerald-300 ml-1">฿{baht(snap.paid_total)}</span></div>
-        <div style={{ color: "var(--t-low)" }}>ค้างรับ <span className="text-amber-300 ml-1">฿{baht(snap.outstanding)}</span></div>
+        <div style={{ color: "var(--t-low)" }}>ยอดสุทธิ (net) <span className="text-white ml-1">{baht(snap.net_amount)} บาท</span></div>
+        <div style={{ color: "var(--t-low)" }}>รวม VAT <span className="text-white ml-1">{baht(snap.total_amount)} บาท</span></div>
+        <div style={{ color: "var(--t-low)" }}>รับแล้ว <span className="text-emerald-300 ml-1">{baht(snap.paid_total)} บาท</span></div>
+        <div style={{ color: "var(--t-low)" }}>ค้างรับ <span className="text-amber-300 ml-1">{baht(snap.outstanding)} บาท</span></div>
       </div>
     </div>
   );
@@ -70,12 +70,12 @@ function ConsistencyCheck({ before, oldAfter, newAfter }: { before: JobSnapshot;
         เช็คยอด (ก่อนแตก = งานเดิม + งานใหม่ หลังแตก)
       </div>
       <div className="tnum mt-1">
-        ยอดบิล: ฿{baht(before.total_amount)} = ฿{baht(oldAfter.total_amount)} + ฿{baht(newAfter.total_amount)}
-        {Math.abs(diffTotal) >= 0.01 && <span className="text-rose-200"> · ต่าง ฿{baht(diffTotal)}</span>}
+        ยอดบิล: {baht(before.total_amount)} บาท = {baht(oldAfter.total_amount)} บาท + {baht(newAfter.total_amount)} บาท
+        {Math.abs(diffTotal) >= 0.01 && <span className="text-rose-200"> · ต่าง {baht(diffTotal)} บาท</span>}
       </div>
       <div className="tnum mt-0.5">
-        เงินรับแล้ว: ฿{baht(before.paid_total)} = ฿{baht(oldAfter.paid_total)} + ฿{baht(newAfter.paid_total)}
-        {Math.abs(diffPaid) >= 0.01 && <span className="text-rose-200"> · ต่าง ฿{baht(diffPaid)} (เงินอาจไปงานผิด)</span>}
+        เงินรับแล้ว: {baht(before.paid_total)} บาท = {baht(oldAfter.paid_total)} บาท + {baht(newAfter.paid_total)} บาท
+        {Math.abs(diffPaid) >= 0.01 && <span className="text-rose-200"> · ต่าง {baht(diffPaid)} บาท (เงินอาจไปงานผิด)</span>}
       </div>
       {!ok && <span className="block mt-1 font-semibold">⚠ ยอดไม่ตรง — ห้ามยืนยันจนกว่าจะตรวจสอบ</span>}
     </div>
@@ -123,8 +123,8 @@ function OrderRow({ jobId, q, onDone }: { jobId: string; q: Quotation; onDone: (
         <div className="min-w-0">
           <div className="text-[13px] font-semibold text-white tnum">{q.code}</div>
           <div className="text-[11px]" style={{ color: "var(--t-low)" }}>
-            {QSTATUS_TH[q.status] ?? q.status} · {thDate(q.issue_date)} · ยอด ฿{baht(q.total)}
-            {activeBills.length > 0 && <> · บิล {activeBills.length} ใบ (฿{baht(billTotal)})</>}
+            {QSTATUS_TH[q.status] ?? q.status} · {thDate(q.issue_date)} · ยอด {baht(q.total)} บาท
+            {activeBills.length > 0 && <> · บิล {activeBills.length} ใบ ({baht(billTotal)} บาท)</>}
           </div>
         </div>
         {!preview && (
@@ -209,7 +209,7 @@ export function SplitOrdersPanel({ jobId, onSplit }: { jobId: string; onSplit: (
       {d.unlinked_deposits.length > 0 && (
         <div className="rounded-xl border border-amber-300/25 bg-amber-500/10 p-2.5 text-[12px] text-amber-100 flex items-start gap-1.5">
           <TriangleAlert size={13} className="shrink-0 mt-0.5" />
-          มีมัดจำอัตโนมัติที่ยังไม่ผูกงวด ฿{baht(d.unlinked_deposits.reduce((s, x) => s + Number(x.amount || 0), 0))} — ถ้างานเดิมยังมีออเดอร์อื่นที่มีบิลด้วย ระบบจะปฏิเสธการแตก (ระบุไม่ได้ว่ามัดจำเป็นของออเดอร์ไหน)
+          มีมัดจำอัตโนมัติที่ยังไม่ผูกงวด {baht(d.unlinked_deposits.reduce((s, x) => s + Number(x.amount || 0), 0))} บาท — ถ้างานเดิมยังมีออเดอร์อื่นที่มีบิลด้วย ระบบจะปฏิเสธการแตก (ระบุไม่ได้ว่ามัดจำเป็นของออเดอร์ไหน)
         </div>
       )}
 

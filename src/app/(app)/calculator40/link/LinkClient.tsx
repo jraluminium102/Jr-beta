@@ -371,7 +371,7 @@ export default function LinkClient({
 
   // CSV ทุกแถวทุกรุ่น (สร้างฝั่งเบราว์เซอร์ — ลอกแพตเทิร์นจากหน้า stock-audit เดิม) ให้ดาวน์โหลดไปกาเช็คนอกจอได้เหมือนเดิม
   function downloadCsv() {
-    const head = ["รุ่น", "หมวด", "ชื่อรายการ", "รหัส (คิดราคา)", "จำนวน", "ราคา/หน่วย", "รวม ฿",
+    const head = ["รุ่น", "หมวด", "ชื่อรายการ", "รหัส (คิดราคา)", "จำนวน", "ราคา/หน่วย", "รวม บาท",
       "รหัส (ใบตัด)", "จำนวน (ใบตัด)", "ยาว/ชิ้น (ซม.)", "ชื่อในสโตร์", "ราคาในสโตร์", "คงเหลือ", "สถานะ", "ตรวจแล้ว"];
     const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
     const body = rows.map((r) => [r.productName, r.section, r.name, r.calcSku, r.calcQty ?? "", r.calcPrice ?? "", r.calcAmount ?? "",
@@ -564,12 +564,12 @@ export default function LinkClient({
                 <th className={cn(stick, "left-0 border-b border-line")} />
                 <th className={cn(stick, "left-[150px] border-b border-line")} />
                 <th className={cn("bg-brand-soft/60 px-2 pb-1.5 text-right border-b border-line", G.calc)}>จำนวน</th>
-                {canSeeCost && <th className="bg-brand-soft/60 px-2 pb-1.5 text-right border-b border-line">฿/หน่วย</th>}
-                {canSeeCost && <th className="bg-brand-soft/60 px-2 pb-1.5 text-right border-b border-line">รวม ฿</th>}
+                {canSeeCost && <th className="bg-brand-soft/60 px-2 pb-1.5 text-right border-b border-line">บาท/หน่วย</th>}
+                {canSeeCost && <th className="bg-brand-soft/60 px-2 pb-1.5 text-right border-b border-line">รวม บาท</th>}
                 <th className={cn("bg-sky-50/60 px-2 pb-1.5 text-right border-b border-line", G.cut)}>ชิ้น</th>
                 <th className="bg-sky-50/60 px-2 pb-1.5 text-right border-b border-line" title="เฉพาะเส้นอลู — อุปกรณ์ไม่มีความยาวตัด">ยาว/ชิ้น (ซม.)<div className="text-[9px] font-normal text-ink-3">เฉพาะเส้นอลู</div></th>
                 <th className={cn("bg-emerald-50/60 px-2 pb-1.5 text-left border-b border-line", G.stock)}>ชื่อจริงในสโตร์</th>
-                {canSeeCost && <th className="bg-emerald-50/60 px-2 pb-1.5 text-right border-b border-line">฿/หน่วย</th>}
+                {canSeeCost && <th className="bg-emerald-50/60 px-2 pb-1.5 text-right border-b border-line">บาท/หน่วย</th>}
                 <th className="bg-emerald-50/60 px-2 pb-1.5 text-right border-b border-line">คงเหลือ</th>
                 <th className="bg-white/85 border-b border-line" />
               </tr>
@@ -762,7 +762,7 @@ export default function LinkClient({
                 {confirm.draft.isAdd && (
                   <>
                     <tr><td className="py-1 text-ink-3">ชื่อรายการ</td><td colSpan={3} className="py-1 font-semibold">{confirm.draft.itemName}</td></tr>
-                    <tr><td className="py-1 text-ink-3">ราคา</td><td colSpan={3} className="py-1 font-semibold">฿{confirm.draft.price}</td></tr>
+                    <tr><td className="py-1 text-ink-3">ราคา</td><td colSpan={3} className="py-1 font-semibold">{confirm.draft.price} บาท</td></tr>
                   </>
                 )}
               </tbody>
@@ -770,13 +770,13 @@ export default function LinkClient({
             {canSeeCost && (
               <div className="mt-3 pt-3 border-t border-line/60 text-sm">
                 <div className="flex justify-between"><span className="text-ink-3">ทุนรวมของรุ่นนี้ (ที่ขนาดตั้งต้น)</span></div>
-                <div className="flex justify-between"><span>เดิม</span><span className="tabular-nums">฿{baht(confirm.costBefore)}</span></div>
-                <div className="flex justify-between"><span>ใหม่</span><span className="tabular-nums">฿{baht(confirm.costAfter)}</span></div>
+                <div className="flex justify-between"><span>เดิม</span><span className="tabular-nums">{baht(confirm.costBefore)} บาท</span></div>
+                <div className="flex justify-between"><span>ใหม่</span><span className="tabular-nums">{baht(confirm.costAfter)} บาท</span></div>
                 <div className="flex justify-between font-bold">
                   <span>ต่าง</span>
                   <span className={cn("tabular-nums",
                     confirm.costAfter > confirm.costBefore ? "text-red-700" : confirm.costAfter < confirm.costBefore ? "text-emerald-700" : "text-ink-3")}>
-                    {confirm.costAfter === confirm.costBefore ? "ไม่ขยับ" : `${confirm.costAfter > confirm.costBefore ? "+" : ""}฿${baht(Math.abs(confirm.costAfter - confirm.costBefore))}`}
+                    {confirm.costAfter === confirm.costBefore ? "ไม่ขยับ" : `${confirm.costAfter > confirm.costBefore ? "+" : ""}${baht(Math.abs(confirm.costAfter - confirm.costBefore))} บาท`}
                   </span>
                 </div>
                 {confirm.note && <p className="mt-1 text-[11px] text-amber-800">{confirm.note}</p>}
@@ -1007,9 +1007,9 @@ function MobileRowCard({
         <button onClick={onOpenSku} className="press font-mono text-xs text-brand-dark underline decoration-dotted">{row.calcSku || row.cutSku}</button>
       )}
       <div className="mt-2 space-y-1 text-xs">
-        <div className={cn("border-l-2 border-brand/40 pl-2", diff(qtyBad))}>คิดราคา {row.calcQty ?? "—"} {row.calcUnit} {canSeeCost && row.calcAmount != null && `· ฿${baht(row.calcAmount)}`}</div>
+        <div className={cn("border-l-2 border-brand/40 pl-2", diff(qtyBad))}>คิดราคา {row.calcQty ?? "—"} {row.calcUnit} {canSeeCost && row.calcAmount != null && `· ${baht(row.calcAmount)} บาท`}</div>
         <div className={cn("border-l-2 border-sky-300 pl-2", diff(qtyBad))}>ใบตัด {row.cutQty ?? "—"} {row.cutUnit} {row.cutLenPerPiece != null && `· ${n1(row.cutLenPerPiece)} ซม./ชิ้น`}</div>
-        <div className="border-l-2 border-emerald-300 pl-2">สโตร์ {row.stockFound ? `${canSeeCost && row.stockPrice != null ? "฿" + baht(row.stockPrice) + " · " : ""}คงเหลือ ${row.stockQty}` : "⚠ ไม่มีในสโตร์"}</div>
+        <div className="border-l-2 border-emerald-300 pl-2">สโตร์ {row.stockFound ? `${canSeeCost && row.stockPrice != null ? baht(row.stockPrice) + " บาท · " : ""}คงเหลือ ${row.stockQty}` : "⚠ ไม่มีในสโตร์"}</div>
       </div>
       {canEdit && (
         <button onClick={onEdit} className="press mt-2 w-full min-h-[40px] rounded-lg glass-soft text-xs font-semibold flex items-center justify-center gap-1">

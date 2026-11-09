@@ -114,7 +114,7 @@ export default async function BillingNotesPage({ searchParams }: { searchParams?
                   {r.customer_snapshot?.job && <div className="text-xs text-ink-3">{r.customer_snapshot.job}</div>}
                   <div className="flex items-center justify-between mt-1.5 text-sm">
                     <span className="text-ink-3">{r.issue_date}</span>
-                    <span className="font-bold text-brand-dark">฿{baht(r.total)}</span>
+                    <span className="font-bold text-brand-dark">{baht(r.total)} บาท</span>
                   </div>
                 </Link>
               ))}
@@ -146,7 +146,7 @@ export default async function BillingNotesPage({ searchParams }: { searchParams?
                         <div className="text-xs text-ink-3">{r.customer_snapshot?.job}</div>
                       </td>
                       <td className="text-ink-2">{r.issue_date}</td>
-                      <td className="text-right font-semibold">฿{baht(r.total)}</td>
+                      <td className="text-right font-semibold">{baht(r.total)} บาท</td>
                       <td><Badge tone={STATUS_TONE[r.status]} dot>{BILLING_STATUS_LABEL[r.status]}</Badge></td>
                     </tr>
                   ))}

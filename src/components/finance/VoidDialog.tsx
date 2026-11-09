@@ -40,7 +40,7 @@ export function VoidDialog({ entry, onClose, onVoided }: {
 
         <div className="glass-card rounded-xl px-3.5 py-3 mb-4">
           <div className="text-white text-sm font-medium tnum">{entry.job_code} · {entry.type}</div>
-          <div className="text-[12px] mt-0.5 tnum" style={{ color: "var(--t-low)" }}>{thDate(entry.payment_date)} · {baht(entry.amount)} ฿</div>
+          <div className="text-[12px] mt-0.5 tnum" style={{ color: "var(--t-low)" }}>{thDate(entry.payment_date)} · {baht(entry.amount)} บาท</div>
         </div>
 
         <div className="flex items-start gap-2 text-[12px] text-amber-200 bg-amber-500/15 border border-amber-300/25 rounded-xl px-3 py-2.5 mb-4">

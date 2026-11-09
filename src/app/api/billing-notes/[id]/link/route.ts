@@ -130,7 +130,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   // 7) ยอดไม่ตรง = เตือน ไม่บล็อก (บิลอาจออกใบเสร็จไปแล้ว ยอดต้องนิ่ง)
   const qNet = Number(q.net) || 0;
   if (qNet > 0 && Math.abs(qNet - (Number(bn.total) || 0)) > 0.5) {
-    warnings.push(`ยอดไม่ตรงกัน: บิล ฿${Number(bn.total).toLocaleString("th-TH")} · ใบเสนอ ฿${qNet.toLocaleString("th-TH")} (ยอดบิลไม่ถูกแก้ — ตรวจสอบเอง)`);
+    warnings.push(`ยอดไม่ตรงกัน: บิล ${Number(bn.total).toLocaleString("th-TH")} บาท · ใบเสนอ ${qNet.toLocaleString("th-TH")} บาท (ยอดบิลไม่ถูกแก้ — ตรวจสอบเอง)`);
   }
 
   return ok({ id: bn.id, quotation_code: q.code, backfilled, warnings });

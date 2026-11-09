@@ -257,7 +257,7 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
             </div>
             <div className="text-xs text-ink-3">อ้างอิงใบเสนอ: {refCode ? <b className="text-ink font-mono">{refCode}</b> : "—"}</div>
             <div className="text-xs text-ink-3">ผู้ติดต่อ: {c.contact_person || "—"} · โทร {c.phone || "—"}</div>
-            <div className="text-base font-bold text-brand-dark mt-1">ยอดรวม ฿{baht(bn.total)}</div>
+            <div className="text-base font-bold text-brand-dark mt-1">ยอดรวม {baht(bn.total)} บาท</div>
           </div>
         </div>
 
@@ -280,10 +280,10 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
                   <td>
                     <div className="font-medium whitespace-pre-line">{it.label}</div>
                     {lastWht && it.seq === lastWht.seq && (
-                      <div className="text-xs text-ink-2 tabular-nums">หักภาษี ณ ที่จ่าย {lastWht.rate}% <span className="text-red-700">-฿{baht(lastWht.wht)}</span> · ชำระสุทธิงวดนี้ ฿{baht(Math.round(((Number(it.amount) || 0) - lastWht.wht) * 100) / 100)}</div>
+                      <div className="text-xs text-ink-2 tabular-nums">หักภาษี ณ ที่จ่าย {lastWht.rate}% <span className="text-red-700">-{baht(lastWht.wht)} บาท</span> · ชำระสุทธิงวดนี้ {baht(Math.round(((Number(it.amount) || 0) - lastWht.wht) * 100) / 100)} บาท</div>
                     )}
                     {it.status === "paid" && (
-                      <div className="text-xs text-emerald-700">รับแล้ว ฿{baht(it.paid_amount)} · {ddmy(it.paid_date)}</div>
+                      <div className="text-xs text-emerald-700">รับแล้ว {baht(it.paid_amount)} บาท · {ddmy(it.paid_date)}</div>
                     )}
                     <div className="flex items-center gap-3 mt-0.5">
                       <Link
@@ -302,7 +302,7 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
                       })()}
                     </div>
                   </td>
-                  <td className="text-right font-semibold tabular-nums">฿{baht(it.amount)}</td>
+                  <td className="text-right font-semibold tabular-nums">{baht(it.amount)} บาท</td>
                   <td className="text-center text-ink-2">{it.due_date || "—"}</td>
                   <td className="text-center">
                     <Badge tone={it.status === "paid" ? "emerald" : "gray"} dot>
@@ -354,16 +354,16 @@ export default async function BillingNoteDetail({ params }: { params: { id: stri
           return (
             <div className="mt-5 flex justify-end">
               <div className="w-full sm:w-72 text-sm space-y-1">
-                <div className="flex justify-between"><span className="text-ink-3">รวมเป็นเงิน</span><span className="tabular-nums">฿{baht(afterDis)}</span></div>
-                {va > 0 && <div className="flex justify-between"><span className="text-ink-3">ภาษีมูลค่าเพิ่ม {vaRate > 0 ? `${vaRate}%` : ""}</span><span className="tabular-nums">฿{baht(va)}</span></div>}
-                {wh > 0 && <div className="flex justify-between"><span className="text-ink-3">หักภาษี ณ ที่จ่าย {whRate > 0 ? `${whRate}%` : ""}</span><span className="tabular-nums text-red-700">-฿{baht(wh)}</span></div>}
+                <div className="flex justify-between"><span className="text-ink-3">รวมเป็นเงิน</span><span className="tabular-nums">{baht(afterDis)} บาท</span></div>
+                {va > 0 && <div className="flex justify-between"><span className="text-ink-3">ภาษีมูลค่าเพิ่ม {vaRate > 0 ? `${vaRate}%` : ""}</span><span className="tabular-nums">{baht(va)} บาท</span></div>}
+                {wh > 0 && <div className="flex justify-between"><span className="text-ink-3">หักภาษี ณ ที่จ่าย {whRate > 0 ? `${whRate}%` : ""}</span><span className="tabular-nums text-red-700">-{baht(wh)} บาท</span></div>}
                 {lastWht && !(wh > 0) && (
                   <>
-                    <div className="flex justify-between font-semibold"><span className="text-ink-2">จำนวนเงินรวมทั้งสิ้น</span><span className="tabular-nums">฿{baht(netShown)}</span></div>
-                    <div className="flex justify-between"><span className="text-ink-3">หักภาษี ณ ที่จ่าย {lastWht.rate}% (งวดที่ {lastWht.seq})</span><span className="tabular-nums text-red-700">-฿{baht(lastWht.wht)}</span></div>
+                    <div className="flex justify-between font-semibold"><span className="text-ink-2">จำนวนเงินรวมทั้งสิ้น</span><span className="tabular-nums">{baht(netShown)} บาท</span></div>
+                    <div className="flex justify-between"><span className="text-ink-3">หักภาษี ณ ที่จ่าย {lastWht.rate}% (งวดที่ {lastWht.seq})</span><span className="tabular-nums text-red-700">-{baht(lastWht.wht)} บาท</span></div>
                   </>
                 )}
-                <div className="flex justify-between font-bold border-t border-gray-300/70 pt-1"><span className="text-ink">ยอดชำระสุทธิ</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(lastWht && !(wh > 0) ? Math.round((netShown - lastWht.wht) * 100) / 100 : netShown)}</span></div>
+                <div className="flex justify-between font-bold border-t border-gray-300/70 pt-1"><span className="text-ink">ยอดชำระสุทธิ</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>{baht(lastWht && !(wh > 0) ? Math.round((netShown - lastWht.wht) * 100) / 100 : netShown)} บาท</span></div>
                 <div className="text-[11px] text-ink-3 pt-0.5">
                   แก้ footer (ส่วนลด/VAT/หัก ณ ที่จ่าย) ได้ที่หน้า <b>พิมพ์ / PDF</b> {ov ? "· แก้แล้ว ✎" : ""}
                 </div>

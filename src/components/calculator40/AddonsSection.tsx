@@ -266,7 +266,7 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, co
             <NumberInput value={g.vLen || 0} onChange={(v) => setObj("grid", { vLen: v })} placeholder={fmtNum(hM)} />
           </div>
         </div>
-        {/* 30 ต.ค.69 เจ้าของเคาะ "ถอดจริง": เส้นนอน/ตั้ง = เส้นกลางจริง ติด 2 ฝั่ง เข้า "ค่าของ" ราคาตามสี · รุ่นขายเหมา (R3.9 สำรอง/ตู้/ม่านซิป) ยังเหมา ฿/ม. */}
+        {/* 30 ต.ค.69 เจ้าของเคาะ "ถอดจริง": เส้นนอน/ตั้ง = เส้นกลางจริง ติด 2 ฝั่ง เข้า "ค่าของ" ราคาตามสี · รุ่นขายเหมา (R3.9 สำรอง/ตู้/ม่านซิป) ยังเหมา บาท/ม. */}
         {!(prod?.sellR39 || prod?.sellDirect || prod?.sellCabinet || prod?.sellZip) ? (
           <p className="text-[11px] text-ink-3 mt-1.5">
             ถอดเส้นจริง: เส้นกลาง นอน {g.nh || 0}×{fmtNum(hLen)} ม. + ตั้ง {g.nv || 0}×{fmtNum(vLen)} ม. × 2 ฝั่ง = {fmtNum(len * 2)} ม. (เข้า &quot;ค่าของ&quot; ราคาเส้นตามสี){(g.nc || 0) > 0 ? ` · เส้นโค้ง ${g.nc} × 3,000` : ""}
@@ -986,15 +986,15 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, co
   }
   if (ad === "roof_film") {
     return (
-      <Field label="ฟิล์ม/ลามิเนตหลังคา" hint="(กันร้อน/UV · กรอก ฿/ตร.ม. × พื้นที่หลังคา)">
-        <NumberInput value={A.roof_film || 0} onChange={(v) => set("roof_film", v)} placeholder="฿/ตร.ม. (เว้น=ไม่มี)" />
+      <Field label="ฟิล์ม/ลามิเนตหลังคา" hint="(กันร้อน/UV · กรอก บาท/ตร.ม. × พื้นที่หลังคา)">
+        <NumberInput value={A.roof_film || 0} onChange={(v) => set("roof_film", v)} placeholder="บาท/ตร.ม. (เว้น=ไม่มี)" />
       </Field>
     );
   }
   if (ad === "roof_2nd") {
     const g = A.roof_2nd || { mat: "", len: 0, proj: 0, rate: 0 };
     return (
-      <Field label="หลังคาผสม วัสดุที่ 2" hint="(ต่อปลาย · ยาว×ยื่น × ฿/ตร.ม.)">
+      <Field label="หลังคาผสม วัสดุที่ 2" hint="(ต่อปลาย · ยาว×ยื่น × บาท/ตร.ม.)">
         <div className="space-y-2">
           <ChipRow
             items={[{ val: "", label: "ไม่มี" }, { val: "ไวนิล", label: "ไวนิล" }, { val: "ดีไลท์", label: "ดีไลท์" }, { val: "โพลีฯ/กระจก", label: "โพลีฯ/กระจก" }, { val: "เมทัลชีท", label: "เมทัล" }, { val: "ชินโค", label: "ชินโค" }]}
@@ -1005,7 +1005,7 @@ function AddonField({ ad, prod, addons, setAddons, area, W, movePanes, color, co
             <div className="grid grid-cols-3 gap-2">
               <NumberInput value={g.len || 0} onChange={(v) => setObj("roof_2nd", { len: v })} placeholder="ยาว (ม.)" step={0.1} />
               <NumberInput value={g.proj || 0} onChange={(v) => setObj("roof_2nd", { proj: v })} placeholder="ยื่น (ม.)" step={0.1} />
-              <NumberInput value={g.rate || 0} onChange={(v) => setObj("roof_2nd", { rate: v })} placeholder="฿/ตร.ม." />
+              <NumberInput value={g.rate || 0} onChange={(v) => setObj("roof_2nd", { rate: v })} placeholder="บาท/ตร.ม." />
             </div>
           )}
         </div>

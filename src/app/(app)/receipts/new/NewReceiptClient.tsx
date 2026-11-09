@@ -155,7 +155,7 @@ export default function NewReceiptClient({ notes }: { notes: BillingNoteOption[]
                   {notes.map((n) => (
                     <option key={n.id} value={n.id}>
                       {n.code} · {n.customer_snapshot?.name}
-                      {n.customer_snapshot?.job ? ` · ${n.customer_snapshot.job}` : ""} · ฿{baht(n.total)}
+                      {n.customer_snapshot?.job ? ` · ${n.customer_snapshot.job}` : ""} · {baht(n.total)} บาท
                     </option>
                   ))}
                 </select>
@@ -174,8 +174,8 @@ export default function NewReceiptClient({ notes }: { notes: BillingNoteOption[]
                   <option value="">— {hasInstallments ? "เลือกงวด *" : "ทั้งใบ / ไม่ระบุงวด"} —</option>
                   {installments.map((it) => (
                     <option key={it.id} value={it.id}>
-                      งวด {it.seq} · {it.label} · คงเหลือ ฿{baht(remainingOf(it))}
-                      {Number(it.paid_amount) > 0 ? ` (จ่ายแล้ว ฿${baht(Number(it.paid_amount))})` : ""}
+                      งวด {it.seq} · {it.label} · คงเหลือ {baht(remainingOf(it))} บาท
+                      {Number(it.paid_amount) > 0 ? ` (จ่ายแล้ว ${baht(Number(it.paid_amount))} บาท)` : ""}
                     </option>
                   ))}
                 </select>
@@ -222,25 +222,25 @@ export default function NewReceiptClient({ notes }: { notes: BillingNoteOption[]
               <h3 className="font-bold text-brand-dark mb-3">สรุป</h3>
               <div className="flex justify-between text-sm py-0.5">
                 <span className="text-ink-3">ฐานภาษี (ก่อน VAT)</span>
-                <span className="tabular-nums">฿{baht(baseAmt)}</span>
+                <span className="tabular-nums">{baht(baseAmt)} บาท</span>
               </div>
               <div className="flex justify-between text-sm py-0.5">
                 <span className="text-ink-3">VAT {vatRate}%</span>
-                <span className="tabular-nums">฿{baht(vatAmt)}</span>
+                <span className="tabular-nums">{baht(vatAmt)} บาท</span>
               </div>
               <div className="flex justify-between text-sm py-1 mt-1 border-t font-bold" style={{ color: "#7d0f15" }}>
                 <span>จำนวนเงินรวมทั้งสิ้น</span>
-                <span className="tabular-nums">฿{baht(gross)}</span>
+                <span className="tabular-nums">{baht(gross)} บาท</span>
               </div>
               {whtAmt > 0 && (
                 <>
                   <div className="flex justify-between text-sm py-0.5">
                     <span className="text-ink-3">หัก ณ ที่จ่าย {whtRate}%</span>
-                    <span className="tabular-nums">-฿{baht(whtAmt)}</span>
+                    <span className="tabular-nums">-{baht(whtAmt)} บาท</span>
                   </div>
                   <div className="flex justify-between text-sm py-1 mt-1 border-t font-bold" style={{ color: "#7d0f15" }}>
                     <span>เงินสดรับสุทธิ</span>
-                    <span className="tabular-nums">฿{baht(net)}</span>
+                    <span className="tabular-nums">{baht(net)} บาท</span>
                   </div>
                 </>
               )}

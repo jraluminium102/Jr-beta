@@ -197,7 +197,7 @@ export default async function BillingPrintPage({
                     <div className="text-xs text-gray-600 mt-0.5 tabular-nums">หักภาษี ณ ที่จ่าย {extraWht.rate}% -{baht(extraWht.wht)} · ชำระสุทธิงวดนี้ {baht(round2((Number(it.amount) || 0) - extraWht.wht))}</div>
                   )}
                   {it.status === "paid" && (
-                    <div className="text-xs text-gray-500">รับชำระแล้ว ฿{baht(it.paid_amount)}{it.paid_date ? ` · ${it.paid_date}` : ""}</div>
+                    <div className="text-xs text-gray-500">รับชำระแล้ว {baht(it.paid_amount)} บาท{it.paid_date ? ` · ${it.paid_date}` : ""}</div>
                   )}
                 </td>
                 <td className="p-2 border border-[#f0dde3] text-center align-top">{it.due_date || "—"}</td>
@@ -230,7 +230,7 @@ export default async function BillingPrintPage({
               </>
             )}
             {/* effWht>0 ทั้งใบ → "ยอดชำระสุทธิ" (กันชนกับบรรทัด "จำนวนเงินรวมทั้งสิ้น" ก่อนหัก ณ ที่จ่าย) */}
-            <tr className="font-bold text-lg" style={{ color: "#a8425a" }}><td className="pr-10 py-1 border-t text-left">{isSingle ? "ยอดชำระ" : (effWht > 0 || extraWht ? "ยอดชำระสุทธิ" : "ยอดรวมทั้งสิ้น")}</td><td className="text-right border-t tabular-nums">฿{baht(payable)}</td></tr>
+            <tr className="font-bold text-lg" style={{ color: "#a8425a" }}><td className="pr-10 py-1 border-t text-left">{isSingle ? "ยอดชำระ" : (effWht > 0 || extraWht ? "ยอดชำระสุทธิ" : "ยอดรวมทั้งสิ้น")}</td><td className="text-right border-t tabular-nums">{baht(payable)} บาท</td></tr>
           </tbody>
         </table>
       </div>

@@ -278,8 +278,8 @@ function Modal({
               const beforeVat = Math.round((t - vatAmt) * 100) / 100;
               return (
                 <p className="text-[11px] text-white/50 mt-1 tabular-nums">
-                  ก่อน VAT ฿{baht(beforeVat)}
-                  {" · "}VAT ฿{baht(vatAmt)}
+                  ก่อน VAT {baht(beforeVat)} บาท
+                  {" · "}VAT {baht(vatAmt)} บาท
                   {noVat && <span className="ml-1 text-amber-300/80">(ไม่มี VAT)</span>}
                 </p>
               );
@@ -408,7 +408,7 @@ function SentJobCard({
           <div className="flex items-center justify-between gap-2">
             <span className="font-mono text-xs text-brand-dark font-semibold">{q.code}</span>
             {Number(q.net) > 0
-              ? <span className="tabular-nums text-sm font-bold text-ink">฿{baht(q.net)}</span>
+              ? <span className="tabular-nums text-sm font-bold text-ink">{baht(q.net)} บาท</span>
               : <span className="text-xs font-semibold text-amber-600">รอใส่ยอด</span>}
           </div>
           {parsed?.ext_ref && (
@@ -478,7 +478,7 @@ function ActiveTableRow({
       <div className="space-y-0.5">
         <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-300">✓ ส่งด่วนแล้ว</span>
         <div className="text-[10px] text-amber-700 font-medium">แบบยังทำอยู่</div>
-        {q && <div className="text-[11px] text-ink-3 tabular-nums">{q.code}{Number(q.net) > 0 ? ` · ฿${baht(q.net)}` : ""}</div>}
+        {q && <div className="text-[11px] text-ink-3 tabular-nums">{q.code}{Number(q.net) > 0 ? ` · ${baht(q.net)} บาท` : ""}</div>}
       </div>
     ) : item.design_state === "REVISING"
       ? <Badge tone="red">แก้แบบ</Badge>
@@ -490,7 +490,7 @@ function ActiveTableRow({
       <div className="space-y-0.5">
         <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-300">✓ ส่งแล้ว</span>
         {q && (
-          <div className="text-[11px] text-ink-3 tabular-nums">{q.code}{Number(q.net) > 0 ? ` · ฿${baht(q.net)}` : ""}</div>
+          <div className="text-[11px] text-ink-3 tabular-nums">{q.code}{Number(q.net) > 0 ? ` · ${baht(q.net)} บาท` : ""}</div>
         )}
       </div>
     );
@@ -501,7 +501,7 @@ function ActiveTableRow({
         <Badge tone="sky">ร่าง</Badge>
         {q && (
           <div className="text-[11px] text-ink-3 tabular-nums">
-            {q.code}{Number(q.net) > 0 ? ` · ฿${baht(q.net)}` : ""}
+            {q.code}{Number(q.net) > 0 ? ` · ${baht(q.net)} บาท` : ""}
           </div>
         )}
       </div>
@@ -772,7 +772,7 @@ function ActiveMobileCard({
           <div className="flex items-center justify-between gap-2">
             <span className="font-mono text-xs text-brand-dark font-semibold">{q.code}</span>
             {Number(q.net) > 0
-              ? <span className="tabular-nums text-sm font-bold text-ink">฿{baht(q.net)}</span>
+              ? <span className="tabular-nums text-sm font-bold text-ink">{baht(q.net)} บาท</span>
               : <span className="text-xs font-semibold text-amber-600">รอใส่ยอด</span>}
           </div>
         </div>

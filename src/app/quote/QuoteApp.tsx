@@ -140,7 +140,7 @@ function Header({ cur, pb, onRefreshPrices }: { cur: Quote; pb: Pricebook; onRef
         </div>
         <div className="text-right">
           <div className="text-[10px] uppercase tracking-wide text-slate-400">รวม</div>
-          <div className="text-lg font-bold tabular-nums text-slate-900">฿{baht(grandOf(cur))}</div>
+          <div className="text-lg font-bold tabular-nums text-slate-900">{baht(grandOf(cur))} บาท</div>
         </div>
       </div>
       {open && (
@@ -182,7 +182,7 @@ function BottomBar({ cur, setCur }: { cur: Quote; setCur: (q: Quote) => void }) 
     <>
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 px-3 py-2.5 backdrop-blur">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
-          <div className="text-sm text-slate-500">{cur.lines.length} รายการ · <span className="font-bold text-slate-900">฿{baht(grandOf(cur))}</span></div>
+          <div className="text-sm text-slate-500">{cur.lines.length} รายการ · <span className="font-bold text-slate-900">{baht(grandOf(cur))} บาท</span></div>
           <button onClick={() => setSummary(true)} disabled={!cur.lines.length}
             className="rounded-xl bg-slate-800 px-5 py-2.5 text-sm font-semibold text-white active:bg-slate-900 disabled:opacity-40">
             ดูใบสรุป
@@ -340,7 +340,7 @@ function CalcTab({ pb, cur, setCur }: { pb: Pricebook; cur: Quote; setCur: (q: Q
             {product.note && <div className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">💡 {product.note}</div>}
             {(product.min != null || product.unitNote) && (
               <div className="text-xs text-slate-400">
-                {product.min != null && `ขั้นต่ำ ฿${baht(product.min)}/ชุด`}
+                {product.min != null && `ขั้นต่ำ ${baht(product.min)} บาท/ชุด`}
                 {product.unitNote && product.unitNote !== "ขั้นต่ำ" && ` · ${product.unitNote}`}
               </div>
             )}
@@ -351,7 +351,7 @@ function CalcTab({ pb, cur, setCur }: { pb: Pricebook; cur: Quote; setCur: (q: Q
           <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
             <div>
               <div className="text-[11px] text-slate-400">ราคาประเมิน</div>
-              <div className="text-xl font-bold tabular-nums text-slate-900">฿{baht(isCustom ? num(customPrice) : result?.total ?? 0)}</div>
+              <div className="text-xl font-bold tabular-nums text-slate-900">{baht(isCustom ? num(customPrice) : result?.total ?? 0)} บาท</div>
               {result?.minApplied && <div className="text-[11px] text-sky-500">ใช้ราคาขั้นต่ำ</div>}
             </div>
             <button onClick={addLine} className="rounded-xl bg-sky-500 px-5 py-2.5 text-sm font-semibold text-white active:bg-sky-600">➕ เพิ่มรายการ</button>
@@ -369,7 +369,7 @@ function CalcTab({ pb, cur, setCur }: { pb: Pricebook; cur: Quote; setCur: (q: Q
                 <div className="text-xs text-slate-400">{l.detail}</div>
               </div>
               <div className="shrink-0 text-right">
-                <div className="text-sm font-bold tabular-nums text-slate-900">฿{baht(l.total)}</div>
+                <div className="text-sm font-bold tabular-nums text-slate-900">{baht(l.total)} บาท</div>
                 <button onClick={() => removeLine(l.id)} className="text-[11px] text-rose-400 active:text-rose-600">ลบ</button>
               </div>
             </div>
@@ -434,7 +434,7 @@ function FloorTab({ cur, setCur, goCalc }: { cur: Quote; setCur: (q: Quote) => v
         </div>
         <div className="mt-3">
           <SelField label="ชนิดเข็ม" value={pileKey} onChange={setPileKey}
-            options={PILE_TYPES.map((p: any) => ({ v: p.key, t: `${p.label}${p.price ? ` (฿${baht(p.price)}/ต้น)` : ""}` }))} />
+            options={PILE_TYPES.map((p: any) => ({ v: p.key, t: `${p.label}${p.price ? ` (${baht(p.price)} บาท/ต้น)` : ""}` }))} />
         </div>
         {plan && (
           <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
@@ -451,14 +451,14 @@ function FloorTab({ cur, setCur, goCalc }: { cur: Quote; setCur: (q: Quote) => v
               <div key={i} className="flex items-start gap-2 border-b border-slate-100 px-3 py-2 last:border-0">
                 <div className="min-w-0 flex-1">
                   <div className="text-[13px] leading-snug text-slate-700">{it.name}</div>
-                  <div className="text-[11px] text-slate-400">{it.qty} {it.unit} × ฿{baht(it.unit_price)}</div>
+                  <div className="text-[11px] text-slate-400">{it.qty} {it.unit} × {baht(it.unit_price)} บาท</div>
                 </div>
-                <div className="shrink-0 text-sm font-semibold tabular-nums text-slate-800">฿{baht(it.line_total)}</div>
+                <div className="shrink-0 text-sm font-semibold tabular-nums text-slate-800">{baht(it.line_total)} บาท</div>
               </div>
             ))}
             <div className="flex items-center justify-between px-3 py-2.5">
               <div className="text-sm font-semibold text-slate-600">รวมงานพื้น</div>
-              <div className="text-lg font-bold tabular-nums text-slate-900">฿{baht(total)}</div>
+              <div className="text-lg font-bold tabular-nums text-slate-900">{baht(total)} บาท</div>
             </div>
           </section>
           <button onClick={addToQuote} className="w-full rounded-xl bg-sky-500 py-3 text-sm font-semibold text-white active:bg-sky-600">
@@ -486,7 +486,7 @@ function SavedTab({ loadInto }: { loadInto: (q: Quote) => void }) {
               <div className="truncate text-sm font-semibold text-slate-800">{q.customer || "(ไม่ระบุชื่อ)"}</div>
               <div className="text-xs text-slate-400">{q.createdAt} · {q.lines.length} รายการ</div>
             </div>
-            <div className="text-right"><div className="text-base font-bold tabular-nums text-slate-900">฿{baht(grandOf(q))}</div></div>
+            <div className="text-right"><div className="text-base font-bold tabular-nums text-slate-900">{baht(grandOf(q))} บาท</div></div>
           </div>
           <div className="mt-2 flex gap-2">
             <button onClick={() => loadInto(q)} className="flex-1 rounded-lg bg-sky-50 py-2 text-xs font-medium text-sky-600 active:bg-sky-100">เปิดใช้งาน</button>
@@ -508,7 +508,7 @@ function SummaryModal({ cur, setCur, close }: { cur: Quote; setCur: (q: Quote) =
   const persist = (patch: Partial<Quote>) => setCur({ ...cur, ...patch });
 
   const textSummary = () => {
-    const lines = cur.lines.map((l, i) => `${i + 1}. ${l.label}\n   ${l.detail} = ฿${baht(l.total)}`).join("\n");
+    const lines = cur.lines.map((l, i) => `${i + 1}. ${l.label}\n   ${l.detail} = ${baht(l.total)} บาท`).join("\n");
     return [
       "JR Aluminium — ราคาประเมินเบื้องต้น",
       customer ? `ลูกค้า: ${customer}` : "",
@@ -516,7 +516,7 @@ function SummaryModal({ cur, setCur, close }: { cur: Quote; setCur: (q: Quote) =
       "",
       lines,
       "",
-      `รวมประเมิน: ฿${baht(grand)}`,
+      `รวมประเมิน: ${baht(grand)} บาท`,
       note ? `\nหมายเหตุ: ${note}` : "",
       "\n*ราคาประเมินเบื้องต้น ยังไม่ใช่ใบเสนอราคา อาจเปลี่ยนแปลงหลังวัดหน้างานจริง",
     ].filter((x) => x !== "").join("\n");
@@ -568,12 +568,12 @@ function SummaryModal({ cur, setCur, close }: { cur: Quote; setCur: (q: Quote) =
                   <div className="text-sm font-medium leading-snug text-slate-800">{l.label}</div>
                   <div className="text-xs text-slate-400">{l.detail}</div>
                 </div>
-                <div className="shrink-0 text-sm font-bold tabular-nums text-slate-900">฿{baht(l.total)}</div>
+                <div className="shrink-0 text-sm font-bold tabular-nums text-slate-900">{baht(l.total)} บาท</div>
               </div>
             ))}
             <div className="flex items-center justify-between bg-slate-50 px-3 py-3">
               <div className="text-sm font-semibold text-slate-600">รวมประเมิน</div>
-              <div className="text-xl font-extrabold tabular-nums text-slate-900">฿{baht(grand)}</div>
+              <div className="text-xl font-extrabold tabular-nums text-slate-900">{baht(grand)} บาท</div>
             </div>
           </div>
 

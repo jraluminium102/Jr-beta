@@ -74,7 +74,7 @@ export default function OpsSummaryDrawer({
             <div className="glass-card rounded-2xl px-4">
               <Row icon="💰" label="มัดจำ">
                 {j?.deposit_date
-                  ? <>{thDate(j.deposit_date)}{j.deposit_amount != null && <> · <b className="text-emerald-300">฿{baht(Number(j.deposit_amount))}</b></>}</>
+                  ? <>{thDate(j.deposit_date)}{j.deposit_amount != null && <> · <b className="text-emerald-300">{baht(Number(j.deposit_amount))} บาท</b></>}</>
                   : <span style={{ color: "var(--t-low)" }}>ยังไม่มัดจำ</span>}
               </Row>
 
@@ -86,7 +86,7 @@ export default function OpsSummaryDrawer({
                       return (
                         <a key={q.id} href={`/quotations/${q.id}`} className="press flex items-baseline justify-between gap-2 hover:text-sky-300">
                           <span className="font-mono text-sky-300">{q.code}</span>
-                          <span className="tabular-nums shrink-0" style={{ color: "var(--t-mid)" }}>{amt != null ? `฿${baht(Number(amt))} ` : ""}<span className="text-[11px]" style={{ color: "var(--t-low)" }}>{thDate(q.issue_date)}</span></span>
+                          <span className="tabular-nums shrink-0" style={{ color: "var(--t-mid)" }}>{amt != null ? `${baht(Number(amt))} บาท ` : ""}<span className="text-[11px]" style={{ color: "var(--t-low)" }}>{thDate(q.issue_date)}</span></span>
                         </a>
                       );
                     })}

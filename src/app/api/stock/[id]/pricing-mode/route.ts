@@ -49,12 +49,12 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     // ③ เรตต่อโลตั้งต้น = ราคาต่อหน่วยที่มีอยู่ ÷ น้ำหนัก → ราคาต่อหน่วยเท่าเดิมเป๊ะ ไม่กระโดด
     newRate = round2((rate > 0 ? rate * kg : cost) / kg);
     newCost = round2(newRate * kg);
-    note = `เปลี่ยนเป็นคิดต่อโล — ${newRate} ฿/กก. × ${kg} กก./${item.unit}`;
+    note = `เปลี่ยนเป็นคิดต่อโล — ${newRate} บาท/กก. × ${kg} กก./${item.unit}`;
   } else {
     // กลับไปตั้งราคาต่อหน่วยตรง — ยึดราคาต่อหน่วยปัจจุบันไว้ (ไม่ให้ราคาขยับจากการสลับโหมด)
     newCost = round2(cost > 0 ? cost : rate * kg);
     if (!(newCost > 0)) return fail("ยังไม่มีราคาให้ยึด — ตั้งราคาก่อนแล้วค่อยสลับ");
-    note = `เปลี่ยนเป็นตั้งราคาต่อ${item.unit}ตรง — ยึดราคาเดิม ${newCost} ฿`;
+    note = `เปลี่ยนเป็นตั้งราคาต่อ${item.unit}ตรง — ยึดราคาเดิม ${newCost} บาท`;
   }
 
   // ② ลงประวัติราคาก่อนเสมอ (history-first) — insert ล้ม = ไม่มีอะไรเปลี่ยน
@@ -76,7 +76,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   return ok({
     weight_based: toWeight, unit_cost: newCost, price_per_kg: newRate,
     note: toWeight
-      ? `เปลี่ยนเป็นคิดต่อโลแล้ว — ราคาต่อ${item.unit}เท่าเดิม (${newCost} ฿) ต่อไปแก้ที่เรตต่อโลได้เลย`
-      : `เปลี่ยนเป็นตั้งราคาต่อ${item.unit}ตรงแล้ว — ราคาเท่าเดิม (${newCost} ฿)`,
+      ? `เปลี่ยนเป็นคิดต่อโลแล้ว — ราคาต่อ${item.unit}เท่าเดิม (${newCost} บาท) ต่อไปแก้ที่เรตต่อโลได้เลย`
+      : `เปลี่ยนเป็นตั้งราคาต่อ${item.unit}ตรงแล้ว — ราคาเท่าเดิม (${newCost} บาท)`,
   });
 }

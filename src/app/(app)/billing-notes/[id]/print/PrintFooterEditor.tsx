@@ -167,7 +167,7 @@ export default function PrintFooterEditor({
         <tr className="no-print"><td colSpan={2} className="pt-2">
           {err && <div className="mb-2 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">{err}</div>}
           <div className="flex items-center justify-between gap-2">
-            <span className="text-sm">ยอดสุทธิ <b className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(t.net)}</b></span>
+            <span className="text-sm">ยอดสุทธิ <b className="tabular-nums" style={{ color: "#7d0f15" }}>{baht(t.net)} บาท</b></span>
             <span className="flex gap-2">
               {canManual && (
                 <button type="button" disabled={busy} onClick={() => setManual(true)}

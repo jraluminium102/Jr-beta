@@ -55,7 +55,7 @@ export default function FinancePage() {
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-white">บัญชี</h1>
           <p className="text-sm tnum" style={{ color: "var(--t-low)" }}>
-            {view === "ledger" ? `รับรวม ${baht(total)} ฿ · ${rows.length} รายการ` : `ค้างรับรวม ${baht(totalOut)} ฿ · ${outRows.length} งาน`}
+            {view === "ledger" ? `รับรวม ${baht(total)} บาท · ${rows.length} รายการ` : `ค้างรับรวม ${baht(totalOut)} บาท · ${outRows.length} งาน`}
           </p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
@@ -127,7 +127,7 @@ export default function FinancePage() {
                   <div className="text-[12px] mt-0.5 tnum" style={{ color: "var(--t-low)" }}>{thDate(f.payment_date)} · {CH_TH[f.channel]}</div>
                   {canVoid && <div className="mt-2"><VoidBtn r={f} /></div>}
                 </div>
-                <span className="text-emerald-300 font-bold text-sm tnum shrink-0">{baht(f.amount)} ฿</span>
+                <span className="text-emerald-300 font-bold text-sm tnum shrink-0">{baht(f.amount)} บาท</span>
               </div>
             ))}
           </div>
@@ -150,7 +150,7 @@ export default function FinancePage() {
                   ) : (
                     <>
                       <div className="text-[11px]" style={{ color: "var(--t-low)" }}>ค้างรับ</div>
-                      <div className="text-amber-300 font-bold text-sm tnum">{baht(r.outstanding)} ฿</div>
+                      <div className="text-amber-300 font-bold text-sm tnum">{baht(r.outstanding)} บาท</div>
                     </>
                   )}
                 </div>

@@ -128,8 +128,8 @@ export default function AuditClient({ rows, products, bump, kgRows, boxRows, box
               {bump.filter((b) => b.moved).map((b) => (
                 <tr key={b.id} className="border-t border-black/5">
                   <td className="py-1">{b.name}</td>
-                  <td className="text-right tabular-nums">฿{baht(b.before)}</td>
-                  <td className="text-right tabular-nums">฿{baht(b.after)}</td>
+                  <td className="text-right tabular-nums">{baht(b.before)} บาท</td>
+                  <td className="text-right tabular-nums">{baht(b.after)} บาท</td>
                   <td className="text-right tabular-nums text-emerald-700">+{b.pct}%</td>
                 </tr>
               ))}
@@ -215,7 +215,7 @@ export default function AuditClient({ rows, products, bump, kgRows, boxRows, box
                     <span className="text-emerald-700">✓{f.linked}</span>
                     {f.missing > 0 && <span className="text-red-700 font-semibold">✗{f.missing} หาย</span>}
                     {f.dup > 0 && <span className="text-amber-700">⚠{f.dup} ซ้ำ</span>}
-                    {f.zero > 0 && <span className="text-amber-700">฿0×{f.zero}</span>}
+                    {f.zero > 0 && <span className="text-amber-700">0 บาท×{f.zero}</span>}
                     {bad === 0 && f.box === 0 && <span className="text-emerald-700 font-semibold">ครบ</span>}
                     {f.box > 0 && <span className="text-gray-500">กล่อง{f.box}</span>}
                   </div>
@@ -257,7 +257,7 @@ export default function AuditClient({ rows, products, bump, kgRows, boxRows, box
                         <td className="text-xs">{c.status === "missing" || c.status === "box" ? <span className="text-ink-3">—</span> : c.name}</td>
                         <td className="text-center tabular-nums">{c.matches || "—"}</td>
                         <td className="text-xs text-ink-3">{c.colors.length ? c.colors.join(", ") : "—"}</td>
-                        <td className="text-right tabular-nums">{c.cost ? `฿${baht(c.cost)}` : "—"}</td>
+                        <td className="text-right tabular-nums">{c.cost ? `${baht(c.cost)} บาท` : "—"}</td>
                         <td className="p-2"><Badge tone={FCODE_TONE[c.status]}>{FCODE_LABEL[c.status]}</Badge></td>
                       </tr>
                     ))}
@@ -354,8 +354,8 @@ export default function AuditClient({ rows, products, bump, kgRows, boxRows, box
               <thead>
                 <tr className="text-left bg-brand-soft text-brand-dark">
                   <th className="p-2 rounded-l-lg">รหัส</th><th>ชื่อ</th><th>สี</th>
-                  <th className="text-right">กก./เส้น</th><th className="text-right">เรต ฿/กก.</th>
-                  <th className="text-right">ควรเป็น ฿/เส้น</th><th className="text-right">ราคาจริง ฿/เส้น</th>
+                  <th className="text-right">กก./เส้น</th><th className="text-right">เรต บาท/กก.</th>
+                  <th className="text-right">ควรเป็น บาท/เส้น</th><th className="text-right">ราคาจริง บาท/เส้น</th>
                   <th className="p-2 rounded-r-lg">สถานะ</th>
                 </tr>
               </thead>

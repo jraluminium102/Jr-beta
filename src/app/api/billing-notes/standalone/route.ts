@@ -124,7 +124,7 @@ export async function POST(req: Request) {
   if (bnErr || !bn) return fail("บันทึกใบวางบิลไม่สำเร็จ: " + (bnErr?.message ?? ""), 500);
 
   // งวดเดียว (ค่าประเมิน = 1 รายการ) — label ตามสไตล์งวดเดิม
-  const label = qty > 1 ? `${itemName} (${qty} × ฿${baht(b.unit_price)})` : itemName;
+  const label = qty > 1 ? `${itemName} (${qty} × ${baht(b.unit_price)} บาท)` : itemName;
   const { error: iErr } = await supabase.from("billing_installments").insert({
     billing_note_id: bn.id, seq: 1, label, amount: net, sort_order: 0, status: "pending",
   });

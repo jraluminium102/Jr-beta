@@ -594,7 +594,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
                     <label className="text-xs text-ink-3">ราคา/หน่วย
                       <input type="number" min={0} value={it.unit_price} onChange={(e) => setItem(i, "unit_price", Number(e.target.value))} className="w-28 ml-1.5 glass rounded-md px-2 py-1 text-right outline-none" />
                     </label>
-                    <span className="ml-auto font-bold text-brand-dark">฿{baht((Number(it.qty) || 0) * (Number(it.unit_price) || 0))}</span>
+                    <span className="ml-auto font-bold text-brand-dark">{baht((Number(it.qty) || 0) * (Number(it.unit_price) || 0))} บาท</span>
                   </div>
                 </div>
               ))}
@@ -661,17 +661,17 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
             <h3 className="font-bold text-brand-dark mb-3">สรุปยอด</h3>
             {/* footer แบบเดียวกับใบวางบิล/FlowAccount: ส่วนลด %+บาท · VAT ติ๊ก · หัก ณ ที่จ่าย ติ๊ก+% */}
             <div className="space-y-1.5 text-sm">
-              <div className="flex justify-between"><span className="text-ink-3">รวมเป็นเงิน</span><span className="tabular-nums">฿{baht(t.subtotal)}</span></div>
+              <div className="flex justify-between"><span className="text-ink-3">รวมเป็นเงิน</span><span className="tabular-nums">{baht(t.subtotal)} บาท</span></div>
               <DiscountLinesEditor subtotal={t.subtotal} lines={discounts} onChange={setDiscounts} />
-              {t.discount_amt > 0 && <div className="flex justify-between"><span className="text-ink-3">ราคาหลังหักส่วนลด</span><span className="tabular-nums">฿{baht(t.after_discount)}</span></div>}
+              {t.discount_amt > 0 && <div className="flex justify-between"><span className="text-ink-3">ราคาหลังหักส่วนลด</span><span className="tabular-nums">{baht(t.after_discount)} บาท</span></div>}
               <label className="flex items-center justify-between gap-2 cursor-pointer">
                 <span className="text-ink-3 flex items-center gap-1.5">
                   <input type="checkbox" checked={vat === 7} onChange={(e) => setVat(e.target.checked ? 7 : 0)} /> ภาษีมูลค่าเพิ่ม 7%
                 </span>
-                <span className="tabular-nums">฿{baht(t.vat_amt)}</span>
+                <span className="tabular-nums">{baht(t.vat_amt)} บาท</span>
               </label>
               <div className="border-t border-gray-300/70 my-1.5" />
-              <div className="flex justify-between font-bold"><span className="text-ink">จำนวนเงินรวมทั้งสิ้น</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(t.total)}</span></div>
+              <div className="flex justify-between font-bold"><span className="text-ink">จำนวนเงินรวมทั้งสิ้น</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>{baht(t.total)} บาท</span></div>
               <label className="flex items-center justify-between gap-2 cursor-pointer">
                 <span className="text-ink-3 flex items-center gap-1.5">
                   <input type="checkbox" checked={wht > 0} onChange={(e) => setWht(e.target.checked ? 3 : 0)} /> หักภาษี ณ ที่จ่าย
@@ -680,9 +680,9 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
                     <option value={1}>1%</option><option value={2}>2%</option><option value={3}>3%</option><option value={5}>5%</option>
                   </select>
                 </span>
-                <span className="tabular-nums text-red-700">-฿{baht(t.wht_amt)}</span>
+                <span className="tabular-nums text-red-700">-{baht(t.wht_amt)} บาท</span>
               </label>
-              {wht > 0 && <div className="flex justify-between font-bold text-lg"><span className="text-ink">ยอดชำระ</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(t.net)}</span></div>}
+              {wht > 0 && <div className="flex justify-between font-bold text-lg"><span className="text-ink">ยอดชำระ</span><span className="tabular-nums" style={{ color: "#7d0f15" }}>{baht(t.net)} บาท</span></div>}
             </div>
 
             {err && <p role="alert" className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2 mt-3">{err}</p>}
@@ -728,7 +728,7 @@ function Row({ k, v, bold, big, red }: { k: string; v: number; bold?: boolean; b
   return (
     <div className={`flex justify-between ${big ? "text-lg" : "text-sm"} ${bold ? "font-bold" : ""} py-0.5`}>
       <span className={bold ? "text-ink" : "text-ink-3"}>{k}</span>
-      <span style={red ? { color: "#b3151d" } : bold ? { color: "#7d0f15" } : {}}>{v < 0 ? "-" : ""}฿{baht(Math.abs(v))}</span>
+      <span style={red ? { color: "#b3151d" } : bold ? { color: "#7d0f15" } : {}}>{v < 0 ? "-" : ""}{baht(Math.abs(v))} บาท</span>
     </div>
   );
 }

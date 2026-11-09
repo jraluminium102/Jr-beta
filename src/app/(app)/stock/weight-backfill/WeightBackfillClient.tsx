@@ -129,7 +129,7 @@ export default function WeightBackfillClient({ rows, counts, stockCount, manual 
                 <th>รหัส</th><th>ชื่อ</th><th>สี</th>
                 <th className="text-right">น้ำหนักในสโตร์</th>
                 <th className="text-right">จากไฟล์</th>
-                <th className="text-right">เรต ฿/กก.</th>
+                <th className="text-right">เรต บาท/กก.</th>
                 <th className="text-right">ราคา/เส้น</th>
                 <th className="p-2 rounded-r-lg">สถานะ</th>
               </tr>

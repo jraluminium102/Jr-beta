@@ -174,7 +174,7 @@ export default function QuotationEditButton({
                   <input type="number" inputMode="decimal" value={row.unit_price} min={0} step="any"
                     onChange={(e) => updateRow(idx, "unit_price", Number(e.target.value))}
                     className="w-28 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-right tabular-nums outline-none focus-visible:ring-2" /></label>
-                <span className="ml-auto text-sm font-semibold text-brand-dark tabular-nums">รวม ฿{baht((Number(row.qty) || 0) * (Number(row.unit_price) || 0))}</span>
+                <span className="ml-auto text-sm font-semibold text-brand-dark tabular-nums">รวม {baht((Number(row.qty) || 0) * (Number(row.unit_price) || 0))} บาท</span>
               </div>
             </div>
           ))}
@@ -220,10 +220,10 @@ export default function QuotationEditButton({
           {discountAmt > 0 && <div className="flex justify-between"><span className="text-gray-500">ส่วนลด{discounts.length === 1 && (discounts[0].label ?? "").trim() ? ` (${(discounts[0].label ?? "").trim()})` : discounts.length > 1 ? ` (${discounts.length} รายการ)` : ` ${Number(discPct.toFixed(2))}%`}</span><span className="tabular-nums text-brand">-{baht(discountAmt)}</span></div>}
           {discountAmt > 0 && <div className="flex justify-between"><span className="text-gray-500">จำนวนเงินหลังหักส่วนลด</span><span className="tabular-nums">{baht(afterDiscount)}</span></div>}
           <div className="flex justify-between"><span className="text-gray-500">VAT {vat}%</span><span className="tabular-nums">{baht(vatAmt)}</span></div>
-          <div className="flex justify-between font-bold text-brand-dark border-t pt-1"><span>ยอดรวมสุทธิ</span><span className="tabular-nums">฿{baht(total)}</span></div>
+          <div className="flex justify-between font-bold text-brand-dark border-t pt-1"><span>ยอดรวมสุทธิ</span><span className="tabular-nums">{baht(total)} บาท</span></div>
           {whtAmt > 0 && <>
             <div className="flex justify-between"><span className="text-gray-500">หัก ณ ที่จ่าย {wht}%</span><span className="tabular-nums text-brand">-{baht(whtAmt)}</span></div>
-            <div className="flex justify-between font-bold text-brand-dark"><span>ยอดรับสุทธิ</span><span className="tabular-nums">฿{baht(net)}</span></div>
+            <div className="flex justify-between font-bold text-brand-dark"><span>ยอดรับสุทธิ</span><span className="tabular-nums">{baht(net)} บาท</span></div>
           </>}
         </div>
 

@@ -123,7 +123,7 @@ export async function applyInstallmentPayment(
         // ไม่ block ตายตัว — คืน needsConfirm ให้หน้าจอถามยืนยัน แล้วส่ง force มาปิดได้
         //   (เคสจริง: มัดจำเป็น token ก้อนเล็ก 7,000 ที่ลงไว้ก่อน · งวด 1 จริง 138,044.27 · ลูกค้าจ่ายเต็มแล้ว)
         return {
-          error: `บันทึกชำระ ฿${willBe.toLocaleString("th-TH", { minimumFractionDigits: 2 })} มากกว่ามัดจำที่บันทึกไว้เดิม (฿${depositAmt.toLocaleString("th-TH", { minimumFractionDigits: 2 })})`
+          error: `บันทึกชำระ ${willBe.toLocaleString("th-TH", { minimumFractionDigits: 2 })} บาท มากกว่ามัดจำที่บันทึกไว้เดิม (${depositAmt.toLocaleString("th-TH", { minimumFractionDigits: 2 })} บาท)`
             + ` — ถ้าลูกค้าจ่ายยอดนี้จริง กด “ยืนยันรับเงินจริง” เพื่อบันทึก (ระบบจะปรับมัดจำเดิมเป็นยอดนี้ให้)`,
           needsConfirm: true,
           suggested: willBe,

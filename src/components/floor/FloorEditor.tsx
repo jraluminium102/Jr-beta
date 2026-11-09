@@ -393,7 +393,7 @@ export default function FloorEditor({
                 placeholder="เช่น 12" className="w-24 rounded-lg border border-gray-300 px-2 py-1 text-xs" />
             </label>
             <div className="text-xs leading-tight min-w-[150px]">
-              <div className="font-semibold text-brand-dark">฿{baht(num(demoCalc?.price))}</div>
+              <div className="font-semibold text-brand-dark">{baht(num(demoCalc?.price))} บาท</div>
               <div className="text-ink-3" style={{ fontSize: 10 }}>
                 {num(demoArea) > 0
                   ? `${num(demoArea)} × ${num(demoCalc?.rate).toLocaleString()}/ตร.ม.${demoCalc?.atMin ? " · ติดขั้นต่ำ" : ""}${demoCalc?.warn ? " · ⚠ เกิน 30 รีเช็ค" : ""}`

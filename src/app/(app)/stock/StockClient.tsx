@@ -479,7 +479,7 @@ function ItemDetail({
         {canViewCost && (
           <div className="rounded-2xl px-5 py-4 glass-soft">
             <div className="text-xs font-medium text-ink-3">ต้นทุน/หน่วย</div>
-            <div className="text-3xl font-bold leading-tight text-brand-dark">฿{baht(item.unit_cost)}</div>
+            <div className="text-3xl font-bold leading-tight text-brand-dark">{baht(item.unit_cost)} บาท</div>
             {/* บอกให้ชัดว่าตัวนี้คิดยังไง — ต่อโล หรือตั้งราคาต่อหน่วยตรง (เจ้าของสั่ง 19 ส.ค.69) */}
             {item.is_weight_based ? (
               <div className="text-xs mt-1.5">
@@ -487,7 +487,7 @@ function ItemDetail({
                   คิดต่อโล
                 </span>
                 <span className="text-ink-3 ml-2">
-                  {baht(item.price_per_kg)} ฿/กก. × {fmt3(item.weight_per_unit)} กก./{item.unit}
+                  {baht(item.price_per_kg)} บาท/กก. × {fmt3(item.weight_per_unit)} กก./{item.unit}
                 </span>
                 <div className="text-ink-3 mt-1">เปลี่ยนเรตต่อโลเมื่อไร ราคาต่อ{item.unit}คิดใหม่ให้เอง</div>
               </div>
@@ -504,7 +504,7 @@ function ItemDetail({
                 </div>
               </div>
             )}
-            <div className="text-xs text-ink-3 mt-0.5">มูลค่าคงคลัง ≈ ฿{baht(Number(item.qty_on_hand) * Number(item.unit_cost))}</div>
+            <div className="text-xs text-ink-3 mt-0.5">มูลค่าคงคลัง ≈ {baht(Number(item.qty_on_hand) * Number(item.unit_cost))} บาท</div>
           </div>
         )}
       </div>
@@ -576,7 +576,7 @@ function ItemDetail({
                     </td>
                     <td className="px-3 py-2 text-ink-2 truncate max-w-[160px]">
                       {m.requester || m.ref || "—"}
-                      {canViewCost && m.total_price ? <span className="text-ink-3"> · ฿{baht(m.total_price)}</span> : ""}
+                      {canViewCost && m.total_price ? <span className="text-ink-3"> · {baht(m.total_price)} บาท</span> : ""}
                       {m.is_voided && m.void_reason && <div className="text-[10px] text-red-500">เหตุผล: {m.void_reason}</div>}
                     </td>
                     <td className="px-3 py-2">
@@ -870,14 +870,14 @@ function PriceSection({ item, prices, canPrice, isAdmin, onDone }: { item: Stock
         <div className="mt-2 rounded-xl border border-brand/20 bg-brand/5 p-3 space-y-2.5">
           <div className="grid grid-cols-2 gap-3 text-sm">
             {item.is_weight_based
-              ? <Field label="ราคาต่อโล (฿/กก.)" value={pricePerKg} onChange={setPricePerKg} type="number" autoFocus />
-              : <Field label="ต้นทุนต่อหน่วย (฿)" value={unitCost} onChange={setUnitCost} type="number" autoFocus />}
+              ? <Field label="ราคาต่อโล (บาท/กก.)" value={pricePerKg} onChange={setPricePerKg} type="number" autoFocus />
+              : <Field label="ต้นทุนต่อหน่วย (บาท)" value={unitCost} onChange={setUnitCost} type="number" autoFocus />}
             <Field label="มีผลวันที่" value={effDate} onChange={setEffDate} type="date" />
             {/* ร้าน/ผู้ขาย ใช้ค่าจากข้อมูลวัสดุ (supplier) — ไม่ต้องกรอกซ้ำ · ปรับที่ฟอร์มแก้วัสดุ */}
             <Field label="หมายเหตุ" value={note} onChange={setNote} />
           </div>
           {item.is_weight_based && pricePerKg && (
-            <p className="text-xs text-ink-3">→ ต้นทุนต่อ {item.unit} ≈ ฿{baht((Number(pricePerKg) || 0) * Number(item.weight_per_unit))}</p>
+            <p className="text-xs text-ink-3">→ ต้นทุนต่อ {item.unit} ≈ {baht((Number(pricePerKg) || 0) * Number(item.weight_per_unit))} บาท</p>
           )}
           {err && <p role="alert" className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">{err}</p>}
           <button onClick={save} disabled={busy} className="press rounded-xl px-4 py-2 text-sm font-semibold text-white bg-brand disabled:opacity-60">
@@ -895,7 +895,7 @@ function PriceSection({ item, prices, canPrice, isAdmin, onDone }: { item: Stock
               <thead>
                 <tr className="text-left text-ink-3 text-xs border-b border-black/5">
                   <th className="px-3 py-2 font-medium">วันที่</th>
-                  {item.is_weight_based && <th className="px-3 py-2 font-medium text-right">฿/กก.</th>}
+                  {item.is_weight_based && <th className="px-3 py-2 font-medium text-right">บาท/กก.</th>}
                   <th className="px-3 py-2 font-medium text-right">ต้นทุน/{item.unit}</th>
                   {isAdmin && <th className="px-3 py-2"></th>}
                 </tr>
@@ -905,7 +905,7 @@ function PriceSection({ item, prices, canPrice, isAdmin, onDone }: { item: Stock
                   <tr key={p.id} className="border-b border-black/5 last:border-0">
                     <td className="px-3 py-2 text-ink-2 whitespace-nowrap">{new Date(p.effective_date).toLocaleDateString("th-TH")}</td>
                     {item.is_weight_based && <td className="px-3 py-2 text-right tabular-nums">{p.price_per_kg != null ? baht(p.price_per_kg) : "—"}</td>}
-                    <td className="px-3 py-2 text-right font-semibold tabular-nums">฿{baht(p.unit_cost)}</td>
+                    <td className="px-3 py-2 text-right font-semibold tabular-nums">{baht(p.unit_cost)} บาท</td>
                     {isAdmin && (
                       <td className="px-3 py-2 text-right">
                         <button onClick={() => delPrice(p.id)} title="ลบราคานี้" className="text-ink-3 hover:text-red-600"><Icon name="trash" size={13} /></button>
@@ -1033,7 +1033,7 @@ function AddItemForm({ cats, canViewCost, onManageCat, onCancel, onSaved }: {
               <option value="">— เลือกสี —</option>
               {colorOpts.map((o) => (
                 <option key={o.color} value={o.color}>
-                  {o.color}{canViewCost ? ` — ${o.rate} ฿/กก.` : ""}{o.via ? ` (เรต ${ALU_BRAND_LABEL[o.via] ?? o.via})` : ""}
+                  {o.color}{canViewCost ? ` — ${o.rate} บาท/กก.` : ""}{o.via ? ` (เรต ${ALU_BRAND_LABEL[o.via] ?? o.via})` : ""}
                 </option>
               ))}
             </select>
@@ -1060,7 +1060,7 @@ function AddItemForm({ cats, canViewCost, onManageCat, onCancel, onSaved }: {
             <div className="text-sm space-y-1">
               <div className="font-medium text-ink-1">🔒 คิดราคาแบบชั่งน้ำหนัก — เรตล็อกตามแบรนด์ {ALU_BRAND_LABEL[f.alu_brand]}</div>
               <div className="text-ink-2">
-                ราคาต่อโล: <b className="tabular-nums">{lockedRate > 0 ? `${lockedRate} ฿/กก.` : "— เลือกสีก่อน"}</b>
+                ราคาต่อโล: <b className="tabular-nums">{lockedRate > 0 ? `${lockedRate} บาท/กก.` : "— เลือกสีก่อน"}</b>
                 <span className="text-xs text-ink-3"> (แก้ที่หน้า &quot;เรตอลู&quot; เท่านั้น · เปลี่ยนเรตแล้วราคาเส้นนี้ขยับตาม)</span>
               </div>
             </div>
@@ -1068,7 +1068,7 @@ function AddItemForm({ cats, canViewCost, onManageCat, onCancel, onSaved }: {
             <div className="space-y-2">
               <div className="text-sm font-medium text-ink-1">ซื้อเป็นเส้น — ไม่คิดต่อโล</div>
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <Field label="ต้นทุนต่อหน่วย (฿)" value={f.unit_cost} onChange={(v) => setF({ ...f, unit_cost: v })} type="number" />
+                <Field label="ต้นทุนต่อหน่วย (บาท)" value={f.unit_cost} onChange={(v) => setF({ ...f, unit_cost: v })} type="number" />
               </div>
             </div>
           ) : (
@@ -1079,17 +1079,17 @@ function AddItemForm({ cats, canViewCost, onManageCat, onCancel, onSaved }: {
               </label>
               {f.is_weight_based ? (
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <Field label="ราคาต่อโล (฿/กก.)" value={f.price_per_kg} onChange={(v) => setF({ ...f, price_per_kg: v })} type="number" />
+                  <Field label="ราคาต่อโล (บาท/กก.)" value={f.price_per_kg} onChange={(v) => setF({ ...f, price_per_kg: v })} type="number" />
                   <Field label={`น้ำหนักต่อ 1 ${f.unit} (กก.)`} value={f.weight_per_unit} onChange={(v) => setF({ ...f, weight_per_unit: v })} type="number" />
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <Field label="ต้นทุนต่อหน่วย (฿)" value={f.unit_cost} onChange={(v) => setF({ ...f, unit_cost: v })} type="number" />
+                  <Field label="ต้นทุนต่อหน่วย (บาท)" value={f.unit_cost} onChange={(v) => setF({ ...f, unit_cost: v })} type="number" />
                 </div>
               )}
             </>
           )}
-          {computedCost > 0 && <p className="text-xs text-ink-3">ต้นทุนต่อ {f.unit} ≈ <b>฿{baht(computedCost)}</b>{brandLocked ? ` (${f.weight_per_unit} กก. × ${lockedRate})` : ""}</p>}
+          {computedCost > 0 && <p className="text-xs text-ink-3">ต้นทุนต่อ {f.unit} ≈ <b>{baht(computedCost)} บาท</b>{brandLocked ? ` (${f.weight_per_unit} กก. × ${lockedRate})` : ""}</p>}
         </div>
       ) : (
         <p className="mt-3 text-xs text-ink-3">* ราคา/ต้นทุนให้ฝ่ายบัญชีเป็นผู้กรอกภายหลัง{brandLocked ? " · อลูแบรนด์นี้ระบบตั้งเรตต่อโลให้อัตโนมัติ" : ""}</p>

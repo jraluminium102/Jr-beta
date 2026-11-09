@@ -133,7 +133,7 @@ console.log("\n═══ ⑥ สายไฟ — ต้องไม่มี ':'
 {
   const c = fs.readFileSync(path.join(ROOT, "src/components/Calculator40Client.tsx"), "utf8");
   ok("ไม่มี ':' หลังชื่อด้าน", /`- ด้าน \$\{String\.fromCharCode\(65 \+ i\)\} \$\{dd\[i\]/.test(c), "");
-  ok("ราคาขึ้นว่า (ราคา …฿)", /\(ราคา \$\{baht\(s\)\}฿\)/.test(c), "");
+  ok("ราคาขึ้นว่า (ราคา … บาท) — 9 พ.ย.69 เปลี่ยน ฿ เป็นคำว่า บาท", /\(ราคา \$\{baht\(s\)\} บาท\)/.test(c), "");
   const r = fs.readFileSync(path.join(ROOT, "src/components/calculator40/RoomComposer.tsx"), "utf8");
   ok("RoomComposer ใช้ sideDescQuote จากโมดูลกลาง", /from "@\/lib\/calculator40\/room-desc"/.test(r) && /sideDescQuote\(s, wallLabel\)/.test(r), "");
   ok("ไม่เหลือ paneDesc ตัวเก่าในคอมโพเนนต์ (กันสองแหล่ง)", !/function paneDesc\(/.test(r), "");

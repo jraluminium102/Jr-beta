@@ -137,7 +137,7 @@ export default async function QuotationsPage({ searchParams }: { searchParams?: 
                       )}
                     </td>
                     <td className="text-ink-2">{r.issue_date}</td>
-                    <td className="text-right font-semibold">฿{baht(r.net)}</td>
+                    <td className="text-right font-semibold">{baht(r.net)} บาท</td>
                     <td><StatusBadge status={r.status} /></td>
                   </tr>
                 ))}

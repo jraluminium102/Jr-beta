@@ -116,11 +116,11 @@ export default async function ReceiptDetail({ params }: { params: { id: string }
             <tbody>
               <tr><td className="pr-8 py-0.5 text-ink-3 tabular-nums">ฐานภาษี (ก่อน VAT)</td><td className="text-right tabular-nums">{baht(rcBase)}</td></tr>
               <tr><td className="pr-8 py-0.5 text-ink-3">VAT {rc.vat_rate}%</td><td className="text-right tabular-nums">{baht(rc.vat_amt)}</td></tr>
-              <tr className="font-bold text-brand-dark text-lg"><td className="pr-8 py-1 border-t">จำนวนเงินรวมทั้งสิ้น</td><td className="text-right border-t tabular-nums">฿{baht(rcGross)}</td></tr>
+              <tr className="font-bold text-brand-dark text-lg"><td className="pr-8 py-1 border-t">จำนวนเงินรวมทั้งสิ้น</td><td className="text-right border-t tabular-nums">{baht(rcGross)} บาท</td></tr>
               {rcWht > 0 && (
                 <>
                   <tr><td className="pr-8 py-0.5 text-ink-3">หัก ณ ที่จ่าย {rcWhtRate}%</td><td className="text-right tabular-nums">-{baht(rcWht)}</td></tr>
-                  <tr className="font-bold text-brand-dark"><td className="pr-8 py-1 border-t">เงินสดรับสุทธิ</td><td className="text-right border-t tabular-nums">฿{baht(rc.net)}</td></tr>
+                  <tr className="font-bold text-brand-dark"><td className="pr-8 py-1 border-t">เงินสดรับสุทธิ</td><td className="text-right border-t tabular-nums">{baht(rc.net)} บาท</td></tr>
                 </>
               )}
             </tbody>

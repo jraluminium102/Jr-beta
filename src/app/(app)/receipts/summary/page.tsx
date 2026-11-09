@@ -142,7 +142,7 @@ export default async function ReceiptSummaryPage({
                 <td className="p-2 border border-gray-200 text-right" colSpan={5}>รวม (เฉพาะใบที่ใช้ได้ {live.length} ใบ)</td>
                 <td className="p-2 text-right border border-gray-200 tabular-nums">{baht(sumBase)}</td>
                 <td className="p-2 text-right border border-gray-200 tabular-nums">{baht(sumVat)}</td>
-                <td className="p-2 text-right border border-gray-200 tabular-nums" style={{ color: "#7d0f15" }}>฿{baht(sumNet)}</td>
+                <td className="p-2 text-right border border-gray-200 tabular-nums" style={{ color: "#7d0f15" }}>{baht(sumNet)} บาท</td>
               </tr>
             </tfoot>
           )}

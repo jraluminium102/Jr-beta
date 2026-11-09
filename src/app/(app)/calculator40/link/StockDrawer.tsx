@@ -72,7 +72,7 @@ export default function StockDrawer({
                 {canSeeCost && (
                   <div className="glass-soft rounded-xl px-3 py-2">
                     <div className="text-[11px] text-ink-3">ราคา/หน่วย</div>
-                    <div className="font-bold tabular-nums">฿{baht(price)}</div>
+                    <div className="font-bold tabular-nums">{baht(price)} บาท</div>
                   </div>
                 )}
                 <div className="glass-soft rounded-xl px-3 py-2">
@@ -89,7 +89,7 @@ export default function StockDrawer({
                 {canSeeCost && (
                   <div className="glass-soft rounded-xl px-3 py-2">
                     <div className="text-[11px] text-ink-3">มูลค่าคงเหลือ</div>
-                    <div className="font-bold tabular-nums">฿{baht(price * data.qty_on_hand)}</div>
+                    <div className="font-bold tabular-nums">{baht(price * data.qty_on_hand)} บาท</div>
                   </div>
                 )}
               </div>
@@ -103,7 +103,7 @@ export default function StockDrawer({
                     <span className="text-ink-3">คิดราคาต่อโล</span>
                     <div className="mt-1">
                       {data.weight_per_unit > 0
-                        ? <>{data.weight_per_unit} กก. × ฿{baht(data.price_per_kg)} = <b>฿{baht(price)}</b>/เส้น</>
+                        ? <>{data.weight_per_unit} กก. × {baht(data.price_per_kg)} บาท = <b>{baht(price)} บาท</b>/เส้น</>
                         : (
                           <span className="text-red-700">
                             ไม่มีน้ำหนัก — ขึ้นเรตต่อโลแล้วราคาไม่ขยับ{" "}
@@ -124,7 +124,7 @@ export default function StockDrawer({
                       {siblings.map((s) => (
                         <tr key={s.id} className="border-t border-line/60">
                           <td className="py-1.5">{s.color || "—"}</td>
-                          {canSeeCost && <td className="py-1.5 text-right tabular-nums">฿{baht(s.is_weight_based ? s.weight_per_unit * s.price_per_kg : s.unit_cost)}</td>}
+                          {canSeeCost && <td className="py-1.5 text-right tabular-nums">{baht(s.is_weight_based ? s.weight_per_unit * s.price_per_kg : s.unit_cost)} บาท</td>}
                           <td className="py-1.5 text-right tabular-nums text-ink-3">{s.qty_on_hand.toLocaleString("th-TH")}</td>
                         </tr>
                       ))}

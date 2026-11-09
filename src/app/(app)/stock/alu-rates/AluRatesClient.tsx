@@ -100,8 +100,8 @@ export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog 
 
   async function apply(g: Group) {
     const rate = Number(inputs[g.key]);
-    if (!(rate > 0)) { setMsg({ key: g.key, text: "ใส่เรต ฿/กก. ก่อน", ok: false }); return; }
-    if (!confirm(`ตั้งเรต ${g.series} · ${g.color} = ${rate} ฿/กก.\nจะอัปเดตราคา ${g.items.length} เส้น (ราคา/เส้น = น้ำหนัก × เรต) — ยืนยัน?`)) return;
+    if (!(rate > 0)) { setMsg({ key: g.key, text: "ใส่เรต บาท/กก. ก่อน", ok: false }); return; }
+    if (!confirm(`ตั้งเรต ${g.series} · ${g.color} = ${rate} บาท/กก.\nจะอัปเดตราคา ${g.items.length} เส้น (ราคา/เส้น = น้ำหนัก × เรต) — ยืนยัน?`)) return;
     setBusy(g.key); setMsg(null);
     const res = await fetch("/api/stock/alu-rates", {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -131,7 +131,7 @@ export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog 
       </div>
 
       <p className="text-[13px] text-ink-2 glass-soft rounded-xl px-4 py-3">
-        ตั้งราคา <b>฿/กก.</b> ของแต่ละ <b>แบรนด์ × สี</b> แล้วกดอัปเดต — ระบบคูณ<b>น้ำหนักต่อเส้น</b>ของแต่ละรหัส
+        ตั้งราคา <b>บาท/กก.</b> ของแต่ละ <b>แบรนด์ × สี</b> แล้วกดอัปเดต — ระบบคูณ<b>น้ำหนักต่อเส้น</b>ของแต่ละรหัส
         อัปเดตราคา/เส้นให้ทั้งกลุ่ม · เส้นที่ผูกรหัสกับคิดราคา 4.0 จะใช้ราคาใหม่ทันที
         {noWeightCount > 0 && <> · ⚠ อลูอีก <b>{noWeightCount}</b> รายการยังไม่มีน้ำหนัก/เส้น (เติมในหน้าสต๊อกแล้วจะโผล่ที่นี่)</>}
       </p>
@@ -154,7 +154,7 @@ export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog 
                     <tr className="text-left text-[12px] text-ink-3 border-b border-brand/10">
                       <th className="py-1.5 pr-3">สี</th>
                       <th className="py-1.5 pr-3 text-right">จำนวนเส้น</th>
-                      <th className="py-1.5 pr-3 text-right">เรตตอนนี้ (฿/กก.)</th>
+                      <th className="py-1.5 pr-3 text-right">เรตตอนนี้ (บาท/กก.)</th>
                       <th className="py-1.5 pr-3 text-right">ตารางแบรนด์</th>
                       <th className="py-1.5 pr-3">เรตใหม่</th>
                       <th className="py-1.5 pr-3"></th>
@@ -226,7 +226,7 @@ export default function AluRatesClient({ items, noWeightCount, canEdit, rateLog 
                   <th className="py-1.5 pr-3">วันที่</th>
                   <th className="py-1.5 pr-3">กลุ่ม</th>
                   <th className="py-1.5 pr-3">สี</th>
-                  <th className="py-1.5 pr-3 text-right">เรต (฿/กก.)</th>
+                  <th className="py-1.5 pr-3 text-right">เรต (บาท/กก.)</th>
                   <th className="py-1.5 pr-3 text-right">เส้น</th>
                   <th className="py-1.5 pr-3">โดย</th>
                 </tr>
@@ -295,7 +295,7 @@ function RateRow({ g, value, busy, msg, canEdit, onChange, onApply }: {
             <span className="text-[11px] text-red-700">ลบ/ย้ายแถวในหน้าสต๊อก</span>
           ) : canEdit ? (
             <input inputMode="decimal" value={value} onChange={(e) => onChange(e.target.value)}
-              placeholder={g.rate > 0 ? String(g.rate) : "฿/กก."}
+              placeholder={g.rate > 0 ? String(g.rate) : "บาท/กก."}
               className="w-24 glass-soft rounded-lg px-2 py-1.5 text-sm outline-none" />
           ) : <span className="text-ink-3 text-xs">ดูอย่างเดียว</span>}
         </td>
@@ -316,8 +316,8 @@ function RateRow({ g, value, busy, msg, canEdit, onChange, onApply }: {
                 <div key={r.id} className="flex justify-between gap-2 py-0.5">
                   <span className="truncate">{r.sku} · {r.name}</span>
                   <span className="shrink-0">
-                    {fmt(Number(r.weight_per_unit))} กก. → {fmt(Number(r.unit_cost))}฿
-                    {preview && <b className="text-brand-dark"> ⇒ {fmt(round2(Number(r.weight_per_unit) * preview))}฿</b>}
+                    {fmt(Number(r.weight_per_unit))} กก. → {fmt(Number(r.unit_cost))} บาท
+                    {preview && <b className="text-brand-dark"> ⇒ {fmt(round2(Number(r.weight_per_unit) * preview))} บาท</b>}
                   </span>
                 </div>
               ))}

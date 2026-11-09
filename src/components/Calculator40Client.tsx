@@ -820,13 +820,13 @@ export default function Calculator40Client({ customers = [], priceOverride, line
       const svcP = mfg ? 0 : rt.svc;
       const totalP = mfg ? (Number(rt.mfgTotal) > 0 ? Number(rt.mfgTotal) : rt.total) : rt.total;
       // ไม่ใส่ ":" หลังชื่อด้าน — เจ้าของสั่ง 7 ส.ค.69 ให้เว้นวรรคแทน
-      const lines: string[] = rt.sides.map((_s, i) => { const s = sidesP[i] ?? 0; return `- ด้าน ${String.fromCharCode(65 + i)} ${dd[i] || "—"}${showP && s > 0 ? ` (ราคา ${baht(s)}฿)` : ""}`; });
-      if (roofP > 0) lines.push(`- ${rt.roofDesc || "หลังคา"}${showP ? ` (${baht(roofP)}฿)` : ""}`);
-      if (ceilP > 0) lines.push(`- ${rt.ceilDesc || "ฝ้า"}${showP ? ` (${baht(ceilP)}฿)` : ""}`);
-      if (rt.floor > 0) lines.push(`- พื้น${showP ? ` (${baht(rt.floor)}฿)` : ""}`);
-      if (rt.fan > 0) lines.push(`- พัดลม/ระบายอากาศ${showP ? ` (${baht(rt.fan)}฿)` : ""}`);
-      if (rt.services > 0) lines.push(`- งานบริการเพิ่มเติม${showP ? ` (${baht(rt.services)}฿)` : ""}`);
-      if (svcP > 0) lines.push(`- รื้อ/ป้องกันหน้างาน${showP ? ` (${baht(svcP)}฿)` : ""}`);
+      const lines: string[] = rt.sides.map((_s, i) => { const s = sidesP[i] ?? 0; return `- ด้าน ${String.fromCharCode(65 + i)} ${dd[i] || "—"}${showP && s > 0 ? ` (ราคา ${baht(s)} บาท)` : ""}`; });
+      if (roofP > 0) lines.push(`- ${rt.roofDesc || "หลังคา"}${showP ? ` (${baht(roofP)} บาท)` : ""}`);
+      if (ceilP > 0) lines.push(`- ${rt.ceilDesc || "ฝ้า"}${showP ? ` (${baht(ceilP)} บาท)` : ""}`);
+      if (rt.floor > 0) lines.push(`- พื้น${showP ? ` (${baht(rt.floor)} บาท)` : ""}`);
+      if (rt.fan > 0) lines.push(`- พัดลม/ระบายอากาศ${showP ? ` (${baht(rt.fan)} บาท)` : ""}`);
+      if (rt.services > 0) lines.push(`- งานบริการเพิ่มเติม${showP ? ` (${baht(rt.services)} บาท)` : ""}`);
+      if (svcP > 0) lines.push(`- รื้อ/ป้องกันหน้างาน${showP ? ` (${baht(svcP)} บาท)` : ""}`);
       lines.push("รายละเอียดงาน");
       lines.push(aluColorLine(color));
       lines.push(glassLine(glassType));
@@ -1250,7 +1250,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     const svcRows = svcResult.lines.filter((l) => l.amount > 0)
       .map((l) => `<tr><td></td><td>${l.name}</td><td class="r">1</td><td class="r">${baht(l.amount)}</td><td class="r">${baht(l.amount)}</td></tr>`).join("");
     const grandRow = svcResult.total > 0
-      ? `<tr class="t"><td colspan="4" class="r">รวมทั้งสิ้น (สินค้า + บริการ)</td><td class="r">฿${baht(grandTotal)}</td></tr>`
+      ? `<tr class="t"><td colspan="4" class="r">รวมทั้งสิ้น (สินค้า + บริการ)</td><td class="r">${baht(grandTotal)} บาท</td></tr>`
       : "";
     const html = `<!doctype html><html><head><meta charset="utf-8"><title>ใบเสนอราคา (R4.0)</title><style>
       body{font-family:'Segoe UI',Tahoma,sans-serif;padding:24px;color:#1f2937}h2{color:#b3151d;margin:0 0 2px}
@@ -1262,7 +1262,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
       <div style="font-size:12px;color:#6b7280">ราคารวมติดตั้ง · ยังไม่ใช่เอกสารทางการ — ออกใบเสนอราคาจริงที่เมนูใบเสนอราคา</div>
       <table><thead><tr><th>#</th><th>รายการ</th><th class="r">จำนวน</th><th class="r">ราคา/ชุด</th><th class="r">รวม</th></tr></thead>
       <tbody>${rows}${svcRows}</tbody>
-      <tfoot><tr class="t"><td colspan="4" class="r">${svcResult.total > 0 ? "รวมค่าสินค้า/งาน" : "รวมทั้งสิ้น"}</td><td class="r">฿${baht(quoteTotal)}</td></tr>${grandRow}</tfoot></table>
+      <tfoot><tr class="t"><td colspan="4" class="r">${svcResult.total > 0 ? "รวมค่าสินค้า/งาน" : "รวมทั้งสิ้น"}</td><td class="r">${baht(quoteTotal)} บาท</td></tr>${grandRow}</tfoot></table>
       <div class="note">คิดโดยเครื่องคิดราคา R4.0 (ต้นทุนจริง × กำไร) · ${new Date().toLocaleDateString("th-TH")}</div>
       <script>window.print()</script></body></html>`;
     const win = window.open("", "_blank");
@@ -1356,7 +1356,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
           </div>
           <div className="grid md:grid-cols-2 gap-4 text-sm">
             <div>
-              <div className="text-xs font-semibold text-ink-3 mb-1.5">ราคาอลูมิเนียม (฿/กก.)</div>
+              <div className="text-xs font-semibold text-ink-3 mb-1.5">ราคาอลูมิเนียม (บาท/กก.)</div>
               <div className="space-y-1.5">
                 {Object.keys(pb.ALU).map((b) => (
                   <label key={b} className="flex items-center gap-2">
@@ -1367,7 +1367,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                   </label>
                 ))}
               </div>
-              <div className="text-xs font-semibold text-ink-3 mt-3 mb-1.5">ค่าอบสี (฿/กก.)</div>
+              <div className="text-xs font-semibold text-ink-3 mt-3 mb-1.5">ค่าอบสี (บาท/กก.)</div>
               <div className="space-y-1.5">
                 {Object.keys(pb.BAKE).map((k) => (
                   <label key={k} className="flex items-center gap-2">
@@ -1379,7 +1379,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
               </div>
             </div>
             <div>
-              <div className="text-xs font-semibold text-ink-3 mb-1.5">ราคากระจก (฿/ตร.ม.) — ค้นแล้วแก้</div>
+              <div className="text-xs font-semibold text-ink-3 mb-1.5">ราคากระจก (บาท/ตร.ม.) — ค้นแล้วแก้</div>
               <input value={glassSearch} onChange={(e) => setGlassSearch(e.target.value)} placeholder="ค้นชื่อกระจก เช่น เทมเปอร์ 6"
                 className="w-full glass-soft rounded-lg px-3 py-2 mb-2 outline-none" />
               <div className="max-h-64 overflow-y-auto space-y-1.5 pr-1">
@@ -1621,7 +1621,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                   (ไม่งั้นค่าของหายเงียบ = เสนอราคาต่ำกว่าจริง) ระบบยังใช้ราคาเดิมไปก่อน */}
               {(result as any)?.hwMissing?.length > 0 && (
                 <div className="mt-2 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                  ⚠ อุปกรณ์ {(result as any).hwMissing.length} รายการยังไม่มีราคาในสโตร์ — รายการที่มีราคาสำรองในสูตรจะใช้ราคานั้นไปก่อน ส่วนที่ไม่มีเลยจะคิดเป็น ฿0 (ค่าของต่ำกว่าจริง)
+                  ⚠ อุปกรณ์ {(result as any).hwMissing.length} รายการยังไม่มีราคาในสโตร์ — รายการที่มีราคาสำรองในสูตรจะใช้ราคานั้นไปก่อน ส่วนที่ไม่มีเลยจะคิดเป็น 0 บาท (ค่าของต่ำกว่าจริง)
                   <div className="mt-1 font-mono text-[10px] leading-relaxed">
                     {(result as any).hwMissing.map((m: any) => `${m.sku || "ไม่มีรหัส"} ${m.name}`).join(" · ")}
                   </div>
@@ -1870,11 +1870,11 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                       {laborMode === "mfg" ? "✓ " : ""}ขายผลิตอย่างเดียว
                     </div>
                     {/* รวมบานย่อย (ผสมบาน) เฉพาะตอนโหมดนี้ถูกเลือก — ยอดบานย่อยคิดตาม laborMode ปัจจุบัน */}
-                    <div className={"font-bold leading-tight " + (laborMode === "mfg" ? "text-3xl" : "text-2xl text-brand-dark")}>฿{baht(result.sell.mfgOnlyNet + (laborMode === "mfg" ? subSellAll : 0))}</div>
+                    <div className={"font-bold leading-tight " + (laborMode === "mfg" ? "text-3xl" : "text-2xl text-brand-dark")}>{baht(result.sell.mfgOnlyNet + (laborMode === "mfg" ? subSellAll : 0))} บาท</div>
                     <div className={"text-[11px] mt-0.5 " + (laborMode === "mfg" ? "text-red-100" : "text-ink-3")}>
                       ขายส่ง · ไม่ไปติดตั้ง
                       {result.sell.wholesalePct > 0 && (
-                        <> · <span className="line-through opacity-70">฿{baht(result.sell.mfgOnly)}</span> ลด {result.sell.wholesalePct}%</>
+                        <> · <span className="line-through opacity-70">{baht(result.sell.mfgOnly)} บาท</span> ลด {result.sell.wholesalePct}%</>
                       )}
                     </div>
                   </button>
@@ -1887,9 +1887,9 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                       {laborMode === "all" ? "✓ " : ""}ขาย + ติดตั้ง
                     </div>
                     {/* รวมบานย่อย (ผสมบาน) ในราคาหัวการ์ด — เจ้าของ 29 ต.ค.69 "กดเพิ่มแล้วไม่ไปเพิ่มในราคา" */}
-                    <div className={"font-bold leading-tight " + (laborMode === "all" ? "text-3xl" : "text-2xl text-brand-dark")}>฿{baht(result.sell.withInstall + (laborMode === "all" ? subSellAll : 0))}</div>
+                    <div className={"font-bold leading-tight " + (laborMode === "all" ? "text-3xl" : "text-2xl text-brand-dark")}>{baht(result.sell.withInstall + (laborMode === "all" ? subSellAll : 0))} บาท</div>
                     {subLinesAll.length > 0 && laborMode === "all" && (
-                      <div className={"text-[11px] " + (laborMode === "all" ? "text-red-100" : "text-ink-3")}>บานหลัก ฿{baht(result.sell.withInstall)} + บานย่อย {subLinesAll.length} บาน ฿{baht(subSellAll)}</div>
+                      <div className={"text-[11px] " + (laborMode === "all" ? "text-red-100" : "text-ink-3")}>บานหลัก {baht(result.sell.withInstall)} บาท + บานย่อย {subLinesAll.length} บาน {baht(subSellAll)} บาท</div>
                     )}
                     {/* 30 ต.ค.69: result.aluKg = กก.ที่เข้ากองอบสี (สีขาว = 0) ไม่ใช่น้ำหนักอลูจริง → การ์ดโชว์ "อลู 0 กก." ทั้งที่บานหนัก 54 กก. · ใช้ weight.alu (ความยาวตัดจริง × กก./ม.) */}
                     <div className={"text-[11px] mt-0.5 " + (laborMode === "all" ? "text-red-100" : "text-ink-3")}>พื้นที่ {result.input.area} ตร.ม. · อลู {baht((result as any).weight?.alu ?? result.aluKg)} กก.</div>
@@ -1922,7 +1922,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                           {Array.isArray((result as any).sellModel?.parts) ? <span className="text-ink-3"> (เป้าตาราง {(result as any).sellModel.parts.join("/")}%)</span> : null}
                           {/* สีสต็อก: ค่าสีที่เพิ่มจากสีขาว ขาย × 1.6 (เจ้าของเคาะ 15 ต.ค.69) — บอกให้เห็นว่าก้อนนี้ไม่ได้ผ่านกำไรสุทธิเต็ม */}
                           {(result as any).sellModel?.colourExtra ? (
-                            <span className="block text-ink-3">ค่าสีสต็อกที่เพิ่มจากสีขาว ทุน ฿{baht((result as any).sellModel.colourExtra.cost)} × {(result as any).sellModel.colourExtra.mult} = ขาย ฿{baht((result as any).sellModel.colourExtra.sell)} (ไม่ผ่านกำไรสุทธิ · ส่วนอื่นยังตามเป้า)</span>
+                            <span className="block text-ink-3">ค่าสีสต็อกที่เพิ่มจากสีขาว ทุน {baht((result as any).sellModel.colourExtra.cost)} บาท × {(result as any).sellModel.colourExtra.mult} = ขาย {baht((result as any).sellModel.colourExtra.sell)} บาท (ไม่ผ่านกำไรสุทธิ · ส่วนอื่นยังตามเป้า)</span>
                           ) : null}
                         </div>
                       );
@@ -1948,8 +1948,8 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                       return (
                         <div key={label} className={"rounded-xl border px-3 py-2 " + (howOpen === label ? "border-brand bg-brand/5" : "border-line bg-ground/40")}>
                           <div className="text-[11px] font-medium text-ink-3">{label}</div>
-                          {cost != null && <div className="text-xs text-ink-3 tabular-nums">ทุน ฿{baht(cost)}</div>}
-                          <div className="text-xl font-bold text-brand-dark tabular-nums leading-tight">฿{baht(sell)}</div>
+                          {cost != null && <div className="text-xs text-ink-3 tabular-nums">ทุน {baht(cost)} บาท</div>}
+                          <div className="text-xl font-bold text-brand-dark tabular-nums leading-tight">{baht(sell)} บาท</div>
                           <div className="flex items-center gap-1 mt-1.5">
                             <button type="button" aria-label={`ลดกำไร ${label}`}
                               onClick={() => setPct(String(Math.max(0, (Number(pct) || 0) - 5)))}
@@ -1971,7 +1971,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                     </div>
 
                     {/* ── กางวิธีคิดทีละก้อน (เจ้าของสั่ง 20 ส.ค.69) ────────────────────────
-                        ค่าของ = กางรายการของที่ใช้ + รหัสสโตร์ · ตัวไหนสโตร์ยังไม่ตั้งราคา ขึ้น ฿0 ให้เห็นว่าขาด
+                        ค่าของ = กางรายการของที่ใช้ + รหัสสโตร์ · ตัวไหนสโตร์ยังไม่ตั้งราคา ขึ้น 0 บาท ให้เห็นว่าขาด
                         ค่าผลิต/ค่าติดตั้ง = กางสูตรค่าแรงจากชีต "ค่าแรง" (ฐาน + เรต × ตร.ม.) */}
                     {howOpen === "ค่าของ" && (
                       <div className="mt-2 rounded-xl border border-line bg-white/70 p-3">
@@ -1987,7 +1987,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                               <tr className="text-left text-ink-3 border-b border-line">
                                 <th className="py-1">รายการ</th><th>รหัสสโตร์</th>
                                 <th className="text-right">จำนวน</th>
-                                <th className="text-right">฿/หน่วย</th><th className="text-right">รวม</th>
+                                <th className="text-right">บาท/หน่วย</th><th className="text-right">รวม</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -2004,9 +2004,9 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                                     <td className="font-mono text-[11px] text-ink-3">{code || "—"}</td>
                                     <td className="text-right tabular-nums">{r2(l.qty)} {l.unit || ""}{poolTot > 0 && <span className="text-[10px] text-ink-3"> (รหัสนี้รวม {r2(poolTot)} เส้น)</span>}</td>
                                     <td className={"text-right tabular-nums " + (noPrice ? "text-red-600 font-bold" : "")}>
-                                      ฿{baht(lineUnitCost(l))}
+                                      {baht(lineUnitCost(l))} บาท
                                     </td>
-                                    <td className="text-right tabular-nums">฿{baht(lineCost(l))}</td>
+                                    <td className="text-right tabular-nums">{baht(lineCost(l))} บาท</td>
                                   </tr>
                                 );
                               })}
@@ -2014,7 +2014,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                               {subLinesAll.map((sb, si) => (sb.lines?.length ? [
                                 <tr key={`sbh${si}`} className="bg-sky-50">
                                   <td className="py-1 font-semibold text-sky-900" colSpan={4}>บานย่อย: {sb.desc}</td>
-                                  <td className="text-right tabular-nums font-semibold text-sky-900">฿{baht(sb.cost)}</td>
+                                  <td className="text-right tabular-nums font-semibold text-sky-900">{baht(sb.cost)} บาท</td>
                                 </tr>,
                                 ...sb.lines.map((l: any, i: number) => {
                                   const code = l.sku || l.code || "";
@@ -2024,8 +2024,8 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                                       <td className="py-1 pr-2 pl-3">{l.name}{lineTag(l) && <span className="text-[11px] text-violet-700">{lineTag(l)}</span>}</td>
                                       <td className="font-mono text-[11px] text-ink-3">{code || "—"}</td>
                                       <td className="text-right tabular-nums">{r2(l.qty)} {l.unit || ""}</td>
-                                      <td className={"text-right tabular-nums " + (noPrice ? "text-red-600 font-bold" : "")}>฿{baht(lineUnitCost(l))}</td>
-                                      <td className="text-right tabular-nums">฿{baht(lineCost(l))}</td>
+                                      <td className={"text-right tabular-nums " + (noPrice ? "text-red-600 font-bold" : "")}>{baht(lineUnitCost(l))} บาท</td>
+                                      <td className="text-right tabular-nums">{baht(lineCost(l))} บาท</td>
                                     </tr>
                                   );
                                 }),
@@ -2034,7 +2034,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                             <tfoot>
                               <tr className="border-t-2 border-line font-bold">
                                 <td className="py-1" colSpan={4}>ทุนรวม{subMatCost > 0 ? " (บานหลัก + บานย่อย)" : ""}</td>
-                                <td className="text-right tabular-nums">฿{baht(result.cost.total + subMatCost)}</td>
+                                <td className="text-right tabular-nums">{baht(result.cost.total + subMatCost)} บาท</td>
                               </tr>
                             </tfoot>
                           </table>
@@ -2046,7 +2046,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                         )}
                         {(result as any)?.hwMissing?.length > 0 && (
                           <p className="text-[11px] text-red-700 mt-1.5">
-                            ⚠ แถวสีเหลือง = ยังไม่มีราคาในสโตร์ คิดเป็น ฿0 (ค่าของต่ำกว่าจริง) — ไปตั้งราคาที่หน้าสโตร์
+                            ⚠ แถวสีเหลือง = ยังไม่มีราคาในสโตร์ คิดเป็น 0 บาท (ค่าของต่ำกว่าจริง) — ไปตั้งราคาที่หน้าสโตร์
                           </p>
                         )}
                       </div>
@@ -2069,26 +2069,26 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                           <div>ค่าแรงของรุ่นนี้มาจากชีต &quot;ค่าแรง&quot; ในไฟล์ถอดทุน — หัวข้อ <b>{lc.key || "—"}</b></div>
                           {lc.mode === "baseOnly" ? (
                             <div className="tabular-nums">
-                              ฐาน ฿{baht(base)}{lc.mult > 1 ? ` × ${lc.mult} บาน` : ""} = <b>฿{baht(raw)}</b>
+                              ฐาน {baht(base)} บาท{lc.mult > 1 ? ` × ${lc.mult} บาน` : ""} = <b>{baht(raw)} บาท</b>
                               <span className="text-ink-3"> (รุ่นนี้คิดฐานอย่างเดียว ไม่บวกตามพื้นที่)</span>
                             </div>
                           ) : (
                             <div className="tabular-nums">
-                              (ฐาน ฿{baht(base)}{lc.mode === "perLeaf" ? ` × ${lc.mult} ${unit}` : ""} + ฿{baht(rate)}/ตร.ม. × {r2(lc.area)} ตร.ม.)
-                              {lc.mode !== "perLeaf" && lc.mult > 1 ? ` × ${lc.mult} บาน` : ""} = <b>฿{baht(raw)}</b>
+                              (ฐาน {baht(base)} บาท{lc.mode === "perLeaf" ? ` × ${lc.mult} ${unit}` : ""} + {baht(rate)} บาท/ตร.ม. × {r2(lc.area)} ตร.ม.)
+                              {lc.mode !== "perLeaf" && lc.mult > 1 ? ` × ${lc.mult} บาน` : ""} = <b>{baht(raw)} บาท</b>
                             </div>
                           )}
                           {ref ? (
                             <div className="tabular-nums">
-                              ราคาขายตาม ★ ตาราง R4.1 — แถว {ref.w}×{ref.h}{ref.p > 1 ? ` ${ref.p} บาน` : ""}{ref.vk ? ` · ${ref.vk}` : ""}: ทุน ฿{baht(ref.cost)} → ขาย ฿{baht(ref.sell)}
+                              ราคาขายตาม ★ ตาราง R4.1 — แถว {ref.w}×{ref.h}{ref.p > 1 ? ` ${ref.p} บาน` : ""}{ref.vk ? ` · ${ref.vk}` : ""}: ทุน {baht(ref.cost)} บาท → ขาย {baht(ref.sell)} บาท
                               {Math.abs(ref.cost - raw) <= 1
-                                ? <> (ขนาดตรงตาราง) = <b className="text-brand-dark">฿{baht(sell)}</b></>
-                                : <> (กำไร {Math.round((1 - ref.cost / ref.sell) * 100)}%) → ขนาดนี้ใช้กำไรเท่าแถวนั้น: ทุน ฿{baht(raw)} = <b className="text-brand-dark">฿{baht(sell)}</b></>}
+                                ? <> (ขนาดตรงตาราง) = <b className="text-brand-dark">{baht(sell)} บาท</b></>
+                                : <> (กำไร {Math.round((1 - ref.cost / ref.sell) * 100)}%) → ขนาดนี้ใช้กำไรเท่าแถวนั้น: ทุน {baht(raw)} บาท = <b className="text-brand-dark">{baht(sell)} บาท</b></>}
                               <span className="text-ink-3"> (กำไร {pct}%)</span>
                             </div>
                           ) : (
                             <div className="tabular-nums">
-                              กำไร {pct}% = <b className="text-brand-dark">฿{baht(sell)}</b>
+                              กำไร {pct}% = <b className="text-brand-dark">{baht(sell)} บาท</b>
                             </div>
                           )}
                           <p className="text-[11px] text-ink-3">
@@ -2099,8 +2099,8 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                     })()}
 
                     <p className="text-[11px] text-ink-3 mt-2">
-                      ราคาขายพร้อมติดตั้ง = ค่าของ + ค่าผลิต + ค่าติดตั้ง = <b className="tabular-nums">฿{baht(result.sell.withInstall)}</b>
-                      {subLinesAll.length > 0 && <> + บานย่อย <b className="tabular-nums">฿{baht(subSellAll)}</b> = <b className="tabular-nums">฿{baht(result.sell.withInstall + subSellAll)}</b></>}
+                      ราคาขายพร้อมติดตั้ง = ค่าของ + ค่าผลิต + ค่าติดตั้ง = <b className="tabular-nums">{baht(result.sell.withInstall)} บาท</b>
+                      {subLinesAll.length > 0 && <> + บานย่อย <b className="tabular-nums">{baht(subSellAll)} บาท</b> = <b className="tabular-nums">{baht(result.sell.withInstall + subSellAll)} บาท</b></>}
                       {" "}· กำไร % = (ขาย − ทุน) ÷ ขาย แบบตาราง R4.1 — เช่น ทุน 100 ขาย 270 = กำไร 63%
                     </p>
                     {/* กำไรสุทธิตามตาราง R4.1 เป็นตัวตัดสินราคา (เจ้าของเคาะ 13 ต.ค.69) — บอกที่มาของ % ค่าของ */}
@@ -2115,9 +2115,9 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                   <div className="col-span-2 rounded-2xl px-5 py-3 bg-slate-50 border border-slate-200">
                     <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-slate-700">
                       <span className="font-semibold text-slate-800">ค่าแรง (ทุน)</span>
-                      <span>ผลิต <b className="tabular-nums">฿{baht(result.labor.prod)}</b></span>
-                      <span>ติดตั้ง <b className="tabular-nums">฿{baht(result.labor.install)}</b></span>
-                      <span>รวม <b className="tabular-nums">฿{baht(result.labor.prod + result.labor.install)}</b></span>
+                      <span>ผลิต <b className="tabular-nums">{baht(result.labor.prod)} บาท</b></span>
+                      <span>ติดตั้ง <b className="tabular-nums">{baht(result.labor.install)} บาท</b></span>
+                      <span>รวม <b className="tabular-nums">{baht(result.labor.prod + result.labor.install)} บาท</b></span>
                     </div>
                     <p className="text-[11px] text-slate-500 mt-1">
                       {laborMode === "mfg"
@@ -2152,8 +2152,8 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                   {showCost && (
                     <div className="col-span-2 rounded-2xl px-5 py-4 bg-amber-50 border border-amber-200">
                       <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
-                        <span>ทุนรวม (ของ + ค่าแรง) <b className="tabular-nums">฿{baht(fullCost)}</b></span>
-                        <span className="text-emerald-700">กำไร <b className="tabular-nums">฿{baht(stickyPrice - fullCost)}</b></span>
+                        <span>ทุนรวม (ของ + ค่าแรง) <b className="tabular-nums">{baht(fullCost)} บาท</b></span>
+                        <span className="text-emerald-700">กำไร <b className="tabular-nums">{baht(stickyPrice - fullCost)} บาท</b></span>
                         <span className="text-ink-3 text-xs">อลู {baht(result.cost.alu)} · สี {baht(result.cost.bake)} · กระจก {baht(result.cost.glass)} · อุปกรณ์ {baht(result.cost.hardware)} · สิ้นเปลือง {baht(result.cost.consum)} · ค่าแรงผลิต {baht(result.labor.prod)} · ติดตั้ง {baht(result.labor.install)}</span>
                       </div>
                       <button onClick={() => setLinesOpen((v) => !v)} className="press text-xs font-semibold text-brand-dark mt-2">
@@ -2162,7 +2162,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                       {linesOpen && (
                         <div className="mt-2 max-h-56 overflow-y-auto">
                           <table className="w-full text-xs">
-                            <thead><tr className="text-left text-ink-3"><th className="py-1">รายการ</th><th className="text-right">จำนวน</th><th className="text-right">฿</th></tr></thead>
+                            <thead><tr className="text-left text-ink-3"><th className="py-1">รายการ</th><th className="text-right">จำนวน</th><th className="text-right">บาท</th></tr></thead>
                             <tbody>
                               {result.lines.map((l: any, i: number) => (
                                 <tr key={i} className={"border-t border-black/5" + (l.est ? " bg-violet-50" : "")}>
@@ -2198,7 +2198,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                 <div className="mt-3 rounded-xl px-4 py-2.5 bg-sky-50 border border-sky-200 text-sm text-sky-900">
                   <div className="flex items-center justify-between font-semibold">
                     <span>+ รายการเสริม {(result as any).subLines.length} รายการ</span>
-                    <span className="tabular-nums">+฿{baht((result as any).subSell || 0)}</span>
+                    <span className="tabular-nums">+{baht((result as any).subSell || 0)} บาท</span>
                   </div>
                   <ul className="mt-1.5 space-y-0.5 text-xs text-sky-800">
                     {(result as any).subLines.map((l: any, i: number) => (
@@ -2207,16 +2207,16 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                           {l.desc}
                           {/* ทุนจริงของบานย่อย (ของ + ค่าแรง) — โชว์เมื่อเปิด 💰 ดูทุน */}
                           {showCost && l.lines?.length > 0 && (
-                            <span className="block text-[11px] text-sky-700/80 tabular-nums">ทุนของ ฿{baht(l.cost)} · ค่าแรง ฿{baht(l.labor)} · ของ {l.lines.length} รายการ</span>
+                            <span className="block text-[11px] text-sky-700/80 tabular-nums">ทุนของ {baht(l.cost)} บาท · ค่าแรง {baht(l.labor)} บาท · ของ {l.lines.length} รายการ</span>
                           )}
                         </span>
-                        <span className="tabular-nums shrink-0">฿{baht(l.amt)}</span>
+                        <span className="tabular-nums shrink-0">{baht(l.amt)} บาท</span>
                       </li>
                     ))}
                   </ul>
                   <div className="mt-1.5 pt-1.5 border-t border-sky-200 flex items-center justify-between font-bold">
                     <span>รวมทั้งหมด (หลัก + เสริม)</span>
-                    <span className="tabular-nums">฿{baht((laborMode === "mfg" ? result.sell.mfgOnlyNet : result.sell.withInstall) + ((result as any).subSell || 0))}</span>
+                    <span className="tabular-nums">{baht((laborMode === "mfg" ? result.sell.mfgOnlyNet : result.sell.withInstall) + ((result as any).subSell || 0))} บาท</span>
                   </div>
                 </div>
               )}
@@ -2232,7 +2232,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                   <>
                     {addonLines.length > 0 && (
                       <div className="mt-3 rounded-xl px-4 py-2.5 bg-emerald-50 border border-emerald-200 text-sm text-emerald-800">
-                        <div className="font-semibold">ของเสริม +฿{baht(addonSum)} ({addonLines.length} รายการ)</div>
+                        <div className="font-semibold">ของเสริม +{baht(addonSum)} บาท ({addonLines.length} รายการ)</div>
                         {/* รายการทีละบรรทัด + ทุน (เจ้าของสั่ง 5 ก.ย.69 "มอเตอร์อยากให้แสดงราคาทุนด้วย แค่ไม่เอามาคิด")
                             📌 = ราคาขายฟิกตามชีต "ราคาออโต้" ช่องขายขั้นต่ำ — กด +/- กำไร ราคาไม่ขยับ */}
                         <ul className="mt-1.5 space-y-0.5">
@@ -2243,8 +2243,8 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                                 {l.name}
                               </span>
                               <span className="shrink-0 tabular-nums">
-                                {showCost && l.cost != null && <span className="text-emerald-700/70">ทุน ฿{baht(l.cost)} · </span>}
-                                ฿{baht(aSell(l))}
+                                {showCost && l.cost != null && <span className="text-emerald-700/70">ทุน {baht(l.cost)} บาท · </span>}
+                                {baht(aSell(l))} บาท
                               </span>
                             </li>
                           ))}
@@ -2254,16 +2254,16 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                           <div className="mt-2 pt-2 border-t border-emerald-200/70">
                             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[13px]">
                               <span className="font-semibold">มอเตอร์ / ชุดออโต้</span>
-                              <span className="tabular-nums">ทุน ฿{baht((result as any).motor.cost)}</span>
-                              <span className="tabular-nums">ขาย ฿{baht((result as any).motor.sell)}</span>
-                              <span className="tabular-nums">กำไร ฿{baht((result as any).motor.profit)}{(result as any).motor.pct != null ? ` (${Math.round((result as any).motor.pct)}%)` : ""}</span>
-                              {(result as any).motor.edited && <span className="text-[11px] text-amber-700">แก้ราคาเอง · ตามไฟล์ ฿{baht((result as any).motor.fileSell)}</span>}
+                              <span className="tabular-nums">ทุน {baht((result as any).motor.cost)} บาท</span>
+                              <span className="tabular-nums">ขาย {baht((result as any).motor.sell)} บาท</span>
+                              <span className="tabular-nums">กำไร {baht((result as any).motor.profit)} บาท{(result as any).motor.pct != null ? ` (${Math.round((result as any).motor.pct)}%)` : ""}</span>
+                              {(result as any).motor.edited && <span className="text-[11px] text-amber-700">แก้ราคาเอง · ตามไฟล์ {baht((result as any).motor.fileSell)} บาท</span>}
                             </div>
                             <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                              <label className="flex items-center gap-1 text-[12px]">ราคาขายมอเตอร์ ฿
+                              <label className="flex items-center gap-1 text-[12px]">ราคาขายมอเตอร์
                                 <input value={motorSell} onChange={(e) => setMotorSell(e.target.value.replace(/[^0-9.]/g, ""))} inputMode="decimal"
                                   placeholder={String(Math.round((result as any).motor.fileSell || 0))}
-                                  className="w-24 rounded-lg border border-emerald-300 bg-white px-2 py-1 text-right tabular-nums outline-none" />
+                                  className="w-24 rounded-lg border border-emerald-300 bg-white px-2 py-1 text-right tabular-nums outline-none" /> บาท
                               </label>
                               <label className="flex items-center gap-1 text-[12px]">กำไรมอเตอร์
                                 <input value={motorPct} onChange={(e) => setMotorPct(e.target.value.replace(/[^0-9.-]/g, ""))} inputMode="decimal" disabled={motorSell !== ""}
@@ -2383,7 +2383,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                     <span className="flex-1 min-w-0 truncate font-medium text-ink-1" title={it.name}>
                       {it.name}{isEditing ? " ← กำลังแก้" : ""}
                     </span>
-                    <span className="tabular-nums text-ink-2 shrink-0">฿{baht(it.perUnit * it.qty)}</span>
+                    <span className="tabular-nums text-ink-2 shrink-0">{baht(it.perUnit * it.qty)} บาท</span>
                     {hasRecipe ? (
                       <button onClick={() => editQuoteItem(it)} title="แก้ข้อนี้ (โหลดขนาด/option ที่บันทึกไว้กลับเข้าเครื่องคิด)"
                         className="press px-1.5 py-1 rounded hover:bg-white">✏️</button>
@@ -2461,7 +2461,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
             <div>
               <button onClick={() => setSvcOpen((v) => !v)} className="press text-sm font-semibold text-brand-dark inline-flex items-center gap-1.5">
                 <Icon name="plus" size={15} /> ค่าบริการเพิ่มเติม (ทั้งใบ) {svcOpen ? "▲" : "▼"}
-                {svcResult.total > 0 && <span className="text-xs font-normal text-ink-3">· ฿{baht(svcResult.total)}</span>}
+                {svcResult.total > 0 && <span className="text-xs font-normal text-ink-3">· {baht(svcResult.total)} บาท</span>}
               </button>
               {svcOpen && (
                 <div className="mt-2 rounded-xl border border-brand/15 bg-black/[0.02] p-3 space-y-3">
@@ -2483,7 +2483,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
               )}
             </div>
             {showCost && quote.length > 0 && (
-              <p className="text-xs text-ink-3">ทุนรวม ฿{baht(quoteCost)} · กำไรรวม ฿{baht(quoteTotal - quoteCost)}</p>
+              <p className="text-xs text-ink-3">ทุนรวม {baht(quoteCost)} บาท · กำไรรวม {baht(quoteTotal - quoteCost)} บาท</p>
             )}
             <p className="text-[11px] text-ink-3">แก้ชื่อ/รายละเอียด/จำนวน/ราคา ได้ในฟอร์มด้านล่างเลย · กด &quot;ออกใบเสนอราคา&quot; เพื่อบันทึกเข้าระบบ (ออกเลขเอกสาร)</p>
           </Card>
@@ -2527,7 +2527,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
             <button onClick={() => setSvcOpen((v) => !v)}
               className="press text-sm font-semibold text-brand-dark inline-flex items-center gap-1.5">
               <Icon name="plus" size={15} /> ค่าบริการเพิ่มเติม (ทั้งใบ) {svcOpen ? "▲" : "▼"}
-              {svcResult.total > 0 && <span className="text-xs font-normal text-ink-3">· ฿{baht(svcResult.total)}</span>}
+              {svcResult.total > 0 && <span className="text-xs font-normal text-ink-3">· {baht(svcResult.total)} บาท</span>}
             </button>
             {svcOpen && (
               <div className="mt-2 rounded-xl border border-brand/15 bg-black/[0.02] p-3 space-y-3">
@@ -2545,7 +2545,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                   <Field label="รื้อหลังคาเดิม (จุด)" value={String(svc.demoRoofPts || "")} onChange={(v) => setSvc((s) => ({ ...s, demoRoofPts: Number(v) || 0 }))} />
                 </div>
                 {svcResult.waivedNote && <p className="text-[11px] text-emerald-700 bg-emerald-50 rounded-lg px-3 py-1.5">✓ {svcResult.waivedNote}</p>}
-                {svcResult.total > 0 && <p className="text-sm font-semibold text-brand-dark">รวมค่าบริการ ฿{baht(svcResult.total)}</p>}
+                {svcResult.total > 0 && <p className="text-sm font-semibold text-brand-dark">รวมค่าบริการ {baht(svcResult.total)} บาท</p>}
               </div>
             )}
           </div>
@@ -2588,26 +2588,26 @@ export default function Calculator40Client({ customers = [], priceOverride, line
               <tfoot>
                 <tr className={svcResult.total > 0 ? "font-medium text-ink-2" : "font-bold"}>
                   <td className="px-3 py-2.5" colSpan={3}>{svcResult.total > 0 ? "รวมค่าสินค้า/งาน (รวมติดตั้ง)" : "รวมทั้งสิ้น (รวมติดตั้ง)"}</td>
-                  <td className="px-3 py-2.5 text-right tabular-nums">฿{baht(quoteTotal)}</td>
+                  <td className="px-3 py-2.5 text-right tabular-nums">{baht(quoteTotal)} บาท</td>
                   <td></td>
                 </tr>
                 {svcResult.lines.filter((l) => l.amount > 0).map((l, idx) => (
                   <tr key={idx} className="text-xs text-ink-2">
                     <td className="px-3 py-1" colSpan={3}>+ {l.name}</td>
-                    <td className="px-3 py-1 text-right tabular-nums">฿{baht(l.amount)}</td>
+                    <td className="px-3 py-1 text-right tabular-nums">{baht(l.amount)} บาท</td>
                     <td></td>
                   </tr>
                 ))}
                 {svcResult.total > 0 && (
                   <tr className="font-bold border-t border-black/10">
                     <td className="px-3 py-2.5" colSpan={3}>รวมทั้งสิ้น (สินค้า + บริการ)</td>
-                    <td className="px-3 py-2.5 text-right text-brand-dark tabular-nums">฿{baht(grandTotal)}</td>
+                    <td className="px-3 py-2.5 text-right text-brand-dark tabular-nums">{baht(grandTotal)} บาท</td>
                     <td></td>
                   </tr>
                 )}
                 {showCost && (
                   <tr className="text-xs text-ink-3">
-                    <td className="px-3 pb-2" colSpan={3}>ทุนรวม ฿{baht(quoteCost)} · กำไรรวม ฿{baht(quoteTotal - quoteCost)}</td>
+                    <td className="px-3 pb-2" colSpan={3}>ทุนรวม {baht(quoteCost)} บาท · กำไรรวม {baht(quoteTotal - quoteCost)} บาท</td>
                     <td colSpan={2}></td>
                   </tr>
                 )}
@@ -2637,12 +2637,12 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                         <span className="ml-1.5 text-ink-3/80">({laborMode === "mfg" ? "ผลิตอย่างเดียว" : "ผลิต+ติดตั้ง"})</span>
                       </div>
                       <div className="flex items-baseline gap-2 flex-wrap">
-                        <span className="text-2xl font-bold text-brand-dark tabular-nums leading-tight">฿{baht(stickyPrice)}</span>
+                        <span className="text-2xl font-bold text-brand-dark tabular-nums leading-tight">{baht(stickyPrice)} บาท</span>
                         <span className="text-[11px] text-ink-3">/ ชุด</span>
                         {/* ห้องกระจก (G6) ไม่มีทุนรายตัว (cost.total = 0) → ไม่โชว์ กันขึ้นกำไร = ราคาเต็ม */}
                         {showCost && result.cost.total > 0 && (
                           <span className="text-[11px] text-ink-3 tabular-nums">
-                            · ทุน ฿{baht(fullCost)} · กำไร ฿{baht(stickyPrice - fullCost)}
+                            · ทุน {baht(fullCost)} บาท · กำไร {baht(stickyPrice - fullCost)} บาท
                           </span>
                         )}
                       </div>
@@ -2650,7 +2650,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                     {quote.length > 0 && (
                       <div className="text-right shrink-0 border-l border-black/10 pl-3">
                         <div className="text-[11px] text-ink-3">รวมในใบ ({quote.length})</div>
-                        <div className="text-sm font-bold text-ink-1 tabular-nums">฿{baht(grandTotal)}</div>
+                        <div className="text-sm font-bold text-ink-1 tabular-nums">{baht(grandTotal)} บาท</div>
                       </div>
                     )}
                     <button type="button" onClick={() => toggleSticky(false)} aria-label="ปิดแถบราคา"
@@ -2660,7 +2660,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
               ) : (
                 <button type="button" onClick={() => toggleSticky(true)} aria-label="ดูราคาปัจจุบัน"
                   className="press pointer-events-auto mx-auto flex items-center gap-2 rounded-full border border-brand/20 bg-white/90 backdrop-blur-md shadow-lg px-4 py-2">
-                  <span className="text-sm font-bold text-brand-dark tabular-nums">฿{baht(stickyPrice)}</span>
+                  <span className="text-sm font-bold text-brand-dark tabular-nums">{baht(stickyPrice)} บาท</span>
                   <span className="text-[11px] text-ink-3">ดูราคา ▲</span>
                 </button>
               )}

@@ -148,7 +148,7 @@ export async function POST(req: Request) {
       price_per_kg: isWeight ? pricePerKg : null,
       unit_cost: unitCost,
       supplier: body.supplier ?? "",
-      note: brandLocked ? `ราคาเริ่มต้น — เรตแบรนด์ ${ALU_BRAND_LABEL[aluBrand]} · ${lockedColor} ${pricePerKg} ฿/กก.` : "ราคาเริ่มต้น",
+      note: brandLocked ? `ราคาเริ่มต้น — เรตแบรนด์ ${ALU_BRAND_LABEL[aluBrand]} · ${lockedColor} ${pricePerKg} บาท/กก.` : "ราคาเริ่มต้น",
       created_by: profile.id,
     });
     if (phErr) priceWarn = "บันทึกวัสดุแล้ว แต่ประวัติราคาไม่ถูกบันทึก: " + phErr.message;

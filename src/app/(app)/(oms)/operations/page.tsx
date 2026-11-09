@@ -106,7 +106,7 @@ function FollowupSection({ fu }: { fu: Ops["followup"] }) {
                   <div className="h-full rounded-lg bg-violet-400/50 group-hover:bg-violet-400/70 transition-all" style={{ width: `${Math.round((m.count / maxCount) * 100)}%` }} />
                   <span className="absolute left-2 top-0 h-6 flex items-center text-[12px] font-semibold text-white tnum">{m.count}</span>
                 </div>
-                <span className="text-[11px] w-24 text-right shrink-0 tabular-nums" style={{ color: "var(--t-low)" }}>{m.net != null ? `฿${baht(m.net)}` : ""}</span>
+                <span className="text-[11px] w-24 text-right shrink-0 tabular-nums" style={{ color: "var(--t-low)" }}>{m.net != null ? `${baht(m.net)} บาท` : ""}</span>
                 <ChevronRight size={14} className="text-white/30 group-hover:text-white/70 shrink-0" />
               </a>
             ))}
@@ -250,7 +250,7 @@ function CompletedSection({ count }: { count: number }) {
                         {r.customer_area ? ` · ${r.customer_area}` : ""}
                       </div>
                     </div>
-                    {r.net != null && <span className="text-[12px] tnum shrink-0" style={{ color: "var(--t-mid)" }}>฿{baht(r.net)}</span>}
+                    {r.net != null && <span className="text-[12px] tnum shrink-0" style={{ color: "var(--t-mid)" }}>{baht(r.net)} บาท</span>}
                     <ChevronRight size={14} className="text-white/30 shrink-0" />
                   </button>
                 ))}

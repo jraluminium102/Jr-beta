@@ -182,7 +182,7 @@ function MovesView({ rows, canViewCost, canRelink, onRelinked }: { rows: Row[]; 
               {!g.isJob && <span className="text-[11px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-900">งานเบิก (ไม่ผูกลูกค้า)</span>}
               {g.who.size > 0 && <span className="text-[12px] text-ink-3">ผู้เบิก(ช่าง): <b className="text-ink-2">{[...g.who].join(", ")}</b></span>}
               {g.op.size > 0 && <span className="text-[12px] text-ink-3">อนุมัติ(ระบบ): <b className="text-ink-2">{[...g.op].join(", ")}</b></span>}
-              {canViewCost && <span className="ml-auto text-[13px] font-semibold text-ink-2 tabular-nums">฿{baht(g.price)}</span>}
+              {canViewCost && <span className="ml-auto text-[13px] font-semibold text-ink-2 tabular-nums">{baht(g.price)} บาท</span>}
             </div>
             {!g.isJob && canRelink && g.refText.trim() && <RelinkRow refText={g.refText} count={g.count} onDone={onRelinked} />}
             <div className="overflow-x-auto">
@@ -218,7 +218,7 @@ function MovesView({ rows, canViewCost, canRelink, onRelinked }: { rows: Row[]; 
                     <td className="px-3 py-2 font-mono text-ink-2">{r.sku || "—"}</td>
                     <td className="px-3 py-2 text-ink-1">{r.name}</td>
                     <td className="px-3 py-2 text-right tabular-nums text-emerald-700 font-semibold whitespace-nowrap">+{nqty(r.qty)} {r.unit}</td>
-                    {canViewCost && <td className="px-3 py-2 text-right tabular-nums text-ink-1">{r.price ? `฿${baht(r.price)}` : "—"}</td>}
+                    {canViewCost && <td className="px-3 py-2 text-right tabular-nums text-ink-1">{r.price ? `${baht(r.price)} บาท` : "—"}</td>}
                     <td className="px-3 py-2 text-ink-2">{r.who || "—"}</td>
                     <td className="px-3 py-2 text-ink-3 text-xs">{r.note}</td>
                   </tr>

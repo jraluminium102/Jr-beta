@@ -141,7 +141,7 @@ export default function MergePanel({ keepItem, canViewCost, canSetQty = false, o
           <div className="font-semibold text-brand-dark">{keepItem.name}</div>
           <div className="text-xs text-ink-3">
             {keepItem.sku ? `${keepItem.sku} · ` : ""}คงเหลือ {baht(keepItem.qty_on_hand)} {keepItem.unit}
-            {canViewCost ? ` · ต้นทุน ฿${baht(keepItem.unit_cost)}` : ""}
+            {canViewCost ? ` · ต้นทุน ${baht(keepItem.unit_cost)} บาท` : ""}
           </div>
           <div className="mt-1"><LinkBadges it={keepItem} /></div>
         </div>
@@ -185,7 +185,7 @@ export default function MergePanel({ keepItem, canViewCost, canSetQty = false, o
               <div className="font-semibold text-brand-dark">{remove.name}</div>
               <div className="text-xs text-ink-3">
                 {remove.sku ? `${remove.sku} · ` : ""}คงเหลือ {baht(remove.qty_on_hand)} {remove.unit}
-                {canViewCost ? ` · ต้นทุน ฿${baht(remove.unit_cost)}` : ""}
+                {canViewCost ? ` · ต้นทุน ${baht(remove.unit_cost)} บาท` : ""}
               </div>
               <div className="mt-1"><LinkBadges it={remove} /></div>
             </div>
@@ -250,7 +250,7 @@ export default function MergePanel({ keepItem, canViewCost, canSetQty = false, o
                 )}
                 {!hasRemoveQty && onlyRemovePriced && (
                   <div className="text-sm rounded-lg glass-soft px-3 py-2">
-                    <b>เติมราคา ฿{baht(removePrice)}{priceUnit}</b> ให้ตัวหลัก (ตอนนี้ยังไม่มีราคา)
+                    <b>เติมราคา {baht(removePrice)} บาท{priceUnit}</b> ให้ตัวหลัก (ตอนนี้ยังไม่มีราคา)
                     <div className="text-[11px] text-ink-3">ราคานี้จะเป็นราคาที่คิดราคา 4.0 + ใบตัด ใช้</div>
                   </div>
                 )}
@@ -260,11 +260,11 @@ export default function MergePanel({ keepItem, canViewCost, canSetQty = false, o
                     <div className="flex flex-col gap-1.5">
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input type="radio" name="pmode" checked={priceMode === "keep"} onChange={() => setPriceMode("keep")} />
-                        <span>ราคาตัวที่เก็บ <b>฿{baht(keepPrice)}{priceUnit}</b> <span className="text-[11px] text-ink-3">(ค่าเริ่มต้น)</span></span>
+                        <span>ราคาตัวที่เก็บ <b>{baht(keepPrice)} บาท{priceUnit}</b> <span className="text-[11px] text-ink-3">(ค่าเริ่มต้น)</span></span>
                       </label>
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input type="radio" name="pmode" checked={priceMode === "remove"} onChange={() => setPriceMode("remove")} />
-                        <span>ราคาตัวที่ลบ <b>฿{baht(removePrice)}{priceUnit}</b> <span className="text-[11px] text-ink-3">(เอามาทับ)</span></span>
+                        <span>ราคาตัวที่ลบ <b>{baht(removePrice)} บาท{priceUnit}</b> <span className="text-[11px] text-ink-3">(เอามาทับ)</span></span>
                       </label>
                     </div>
                   </div>

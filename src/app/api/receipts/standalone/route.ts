@@ -113,7 +113,7 @@ export async function POST(req: Request) {
     line_id: "",
   };
 
-  const itemDesc = qty > 1 ? `${itemName} (${qty} × ฿${baht(b.unit_price)})` : itemName;
+  const itemDesc = qty > 1 ? `${itemName} (${qty} × ${baht(b.unit_price)} บาท)` : itemName;
 
   const rcBase: Record<string, unknown> = {
     code,

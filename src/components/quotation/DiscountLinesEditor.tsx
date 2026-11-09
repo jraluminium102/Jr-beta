@@ -52,7 +52,7 @@ export default function DiscountLinesEditor({ subtotal, lines, onChange }: {
           className="press inline-flex items-center gap-1 text-xs font-medium text-brand-dark/80 hover:text-brand-dark border border-dashed border-gray-300 rounded-lg px-2.5 py-1.5">
           + เพิ่มส่วนลด
         </button>
-        {total > 0 && <span className="text-xs tabular-nums text-red-700 font-medium">รวมส่วนลด -฿{baht(total)}</span>}
+        {total > 0 && <span className="text-xs tabular-nums text-red-700 font-medium">รวมส่วนลด -{baht(total)} บาท</span>}
       </div>
     </div>
   );

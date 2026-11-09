@@ -90,7 +90,7 @@ export default async function ReceiptsPage({ searchParams }: { searchParams?: { 
                   {r.customer_snapshot?.job && <div className="text-xs text-ink-3">{r.customer_snapshot.job}</div>}
                   <div className="flex items-center justify-between mt-1.5 text-sm">
                     <span className="text-ink-3">{r.issue_date}</span>
-                    <span className={`font-bold ${r.is_voided ? "line-through text-ink-3" : "text-brand-dark"}`}>฿{baht(r.net)}</span>
+                    <span className={`font-bold ${r.is_voided ? "line-through text-ink-3" : "text-brand-dark"}`}>{baht(r.net)} บาท</span>
                   </div>
                 </Link>
               ))}
@@ -119,7 +119,7 @@ export default async function ReceiptsPage({ searchParams }: { searchParams?: { 
                       <div className="text-xs text-ink-3">{r.customer_snapshot?.job}</div>
                     </td>
                     <td className="text-ink-2">{r.issue_date}</td>
-                    <td className={`text-right font-semibold ${r.is_voided ? "line-through text-ink-3" : ""}`}>฿{baht(r.net)}</td>
+                    <td className={`text-right font-semibold ${r.is_voided ? "line-through text-ink-3" : ""}`}>{baht(r.net)} บาท</td>
                     <td className="text-ink-2">{PAYMENT_LABEL[r.payment_method] ?? r.payment_method}</td>
                   </tr>
                 ))}

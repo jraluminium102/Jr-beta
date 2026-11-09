@@ -55,7 +55,7 @@ export default function RevisionHistory({
               <span className="font-mono font-semibold text-brand-dark">{r.label}</span>
               <span className="text-ink-3 text-xs">{fmtDateTime(r.created_at)}</span>
               <span className="text-ink-2">{r.itemCount} รายการ</span>
-              <span className="tabular-nums font-semibold ml-auto">฿{baht(r.total)}</span>
+              <span className="tabular-nums font-semibold ml-auto">{baht(r.total)} บาท</span>
               <Link
                 href={`/quotations/${quotationId}/rev/${r.id}/print`}
                 className="press inline-flex items-center gap-1.5 glass-soft rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-dark"

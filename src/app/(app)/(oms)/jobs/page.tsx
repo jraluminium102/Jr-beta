@@ -114,7 +114,7 @@ export default function JobsPage() {
                   <div className="text-white/90 text-sm mt-0.5 truncate">{j.customer_name} · <span style={{ color: "var(--t-low)" }}>{j.customer_area}</span></div>
                   <div className="flex items-center gap-2 mt-2">
                     <Chip status={j.status} />
-                    {canFinance && j.net_amount ? <span className="text-[12px] tnum" style={{ color: "var(--t-mid)" }}>{baht(j.net_amount)} ฿</span> : null}
+                    {canFinance && j.net_amount ? <span className="text-[12px] tnum" style={{ color: "var(--t-mid)" }}>{baht(j.net_amount)} บาท</span> : null}
                   </div>
                 </div>
                 <span className="text-white/40"><ChevronRight size={18} /></span>
