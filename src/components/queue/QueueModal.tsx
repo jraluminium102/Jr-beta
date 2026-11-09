@@ -298,6 +298,23 @@ export function QueueModal({
     entry?.lat != null && entry?.lng != null ? { lat: entry.lat, lng: entry.lng } : null
   );
   const [coordText, setCoordText] = useState(""); // ช่องวางพิกัด lat,lng เอง (ตอนลิงก์อ่านไม่ได้)
+  // พิกัดโดยประมาณจากที่อยู่ตัวหนังสือ (เจ้าของ 9 พ.ย.69) — label บอกว่าหาเจอระดับไหน · ล้างเมื่อผู้ใช้ปัก/วางพิกัด/เปลี่ยนลิงก์เอง
+  const [geoLabel, setGeoLabel] = useState<string | null>(null);
+  const [geocoding, setGeocoding] = useState(false);
+  const [geoErr, setGeoErr] = useState("");
+  async function geocodeFromAddress() {
+    const addr = (f.address || "").trim();
+    if (addr.length < 6) { setGeoErr("กรอกที่อยู่ก่อน (อย่างน้อย แขวง/เขต หรือถนน)"); return; }
+    setGeocoding(true); setGeoErr("");
+    try {
+      const r = await api.post<{ lat: number; lng: number; label: string }>("/queue/geocode", { address: addr });
+      setManualCoords({ lat: r.data.lat, lng: r.data.lng });
+      setCoordText("");
+      setGeoLabel(r.data.label || "ระดับถนน/แขวง");
+    } catch (e) {
+      setGeoErr(e instanceof Error ? e.message : "หาพิกัดจากที่อยู่ไม่เจอ");
+    } finally { setGeocoding(false); }
+  }
   // พิกัด: หมุดที่เลือกเอง > parse ตรงๆ (raw/ลิงก์เต็ม) > server แกะลิงก์ย่อ
   const coords = manualCoords ?? parseLatLng(f.location_url) ?? resolved;
   const [suggesting, setSuggesting] = useState(false);
@@ -1985,7 +2002,7 @@ export function QueueModal({
                   1) ลิงก์แมพ <span className="font-normal text-ink-3">— วางลิงก์ที่ลูกค้าส่งมา (เก็บไว้ส่งให้เซลล์เสมอ)</span>
                 </label>
                 <input value={f.location_url}
-                  onChange={(e) => { set("location_url", e.target.value); setResolved(null); setManualCoords(null); setCoordText(""); }}
+                  onChange={(e) => { set("location_url", e.target.value); setResolved(null); setManualCoords(null); setCoordText(""); setGeoLabel(null); }}
                   onBlur={resolveLink}
                   placeholder="วางลิงก์ Google Maps ที่นี่" className={inp} />
 
@@ -1993,6 +2010,11 @@ export function QueueModal({
                 {resolving ? (
                   <div className="rounded-lg bg-sky-50 border border-sky-200 px-3 py-2.5 text-sm text-sky-800 flex items-center gap-2">
                     <Icon name="refresh" size={16} className="animate-spin shrink-0" /> กำลังอ่านพิกัดจากลิงก์…
+                  </div>
+                ) : coords && geoLabel && manualCoords ? (
+                  <div className="rounded-lg bg-amber-50 border border-amber-300 px-3 py-2.5 text-sm text-amber-900">
+                    <div className="font-semibold flex items-center gap-1.5"><Icon name="check" size={16} className="shrink-0" /> ใช้พิกัดโดยประมาณจากที่อยู่ (ระดับถนน/แขวง)</div>
+                    <div className="text-[12px] mt-0.5">{geoLabel} · {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)} — พอให้ระบบจับคู่คิวใกล้กันได้ · ถ้าหมุดบนแผนที่ไม่ตรงบ้านลูกค้า ลากหมุดแก้ได้</div>
                   </div>
                 ) : coords ? (
                   <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2.5 text-sm text-emerald-800">
@@ -2007,8 +2029,8 @@ export function QueueModal({
                     <div className="text-[12px] mt-0.5">ลิงก์ถูกเก็บให้เซลล์เรียบร้อย — แต่ต้อง <b>ปักหมุดเอง 1 ครั้ง</b> เพื่อใช้จัดคิว (เลือกวิธีด้านล่าง 👇)</div>
                   </div>
                 ) : (
-                  <div className="rounded-lg bg-gray-50 border border-gray-200 px-3 py-2.5 text-sm text-ink-3">
-                    📍 วางลิงก์ด้านบน หรือปักหมุดบนแผนที่ด้านล่าง (เพื่อใช้จัดคิวอัตโนมัติ)
+                  <div className="rounded-lg bg-amber-50/60 border border-amber-200 px-3 py-2.5 text-sm text-amber-900">
+                    📍 ยังไม่มีพิกัด → ตอน "เสนอวัน" ระบบจะไม่จับคู่กับคิวอื่นที่อยู่ใกล้กันในวันเดียวกัน (จะได้แต่วันว่างทั้งวัน) — วางลิงก์ด้านบน · ปักหมุด · หรือหาจากที่อยู่ด้านล่าง
                   </div>
                 )}
 
@@ -2016,13 +2038,21 @@ export function QueueModal({
                 {!coords && !resolving && (
                   <div className="rounded-lg bg-amber-50/60 border border-amber-200 p-3 space-y-2">
                     <p className="text-[12px] font-semibold text-amber-900">ปักหมุดเอง — เลือกทางใดก็ได้:</p>
+                    <div className="text-[12px] text-ink-2 flex flex-wrap items-center gap-2">
+                      <span>⓪ <b>หาจากที่อยู่ที่กรอก</b> (โดยประมาณ ระดับถนน/แขวง — พอใช้จับคู่คิว)</span>
+                      <button type="button" onClick={geocodeFromAddress} disabled={geocoding || (f.address || "").trim().length < 6}
+                        className="px-2.5 py-1 rounded-md bg-amber-600 text-white text-[12px] font-semibold disabled:opacity-50">
+                        {geocoding ? "กำลังหา…" : "หาพิกัดจากที่อยู่"}
+                      </button>
+                      {geoErr && <span className="text-red-700">{geoErr}</span>}
+                    </div>
                     <p className="text-[12px] text-ink-2">① <b>คลิกหรือลากหมุด</b> บนแผนที่ด้านล่าง</p>
                     <div className="text-[12px] text-ink-2">
                       ② หรือ <b>วางพิกัด</b>: {f.location_url && /^https?:\/\//i.test(f.location_url) && (
                         <a href={f.location_url} target="_blank" rel="noopener noreferrer" className="text-brand font-semibold underline">เปิดแมพ</a>
                       )} {f.location_url && /^https?:\/\//i.test(f.location_url) && "→ "}กดค้างที่หมุดใน Google Maps → ก๊อปตัวเลขพิกัด → วางช่องนี้
                       <input value={coordText}
-                        onChange={(e) => { const v = e.target.value; setCoordText(v); const c = parseLatLng(v); if (c) setManualCoords(c); }}
+                        onChange={(e) => { const v = e.target.value; setCoordText(v); const c = parseLatLng(v); if (c) { setManualCoords(c); setGeoLabel(null); } }}
                         placeholder="เช่น 13.65782, 100.47339"
                         className={`${inp} mt-1`} />
                     </div>
@@ -2033,7 +2063,7 @@ export function QueueModal({
                 <MapPicker
                   lat={coords?.lat ?? null}
                   lng={coords?.lng ?? null}
-                  onChange={(lat, lng) => { setManualCoords({ lat, lng }); setCoordText(""); }}
+                  onChange={(lat, lng) => { setManualCoords({ lat, lng }); setCoordText(""); setGeoLabel(null); }}
                 />
               </div>
 
