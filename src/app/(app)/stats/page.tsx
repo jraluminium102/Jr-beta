@@ -102,7 +102,7 @@ const STAGE_TH: Record<string, { th: string; cls: string }> = {
 };
 const SRC_TH: Record<Row["src"], string> = { bill: "จากใบวางบิล", quote: "จากใบเสนอ (ยังไม่มีบิล)", none: "ไม่มียอด" };
 
-type TabKey = "stats" | "kpi";
+type TabKey = "stats" | "ledger" | "kpi";
 type ModalState = { title: string; rows: Row[]; kind: "money" | "quoted" | "cohort" | "lost" };
 
 export default function StatsPage() {
@@ -174,7 +174,7 @@ export default function StatsPage() {
       </div>
 
       <div className="flex gap-1.5 glass rounded-xl p-1 w-fit">
-        {([{ k: "stats", label: "สถิติ", icon: "chart" }, { k: "kpi", label: "KPI ทีมงาน", icon: "users" }] as const).map((t) => (
+        {([{ k: "stats", label: "สถิติ", icon: "chart" }, { k: "ledger", label: "สมุดบัญชี (ยอดมัดจำ)", icon: "file" }, { k: "kpi", label: "KPI ทีมงาน", icon: "users" }] as const).map((t) => (
           <button key={t.k} onClick={() => setTab(t.k)}
             className={`press rounded-lg px-4 py-1.5 text-sm font-semibold inline-flex items-center gap-1.5 ${tab === t.k ? "bg-brand text-white shadow-brand" : "text-ink-2 hover:bg-white/60"}`}>
             <Icon name={t.icon} size={15} /> {t.label}
@@ -196,7 +196,9 @@ export default function StatsPage() {
         <div className={`relative transition-opacity ${loading ? "opacity-50 pointer-events-none" : ""}`}>
           {loading && <div className="absolute inset-x-0 top-2 z-10 text-center text-sm font-semibold text-brand">กำลังโหลดช่วงใหม่…</div>}
           {err && <p className="text-red-700 text-sm mb-2">{err}</p>}
-          {tab === "stats" ? <StatsTab data={data} open={open} reload={reload} /> : <KpiTab data={data} open={open} />}
+          {tab === "stats" ? <StatsTab data={data} open={open} reload={reload} goLedger={() => { setTab("ledger"); window.scrollTo({ top: 0 }); }} />
+            : tab === "ledger" ? <LedgerTab data={data} reload={reload} />
+            : <KpiTab data={data} open={open} />}
         </div>
       ) : null}
 
@@ -208,13 +210,10 @@ export default function StatsPage() {
 /* ─────────────────────── TAB: สถิติ ─────────────────────── */
 type Open = (title: string, rows: Row[], kind?: ModalState["kind"]) => void;
 
-function StatsTab({ data, open, reload }: { data: Stats; open: Open; reload: () => void }) {
+function StatsTab({ data, open, reload, goLedger }: { data: Stats; open: Open; reload: () => void; goLedger: () => void }) {
   const canFin = data.can_finance;
   const s = data.summary, c = s.cohort, L = data.lists;
   const acct = s.period === "acct";
-  const mLabel = (ym: string) => acct ? `${monthLabel(ym)} (${acctLabel(ym)})` : monthLabel(ym);
-  // เป้า: โชว์เมื่อช่วงที่เลือกอยู่ในเดือนเดียว (เดือนนี้/เดือนก่อน/เลือกเดือน)
-  const singleMonth = data.byMonth.length === 1;
   const moneyMax = useMemo(() => Math.max(1, ...data.byMonth.flatMap((m) => [m.quoted_amount ?? 0, m.revenue ?? 0])), [data]);
   const countMax = useMemo(() => Math.max(1, ...data.byMonth.flatMap((m) => [m.quoted, m.deposited])), [data]);
   const areaMax = useMemo(() => Math.max(1, ...data.byArea.map((a) => a.assessed)), [data]);
@@ -273,29 +272,20 @@ function StatsTab({ data, open, reload }: { data: Stats; open: Open; reload: () 
         </p>
       </div>
 
-      {/* กลุ่ม 3: แบบสมุดบัญชี (ไฟล์ "ยอดมัดจำ" ของบัญชี) */}
-      <div>
-        <div className="text-xs font-semibold text-ink-3 mb-1.5">ตามสมุดบัญชี: ลูกค้าที่มัดจำในช่วงนี้ ({s.deposited} งาน · ไม่รวมที่ยกเลิกมัดจำ)</div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {canFin && <Kpi label="ยอดมัดจำที่รับ · ก่อน VAT" value={`฿${baht(s.deposit_sum ?? 0)}`} color="#0f7a38" sub={<>เงินรับจริงรวม VAT ฿{baht(s.deposit_gross_sum ?? 0)} · ค่าประเมิน/3D ฿{baht(s.fee_sum ?? 0)}</>} />}
-          <Kpi label="ลูกค้าใหม่ / เก่า" value={<>{s.kinds.NEW} <span className="text-ink-3 text-base">/</span> {s.kinds.OLD}</>} color="#1F4E78"
-            sub={<>ใหม่ {pctOf(s.kinds.NEW, s.kinds.NEW + s.kinds.OLD)}% · เก่า {pctOf(s.kinds.OLD, s.kinds.NEW + s.kinds.OLD)}%{canFin ? <> · ฿{baht(s.kinds_amount.NEW ?? 0)} / ฿{baht(s.kinds_amount.OLD ?? 0)}</> : null}</>} />
-          <Kpi label="งานเพิ่ม / พิเศษ" value={<>{s.kinds.ADDON} <span className="text-ink-3 text-base">/</span> {s.kinds.SPECIAL}</>}
-            sub={<>งานเพิ่ม = ไม่ผ่านประเมิน (ช่างวัดจริง) · พิเศษ = ช่าง/พาร์ตเนอร์</>} />
-          <Kpi label="มัดจำหน้างาน" value={s.onsite} color="#b45309"
-            sub={s.onsite_by_sales.length ? <>{s.onsite_by_sales.map((x) => `${x.name} ${x.n}`).join(" · ")}</> : <>ลูกค้าจ่ายมัดจำวันเดียวกับที่ประเมิน</>} />
-        </div>
-        {singleMonth && canFin && (s.goal_monthly ?? 0) > 0 && (
-          <GoalBar goal={s.goal_monthly ?? 0} got={s.revenue ?? 0} label={acct ? `รอบบัญชี ${acctLabel(data.byMonth[0].month)}` : monthLabel(data.byMonth[0].month)} onSaved={reload} />
-        )}
-        <p className="text-[11px] text-ink-3 mt-1.5 leading-relaxed">
-          ใหม่/เก่า ระบบเดาให้ก่อน (คิวติ๊กลูกค้าเก่า หรือเคยมัดจำงานก่อนหน้า = เก่า · ไม่มีคิวประเมิน = งานเพิ่ม) — แก้ได้ในตารางแจกแจงด้านล่าง ค่าที่แก้เองจะไม่ถูกทับ
-          {s.kind_auto > 0 && <> · <span className="text-amber-700">{s.kind_auto} งานยังเป็นค่าที่ระบบเดา (ยังไม่มีคนยืนยัน)</span></>}
-          {s.vat_count > 0 && <> · มี VAT {s.vat_count} งาน (บอกเฉย ๆ ยอดทุกตัวเป็นก่อน VAT)</>}
-        </p>
-      </div>
-
-      <LedgerTable rows={L.deposits} canFin={canFin} onChanged={reload} title={`แจกแจงรายงาน: ลูกค้ามัดจำ ${fmtRange(data.range.from, data.range.to)}`} />
+      {/* สมุดบัญชี (ยอดมัดจำ) อยู่แท็บของตัวเอง — ที่นี่แค่สรุปสั้น + ปุ่มไป */}
+      <button onClick={goLedger} className="press text-left w-full">
+        <Card className="p-4 hover:ring-2 hover:ring-brand/30 flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <div className="text-xs font-semibold text-ink-3">สมุดบัญชี (ยอดมัดจำ) · {fmtRange(data.range.from, data.range.to)}</div>
+            <div className="text-sm text-ink-2 mt-0.5 tabular-nums">
+              มัดจำ <b>{s.deposited}</b> งาน · ใหม่ {s.kinds.NEW} / เก่า {s.kinds.OLD}{s.kinds.ADDON ? ` / งานเพิ่ม ${s.kinds.ADDON}` : ""}{s.kinds.SPECIAL ? ` / พิเศษ ${s.kinds.SPECIAL}` : ""} · มัดจำหน้างาน {s.onsite}
+              {canFin && <> · ยอดมัดจำรับ <b>฿{baht(s.deposit_sum ?? 0)}</b></>}
+              {s.kind_auto > 0 && <span className="text-amber-700"> · {s.kind_auto} งานรอยืนยันใหม่/เก่า</span>}
+            </div>
+          </div>
+          <span className="text-sm font-semibold text-brand inline-flex items-center gap-1">เปิดตารางแจกแจง <Icon name="external" size={14} /></span>
+        </Card>
+      </button>
 
       <div className="grid lg:grid-cols-2 gap-4">
         {/* รายเดือน */}
@@ -716,15 +706,72 @@ function GoalBar({ goal, got, label, onSaved }: { goal: number; got: number; lab
   );
 }
 
+/* ─────────────────────── TAB: สมุดบัญชี (ยอดมัดจำ) ─────────────────────── */
+//   หน้าตาแบบไฟล์ "ยอดมัดจำ - 2569" ของบัญชี: การ์ดสรุป → เป้า → ตารางแจกแจงแบ่งรายเดือน ตัวหนังสือใหญ่ เต็มกว้าง (เจ้าของ 9 พ.ย.69: "ตารางเล็กเกิน ออกแบบใหม่")
+function LedgerTab({ data, reload }: { data: Stats; reload: () => void }) {
+  const canFin = data.can_finance;
+  const s = data.summary, L = data.lists;
+  const acct = s.period === "acct";
+  const singleMonth = data.byMonth.length === 1;
+  return (
+    <div className="space-y-4">
+      <div>
+        <div className="text-xs font-semibold text-ink-3 mb-1.5">ตามสมุดบัญชี: ลูกค้าที่มัดจำในช่วงนี้ ({s.deposited} งาน · ไม่รวมที่ยกเลิกมัดจำ)</div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {canFin && <Kpi label="ยอดมัดจำที่รับ · ก่อน VAT" value={`฿${baht(s.deposit_sum ?? 0)}`} color="#0f7a38" sub={<>เงินรับจริงรวม VAT ฿{baht(s.deposit_gross_sum ?? 0)} · ค่าประเมิน/3D ฿{baht(s.fee_sum ?? 0)}</>} />}
+          <Kpi label="ลูกค้าใหม่ / เก่า" value={<>{s.kinds.NEW} <span className="text-ink-3 text-base">/</span> {s.kinds.OLD}</>} color="#1F4E78"
+            sub={<>ใหม่ {pctOf(s.kinds.NEW, s.kinds.NEW + s.kinds.OLD)}% · เก่า {pctOf(s.kinds.OLD, s.kinds.NEW + s.kinds.OLD)}%{canFin ? <> · ฿{baht(s.kinds_amount.NEW ?? 0)} / ฿{baht(s.kinds_amount.OLD ?? 0)}</> : null}</>} />
+          <Kpi label="งานเพิ่ม / พิเศษ" value={<>{s.kinds.ADDON} <span className="text-ink-3 text-base">/</span> {s.kinds.SPECIAL}</>}
+            sub={<>งานเพิ่ม = ไม่ผ่านประเมิน (ช่างวัดจริง) · พิเศษ = ช่าง/พาร์ตเนอร์</>} />
+          <Kpi label="มัดจำหน้างาน" value={s.onsite} color="#b45309"
+            sub={s.onsite_by_sales.length ? <>{s.onsite_by_sales.map((x) => `${x.name} ${x.n}`).join(" · ")}</> : <>ลูกค้าจ่ายมัดจำวันเดียวกับที่ประเมิน</>} />
+        </div>
+        {singleMonth && canFin && (s.goal_monthly ?? 0) > 0 && (
+          <GoalBar goal={s.goal_monthly ?? 0} got={s.revenue ?? 0} label={acct ? `รอบบัญชี ${acctLabel(data.byMonth[0].month)}` : monthLabel(data.byMonth[0].month)} onSaved={reload} />
+        )}
+        <p className="text-[11px] text-ink-3 mt-1.5 leading-relaxed">
+          ใหม่/เก่า ระบบเดาให้ก่อน (คิวติ๊กลูกค้าเก่า หรือเคยมัดจำงานก่อนหน้า = เก่า · ไม่มีคิวประเมิน = งานเพิ่ม) — แก้ได้ในตารางด้านล่าง ค่าที่แก้เองจะไม่ถูกทับ
+          {s.kind_auto > 0 && <> · <span className="text-amber-700">{s.kind_auto} งานยังเป็นค่าที่ระบบเดา (ยังไม่มีคนยืนยัน)</span></>}
+          {s.vat_count > 0 && <> · มี VAT {s.vat_count} งาน (บอกเฉย ๆ ยอดทุกตัวเป็นก่อน VAT)</>}
+        </p>
+      </div>
+
+      <LedgerTable rows={L.deposits} canFin={canFin} onChanged={reload} period={s.period} title={`ลูกค้ามัดจำ ${fmtRange(data.range.from, data.range.to)}`} />
+    </div>
+  );
+}
+
 /* ─── ตารางแจกแจงแบบสมุดบัญชี (คอลัมน์ตามไฟล์ "ยอดมัดจำ" ของบัญชี) ─── */
-function LedgerTable({ rows, canFin, onChanged, title }: { rows: Row[]; canFin: boolean; onChanged: () => void; title: string }) {
-  const [openTbl, setOpenTbl] = useState(true);
+function monthKeyClient(iso: string | null, period: "calendar" | "acct"): string {
+  if (!iso) return "";
+  if (period === "calendar" || Number(iso.slice(8, 10)) < 29) return iso.slice(0, 7);
+  let y = Number(iso.slice(0, 4)), m = Number(iso.slice(5, 7)) + 1; if (m > 12) { m = 1; y++; }
+  return `${y}-${String(m).padStart(2, "0")}`;
+}
+type KindFilter = "ALL" | Kind | "ONSITE" | "AUTO";
+function LedgerTable({ rows, canFin, onChanged, title, period }: { rows: Row[]; canFin: boolean; onChanged: () => void; title: string; period: "calendar" | "acct" }) {
   const [saving, setSaving] = useState<string | null>(null);
   const [q, setQ] = useState("");
-  const live = rows.filter((r) => !r.cancelled);
-  const shown = useMemo(() => { const k = q.trim().toLowerCase(); return k ? rows.filter((r) => [r.customer_name, r.line, r.sales, r.job_code ?? "", r.ledger_note, r.area].join(" ").toLowerCase().includes(k)) : rows; }, [rows, q]);
-  const sum = (f: (r: Row) => number) => live.reduce((a, r) => a + f(r), 0);
-  const kinds = live.reduce((a, r) => { a[r.kind]++; return a; }, { NEW: 0, OLD: 0, ADDON: 0, SPECIAL: 0 } as Record<Kind, number>);
+  const [kf, setKf] = useState<KindFilter>("ALL");
+  const [salesF, setSalesF] = useState("");
+  const salesNames = useMemo(() => [...new Set(rows.map((r) => r.sales))].sort((a, b) => a.localeCompare(b, "th")), [rows]);
+  const shown = useMemo(() => {
+    const k = q.trim().toLowerCase();
+    return rows.filter((r) =>
+      (!k || [r.customer_name, r.line, r.sales, r.job_code ?? "", r.ledger_note, r.area].join(" ").toLowerCase().includes(k))
+      && (kf === "ALL" || (kf === "ONSITE" ? r.onsite : kf === "AUTO" ? r.kind_auto && !r.cancelled : r.kind === kf))
+      && (!salesF || r.sales === salesF));
+  }, [rows, q, kf, salesF]);
+  const live = shown.filter((r) => !r.cancelled);
+  const sum = (list: Row[], f: (r: Row) => number) => list.reduce((a, r) => a + f(r), 0);
+  const kindsOf = (list: Row[]) => list.reduce((a, r) => { a[r.kind]++; return a; }, { NEW: 0, OLD: 0, ADDON: 0, SPECIAL: 0 } as Record<Kind, number>);
+  // แบ่งกลุ่มรายเดือน (เรียงเดือนใหม่ → เก่า · ในเดือนเรียงวันมัดจำเก่า → ใหม่ เหมือนสมุด)
+  const groups = useMemo(() => {
+    const m = new Map<string, Row[]>();
+    for (const r of shown) { const k = monthKeyClient(r.date, period); const a = m.get(k) ?? []; a.push(r); m.set(k, a); }
+    return [...m.entries()].sort((a, b) => b[0].localeCompare(a[0])).map(([k, list]) => ({ key: k, list: list.sort((a, b) => String(a.date).localeCompare(String(b.date)) || a.customer_name.localeCompare(b.customer_name, "th")) }));
+  }, [shown, period]);
+  const multi = groups.length > 1;
 
   async function patch(id: string, body: Record<string, unknown>) {
     setSaving(id);
@@ -739,100 +786,149 @@ function LedgerTable({ rows, canFin, onChanged, title }: { rows: Row[]; canFin: 
     if (v == null) return; patch(r.id, { ledger_note: v.trim() });
   }
   function exportCsv() {
-    const head = ["ลำดับ", "ชื่อลูกค้า", "ไลน์/ชื่อติดต่อ", "รหัสงาน", "เข้าประเมิน", "วันที่มัดจำ", "ยอดมัดจำ (ก่อน VAT)", "เงินมัดจำรับจริง (รวม VAT)", "ค่าประเมิน/3D", "ยอดงานทั้งหมด (ก่อน VAT)", "VAT", "ใหม่/เก่า", "เซลล์", "พื้นที่", "มัดจำหน้างาน", "ที่มายอด", "หมายเหตุ", "สถานะ"];
+    const head = ["เดือน", "ลำดับ", "ชื่อลูกค้า", "ไลน์/ชื่อติดต่อ", "รหัสงาน", "เข้าประเมิน", "วันที่มัดจำ", "ยอดมัดจำ (ก่อน VAT)", "เงินมัดจำรับจริง (รวม VAT)", "ค่าประเมิน/3D", "ยอดงานทั้งหมด (ก่อน VAT)", "VAT", "ใหม่/เก่า", "เซลล์", "พื้นที่", "มัดจำหน้างาน", "ที่มายอด", "หมายเหตุ", "สถานะ"];
     const esc = (v: unknown) => { const t = String(v ?? ""); return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
     const lines = [head.join(",")];
-    let n = 0;
-    for (const r of shown) {
-      lines.push([r.cancelled ? "" : ++n, r.customer_name, r.line, r.job_code ?? "", r.assess_date ?? "", r.date ?? "", canFin ? r.deposit ?? 0 : "", canFin ? r.deposit_gross ?? 0 : "", canFin ? r.fee ?? 0 : "", canFin ? r.net ?? 0 : "", r.vat ? "Vat" : "", KIND_TH[r.kind].short + (r.kind_auto ? "?" : ""), r.sales, r.area, r.onsite ? "มัดจำหน้างาน" : "", SRC_TH[r.src], r.ledger_note + (r.cancelled ? (r.ledger_note ? " · " : "") + "ยกเลิกมัดจำ: " + (r.note ?? "") : ""), r.cancelled ? "ยกเลิกมัดจำ" : ""].map(esc).join(","));
+    for (const g of groups) {
+      let n = 0;
+      for (const r of g.list) {
+        lines.push([monthLabel(g.key), r.cancelled ? "" : ++n, r.customer_name, r.line, r.job_code ?? "", r.assess_date ?? "", r.date ?? "", canFin ? r.deposit ?? 0 : "", canFin ? r.deposit_gross ?? 0 : "", canFin ? r.fee ?? 0 : "", canFin ? r.net ?? 0 : "", r.vat ? "Vat" : "", KIND_TH[r.kind].short + (r.kind_auto ? "?" : ""), r.sales, r.area, r.onsite ? "มัดจำหน้างาน" : "", SRC_TH[r.src], r.ledger_note + (r.cancelled ? (r.ledger_note ? " · " : "") + "ยกเลิกมัดจำ: " + (r.note ?? "") : ""), r.cancelled ? "ยกเลิกมัดจำ" : ""].map(esc).join(","));
+      }
+      const lv = g.list.filter((r) => !r.cancelled), kk = kindsOf(lv);
+      if (canFin) lines.push([monthLabel(g.key), "", `รวม ${lv.length} งาน`, "", "", "", "", sum(lv, (r) => r.deposit ?? 0), sum(lv, (r) => r.deposit_gross ?? 0), sum(lv, (r) => r.fee ?? 0), sum(lv, (r) => r.net ?? 0), "", `N ${kk.NEW} · O ${kk.OLD} · เพิ่ม ${kk.ADDON} · พิเศษ ${kk.SPECIAL}`, "", "", `หน้างาน ${lv.filter((r) => r.onsite).length}`, "", "", ""].map(esc).join(","));
     }
-    if (canFin) lines.push(["", "รวม (ไม่รวมยกเลิก)", "", "", "", "", sum((r) => r.deposit ?? 0), sum((r) => r.deposit_gross ?? 0), sum((r) => r.fee ?? 0), sum((r) => r.net ?? 0), "", `N ${kinds.NEW} · O ${kinds.OLD} · เพิ่ม ${kinds.ADDON} · พิเศษ ${kinds.SPECIAL}`, "", "", `หน้างาน ${live.filter((r) => r.onsite).length}`, "", "", ""].map(esc).join(","));
     const blob = new Blob(["\ufeff" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `ยอดมัดจำ-${new Date().toISOString().slice(0, 10)}.csv`; a.click(); URL.revokeObjectURL(a.href);
   }
 
+  const chip = (k: KindFilter, label: string, cls = "") => (
+    <button key={k} onClick={() => setKf(k)}
+      className={`press rounded-full px-3 py-1 text-[13px] font-semibold border ${kf === k ? "bg-ink text-white border-ink" : `bg-white border-black/10 text-ink-2 hover:bg-gray-50 ${cls}`}`}>{label}</button>
+  );
+  const th = "py-2.5 px-2 font-semibold text-[12.5px] text-ink-3 whitespace-nowrap";
+  const td = "py-2.5 px-2 align-middle";
+  const tot = kindsOf(live);
+
   return (
-    <Card className="p-5">
-      <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
-        <h3 className="font-bold text-brand-dark">{title}</h3>
-        <div className="flex items-center gap-2">
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นชื่อ/ไลน์/เซลล์/รหัส" className="rounded-lg border border-black/10 px-2.5 py-1 text-xs w-44" />
-          <button onClick={exportCsv} className="press rounded-lg px-3 py-1 text-xs font-semibold border border-black/10 bg-white hover:bg-gray-50">ส่งออก CSV (เปิดใน Excel)</button>
-          <button onClick={() => setOpenTbl((v) => !v)} className="press text-xs text-ink-3">{openTbl ? "ซ่อนตาราง" : "แสดงตาราง"}</button>
+    <Card className="p-0 overflow-hidden">
+      <div className="px-5 pt-4 pb-3 border-b border-gray-200/70">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <h3 className="font-bold text-brand-dark text-lg">{title} <span className="text-sm font-medium text-ink-3">· {live.length} งาน{shown.length - live.length ? ` · ยกเลิกมัดจำ ${shown.length - live.length}` : ""}</span></h3>
+          <div className="flex items-center gap-2 flex-wrap">
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นชื่อ / ไลน์ / รหัสงาน" className="rounded-lg border border-black/10 px-3 py-1.5 text-sm w-52" />
+            <select value={salesF} onChange={(e) => setSalesF(e.target.value)} className="rounded-lg border border-black/10 bg-white px-2.5 py-1.5 text-sm">
+              <option value="">เซลล์ทุกคน</option>
+              {salesNames.map((n) => <option key={n} value={n}>{n}</option>)}
+            </select>
+            <button onClick={exportCsv} className="press rounded-lg px-3.5 py-1.5 text-sm font-semibold bg-brand text-white shadow-brand">ส่งออก CSV</button>
+          </div>
         </div>
+        <div className="flex items-center gap-1.5 flex-wrap mt-2.5">
+          {chip("ALL", "ทั้งหมด")}
+          {chip("NEW", `ใหม่ (N) ${tot.NEW}`)}
+          {chip("OLD", `เก่า (O) ${tot.OLD}`)}
+          {chip("ADDON", `งานเพิ่ม ${tot.ADDON}`)}
+          {chip("SPECIAL", `พิเศษ ${tot.SPECIAL}`)}
+          {chip("ONSITE", `มัดจำหน้างาน ${live.filter((r) => r.onsite).length}`)}
+          {chip("AUTO", `รอยืนยันใหม่/เก่า ${live.filter((r) => r.kind_auto).length}`, "text-amber-800")}
+        </div>
+        <p className="text-[12px] text-ink-3 mt-2">ยอดทุกตัวก่อน VAT · ยอดมัดจำของงานที่มี VAT ถอด VAT ออกให้ตรงสมุด (เงินรับจริงดูตอนชี้ที่ตัวเลข / ใน CSV) · <b>ใหม่/เก่า</b> เปลี่ยนได้ในช่อง (ตัวจาง = ระบบเดา กดเลือกเพื่อยืนยัน) · <b>หมายเหตุ</b> กดที่ช่องเพื่อพิมพ์ · งานที่ยกเลิกหลังมัดจำขึ้นขีดฆ่า ไม่รวมยอด/จำนวน</p>
       </div>
-      <p className="text-[11px] text-ink-3 mb-3">คอลัมน์ตามสมุดบัญชี · ยอดทุกตัวก่อน VAT (ยอดมัดจำของงานที่มี VAT ถอด VAT ออกให้ตรงสมุด · เงินรับจริงดูได้ตอนชี้ที่ตัวเลข/ใน CSV) · ใหม่/เก่า กดเปลี่ยนได้ทันที (ตัวจาง = ระบบเดา ยังไม่มีคนยืนยัน) · หมายเหตุกดที่ช่องเพื่อแก้ · งานที่ยกเลิกหลังมัดจำขึ้นขีดฆ่า ไม่รวมในยอดรวม/จำนวน</p>
-      {openTbl && (
-        <div className="overflow-x-auto">
-          <table className="w-full text-[12.5px] min-w-[1100px]">
-            <thead><tr className="text-left text-ink-3 text-[11px] border-b border-gray-200/70">
-              <th className="py-1.5 font-semibold w-8">#</th>
-              <th className="font-semibold">ชื่อลูกค้า</th>
-              <th className="font-semibold">ไลน์</th>
-              <th className="font-semibold text-center">เข้าประเมิน</th>
-              <th className="font-semibold text-center">วันมัดจำ</th>
-              {canFin && <th className="font-semibold text-right" title="แบบสมุดบัญชี: มัดจำก่อน VAT (เงินรับจริงรวม VAT ดูใน CSV)">ยอดมัดจำ</th>}
-              {canFin && <th className="font-semibold text-right">ค่าประเมิน</th>}
-              {canFin && <th className="font-semibold text-right">ยอดงาน</th>}
-              <th className="font-semibold text-center">VAT</th>
-              <th className="font-semibold text-center">ใหม่/เก่า</th>
-              <th className="font-semibold">เซลล์</th>
-              <th className="font-semibold text-center">หน้างาน</th>
-              <th className="font-semibold">หมายเหตุ</th>
-            </tr></thead>
-            <tbody>
-              {(() => { let n = 0; return shown.map((r) => {
-                const idx = r.cancelled ? null : ++n;
-                return (
-                  <tr key={r.id} className={`border-b border-gray-100 last:border-0 ${r.cancelled ? "text-ink-3 line-through decoration-red-400/70" : ""} ${saving === r.id ? "opacity-50" : ""}`}>
-                    <td className="py-1.5 tabular-nums text-ink-3">{idx ?? ""}</td>
-                    <td className="py-1.5 font-medium text-ink-2 no-underline">
-                      {r.customer_name || "(ไม่มีชื่อ)"}{r.job_code && <span className="text-[10.5px] text-ink-3 font-normal"> · {r.job_code}</span>}
-                      {r.cancelled && <span className="ml-1.5 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700 no-underline">ยกเลิกมัดจำ</span>}
-                    </td>
-                    <td className="text-ink-3 max-w-[160px] truncate" title={r.line}>{r.line || "–"}</td>
-                    <td className="text-center tabular-nums text-ink-3">{fmtDate(r.assess_date)}</td>
-                    <td className="text-center tabular-nums">{fmtDate(r.date)}</td>
-                    {canFin && <td className="text-right tabular-nums" title={r.vat ? `รับจริงรวม VAT ฿${baht(r.deposit_gross ?? 0)}` : undefined}>{baht(r.deposit ?? 0)}</td>}
-                    {canFin && <td className="text-right tabular-nums text-ink-3">{(r.fee ?? 0) ? baht(r.fee ?? 0) : "–"}</td>}
-                    {canFin && <td className="text-right tabular-nums font-semibold">{baht(r.net ?? 0)}{r.src !== "bill" && <span className={`ml-1 text-[9.5px] font-normal ${r.src === "quote" ? "text-amber-700" : "text-red-700"}`}>{r.src === "quote" ? "ใบเสนอ" : "ไม่มียอด"}</span>}</td>}
-                    <td className="text-center text-[11px] text-ink-3">{r.vat ? "Vat" : ""}</td>
-                    <td className="text-center">
-                      {r.cancelled ? <span className="text-[11px]">{KIND_TH[r.kind].short}</span> : (
-                        <select value={r.kind} disabled={saving === r.id} onChange={(e) => patch(r.id, { customer_kind: e.target.value })}
-                          title={r.kind_auto ? "ระบบเดา — เลือกเพื่อยืนยัน" : KIND_TH[r.kind].th}
-                          className={`rounded-md px-1.5 py-0.5 text-[11px] font-semibold border-0 cursor-pointer ${KIND_TH[r.kind].cls} ${r.kind_auto ? "opacity-60" : ""}`}>
-                          {(Object.keys(KIND_TH) as Kind[]).map((k) => <option key={k} value={k}>{KIND_TH[k].short} — {KIND_TH[k].th}</option>)}
-                        </select>
-                      )}
-                    </td>
-                    <td className="text-ink-2 whitespace-nowrap">{r.sales}</td>
-                    <td className="text-center text-[11px] text-amber-800">{r.onsite ? "มัดจำหน้างาน" : ""}</td>
-                    <td className="text-[11.5px] text-ink-3 max-w-[220px]">
-                      <button onClick={() => !r.cancelled && editNote(r)} className={`press text-left ${r.cancelled ? "cursor-default" : "hover:text-brand"}`} title="กดเพื่อแก้หมายเหตุ">
-                        {r.ledger_note || (r.cancelled ? "" : <span className="text-ink-3/60">＋</span>)}
-                        {r.cancelled && <span className="text-red-700"> เหตุผล: {r.note}</span>}
-                      </button>
-                    </td>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-[14px] min-w-[1180px]">
+          <thead className="sticky top-0 z-10 bg-white/95 backdrop-blur"><tr className="text-left border-b border-gray-200">
+            <th className={`${th} w-10`}>#</th>
+            <th className={th}>ชื่อลูกค้า / ไลน์</th>
+            <th className={`${th} text-center`}>เข้าประเมิน</th>
+            <th className={`${th} text-center`}>วันมัดจำ</th>
+            {canFin && <th className={`${th} text-right`}>ยอดมัดจำ</th>}
+            {canFin && <th className={`${th} text-right`}>ค่าประเมิน/3D</th>}
+            {canFin && <th className={`${th} text-right`}>ยอดงานทั้งหมด</th>}
+            <th className={`${th} text-center`}>VAT</th>
+            <th className={`${th} text-center`}>ใหม่/เก่า</th>
+            <th className={th}>เซลล์</th>
+            <th className={`${th} text-center`}>มัดจำหน้างาน</th>
+            <th className={th}>หมายเหตุ</th>
+          </tr></thead>
+          {groups.map((g) => {
+            const lv = g.list.filter((r) => !r.cancelled), kk = kindsOf(lv);
+            let n = 0;
+            return (
+              <tbody key={g.key} className="border-b-4 border-gray-100">
+                {multi && (
+                  <tr className="bg-brand/5"><td colSpan={canFin ? 12 : 9} className="px-3 py-2 text-[13.5px] font-bold text-brand-dark">
+                    {monthLabel(g.key)}{period === "acct" && <span className="font-medium text-ink-3"> · รอบ {acctLabel(g.key)}</span>}
+                    <span className="font-medium text-ink-2"> · {lv.length} งาน{canFin ? ` · ยอดงาน ฿${baht(sum(lv, (r) => r.net ?? 0))} · มัดจำ ฿${baht(sum(lv, (r) => r.deposit ?? 0))}` : ""} · N {kk.NEW} / O {kk.OLD}</span>
+                  </td></tr>
+                )}
+                {g.list.map((r, i) => {
+                  const idx = r.cancelled ? null : ++n;
+                  return (
+                    <tr key={r.id} className={`border-b border-gray-100 ${i % 2 ? "bg-gray-50/50" : ""} ${r.cancelled ? "text-ink-3 line-through decoration-red-400/70" : ""} ${saving === r.id ? "opacity-50" : ""}`}>
+                      <td className={`${td} tabular-nums text-ink-3`}>{idx ?? ""}</td>
+                      <td className={`${td} no-underline`}>
+                        <div className="font-semibold text-ink-1 text-[15px] leading-tight">{r.customer_name || "(ไม่มีชื่อ)"}
+                          {r.cancelled && <span className="ml-2 rounded bg-red-100 px-1.5 py-0.5 text-[11px] font-semibold text-red-700 no-underline align-middle">ยกเลิกมัดจำ</span>}
+                        </div>
+                        <div className="text-[12px] text-ink-3 mt-0.5 truncate max-w-[260px]" title={r.line}>{r.line || "–"}{r.job_code && <span> · {r.job_code}</span>}</div>
+                      </td>
+                      <td className={`${td} text-center tabular-nums text-ink-3`}>{r.kind === "ADDON" ? <span className="text-[12px]">ไม่ผ่านประเมิน</span> : fmtDate(r.assess_date)}</td>
+                      <td className={`${td} text-center tabular-nums font-medium`}>{fmtDate(r.date)}</td>
+                      {canFin && <td className={`${td} text-right tabular-nums`} title={r.vat ? `รับจริงรวม VAT ฿${baht(r.deposit_gross ?? 0)}` : undefined}>{baht(r.deposit ?? 0)}</td>}
+                      {canFin && <td className={`${td} text-right tabular-nums text-ink-3`}>{(r.fee ?? 0) ? baht(r.fee ?? 0) : "–"}</td>}
+                      {canFin && <td className={`${td} text-right tabular-nums font-bold text-[15px]`}>{baht(r.net ?? 0)}{r.src !== "bill" && <div className={`text-[11px] font-normal ${r.src === "quote" ? "text-amber-700" : "text-red-700"}`}>{r.src === "quote" ? "จากใบเสนอ ยังไม่วางบิล" : "ไม่มียอด"}</div>}</td>}
+                      <td className={`${td} text-center text-[12.5px] text-ink-3`}>{r.vat ? "Vat" : ""}</td>
+                      <td className={`${td} text-center`}>
+                        {r.cancelled ? <span className="text-[12px]">{KIND_TH[r.kind].short}</span> : (
+                          <select value={r.kind} disabled={saving === r.id} onChange={(e) => patch(r.id, { customer_kind: e.target.value })}
+                            title={r.kind_auto ? "ระบบเดา — เลือกเพื่อยืนยัน" : KIND_TH[r.kind].th}
+                            className={`rounded-lg px-2 py-1 text-[13px] font-bold border-0 cursor-pointer ${KIND_TH[r.kind].cls} ${r.kind_auto ? "opacity-55 ring-1 ring-amber-400/60" : ""}`}>
+                            {(Object.keys(KIND_TH) as Kind[]).map((k) => <option key={k} value={k}>{KIND_TH[k].short} — {KIND_TH[k].th}</option>)}
+                          </select>
+                        )}
+                      </td>
+                      <td className={`${td} whitespace-nowrap`}>{r.sales}</td>
+                      <td className={`${td} text-center`}>{r.onsite && <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[12px] font-semibold text-amber-900">หน้างาน</span>}</td>
+                      <td className={`${td} text-[13px] text-ink-3 max-w-[240px]`}>
+                        <button onClick={() => !r.cancelled && editNote(r)} className={`press text-left w-full ${r.cancelled ? "cursor-default" : "hover:text-brand"}`} title="กดเพื่อแก้หมายเหตุ">
+                          {r.ledger_note || (r.cancelled ? "" : <span className="text-ink-3/50">＋ หมายเหตุ</span>)}
+                          {r.cancelled && <span className="text-red-700"> เหตุผล: {r.note}</span>}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {multi && canFin && (
+                  <tr className="bg-gray-50 font-semibold text-[13.5px]">
+                    <td className={td} colSpan={4}>รวม {monthLabel(g.key)} · {lv.length} งาน</td>
+                    <td className={`${td} text-right tabular-nums`}>{baht(sum(lv, (r) => r.deposit ?? 0))}</td>
+                    <td className={`${td} text-right tabular-nums`}>{baht(sum(lv, (r) => r.fee ?? 0))}</td>
+                    <td className={`${td} text-right tabular-nums text-emerald-700`}>{baht(sum(lv, (r) => r.net ?? 0))}</td>
+                    <td className={`${td} text-center font-normal text-ink-3`}>{lv.filter((r) => r.vat).length}</td>
+                    <td className={`${td} text-center text-[12px] whitespace-nowrap`}>N {kk.NEW} · O {kk.OLD}</td>
+                    <td />
+                    <td className={`${td} text-center text-amber-800`}>{lv.filter((r) => r.onsite).length || ""}</td>
+                    <td />
                   </tr>
-                );
-              }); })()}
-              {shown.length === 0 && <tr><td colSpan={canFin ? 13 : 10} className="py-4 text-center text-ink-3">ไม่มีรายการ</td></tr>}
-            </tbody>
-            <tfoot><tr className="border-t-2 border-gray-300 text-[12px] font-semibold">
-              <td className="py-2" colSpan={5}>รวม {live.length} งาน (ไม่รวมยกเลิก {rows.length - live.length})</td>
-              {canFin && <td className="text-right tabular-nums">{baht(sum((r) => r.deposit ?? 0))}</td>}
-              {canFin && <td className="text-right tabular-nums">{baht(sum((r) => r.fee ?? 0))}</td>}
-              {canFin && <td className="text-right tabular-nums text-emerald-700">{baht(sum((r) => r.net ?? 0))}</td>}
-              <td className="text-center text-ink-3 font-normal">{live.filter((r) => r.vat).length}</td>
-              <td className="text-center text-[11px] whitespace-nowrap">N {kinds.NEW} · O {kinds.OLD}{kinds.ADDON ? ` · เพิ่ม ${kinds.ADDON}` : ""}{kinds.SPECIAL ? ` · พิเศษ ${kinds.SPECIAL}` : ""}</td>
-              <td />
-              <td className="text-center text-amber-800">{live.filter((r) => r.onsite).length}</td>
-              <td />
-            </tr></tfoot>
-          </table>
-        </div>
-      )}
+                )}
+              </tbody>
+            );
+          })}
+          {shown.length === 0 && <tbody><tr><td colSpan={canFin ? 12 : 9} className="py-8 text-center text-ink-3">ไม่มีรายการ</td></tr></tbody>}
+          <tfoot><tr className="border-t-2 border-gray-300 bg-white font-bold text-[14.5px]">
+            <td className={td} colSpan={4}>รวมทั้งหมด {live.length} งาน{shown.length - live.length ? <span className="font-medium text-ink-3"> (ไม่รวมยกเลิกมัดจำ {shown.length - live.length})</span> : null}</td>
+            {canFin && <td className={`${td} text-right tabular-nums`}>{baht(sum(live, (r) => r.deposit ?? 0))}</td>}
+            {canFin && <td className={`${td} text-right tabular-nums`}>{baht(sum(live, (r) => r.fee ?? 0))}</td>}
+            {canFin && <td className={`${td} text-right tabular-nums text-emerald-700`}>{baht(sum(live, (r) => r.net ?? 0))}</td>}
+            <td className={`${td} text-center font-normal text-ink-3`}>{live.filter((r) => r.vat).length}</td>
+            <td className={`${td} text-center text-[12.5px] whitespace-nowrap`}>N {tot.NEW} · O {tot.OLD}{tot.ADDON ? ` · เพิ่ม ${tot.ADDON}` : ""}{tot.SPECIAL ? ` · พิเศษ ${tot.SPECIAL}` : ""}</td>
+            <td />
+            <td className={`${td} text-center text-amber-800`}>{live.filter((r) => r.onsite).length || ""}</td>
+            <td />
+          </tr></tfoot>
+        </table>
+      </div>
     </Card>
   );
 }
