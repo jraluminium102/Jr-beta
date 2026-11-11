@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Icon from "@/components/Icon";
@@ -408,9 +408,8 @@ export default function FloorEditor({
           </div>
         </div>
 
-        {/* กระดาษ A4 จริง — ย่อให้พอดีจอเล็ก แต่สัดส่วนเท่าของจริง */}
-        <div className="overflow-x-auto bg-gray-100 rounded-xl p-3 -mx-1">
-          <div className="origin-top-left" style={{ minWidth: "210mm" }}>
+        {/* กระดาษ A4 จริง — ขยาย/ย่อให้เต็มความกว้างจอเสมอ (เจ้าของ 11 พ.ย.69: "แผ่นเล็กมาก ขยายเต็มจอ") สัดส่วนเท่าของจริง พิมพ์ยังได้ 210mm */}
+        <ScaledA4>
             <FloorQuoteSheet
               editable
               customer={{ name: cName, address: cAddr, phone: cPhone }}
@@ -425,8 +424,7 @@ export default function FloorEditor({
               onCustomer={(p) => { if (p.name !== undefined) setCName(p.name); if (p.address !== undefined) setCAddr(p.address); }}
               onNote={setNote}
             />
-          </div>
-        </div>
+        </ScaledA4>
         <datalist id="floor-remarks"><option value="งานเพิ่ม" /></datalist>
       </section>
 
@@ -482,6 +480,40 @@ export default function FloorEditor({
             {saving ? "กำลังบันทึก…" : mode === "create" ? "บันทึกใบเสนอ" : "บันทึกการแก้ไข"}
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * ห่อกระดาษ A4 (กว้างคงที่ 210mm ≈ 794px) แล้ว scale ให้พอดีความกว้างที่มีเสมอ — จอใหญ่ขยายขึ้น จอเล็กย่อลง
+ *   ใช้ transform เพื่อให้สัดส่วน/การตัดหน้าเหมือนพิมพ์จริง (ช่องแก้บนใบยังพิมพ์ได้ตามปกติ)
+ *   ความสูง wrapper = สูงจริง × scale (ไม่งั้น transform ทิ้งที่ว่างใต้ใบ)
+ */
+function ScaledA4({ children }: { children: React.ReactNode }) {
+  const outer = useRef<HTMLDivElement>(null);
+  const inner = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  const [height, setHeight] = useState<number | undefined>(undefined);
+  useEffect(() => {
+    const o = outer.current, i = inner.current;
+    if (!o || !i) return;
+    const A4_PX = i.offsetWidth || 794;
+    const update = () => {
+      const w = o.clientWidth - 24; // หัก padding p-3 ซ้าย-ขวา
+      const sc = w > 0 ? w / A4_PX : 1;
+      setScale(sc);
+      setHeight(i.offsetHeight * sc);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(o); ro.observe(i);
+    return () => ro.disconnect();
+  }, []);
+  return (
+    <div ref={outer} className="bg-gray-100 rounded-xl p-3 -mx-1 overflow-hidden" style={{ height: height != null ? height + 24 : undefined }}>
+      <div ref={inner} className="origin-top-left" style={{ width: "210mm", transform: `scale(${scale})` }}>
+        {children}
       </div>
     </div>
   );
