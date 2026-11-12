@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { dayLabel, dayColor, thaiDate, JOB_SIZE_META, type JobSize } from "@/lib/queue";
-import { computeFieldStats, type FieldOffice } from "@/lib/field-stats";
+import { computeFieldStats, isFieldTracked, type FieldOffice } from "@/lib/field-stats";
 
 // หน้าคิวประเมินมือถือของเซลล์ — ดูอย่างเดียว (ข้อมูลมาจาก page.tsx ฝั่ง server · ไม่มีปุ่มแก้)
 
@@ -208,7 +208,7 @@ export default function SalesQueueView({ today, sales, entries, avail, statsEntr
   const whoName = who === ALL ? "ทุกคน" : salesById.get(who)?.name ?? "";
   // เดือนนี้ออกหน้างานกี่วัน / ติดกัน / ออฟฟิศ — ของเซลล์ที่เลือก (รวมทุกแถวของคนเดียวกัน) (เจ้าของ 12 พ.ย.69)
   const monthStat = useMemo(() => {
-    if (who === ALL || !statsEntries || !settings) return null;
+    if (who === ALL || !statsEntries || !settings || !isFieldTracked(salesById.get(who)?.name)) return null;
     const ids = [...idsOf(who)];
     const mainRow = ids.map((i) => salesById.get(i)).find((x) => x && x.role === "MAIN") ?? salesById.get(who);
     const month = today.slice(0, 7);

@@ -10,6 +10,10 @@
  * ฟังก์ชันล้วน ไม่แตะ DB — ใช้ร่วมกัน หน้าคิวงาน · ลิงก์เซลล์ · engine เสนอคิว
  */
 
+/** เซลล์ที่ติดตาม ออกหน้างาน/ติดกัน/วันออฟฟิศ — เจ้าของสั่ง 12 พ.ย.69 "เอาแค่แม็กกับไล้พอ" (การ์ด · ปฏิทินออฟฟิศ · เตือนใน engine · ลิงก์เซลล์) */
+export const FIELD_TRACK_NAMES = ["แม็ก", "ไล้"];
+export const isFieldTracked = (name?: string | null) => FIELD_TRACK_NAMES.includes(String(name ?? "").trim());
+
 export type FieldEntry = {
   sales_id: string | null;
   queue_date: string | null;

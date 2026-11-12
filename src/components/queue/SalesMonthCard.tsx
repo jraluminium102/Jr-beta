@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { api } from "@/lib/api";
-import { computeFieldStats, type FieldAvail, type FieldEntry, type FieldOffice } from "@/lib/field-stats";
+import { computeFieldStats, isFieldTracked, type FieldAvail, type FieldEntry, type FieldOffice } from "@/lib/field-stats";
 import type { QueueSales } from "@/lib/queue";
 
 /**
@@ -37,7 +37,7 @@ export function SalesMonthCard({ sales, avail, month, today, settings, onOpenOff
     return () => { alive = false; };
   }, [month, refreshKey]);
 
-  const mains = useMemo(() => sales.filter((s) => s.role !== "ASSISTANT"), [sales]);
+  const mains = useMemo(() => sales.filter((s) => s.role !== "ASSISTANT" && isFieldTracked(s.name)), [sales]);
   const stats = useMemo(() => computeFieldStats({
     salesIds: mains.map((s) => s.id),
     entries, avail, month, today,

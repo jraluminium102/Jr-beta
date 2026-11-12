@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { isFieldTracked } from "@/lib/field-stats";
 import Icon from "@/components/Icon";
 import { api } from "@/lib/api";
 import { dayColor } from "@/lib/queue";
@@ -62,7 +63,7 @@ export function OfficeCalendarModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const mainSales = useMemo(() => salesList.filter((s) => s.role !== "ASSISTANT"), [salesList]);
+  const mainSales = useMemo(() => salesList.filter((s) => s.role !== "ASSISTANT" && isFieldTracked(s.name)), [salesList]);
   const initial = useMemo(() => initialDraft(mainSales), [mainSales]);
   const [draft, setDraft] = useState<Record<string, St>>(initial);
   const [cur, setCur] = useState(month);
