@@ -139,7 +139,7 @@ export function OfficeCalendarModal({
             <button onClick={() => setCur((m) => shiftMonth(m, -1))} aria-label="เดือนก่อน"
               className="press glass-soft rounded-lg w-11 h-11 text-lg font-bold text-ink-2">‹</button>
             <span className="min-w-[9rem] text-center text-sm font-bold text-ink tabular-nums">
-              {TH_MONTH[cm]} {cy}
+              {TH_MONTH[cm]} {cy + 543}
             </span>
             <button onClick={() => setCur((m) => shiftMonth(m, 1))} aria-label="เดือนหน้า"
               className="press glass-soft rounded-lg w-11 h-11 text-lg font-bold text-ink-2">›</button>
@@ -178,7 +178,10 @@ export function OfficeCalendarModal({
                 const lack = Math.max(0, requiredDays - total);
                 return (
                   <tr key={s.id}>
-                    <td className="px-2 py-1 font-semibold text-ink-2 whitespace-nowrap sticky left-0 bg-white/80 z-10">{s.name}</td>
+                    <td className="px-2 py-1 whitespace-nowrap sticky left-0 bg-white/90 z-10">
+                      <div className="font-semibold text-ink-2">{s.name}</div>
+                      <div className={`text-[11px] tabular-nums ${lack > 0 ? "text-red-700" : "text-emerald-700"}`}>{total}/{requiredDays} วัน{lack > 0 ? ` · ขาด ${lack}` : " · ครบ"}</div>
+                    </td>
                     {days.map((d) => {
                       const st = draft[`${s.id}|${d.iso}`] ?? "";
                       const past = d.iso < today;
@@ -197,11 +200,6 @@ export function OfficeCalendarModal({
                         </td>
                       );
                     })}
-                    <td className="px-2 py-1 whitespace-nowrap tabular-nums text-xs">
-                      <span className={lack > 0 ? "text-red-700 font-semibold" : "text-emerald-700 font-semibold"}>
-                        ตั้งแล้ว {total} / ต้อง {requiredDays} วัน · ขาด {lack}
-                      </span>
-                    </td>
                   </tr>
                 );
               })}
