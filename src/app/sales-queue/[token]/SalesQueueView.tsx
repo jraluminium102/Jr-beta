@@ -418,7 +418,7 @@ function EntryCard({ e, showSales, salesById, viewerIds }: {
               <div className="flex gap-1.5">
                 <dt className="text-stone-500">ค่าประเมิน</dt>
                 <dd className="font-semibold">{e.assess_fee.toLocaleString("th-TH")} บ.</dd>
-                <dd className={e.fee_paid ? "text-emerald-700" : "text-amber-700"}>{e.fee_paid ? "· ชำระแล้ว" : "· ยังไม่ชำระ"}</dd>
+                {(e.assess_fee > 0 || e.fee_paid) && <dd className={e.fee_paid ? "text-emerald-700" : "text-amber-700"}>{e.fee_paid ? "· ชำระแล้ว" : "· ยังไม่ชำระ"}</dd>}
               </div>
             )}
             {tel && (

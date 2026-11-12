@@ -2221,6 +2221,8 @@ export function QueueModal({
               {STATUS_ORDER.map((s) => <option key={s} value={s}>{STATUS_META[s].th}</option>)}
             </select>
           </Field>
+          {/* ไม่กรอกค่าประเมิน (หรือ 0) → ไม่ต้องติ๊กชำระ (เจ้าของ 12 พ.ย.69) · เคยติ๊กไว้ยังโชว์ให้เอาออกได้ */}
+          {(Number(f.assess_fee) > 0 || f.fee_paid) && (
           <Field label="ชำระค่าประเมิน">
             <label className="flex items-center gap-2 mt-1.5 cursor-pointer">
               <input type="checkbox" checked={f.fee_paid}
@@ -2229,6 +2231,7 @@ export function QueueModal({
               <span className="text-ink-2">ชำระค่าประเมินแล้ว</span>
             </label>
           </Field>
+          )}
           <Field label="ใบเสร็จ">
             <label className="flex items-center gap-2 mt-1.5 cursor-pointer">
               <input type="checkbox" checked={f.receipt_done}

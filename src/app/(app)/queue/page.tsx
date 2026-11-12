@@ -1331,10 +1331,13 @@ function QueueRow({ e, onOpen, onToggleReceipt, onToggleFeePaid, onNote, canWrit
       <td className="px-1.5 py-2.5 text-right tabular-nums text-ink-2">{e.assess_fee != null ? e.assess_fee.toLocaleString("th-TH") : "—"}</td>
       <td className="px-1.5 py-2.5 text-ink-2">{e.payment || "—"}</td>
       <td className="px-1.5 py-2.5 text-center" onClick={(ev) => ev.stopPropagation()}>
+        {/* ไม่มีค่าประเมิน → ไม่ต้องติ๊ก (เจ้าของ 12 พ.ย.69) */}
+        {(e.assess_fee ?? 0) > 0 || e.fee_paid ? (
         <input type="checkbox" checked={e.fee_paid ?? false} disabled={!canWrite}
           onChange={(ev) => onToggleFeePaid(e, ev.target.checked)}
           className="w-4 h-4 accent-emerald-600"
           title="ชำระค่าประเมินแล้ว" />
+        ) : <span className="text-ink-3">—</span>}
       </td>
       <td className="px-1.5 py-2.5 text-center" onClick={(ev) => ev.stopPropagation()}>
         <div className="inline-flex items-center gap-2">
@@ -1493,11 +1496,13 @@ function MobileCard({ e, onOpen, onToggleReceipt, onToggleFeePaid, onNote, canWr
         ) : <span className="text-ink-3 text-sm">—</span>}
         <div className="flex items-center gap-3 ml-auto" onClick={(ev) => ev.stopPropagation()}>
           <ConfirmCopyButton e={e} />
+          {((e.assess_fee ?? 0) > 0 || e.fee_paid) && (
           <label className="flex items-center gap-1.5 text-xs text-ink-2 cursor-pointer min-h-[44px]">
             <input type="checkbox" checked={e.fee_paid ?? false} disabled={!canWrite}
               onChange={(ev) => onToggleFeePaid(e, ev.target.checked)}
               className="w-4 h-4 accent-emerald-600" /> ชำระแล้ว
           </label>
+          )}
           <label className="flex items-center gap-1.5 text-xs text-ink-2 cursor-pointer min-h-[44px]">
             <input type="checkbox" checked={e.receipt_done} disabled={!canWrite}
               onChange={(ev) => onToggleReceipt(e, ev.target.checked)}
