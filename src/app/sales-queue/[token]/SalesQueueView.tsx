@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { dayLabel, dayColor, thaiDate, JOB_SIZE_META, type JobSize } from "@/lib/queue";
+import { computeFieldStats, type FieldOffice } from "@/lib/field-stats";
 
 // หน้าคิวประเมินมือถือของเซลล์ — ดูอย่างเดียว (ข้อมูลมาจาก page.tsx ฝั่ง server · ไม่มีปุ่มแก้)
 
-export type SqSales = { id: string; name: string; team: "BKK" | "PHUKET"; role: "MAIN" | "ASSISTANT"; parent_sales_id: string | null };
+export type SqSales = { id: string; name: string; team: "BKK" | "PHUKET"; role: "MAIN" | "ASSISTANT"; parent_sales_id: string | null; office_overrides?: FieldOffice[] | null; office_days_required?: number | null };
 export type SqEntry = {
   id: string; status: "PENDING" | "PROPOSED" | "CONFIRMED" | "DONE" | "CANCELLED";
   queue_date: string | null; queue_time: string | null; job_type: string | null;
@@ -70,8 +71,9 @@ function mapHref(e: SqEntry): string | null {
   return null;
 }
 
-export default function SalesQueueView({ today, sales, entries, avail }: {
+export default function SalesQueueView({ today, sales, entries, avail, statsEntries, settings }: {
   today: string; sales: SqSales[]; entries: SqEntry[]; avail: SqAvail[];
+  statsEntries?: SqEntry[]; settings?: { office_days_required: number; field_streak_warn: number };
 }) {
   const router = useRouter();
   const [refreshing, startRefresh] = useTransition();
@@ -204,6 +206,21 @@ export default function SalesQueueView({ today, sales, entries, avail }: {
     avail.filter((a) => a.date === date && (who === ALL ? true : idsOf(who).has(a.sales_id)));
 
   const whoName = who === ALL ? "ทุกคน" : salesById.get(who)?.name ?? "";
+  // เดือนนี้ออกหน้างานกี่วัน / ติดกัน / ออฟฟิศ — ของเซลล์ที่เลือก (รวมทุกแถวของคนเดียวกัน) (เจ้าของ 12 พ.ย.69)
+  const monthStat = useMemo(() => {
+    if (who === ALL || !statsEntries || !settings) return null;
+    const ids = [...idsOf(who)];
+    const mainRow = ids.map((i) => salesById.get(i)).find((x) => x && x.role === "MAIN") ?? salesById.get(who);
+    const month = today.slice(0, 7);
+    const merged = statsEntries.map((e) => ({ ...e, sales_id: e.sales_id && ids.includes(e.sales_id) ? "__me" : e.sales_id }));
+    const [st] = computeFieldStats({
+      salesIds: ["__me"], entries: merged, avail: avail.map((a) => ({ ...a, sales_id: ids.includes(a.sales_id) ? "__me" : a.sales_id })),
+      officeBySales: { __me: mainRow?.office_overrides ?? [] }, month, today,
+      requiredDays: mainRow?.office_days_required ?? settings.office_days_required, streakWarn: settings.field_streak_warn,
+    });
+    return st;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [who, statsEntries, settings, avail, today, personIds]);
 
   return (
     <div className="min-h-[100dvh] bg-[#f3f3f5] text-stone-900 [font-variant-numeric:tabular-nums]">
@@ -213,6 +230,13 @@ export default function SalesQueueView({ today, sales, entries, avail }: {
           <div className="min-w-0">
             <div className="text-[11px] font-semibold tracking-wide text-[#b3151d]">JR · คิวประเมินหน้างาน</div>
             <h1 className="text-[22px] font-bold leading-tight truncate">{whoName}</h1>
+            {monthStat && (
+              <div className="text-[11.5px] text-stone-500 leading-tight mt-0.5">
+                เดือนนี้ออกหน้างาน <b className="text-stone-700">{Number.isInteger(monthStat.field_days) ? monthStat.field_days : monthStat.field_days.toFixed(1)} วัน</b>
+                {" · "}ติดกัน <b className={monthStat.streak_warn ? "text-orange-600" : "text-stone-700"}>{monthStat.streak_now} วัน</b>
+                {" · "}ออฟฟิศ <b className={monthStat.office_days >= monthStat.office_required ? "text-emerald-700" : "text-stone-700"}>{Number.isInteger(monthStat.office_days) ? monthStat.office_days : monthStat.office_days.toFixed(1)}/{monthStat.office_required}</b>
+              </div>
+            )}
           </div>
           <button
             onClick={() => startRefresh(() => router.refresh())}

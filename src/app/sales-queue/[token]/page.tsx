@@ -14,6 +14,8 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "คิวประเมิน · JR", robots: { index: false, follow: false } };
 
 const PAST_DAYS = 14;
+// วันแรกของเดือนก่อน (ไว้นับสายออกหน้างานต่อเนื่องข้ามเดือน)
+function prevMonthStart(iso: string): string { const y = Number(iso.slice(0, 4)), m = Number(iso.slice(5, 7)); return m === 1 ? `${y - 1}-12-01` : `${y}-${String(m - 1).padStart(2, "0")}-01`; }
 const AHEAD_DAYS = 60;
 const COLS =
   "id, status, queue_date, queue_time, job_type, sales_id, assistant_id, line_contact, contact_channel, " +
@@ -34,8 +36,8 @@ export default async function SalesQueuePage({ params }: { params: { token: stri
   const from = thaiIso(-PAST_DAYS);
   const to = thaiIso(AHEAD_DAYS);
 
-  const [salesRes, entries, availRes] = await Promise.all([
-    sb.from("queue_sales").select("id, name, team, role, parent_sales_id").eq("active", true).order("team").order("name"),
+  const [salesRes, entries, availRes, olderEntries, settingsRes] = await Promise.all([
+    sb.from("queue_sales").select("id, name, team, role, parent_sales_id, office_overrides, office_days_required").eq("active", true).order("team").order("name"),
     fetchAllPaged<SqEntry>((a, b) =>
       sb.from("queue_entries").select(COLS)
         .neq("status", "CANCELLED")
@@ -46,6 +48,14 @@ export default async function SalesQueuePage({ params }: { params: { token: stri
         .order("id")
         .range(a, b)),
     sb.from("sales_availability").select("sales_id, date, kind, half, note").gte("date", from).lte("date", to),
+    // คิวตั้งแต่ต้นเดือนก่อน (ไว้นับ ออกหน้างาน/ติดกัน ของเดือนนี้ — เจ้าของ 12 พ.ย.69) · เฉพาะคอลัมน์ที่ใช้นับ
+    fetchAllPaged<SqEntry>((a, b) =>
+      sb.from("queue_entries").select(COLS)
+        .neq("status", "CANCELLED")
+        .gte("queue_date", prevMonthStart(today))
+        .lt("queue_date", from)
+        .order("queue_date", { ascending: true }).order("id").range(a, b)),
+    sb.from("queue_settings").select("office_days_required, field_streak_warn").eq("id", 1).maybeSingle(),
   ]);
 
   return (
@@ -54,6 +64,8 @@ export default async function SalesQueuePage({ params }: { params: { token: stri
       sales={(salesRes.data ?? []) as SqSales[]}
       entries={entries}
       avail={(availRes.data ?? []) as SqAvail[]}
+      statsEntries={[...olderEntries, ...entries]}
+      settings={{ office_days_required: Number(settingsRes?.data?.office_days_required ?? 4) || 4, field_streak_warn: Number(settingsRes?.data?.field_streak_warn ?? 6) || 6 }}
     />
   );
 }

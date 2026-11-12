@@ -4,6 +4,7 @@ import { HttpError } from "@/lib/bff/context";
 import { dbError } from "@/lib/bff/db-error";
 import { detectTeam, estimateMinutes, haversineKm } from "@/lib/queue";
 import { geocodeAddress, resolveMapLink } from "@/lib/queue-geo";
+import { fieldDayMap, fieldStreakEnding } from "@/lib/field-stats";
 import { drivingMinutes } from "@/lib/ors";
 
 type Sb = { from: (t: string) => any };
@@ -74,13 +75,13 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
 
   // Load queue_settings for max_pair_min / avg_speed_kmh / detour_factor
   type Settings = {
-    max_pair_min?: number | null; avg_speed_kmh?: number | null; detour_factor?: number | null;
+    max_pair_min?: number | null; avg_speed_kmh?: number | null; detour_factor?: number | null; field_streak_warn?: number | null;
     max_pair_km?: number | null; traffic_factor?: number | null;
   };
   // 0167 เพิ่ม max_pair_km/traffic_factor — ยังไม่รัน = อ่านคอลัมน์เดิมแล้วใช้ค่าเริ่มต้น
   let { data: settingsRaw, error: sErr } = await sb
     .from("queue_settings")
-    .select("max_pair_min,avg_speed_kmh,detour_factor,max_pair_km,traffic_factor")
+    .select("max_pair_min,avg_speed_kmh,detour_factor,max_pair_km,traffic_factor,field_streak_warn")
     .eq("id", 1)
     .maybeSingle();
   if (sErr) {
@@ -136,12 +137,13 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
     .select("id,sales_id,queue_date,queue_time,status,lat,lng,customer_name,address,job_type,job_size")
     .not("queue_date", "is", null)
     .neq("status", "CANCELLED")
-    .gte("queue_date", today);
+    .gte("queue_date", new Date(new Date(today + "T00:00:00Z").getTime() - 21 * 86400000).toISOString().slice(0, 10)); // ย้อน 3 สัปดาห์ ไว้นับสายออกหน้างานติดกัน
   const entries = (entriesRaw ?? []) as {
     id: string;
     sales_id: string | null;
     queue_date: string;
     queue_time: string | null;
+    status: string;
     lat: number | null;
     lng: number | null;
     customer_name: string | null;
@@ -177,8 +179,16 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
   // R-Balance: count queued bookings per sales rep (load)
   const load: Record<string, number> = {};
   entries.forEach((e) => {
-    if (e.sales_id) load[e.sales_id] = (load[e.sales_id] ?? 0) + 1;
+    if (e.sales_id && e.queue_date >= today) load[e.sales_id] = (load[e.sales_id] ?? 0) + 1;
   });
+  // ออกหน้างานติดกัน (เจ้าของ 12 พ.ย.69): เตือนในกล่องเสนอเมื่อเซลล์ออกติดกันมาแล้ว ≥ field_streak_warn วันทำงาน — เตือนอย่างเดียว ไม่เปลี่ยนวันที่เสนอ
+  const streakWarnAt = Math.max(1, Number((settingsRaw as { field_streak_warn?: number | null } | null)?.field_streak_warn ?? 6) || 6);
+  const fieldDaysBySales = new Map<string, ReturnType<typeof fieldDayMap>>();
+  const streakBefore = (salesId: string, dateStr: string) => {
+    let m = fieldDaysBySales.get(salesId); if (!m) { m = fieldDayMap(entries, salesId); fieldDaysBySales.set(salesId, m); }
+    const prev = new Date(new Date(dateStr + "T00:00:00Z").getTime() - 86400000).toISOString().slice(0, 10);
+    return fieldStreakEnding(m, prev);
+  };
 
   const driveCache = new Map<string, number | null>();
 
@@ -217,6 +227,7 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
       const dayNotes: string[] = [];
       if (blocked.has("10:00")) dayNotes.push(halfLeave?.half !== "PM" && halfLeave ? "เช้า: ลาครึ่งวัน" : "เช้า: วันออฟฟิศ");
       if (blocked.has("14:00")) dayNotes.push(halfLeave?.half === "PM" ? "บ่าย: ลาครึ่งวัน" : "บ่าย: วันออฟฟิศ");
+      { const st = streakBefore(s.id, dateStr); if (st >= streakWarnAt) dayNotes.push(`⚠ ${s.name} ออกหน้างานติดกันมาแล้ว ${st} วันทำงาน (ถึงวันก่อนหน้า) — พิจารณาให้พักหรือลงออฟฟิศ`); }
       let slots = ["10:00", "14:00"].filter((t) => !blocked.has(t));
       if (body.job_size === "MULTI")
         slots = [...slots].sort((a, b) => (a === "14:00" ? -1 : 1) - (b === "14:00" ? -1 : 1));

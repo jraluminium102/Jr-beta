@@ -6,7 +6,8 @@ import Icon from "@/components/Icon";
 import { api } from "@/lib/api";
 import { QueueModal, isAssessJobType } from "@/components/queue/QueueModal";
 import { LeaveModal } from "@/components/queue/LeaveModal";
-import { OfficeScheduleModal } from "@/components/queue/OfficeScheduleModal";
+import { OfficeCalendarModal } from "@/components/queue/OfficeCalendarModal";
+import { SalesMonthCard, type QueueSettingsLite } from "@/components/queue/SalesMonthCard";
 import { LeaveSummaryModal } from "@/components/queue/LeaveSummaryModal";
 import {
   QueueCalendarView, toIsoWeek,
@@ -271,6 +272,10 @@ export default function QueuePage() {
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [geoBusy, setGeoBusy] = useState(false);
   const [geoMsg, setGeoMsg] = useState("");
+  // ตั้งค่าคิว (0174): ต้องอยู่ออฟฟิศกี่วัน/เดือน · ออกติดกันกี่วันถึงเตือน — ใช้ในการ์ดเซลล์เดือนนี้ + ปฏิทินออฟฟิศ
+  const [qSettings, setQSettings] = useState<QueueSettingsLite>({ office_days_required: 4, field_streak_warn: 6 });
+  const [statsKey, setStatsKey] = useState(0);
+  useEffect(() => { api.get<QueueSettingsLite>("/queue/settings").then((r) => { if (r.data) setQSettings(r.data); }).catch(() => {}); }, []);
 
   // View mode
   const [viewMode, setViewMode] = useState<ViewMode>("list");
@@ -325,6 +330,7 @@ export default function QueuePage() {
       const res = await api.get<QueueEntry[]>(`/queue?${params.toString()}`);
       setRows(res.data ?? []);
       setSales((res.meta?.sales as QueueSales[]) ?? []);
+      setStatsKey((k) => k + 1);
       setCanWrite(Boolean(res.meta?.can_write));
       setUnlinked(Boolean(res.meta?.unlinked));
     } catch (e) {
@@ -793,6 +799,10 @@ export default function QueuePage() {
         </div>
       )}
 
+      {/* เซลล์เดือนนี้: ออกหน้างาน/ติดกัน/ออฟฟิศ/ลา (เจ้าของ 12 พ.ย.69) */}
+      <SalesMonthCard sales={sales} avail={avail} month={filterMonth} today={todayStr} settings={qSettings}
+        onOpenOffice={canWrite ? () => setOfficeOpen(true) : undefined} refreshKey={statsKey} />
+
       <Card className="p-4">
         {/* Filter bar */}
         <div className="flex items-center gap-2 flex-wrap mb-4">
@@ -1161,10 +1171,12 @@ export default function QueuePage() {
       )}
 
       {officeOpen && (
-        <OfficeScheduleModal
+        <OfficeCalendarModal
           salesList={sales}
+          month={filterMonth}
+          requiredDays={qSettings.office_days_required}
           onClose={() => setOfficeOpen(false)}
-          onSaved={() => { setOfficeOpen(false); load(); }}
+          onSaved={() => { setOfficeOpen(false); load(); setStatsKey((k) => k + 1); }}
         />
       )}
 
