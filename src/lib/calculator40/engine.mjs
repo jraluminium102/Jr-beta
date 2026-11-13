@@ -33,7 +33,7 @@ export const GLASS_KG_PER_M2_MM = 2.5;
 
 export const STOCK_LEN = 6.4; // ความยาวเส้นอลู stock มาตรฐาน (ม.) — บางรุ่นใช้ 6.0 (ตั้ง prod.stockLen)
 // ชื่อโชว์กระจก (ลิสต์เจ้าของ 4 พ.ย.69) → คีย์ราคาใน PB.GLASS
-import { glassPriceKey } from './glass-catalog.mjs';
+import { glassPriceKey, GLASS_EXTRA } from './glass-catalog.mjs';
 
 export function ceil100(x) { return Math.ceil(x / 100) * 100; }
 // ค่าสีสต็อก (ลายไม้สต็อก/ซาฮาร่า ฯลฯ) ที่เพิ่มจากสีขาว ขาย = ทุนสีที่เพิ่ม × 1.6 (เจ้าของเคาะ 15 ต.ค.69 · สีอบพิเศษไม่ใช้)
@@ -455,7 +455,13 @@ export function computeCost(PB, prod, opt) {
   const _spSel = (opt.addons || {}).solid_panel || {};
   const lookLow = lookReal && _spSel.type === 'look' && (+_spSel.h || 0) > 0
     ? { w: (+_spSel.w > 0 ? +_spSel.w : W), h: +_spSel.h } : null;
-  const lookGlass = lookReal && glassType === 'แผ่นลูกฟูก' && prod.glass ? Math.max(0, Number(val(prod.glass)) || 0) : 0;
+  // ── กระจกช่องแสงแยก (บานเปิดช่องแสงข้าง/ล่าง · เจ้าของ 13 พ.ย.69) ──
+  //   prod.litGlass = สูตรพื้นที่ช่องแสง · prod.litGlassKey = คีย์ spec ที่เก็บชนิดกระจก ('' = ตามบาน)
+  //   เลือกแล้ว → หักพื้นที่ช่องแสงออกจากกระจก/ลูกฟูกของบาน + คิดกระจกช่องแสงเป็นบรรทัดแยก · รับเฉพาะกระจกจริง (แผ่นแทนกระจกไม่รับ)
+  const _litSel = prod.litGlass && prod.litGlassKey ? String((opt.spec || {})[prod.litGlassKey] || '') : '';
+  const litGlassType = _litSel && _litSel !== glassType && !GLASS_EXTRA.includes(_litSel) ? _litSel : '';
+  const litArea = litGlassType && prod.glass ? Math.max(0, Math.min(Number(val(prod.litGlass)) || 0, Number(val(prod.glass)) || 0)) : 0;
+  const lookGlass = lookReal && glassType === 'แผ่นลูกฟูก' && prod.glass ? Math.max(0, (Number(val(prod.glass)) || 0) - litArea) : 0;
   const lookLines = [];
   if (lookLow) lookLines.push({ ...LOOK_LINE, name: 'ลูกฟูก2ทาง (ทึบล่าง)', seg: lookLow.h, count: Math.ceil(lookLow.w * 100 / 10 - 1e-9) });
   if (lookGlass > 0 && H > 0) lookLines.push({ ...LOOK_LINE, name: 'ลูกฟูก2ทาง (แทนกระจก)', seg: H, count: Math.ceil(lookGlass / (H * 0.1) - 1e-9) });
@@ -664,7 +670,7 @@ export function computeCost(PB, prod, opt) {
   const zGlassSize = glassType === 'เกล็ด Z 1"' ? '1' : glassType === 'เกล็ด Z 1.6"' ? '1.6' : null;
   const isPanelGlass = glassType === 'แผ่นคอมโพสิต' || glassType === 'แผ่นลูกฟูก' || !!zGlassSize;
   if (prod.glass) {
-    glassArea = val(prod.glass);
+    glassArea = Math.max(0, val(prod.glass) - litArea);   // ช่องแสงที่เลือกกระจกแยก คิดข้างล่าง (13 พ.ย.69)
     // ทึบล่างลูกฟูก (ของจริง) แทนกระจกช่วงล่าง → หักพื้นที่กระจกส่วนนั้นออก (29 ต.ค.69)
     if (lookLow && !isPanelGlass) glassArea = Math.max(0, glassArea - lookLow.w * lookLow.h);
     if (isPanelGlass) {
@@ -682,6 +688,14 @@ export function computeCost(PB, prod, opt) {
       // prod.glassRound = ชีตคิดทุนปัดค่ากระจกเป็นบาทเต็ม ROUND(พื้นที่×ราคา,0) (เช่น เปิดดัดโค้ง D15) — 18 ก.ย.69 ตามไฟล์
       if (prod.glassRound) glassCost = Math.round(glassCost);
       lines.push({ cat: 'glass', name: 'กระจก ' + glassType, qty: round2(glassArea), unit: 'ตร.ม.', unitPrice: gp, amount: round2(glassCost) });
+    }
+    if (litArea > 0) {
+      const lgp = PB.GLASS[glassPriceKey(litGlassType)] ?? 0;
+      if (!(lgp > 0)) hwMissing.push({ sku: '', name: `กระจกช่องแสง "${litGlassType}" ไม่มีในไฟล์ถอดทุนล่าสุดแล้ว — เลือกกระจกใหม่` });
+      let lc = litArea * lgp;
+      if (prod.glassRound) lc = Math.round(lc);
+      glassCost += lc;
+      lines.push({ cat: 'glass', name: 'กระจกช่องแสง ' + litGlassType, litType: litGlassType, qty: round2(litArea), unit: 'ตร.ม.', unitPrice: lgp, amount: round2(lc) });
     }
   }
 
@@ -1236,7 +1250,7 @@ export function computeCost(PB, prod, opt) {
   //   กระจก = พื้นที่ × ความหนา × 2.5 กก./ตร.ม./มม.
   //   ⚠ แผ่นมุงหลังคา (ชินโคร์/ไวนิล/โพลี/เมทัลชีท) ไฟล์ยังไม่มีน้ำหนัก → ยังไม่นับ ต้องเตือน
   const gMM = isPanelGlass ? 0 : glassMM(glassType);
-  const glassKg = gMM > 0 ? glassArea * gMM * GLASS_KG_PER_M2_MM : 0;
+  const glassKg = (gMM > 0 ? glassArea * gMM * GLASS_KG_PER_M2_MM : 0) + (litArea > 0 ? litArea * glassMM(litGlassType) * GLASS_KG_PER_M2_MM : 0);
   // แผ่นมุงหลังคา — พื้นที่ที่ปูจริง × กก./ตร.ม. (เจ้าของให้เลข 8 ก.ย.69 · เมทัลชีทยังไม่ให้ = ไม่คิด เตือนแทน)
   const WS = prod.weightSpec || null;
   let sheetKg = 0, sheetKgMoving = 0;

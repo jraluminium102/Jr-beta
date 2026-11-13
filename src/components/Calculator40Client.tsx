@@ -990,7 +990,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
       ...(prod.id === "roof" ? ["batten", "roofframe", "roofend", "drainsys", "rfplate", "rfpull", "rfleaf", "hideslopemat"] : []),
     ]);
     (prod.specOpts ?? []).forEach((o: any) => {
-      if (o.type === "number") return;
+      if (o.type === "number" || o.type === "glass") return;
       if (NAME_OWNED_SPEC.has(o.key)) return;
       const v = spec[o.key];
       if (v == null || v === "" || v === "—") return;
@@ -1023,6 +1023,9 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     //   🐞 เจอตอนเทสสด 30 ต.ค.69: เพิ่มรายการโดยไม่แตะช่องกระจก → ใบเสนอไม่มีบรรทัดกระจกเลย
     const glassForDoc = glassType || (prod.defGlass ?? "");
     if (glassForDoc) jobLines.push(glassLine(glassForDoc));
+    // กระจกช่องแสงแยก (13 พ.ย.69) — ขึ้นเฉพาะเมื่อคิดเงินจริง (มีช่องแสง + เลือกกระจกต่างจากบาน)
+    const litLn = ((result as any).lines || []).find((l: any) => l?.cat === "glass" && l.litType);
+    if (litLn) jobLines.push("- ช่องแสง: " + glassLine(litLn.litType).replace(/^- /, ""));
     if (material) jobLines.push(`- วัสดุ: ${prod.materialLabels?.[material] ?? material}`);
     if (sheetColor) jobLines.push(`- วัสดุมุง: ${sheetColor}`);
     if (mqDetail) jobLines.push(`- ${mqDetail}`); // มุ้ง + ผ้ามุ้ง (ตามที่เลือก)
@@ -1585,6 +1588,23 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                           onChange={(e) => setSpec((s) => ({ ...s, [o.key]: e.target.value }))}
                           disabled={altLocked}
                           className="mt-1.5 w-full min-h-[44px] glass-soft rounded-lg px-3 py-2 outline-none tabular-nums text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand disabled:opacity-40 disabled:cursor-not-allowed" />
+                      </label>
+                    );
+                  }
+                  // specOpts type:'glass' → เลือกกระจกจากลิสต์กระจกเดียวกับช่องกระจกหลัก (ไม่รวมแผ่นแทนกระจก) · ว่าง = ตามบาน (13 พ.ย.69)
+                  if (o.type === 'glass') {
+                    return (
+                      <label key={o.key} className="block">
+                        <span className="text-xs font-medium text-ink-3">{o.label}</span>
+                        <select value={spec[o.key] ?? ""} onChange={(e) => setSpec((s) => ({ ...s, [o.key]: e.target.value }))}
+                          className="mt-1.5 w-full min-h-[44px] glass-soft rounded-lg px-3 py-2 outline-none text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
+                          <option value="">ตามบาน ({glassDisplayName(glassType || prod.defGlass || "")})</option>
+                          {glassGroups.filter((g) => g.cat !== "แทนกระจก").map((g) => (
+                            <optgroup key={g.cat} label={g.cat}>
+                              {g.items.map((i) => <option key={i.value} value={i.value}>{i.label}</option>)}
+                            </optgroup>
+                          ))}
+                        </select>
                       </label>
                     );
                   }

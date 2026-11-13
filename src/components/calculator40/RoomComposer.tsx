@@ -505,6 +505,24 @@ function ColsEditor({
                     </span>
                   );
                 }
+                // กระจกช่องแสง (type glass · 13 พ.ย.69) — ลิสต์กระจกเดียวกับหน้า G1 · ว่าง = ตามบาน
+                if (o.type === "glass") {
+                  return (
+                    <span key={o.key} className="inline-flex items-center gap-1">
+                      <span className="text-ink-3">{o.label}</span>
+                      <select value={paneSpec(prod, sel)[o.key] ?? ""}
+                        onChange={(e) => onPatchPane(sel.key, { spec: { ...paneSpec(prod, sel), [o.key]: e.target.value } })}
+                        className="min-h-[32px] glass-soft rounded-lg px-2 py-1 outline-none text-xs">
+                        <option value="">ตามบาน</option>
+                        {glassGroups.filter((g) => g.cat !== "แทนกระจก").map((g) => (
+                          <optgroup key={g.cat} label={g.cat}>
+                            {g.items.map((i) => <option key={i.value} value={i.value}>{i.label}</option>)}
+                          </optgroup>
+                        ))}
+                      </select>
+                    </span>
+                  );
+                }
                 const opts: string[] = (o.optsByMaterial && o.optsByMaterial[prod.defMaterial]) || o.opts || [];
                 const cur = paneSpec(prod, sel)[o.key];
                 return (

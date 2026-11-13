@@ -1615,5 +1615,37 @@ console.log(NL + "═══ 🚪 บานโซลิดแบบเลื่�
   ok("หน้า G1: แถบ ชนิดบาน (SOLID_KINDS) ในหน้าบานโซลิด · การ์ดกรอง listHide", cc.includes("prod.solidFamily && (") && cc.includes("SOLID_KINDS as [string, string][]") && cc.includes("!x.pickerHide && !x.listHide"));
   ok("บานโซลิด (เปิด) ติดธง solidFamily — แถบชนิดบานโผล่", PRODUCTS.bansolid.solidFamily === true && PRODUCTS.bansolid.glass == null);
 }
+
+// ── 🪟 บานเปิด: กระจกช่องแสงเลือกแยก (เจ้าของ 13 พ.ย.69 "บานเปิดทึบที่มีช่องแสง อยากให้แอดกระจกได้ว่าใช้กระจกอะไร") ──
+console.log(NL + "═══ 🪟 บานเปิด กระจกช่องแสงแยก (13 พ.ย.69) ═══");
+{
+  const OD = PRODUCTS.open_door;
+  const C = (glassType, spec = {}) => computeCost(PB, OD, { w: 150, h: 220, p: 1, form: "มีธรณี", color: "white", colorKey: "white", glassType, spec: { odsiden: "1", odside: "15", odbot: "0", ...spec }, addons: {} });
+  const CLEAR = Object.keys(PB.GLASS).find((k) => /ใส/.test(k) && /6/.test(k)) || Object.keys(PB.GLASS)[0];
+  ok("มีช่อง 'กระจกช่องแสง' (type glass) · ค่าตั้งต้นว่าง = ตามบาน · สูตรพื้นที่ช่องแสง", OD.specOpts.some((s) => s.key === "odlitglass" && s.type === "glass" && s.def === "") && OD.litGlass && OD.litGlassKey === "odlitglass");
+  const base = C("แผ่นลูกฟูก"), same = C("แผ่นลูกฟูก", { odlitglass: "" });
+  ok("ไม่เลือก = ราคาเท่าเดิมทุกบาท", base.sell.withInstall === same.sell.withInstall && !base.lines.some((l) => l.litType));
+  const lit = C("แผ่นลูกฟูก", { odlitglass: CLEAR });
+  const ll = lit.lines.find((l) => l.litType);
+  ok(`ทึบลูกฟูก + ช่องแสงข้าง 15 ซม. กระจก ${CLEAR}: บรรทัดกระจกช่องแสง 0.15×2.2 = 0.33 ตร.ม.`, ll && Math.abs(ll.qty - 0.33) < 1e-9 && ll.unitPrice === PB.GLASS[CLEAR], ll && ll.qty + " @" + ll.unitPrice);
+  const lk = (r) => r.lines.filter((l) => /ลูกฟูก2ทาง \(แทนกระจก\)/.test(l.name)).reduce((a, l) => a + l.count.pieces, 0);
+  ok("ลูกฟูกของบานลดลงตามพื้นที่ช่องแสงที่หักออก", lk(lit) < lk(base), lk(base) + " → " + lk(lit));
+  ok("ราคาเปลี่ยนจริง (ไม่เท่าตอนไม่เลือก)", lit.sell.withInstall !== base.sell.withInstall, base.sell.withInstall + " → " + lit.sell.withInstall);
+  const g = C(CLEAR), gl = C(CLEAR, { odlitglass: CLEAR });
+  ok("เลือกกระจกช่องแสงชนิดเดียวกับบาน = ไม่แยกบรรทัด ราคาเท่าเดิม", g.sell.withInstall === gl.sell.withInstall && !gl.lines.some((l) => l.litType));
+  const tint = Object.keys(PB.GLASS).find((k) => k !== CLEAR && PB.GLASS[k] > PB.GLASS[CLEAR]);
+  const gt = C(CLEAR, { odlitglass: tint });
+  const area = (r) => r.lines.filter((l) => l.cat === "glass").reduce((a, l) => a + l.qty, 0);
+  ok(`บานกระจก ${CLEAR} + ช่องแสง ${tint}: พื้นที่กระจกรวมเท่าเดิม แต่แยก 2 บรรทัด · แพงขึ้น`, Math.abs(area(gt) - area(g)) < 0.011 && gt.lines.filter((l) => l.cat === "glass").length === 2 && gt.sell.withInstall > g.sell.withInstall, area(g) + " / " + area(gt));
+  const none = C("แผ่นลูกฟูก", { odsiden: "0", odside: "0", odlitglass: CLEAR });
+  ok("ไม่มีช่องแสง (0 ข้าง / ไม่กรอกกว้าง) = เลือกกระจกช่องแสงไว้ก็ไม่คิด", none.sell.withInstall === C("แผ่นลูกฟูก", { odsiden: "0", odside: "0" }).sell.withInstall && !none.lines.some((l) => l.litType));
+  const bot = C("แผ่นลูกฟูก", { odsiden: "0", odside: "0", odbot: "40", odlitglass: CLEAR });
+  const bl = bot.lines.find((l) => l.litType);
+  ok("ช่องแสงล่าง 40 ซม. (ไม่มีข้าง) → กระจกช่องแสง 0.4 × กว้าง 1.5 = 0.6 ตร.ม.", bl && Math.abs(bl.qty - 0.6) < 1e-9, bl && bl.qty);
+  ok("แผ่นแทนกระจก (ลูกฟูก/คอมโพสิต) เลือกเป็นกระจกช่องแสงไม่ได้ — engine ไม่รับ", !C(CLEAR, { odlitglass: "แผ่นคอมโพสิต" }).lines.some((l) => l.litType));
+  ok("น้ำหนักกระจกนับช่องแสงด้วย", lit.weight.glass > 0, lit.weight.glass);
+  const cc = fs.readFileSync("src/components/Calculator40Client.tsx", "utf8"), rc = fs.readFileSync("src/components/calculator40/RoomComposer.tsx", "utf8");
+  ok("หน้าจอ G1 + ห้องกระจก มีช่องเลือก type glass · ใบเสนอขึ้น '- ช่องแสง: …'", cc.includes("if (o.type === 'glass')") && rc.includes('if (o.type === "glass")') && cc.includes('"- ช่องแสง: " + glassLine(litLn.litType)'));
+}
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);
