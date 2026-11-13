@@ -135,6 +135,26 @@ export function FloorQuoteSheet({
       return n;
     }));
   };
+  /**
+   * บรรทัดที่กรอก ค่าวัสดุ/ค่าแรง เป็น "ยอดรวมของบรรทัด" แทน "ต่อหน่วย" (เจอจริงใบคุณอ้อย 13 พ.ย.69)
+   *   → ใบพิมพ์โชว์ค่าวัสดุต่อหน่วยผิด + พอแก้ช่องใดช่องหนึ่ง ราคางาน = ยอดรวม แล้ว × ปริมาณซ้ำ = ยอดพุ่งหลักล้าน
+   *   จับ: ปริมาณ ≠ 1 · วัสดุ+แรง ≠ ราคางาน แต่ = ราคารวมบรรทัด
+   */
+  const totalsAsUnit = editable ? items.map((it, i) => ({ it, i })).filter(({ it }) => {
+    const q = num(it.qty), m = num(it.material_price), l = num(it.labor_price);
+    if (q === 1 || q === 0 || (!m && !l)) return false;
+    return Math.abs(m + l - num(it.unit_price)) > 0.5 && Math.abs(m + l - lineTotalOf(it)) <= 1;
+  }) : [];
+  const fixTotalsAsUnit = () => {
+    if (!onItems) return;
+    const bad = new Set(totalsAsUnit.map((x) => x.i));
+    onItems(items.map((it, k) => {
+      if (!bad.has(k)) return it;
+      const q = num(it.qty);
+      const r = (v: unknown) => (v == null || v === "" ? null : Math.round((num(v) / q) * 100) / 100);
+      return { ...it, material_price: r(it.material_price), labor_price: r(it.labor_price) };
+    }));
+  };
   const del = (i: number) => onItems?.(items.filter((_, k) => k !== i));
   const move = (i: number, d: -1 | 1) => {
     if (!onItems) return;
@@ -207,6 +227,19 @@ export function FloorQuoteSheet({
         </div>
       </div>
 
+      {totalsAsUnit.length > 0 && (
+        <div className="no-print mt-3 rounded-lg border border-amber-400 bg-amber-50 px-3 py-2 text-amber-900" style={{ fontSize: 12 }}>
+          <b>⚠ {totalsAsUnit.length} บรรทัด กรอกค่าวัสดุ/ค่าแรงเป็นยอดรวม</b> — ช่องนี้บนใบคือ <b>ราคาต่อหน่วย</b> (วัสดุ + แรง = ราคางาน)
+          <div className="mt-0.5" style={{ fontSize: 11 }}>
+            {totalsAsUnit.slice(0, 4).map(({ it }) => String(it.name ?? "").split(/\r?\n/)[0].slice(0, 30)).join(" · ")}{totalsAsUnit.length > 4 ? " · …" : ""}
+          </div>
+          <button type="button" onClick={fixTotalsAsUnit}
+            className="press mt-1.5 rounded-md bg-amber-600 px-3 py-1 font-semibold text-white" style={{ fontSize: 12 }}>
+            แปลงเป็นต่อหน่วย (หารด้วยปริมาณ · ยอดรวมเท่าเดิม)
+          </button>
+        </div>
+      )}
+
       {/* ตาราง */}
       <table className="w-full mt-3 border-collapse" style={{ fontSize: 11 }}>
         <thead>
@@ -221,8 +254,8 @@ export function FloorQuoteSheet({
             {editable && <th className="p-0 border-0 no-print" style={{ width: 1 }} rowSpan={2} />}
           </tr>
           <tr style={{ background: "#faedf0", color: "#a8425a" }}>
-            <th className={th} style={{ width: "9%" }}>ค่าวัสดุ</th>
-            <th className={th} style={{ width: "9%" }}>ค่าแรง</th>
+            <th className={th} style={{ width: "9%" }}>ค่าวัสดุ{editable && <span className="no-print block font-normal" style={{ fontSize: 9 }}>(ต่อหน่วย)</span>}</th>
+            <th className={th} style={{ width: "9%" }}>ค่าแรง{editable && <span className="no-print block font-normal" style={{ fontSize: 9 }}>(ต่อหน่วย)</span>}</th>
             <th className={th} style={{ width: "10%" }}>ราคางาน</th>
           </tr>
         </thead>
