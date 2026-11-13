@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { baht } from "@/lib/money";
-import { groupItems, DEFAULT_FOOTER_NOTES } from "@/lib/floor-calc/engine.mjs";
+import { groupItems, DEFAULT_FOOTER_NOTES, parseNum, lineTotalOf, sumItems, netTotal } from "@/lib/floor-calc/engine.mjs";
 
 /**
  * ใบเสนอราคางานพื้น — กระดาษ A4 จริง ที่ "แก้ตรงบนใบได้เลย"
@@ -17,7 +17,8 @@ import { groupItems, DEFAULT_FOOTER_NOTES } from "@/lib/floor-calc/engine.mjs";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Item = any;
 
-const num = (v: unknown) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
+// ตัวเลขที่พิมพ์มีลูกน้ำได้ ("1,200") — เดิม Number() แล้วกลายเป็น 0
+const num = (v: unknown) => parseNum(v);
 
 /**
  * ช่องตัวเลข — ยังไม่แตะ = เป็น "ข้อความ" เหมือนบนใบพิมพ์เป๊ะ (ไม่ใช่กล่อง input ที่ตัดเลขทิ้ง)
@@ -110,7 +111,9 @@ export function FloorQuoteSheet({
    */
   const groups = groupItems(items.map((it, i) => ({ ...it, __idx: i, sort_order: i })));
   const multi = groups.length > 1;
-  const total = items.reduce((a, it) => a + num(it.line_total), 0);
+  // ยอดรวม = ปริมาณ × ราคางาน ทุกบรรทัด (สูตรเดียวกับตอนบันทึก — เห็นเท่าไหร่ บันทึกเท่านั้น)
+  const total = sumItems(items);
+  const net = netTotal(total, discount);
 
   const th = "border border-gray-400 px-1.5 py-1 text-center font-semibold";
   const td = "border border-gray-400 px-1.5 py-1 align-top";
@@ -128,7 +131,7 @@ export function FloorQuoteSheet({
         const l = n.labor_price === "" || n.labor_price == null ? null : num(n.labor_price);
         if (m != null || l != null) n.unit_price = Math.round(((m ?? 0) + (l ?? 0)) * 100) / 100;
       }
-      n.line_total = Math.round(num(n.qty) * num(n.unit_price) * 100) / 100;
+      n.line_total = lineTotalOf(n);
       return n;
     }));
   };
@@ -307,7 +310,7 @@ export function FloorQuoteSheet({
             )}
             <tr className="font-bold" style={{ color: "#a8425a", fontSize: 14 }}>
               <td className="pr-8 py-1 text-right border-t">ยอดโดยรวมสุทธิ</td>
-              <td className="text-right tabular-nums border-t">{baht(Math.max(0, total - num(discount)))} บาท</td>
+              <td className="text-right tabular-nums border-t">{baht(net)} บาท</td>
             </tr>
           </tbody>
         </table>
@@ -409,7 +412,7 @@ function FloorGroupRows({
                 ? <NumCell value={it.unit_price} onChange={(v) => patch(idx, { unit_price: v })} />
                 : <span className="tabular-nums block text-right">{baht(num(it.unit_price))}</span>}
             </td>
-            <td className={`${td} text-right tabular-nums`} style={{ fontWeight: 500 }}>{baht(num(it.line_total))}</td>
+            <td className={`${td} text-right tabular-nums`} style={{ fontWeight: 500 }}>{baht(lineTotalOf(it))}</td>
             <td className={`${td} text-center`} style={{ fontSize: 10 }}>
               {editable
                 ? <input value={it.remark ?? ""} onChange={(e) => patch(idx, { remark: e.target.value })}

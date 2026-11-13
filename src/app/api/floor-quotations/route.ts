@@ -3,7 +3,7 @@ import { getProfile, canWrite } from "@/lib/auth";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 import { audit } from "@/lib/bff/handler";
 import { nextDocumentCode } from "@/lib/doc-code";
-import { sumItems, DEFAULT_CONTRACTOR } from "@/lib/floor-calc/engine.mjs";
+import { sumItems, DEFAULT_CONTRACTOR, parseNum, lineTotalOf } from "@/lib/floor-calc/engine.mjs";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +23,7 @@ export async function GET(req: Request) {
   const supabase = createClient();
   let query = supabase
     .from("floor_quotations")
-    .select("id, code, job_id, customer_id, customer_snapshot, issue_date, rev, status, total, calc")
+    .select("id, code, job_id, customer_id, customer_snapshot, issue_date, rev, status, total, discount, calc")
     .order("issue_date", { ascending: false })
     .order("id", { ascending: false })
     .limit(limit);
@@ -111,9 +111,10 @@ export async function POST(req: Request) {
 /** ล้าง/คำนวณรายการให้ปลอดภัยก่อนลง DB — line_total คิดใหม่เสมอ (ห้ามเชื่อค่าจาก client) */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function normalizeItems(items: any[]) {
+  // ตัวเลขที่คนพิมพ์มีลูกน้ำได้ ("1,200") — parseNum ตัดออกก่อน (เดิม Number("1,200") = NaN → บันทึกเป็น 0)
   const num = (v: unknown, dflt = 0) => {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : dflt;
+    if (v == null || String(v).trim() === "") return dflt;
+    return parseNum(v);
   };
   const r2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -128,7 +129,7 @@ export function normalizeItems(items: any[]) {
       material_price: it?.material_price == null || it.material_price === "" ? null : r2(num(it.material_price)),
       labor_price: it?.labor_price == null || it.labor_price === "" ? null : r2(num(it.labor_price)),
       unit_price: r2(unitPrice),
-      line_total: r2(qty * unitPrice),
+      line_total: lineTotalOf({ qty, unit_price: unitPrice }),
       remark: String(it?.remark ?? "").trim().slice(0, 120),
       source: ["auto", "suggest", "manual"].includes(it?.source) ? it.source : "manual",
     };

@@ -6,6 +6,7 @@ import Link from "next/link";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
 import { api } from "@/lib/api";
+import { useUnsavedWarning } from "@/lib/useUnsavedWarning";
 import { FloorPlanSvg } from "./FloorPlanSvg";
 import ImportQuoteButton from "./ImportQuoteButton";
 import { FloorQuoteSheet } from "./FloorQuoteSheet";
@@ -13,6 +14,7 @@ import { fixThai } from "@/lib/floor-calc/thai-fix";
 import {
   planFloor, draftItems, quickAdds, quoteFileName, groupNames, addItemToGroup, isExistingPile,
   PILE_TYPES, DEFAULT_CONTRACTOR, DEMO_WORKS, demoItem, demoPrice,
+  parseNum, lineTotalOf, sumItems, netTotal,
 } from "@/lib/floor-calc/engine.mjs";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -26,7 +28,10 @@ const todayISO = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
-const num = (v: unknown) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
+const num = (v: unknown) => parseNum(v);
+/** บรรทัดว่างล้วน (ไม่มีชื่อ ไม่มีราคา) — เช่นกด "+ เพิ่มบรรทัด" แล้วไม่ได้ใช้ → ตัดทิ้งตอนบันทึก ไม่ต้องบล็อก */
+const isBlankRow = (it: Item) =>
+  !String(it?.name ?? "").trim() && !parseNum(it?.unit_price) && !parseNum(it?.material_price) && !parseNum(it?.labor_price);
 
 /**
  * หน้าคิดราคางานพื้น — สร้าง/แก้ใบเสนอ
@@ -76,6 +81,13 @@ export default function FloorEditor({
       .slice()
       .sort((a: Item, b: Item) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
   );
+
+  // มีของแก้ยังไม่บันทึก → เตือนก่อนกดลิงก์ออกจากหน้า (เดิมไม่มี — แก้แล้วกดเมนูอื่น ของหายเงียบ ๆ = "เซฟไม่ติด")
+  const snapshot = JSON.stringify({ cName, cAddr, cPhone, issueDate, note, discount: String(discount), jobId, items, width, length, pileKey, pilesOverride });
+  const savedSnap = useRef<string | null>(null);
+  if (savedSnap.current === null) savedSnap.current = snapshot;
+  const dirty = snapshot !== savedSnap.current;
+  useUnsavedWarning(dirty && !saving);
 
   const plan = useMemo(() => planFloor(num(width) || 0.1, num(length) || 0.1), [width, length]);
   // จำนวนเข็มที่ใช้จริง = ที่แก้เอง (ถ้ามี) ไม่งั้นที่ผังคิด · ไหลเข้ารายการข้อ 1/ข้อ 2 ตอนสร้าง
@@ -135,9 +147,16 @@ export default function FloorEditor({
   const save = async () => {
     setErr(null);
     setSavedMsg(null);
-    if (!cName.trim()) return setErr("กรุณากรอกชื่อลูกค้า");
-    if (items.length === 0) return setErr("ยังไม่มีรายการ — กด “สร้างรายการตั้งต้น” หรือเพิ่มเอง");
-    if (items.some((it) => !String(it.name ?? "").trim())) return setErr("มีรายการที่ยังไม่ได้ใส่ชื่องาน");
+    if (!cName.trim()) return setErr("กรุณากรอกชื่อลูกค้า (ช่อง “รายการงาน” บนหัวใบ)");
+    // ตัดบรรทัดว่างล้วนทิ้งเอง (เดิมบรรทัดว่างแค่บรรทัดเดียวบล็อกการบันทึกทั้งใบ แต่ข้อความเตือนอยู่บนสุดของหน้า มองไม่เห็น)
+    const rows = items.filter((it) => !isBlankRow(it));
+    if (rows.length === 0) return setErr("ยังไม่มีรายการ — กด “สร้างรายการตั้งต้น” หรือเพิ่มเอง");
+    const noName = rows.findIndex((it) => !String(it.name ?? "").trim());
+    if (noName >= 0) {
+      const g = String(rows[noName].group_label ?? "").trim();
+      const nInGroup = rows.slice(0, noName + 1).filter((it) => String(it.group_label ?? "").trim() === g).length;
+      return setErr(`มีบรรทัดที่ใส่ราคาแล้วแต่ยังไม่มีชื่องาน — ${g ? `หมวด “${g}” ` : ""}ข้อ ${nInGroup} (ใส่ชื่อ หรือกด ✕ ลบบรรทัดนั้น)`);
+    }
 
     setSaving(true);
     const payload = {
@@ -145,22 +164,25 @@ export default function FloorEditor({
       job_id: jobId || null,
       issue_date: issueDate,
       note,
-      discount: Math.max(0, Number(discount) || 0),
+      discount: Math.max(0, num(discount)),
       calc: {
         width: num(width), length: num(length), pile_key: pileKey,
         rows_w: plan.rowsW, rows_l: plan.rowsL, piles: effectivePiles,
         beam_len: plan.beamLen, area: plan.area,
       },
-      items: items.map((it, i) => ({ ...it, sort_order: i })),
+      items: rows.map((it, i) => ({ ...it, line_total: lineTotalOf(it), sort_order: i })),
       ...(mode === "create" ? { contractor: DEFAULT_CONTRACTOR } : {}),
     };
     try {
       // api client เติม prefix /api ให้เอง และคืน { data } — ห้ามใส่ /api ซ้ำ
       if (mode === "create") {
         const { data } = await api.post<{ id: number }>("/floor-quotations", payload);
+        savedSnap.current = snapshot; // บันทึกแล้ว — ไม่ต้องเตือนตอนพาไปหน้าใบ
         router.push(`/floor-works/${data.id}`);
       } else {
         const { data } = await api.patch<{ rev: number }>(`/floor-quotations/${initial.id}`, payload);
+        if (rows.length !== items.length) setItems(rows); // บรรทัดว่างที่ตัดทิ้ง ให้หายจากจอด้วย
+        savedSnap.current = JSON.stringify({ cName, cAddr, cPhone, issueDate, note, discount: String(discount), jobId, items: rows.length !== items.length ? rows : items, width, length, pileKey, pilesOverride });
         setSavedMsg(`บันทึกแล้ว — ใบนี้เป็น rev${data?.rev ?? ""} · ชื่อไฟล์เวลาพิมพ์/โหลด = “${quoteFileName(cName, data?.rev)}”`);
         router.refresh();
       }
@@ -472,8 +494,16 @@ export default function FloorEditor({
       {/* แถบบันทึกลอยล่างจอ — ใบ A4 ยาว ถ้าไม่มีอันนี้ต้องเลื่อนสุดหน้าทุกครั้งกว่าจะเจอปุ่มเซฟ */}
       <div className="sticky bottom-3 z-20 flex justify-end pointer-events-none">
         <div className="pointer-events-auto flex items-center gap-3 rounded-2xl border border-gray-200 bg-white/95 backdrop-blur px-4 py-2.5 shadow-lg">
+          {/* ผลการบันทึกโชว์ที่แถบนี้ด้วย — เดิมโชว์แค่บนสุดของหน้า กดเซฟจากแถบล่างแล้วไม่เห็นอะไรเลย (เหมือนเซฟไม่ติด) */}
+          {err ? (
+            <span className="text-xs font-semibold text-red-700 max-w-[420px]">⚠ {err}</span>
+          ) : savedMsg && !dirty ? (
+            <span className="text-xs font-semibold text-emerald-700">✓ บันทึกแล้ว</span>
+          ) : dirty ? (
+            <span className="text-xs font-semibold text-amber-700">● ยังไม่บันทึก</span>
+          ) : null}
           <span className="text-xs text-ink-3 hidden sm:block">
-            {items.length} รายการ · {baht(items.reduce((a, it) => a + num(it.line_total), 0))} บาท
+            {items.length} รายการ · ยอดสุทธิ {baht(netTotal(sumItems(items), discount))} บาท
           </span>
           <button type="button" onClick={save} disabled={saving}
             className="press rounded-xl bg-brand text-white font-semibold px-6 py-2 disabled:opacity-50 whitespace-nowrap">

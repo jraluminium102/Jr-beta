@@ -34,6 +34,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     items,
     contractor: q.contractor ?? {},
     note: q.note,
+    discount: Number(q.discount) || 0,
     installments: inst.length
       ? inst.map((r) => ({ label: r.label, amount: Number(r.amount) || 0, work_items: r.work_items, is_final: !!r.is_final }))
       : undefined,

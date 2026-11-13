@@ -206,8 +206,12 @@ export function importQuoteXlsx(buf: Buffer): ImportResult {
     const mat = matRaw ? toNum(matRaw) : null;
     const lab = labRaw && toNum(labRaw) !== mat ? toNum(labRaw) : null;
 
-    const price = unitPrice || (qty ? r2(total / qty) : 0);
-    const computed = r2((qty || 1) * price);
+    const filePrice = unitPrice || (qty ? r2(total / qty) : 0);
+    const computed = r2((qty || 1) * filePrice);
+    // ยอดในไฟล์ไม่ตรง ปริมาณ × ราคา (ช่างพิมพ์ยอดทับสูตร) → ยึด "ยอดในไฟล์" แล้วปรับราคาต่อหน่วยให้คูณได้ยอดนั้น
+    //   เดิมหน้าจอโชว์ยอดไฟล์ แต่ตอนบันทึกคิด ปริมาณ × ราคา ใหม่ → ยอดเปลี่ยนเองหลังกดบันทึก (13 พ.ย.69)
+    const mismatch = !!total && Math.abs(total - computed) > 0.5;
+    const price = mismatch ? r2(total / (qty || 1)) : filePrice;
 
     items.push({
       group_label: group,
@@ -217,15 +221,15 @@ export function importQuoteXlsx(buf: Buffer): ImportResult {
       material_price: mat && mat > 0 ? mat : null,
       labor_price: lab && lab > 0 ? lab : null,
       unit_price: price,
-      line_total: total || computed,
+      line_total: r2((qty || 1) * price),
       remark: c.remark >= 0 ? collect(cell(row, c.remark)) : "",
       source: "import",
       raw_total: total,
     });
 
     // ยอดในไฟล์ไม่ตรงกับ ปริมาณ × ราคา (ช่างพิมพ์ทับสูตร)
-    if (total && Math.abs(total - computed) > 0.5) {
-      warnings.push(`“${name.slice(0, 40)}” — ยอดในไฟล์ ${total.toLocaleString()} แต่ ${qty || 1} × ${price.toLocaleString()} = ${computed.toLocaleString()}`);
+    if (mismatch) {
+      warnings.push(`“${name.slice(0, 40)}” — ยอดในไฟล์ ${total.toLocaleString()} แต่ ${qty || 1} × ${filePrice.toLocaleString()} = ${computed.toLocaleString()} → ใช้ยอดในไฟล์ (ราคางานปรับเป็น ${price.toLocaleString()}/หน่วย)`);
     }
   }
 

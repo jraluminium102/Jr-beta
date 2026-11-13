@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { netTotal } from "@/lib/floor-calc/engine.mjs";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile, canWrite } from "@/lib/auth";
 import { baht } from "@/lib/money";
@@ -19,7 +20,7 @@ export default async function FloorWorksPage() {
 
   const { data, error } = await supabase
     .from("floor_quotations")
-    .select("id, code, customer_snapshot, issue_date, rev, status, total, calc")
+    .select("id, code, customer_snapshot, issue_date, rev, status, total, discount, calc")
     .order("issue_date", { ascending: false })
     .order("id", { ascending: false })
     .limit(300);
@@ -88,7 +89,7 @@ export default async function FloorWorksPage() {
                       {c.width && c.length ? `${c.width} × ${c.length} ม.` : "—"}
                     </td>
                     <td className="p-2.5 text-center tabular-nums text-ink-2">{c.piles ?? "—"}</td>
-                    <td className="p-2.5 text-right tabular-nums font-semibold">{baht(Number(r.total) || 0)}</td>
+                    <td className="p-2.5 text-right tabular-nums font-semibold">{baht(netTotal(r.total, r.discount))}</td>
                     <td className="p-2.5 text-center">
                       <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${st.cls}`}>{st.label}</span>
                     </td>
