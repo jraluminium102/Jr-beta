@@ -74,7 +74,11 @@ console.log("\n═══ 🔎 ค้นหากระจก (GlassPicker) ═�
   const r1 = flat(filterGlassGroups(groups, "เทมเปอร์"));
   ok("พิมพ์ 'เทมเปอร์' = เหลือแต่เทมเปอร์ (" + r1.length + " ตัว)", r1.length > 0 && r1.length < total && r1.every((i) => /เทมเปอร์/.test(i.label + i.value)));
   const r2 = flat(filterGlassGroups(groups, "เทมเปอร์ 10"));
-  ok("หลายคำ 'เทมเปอร์ 10' = ต้องมีครบทุกคำ", r2.length > 0 && r2.length < r1.length && r2.every((i) => /เทมเปอร์/.test(i.label + i.value) && /10/.test(i.label + i.value)));
+  // 13 พ.ย.69 บั๊กจริงบนเว็บ: regex \\s หาย (กลายเป็น /[s.]/) → "เทมเปอร์ 10" เจอแค่ 1 ตัว · ตรวจจำนวนให้ตรงกับนับมือ
+  const want2 = flat(groups).filter((i) => { const h = (i.label + "|" + i.value).replace(/[\s.]/g, ""); return h.includes("เทมเปอร์") && h.includes("10"); }).length;
+  ok("หลายคำ 'เทมเปอร์ 10' = ต้องมีครบทุกคำ · ได้ครบทุกตัว (" + r2.length + "/" + want2 + ")", r2.length === want2 && want2 >= 5 && r2.some((i) => i.label === "เทมเปอร์ใส หนา 10 มม." || /เทมเปอร์ใส/.test(i.label)));
+  const rs = flat(filterGlassGroups(groups, "ลามิเนต ใส"));
+  ok("'ลามิเนต ใส' เจอหลายตัว (" + rs.length + ")", rs.length >= 2 && rs.every((i) => /ลามิเนต/.test(i.label + i.value) && /ใส/.test(i.label + i.value)));
   const r3 = flat(filterGlassGroups(groups, "ใส6"));
   ok("ไม่สนช่องว่าง: 'ใส6' เจอกระจกใส 6 มม.", r3.length > 0 && r3.every((i) => /ใส/.test(i.label + i.value) && /6/.test(i.label + i.value)));
   ok("ไม่เจอ = รายการว่าง (หน้าจอขึ้น 'ไม่เจอกระจก')", flat(filterGlassGroups(groups, "zzzไม่มีแน่")).length === 0);
