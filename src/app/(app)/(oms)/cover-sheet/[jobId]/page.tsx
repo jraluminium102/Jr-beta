@@ -19,10 +19,18 @@ const COLOR_LABEL: Record<CoverColor, string> = { "": "ดำ", red: "แดง"
 const nextN = (left: CoverLine[]) => left.reduce((m, l) => Math.max(m, l.kind === "group" ? (l.n ?? 0) : 0), 0) + 1;
 
 // ── บรรทัด spec (บุลเลท) ในคอลัมน์ซ้าย — พื้นขาว อ่านออกชัด ──
-function SpecRow({ line, onChange, onRemove, onEnter, placeholder = "พิมพ์รายการ…" }: {
+// ช่องแจ้งช่าง: ไม่เลือกสี = แดง (ตรงกับหน้าพิมพ์) → ตัวเลือก แดง/น้ำเงิน/เขียว
+const MID_COLORS: [CoverColor, string][] = [["", "แดง"], ["blue", "น้ำเงิน"], ["green", "เขียว"]];
+const DEFAULT_COLORS: [CoverColor, string][] = (Object.keys(COLOR_LABEL) as CoverColor[]).map((c) => [c, COLOR_LABEL[c]]);
+
+function SpecRow({ line, onChange, onRemove, onEnter, placeholder = "พิมพ์รายการ…", redDefault = false }: {
   line: CoverLine; onChange: (p: Partial<CoverLine>) => void; onRemove: () => void; onEnter?: () => void; placeholder?: string;
+  redDefault?: boolean; // true = ช่องแจ้งช่าง (ไม่เลือกสี = แดง)
 }) {
   const hl = effectiveHl(line);
+  const colorVal: CoverColor = redDefault && line.color === "red" ? "" : (line.color ?? "");
+  const textHex = redDefault && !colorVal ? COLOR_HEX.red : COLOR_HEX[colorVal];
+  const options = redDefault ? MID_COLORS : DEFAULT_COLORS;
   return (
     <div className="flex items-center gap-1.5">
       <span className="text-gray-400 select-none">–</span>
@@ -31,16 +39,16 @@ function SpecRow({ line, onChange, onRemove, onEnter, placeholder = "พิม�
         onChange={(e) => onChange({ text: e.target.value })}
         placeholder={placeholder}
         onKeyDown={(e) => { if (e.key === "Enter" && onEnter) { e.preventDefault(); onEnter(); } }}
-        style={{ color: COLOR_HEX[line.color ?? ""], background: hl ? HIGHLIGHT_HEX[hl] : "#fff" }}
+        style={{ color: textHex, background: hl ? HIGHLIGHT_HEX[hl] : "#fff" }}
         className="flex-1 min-w-0 rounded-md border border-gray-300 px-2.5 py-2 text-[15px] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-300"
       />
       <select
-        value={line.color ?? ""} onChange={(e) => onChange({ color: e.target.value as CoverColor })}
+        value={colorVal} onChange={(e) => onChange({ color: e.target.value as CoverColor })}
         aria-label="สี" title="สีตัวอักษร"
         className="rounded-md border border-gray-300 bg-white px-1.5 py-2 text-[13px] text-gray-800 focus:outline-none"
-        style={{ color: COLOR_HEX[line.color ?? ""] }}
+        style={{ color: textHex }}
       >
-        {(Object.keys(COLOR_LABEL) as CoverColor[]).map((c) => <option key={c} value={c}>{COLOR_LABEL[c]}</option>)}
+        {options.map(([c, label]) => <option key={c} value={c}>{label}</option>)}
       </select>
       {/* กดวนสีไฮไลต์: ไม่มี→เหลือง→เขียว→ชมพู→ฟ้า→ส้ม→ไม่มี — เขียนทั้ง hlc(ใหม่)+hl(เก่า sync ไว้กันหน้าจอ/รายงานเก่าอ่าน boolean) */}
       <button type="button" onClick={() => { const n = nextHighlight(hl); onChange({ hlc: n, hl: n !== "" }); }}
@@ -92,7 +100,7 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
       floorNote: c?.floorNote ?? d.job?.floor_note ?? "",
       warnings: c?.warnings ?? [],
       left: c?.left ?? [],
-      mid: c?.mid ?? [],
+      mid: (c?.mid ?? []).filter((l) => (l.text ?? "").trim()), // ของเก่าจาก textarea มีบรรทัดว่างแทรก — ตัดทิ้ง (พิมพ์ก็ไม่โชว์อยู่แล้ว)
       right: c?.right ?? [],
     };
     setMode(loadedMode);
@@ -127,20 +135,16 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
     setContent((c) => ({ ...c, left: [...c.left, { text: "", kind: "group", n: nextN(c.left) }] }));
 
   // ── mid/right = textarea (บรรทัดละโน้ต) ──
-  const sideText = (key: "mid" | "right") => content[key].map((l) => l.text).join("\n");
-  const setSideText = (key: "mid" | "right", v: string) =>
-    setContent((c) => ({ ...c, [key]: v.split("\n").map((t) => ({ text: t, color: "" as CoverColor, hl: false })) }));
-
-  // ── right = รายบรรทัด (สี/ไฮไลต์ได้เหมือนคอลัมน์ซ้าย — เจ้าของ 3 พ.ย.69) ──
-  const updateRight = (i: number, p: Partial<CoverLine>) =>
-    setContent((c) => ({ ...c, right: c.right.map((l, j) => (j === i ? { ...l, ...p } : l)) }));
-  const removeRight = (i: number) =>
-    setContent((c) => ({ ...c, right: c.right.filter((_, j) => j !== i) }));
-  const addRight = (after?: number) =>
+  //    → เลิก textarea: แจ้งช่าง (13 พ.ย.69) + แจ้งลูกค้า (3 พ.ย.69) เป็นรายบรรทัด สี/ไฮไลต์ได้เหมือนคอลัมน์ซ้าย
+  const updateSide = (key: "mid" | "right", i: number, p: Partial<CoverLine>) =>
+    setContent((c) => ({ ...c, [key]: c[key].map((l, j) => (j === i ? { ...l, ...p } : l)) }));
+  const removeSide = (key: "mid" | "right", i: number) =>
+    setContent((c) => ({ ...c, [key]: c[key].filter((_, j) => j !== i) }));
+  const addSide = (key: "mid" | "right", after?: number) =>
     setContent((c) => {
-      const next = [...c.right];
+      const next = [...c[key]];
       next.splice(after == null ? next.length : after + 1, 0, { text: "", color: "", hl: false });
-      return { ...c, right: next };
+      return { ...c, [key]: next };
     });
 
   // ── คำเตือนมุมซ้ายบน ──
@@ -408,7 +412,7 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
               {/* คอลัมน์ 2: แจ้งช่าง (textarea แดง) */}
               <div className="rounded-2xl bg-white border border-black/10 shadow-sm p-4">
                 <div className="font-bold text-[#c00000] text-[13.5px] mb-1 underline underline-offset-2">รายละเอียด แจ้งช่างตอนติดตั้ง</div>
-                <div className="text-[11px] text-gray-400 mb-2">กรอกเอง — 1 บรรทัด/โน้ต (เช่น พี่เนียน วัดงาน)</div>
+                <div className="text-[11px] text-gray-400 mb-2">กรอกเอง — 1 บรรทัด/โน้ต (เช่น พี่เนียน วัดงาน) · เลือกสีตัวอักษร/ไฮไลต์ได้ทีละบรรทัด · Enter = บรรทัดใหม่</div>
                 {/* ตัวช่วย "วัดงาน" — กรอกคนวัด+วันที่(จิ้มปฏิทิน) กด+เพิ่ม → แทรก "พี่..วัดงาน วว/ดด/ปปปป" บนสุด */}
                 <div className="mb-2 rounded-lg bg-rose-50 border border-rose-200 p-2.5">
                   <div className="text-[12px] font-semibold text-rose-700 mb-1.5">📏 ใส่วันวัดงาน (เขียนให้อัตโนมัติ)</div>
@@ -422,12 +426,16 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
                       className="shrink-0 rounded-md bg-rose-600 text-white text-[13px] font-semibold px-3.5 py-2 min-h-[38px] disabled:opacity-40">+ เพิ่มลงช่องล่าง</button>
                   </div>
                 </div>
-                <textarea
-                  value={sideText("mid")}
-                  onChange={(e) => setSideText("mid", e.target.value)}
-                  placeholder="พี่…… วัดงาน&#10;รื้อของเดิม พร้อมเก็บสี"
-                  rows={10}
-                  className="w-full min-h-[220px] resize-y rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-[15px] text-[#c00000] leading-relaxed focus:outline-none focus:ring-2 focus:ring-sky-300" />
+                <div className="space-y-1.5">
+                  {content.mid.map((l, i) => (
+                    <SpecRow key={i} line={l} placeholder="รื้อของเดิม พร้อมเก็บสี" redDefault
+                      onChange={(p) => updateSide("mid", i, p)} onRemove={() => removeSide("mid", i)} onEnter={() => addSide("mid", i)} />
+                  ))}
+                  <button type="button" onClick={() => addSide("mid")}
+                    className="rounded-md border border-dashed border-gray-300 bg-white px-3 py-2 text-[13px] text-gray-600 hover:border-rose-300 hover:text-rose-700">
+                    + เพิ่มบรรทัด
+                  </button>
+                </div>
               </div>
 
               {/* คอลัมน์ 3: แจ้งลูกค้า (textarea) */}
@@ -437,9 +445,9 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
                 <div className="space-y-1.5">
                   {content.right.map((l, i) => (
                     <SpecRow key={i} line={l} placeholder="สีเก็บงาน"
-                      onChange={(p) => updateRight(i, p)} onRemove={() => removeRight(i)} onEnter={() => addRight(i)} />
+                      onChange={(p) => updateSide("right", i, p)} onRemove={() => removeSide("right", i)} onEnter={() => addSide("right", i)} />
                   ))}
-                  <button type="button" onClick={() => addRight()}
+                  <button type="button" onClick={() => addSide("right")}
                     className="rounded-md border border-dashed border-gray-300 bg-white px-3 py-2 text-[13px] text-gray-600 hover:border-sky-300 hover:text-sky-700">
                     + เพิ่มบรรทัด
                   </button>
