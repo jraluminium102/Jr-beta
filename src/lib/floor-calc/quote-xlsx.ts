@@ -1,5 +1,5 @@
 import { writeXlsx, S, type Row, type SheetSpec } from "./xlsx-write";
-import { DEFAULT_FOOTER_NOTES } from "./engine.mjs";
+import { DEFAULT_FOOTER_NOTES, lineTotalOf, sumItems, netTotal } from "./engine.mjs";
 
 /**
  * ประกอบ "ใบเสนอราคางานพื้น" เป็นไฟล์ Excel ตามฟอร์มช่าง
@@ -25,6 +25,8 @@ export type XlsxQuote = {
   items: XlsxItem[];
   contractor?: { name?: string; phone?: string; bank_name?: string; bank_acc?: string };
   note?: string;
+  /** ส่วนลดเป็นบาท (0146) — มีค่า = เพิ่มแถว รวมเป็นเงิน / ส่วนลด ก่อนยอดสุทธิ เหมือนหน้าพิมพ์ */
+  discount?: number;
   /** งวดเงิน — ถ้ามีจะเพิ่มชีต "ใบเบิกงวด" */
   installments?: { label: string; amount: number; work_items?: string; is_final?: boolean }[];
 };
@@ -42,7 +44,7 @@ function group(items: XlsxItem[]) {
   }
   return order.map((label) => {
     const list = map.get(label)!;
-    return { label, items: list, subtotal: r2(list.reduce((a, i) => a + (Number(i.line_total) || 0), 0)) };
+    return { label, items: list, subtotal: sumItems(list) };
   });
 }
 
@@ -51,7 +53,8 @@ const COLS = 9; // ลำดับ · รายการ · ปริมาณ �
 export function buildQuoteXlsx(q: XlsxQuote): Buffer {
   const groups = group(q.items);
   const multi = groups.length > 1;
-  const total = r2(q.items.reduce((a, i) => a + (Number(i.line_total) || 0), 0));
+  const total = sumItems(q.items);
+  const discount = Math.min(Math.max(0, Number(q.discount) || 0), total);
   const rows: Row[] = [];
   const merges: string[] = [];
   const heights: Record<number, number> = {};
@@ -105,7 +108,7 @@ export function buildQuoteXlsx(q: XlsxQuote): Buffer {
         { v: it.material_price == null ? "-" : Number(it.material_price), s: it.material_price == null ? S.tdC : S.num },
         { v: it.labor_price == null ? "-" : Number(it.labor_price), s: it.labor_price == null ? S.tdC : S.num },
         { v: Number(it.unit_price) || 0, s: S.num },
-        { v: Number(it.line_total) || 0, s: S.num },
+        { v: lineTotalOf(it), s: S.num },
         { v: it.remark ?? "", s: S.tdC },
       ]);
     });
@@ -119,11 +122,16 @@ export function buildQuoteXlsx(q: XlsxQuote): Buffer {
     }
   }
 
-  // ── ยอดรวม ──
+  // ── ยอดรวม (มีส่วนลด = แสดง รวมเป็นเงิน / ส่วนลด ก่อน เหมือนหน้าพิมพ์ · เดิม Excel ไม่หักส่วนลด) ──
+  const sumRow = (label: string, v: number) => {
+    const r = push([{ v: label, s: S.totalLbl }, ...Array.from({ length: 6 }, () => ({ v: "", s: S.totalLbl })), { v, s: S.totalNum }, { v: "", s: S.tdC }]);
+    merges.push(`A${r}:G${r}`);
+  };
+  if (discount > 0) { sumRow("รวมเป็นเงิน", total); sumRow("ส่วนลด", -discount); }
   const tr = push([
     { v: "ยอดโดยรวมสุทธิ", s: S.totalLbl },
     ...Array.from({ length: 6 }, () => ({ v: "", s: S.totalLbl })),
-    { v: total, s: S.totalNum }, { v: "", s: S.tdC },
+    { v: netTotal(total, discount), s: S.totalNum }, { v: "", s: S.tdC },
   ]);
   merges.push(`A${tr}:G${tr}`);
   heights[tr] = 20;

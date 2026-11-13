@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfile, canWrite } from "@/lib/auth";
 import { ok, fail, UNAUTHORIZED, FORBIDDEN } from "@/lib/bff";
 import { audit } from "@/lib/bff/handler";
-import { sumItems } from "@/lib/floor-calc/engine.mjs";
+import { sumItems, parseNum } from "@/lib/floor-calc/engine.mjs";
 import { normalizeItems } from "../route";
 
 export const dynamic = "force-dynamic";
@@ -70,7 +70,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (body?.note !== undefined) patch.note = String(body.note).trim();
   if (body?.job_id !== undefined) patch.job_id = body.job_id || null;
   if (body?.customer_id !== undefined) patch.customer_id = body.customer_id || null;
-  if (body?.discount !== undefined) patch.discount = Math.max(0, Number(body.discount) || 0);
+  if (body?.discount !== undefined) patch.discount = Math.max(0, parseNum(body.discount));
 
   // ── รายการ: ส่งมา = แทนที่ทั้งชุด + นับ Rev ขึ้น 1 ──
   //    เจ้าของสั่ง 6 ส.ค.69: rev = "จำนวนครั้งที่แก้" → ชื่อไฟล์ต่อท้าย rev1, rev2, ...
@@ -83,13 +83,24 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     const clean = normalizeItems(body.items);
     newTotal = sumItems(clean);
 
-    const { error: dErr } = await supabase.from("floor_quotation_items").delete().eq("quotation_id", params.id);
-    if (dErr) return fail("ลบรายการเดิมไม่สำเร็จ: " + dErr.message, 500);
+    // ใส่ชุดใหม่ก่อน แล้วค่อยลบชุดเก่า (เดิมลบก่อน → ถ้าใส่ไม่ผ่าน รายการหายทั้งใบ · 13 พ.ย.69)
+    const { data: oldRows, error: oErr } = await supabase.from("floor_quotation_items").select("id").eq("quotation_id", params.id);
+    if (oErr) return fail("อ่านรายการเดิมไม่สำเร็จ: " + oErr.message, 500);
     const { error: iErr } = await supabase
       .from("floor_quotation_items")
       .insert(clean.map((it, i) => ({ ...it, quotation_id: Number(params.id), sort_order: i })));
-    if (iErr) return fail("บันทึกรายการไม่สำเร็จ: " + iErr.message, 500);
+    if (iErr) return fail("บันทึกรายการไม่สำเร็จ (รายการเดิมยังอยู่ครบ): " + iErr.message, 500);
+    const oldIds = ((oldRows ?? []) as { id: number }[]).map((r) => r.id);
+    if (oldIds.length) {
+      const { error: dErr } = await supabase.from("floor_quotation_items").delete().in("id", oldIds);
+      if (dErr) return fail("ลบรายการเดิมไม่สำเร็จ: " + dErr.message, 500);
+    }
     patch.total = newTotal;
+  }
+  // ส่วนลดห้ามเกินยอด (ตอนสร้างใบคุมไว้แล้ว แต่ตอนแก้เดิมไม่คุม)
+  if (patch.discount !== undefined) {
+    const t = newTotal ?? (Number(cu.total) || 0);
+    patch.discount = Math.min(Number(patch.discount) || 0, t);
   }
 
   if (Object.keys(patch).length === 0) return fail("ไม่มีข้อมูลให้แก้ไข");

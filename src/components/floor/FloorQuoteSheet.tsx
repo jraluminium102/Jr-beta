@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { baht } from "@/lib/money";
-import { groupItems, DEFAULT_FOOTER_NOTES } from "@/lib/floor-calc/engine.mjs";
+import { groupItems, DEFAULT_FOOTER_NOTES, parseNum, lineTotalOf, sumItems, netTotal } from "@/lib/floor-calc/engine.mjs";
 
 /**
  * ใบเสนอราคางานพื้น — กระดาษ A4 จริง ที่ "แก้ตรงบนใบได้เลย"
@@ -17,7 +17,8 @@ import { groupItems, DEFAULT_FOOTER_NOTES } from "@/lib/floor-calc/engine.mjs";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Item = any;
 
-const num = (v: unknown) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
+// ตัวเลขที่พิมพ์มีลูกน้ำได้ ("1,200") — เดิม Number() แล้วกลายเป็น 0
+const num = (v: unknown) => parseNum(v);
 
 /**
  * ช่องตัวเลข — ยังไม่แตะ = เป็น "ข้อความ" เหมือนบนใบพิมพ์เป๊ะ (ไม่ใช่กล่อง input ที่ตัดเลขทิ้ง)
@@ -110,7 +111,9 @@ export function FloorQuoteSheet({
    */
   const groups = groupItems(items.map((it, i) => ({ ...it, __idx: i, sort_order: i })));
   const multi = groups.length > 1;
-  const total = items.reduce((a, it) => a + num(it.line_total), 0);
+  // ยอดรวม = ปริมาณ × ราคางาน ทุกบรรทัด (สูตรเดียวกับตอนบันทึก — เห็นเท่าไหร่ บันทึกเท่านั้น)
+  const total = sumItems(items);
+  const net = netTotal(total, discount);
 
   const th = "border border-gray-400 px-1.5 py-1 text-center font-semibold";
   const td = "border border-gray-400 px-1.5 py-1 align-top";
@@ -128,8 +131,28 @@ export function FloorQuoteSheet({
         const l = n.labor_price === "" || n.labor_price == null ? null : num(n.labor_price);
         if (m != null || l != null) n.unit_price = Math.round(((m ?? 0) + (l ?? 0)) * 100) / 100;
       }
-      n.line_total = Math.round(num(n.qty) * num(n.unit_price) * 100) / 100;
+      n.line_total = lineTotalOf(n);
       return n;
+    }));
+  };
+  /**
+   * บรรทัดที่กรอก ค่าวัสดุ/ค่าแรง เป็น "ยอดรวมของบรรทัด" แทน "ต่อหน่วย" (เจอจริงใบคุณอ้อย 13 พ.ย.69)
+   *   → ใบพิมพ์โชว์ค่าวัสดุต่อหน่วยผิด + พอแก้ช่องใดช่องหนึ่ง ราคางาน = ยอดรวม แล้ว × ปริมาณซ้ำ = ยอดพุ่งหลักล้าน
+   *   จับ: ปริมาณ ≠ 1 · วัสดุ+แรง ≠ ราคางาน แต่ = ราคารวมบรรทัด
+   */
+  const totalsAsUnit = editable ? items.map((it, i) => ({ it, i })).filter(({ it }) => {
+    const q = num(it.qty), m = num(it.material_price), l = num(it.labor_price);
+    if (q === 1 || q === 0 || (!m && !l)) return false;
+    return Math.abs(m + l - num(it.unit_price)) > 0.5 && Math.abs(m + l - lineTotalOf(it)) <= 1;
+  }) : [];
+  const fixTotalsAsUnit = () => {
+    if (!onItems) return;
+    const bad = new Set(totalsAsUnit.map((x) => x.i));
+    onItems(items.map((it, k) => {
+      if (!bad.has(k)) return it;
+      const q = num(it.qty);
+      const r = (v: unknown) => (v == null || v === "" ? null : Math.round((num(v) / q) * 100) / 100);
+      return { ...it, material_price: r(it.material_price), labor_price: r(it.labor_price) };
     }));
   };
   const del = (i: number) => onItems?.(items.filter((_, k) => k !== i));
@@ -204,6 +227,19 @@ export function FloorQuoteSheet({
         </div>
       </div>
 
+      {totalsAsUnit.length > 0 && (
+        <div className="no-print mt-3 rounded-lg border border-amber-400 bg-amber-50 px-3 py-2 text-amber-900" style={{ fontSize: 12 }}>
+          <b>⚠ {totalsAsUnit.length} บรรทัด กรอกค่าวัสดุ/ค่าแรงเป็นยอดรวม</b> — ช่องนี้บนใบคือ <b>ราคาต่อหน่วย</b> (วัสดุ + แรง = ราคางาน)
+          <div className="mt-0.5" style={{ fontSize: 11 }}>
+            {totalsAsUnit.slice(0, 4).map(({ it }) => String(it.name ?? "").split(/\r?\n/)[0].slice(0, 30)).join(" · ")}{totalsAsUnit.length > 4 ? " · …" : ""}
+          </div>
+          <button type="button" onClick={fixTotalsAsUnit}
+            className="press mt-1.5 rounded-md bg-amber-600 px-3 py-1 font-semibold text-white" style={{ fontSize: 12 }}>
+            แปลงเป็นต่อหน่วย (หารด้วยปริมาณ · ยอดรวมเท่าเดิม)
+          </button>
+        </div>
+      )}
+
       {/* ตาราง */}
       <table className="w-full mt-3 border-collapse" style={{ fontSize: 11 }}>
         <thead>
@@ -218,8 +254,8 @@ export function FloorQuoteSheet({
             {editable && <th className="p-0 border-0 no-print" style={{ width: 1 }} rowSpan={2} />}
           </tr>
           <tr style={{ background: "#faedf0", color: "#a8425a" }}>
-            <th className={th} style={{ width: "9%" }}>ค่าวัสดุ</th>
-            <th className={th} style={{ width: "9%" }}>ค่าแรง</th>
+            <th className={th} style={{ width: "9%" }}>ค่าวัสดุ{editable && <span className="no-print block font-normal" style={{ fontSize: 9 }}>(ต่อหน่วย)</span>}</th>
+            <th className={th} style={{ width: "9%" }}>ค่าแรง{editable && <span className="no-print block font-normal" style={{ fontSize: 9 }}>(ต่อหน่วย)</span>}</th>
             <th className={th} style={{ width: "10%" }}>ราคางาน</th>
           </tr>
         </thead>
@@ -307,7 +343,7 @@ export function FloorQuoteSheet({
             )}
             <tr className="font-bold" style={{ color: "#a8425a", fontSize: 14 }}>
               <td className="pr-8 py-1 text-right border-t">ยอดโดยรวมสุทธิ</td>
-              <td className="text-right tabular-nums border-t">{baht(Math.max(0, total - num(discount)))} บาท</td>
+              <td className="text-right tabular-nums border-t">{baht(net)} บาท</td>
             </tr>
           </tbody>
         </table>
@@ -409,7 +445,7 @@ function FloorGroupRows({
                 ? <NumCell value={it.unit_price} onChange={(v) => patch(idx, { unit_price: v })} />
                 : <span className="tabular-nums block text-right">{baht(num(it.unit_price))}</span>}
             </td>
-            <td className={`${td} text-right tabular-nums`} style={{ fontWeight: 500 }}>{baht(num(it.line_total))}</td>
+            <td className={`${td} text-right tabular-nums`} style={{ fontWeight: 500 }}>{baht(lineTotalOf(it))}</td>
             <td className={`${td} text-center`} style={{ fontSize: 10 }}>
               {editable
                 ? <input value={it.remark ?? ""} onChange={(e) => patch(idx, { remark: e.target.value })}

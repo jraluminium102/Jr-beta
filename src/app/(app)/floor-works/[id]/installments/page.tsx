@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { netTotal } from "@/lib/floor-calc/engine.mjs";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile, canWrite } from "@/lib/auth";
@@ -51,7 +52,7 @@ export default async function FloorInstallmentsPage({ params }: { params: { id: 
       {canWrite(profile.role) ? (
         <InstallmentEditor
           quotationId={q.id}
-          quoteTotal={Number(q.total) || 0}
+          quoteTotal={netTotal(q.total, q.discount)}
           initial={rows}
           itemNames={itemNames}
         />

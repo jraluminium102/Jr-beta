@@ -13,6 +13,7 @@ import {
   planFloor, layoutAxis, RATE, pileType, suggest, draftItems, sumItems, groupItems,
   quoteFileName, groupNames, addItemToGroup, isExistingPile, PILE_TYPES,
   MIN_SPAN, MAX_SPAN, demoPrice, DEMO_WORKS, DEMO_BANDS,
+  demoItem, parseNum, lineTotalOf, netTotal,
 } from "../src/lib/floor-calc/engine.mjs";
 
 let failed = 0;
@@ -355,6 +356,42 @@ console.log("\n═══ ⑩ ใช้เข็มเดิมของลูก
   // ต้องมีในลิสต์ให้เลือก
   if (PILE_TYPES.some((p) => p.key === "existing")) ok("โผล่ในตัวเลือกชนิดเข็ม");
   else bad("ไม่มีในตัวเลือกชนิดเข็ม");
+}
+
+// ═══ ⑪ ยอดบนจอ = ยอดที่บันทึก (บั๊ก "รวมยอดผิด / เซฟแล้วยอดเปลี่ยน" 13 พ.ย.69) ═══
+console.log("\n═══ ⑪ ยอดบนจอ = ยอดที่บันทึก · ตัวเลขมีลูกน้ำ · ส่วนลด ═══");
+{
+  const cases = [["1,200", 1200], [" 2,500.50 ", 2500.5], ["3000 บาท", 3000], [1200, 1200], ["", 0], ["abc", 0], [null, 0]];
+  const wrong = cases.filter(([v, want]) => parseNum(v) !== want);
+  if (!wrong.length) ok("อ่านตัวเลขมีลูกน้ำ/ช่องว่าง/คำว่าบาท ได้ถูก (1,200 = 1200)");
+  else bad("อ่านตัวเลขผิด: " + wrong.map(([v, w]) => `${JSON.stringify(v)}→${parseNum(v)} (ต้อง ${w})`).join(", "));
+
+  const stale = [{ qty: 2, unit_price: 1000, line_total: 9999 }, { qty: 1, unit_price: 0, line_total: 5 }];
+  if (sumItems(stale) === 2000) ok("ยอดรวมไม่เชื่อ line_total ค้าง (คิด 2 × 1,000 = 2,000)");
+  else bad(`ยอดรวมยังเชื่อ line_total ค้าง: ${sumItems(stale)}`);
+
+  if (lineTotalOf({ qty: 18.600000000000001, unit_price: 1500 }) === 27900) ok("ปริมาณทศนิยมยาวปัดก่อนคูณ = ตรงฝั่งบันทึก");
+  else bad("ปริมาณทศนิยมยาวคูณไม่ตรง: " + lineTotalOf({ qty: 18.600000000000001, unit_price: 1500 }));
+
+  const probs = [];
+  for (const d of DEMO_WORKS) for (const a of [0, 3, 12.5, 25, 45]) {
+    const it = demoItem(d.key, a);
+    if (!it) continue;
+    if (lineTotalOf(it) !== it.line_total) probs.push(`${d.label} ${a} ตร.ม.: บรรทัด ${it.line_total} แต่ ปริมาณ×ราคา = ${lineTotalOf(it)}`);
+    if (it.labor_price != null && it.labor_price !== it.unit_price) probs.push(`${d.label} ${a} ตร.ม.: ค่าแรง ${it.labor_price} ≠ ราคางาน ${it.unit_price}`);
+  }
+  if (!probs.length) ok("งานรื้อทุกแบบ: ยอดบรรทัด = ปริมาณ × ราคางาน · ค่าแรงเป็นต่อหน่วย");
+  else probs.slice(0, 5).forEach(bad);
+
+  const dr = draftItems(planFloor(3.1, 6.3), "i18");
+  const off = dr.filter((it) => lineTotalOf(it) !== it.line_total);
+  if (!off.length) ok(`รายการตั้งต้นจากผัง ${dr.length} บรรทัด ยอดตรง ปริมาณ × ราคา ทุกบรรทัด`);
+  else bad("รายการตั้งต้นยอดไม่ตรง: " + off.map((it) => `${it.name.slice(0, 20)} ${it.line_total}≠${lineTotalOf(it)}`).join(", "));
+
+  const nt = [[100000, 5000, 95000], [100000, 0, 100000], [100000, "5,000", 95000], [1000, 5000, 0], [1000, -50, 1000]];
+  const ntBad = nt.filter(([t, dc, w]) => netTotal(t, dc) !== w);
+  if (!ntBad.length) ok("ยอดสุทธิหักส่วนลดถูก (ส่วนลดเกินยอด = 0 · ติดลบ = ไม่หัก)");
+  else bad("ยอดสุทธิผิด: " + ntBad.map(([t, dc]) => `${t}-${dc}=${netTotal(t, dc)}`).join(", "));
 }
 
 console.log(`\n═══ สรุป: ${failed === 0 ? "✅ ผ่านทั้งหมด" : `❌ ไม่ผ่าน ${failed} ข้อ`} ═══`);

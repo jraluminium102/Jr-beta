@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { netTotal } from "@/lib/floor-calc/engine.mjs";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
@@ -31,7 +32,7 @@ export default async function FloorInstallmentPrintPage({ params }: { params: { 
   const contractor = q.contractor ?? {};
   const revLabel = q.rev > 0 ? ` (Rev${String(q.rev).padStart(2, "0")})` : "";
   const sum = rows.reduce((a, r) => a + (Number(r.amount) || 0), 0);
-  const quoteTotal = Number(q.total) || 0;
+  const quoteTotal = netTotal(q.total, q.discount); // ยอดใบเสนอ = หลังหักส่วนลด (เดิมเทียบก่อนส่วนลด → เตือนงวดไม่ตรงผิด ๆ)
   const diff = Math.round((quoteTotal - sum + Number.EPSILON) * 100) / 100;
 
   const today = q.issue_date;

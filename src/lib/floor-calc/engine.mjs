@@ -252,8 +252,8 @@ export function demoItem(key, area) {
   if (!q) return null;
   const a = Math.max(0, Number(area) || 0);
   if (a > 0 && !q.atMin) {
-    const total = Math.round(a * q.rate);
-    return { name: q.name, qty: a, unit: "ตร.ม.", material_price: null, labor_price: total, unit_price: q.rate, line_total: total, remark: "", source: "manual" };
+    // ค่าแรง = "ต่อหน่วย" เหมือนคอลัมน์อื่น (เดิมใส่ยอดรวม → พอกรอกค่าวัสดุเพิ่ม ราคางานกลายเป็น วัสดุ+ยอดรวม ยอดพุ่ง · 13 พ.ย.69)
+    return { name: q.name, qty: a, unit: "ตร.ม.", material_price: null, labor_price: q.rate, unit_price: q.rate, line_total: round2(round2(a) * q.rate), remark: "", source: "manual" };
   }
   const nm = a > 0 ? `${q.name} (${a} ตร.ม. · เหมาขั้นต่ำ)` : `${q.name} (เหมาขั้นต่ำ)`;
   return { name: nm, qty: 1, unit: "งาน", material_price: null, labor_price: q.price, unit_price: q.price, line_total: q.price, remark: "", source: "manual" };
@@ -288,9 +288,32 @@ export function quoteFileName(customerName, rev) {
   return `ใบเสนอราคางานพื้น ${safe}${r > 0 ? ` rev${r}` : ""}`.replace(/\s+/g, " ").trim();
 }
 
-/** ผลรวมใบ = ผลบวก line_total ทุกรายการ (ไม่มี VAT — ตามฟอร์มช่าง) */
+/**
+ * อ่านตัวเลขที่คนพิมพ์ — ตัดลูกน้ำ/ช่องว่าง/คำว่า บาท ออกก่อน (เดิม Number("1,200") = NaN → กลายเป็น 0 เงียบ ๆ
+ *   = ยอดหายตอนพิมพ์ราคามีลูกน้ำ · บั๊กจริง 13 พ.ย.69)
+ */
+export const parseNum = (v) => {
+  if (typeof v === "number") return Number.isFinite(v) ? v : 0;
+  const n = Number(String(v ?? "").replace(/[,s]|บาท/g, ""));
+  return Number.isFinite(n) ? n : 0;
+};
+
+/**
+ * ⭐ ราคารวมของบรรทัด = ปริมาณ (ปัด 2 ตำแหน่ง) × ราคางาน — แหล่งเดียวทั้งหน้าจอ/บันทึก/พิมพ์/Excel
+ *   เดิมหน้าจอเชื่อ line_total ที่พกมากับบรรทัด แต่ตอนบันทึก server คิด ปริมาณ×ราคา ใหม่
+ *   → บรรทัดที่สองค่านี้ไม่ตรง (งานรื้อติดขั้นต่ำ / นำเข้าไฟล์ช่างที่พิมพ์ยอดทับสูตร) ยอดเปลี่ยนเองหลังกดบันทึก (13 พ.ย.69)
+ */
+export const lineTotalOf = (it) => round2(round2(parseNum(it?.qty)) * parseNum(it?.unit_price));
+
+/** ผลรวมใบ (ก่อนส่วนลด) = ผลบวกราคารวมทุกบรรทัด (ไม่มี VAT — ตามฟอร์มช่าง) */
 export const sumItems = (items) =>
-  round2((items ?? []).reduce((a, it) => a + (Number(it.line_total) || 0), 0));
+  round2((items ?? []).reduce((a, it) => a + lineTotalOf(it), 0));
+
+/** ยอดสุทธิหลังหักส่วนลด (ส่วนลดเกินยอด = 0) — ใช้ทุกที่ที่โชว์ "ยอดใบเสนอ" (รายการ/ใบเบิกงวด/Excel) */
+export const netTotal = (total, discount) => {
+  const t = parseNum(total);
+  return round2(Math.max(0, t - Math.min(Math.max(0, parseNum(discount)), t)));
+};
 
 /** ชื่อหมวดที่มีอยู่ เรียงตามที่ปรากฏบนใบ (ไม่ซ้ำ · ไม่มีเลย = [""]) */
 export function groupNames(items) {
