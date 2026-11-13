@@ -60,7 +60,7 @@ console.log("\n═══ ③.1 กระจกแยกต่อบานย่�
   const sf = subCalc({ ...base, addons: { mosquito: "safety" } }, PB, "white", GLASS, 100, PO);
   ok("มุ้งนิรภัยในบานย่อย: ขายขึ้น + ข้อความ + มุ้งจีบนิรภัย", sf.amount > direct.amount && /มุ้งจีบนิรภัย/.test(subDesc({ ...base, addons: { mosquito: "safety" } })), `${direct.amount} → ${sf.amount}`);
   const ui = fs.readFileSync(path.join(__dirname, "../src/components/calculator40/SubPanesSection.tsx"), "utf8");
-  ok("หน้าจอ ปรับ: มีช่องกระจก (ตามบานหลัก/เลือกเอง) + ปุ่มมุ้งชุดเดียวกับจัดเต็ม (MOSQ_CHIPS → addons.mosquito)", ui.includes('patch(s.key, { glass: e.target.value || undefined })') && ui.includes("mosquito: c2.val"));
+  ok("หน้าจอ ปรับ: มีช่องกระจก (ตามบานหลัก/เลือกเอง) + ปุ่มมุ้งชุดเดียวกับจัดเต็ม (MOSQ_CHIPS → addons.mosquito)", ui.includes('patch(s.key, { glass: v || undefined })') && ui.includes("mosquito: c2.val"));
 }
 
 console.log("\n═══ ④ ใบเก่า (แบบเหมา) ราคาเดิม ═══");

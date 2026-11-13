@@ -170,3 +170,16 @@ export function glassOptionGroups(PB) {
 export function glassOptionValues(PB) {
   return glassOptionGroups(PB).flatMap((g) => g.items.map((i) => i.value));
 }
+
+/**
+ * กรองรายการกระจกตามคำค้น (ช่องเลือกกระจกแบบค้นหา GlassPicker · 13 พ.ย.69)
+ *   แยกคำด้วยช่องว่าง ทุกคำต้องเจอในชื่อโชว์หรือค่าที่เก็บ · ไม่สนช่องว่าง/จุด/ตัวพิมพ์ ("ใส6" เจอ "ใส 6มม.")
+ */
+export function filterGlassGroups(groups, q) {
+  const norm = (s) => String(s ?? "").toLowerCase().replace(/[s.]/g, "");
+  const toks = String(q ?? "").trim().split(/s+/).map(norm).filter(Boolean);
+  if (!toks.length) return groups;
+  return groups
+    .map((g) => ({ ...g, items: g.items.filter((it) => { const hay = norm(it.label) + "|" + norm(it.value); return toks.every((t) => hay.includes(t)); }) }))
+    .filter((g) => g.items.length > 0);
+}

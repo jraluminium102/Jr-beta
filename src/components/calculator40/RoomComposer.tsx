@@ -31,6 +31,7 @@ import { ALU_COLOR_LABEL, resolveAluColor, aluColorKeysFor } from "@/lib/calcula
 // ชื่อโชว์/ลำดับกระจกตามลิสต์เจ้าของ (4 พ.ย.69) — ชุดเดียวกับหน้า G1
 // @ts-expect-error — ESM JS ล้วน
 import { glassOptionGroups, glassDisplayName, glassCanonical } from "@/lib/calculator40/glass-catalog.mjs";
+import GlassPicker from "@/components/calculator40/GlassPicker";
 // @ts-expect-error — engine เป็น ESM JS ล้วน
 import { computeCost, ceil100, CEIL_RATE } from "@/lib/calculator40/engine.mjs";
 import { stockColorOfCalc } from "@/lib/calculator40/stock-link";
@@ -510,16 +511,9 @@ function ColsEditor({
                   return (
                     <span key={o.key} className="inline-flex items-center gap-1">
                       <span className="text-ink-3">{o.label}</span>
-                      <select value={paneSpec(prod, sel)[o.key] ?? ""}
-                        onChange={(e) => onPatchPane(sel.key, { spec: { ...paneSpec(prod, sel), [o.key]: e.target.value } })}
-                        className="min-h-[32px] glass-soft rounded-lg px-2 py-1 outline-none text-xs">
-                        <option value="">ตามบาน</option>
-                        {glassGroups.filter((g) => g.cat !== "แทนกระจก").map((g) => (
-                          <optgroup key={g.cat} label={g.cat}>
-                            {g.items.map((i) => <option key={i.value} value={i.value}>{i.label}</option>)}
-                          </optgroup>
-                        ))}
-                      </select>
+                      <GlassPicker value={paneSpec(prod, sel)[o.key] ?? ""} size="sm" className="min-w-[160px]" ariaLabel={o.label}
+                        onChange={(v) => onPatchPane(sel.key, { spec: { ...paneSpec(prod, sel), [o.key]: v } })}
+                        groups={glassGroups.filter((g) => g.cat !== "แทนกระจก")} emptyLabel="ตามบาน" />
                     </span>
                   );
                 }
@@ -561,15 +555,9 @@ function ColsEditor({
             {prod?.defGlass && (
               <>
                 <span className="text-ink-3">กระจก</span>
-                <select value={glassCanonical(sel.glassOvr || "")} onChange={(e) => onPatchPane(sel.key, { glassOvr: e.target.value })}
-                  className="min-h-[32px] glass-soft rounded-lg px-2 py-1 outline-none text-xs">
-                  <option value="">ตามด้าน ({glassDisplayName(glassFallback || prod.defGlass)})</option>
-                  {glassGroups.map((gp) => (
-                    <optgroup key={gp.cat} label={gp.cat}>
-                      {gp.items.map((g) => <option key={g.value} value={g.value}>{g.label}</option>)}
-                    </optgroup>
-                  ))}
-                </select>
+                <GlassPicker value={sel.glassOvr || ""} size="sm" className="min-w-[180px]" ariaLabel="กระจกบานนี้"
+                  onChange={(v) => onPatchPane(sel.key, { glassOvr: v })} groups={glassGroups}
+                  emptyLabel={`ตามด้าน (${glassDisplayName(glassFallback || prod.defGlass)})`} />
               </>
             )}
           </div>
@@ -1183,15 +1171,10 @@ export default function RoomComposer({
                 <option value="">สีตามห้อง ({ALU_COLOR_LABEL[mainColor] ?? COLOR_LABEL[mainColor] ?? mainColor})</option>
                 {colorKeysForSide(s).map((c) => <option key={c} value={c}>{ALU_COLOR_LABEL[c]}</option>)}
               </select>
-              <select value={sideColorOvr[i]?.glass || ""} onChange={(e) => setSideColorOvr((m) => ({ ...m, [i]: { color: m[i]?.color || "", glass: e.target.value } }))}
-                className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 outline-none text-xs">
-                <option value="">กระจกตามห้อง ({mainGlass ? glassDisplayName(mainGlass) : "—"})</option>
-                {glassOptionGroups(pb).map((gp: { cat: string; items: { value: string; label: string }[] }) => (
-                  <optgroup key={gp.cat} label={gp.cat}>
-                    {gp.items.map((g) => <option key={g.value} value={g.value}>{g.label}</option>)}
-                  </optgroup>
-                ))}
-              </select>
+              <GlassPicker value={sideColorOvr[i]?.glass || ""} size="sm" className="min-w-[200px]" ariaLabel={`กระจกด้าน ${L(i)}`}
+                onChange={(v) => setSideColorOvr((m) => ({ ...m, [i]: { color: m[i]?.color || "", glass: v } }))}
+                groups={glassOptionGroups(pb) as { cat: string; items: { value: string; label: string }[] }[]}
+                emptyLabel={`กระจกตามห้อง (${mainGlass ? glassDisplayName(mainGlass) : "—"})`} />
               {(sideColorOvr[i]?.color || sideColorOvr[i]?.glass) && (
                 <button type="button" onClick={() => setSideColorOvr((m) => { const n = { ...m }; delete n[i]; return n; })}
                   className="press text-[11px] text-red-600 min-h-[32px]">ล้าง override</button>

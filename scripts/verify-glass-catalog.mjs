@@ -62,5 +62,28 @@ ok("ทับราคาไฟล์ 3 ตัวตามเจ้าของ 
   PB.GLASS["เทมเปอร์ใสพิเศษ 8มม."] === 2105 && PB.GLASS["ลามิเนตใส 5+5 กันเสียง 0.76"] === 1883 && PB.GLASS["เทมเปอร์ลามิเนต 6+6 PVB 1.52"] === 2215,
   [PB.GLASS["เทมเปอร์ใสพิเศษ 8มม."], PB.GLASS["ลามิเนตใส 5+5 กันเสียง 0.76"], PB.GLASS["เทมเปอร์ลามิเนต 6+6 PVB 1.52"]].join("/"));
 
+
+// ── ช่องเลือกกระจกค้นหาได้ (เจ้าของ 13 พ.ย.69 "ดรอปดาวกระจก อยากให้เสิร์ชได้ มันเยอะแล้ว") ──
+console.log("\n═══ 🔎 ค้นหากระจก (GlassPicker) ═══");
+{
+  const { filterGlassGroups, glassOptionGroups: _gog } = await import("../src/lib/calculator40/glass-catalog.mjs");
+  const groups = _gog(PB);
+  const flat = (gs) => gs.flatMap((g) => g.items);
+  const total = flat(groups).length;
+  ok("ไม่พิมพ์ = เห็นครบทุกตัว (" + total + ")", flat(filterGlassGroups(groups, "")).length === total && flat(filterGlassGroups(groups, "   ")).length === total);
+  const r1 = flat(filterGlassGroups(groups, "เทมเปอร์"));
+  ok("พิมพ์ 'เทมเปอร์' = เหลือแต่เทมเปอร์ (" + r1.length + " ตัว)", r1.length > 0 && r1.length < total && r1.every((i) => /เทมเปอร์/.test(i.label + i.value)));
+  const r2 = flat(filterGlassGroups(groups, "เทมเปอร์ 10"));
+  ok("หลายคำ 'เทมเปอร์ 10' = ต้องมีครบทุกคำ", r2.length > 0 && r2.length < r1.length && r2.every((i) => /เทมเปอร์/.test(i.label + i.value) && /10/.test(i.label + i.value)));
+  const r3 = flat(filterGlassGroups(groups, "ใส6"));
+  ok("ไม่สนช่องว่าง: 'ใส6' เจอกระจกใส 6 มม.", r3.length > 0 && r3.every((i) => /ใส/.test(i.label + i.value) && /6/.test(i.label + i.value)));
+  ok("ไม่เจอ = รายการว่าง (หน้าจอขึ้น 'ไม่เจอกระจก')", flat(filterGlassGroups(groups, "zzzไม่มีแน่")).length === 0);
+  ok("กลุ่มที่ไม่มีตัวเหลือ ถูกซ่อน", filterGlassGroups(groups, "ลูกฟูก").every((g) => g.items.length > 0) && filterGlassGroups(groups, "ลูกฟูก").length === 1);
+  const read = (f) => fs.readFileSync(path.join(__dirname, "..", f), "utf8");
+  const files = ["src/components/Calculator40Client.tsx", "src/components/calculator40/RoomComposer.tsx", "src/components/calculator40/SubPanesSection.tsx"];
+  const cnt = files.map((f) => (read(f).match(/<GlassPicker\b/g) || []).length);
+  ok("ช่องกระจกทั้ง 6 จุดใช้ตัวค้นหา (หน้าคิดราคา 2 · ห้องกระจก 3 · ผสมบาน 1) = " + cnt.join("/"), cnt[0] === 2 && cnt[1] === 3 && cnt[2] === 1);
+  ok("ไม่เหลือ <select> กระจกแบบเก่า (optgroup รายการกระจก)", files.every((f) => !/<optgroup key=\{(g|gp)\.cat\}/.test(read(f))));
+}
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);

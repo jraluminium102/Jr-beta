@@ -15,6 +15,7 @@ import { subCalc, subProd, subIsLegacy, SUB_GROUPS, SUB_WORKING, type SubPane } 
 import type { PaneProfit } from "@/lib/calculator40/pane-calc";
 // @ts-expect-error — glass-catalog / mosquito เป็น ESM JS ล้วน
 import { glassOptionGroups, glassDisplayName } from "@/lib/calculator40/glass-catalog.mjs";
+import GlassPicker from "@/components/calculator40/GlassPicker";
 // @ts-expect-error — mosquito helper เป็น ESM JS ล้วน
 import { MOSQ_CHIPS } from "@/lib/calculator40/mosquito.mjs";
 // ตัวคิด/ข้อความ export ต่อให้โค้ดเดิมที่ import จากไฟล์นี้ยังใช้ได้
@@ -181,18 +182,12 @@ export default function SubPanesSection({ subs, setSubs, pb, mainColor, mainGlas
                 )}
                 {/* กระจกบานนี้ (9 พ.ย.69 เจ้าของ: "บานหลักใส่แค่ลูกฟูก บานรองใส่กระจก") — เว้น = ตามบานหลัก */}
                 {prod?.glass && (
-                  <label className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-ink-3 min-w-[52px]">กระจก:</span>
-                    <select value={s.glass || ""} onChange={(e) => patch(s.key, { glass: e.target.value || undefined })}
-                      className="min-h-[40px] glass-soft rounded-lg px-2.5 py-1.5 outline-none text-sm flex-1">
-                      <option value="">ตามบานหลัก ({glassDisplayName(mainGlass) || "—"})</option>
-                      {glassGroups.map((gp) => (
-                        <optgroup key={gp.cat} label={gp.cat}>
-                          {gp.items.map((it) => <option key={it.value} value={it.value}>{it.label}</option>)}
-                        </optgroup>
-                      ))}
-                    </select>
-                  </label>
+                    <GlassPicker value={s.glass || ""} onChange={(v) => patch(s.key, { glass: v || undefined })}
+                      groups={glassGroups} className="flex-1" ariaLabel="กระจกบานย่อย"
+                      emptyLabel={`ตามบานหลัก (${glassDisplayName(mainGlass) || "—"})`} />
+                  </div>
                 )}
                 {/* มุ้งบานนี้ — ปุ่มเดียวกับใน "จัดเต็ม" (เก็บที่ addons.mosquito ตัวเดียวกัน) · ผ้า/รุ่น/ขนาดมุ้ง ไปปรับต่อใน จัดเต็ม */}
                 {(prod?.addons || []).includes("mosquito") && (

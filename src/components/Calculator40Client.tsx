@@ -57,6 +57,7 @@ import { cutHardwareLines, HANDLE_FIELDS, HW_FROM_CUTLIST } from "@/lib/calculat
 // ชื่อโชว์/ลำดับกระจกตามลิสต์เจ้าของ (4 พ.ย.69) — แหล่งเดียวทั้งดรอปดาวน์ ใบเสนอ และ engine
 // @ts-expect-error — ESM JS ล้วน
 import { glassOptionGroups, glassDisplayName, glassCanonical } from "@/lib/calculator40/glass-catalog.mjs";
+import GlassPicker from "@/components/calculator40/GlassPicker";
 import { computeServices, EMPTY_SERVICES, type ServiceInput } from "@/lib/calculator40/services";
 import SubPanesSection from "@/components/calculator40/SubPanesSection";
 // ผสมบาน: ตัวคิดอยู่ lib (ไม่มี JSX) — subCalc คืน ขาย/ทุนของ/ค่าแรง/รายการของ ทั้งก้อน (29 ต.ค.69)
@@ -1594,18 +1595,12 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                   // specOpts type:'glass' → เลือกกระจกจากลิสต์กระจกเดียวกับช่องกระจกหลัก (ไม่รวมแผ่นแทนกระจก) · ว่าง = ตามบาน (13 พ.ย.69)
                   if (o.type === 'glass') {
                     return (
-                      <label key={o.key} className="block">
+                      <div key={o.key} className="block">
                         <span className="text-xs font-medium text-ink-3">{o.label}</span>
-                        <select value={spec[o.key] ?? ""} onChange={(e) => setSpec((s) => ({ ...s, [o.key]: e.target.value }))}
-                          className="mt-1.5 w-full min-h-[44px] glass-soft rounded-lg px-3 py-2 outline-none text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
-                          <option value="">ตามบาน ({glassDisplayName(glassType || prod.defGlass || "")})</option>
-                          {glassGroups.filter((g) => g.cat !== "แทนกระจก").map((g) => (
-                            <optgroup key={g.cat} label={g.cat}>
-                              {g.items.map((i) => <option key={i.value} value={i.value}>{i.label}</option>)}
-                            </optgroup>
-                          ))}
-                        </select>
-                      </label>
+                        <GlassPicker value={spec[o.key] ?? ""} onChange={(v) => setSpec((s) => ({ ...s, [o.key]: v }))}
+                          groups={glassGroups.filter((g) => g.cat !== "แทนกระจก")} className="mt-1.5" ariaLabel={o.label}
+                          emptyLabel={`ตามบาน (${glassDisplayName(glassType || prod.defGlass || "")})`} />
+                      </div>
                     );
                   }
                   // specOpts type:'text' → ช่องพิมพ์อิสระ (รหัสสี/ชื่อสีผนัง · สีแผ่นไอโซวอล)
@@ -2739,16 +2734,10 @@ function GlassSelect({ label, value, onChange, groups }: {
 }) {
   const n = groups.reduce((s, g) => s + g.items.length, 0);
   return (
-    <label className="block">
-      <span className="text-xs font-medium text-ink-3">{label} <span className="text-ink-3/70 font-normal">({n} รุ่น · เรียงตามลิสต์)</span></span>
-      <select value={glassCanonical(value)} onChange={(e) => onChange(e.target.value)}
-        className="w-full glass-soft rounded-lg px-3 py-2 mt-1 outline-none">
-        {groups.map((g) => (
-          <optgroup key={g.cat} label={g.cat}>
-            {g.items.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </optgroup>
-        ))}
-      </select>
-    </label>
+    <div className="block">
+      <span className="text-xs font-medium text-ink-3">{label} <span className="text-ink-3/70 font-normal">({n} รุ่น · พิมพ์ค้นหาได้)</span></span>
+      {/* 13 พ.ย.69 พิมพ์ค้นหาได้ (กระจกเยอะแล้ว) */}
+      <GlassPicker value={value} onChange={onChange} groups={groups} className="mt-1" ariaLabel={label} />
+    </div>
   );
 }
