@@ -232,7 +232,8 @@ function floorPrice(mat: string, w: number, l: number, rate: number, discOvr: st
   const a = Math.max(5, raw);
   const r = mat === "spc" ? rate || 0 : 5000;
   const base = a * r;
-  const dp = discOvr !== "" ? Number(discOvr) || 0 : (a >= 20 ? 10 : 0);
+  // ส่วนลด 0–100% เท่านั้น — 14 พ.ย.69 เจอบนเว็บจริง: กรอก 150 ได้พื้น −30,000 บาท (ยอดห้องหาย) · กรอก −20 ราคาเพิ่ม
+  const dp = discOvr !== "" ? Math.min(100, Math.max(0, Number(discOvr) || 0)) : (a >= 20 ? 10 : 0);
   return Math.round(base * (1 - dp / 100));
 }
 
@@ -706,14 +707,21 @@ export default function RoomComposer({
   function sideColor(i: number) { return sideColorOvr[i]?.color || mainColor; }
   function sideGlass(i: number) { return sideColorOvr[i]?.glass || mainGlass; }
 
+  // profitKey — กำไร 3 ก้อน (ค่าของ/ค่าผลิต/ค่าติดตั้ง + โหมดกรอกเอง) ย่อเป็นข้อความ ใส่ใน deps ของทุก memo ที่คิดราคา
+  //   🐞 14 พ.ย.69 เจอบนเว็บจริง: ปรับกำไรค่าผลิต/ค่าติดตั้ง (ไม่แตะค่าของ) ราคาบานในการ์ดขยับ แต่ยอดห้องค้างค่าเดิม
+  //     (40,800 ทั้งที่ควรเป็น 63,400) เพราะ deps มีแต่ profitPct (= ค่าของ) → memo ไม่คิดใหม่
+  const profitKey = JSON.stringify(profitOpt ?? null);
+
   // คิดคู่เสมอ (ผลิต+ติดตั้ง / ผลิตอย่างเดียว) — หน้าสรุปโชว์ทั้ง 2 คอลัมน์ · ยอดที่ส่งขึ้นใบตามโหมดที่หน้าหลักเลือก
   const sideTotalsAll = useMemo(
     () => sides.map((s, i) => sideTotal(s, pb, sideColor(i), sideGlass(i), profitPct, profitOpt, "all")),
-    [sides, pb, sideColorOvr, mainColor, mainGlass, profitPct]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sides, pb, sideColorOvr, mainColor, mainGlass, profitPct, profitKey]
   );
   const sideTotalsMfg = useMemo(
     () => sides.map((s, i) => sideTotal(s, pb, sideColor(i), sideGlass(i), profitPct, profitOpt, "mfg")),
-    [sides, pb, sideColorOvr, mainColor, mainGlass, profitPct]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sides, pb, sideColorOvr, mainColor, mainGlass, profitPct, profitKey]
   );
   const sideTotals = isMfg ? sideTotalsMfg : sideTotalsAll;
 
@@ -748,21 +756,23 @@ export default function RoomComposer({
       t += sr.sell.withInstall; tm += sellOf(sr, "mfg");
     });
     return { all: t, mfg: tm };
-  }, [roofOn, roofShapeId, roofW, roofL, roofMaterial, roofSegs, roofAddons, pb, profitPct]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roofOn, roofShapeId, roofW, roofL, roofMaterial, roofSegs, roofAddons, pb, profitPct, profitKey]);
   const roofTotalAll = roofTotals.all, roofTotalMfg = roofTotals.mfg;
   const roofTotal = isMfg ? roofTotalMfg : roofTotalAll;
 
   const ceilTotalAll = useMemo(() => {
     if (!ceilOn) return 0;
     return ceilPrice(ceilType, Number(ceilW) || 0, Number(ceilL) || 0, ceilInsul, pb, profitPct, profitOpt, "all");
-  }, [ceilOn, ceilType, ceilW, ceilL, ceilInsul, pb, profitPct]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ceilOn, ceilType, ceilW, ceilL, ceilInsul, pb, profitPct, profitKey]);
   const ceilTotalMfg = useMemo(() => {
     if (!ceilOn) return 0;
     return ceilPrice(ceilType, Number(ceilW) || 0, Number(ceilL) || 0, ceilInsul, pb, profitPct, profitOpt, "mfg");
-  }, [ceilOn, ceilType, ceilW, ceilL, ceilInsul, pb, profitPct]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ceilOn, ceilType, ceilW, ceilL, ceilInsul, pb, profitPct, profitKey]);
   const ceilTotal = isMfg ? ceilTotalMfg : ceilTotalAll;
 
-  const profitKey = JSON.stringify(profitOpt ?? null);
   const floorTotal = useMemo(() => {
     if (!floorOn) return 0;
     if (floorMat === "wpc") return floorWpcPrice(Number(floorW) || 0, Number(floorL) || 0, floorModel, floorH, floorEdgeW, floorEdgeL, floorDisc, pb, profitOpt, "all");
@@ -846,6 +856,8 @@ export default function RoomComposer({
   };
   const savedKey = JSON.stringify(savedState);
 
+  const partsKey = JSON.stringify([sideTotalsAll, sideTotalsMfg, roofTotalAll, roofTotalMfg, ceilTotalAll, ceilTotalMfg, floorTotal, fanTotal, servicesTotal, svcTotal]);
+
   // แจ้ง parent (Calculator40Client เอาไปโชว์เป็นราคาหลัก + เพิ่มลงใบเสนอราคา)
   // dep รวม savedKey — state เปลี่ยนแม้ยอดเท่าเดิม (เช่น สลับตำแหน่ง/หมายเหตุ) สูตรก็ตามทัน
   useMemo(() => {
@@ -854,8 +866,9 @@ export default function RoomComposer({
       mfgTotal: roomTotalMfg, sidesMfg: sideTotalsMfg, roofMfg: roofTotalMfg, ceilMfg: ceilTotalMfg,
     });
     return null;
+    // partsKey — ยอดย่อย (รายด้าน/หลังคา/ฝ้า/พื้น) ขยับแต่ยอดรวมหลังปัดร้อยเท่าเดิม (เช่น ปรับกำไรนิดเดียว/เปลี่ยนสี) ก็ต้องส่งชุดใหม่ ไม่งั้นราคารายด้านบนใบไม่ตรงยอดรวม
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomTotalAll, roomTotalMfg, savedKey]);
+  }, [roomTotalAll, roomTotalMfg, savedKey, partsKey]);
 
   function addSide() {
     setSides((s) => [...s, freshGlassSide()]);

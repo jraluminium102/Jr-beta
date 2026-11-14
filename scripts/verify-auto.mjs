@@ -1484,6 +1484,17 @@ console.log(NL + "═══ 🏠 ห้องกระจก G6 — ราคา
     has(rc, /mfgTotal: roomTotalMfg, sidesMfg: sideTotalsMfg, roofMfg: roofTotalMfg, ceilMfg: ceilTotalMfg/));
   ok("ราคาผลิตอย่างเดียว ไม่รวมรื้อ/ป้องกันหน้างาน (svcTotal)",
     has(rc, /roomTotalMfg = useMemo[\s\S]*?floorTotalMfg \+ fanTotal \+ servicesTotal;\s*return ceil100/));   // 14 พ.ย.69 พื้นไม้เทียม WPC มีค่าติดตั้งแยก → โหมดผลิตใช้ floorTotalMfg
+  {
+    // 14 พ.ย.69: memo ที่คิดราคาด้วย profitOpt ต้องมี profitKey ใน deps ทุกตัว (ไม่งั้นปรับกำไรค่าผลิต/ค่าติดตั้งแล้วยอดห้องค้าง)
+    //   ตัดซอร์สทีละก้อน useMemo( … แล้วหา deps ตัวแรกของก้อนนั้น (รูป "}, [..]);" หรือ "[..]" ขึ้นบรรทัดแล้ว ");")
+    const memos = rc.replace(/\r\n/g, "\n").split("useMemo(").slice(1)
+      .map((c) => { const m = c.match(/\n\s*(?:\}, )?\[([^\]\n]*)\]\s*\);/); return m ? [c.slice(0, m.index), m[1]] : null; })
+      .filter((m) => m && /profitOpt/.test(m[0]));
+    const bad = memos.filter((m) => !/\bprofitKey\b/.test(m[1]));
+    ok("RoomComposer: memo ที่ใช้กำไร 3 ก้อน (profitOpt) มี profitKey ใน deps ครบ", memos.length >= 7 && bad.length === 0, memos.length + " memo · ขาด " + bad.length);
+    ok("RoomComposer: ส่วนลดพื้นเรตเหมา บีบ 0–100% (กรอกเกิน/ติดลบ ราคาไม่ติดลบ/ไม่เพิ่ม)",
+      has(rc, /function floorPrice\([\s\S]{0,400}?Math\.min\(100, Math\.max\(0, Number\(discOvr\) \|\| 0\)\) : \(a >= 20 \? 10 : 0\)/));
+  }
   ok("RoomComposer: พื้นไม้เทียม WPC คิดจากรุ่น floor_wpc (สูตรไฟล์ถอดทุน)", has(rc, /function floorWpcPrice\(/) && has(rc, /\(PRODUCTS as any\)\.floor_wpc/) && has(rc, /floorMat === "wpc"\) return floorWpcPrice\(/));
   {
     // ราคาพื้นไม้เทียมในห้องกระจก = การ์ด G3 ค่าตั้งต้น (3×4 ม. Entrée สูง 30 ปิดขอบ 2/2 = 99,900 ตามไฟล์) — อินพุตแบบเดียวกับที่ห้องกระจกส่ง (ไม่ส่ง profitPct ของห้อง)
