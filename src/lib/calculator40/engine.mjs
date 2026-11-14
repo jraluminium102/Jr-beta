@@ -34,6 +34,7 @@ export const GLASS_KG_PER_M2_MM = 2.5;
 export const STOCK_LEN = 6.4; // ความยาวเส้นอลู stock มาตรฐาน (ม.) — บางรุ่นใช้ 6.0 (ตั้ง prod.stockLen)
 // ชื่อโชว์กระจก (ลิสต์เจ้าของ 4 พ.ย.69) → คีย์ราคาใน PB.GLASS
 import { glassPriceKey, GLASS_EXTRA } from './glass-catalog.mjs';
+import { FILE_CALC } from './file-calc.mjs';
 
 export function ceil100(x) { return Math.ceil(x / 100) * 100; }
 // ค่าสีสต็อก (ลายไม้สต็อก/ซาฮาร่า ฯลฯ) ที่เพิ่มจากสีขาว ขาย = ทุนสีที่เพิ่ม × 1.6 (เจ้าของเคาะ 15 ต.ค.69 · สีอบพิเศษไม่ใช้)
@@ -96,7 +97,8 @@ export function barsNeeded(segLen, count, stockLen = STOCK_LEN, waste = false, a
 function buildEvaluator(extraVarNames) {
   // TBL = ตารางค่าคงที่ของรุ่น (prod.tables) — เช่น จำนวนเสา/บังใบ ต่อ config พับ ที่ลอกมาจากใบตัด
   // ADD = ออปชั่นเสริมที่เลือก (opt.addons) — สูตร BOM อ้างได้ เช่น บานโซลิดเลือก Digital lock แล้วตัดชุดล็อคมาตรฐาน (29 ต.ค.69)
-  const base = ['W', 'H', 'P', 'form', 'area', 'color', 'material', 'ROW', 'spec', 'mult', 'GMM', 'CKEY', 'TBL', 'ADD'];
+  // FN = สูตรยาวจากไฟล์ถอดทุน (file-calc.mjs) · BAKE = เรตอบสี บาท/กก. (PB.BAKE) — สินค้าที่ชีตคิดสีเองในสูตร (อลูทึบ · 14 พ.ย.69)
+  const base = ['W', 'H', 'P', 'form', 'area', 'color', 'material', 'ROW', 'spec', 'mult', 'GMM', 'CKEY', 'TBL', 'ADD', 'FN', 'BAKE'];
   const names = [...base, ...extraVarNames];
   const cache = new Map();
   const compile = (expr) => {
@@ -215,7 +217,7 @@ export function computeCost(PB, prod, opt) {
   // mult ฉีดเข้า scope → สูตรราคา consum (โครงเมืองทอง roof/ระแนง) อ้าง mult ได้ → ขยับตามราคาอลู/กก. (ตั้งต้น mult=1 ไม่กระทบ anchor)
   // GMM = ความหนากระจก (มม.) จากชื่อกระจก — สูตรบางรุ่นเลือกคิ้วตามความหนา (F7919 6-13 · F7917 13-15)
   const GMM = Number((/(\d+)\s*มม/.exec(String(glassType)) || [])[1]) || 6;
-  const scope = { W, H, P, form, area, color, material, ROW: prod.lut ? (prod.lut[material] || prod.lut[prod.defMaterial] || {}) : {}, spec: opt.spec || {}, ADD: opt.addons || {}, mult, GMM, CKEY: String(opt.colorKey ?? ''), TBL: prod.tables || {} };
+  const scope = { W, H, P, form, area, color, material, ROW: prod.lut ? (prod.lut[material] || prod.lut[prod.defMaterial] || {}) : {}, spec: opt.spec || {}, ADD: opt.addons || {}, mult, GMM, CKEY: String(opt.colorKey ?? ''), TBL: prod.tables || {}, FN: FILE_CALC, BAKE: PB.BAKE || {} };
   for (const [k, expr] of Object.entries(varDefs)) {
     scope[k] = ev.compile(expr)(scope);
   }
@@ -805,6 +807,9 @@ export function computeCost(PB, prod, opt) {
       ...(bcHon ? { boxColour: { kg: bcH.kg, perKg: bcH.perKg || 0, bake: !!bcH.bake, brand: bcH.brand || '' } } : bcH && bcH.cf && cfH !== 1 ? { boxColour: { cf: cfH } } : {}) });
   }
   let consumCost = 0;
+  // altCost = ทุนของบรรทัด it.alt — ก้อนที่ชีตขายด้วยกำไรคนละ % กับค่าของหลัก (อลูทึบ: เส้นคาด+ค่าแปะ กำไร 50% · prod.altSell)
+  // ovenLine = ค่าเปิดตู้อบที่สูตรรุ่นนั้นคิดเอง (it.oven) — รุ่นที่ไม่มีเส้นในกองอลูให้เอนจินตัดสิน (อลูทึบ B21)
+  let altCost = 0, ovenLine = 0;
   const sheetNoKg = [];   // ของที่ยังไม่รู้น้ำหนัก (ไฟล์มีแต่ราคา ไม่มี กก.)
   let boxKgAll = 0, boxKgMoving = 0;   // น้ำหนักโครงกล่อง/ฉาก/แซด/เหล็ก (แยกส่วนที่เคลื่อนที่)
   // opt.consumLines = แผ่นมุง/เหล็ก/ราง ที่ผู้เรียกคิดมาจากใบตัดแล้ว (หลังคาหลายด้าน) — ทับ prod.consum
@@ -842,7 +847,8 @@ export function computeCost(PB, prod, opt) {
     if (it.buf > 0) unitPrice *= it.buf;
     noteMissing({ ...it, sku: cSku }, count);
     if (!(unitPrice > 0) && cfp !== 0 && !it.orderOnly && !it.labor) noteMissing({ sku: cSku || it.ref || it.name, name: it.name, price: 0 }, count);
-    const amount = count * unitPrice;
+    // it.roundAmt = ชีตปัดทุนทีละบรรทัดเป็นบาท E = ROUND(จำนวน × ราคา, 0) (พื้นไม้เทียม · อลูทึบ)
+    const amount = it.roundAmt ? FILE_CALC.xround(count * unitPrice, 0) : count * unitPrice;
     // มอเตอร์ขายฟิก (ระแนงหมุน) — ทุนไม่เข้า consumCost = ไม่เข้าฐานคิดกำไร แต่ยังเข้าทุนรวมทาง fixedSellCost
     const cSell = it.motorSellKey ? motorFixSell(PB, it.motorSellKey, 0) : 0;
     if (cSell > 0 && count > 0) {
@@ -850,7 +856,12 @@ export function computeCost(PB, prod, opt) {
       lines.push({ cat: 'consum', name: it.name, sku: cSku, qty: round2(count), unit: it.unit || '', unitPrice: round2(unitPrice), amount: round2(amount), cost: round2(amount), sellFixed: round2(cSell * count), fixedSell: true, ...(it.box ? { box: it.box } : {}) });
       continue;
     }
+    if (it.oven) {   // ค่าเปิดตู้อบตามสูตรรุ่น — ใบเสนอคิดครั้งเดียวต่อใบแล้ว (opt.noOven) = ไม่คิดซ้ำ
+      if (!opt.noOven) ovenLine += amount;
+      continue;
+    }
     consumCost += amount;
+    if (it.alt) altCost += amount;
     // โครงกล่อง/ฉาก/แซด/เหล็ก — น้ำหนักต่อเส้นอยู่ใน PB.BOX_KG (ยังไม่มีข้อมูล = เตือน ห้ามเดา)
     //   แผ่นมุงไม่คิดตรงนี้ (หน่วยเป็น แผ่น/เส้น/ม. คนละอย่าง) — คิดจากพื้นที่ปูจริงที่ prod.weightSpec แทน
     // ⚠ นับเฉพาะรุ่นที่ประกาศ weightSpec ไว้ (ตอนนี้ = หลังคาเลื่อน) — ไม่ใช่ทุกรุ่นที่มีบรรทัดกล่อง
@@ -923,6 +934,10 @@ export function computeCost(PB, prod, opt) {
     openOven = PB.BAKE_OPEN_OVEN || 0;
     if (openOven) lines.push({ cat: 'bake', name: 'ค่าเปิดตู้อบ', qty: 1, unit: 'งาน', unitPrice: openOven, amount: openOven });
   }
+  if (!openOven && ovenLine > 0) {
+    openOven = ovenLine;
+    lines.push({ cat: 'bake', name: 'ค่าเปิดตู้อบ', qty: 1, unit: 'งาน', unitPrice: openOven, amount: openOven });
+  }
 
   // สีโครงพิเศษ — ค่าสีเพิ่ม/ตร.ม. (per-item · เฉพาะรุ่น showColor เช่น หลังคา · X รอราคา · ไม่ sync ทั้งใบ)
   let frameColorCost = 0;
@@ -959,7 +974,13 @@ export function computeCost(PB, prod, opt) {
     // prod.laborInstExtra = ค่าติดตั้งบวกเพิ่มตามสูตรชีต (Shower: มีบานเปิด/เลื่อน +1 ชม. = ค่าแรง!I · ไฟล์รวม v1 E39)
     const instExtra = (area > 0 && prod.laborInstExtra) ? (Number(val(prod.laborInstExtra)) || 0) : 0;
     laborInstall += instExtra;
-    laborShow = { mode: prod.laborNoRate ? 'baseOnly' : 'rate', mult: lp, pBase: L.pBase, pRate: rp, iBase: L.iBase, iRate: ri, ...(instExtra ? { iExtra: instExtra } : {}) };
+    // prod.laborFactor = ตัวคูณค่าแรงตามตัวเลือกของรุ่น — คูณทั้งผลิตและติดตั้ง (ไฟล์ถอดทุน บันทึกการแก้ไข ข้อ 24 · 11 พ.ย.69)
+    //   บานโซลิด รุ่น 1 (ลูกฟูกฝั่งเดียว) ค่าแรง −25%: คิดทุน บานโซลิด D36/D37 = (ฐาน + เรต × ตร.ม.) × IF(รุ่น="โซลิด 1",0.75,1)
+    const laborF = (area > 0 && prod.laborFactor) ? (Number(val(prod.laborFactor.expr)) || 1) : 1;
+    if (laborF !== 1) { laborProd *= laborF; laborInstall *= laborF; }
+    // prod.laborRound = ชีตปัดค่าแรงแต่ละก้อนเป็นบาท ROUND(…,0) (พื้นไม้เทียม E24/E25)
+    if (prod.laborRound) { laborProd = FILE_CALC.xround(laborProd, 0); laborInstall = FILE_CALC.xround(laborInstall, 0); }
+    laborShow = { mode: prod.laborNoRate ? 'baseOnly' : 'rate', mult: lp, pBase: L.pBase, pRate: rp, iBase: L.iBase, iRate: ri, ...(instExtra ? { iExtra: instExtra } : {}), ...(laborF !== 1 ? { factor: laborF, factorNote: prod.laborFactor.note || '' } : {}) };
   }
 
   // (5) ราคาขาย
@@ -1209,7 +1230,11 @@ export function computeCost(PB, prod, opt) {
     sellPct = S.pct; sellAdj = S.adj; sellTarget = target;
     if (S.parts) sellParts_ = { mat: round2(S.parts.mat * nLeaf), prod: round2(S.parts.prod * nLeaf), inst: round2(S.parts.inst * nLeaf) };
   } else {
-    sellBeforeLabor = ceil100(costTotal * (1 + pctMat / 100));
+    // prod.altSell = ก้อนที่ขายด้วยกำไรของตัวเอง ปัดร้อยแยกก้อน (อลูทึบ B29/B30: ไส้ ทุน×(1+กำไร%) + เส้นคาด/ค่าแปะ ทุน×1.5)
+    const altPct = (prod.altSell && altCost > 0) ? (Number(prod.altSell.pct) || 0) : null;
+    sellBeforeLabor = altPct != null
+      ? ceil100((costTotal - altCost) * (1 + pctMat / 100)) + ceil100(altCost * (1 + altPct / 100))
+      : ceil100(costTotal * (1 + pctMat / 100));
     sellMfgOnly = sellBeforeLabor + ceil100(laborProd * (1 + pctProd / 100));
     sellWithInstall = sellMfgOnly + ceil100(laborInstall * (1 + pctInst / 100));
     sellParts_ = { mat: sellBeforeLabor, prod: sellMfgOnly - sellBeforeLabor, inst: sellWithInstall - sellMfgOnly };

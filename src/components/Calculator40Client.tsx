@@ -720,7 +720,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     if (nw != null && nw > 5000) return "กว้างเกิน 50 ม. — เช็คหน่วย (ต้องเป็น ซม.)";
     if (nh != null && nh > 5000) return "สูงเกิน 50 ม. — เช็คหน่วย (ต้องเป็น ซม.)";
     const minP = Number(prod.minP) || 1, maxP = Number(prod.maxP) || 99;
-    if (np != null && (!Number.isInteger(np) || np < minP || np > maxP)) return `จำนวนบานต้องเป็นจำนวนเต็ม ${minP}–${maxP}`;
+    if (np != null && (!Number.isInteger(np) || np < minP || np > maxP)) return `จำนวน${prod.pLabel || "บาน"}ต้องเป็นจำนวนเต็ม ${minP}–${maxP}`;
     return "";
   })();
   const ok = result && !("error" in result) && !inputErr;
@@ -926,7 +926,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
       // ประตู/หน้าต่าง — คำนำหน้าชื่อ + พื้นล่าง (เฉพาะประตู) · quoteProductName ตัดคำนำหน้าเดิมทิ้งให้แล้ว
       const nameWithKind = paneKindOn ? quoteProductName(prod.id, paneKind, baseName) : baseName;
       itemName = nameWithKind
-        + (nBan > 1 ? ` แบ่ง ${nBan} บาน` : "")
+        + (nBan > 1 ? (prod.pLabel ? ` จำนวน ${nBan} ${prod.pLabel}` : ` แบ่ง ${nBan} บาน`) : "")
         + (paneKindOn && paneKind === "door" && !sillIsForm(prod.id) ? ` (${paneSill({ typeKey: prod.id, w: 0, h: 0, n: 1, sill: sillSel || undefined })})` : "")
         + (mqType ? ` (มีมุ้ง${mqType})` : "")
         + szTxt;
@@ -980,6 +980,12 @@ export default function Calculator40Client({ customers = [], priceOverride, line
         workLines.push(`- คาดตาราง ${parts} (ติด 2 ฝั่ง)`);
       }
     }
+    // อลูทึบ (ไส้บาน · 14 พ.ย.69): มุมลูกฟูก/เส้นคาดตาราง เป็นช่องตัวเลข (ไม่พิมพ์เอง) แต่คิดเงินแล้ว → เขียนลงใบเอง เหมือนคาดตารางของรุ่นอื่น
+    if (prod.id === "alu_solid") {
+      const deg = spec.corrDeg === "" || spec.corrDeg == null ? 90 : Number(spec.corrDeg);
+      if (String(material || "").startsWith("ลูกฟูก") && Number.isFinite(deg) && deg !== 90) workLines.push(deg === 0 ? "- ลูกฟูกวางแนวนอน" : `- ลูกฟูกวางเฉียง ${r2(deg)} องศา`);
+      if (Number(spec.gridM) > 0) workLines.push(`- เส้นคาดตาราง ${r2(Number(spec.gridM))} ม. ต่อด้าน (ติด 2 ด้าน) สี${spec.gridColor || "อบขาว"}`);
+    }
     // specOpts ที่ผู้ใช้เลือกทุกตัว (รวมค่า default = สเปกที่ลูกค้าควรเห็น) → priced เข้า "รายการ" · label-only เข้า "รายละเอียดงาน"
     // ยกเว้น type:'number' (ช่องกรอกราคาเอง ฿/ตร.ม. — ไม่ใช่ option ลูกค้า · ไปเป็นบรรทัดราคาแล้ว)
     const specDetailLines: string[] = [];
@@ -1019,7 +1025,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
       else specDetailLines.push(`- ${lb}: ${vt}`);
     });
     // ── "รายละเอียดงาน" (ล่าง · คุณสมบัติวัสดุ/ผิว) ──
-    const jobLines = [aluColorLine(color)];
+    const jobLines = prod.noAluColor ? [] : [aluColorLine(color)];   // noAluColor = รุ่นที่ไม่มีเส้นอลู (พื้นไม้เทียม) ไม่ต้องพิมพ์สีอลูมิเนียม
     // กระจก: state ว่าง ("" ตอนเพิ่งเปิดหน้า/ใบเก่า) = เอนจินใช้กระจกตั้งต้นของรุ่นคิดราคาอยู่แล้ว → ใบต้องเขียนตัวเดียวกัน
     //   🐞 เจอตอนเทสสด 30 ต.ค.69: เพิ่มรายการโดยไม่แตะช่องกระจก → ใบเสนอไม่มีบรรทัดกระจกเลย
     const glassForDoc = glassType || (prod.defGlass ?? "");
@@ -1507,10 +1513,16 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                       <MetersField label="ความกว้าง (ม.)" cm={w} onCm={setW} />
                       <MetersField label="ยื่น (ม.)" cm={h} onCm={setH} />
                     </>
+                  ) : prod.dimLabels?.meters ? (
+                    // รุ่นที่ไฟล์ถอดทุนกรอกเป็นเมตร + ใช้ชื่อช่องของตัวเอง (พื้นไม้เทียม: กว้างพื้น/ยาวพื้น)
+                    <>
+                      <MetersField label={prod.dimLabels.w} cm={w} onCm={setW} />
+                      <MetersField label={prod.dimLabels.h} cm={h} onCm={setH} />
+                    </>
                   ) : (
                     <>
-                      <Field label="กว้าง (ซม.)" value={w} onChange={setW} />
-                      <Field label="สูง (ซม.)" value={h} onChange={setH} />
+                      <Field label={prod.dimLabels?.w || "กว้าง (ซม.)"} value={w} onChange={setW} />
+                      <Field label={prod.dimLabels?.h || "สูง (ซม.)"} value={h} onChange={setH} />
                     </>
                   )}
                   {(prod.maxP ?? 1) > 1 || (prod.defaults?.p ?? 1) > 1 ? (
@@ -1521,7 +1533,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                         opts={allowedPanes(prod, form).map(String)}
                         labels={Object.fromEntries(allowedPanes(prod, form).map((v) => [String(v), `${v} บาน (เลื่อน ${v - 2} + ติดตาย 2)`]))} />
                     ) : (
-                      <Field label={`จำนวนบาน${prod.minP ? ` (${prod.minP}–${prod.maxP})` : ""}`} value={p} onChange={setP} />
+                      <Field label={`จำนวน${prod.pLabel || "บาน"}${prod.minP ? ` (${prod.minP}–${prod.maxP})` : ""}`} value={p} onChange={setP} />
                     )
                   ) : <div />}
                   {/* 15 ต.ค.69 เจ้าของสั่ง: เอาช่อง "กำไร ค่าของ %" แถวบนออก — ปรับที่การ์ด "ค่าของ" ด้านล่างที่เดียว (เดิมมี 2 ที่) */}
@@ -1566,8 +1578,10 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                     onChange={setSillSel} opts={SILL_OPTS}
                   />
                 )}
-                <Select label="สีอลูมิเนียม" value={color} onChange={setColor}
-                  opts={aluColorKeysFor(prod?.id)} labels={ALU_COLOR_LABEL} />
+                {!prod.noAluColor && (
+                  <Select label="สีอลูมิเนียม" value={color} onChange={setColor}
+                    opts={aluColorKeysFor(prod?.id)} labels={ALU_COLOR_LABEL} />
+                )}
                 {(prod.defGlass || prod.composite) && (
                   <GlassSelect label="กระจก (ทั้งห้อง)" value={glassType} onChange={setGlassType} groups={glassGroups} />
                 )}
@@ -2090,7 +2104,8 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                           ) : (
                             <div className="tabular-nums">
                               (ฐาน {baht(base)} บาท{lc.mode === "perLeaf" ? ` × ${lc.mult} ${unit}` : ""} + {baht(rate)} บาท/ตร.ม. × {r2(lc.area)} ตร.ม.)
-                              {lc.mode !== "perLeaf" && lc.mult > 1 ? ` × ${lc.mult} บาน` : ""} = <b>{baht(raw)} บาท</b>
+                              {lc.mode !== "perLeaf" && lc.mult > 1 ? ` × ${lc.mult} บาน` : ""}{lc.factor ? ` × ${lc.factor}` : ""} = <b>{baht(raw)} บาท</b>
+                              {lc.factor ? <span className="text-ink-3"> ({lc.factorNote || "ตัวคูณค่าแรงของแบบที่เลือก"})</span> : null}
                             </div>
                           )}
                           {ref ? (

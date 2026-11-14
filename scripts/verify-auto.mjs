@@ -765,7 +765,9 @@ console.log("\n═══ ⑰ บานโซลิด 1 ชั้น / 2 ชั�
     ok(w + "×" + h + ": ลูกฟูกตามสูตรชีต B24 (1 ชั้น " + corr(1) + " · 2 ชั้น " + corr(2) + " เส้น)",
       line(one, /ลูกฟูก/).qty === corr(1) && line(two, /ลูกฟูก/).qty === corr(2), line(one, /ลูกฟูก/).qty + " / " + line(two, /ลูกฟูก/).qty);
     ok(w + "×" + h + ": เส้นคาดตารางเท่ากัน 2 ฝั่ง", line(one, /เส้นคาด/).qty === line(two, /เส้นคาด/).qty);
-    ok(w + "×" + h + ": ค่าแรงทุนเท่ากันทั้ง 2 แบบ", one.labor.prod === two.labor.prod && one.labor.install === two.labor.install);
+    // 14 พ.ย.69 ไฟล์ถอดทุน ข้อ 24 (11 พ.ย.69): โซลิด 1 ชั้น ค่าแรงผลิต+ติดตั้ง −25% (เดิมเท่ากันทั้ง 2 แบบ) · ข้อ 29: ผลิต = 34 ชม. + 1.1666 ชม./ตร.ม. × 87.5
+    ok(w + "×" + h + ": ค่าแรงทุน 1 ชั้น = 75% ของ 2 ชั้น", Math.abs(one.labor.prod - two.labor.prod * 0.75) < 0.01 && Math.abs(one.labor.install - two.labor.install * 0.75) < 0.01, one.labor.prod + " / " + two.labor.prod);
+    ok(w + "×" + h + ": ค่าแรงผลิต 2 ชั้น = (34 + 1.1666 × ตร.ม.) × 87.5 ตามไฟล์", Math.abs(two.labor.prod - (34 + 1.1666 * w * h / 10000) * 87.5) < 0.01, String(two.labor.prod));
     ok(w + "×" + h + ": 1 ชั้น ใช้แถวอ้างอิง/% ของ 1 ชั้น", one.sellModel.vk === "โซลิด 1 ชั้น" && one.sellModel.refInst && one.sellModel.refInst.vk === "โซลิด 1 ชั้น");
   }
   ok("ไม่เลือก = 2 ชั้น (ใบเก่า)", S({ w: 90, h: 240 }).cost.total === S({ w: 90, h: 240, spec: { solidLayer: "โซลิด 2 ชั้น" } }).cost.total);
@@ -854,7 +856,8 @@ console.log("\n═══ ⑳ ลำดับราคาสี — ขาว ≤
   ok("อ่านรายชื่อรุ่นยูโรที่มีสีพิเศษได้", special.has("open_door") && special.has("fold_euro"), [...special].join(","));
   // เจ้าของ 11 ก.ย.69: Aztec gray / มะฮอกกานี / ไวท์โอ๊ค มีแค่ บานเปิดยูโร · บานเลื่อนยูโร · บานโซลิด · PC Door (E-series ใบเก่า aztec = สีอบพิเศษ ⑲)
   // เจ้าของยืนยันซ้ำ 17 ก.ย.69: เฟี้ยมยูโรมี · บานโซลิดไม่มี (ของเดิมสลับกัน)
-  ok("3 สีพิเศษเลือกได้ 5 รุ่นเท่านั้น (4 → 5 · 9 พ.ย.69: โซลิดเลื่อนยูโร = เส้นยูโรทั้งชุด สีเท่า euro_slide)", [...special].sort().join(",") === "euro_slide,fold_euro,open_door,pcdoor,solid_slide_euro", [...special].join(","));
+  // 14 พ.ย.69 +alu_solid (อลูทึบ ไส้บาน): ชีตคิดทุนของเจ้าของ (12 พ.ย.69) ให้เลือกสีไส้ครบ + มีราคาทุกสีในตาราง ราคาสี!B199:K201 — ไม่ใช่เส้นโปรไฟล์ที่โรงงานจำกัดสี
+  ok("3 สีพิเศษเลือกได้ 5 รุ่น + อลูทึบ เท่านั้น (9 พ.ย.69: โซลิดเลื่อนยูโร · 14 พ.ย.69: อลูทึบตามชีต)", [...special].sort().join(",") === "alu_solid,euro_slide,fold_euro,open_door,pcdoor,solid_slide_euro", [...special].join(","));
   ok("ธง euroColors ในสูตร = รายชื่อใน alu-colors", Object.values(PRODUCTS).filter((p) => p.euroColors).map((p) => p.id).sort().join(",") === [...special].sort().join(","),
     Object.values(PRODUCTS).filter((p) => p.euroColors).map((p) => p.id).join(","));
   const AC = await import("../src/lib/calculator40/alu-colors.ts");
@@ -1493,16 +1496,25 @@ console.log(NL + "═══ 📏 นับเส้นอลูรวมรห�
 {
   const bars = (r, code) => Math.round(r.lines.filter((l) => l.cat === "alu" && l.code === code).reduce((s, l) => s + (Number(l.qty) || 0), 0) * 100) / 100;
   const fx = C("fixed", { w: 140, h: 35, p: 1, form: "กระจกล้วน", glassType: "เขียว 6มม." });
-  ok("ติดตาย 140×35: กล่อง 1.6×3 ตั้ง+นอน รวม 1 เส้น · 9014 รวม 1 เส้น (เดิม 2+2)", bars(fx, 'กล่อง 1.6"x3"') === 1 && bars(fx, "9014") === 1, bars(fx, 'กล่อง 1.6"x3"') + "/" + bars(fx, "9014"));
-  ok("ติดตาย: ทุกบรรทัดอลูเป็นโหมด pool (แบ่งเศษเส้นตามสัดส่วนยาว · รวมเท่าใบตัด)", fx.lines.filter((l) => l.cat === "alu").every((l) => l.count?.mode === "pool"));
+  // 14 พ.ย.69 ไฟล์ถอดทุน (บันทึกการแก้ไข ข้อ 1-2 · 9 พ.ย.69) เปลี่ยนติดตายเป็น "ตัดเท่าไหร่คิดเท่านั้น × เผื่อเศษ 1.3" (เส้น 6 ม.) — เลิก packBars ของรุ่นนี้
+  //   กล่อง = (2×กว้างรวม + (ช่อง+1)×สูง) ÷ 600 × 1.3 · 9014 = (2×กว้างรวม + 2×ช่อง×สูง) ÷ 600 × 1.3  (คิดทุน ติดตาย B13/B14)
+  const fileBox = (w, h, n) => Math.round((2 * w + (n + 1) * h) / 600 * 1.3 * 100) / 100, file9014 = (w, h, n) => Math.round((2 * w + 2 * n * h) / 600 * 1.3 * 100) / 100;
+  ok("ติดตาย 140×35: กล่อง/9014 ตามสูตรไฟล์ = 0.76 เส้น (ไม่ถึง 1 เส้น · เดิมนับ 2+2 → 1+1)", bars(fx, 'กล่อง 1.6"x3"') === fileBox(140, 35, 1) && bars(fx, "9014") === file9014(140, 35, 1), bars(fx, 'กล่อง 1.6"x3"') + "/" + bars(fx, "9014"));
+  ok("ติดตาย: ทุกบรรทัดอลูเป็นโหมดเผื่อเศษ (ตัดจริง × 1.3)", fx.lines.filter((l) => l.cat === "alu").every((l) => l.count?.mode === "waste"));
   const fx2 = C("fixed", { w: 600, h: 250, p: 4, form: "กระจกล้วน", glassType: "เขียว 6มม." });
-  ok("ติดตาย 600×250×4: จัดชิ้นลงเส้นจริง = 5 เส้น/รหัส (ท่อนตั้ง 2.5 ม. ลงเส้น 6 ม. ได้ 2 ท่อน — รวมยาวหารเส้นจะได้ 4 ซึ่งตัดจริงไม่ได้)", bars(fx2, 'กล่อง 1.6"x3"') === 5, bars(fx2, 'กล่อง 1.6"x3"'));
+  ok("ติดตาย 600×250×4: กล่อง " + fileBox(600, 250, 4) + " เส้น · 9014 " + file9014(600, 250, 4) + " เส้น ตามสูตรไฟล์", bars(fx2, 'กล่อง 1.6"x3"') === fileBox(600, 250, 4) && bars(fx2, "9014") === file9014(600, 250, 4), bars(fx2, 'กล่อง 1.6"x3"') + "/" + bars(fx2, "9014"));
+  {
+    const PBoff = { ...PB, ALU_BRAND_ON: false };
+    const tot = (w, h, n) => Math.round(computeCost(PBoff, PRODUCTS.fixed, { w, h, p: n, form: "กระจกล้วน", glassType: "เขียว 6มม.", color: "white", colorKey: "white", spec: {}, addons: {} }).cost.total);
+    ok("ติดตาย ทุนสีขาว = ไฟล์ (ผลกระทบข้อ 1-2): 50×50 = 898 · 150×200 = 3,519 · 300×250×2 = 7,394", tot(50, 50, 1) === 898 && tot(150, 200, 1) === 3519 && tot(300, 250, 2) === 7394, tot(50, 50, 1) + "/" + tot(150, 200, 1) + "/" + tot(300, 250, 2));
+  }
   const wj = C("woodjamb", { w: 130, h: 210, p: 2 });
   ok("ครอบวงกบเมืองทอง 130×210×2: กรอบบาน JR03131 ตั้ง+นอนบาน1+นอนบาน2 รวม 1 เส้น (เดิม 3) · กล่องเรียบ JR01985 รวม 1 (เดิม 2)", bars(wj, "JR03131") === 1 && bars(wj, "JR01985") === 1, bars(wj, "JR03131") + "/" + bars(wj, "JR01985"));
   const pv = C("pivot", { w: 150, h: 200, p: 1 });
   ok("บานหมุน: กรอบประตู F7864 ยาวรวม 7 ม. (lenTotal) → แตกเป็น 6.4 + 0.6 = 2 เส้น (ไม่ใช่ 'ชิ้นยาวเกินเส้น' 1 เส้น)", bars(pv, "F7864") === 2, bars(pv, "F7864"));
   ok("บานหมุน 150×200 ทุนไม่ขยับ (ไม่มีรหัสซ้ำบรรทัด)", Math.round(pv.cost.total) === 11433, Math.round(pv.cost.total));
-  for (const id of ["fixed", "pivot", "bansolid", "woodjamb"]) ok(`${id}: packBars เปิด`, PRODUCTS[id].packBars === true && !PRODUCTS[id].aluWaste);
+  for (const id of ["pivot", "bansolid", "woodjamb"]) ok(`${id}: packBars เปิด`, PRODUCTS[id].packBars === true && !PRODUCTS[id].aluWaste);
+  ok("fixed: เผื่อเศษ ×1.3 ตามไฟล์ (ไม่ใช่ packBars แล้ว)", PRODUCTS.fixed.aluWaste === true && !PRODUCTS.fixed.packBars);
   for (const id of ["roof_multi", "glasshouse", "glasshouse_multi", "gable_multi"]) ok(`${id}: poolBars เปิด (ตรงใบตัด barsByCode)`, PRODUCTS[id].poolBars === true && !PRODUCTS[id].aluWaste);
   // เส้นจากใบตัด: จำนวนเส้นรวมต่อรหัสในคิดราคา = สรุปเส้นต่อรหัสของใบตัดตัวเดียวกัน
   const { cutAluLines, ALU_FROM_CUTLIST } = await import("../src/lib/calculator40/alu-from-cutlist.ts");

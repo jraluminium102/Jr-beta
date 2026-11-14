@@ -30,6 +30,9 @@ for (const r of x.read(sh.path)) {
   const n = (c) => Number(r.cells?.[c]);
   if ([n("B"), n("C"), n("D"), n("E")].every(Number.isFinite)) T[String(a).trim()] = { pb: n("B"), pr: n("C"), ib: n("D"), ir: n("E"), hr: n("I") };
 }
+// 14 พ.ย.69 ไฟล์ ถอดทุน_รวมทั้งหมด (บันทึกการแก้ไข ข้อ 29 · 12 พ.ย.69): เวลาผลิตบานโซลิด ×2 → ค่าแรง!G40 34 ชม. · J40 1.1666 ชม./ตร.ม. × 87.5 × 1 คน
+//   ไฟล์รวม v1 ยังเป็นเลขเก่า (10 ชม. × 1.5 คน) → ทับเฉพาะก้อนผลิตของแถวนี้ · ติดตั้งคงตาม v1
+if (T["บานโซลิด"]) { T["บานโซลิด"].pb = 34 * 87.5; T["บานโซลิด"].pr = 1.1666 * 87.5; }
 let pass = 0, fail = 0;
 const ok = (label, cond, got = "") => { cond ? pass++ : fail++; if (!cond) console.log(`  ❌ ${label}  (${got})`); };
 
