@@ -122,225 +122,293 @@ for (const c of cases) {
   });
 }
 
-// ── หน้าตา ──
+// ── หน้าตา (รอบ 2 · เจ้าของ 14 พ.ย.69: รวมตารางตัด+เบิกเส้น · เขียนยาวเส้น · วาดสัญลักษณ์เปิด/เลื่อน · ตัวหนังสือน้อย · ไม่เอาสารบัญ · มีรูปหน้าตัด) ──
+const IMG: Record<string, string> = JSON.parse(fs.readFileSync("scripts/fixtures/profile-images.json", "utf8"));
+const imgSrc = (code: string) => { const u = IMG[code]; return !u ? "" : u.startsWith("/") ? "file:///" + process.cwd().replace(/\\/g, "/") + "/public" + u : u; };
 const esc = (s: unknown) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const num = (x: number) => (Math.round(x * 10) / 10).toLocaleString("en-US", { maximumFractionDigits: 1 });
-const DIM: [string, string, string][] = [
-  ["W", "กว้าง", "ซม."], ["H", "สูง", "ซม."], ["N", "จำนวนบาน", "บาน"], ["P", "ยื่น", "ซม."], ["D", "ยื่น/ยาว", "ซม."],
-  ["drop", "สูงตก", "ซม."], ["ridgeH", "สูงสัน", "ซม."], ["hiH", "สูงฝั่งชนบ้าน", "ซม."], ["loH", "สูงฝั่งหน้า", "ซม."],
-  ["WA", "ผนัง A กว้าง", "ซม."], ["nA", "ผนัง A", "บาน"], ["WB", "ผนัง B กว้าง", "ซม."], ["nB", "ผนัง B", "บาน"],
-  ["LA", "ยาวผนัง A", "ซม."], ["PA", "ยื่น A", "ซม."], ["LB", "ยาวผนัง B", "ซม."], ["PB", "ยื่น B", "ซม."],
-  ["L", "พับไปซ้าย", "บาน"], ["motherW", "บานแม่กว้าง", "ซม."], ["glass", "กระจกหนา", "มม."],
-  ...[1, 2, 3, 4, 5, 6].flatMap((i) => [[`side${i}W`, `ด้าน ${i} กว้าง`, "ซม."], [`side${i}P`, `ด้าน ${i} ยื่น`, "ซม."], [`side${i}D`, `ด้าน ${i} ยาว`, "ซม."]] as [string, string, string][]),
-];
 const isRoof = (id: string) => /awning|gable|glasshouse/.test(id);
+
+// ขนาดบนหัวกระดาษ — เฉพาะตัวที่ใช้ตัดจริง
+const DIM: [string, string][] = [
+  ["W", "กว้าง"], ["H", "สูง"], ["P", "ยื่น"], ["D", "ยาว"], ["ridgeH", "สูงสัน"], ["hiH", "สูงชนบ้าน"], ["loH", "สูงหน้า"],
+  ["WA", "ผนัง A"], ["WB", "ผนัง B"], ["LA", "ผนัง A"], ["PA", "ยื่น A"], ["LB", "ผนัง B"], ["PB", "ยื่น B"],
+  ...[1, 2, 3, 4, 5, 6].flatMap((i) => [[`side${i}W`, `ด้าน ${i} กว้าง`], [`side${i}P`, `ด้าน ${i} ยื่น`], [`side${i}D`, `ด้าน ${i} ยาว`]] as [string, string][]),
+];
 function dims(p: Page) {
-  const o = p.input, out: string[] = [];
-  for (const [k, lab, u] of DIM) {
+  const o = p.input, id = p.c.spec, out: string[] = [];
+  for (const [k, lab] of DIM) {
     const v = Number(o[k]);
     if (!Number.isFinite(v) || v <= 0) continue;
-    if (k === "W" && (p.c.spec === "euro_bifold_corner" || /multi/.test(p.c.spec) || p.c.spec === "awning_l")) continue;
-    if (k === "N" && (isRoof(p.c.spec) || p.c.spec === "euro_bifold_corner" || p.c.spec === "gate_slide" || p.c.spec === "louver_panel")) continue;
-    if (k === "H" && isRoof(p.c.spec)) continue;
-    if (k === "glass" && v < 0) continue;
-    out.push(`<span class="dim"><i>${lab}</i><b>${num(v)}</b><u>${u}</u></span>`);
+    if (k === "W" && (id === "euro_bifold_corner" || /multi/.test(id) || id === "awning_l")) continue;
+    if (k === "H" && isRoof(id)) continue;
+    out.push(`<span class="dim">${lab} <b>${num(v)}</b></span>`);
   }
+  const n = Number(o.N);
+  if (id === "euro_bifold_corner") out.push(`<span class="dim">บาน <b>${o.nA}+${o.nB}</b></span>`);
+  else if (!isRoof(id) && !["gate_slide", "louver_panel"].includes(id) && n > 0) out.push(`<span class="dim"><b>${p.sets > 1 ? p.sets : n}</b> บาน</span>`);
   return out.join("");
 }
+// ตัวเลือกที่เปลี่ยนการตัดเท่านั้น (มือจับ/สี ไม่โชว์ — ตัวหนังสือน้อย)
+const KEEP = new Set(["sys", "fit", "work", "box", "solidLayer", "doorSplit", "slatDir", "slatType", "foldSill", "sheet", "purlin", "roofEnd", "beam", "sill"]);
 function optsLine(p: Page) {
   const o = p.input, out: string[] = [];
-  if (p.spec.rails.length && o.rail) out.push(`<span class="opt"><i>ราง/แบบ</i>${esc(o.rail)}</span>`);
-  const noMesh = !o.mesh || o.mesh === "ไม่มี" || o.mesh === "ไม่ใส่";
-  for (const op of p.spec.opts ?? []) {
-    if (op.type === "number" || DIM.some((d) => d[0] === op.key)) continue;
-    if (/^mesh(Handle|Count)/.test(op.key) && noMesh) continue;
-    if (/^joint/.test(op.key)) { const i = Number(op.key.slice(5)); if (!(Number(o[`side${i + 1}W`]) > 0 || Number(o[`side${i + 1}D`]) > 0)) continue; }
-    const v = o[op.key];
-    if (v == null || v === "") continue;
-    out.push(`<span class="opt"><i>${esc(op.label)}</i>${esc(v)}</span>`);
-  }
-  return out.join("");
+  if (p.spec.rails.length && o.rail && p.c.spec !== "sms240_bifold") out.push(esc(o.rail));
+  for (const op of p.spec.opts ?? []) if (KEEP.has(op.key) && o[op.key]) out.push(esc(o[op.key]));
+  return out.join(" · ");
 }
-// รูปร่างคร่าว ๆ (บาน = กรอบแบ่งตามจำนวนบาน · หลังคา = มองจากบน กว้าง × ยื่น)
+
+// ── รูปบาน + สัญลักษณ์การเปิด (มองจากด้านนอก) ──
+type Kind = "slide" | "swing" | "fold" | "up" | "fixed" | "plain";
+function moveOf(p: Page): { kind: Kind; panes: string[]; widths?: number[] } {
+  const o = p.input, id = p.c.spec, n = Math.max(1, Number(o.N) || 1);
+  const all = (s: string) => Array(n).fill(s);
+  const center = () => all("").map((_, i) => (i < n / 2 ? "L" : "R"));
+  if (id === "sms_slide_center" || id === "fuji_slide_center") return { kind: "slide", panes: center().map((d, i) => (i === 0 || i === n - 1 ? "F" : d)) };
+  if (id === "sms_slide_tow") return { kind: "slide", panes: all("L") };
+  if (id === "slimlux_slide" || id === "toprail_frame") {
+    const m = String(o.sashMode);
+    return { kind: "slide", panes: m === "ลากจูง" ? all("L") : m === "เปิดคู่กลาง" ? center() : all("LR") };
+  }
+  if (["sms_slide_free", "fuji_slide", "fuji_slide_multi"].includes(id)) return { kind: "slide", panes: all("LR") };
+  if (id === "gate_slide") return { kind: "slide", panes: ["L"] };
+  if (id === "fuji_hung" || id === "euro_lift") return { kind: "up", panes: all(id === "euro_lift" ? "fold" : "") };
+  if (id === "fixed_panel" || id === "fuji_fix") return { kind: "fixed", panes: all("F") };
+  if (["velora_swing", "fuji_door", "fuji_swing"].includes(id)) return { kind: "swing", panes: ["hL"] };
+  if (id === "fuji_door_double") return { kind: "swing", panes: ["hL", "hR"] };
+  if (id === "solid_door" || id === "woodjamb_swing") {
+    if (n === 1) return { kind: "swing", panes: ["hL"] };
+    const W = Number(o.W), mw = /แม่/.test(String(o.doorSplit)) ? Number(o.motherW) || W / 2 : W / 2;
+    return { kind: "swing", panes: ["hL", "hR"], widths: [mw, W - mw] };
+  }
+  if (id === "sms240_bifold" || id === "euro_bifold") {
+    let L = 0;
+    if (id === "euro_bifold") L = Number(o.L) || 0; else { const m = /(\d+)L(\d+)R/.exec(String(o.rail)); L = m ? Number(m[1]) : n; }
+    return { kind: "fold", panes: all("").map((_, i) => (i < L ? "L" : "R")) };
+  }
+  return { kind: "plain", panes: all("") };
+}
 function sketch(p: Page) {
   const o = p.input, id = p.c.spec;
-  let w = Number(o.W), h = Number(o.H), n = Math.max(1, Number(o.N) || 1), lw = "กว้าง", lh = "สูง";
-  if (id === "euro_bifold_corner") return "";
-  if (isRoof(id)) {
-    if (/multi/.test(id) || id === "awning_l") return "";
-    h = Number(o.P || o.D); lh = id === "gable_straight" ? "ยาว" : "ยื่น"; n = 1;
-  }
-  if (id === "velora_swing" || id === "fuji_swing" || id === "fuji_door" || id === "fuji_fix" || id === "fixed_panel" && n === 1) n = Math.max(1, n);
+  if (id === "euro_bifold_corner" || /multi/.test(id) || id === "awning_l") return "";
+  let w = Number(o.W), h = Number(o.H), lh = "สูง";
+  const roof = isRoof(id);
+  if (roof) { h = Number(o.P || o.D); lh = id === "gable_straight" ? "ยาว" : "ยื่น"; }
+  if (p.sets > 1) w = w * p.sets;   // Velora ใบตัดทีละบาน — รูปโชว์ทั้งช่อง
   if (!(w > 0 && h > 0)) return "";
-  const BW = 150, BH = 110, s = Math.min(BW / w, BH / h), rw = w * s, rh = h * s, x0 = 30 + (BW - rw) / 2, y0 = 14 + (BH - rh) / 2;
-  const lines = Array.from({ length: n - 1 }, (_, i) => { const x = x0 + (rw * (i + 1)) / n; return `<line x1="${x}" y1="${y0}" x2="${x}" y2="${y0 + rh}" class="sk-div"/>`; }).join("");
-  return `<svg class="sketch" viewBox="0 0 190 140" aria-hidden="true">
-    <rect x="${x0}" y="${y0}" width="${rw}" height="${rh}" class="sk-box"/>${lines}
-    <text x="${x0 + rw / 2}" y="${y0 - 3}" class="sk-t" text-anchor="middle">${lw} ${num(w)}</text>
-    <text x="${x0 - 4}" y="${y0 + rh / 2}" class="sk-t" text-anchor="end" dominant-baseline="middle">${lh} ${num(h)}</text>
-    ${n > 1 ? `<text x="${x0 + rw / 2}" y="${y0 + rh + 11}" class="sk-s" text-anchor="middle">${n} บาน</text>` : ""}
+  const mv = roof ? { kind: "plain" as Kind, panes: [""] } : p.sets > 1 ? { kind: "swing" as Kind, panes: Array(p.sets).fill("").map((_, i) => (i % 2 ? "hR" : "hL")) } : moveOf(p);
+  const BW = 160, BH = 104, s = Math.min(BW / w, BH / h), rw = w * s, rh = h * s, x0 = 34 + (BW - rw) / 2, y0 = 14 + (BH - rh) / 2;
+  const n = mv.panes.length;
+  const ws = mv.widths ? mv.widths.map((x) => (x / w) * rw) : Array(n).fill(rw / n);
+  const xs: number[] = []; ws.reduce((a, x) => (xs.push(a), a + x), x0);
+  const g: string[] = [];
+  xs.slice(1).forEach((x) => g.push(`<line x1="${x}" y1="${y0}" x2="${x}" y2="${y0 + rh}" class="sk-div"/>`));
+  const cy = y0 + rh / 2, ah = Math.min(9, rh * 0.12);
+  const arrow = (x1: number, x2: number, y: number) => {
+    const d = x2 > x1 ? 1 : -1;
+    return `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" class="sk-mv"/><path d="M${x2} ${y} l${-d * ah} ${-ah * 0.6} l0 ${ah * 1.2} z" class="sk-ah"/>`;
+  };
+  mv.panes.forEach((pn, i) => {
+    const a = xs[i], b = a + ws[i], m = (a + b) / 2, q = ws[i] * 0.3;
+    if (mv.kind === "slide") {
+      if (pn === "F") g.push(`<text x="${m}" y="${cy}" class="sk-f" text-anchor="middle" dominant-baseline="central">F</text>`);
+      else if (pn === "L") g.push(arrow(m + q, m - q, cy));
+      else if (pn === "R") g.push(arrow(m - q, m + q, cy));
+      else g.push(arrow(m, m - q, cy), arrow(m, m + q, cy));
+    } else if (mv.kind === "swing") {
+      // เส้นประเปิด: ปลายแหลมอยู่ฝั่งบานพับ
+      const hx = pn === "hL" ? a : b, fx = pn === "hL" ? b : a;
+      g.push(`<path d="M${fx} ${y0} L${hx} ${cy} L${fx} ${y0 + rh}" class="sk-sw"/>`);
+    } else if (mv.kind === "fold") {
+      // พับ: ลายฟันปลาใต้กรอบ + ลูกศรไปทางที่รวบ
+      const zy = y0 + rh + 3, up = i % 2 === 0;
+      g.push(`<path d="M${a} ${up ? zy + 9 : zy} L${b} ${up ? zy : zy + 9}" class="sk-zz"/>`);
+    } else if (mv.kind === "up") {
+      g.push(`<line x1="${m}" y1="${cy + rh * 0.25}" x2="${m}" y2="${cy - rh * 0.25}" class="sk-mv"/><path d="M${m} ${cy - rh * 0.25} l${-ah * 0.6} ${ah} l${ah * 1.2} 0 z" class="sk-ah"/>`);
+    } else if (mv.kind === "fixed") {
+      g.push(`<text x="${m}" y="${cy}" class="sk-f" text-anchor="middle" dominant-baseline="central">F</text>`);
+    }
+  });
+  if (mv.kind === "fold") {
+    const nl = mv.panes.filter((x) => x === "L").length, nr = n - nl, ay = y0 + rh * 0.5;
+    if (nl) g.push(arrow(x0 + rw * 0.3, x0 + 6, ay));
+    if (nr) g.push(arrow(x0 + rw - rw * 0.3, x0 + rw - 6, ay));
+  }
+  return `<svg class="sketch" viewBox="0 0 200 ${mv.kind === "fold" ? 140 : 128}" aria-hidden="true">
+    <rect x="${x0}" y="${y0}" width="${rw}" height="${rh}" class="sk-box"/>${g.join("")}
+    <text x="${x0 + rw / 2}" y="${y0 - 3.5}" class="sk-t" text-anchor="middle">${num(w)}</text>
+    <text x="${x0 - 4}" y="${y0 + rh / 2}" class="sk-t" text-anchor="end" dominant-baseline="middle">${num(h)}</text>
+    ${roof ? `<text x="${x0 - 4}" y="${y0 + rh / 2 + 10}" class="sk-s" text-anchor="end">${lh}</text>` : ""}
   </svg>`;
 }
-const pcs = (p: Page) => p.res.rows.filter((r) => r.qty > 0 && r.len > 0);
-// แบ่งรายการเป็น 2 คอลัมน์ซ้าย-ขวา เมื่อยาว (ให้ลง 1 หน้าโดยตัวไม่เล็กลง)
+
 const unsure = (note?: string) => !!note && /⏳|สมมติ|รอเจ้าของ|ยังไม่|เดา/.test(note);
-const flag = (note?: string) => (unsure(note) ? ` <span class="flag">⚠ ช่วยดูพิเศษ เว็บยังไม่แน่ใจ</span>` : "");
-const halves = <T,>(a: T[], min: number): T[][] => (a.length > min ? [a.slice(0, Math.ceil(a.length / 2)), a.slice(Math.ceil(a.length / 2))] : [a]);
-function pageHtml(p: Page, idx: number, total: number) {
-  const rows = pcs(p);
-  const aluCols = halves(rows.map((r, i) => ({ r, i })), 13);
-  const aluTable = (part: { r: (typeof rows)[number]; i: number }[]) => `<table class="t alu"><colgroup><col class="c-n"><col><col class="c-len"><col class="c-q"><col class="c-ck"><col class="c-fix"></colgroup>
-    <thead><tr><th>#</th><th>ชื่อเส้น · รหัส</th><th class="r">ยาวตัด ซม.</th><th class="r">กี่ท่อน</th><th>ถูก</th><th>แก้เป็น</th></tr></thead><tbody>${part.map(({ r, i }) => `<tr>
-      <td class="n">${i + 1}</td>
-      <td class="nm">${esc(r.name)}<small>${esc(r.code === "-" ? "" : r.code)}</small>${flag(r.note)}</td>
+const flag = (note?: string) => (unsure(note) ? ` <span class="flag">⚠ ดูพิเศษ</span>` : "");
+const pcs = (p: Page) => p.res.rows.filter((r) => r.qty > 0 && r.len > 0);
+
+// ตารางเดียว: รูปหน้าตัด · ชื่อเส้น · ยาวตัด · กี่ท่อน · เบิกกี่เส้น (ยาวเส้น) — เส้นรหัสเดียวกันรวมกลุ่ม
+type Grp = { code: string; rows: CutResult["rows"]; bars?: CutResult["barsByCode"][number] };
+function groupsOf(p: Page): Grp[] {
+  const gs: Grp[] = [];
+  for (const r of pcs(p)) {
+    const key = r.code && r.code !== "-" ? r.code : "__" + gs.length;
+    let g = gs.find((x) => x.code === key);
+    if (!g) { g = { code: key, rows: [], bars: p.res.barsByCode.find((b) => b.code === r.code) }; gs.push(g); }
+    g.rows.push(r);
+  }
+  return gs;
+}
+function aluTable(gs: Grp[], start: number) {
+  let i = start;
+  const body = gs.map((g) => g.rows.map((r, k) => {
+    i++;
+    const first = k === 0, span = g.rows.length;
+    const src = first ? imgSrc(r.code) : "";
+    return `<tr class="${first ? "g1" : ""}">
+      ${first ? `<td class="img" rowspan="${span}">${src ? `<img src="${esc(src)}" alt="">` : ""}<small>${esc(g.code.startsWith("__") ? "" : g.code)}</small></td>` : ""}
+      <td class="nm">${esc(r.name)}${flag(r.note)}</td>
       <td class="len">${num(r.len)}</td>
       <td class="qty">${r.qty}</td>
-      <td class="ck"><span class="box"></span></td><td class="fix"></td></tr>`).join("")}</tbody></table>`;
-  const aluHtml = rows.length ? `<div class="cols${aluCols.length > 1 ? " two" : ""}">${aluCols.map(aluTable).join("")}</div>` : `<div class="empty">— ไม่มีเส้นอลู —</div>`;
-  // หลายเส้นใช้รหัสเดียวกัน (เช่น กรอบตั้ง+กรอบขวาง = F7972) → บอกว่ารวมกี่ชนิด ไม่ให้ช่างเข้าใจว่าเป็นของชิ้นเดียว
-  const nameOfCode = (code: string) => { const ns = [...new Set(rows.filter((r) => r.code === code).map((r) => r.name))]; return ns.length > 1 ? `${ns[0]} +อีก ${ns.length - 1}` : ns[0] ?? ""; };
-  const bars = p.res.barsByCode.map((b) => `<div class="bar"><span class="box"></span><div class="bar-t"><b>${esc(nameOfCode(b.code))}</b><small>${esc(b.code)} · ใช้จริง ${num(b.totalLenCm / 100)} ม.</small></div><div class="bar-q"><b>${b.bars}</b> เส้น<small>เส้นยาว ${num(b.stockLen / 100)} ม.</small></div></div>`).join("");
-  const hwCols = halves(p.res.hardware.map((h, i) => ({ h, i })), 8);
-  const hwTable = (part: { h: CutResult["hardware"][number]; i: number }[]) => `<table class="t hw"><colgroup><col class="c-n"><col><col class="c-q2"><col class="c-ck"><col class="c-fix2"></colgroup>
-    <thead><tr><th>#</th><th>ชื่ออุปกรณ์ · รหัส</th><th class="r">จำนวน</th><th>ถูก</th><th>แก้เป็น</th></tr></thead><tbody>${part.map(({ h, i }) => `<tr>
-      <td class="n">${i + 1}</td>
-      <td class="nm">${esc(h.name)}<small>${esc(h.sku)}${h.noStock ? " · ซื้อแยก/สั่งตามงาน" : ""}</small>${flag(h.note)}</td>
+      ${first ? `<td class="bar" rowspan="${span}">${g.bars ? `<b>${g.bars.bars}</b><i> เส้น</i><small>ยาว ${num(g.bars.stockLen / 100)} ม.</small>` : "—"}</td>` : ""}
+      <td class="ck"><span class="box"></span></td><td class="fix"></td></tr>`;
+  }).join("")).join("");
+  return `<table class="t alu"><colgroup><col class="c-img"><col><col class="c-len"><col class="c-q"><col class="c-bar"><col class="c-ck"><col class="c-fix"></colgroup>
+    <thead><tr><th>หน้าตัด</th><th>ชื่อเส้น</th><th class="r">ยาวตัด<br>ซม.</th><th class="r">ท่อน</th><th class="c">เบิก</th><th>ถูก</th><th>แก้เป็น</th></tr></thead><tbody>${body}</tbody></table>`;
+}
+// แบ่ง 2 คอลัมน์ตามกลุ่ม เมื่อยาว
+function splitGroups(gs: Grp[], limit: number): Grp[][] {
+  const total = gs.reduce((s, g) => s + Math.max(g.rows.length, 2), 0);
+  if (total <= limit) return [gs];
+  let acc = 0, cut = gs.length;
+  for (let k = 0; k < gs.length; k++) { acc += Math.max(gs[k].rows.length, 2); if (acc >= total / 2) { cut = k + 1; break; } }
+  return [gs.slice(0, cut), gs.slice(cut)];
+}
+const halves = <T,>(a: T[], min: number): T[][] => (a.length > min ? [a.slice(0, Math.ceil(a.length / 2)), a.slice(Math.ceil(a.length / 2))] : [a]);
+
+function pageHtml(p: Page, idx: number, total: number) {
+  const gs = groupsOf(p);
+  const two = splitGroups(gs, 0);
+  const n1 = two[0].reduce((s, g) => s + g.rows.length, 0);
+  const aluHtml = gs.length ? `<div class="cols one">${aluTable(gs, 0)}</div>${two.length > 1 ? `<div class="cols two alt">${aluTable(two[0], 0)}${aluTable(two[1], n1)}</div>` : ""}` : `<div class="empty">— ไม่มีเส้นอลู —</div>`;
+  const totalBars = p.res.barsByCode.reduce((s, b) => s + b.bars, 0);
+  const hwCols = halves(p.res.hardware, 5);
+  const hwTable = (part: CutResult["hardware"]) => `<table class="t hw"><colgroup><col><col class="c-q2"><col class="c-ck"><col class="c-fix2"></colgroup>
+    <thead><tr><th>อุปกรณ์</th><th class="r">จำนวน</th><th>ถูก</th><th>แก้เป็น</th></tr></thead><tbody>${part.map((h) => `<tr>
+      <td class="nm">${esc(h.name)}${flag(h.note)}</td>
       <td class="qty">${num(h.qty)} <span class="u">${esc(h.unit)}</span></td>
       <td class="ck"><span class="box"></span></td><td class="fix"></td></tr>`).join("")}</tbody></table>`;
-  const hwHtml = p.res.hardware.length ? `<div class="cols${hwCols.length > 1 ? " two" : ""}">${hwCols.map(hwTable).join("")}</div>` : `<div class="empty">— ไม่มีอุปกรณ์ —</div>`;
-  const setsNote = p.sets > 1 ? `<div class="warn">ใบตัดรุ่นนี้คิดทีละบาน — ตัวเลขข้างล่างคูณ ${p.sets} บานแล้ว (บานละ ${num(Number(p.input.W))} ซม.)</div>` : "";
+  const hwHtml = p.res.hardware.length ? `<div class="cols${hwCols.length > 1 ? " two" : ""}">${hwCols.map(hwTable).join("")}</div>` : `<div class="empty">— เว็บยังไม่มีรายการอุปกรณ์ —</div>`;
+  const borrowed = /ยืมขนาด/.test(p.c.src);
   return `<section class="page"><div class="fit">
   <header class="top">
-    <div class="ttl"><div class="eyebrow">ใบตรวจใบตัด · ${p.tag}</div><h1>${esc(p.c.title)}</h1><div class="form">${esc(p.form)}</div></div>
-    <div class="pg">หน้า ${idx}/${total}</div>
-  </header>
-  <div class="spec">
-    <div class="spec-l"><div class="dims">${dims(p)}</div><div class="opts">${optsLine(p)}</div><div class="src">${esc(p.c.src)}</div>${setsNote}</div>
+    <div class="ttl"><h1>${esc(p.c.title)}</h1><div class="form">${esc(p.form)}<span class="tag">${p.tag}</span></div>
+      <div class="dims">${dims(p)}</div>
+      ${optsLine(p) ? `<div class="opts">${optsLine(p)}</div>` : ""}
+      ${borrowed ? `<div class="src">ขนาดสมมติ (ใบตรวจราคาไม่มีรุ่นนี้)</div>` : ""}
+      ${p.sets > 1 ? `<div class="warn">ตัวเลขคูณ ${p.sets} บานแล้ว</div>` : ""}
+    </div>
     ${sketch(p)}
-  </div>
-  <h2>① ตัดเส้นอลู <em>${rows.length} รายการ · ยาวตัด = ซม. ต่อท่อน</em></h2>
+  </header>
+  <h2>เส้นอลู <em>เบิกรวม ${totalBars} เส้น</em></h2>
   ${aluHtml}
-  ${bars ? `<h2>② เบิกเส้นเต็มจากสโตร์ <em>รวม ${p.res.barsByCode.reduce((s, b) => s + b.bars, 0)} เส้น · ถูกติ๊ก ผิดเขียนข้าง ๆ</em></h2><div class="bars">${bars}</div>` : ""}
-  <h2>③ อุปกรณ์ <em>${p.res.hardware.length} รายการ</em></h2>
+  <h2>อุปกรณ์</h2>
   ${hwHtml}
-  <div class="more"><div class="more-h">ของที่ขาด / เกิน / ตัดไม่ได้จริง (เขียนเพิ่ม)</div><div class="ln"></div><div class="ln"></div></div>
-  <footer class="sign"><span>ผู้ตรวจ ...................................................</span><span>วันที่ ............................</span><span>ผล ☐ ถูกทั้งหน้า &nbsp; ☐ มีแก้</span></footer>
+  <div class="more">ขาด / เกิน :</div>
+  <footer class="sign"><span>ผู้ตรวจ ..............................................</span><span>วันที่ ......................</span><span class="pg">${idx}/${total}</span></footer>
   </div></section>`;
 }
 
-const idxRows = pages.map((p, i) => `<tr><td class="n">${i + 2}</td><td>${esc(p.c.title)}<small>${esc(p.form)}</small></td><td>${p.tag.replace("ขนาด", "")}</td><td class="r">${p.c.spec === "euro_bifold_corner" ? `ผนังละ ${num(p.sz.w)} · ${p.sz.p} บาน` : isRoof(p.c.spec) ? `${num(p.sz.w)} × ยื่น ${num(p.sz.h)}` : `${num(p.sz.w)} × ${num(p.sz.h)} · ${p.sz.p} บาน`}</td></tr>`).join("");
-const cover = `<section class="page cover"><div class="fit">
-  <div class="eyebrow">JR อลูมิเนียม · ทดสอบใบตัดจากเว็บ</div>
-  <h1 class="big">ใบตรวจใบตัด / BOQ</h1>
-  <p class="lead">ตัวเลขทุกหน้าออกจาก <b>ระบบใบตัดในเว็บ</b> ตรง ๆ — ขอให้ช่างดูว่า ตัดยาวเท่านี้ กี่ท่อน อุปกรณ์ครบไหม ถ้าทำจริงจะถูกหรือผิด</p>
-  <ol class="steps">
-    <li>ดูขนาดบานกับรูปแบบบนหัวกระดาษ</li>
-    <li>ไล่ทีละบรรทัด ถูก <b>ติ๊ก ✓</b> · ผิด <b>เขียนตัวเลขที่ถูก</b> ในช่อง "แก้เป็น"</li>
-    <li>ของที่ขาด หรือที่เว็บใส่เกิน เขียนในกรอบท้ายหน้า</li>
-    <li>เซ็นชื่อ ลงวันที่ ทุกหน้า</li>
-  </ol>
-  <p class="small">${pages.length} หน้า (${cases.length} รูปแบบ × 2 ขนาด) · สีอบขาว · กระจกเขียว 6 มม. · ตัวเลือกอื่นใช้ค่าตั้งต้นของเว็บ · ขนาดเอามาจากใบตรวจราคา รุ่นที่ใบตรวจราคาไม่มี ยืมขนาดรุ่นที่ใกล้เคียง (เขียนบอกไว้ทุกหน้า) · พิมพ์ ${new Date().toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })}</p>
-  <div class="idx2">${halves(idxRows.split("</tr>").filter(Boolean).map((r) => r + "</tr>"), 0).map((part) => `<table class="t idx"><colgroup><col class="c-n"><col><col class="c-tag"><col class="c-sz"></colgroup><thead><tr><th>หน้า</th><th>รุ่น · รูปแบบ</th><th>ขนาด</th><th class="r">กว้าง × สูง</th></tr></thead><tbody>${part.join("")}</tbody></table>`).join("")}</div>
-</div></section>`;
-
-const total = pages.length + 1;
+const total = pages.length;
 const html = `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>ใบตรวจใบตัด BOQ</title><style>
 @page { size: A4; margin: 0; }
-:root { --ink:#1b1a19; --mut:#5c5853; --line:#c9c4bd; --soft:#f1eee9; --acc:#8a1f24; }
+:root { --ink:#1b1a19; --mut:#6a655f; --line:#cbc6bf; --soft:#f1eee9; --acc:#8a1f24; }
 * { box-sizing: border-box; }
 body { margin:0; font-family: "Leelawadee UI", Tahoma, sans-serif; color: var(--ink); background:#fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-.page { width:210mm; height:297mm; padding:9mm 10mm 8mm; overflow:hidden; page-break-after:always; position:relative; }
-.fit { font-size: 10.5pt; line-height: 1.3; transform-origin: top left; }
-.top { display:flex; justify-content:space-between; align-items:flex-start; border-bottom: 2.4pt solid var(--acc); padding-bottom: 2mm; }
-.eyebrow { font-size:.78em; letter-spacing:.06em; color: var(--acc); font-weight:700; }
-h1 { margin:.5mm 0 0; font-size: 1.85em; line-height:1.1; text-wrap: balance; }
-.form { font-size:1.12em; font-weight:600; color:#333; }
-.pg { font-size:.85em; color: var(--mut); white-space:nowrap; }
-.spec { display:flex; gap:4mm; align-items:flex-start; margin-top:2.5mm; }
-.spec-l { flex:1; }
-.dims { display:flex; flex-wrap:wrap; gap:1.5mm; }
-.dim { display:inline-flex; align-items:baseline; gap:1.2mm; background: var(--soft); border-radius:2mm; padding:1mm 2.4mm; }
-.dim i { font-style:normal; font-size:.82em; color: var(--mut); }
-.dim b { font-size:1.35em; font-variant-numeric: tabular-nums; }
-.dim u { text-decoration:none; font-size:.8em; color: var(--mut); }
-.opts { margin-top:1.6mm; display:flex; flex-wrap:wrap; gap:1mm 3mm; font-size:.86em; }
-.opt i { font-style:normal; color: var(--mut); margin-right:1mm; }
-.opt i::after { content:":"; }
-.src { margin-top:1.4mm; font-size:.76em; color: var(--mut); }
-.warn { margin-top:1.4mm; font-size:.85em; font-weight:700; color: var(--acc); }
-.sketch { width:40mm; height:29mm; flex:none; }
-.sk-box { fill:#fafafa; stroke: var(--ink); stroke-width:1.6; }
-.sk-div { stroke: var(--ink); stroke-width:1; stroke-dasharray:3 2; }
-.sk-t { font: 600 9px "Leelawadee UI", Tahoma; fill: var(--ink); }
+.page { width:210mm; height:297mm; padding:9mm 10mm 8mm; overflow:hidden; page-break-after:always; }
+.fit { font-size: 11pt; line-height: 1.25; transform-origin: top left; }
+.top { display:flex; justify-content:space-between; gap:4mm; align-items:flex-start; border-bottom: 2.4pt solid var(--acc); padding-bottom: 2mm; }
+.ttl { flex:1; min-width:0; }
+h1 { margin:0; font-size: 1.9em; line-height:1.1; }
+.form { font-size:1.15em; font-weight:600; margin-top:.6mm; display:flex; gap:3mm; align-items:baseline; }
+.tag { font-size:.75em; font-weight:700; color:#fff; background: var(--acc); border-radius:1.2mm; padding:.2mm 2mm; }
+.dims { display:flex; flex-wrap:wrap; gap:1.4mm; margin-top:2mm; }
+.dim { background: var(--soft); border-radius:1.6mm; padding:.8mm 2.4mm; font-size:.9em; color:#333; }
+.dim b { font-size:1.35em; color: var(--ink); font-variant-numeric: tabular-nums; }
+.opts { margin-top:1.5mm; font-size:.9em; color:#333; }
+.src { margin-top:1mm; font-size:.78em; color: var(--mut); }
+.warn { margin-top:1mm; font-size:.85em; font-weight:700; color: var(--acc); }
+.sketch { width:58mm; flex:none; }
+.sk-box { fill:#fbfbfa; stroke: var(--ink); stroke-width:1.6; }
+.sk-div { stroke: var(--ink); stroke-width:1.1; }
+.sk-mv { stroke: var(--acc); stroke-width:1.8; }
+.sk-ah { fill: var(--acc); }
+.sk-sw { fill:none; stroke: var(--acc); stroke-width:1.2; stroke-dasharray:4 2.5; }
+.sk-zz { fill:none; stroke: var(--acc); stroke-width:1.4; }
+.sk-f { font: 700 13px "Leelawadee UI", Tahoma; fill: var(--mut); }
+.sk-t { font: 600 9.5px "Leelawadee UI", Tahoma; fill: var(--ink); }
 .sk-s { font: 8px "Leelawadee UI", Tahoma; fill: var(--mut); }
-.how { margin:2.4mm 0 1mm; font-size:.82em; color:#333; background:#fbf6e9; border:0.6pt solid #e6d6a8; border-radius:1.5mm; padding:1mm 2.4mm; }
-h2 { font-size:1.08em; margin:2.6mm 0 1mm; display:flex; gap:2mm; align-items:baseline; }
-h2 em { font-style:normal; font-weight:400; font-size:.8em; color: var(--mut); }
+h2 { font-size:1.12em; margin:2.6mm 0 1mm; display:flex; gap:3mm; align-items:baseline; }
+h2 em { font-style:normal; font-weight:700; font-size:.85em; color: var(--acc); }
 .t { width:100%; border-collapse:collapse; table-layout:fixed; }
-.t th { font-size:.78em; font-weight:700; color:#333; text-align:left; background: var(--soft); padding:1mm 1.4mm; border-bottom:0.8pt solid var(--line); }
-.t td { padding:.55mm 1.2mm; border-bottom:0.5pt solid var(--line); vertical-align:middle; }
-.t .r, .t td.len, .t td.qty { text-align:right; }
-.t td.n { color: var(--mut); font-size:.85em; }
-.t td.nm { line-height:1.15; } .t td.nm small { display:block; font-size:.72em; color: var(--mut); line-height:1.15; }
-.t td.cd { font-size:.82em; color:#333; font-variant-numeric: tabular-nums; word-break:break-all; }
-.t td.len { font-size:1.22em; font-weight:700; font-variant-numeric: tabular-nums; }
-.t td.qty { font-size:1.22em; font-weight:700; font-variant-numeric: tabular-nums; }
-.t td.u { font-size:.88em; }
-.t td.sm { font-size:.85em; color: var(--mut); }
+.t th { font-size:.74em; font-weight:700; color:#444; text-align:left; background: var(--soft); padding:.8mm 1.2mm; border-bottom:0.8pt solid var(--line); line-height:1.1; }
+.t th.r { text-align:right; } .t th.c { text-align:center; }
+.t td { padding:.6mm 1.2mm; border-bottom:0.5pt solid var(--line); vertical-align:middle; }
+.t tr.g1 td { border-top:0.9pt solid #9d978f; }
+.t td.nm { line-height:1.15; }
+.t td.len, .t td.qty { white-space:nowrap; text-align:right; font-size:1.25em; font-weight:700; font-variant-numeric: tabular-nums; }
+.t td.img { text-align:center; padding:.6mm .6mm; border-right:0.5pt solid var(--line); }
+.t td.img img { display:block; margin:0 auto; max-width:100%; max-height:12.5mm; object-fit:contain; }
+.t td.img small { display:block; font-size:.62em; color: var(--mut); line-height:1.1; margin-top:.3mm; white-space:nowrap; overflow:hidden; text-overflow:clip; }
+.t td.bar { text-align:center; border-left:0.5pt solid var(--line); background:#faf7f2; line-height:1.1; }
+.t td.bar b { font-size:1.45em; font-variant-numeric: tabular-nums; }
+.t td.bar small { display:block; font-size:.72em; color:#444; }
 .t td.ck { text-align:center; }
-.box { display:inline-block; width:4.2mm; height:4.2mm; border:1pt solid var(--ink); border-radius:.6mm; vertical-align:middle; }
 .t td.fix { border-left:0.5pt dashed var(--line); }
-.t td.empty { color: var(--mut); text-align:center; }
-col.c-n { width:6mm } col.c-len { width:20mm } col.c-q { width:13mm } col.c-q2 { width:20mm } col.c-ck { width:8mm } col.c-fix { width:24mm } col.c-fix2 { width:22mm }
+.t .u { font-size:.7em; font-weight:400; color: var(--mut); }
+.box { display:inline-block; width:4.2mm; height:4.2mm; border:1pt solid var(--ink); border-radius:.6mm; vertical-align:middle; }
+col.c-img { width:26mm } col.c-len { width:17mm } col.c-q { width:11mm } col.c-bar { width:17mm } col.c-ck { width:8mm } col.c-fix { width:20mm }
+col.c-q2 { width:19mm } col.c-fix2 { width:20mm }
+.cols.alt { display:none !important; }
 .cols.two { display:grid; grid-template-columns: 1fr 1fr; gap:3mm; }
-.cols.two col.c-fix, .cols.two col.c-fix2 { width:14mm } .cols.two col.c-len { width:16mm } .cols.two col.c-q { width:10mm } .cols.two col.c-q2 { width:17mm }
-.cols.two .t td.len, .cols.two .t td.qty { font-size:1.1em; }
-.t .u { font-size:.75em; font-weight:400; color: var(--mut); }
-.bars { display:grid; grid-template-columns: repeat(3, 1fr); gap:1.4mm; }
-.bar { display:flex; align-items:center; gap:1.6mm; border:0.6pt solid var(--line); border-radius:1.5mm; padding:.9mm 1.6mm; }
-.bar-t { flex:1; min-width:0; line-height:1.15; }
-.bar-t b { display:block; font-size:.86em; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.bar-t small, .bar-q small { display:block; font-size:.68em; color: var(--mut); white-space:nowrap; }
-.bar-q { text-align:right; font-size:.8em; line-height:1.1; }
-.bar-q b { font-size:1.55em; font-variant-numeric: tabular-nums; }
+.cols.two col.c-img { width:17mm } .cols.two col.c-len { width:13mm } .cols.two col.c-q { width:8mm } .cols.two col.c-bar { width:12mm } .cols.two .t td.bar i { display:none; } .cols.two .t td.bar small { font-size:.6em; white-space:nowrap; } .cols.two col.c-ck { width:6mm } .cols.two col.c-fix { width:11mm }
+.cols.two col.c-q2 { width:16mm } .cols.two col.c-fix2 { width:13mm }
+.cols.two .t td.len, .cols.two .t td.qty { font-size:1.08em; }
+.cols.two .t td.nm { font-size:.88em; }
+.cols.two .t td.img img { max-height:12mm; } .cols.two .t td.img small { font-size:.55em; }
+.flag { display:inline-block; font-size:.66em; font-weight:700; color:#9a5b00; background:#fff3d6; border-radius:1mm; padding:0 1mm; white-space:nowrap; }
 .empty { color: var(--mut); font-size:.9em; }
-.more { margin-top:2.6mm; border:0.8pt solid var(--line); border-radius:1.5mm; padding:1.2mm 2.4mm 1.6mm; }
-.more-h { font-size:.82em; font-weight:700; color:#333; }
-.ln { border-bottom:0.6pt dotted #999; height:6mm; }
-.sign { display:flex; justify-content:space-between; gap:3mm; margin-top:3mm; font-size:.88em; }
-.cover .big { font-size:2.6em; margin:2mm 0 3mm; }
-.cover .lead { font-size:1.12em; max-width:62ch; }
-.cover .steps { font-size:1.05em; padding-left:6mm; margin:2mm 0 3mm; }
-.cover .steps li { margin:.8mm 0; }
-.cover .small { font-size:.8em; color: var(--mut); max-width:80ch; }
-.idx2 { display:grid; grid-template-columns:1fr 1fr; gap:3mm; margin-top:3mm; }
-.t.idx { font-size:.74em; } col.c-tag { width:9mm } col.c-sz { width:26mm }
-.t.idx td small { display:block; font-size:.85em; color: var(--mut); }
-.flag { display:inline-block; font-size:.68em; font-weight:700; color:#9a5b00; background:#fff3d6; border-radius:1mm; padding:0 1mm; }
-.t.idx td { padding:.3mm 1.2mm; line-height:1.15; }
-</style></head><body>${cover}${pages.map((p, i) => pageHtml(p, i + 2, total)).join("")}</body></html>`;
+.more { margin-top:2.6mm; border:0.8pt solid var(--line); border-radius:1.5mm; padding:1mm 2.4mm; height:13mm; font-size:.85em; font-weight:700; color:#444; }
+.sign { display:flex; justify-content:space-between; gap:3mm; margin-top:3mm; font-size:.9em; }
+.sign .pg { color: var(--mut); }
+</style></head><body>${pages.map((p, i) => pageHtml(p, i + 1, total)).join("")}</body></html>`;
 
 fs.mkdirSync("docs", { recursive: true });
 const tmp = "docs/_boq-check.html";
 fs.writeFileSync(tmp, html, "utf8");
 const browser = await chromium.launch();
 const page = await browser.newPage();
-await page.goto("file:///" + process.cwd().replace(/\\/g, "/") + "/" + tmp, { waitUntil: "load" });
+await page.goto("file:///" + process.cwd().replace(/\\/g, "/") + "/" + tmp, { waitUntil: "networkidle" });
 // ย่อตัวอักษรทีละนิดจนลง 1 หน้า (หน้าที่รายการเยอะ) — ต่ำสุด 7pt
 const fitLog = await page.evaluate(() => {
   const out: string[] = [];
   document.querySelectorAll<HTMLElement>(".page").forEach((pg, i) => {
     const fit = pg.querySelector<HTMLElement>(".fit")!;
     const avail = pg.clientHeight - 17 * 3.78;   // padding บน+ล่าง ≈ 17 มม.
-    let fs = 10.5;
+    let fs = 11;
+    const one = pg.querySelector<HTMLElement>(".cols.one"), alt = pg.querySelector<HTMLElement>(".cols.alt");
+    if (alt) {
+      while (fit.scrollHeight > avail && fs > 10) { fs -= 0.25; fit.style.fontSize = fs + "pt"; }
+      if (fit.scrollHeight > avail) { one!.remove(); alt.classList.remove("alt"); fs = 11; fit.style.fontSize = fs + "pt"; } else alt.remove();
+    }
     while (fit.scrollHeight > avail && fs > 8.5) { fs -= 0.25; fit.style.fontSize = fs + "pt"; }
     if (fit.scrollHeight > avail) {
       const k = avail / fit.scrollHeight; fit.style.transform = `scale(${k})`; fit.style.width = 100 / k + "%";
       out.push(`หน้า ${i + 1}: ย่อ scale ${k.toFixed(2)}`);
-    } else if (fs < 10.5) out.push(`หน้า ${i + 1}: ${fs}pt`);
+    } else if (fs < 11) out.push(`หน้า ${i + 1}: ${fs}pt`);
   });
   return out;
 });
+if (process.argv.includes("--keep-html")) fs.writeFileSync(tmp, await page.content(), "utf8");   // เก็บหน้าหลังจัดแล้วไว้ดู
 await page.pdf({ path: OUT, format: "A4", printBackground: true, margin: { top: "0", bottom: "0", left: "0", right: "0" } });
 const nPdf = (await page.evaluate(() => document.querySelectorAll(".page").length));
 await browser.close();
