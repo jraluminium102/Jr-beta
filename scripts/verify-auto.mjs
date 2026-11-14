@@ -1146,7 +1146,16 @@ console.log("\n═══ เส้นราคารวมสี (colorIn) ต�
 {
   const V = (k, color) => computeCost(PB, PRODUCTS.velora, { w: 90, h: 220, p: 1, spec: {}, addons: {}, colorKey: k, color });
   const w = V("white", "white"), sp = V("special", "special"), ws = V("wood_special", "woodSpecial");
-  ok("Velora ลายไม้อบพิเศษ: ลูกฟูก (ไม่มีราคาสี) เข้ากองค่าอบ", ws.aluKg > sp.aluKg + 0.5, sp.aluKg + " / " + ws.aluKg);
+  // 14 พ.ย.69: เลิกราคาตายตัวลูกฟูกสีอบพิเศษ (687 = ราคาสีเทา · ไฟล์ถอดทุน 12 พ.ย.69 แก้บั๊กนี้ ข้อ 17-18) → สีอบพิเศษ/ลายไม้อบพิเศษ ลูกฟูกเข้ากองค่าอบ "เท่ากัน" ทั้งคู่
+  //   (เดิมด่านนี้เช็คว่า ลายไม้อบพิเศษ กก. มากกว่า สีอบพิเศษ — ซึ่งสะท้อนบั๊กสีอบพิเศษไม่โดนค่าอบลูกฟูก)
+  const corrKg = (c) => (c.lines || []).filter((l) => l.code === "JR01994").reduce((a, l) => a + (Number(l.qty) || 0) * 2.544, 0);
+  ok("Velora สีอบพิเศษ + ลายไม้อบพิเศษ: ลูกฟูก (ไม่มีราคาสี) เข้ากองค่าอบทั้งคู่", Math.abs(ws.aluKg - sp.aluKg) < 0.01 && corrKg(sp) > 0.5 && sp.aluKg >= corrKg(sp) - 0.01, sp.aluKg + " / " + ws.aluKg + " (ลูกฟูก " + Math.round(corrKg(sp) * 100) / 100 + " กก.)");
+  {
+    const line = (c) => (c.lines || []).find((l) => l.code === "JR01994") || {};
+    const bs = (k, color) => computeCost(PB, PRODUCTS.bansolid, { w: 150, h: 200, p: 1, form: "มีธรณี", spec: {}, addons: {}, colorKey: k, color });
+    const b0 = bs("white", "white"), b1 = bs("special", "special"), b2 = bs("wood_special", "woodSpecial");
+    ok("บานโซลิด สีอบพิเศษ: ลูกฟูกใช้ราคาขาว + ค่าอบตามน้ำหนัก (ไม่ใช่ราคาเทา 687)", line(b1).unitPrice === line(b0).unitPrice && line(b2).unitPrice === line(b0).unitPrice && Math.abs(b1.aluKg - b2.aluKg) < 0.01 && b1.aluKg > b0.aluKg + 20, line(b1).unitPrice + " · " + b1.aluKg + " กก.");
+  }
   ok("Velora ทุน ลายไม้อบพิเศษ ≥ สีอบพิเศษ", ws.cost.total >= sp.cost.total - 0.5, sp.cost.total + " / " + ws.cost.total);
   const S = (k, color) => computeCost(PB, PRODUCTS.sms_slide, { w: 400, h: 240, p: 3, spec: {}, addons: {}, colorKey: k, color });
   const sw = S("white", "white"), ss = S("special", "special"), st = S("wood_teak", "woodStock");

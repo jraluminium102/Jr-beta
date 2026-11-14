@@ -49,7 +49,7 @@ export const WALL_PANES: { key: string; label: string }[] = [
  *  รุ่นใหม่ใน group 1/2 โผล่เองไม่ต้องมาเติม */
 export const PANE_TYPES: { key: string; label: string }[] = [
   ...Object.values(PRODUCTS as Record<string, any>)
-    .filter((p: any) => p && (p.group === 1 || p.group === 2) && !p.pickerHide)
+    .filter((p: any) => p && (p.group === 1 || p.group === 2) && !p.pickerHide && !p.noPane)   // noPane = ไม่ใช่ "บาน" (อลูทึบ ไส้บาน: ไม่มีโครง/ค่าติดตั้ง — คิดจากการ์ดของตัวเอง)
     .map((p: any) => ({ key: p.id as string, label: p.name as string })),
   ...WALL_PANES.filter((w) => (PRODUCTS as Record<string, any>)[w.key]),
 ];

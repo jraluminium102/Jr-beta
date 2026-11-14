@@ -217,11 +217,11 @@ function ceilPrice(typeKey: string, w: number, l: number, insul: boolean, pb: an
 //   ไม่ส่ง profitPct ของห้อง — ตัวคูณขายของชีต (วัสดุ ×1.8 · ผลิต ×1.5 · ติดตั้ง ×2) อยู่ใน PB.PROFIT.floor_wpc · กดปรับกำไรเอง (pf.manual) จึงใช้ % ที่กรอก
 function floorWpcPrice(w: number, l: number, model: string, heightCm: string, edgeW: string, edgeL: string, discOvr: string, pb: any, pf?: PaneProfit, mode: LaborMode = "all"): number {
   const prod = (PRODUCTS as any).floor_wpc;
-  if (!prod || !(w > 0) || !(l > 0)) return 0;
+  if (!prod || !(Math.round(w * 100) > 0) || !(Math.round(l * 100) > 0)) return 0;   // ปัดเป็น ซม. แล้วต้องยัง > 0 (0.004 ม. = 0 ซม. ห้ามหลุดเข้าเอนจิน)
   const r: any = computeCost(pb, prod, { w: Math.round(w * 100), h: Math.round(l * 100), p: 1, form: prod.defForm, material: model || prod.defMaterial, addons: {},
     spec: { wpcH: heightCm, wpcEdgeW: edgeW, wpcEdgeL: edgeL },
     ...(pf && pf.manual ? { profitManual: true, profitMat: pf.mat, profitProd: pf.prod, profitInst: pf.inst, installProfitPct: pf.inst } : {}) });
-  const dp = discOvr !== "" ? Number(discOvr) || 0 : 0;
+  const dp = discOvr !== "" ? Math.min(100, Math.max(0, Number(discOvr) || 0)) : 0;   // ส่วนลด 0–100% เท่านั้น (กรอกเกิน/ติดลบ ราคาต้องไม่ติดลบ/ไม่เพิ่ม)
   return Math.round(sellOf(r, mode) * (1 - dp / 100));
 }
 
@@ -762,19 +762,21 @@ export default function RoomComposer({
   }, [ceilOn, ceilType, ceilW, ceilL, ceilInsul, pb, profitPct]);
   const ceilTotal = isMfg ? ceilTotalMfg : ceilTotalAll;
 
+  const profitKey = JSON.stringify(profitOpt ?? null);
   const floorTotal = useMemo(() => {
     if (!floorOn) return 0;
     if (floorMat === "wpc") return floorWpcPrice(Number(floorW) || 0, Number(floorL) || 0, floorModel, floorH, floorEdgeW, floorEdgeL, floorDisc, pb, profitOpt, "all");
     return floorPrice(floorMat, Number(floorW) || 0, Number(floorL) || 0, Number(floorRate) || 0, floorDisc);
+    // profitKey — กดปรับกำไรทีละก้อน (ค่าผลิต/ค่าติดตั้ง) ราคาพื้นต้องคิดใหม่ด้วย (QA 14 พ.ย.69)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [floorOn, floorMat, floorW, floorL, floorRate, floorDisc, floorModel, floorH, floorEdgeW, floorEdgeL, pb, profitPct]);
+  }, [floorOn, floorMat, floorW, floorL, floorRate, floorDisc, floorModel, floorH, floorEdgeW, floorEdgeL, pb, profitPct, profitKey]);
   // ผลิตอย่างเดียว: พื้นไม้เทียม WPC มีค่าติดตั้งแยกในสูตร → ตัดออกได้ · พื้นเรตเหมา (สมาร์ทบอร์ด/SPC) ไม่มีค่าแรงแยก ราคาเท่าเดิม
   const floorTotalMfg = useMemo(() => {
     if (!floorOn) return 0;
     if (floorMat === "wpc") return floorWpcPrice(Number(floorW) || 0, Number(floorL) || 0, floorModel, floorH, floorEdgeW, floorEdgeL, floorDisc, pb, profitOpt, "mfg");
     return floorTotal;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [floorOn, floorMat, floorW, floorL, floorTotal, floorDisc, floorModel, floorH, floorEdgeW, floorEdgeL, pb, profitPct]);
+  }, [floorOn, floorMat, floorW, floorL, floorTotal, floorDisc, floorModel, floorH, floorEdgeW, floorEdgeL, pb, profitPct, profitKey]);
 
   const fanTotal = useMemo(() => {
     if (!fanOn) return 0;

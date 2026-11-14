@@ -715,10 +715,12 @@ export default function Calculator40Client({ customers = [], priceOverride, line
   const inputErr = (() => {
     if (!prod || prod.composite) return "";
     const nw = w === "" ? null : Number(w), nh = h === "" ? null : Number(h), np = p === "" ? null : Number(p);
-    if (nw != null && !(nw > 0)) return "กว้าง (ซม.) ต้องมากกว่า 0";
-    if (nh != null && !(nh > 0)) return "สูง (ซม.) ต้องมากกว่า 0";
-    if (nw != null && nw > 5000) return "กว้างเกิน 50 ม. — เช็คหน่วย (ต้องเป็น ซม.)";
-    if (nh != null && nh > 5000) return "สูงเกิน 50 ม. — เช็คหน่วย (ต้องเป็น ซม.)";
+    const wLb = prod.dimLabels?.w || "กว้าง (ซม.)", hLb = prod.dimLabels?.h || "สูง (ซม.)";   // รุ่นที่กรอกเป็นเมตร/ชื่อช่องของตัวเอง (พื้นไม้เทียม)
+    const unitHint = prod.dimLabels?.meters ? "" : " — เช็คหน่วย (ต้องเป็น ซม.)";
+    if (nw != null && !(nw > 0)) return wLb + " ต้องมากกว่า 0";
+    if (nh != null && !(nh > 0)) return hLb + " ต้องมากกว่า 0";
+    if (nw != null && nw > 5000) return (prod.dimLabels?.meters ? "กว้างเกิน 50 ม." : "กว้างเกิน 50 ม.") + unitHint;
+    if (nh != null && nh > 5000) return (prod.dimLabels?.meters ? "ยาวเกิน 50 ม." : "สูงเกิน 50 ม.") + unitHint;
     const minP = Number(prod.minP) || 1, maxP = Number(prod.maxP) || 99;
     if (np != null && (!Number.isInteger(np) || np < minP || np > maxP)) return `จำนวน${prod.pLabel || "บาน"}ต้องเป็นจำนวนเต็ม ${minP}–${maxP}`;
     return "";
@@ -982,7 +984,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     }
     // อลูทึบ (ไส้บาน · 14 พ.ย.69): มุมลูกฟูก/เส้นคาดตาราง เป็นช่องตัวเลข (ไม่พิมพ์เอง) แต่คิดเงินแล้ว → เขียนลงใบเอง เหมือนคาดตารางของรุ่นอื่น
     if (prod.id === "alu_solid") {
-      const deg = spec.corrDeg === "" || spec.corrDeg == null ? 90 : Number(spec.corrDeg);
+      const deg = spec.corrDeg === "" || spec.corrDeg == null ? 90 : Math.min(90, Math.max(0, Number(spec.corrDeg) || 0));   // ตรงกับที่เอนจินคิด (บีบ 0–90)
       if (String(material || "").startsWith("ลูกฟูก") && Number.isFinite(deg) && deg !== 90) workLines.push(deg === 0 ? "- ลูกฟูกวางแนวนอน" : `- ลูกฟูกวางเฉียง ${r2(deg)} องศา`);
       if (Number(spec.gridM) > 0) workLines.push(`- เส้นคาดตาราง ${r2(Number(spec.gridM))} ม. ต่อด้าน (ติด 2 ด้าน) สี${spec.gridColor || "อบขาว"}`);
     }
