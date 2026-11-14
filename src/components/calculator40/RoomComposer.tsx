@@ -212,7 +212,20 @@ function ceilPrice(typeKey: string, w: number, l: number, insul: boolean, pb: an
   return Math.round(area * rate);
 }
 
-// พื้น (มติ 16มิ.ย.): สมาร์ทบอร์ด/ไม้เทียม 5,000/ตร.ม. · SPC กรอกเรตเอง · min 5 ตร.ม. · ลด auto 10% ถ้า ≥20 (แก้ %ได้)
+// พื้นไม้เทียม WPC (เจ้าของเคาะ 14 พ.ย.69 "เอาตามไฟล์") — คิดจากรุ่น floor_wpc ตัวเดียวกับการ์ด G3 (ชีต "คิดทุน พื้นไม้เทียม")
+//   ไม่มีขั้นต่ำ 5 ตร.ม. / ส่วนลด auto ของเรตเหมาเดิม (ชีตไม่มี) · กรอกส่วนลด % เองได้ · ตงซอย/ตงขวาง/ตัวปิดขอบ/แนวปู = ค่าตั้งต้นของชีต
+//   ไม่ส่ง profitPct ของห้อง — ตัวคูณขายของชีต (วัสดุ ×1.8 · ผลิต ×1.5 · ติดตั้ง ×2) อยู่ใน PB.PROFIT.floor_wpc · กดปรับกำไรเอง (pf.manual) จึงใช้ % ที่กรอก
+function floorWpcPrice(w: number, l: number, model: string, heightCm: string, edgeW: string, edgeL: string, discOvr: string, pb: any, pf?: PaneProfit, mode: LaborMode = "all"): number {
+  const prod = (PRODUCTS as any).floor_wpc;
+  if (!prod || !(w > 0) || !(l > 0)) return 0;
+  const r: any = computeCost(pb, prod, { w: Math.round(w * 100), h: Math.round(l * 100), p: 1, form: prod.defForm, material: model || prod.defMaterial, addons: {},
+    spec: { wpcH: heightCm, wpcEdgeW: edgeW, wpcEdgeL: edgeL },
+    ...(pf && pf.manual ? { profitManual: true, profitMat: pf.mat, profitProd: pf.prod, profitInst: pf.inst, installProfitPct: pf.inst } : {}) });
+  const dp = discOvr !== "" ? Number(discOvr) || 0 : 0;
+  return Math.round(sellOf(r, mode) * (1 - dp / 100));
+}
+
+// พื้น (มติ 16มิ.ย.): สมาร์ทบอร์ด 5,000/ตร.ม. · SPC กรอกเรตเอง · min 5 ตร.ม. · ลด auto 10% ถ้า ≥20 (แก้ %ได้)
 function floorPrice(mat: string, w: number, l: number, rate: number, discOvr: string): number {
   const raw = (w || 0) * (l || 0);
   if (raw <= 0) return 0;
@@ -345,7 +358,7 @@ function ColsEditor({
   const scale = 150 / maxColH; // px/เมตร แนวตั้ง (สแต็คสูงสุด ≈ 150px)
   const totalW = cols.reduce((a, c) => a + Math.max(0.3, ...c.pcs.map((p) => p.w || 0)), 0);
   const arrCls = "press min-h-[32px] min-w-[34px] px-2 rounded-lg text-xs font-bold glass-soft text-ink-2 hover:bg-white/80";
-  const prod = sel ? PANE_BY_KEY[sel.typeKey] : null;
+  const prod = sel ? (PANE_BY_KEY[sel.typeKey] || (PRODUCTS as any)[sel.typeKey] || null) : null;
   const pr = sel ? panePrice(sel, pb, color, glassFallback, profitPct, undefined, profitOpt) : null;
   const price = pr ? (pr.r ? sellOf(pr.r, laborMode) : pr.amount) : 0;   // ราคาบานที่เลือก ตามโหมดค่าแรง (ผลิต / ผลิต+ติดตั้ง)
   const mosqLabel = pr?.mosqLabel;
@@ -657,7 +670,12 @@ export default function RoomComposer({
 
   // พื้น
   const [floorOn, setFloorOn] = useState(!!ini.floorOn);
-  const [floorMat, setFloorMat] = useState<"smart" | "spc">(ini.floorMat === "spc" ? "spc" : "smart");
+  const [floorMat, setFloorMat] = useState<"smart" | "spc" | "wpc">(ini.floorMat === "spc" ? "spc" : ini.floorMat === "wpc" ? "wpc" : "smart");
+  // พื้นไม้เทียม WPC (14 พ.ย.69) — รุ่นพื้น · สูงพื้น · จำนวนด้านที่ปิดขอบ (ด้านติดบ้านไม่นับ)
+  const [floorModel, setFloorModel] = useState<string>(ini.floorModel ?? "Entrée");
+  const [floorH, setFloorH] = useState<string>(ini.floorH ?? "30");
+  const [floorEdgeW, setFloorEdgeW] = useState<string>(ini.floorEdgeW ?? "2");
+  const [floorEdgeL, setFloorEdgeL] = useState<string>(ini.floorEdgeL ?? "2");
   const [floorW, setFloorW] = useState(ini.floorW ?? "4");
   const [floorL, setFloorL] = useState(ini.floorL ?? "3");
   const [floorRate, setFloorRate] = useState(ini.floorRate ?? "");
@@ -746,8 +764,17 @@ export default function RoomComposer({
 
   const floorTotal = useMemo(() => {
     if (!floorOn) return 0;
+    if (floorMat === "wpc") return floorWpcPrice(Number(floorW) || 0, Number(floorL) || 0, floorModel, floorH, floorEdgeW, floorEdgeL, floorDisc, pb, profitOpt, "all");
     return floorPrice(floorMat, Number(floorW) || 0, Number(floorL) || 0, Number(floorRate) || 0, floorDisc);
-  }, [floorOn, floorMat, floorW, floorL, floorRate, floorDisc]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [floorOn, floorMat, floorW, floorL, floorRate, floorDisc, floorModel, floorH, floorEdgeW, floorEdgeL, pb, profitPct]);
+  // ผลิตอย่างเดียว: พื้นไม้เทียม WPC มีค่าติดตั้งแยกในสูตร → ตัดออกได้ · พื้นเรตเหมา (สมาร์ทบอร์ด/SPC) ไม่มีค่าแรงแยก ราคาเท่าเดิม
+  const floorTotalMfg = useMemo(() => {
+    if (!floorOn) return 0;
+    if (floorMat === "wpc") return floorWpcPrice(Number(floorW) || 0, Number(floorL) || 0, floorModel, floorH, floorEdgeW, floorEdgeL, floorDisc, pb, profitOpt, "mfg");
+    return floorTotal;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [floorOn, floorMat, floorW, floorL, floorTotal, floorDisc, floorModel, floorH, floorEdgeW, floorEdgeL, pb, profitPct]);
 
   const fanTotal = useMemo(() => {
     if (!fanOn) return 0;
@@ -773,9 +800,9 @@ export default function RoomComposer({
   }, [sideTotalsAll, roofTotalAll, ceilTotalAll, floorTotal, fanTotal, servicesTotal, svcTotal]);
   // ผลิตอย่างเดียว = ส่งของ ไม่ไปหน้างาน → ไม่มี "รื้อของเดิม/ป้องกันหน้างาน" (svcTotal) · พื้น/พัดลม/บริการที่กรอกเองคงไว้ตามที่เลือก
   const roomTotalMfg = useMemo(() => {
-    const t = sideTotalsMfg.reduce((a, b) => a + b, 0) + roofTotalMfg + ceilTotalMfg + floorTotal + fanTotal + servicesTotal;
+    const t = sideTotalsMfg.reduce((a, b) => a + b, 0) + roofTotalMfg + ceilTotalMfg + floorTotalMfg + fanTotal + servicesTotal;
     return ceil100(t);
-  }, [sideTotalsMfg, roofTotalMfg, ceilTotalMfg, floorTotal, fanTotal, servicesTotal]);
+  }, [sideTotalsMfg, roofTotalMfg, ceilTotalMfg, floorTotalMfg, fanTotal, servicesTotal]);
   const roomTotal = isMfg ? roomTotalMfg : roomTotalAll;
 
   // รายละเอียดรายด้าน (ชนิดบาน+รูปแบบ+ขนาด+กระจก) — ไปขึ้นใบเสนอราคาให้ครบ (แก้ปัญหา G6 ปริ้นไม่มีรายละเอียด)
@@ -811,6 +838,7 @@ export default function RoomComposer({
     roofOn, roofShapeId, roofW, roofL, roofMaterial, roofSegs, roofAddons,
     ceilOn, ceilType, ceilW, ceilL, ceilInsul, ceilPos, ceilDir,
     floorOn, floorMat, floorW, floorL, floorRate, floorDisc,
+    ...(floorMat === "wpc" ? { floorModel, floorH, floorEdgeW, floorEdgeL } : {}),
     fanOn, fanQty, fanPrice, services,
     demoRoof, demoFloor, demoRail, demoRailLen, demoDoor, protectOn, protectPts, remarks,
   };
@@ -1334,7 +1362,11 @@ export default function RoomComposer({
                 <div className="flex flex-wrap gap-1.5">
                   <button type="button" onClick={() => setFloorMat("smart")}
                     className={`press text-xs font-semibold rounded-full px-3 py-1.5 min-h-[36px] ${floorMat === "smart" ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
-                    สมาร์ทบอร์ด/ไม้เทียม (5,000/ตร.ม.)
+                    สมาร์ทบอร์ด (5,000/ตร.ม.)
+                  </button>
+                  <button type="button" onClick={() => setFloorMat("wpc")}
+                    className={`press text-xs font-semibold rounded-full px-3 py-1.5 min-h-[36px] ${floorMat === "wpc" ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
+                    ไม้เทียม WPC (คิดตามไฟล์ถอดทุน)
                   </button>
                   <button type="button" onClick={() => setFloorMat("spc")}
                     className={`press text-xs font-semibold rounded-full px-3 py-1.5 min-h-[36px] ${floorMat === "spc" ? "bg-brand text-white" : "glass-soft text-ink-2"}`}>
@@ -1348,8 +1380,39 @@ export default function RoomComposer({
                   <span className="text-ink-3">×</span>
                   <input type="number" step={0.1} value={floorL} onChange={(e) => setFloorL(e.target.value)}
                     className="min-h-[40px] glass-soft rounded-lg px-2 py-1.5 w-20 outline-none tabular-nums" />
-                  <span className="text-ink-3">ม. (ขั้นต่ำ 5 ตร.ม.)</span>
+                  <span className="text-ink-3">{floorMat === "wpc" ? "ม." : "ม. (ขั้นต่ำ 5 ตร.ม.)"}</span>
                 </div>
+                {floorMat === "wpc" && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="block">
+                      <span className="text-xs font-medium text-ink-3">รุ่นพื้นไม้ (reMood)</span>
+                      <select value={floorModel} onChange={(e) => setFloorModel(e.target.value)}
+                        className="w-full min-h-[40px] glass-soft rounded-lg px-2 py-1.5 mt-1 outline-none text-sm">
+                        {(((PRODUCTS as any).floor_wpc?.materials ?? []) as string[]).map((m) => <option key={m} value={m}>{m}</option>)}
+                      </select>
+                    </label>
+                    <label className="block">
+                      <span className="text-xs font-medium text-ink-3">สูงพื้น (ซม. · เกิน 10 คิดค่าขา)</span>
+                      <input type="number" value={floorH} onChange={(e) => setFloorH(e.target.value)}
+                        className="w-full min-h-[40px] glass-soft rounded-lg px-2 py-1.5 mt-1 outline-none tabular-nums text-sm" />
+                    </label>
+                    <label className="block">
+                      <span className="text-xs font-medium text-ink-3">ด้านกว้างที่ปิดขอบ</span>
+                      <select value={floorEdgeW} onChange={(e) => setFloorEdgeW(e.target.value)}
+                        className="w-full min-h-[40px] glass-soft rounded-lg px-2 py-1.5 mt-1 outline-none text-sm">
+                        <option value="2">2 ด้าน</option><option value="1">1 ด้าน</option><option value="0">ไม่ปิด</option>
+                      </select>
+                    </label>
+                    <label className="block">
+                      <span className="text-xs font-medium text-ink-3">ด้านยาวที่ปิดขอบ</span>
+                      <select value={floorEdgeL} onChange={(e) => setFloorEdgeL(e.target.value)}
+                        className="w-full min-h-[40px] glass-soft rounded-lg px-2 py-1.5 mt-1 outline-none text-sm">
+                        <option value="2">2 ด้าน</option><option value="1">1 ด้าน</option><option value="0">ไม่ปิด</option>
+                      </select>
+                    </label>
+                    <p className="col-span-2 text-[11px] text-ink-3">ตงซอย 30 ซม. · ตงขวาง 100 ซม. · ตัวปิดขอบ Entrée 145 มม. · แผ่นวิ่งตามความยาว (ค่าตั้งต้นของไฟล์) — จะปรับละเอียด ให้คิดจากการ์ด &quot;พื้นไม้เทียม WPC&quot; ในหมวด G3</p>
+                  </div>
+                )}
                 {floorMat === "spc" && (
                   <label className="block">
                     <span className="text-xs font-medium text-ink-3">เรต SPC/ลามิเนต (บาท/ตร.ม.)</span>
@@ -1358,8 +1421,8 @@ export default function RoomComposer({
                   </label>
                 )}
                 <label className="block">
-                  <span className="text-xs font-medium text-ink-3">ส่วนลด % (เว้น = auto 10% ถ้า ≥20 ตร.ม.)</span>
-                  <input type="number" value={floorDisc} onChange={(e) => setFloorDisc(e.target.value)} placeholder="auto"
+                  <span className="text-xs font-medium text-ink-3">{floorMat === "wpc" ? "ส่วนลด % (เว้น = ไม่ลด)" : "ส่วนลด % (เว้น = auto 10% ถ้า ≥20 ตร.ม.)"}</span>
+                  <input type="number" value={floorDisc} onChange={(e) => setFloorDisc(e.target.value)} placeholder={floorMat === "wpc" ? "0" : "auto"}
                     className="w-full min-h-[40px] glass-soft rounded-lg px-2 py-1.5 mt-1 outline-none tabular-nums text-sm" />
                 </label>
                 <div className="font-semibold text-brand-dark tabular-nums">{fmtBaht(floorTotal)}</div>
@@ -1509,7 +1572,7 @@ export default function RoomComposer({
           {floorOn && (
             <div className="flex items-center justify-between">
               <span className="text-ink-2">พื้น</span>
-              <Pair mfg={floorTotal} all={floorTotal} isMfg={isMfg} />
+              <Pair mfg={floorTotalMfg} all={floorTotal} isMfg={isMfg} />
             </div>
           )}
           {fanOn && (

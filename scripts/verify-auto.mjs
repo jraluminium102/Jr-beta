@@ -886,7 +886,8 @@ console.log("\n═══ ⑳ ลำดับราคาสี — ขาว ≤
   //   velora_auto = ชีตบังคับ "สีอบพิเศษ" เสมอ ไม่มีให้เลือกสี และราคาเส้นรวมค่าอบมาแล้ว
   const NO_COLOR_TABLE_IN_FILE = new Set(["woodjamb", "velora_auto"]);
   // ราวกันตก: ชีต H7 คิดสีเฉพาะ "กล่องอลู 1×1.6" (ระบบเสาตั้ง) · ระบบยูเหล็ก+ครอบอลู (ค่าตั้งต้น) ไฟล์ไม่มีส่วนต่างสี
-  const OVR = { handrail: { material: "เฉียง|เสาตั้ง+ราวจับอลู" } };
+  // อลูทึบ (14 พ.ย.69): ค่าตั้งต้น = คอมโพสิต (ทุกสีราคาเดียวตามชีต) → เทียบลำดับสีด้วยไส้ "ลูกฟูก เล็ก" (เส้น JR01994 คิดตามน้ำหนัก × เรตต่อโล เหมือนบานโซลิด)
+  const OVR = { handrail: { material: "เฉียง|เสาตั้ง+ราวจับอลู" }, alu_solid: { material: "ลูกฟูก เล็ก" } };
   const order = (id, c) => {
     const bad = [];
     // 8 ต.ค.69 เรตแบรนด์: Fuji/SMS ขาว=ดำ แต่ "ตลาด" ดำ 203 > อบขาว 188 → ดำต้องไม่ถูกกว่าขาว (เท่ากันหรือแพงกว่าได้)
@@ -1473,7 +1474,14 @@ console.log(NL + "═══ 🏠 ห้องกระจก G6 — ราคา
   ok("RoomComposer: ส่ง mfgTotal/sidesMfg/roofMfg/ceilMfg ให้หน้าหลัก",
     has(rc, /mfgTotal: roomTotalMfg, sidesMfg: sideTotalsMfg, roofMfg: roofTotalMfg, ceilMfg: ceilTotalMfg/));
   ok("ราคาผลิตอย่างเดียว ไม่รวมรื้อ/ป้องกันหน้างาน (svcTotal)",
-    has(rc, /roomTotalMfg = useMemo[\s\S]*?floorTotal \+ fanTotal \+ servicesTotal;\s*return ceil100/));
+    has(rc, /roomTotalMfg = useMemo[\s\S]*?floorTotalMfg \+ fanTotal \+ servicesTotal;\s*return ceil100/));   // 14 พ.ย.69 พื้นไม้เทียม WPC มีค่าติดตั้งแยก → โหมดผลิตใช้ floorTotalMfg
+  ok("RoomComposer: พื้นไม้เทียม WPC คิดจากรุ่น floor_wpc (สูตรไฟล์ถอดทุน)", has(rc, /function floorWpcPrice\(/) && has(rc, /\(PRODUCTS as any\)\.floor_wpc/) && has(rc, /floorMat === "wpc"\) return floorWpcPrice\(/));
+  {
+    // ราคาพื้นไม้เทียมในห้องกระจก = การ์ด G3 ค่าตั้งต้น (3×4 ม. Entrée สูง 30 ปิดขอบ 2/2 = 99,900 ตามไฟล์) — อินพุตแบบเดียวกับที่ห้องกระจกส่ง (ไม่ส่ง profitPct ของห้อง)
+    const fw = computeCost(PB, PRODUCTS.floor_wpc, { w: 300, h: 400, p: 1, form: PRODUCTS.floor_wpc.defForm, material: "Entrée", addons: {}, spec: { wpcH: "30", wpcEdgeW: "2", wpcEdgeL: "2" } });
+    ok("พื้นไม้เทียม 3×4 ม. (อินพุตแบบห้องกระจก) = 99,900 ตามไฟล์ · ผลิตอย่างเดียว 89,100", fw.sell.withInstall === 99900 && fw.sell.mfgOnly === 89100, fw.sell.withInstall + "/" + fw.sell.mfgOnly);
+  }
+  ok("อลูลูกฟูกทึบตัวเก่า (aluwave) ซ่อนจากการ์ด/ตัวเลือกบานแล้ว แต่ยังคิดราคาใบเก่าได้", PRODUCTS.aluwave.pickerHide === true && computeCost(PB, PRODUCTS.aluwave, { w: 200, h: 240, p: 1 }).sell.withInstall > 0);
   ok("การ์ดล่าง 2 ใบ กดสลับโหมดได้ (onLaborMode mfg/all)",
     rc.split('onLaborMode?.("mfg")').length - 1 === 1 && rc.split('onLaborMode?.("all")').length - 1 === 1);
   ok("หน้าหลัก: sell.mfgOnlyNet ของห้อง = mfgTotal (ไม่ใช่ราคารวมติดตั้ง)",
