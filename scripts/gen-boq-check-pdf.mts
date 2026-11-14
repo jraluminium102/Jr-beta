@@ -46,25 +46,33 @@ const borrow = (name: string) => `ใบตรวจราคาไม่มี�
 
 const sms = sizesOf("sms_slide"), euro = sizesOf("euro_slide"), slx = sizesOf("slimlux"), top = sizesOf("topslide");
 const cases: Case[] = [
-  { spec: "sms_slide_free", title: "บานเลื่อน SMS", form: "อิสระ / สลับ", src: fromCheck("บานเลื่อน SMS"), sizes: sms, recipe: R("sms_slide", { form: "อิสระ" }) },
-  { spec: "sms_slide_center", title: "บานเลื่อน SMS", form: "เปิดคู่กลาง (4 บาน)", src: fromCheck("บานเลื่อน SMS") + " · เปิดคู่กลางทำได้แค่ 4 บาน",
+  // บานเลื่อน = รูปแบบยอดนิยมตามจำนวนบาน (เจ้าของ 14 พ.ย.69 "3 บาน เอาฟิก 1 เลื่อน 2 · 4 บานเอาเปิดคู่กลาง · แบบแปลก ๆ ไม่เอา")
+  //   2 บาน = สลับ (เลื่อนทั้ง 2) · 3 บาน = ฟิก 1 + เลื่อน 2 (ในเว็บเรียก "ลากจูง") · 4 บาน = เปิดคู่กลาง (ฟิก 2 ริม + เลื่อน 2 กลาง)
+  //   ขนาดกว้าง×สูง ยังเอาจากใบตรวจราคา แต่จำนวนบานตั้งตามรูปแบบ
+  { spec: "sms_slide_free", title: "บานเลื่อน SMS", form: "สลับ 2 บาน", src: fromCheck("บานเลื่อน SMS"),
+    sizes: [{ ...sms[0], p: 2 }, { ...sms[1], p: 2 }], recipe: R("sms_slide", { form: "สลับ" }) },
+  { spec: "sms_slide_tow", title: "บานเลื่อน SMS", form: "3 บาน · ฟิก 1 + เลื่อน 2", src: fromCheck("บานเลื่อน SMS"),
+    sizes: [{ ...sms[0], p: 3 }, { ...sms[1], p: 3 }], recipe: R("sms_slide", { form: "ลากจูง" }) },
+  { spec: "sms_slide_center", title: "บานเลื่อน SMS", form: "4 บาน · เปิดคู่กลาง", src: fromCheck("บานเลื่อน SMS"),
     sizes: [{ ...sms[0], p: 4 }, { ...sms[1], p: 4 }], recipe: R("sms_slide", { form: "เปิดคู่กลาง" }) },
-  { spec: "sms_slide_tow", title: "บานเลื่อน SMS", form: "ลากจูง (กองข้างเดียว)", src: fromCheck("บานเลื่อน SMS"), sizes: sms, recipe: R("sms_slide", { form: "ลากจูง" }) },
-  { spec: "fuji_slide", title: "บานเลื่อน ยูโร (FUJI)", form: "อิสระ / สลับ 2–3 บาน", src: fromCheck("บานเลื่อน ยูโร") + " · ใหญ่ใช้ 3 บาน (รูปแบบนี้ทำได้ 2–3 บาน)",
-    sizes: [euro[0], { ...euro[1], p: 3 }], recipe: R("euro_slide", { form: "อิสระ" }) },
-  { spec: "fuji_slide_multi", title: "บานเลื่อน ยูโร (FUJI)", form: "4–5 บาน (เฟรมต่อ)", src: fromCheck("บานเลื่อน ยูโร") + " · กลางใช้ 4 บาน ใหญ่ 5 บาน",
-    sizes: [{ ...euro[0], p: 4 }, { ...euro[1], p: 5 }], recipe: R("euro_slide", { form: "อิสระ" }) },
-  { spec: "fuji_slide_center", title: "บานเลื่อน ยูโร (FUJI)", form: "เปิดคู่กลาง (4 / 6 บาน)", src: fromCheck("บานเลื่อน ยูโร") + " · กลาง 4 บาน ใหญ่ 6 บาน",
-    sizes: [{ ...euro[0], p: 4 }, { ...euro[1], p: 6 }], recipe: R("euro_slide", { form: "เปิดคู่กลาง" }) },
-  { spec: "slimlux_slide", title: "บานเลื่อนเฟรมบาง SlimLux", form: "อิสระ", src: fromCheck("SlimLux"), sizes: slx, recipe: R("slimlux", { form: "อิสระ" }) },
-  { spec: "slimlux_slide", title: "บานเลื่อนเฟรมบาง SlimLux", form: "ลากจูง", src: fromCheck("SlimLux"), sizes: slx, recipe: R("slimlux", { form: "ลากจูง" }) },
-  { spec: "slimlux_slide", title: "บานเลื่อนเฟรมบาง SlimLux", form: "เปิดคู่กลาง", src: fromCheck("SlimLux") + " · เปิดคู่กลางใช้จำนวนบานคู่ (กลาง 4 บาน)",
-    sizes: [{ ...slx[0], p: 4 }, slx[1]], recipe: R("slimlux", { form: "เปิดคู่กลาง" }) },
-  { spec: "toprail_frame", title: "บานเลื่อนรางบน (Hafele)", form: "ระบบ SMS · อิสระ", src: fromCheck("บานเลื่อนรางบน"), sizes: top, recipe: R("topslide", { form: "เลื่อนซ้อน", spec: { sys: "SMS", sashmode: "อิสระ" } }) },
-  { spec: "toprail_frame", title: "บานเลื่อนรางบน (Hafele)", form: "ระบบ SMS · ลากจูง", src: fromCheck("บานเลื่อนรางบน"), sizes: top, recipe: R("topslide", { form: "เลื่อนซ้อน", spec: { sys: "SMS", sashmode: "ลากจูง" } }) },
-  { spec: "toprail_frame", title: "บานเลื่อนรางบน (Hafele)", form: "ระบบ SMS · เปิดคู่กลาง", src: fromCheck("บานเลื่อนรางบน") + " · เปิดคู่กลางใช้จำนวนบานคู่ (กลาง 2 บาน)",
-    sizes: [{ ...top[0], p: 2 }, top[1]], recipe: R("topslide", { form: "เลื่อนซ้อน", spec: { sys: "SMS", sashmode: "เปิดคู่กลาง" } }) },
-  { spec: "toprail_frame", title: "บานเลื่อนรางบน (Hafele)", form: "ระบบยูโร · อิสระ", src: fromCheck("บานเลื่อนรางบน"), sizes: top, recipe: R("topslide", { form: "เลื่อนซ้อน", spec: { sys: "ยูโร", sashmode: "อิสระ" } }) },
+  { spec: "fuji_slide", title: "บานเลื่อน ยูโร (FUJI)", form: "สลับ 2 บาน", src: fromCheck("บานเลื่อน ยูโร"),
+    sizes: [{ ...euro[0], p: 2 }, { ...euro[1], p: 2 }], recipe: R("euro_slide", { form: "สลับ" }) },
+  { spec: "fuji_slide_center", title: "บานเลื่อน ยูโร (FUJI)", form: "4 บาน · เปิดคู่กลาง", src: fromCheck("บานเลื่อน ยูโร"),
+    sizes: [{ ...euro[0], p: 4 }, { ...euro[1], p: 4 }], recipe: R("euro_slide", { form: "เปิดคู่กลาง" }) },
+  { spec: "slimlux_slide", title: "บานเลื่อนเฟรมบาง SlimLux", form: "สลับ 2 บาน", src: fromCheck("SlimLux"),
+    sizes: [{ ...slx[0], p: 2 }, { ...slx[1], p: 2 }], recipe: R("slimlux", { form: "อิสระ" }) },
+  { spec: "slimlux_slide", title: "บานเลื่อนเฟรมบาง SlimLux", form: "3 บาน · ฟิก 1 + เลื่อน 2", src: fromCheck("SlimLux"),
+    sizes: [{ ...slx[0], p: 3 }, { ...slx[1], p: 3 }], recipe: R("slimlux", { form: "ลากจูง" }) },
+  { spec: "slimlux_slide", title: "บานเลื่อนเฟรมบาง SlimLux", form: "4 บาน · เปิดคู่กลาง", src: fromCheck("SlimLux"),
+    sizes: [{ ...slx[0], p: 4 }, { ...slx[1], p: 4 }], recipe: R("slimlux", { form: "เปิดคู่กลาง" }) },
+  { spec: "toprail_frame", title: "บานเลื่อนรางบน (Hafele)", form: "สลับ 2 บาน · ระบบ SMS", src: fromCheck("บานเลื่อนรางบน"),
+    sizes: [{ ...top[0], p: 2 }, { ...top[1], p: 2 }], recipe: R("topslide", { form: "เลื่อนซ้อน", spec: { sys: "SMS", sashmode: "อิสระ" } }) },
+  { spec: "toprail_frame", title: "บานเลื่อนรางบน (Hafele)", form: "3 บาน · ฟิก 1 + เลื่อน 2 · ระบบ SMS", src: fromCheck("บานเลื่อนรางบน"),
+    sizes: [{ ...top[0], p: 3 }, { ...top[1], p: 3 }], recipe: R("topslide", { form: "เลื่อนซ้อน", spec: { sys: "SMS", sashmode: "ลากจูง" } }) },
+  { spec: "toprail_frame", title: "บานเลื่อนรางบน (Hafele)", form: "4 บาน · เปิดคู่กลาง · ระบบ SMS", src: fromCheck("บานเลื่อนรางบน"),
+    sizes: [{ ...top[0], p: 4 }, { ...top[1], p: 4 }], recipe: R("topslide", { form: "เลื่อนซ้อน", spec: { sys: "SMS", sashmode: "เปิดคู่กลาง" } }) },
+  { spec: "toprail_frame", title: "บานเลื่อนรางบน (Hafele)", form: "สลับ 2 บาน · ระบบยูโร", src: fromCheck("บานเลื่อนรางบน"),
+    sizes: [{ ...top[0], p: 2 }, { ...top[1], p: 2 }], recipe: R("topslide", { form: "เลื่อนซ้อน", spec: { sys: "ยูโร", sashmode: "อิสระ" } }) },
   { spec: "fixed_panel", title: "บานติดตาย", form: "กล่อง 1.6×3 + 9014", src: fromCheck("บานติดตาย"), sizes: sizesOf("fixed"), recipe: R("fixed", { form: "กระจกล้วน" }) },
   { spec: "fuji_fix", title: "บานติดตาย ยูโร (FUJI)", form: "Fix", src: borrow("บานติดตาย"), sizes: sizesOf("fixed"), input: (s) => ({ W: s.w, H: s.h, N: 1 }) },
   { spec: "velora_swing", title: "Velora บานเปิด", form: "เดี่ยว · ยัดในช่อง", src: fromCheck("Velora บานเปิด"), sizes: sizesOf("velora"), recipe: R("velora") },
@@ -165,10 +173,11 @@ function moveOf(p: Page): { kind: Kind; panes: string[]; widths?: number[] } {
   const all = (s: string) => Array(n).fill(s);
   const center = () => all("").map((_, i) => (i < n / 2 ? "L" : "R"));
   if (id === "sms_slide_center" || id === "fuji_slide_center") return { kind: "slide", panes: center().map((d, i) => (i === 0 || i === n - 1 ? "F" : d)) };
-  if (id === "sms_slide_tow") return { kind: "slide", panes: all("L") };
+  const tow = () => all("L").map((d, i) => (i === 0 ? "F" : d));   // ฟิก 1 ริมซ้าย · บานเลื่อนวิ่งเข้าหาฟิก
+  if (id === "sms_slide_tow") return { kind: "slide", panes: tow() };
   if (id === "slimlux_slide" || id === "toprail_frame") {
     const m = String(o.sashMode);
-    return { kind: "slide", panes: m === "ลากจูง" ? all("L") : m === "เปิดคู่กลาง" ? center() : all("LR") };
+    return { kind: "slide", panes: m === "ลากจูง" ? tow() : m === "เปิดคู่กลาง" ? center().map((d, i) => (n >= 4 && (i === 0 || i === n - 1) ? "F" : d)) : all("LR") };
   }
   if (["sms_slide_free", "fuji_slide", "fuji_slide_multi"].includes(id)) return { kind: "slide", panes: all("LR") };
   if (id === "gate_slide") return { kind: "slide", panes: ["L"] };
