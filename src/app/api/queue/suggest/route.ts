@@ -16,6 +16,7 @@ const schema = z.object({
   lng: z.number().nullish(),
   from_date: z.string().nullish(), // (0042) วันเริ่มหา slot — ถ้าไม่ส่งมา = today+1
   fixed_time: z.enum(["10:00", "14:00"]).nullish(), // (ข้อ 12) ล็อกเวลาเอง → ระบบหาแค่วัน
+  exclude_id: z.string().uuid().nullish(), // คิวที่กำลังแก้ไขอยู่ — ไม่นับตัวเองเป็นคิวเดิม
 });
 
 // POST /api/queue/suggest — เสนอ slot ว่างเร็วสุดตามกฎคิว (ตรรกะอยู่ใน @/lib/queue-suggest)

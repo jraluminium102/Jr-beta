@@ -91,7 +91,8 @@ export default async function ScheduleCalendarPage({ searchParams }: { searchPar
       line2: workDesc || String(f.duration_note || "").trim(),   // ไปทำอะไร (สั้น ๆ)
       sub: [workDesc, f.duration_note as string, f.extra_note as string].filter(Boolean).join(" · "),
       done: false,
-      href: "/floor-queue",
+      // ?focus=<id คิว> → หน้าคิวงานพื้นเลื่อนไปหาลูกค้าคนนี้ ที่คิวล่าสุด (วันที่อนาคตที่สุด) เอง (เจ้าของ 16 พ.ย.69)
+      href: `/floor-queue?focus=${f.id}`,
     });
   }
 

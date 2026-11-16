@@ -884,6 +884,7 @@ export function QueueModal({
         lat: coords?.lat ?? null,
         lng: coords?.lng ?? null,
         from_date: fromDate,
+        exclude_id: entry?.id ?? null,   // แก้คิวเดิมแล้วกดเสนอ → ไม่นับช่องของตัวเอง
         // (ข้อ 12) ถ้าเลือกเวลาเอง (10:00/14:00) → ล็อกเวลานั้น ให้ระบบหาแค่วัน+โลเคชั่นใกล้
         // ไม่ส่งกับงานหลายจุด/เต็มวัน (MULTI ต้องจัดบ่ายก่อน, FULLDAY ต้องใช้ 2 slot)
         fixed_time:
@@ -1906,7 +1907,9 @@ export function QueueModal({
                     ตารางของ {suggestPlan.sales} วัน {suggestPlan.date.split("-").reverse().join("/")} — {suggestPlan.items.length ? `มีคิวอยู่แล้ว ${suggestPlan.items.length} คิว` : "ยังไม่มีคิวอื่น (ว่างทั้งวัน)"}
                   </div>
                   {suggestPlan.notes.length > 0 && (
-                    <div className="text-[11px] text-amber-700 mt-0.5">{suggestPlan.notes.join(" · ")}</div>
+                    <ul className="text-[11.5px] text-amber-800 mt-1 space-y-0.5">
+                      {suggestPlan.notes.map((n, i) => <li key={i} className="leading-snug">• {n}</li>)}
+                    </ul>
                   )}
                   <ul className="mt-1.5 space-y-1">
                     {[...suggestPlan.items.map((it) => ({ ...it, isNew: false })), { queue_time: suggestPlan.time, customer_name: f.customer_name || "(คิวใหม่นี้)", address: f.address || null, job_type: jobCat || null, job_size: f.job_size || null, km: null, min: null, isNew: true }]
