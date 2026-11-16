@@ -63,6 +63,10 @@ export type QueueEntry = {
   bill_choice?: string | null;       // (0070) SITE | OTHER_ADDR | COMPANY
   bill_kind?: string | null;         // (0070) INDIVIDUAL | COMPANY
   bill_name?: string | null;         // (0070) ชื่อที่ออกเอกสาร
+  bill_tax_id?: string | null;       // (0070) เลขผู้เสียภาษี
+  bill_branch?: string | null;       // (0070) สาขา
+  bill_address?: string | null;      // (0070) ที่อยู่ออกบิล (ที่อยู่อื่น / ที่อยู่บริษัท)
+  bill_postal?: string | null;       // (0077) รหัสไปรษณีย์
   created_at: string;
   updated_at: string;
 };
@@ -75,12 +79,29 @@ export const isOldCustomer = (e: OldCustomerSrc): boolean =>
 export const OLD_CUSTOMER_LABEL = "ลูกค้าเก่า";
 
 // ---------- ออกใบเสนอราคาในนามอื่น (0070) — บรรทัดท้ายข้อความก๊อปคิว (เจ้าของ 3 พ.ย.69) ----------
-export function billingNameLine(e: { bill_choice?: string | null; bill_kind?: string | null; bill_name?: string | null }): string {
+//   เจ้าของ 16 พ.ย.69: "ก๊อปแล้วที่อยู่ออกบิลไม่ไป แต่กรอกไปแล้ว" — เดิมพิมพ์แค่ชื่อ (ที่อยู่อื่น ไม่มีช่องชื่อ → ออกเป็น "-")
+//   ที่อยู่อื่น  → บรรทัดเดียว: หัวข้อ + ที่อยู่ออกบิลที่กรอก
+//   นามบริษัท → ชื่อ · เลขผู้เสียภาษี (สาขา) · ที่อยู่ + รหัสไปรษณีย์ — พิมพ์เฉพาะบรรทัดที่กรอก
+export type BillingSrc = {
+  bill_choice?: string | null; bill_kind?: string | null; bill_name?: string | null;
+  bill_tax_id?: string | null; bill_branch?: string | null; bill_address?: string | null; bill_postal?: string | null;
+};
+export function billingNameLine(e: BillingSrc): string {
   const choice = String(e.bill_choice ?? "SITE");
   if (choice === "SITE") return "";
-  const name = String(e.bill_name ?? "").trim() || "-";
-  const kind = String(e.bill_kind ?? "") === "COMPANY" || choice === "COMPANY" ? "นามบริษัท" : "นามบุคคล (ที่อยู่อื่น)";
-  return `ออกใบเสนอราคาใน${kind}: ${name}`;
+  const one = (v?: string | null) => String(v ?? "").replace(/\s*\n\s*/g, " ").trim();
+  const postal = one(e.bill_postal);
+  const addrRaw = one(e.bill_address);
+  const addr = addrRaw && postal && !addrRaw.includes(postal) ? `${addrRaw} ${postal}` : addrRaw || postal;
+  const isCompany = choice === "COMPANY" || String(e.bill_kind ?? "") === "COMPANY";
+  if (!isCompany) return `ออกใบเสนอราคาในนามบุคคล (ที่อยู่อื่น): ${addr || "-"}`;
+  const taxId = one(e.bill_tax_id);
+  const branch = one(e.bill_branch);
+  return [
+    `ออกใบเสนอราคาในนามบริษัท: ${one(e.bill_name) || "-"}`,
+    taxId ? `เลขผู้เสียภาษี ${taxId}${branch ? ` (${branch})` : ""}` : "",
+    addr ? `ที่อยู่ออกบิล: ${addr}` : "",
+  ].filter(Boolean).join("\n");
 }
 
 // ---------- สถานะ ----------
