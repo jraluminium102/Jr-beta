@@ -2234,17 +2234,7 @@ export function QueueModal({
             </label>
           </Field>
           )}
-          {/* ใบเสร็จ = ใบเสร็จค่าประเมิน → ไม่มีค่าประเมิน ไม่ต้องติ๊ก (เจ้าของ 19 พ.ย.69) */}
-          {Number(f.assess_fee) > 0 && (
-          <Field label="ใบเสร็จ">
-            <label className="flex items-center gap-2 mt-1.5 cursor-pointer">
-              <input type="checkbox" checked={f.receipt_done}
-                onChange={(e) => set("receipt_done", e.target.checked)}
-                className="w-4 h-4 accent-brand" />
-              <span className="text-ink-2">ส่งใบเสร็จให้ลูกค้าแล้ว</span>
-            </label>
-          </Field>
-          )}
+          {/* ช่องติ๊ก "ใบเสร็จ" เอาออกแล้ว — ไม่มีใครมาติ๊ก (เจ้าของ 18 พ.ย.69) · ค่า receipt_done เดิมยังส่งกลับตามเดิม ไม่ล้าง */}
 
           <Field label="หมายเหตุแอดมิน" wide>
             <input value={f.note_admin} onChange={(e) => set("note_admin", e.target.value)} className={inp} />
