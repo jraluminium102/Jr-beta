@@ -1391,11 +1391,14 @@ function QueueRow({ e, onOpen, onToggleReceipt, onToggleFeePaid, onPayment, onNo
       </td>
       <td className="px-1.5 py-2.5 text-center" onClick={(ev) => ev.stopPropagation()}>
         <div className="inline-flex items-center gap-2">
+          {/* ใบเสร็จ = ใบเสร็จค่าประเมิน → ไม่มีค่าประเมิน ไม่ต้องมีช่องติ๊ก/ปุ่มออกใบเสร็จ (เจ้าของ 19 พ.ย.69) */}
+          {hasAssessFee(e) && (
           <input type="checkbox" checked={e.receipt_done} disabled={!canWrite}
             onChange={(ev) => onToggleReceipt(e, ev.target.checked)}
             title="มาร์คว่าออกใบเสร็จแล้ว"
             className="w-4 h-4 accent-brand" />
-          {canWrite && (
+          )}
+          {canWrite && hasAssessFee(e) && (
             <a href={feeReceiptHref(e)} target="_blank" rel="noopener noreferrer"
               title="ออกใบเสร็จ / ใบกำกับภาษี ค่าประเมิน (VAT 7%)"
               className="press text-brand hover:text-brand-dark inline-flex">
@@ -1558,12 +1561,14 @@ function MobileCard({ e, onOpen, onToggleReceipt, onToggleFeePaid, onPayment, on
               className="w-4 h-4 accent-emerald-600" /> ชำระแล้ว
           </label>
           )}
+          {hasAssessFee(e) && (
           <label className="flex items-center gap-1.5 text-xs text-ink-2 cursor-pointer min-h-[44px]">
             <input type="checkbox" checked={e.receipt_done} disabled={!canWrite}
               onChange={(ev) => onToggleReceipt(e, ev.target.checked)}
               className="w-4 h-4 accent-brand" /> ใบเสร็จ
           </label>
-          {canWrite && (
+          )}
+          {canWrite && hasAssessFee(e) && (
             <a href={feeReceiptHref(e)} target="_blank" rel="noopener noreferrer"
               className="press inline-flex items-center gap-1 text-xs font-semibold text-brand min-h-[44px]">
               <Icon name="receipt" size={14} /> ออกใบเสร็จ
