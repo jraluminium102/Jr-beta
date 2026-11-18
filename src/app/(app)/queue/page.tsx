@@ -1314,8 +1314,21 @@ function ConfirmCopyButton({ e, compact }: { e: QueueEntry; compact?: boolean })
 //   ไม่มีค่าประเมิน (ไม่ได้ลง/0) → ขีด ไม่ต้องกรอก · มีค่าเดิมค้างอยู่ (เช่น มัดจำหน้างาน) ยังโชว์เป็นตัวหนังสือ กันข้อมูลหาย
 function PaymentSelect({ e, canWrite, onPayment }: { e: QueueEntry; canWrite: boolean; onPayment: (e: QueueEntry, v: string) => void }) {
   const cur = e.payment ?? "";
-  if (!hasAssessFee(e)) return cur ? <span className="text-ink-2">{cur}</span> : <span className="text-ink-3">—</span>;
   if (!canWrite) return cur ? <span className="text-ink-2">{cur}</span> : <span className="text-ink-3">—</span>;
+  // ไม่มีค่าประเมิน → หน้าตายังเป็นขีด (ไม่บังคับกรอก) แต่กดเลือก "มัดจำหน้างาน" ได้ (เจ้าของ 19 พ.ย.69: "ชำระ ขอเพิ่มช้อย มัดจำหน้างาน")
+  //   ลูกค้ามัดจำหน้างานมักไม่มีค่าประเมิน — เดิมขีดตายตัวเลยเลือกไม่ได้
+  if (!hasAssessFee(e)) {
+    const ONSITE = "มัดจำหน้างาน";
+    return (
+      <select value={cur} onChange={(ev) => onPayment(e, ev.target.value)} onClick={(ev) => ev.stopPropagation()}
+        title="ไม่มีค่าประเมิน — เลือกได้เฉพาะ มัดจำหน้างาน"
+        className={`rounded-md border px-1 py-1 text-xs max-w-[112px] ${cur ? "bg-white text-ink border-emerald-400 font-medium" : "bg-transparent text-ink-3 border-transparent hover:border-gray-300"}`}>
+        {cur && cur !== ONSITE && <option value={cur}>{cur}</option>}
+        <option value="">—</option>
+        <option value={ONSITE}>{ONSITE}</option>
+      </select>
+    );
+  }
   const inList = (PAYMENT_OPTIONS as readonly string[]).includes(cur);
   return (
     <select value={cur} onChange={(ev) => onPayment(e, ev.target.value)} onClick={(ev) => ev.stopPropagation()}
@@ -1517,15 +1530,13 @@ function MobileCard({ e, onOpen, onToggleReceipt, onToggleFeePaid, onPayment, on
       <div className="mt-1.5" onClick={(ev) => ev.stopPropagation()}>
         <InlineNote e={e} canWrite={canWrite} onNote={onNote} />
       </div>
-      {(e.assess_fee != null || e.payment) && (
+      {(e.assess_fee != null || e.payment || canWrite) && (
         <div className="text-xs text-ink-2 mt-1 tabular-nums">
           {e.assess_fee != null && (
             <span>ค่าประเมิน {e.assess_fee.toLocaleString("th-TH")} บาท</span>
           )}
-          {e.assess_fee != null && e.payment && !hasAssessFee(e) && <span> · </span>}
-          {e.payment && !hasAssessFee(e) && <span>ชำระ {e.payment}</span>}
-          {hasAssessFee(e) && (
-            <span className="ml-2 inline-flex items-center gap-1" onClick={(ev) => ev.stopPropagation()}>
+          {(canWrite || e.payment) && (
+            <span className={`${e.assess_fee != null ? "ml-2 " : ""}inline-flex items-center gap-1`} onClick={(ev) => ev.stopPropagation()}>
               ชำระ <PaymentSelect e={e} canWrite={canWrite} onPayment={onPayment} />
             </span>
           )}
