@@ -14,7 +14,7 @@ import { api } from "@/lib/api";
 import DateField from "@/components/ui/DateField";
 import { formatThaiPhone } from "@/lib/phone";
 import {
-  FEE_OPTIONS, JOB_SIZE_META, STATUS_META, STATUS_ORDER, parseLatLng, estimateMinutes, isOfficeOn,
+  FEE_OPTIONS, PAYMENT_OPTIONS, JOB_SIZE_META, STATUS_META, STATUS_ORDER, parseLatLng, estimateMinutes, isOfficeOn,
   type QueueEntry, type QueueSales, type JobSize, type QueueStatus, type QueueTeam,
 } from "@/lib/queue";
 import type { JobSearchResult } from "@/app/api/jobs/search/route";
@@ -74,8 +74,7 @@ const DESIGN_STATE_LABEL: Record<string, string> = {
   DONE:             "เสร็จแล้ว",
 };
 
-// ตัวเลือกการชำระ (ฟีเจอร์ A)
-const PAYMENT_OPTIONS = ["โอน", "จ่ายสด", "ลูกค้าเก่า", "มัดจำหน้างาน"] as const;
+// ตัวเลือกการชำระ (ฟีเจอร์ A) — ย้ายไป @/lib/queue (PAYMENT_OPTIONS) ใช้ร่วมกับดรอปดาวในตารางคิว
 
 // ---- slot-conflict helpers --------------------------------------------------
 
@@ -1140,7 +1139,7 @@ export function QueueModal({
       assess_fee: f.assess_fee && Number.isFinite(Number(f.assess_fee)) ? Number(f.assess_fee) : null,
       payment: f.payment || null,
       receipt_done: f.receipt_done,
-      fee_paid: f.fee_paid,
+      fee_paid: Number(f.assess_fee) > 0 ? f.fee_paid : false,   // ไม่มีค่าประเมิน = ไม่มีอะไรต้องชำระ (เจ้าของ 18 พ.ย.69)
       note_admin: f.note_admin || null,
       target_job_id: f.target_job_id || null,        // (0044) เคลียร์แบบเท่านั้น
       clear_revise: f.clear_revise,                  // (0044) — stripped server-side ก่อน .update()
@@ -2225,7 +2224,7 @@ export function QueueModal({
             </select>
           </Field>
           {/* ไม่กรอกค่าประเมิน (หรือ 0) → ไม่ต้องติ๊กชำระ (เจ้าของ 12 พ.ย.69) · เคยติ๊กไว้ยังโชว์ให้เอาออกได้ */}
-          {(Number(f.assess_fee) > 0 || f.fee_paid) && (
+          {Number(f.assess_fee) > 0 && (
           <Field label="ชำระค่าประเมิน">
             <label className="flex items-center gap-2 mt-1.5 cursor-pointer">
               <input type="checkbox" checked={f.fee_paid}

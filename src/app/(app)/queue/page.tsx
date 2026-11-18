@@ -15,7 +15,7 @@ import {
 } from "@/components/queue/QueueCalendarView";
 import {
   STATUS_META, STATUS_ORDER, JOB_SIZE_META, dayLabel, dayColor, thaiDate,
-  detectTeam, isOfficeOn, isOldCustomer, OLD_CUSTOMER_LABEL, billingNameLine,
+  detectTeam, isOfficeOn, isOldCustomer, OLD_CUSTOMER_LABEL, billingNameLine, PAYMENT_OPTIONS, hasAssessFee,
   type QueueEntry, type QueueSales, type QueueStatus, type QueueTeam, type OfficeHalf,
 } from "@/lib/queue";
 
@@ -639,6 +639,22 @@ export default function QueuePage() {
     }
   }
 
+  // ---- เปลี่ยน "ชำระ" จากดรอปดาวในตารางเลย ไม่ต้องเปิดฟอร์ม (เจ้าของ 18 พ.ย.69) ----
+  //   "มัดจำหน้างาน" มีผลกับเงิน/ผลิต (ปิดคิวแล้วมัดจำอัตโนมัติ) → ไม่บันทึกจากตาราง เปิดฟอร์มพร้อมเลือกไว้ให้ ต้องกดบันทึกเอง
+  async function changePayment(e: QueueEntry, value: string) {
+    const next = value || null;
+    if ((e.payment ?? null) === next) return;
+    if (value === "มัดจำหน้างาน") { setModal({ entry: { ...e, payment: value } }); return; }
+    const prev = e.payment ?? null;
+    setRows((rs) => rs.map((r) => (r.id === e.id ? { ...r, payment: next } : r)));
+    try {
+      await api.patch(`/queue/${e.id}`, { payment: next });
+    } catch (err) {
+      setRows((rs) => rs.map((r) => (r.id === e.id ? { ...r, payment: prev } : r)));
+      alert(err instanceof Error ? err.message : "บันทึกการชำระไม่สำเร็จ");
+    }
+  }
+
   // ---- (0031) override office รายวัน (ใส่/เอาออก เฉพาะวัน) — optimistic + API ----
   const setOffice = useCallback(async (salesId: string, date: string, half: OfficeHalf, want: boolean) => {
     setSales((prev) => prev.map((s) => {
@@ -980,10 +996,10 @@ export default function QueuePage() {
                     <span className="text-xs text-ink-3">เรียงวันเก่าสุดก่อน · กดแต่ละคิวเพื่อปิด/เลื่อน</span>
                   </div>
                   <div className="xl:hidden space-y-2">
-                    {list.map((e) => <MobileCard key={e.id} e={e} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} onNote={saveNote} canWrite={canWrite} />)}
+                    {list.map((e) => <MobileCard key={e.id} e={e} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} onPayment={changePayment} onNote={saveNote} canWrite={canWrite} />)}
                   </div>
                   <div className="hidden xl:block overflow-x-auto rounded-xl border border-red-100">
-                    <DesktopTable rows={list} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} onNote={saveNote} canWrite={canWrite} slotLabel={slotLabel} />
+                    <DesktopTable rows={list} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} onPayment={changePayment} onNote={saveNote} canWrite={canWrite} slotLabel={slotLabel} />
                   </div>
                 </div>
               )
@@ -998,10 +1014,10 @@ export default function QueuePage() {
                     <span className="tabular-nums ml-1 bg-brand/15 rounded-md px-1.5 py-0.5 text-xs">{list.length}</span>
                   </div>
                   <div className="xl:hidden space-y-2">
-                    {list.map((e) => <MobileCard key={e.id} e={e} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} onNote={saveNote} canWrite={canWrite} />)}
+                    {list.map((e) => <MobileCard key={e.id} e={e} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} onPayment={changePayment} onNote={saveNote} canWrite={canWrite} />)}
                   </div>
                   <div className="hidden xl:block overflow-x-auto rounded-xl border border-gray-100">
-                    <DesktopTable rows={list} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} onNote={saveNote} canWrite={canWrite} slotLabel={slotLabel} />
+                    <DesktopTable rows={list} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} onPayment={changePayment} onNote={saveNote} canWrite={canWrite} slotLabel={slotLabel} />
                   </div>
                 </div>
               )
@@ -1030,10 +1046,10 @@ export default function QueuePage() {
                 {overdueOpen && (
                   <>
                     <div className="xl:hidden space-y-2">
-                      {overdueRows.map((e) => <MobileCard key={e.id} e={e} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} onNote={saveNote} canWrite={canWrite} />)}
+                      {overdueRows.map((e) => <MobileCard key={e.id} e={e} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} onPayment={changePayment} onNote={saveNote} canWrite={canWrite} />)}
                     </div>
                     <div className="hidden xl:block overflow-x-auto rounded-xl border border-red-100">
-                      <DesktopTable rows={overdueRows} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} onNote={saveNote} canWrite={canWrite} slotLabel={slotLabel} />
+                      <DesktopTable rows={overdueRows} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} onPayment={changePayment} onNote={saveNote} canWrite={canWrite} slotLabel={slotLabel} />
                     </div>
                   </>
                 )}
@@ -1052,11 +1068,11 @@ export default function QueuePage() {
                 </div>
                 {/* mobile cards */}
                 <div className="xl:hidden space-y-2">
-                  {pendingRows.map((e) => <MobileCard key={e.id} e={e} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} onNote={saveNote} canWrite={canWrite} />)}
+                  {pendingRows.map((e) => <MobileCard key={e.id} e={e} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} onPayment={changePayment} onNote={saveNote} canWrite={canWrite} />)}
                 </div>
                 {/* desktop table */}
                 <div className="hidden xl:block overflow-x-auto rounded-xl border border-amber-100">
-                  <DesktopTable rows={pendingRows} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} onNote={saveNote} canWrite={canWrite} slotLabel={slotLabel} />
+                  <DesktopTable rows={pendingRows} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} onPayment={changePayment} onNote={saveNote} canWrite={canWrite} slotLabel={slotLabel} />
                 </div>
               </div>
             )}
@@ -1112,12 +1128,12 @@ export default function QueuePage() {
                       {/* mobile cards */}
                       <div className="xl:hidden space-y-2">
                         {items.map((it, i) => it.kind === "queue"
-                          ? <MobileCard key={it.entry.id} e={it.entry} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} onNote={saveNote} canWrite={canWrite} />
+                          ? <MobileCard key={it.entry.id} e={it.entry} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} onPayment={changePayment} onNote={saveNote} canWrite={canWrite} />
                           : <MobileScheduleRow key={`s${i}`} it={it} />)}
                       </div>
                       {/* desktop table */}
                       <div className="hidden xl:block overflow-x-auto rounded-xl border border-gray-200/60">
-                        <DayTable items={items} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} onNote={saveNote} canWrite={canWrite} slotLabel={slotLabel} />
+                        <DayTable items={items} onOpen={setModal} onToggleReceipt={toggleReceipt} onToggleFeePaid={toggleFeePaid} onPayment={changePayment} onNote={saveNote} canWrite={canWrite} slotLabel={slotLabel} />
                       </div>
                     </div>
                   );
@@ -1211,6 +1227,7 @@ type TableProps = {
   onOpen: (s: { entry: QueueEntry }) => void;
   onToggleReceipt: (e: QueueEntry, v: boolean) => void;
   onToggleFeePaid: (e: QueueEntry, v: boolean) => void;
+  onPayment: (e: QueueEntry, v: string) => void;
   onNote: (e: QueueEntry, note: string) => void;
   canWrite: boolean;
   slotLabel: (t: string | null) => string;
@@ -1293,10 +1310,29 @@ function ConfirmCopyButton({ e, compact }: { e: QueueEntry; compact?: boolean })
   );
 }
 
-function QueueRow({ e, onOpen, onToggleReceipt, onToggleFeePaid, onNote, canWrite, slotLabel }: {
+// ช่อง "ชำระ" — ดรอปดาวเลือกได้จากตาราง/การ์ดเลย (เจ้าของ 18 พ.ย.69)
+//   ไม่มีค่าประเมิน (ไม่ได้ลง/0) → ขีด ไม่ต้องกรอก · มีค่าเดิมค้างอยู่ (เช่น มัดจำหน้างาน) ยังโชว์เป็นตัวหนังสือ กันข้อมูลหาย
+function PaymentSelect({ e, canWrite, onPayment }: { e: QueueEntry; canWrite: boolean; onPayment: (e: QueueEntry, v: string) => void }) {
+  const cur = e.payment ?? "";
+  if (!hasAssessFee(e)) return cur ? <span className="text-ink-2">{cur}</span> : <span className="text-ink-3">—</span>;
+  if (!canWrite) return cur ? <span className="text-ink-2">{cur}</span> : <span className="text-ink-3">—</span>;
+  const inList = (PAYMENT_OPTIONS as readonly string[]).includes(cur);
+  return (
+    <select value={cur} onChange={(ev) => onPayment(e, ev.target.value)} onClick={(ev) => ev.stopPropagation()}
+      title="เลือกวิธีชำระค่าประเมิน"
+      className={`rounded-md border px-1 py-1 text-xs bg-white text-ink max-w-[112px] ${cur ? "border-emerald-400 font-medium" : "border-gray-300"}`}>
+      {cur && !inList && <option value={cur}>{cur}</option>}
+      <option value="">— เลือก —</option>
+      {PAYMENT_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+    </select>
+  );
+}
+
+function QueueRow({ e, onOpen, onToggleReceipt, onToggleFeePaid, onPayment, onNote, canWrite, slotLabel }: {
   e: QueueEntry; onOpen: (s: { entry: QueueEntry }) => void;
   onToggleReceipt: (e: QueueEntry, v: boolean) => void;
   onToggleFeePaid: (e: QueueEntry, v: boolean) => void;
+  onPayment: (e: QueueEntry, v: string) => void;
   onNote: (e: QueueEntry, note: string) => void;
   canWrite: boolean; slotLabel: (t: string | null) => string;
 }) {
@@ -1329,10 +1365,12 @@ function QueueRow({ e, onOpen, onToggleReceipt, onToggleFeePaid, onNote, canWrit
       </td>
       <td className="px-1.5 py-2.5 text-ink-2 whitespace-nowrap">{e.job_size ? JOB_SIZE_META[e.job_size] : "—"}</td>
       <td className="px-1.5 py-2.5 text-right tabular-nums text-ink-2">{e.assess_fee != null ? e.assess_fee.toLocaleString("th-TH") : "—"}</td>
-      <td className="px-1.5 py-2.5 text-ink-2">{e.payment || "—"}</td>
+      <td className="px-1.5 py-2.5 text-ink-2" onClick={(ev) => ev.stopPropagation()}>
+        <PaymentSelect e={e} canWrite={canWrite} onPayment={onPayment} />
+      </td>
       <td className="px-1.5 py-2.5 text-center" onClick={(ev) => ev.stopPropagation()}>
-        {/* ไม่มีค่าประเมิน → ไม่ต้องติ๊ก (เจ้าของ 12 พ.ย.69) */}
-        {(e.assess_fee ?? 0) > 0 || e.fee_paid ? (
+        {/* ไม่มีค่าประเมิน → ขีด ไม่ต้องติ๊ก แม้เคยติ๊กค้างไว้ (เจ้าของ 12 + 18 พ.ย.69) */}
+        {hasAssessFee(e) ? (
         <input type="checkbox" checked={e.fee_paid ?? false} disabled={!canWrite}
           onChange={(ev) => onToggleFeePaid(e, ev.target.checked)}
           className="w-4 h-4 accent-emerald-600"
@@ -1388,13 +1426,13 @@ function OfficeLeaveRow({ it }: { it: Extract<DayItem, { kind: "office" | "leave
   );
 }
 
-function DesktopTable({ rows, onOpen, onToggleReceipt, onToggleFeePaid, onNote, canWrite, slotLabel }: TableProps) {
+function DesktopTable({ rows, onOpen, onToggleReceipt, onToggleFeePaid, onPayment, onNote, canWrite, slotLabel }: TableProps) {
   return (
     <table className="w-full text-[13px]">
       <QueueTableHead />
       <tbody>
         {rows.map((e) => (
-          <QueueRow key={e.id} e={e} onOpen={onOpen} onToggleReceipt={onToggleReceipt} onToggleFeePaid={onToggleFeePaid} onNote={onNote} canWrite={canWrite} slotLabel={slotLabel} />
+          <QueueRow key={e.id} e={e} onOpen={onOpen} onToggleReceipt={onToggleReceipt} onToggleFeePaid={onToggleFeePaid} onPayment={onPayment} onNote={onNote} canWrite={canWrite} slotLabel={slotLabel} />
         ))}
       </tbody>
     </table>
@@ -1402,10 +1440,11 @@ function DesktopTable({ rows, onOpen, onToggleReceipt, onToggleFeePaid, onNote, 
 }
 
 // ตารางวัน — คิว + อยู่ออฟฟิศ + วันลา แทรกรวมกัน
-function DayTable({ items, onOpen, onToggleReceipt, onToggleFeePaid, onNote, canWrite, slotLabel }: {
+function DayTable({ items, onOpen, onToggleReceipt, onToggleFeePaid, onPayment, onNote, canWrite, slotLabel }: {
   items: DayItem[]; onOpen: (s: { entry: QueueEntry }) => void;
   onToggleReceipt: (e: QueueEntry, v: boolean) => void;
   onToggleFeePaid: (e: QueueEntry, v: boolean) => void;
+  onPayment: (e: QueueEntry, v: string) => void;
   onNote: (e: QueueEntry, note: string) => void;
   canWrite: boolean; slotLabel: (t: string | null) => string;
 }) {
@@ -1414,7 +1453,7 @@ function DayTable({ items, onOpen, onToggleReceipt, onToggleFeePaid, onNote, can
       <QueueTableHead />
       <tbody>
         {items.map((it, i) => it.kind === "queue"
-          ? <QueueRow key={it.entry.id} e={it.entry} onOpen={onOpen} onToggleReceipt={onToggleReceipt} onToggleFeePaid={onToggleFeePaid} onNote={onNote} canWrite={canWrite} slotLabel={slotLabel} />
+          ? <QueueRow key={it.entry.id} e={it.entry} onOpen={onOpen} onToggleReceipt={onToggleReceipt} onToggleFeePaid={onToggleFeePaid} onPayment={onPayment} onNote={onNote} canWrite={canWrite} slotLabel={slotLabel} />
           : <OfficeLeaveRow key={`s${i}`} it={it} />)}
       </tbody>
     </table>
@@ -1439,11 +1478,12 @@ type CardProps = {
   onOpen: (s: { entry: QueueEntry }) => void;
   onToggleReceipt: (e: QueueEntry, v: boolean) => void;
   onToggleFeePaid: (e: QueueEntry, v: boolean) => void;
+  onPayment: (e: QueueEntry, v: string) => void;
   onNote: (e: QueueEntry, note: string) => void;
   canWrite: boolean;
 };
 
-function MobileCard({ e, onOpen, onToggleReceipt, onToggleFeePaid, onNote, canWrite }: CardProps) {
+function MobileCard({ e, onOpen, onToggleReceipt, onToggleFeePaid, onPayment, onNote, canWrite }: CardProps) {
   const c = dayColor(e.queue_date);
   const isMapUrlFn = (v: string) => /(maps\.app\.goo\.gl|google\.[^/]+\/maps|\/maps\/)/i.test(v);
   const slotLabel = (t: string | null) => {
@@ -1482,8 +1522,13 @@ function MobileCard({ e, onOpen, onToggleReceipt, onToggleFeePaid, onNote, canWr
           {e.assess_fee != null && (
             <span>ค่าประเมิน {e.assess_fee.toLocaleString("th-TH")} บาท</span>
           )}
-          {e.assess_fee != null && e.payment && <span> · </span>}
-          {e.payment && <span>ชำระ {e.payment}</span>}
+          {e.assess_fee != null && e.payment && !hasAssessFee(e) && <span> · </span>}
+          {e.payment && !hasAssessFee(e) && <span>ชำระ {e.payment}</span>}
+          {hasAssessFee(e) && (
+            <span className="ml-2 inline-flex items-center gap-1" onClick={(ev) => ev.stopPropagation()}>
+              ชำระ <PaymentSelect e={e} canWrite={canWrite} onPayment={onPayment} />
+            </span>
+          )}
         </div>
       )}
       <div className="flex items-center justify-between mt-2 gap-2">
@@ -1496,7 +1541,7 @@ function MobileCard({ e, onOpen, onToggleReceipt, onToggleFeePaid, onNote, canWr
         ) : <span className="text-ink-3 text-sm">—</span>}
         <div className="flex items-center gap-3 ml-auto" onClick={(ev) => ev.stopPropagation()}>
           <ConfirmCopyButton e={e} />
-          {((e.assess_fee ?? 0) > 0 || e.fee_paid) && (
+          {hasAssessFee(e) && (
           <label className="flex items-center gap-1.5 text-xs text-ink-2 cursor-pointer min-h-[44px]">
             <input type="checkbox" checked={e.fee_paid ?? false} disabled={!canWrite}
               onChange={(ev) => onToggleFeePaid(e, ev.target.checked)}
