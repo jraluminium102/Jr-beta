@@ -154,7 +154,7 @@ export function OfficeCalendarModal({
           </button>
         </div>
         <p className="text-xs text-ink-3 mb-4">
-          ตั้งเป็นวัน ๆ เอง ไม่ซ้ำอัตโนมัติ · ช่องที่ตั้งจะไม่ถูกเสนอคิว แต่ลงคิวทับเองได้ (ขึ้นเตือน)
+          ตั้งเป็นวัน ๆ เอง ไม่ซ้ำอัตโนมัติ · ช่องที่ตั้งจะไม่ถูกเสนอคิว แต่ลงคิวทับเองได้ (ขึ้นเตือน) · วันที่ผ่านไปแล้วลงย้อนหลังได้ (สีจางกว่า)
         </p>
 
         <div className="overflow-x-auto">
@@ -185,17 +185,18 @@ export function OfficeCalendarModal({
                     </td>
                     {days.map((d) => {
                       const st = draft[`${s.id}|${d.iso}`] ?? "";
+                      // วันที่ผ่านไปแล้วลงย้อนหลังได้ (เช่น ลูกค้ายกเลิกคิวแล้วอยู่ออฟฟิศ) · เจ้าของ 18 พ.ย.69
                       const past = d.iso < today;
                       return (
                         <td key={d.iso} className="p-0.5">
-                          <button type="button" disabled={past}
-                            title={past ? "วันที่ผ่านไปแล้ว" : "คลิกเพื่อเปลี่ยน"}
+                          <button type="button"
+                            title={past ? "วันที่ผ่านไปแล้ว · คลิกเพื่อลงย้อนหลัง" : "คลิกเพื่อเปลี่ยน"}
                             onClick={() => setCell(s.id, d.iso, NEXT[st])}
                             className={`h-11 min-w-[2.75rem] w-full rounded-md border px-0.5 text-[13px] leading-tight tabular-nums focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand ${
                               st === "FULL" ? "bg-brand text-white border-brand font-bold"
                                 : st ? "bg-brand/20 text-brand-dark border-brand/40 font-semibold"
                                 : "bg-white/50 border-black/10 text-ink-3"
-                            } ${past ? "opacity-40 cursor-not-allowed" : "press"}`}>
+                            } ${past ? "opacity-60" : ""} press`}>
                             {LABEL[st]}
                           </button>
                         </td>
