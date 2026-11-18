@@ -37,7 +37,9 @@ export default async function SalesQueuePage({ params }: { params: { token: stri
   const to = thaiIso(AHEAD_DAYS);
 
   const [salesRes, entries, availRes, olderEntries, settingsRes] = await Promise.all([
-    sb.from("queue_sales").select("id, name, team, role, parent_sales_id, office_overrides, office_days_required").eq("active", true).order("team").order("name"),
+    // select("*") แล้วคัดคอลัมน์เองข้างล่าง — ห้ามระบุชื่อคอลัมน์ใหม่ตรง ๆ: ถ้าฐานข้อมูลยังไม่มีคอลัมน์ (0174 ยังไม่รัน)
+    //   ทั้ง query พัง → รายชื่อเซลล์ว่าง → ชิปกดดูตามชื่อหายหมด (เจ้าของแจ้ง 18 พ.ย.69)
+    sb.from("queue_sales").select("*").eq("active", true).order("team").order("name"),
     fetchAllPaged<SqEntry>((a, b) =>
       sb.from("queue_entries").select(COLS)
         .neq("status", "CANCELLED")
@@ -61,7 +63,10 @@ export default async function SalesQueuePage({ params }: { params: { token: stri
   return (
     <SalesQueueView
       today={today}
-      sales={(salesRes.data ?? []) as SqSales[]}
+      sales={((salesRes.data ?? []) as Record<string, any>[]).map((s): SqSales => ({
+        id: s.id, name: s.name, team: s.team, role: s.role, parent_sales_id: s.parent_sales_id ?? null,
+        office_overrides: s.office_overrides ?? null, office_days_required: s.office_days_required ?? null,
+      }))}
       entries={entries}
       avail={(availRes.data ?? []) as SqAvail[]}
       statsEntries={[...olderEntries, ...entries]}
