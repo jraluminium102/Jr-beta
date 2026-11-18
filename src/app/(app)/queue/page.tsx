@@ -15,7 +15,7 @@ import {
 } from "@/components/queue/QueueCalendarView";
 import {
   STATUS_META, STATUS_ORDER, JOB_SIZE_META, dayLabel, dayColor, thaiDate,
-  detectTeam, isOfficeOn, isOldCustomer, OLD_CUSTOMER_LABEL, billingNameLine, PAYMENT_OPTIONS, hasAssessFee,
+  detectTeam, isOfficeOn, isOldCustomer, OLD_CUSTOMER_LABEL, billingNameLine, PAYMENT_OPTIONS, PAYMENT_OPTIONS_NO_FEE, hasAssessFee,
   type QueueEntry, type QueueSales, type QueueStatus, type QueueTeam, type OfficeHalf,
 } from "@/lib/queue";
 
@@ -1318,14 +1318,13 @@ function PaymentSelect({ e, canWrite, onPayment }: { e: QueueEntry; canWrite: bo
   // ไม่มีค่าประเมิน → หน้าตายังเป็นขีด (ไม่บังคับกรอก) แต่กดเลือก "มัดจำหน้างาน" ได้ (เจ้าของ 19 พ.ย.69: "ชำระ ขอเพิ่มช้อย มัดจำหน้างาน")
   //   ลูกค้ามัดจำหน้างานมักไม่มีค่าประเมิน — เดิมขีดตายตัวเลยเลือกไม่ได้
   if (!hasAssessFee(e)) {
-    const ONSITE = "มัดจำหน้างาน";
     return (
       <select value={cur} onChange={(ev) => onPayment(e, ev.target.value)} onClick={(ev) => ev.stopPropagation()}
-        title="ไม่มีค่าประเมิน — เลือกได้เฉพาะ มัดจำหน้างาน"
+        title="ไม่มีค่าประเมิน — เลือกได้เฉพาะเรื่องมัดจำ"
         className={`rounded-md border px-1 py-1 text-xs max-w-[112px] ${cur ? "bg-white text-ink border-emerald-400 font-medium" : "bg-transparent text-ink-3 border-transparent hover:border-gray-300"}`}>
-        {cur && cur !== ONSITE && <option value={cur}>{cur}</option>}
+        {cur && !(PAYMENT_OPTIONS_NO_FEE as readonly string[]).includes(cur) && <option value={cur}>{cur}</option>}
         <option value="">—</option>
-        <option value={ONSITE}>{ONSITE}</option>
+        {PAYMENT_OPTIONS_NO_FEE.map((p) => <option key={p} value={p}>{p}</option>)}
       </select>
     );
   }
