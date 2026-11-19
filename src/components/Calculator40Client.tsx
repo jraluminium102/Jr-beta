@@ -867,7 +867,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
       // SlimLux: form ตามจำนวนบานจริง (เจ้าของ 2 ต.ค.69) — 1 บาน=เดี่ยว · อิสระ 2 บาน=สลับ · ที่เหลือตาม form
       const formLabel = isTop
         ? (nBan === 1 ? "เดี่ยว" : (form === "อิสระ" && nBan === 2 ? "สลับ" : (form || "")))
-        : (form || "");
+        : (nBan === 1 ? "เดี่ยว" : (form || ""));   // 19 พ.ย.69 บานเลื่อน 1 บาน = "เดี่ยว" ทุกรุ่น (รูปแบบ อิสระ/ลากจูง ไม่มีความหมายกับบานเดียว)
       let railTxt: string;
       if (isTop) railTxt = `รางบน (รุ่น${spec?.slxrail || "โชว์ราง"})`;
       else railTxt = `รางล่าง (${String(spec?.bottomrail ?? "").includes("รางเตี้ย") ? "รุ่นรางเตี้ย 7 มม." : "รุ่นกันน้ำ"})`;
@@ -924,7 +924,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
       // ชื่อบรรยาย: prod.saleName (แทน {form}) · ไม่มี → ชื่อรุ่นเดิม + (รูปแบบ)
       const baseName: string = prod.saleName
         ? String(prod.saleName).replace(/\{form\}/g, form || "")
-        : `${prod.name}` + (prod.forms?.length && form && !/^(อิสระ|มาตรฐาน|std)$/.test(form) ? ` (${form})` : "");
+        : `${prod.name}` + (prod.forms?.length && form && !/^(อิสระ|มาตรฐาน|std)$/.test(form) && !(prod.singleSlide?.key === "form" && nBan === 1) ? ` (${form})` : "");
       // ประตู/หน้าต่าง — คำนำหน้าชื่อ + พื้นล่าง (เฉพาะประตู) · quoteProductName ตัดคำนำหน้าเดิมทิ้งให้แล้ว
       const nameWithKind = paneKindOn ? quoteProductName(prod.id, paneKind, baseName) : baseName;
       itemName = nameWithKind
@@ -981,6 +981,11 @@ export default function Calculator40Client({ customers = [], priceOverride, line
         const parts = [(gr.nh | 0) > 0 ? `แนวนอน ${gr.nh | 0} เส้น` : "", (gr.nv | 0) > 0 ? `แนวตั้ง ${gr.nv | 0} เส้น` : ""].filter(Boolean).join(" + ");
         workLines.push(`- คาดตาราง ${parts} (ติด 2 ฝั่ง)`);
       }
+    }
+    // บานเลื่อนเดี่ยว (19 พ.ย.69): ยาวรางเป็นของที่คิดเงินแล้ว → เขียนลงใบให้ลูกค้า/ช่างเห็นชัดว่าบานกว้างเท่าไหร่ รางยาวเท่าไหร่
+    {
+      const rail = (result as any).rail;
+      if (prod.singleSlide && nBan === 1 && rail) workLines.push(`- บานเลื่อนเดี่ยว เลื่อนซ้อนผนัง · บานกว้าง ${r2(rail.panelM)} ม. · รางยาว ${r2(rail.lenM)} ม.`);
     }
     // อลูทึบ (ไส้บาน · 14 พ.ย.69): มุมลูกฟูก/เส้นคาดตาราง เป็นช่องตัวเลข (ไม่พิมพ์เอง) แต่คิดเงินแล้ว → เขียนลงใบเอง เหมือนคาดตารางของรุ่นอื่น
     if (prod.id === "alu_solid") {
@@ -1523,7 +1528,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                     </>
                   ) : (
                     <>
-                      <Field label={prod.dimLabels?.w || "กว้าง (ซม.)"} value={w} onChange={setW} />
+                      <Field label={prod.singleSlide && Number(p === "" ? prod.defaults?.p : p) === 1 ? "กว้างบาน = ช่องเปิด (ซม.)" : (prod.dimLabels?.w || "กว้าง (ซม.)")} value={w} onChange={setW} />
                       <Field label={prod.dimLabels?.h || "สูง (ซม.)"} value={h} onChange={setH} />
                     </>
                   )}
@@ -1538,6 +1543,25 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                       <Field label={`จำนวน${prod.pLabel || "บาน"}${prod.minP ? ` (${prod.minP}–${prod.maxP})` : ""}`} value={p} onChange={setP} />
                     )
                   ) : <div />}
+                  {/* บานเลื่อนเดี่ยว (1 บาน · เลื่อนซ้อนผนัง) — เจ้าของสั่ง 19 พ.ย.69: กรอกกว้างบาน · รางยาว 2 เท่าของบาน (แก้เองได้) */}
+                  {prod.singleSlide && Number(p === "" ? prod.defaults?.p : p) === 1 && (() => {
+                    const wCmNow = Number(w === "" ? prod.defaults?.w : w) || 0;
+                    const rail = (result as any)?.rail as { panelM: number; lenM: number; auto: boolean; clamped: boolean } | null | undefined;
+                    const lenM = rail ? rail.lenM : (wCmNow * 2) / 100, panelM = rail ? rail.panelM : wCmNow / 100;
+                    return (
+                      <>
+                        <Field label="ยาวราง (ซม.) · เว้นว่าง = 2 เท่าของบาน" value={spec.railLen ?? ""} placeholder={String(wCmNow * 2)}
+                          onChange={(v: string) => setSpec((s) => ({ ...s, railLen: v }))} />
+                        <p className="col-span-2 md:col-span-4 text-xs text-ink-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 leading-relaxed">
+                          <b>บานเลื่อนเดี่ยว (เลื่อนซ้อนผนัง)</b> — ช่อง &quot;กว้าง&quot; ให้กรอก<b>กว้างของบาน</b> (= ช่องที่บานปิด) ไม่ใช่ความยาวราง ·
+                          ตอนนี้: บานกว้าง <b className="tabular-nums">{r2(panelM)}</b> ม. · รางยาว <b className="tabular-nums">{r2(lenM)}</b> ม.
+                          {" "}(ช่องเปิด {r2(panelM)} + ซ้อนผนัง {r2(Math.max(0, lenM - panelM))} ม.)
+                          {rail?.clamped ? <span className="text-red-700"> · รางที่กรอกสั้นกว่าบาน ระบบคิดรางเท่าความกว้างบานแทน</span> : null}
+                          {" "}· กระจก/ค่าแรงคิดตามขนาดบาน · เฟรมบน-ล่างและรางคิดตามยาวราง
+                        </p>
+                      </>
+                    );
+                  })()}
                   {/* 15 ต.ค.69 เจ้าของสั่ง: เอาช่อง "กำไร ค่าของ %" แถวบนออก — ปรับที่การ์ด "ค่าของ" ด้านล่างที่เดียว (เดิมมี 2 ที่) */}
                   <Field label="กำไร ค่าผลิต %" value={shownMargin.prod} onChange={(v: string) => editMargin("prod", v)} />
                   <Field label="กำไร ค่าติดตั้ง %" value={shownMargin.inst} onChange={(v: string) => editMargin("inst", v)} />

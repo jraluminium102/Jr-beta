@@ -98,7 +98,8 @@ function buildEvaluator(extraVarNames) {
   // TBL = ตารางค่าคงที่ของรุ่น (prod.tables) — เช่น จำนวนเสา/บังใบ ต่อ config พับ ที่ลอกมาจากใบตัด
   // ADD = ออปชั่นเสริมที่เลือก (opt.addons) — สูตร BOM อ้างได้ เช่น บานโซลิดเลือก Digital lock แล้วตัดชุดล็อคมาตรฐาน (29 ต.ค.69)
   // FN = สูตรยาวจากไฟล์ถอดทุน (file-calc.mjs) · BAKE = เรตอบสี บาท/กก. (PB.BAKE) — สินค้าที่ชีตคิดสีเองในสูตร (อลูทึบ · 14 พ.ย.69)
-  const base = ['W', 'H', 'P', 'form', 'area', 'color', 'material', 'ROW', 'spec', 'mult', 'GMM', 'CKEY', 'TBL', 'ADD', 'FN', 'BAKE'];
+  // RW = ยาวราง/เฟรมบน-ล่าง (ม.) — เท่า W เสมอ ยกเว้นบานเลื่อนเดี่ยว (ดู singleSlide ใน computeCost)
+  const base = ['W', 'H', 'P', 'form', 'area', 'color', 'material', 'ROW', 'spec', 'mult', 'GMM', 'CKEY', 'TBL', 'ADD', 'FN', 'BAKE', 'RW'];
   const names = [...base, ...extraVarNames];
   const cache = new Map();
   const compile = (expr) => {
@@ -151,7 +152,14 @@ export function computeCost(PB, prod, opt) {
   const W = (opt.w ?? prod.defaults.w) / 100;   // ม.
   const H = (opt.h ?? prod.defaults.h) / 100;   // ม.
   const P = opt.p ?? prod.defaults.p ?? 1;
-  const form = opt.form ?? prod.defForm ?? 'std';
+  // ── บานเลื่อนเดี่ยว (1 บาน · เลื่อนซ้อนผนัง) — เจ้าของสั่ง 19 พ.ย.69 "บานเลื่อนทุกรุ่นต้องคิด 1 บานได้ · รางยาวกว่าปกติ คิดเผื่อด้วย" ──
+  //   prod.singleSlide = { key: 'form' | 'material', as: รูปแบบที่ใช้คิดตอน 1 บาน } · P = 1 → รูปแบบ (ลากจูง/เปิดคู่กลาง) ไม่มีความหมาย ล็อกเป็นรูปแบบเดียว
+  //   กว้างที่กรอก = กว้างบาน (ช่องเปิด) · RW = ยาวราง/เฟรมบน-ล่าง = spec.railLen (ซม.) ถ้ากรอก · ไม่กรอก = 2 × กว้างบาน · ไม่สั้นกว่าบาน
+  //   P ≥ 2 → RW = W เสมอ (สูตรทุกรุ่นเท่าเดิม)
+  const singleSlide = (prod.singleSlide && P === 1) ? prod.singleSlide : null;
+  const railLenIn = singleSlide ? (Number((opt.spec || {}).railLen) || 0) / 100 : 0;
+  const RW = singleSlide ? Math.max(W, railLenIn > 0 ? railLenIn : 2 * W) : W;
+  const form = (singleSlide && singleSlide.key === 'form') ? singleSlide.as : (opt.form ?? prod.defForm ?? 'std');
   let area = W * H;   // let — หลังคาหลายด้านทับด้วย opt.areaOverride ด้านล่าง (พื้นที่ = ผลรวมทุกด้าน)
   // Aztec gray = สีสต็อกของโปรไฟล์ยูโร (ชีตราคาสี v20.1 คอลัมน์ "แอทแทคเกรย์" ≈ เทา × 1.02) — ไม่ใช่สีอบพิเศษ
   //   เจ้าของ 11 ก.ย.69: ขาว=ดำ ถูกสุด < เทา=ดำซาฮาร่า ≤ แอทแทค < ลายไม้สักทอง
@@ -162,7 +170,8 @@ export function computeCost(PB, prod, opt) {
   //   prod.materialAlias = ชื่อเก่า → ชื่อใหม่ (ไฟล์ถอดทุน v20.1 จัดกลุ่มเมทัลชีทใหม่ 3 ก.ย.69)
   //   ใบเสนอเก่าที่บันทึก material ชื่อเดิมไว้ ต้องยังคิดราคาได้ ไม่ใช่ตกไปเป็น 0 เงียบ ๆ
   const materialRaw = opt.material ?? prod.defMaterial ?? null;
-  const material = (materialRaw && prod.materialAlias && prod.materialAlias[materialRaw]) ? prod.materialAlias[materialRaw] : materialRaw;
+  const material0 = (materialRaw && prod.materialAlias && prod.materialAlias[materialRaw]) ? prod.materialAlias[materialRaw] : materialRaw;
+  const material = (singleSlide && singleSlide.key === 'material') ? singleSlide.as : material0;   // ระแนงเลื่อน: รูปแบบการเลื่อนอยู่ในช่อง material
   const glassType = opt.glassType ?? prod.defGlass ?? 'เขียว 6มม.';
   // ── กำไรแยก 3 ส่วน (ไฟล์ถอดทุน v9 บล็อก "⚙ ตั้งค่ากำไร" ท้ายชีตคิดทุนทุกใบ) ──
   //   ค่าวัสดุ · ค่าผลิต · ค่าติดตั้ง ตั้ง % แยกกันได้ · ค่าตั้งต้นต่อรุ่นอยู่ใน PB.PROFIT
@@ -217,7 +226,7 @@ export function computeCost(PB, prod, opt) {
   // mult ฉีดเข้า scope → สูตรราคา consum (โครงเมืองทอง roof/ระแนง) อ้าง mult ได้ → ขยับตามราคาอลู/กก. (ตั้งต้น mult=1 ไม่กระทบ anchor)
   // GMM = ความหนากระจก (มม.) จากชื่อกระจก — สูตรบางรุ่นเลือกคิ้วตามความหนา (F7919 6-13 · F7917 13-15)
   const GMM = Number((/(\d+)\s*มม/.exec(String(glassType)) || [])[1]) || 6;
-  const scope = { W, H, P, form, area, color, material, ROW: prod.lut ? (prod.lut[material] || prod.lut[prod.defMaterial] || {}) : {}, spec: opt.spec || {}, ADD: opt.addons || {}, mult, GMM, CKEY: String(opt.colorKey ?? ''), TBL: prod.tables || {}, FN: FILE_CALC, BAKE: PB.BAKE || {} };
+  const scope = { W, H, P, form, area, color, material, ROW: prod.lut ? (prod.lut[material] || prod.lut[prod.defMaterial] || {}) : {}, spec: opt.spec || {}, ADD: opt.addons || {}, mult, GMM, CKEY: String(opt.colorKey ?? ''), TBL: prod.tables || {}, FN: FILE_CALC, BAKE: PB.BAKE || {}, RW };
   for (const [k, expr] of Object.entries(varDefs)) {
     scope[k] = ev.compile(expr)(scope);
   }
@@ -1422,6 +1431,8 @@ export function computeCost(PB, prod, opt) {
       hardware: round2(hwCost), consum: round2(consumCost + addonCost), total: costTotalOut,
     },
     profit: round2(sellWithInstall - costTotalOut),  // กำไร (ขาย − ทุน)
+    // บานเลื่อนเดี่ยว: หน้าจอ/ใบเสนอเอาไปเขียนบอก "บานกว้างเท่าไหร่ · รางยาวเท่าไหร่" (null = ไม่ใช่บานเดี่ยว)
+    rail: singleSlide ? { panelM: round2(W), lenM: round2(RW), auto: !(railLenIn > 0), clamped: railLenIn > 0 && railLenIn < W } : null,
     _costCore: round2(costTotal),   // ทุนค่าของก่อนออปชั่น — ใช้เทียบค่าสีสต็อกกับสีขาว (colourExtra)
     glassArea: round2(glassArea), aluKg: round2(aluKg), weight,
     profit3: sellPct || { mat: pctMat, prod: pctProd, inst: pctInst },   // % ที่ใช้จริง (หน้าจอเอาไปโชว์/แก้)

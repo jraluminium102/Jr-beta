@@ -95,7 +95,7 @@ export function lineKeyOf(item: LineItem, _scope: LineOverrideScope): string {
  *   แถวถูกบันทึกลง DB ก่อนคำนวณ → ทุกคนที่เปิดหน้าคิดราคารุ่นนั้นค้างถาวร ต้องเข้า SQL ลบเอง
  */
 const CALC_VARS = new Set([
-  "W", "H", "P", "form", "area", "color", "material", "ROW", "spec", "mult", "GMM", "CKEY", "TBL",
+  "W", "H", "P", "form", "area", "color", "material", "ROW", "spec", "mult", "GMM", "CKEY", "TBL", "RW",
   "Math", "true", "false", "null", "undefined",
 ]);
 const MATH_FNS = new Set(["min", "max", "ceil", "floor", "round", "abs", "pow", "sqrt", "trunc"]);

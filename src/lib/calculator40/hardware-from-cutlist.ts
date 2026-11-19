@@ -98,6 +98,9 @@ export const HW_ALIAS: Record<string, string> = { solid_slide_euro: "euro_slide"
 export function cutHardwareLines(inp: CalcHwInput): HwLine[] | null {
   const pid = HW_ALIAS[inp.prodId] || inp.prodId;
   if (!HW_FROM_CUTLIST.has(pid)) return null;
+  // บานเลื่อนเดี่ยว (1 บาน · 19 พ.ย.69): ใบตัดในไฟล์ไม่มีสูตรบานเดียวเลื่อนซ้อนผนัง (รางยาว 2 เท่า) → ไม่ดึงอุปกรณ์จากใบตัด
+  //   ใช้รายการอุปกรณ์ในสูตรคิดราคา (ล้อ 1 ชุด · มือจับ 1 ชุด) ที่ล็อกรูปแบบแล้ว — ไม่งั้นเลือก "ลากจูง" 1 บาน จะได้ล้อ 0 ตัว
+  if ((PRODUCTS as Record<string, any>)[inp.prodId]?.singleSlide && Number(inp.p) === 1) return null;
   const map = cutInputFromRecipe({
     kind: "std", prodId: pid,
     w: inp.w, h: inp.h, p: inp.p, form: inp.form ?? "", spec: inp.spec ?? {},

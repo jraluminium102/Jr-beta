@@ -1687,5 +1687,37 @@ console.log(NL + "═══ 🪟 บานเปิด กระจกช่อ�
   const cc = fs.readFileSync("src/components/Calculator40Client.tsx", "utf8"), rc = fs.readFileSync("src/components/calculator40/RoomComposer.tsx", "utf8");
   ok("หน้าจอ G1 + ห้องกระจก มีช่องเลือก type glass · ใบเสนอขึ้น '- ช่องแสง: …'", cc.includes("if (o.type === 'glass')") && rc.includes('if (o.type === "glass")') && cc.includes('"- ช่องแสง: " + glassLine(litLn.litType)'));
 }
+// ── 🚪 บานเลื่อนเดี่ยว (1 บาน · เลื่อนซ้อนผนัง) — เจ้าของสั่ง 19 พ.ย.69 "บานเลื่อนทุกรุ่นทุกแบบต้องคิด 1 บานได้ · รางยาวกว่าปกติ คิดเผื่อด้วย" ──
+//   กว้างที่กรอก = กว้างบาน (ช่องเปิด) · ยาวราง (RW) ตั้งต้น 2 × กว้างบาน · กรอกเองได้ (spec.railLen ซม.) · ไม่สั้นกว่าบาน · ≥ 2 บาน ไม่กระทบ
+console.log("\n═══ 🚪 บานเลื่อนเดี่ยว (1 บาน เลื่อนซ้อนผนัง) ═══");
+{
+  const IDS = ["sms_slide", "euro_slide", "slimlux", "topslide", "eseries", "bar_slide", "solid_slide_sms", "solid_slide_euro"];
+  for (const id of IDS) {
+    const p = PRODUCTS[id];
+    ok(id + ": เลือก 1 บานได้ (minP 1) + มีธง singleSlide", p.minP === 1 && !!p.singleSlide, "minP " + p.minP);
+    const mk = (o) => computeCost(PB, p, { w: 120, h: 200, p: 1, form: p.defForm, material: p.defMaterial, color: "white", colorKey: "white", spec: {}, addons: {}, ...o });
+    const a = mk({}), b = mk({ spec: { railLen: "240" } }), c = mk({ spec: { railLen: "360" } }), d = mk({ spec: { railLen: "120" } }), e = mk({ spec: { railLen: "50" } });
+    ok(id + ": รางตั้งต้น = 2 เท่าของบาน (2.4 ม.) · บาน 1.2 ม.", a.rail && a.rail.lenM === 2.4 && a.rail.panelM === 1.2 && a.rail.auto === true, JSON.stringify(a.rail));
+    ok(id + ": กรอกราง 240 = ราคาเท่าค่าตั้งต้น", a.sell.withInstall === b.sell.withInstall && a.cost.total === b.cost.total);
+    ok(id + ": รางยาวขึ้น (360) แพงขึ้น · รางเท่าบาน (120) ถูกลง", c.cost.total > a.cost.total && d.cost.total < a.cost.total, d.cost.total + " < " + a.cost.total + " < " + c.cost.total);
+    ok(id + ": รางสั้นกว่าบาน (50) → คิดเท่าความกว้างบาน + ขึ้นธงเตือน", e.cost.total === d.cost.total && e.rail.clamped === true, e.cost.total + " / " + d.cost.total);
+    ok(id + ": กระจก/พื้นที่/ค่าแรง คิดตามขนาดบาน ไม่ใช่ยาวราง", a.input.area === c.input.area && a.labor.prod === c.labor.prod && a.labor.install === c.labor.install && a.glassArea === c.glassArea);
+    // รูปแบบ (ลากจูง/เปิดคู่กลาง) ไม่มีความหมายกับบานเดียว → ราคาต้องเท่ากันทุกรูปแบบ (เดิม ลากจูง 1 บาน = ล้อ 0 ตัว)
+    const key = p.singleSlide.key, opts = key === "material" ? (p.materials || []) : (p.forms || []);
+    const tot = opts.map((v) => mk({ [key]: v }).sell.withInstall);
+    ok(id + ": 1 บาน ราคาเท่ากันทุกรูปแบบการเลื่อน", tot.every((x) => x === tot[0]) && tot[0] > 0, tot.join("/"));
+    const wheels = (a.lines || []).filter((l) => /ล้อ/.test(l.name || "") && !/ล้อลูกฟูก/.test(l.name || "")).reduce((s, l) => s + (Number(l.qty) || 0), 0);
+    ok(id + ": มีล้อ/ชุดล้อของบาน (ไม่เป็น 0)", wheels > 0, String(wheels));
+    // ≥ 2 บาน: ไม่มี rail · กรอก railLen ก็ไม่มีผล
+    const two = computeCost(PB, p, { w: 240, h: 200, p: 2, form: p.defForm, material: p.defMaterial, color: "white", colorKey: "white", spec: {}, addons: {} });
+    const two2 = computeCost(PB, p, { w: 240, h: 200, p: 2, form: p.defForm, material: p.defMaterial, color: "white", colorKey: "white", spec: { railLen: "999" }, addons: {} });
+    ok(id + ": 2 บานขึ้นไป ไม่ใช้ยาวราง (ราคาเท่าเดิม)", two.rail == null && two.cost.total === two2.cost.total);
+    ok(id + ": บานเดี่ยว 120 (ราง 240) ถูกกว่า 2 บาน กว้างรวม 240", a.sell.withInstall < two.sell.withInstall, a.sell.withInstall + " < " + two.sell.withInstall);
+  }
+  const src = fs.readFileSync("src/components/Calculator40Client.tsx", "utf8");
+  ok("หน้าจอ: ช่อง 'ยาวราง' + คำอธิบายบานเลื่อนเดี่ยว ขึ้นเมื่อเลือก 1 บาน", /prod\.singleSlide && Number\(p === "" \? prod\.defaults\?\.p : p\) === 1/.test(src) && /ยาวราง \(ซม\.\)/.test(src) && /railLen: v/.test(src));
+  ok("ใบเสนอ: เขียนบอกบานกว้าง/รางยาวของบานเลื่อนเดี่ยว", /บานเลื่อนเดี่ยว เลื่อนซ้อนผนัง · บานกว้าง/.test(src));
+}
+
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);
