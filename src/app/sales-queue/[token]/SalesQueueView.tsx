@@ -234,6 +234,7 @@ export default function SalesQueueView({ today, sales, entries, avail, statsEntr
               <div className="text-[11.5px] text-stone-500 leading-tight mt-0.5">
                 เดือนนี้ออกหน้างาน <b className="text-stone-700">{Number.isInteger(monthStat.field_days) ? monthStat.field_days : monthStat.field_days.toFixed(1)} วัน</b>
                 {" · "}ติดกัน <b className={monthStat.streak_warn ? "text-orange-600" : "text-stone-700"}>{monthStat.streak_now} วัน</b>
+                {monthStat.streak_ahead > 0 && <span className={monthStat.streak_ahead_warn ? "text-amber-700" : ""}> (คิวล่วงหน้าอีก {monthStat.streak_ahead})</span>}
                 {" · "}ออฟฟิศ <b className={monthStat.office_days >= monthStat.office_required ? "text-emerald-700" : "text-stone-700"}>{Number.isInteger(monthStat.office_days) ? monthStat.office_days : monthStat.office_days.toFixed(1)}/{monthStat.office_required}</b>
               </div>
             )}

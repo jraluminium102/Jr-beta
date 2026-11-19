@@ -4,7 +4,7 @@ import { HttpError } from "@/lib/bff/context";
 import { dbError } from "@/lib/bff/db-error";
 import { detectTeam, estimateMinutes, haversineKm } from "@/lib/queue";
 import { geocodeAddress, resolveMapLink } from "@/lib/queue-geo";
-import { fieldDayMap, fieldStreakEnding, isFieldTracked } from "@/lib/field-stats";
+import { fieldDayMap, fieldStreakEnding, isFieldTracked, officeDateSet, type FieldOffice } from "@/lib/field-stats";
 import { drivingMinutes } from "@/lib/ors";
 
 type Sb = { from: (t: string) => any };
@@ -199,10 +199,11 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
   // ออกหน้างานติดกัน (เจ้าของ 12 พ.ย.69): เตือนในกล่องเสนอเมื่อเซลล์ออกติดกันมาแล้ว ≥ field_streak_warn วันทำงาน — เตือนอย่างเดียว ไม่เปลี่ยนวันที่เสนอ
   const streakWarnAt = Math.max(1, Number((settingsRaw as { field_streak_warn?: number | null } | null)?.field_streak_warn ?? 6) || 6);
   const fieldDaysBySales = new Map<string, ReturnType<typeof fieldDayMap>>();
-  const streakBefore = (salesId: string, dateStr: string) => {
+  //   วันลงออฟฟิศ (แม้ครึ่งวัน) = ตัดสาย (เจ้าของ 19 พ.ย.69) — ใช้กติกาเดียวกับการ์ดเซลล์เดือนนี้
+  const streakBefore = (salesId: string, dateStr: string, office?: unknown) => {
     let m = fieldDaysBySales.get(salesId); if (!m) { m = fieldDayMap(entries, salesId); fieldDaysBySales.set(salesId, m); }
     const prev = new Date(new Date(dateStr + "T00:00:00Z").getTime() - 86400000).toISOString().slice(0, 10);
-    return fieldStreakEnding(m, prev);
+    return fieldStreakEnding(m, prev, officeDateSet(Array.isArray(office) ? (office as FieldOffice[]) : []));
   };
 
   const driveCache = new Map<string, number | null>();
@@ -268,7 +269,7 @@ export async function computeSuggestion(sb: Sb, params: SuggestParams): Promise<
       const dayNotes: string[] = [];
       if (blocked.has("10:00")) dayNotes.push(halfLeave?.half !== "PM" && halfLeave ? "เช้า: ลาครึ่งวัน" : "เช้า: วันออฟฟิศ");
       if (blocked.has("14:00")) dayNotes.push(halfLeave?.half === "PM" ? "บ่าย: ลาครึ่งวัน" : "บ่าย: วันออฟฟิศ");
-      if (isFieldTracked(s.name)) { const st = streakBefore(s.id, dateStr); if (st >= streakWarnAt) dayNotes.push(`⚠ ${s.name} ออกหน้างานติดกันมาแล้ว ${st} วันทำงาน (ถึงวันก่อนหน้า) — พิจารณาให้พักหรือลงออฟฟิศ`); }
+      if (isFieldTracked(s.name)) { const st = streakBefore(s.id, dateStr, s.office_overrides); if (st >= streakWarnAt) dayNotes.push(`⚠ ${s.name} ออกหน้างานติดกันมาแล้ว ${st} วันทำงาน (ถึงวันก่อนหน้า) — พิจารณาให้พักหรือลงออฟฟิศ`); }
       let slots = ["10:00", "14:00"].filter((t) => !blocked.has(t));
       if (body.job_size === "MULTI")
         slots = [...slots].sort((a, b) => (a === "14:00" ? -1 : 1) - (b === "14:00" ? -1 : 1));

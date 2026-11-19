@@ -4,7 +4,9 @@
  *   · เช้า = 0.5 วัน · บ่าย = 0.5 วัน · มีทั้งสอง = 1 วัน
  *   · งานขนาด "เต็มวัน" หรือ งานต่างจังหวัด (นอก กทม.+นนทบุรี+ปทุมธานี+สมุทรปราการ+สมุทรสาคร+นครปฐม) แม้เจ้าเดียว = 1 วัน
  *   · วันอาทิตย์ = หยุด ไม่นับ ไม่ตัดสาย (ศุกร์ เสาร์ จันทร์ = ติดกัน 3 วัน)
- *   · "ติดกัน" = วันทำงาน (จ–ส) ที่ออกหน้างานต่อเนื่อง · วันลา/วันหยุด/อยู่ออฟฟิศทั้งวัน/ไม่มีคิว = ตัดสาย
+ *   · "ติดกัน" = วันทำงาน (จ–ส) ที่ออกหน้างานต่อเนื่อง · วันลา/วันหยุด/ไม่มีคิว = ตัดสาย
+ *   · วันที่ลงออฟฟิศ (แม้ครึ่งวัน) = ตัดสายทันที นับใหม่จาก 0 (เจ้าของ 19 พ.ย.69: "อยู่ออฟฟิศ 1 วันก็เป็น 0 ทันที")
+ *   · แยก 2 ตัว: ติดกันถึงวันนี้ (ของจริง) กับ ต่อจากคิวล่วงหน้า (วันที่ยังมาไม่ถึง นับเฉพาะวันที่ลูกค้าเต็มวัน)
  *   · วันออฟฟิศ: ทั้งวัน = 1 · เช้าหรือบ่าย = 0.5 (จาก queue_sales.office_overrides action "add")
  *   · ผู้ช่วยเซลล์ไม่นับ (ผู้เรียกกรอง role เอง)
  * ฟังก์ชันล้วน ไม่แตะ DB — ใช้ร่วมกัน หน้าคิวงาน · ลิงก์เซลล์ · engine เสนอคิว
@@ -34,8 +36,11 @@ export type SalesFieldStats = {
   full_days: number;       // วันที่ออกเต็มวัน
   half_days: number;       // วันที่ออกครึ่งวัน
   upcountry_days: number;  // วันที่มีงานต่างจังหวัด
-  streak_now: number;      // ออกติดกันมาถึงวันนี้กี่วันทำงาน (0 = วันนี้/เมื่อวานไม่ได้ออก)
-  streak_max: number;      // ติดกันยาวสุดในเดือน
+  streak_now: number;      // ออกติดกันมาถึงวันนี้กี่วันทำงาน (0 = วันนี้ไม่ได้ออก หรือวันนี้ลงออฟฟิศ)
+  streak_ahead: number;    // คิวล่วงหน้าต่อจากวันนี้อีกกี่วันทำงาน — นับเฉพาะวันที่ลูกค้าเต็มวัน (หยุดที่วันแรกที่ไม่เต็ม/ลงออฟฟิศ)
+  streak_ahead_until: string | null; // วันสุดท้ายของสายล่วงหน้า (YYYY-MM-DD) · null = ไม่มีต่อ
+  streak_ahead_warn: boolean; // ถึงวันนี้ + ล่วงหน้า ≥ เกณฑ์เตือน (ทั้งที่ตอนนี้ยังไม่ถึงเกณฑ์)
+  streak_max: number;      // ติดกันยาวสุดในเดือน (ของจริง ถึงวันนี้)
   office_days: number;     // ตั้งวันออฟฟิศในเดือนแล้วกี่วัน (0.5 ต่อครึ่งวัน)
   office_required: number; // ต้องอยู่ออฟฟิศกี่วัน
   leave_days: number;      // ลา/หยุด/WFH (0.5 ต่อครึ่งวัน)
@@ -95,16 +100,35 @@ export function fieldDayMap(entries: FieldEntry[], salesId: string): Map<string,
   return out;
 }
 
-/** นับวันทำงานติดกันที่ออกหน้างาน ย้อนจาก `endDate` (รวมวันนั้น) — หยุดเมื่อเจอวันทำงานที่ไม่ได้ออก */
-export function fieldStreakEnding(days: Map<string, { value: number }>, endDate: string): number {
+/** วันที่ลงออฟฟิศ (เช้า/บ่าย/ทั้งวัน) — ใช้ตัดสาย "ติดกัน" */
+export function officeDateSet(office?: FieldOffice[] | null): Set<string> {
+  const s = new Set<string>();
+  for (const o of office ?? []) if (o && o.action === "add" && o.date) s.add(String(o.date).slice(0, 10));
+  return s;
+}
+
+/** นับวันทำงานติดกันที่ออกหน้างาน ย้อนจาก `endDate` (รวมวันนั้น) — หยุดเมื่อเจอวันทำงานที่ไม่ได้ออก หรือวันที่ลงออฟฟิศ (แม้ครึ่งวัน) */
+export function fieldStreakEnding(days: Map<string, { value: number }>, endDate: string, officeDays?: Set<string>): number {
   let d = isSunday(endDate) ? prevWorkingDay(endDate) : endDate;
   let n = 0;
   for (let i = 0; i < 60; i++) {
-    if ((days.get(d)?.value ?? 0) <= 0) break;
+    if ((days.get(d)?.value ?? 0) <= 0 || officeDays?.has(d)) break;
     n++;
     d = prevWorkingDay(d);
   }
   return n;
+}
+
+/** คิวล่วงหน้า: นับวันทำงานถัดจาก `today` ไปข้างหน้า เฉพาะวันที่ลูกค้าเต็มวัน (ค่า 1) และไม่ได้ลงออฟฟิศ — หยุดที่วันแรกที่ไม่เข้าเงื่อนไข */
+export function fieldStreakAhead(days: Map<string, { value: number }>, today: string, officeDays?: Set<string>): { days: number; until: string | null } {
+  const next = (iso: string) => { let d = addDays(iso, 1); while (isSunday(d)) d = addDays(d, 1); return d; };
+  let d = next(today), n = 0, until: string | null = null;
+  for (let i = 0; i < 60; i++) {
+    if ((days.get(d)?.value ?? 0) < 1 || officeDays?.has(d)) break;
+    n++; until = d;
+    d = next(d);
+  }
+  return { days: n, until };
 }
 
 export function computeFieldStats(args: {
@@ -127,21 +151,24 @@ export function computeFieldStats(args: {
       if (!inMonth(d)) continue;
       field += v.value; if (v.value >= 1) full++; else if (v.value > 0) half++; if (v.upcountry) up++;
     }
-    // ติดกันยาวสุดในเดือน: ไล่ทุกวันทำงานของเดือน · เริ่มด้วยสายที่ต่อมาจากเดือนก่อน (นับเข้า max เฉพาะเมื่อยังออกต่อในเดือนนี้)
+    const officeDays = officeDateSet(args.officeBySales[sid]);
+    // ติดกันยาวสุดในเดือน (ของจริง — ถึงวันนี้เท่านั้น วันที่ยังมาไม่ถึงไปอยู่ช่องล่วงหน้า): ไล่ทุกวันทำงานของเดือน
+    //   เริ่มด้วยสายที่ต่อมาจากเดือนก่อน (นับเข้า max เฉพาะเมื่อยังออกต่อในเดือนนี้) · วันลงออฟฟิศ = ตัดสาย
     {
-      let cur = fieldStreakEnding(days, prevWorkingDay(`${month}-01`));
+      let cur = fieldStreakEnding(days, prevWorkingDay(`${month}-01`), officeDays);
       let d = `${month}-01`;
-      while (d.startsWith(month)) {
-        if (!isSunday(d)) { if ((days.get(d)?.value ?? 0) > 0) { cur++; streakMax = Math.max(streakMax, cur); } else cur = 0; }
+      while (d.startsWith(month) && d <= today) {
+        if (!isSunday(d)) { if ((days.get(d)?.value ?? 0) > 0 && !officeDays.has(d)) { cur++; streakMax = Math.max(streakMax, cur); } else cur = 0; }
         d = addDays(d, 1);
       }
     }
-    const streakNow = fieldStreakEnding(days, today);
+    const streakNow = fieldStreakEnding(days, today, officeDays);
+    const ahead = fieldStreakAhead(days, today, officeDays);
     // วันออฟฟิศในเดือน
     const off = (args.officeBySales[sid] ?? []).filter((o) => o.action === "add" && inMonth(o.date));
     const offDays = new Map<string, number>();
     for (const o of off) offDays.set(o.date, (offDays.get(o.date) ?? 0) + 0.5);
-    let officeDays = 0; for (const v of offDays.values()) officeDays += Math.min(1, v);
+    let officeCount = 0; for (const v of offDays.values()) officeCount += Math.min(1, v);
     // ลา
     let leave = 0;
     for (const a of args.avail) {
@@ -152,7 +179,9 @@ export function computeFieldStats(args: {
     const required = args.requiredBySales?.[sid] ?? args.requiredDays;
     return {
       sales_id: sid, field_days: field, full_days: full, half_days: half, upcountry_days: up,
-      streak_now: streakNow, streak_max: streakMax, office_days: officeDays, office_required: required, leave_days: leave,
+      streak_now: streakNow, streak_ahead: ahead.days, streak_ahead_until: ahead.until,
+      streak_ahead_warn: ahead.days > 0 && streakNow < args.streakWarn && streakNow + ahead.days >= args.streakWarn,
+      streak_max: streakMax, office_days: officeCount, office_required: required, leave_days: leave,
       streak_warn: streakNow >= args.streakWarn,
     };
   });
