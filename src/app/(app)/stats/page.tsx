@@ -20,6 +20,7 @@ type Row = {
   id: string; job_code: string | null; customer_name: string; date: string | null; net: Money; net_vat: Money; sales: string; area: string; src: "bill" | "quote" | "none"; stage: string; days?: number | null; note?: string;
   line: string; assess_date: string | null; deposit: Money; deposit_gross: Money; fee: Money; vat: boolean; kind: Kind; kind_auto: boolean; kind_guess: Kind; onsite: boolean; ledger_note: string; cancelled: boolean;
 };
+type LeadRow = { assessed: number; won_cohort: number; close_rate: number; deposited: number; revenue: Money; deposit_sum: Money };
 type Stats = {
   range: { from: string; to: string; today: string; span_days: number };
   can_finance: boolean;
@@ -38,6 +39,10 @@ type Stats = {
   byArea: { area: string; assessed: number; deposited: number; revenue: Money }[];
   areaUnknown: number; areaOther: number; areaUnknownDep: number;
   byChannel: { channel: string; assessed: number; deposited: number }[];
+  // (0175) ยอดมัดจำแยกตามที่มาของลูกค้า + รหัสแอด — ผลรวมทุกแถว = leadSourceTotal = การ์ดด้านบน
+  byLeadSource?: (LeadRow & { source: string; label: string; codes: (LeadRow & { code: string })[] })[];
+  leadSourceTotal?: LeadRow;
+  leadSourceReady?: boolean;
   topItems: { name: string; quoted_jobs: number; sold_jobs: number; qty: number }[];
   byCategory: { category: string; quoted_jobs: number; quoted_qty: number; quoted_revenue: Money; sold_jobs: number; sold_qty: number; sold_revenue: Money; avg_price: Money }[];
   uncategorizedItems: number;
@@ -207,6 +212,37 @@ export default function StatsPage() {
   );
 }
 
+/* ─────────────────────── ที่มาของลูกค้า (0175) ─────────────────────── */
+// อัตราปิด: "25% (2/8)" · ยังไม่มีงานประเมินในช่วง = ขีด
+function leadRate(r: LeadRow) {
+  return r.assessed ? <>{r.close_rate}% <span className="text-[10.5px] font-normal text-ink-3">({r.won_cohort}/{r.assessed})</span></> : "–";
+}
+// แถวที่มา 1 แถว + แถวย่อยรายรหัสแอด (ถ้าที่มานั้นมีรหัส)
+function LeadRows({ g, canFin }: { g: NonNullable<Stats["byLeadSource"]>[number]; canFin: boolean }) {
+  return (
+    <>
+      <tr className="border-b border-gray-100">
+        <td className="py-2 font-semibold text-ink-2">{g.label}</td>
+        <td className="text-center tabular-nums text-ink-2">{g.assessed}</td>
+        <td className="text-center tabular-nums text-ink-2">{leadRate(g)}</td>
+        <td className="text-center tabular-nums font-semibold text-emerald-700">{g.deposited}</td>
+        {canFin && <td className="text-right tabular-nums font-semibold text-emerald-700">{baht(g.revenue ?? 0)}</td>}
+        {canFin && <td className="text-right tabular-nums text-ink-2">{baht(g.deposit_sum ?? 0)}</td>}
+      </tr>
+      {g.codes.map((c) => (
+        <tr key={c.code || "-"} className="border-b border-gray-100 text-[13px] text-ink-3">
+          <td className="py-1.5 pl-5">{c.code ? <span className="font-mono font-semibold text-ink-2">{c.code}</span> : "ไม่มีรหัส"}</td>
+          <td className="text-center tabular-nums">{c.assessed}</td>
+          <td className="text-center tabular-nums">{leadRate(c)}</td>
+          <td className="text-center tabular-nums text-emerald-700">{c.deposited}</td>
+          {canFin && <td className="text-right tabular-nums text-emerald-700">{baht(c.revenue ?? 0)}</td>}
+          {canFin && <td className="text-right tabular-nums">{baht(c.deposit_sum ?? 0)}</td>}
+        </tr>
+      ))}
+    </>
+  );
+}
+
 /* ─────────────────────── TAB: สถิติ ─────────────────────── */
 type Open = (title: string, rows: Row[], kind?: ModalState["kind"]) => void;
 
@@ -338,6 +374,44 @@ function StatsTab({ data, open, reload, goLedger }: { data: Stats; open: Open; r
             </table>
           </div>
         </Card>
+
+        {/* (0175) ยอดมัดจำแยกตามที่มาของลูกค้า / รหัสแอด */}
+        {data.byLeadSource && data.leadSourceTotal && (
+          <Card className="p-5 lg:col-span-2">
+            <h3 className="font-bold text-brand-dark mb-1">ยอดมัดจำแยกตามที่มาของลูกค้า (รหัสแอด)</h3>
+            <p className="text-[11px] text-ink-3 mb-3 leading-relaxed">
+              ดูว่าแอดตัวไหนพาลูกค้ามาจนมัดจำ · <b>เข้าประเมิน</b> = งานที่ประเมินในช่วงนี้ · <b>อัตราปิด</b> = ในงานที่ประเมินช่วงนี้ มัดจำแล้วกี่งาน · <b>มัดจำ / ยอด</b> = ลูกค้าที่มัดจำในช่วงนี้ (นับตามวันมัดจำ) · แถวรวมตรงกับการ์ดด้านบน · ลูกค้าที่ไม่ได้ระบุที่มาอยู่แถว &quot;ไม่ทราบ&quot; · ลูกค้าเก่าใช้ที่มาเดิมของลูกค้า
+              {data.leadSourceReady === false && <span className="text-amber-700"> · ยังไม่ได้เปิดใช้ช่องที่มาของลูกค้าในฐานข้อมูล (ไฟล์ 0175_queue_lead_source.sql) ตอนนี้ทุกงานจึงอยู่แถว &quot;ไม่ทราบ&quot;</span>}
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[620px]">
+                <thead><tr className="text-left text-ink-3 text-xs border-b border-gray-200/70">
+                  <th className="py-1.5 font-semibold">ที่มา / รหัสแอด</th>
+                  <th className="font-semibold text-center">เข้าประเมิน</th>
+                  <th className="font-semibold text-center">อัตราปิด</th>
+                  <th className="font-semibold text-center text-emerald-700">มัดจำ (งาน)</th>
+                  {canFin && <th className="font-semibold text-right text-emerald-700">ยอดขาย ก่อน VAT (บาท)</th>}
+                  {canFin && <th className="font-semibold text-right">ยอดมัดจำรับ (บาท)</th>}
+                </tr></thead>
+                <tbody>
+                  {data.byLeadSource.map((g) => (
+                    <LeadRows key={g.source} g={g} canFin={canFin} />
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-gray-300 font-bold text-ink">
+                    <td className="py-2">รวม</td>
+                    <td className="text-center tabular-nums">{data.leadSourceTotal.assessed}</td>
+                    <td className="text-center tabular-nums">{leadRate(data.leadSourceTotal)}</td>
+                    <td className="text-center tabular-nums text-emerald-700">{data.leadSourceTotal.deposited}</td>
+                    {canFin && <td className="text-right tabular-nums text-emerald-700">{baht(data.leadSourceTotal.revenue ?? 0)}</td>}
+                    {canFin && <td className="text-right tabular-nums">{baht(data.leadSourceTotal.deposit_sum ?? 0)}</td>}
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </Card>
+        )}
 
         {/* พื้นที่ */}
         <Card className="p-5">

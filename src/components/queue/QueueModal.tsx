@@ -15,8 +15,10 @@ import DateField from "@/components/ui/DateField";
 import { formatThaiPhone } from "@/lib/phone";
 import {
   FEE_OPTIONS, PAYMENT_OPTIONS, JOB_SIZE_META, STATUS_META, STATUS_ORDER, parseLatLng, estimateMinutes, isOfficeOn,
+  LEAD_SOURCES, LEAD_SOURCE_LABEL, LEAD_CODE_MAX, normLeadCode, leadSourceFromCode,
   type QueueEntry, type QueueSales, type JobSize, type QueueStatus, type QueueTeam,
 } from "@/lib/queue";
+import { parseContactBlob } from "@/lib/queue-paste";
 import type { JobSearchResult } from "@/app/api/jobs/search/route";
 
 // ---- ชนิดลูกค้าที่ค้นมา ----
@@ -118,6 +120,8 @@ type FormState = {
   assistant_id: string;
   line_contact: string;
   contact_channel: string;
+  lead_source: string;       // (0175) ที่มาของลูกค้า — "" = ยังไม่ระบุ
+  lead_source_code: string;  // (0175) รหัสแอด เช่น A12
   customer_name: string;
   tel: string;
   address: string;
@@ -181,6 +185,9 @@ function initForm(e?: QueueEntry | null): FormState {
     assistant_id: e?.assistant_id ?? "",
     line_contact: e?.line_contact ?? "",
     contact_channel: e?.contact_channel ?? "LINE",
+    // (0175) ค่าแปลกที่ไม่อยู่ในรายการ → เว้นว่าง (กันส่งค่าที่บันทึกไม่ผ่านกลับไป)
+    lead_source: (LEAD_SOURCES as readonly string[]).includes(String(e?.lead_source ?? "")) ? String(e?.lead_source) : "",
+    lead_source_code: e?.lead_source_code ?? "",
     customer_name: e?.customer_name ?? "",
     tel: e?.tel ?? "",
     address: e?.address ?? "",
@@ -207,52 +214,6 @@ function initForm(e?: QueueEntry | null): FormState {
     bill_address: eb?.bill_address ?? "",
     bill_postal: eb?.bill_postal ?? "",
   };
-}
-
-// แยกข้อมูลจาก "ข้อความที่วางมา" → ชื่อ/เบอร์/ที่อยู่/ลิงก์แมพ/ช่องทาง (heuristic · เว้นวันนัดให้กรอกเอง)
-type ParsedContact = { customer_name?: string; tel?: string; address?: string; location_url?: string; contact_channel?: string; line_contact?: string };
-export function parseContactBlob(text: string): ParsedContact {
-  const out: ParsedContact = {};
-  const urlRe = /(https?:\/\/[^\s]+)/i;
-  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-  if (!lines.length) return out;
-
-  // ลิงก์แมพ (เอาลิงก์แรก · ถ้าเป็นลิงก์แมพยิ่งชัวร์)
-  let mapUrl = "";
-  for (const l of lines) { const m = l.match(urlRe); if (m) { mapUrl = m[1]; if (/goo\.gl|maps|map/i.test(m[1])) break; } }
-  if (mapUrl) out.location_url = mapUrl;
-
-  // เบอร์โทร (0xx-xxx-xxxx / 0xxxxxxxxx) — ข้ามบรรทัดที่เป็นลิงก์
-  const phoneRe = /0\d[\d\s\-]{7,11}\d/;
-  let phone = "";
-  for (const l of lines) { if (urlRe.test(l)) continue; const m = l.match(phoneRe); if (m) { phone = m[0].trim(); break; } }
-  if (phone) out.tel = phone;
-
-  // ช่องทาง + ชื่อ/handle (FB / Line / IG) — คิวรองรับ LINE/FB (IG เก็บชื่อไว้ ไม่เปลี่ยนช่อง)
-  const chanRe = /^(fb|facebook|เฟส\S*|เฟซ\S*|line|ไลน์|ig|instagram|อินสตา\S*)\b[\s:：]*(.*)$/i;
-  for (const l of lines) {
-    const m = l.match(chanRe); if (!m) continue;
-    const key = m[1].toLowerCase();
-    if (/fb|face|เฟส|เฟซ/.test(key)) out.contact_channel = "FB";
-    else if (/line|ไลน์/.test(key)) out.contact_channel = "LINE";
-    const handle = (m[2] ?? "").trim();
-    if (handle) out.line_contact = handle;
-    break;
-  }
-
-  // ที่อยู่ — บรรทัดที่มีคำบอกที่อยู่ (ไม่ใช่ลิงก์/ช่องทาง/บรรทัดเบอร์)
-  const addrRe = /(เลขที่|หมู่ ?\d|หมู่บ้าน|ซอย|ถ\.|ถนน|ตำบล|ต\.|อำเภอ|อ\.|จังหวัด|จ\.|แขวง|เขต|กรุงเทพ|\d{5})/;
-  const addrLines = lines.filter((l) => !urlRe.test(l) && !chanRe.test(l) && !(phone && l.includes(phone)) && addrRe.test(l));
-  if (addrLines.length) out.address = addrLines.join(" ");
-
-  // ชื่อลูกค้า — บรรทัดที่มีเบอร์ (ตัดเบอร์ออก) หรือบรรทัดแรกที่ไม่ใช่ที่อยู่/ลิงก์/ช่องทาง
-  let name = "";
-  if (phone) { const pl = lines.find((l) => l.includes(phone)); if (pl) name = pl.replace(phone, "").replace(/[·|,]/g, " ").trim(); }
-  if (!name) name = lines.find((l) => !urlRe.test(l) && !chanRe.test(l) && !addrRe.test(l)) ?? "";
-  name = name.replace(/^[·|,\-–\s]+|[·|,\-–\s]+$/g, "").trim();
-  if (name) out.customer_name = name;
-
-  return out;
 }
 
 export function QueueModal({
@@ -298,7 +259,11 @@ export function QueueModal({
       location_url: p.location_url ?? s.location_url,
       contact_channel: p.contact_channel ?? s.contact_channel,
       line_contact: p.line_contact ?? s.line_contact,
+      // (0175) เจอรหัสแอด → เติมรหัส + ที่มาคู่กันเสมอ · ไม่เจอ = คงค่าที่กรอกไว้
+      lead_source_code: p.lead_source_code ?? s.lead_source_code,
+      lead_source: p.lead_source ?? s.lead_source,
     }));
+    if (p.lead_source_code) got.push(`ที่มา (${p.lead_source_code})`);
     if (p.customer_name) got.push("ชื่อ");
     if (p.tel) got.push("เบอร์");
     if (p.address) got.push("ที่อยู่");
@@ -1128,6 +1093,8 @@ export function QueueModal({
       assistant_id: f.assistant_id || null,
       line_contact: f.line_contact || null,
       contact_channel: f.contact_channel || "LINE",
+      lead_source: f.lead_source || null,                         // (0175) ไม่บังคับ
+      lead_source_code: normLeadCode(f.lead_source_code) || null, // (0175) ไม่บังคับ
       customer_name: f.customer_name.trim(),
       tel: telFormatted,
       address: f.address || null,
@@ -1173,11 +1140,18 @@ export function QueueModal({
     };
     try {
       let doneJobId: unknown;
+      // (0175) แถวที่ระบบตอบกลับไม่มีคอลัมน์ lead_source = ฐานข้อมูลยังไม่มีช่องนี้ → ค่าที่กรอกไม่ถูกเก็บ (คิวบันทึกแล้วตามปกติ)
+      let leadNotSaved = false;
+      const checkLead = (row: unknown) => {
+        if ((payload.lead_source || payload.lead_source_code) && row && typeof row === "object" && "customer_name" in row && !("lead_source" in row)) leadNotSaved = true;
+      };
       if (editing) {
         const r = await api.patch<{ id: string }>(`/queue/${entry!.id}`, payload);
         doneJobId = r.meta?.job_id;
+        checkLead(r.data);
       } else {
         const c = await api.post<{ id: string }>("/queue", payload);
+        checkLead(c.data);
         // ⚠ POST /api/queue "ไม่" รัน DONE→promote (มีเฉพาะ PATCH) → ถ้าสร้างเป็น "เสร็จ" เลย
         //    งานจะไม่ถูกสร้าง/ไม่ผูกลูกค้าเดิม/ไม่เข้าเขียนแบบ → ต้อง PATCH ซ้ำเพื่อ promote (บั๊กเจ้าของแจ้ง 4 ส.ค.)
         if (payload.status === "DONE" && c.data?.id) {
@@ -1186,6 +1160,8 @@ export function QueueModal({
         }
       }
       if (payload.status === "DONE") announceDone(doneJobId);
+      // (0175) บอกให้รู้เฉย ๆ หลังบันทึกสำเร็จ — ไม่บล็อก ไม่ต้องกดซ้ำ
+      if (leadNotSaved) alert("บันทึกคิวแล้ว\n\nแต่ยังเก็บ \"ลูกค้ามาจากไหน / รหัสแอด\" ไม่ได้ เพราะฐานข้อมูลยังไม่ได้เปิดใช้ช่องนี้ (ไฟล์ 0175_queue_lead_source.sql)\nแจ้งเจ้าของให้เปิดใช้ก่อน แล้วค่อยกรอกที่มาอีกครั้ง");
       onSaved((payload as { queue_date?: string | null }).queue_date ?? null);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ");
@@ -2022,6 +1998,31 @@ export function QueueModal({
               <input value={f.line_contact} onChange={(e) => set("line_contact", e.target.value)}
                 placeholder={f.contact_channel === "FB" ? "ชื่อ/ลิงก์ FB" : "ชื่อ/ID Line"} className={`${inp} flex-1`} />
             </div>
+          </Field>
+
+          {/* (0175) ที่มาของลูกค้า + รหัสแอด — ไม่บังคับ ไม่มีคำเตือน · วางข้อความลูกค้าที่มี (A12) ด้านบนแล้วเติมให้เอง */}
+          <Field label="ลูกค้ามาจากไหน (ไม่บังคับ)">
+            <div className="flex gap-1.5">
+              <select value={f.lead_source} onChange={(e) => set("lead_source", e.target.value)}
+                aria-label="ที่มาของลูกค้า"
+                className="glass-soft rounded-lg px-2 py-2 text-sm outline-none min-w-0 flex-1">
+                <option value="">— ยังไม่ระบุ —</option>
+                {LEAD_SOURCES.map((k) => <option key={k} value={k}>{LEAD_SOURCE_LABEL[k]}</option>)}
+              </select>
+              <input value={f.lead_source_code}
+                onChange={(e) => set("lead_source_code", normLeadCode(e.target.value))}
+                onBlur={(e) => {
+                  // จัดรูปรหัส + ถ้ายังไม่ได้เลือกที่มา เดาจากตัวอักษรนำ (A/T/Y/G) · เดาไม่ได้ = ปล่อยว่าง
+                  const code = normLeadCode(e.target.value);
+                  const guess = leadSourceFromCode(code);
+                  setF((s) => ({ ...s, lead_source_code: code, lead_source: s.lead_source || guess || "" }));
+                }}
+                maxLength={LEAD_CODE_MAX} aria-label="รหัสแอด"
+                placeholder="รหัสแอด เช่น A12" className="glass-soft rounded-lg px-3 py-2 outline-none w-36 shrink-0" />
+            </div>
+            {jobCat === "ประเมินหน้างาน" && f.custMode === "old" && !f.lead_source && !f.lead_source_code && (
+              <span className="mt-1 block text-[11px] text-ink-3">ลูกค้าเก่า: เว้นว่างได้ ระบบใช้ที่มาเดิมของลูกค้าให้เอง</span>
+            )}
           </Field>
 
           {/* เบอร์โทร — onBlur format ใส่ขีด (ฟีเจอร์ C) */}

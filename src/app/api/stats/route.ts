@@ -4,6 +4,7 @@ import { ok, err } from "@/lib/bff/response";
 import { can } from "@/lib/rbac";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { fetchAllPaged } from "@/lib/supabase/fetch-all";
+import { LEAD_SOURCES, LEAD_SOURCE_LABEL, leadSourceKey, leadSourceFromCode, normLeadCode, hasLeadInfo, type LeadSource } from "@/lib/queue";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -120,7 +121,11 @@ type Kind = "NEW" | "OLD" | "ADDON" | "SPECIAL";
 type QuoteRow = { id: number; job_id: string | null; issue_date: string | null; status: string; subtotal: number | null; discount_amt: number | null; vat_amt: number | null; vat_rate: number | null; total: number | null; revision_no: number | null };
 type BillRow = { id: number; job_id: string | null; quotation_id: number | null; issue_date: string | null; total: number | null; vat_amt: number | null; wht_amt: number | null; status: string };
 type ItemRow = { name: string | null; qty: number | null; category: string | null; line_total: number | null; quotation_id: number };
-type QueueRow = { id: string; job_id: string | null; customer_name: string | null; sales_id: string | null; address: string | null; contact_channel: string | null; job_type: string | null; queue_date: string | null; status: string; line_contact: string | null; assess_fee: number | null; old_customer: boolean | null; target_customer_id: number | null; target_job_id: string | null };
+type QueueRow = {
+  id: string; job_id: string | null; customer_name: string | null; sales_id: string | null; address: string | null; contact_channel: string | null; job_type: string | null; queue_date: string | null; status: string; line_contact: string | null; assess_fee: number | null; old_customer: boolean | null; target_customer_id: number | null; target_job_id: string | null;
+  // 0175 — ที่มาของลูกค้า + รหัสแอด (ไม่มีถ้ายังไม่รัน migration)
+  customer_id?: number | string | null; created_at?: string | null; lead_source?: string | null; lead_source_code?: string | null;
+};
 
 export const GET = withRoute(async (req: Request) => {
   // สิทธิ์ให้ตรงกับเมนู (Shell ซ่อน /stats ด้วย finance:read) — เดิมเปิด dashboard:read ทำให้ DESIGNER/VIEWER ยิง API ตรงได้ชื่อลูกค้า/วันมัดจำ (QA 9 พ.ย.69)
@@ -165,6 +170,19 @@ export const GET = withRoute(async (req: Request) => {
     }
     warnings.push(`งาน: ${colErr}`); return rows;
   };
+  // คิวงาน — อ่านคอลัมน์ที่มา/รหัสแอด (0175) ด้วย · ถ้ายังไม่รัน migration → อ่านแบบเดิม (ตารางแยกตามที่มาจะเป็น "ไม่ทราบ" ทั้งหมด ส่วนอื่นของหน้าไม่กระทบ)
+  const QUEUE_COLS_BASE = "id, job_id, customer_name, sales_id, address, contact_channel, job_type, queue_date, status, line_contact, assess_fee, old_customer, target_customer_id, target_job_id";
+  let leadReady = true;
+  const fetchQueues = async (): Promise<QueueRow[]> => {
+    let colErr = "";
+    const rows = await fetchAllPaged<QueueRow>((f, t) => sb.from("queue_entries").select(QUEUE_COLS_BASE + ", customer_id, created_at, lead_source, lead_source_code").order("id", { ascending: true }).range(f, t), 1000, (e) => { colErr = (e as { message?: string })?.message ?? "โหลดไม่สำเร็จ"; });
+    if (!colErr) return rows;
+    if (/lead_source/.test(colErr)) {
+      leadReady = false;
+      return paged<QueueRow>("คิวงาน", (f, t) => sb.from("queue_entries").select(QUEUE_COLS_BASE).order("id", { ascending: true }).range(f, t));
+    }
+    warnings.push(`คิวงาน: ${colErr}`); return rows;
+  };
   const [jobs, quotes, bills, queueRows, salesRes, custRows, issues, depFin, goalRes] = await Promise.all([
     fetchJobs(),
     paged<QuoteRow>("ใบเสนอราคา", (f, t) => sb.from("quotations")
@@ -174,9 +192,7 @@ export const GET = withRoute(async (req: Request) => {
       .select("id, job_id, quotation_id, issue_date, total, vat_amt, wht_amt, status")
       .not("job_id", "is", null)
       .order("id", { ascending: true }).range(f, t)),
-    paged<QueueRow>("คิวงาน", (f, t) => sb.from("queue_entries")
-      .select("id, job_id, customer_name, sales_id, address, contact_channel, job_type, queue_date, status, line_contact, assess_fee, old_customer, target_customer_id, target_job_id")
-      .order("id", { ascending: true }).range(f, t)),
+    fetchQueues(),
     sb.from("queue_sales").select("id, name"),
     paged<{ id: number | string; address: string | null; contact_channel: string | null }>("ทะเบียนลูกค้า", (f, t) => sb.from("customers")
       .select("id, address, contact_channel")
@@ -502,6 +518,68 @@ export const GET = withRoute(async (req: Request) => {
   cohort.forEach((j) => { chA[channelOf(j)]++; }); depositedJobs.forEach((j) => { chD[channelOf(j)]++; });
   const byChannel = CH_ALL.map((channel) => ({ channel, assessed: chA[channel], deposited: chD[channel] }));
 
+  // ── ที่มาของลูกค้า + รหัสแอด (0175): เข้าประเมิน (cohort) · มัดจำในช่วง · ยอด ──
+  //   ฐานเดียวกับทั้งหน้า: มัดจำ/ยอด = งานที่มัดจำในช่วง (depositedJobs) · เข้าประเมิน/อัตราปิด = งานที่ประเมินในช่วง (cohort)
+  //   ทุกงานลงได้กลุ่มเดียว → ผลรวมทุกแถว = การ์ดด้านบนเสมอ (งานที่ไม่มีที่มา = "ไม่ทราบ" ไม่ซ่อน)
+  //   ที่มาของงาน: คิวที่ผูกงานนั้น (คิวแรกสุดที่ระบุที่มา) → ไม่มีก็ "ที่มาเดิมของลูกค้า" (คิวแรกสุดของลูกค้าคนนั้นที่ระบุที่มา) → ไม่ทราบ
+  //   มีแต่รหัส ไม่ได้เลือกที่มา → ดูตัวอักษรนำของรหัส (A/T/Y/G) · ตัวอื่น = ไม่ทราบ (ไม่เดา)
+  //   เลือก "ไม่ทราบ" เฉย ๆ (ไม่มีรหัส) = ไม่มีข้อมูล → ไม่ทับที่มาจริงของคิวอื่น
+  const hasLead = (q: QueueRow | undefined): q is QueueRow => hasLeadInfo(q);
+  const qAge = (q: QueueRow) => String(q.created_at ?? "") || d10(q.queue_date) || "9999";
+  const olderQ = (a: QueueRow | undefined, b: QueueRow) => (!a || qAge(b) < qAge(a) ? b : a);
+  const leadQByJob = new Map<string, QueueRow>(), leadQById = new Map<string, QueueRow>(), leadQByCust = new Map<string, QueueRow>();
+  for (const q of queueRows) {
+    if (!hasLead(q)) continue; // นับทุกสถานะ (คิวที่ยกเลิกแต่เก็บไว้ก็ยังบอกได้ว่าลูกค้ามาจากไหน)
+    leadQById.set(q.id, q);
+    if (q.job_id) leadQByJob.set(q.job_id, olderQ(leadQByJob.get(q.job_id), q));
+    for (const cid of [q.customer_id, q.target_customer_id]) if (cid != null) leadQByCust.set(String(cid), olderQ(leadQByCust.get(String(cid)), q));
+  }
+  const leadOf = (j: JobRow): { source: LeadSource; code: string } => {
+    const nameQ = queueOf(j);
+    const q = leadQByJob.get(j.id) ?? (j.queue_entry_id ? leadQById.get(j.queue_entry_id) : undefined)
+      ?? (j.customer_id != null ? leadQByCust.get(String(j.customer_id)) : undefined) ?? (hasLead(nameQ) ? nameQ : undefined);
+    if (!q) return { source: "UNKNOWN", code: "" };
+    const code = normLeadCode(q.lead_source_code);
+    return { source: q.lead_source ? leadSourceKey(q.lead_source) : leadSourceFromCode(code) ?? "UNKNOWN", code };
+  };
+  type LS = { assessed: number; won_cohort: number; deposited: number; revenue: number; deposit_sum: number };
+  const newLS = (): LS => ({ assessed: 0, won_cohort: 0, deposited: 0, revenue: 0, deposit_sum: 0 });
+  const lsMap = new Map<LeadSource, { tot: LS; codes: Map<string, LS> }>();
+  const lsOf = (j: JobRow): LS[] => {
+    const { source, code } = leadOf(j);
+    const g = lsMap.get(source) ?? { tot: newLS(), codes: new Map<string, LS>() }; lsMap.set(source, g);
+    const c = g.codes.get(code) ?? newLS(); g.codes.set(code, c);
+    return [g.tot, c];
+  };
+  for (const j of cohort) for (const m of lsOf(j)) { m.assessed++; if (won(j)) m.won_cohort++; }
+  for (const j of depositedJobs) { const v = valueOf(j).net, d = depositOf(j); for (const m of lsOf(j)) { m.deposited++; m.revenue += v; m.deposit_sum += d; } }
+  const lsOut = (m: LS) => ({ assessed: m.assessed, won_cohort: m.won_cohort, close_rate: pct(m.won_cohort, m.assessed), deposited: m.deposited, revenue: mask(m.revenue), deposit_sum: mask(m.deposit_sum) });
+  // ปัดเศษแต่ละแถวแล้วผลรวมอาจคลาดจากยอดรวม 1–2 บาท (ยอดมีสตางค์จากการถอด VAT) → เกลี่ยส่วนต่างลงแถวที่ยอดมากสุด ให้บวกบนจอแล้วเท่ายอดรวมเป๊ะ (QA 20 พ.ย.69)
+  type LSMoney = { revenue: number | null; deposit_sum: number | null };
+  const fitMoney = <T extends LSMoney>(rows: T[], total: LSMoney): T[] => {
+    for (const k of ["revenue", "deposit_sum"] as const) {
+      const want = total[k]; if (want == null || !rows.length) continue;
+      const diff = want - rows.reduce((s, r) => s + (r[k] ?? 0), 0);
+      if (diff) { const big = rows.reduce((a, r) => ((r[k] ?? 0) > (a[k] ?? 0) ? r : a), rows[0]); (big as LSMoney)[k] = (big[k] ?? 0) + diff; }
+    }
+    return rows;
+  };
+  // แถวรวม = ตัวเลขเดียวกับการ์ดด้านบน (คิดจากชุดงานเดียวกัน ไม่ได้บวกจากแถวที่ปัดเศษแล้ว)
+  const leadSourceTotal = { assessed: cohort.length, won_cohort: coWon.length, close_rate: pct(coWon.length, cohort.length), deposited: depositedJobs.length, revenue: mask(cur.revenue), deposit_sum: mask(cur.deposit_sum) };
+  const lsSort = (a: LS, b: LS) => (showFinance ? b.revenue - a.revenue : 0) || b.deposited - a.deposited || b.assessed - a.assessed;
+  const byLeadSource = fitMoney(LEAD_SOURCES
+    .filter((k) => k === "UNKNOWN" || lsMap.has(k)) // "ไม่ทราบ" โชว์เสมอ
+    .map((k) => {
+      const g = lsMap.get(k) ?? { tot: newLS(), codes: new Map<string, LS>() };
+      const hasCodes = [...g.codes.keys()].some((c) => c !== "");
+      // แจกแจงรายรหัสเฉพาะที่มาที่มีรหัสจริง · งานที่ไม่มีรหัสในกลุ่มนั้น = แถว "" (หน้าเว็บเขียนว่า ไม่มีรหัส) → ผลรวมรายรหัส = แถวที่มา
+      const codes = hasCodes ? [...g.codes.entries()].sort((a, b) => (a[0] === "" ? 1 : b[0] === "" ? -1 : lsSort(a[1], b[1]) || a[0].localeCompare(b[0]))).map(([code, m]) => ({ code, ...lsOut(m) })) : [];
+      return { source: k, label: LEAD_SOURCE_LABEL[k], ...lsOut(g.tot), codes, _m: g.tot };
+    })
+    .sort((a, b) => (a.source === "UNKNOWN" ? 1 : b.source === "UNKNOWN" ? -1 : lsSort(a._m, b._m)))
+    .map(({ _m, ...r }) => r), leadSourceTotal)
+    .map((g) => ({ ...g, codes: fitMoney(g.codes, g) })); // รายรหัสในกลุ่ม บวกแล้ว = แถวที่มา
+
   // ── ประเภทงานนิยม: นับ "จำนวนงาน" ที่มีสินค้านั้นในใบเสนอล่าสุด (ไม่นับ qty — หน่วยต่างกัน · ไม่นับซ้ำข้าม Rev) ──
   const baseName = (n: string) => n.replace(/\s*[（(].*$/s, "").trim() || n.trim();
   const itemJobs = new Map<string, { quoted: Set<number>; sold: Set<number>; qty: number }>();
@@ -587,6 +665,7 @@ export const GET = withRoute(async (req: Request) => {
     can_finance: showFinance,
     warnings,
     summary, lists, byMonth, byArea, areaUnknown, areaOther, areaUnknownDep, byChannel, topItems,
+    byLeadSource, leadSourceTotal, leadSourceReady: leadReady,
     byCategory, uncategorizedItems: uncategorized,
     bySales, drawing, quotation,
     issues: { total: inIssues.length, open: inIssues.filter((i) => i.status !== "CLOSED").length, bySeverity: sev },

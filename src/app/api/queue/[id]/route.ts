@@ -5,6 +5,7 @@ import { withRoute, audit } from "@/lib/bff/handler";
 import { ok } from "@/lib/bff/response";
 import { dbError } from "@/lib/bff/db-error";
 import { resolveMapLink } from "@/lib/queue-geo";
+import { LEAD_SOURCES, normLeadCode, dropMissingQueueCols } from "@/lib/queue";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,9 @@ const patchSchema = z.object({
   assistant_id: z.string().uuid().nullish(),
   line_contact: z.string().nullish(),
   contact_channel: z.enum(["LINE", "FB"]).optional(),
+  // (0175) ที่มาของลูกค้า + รหัสแอด — ไม่บังคับ · ไม่ส่งมา = ไม่แตะค่าเดิม
+  lead_source: z.enum(LEAD_SOURCES).nullish(),
+  lead_source_code: z.string().transform((s) => normLeadCode(s) || null).nullish(),
   customer_name: z.string().min(1).optional(),
   tel: z.string().nullish(),
   address: z.string().nullish(),
@@ -140,12 +144,18 @@ export const PATCH = withRoute(async (req: Request, { params }: { params: { id: 
     body.lng = null;
   }
 
+  let updateRow: Record<string, unknown> = body;
   let { data, error } = await sb.from("queue_entries")
-    .update(body).eq("id", params.id).select(SELECT).maybeSingle();
-  // กันพัง: ถ้า migration 0077 (bill_postal) ยังไม่รัน → retry แบบตัด bill_postal ออก (คิวต้องเซฟได้เสมอ)
-  if (error && /bill_postal/i.test(error.message ?? "")) {
-    const { bill_postal, ...bodyNoPostal } = body as Record<string, unknown>;
-    ({ data, error } = await sb.from("queue_entries").update(bodyNoPostal).eq("id", params.id).select(SELECT).maybeSingle());
+    .update(updateRow).eq("id", params.id).select(SELECT).maybeSingle();
+  // กันพัง: ถ้า migration ที่เพิ่มคอลัมน์ยังไม่รัน (0077 bill_postal · 0175 lead_source) → ตัดคอลัมน์นั้นแล้วลองใหม่ (คิวต้องเซฟได้เสมอ)
+  for (let i = 0; i < 2 && error; i++) {
+    const slim = dropMissingQueueCols(updateRow, error.message);
+    if (!slim) break;
+    updateRow = slim;
+    // เหลือแต่คอลัมน์ที่ยังไม่มี (เช่นแก้เฉพาะที่มา) → ไม่มีอะไรให้อัปเดต อ่านแถวเดิมคืนไป
+    ({ data, error } = Object.keys(updateRow).length
+      ? await sb.from("queue_entries").update(updateRow).eq("id", params.id).select(SELECT).maybeSingle()
+      : await sb.from("queue_entries").select(SELECT).eq("id", params.id).maybeSingle());
   }
   if (error) throw dbError(error);
   if (!data) throw new HttpError(404, "ไม่พบคิวนี้ (อาจถูกลบไปแล้ว)");

@@ -7,6 +7,7 @@ import { dbError } from "@/lib/bff/db-error";
 import { can } from "@/lib/rbac";
 import { resolveMapLink } from "@/lib/queue-geo";
 import { fetchAllPaged } from "@/lib/supabase/fetch-all";
+import { LEAD_SOURCES, leadSourceKey, normLeadCode, hasLeadInfo, dropMissingQueueCols } from "@/lib/queue";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +43,9 @@ const entrySchema = z.object({
   assistant_id: z.string().uuid().nullish(),
   line_contact: z.string().nullish(),
   contact_channel: z.enum(["LINE", "FB"]).optional(),
+  // (0175) ที่มาของลูกค้า + รหัสแอด — ไม่บังคับ · รหัสจัดรูปให้เอง (ตัวใหญ่ ตัดยาวเกิน) ไม่เด้งเตือน
+  lead_source: z.enum(LEAD_SOURCES).nullish(),
+  lead_source_code: z.string().transform((s) => normLeadCode(s) || null).nullish(),
   customer_name: z.string().min(1, "กรุณาระบุชื่อลูกค้า"),
   tel: z.string().nullish(),
   address: z.string().nullish(),
@@ -176,12 +180,38 @@ export const POST = withRoute(async (req: Request) => {
     if (co) { body.lat = co.lat; body.lng = co.lng; }
   }
 
-  const insertRow = { ...body, status: body.status ?? "PENDING", created_by: ctx.user.id };
+  // (0175) ลูกค้าเก่า: ไม่ได้กรอกที่มา → คงที่มาเดิมของลูกค้าไว้ (คิวแรกสุดของลูกค้าที่มีที่มา) · กรอกมาเอง = ใช้ตามที่กรอก
+  //   best-effort: หาไม่เจอ / ยังไม่รัน migration → ปล่อยว่าง ไม่บล็อกการสร้างคิว
+  if (!body.lead_source && !body.lead_source_code && (body.target_customer_id != null || body.target_job_id)) {
+    try {
+      let cid: number | null = body.target_customer_id ?? null;
+      if (cid == null && body.target_job_id) {
+        const { data: jr } = await sb.from("jobs").select("customer_id").eq("id", body.target_job_id).maybeSingle();
+        cid = (jr as { customer_id?: number | null } | null)?.customer_id ?? null;
+      }
+      if (cid != null) {
+        const { data: prev } = await sb.from("queue_entries")
+          .select("lead_source, lead_source_code")
+          .or(`customer_id.eq.${Number(cid)},target_customer_id.eq.${Number(cid)}`)
+          .order("created_at", { ascending: true }).limit(200);
+        const p = ((prev ?? []) as { lead_source: string | null; lead_source_code: string | null }[])
+          .find((q) => hasLeadInfo(q)); // "ไม่ทราบ" เฉย ๆ ไม่นับเป็นที่มา
+        if (p) {
+          body.lead_source = p.lead_source ? leadSourceKey(p.lead_source) : null;
+          body.lead_source_code = normLeadCode(p.lead_source_code) || null;
+        }
+      }
+    } catch (e) { console.warn("[queue POST] inherit lead source:", e instanceof Error ? e.message : e); }
+  }
+
+  let insertRow: Record<string, unknown> = { ...body, status: body.status ?? "PENDING", created_by: ctx.user.id };
   let { data, error } = await sb.from("queue_entries").insert(insertRow).select(SELECT).single();
-  // กันพัง: ถ้า migration 0077 (bill_postal) ยังไม่รัน → retry แบบตัด bill_postal ออก
-  if (error && /bill_postal/i.test(error.message ?? "")) {
-    const { bill_postal, ...rowNoPostal } = insertRow as Record<string, unknown>;
-    ({ data, error } = await sb.from("queue_entries").insert(rowNoPostal).select(SELECT).single());
+  // กันพัง: ถ้า migration ที่เพิ่มคอลัมน์ยังไม่รัน (0077 bill_postal · 0175 lead_source) → ตัดคอลัมน์นั้นแล้วลองใหม่ (คิวต้องเซฟได้เสมอ)
+  for (let i = 0; i < 2 && error; i++) {
+    const slim = dropMissingQueueCols(insertRow, error.message);
+    if (!slim) break;
+    insertRow = slim;
+    ({ data, error } = await sb.from("queue_entries").insert(insertRow).select(SELECT).single());
   }
   if (error) throw dbError(error);
   if (!data) throw new HttpError(400, "สร้างคิวไม่สำเร็จ");

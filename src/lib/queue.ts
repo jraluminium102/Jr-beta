@@ -43,6 +43,8 @@ export type QueueEntry = {
   assistant?: { id: string; name: string; code: string } | null;
   line_contact: string | null;
   contact_channel: string;        // (0043) LINE | FB
+  lead_source?: string | null;       // (0175) ที่มาของลูกค้า — ชุดปิด LEAD_SOURCES · null = ยังไม่ระบุ
+  lead_source_code?: string | null;  // (0175) รหัสแอด เช่น A12
   customer_name: string;
   tel: string | null;
   address: string | null;
@@ -77,6 +79,81 @@ export type OldCustomerSrc = { old_customer?: boolean | null; target_customer_id
 export const isOldCustomer = (e: OldCustomerSrc): boolean =>
   !!e && (!!e.old_customer || e.target_customer_id != null || e.target_job_id != null);
 export const OLD_CUSTOMER_LABEL = "ลูกค้าเก่า";
+
+// ---------- ที่มาของลูกค้า + รหัสแอด (0175 · เจ้าของ 20 พ.ย.69) ----------
+//   ลิงก์ไลน์ของแต่ละแอดเปิดแชทพร้อมข้อความพิมพ์รอไว้ มีรหัสในวงเล็บ เช่น "สนใจหน้าต่างบานยกครับ (A12)"
+//   → แอดมินวางข้อความลูกค้าในฟอร์มคิว ระบบหยิบรหัสให้เอง ไม่ต้องถามลูกค้าว่ามาจากไหน
+//   contact_channel = ช่องทางที่ใช้คุย (LINE/FB) · lead_source = ลูกค้ารู้จักเราจากไหน — คนละเรื่องกัน
+export const LEAD_SOURCES = ["FB_AD", "TIKTOK", "YOUTUBE", "GOOGLE_MAPS", "REFERRAL", "OTHER", "UNKNOWN"] as const;
+export type LeadSource = (typeof LEAD_SOURCES)[number];
+export const LEAD_SOURCE_LABEL: Record<LeadSource, string> = {
+  FB_AD: "แอดเฟส",
+  TIKTOK: "TikTok",
+  YOUTUBE: "YouTube",
+  GOOGLE_MAPS: "Google Maps",
+  REFERRAL: "ลูกค้าเก่า/แนะนำ",
+  OTHER: "อื่น ๆ",
+  UNKNOWN: "ไม่ทราบ",
+};
+// ค่าในฐานข้อมูล → คีย์ที่ใช้รายงาน · ว่าง/ค่าแปลก = ไม่ทราบ (ไม่ซ่อน ไม่เดา)
+export const leadSourceKey = (v: unknown): LeadSource =>
+  (LEAD_SOURCES as readonly string[]).includes(String(v ?? "")) ? (v as LeadSource) : "UNKNOWN";
+// รหัสแอด: ตัวพิมพ์ใหญ่ ไม่มีช่องว่าง ยาวไม่เกิน 20 ตัว (ตัดให้ ไม่เด้งเตือน)
+export const LEAD_CODE_MAX = 20;
+//   ตัดทีละ "ตัวอักษรจริง" (Array.from) — slice ธรรมดาตัดกลางอีโมจิแล้วได้ตัวอักษรเสีย (QA 20 พ.ย.69)
+export const normLeadCode = (v: unknown): string =>
+  Array.from(String(v ?? "").replace(/\s+/g, "").toUpperCase()).slice(0, LEAD_CODE_MAX).join("");
+// คิวนี้ "บอกที่มา" ไหม — มีรหัส หรือเลือกที่มาที่ไม่ใช่ "ไม่ทราบ" · เลือก "ไม่ทราบ" เฉย ๆ = ไม่มีข้อมูล (ไม่ให้ไปทับที่มาจริงของคิวอื่น)
+export const hasLeadInfo = (q: { lead_source?: string | null; lead_source_code?: string | null } | null | undefined): boolean =>
+  !!q && (!!normLeadCode(q.lead_source_code) || (!!q.lead_source && q.lead_source !== "UNKNOWN"));
+// ตัวอักษรนำของรหัส → ที่มา · ตัวอื่นไม่เดา (คืน null)
+const LEAD_PREFIX: Record<string, LeadSource> = { A: "FB_AD", T: "TIKTOK", Y: "YOUTUBE", G: "GOOGLE_MAPS" };
+export const leadSourceFromCode = (code: unknown): LeadSource | null => {
+  const m = normLeadCode(code).match(/^([A-Z])\d/);
+  return m ? LEAD_PREFIX[m[1]] ?? null : null;
+};
+// หารหัสแอดในข้อความที่วาง — ต้องเป็น "(ตัวอักษรนำที่รู้จัก A/T/Y/G + เลข 1–4 หลัก)" อยู่ท้ายบรรทัดเท่านั้น
+//   เช่น (A12) (T3) (Y1) (G05) · ไม่เจอ = null ปล่อยว่าง ห้ามเดา
+//   ข้ามบรรทัดที่เป็นลิงก์ · วงเล็บกลางบรรทัด (เช่น "อาคาร (A2) ชั้น 3") ไม่นับ
+//   ตัวอักษรนำอื่นไม่นับ — "บานเลื่อน (S2)" "ห้อง (B12)" "รุ่น FUJI (F2)" เป็นรุ่น/เลขห้อง ไม่ใช่รหัสแอด (QA 20 พ.ย.69)
+//   จะเพิ่มแอดช่องทางใหม่ → เพิ่มตัวอักษรใน LEAD_PREFIX ที่เดียว · รหัสรูปแบบอื่นแอดมินพิมพ์เองในช่องรหัสได้เสมอ
+const LEAD_CODE_RE = /[(（]\s*([A-Za-z]{1,2}\d{1,4})\s*[)）][\s.。]*$/;
+export function parseLeadCode(
+  text: string, skipLine?: (line: string) => boolean,
+): { code: string; source: LeadSource; line: number } | null {
+  const lines = String(text ?? "").split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i].trim();
+    if (!l || /https?:\/\//i.test(l) || skipLine?.(l)) continue;
+    const m = l.match(LEAD_CODE_RE);
+    if (!m) continue;
+    const code = normLeadCode(m[1]);
+    const source = leadSourceFromCode(code);
+    if (!source) continue; // ไม่ใช่ตัวอักษรนำที่รู้จัก → ไม่ใช่รหัสแอด
+    return { code, source, line: i };
+  }
+  return null;
+}
+// ── ฝั่ง API (สร้าง/แก้คิว) — ใช้ร่วมกัน 2 route ──
+// คิวต้องบันทึกได้เสมอ: ถ้ายังไม่ได้รัน migration ที่เพิ่มคอลัมน์ (0077 bill_postal · 0175 lead_source) ฐานข้อมูลจะตอบว่าไม่รู้จักคอลัมน์
+//   → ตัดคอลัมน์กลุ่มนั้นออกแล้วให้ลองใหม่ (คืน null = ไม่ใช่ error แบบนี้ ไม่ต้องลองใหม่)
+const OPTIONAL_QUEUE_COLS: { re: RegExp; cols: string[] }[] = [
+  { re: /bill_postal/i, cols: ["bill_postal"] },
+  { re: /lead_source/i, cols: ["lead_source", "lead_source_code"] },
+];
+export function dropMissingQueueCols(row: Record<string, unknown>, errMessage: unknown): Record<string, unknown> | null {
+  const msg = String(errMessage ?? "");
+  // เฉพาะ error "ไม่มีคอลัมน์" — ไม่ใช่ค่าผิดกติกา (check constraint) ซึ่งต้องเด้งตามปกติ
+  if (!/column|schema cache/i.test(msg)) return null;
+  const hit = OPTIONAL_QUEUE_COLS.find((g) => g.re.test(msg) && g.cols.some((c) => c in row));
+  if (!hit) return null;
+  const next = { ...row };
+  for (const c of hit.cols) delete next[c];
+  return next;
+}
+
+// ตัดรหัสแอดท้ายบรรทัดออก (ใช้ตอนหยิบชื่อลูกค้า — ไม่ให้ "(A12)" ติดไปกับชื่อ)
+export const stripLeadCode = (line: string): string => String(line ?? "").replace(LEAD_CODE_RE, "").trim();
 
 // ---------- ออกใบเสนอราคาในนามอื่น (0070) — บรรทัดท้ายข้อความก๊อปคิว (เจ้าของ 3 พ.ย.69) ----------
 //   เจ้าของ 16 พ.ย.69: "ก๊อปแล้วที่อยู่ออกบิลไม่ไป แต่กรอกไปแล้ว" — เดิมพิมพ์แค่ชื่อ (ที่อยู่อื่น ไม่มีช่องชื่อ → ออกเป็น "-")
