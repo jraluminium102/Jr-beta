@@ -8,6 +8,7 @@ import { QueueModal, isAssessJobType } from "@/components/queue/QueueModal";
 import { LeaveModal } from "@/components/queue/LeaveModal";
 import { OfficeCalendarModal } from "@/components/queue/OfficeCalendarModal";
 import { SalesMonthCard, type QueueSettingsLite } from "@/components/queue/SalesMonthCard";
+import { FeeCheckButton } from "@/components/queue/FeeCheck";
 import { LeaveSummaryModal } from "@/components/queue/LeaveSummaryModal";
 import {
   QueueCalendarView, toIsoWeek,
@@ -717,6 +718,8 @@ export default function QueuePage() {
             className="press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold glass-soft text-ink-2">
             <Icon name="calendar" size={16} /> <span className="hidden sm:inline">สรุปวันลา</span>
           </button>
+          {/* เช็คค่าประเมิน: ใครจ่ายแล้ว/ยังไม่จ่าย รวมทุกเดือนตั้งแต่ พ.ย.69 (เจ้าของ 23 พ.ย.69) */}
+          <FeeCheckButton today={todayStr} refreshKey={statsKey} onChanged={load} onOpenEntry={(e) => setModal({ entry: e })} />
           {canWrite && (
             <>
               <SalesLinkButton />
