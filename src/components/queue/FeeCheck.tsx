@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import Icon from "@/components/Icon";
 import { api } from "@/lib/api";
 import { dayLabel, thaiDate, type QueueEntry } from "@/lib/queue";
@@ -82,10 +83,12 @@ export function FeeCheckButton({ today, refreshKey, onChanged, onOpenEntry }: {
           <span className="rounded-full bg-red-600 text-white text-[11px] font-bold min-w-[20px] px-1.5 py-0.5 text-center tabular-nums">{unpaid}</span>
         )}
       </button>
-      {open && (
+      {/* ปุ่มอยู่ในแถบหัวที่ตรึงบน (มี backdrop-filter) → หน้าต่างต้องย้ายไปเกาะ body ไม่งั้น fixed จะยึดกับแถบหัวแล้วโดนตัด */}
+      {open && createPortal(
         <FeeCheckModal rows={rows} setRows={setRows} canWrite={canWrite} today={today} err={err} loaded={loaded} refreshing={loading}
           onReload={load} onDirty={() => setDirty(true)} onClose={close}
-          onOpenEntry={onOpenEntry ? (e) => { close(); onOpenEntry(e); } : undefined} />
+          onOpenEntry={onOpenEntry ? (e) => { close(); onOpenEntry(e); } : undefined} />,
+        document.body,
       )}
     </>
   );
