@@ -64,6 +64,59 @@ export function sortUnpaid<T extends FeeRow>(rows: T[]): T[] {
   return [...rows].sort((a, b) => key(a).localeCompare(key(b)));
 }
 
+// ── ข้อความถามเซลล์ทางไลน์ "ลูกค้าจ่ายค่าประเมินยัง" (เจ้าของ 24 พ.ย.69) ──────────────
+//   เอาเฉพาะคิวที่ยังไม่ได้ติ๊ก/เลือกอะไรในช่องชำระเลย (กลุ่ม TODO) · วันคิวตั้งแต่ from เป็นต้นไป (ค่าตั้งต้น = เมื่อวาน)
+//   1 บรรทัด/คิว: "23/11/69 14.00 คุณนัท 131/33 … จ่ายค่าประเมินยัง" · แยกก้อนตามเซลล์
+
+export const FEE_ASK_TAIL = "จ่ายค่าประเมินยัง";
+export const FEE_ASK_NO_SALES = "ยังไม่ระบุเซลล์";
+
+/** เลื่อนวัน (YYYY-MM-DD) ไป n วัน */
+export function feeAddDays(iso: string, n: number): string {
+  return new Date((dayNum(iso) + n) * 86400000).toISOString().slice(0, 10);
+}
+/** เวลาแบบที่ใช้พิมพ์ในไลน์ "14.00" — รับทั้ง "14:00" "14.00" "9.30" · ไม่มีเวลา = "" */
+export function feeTime(t: string | null | undefined): string {
+  const m = String(t ?? "").match(/(\d{1,2})[:.](\d{2})/);
+  return m ? `${m[1].padStart(2, "0")}.${m[2]}` : "";
+}
+/** วันที่แบบ 23/11/69 (ปี พ.ศ. 2 หลัก) */
+export function feeAskDate(iso: string): string {
+  const [y, m, d] = iso.slice(0, 10).split("-");
+  return `${d}/${m}/${String((Number(y) + 543) % 100).padStart(2, "0")}`;
+}
+
+export type FeeAskRow = FeeRow & {
+  customer_name?: string | null;
+  address?: string | null;
+  sales_id?: string | null;
+  sales?: { name?: string | null } | null;
+};
+
+export function feeAskLine(e: FeeAskRow): string {
+  const one = (s: string | null | undefined) => String(s ?? "").replace(/\s+/g, " ").trim();
+  return [e.queue_date ? feeAskDate(e.queue_date) : "", feeTime(e.queue_time), one(e.customer_name), one(e.address), FEE_ASK_TAIL].filter(Boolean).join(" ");
+}
+
+export type FeeAskGroup<T> = { key: string; sales: string; rows: T[]; text: string };
+
+/** จัดก้อนข้อความตามเซลล์ · เรียงวัน/เวลาในก้อน · เซลล์เรียงตามชื่อ · คิวที่ยังไม่ระบุเซลล์ไว้ท้าย */
+export function feeAskGroups<T extends FeeAskRow>(rows: T[], from: string): FeeAskGroup<T>[] {
+  const pick = rows
+    .filter((e) => feeBucket(e) === "TODO" && !!e.queue_date && e.queue_date.slice(0, 10) >= from)
+    .sort((a, b) => `${a.queue_date!.slice(0, 10)} ${feeTime(a.queue_time) || "99"}`.localeCompare(`${b.queue_date!.slice(0, 10)} ${feeTime(b.queue_time) || "99"}`));
+  const map = new Map<string, FeeAskGroup<T>>();
+  for (const e of pick) {
+    const name = String(e.sales?.name ?? "").trim();
+    const key = name ? (e.sales_id || name) : "";
+    if (!map.has(key)) map.set(key, { key, sales: name || FEE_ASK_NO_SALES, rows: [], text: "" });
+    map.get(key)!.rows.push(e);
+  }
+  const groups = [...map.values()].sort((a, b) => (a.key === "" ? 1 : b.key === "" ? -1 : a.sales.localeCompare(b.sales, "th")));
+  for (const g of groups) g.text = [g.sales, ...g.rows.map(feeAskLine)].join("\n");
+  return groups;
+}
+
 export function feeSum(rows: FeeRow[]): number {
   return rows.reduce((s, e) => s + (Number(e.assess_fee ?? 0) || 0), 0);
 }

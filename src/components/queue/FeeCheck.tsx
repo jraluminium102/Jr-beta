@@ -6,7 +6,7 @@ import Icon from "@/components/Icon";
 import { api } from "@/lib/api";
 import { dayLabel, thaiDate, type QueueEntry } from "@/lib/queue";
 import {
-  FEE_BUCKET_TH, FEE_CHECK_FROM, FEE_WAITING, feeBucket, feeDayNote, feeSum, sortUnpaid, type FeeBucket,
+  FEE_BUCKET_TH, FEE_CHECK_FROM, FEE_WAITING, feeAddDays, feeAskGroups, feeBucket, feeDayNote, feeSum, sortUnpaid, type FeeBucket,
 } from "@/lib/fee-check";
 
 /**
@@ -108,6 +108,15 @@ function FeeCheckModal({ rows, setRows, canWrite, today, err, loaded, refreshing
   const [busyId, setBusyId] = useState<string | null>(null);
   const [undo, setUndo] = useState<{ id: string; name: string; did: string; prev: Patch } | null>(null);
   const [copied, setCopied] = useState(false);
+  // ถามเซลล์ทางไลน์ (เจ้าของ 24 พ.ย.69) — คิวตั้งแต่เมื่อวานเป็นต้นไป ที่ยังไม่ได้ติ๊ก/เลือกอะไรในช่องชำระ
+  const [ask, setAsk] = useState(false);
+  const [askFrom, setAskFrom] = useState(() => feeAddDays(today, -1));
+  const [askCopied, setAskCopied] = useState<string | null>(null);   // key ของก้อนที่เพิ่งก๊อป · "*" = ทั้งหมด
+  const askGroups = useMemo(() => feeAskGroups(rows, askFrom || feeAddDays(today, -1)), [rows, askFrom, today]);
+  const askTotal = askGroups.reduce((s, g) => s + g.rows.length, 0);
+  function copyAsk(key: string, text: string) {
+    navigator.clipboard.writeText(text).then(() => { setAskCopied(key); setTimeout(() => setAskCopied((k) => (k === key ? null : k)), 1600); }).catch(() => alert("คัดลอกไม่สำเร็จ"));
+  }
 
   const checked = useMemo(() => rows.filter((e) => feeBucket(e) !== null), [rows]);
   const months = useMemo(() => [...new Set(checked.map((e) => (e.queue_date ? e.queue_date.slice(0, 7) : "")).filter(Boolean))].sort(), [checked]);
@@ -206,9 +215,9 @@ function FeeCheckModal({ rows, setRows, canWrite, today, err, loaded, refreshing
           {/* สรุป 4 กล่อง — กดเพื่อดูรายชื่อกลุ่มนั้น */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
             {(["UNPAID", "TODO", "WAITING", "PAID"] as const).map((t) => {
-              const list = tileRows[t]; const meta = TILE[t]; const active = tab === t;
+              const list = tileRows[t]; const meta = TILE[t]; const active = !ask && tab === t;
               return (
-                <button key={t} onClick={() => setTab(t)} aria-pressed={active} title={meta.hint}
+                <button key={t} onClick={() => { setTab(t); setAsk(false); }} aria-pressed={active} title={meta.hint}
                   className={`press text-left rounded-xl border-2 px-3 py-2 transition-colors ${active ? meta.on : "border-gray-200 bg-white"}`}>
                   <div className="text-[11.5px] font-semibold text-ink-2 leading-tight">{meta.th}</div>
                   <div className={`text-2xl font-bold leading-tight tabular-nums ${meta.num}`}>{list.length}<span className="text-xs font-semibold text-ink-3 ml-1">คิว</span></div>
@@ -236,10 +245,57 @@ function FeeCheckModal({ rows, setRows, canWrite, today, err, loaded, refreshing
               className="press inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-ink-2 disabled:opacity-50">
               <Icon name="copy" size={13} /> {copied ? "คัดลอกแล้ว" : "ก๊อปรายชื่อยังไม่จ่าย"}
             </button>
+            <button onClick={() => setAsk((v) => !v)} aria-pressed={ask}
+              title="ทำข้อความถามเซลล์ว่าลูกค้าจ่ายค่าประเมินยัง — ก๊อปไปวางในไลน์"
+              className={`press inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-semibold ${ask ? "border-brand bg-brand text-white" : "border-gray-300 bg-white text-ink-2"}`}>
+              <Icon name="copy" size={13} /> ถามเซลล์ทางไลน์
+              {askTotal > 0 && <span className={`rounded-full px-1.5 text-[11px] font-bold tabular-nums ${ask ? "bg-white text-brand" : "bg-red-600 text-white"}`}>{askTotal}</span>}
+            </button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-3">
+        {/* ข้อความถามเซลล์ — แยกก้อนตามเซลล์ กดก๊อปแล้วไปวางในไลน์ได้เลย */}
+        {ask && (
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-3">
+            <div className="flex items-end justify-between gap-3 flex-wrap mb-3">
+              <div>
+                <h3 className="text-sm font-bold text-ink">ข้อความถามเซลล์: ลูกค้าจ่ายค่าประเมินยัง</h3>
+                <p className="text-xs text-ink-3 mt-0.5">คิวที่มีค่าประเมิน แต่ยังไม่ได้ติ๊กชำระ และยังไม่ได้เลือกอะไรในช่องชำระเลย</p>
+                <label className="mt-2 flex items-center gap-2 text-xs text-ink-2 font-semibold">
+                  คิวตั้งแต่วันที่
+                  <input type="date" value={askFrom} onChange={(ev) => setAskFrom(ev.target.value)}
+                    className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-xs text-ink font-normal" />
+                  เป็นต้นไป
+                  {askFrom !== feeAddDays(today, -1) && (
+                    <button onClick={() => setAskFrom(feeAddDays(today, -1))} className="press underline font-semibold text-brand">กลับเป็นเมื่อวาน</button>
+                  )}
+                </label>
+              </div>
+              <button onClick={() => copyAsk("*", askGroups.map((g) => g.text).join("\n\n"))} disabled={askTotal === 0}
+                className="press inline-flex items-center gap-1.5 rounded-lg border border-brand bg-brand px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">
+                <Icon name="copy" size={13} /> {askCopied === "*" ? "คัดลอกแล้ว" : `ก๊อปทั้งหมด (${askTotal} คิว)`}
+              </button>
+            </div>
+            {!loaded && <p className="text-center text-ink-3 py-10 text-sm">กำลังโหลด…</p>}
+            {loaded && err && <p className="text-center text-red-700 py-10 text-sm">โหลดรายการไม่สำเร็จ: {err}</p>}
+            {loaded && !err && askTotal === 0 && <p className="text-center text-ink-3 py-10 text-sm">ไม่มีคิวที่ต้องถาม — ทุกคิวตั้งแต่วันที่เลือก ติ๊กหรือเลือกช่องชำระแล้ว</p>}
+            {loaded && !err && askGroups.map((g) => (
+              <section key={g.key || "-"} className="mb-3 rounded-xl border border-gray-200/80 bg-white">
+                <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-gray-100">
+                  <h4 className="text-sm font-bold text-ink">{g.sales} <span className="text-xs font-medium text-ink-3">{g.rows.length} คิว</span></h4>
+                  <button onClick={() => copyAsk(g.key || "-", g.text)}
+                    className="press inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-ink-2">
+                    <Icon name="copy" size={13} /> {askCopied === (g.key || "-") ? "คัดลอกแล้ว" : "ก๊อปของคนนี้"}
+                  </button>
+                </div>
+                <pre className="px-3 py-2 text-[13px] leading-relaxed text-ink whitespace-pre-wrap break-words font-sans">{g.text}</pre>
+              </section>
+            ))}
+          </div>
+        )}
+
+
+        <div className={`flex-1 overflow-y-auto px-4 sm:px-6 py-3 ${ask ? "hidden" : ""}`}>
           {err && (
             <div className="rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm px-3 py-2 mb-3 flex items-center justify-between gap-2">
               <span>โหลดรายการไม่สำเร็จ: {err}</span>
