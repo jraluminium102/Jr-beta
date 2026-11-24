@@ -7,16 +7,18 @@
  *   ตัวเลข = เอนจินใบตัดของเว็บตัวจริง (src/lib/cutlist) · แปลงจากสูตรคิดราคาผ่าน cutInputFromRecipe ตัวเดียวกับเว็บ
  *   รูปแบบที่ใบตรวจราคาไม่มีขนาด → ยืมขนาดรุ่นที่ใกล้สุด และเขียนบอกบนหน้า
  *
- *   รัน: node --experimental-strip-types scripts/gen-boq-check-pdf.mts [--keep-html]
+ *   รัน: node --experimental-strip-types scripts/gen-boq-check-pdf.mts [--keep-html] [--slat-only]
  */
 import fs from "node:fs";
 import { chromium } from "playwright";
-import { CUT_SPEC_BY_ID } from "../src/lib/cutlist/products.ts";
+import { CUT_SPEC_BY_ID, slatLayout, type SlatLayout } from "../src/lib/cutlist/products.ts";
 import { computeCutList, type CutSpec, type CutResult } from "../src/lib/cutlist/engine.ts";
 import { cutInputFromRecipe } from "../src/lib/cutlist/from-recipe.ts";
 import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
 
-const OUT = "docs/ใบตรวจใบตัด-BOQ-2ขนาด.pdf";
+// --slat-only = เอาเฉพาะหน้างานระแนง (ประตูรั้ว + บานระแนง) ออกเป็นไฟล์เล็กแยก
+const SLAT_ONLY = process.argv.includes("--slat-only");
+const OUT = SLAT_ONLY ? "docs/ใบตรวจใบตัด-BOQ-งานระแนง.pdf" : "docs/ใบตรวจใบตัด-BOQ-2ขนาด.pdf";
 const key: any[] = JSON.parse(fs.readFileSync("docs/ใบตรวจราคา-ผลเทียบ-data/key.json", "utf8"));
 const K = (id: string, nameHas?: string) => {
   const p = key.find((x) => x.id === id && (!nameHas || x.name.includes(nameHas)));
@@ -129,6 +131,8 @@ for (const c of cases) {
     pages.push({ c, form, tag: i === 0 ? "ขนาดกลาง" : "ขนาดใหญ่", sz, spec, input: full, sets, res });
   });
 }
+
+if (SLAT_ONLY) pages.splice(0, pages.length, ...pages.filter((p) => !!slatLayout(p.c.spec, p.input as any)));
 
 // ── หน้าตา (รอบ 2 · เจ้าของ 14 พ.ย.69: รวมตารางตัด+เบิกเส้น · เขียนยาวเส้น · วาดสัญลักษณ์เปิด/เลื่อน · ตัวหนังสือน้อย · ไม่เอาสารบัญ · มีรูปหน้าตัด) ──
 const IMG: Record<string, string> = JSON.parse(fs.readFileSync("scripts/fixtures/profile-images.json", "utf8"));
@@ -251,6 +255,67 @@ function sketch(p: Page) {
   </svg>`;
 }
 
+// ── งานระแนง: โชว์หน้าเท่าไหร่ · เว้นห่างเท่าไหร่ (เจ้าของ 24 พ.ย.69 "งานระแนงทั้งหมดไม่ระบุว่าระแนงโชว์หน้าเท่าไหร่ เว้นระยะห่างเท่าไหร่") ──
+//   ตัวเลขมาจาก slatLayout ของใบตัดตัวจริง (ตัวเดียวกับที่นับจำนวนใบ) · ห่างจริง = เกลี่ยใบให้เต็มช่องพอดี ตรงช่อง "ระยะห่างจริง" ในไฟล์ตัด
+const n2 = (x: number) => (Math.round(x * 100) / 100).toLocaleString("en-US", { maximumFractionDigits: 2 });
+const showTh = (s: string, face: number) => (/cm/i.test(s) ? `${n2(face)} ซม.` : `${s.replace(/"/g, "")} นิ้ว <i>(${n2(face)} ซม.)</i>`);
+const boxTh = (b: string) => (/ซม/.test(b) ? `กล่อง ${esc(b)}` : `กล่อง ${esc(b)} นิ้ว`);
+function slatSvg(L: SlatLayout) {
+  const seq: ("A" | "B")[] = L.alt && L.B ? [...Array(Math.min(L.A.run, 4)).fill("A"), ...Array(Math.min(L.B.run, 5)).fill("B")] : ["A", "A", "A"];
+  const face = (k: "A" | "B") => (k === "B" && L.B ? L.B.face : L.A.face);
+  const T = seq.reduce((s, k) => s + face(k), 0) + (seq.length - 1) * L.gapReal;
+  const vert = L.dir === "ตั้ง";
+  const room = vert ? 176 : 96, sc = Math.min(room / T, 11);
+  const g: string[] = [];
+  let pos = (vert ? 12 : 8) + (room - T * sc) / 2, firstGap = true;
+  const seen = new Set<string>();
+  seq.forEach((k, i) => {
+    const f = face(k) * sc, a = pos, b = pos + f, lab = `${L.alt ? k + " " : ""}${n2(face(k))}`;
+    g.push(vert ? `<rect x="${a}" y="24" width="${f}" height="66" class="sl-${k}"/>` : `<rect x="52" y="${a}" width="96" height="${f}" class="sl-${k}"/>`);
+    if (!seen.has(k)) {
+      seen.add(k);
+      g.push(vert
+        ? `<path d="M${a} 93 v4 M${b} 93 v4 M${a} 95 H${b}" class="sl-dim"/><text x="${(a + b) / 2}" y="107" class="sl-t" text-anchor="middle">${lab}</text>`
+        : `<path d="M151 ${a} h4 M151 ${b} h4 M153 ${a} V${b}" class="sl-dim"/><text x="158" y="${(a + b) / 2}" class="sl-t" dominant-baseline="central">${lab}</text>`);
+    }
+    pos = b;
+    if (i < seq.length - 1) {
+      const c = pos, d = pos + L.gapReal * sc;
+      if (firstGap) {
+        firstGap = false;
+        g.push(vert
+          ? `<path d="M${c} 17 v4 M${d} 17 v4 M${c} 19 H${d}" class="sl-gap"/><text x="${(c + d) / 2}" y="13" class="sl-g" text-anchor="middle">ห่าง ${n2(L.gapReal)}</text>`
+          : `<path d="M45 ${c} h4 M45 ${d} h4 M47 ${c} V${d}" class="sl-gap"/><text x="42" y="${(c + d) / 2}" class="sl-g" text-anchor="end" dominant-baseline="central">ห่าง ${n2(L.gapReal)}</text>`);
+      }
+      pos = d;
+    }
+  });
+  return `<svg class="slsvg" viewBox="0 0 200 ${vert ? 122 : 124}" aria-hidden="true">${g.join("")}
+    <text x="100" y="${vert ? 119 : 121}" class="sl-s" text-anchor="middle">ระแนง${L.dir} · หน่วย ซม.${seq.length < L.A.n + (L.B?.n ?? 0) ? " · วาดให้ดูแค่ช่วงต้น" : ""}</text></svg>`;
+}
+function slatBlock(p: Page) {
+  const L = slatLayout(p.c.spec, p.input as any);
+  if (!L) return "";
+  const rows: [string, string][] = [["แนวระแนง", `<b>${L.dir}</b>`]];
+  if (L.alt && L.B) {
+    rows.push(["ใบ A", `${boxTh(L.A.box)} · โชว์หน้า <b>${showTh(L.A.show, L.A.face)}</b>`]);
+    rows.push(["ใบ B", `${boxTh(L.B.box)} · โชว์หน้า <b>${showTh(L.B.show, L.B.face)}</b>`]);
+    rows.push(["เรียงสลับ", `A <b>${L.A.run}</b> ใบ แล้ว B <b>${L.B.run}</b> ใบ วนไป`]);
+    rows.push(["เว้นห่างที่ตั้งไว้", L.A.gap === L.B.gap ? `<b>${n2(L.A.gap)}</b> ซม.` : `หลังใบ A <b>${n2(L.A.gap)}</b> ซม. · หลังใบ B <b>${n2(L.B.gap)}</b> ซม.`]);
+  } else {
+    rows.push(["กล่องใบระแนง", `<b>${boxTh(L.A.box)}</b>`]);
+    rows.push(["โชว์หน้า", `<b>${showTh(L.A.show, L.A.face)}</b>`]);
+    rows.push(["เว้นห่างที่ตั้งไว้", `<b>${n2(L.A.gap)}</b> ซม.`]);
+  }
+  const n = L.A.n + (L.B?.n ?? 0);
+  rows.push(["เว้นห่างจริง", `<b class="big">${n2(L.gapReal)}</b> ซม. <i>(เกลี่ยใบให้เต็มช่องพอดี)</i>`]);
+  rows.push(["จำนวนใบ", `${L.B ? `A ${L.A.n} + B ${L.B.n} = ` : ""}<b>${n}</b> ใบ <i>เรียงในช่วง ${num(L.span)} ซม.</i>`]);
+  return `<h2>ระแนง <em>โชว์หน้า · เว้นห่าง</em></h2>
+  <div class="slat"><table class="t sl"><colgroup><col class="c-k"><col><col class="c-ck"><col class="c-fix"></colgroup>
+    <thead><tr><th>หัวข้อ</th><th>ใบตัดคิดไว้</th><th>ถูก</th><th>แก้เป็น</th></tr></thead><tbody>${rows.map(([k, v]) => `<tr><td class="k">${k}</td><td class="v">${v}</td><td class="ck"><span class="box"></span></td><td class="fix"></td></tr>`).join("")}</tbody></table>
+    ${slatSvg(L)}</div>`;
+}
+
 const unsure = (note?: string) => !!note && /⏳|สมมติ|รอเจ้าของ|ยังไม่|เดา/.test(note);
 const flag = (note?: string) => (unsure(note) ? ` <span class="flag">⚠ ดูพิเศษ</span>` : "");
 const pcs = (p: Page) => p.res.rows.filter((r) => r.qty > 0 && r.len > 0);
@@ -318,6 +383,7 @@ function pageHtml(p: Page, idx: number, total: number) {
     </div>
     ${sketch(p)}
   </header>
+  ${slatBlock(p)}
   <h2>เส้นอลู <em>เบิกรวม ${totalBars} เส้น</em></h2>
   ${aluHtml}
   <h2>อุปกรณ์</h2>
@@ -384,6 +450,17 @@ col.c-q2 { width:19mm } col.c-fix2 { width:20mm }
 .cols.two .t td.len, .cols.two .t td.qty { font-size:1.08em; }
 .cols.two .t td.nm { font-size:.88em; }
 .cols.two .t td.img img { max-height:12mm; } .cols.two .t td.img small { font-size:.55em; }
+.slat { display:grid; grid-template-columns: 1fr 50mm; gap:3mm; align-items:center; }
+.slsvg { width:50mm; }
+col.c-k { width:31mm }
+.t.sl td.k { font-size:.88em; color:#444; }
+.t.sl td.v { line-height:1.2; }
+.t.sl td.v b { font-size:1.12em; } .t.sl td.v b.big { font-size:1.35em; color: var(--acc); font-variant-numeric: tabular-nums; }
+.t.sl td.v i { font-style:normal; font-size:.8em; color: var(--mut); }
+.sl-A { fill:#cfc8bd; stroke: var(--ink); stroke-width:.9; } .sl-B { fill:#f6f3ee; stroke: var(--ink); stroke-width:.9; }
+.sl-dim { fill:none; stroke: var(--ink); stroke-width:.8; } .sl-gap { fill:none; stroke: var(--acc); stroke-width:1; }
+.sl-t { font: 600 9.5px "Leelawadee UI", Tahoma; fill: var(--ink); } .sl-g { font: 700 9.5px "Leelawadee UI", Tahoma; fill: var(--acc); }
+.sl-s { font: 8.5px "Leelawadee UI", Tahoma; fill: var(--mut); }
 .flag { display:inline-block; font-size:.66em; font-weight:700; color:#9a5b00; background:#fff3d6; border-radius:1mm; padding:0 1mm; white-space:nowrap; }
 .empty { color: var(--mut); font-size:.9em; }
 .more { margin-top:2.6mm; border:0.8pt solid var(--line); border-radius:1.5mm; padding:1mm 2.4mm; height:13mm; font-size:.85em; font-weight:700; color:#444; }
