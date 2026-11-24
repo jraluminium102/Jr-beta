@@ -13,6 +13,8 @@ import type {
 } from "@/lib/cover-sheet/types";
 import { EMPTY_CONTENT, WARN_PRESETS, effectiveHl } from "@/lib/cover-sheet/types";
 import { HIGHLIGHT_HEX, nextHighlight } from "@/lib/highlight-colors";
+// ของที่ช่างต้องเตรียม — รายการ/ข้อความมาจากที่เดียวกับตัวสร้างอัตโนมัติ
+import { ROOF_PREP, PREP_EXTRAS, LAMP_COLORS, prepText, lampPrepText, roofPrepKeys } from "@/lib/cover-sheet/generate.mjs";
 
 const COLOR_HEX: Record<CoverColor, string> = { "": "#111827", red: "#c00000", blue: "#1a56db", green: "#15803d" };
 const COLOR_LABEL: Record<CoverColor, string> = { "": "ดำ", red: "แดง", blue: "น้ำเงิน", green: "เขียว" };
@@ -83,6 +85,8 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
   const [changingQuote, setChangingQuote] = useState(false); // (0136) กำลังสลับใบเสนอ/rev ที่ pin ไว้
   const [measurer, setMeasurer] = useState("");     // ตัวช่วย "วัดงาน" — ชื่อคนวัด
   const [measureDate, setMeasureDate] = useState(""); // วันวัด (YYYY-MM-DD)
+  const [lampColor, setLampColor] = useState("");     // ตัวช่วย "โคมไฟ" — ไฟสีอะไร (จิ้มหรือพิมพ์เอง)
+  const [lampCount, setLampCount] = useState("");     // โคมไฟกี่อัน
 
   // เตือน "มีของยังไม่บันทึก" (เจ้าของสั่ง 25 ส.ค.69) — เทียบ 4 ตัวที่แก้ได้ (content/mode/measurer/measureDate)
   // กับ snapshot ล่าสุดที่โหลด/บันทึกแล้ว · savedRef กัน false-positive ตอนโหลดครั้งแรก
@@ -123,6 +127,8 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
   const quotationOptions = data?.data?.quotations ?? []; // (0136) รายการใบเสนอ/rev ให้เลือก
   const revStale = !!data?.data?.rev_stale;               // (0136) ใบเสนอถูก Rev หลังสร้างใบปะหน้านี้
   const showFloorNote = !!job && job.floor_work && job.floor_work !== "none";
+  // ใบเสนอที่อ้างอิงมีหลังคาชินโคไลท์/โพลีตันไหม — ติดป้าย "มีในใบเสนอ" ที่ปุ่มของเตรียม
+  const quoteRoofKeys = roofPrepKeys(quotation?.items ?? []) as string[];
 
   // ── left mutations ──
   const patchLeft = (i: number, p: Partial<CoverLine>) =>
@@ -166,6 +172,35 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
     const note = `พี่${name}วัดงาน${d ? " " + d : ""}`;
     setContent((c) => ({ ...c, mid: [{ text: note, color: "" as CoverColor, hl: false }, ...c.mid] }));
     setMeasurer(""); setMeasureDate("");
+  };
+
+  // ── ของที่ช่างต้องเตรียม (ช่องกลาง · เจ้าของ 24 พ.ย.69) — จิ้มแล้วเพิ่มบรรทัด จิ้มซ้ำเอาออก ──
+  const midTexts = content.mid.map((l) => (l.text ?? "").trim());
+  const addMid = (texts: string[]) => setContent((c) => {
+    const have = new Set(c.mid.map((l) => (l.text ?? "").trim()));
+    const add = texts.filter((t) => t && !have.has(t)).map((t) => ({ text: t, color: "" as CoverColor, hl: false }));
+    return add.length ? { ...c, mid: [...c.mid, ...add] } : c;
+  });
+  const roofSetOn = (key: string) => (ROOF_PREP.find((p) => p.key === key)?.items ?? []).every((n) => midTexts.includes(prepText(n)));
+  const toggleRoofSet = (key: string) => {
+    const texts = (ROOF_PREP.find((p) => p.key === key)?.items ?? []).map((n) => prepText(n));
+    if (!roofSetOn(key)) { addMid(texts); return; }
+    // เอาออก — บรรทัดที่อีกชุดซึ่งยังเลือกอยู่ต้องใช้ด้วย (ยางเดิน) เก็บไว้
+    const keep = new Set(ROOF_PREP.filter((p) => p.key !== key && roofSetOn(p.key)).flatMap((p) => p.items.map((n) => prepText(n))));
+    const drop = new Set(texts.filter((t) => !keep.has(t)));
+    setContent((c) => ({ ...c, mid: c.mid.filter((l) => !drop.has((l.text ?? "").trim())) }));
+  };
+  // นั่งร้าน/ข้อต่อ/ตีนเป็ด — นับว่าเลือกแล้วแม้พิมพ์จำนวนต่อท้าย (เช่น "เตรียม นั่งร้าน 2 ชั้น")
+  const extraOn = (name: string) => midTexts.some((t) => t.startsWith(prepText(name)));
+  const toggleExtra = (name: string) => {
+    if (!extraOn(name)) { addMid([prepText(name)]); return; }
+    setContent((c) => ({ ...c, mid: c.mid.filter((l) => !(l.text ?? "").trim().startsWith(prepText(name))) }));
+  };
+  const lampN = Math.max(0, Math.round(Number(lampCount) || 0));
+  const addLamp = () => {
+    if (lampN < 1) return;
+    addMid([lampPrepText(lampN, lampColor)]);
+    setLampCount(""); setLampColor("");
   };
 
   const doGenerate = async () => {
@@ -412,7 +447,7 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
               {/* คอลัมน์ 2: แจ้งช่าง (textarea แดง) */}
               <div className="rounded-2xl bg-white border border-black/10 shadow-sm p-4">
                 <div className="font-bold text-[#c00000] text-[13.5px] mb-1 underline underline-offset-2">รายละเอียด แจ้งช่างตอนติดตั้ง</div>
-                <div className="text-[11px] text-gray-400 mb-2">กรอกเอง — 1 บรรทัด/โน้ต (เช่น พี่เนียน วัดงาน) · เลือกสีตัวอักษร/ไฮไลต์ได้ทีละบรรทัด · Enter = บรรทัดใหม่</div>
+                <div className="text-[11px] text-gray-400 mb-2">กรอกเอง หรือจิ้มตัวช่วยด้านล่าง — 1 บรรทัด/โน้ต (เช่น พี่เนียน วัดงาน) · เลือกสีตัวอักษร/ไฮไลต์ได้ทีละบรรทัด · Enter = บรรทัดใหม่</div>
                 {/* ตัวช่วย "วัดงาน" — กรอกคนวัด+วันที่(จิ้มปฏิทิน) กด+เพิ่ม → แทรก "พี่..วัดงาน วว/ดด/ปปปป" บนสุด */}
                 <div className="mb-2 rounded-lg bg-rose-50 border border-rose-200 p-2.5">
                   <div className="text-[12px] font-semibold text-rose-700 mb-1.5">📏 ใส่วันวัดงาน (เขียนให้อัตโนมัติ)</div>
@@ -424,6 +459,65 @@ export default function CoverSheetEditorPage({ params }: { params: { jobId: stri
                       className="rounded-md border border-gray-300 bg-white px-2.5 py-2 text-[14px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-rose-200" />
                     <button type="button" onClick={addMeasureNote} disabled={!measurer.trim()}
                       className="shrink-0 rounded-md bg-rose-600 text-white text-[13px] font-semibold px-3.5 py-2 min-h-[38px] disabled:opacity-40">+ เพิ่มลงช่องล่าง</button>
+                  </div>
+                </div>
+                {/* ตัวช่วย "ของที่ช่างต้องเตรียม" — จิ้มแล้วเขียนบรรทัด "เตรียม …" ลงช่องล่าง · จิ้มซ้ำ = เอาออก */}
+                <div className="mb-2 rounded-lg bg-amber-50 border border-amber-200 p-2.5 space-y-2.5">
+                  <div className="text-[12px] font-semibold text-amber-800">🧰 ของที่ช่างต้องเตรียม (จิ้มเลือก · จิ้มซ้ำ = เอาออก)</div>
+                  <div>
+                    <div className="text-[11.5px] text-gray-600 mb-1">ตามงานหลังคา — ใบเสนอมีหลังคาแบบนี้ กด “สร้างอัตโนมัติ” จะขึ้นให้เอง</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {ROOF_PREP.map((p) => {
+                        const on = roofSetOn(p.key);
+                        const inQuote = quoteRoofKeys.includes(p.key);
+                        return (
+                          <button key={p.key} type="button" onClick={() => toggleRoofSet(p.key)} aria-pressed={on}
+                            title={p.items.map((n) => prepText(n)).join(" · ")}
+                            className={`text-left rounded-lg px-2.5 py-2 min-h-[38px] border text-[13px] ${on ? "bg-amber-600 text-white border-amber-600" : "bg-white text-gray-800 border-gray-300 hover:border-amber-400"}`}>
+                            <span className="font-semibold">{on ? "✓ " : ""}{p.label}</span>
+                            {inQuote && !on && <span className="ml-1.5 rounded-full bg-amber-100 text-amber-800 text-[11px] font-semibold px-1.5 py-0.5">มีในใบเสนอ</span>}
+                            <span className={`block text-[11.5px] ${on ? "text-white/85" : "text-gray-500"}`}>{p.items.join(" · ")}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[11.5px] text-gray-600 mb-1">โคมไฟ — เลือกสีไฟ ใส่จำนวน แล้วกดเพิ่ม</div>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {LAMP_COLORS.map((c) => (
+                        <button key={c} type="button" onClick={() => setLampColor(lampColor === c ? "" : c)} aria-pressed={lampColor === c}
+                          className={`rounded-full px-2.5 py-1.5 min-h-[34px] border text-[12.5px] ${lampColor === c ? "bg-amber-600 text-white border-amber-600" : "bg-white text-gray-800 border-gray-300 hover:border-amber-400"}`}>
+                          {c}
+                        </button>
+                      ))}
+                      <input value={LAMP_COLORS.includes(lampColor) ? "" : lampColor} onChange={(e) => setLampColor(e.target.value)} placeholder="สีอื่น พิมพ์เอง"
+                        aria-label="สีไฟ (พิมพ์เอง)"
+                        className="w-[120px] rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-[13.5px] text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-200" />
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                      <input type="number" min={1} step={1} inputMode="numeric" value={lampCount} onChange={(e) => setLampCount(e.target.value)} placeholder="กี่อัน"
+                        aria-label="จำนวนโคมไฟ (อัน)"
+                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addLamp(); } }}
+                        className="w-[84px] rounded-md border border-gray-300 bg-white px-2.5 py-2 text-[14px] text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-200" />
+                      <span className="text-[13px] text-gray-600">อัน</span>
+                      <button type="button" onClick={addLamp} disabled={lampN < 1}
+                        className="shrink-0 rounded-md bg-amber-600 text-white text-[13px] font-semibold px-3.5 py-2 min-h-[38px] disabled:opacity-40">+ เพิ่มโคมไฟ</button>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[11.5px] text-gray-600 mb-1">อื่น ๆ</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {PREP_EXTRAS.map((n) => {
+                        const on = extraOn(n);
+                        return (
+                          <button key={n} type="button" onClick={() => toggleExtra(n)} aria-pressed={on}
+                            className={`rounded-full px-3 py-1.5 min-h-[34px] border text-[13px] ${on ? "bg-amber-600 text-white border-amber-600" : "bg-white text-gray-800 border-gray-300 hover:border-amber-400"}`}>
+                            {on ? "✓ " : ""}{n}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
                 <div className="space-y-1.5">

@@ -1,6 +1,6 @@
 // verify-cover.mjs — ล็อกพฤติกรรม auto-fill คอลัมน์ 2 (แจ้งช่าง) / 3 (แจ้งลูกค้า) ของใบปะหน้า
 //   รัน: node scripts/verify-cover.mjs  (import generator จริง ไม่ลอก logic)
-import { buildSideColumns, installerScopeFromNote, customerPrepFromNote, noteBulletsFromDetail } from "../src/lib/cover-sheet/generate.mjs";
+import { buildSideColumns, installerScopeFromNote, customerPrepFromNote, noteBulletsFromDetail, roofPrepLines, lampPrepText } from "../src/lib/cover-sheet/generate.mjs";
 
 let pass = 0, fail = 0;
 const eq = (name, got, want) => {
@@ -38,6 +38,28 @@ eq("scope: ตัด 'หากพบ'", installerScopeFromNote("ราคาท
 eq("scope: ไม่ใช่บรรทัดขอบเขต → ''", installerScopeFromNote("ราคานี้ยืน 30 วัน"), "");
 eq("prep: ไม่มี 'ลูกค้า…เตรียม' → ''", customerPrepFromNote("ราคาที่เสนอรวมงานรื้อประตูเดิม"), "");
 eq("prep: ดึงในวงเล็บ", customerPrepFromNote("...แต่ไม่รวมวัสดุและสี (ลูกค้าดำเนินการเตรียมวัสดุและสีให้)"), "ลูกค้าดำเนินการเตรียมวัสดุและสีให้");
+
+// ── ของที่ช่างต้องเตรียมตามชนิดหลังคา (เจ้าของ 24 พ.ย.69) ──
+const SHINKO = ["เตรียม ยางเดิน", "เตรียม ตบหลังชินโคไลท์", "เตรียม ปิดปลายชินโคไลท์"];
+const POLY = ["เตรียม ตบหลังคาหลังเต่า", "เตรียม ปิดปลายโพลีตัน", "เตรียม ยางเดิน"];
+const spec = "รายละเอียดงาน\n- อลูมิเนียม สีขาว";
+eq("หลังคาชินโคร์ (ชื่อจากคิดราคา 4.0) → ของชินโคไลท์", roofPrepLines([{ name: "หลังคาชินโคร์ HC (แป 2 ชั้น) โครงอลูมิเนียม ปล่อยปลาย/ไม่มีรางน้ำ", detail: spec }]), SHINKO);
+eq("ชินโคไลท์ พิมพ์มือ ไม่มีรายละเอียดงาน → ยังเจอ", roofPrepLines([{ name: "กันสาดชินโคไลท์ 6 มม. รุ่น Heat Cut", detail: "" }]), SHINKO);
+eq("หลังคาโพลีตัน → ของโพลีตัน", roofPrepLines([{ name: "หลังคาโพลีตัน (แป 1 ชั้น) โครงอลูมิเนียม", detail: spec }]), POLY);
+eq("ห้องกระจก: บรรทัดหลังคาในรายละเอียด", roofPrepLines([{ name: "ห้องกระจก", detail: "รายละเอียดงาน\n- หลังคาเพิงหมาแหงน: โพลีตัน" }]), POLY);
+eq("มีทั้งสองแบบ → ยางเดินขึ้นครั้งเดียว", roofPrepLines([{ name: "หลังคาชินโคร์ Sup", detail: spec }, { name: "หลังคาโพลีตัน", detail: spec }]),
+  ["เตรียม ยางเดิน", "เตรียม ตบหลังชินโคไลท์", "เตรียม ปิดปลายชินโคไลท์", "เตรียม ตบหลังคาหลังเต่า", "เตรียม ปิดปลายโพลีตัน"]);
+eq("หลังคาไวนิล → ไม่ขึ้น", roofPrepLines([{ name: "หลังคาไวนิล (แป 1 ชั้น) โครงอลูมิเนียม", detail: spec }]), []);
+eq("ไวนิล ซ่อนสโลปด้วยชินโค → ไม่ขึ้น", roofPrepLines([{ name: "หลังคาไวนิล (แป 1 ชั้น) โครงอลูมิเนียม (ซ่อนสโลปหลังคาด้วยชินโค)", detail: spec }]), []);
+eq("ผนังแผ่นหลังคา โพลีตัน → ไม่ขึ้น (ไม่ใช่งานหลังคา)", roofPrepLines([{ name: "ผนังแผ่นหลังคา (รวมโครง) โพลีตัน", detail: spec }]), []);
+eq("หมายเหตุ รื้อหลังคาโพลีตันเดิม → ไม่ขึ้น", roofPrepLines([{ name: "หลังคาไวนิล", detail: "หมายเหตุ\n- ราคาที่เสนอรวมงานรื้อหลังคาโพลีตันเดิม\n\n" + spec }]), []);
+eq("ผนังอย่างอื่น + หลังคาชินโคไลท์ ในชื่อเดียว → ขึ้น", roofPrepLines([{ name: "งานต่อเติม ผนังสมาร์ทบอร์ด หลังคาชินโคไลท์", detail: "" }]), SHINKO);
+eq("รื้อโพลีตันเดิม แล้วติดชินโคไลท์ → ขึ้นเฉพาะชินโคไลท์", roofPrepLines([{ name: "รื้อหลังคาโพลีตันเดิม แล้วติดตั้งหลังคาชินโคไลท์", detail: "" }]), SHINKO);
+eq("ข้อส่วนลด → ข้าม", roofPrepLines([{ name: "ส่วนลดหลังคาชินโคไลท์", detail: "" }]), []);
+eq("ช่องกลาง = ขอบเขตงาน + ของเตรียมหลังคา ต่อท้าย", buildSideColumns([{ name: "หลังคาชินโคร์ HC", detail: "หมายเหตุ\n- ราคาที่เสนอรวมงานรื้อหลังคาเดิม ในกรณีที่เกิดความเสียหาย\n\n" + spec }]).mid.map((l) => l.text),
+  ["รื้อหลังคาเดิม", ...SHINKO]);
+eq("โคมไฟ: จำนวน + สี", lampPrepText(4, "วอร์มไวท์"), "เตรียม โคมไฟ 4 อัน ไฟสีวอร์มไวท์");
+eq("โคมไฟ: ไม่ใส่สี", lampPrepText("2", ""), "เตรียม โคมไฟ 2 อัน");
 
 console.log(`\n${fail === 0 ? "✓ PASS" : "✗ FAIL"}  ${pass}/${pass + fail}`);
 process.exit(fail === 0 ? 0 : 1);

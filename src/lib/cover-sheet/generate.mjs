@@ -73,6 +73,70 @@ export function customerPrepFromNote(note) {
   return m[0].replace(/\s+/g, " ").replace(/[\s.]+$/, "").trim();
 }
 
+// ── ของที่ช่างต้องเตรียมไปหน้างาน (ช่องกลาง · เจ้าของ 24 พ.ย.69) ─────────────────────
+//   แหล่งเดียว ใช้ทั้งตอนสร้างอัตโนมัติ (ดูจากใบเสนอ) และปุ่มจิ้มในหน้าแก้ใบปะหน้า
+//   ① ตามงาน: ใบเสนอมีหลังคาชินโคไลท์ / โพลีตัน → ขึ้นของที่ต้องเตรียมให้เอง
+//   ② ไม่เกี่ยวกับงาน (จิ้มเอง): โคมไฟ (ไฟสี + กี่อัน) · นั่งร้าน · ข้อต่อ · ตีนเป็ด
+export const prepText = (name) => "เตรียม " + String(name || "").trim();
+export const ROOF_PREP = [
+  { key: "shinko", label: "หลังคาชินโคไลท์", re: /ชินโค|shinko/i, items: ["ยางเดิน", "ตบหลังชินโคไลท์", "ปิดปลายชินโคไลท์"] },
+  { key: "poly", label: "หลังคาโพลีตัน", re: /โพลีตัน|polyton/i, items: ["ตบหลังคาหลังเต่า", "ปิดปลายโพลีตัน", "ยางเดิน"] },
+];
+export const PREP_EXTRAS = ["นั่งร้าน", "ข้อต่อ", "ตีนเป็ด"];
+export const LAMP_COLORS = ["วอร์มไวท์", "คูลไวท์", "เดย์ไลท์"];
+export function lampPrepText(count, color) {
+  const n = Math.max(0, Math.round(Number(count) || 0));
+  const c = String(color || "").trim();
+  return prepText("โคมไฟ" + (n > 0 ? ` ${n} อัน` : "") + (c ? ` ไฟสี${c}` : ""));
+}
+
+// ใบเสนอมีหลังคาชนิดไหนบ้าง → คีย์ของ ROOF_PREP (เรียงตาม ROOF_PREP)
+//   ดูชื่อข้อ + บรรทัดรายละเอียด (ไม่ดูบล็อกหมายเหตุ/เงื่อนไข — กันข้อความแบบ "รื้อหลังคาโพลีตันเดิม")
+//   ไม่นับ: ผนังที่ทำจากแผ่นหลังคา · วัสดุซ่อนสโลป · ของเดิมที่รื้อออก
+export function roofPrepKeys(items) {
+  const found = new Set();
+  const scan = (raw) => {
+    // "แผ่นหลังคา" ในชื่อ "ผนังแผ่นหลังคา" ไม่ใช่งานหลังคา — ตัดออกก่อนดูว่าคำว่า ผนัง หรือ หลังคา อยู่ใกล้ชื่อวัสดุกว่ากัน
+    const u = String(raw || "").replace(/ซ่อนสโลป[^)]*/g, "").replace(/แผ่นหลังคา/g, "");
+    for (const p of ROOF_PREP) {
+      const re = new RegExp(p.re.source, "gi");
+      let m;
+      while ((m = re.exec(u))) {
+        const before = u.slice(0, m.index), after = u.slice(m.index);
+        if (/รื้อ/.test(before.slice(-25))) continue;                       // ของที่รื้อออก
+        if (/^[^\s()]*\s*(?:ของ)?เดิม/.test(after)) continue;               // "โพลีตันเดิม"
+        if (before.lastIndexOf("ผนัง") > Math.max(before.lastIndexOf("หลังคา"), before.lastIndexOf("กันสาด"))) continue; // ผนังทำจากแผ่นนี้
+        found.add(p.key);
+        break;
+      }
+    }
+  };
+  for (const it of items || []) {
+    if (/ส่วนลด|discount/i.test(String(it?.name || ""))) continue;
+    scan(it?.name);
+    let inNote = false;
+    for (const ln of String(it?.detail || "").split(/\r?\n/).map((s) => s.trim()).filter(Boolean)) {
+      const head = ln.replace(/^[#\-\s]+/, "").trim();
+      if (/^(หมายเหตุ|เงื่อนไข)/.test(head)) { inNote = true; continue; }
+      if (/^(รายละเอียดงาน|สเปก|รายละเอียด)/.test(head)) { inNote = false; continue; }
+      if (!inNote) scan(ln);
+    }
+  }
+  return ROOF_PREP.filter((p) => found.has(p.key)).map((p) => p.key);
+}
+
+// บรรทัด "เตรียม …" ของหลังคาที่เจอในใบเสนอ (ไม่ซ้ำ · ยางเดิน ใช้ร่วมสองแบบ ขึ้นครั้งเดียว)
+export function roofPrepLines(items) {
+  const out = [];
+  for (const k of roofPrepKeys(items)) {
+    for (const name of ROOF_PREP.find((p) => p.key === k).items) {
+      const t = prepText(name);
+      if (!out.includes(t)) out.push(t);
+    }
+  }
+  return out;
+}
+
 // ── สร้างคอลัมน์ 2/3 จากหมายเหตุทุกข้อในใบเสนอ (dedup รักษาลำดับ) ────────────────────
 export function buildSideColumns(items) {
   const midSeen = new Set(), rightSeen = new Set();
@@ -85,6 +149,10 @@ export function buildSideColumns(items) {
       const prep = customerPrepFromNote(note);
       if (prep && !rightSeen.has(prep)) { rightSeen.add(prep); right.push({ text: prep, color: "", kind: "spec" }); }
     }
+  }
+  // ของที่ช่างต้องเตรียมตามชนิดหลังคา → ต่อท้ายช่องกลาง
+  for (const t of roofPrepLines(items)) {
+    if (!midSeen.has(t)) { midSeen.add(t); mid.push({ text: t, color: "", kind: "spec" }); }
   }
   return { mid, right };
 }
