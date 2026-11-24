@@ -1719,5 +1719,21 @@ console.log("\n═══ 🚪 บานเลื่อนเดี่ยว (1 �
   ok("ใบเสนอ: เขียนบอกบานกว้าง/รางยาวของบานเลื่อนเดี่ยว", /บานเลื่อนเดี่ยว เลื่อนซ้อนผนัง · บานกว้าง/.test(src));
 }
 
+// ── 🧱 ผนังไอโซวอล ขายราคาเท่าผนังสมาร์ทบอร์ด (เจ้าของสั่ง 24 พ.ย.69 "ราคา Isowall ขายเท่า SMB เลย") ──
+//   ยึดสมาร์ทบอร์ดแบบใส่ฉนวน (ค่าตั้งต้น) ขนาดเดียวกัน · ทุนไอโซวอลยังเป็นของจริง · ค่าทาสีเพิ่ม/ออปชั่นของไอโซวอลยังบวกทับ
+console.log("\n═══ 🧱 ไอโซวอลขายเท่าสมาร์ทบอร์ด ═══");
+{
+  for (const [w, h] of [[300, 270], [400, 260], [600, 280], [120, 100], [250, 240]]) {
+    const o = { w, h, p: 1, color: "white", colorKey: "white", spec: {}, addons: {} };
+    const smb = computeCost(PB, PRODUCTS.wall_smartboard, { ...o, form: 'ใส่ฉนวน 3"' }), iso = computeCost(PB, PRODUCTS.wall_isowall, { ...o, form: "มาตรฐาน" });
+    ok("ไอโซวอล " + w + "×" + h + ": ขายรวมติดตั้ง/ผลิตอย่างเดียว/ขายส่ง = สมาร์ทบอร์ดใส่ฉนวน", iso.sell.withInstall === smb.sell.withInstall && iso.sell.mfgOnly === smb.sell.mfgOnly && iso.sell.mfgOnlyNet === smb.sell.mfgOnlyNet && iso.sell.withInstall > 0, iso.sell.withInstall + " / " + smb.sell.withInstall);
+    ok("ไอโซวอล " + w + "×" + h + ": ทุนยังเป็นของไอโซวอลเอง (ไม่ใช่ทุนสมาร์ทบอร์ด)", iso.cost.total !== smb.cost.total && iso.lines.some((l) => /ไอโซวอล/.test(l.name || "")) && iso.sellAs && iso.sellAs.id === "wall_smartboard");
+  }
+  const o = { w: 300, h: 270, p: 1, form: "มาตรฐาน", color: "white", colorKey: "white", addons: {} };
+  const base = computeCost(PB, PRODUCTS.wall_isowall, { ...o, spec: {} }), paint = computeCost(PB, PRODUCTS.wall_isowall, { ...o, spec: { wallpaintprice: "2000" } });
+  ok("ไอโซวอล: ค่าทาสีผนังเพิ่มเติมยังบวกทับ (+2,000)", paint.sell.withInstall === base.sell.withInstall + 2000, paint.sell.withInstall + " / " + base.sell.withInstall);
+  ok("สมาร์ทบอร์ดเองไม่ถูกแตะ (ไม่มี sellAs)", computeCost(PB, PRODUCTS.wall_smartboard, { ...o, form: 'ใส่ฉนวน 3"', spec: {} }).sellAs == null);
+}
+
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);

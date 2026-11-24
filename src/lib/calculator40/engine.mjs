@@ -1272,6 +1272,18 @@ export function computeCost(PB, prod, opt) {
     }
   }
 
+  // prod.sellAs = "ขายราคาเดียวกับอีกรุ่น" ที่ขนาดเท่ากัน — ทุนยังคิดจากของจริงของรุ่นนี้ (กำไรที่โชว์จึงเป็นของจริง)
+  //   ผนังไอโซวอล ขายเท่าผนังสมาร์ทบอร์ด (เจ้าของสั่ง 24 พ.ย.69 "ราคา Isowall ขายเท่า SMB เลย") · ออปชั่น/ค่าทาสีเพิ่มของรุ่นนี้ยังบวกทับตามปกติ
+  let sellAsInfo = null;
+  if (prod.sellAs && prod.sellAs.prod && !opt._inner) {
+    const ref = computeCost(PB, prod.sellAs.prod, { ...opt, form: prod.sellAs.form, material: undefined, glassType: undefined, spec: {}, addons: {}, _inner: true });
+    if (ref && ref.sell && ref.sell.withInstall > 0) {
+      sellBeforeLabor = ref.sell.beforeLabor; sellMfgOnly = ref.sell.mfgOnly; sellWithInstall = ref.sell.withInstall;
+      sellParts_ = { mat: sellBeforeLabor, prod: sellMfgOnly - sellBeforeLabor, inst: sellWithInstall - sellMfgOnly };
+      sellAsInfo = { id: prod.sellAs.prod.id, name: prod.sellAs.prod.name, form: prod.sellAs.form || '' };
+    }
+  }
+
   // (6) ออปชั่นเสริม (add-on) — แต่ละตัวเป็นบรรทัดราคาแยก บวกเข้ายอดขาย (ราคา R3.9 ยังไม่ถอดทุน · flag)
   // computeAddon คืน object เดียว หรือ array (มอเตอร์ = หลายบรรทัด: ตัวมอเตอร์+ฟันเฟือง+เซนเซอร์)
   // r.cost (ถ้ามี) = ทุนจริง (มอเตอร์/ออโต้ ถอดจาก "ราคาออโต้") → ไม่ใช่ ÷2 · ไม่มี = R3.9 ทุน≈ขาย÷2
@@ -1433,6 +1445,7 @@ export function computeCost(PB, prod, opt) {
     profit: round2(sellWithInstall - costTotalOut),  // กำไร (ขาย − ทุน)
     // บานเลื่อนเดี่ยว: หน้าจอ/ใบเสนอเอาไปเขียนบอก "บานกว้างเท่าไหร่ · รางยาวเท่าไหร่" (null = ไม่ใช่บานเดี่ยว)
     rail: singleSlide ? { panelM: round2(W), lenM: round2(RW), auto: !(railLenIn > 0), clamped: railLenIn > 0 && railLenIn < W } : null,
+    sellAs: sellAsInfo,   // ขายราคาเดียวกับรุ่นไหน (null = คิดราคาขายของตัวเอง)
     _costCore: round2(costTotal),   // ทุนค่าของก่อนออปชั่น — ใช้เทียบค่าสีสต็อกกับสีขาว (colourExtra)
     glassArea: round2(glassArea), aluKg: round2(aluKg), weight,
     profit3: sellPct || { mat: pctMat, prod: pctProd, inst: pctInst },   // % ที่ใช้จริง (หน้าจอเอาไปโชว์/แก้)
