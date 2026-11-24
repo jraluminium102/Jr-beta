@@ -6,6 +6,7 @@ import { Card } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { baht } from "@/lib/money";
 import { CHANNEL } from "@/lib/constants";
+import { LedgerEditModal, ledgerApi } from "@/components/stats/LedgerEditModal";
 
 /**
  * หน้า "สถิติ & KPI" — รื้อใหม่ 9 พ.ย.69 หลังออดิต 3 ทีม (นักบัญชี · นักวิเคราะห์ · QA)
@@ -17,24 +18,29 @@ import { CHANNEL } from "@/lib/constants";
 type Money = number | null;
 type Kind = "NEW" | "OLD" | "ADDON" | "SPECIAL";
 type Row = {
-  id: string; job_code: string | null; customer_name: string; date: string | null; net: Money; net_vat: Money; sales: string; area: string; src: "bill" | "quote" | "none"; stage: string; days?: number | null; note?: string;
+  id: string; job_code: string | null; customer_name: string; date: string | null; net: Money; net_vat: Money; sales: string; area: string; src: "bill" | "quote" | "none" | "manual"; stage: string; days?: number | null; note?: string;
+  // แก้สมุดบัญชีด้วยมือ (24 พ.ย.69): manual = รายการที่เพิ่มเอง · adj = ช่องที่ตั้งทับ · *_auto = ค่าที่ระบบคิดเอง
+  manual: boolean; adj: { net: boolean; deposit: boolean; onsite: boolean }; net_auto: Money; deposit_auto: Money; onsite_auto: boolean;
   line: string; assess_date: string | null; deposit: Money; deposit_gross: Money; fee: Money; vat: boolean; kind: Kind; kind_auto: boolean; kind_guess: Kind; onsite: boolean; ledger_note: string; cancelled: boolean;
 };
 type LeadRow = { assessed: number; won_cohort: number; close_rate: number; deposited: number; revenue: Money; deposit_sum: Money };
 type Stats = {
   range: { from: string; to: string; today: string; span_days: number };
   can_finance: boolean;
+  can_ledger_edit?: boolean;
+  sales_names?: string[];
   warnings: string[];
   summary: {
     assessed: number; quoted: number; quoted_amount: Money; deposited: number; revenue: Money; revenue_vat: Money;
     revenue_from_quote: number; revenue_zero: number; revenue_multi_quote: number; cancelled_after_deposit: number; cancelled_after_deposit_amount: Money; avg_ticket: Money;
     deposit_sum: Money; deposit_gross_sum: Money; fee_sum: Money; kinds: Record<Kind, number>; kinds_amount: Record<Kind, Money>; onsite: number; vat_count: number; kind_auto: number;
+    ledger_manual?: number; ledger_edited?: number; ledger_excluded?: number;
     onsite_by_sales: { name: string; n: number }[]; goal_monthly: Money; period: "calendar" | "acct";
     prev: { from: string; to: string; assessed: number; quoted: number; deposited: number; revenue: Money; quoted_amount: Money };
     cohort: { assessed: number; quoted: number; won: number; lost: number; pending: number; quote_rate: number; close_rate: number; close_rate_of_quoted: number; won_amount: Money; pending_amount: Money; lag_median_days: number; immature: boolean };
     quotation_docs: number; ext_quotes: number; ext_pct: number;
   };
-  lists: { deposits: Row[]; quoted: Row[]; assessed: Row[]; cohort_won: Row[]; cohort_pending: Row[]; cohort_lost: Row[]; cancelled_after_deposit: Row[] };
+  lists: { deposits: Row[]; quoted: Row[]; assessed: Row[]; cohort_won: Row[]; cohort_pending: Row[]; cohort_lost: Row[]; cancelled_after_deposit: Row[]; ledger_excluded?: Row[] };
   byMonth: { month: string; partial: boolean; assessed: number; cohort_won: number; cohort_close_rate: number; quoted: number; quoted_amount: Money; deposited: number; revenue: Money; revenue_vat: Money; deposit_per_quote: number; deposit_sum: Money; fee_sum: Money; kinds: Record<Kind, number>; onsite: number; goal: Money }[];
   byArea: { area: string; assessed: number; deposited: number; revenue: Money }[];
   areaUnknown: number; areaOther: number; areaUnknownDep: number;
@@ -105,7 +111,8 @@ const STAGE_TH: Record<string, { th: string; cls: string }> = {
   ASSESSED: { th: "ประเมินแล้ว ยังไม่ส่งใบ", cls: "bg-sky-100 text-sky-800" },
   LOST: { th: "ยกเลิก", cls: "bg-gray-200 text-gray-700" },
 };
-const SRC_TH: Record<Row["src"], string> = { bill: "จากใบวางบิล", quote: "จากใบเสนอ (ยังไม่มีบิล)", none: "ไม่มียอด" };
+const SRC_TH: Record<Row["src"], string> = { bill: "จากใบวางบิล", quote: "จากใบเสนอ (ยังไม่มีบิล)", none: "ไม่มียอด", manual: "กรอกเอง" };
+const SRC_CLS: Record<Row["src"], string> = { bill: "", quote: "bg-amber-50 text-amber-800", none: "bg-red-50 text-red-700", manual: "bg-sky-50 text-sky-800" };
 
 type TabKey = "stats" | "ledger" | "kpi";
 type ModalState = { title: string; rows: Row[]; kind: "money" | "quoted" | "cohort" | "lost" };
@@ -704,7 +711,7 @@ function ListModal({ m, canFin, onClose }: { m: ModalState; canFin: boolean; onC
                     <td className="py-1.5 text-ink-2">
                       <span className="font-medium">{r.customer_name || "(ไม่มีชื่อ)"}</span>
                       {r.job_code ? <span className="text-[11px] text-ink-3"> · {r.job_code}</span> : ""}
-                      {showMoney && m.kind === "money" && r.src !== "bill" && <span className={`ml-1.5 text-[10px] rounded px-1 ${r.src === "quote" ? "bg-amber-50 text-amber-800" : "bg-red-50 text-red-700"}`}>{SRC_TH[r.src]}</span>}
+                      {showMoney && m.kind === "money" && r.src !== "bill" && <span className={`ml-1.5 text-[10px] rounded px-1 ${SRC_CLS[r.src]}`}>{SRC_TH[r.src]}</span>}
                     </td>
                     <td className="text-ink-3 text-xs">{r.area}</td>
                     <td className="text-ink-3 text-xs">{r.sales}</td>
@@ -808,7 +815,8 @@ function LedgerTab({ data, reload }: { data: Stats; reload: () => void }) {
         </p>
       </div>
 
-      <LedgerTable rows={L.deposits} canFin={canFin} onChanged={reload} period={s.period} title={`ลูกค้ามัดจำ ${fmtRange(data.range.from, data.range.to)}`} />
+      <LedgerTable rows={L.deposits} canFin={canFin} onChanged={reload} period={s.period} title={`ลูกค้ามัดจำ ${fmtRange(data.range.from, data.range.to)}`}
+        canEdit={!!data.can_ledger_edit} salesNames={data.sales_names ?? []} excluded={L.ledger_excluded ?? []} />
     </div>
   );
 }
@@ -821,8 +829,29 @@ function monthKeyClient(iso: string | null, period: "calendar" | "acct"): string
   return `${y}-${String(m).padStart(2, "0")}`;
 }
 type KindFilter = "ALL" | Kind | "ONSITE" | "AUTO";
-function LedgerTable({ rows, canFin, onChanged, title, period }: { rows: Row[]; canFin: boolean; onChanged: () => void; title: string; period: "calendar" | "acct" }) {
+function LedgerTable({ rows, canFin, onChanged, title, period, canEdit, salesNames: allSales, excluded }: {
+  rows: Row[]; canFin: boolean; onChanged: () => void; title: string; period: "calendar" | "acct";
+  /** แก้สมุดบัญชีด้วยมือได้ (เพิ่มรายการ · แก้ยอด · เอาออก · ตั้งมัดจำหน้างาน) */
+  canEdit: boolean; salesNames: string[]; excluded: Row[];
+}) {
   const [saving, setSaving] = useState<string | null>(null);
+  // หน้าต่างแก้รายการ: undefined = ปิด · null = เพิ่มรายการใหม่ · Row = แก้แถวนั้น
+  const [editing, setEditing] = useState<Row | null | undefined>(undefined);
+  const cols = canFin ? (canEdit ? 13 : 12) : 9;
+  //   ⚠ ทุกการบันทึก = อ่านก้อนเดิม → แก้ → เขียนกลับทั้งก้อน · กด 2 แถวติดกันก่อนตัวแรกเสร็จ ตัวหลังจะทับตัวแรกหาย → ล็อกทั้งตารางระหว่างบันทึก (QA 24 พ.ย.69)
+  const locked = saving !== null;
+  async function ledgerDo(id: string, fn: () => Promise<unknown>) {
+    if (saving !== null) return;
+    setSaving(id);
+    try { await fn(); onChanged(); }
+    catch (e) { alert(e instanceof Error ? e.message : "บันทึกไม่สำเร็จ"); } finally { setSaving(null); }
+  }
+  // กดป้ายมัดจำหน้างาน = สลับ ใช่/ไม่ใช่ · สลับกลับมาเท่าที่ระบบดู = เลิกตั้งทับ
+  function toggleOnsite(r: Row) {
+    const next = !r.onsite;
+    ledgerDo(r.id, () => (r.manual ? ledgerApi.putManual(r.id, { onsite: next }) : ledgerApi.patchJob(r.id, { onsite: next === r.onsite_auto ? null : next })));
+  }
+  function restore(r: Row) { ledgerDo(r.id, () => ledgerApi.patchJob(r.id, { excluded: false })); }
   const [q, setQ] = useState("");
   const [kf, setKf] = useState<KindFilter>("ALL");
   const [salesF, setSalesF] = useState("");
@@ -846,6 +875,8 @@ function LedgerTable({ rows, canFin, onChanged, title, period }: { rows: Row[]; 
   const multi = groups.length > 1;
 
   async function patch(id: string, body: Record<string, unknown>) {
+    // รายการที่เพิ่มเอง ไม่มีงานจริงให้แก้ → แก้ที่สมุดบัญชี
+    if (id.startsWith("m:")) return ledgerDo(id, () => ledgerApi.putManual(id, "customer_kind" in body ? { kind: body.customer_kind } : { note: body.ledger_note }));
     setSaving(id);
     try {
       const res = await fetch(`/api/jobs/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -892,6 +923,7 @@ function LedgerTable({ rows, canFin, onChanged, title, period }: { rows: Row[]; 
               <option value="">เซลล์ทุกคน</option>
               {salesNames.map((n) => <option key={n} value={n}>{n}</option>)}
             </select>
+            {canEdit && <button onClick={() => setEditing(null)} disabled={locked} title="เพิ่มงานที่ไม่ได้เปิดในระบบ เข้ายอดมัดจำ" className="disabled:opacity-50 press inline-flex items-center gap-1 rounded-lg px-3.5 py-1.5 text-sm font-semibold border border-brand text-brand bg-white"><Icon name="plus" size={15} /> เพิ่มรายการ</button>}
             <button onClick={exportCsv} className="press rounded-lg px-3.5 py-1.5 text-sm font-semibold bg-brand text-white shadow-brand">ส่งออก CSV</button>
           </div>
         </div>
@@ -903,7 +935,7 @@ function LedgerTable({ rows, canFin, onChanged, title, period }: { rows: Row[]; 
           {chip("SPECIAL", `พิเศษ ${tot.SPECIAL}`)}
           {chip("ONSITE", `มัดจำหน้างาน ${live.filter((r) => r.onsite).length}`)}
         </div>
-        <p className="text-[12px] text-ink-3 mt-2">ยอดทุกตัวก่อน VAT · ยอดมัดจำของงานที่มี VAT ถอด VAT ออกให้ตรงสมุด (เงินรับจริงดูตอนชี้ที่ตัวเลข / ใน CSV) · <b>ใหม่/เก่า</b> ระบบตัดสินให้จากประวัติลูกค้า (เปลี่ยนได้ในช่องถ้าไม่ตรง) · <b>หมายเหตุ</b> กดที่ช่องเพื่อพิมพ์ · งานที่ยกเลิกหลังมัดจำขึ้นขีดฆ่า ไม่รวมยอด/จำนวน</p>
+        <p className="text-[12px] text-ink-3 mt-2">ยอดทุกตัวก่อน VAT · ยอดมัดจำของงานที่มี VAT ถอด VAT ออกให้ตรงสมุด (เงินรับจริงดูตอนชี้ที่ตัวเลข / ใน CSV) · <b>ใหม่/เก่า</b> ระบบตัดสินให้จากประวัติลูกค้า (เปลี่ยนได้ในช่องถ้าไม่ตรง) · <b>หมายเหตุ</b> กดที่ช่องเพื่อพิมพ์ · งานที่ยกเลิกหลังมัดจำขึ้นขีดฆ่า ไม่รวมยอด/จำนวน{canEdit && <> · <b>ไม่ตรงกับสมุด</b> กดปุ่ม แก้ ท้ายแถว (แก้ยอด / เอาออก) หรือ เพิ่มรายการ ด้านบน · ป้าย <span className="rounded bg-sky-100 px-1 text-sky-800">แก้เอง</span> = ตัวเลขที่กรอกทับค่าของระบบ</>}</p>
       </div>
 
       <div className="overflow-x-auto">
@@ -921,6 +953,7 @@ function LedgerTable({ rows, canFin, onChanged, title, period }: { rows: Row[]; 
             <th className={th}>เซลล์</th>
             <th className={`${th} text-center`}>มัดจำหน้างาน</th>
             <th className={th}>หมายเหตุ</th>
+            {canEdit && <th className={`${th} text-center w-14`}>จัดการ</th>}
           </tr></thead>
           {groups.map((g) => {
             const lv = g.list.filter((r) => !r.cancelled), kk = kindsOf(lv);
@@ -928,7 +961,7 @@ function LedgerTable({ rows, canFin, onChanged, title, period }: { rows: Row[]; 
             return (
               <tbody key={g.key} className="border-b-4 border-gray-100">
                 {multi && (
-                  <tr className="bg-brand/5"><td colSpan={canFin ? 12 : 9} className="px-3 py-2 text-[13.5px] font-bold text-brand-dark">
+                  <tr className="bg-brand/5"><td colSpan={cols} className="px-3 py-2 text-[13.5px] font-bold text-brand-dark">
                     {monthLabel(g.key)}{period === "acct" && <span className="font-medium text-ink-3"> · รอบ {acctLabel(g.key)}</span>}
                     <span className="font-medium text-ink-2"> · {lv.length} งาน{canFin ? ` · ยอดงาน ฿${baht(sum(lv, (r) => r.net ?? 0))} · มัดจำ ฿${baht(sum(lv, (r) => r.deposit ?? 0))}` : ""} · N {kk.NEW} / O {kk.OLD}</span>
                   </td></tr>
@@ -941,18 +974,23 @@ function LedgerTable({ rows, canFin, onChanged, title, period }: { rows: Row[]; 
                       <td className={`${td} no-underline`}>
                         <div className="font-semibold text-ink-1 text-[15px] leading-tight">{r.customer_name || "(ไม่มีชื่อ)"}
                           {r.cancelled && <span className="ml-2 rounded bg-red-100 px-1.5 py-0.5 text-[11px] font-semibold text-red-700 no-underline align-middle">ยกเลิกมัดจำ</span>}
+                          {r.manual && <span className="ml-2 rounded bg-sky-100 px-1.5 py-0.5 text-[11px] font-semibold text-sky-800 align-middle" title="รายการที่เพิ่มเอง ไม่มีงานในระบบ">เพิ่มเอง</span>}
                         </div>
                         <div className="text-[12px] text-ink-3 mt-0.5 truncate max-w-[260px]" title={r.line}>{r.line || "–"}{r.job_code && <span> · {r.job_code}</span>}</div>
                       </td>
                       <td className={`${td} text-center tabular-nums text-ink-3`}>{r.kind === "ADDON" ? <span className="text-[12px]">ไม่ผ่านประเมิน</span> : fmtDate(r.assess_date)}</td>
                       <td className={`${td} text-center tabular-nums font-medium`}>{fmtDate(r.date)}</td>
-                      {canFin && <td className={`${td} text-right tabular-nums`} title={r.vat ? `รับจริงรวม VAT ฿${baht(r.deposit_gross ?? 0)}` : undefined}>{baht(r.deposit ?? 0)}</td>}
+                      {canFin && <td className={`${td} text-right tabular-nums`} title={r.vat ? `รับจริงรวม VAT ${baht(r.deposit_gross ?? 0)} บาท` : undefined}>{baht(r.deposit ?? 0)}
+                        {r.adj.deposit && <div className="text-[11px] text-sky-800" title={`ระบบคิดได้ ${baht(r.deposit_auto ?? 0)} บาท`}><span className="rounded bg-sky-100 px-1">แก้เอง</span> เดิม {baht(r.deposit_auto ?? 0)}</div>}</td>}
                       {canFin && <td className={`${td} text-right tabular-nums text-ink-3`}>{(r.fee ?? 0) ? baht(r.fee ?? 0) : "–"}</td>}
-                      {canFin && <td className={`${td} text-right tabular-nums font-bold text-[15px]`}>{baht(r.net ?? 0)}{r.src !== "bill" && <div className={`text-[11px] font-normal ${r.src === "quote" ? "text-amber-700" : "text-red-700"}`}>{r.src === "quote" ? "จากใบเสนอ ยังไม่วางบิล" : "ไม่มียอด"}</div>}</td>}
+                      {canFin && <td className={`${td} text-right tabular-nums font-bold text-[15px]`}>{baht(r.net ?? 0)}
+                        {r.src === "quote" && <div className="text-[11px] font-normal text-amber-700">จากใบเสนอ ยังไม่วางบิล</div>}
+                        {r.src === "none" && <div className="text-[11px] font-normal text-red-700">ไม่มียอด</div>}
+                        {r.adj.net && <div className="text-[11px] font-normal text-sky-800" title={`ระบบคิดได้ ${baht(r.net_auto ?? 0)} บาท`}><span className="rounded bg-sky-100 px-1">แก้เอง</span> เดิม {baht(r.net_auto ?? 0)}</div>}</td>}
                       <td className={`${td} text-center text-[12.5px] text-ink-3`}>{r.vat ? "Vat" : ""}</td>
                       <td className={`${td} text-center`}>
                         {r.cancelled ? <span className="text-[12px]">{KIND_TH[r.kind].short}</span> : (
-                          <select value={r.kind} disabled={saving === r.id} onChange={(e) => patch(r.id, { customer_kind: e.target.value })}
+                          <select value={r.kind} disabled={locked} onChange={(e) => patch(r.id, { customer_kind: e.target.value })}
                             title={r.kind_auto ? `ระบบตัดสินจากประวัติลูกค้า: ${KIND_TH[r.kind].th}` : `ตั้งเอง: ${KIND_TH[r.kind].th}`}
                             className={`rounded-lg px-2 py-1 text-[13px] font-bold border-0 cursor-pointer ${KIND_TH[r.kind].cls}`}>
                             {(Object.keys(KIND_TH) as Kind[]).map((k) => <option key={k} value={k}>{KIND_TH[k].short} — {KIND_TH[k].th}</option>)}
@@ -960,13 +998,31 @@ function LedgerTable({ rows, canFin, onChanged, title, period }: { rows: Row[]; 
                         )}
                       </td>
                       <td className={`${td} whitespace-nowrap`}>{r.sales}</td>
-                      <td className={`${td} text-center`}>{r.onsite && <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[12px] font-semibold text-amber-900">หน้างาน</span>}</td>
+                      <td className={`${td} text-center`}>
+                        {canEdit && !r.cancelled ? (
+                          <button onClick={() => toggleOnsite(r)} disabled={locked}
+                            title={`กดเพื่อเปลี่ยนเป็น ${r.onsite ? "ไม่ใช่มัดจำหน้างาน" : "มัดจำหน้างาน"}${r.adj.onsite ? ` · ตั้งเอง (ระบบดูว่า${r.onsite_auto ? "ใช่" : "ไม่ใช่"})` : ""}`}
+                            className={`press rounded-md px-2 py-0.5 text-[12px] font-semibold ${r.onsite ? "bg-amber-100 text-amber-900" : "text-ink-3/40 hover:bg-gray-100 hover:text-ink-3"}`}>
+                            {r.onsite ? "หน้างาน" : "–"}{r.adj.onsite && <span className="ml-1 text-sky-700" aria-label="ตั้งเอง">●</span>}
+                          </button>
+                        ) : r.onsite && <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[12px] font-semibold text-amber-900">หน้างาน</span>}
+                      </td>
                       <td className={`${td} text-[13px] text-ink-3 max-w-[240px]`}>
                         <button onClick={() => !r.cancelled && editNote(r)} className={`press text-left w-full ${r.cancelled ? "cursor-default" : "hover:text-brand"}`} title="กดเพื่อแก้หมายเหตุ">
                           {r.ledger_note || (r.cancelled ? "" : <span className="text-ink-3/50">＋ หมายเหตุ</span>)}
                           {r.cancelled && <span className="text-red-700"> เหตุผล: {r.note}</span>}
                         </button>
                       </td>
+                      {canEdit && (
+                        <td className={td + " text-center"}>
+                          {!r.cancelled && (
+                            <button onClick={() => setEditing(r)} disabled={locked} title={r.manual ? "แก้ / ลบ รายการที่เพิ่มเอง" : "แก้ยอดงาน ยอดมัดจำ หรือเอารายการนี้ออก"}
+                              className="press inline-flex items-center gap-1 rounded-lg border border-black/10 bg-white px-2 py-1 text-[12.5px] font-semibold text-ink-2 hover:border-brand hover:text-brand">
+                              <Icon name="pencil" size={13} /> แก้
+                            </button>
+                          )}
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -981,12 +1037,13 @@ function LedgerTable({ rows, canFin, onChanged, title, period }: { rows: Row[]; 
                     <td />
                     <td className={`${td} text-center text-amber-800`}>{lv.filter((r) => r.onsite).length || ""}</td>
                     <td />
+                    {canEdit && <td />}
                   </tr>
                 )}
               </tbody>
             );
           })}
-          {shown.length === 0 && <tbody><tr><td colSpan={canFin ? 12 : 9} className="py-8 text-center text-ink-3">ไม่มีรายการ</td></tr></tbody>}
+          {shown.length === 0 && <tbody><tr><td colSpan={cols} className="py-8 text-center text-ink-3">ไม่มีรายการ</td></tr></tbody>}
           <tfoot><tr className="border-t-2 border-gray-300 bg-white font-bold text-[14.5px]">
             <td className={td} colSpan={4}>รวมทั้งหมด {live.length} งาน{shown.length - live.length ? <span className="font-medium text-ink-3"> (ไม่รวมยกเลิกมัดจำ {shown.length - live.length})</span> : null}</td>
             {canFin && <td className={`${td} text-right tabular-nums`}>{baht(sum(live, (r) => r.deposit ?? 0))}</td>}
@@ -997,9 +1054,30 @@ function LedgerTable({ rows, canFin, onChanged, title, period }: { rows: Row[]; 
             <td />
             <td className={`${td} text-center text-amber-800`}>{live.filter((r) => r.onsite).length || ""}</td>
             <td />
+            {canEdit && <td />}
           </tr></tfoot>
         </table>
       </div>
+
+      {/* รายการที่ถูกเอาออกจากยอดมัดจำ — ไม่รวมในตัวเลขไหนเลย · เอากลับได้ */}
+      {excluded.length > 0 && (
+        <div className="px-5 py-3.5 border-t border-gray-200/70 bg-gray-50/60">
+          <div className="text-[13px] font-bold text-ink-2">เอาออกจากยอดมัดจำแล้ว {excluded.length} รายการ <span className="font-medium text-ink-3">· ไม่ถูกนับเป็นยอดมัดจำ/ยอดขายในหน้านี้ (งานและเอกสารจริงยังอยู่ครบ)</span></div>
+          <div className="mt-2 divide-y divide-gray-200/70">
+            {excluded.map((r) => (
+              <div key={r.id} className={`flex items-center gap-3 flex-wrap py-1.5 text-[13.5px] ${saving === r.id ? "opacity-50" : ""}`}>
+                <span className="font-semibold text-ink-2">{r.customer_name || "(ไม่มีชื่อ)"}</span>
+                <span className="text-ink-3 text-[12.5px]">{r.job_code ?? ""} · มัดจำ {fmtDate(r.date)} · {r.sales}{canFin ? ` · ยอดงาน ${baht(r.net ?? 0)} บาท · มัดจำ ${baht(r.deposit ?? 0)} บาท` : ""}</span>
+                {canEdit && <button onClick={() => restore(r)} disabled={locked} className="press ml-auto rounded-lg border border-black/10 bg-white px-2.5 py-1 text-[12.5px] font-semibold text-brand">เอากลับ</button>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {editing !== undefined && (
+        <LedgerEditModal row={editing} salesNames={allSales} onClose={() => setEditing(undefined)} onSaved={onChanged} />
+      )}
     </Card>
   );
 }

@@ -4,6 +4,7 @@ import { ok, err } from "@/lib/bff/response";
 import { can } from "@/lib/rbac";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { fetchAllPaged } from "@/lib/supabase/fetch-all";
+import { LEDGER_ADJUST_KEY, MANUAL_PREFIX, parseLedgerAdjust, type LedgerManual } from "@/lib/stats-ledger";
 import { LEAD_SOURCES, LEAD_SOURCE_LABEL, leadSourceKey, leadSourceFromCode, normLeadCode, hasLeadInfo, type LeadSource } from "@/lib/queue";
 
 export const dynamic = "force-dynamic";
@@ -183,7 +184,7 @@ export const GET = withRoute(async (req: Request) => {
     }
     warnings.push(`คิวงาน: ${colErr}`); return rows;
   };
-  const [jobs, quotes, bills, queueRows, salesRes, custRows, issues, depFin, goalRes] = await Promise.all([
+  const [jobs, quotes, bills, queueRows, salesRes, custRows, issues, depFin, goalRes, adjRes] = await Promise.all([
     fetchJobs(),
     paged<QuoteRow>("ใบเสนอราคา", (f, t) => sb.from("quotations")
       .select("id, job_id, issue_date, status, subtotal, discount_amt, vat_amt, vat_rate, total, revision_no")
@@ -206,7 +207,23 @@ export const GET = withRoute(async (req: Request) => {
       .select("job_id, amount").eq("type", "DEPOSIT").eq("is_voided", false)
       .order("id", { ascending: true }).range(f, t)),
     sb.from("app_config").select("value").eq("key", "stats_goal_monthly").maybeSingle(),
+    sb.from("app_config").select("value").eq("key", LEDGER_ADJUST_KEY).maybeSingle(),
   ]);
+  // ── แก้สมุดบัญชีด้วยมือ (เจ้าของ 24 พ.ย.69): เพิ่มรายการที่ไม่มีในระบบ · แก้ยอด · เอาออก · ตั้งมัดจำหน้างานเอง ──
+  //   อ่านไม่ได้ = เตือนบนหน้า (ตัวเลขจะกลับไปเป็นค่าที่ระบบคิดเองทั้งหมด) ไม่เงียบ
+  if (adjRes?.error) warnings.push(`รายการที่แก้สมุดบัญชีเอง: ${adjRes.error.message ?? "โหลดไม่สำเร็จ"} — ตัวเลขด้านล่างเป็นค่าที่ระบบคิดเอง ยังไม่รวมที่แก้ไว้`);
+  const ledgerAdj = parseLedgerAdjust(adjRes?.data?.value ?? null);
+  const adjOf = (j: JobRow) => ledgerAdj.jobs[j.id];
+  const manualById = new Map<string, LedgerManual>(ledgerAdj.manual.map((m) => [MANUAL_PREFIX + m.id, m]));
+  const manualOf = (j: JobRow) => manualById.get(j.id);
+  // รายการที่เพิ่มเอง → ทำเป็น "งานจำลอง" ให้เดินผ่านตัวคิดเดียวกับงานจริง (เข้าเฉพาะฝั่งมัดจำ/ยอดขาย ไม่นับเป็นการเข้าประเมิน)
+  const manualJobs: JobRow[] = ledgerAdj.manual.map((m) => ({
+    id: MANUAL_PREFIX + m.id, job_code: null, status: "DEPOSITED", assess_date: m.assess_date, quote_sent_date: null, deposit_date: m.deposit_date,
+    deposit_amount: null, design_state: null, design_start: null, design_end: null, design_due_date: null,
+    customer_area: null, customer_id: null, customer_name: m.customer_name, customer_tel: null, channel: null, external_intake: false,
+    cancel_reason: null, estimator: null, designer_ref: null, designer_lookup: null, queue_entry_id: null,
+    onsite_deposit: m.onsite, customer_kind: m.kind, ledger_note: m.note,
+  }));
   const goalMonthly = Math.max(0, num(goalRes?.data?.value)) || 6_500_000; // เป้ายอดงานต่อเดือน (ก่อน VAT) · แก้ได้จากหน้าสถิติ
   const depFinByJob = new Map<string, number>();
   for (const f of depFin) depFinByJob.set(f.job_id, (depFinByJob.get(f.job_id) ?? 0) + num(f.amount));
@@ -248,11 +265,18 @@ export const GET = withRoute(async (req: Request) => {
   // วันส่งใบเสนอของงาน = jobs.quote_sent_date → ไม่มีก็วันออกใบเสนอใบแรกที่ส่งแล้ว
   const qsd = (j: JobRow): string | null => d10(j.quote_sent_date) || firstSentIssue.get(j.id) || null;
   const qNet = (q: QuoteRow) => num(q.total) - num(q.vat_amt);
-  type Val = { net: number; total: number; src: "bill" | "quote" | "none" };
-  const valueOf = (j: JobRow): Val => {
+  type Val = { net: number; total: number; src: "bill" | "quote" | "none" | "manual" };
+  // ยอดที่ระบบคิดเอง (ไม่รวมที่แก้ด้วยมือ) — เก็บไว้โชว์เทียบในตาราง
+  const autoValueOf = (j: JobRow): Val => {
     const b = billByJob.get(j.id); if (b && b.n > 0) return { net: b.net, total: b.total, src: "bill" };
     const q = latestQuoteByJob.get(j.id); if (q) return { net: qNet(q), total: num(q.total), src: "quote" };
     return { net: 0, total: 0, src: "none" };
+  };
+  // ยอดที่ใช้จริง: รายการเพิ่มเอง / ยอดงานที่แก้เอง ชนะค่าที่ระบบคิด (ยอดที่กรอก = ก่อน VAT · หลัง VAT คิดจากอัตราของงาน)
+  const valueOf = (j: JobRow): Val => {
+    const m = manualOf(j); const over = m ? m.net : adjOf(j)?.net;
+    if (over == null) return autoValueOf(j);
+    return { net: over, total: vatOf(j) ? Math.round(over * (1 + vatRateOf(j) / 100) * 100) / 100 : over, src: "manual" };
   };
   // ใบเสนอที่ใช้ฝั่ง "ขาย" ของหมวดสินค้า: ใบที่ผูกบิลจริงก่อน → ไม่มีก็ใบล่าสุด
   const soldQuoteIdsOf = (j: JobRow): number[] => {
@@ -275,7 +299,7 @@ export const GET = withRoute(async (req: Request) => {
     if (nm.length >= 3) byNameQ.set(nm, byNameQ.has(nm) ? null : q);
   }
   const queueOf = (j: JobRow): QueueRow | undefined =>
-    byJobQ.get(j.id) ?? (j.queue_entry_id ? byQeQ.get(j.queue_entry_id) : undefined) ?? (j.customer_name ? byNameQ.get(String(j.customer_name).trim()) ?? undefined : undefined);
+    manualById.has(j.id) ? undefined : byJobQ.get(j.id) ?? (j.queue_entry_id ? byQeQ.get(j.queue_entry_id) : undefined) ?? (j.customer_name ? byNameQ.get(String(j.customer_name).trim()) ?? undefined : undefined);
   const custById = new Map<string, { address: string; channel: string | null }>();
   const normCh = (v: unknown): string | null => {
     const s = String(v ?? "").trim().toUpperCase();
@@ -287,6 +311,7 @@ export const GET = withRoute(async (req: Request) => {
   };
   for (const c of custRows) custById.set(String(c.id), { address: String(c.address ?? "").trim(), channel: normCh(c.contact_channel) });
   const salesOf = (j: JobRow): string => {
+    const m = manualOf(j); if (m) return m.sales || "ไม่ระบุ";
     const q = queueOf(j); const nm = q?.sales_id ? salesIdToName.get(q.sales_id) : undefined;
     return nm || String(j.estimator?.full_name ?? "").trim() || "ไม่ระบุ";
   };
@@ -331,24 +356,34 @@ export const GET = withRoute(async (req: Request) => {
   const kindOf = (j: JobRow): Kind => j.customer_kind ?? kindGuess(j);
   const kindAuto = (j: JobRow) => !j.customer_kind; // true = ระบบตัดสินเอง (ไม่ต้องยืนยัน · โชว์เป็นข้อมูลเฉย ๆ)
   // มัดจำหน้างาน: ธง 0044 หรือ วันมัดจำ = วันประเมิน (บัญชีจดแบบนี้)
-  const onsiteOf = (j: JobRow) => !!j.onsite_deposit || (!!j.deposit_date && !!j.assess_date && d10(j.deposit_date) === d10(j.assess_date) && !!queueOf(j));
+  const onsiteAutoOf = (j: JobRow) => !!j.onsite_deposit || (!!j.deposit_date && !!j.assess_date && d10(j.deposit_date) === d10(j.assess_date) && !!queueOf(j));
+  //   ตั้งเองในตาราง (ใช่/ไม่ใช่) ชนะค่าที่ระบบเดา
+  const onsiteOf = (j: JobRow) => { const m = manualOf(j); if (m) return m.onsite; const o = adjOf(j)?.onsite; return o == null ? onsiteAutoOf(j) : o; };
   // VAT: บิลมี vat หรือใบเสนอล่าสุด vat_rate > 0
-  const vatOf = (j: JobRow) => { const b = billByJob.get(j.id); if (b && b.n > 0) return bills.some((x) => x.job_id === j.id && x.status !== "cancelled" && num(x.vat_amt) > 0); const q = latestQuoteByJob.get(j.id); return !!q && (num(q.vat_rate) > 0 || num(q.vat_amt) > 0); };
+  const vatOf = (j: JobRow) => { const mm = manualOf(j); if (mm) return mm.vat; const b = billByJob.get(j.id); if (b && b.n > 0) return bills.some((x) => x.job_id === j.id && x.status !== "cancelled" && num(x.vat_amt) > 0); const q = latestQuoteByJob.get(j.id); return !!q && (num(q.vat_rate) > 0 || num(q.vat_amt) > 0); };
   // ยอดมัดจำ: jobs.deposit_amount → Σ finance DEPOSIT → 0
   // ยอดมัดจำ "รับจริง" (รวม VAT ถ้างานมี VAT — งวดบิลเป็นยอดรวม VAT) vs "ก่อน VAT" (แบบที่บัญชีจดในสมุด: มัดจำ = % ของยอดงานก่อน VAT)
-  const depositGrossOf = (j: JobRow) => num(j.deposit_amount) || depFinByJob.get(j.id) || 0;
+  const depositGrossAutoOf = (j: JobRow) => num(j.deposit_amount) || depFinByJob.get(j.id) || 0;
   const vatRateOf = (j: JobRow) => { const q = latestQuoteByJob.get(j.id); const r = num(q?.vat_rate); return r > 0 ? r : 7; };
-  const depositOf = (j: JobRow) => { const g = depositGrossOf(j); return vatOf(j) ? Math.round((g / (1 + vatRateOf(j) / 100)) * 100) / 100 : g; };
-  const feeOf = (j: JobRow) => num(queueOf(j)?.assess_fee);
-  const lineOf = (j: JobRow) => String(queueOf(j)?.line_contact ?? "").trim();
+  const depositAutoOf = (j: JobRow) => { const g = depositGrossAutoOf(j); return vatOf(j) ? Math.round((g / (1 + vatRateOf(j) / 100)) * 100) / 100 : g; };
+  // ยอดมัดจำที่แก้เอง / กรอกเอง = ตัวเลขก่อน VAT แบบที่บัญชีจด → "รับจริงรวม VAT" คิดกลับจากอัตราของงาน
+  const depositOverOf = (j: JobRow): number | undefined => { const m = manualOf(j); return m ? m.deposit : adjOf(j)?.deposit; };
+  const depositOf = (j: JobRow) => depositOverOf(j) ?? depositAutoOf(j);
+  const depositGrossOf = (j: JobRow) => { const o = depositOverOf(j); return o == null ? depositGrossAutoOf(j) : vatOf(j) ? Math.round(o * (1 + vatRateOf(j) / 100) * 100) / 100 : o; };
+  const feeOf = (j: JobRow) => { const m = manualOf(j); return m ? m.fee : num(queueOf(j)?.assess_fee); };
+  const lineOf = (j: JobRow) => { const m = manualOf(j); return m ? m.line : String(queueOf(j)?.line_contact ?? "").trim(); };
 
   // ── ฐานข้อมูล 3 กลุ่ม (ตัด external_intake = ลัดคิววัดลูกค้านอกระบบ ไม่ใช่งานขายในระบบ) ──
   const real = J.filter((j) => !j.external_intake);
   const cohortIn = (a: string, b: string) => real.filter((j) => inR(j.assess_date, a, b) && !neverVisited(j));          // เข้าประเมินในช่วง
-  const depositedIn = (a: string, b: string) => real.filter((j) => inR(j.deposit_date, a, b) && !isCancelled(j));       // มัดจำในช่วง (ยังไม่ยกเลิก)
+  // "เอาออกจากยอดมัดจำ" (แก้เองในตาราง): ไม่นับเป็นมัดจำ/ยอดขาย/ปิดได้ ทุกจุดในหน้า — ยังนับว่าเข้าประเมินตามจริง
+  const ledgerExcluded = (j: JobRow) => adjOf(j)?.excluded === true;
+  const ledgerJobs = [...real, ...manualJobs];   // ฝั่งมัดจำ/ยอดขาย = งานจริง + รายการที่เพิ่มเอง
+  const depositedIn = (a: string, b: string) => ledgerJobs.filter((j) => inR(j.deposit_date, a, b) && !isCancelled(j) && !ledgerExcluded(j));       // มัดจำในช่วง (ยังไม่ยกเลิก)
   const quotedIn = (a: string, b: string) => real.filter((j) => inR(qsd(j), a, b));                          // ส่งใบเสนอในช่วง (นับแม้ภายหลังยกเลิก — เสนอไปแล้วจริง)
   const cancelledAfterDepositIn = (a: string, b: string) => real.filter((j) => inR(j.deposit_date, a, b) && isCancelled(j));
-  const won = (j: JobRow) => !!j.deposit_date && !isCancelled(j);
+  const excludedIn = (a: string, b: string) => real.filter((j) => inR(j.deposit_date, a, b) && !isCancelled(j) && ledgerExcluded(j));
+  const won = (j: JobRow) => !!j.deposit_date && !isCancelled(j) && !ledgerExcluded(j);
 
   const periodSummary = (a: string, b: string) => {
     const dep = depositedIn(a, b), qt = quotedIn(a, b), co = cohortIn(a, b);
@@ -359,6 +394,9 @@ export const GET = withRoute(async (req: Request) => {
       deposited: dep.length,
       revenue: vals.reduce((s, v) => s + v.net, 0), revenue_vat: vals.reduce((s, v) => s + v.total, 0),
       from_quote: vals.filter((v) => v.src === "quote").length, zero: vals.filter((v) => v.src === "none").length,
+      ledger_manual: dep.filter((j) => manualById.has(j.id)).length,
+      ledger_edited: dep.filter((j) => { const a = adjOf(j); return !!a && (a.net != null || a.deposit != null || a.onsite != null); }).length,
+      ledger_excluded: excludedIn(a, b).length,
       multi_quote: dep.filter((j) => (activeQuoteCount.get(j.id) ?? 0) > 1 && !(billByJob.get(j.id)?.n)).length,
       cancelled_after_deposit: cancelledAfterDepositIn(a, b).length,
       cancelled_after_deposit_amount: cancelledAfterDepositIn(a, b).reduce((s, j) => s + num(j.deposit_amount), 0),
@@ -380,7 +418,8 @@ export const GET = withRoute(async (req: Request) => {
   const coQuoted = cohort.filter((j) => !!qsd(j));
   const coWon = cohort.filter(won);
   const coLost = cohort.filter((j) => isCancelled(j));
-  const coPending = cohort.filter((j) => !won(j) && !isCancelled(j));
+  // งานที่ถูก "เอาออกจากยอดมัดจำ" (เช่น จ่ายแค่ค่าแบบ) ยังนับว่าเข้าประเมิน แต่ไม่ใช่ทั้ง "ปิดได้" และ "รอตัดสินใจ" → ไม่เข้ากลุ่มยังไม่ปิด (ไม่ต้องตาม ไม่บวกยอดรอ)
+  const coPending = cohort.filter((j) => !won(j) && !isCancelled(j) && !ledgerExcluded(j));
   // รอบเวลาปกติ ประเมิน→มัดจำ (งานที่ปิดได้ทั้งหมดในระบบ) — ไว้เตือนว่า cohort เดือนล่าสุดยังไม่สุก
   const lagAll = real.filter(won).map((j) => dayDiff(j.assess_date, j.deposit_date)).filter((d): d is number => d != null && d >= 0);
   const lagMedian = median(lagAll);
@@ -423,6 +462,7 @@ export const GET = withRoute(async (req: Request) => {
     deposit_sum: mask(cur.deposit_sum), deposit_gross_sum: mask(cur.deposit_gross_sum), fee_sum: mask(cur.fee_sum),
     kinds: cur.kinds, kinds_amount: { NEW: mask(cur.kinds_amount.NEW), OLD: mask(cur.kinds_amount.OLD), ADDON: mask(cur.kinds_amount.ADDON), SPECIAL: mask(cur.kinds_amount.SPECIAL) },
     onsite: cur.onsite, vat_count: cur.vat, kind_auto: cur.kind_auto,
+    ledger_manual: cur.ledger_manual, ledger_edited: cur.ledger_edited, ledger_excluded: cur.ledger_excluded,
     onsite_by_sales: Object.entries(depositedIn(from, to).filter(onsiteOf).reduce((acc, j) => { const n = salesOf(j); acc[n] = (acc[n] ?? 0) + 1; return acc; }, {} as Record<string, number>)).map(([name, n]) => ({ name, n })).sort((a, b) => b.n - a.n),
     goal_monthly: mask(goalMonthly), period,
     cancelled_after_deposit: cur.cancelled_after_deposit, cancelled_after_deposit_amount: mask(cur.cancelled_after_deposit_amount),
@@ -448,7 +488,9 @@ export const GET = withRoute(async (req: Request) => {
   // ── รายชื่อ (กดดู) ──
   // แถวรายชื่อ: stage = สถานะแบบย่อสำหรับหน้าจอ · src = ยอดมาจากไหน (bill/quote/none) · note = เหตุผลยกเลิก ฯลฯ
   type Row = {
-    id: string; job_code: string | null; customer_name: string; date: string | null; net: number | null; net_vat: number | null; sales: string; area: string; src: "bill" | "quote" | "none"; stage: string; days?: number | null; note?: string;
+    id: string; job_code: string | null; customer_name: string; date: string | null; net: number | null; net_vat: number | null; sales: string; area: string; src: "bill" | "quote" | "none" | "manual"; stage: string; days?: number | null; note?: string;
+    // แก้สมุดบัญชีด้วยมือ: manual = รายการที่เพิ่มเอง · adj = ช่องที่ตั้งทับ · *_auto = ค่าที่ระบบคิดเอง (ไว้โชว์เทียบ / กดกลับ)
+    manual: boolean; adj: { net: boolean; deposit: boolean; onsite: boolean }; net_auto: number | null; deposit_auto: number | null; onsite_auto: boolean;
     // แบบสมุดบัญชี
     line: string; assess_date: string | null; deposit: number | null; deposit_gross: number | null; fee: number | null; vat: boolean; kind: Kind; kind_auto: boolean; kind_guess: Kind; onsite: boolean; ledger_note: string; cancelled: boolean;
   };
@@ -459,6 +501,9 @@ export const GET = withRoute(async (req: Request) => {
     src: v?.src ?? "none", stage: stageOf(j),
     line: lineOf(j), assess_date: d10(j.assess_date) || null, deposit: mask(depositOf(j)), deposit_gross: mask(depositGrossOf(j)), fee: mask(feeOf(j)), vat: vatOf(j),
     kind: kindOf(j), kind_auto: kindAuto(j), kind_guess: kindGuess(j), onsite: onsiteOf(j), ledger_note: String(j.ledger_note ?? "").trim(), cancelled: isCancelled(j),
+    manual: manualById.has(j.id),
+    adj: { net: adjOf(j)?.net != null, deposit: adjOf(j)?.deposit != null, onsite: adjOf(j)?.onsite != null },
+    net_auto: mask(manualById.has(j.id) ? 0 : autoValueOf(j).net), deposit_auto: mask(manualById.has(j.id) ? 0 : depositAutoOf(j)), onsite_auto: manualById.has(j.id) ? false : onsiteAutoOf(j),
     ...extra,
   });
   const byDateDesc = (a: Row, b: Row) => String(b.date ?? "").localeCompare(String(a.date ?? ""));
@@ -474,6 +519,8 @@ export const GET = withRoute(async (req: Request) => {
     cohort_pending: coPending.map((j) => rowOf(j, qsd(j) ?? j.assess_date, quotedVal(j), { days: dayDiff(qsd(j) ?? j.assess_date, today) })).sort((a, b) => (b.days ?? 0) - (a.days ?? 0)),
     cohort_lost: coLost.map((j) => rowOf(j, j.assess_date, null, { note: String(j.cancel_reason ?? "").trim() || "-" })).sort(byDateDesc),
     cancelled_after_deposit: cancelledAfterDepositIn(from, to).map((j) => rowOf(j, j.deposit_date, { net: num(j.deposit_amount), total: 0, src: "none" }, { note: String(j.cancel_reason ?? "").trim() || "-" })).sort(byDateDesc),
+    // รายการที่ถูกเอาออกจากยอดมัดจำ (ไม่รวมในตัวเลขไหนเลย) — โชว์ท้ายตารางให้กดเอากลับได้
+    ledger_excluded: excludedIn(from, to).map((j) => rowOf(j, j.deposit_date, valueOf(j))).sort(byDateDesc),
   };
 
   // ── รายเดือน: ประเมิน n · ส่งใบ n/฿ · มัดจำ n/฿ · %มัดจำต่อส่งใบ (เดือนเดียวกัน) · %ปิด cohort ของเดือนนั้น ──
@@ -481,7 +528,7 @@ export const GET = withRoute(async (req: Request) => {
   { let y = Number(monthKeyOf(from).slice(0, 4)), m = Number(monthKeyOf(from).slice(5, 7)); const end = monthKeyOf(to); while (monthKeys.length < 60) { const k = `${y}-${String(m).padStart(2, "0")}`; monthKeys.push(k); if (k >= end) break; m++; if (m > 12) { m = 1; y++; } } }
   const mk = (s?: string | null) => monthKeyOf(s ?? "");
   const bucket = <T,>(rows: JobRow[], key: (j: JobRow) => string, map: (j: JobRow) => T) => { const o = new Map<string, T[]>(); for (const j of rows) { const k = key(j); if (!k) continue; const a = o.get(k) ?? []; a.push(map(j)); o.set(k, a); } return o; };
-  const depM = bucket(real.filter((j) => !isCancelled(j) && j.deposit_date), (j) => mk(j.deposit_date), (j) => ({ ...valueOf(j), dep: depositOf(j), fee: feeOf(j), kind: kindOf(j), onsite: onsiteOf(j) }));
+  const depM = bucket(ledgerJobs.filter((j) => !isCancelled(j) && j.deposit_date && !ledgerExcluded(j)), (j) => mk(j.deposit_date), (j) => ({ ...valueOf(j), dep: depositOf(j), fee: feeOf(j), kind: kindOf(j), onsite: onsiteOf(j) }));
   const qtM = bucket(real.filter((j) => qsd(j)), (j) => mk(qsd(j)), (j) => quotedValueOf(j));
   const asM = bucket(real.filter((j) => j.assess_date && !neverVisited(j)), (j) => mk(j.assess_date), (j) => won(j));
   const byMonth = monthKeys.map((m) => {
@@ -663,6 +710,9 @@ export const GET = withRoute(async (req: Request) => {
   return ok({
     range: { from, to, today, span_days: spanDays },
     can_finance: showFinance,
+    // แก้สมุดบัญชีด้วยมือได้ไหม (ต้องเห็นเงิน + มีสิทธิ์บันทึกการเงิน — เท่ากับสิทธิ์แก้เป้า)
+    can_ledger_edit: showFinance && can(ctx.role, "finance", "write"),
+    sales_names: [...new Set(salesIdToName.values())].filter(Boolean).sort((a, b) => a.localeCompare(b, "th")),
     warnings,
     summary, lists, byMonth, byArea, areaUnknown, areaOther, areaUnknownDep, byChannel, topItems,
     byLeadSource, leadSourceTotal, leadSourceReady: leadReady,
