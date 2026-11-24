@@ -181,7 +181,7 @@ export function cutInputFromRecipe(recipe: any, opts?: { rawCompare?: boolean })
       // ประตูรั้ว รื้อใหม่ 24 ส.ค.69 — คิดราคาเก็บตัวเลือกครบตามไฟล์แล้ว ส่งต่อใบตัดทั้งชุด
       //   material = กล่องใบระแนง A ("1x1.6") · ใบตัดใช้รูป "1×1.6" → แปลงเครื่องหมายให้ตรง
       const gBox = (v: unknown, fb: string) => GATE_BOX_FROM_CALC[String(v ?? fb)] ?? GATE_BOX_FROM_CALC[fb];
-      const gFace = (v: unknown) => ({ "1": "1 cm", "5": "5 cm", "2.54": '1"', "3.81": '1½"', "4.06": '1.6"', "10.16": '4"' })[String(v ?? "4.06")] ?? '1.6"';
+      const gFace = (v: unknown) => ({ "1": "1 cm", "5": "5 cm", "2.54": '1"', "3.81": '1½"', "4.5": '1.6"', "4.06": '1.6"', "10.16": '4"' })[String(v ?? "4.5")] ?? '1.6"';
       const sp = (recipe.spec ?? {}) as Record<string, unknown>;
       m = { spec_id: "gate_slide", input: {
         W, H, N: 1,

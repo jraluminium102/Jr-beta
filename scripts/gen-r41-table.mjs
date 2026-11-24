@@ -84,7 +84,7 @@ const RIDGE = { "200x120": 100, "400x200": 150, "600x250": 250 };
 // หลังคาเลื่อน: ตารางให้ขนาดรวม · ข้อความใต้ขนาด = [กว้างส่วนเลื่อนรวม, กว้างส่วนติดตาย, ยื่น]
 const SLIDE = { "400x200": [270, 130, 200], "600x300": [400, 200, 300], "1000x400": [670, 330, 400] };
 const RANAE = (box, face) => ({ form: "ตั้ง", spec: { rnBox: box, rnFace: face, rnGap: "2", rnFrame: "รวมโครง" } });
-const SLIP = { boxA: "1x4", showA: "10.16", cntA: "3", boxB: "1.6x1.6", showB: "4.06", cntB: "5", rnGap: "2" };
+const SLIP = { boxA: "1x4", showA: "10.16", cntA: "3", boxB: "1.6x1.6", showB: "4.5", cntB: "5", rnGap: "2" };
 const HEAD = {
   "บานเลือนSMS": ["sms_slide"], "บานเลือนยูโร": ["euro_slide"], "บานเลือนEseries": ["eseries"], "บานเลือนรางบน": ["topslide"],
   "บานเลือนSlimLux": ["slimlux"], "บานระแนงเลือน(ลูกฟูกเรียบ2ทางแนวตัง)": ["bar_slide", "", { material: "อิสระ" }],
@@ -98,9 +98,9 @@ const HEAD = {
   "ติดตาย": ["fixed"], "ตายดัดโค้ง": ["curve_fixed"], "เปดดัดโค้ง": ["curve_open"],
   "ระแนง1×5ซม.โชว์5": ["louver", "1x5", RANAE("1x5", "5")],
   "ระแนง1\"×4\"โชว์4\"": ["louver", "1x4", RANAE("1x4", "10.16")],
-  "ระแนง1\"×1.6\"โชว์1.6\"": ["louver", "1x1.6", RANAE("1x1.6", "4.06")],
+  "ระแนง1\"×1.6\"โชว์1.6\"": ["louver", "1x1.6", RANAE("1x1.6", "4.5")],
   "ประตูรัวบานเลือน": ["gate", "ระแนง", { material: "1.6x4", spec: { gslat: "ระแนง", rnFace: "10.16", rnGap: "2" } }],
-  "ประตูรัวระแนงสลับ": ["gate", "ระแนงสลับ", { material: "1x4", spec: { gslat: "ระแนงสลับ", rnFace: "10.16", rnGap: "2", gboxB: "1.6x1.6", gfaceB: "4.06", gaRun: "3", gbRun: "5" } }],
+  "ประตูรัวระแนงสลับ": ["gate", "ระแนงสลับ", { material: "1x4", spec: { gslat: "ระแนงสลับ", rnFace: "10.16", rnGap: "2", gboxB: "1.6x1.6", gfaceB: "4.5", gaRun: "3", gbRun: "5" } }],
   "ระแนงสลับ": ["louver_slip", "", { spec: { ...SLIP, rnFrame: "ไม่รวมโครง" } }],   // 13 ต.ค.69: ตาราง R4.1 คิดใบ A+B ล้วน ไม่มีโครงดาม (เดิมใส่ รวมโครง → เว็บสูงกว่าตาราง 485/เส้น ปลอม ๆ)
   "ระแนงหมุน": ["louver_rotate", "", { spec: { rnMotor: "เอา" } }],
   "บานตู้Futuretech": ["cabinet_face"], "ราวกันตก": ["handrail"],

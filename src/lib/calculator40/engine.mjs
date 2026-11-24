@@ -149,6 +149,16 @@ export function computeCost(PB, prod, opt) {
     if ((opt.colorKey === 'wood_maho' || opt.colorKey === 'wood_whiteoak') && !prod.woodStockColors) opt = { ...opt, colorKey: 'wood_special', color: 'woodSpecial', stockColor: '' };
     else if (opt.colorKey === 'aztec') opt = { ...opt, colorKey: 'special', color: 'special', stockColor: '' };
   }
+  // specOpts[].alias = ค่าตัวเลือกเก่า → ค่าใหม่ · ต้องแปลงตรงนี้ด้วย ไม่ใช่แค่ที่หน้าจอ — ใบเสนอเก่า/หน้าเทียบ/ผสมบาน เรียกเข้ามาตรง ๆ
+  //   24 พ.ย.69 ด้านโชว์ 1.6 = นิ้ว 6 หุน = 4.5 ซม. (เดิมเก็บ '4.06' = คิดเป็นทศนิยมนิ้ว ผิด) → ใบเก่าที่เก็บ '4.06' ต้องคิดเป็น 4.5
+  if (prod && prod.specOpts && opt.spec) {
+    let sp = null;
+    for (const o of prod.specOpts) {
+      const nv = o.alias && o.alias[opt.spec[o.key]];
+      if (nv != null) { sp = sp || { ...opt.spec }; sp[o.key] = nv; }
+    }
+    if (sp) opt = { ...opt, spec: sp };
+  }
   const W = (opt.w ?? prod.defaults.w) / 100;   // ม.
   const H = (opt.h ?? prod.defaults.h) / 100;   // ม.
   const P = opt.p ?? prod.defaults.p ?? 1;

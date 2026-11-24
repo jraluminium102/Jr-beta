@@ -258,7 +258,13 @@ function sketch(p: Page) {
 // ── งานระแนง: โชว์หน้าเท่าไหร่ · เว้นห่างเท่าไหร่ (เจ้าของ 24 พ.ย.69 "งานระแนงทั้งหมดไม่ระบุว่าระแนงโชว์หน้าเท่าไหร่ เว้นระยะห่างเท่าไหร่") ──
 //   ตัวเลขมาจาก slatLayout ของใบตัดตัวจริง (ตัวเดียวกับที่นับจำนวนใบ) · ห่างจริง = เกลี่ยใบให้เต็มช่องพอดี ตรงช่อง "ระยะห่างจริง" ในไฟล์ตัด
 const n2 = (x: number) => (Math.round(x * 100) / 100).toLocaleString("en-US", { maximumFractionDigits: 2 });
-const showTh = (s: string, face: number) => (/cm/i.test(s) ? `${n2(face)} ซม.` : `${s.replace(/"/g, "")} นิ้ว <i>(${n2(face)} ซม.)</i>`);
+// ขนาดกล่องเป็นภาษาช่าง "นิ้ว.หุน" (1 หุน = 1/8 นิ้ว) — 1.6 = 1 นิ้ว 6 หุน = 4.5 ซม. ไม่ใช่ทศนิยมนิ้ว (เจ้าของท้วง 24 พ.ย.69)
+const HUN_TH: Record<string, string> = { "1.6": "นิ้ว 6 หุน" };
+const showTh = (s: string, face: number) => {
+  if (/cm/i.test(s)) return `${n2(face)} ซม.`;
+  const k = s.replace(/"/g, "");
+  return HUN_TH[k] ? `${k} <i>(${HUN_TH[k]} = ${n2(face)} ซม.)</i>` : `${k} นิ้ว <i>(${n2(face)} ซม.)</i>`;
+};
 const boxTh = (b: string) => (/ซม/.test(b) ? `กล่อง ${esc(b)}` : `กล่อง ${esc(b)} นิ้ว`);
 function slatSvg(L: SlatLayout) {
   const seq: ("A" | "B")[] = L.alt && L.B ? [...Array(Math.min(L.A.run, 4)).fill("A"), ...Array(Math.min(L.B.run, 5)).fill("B")] : ["A", "A", "A"];
