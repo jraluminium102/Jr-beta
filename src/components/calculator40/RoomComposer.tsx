@@ -532,7 +532,9 @@ function ColsEditor({
                   );
                 }
                 const opts: string[] = (o.optsByMaterial && o.optsByMaterial[prod.defMaterial]) || o.opts || [];
-                const cur = paneSpec(prod, sel)[o.key];
+                // o.alias = ค่าเก่า → ค่าใหม่ (เช่น ด้านโชว์ '4.06' → '4.5') — ห้องเก่าที่เก็บค่าเดิมต้องโชว์ตัวเลือกเดียวกับที่ engine คิด
+                const cur0 = paneSpec(prod, sel)[o.key];
+                const cur = (o.alias && o.alias[cur0]) || cur0;
                 return (
                   <span key={o.key} className="inline-flex items-center gap-1">
                     <span className={altLocked ? "text-ink-3/40" : "text-ink-3"}>{o.label}</span>

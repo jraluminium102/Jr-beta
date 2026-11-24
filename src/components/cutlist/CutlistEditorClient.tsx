@@ -12,7 +12,7 @@ import Link from "next/link";
 import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
 import { computeCutList, type CutInput } from "@/lib/cutlist/engine";
-import { CUT_SPECS, CUT_SPEC_BY_ID } from "@/lib/cutlist/products";
+import { CUT_SPECS, CUT_SPEC_BY_ID, slatLayout } from "@/lib/cutlist/products";
 import { resolveStock, type StockLite } from "@/lib/cutlist/stock-match";
 import ImageZoom from "@/components/ImageZoom";
 import CutAdjustPanel, { type Adj } from "@/components/cutlist/CutAdjustPanel";
@@ -466,6 +466,20 @@ export default function CutlistEditorClient({
               <div className="hidden print:block text-xs">
                 {spec?.name} · {String(it.input.W)}×{String(it.input.H)} ซม. · {String(it.input.N)} บาน{it.input.rail ? ` · ${it.input.rail}` : ""}{it.input.color ? ` · สี${String(it.input.color)}` : ""}{it.sets > 1 ? ` · ${it.sets} ชุด` : ""}
               </div>
+
+              {/* งานระแนง: บอกโชว์หน้า + เว้นห่าง ให้ช่างเห็นทั้งบนจอและตอนพิมพ์ (เจ้าของ 24 พ.ย.69 "ไม่ระบุว่าระแนงโชว์หน้าเท่าไหร่ เว้นระยะห่างเท่าไหร่") */}
+              {(() => {
+                const L = spec ? slatLayout(spec.id, { ...spec.defaults, ...it.input }) : null;
+                if (!L) return null;
+                const f2 = (x: number) => (Math.round(x * 100) / 100).toLocaleString("en-US", { maximumFractionDigits: 2 });
+                const side = (s: NonNullable<typeof L.B>) => `กล่อง ${s.box} โชว์หน้า ${f2(s.face)} ซม. ${s.n} ใบ`;
+                return (
+                  <div className="text-sm print:text-xs rounded-lg bg-sky-50 print:bg-transparent px-3 py-2 print:p-0 text-ink-2">
+                    <b>ระแนง{L.dir}</b> · {L.B ? <>ใบ A {side(L.A)} · ใบ B {side(L.B)} · เรียง A {L.A.run} ใบ แล้ว B {L.B.run} ใบ</> : side(L.A)}
+                    {" · "}เว้นห่างจริง <b>{f2(L.gapReal)} ซม.</b> <span className="text-ink-3">(ตั้งไว้ {L.B && L.B.gap !== L.A.gap ? `${f2(L.A.gap)} / ${f2(L.B.gap)}` : f2(L.A.gap)} ซม. · เกลี่ยใบให้เต็มช่วง {f2(L.span)} ซม.)</span>
+                  </div>
+                );
+              })()}
 
               {!spec && <p className="text-sm text-amber-800 bg-amber-50 rounded-lg px-3 py-2">⚠ ไม่รู้จักรุ่น &quot;{it.spec_id}&quot; (สเปกถูกถอดจากระบบ) — ข้อนี้จะไม่ถูกคิด/หักสต็อก</p>}
 

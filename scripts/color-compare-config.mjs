@@ -22,7 +22,7 @@ export const FILE_OPTS = {
   // ระแนง: ใบ กล่อง 1"×1.6" · โชว์ 1" · ห่าง 2 ซม. · มีโครงดาม 1"×1.6"
   louver: { spec: { rnBox: "1x1.6", rnFace: "2.54", rnGap: "2", rnFrame: "รวมโครง" } },
   // ระแนงสลับ: A 1"×4" โชว์ 4" ×3 ท่อน · B 1.6"×1.6" ×5 ท่อน · ห่าง 2 ซม.
-  louver_slip: { spec: { boxA: "1x4", showA: "10.16", cntA: "3", boxB: "1.6x1.6", showB: "4.06", cntB: "5", rnGap: "2" } },
+  louver_slip: { spec: { boxA: "1x4", showA: "10.16", cntA: "3", boxB: "1.6x1.6", showB: "4.5", cntB: "5", rnGap: "2" } },
   // ประตูรั้ว: ใบ กล่อง 1.6"×4" โชว์ 4" ห่าง 2 ซม.
   gate: { material: "1.6x4", spec: { rnFace: "10.16", rnGap: "2" } },
   roof: { material: "ไวนิล" },

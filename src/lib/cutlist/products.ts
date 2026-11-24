@@ -1309,8 +1309,8 @@ const GATE = {
 } as const;
 
 // ด้านโชว์ (ซม.) — ตรงดรอปดาวน์ในไฟล์
-const GATE_SHOW: Record<string, number> = { "1 cm": 1, "5 cm": 5, '1"': 2.54, '1½"': 3.81, '1.6"': 4.06, '4"': 10.16 };
-const gShow = (s?: string) => GATE_SHOW[s ?? '1.6"'] ?? 4.06;
+const GATE_SHOW: Record<string, number> = { "1 cm": 1, "5 cm": 5, '1"': 2.54, '1½"': 3.81, '1.6"': 4.5, '4"': 10.16 };
+const gShow = (s?: string) => GATE_SHOW[s ?? '1.6"'] ?? 4.5;
 /**
  * กล่องใบระแนง — ตัวเลือก → "ชื่อรหัสจริงในสโตร์"
  * ⚠ ห้ามสร้างรหัสจากขนาดเอง สโตร์เขียนไม่เหมือนกันทุกตัว
@@ -1351,7 +1351,9 @@ const gAlt = (o: CutInput) => o.slatType === "ระแนงสลับ";
  * จำนวนใบระแนง — ตรงไฟล์
  *   เดี่ยว : nf = INT(ช่วง ÷ pitchA) + 1   (pitch = ด้านโชว์ + ช่องห่าง)
  *   สลับ  : เรียงใบตามรูปแบบ A×aRun, B×bRun วนไป เติมจนเต็มช่วง แล้วนับแยก A/B
- *           (ไฟล์ตัวอย่าง 350 ซม. โชว์ 4.06 ห่าง 5 · A3:B5 → รวม 39 = A 15 + B 24)
+ *           (350 ซม. โชว์ 1.6 = 4.5 ซม. ห่าง 5 · A3:B5 → รวม 37 = A 15 + B 22)
+ *   ⚠ ขนาดกล่องเป็นภาษาช่าง "นิ้ว.หุน" (1 หุน = 1/8 นิ้ว) — 1.6 = 1 นิ้ว 6 หุน = 4.5 ซม. ไม่ใช่ 1.6 × 2.54 = 4.06
+ *     (ตารางแปลงในไฟล์ตัดลง 4.06 ไว้ = ผิด · เจ้าของท้วง 24 พ.ย.69)
  *   ห่างจริง = (ช่วง − หน้ารวม) ÷ (n − 1)
  */
 function gCounts(o: CutInput) {
@@ -2254,7 +2256,7 @@ export const GABLE_MULTI: CutSpec = {
 };
 
 // ㉓ บานระแนง (JR_บานระแนง) — ระแนง / ระแนงสลับ A-B · เส้น 600 ยืนยันในสูตร
-const LV_SHOW: Record<string, number> = { "1 cm": 1, "5 cm": 5, '1"': 2.54, '1.5"': 3.81, '1.6"': 4.06, '2"': 5.08, '4"': 10.16 };
+const LV_SHOW: Record<string, number> = { "1 cm": 1, "5 cm": 5, '1"': 2.54, '1.5"': 3.81, '1.6"': 4.5, '2"': 5.08, '4"': 10.16 };
 const LV_BOX = ["1.6×4", "1×2", "2×4", "1×1.6"];
 const lvShow = (s?: string) => LV_SHOW[s ?? '4"'] ?? 10.16;
 const lvLen = (o: CutInput) => (o.slatDir === "นอน" ? o.W : o.H);
@@ -2296,6 +2298,39 @@ export const LOUVER_PANEL: CutSpec = {
     { name: 'โครงดาม 1"×1.6"', code: boxCode("1×1.6"), len: (o) => o.W, qty: (o) => (lvAlt(o) ? 2 : 1) * (o.H <= 250 ? 2 : 3), note: "สลับ = 2 หน้า · สูง>250 = 3 แถว · ⚠ ไฟล์ใช้ W เสมอ (ไม่ตามแนวเกล็ด)" },
   ],
 };
+
+/**
+ * ข้อมูลระแนงไว้เขียนบนใบตรวจ/ใบตัด — โชว์หน้ากี่ซม. · เว้นห่างเท่าไหร่ · ห่างจริงเมื่อเกลี่ยเต็มช่อง
+ *   (เจ้าของ 24 พ.ย.69 "งานระแนงไม่ระบุว่าระแนงโชว์หน้าเท่าไหร่ เว้นระยะห่างเท่าไหร่")
+ *   อ่านจากตัวนับใบชุดเดียวกับใบตัด (gCounts / lvCounts) — ห้ามไปคิดซ้ำที่อื่น
+ *   gapReal = (ช่วงเรียงใบ − หน้ารวม) ÷ (จำนวนใบ − 1) ปัด 2 ตำแหน่ง · ตรงช่อง "ระยะห่างจริง" ในไฟล์ตัด (บานระแนง E11 · ประตูรั้ว)
+ *   o ต้องรวมค่าตั้งต้นของรุ่นแล้ว ({ ...spec.defaults, ...input })
+ */
+export type SlatSide = { box: string; show: string; face: number; n: number; run: number; gap: number };
+export type SlatLayout = { dir: "ตั้ง" | "นอน"; alt: boolean; span: number; A: SlatSide; B: SlatSide | null; faceSum: number; gapReal: number };
+export function slatLayout(specId: string, o: CutInput): SlatLayout | null {
+  if (specId === "gate_slide") {
+    const c = gCounts(o), alt = gAlt(o), gap = o.gap ?? 5;
+    return {
+      dir: o.slatDir === "นอน" ? "นอน" : "ตั้ง", alt, span: gR1(gSpan(o)),
+      A: { box: String(o.boxA ?? "1×1.6"), show: String(o.showA ?? '1.6"'), face: gShow(o.showA), n: c.nA, run: Math.max(1, Math.round(o.aRun ?? 3)), gap },
+      B: alt ? { box: String(o.boxB ?? "1×1.6"), show: String(o.showB ?? '1.6"'), face: gShow(o.showB), n: c.nB, run: Math.max(1, Math.round(o.bRun ?? 5)), gap } : null,
+      faceSum: c.faceSum, gapReal: c.gapReal,
+    };
+  }
+  if (specId === "louver_panel") {
+    const alt = lvAlt(o), c = alt ? lvCounts(o) : { a: lvSingle(o), b: 0 };
+    const span = lvSpan(o), fA = lvShow(o.showA), fB = lvShow(o.showB), n = c.a + c.b;
+    const faceSum = c.a * fA + c.b * fB;
+    return {
+      dir: o.slatDir === "ตั้ง" ? "ตั้ง" : "นอน", alt, span: gR1(span),
+      A: { box: String(o.boxA ?? "1.6×4"), show: String(o.showA ?? '4"'), face: fA, n: c.a, run: Math.max(1, Math.round(o.aRun ?? 3)), gap: o.gapA ?? 2.5 },
+      B: alt ? { box: String(o.boxB ?? "1×1.6"), show: String(o.showB ?? '1.6"'), face: fB, n: c.b, run: Math.max(1, Math.round(o.bRun ?? 5)), gap: o.gapB ?? 2.5 } : null,
+      faceSum: gR1(faceSum), gapReal: n > 1 ? gR2((span - faceSum) / (n - 1)) : 0,
+    };
+  }
+  return null;
+}
 
 // ㉔ บานเลื่อนรางบนเฟรมปกติ (JR_รางบนเฟรมปกติ) — Hafele · SMS / ยูโร
 // ⚠ ไฟล์ไม่มีคอลัมน์เส้นสต็อก → 600 (รอเจ้าของ · ชิ้น SMS ปกติ 640)

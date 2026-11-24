@@ -7730,7 +7730,7 @@
     "form": "ตั้ง",
     "spec": {
      "rnBox": "1x1.6",
-     "rnFace": "4.06",
+     "rnFace": "4.5",
      "rnGap": "2",
      "rnFrame": "รวมโครง"
     },
@@ -7770,7 +7770,7 @@
     "form": "ตั้ง",
     "spec": {
      "rnBox": "1x1.6",
-     "rnFace": "4.06",
+     "rnFace": "4.5",
      "rnGap": "2",
      "rnFrame": "รวมโครง"
     },
@@ -7810,7 +7810,7 @@
     "form": "ตั้ง",
     "spec": {
      "rnBox": "1x1.6",
-     "rnFace": "4.06",
+     "rnFace": "4.5",
      "rnGap": "2",
      "rnFrame": "รวมโครง"
     },
@@ -7850,7 +7850,7 @@
     "form": "ตั้ง",
     "spec": {
      "rnBox": "1x1.6",
-     "rnFace": "4.06",
+     "rnFace": "4.5",
      "rnGap": "2",
      "rnFrame": "รวมโครง"
     },
@@ -8045,7 +8045,7 @@
      "showA": "10.16",
      "cntA": "3",
      "boxB": "1.6x1.6",
-     "showB": "4.06",
+     "showB": "4.5",
      "cntB": "5",
      "rnGap": "2",
      "rnFrame": "ไม่รวมโครง"
@@ -8089,7 +8089,7 @@
      "showA": "10.16",
      "cntA": "3",
      "boxB": "1.6x1.6",
-     "showB": "4.06",
+     "showB": "4.5",
      "cntB": "5",
      "rnGap": "2",
      "rnFrame": "ไม่รวมโครง"
@@ -8133,7 +8133,7 @@
      "showA": "10.16",
      "cntA": "3",
      "boxB": "1.6x1.6",
-     "showB": "4.06",
+     "showB": "4.5",
      "cntB": "5",
      "rnGap": "2",
      "rnFrame": "ไม่รวมโครง"
@@ -8177,7 +8177,7 @@
      "showA": "10.16",
      "cntA": "3",
      "boxB": "1.6x1.6",
-     "showB": "4.06",
+     "showB": "4.5",
      "cntB": "5",
      "rnGap": "2",
      "rnFrame": "ไม่รวมโครง"
@@ -8325,7 +8325,7 @@
      "rnFace": "10.16",
      "rnGap": "2",
      "gboxB": "1.6x1.6",
-     "gfaceB": "4.06",
+     "gfaceB": "4.5",
      "gaRun": "3",
      "gbRun": "5"
     },
@@ -8369,7 +8369,7 @@
      "rnFace": "10.16",
      "rnGap": "2",
      "gboxB": "1.6x1.6",
-     "gfaceB": "4.06",
+     "gfaceB": "4.5",
      "gaRun": "3",
      "gbRun": "5"
     },
@@ -8413,7 +8413,7 @@
      "rnFace": "10.16",
      "rnGap": "2",
      "gboxB": "1.6x1.6",
-     "gfaceB": "4.06",
+     "gfaceB": "4.5",
      "gaRun": "3",
      "gbRun": "5"
     },
@@ -8457,7 +8457,7 @@
      "rnFace": "10.16",
      "rnGap": "2",
      "gboxB": "1.6x1.6",
-     "gfaceB": "4.06",
+     "gfaceB": "4.5",
      "gaRun": "3",
      "gbRun": "5"
     },
