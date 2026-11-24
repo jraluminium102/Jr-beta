@@ -72,7 +72,7 @@ export function sortUnpaid<T extends FeeRow>(rows: T[]): T[] {
 // ── ข้อความถามเซลล์ทางไลน์ "ลูกค้าจ่ายค่าประเมินยัง" (เจ้าของ 24 พ.ย.69) ──────────────
 //   เอาเฉพาะคิวที่ยังไม่ได้ติ๊ก/เลือกอะไรในช่องชำระเลย (กลุ่ม TODO) · วันคิวตั้งแต่ from ถึง to (วันนี้)
 //   เจ้าของ: "เอาแค่ถึงวันนี้ ไม่ต้องรวมคิวล่วงหน้า … โฟกัสแค่วันนี้ และอดีต เพราะเอาไว้ทวง"
-//   1 บรรทัด/คิว: "23/11/69 14.00 คุณนัท 131/33 … จ่ายค่าประเมินยัง" · แยกก้อนตามเซลล์
+//   แยกก้อนตามเซลล์ · หัวก้อน "พี่แม็ก จ่ายค่าประเมินยัง" · คิวละ 3 บรรทัด (คิว วันที่ / เวลา ชื่อ / ที่อยู่) เว้นบรรทัดคั่น
 
 export const FEE_ASK_TAIL = "จ่ายค่าประเมินยัง";
 export const FEE_ASK_NO_SALES = "ยังไม่ระบุเซลล์";
@@ -99,9 +99,20 @@ export type FeeAskRow = FeeRow & {
   sales?: { name?: string | null } | null;
 };
 
-export function feeAskLine(e: FeeAskRow): string {
+/** 1 คิว = 3 บรรทัด (ฟอร์มที่เจ้าของให้มา 24 พ.ย.69): "คิว 23/11/69" / "เวลา 13.00 ชื่อลูกค้า" / ที่อยู่ */
+export function feeAskBlock(e: FeeAskRow): string {
   const one = (s: string | null | undefined) => String(s ?? "").replace(/\s+/g, " ").trim();
-  return [e.queue_date ? feeAskDate(e.queue_date) : "", feeTime(e.queue_time), one(e.customer_name), one(e.address), FEE_ASK_TAIL].filter(Boolean).join(" ");
+  const t = feeTime(e.queue_time);
+  return [
+    e.queue_date ? `คิว ${feeAskDate(e.queue_date)}` : "",
+    [t ? `เวลา ${t}` : "", one(e.customer_name)].filter(Boolean).join(" "),
+    one(e.address),
+  ].filter(Boolean).join("\n");
+}
+/** หัวก้อน: "พี่แม็ก จ่ายค่าประเมินยัง" (ชื่อที่ขึ้นต้นด้วย พี่ อยู่แล้วไม่เติมซ้ำ) */
+export function feeAskHead(sales: string): string {
+  const who = sales === FEE_ASK_NO_SALES || /^พี่/.test(sales) ? sales : `พี่${sales}`;
+  return `${who} ${FEE_ASK_TAIL}`;
 }
 
 export type FeeAskGroup<T> = { key: string; sales: string; rows: T[]; text: string };
@@ -119,7 +130,8 @@ export function feeAskGroups<T extends FeeAskRow>(rows: T[], from: string, to: s
     map.get(key)!.rows.push(e);
   }
   const groups = [...map.values()].sort((a, b) => (a.key === "" ? 1 : b.key === "" ? -1 : a.sales.localeCompare(b.sales, "th")));
-  for (const g of groups) g.text = [g.sales, ...g.rows.map(feeAskLine)].join("\n");
+  // หัวก้อน แล้วตามด้วยคิวทีละก้อน เว้นบรรทัดว่างคั่นระหว่างคิว
+  for (const g of groups) g.text = `${feeAskHead(g.sales)}\n${g.rows.map(feeAskBlock).join("\n\n")}`;
   return groups;
 }
 

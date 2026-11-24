@@ -286,7 +286,7 @@ function FeeCheckModal({ rows, setRows, canWrite, today, err, loaded, refreshing
                   )}
                 </div>
               </div>
-              <button onClick={() => copyAsk("*", askGroups.map((g) => g.text).join("\n\n"))} disabled={askTotal === 0}
+              <button onClick={() => copyAsk("*", askGroups.map((g) => g.text).join("\n\n\n"))} disabled={askTotal === 0}
                 className="press inline-flex items-center gap-1.5 rounded-lg border border-brand bg-brand px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">
                 <Icon name="copy" size={13} /> {askCopied === "*" ? "คัดลอกแล้ว" : `ก๊อปทั้งหมด (${askTotal} คิว)`}
               </button>
