@@ -49,6 +49,11 @@ export function feeDaysToQueue(queueDate: string | null | undefined, today: stri
   return Number.isFinite(a) && Number.isFinite(b) ? a - b : null;
 }
 
+/** ถึงวันคิวแล้วหรือยัง (วันนี้ + ที่ผ่านมา = ต้องทวง) · คิวล่วงหน้า/ยังไม่ลงวัน = ยังไม่ต้องทวง ไว้ท้ายรายการ (เจ้าของ 24 พ.ย.69) */
+export function feeIsDue(e: FeeRow, today: string): boolean {
+  return !!e.queue_date && e.queue_date.slice(0, 10) <= today;
+}
+
 /** ข้อความบอกจังหวะ + late = เข้าหน้างานไปแล้วแต่ยังไม่ได้เงิน (ต้องตามก่อน) */
 export function feeDayNote(queueDate: string | null | undefined, today: string): { text: string; late: boolean } {
   const d = feeDaysToQueue(queueDate, today);
@@ -65,7 +70,8 @@ export function sortUnpaid<T extends FeeRow>(rows: T[]): T[] {
 }
 
 // ── ข้อความถามเซลล์ทางไลน์ "ลูกค้าจ่ายค่าประเมินยัง" (เจ้าของ 24 พ.ย.69) ──────────────
-//   เอาเฉพาะคิวที่ยังไม่ได้ติ๊ก/เลือกอะไรในช่องชำระเลย (กลุ่ม TODO) · วันคิวตั้งแต่ from เป็นต้นไป (ค่าตั้งต้น = เมื่อวาน)
+//   เอาเฉพาะคิวที่ยังไม่ได้ติ๊ก/เลือกอะไรในช่องชำระเลย (กลุ่ม TODO) · วันคิวตั้งแต่ from ถึง to (วันนี้)
+//   เจ้าของ: "เอาแค่ถึงวันนี้ ไม่ต้องรวมคิวล่วงหน้า … โฟกัสแค่วันนี้ และอดีต เพราะเอาไว้ทวง"
 //   1 บรรทัด/คิว: "23/11/69 14.00 คุณนัท 131/33 … จ่ายค่าประเมินยัง" · แยกก้อนตามเซลล์
 
 export const FEE_ASK_TAIL = "จ่ายค่าประเมินยัง";
@@ -101,9 +107,9 @@ export function feeAskLine(e: FeeAskRow): string {
 export type FeeAskGroup<T> = { key: string; sales: string; rows: T[]; text: string };
 
 /** จัดก้อนข้อความตามเซลล์ · เรียงวัน/เวลาในก้อน · เซลล์เรียงตามชื่อ · คิวที่ยังไม่ระบุเซลล์ไว้ท้าย */
-export function feeAskGroups<T extends FeeAskRow>(rows: T[], from: string): FeeAskGroup<T>[] {
+export function feeAskGroups<T extends FeeAskRow>(rows: T[], from: string, to: string): FeeAskGroup<T>[] {
   const pick = rows
-    .filter((e) => feeBucket(e) === "TODO" && !!e.queue_date && e.queue_date.slice(0, 10) >= from)
+    .filter((e) => feeBucket(e) === "TODO" && !!e.queue_date && e.queue_date.slice(0, 10) >= from && e.queue_date.slice(0, 10) <= to)
     .sort((a, b) => `${a.queue_date!.slice(0, 10)} ${feeTime(a.queue_time) || "99"}`.localeCompare(`${b.queue_date!.slice(0, 10)} ${feeTime(b.queue_time) || "99"}`));
   const map = new Map<string, FeeAskGroup<T>>();
   for (const e of pick) {

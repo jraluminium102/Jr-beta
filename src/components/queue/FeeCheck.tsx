@@ -6,7 +6,7 @@ import Icon from "@/components/Icon";
 import { api } from "@/lib/api";
 import { dayLabel, thaiDate, type QueueEntry } from "@/lib/queue";
 import {
-  FEE_BUCKET_TH, FEE_CHECK_FROM, FEE_WAITING, feeAddDays, feeAskGroups, feeBucket, feeDayNote, feeSum, sortUnpaid, type FeeBucket,
+  FEE_BUCKET_TH, FEE_CHECK_FROM, FEE_WAITING, feeAddDays, feeAskGroups, feeBucket, feeDayNote, feeIsDue, feeSum, sortUnpaid, type FeeBucket,
 } from "@/lib/fee-check";
 
 /**
@@ -66,7 +66,8 @@ export function FeeCheckButton({ today, refreshKey, onChanged, onOpenEntry }: {
   }, []);
   useEffect(() => { load(); }, [load, refreshKey]);
 
-  const unpaid = useMemo(() => rows.filter((e) => { const b = feeBucket(e); return b !== null && b !== "PAID"; }).length, [rows]);
+  // ตัวเลขแดง = ยังไม่จ่ายและถึงวันคิวแล้ว (วันนี้ + ที่ผ่านมา) — คิวล่วงหน้าไม่นับ ยังไม่ต้องทวง
+  const unpaid = useMemo(() => rows.filter((e) => { const b = feeBucket(e); return b !== null && b !== "PAID" && feeIsDue(e, today); }).length, [rows, today]);
 
   function close() {
     setOpen(false);
@@ -76,7 +77,7 @@ export function FeeCheckButton({ today, refreshKey, onChanged, onOpenEntry }: {
   return (
     <>
       <button onClick={() => { setOpen(true); load(); }}
-        title={`เช็คว่าใครจ่ายค่าประเมินแล้ว / ยังไม่จ่าย (คิวตั้งแต่ ${monthLabel(FEE_CHECK_FROM.slice(0, 7))})`}
+        title={`เช็คว่าใครจ่ายค่าประเมินแล้ว / ยังไม่จ่าย (คิวตั้งแต่ ${monthLabel(FEE_CHECK_FROM.slice(0, 7))}) · ตัวเลขแดง = ค้างจ่ายถึงวันนี้ ไม่นับคิวล่วงหน้า`}
         className="press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold glass-soft text-ink-2">
         <Icon name="banknote" size={16} /> <span className="hidden sm:inline">เช็คค่าประเมิน</span>
         {loaded && !err && unpaid > 0 && (
@@ -110,9 +111,13 @@ function FeeCheckModal({ rows, setRows, canWrite, today, err, loaded, refreshing
   const [copied, setCopied] = useState(false);
   // ถามเซลล์ทางไลน์ (เจ้าของ 24 พ.ย.69) — คิวตั้งแต่เมื่อวานเป็นต้นไป ที่ยังไม่ได้ติ๊ก/เลือกอะไรในช่องชำระ
   const [ask, setAsk] = useState(false);
-  const [askFrom, setAskFrom] = useState(() => feeAddDays(today, -1));
+  //   เลือกได้: เฉพาะวันนี้ / ตั้งแต่เมื่อวาน / ย้อนเองถึงวันไหน · ไม่รวมคิวล่วงหน้าเสมอ (เอาไว้ทวง)
+  const yesterday = feeAddDays(today, -1);
+  const [askMode, setAskMode] = useState<"TODAY" | "YESTERDAY" | "CUSTOM">("YESTERDAY");
+  const [askFrom, setAskFrom] = useState(yesterday);
   const [askCopied, setAskCopied] = useState<string | null>(null);   // key ของก้อนที่เพิ่งก๊อป · "*" = ทั้งหมด
-  const askGroups = useMemo(() => feeAskGroups(rows, askFrom || feeAddDays(today, -1)), [rows, askFrom, today]);
+  const askStart = askMode === "TODAY" ? today : askMode === "YESTERDAY" ? yesterday : (askFrom || yesterday);
+  const askGroups = useMemo(() => feeAskGroups(rows, askStart, today), [rows, askStart, today]);
   const askTotal = askGroups.reduce((s, g) => s + g.rows.length, 0);
   function copyAsk(key: string, text: string) {
     navigator.clipboard.writeText(text).then(() => { setAskCopied(key); setTimeout(() => setAskCopied((k) => (k === key ? null : k)), 1600); }).catch(() => alert("คัดลอกไม่สำเร็จ"));
@@ -136,15 +141,19 @@ function FeeCheckModal({ rows, setRows, canWrite, today, err, loaded, refreshing
     });
   }, [checked, month, salesId, q]);
 
-  const groups = useMemo(() => {
+  // groups = ยังไม่จ่ายที่ถึงวันคิวแล้ว (วันนี้ + ที่ผ่านมา = ต้องทวง) + จ่ายแล้วทั้งหมด
+  // later  = ยังไม่จ่ายแต่ยังไม่ถึงวันคิว / ยังไม่ลงวัน → ไม่สำคัญ ไว้ท้ายรายการ (เจ้าของ 24 พ.ย.69)
+  const { groups, later } = useMemo(() => {
     const g: Record<FeeBucket, QueueEntry[]> = { TODO: [], WAITING: [], UNCONFIRMED: [], PAID: [] };
-    for (const e of filtered) { const b = feeBucket(e); if (b) g[b].push(e); }
-    g.TODO = sortUnpaid(g.TODO); g.WAITING = sortUnpaid(g.WAITING); g.UNCONFIRMED = sortUnpaid(g.UNCONFIRMED);
+    const l: Record<FeeBucket, QueueEntry[]> = { TODO: [], WAITING: [], UNCONFIRMED: [], PAID: [] };
+    for (const e of filtered) { const b = feeBucket(e); if (b) (b === "PAID" || feeIsDue(e, today) ? g : l)[b].push(e); }
+    for (const x of [g, l]) { x.TODO = sortUnpaid(x.TODO); x.WAITING = sortUnpaid(x.WAITING); x.UNCONFIRMED = sortUnpaid(x.UNCONFIRMED); }
     g.PAID = [...g.PAID].sort((a, b) => `${b.queue_date ?? ""}${b.queue_time ?? ""}`.localeCompare(`${a.queue_date ?? ""}${a.queue_time ?? ""}`));
-    return g;
-  }, [filtered]);
+    return { groups: g, later: l };
+  }, [filtered, today]);
   const unpaidAll = useMemo(() => [...groups.TODO, ...groups.WAITING, ...groups.UNCONFIRMED], [groups]);
   const tileRows: Record<Tab, QueueEntry[]> = { UNPAID: unpaidAll, TODO: groups.TODO, WAITING: groups.WAITING, PAID: groups.PAID };
+  const laterRows: Record<Tab, QueueEntry[]> = { UNPAID: sortUnpaid([...later.TODO, ...later.WAITING, ...later.UNCONFIRMED]), TODO: later.TODO, WAITING: later.WAITING, PAID: [] };
   const lateCount = unpaidAll.filter((e) => feeDayNote(e.queue_date, today).late).length;
 
   async function save(e: QueueEntry, next: Patch, did: string, keepUndo = true) {
@@ -175,7 +184,7 @@ function FeeCheckModal({ rows, setRows, canWrite, today, err, loaded, refreshing
   function copyList() {
     const line = (e: QueueEntry) =>
       `- ${e.customer_name} · ${e.queue_date ? `${dayLabel(e.queue_date)} ${thaiDate(e.queue_date).replace(/\s\d{4}$/, "")}` : "ยังไม่ลงวัน"}${e.sales?.name ? ` · ${e.sales.name}` : ""} · ${baht(Number(e.assess_fee ?? 0))} · ${feeDayNote(e.queue_date, today).text}`;
-    const parts: string[] = [`ค่าประเมินยังไม่จ่าย (ณ ${thaiDate(today)}) ${unpaidAll.length} คิว · ${baht(feeSum(unpaidAll))}`];
+    const parts: string[] = [`ค่าประเมินยังไม่จ่าย คิวถึงวันนี้ (ณ ${thaiDate(today)}) ${unpaidAll.length} คิว · ${baht(feeSum(unpaidAll))}`];
     for (const b of ["TODO", "WAITING", "UNCONFIRMED"] as const) {
       if (!groups[b].length) continue;
       parts.push("", `■ ${FEE_BUCKET_TH[b]} (${groups[b].length})`, ...groups[b].map(line));
@@ -207,7 +216,7 @@ function FeeCheckModal({ rows, setRows, canWrite, today, err, loaded, refreshing
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-base font-bold text-brand-dark flex items-center gap-2"><Icon name="banknote" size={17} /> เช็คค่าประเมิน</h2>
-              <p className="text-xs text-ink-3 mt-0.5">คิวที่มีค่าประเมิน ตั้งแต่ {monthLabel(FEE_CHECK_FROM.slice(0, 7))} · ไม่รวมคิวที่ยกเลิก</p>
+              <p className="text-xs text-ink-3 mt-0.5">คิวที่มีค่าประเมิน ตั้งแต่ {monthLabel(FEE_CHECK_FROM.slice(0, 7))} · ไม่รวมคิวที่ยกเลิก · ตัวเลขยังไม่จ่าย = คิวถึงวันนี้ (คิวล่วงหน้าอยู่ท้ายรายการ)</p>
             </div>
             <button onClick={onClose} aria-label="ปิด" className="press text-ink-3 hover:text-ink rounded-lg p-1"><Icon name="close" size={17} /></button>
           </div>
@@ -222,6 +231,7 @@ function FeeCheckModal({ rows, setRows, canWrite, today, err, loaded, refreshing
                   <div className="text-[11.5px] font-semibold text-ink-2 leading-tight">{meta.th}</div>
                   <div className={`text-2xl font-bold leading-tight tabular-nums ${meta.num}`}>{list.length}<span className="text-xs font-semibold text-ink-3 ml-1">คิว</span></div>
                   <div className="text-[11px] text-ink-3 tabular-nums">{baht(feeSum(list))}</div>
+                  {laterRows[t].length > 0 && <div className="text-[10.5px] text-ink-3 leading-tight">ล่วงหน้าอีก {laterRows[t].length} คิว</div>}
                 </button>
               );
             })}
@@ -241,7 +251,7 @@ function FeeCheckModal({ rows, setRows, canWrite, today, err, loaded, refreshing
             <input value={q} onChange={(ev) => setQ(ev.target.value)} placeholder="ค้นชื่อ / เบอร์…" aria-label="ค้นหา"
               className="flex-1 min-w-[140px] rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs outline-none" />
             <button onClick={copyList} disabled={unpaidAll.length === 0}
-              title="คัดลอกรายชื่อคนที่ยังไม่จ่าย (ตามตัวกรองที่เลือก) ไปวางในไลน์"
+              title="คัดลอกรายชื่อคนที่ยังไม่จ่าย คิวถึงวันนี้ ไม่รวมคิวล่วงหน้า (ตามตัวกรองที่เลือก) ไปวางในไลน์"
               className="press inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-ink-2 disabled:opacity-50">
               <Icon name="copy" size={13} /> {copied ? "คัดลอกแล้ว" : "ก๊อปรายชื่อยังไม่จ่าย"}
             </button>
@@ -260,16 +270,21 @@ function FeeCheckModal({ rows, setRows, canWrite, today, err, loaded, refreshing
             <div className="flex items-end justify-between gap-3 flex-wrap mb-3">
               <div>
                 <h3 className="text-sm font-bold text-ink">ข้อความถามเซลล์: ลูกค้าจ่ายค่าประเมินยัง</h3>
-                <p className="text-xs text-ink-3 mt-0.5">คิวที่มีค่าประเมิน แต่ยังไม่ได้ติ๊กชำระ และยังไม่ได้เลือกอะไรในช่องชำระเลย</p>
-                <label className="mt-2 flex items-center gap-2 text-xs text-ink-2 font-semibold">
-                  คิวตั้งแต่วันที่
-                  <input type="date" value={askFrom} onChange={(ev) => setAskFrom(ev.target.value)}
-                    className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-xs text-ink font-normal" />
-                  เป็นต้นไป
-                  {askFrom !== feeAddDays(today, -1) && (
-                    <button onClick={() => setAskFrom(feeAddDays(today, -1))} className="press underline font-semibold text-brand">กลับเป็นเมื่อวาน</button>
+                <p className="text-xs text-ink-3 mt-0.5">คิวที่มีค่าประเมิน แต่ยังไม่ได้ติ๊กชำระ และยังไม่ได้เลือกอะไรในช่องชำระเลย · ไม่รวมคิวล่วงหน้า</p>
+                <div className="mt-2 flex items-center gap-1.5 flex-wrap text-xs text-ink-2 font-semibold">
+                  <span>เอาคิว</span>
+                  <button onClick={() => setAskMode("TODAY")} aria-pressed={askMode === "TODAY"} className={chip(askMode === "TODAY")}>เฉพาะวันนี้</button>
+                  <button onClick={() => setAskMode("YESTERDAY")} aria-pressed={askMode === "YESTERDAY"} className={chip(askMode === "YESTERDAY")}>ตั้งแต่เมื่อวาน ถึงวันนี้</button>
+                  <button onClick={() => setAskMode("CUSTOM")} aria-pressed={askMode === "CUSTOM"} className={chip(askMode === "CUSTOM")}>ย้อนไปไกลกว่านั้น</button>
+                  {askMode === "CUSTOM" && (
+                    <label className="flex items-center gap-1.5">
+                      ตั้งแต่วันที่
+                      <input type="date" value={askFrom} max={today} onChange={(ev) => setAskFrom(ev.target.value)}
+                        className="rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-xs text-ink font-normal" />
+                      ถึงวันนี้
+                    </label>
                   )}
-                </label>
+                </div>
               </div>
               <button onClick={() => copyAsk("*", askGroups.map((g) => g.text).join("\n\n"))} disabled={askTotal === 0}
                 className="press inline-flex items-center gap-1.5 rounded-lg border border-brand bg-brand px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">
@@ -278,7 +293,7 @@ function FeeCheckModal({ rows, setRows, canWrite, today, err, loaded, refreshing
             </div>
             {!loaded && <p className="text-center text-ink-3 py-10 text-sm">กำลังโหลด…</p>}
             {loaded && err && <p className="text-center text-red-700 py-10 text-sm">โหลดรายการไม่สำเร็จ: {err}</p>}
-            {loaded && !err && askTotal === 0 && <p className="text-center text-ink-3 py-10 text-sm">ไม่มีคิวที่ต้องถาม — ทุกคิวตั้งแต่วันที่เลือก ติ๊กหรือเลือกช่องชำระแล้ว</p>}
+            {loaded && !err && askTotal === 0 && <p className="text-center text-ink-3 py-10 text-sm">ไม่มีคิวที่ต้องถาม — ทุกคิวในช่วงวันที่เลือก ติ๊กหรือเลือกช่องชำระแล้ว</p>}
             {loaded && !err && askGroups.map((g) => (
               <section key={g.key || "-"} className="mb-3 rounded-xl border border-gray-200/80 bg-white">
                 <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-gray-100">
@@ -320,10 +335,23 @@ function FeeCheckModal({ rows, setRows, canWrite, today, err, loaded, refreshing
           {loaded && !err && tab === "PAID" && section("PAID", groups.PAID, false)}
 
           {loaded && !err && tileRows[tab].length === 0 && (
-            <p className="text-center text-ink-3 py-10 text-sm">
-              {tab === "PAID" ? "ยังไม่มีคิวที่จ่ายแล้ว" : tab === "UNPAID" ? "ไม่มีใครค้างค่าประเมิน" : `ไม่มีคิวในกลุ่ม "${TILE[tab].th}"`}
+            <p className={`text-center text-ink-3 text-sm ${laterRows[tab].length > 0 ? "py-5" : "py-10"}`}>
+              {tab === "PAID" ? "ยังไม่มีคิวที่จ่ายแล้ว" : tab === "UNPAID" ? "คิวถึงวันนี้ ไม่มีใครค้างค่าประเมิน" : `คิวถึงวันนี้ ไม่มีในกลุ่ม "${TILE[tab].th}"`}
               {filtering ? " (ตามตัวกรองที่เลือก)" : ""}
             </p>
+          )}
+
+          {/* คิวล่วงหน้า / ยังไม่ลงวัน — ยังไม่ต้องทวง ไว้ท้ายสุด */}
+          {loaded && !err && laterRows[tab].length > 0 && (
+            <section className="mt-5 pt-3 border-t border-dashed border-gray-300">
+              <h3 className="text-xs font-bold text-ink-3 mb-1.5 flex items-center gap-2 flex-wrap">
+                คิวล่วงหน้า (ยังไม่ถึงวัน) — ยังไม่ต้องทวง
+                <span className="font-medium">{laterRows[tab].length} คิว · {baht(feeSum(laterRows[tab]))}</span>
+              </h3>
+              <div className="rounded-xl border border-gray-200/80 bg-gray-50 divide-y divide-gray-100">
+                {laterRows[tab].map((e) => <Row key={e.id} e={e} bucket={feeBucket(e) ?? "TODO"} today={today} canWrite={canWrite} busy={busyId === e.id || refreshing} onSave={save} onOpenEntry={onOpenEntry} />)}
+              </div>
+            </section>
           )}
         </div>
 
