@@ -40,6 +40,23 @@ export function feeBucket(e: FeeRow): FeeBucket | null {
   return p === FEE_WAITING ? "WAITING" : "UNCONFIRMED";
 }
 
+// ── ป้ายสถานะค่าประเมินของ "งาน" (หน้าใบเสนอราคา · เช็คลิสต์ — เจ้าของ 25 พ.ย.69) ──────────
+//   ดูอย่างเดียว อ่านจากคิวประเมินที่ผูกกับงาน (งานหนึ่งอาจมีหลายคิว) · แก้ได้ที่หน้าคิวงานที่เดียว
+//     ไม่มีค่าประเมิน   = ไม่มีคิวไหนลงค่าประเมิน (หรือคิวยกเลิก)
+//     จ่ายค่าประเมินแล้ว = ทุกคิวที่มีค่าประเมิน ติ๊กชำระแล้ว
+//     รอค่าประเมิน     = ยังมีคิวที่มีค่าประเมินแต่ยังไม่ติ๊กชำระ (ไม่ว่าช่องชำระจะเลือกอะไรไว้)
+export type FeeStatus = "NONE" | "WAITING" | "PAID";
+export const FEE_STATUS_TH: Record<FeeStatus, string> = {
+  NONE: "ไม่มีค่าประเมิน",
+  WAITING: "รอค่าประเมิน",
+  PAID: "จ่ายค่าประเมินแล้ว",
+};
+export function feeStatusOf(rows: FeeRow[]): FeeStatus {
+  const b = rows.map(feeBucket).filter((x): x is FeeBucket => x !== null);
+  if (b.length === 0) return "NONE";
+  return b.every((x) => x === "PAID") ? "PAID" : "WAITING";
+}
+
 const dayNum = (iso: string) => Math.round(Date.parse(iso.slice(0, 10) + "T00:00:00Z") / 86400000);
 
 /** ห่างจากวันคิวกี่วัน: ลบ = เลยวันคิวมาแล้ว (เข้าหน้างานไปแล้ว) · 0 = วันนี้ · บวก = ยังไม่ถึง · null = ยังไม่ลงวัน */

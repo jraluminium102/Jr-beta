@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { can } from "@/lib/rbac";
 import { CHECKLIST_MARKER } from "@/lib/checklist-marker";
 import { buildSalesResolver } from "@/lib/sales-resolve";
+import { feeStatusOf, type FeeRow, type FeeStatus } from "@/lib/fee-check";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,7 @@ export type ChecklistItem = {
   floor_note: string;     // ผรม.ใคร / รายละเอียดงานพื้น
   floor_quote_sent: boolean; // ส่งใบเสนอราคางานพื้นแล้ว (เฉพาะ jr — 0091)
   old_customer: boolean;     // ลูกค้าเก่า (ทั้งมี/ไม่มีในระบบ) จากคิวประเมิน — 0168
+  fee_status: FeeStatus | null; // ป้ายสถานะค่าประเมิน (ดูอย่างเดียว · ตามหน้าคิวงาน) · null = งานไม่ได้ผูกคิว
 };
 
 // ประวัติใบเสนอที่ส่งแล้ว (ถาวร · รวมที่มัดจำ/ปิดงานไปแล้ว) — ไล่เช็คงานพื้นได้ ไม่หาย
@@ -181,6 +183,30 @@ export const GET = withRoute(async () => {
 
   const jobIds = jobRows.map((j) => j.id);
 
+  // ── สถานะค่าประเมินของแต่ละงาน — อ่านจากคิวที่ผูกกับงาน (ผูกได้ 2 ทาง: คิวชี้มาที่งาน / งานชี้ไปที่คิว) ──
+  //   ไม่จับคู่ด้วยชื่อลูกค้า (เรื่องเงิน ห้ามเดา) · โหลดพัง = ไม่โชว์ป้าย ไม่ทำให้ทั้งหน้าพัง
+  type FeeQe = FeeRow & { id: string; job_id: string | null };
+  const feeSel = "id, job_id, assess_fee, fee_paid, payment, status";
+  const qeIds = [...new Set(jobRows.map((j) => j.queue_entry_id).filter((x): x is string => !!x))];
+  const [feeByJobR, feeByIdR] = await Promise.all([
+    sb.from("queue_entries").select(feeSel).in("job_id", jobIds),
+    qeIds.length ? sb.from("queue_entries").select(feeSel).in("id", qeIds) : Promise.resolve({ data: [], error: null }),
+  ]);
+  const feeOk = !feeByJobR.error && !feeByIdR.error;
+  if (!feeOk) console.warn("[quotation-checklist] fee status", feeByJobR.error?.message ?? feeByIdR.error?.message);
+  const feeByJob = new Map<string, FeeQe[]>();
+  const feeById = new Map<string, FeeQe>();
+  for (const q of (feeByJobR.data ?? []) as FeeQe[]) { if (q.job_id) feeByJob.set(q.job_id, [...(feeByJob.get(q.job_id) ?? []), q]); }
+  for (const q of (feeByIdR.data ?? []) as FeeQe[]) feeById.set(q.id, q);
+  const feeStatusOfJob = (j: { id: string; queue_entry_id: string | null }): FeeStatus | null => {
+    if (!feeOk) return null;
+    const m = new Map<string, FeeQe>();
+    for (const q of feeByJob.get(j.id) ?? []) m.set(q.id, q);
+    const fwd = j.queue_entry_id ? feeById.get(j.queue_entry_id) : undefined;
+    if (fwd) m.set(fwd.id, fwd);
+    return m.size ? feeStatusOf([...m.values()]) : null;
+  };
+
   // โหลดใบเสนอราคาล่าสุดของแต่ละงาน — ทั้งใบเบา (checklist) และใบจริง (เครื่องคิดราคา/ฟอร์ม)
   // เดิมกรองเฉพาะใบที่มี marker [เช็คลิสต์] → ใบจากเครื่องคิดราคาถูกซ่อน ทำให้กด "ส่งแล้ว" แล้วเกิดใบซ้ำ
   // ตอนนี้จับใบล่าสุดของ job (ไม่ cancelled) → ใบเครื่องคิดราคาโผล่เป็น "ร่าง" เอง ไม่ต้องสร้างซ้ำ
@@ -264,6 +290,7 @@ export const GET = withRoute(async () => {
         floor_note: j.floor_note ?? "",
         floor_quote_sent: j.floor_quote_sent ?? false,
         old_customer: isOldCustomer(j.queue_entry),
+        fee_status: feeStatusOfJob(j),
         on_hold: true,
         on_hold_reason: j.on_hold_reason ?? null,
       });
@@ -328,6 +355,7 @@ export const GET = withRoute(async () => {
       floor_note: j.floor_note ?? "",
       floor_quote_sent: j.floor_quote_sent ?? false,
       old_customer: isOldCustomer(j.queue_entry),
+      fee_status: feeStatusOfJob(j),
       on_hold: false,
       on_hold_reason: null,
     };

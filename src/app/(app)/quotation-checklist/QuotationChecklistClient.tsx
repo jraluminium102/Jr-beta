@@ -10,6 +10,7 @@ import { baht } from "@/lib/money";
 import DateField from "@/components/ui/DateField";
 import type { ChecklistData, ChecklistItem, ChecklistQuotation, SentHistoryItem } from "@/app/api/quotation-checklist/route";
 import OldCustomerTag from "@/components/OldCustomerTag";
+import FeeStatusTag from "@/components/FeeStatusTag";
 import { HoldModal } from "@/components/jobs/HoldModal";
 
 // ---------- types ----------
@@ -375,6 +376,7 @@ function SentJobCard({
       <div className="flex items-start gap-2">
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-ink truncate">{item.customer_name} <OldCustomerTag show={item.old_customer} small /></div>
+          {item.fee_status && <div className="mt-1"><FeeStatusTag status={item.fee_status} small /></div>}
           {item.job_code && (
             <div className="text-xs text-ink-3 font-mono mt-0.5">{item.job_code}</div>
           )}
@@ -513,6 +515,7 @@ function ActiveTableRow({
       {/* ลูกค้า/เซลล์ */}
       <td className="px-3 py-3 align-top">
         <div className="font-semibold text-ink text-sm leading-snug">{item.customer_name} <OldCustomerTag show={item.old_customer} small /></div>
+        {item.fee_status && <div className="mt-1"><FeeStatusTag status={item.fee_status} small /></div>}
         {item.job_code && (
           <div className="text-xs text-ink-3 font-mono">{item.job_code}</div>
         )}
@@ -704,6 +707,7 @@ function ActiveMobileCard({
       <div className="flex items-start gap-2">
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-ink truncate">{item.customer_name} <OldCustomerTag show={item.old_customer} small /></div>
+          {item.fee_status && <div className="mt-1"><FeeStatusTag status={item.fee_status} small /></div>}
           {item.job_code && (
             <div className="text-xs text-ink-3 font-mono mt-0.5">{item.job_code}</div>
           )}
@@ -1210,6 +1214,7 @@ export default function QuotationChecklistClient() {
                       <td className="px-4 py-3">
                         <div className="font-semibold text-ink tnum text-sm">{item.job_code ?? "—"}</div>
                         <div className="text-xs text-ink-2 mt-0.5">{item.customer_name}</div>
+                        {item.fee_status && <div className="mt-1"><FeeStatusTag status={item.fee_status} small /></div>}
                         {item.customer_area && (
                           <div className="text-xs text-ink-3 flex items-center gap-1 mt-0.5">
                             <Icon name="pin" size={10} />{item.customer_area}
