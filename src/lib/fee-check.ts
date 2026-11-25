@@ -45,16 +45,20 @@ export function feeBucket(e: FeeRow): FeeBucket | null {
 //     ไม่มีค่าประเมิน   = ไม่มีคิวไหนลงค่าประเมิน (หรือคิวยกเลิก)
 //     จ่ายค่าประเมินแล้ว = ทุกคิวที่มีค่าประเมิน ติ๊กชำระแล้ว
 //     รอค่าประเมิน     = ยังมีคิวที่มีค่าประเมินแต่ยังไม่ติ๊กชำระ (ไม่ว่าช่องชำระจะเลือกอะไรไว้)
+//     null (ไม่โชว์ป้าย) = คิวที่ยังไม่ติ๊กเป็นคิวก่อน พ.ย.69 ทั้งหมด — ตอนนั้นยังไม่ได้ใช้ช่องติ๊กชำระ
+//                        (ก.ย.–ต.ค.69 ไม่มีคิวไหนติ๊กเลย) แยกไม่ได้ว่ายังไม่จ่ายจริงหรือแค่ไม่ได้ติ๊ก → ไม่เดา
 export type FeeStatus = "NONE" | "WAITING" | "PAID";
 export const FEE_STATUS_TH: Record<FeeStatus, string> = {
   NONE: "ไม่มีค่าประเมิน",
   WAITING: "รอค่าประเมิน",
   PAID: "จ่ายค่าประเมินแล้ว",
 };
-export function feeStatusOf(rows: FeeRow[]): FeeStatus {
-  const b = rows.map(feeBucket).filter((x): x is FeeBucket => x !== null);
-  if (b.length === 0) return "NONE";
-  return b.every((x) => x === "PAID") ? "PAID" : "WAITING";
+export function feeStatusOf(rows: (FeeRow & { created_at?: string | null })[], trackedFrom: string = FEE_CHECK_FROM): FeeStatus | null {
+  const withFee = rows.filter((e) => feeBucket(e) !== null);
+  if (withFee.length === 0) return "NONE";
+  const unpaid = withFee.filter((e) => feeBucket(e) !== "PAID");
+  if (unpaid.length === 0) return "PAID";
+  return unpaid.some((e) => String(e.queue_date ?? e.created_at ?? "").slice(0, 10) >= trackedFrom) ? "WAITING" : null;
 }
 
 const dayNum = (iso: string) => Math.round(Date.parse(iso.slice(0, 10) + "T00:00:00Z") / 86400000);

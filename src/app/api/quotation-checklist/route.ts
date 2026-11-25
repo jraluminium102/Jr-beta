@@ -185,8 +185,8 @@ export const GET = withRoute(async () => {
 
   // ── สถานะค่าประเมินของแต่ละงาน — อ่านจากคิวที่ผูกกับงาน (ผูกได้ 2 ทาง: คิวชี้มาที่งาน / งานชี้ไปที่คิว) ──
   //   ไม่จับคู่ด้วยชื่อลูกค้า (เรื่องเงิน ห้ามเดา) · โหลดพัง = ไม่โชว์ป้าย ไม่ทำให้ทั้งหน้าพัง
-  type FeeQe = FeeRow & { id: string; job_id: string | null };
-  const feeSel = "id, job_id, assess_fee, fee_paid, payment, status";
+  type FeeQe = FeeRow & { id: string; job_id: string | null; created_at: string | null };
+  const feeSel = "id, job_id, assess_fee, fee_paid, payment, status, queue_date, created_at";
   const qeIds = [...new Set(jobRows.map((j) => j.queue_entry_id).filter((x): x is string => !!x))];
   const [feeByJobR, feeByIdR] = await Promise.all([
     sb.from("queue_entries").select(feeSel).in("job_id", jobIds),
