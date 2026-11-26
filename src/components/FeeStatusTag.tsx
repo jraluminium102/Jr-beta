@@ -9,6 +9,7 @@ const STYLE: Record<FeeStatus, string> = {
   NONE: "bg-gray-100 text-gray-600",
   WAITING: "bg-orange-100 text-orange-800",
   PAID: "bg-emerald-100 text-emerald-800",
+  VOID: "bg-gray-200 text-gray-700",
 };
 
 export default function FeeStatusTag({ status, small }: { status?: FeeStatus | null; small?: boolean }) {

@@ -5,6 +5,9 @@
  *     · ส่งเลขแล้ว รอโอน     = ยังไม่จ่าย + ช่องชำระ "รอค่าประเมิน"
  *     · ยังไม่ดำเนินการ      = ยังไม่จ่าย + ช่องชำระว่าง
  *     · เลือกวิธีแล้วยังไม่ติ๊ก = ยังไม่จ่าย + ช่องชำระเป็นอย่างอื่น (โอน/จ่ายสด/อื่นๆ …) → ให้คนเช็คยอดแล้วติ๊ก
+ *     · ซ่อนไว้             = ยังไม่จ่าย + ช่องชำระ "ไม่จ่าย (ซ่อน)" — ลูกค้าเงียบนานจนน่าจะโดนเท เก็บไว้ให้กดดูได้ ไม่นับเป็นยอดค้าง
+ *     · ยกเลิก              = ยังไม่จ่าย + ช่องชำระ "ยกเลิกค่าประเมิน" — ไม่เก็บค่าประเมินแล้ว (เช่น เข้าหน้างานแล้วไม่ทำต่อ)
+ *       (2 ตัวหลัง เจ้าของ 26 พ.ย.69 · ไม่แตะสถานะคิว/งาน — แค่เลิกทวงค่าประเมิน)
  *   คิวที่ไม่มีค่าประเมิน / ยกเลิก ไม่อยู่ในรายการ
  * ฟังก์ชันล้วน ไม่แตะ DB — ใช้ร่วมกัน API + หน้าจอ
  */
@@ -13,8 +16,14 @@
 export const FEE_CHECK_FROM = "2026-11-01";
 /** ค่าในช่องชำระที่แปลว่า ส่งเลขบัญชีให้ลูกค้าแล้ว รอโอน */
 export const FEE_WAITING = "รอค่าประเมิน";
+/** ลูกค้าไม่จ่ายนานมาก — ซ่อนจากรายชื่อที่ต้องทวง (ยังกดดูได้) */
+export const FEE_HIDDEN = "ไม่จ่าย (ซ่อน)";
+/** ยกเลิก ไม่เก็บค่าประเมินแล้ว */
+export const FEE_VOID = "ยกเลิกค่าประเมิน";
 
-export type FeeBucket = "TODO" | "WAITING" | "UNCONFIRMED" | "PAID";
+export type FeeBucket = "TODO" | "WAITING" | "UNCONFIRMED" | "PAID" | "HIDDEN" | "VOID";
+/** ยังต้องทวงอยู่ไหม (ยังไม่จ่าย และไม่ได้ซ่อน/ยกเลิก) */
+export const feeIsOpen = (b: FeeBucket | null): b is "TODO" | "WAITING" | "UNCONFIRMED" => b === "TODO" || b === "WAITING" || b === "UNCONFIRMED";
 export type FeeRow = {
   assess_fee?: number | string | null;
   fee_paid?: boolean | null;
@@ -29,6 +38,8 @@ export const FEE_BUCKET_TH: Record<FeeBucket, string> = {
   WAITING: "ส่งเลขแล้ว รอโอน",
   UNCONFIRMED: "เลือกวิธีชำระแล้ว แต่ยังไม่ติ๊กว่าจ่าย",
   PAID: "จ่ายแล้ว",
+  HIDDEN: "ซ่อนไว้ (ลูกค้าไม่จ่ายนาน)",
+  VOID: "ยกเลิก ไม่เก็บค่าประเมิน",
 };
 
 /** กลุ่มของคิว · null = ไม่ต้องเช็ค (ไม่มีค่าประเมิน หรือคิวยกเลิก) */
@@ -37,6 +48,8 @@ export function feeBucket(e: FeeRow): FeeBucket | null {
   if (e.fee_paid) return "PAID";
   const p = String(e.payment ?? "").trim();
   if (!p) return "TODO";
+  if (p === FEE_HIDDEN) return "HIDDEN";
+  if (p === FEE_VOID) return "VOID";
   return p === FEE_WAITING ? "WAITING" : "UNCONFIRMED";
 }
 
@@ -45,17 +58,20 @@ export function feeBucket(e: FeeRow): FeeBucket | null {
 //     ไม่มีค่าประเมิน   = ไม่มีคิวไหนลงค่าประเมิน (หรือคิวยกเลิก)
 //     จ่ายค่าประเมินแล้ว = ทุกคิวที่มีค่าประเมิน ติ๊กชำระแล้ว
 //     รอค่าประเมิน     = ยังมีคิวที่มีค่าประเมินแต่ยังไม่ติ๊กชำระ (ไม่ว่าช่องชำระจะเลือกอะไรไว้)
+//     ยกเลิกค่าประเมิน   = คิวที่มีค่าประเมินถูกกดยกเลิกทั้งหมด (ไม่เก็บแล้ว) · คิวที่ซ่อนไว้ ยังนับเป็น รอค่าประเมิน
 //     null (ไม่โชว์ป้าย) = คิวที่ยังไม่ติ๊กเป็นคิวก่อน พ.ย.69 ทั้งหมด — ตอนนั้นยังไม่ได้ใช้ช่องติ๊กชำระ
 //                        (ก.ย.–ต.ค.69 ไม่มีคิวไหนติ๊กเลย) แยกไม่ได้ว่ายังไม่จ่ายจริงหรือแค่ไม่ได้ติ๊ก → ไม่เดา
-export type FeeStatus = "NONE" | "WAITING" | "PAID";
+export type FeeStatus = "NONE" | "WAITING" | "PAID" | "VOID";
 export const FEE_STATUS_TH: Record<FeeStatus, string> = {
   NONE: "ไม่มีค่าประเมิน",
   WAITING: "รอค่าประเมิน",
   PAID: "จ่ายค่าประเมินแล้ว",
+  VOID: "ยกเลิกค่าประเมิน",
 };
 export function feeStatusOf(rows: (FeeRow & { created_at?: string | null })[], trackedFrom: string = FEE_CHECK_FROM): FeeStatus | null {
-  const withFee = rows.filter((e) => feeBucket(e) !== null);
-  if (withFee.length === 0) return "NONE";
+  const all = rows.filter((e) => feeBucket(e) !== null);
+  const withFee = all.filter((e) => feeBucket(e) !== "VOID");
+  if (withFee.length === 0) return all.length > 0 ? "VOID" : "NONE";
   const unpaid = withFee.filter((e) => feeBucket(e) !== "PAID");
   if (unpaid.length === 0) return "PAID";
   return unpaid.some((e) => String(e.queue_date ?? e.created_at ?? "").slice(0, 10) >= trackedFrom) ? "WAITING" : null;

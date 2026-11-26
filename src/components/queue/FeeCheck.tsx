@@ -6,7 +6,7 @@ import Icon from "@/components/Icon";
 import { api } from "@/lib/api";
 import { dayLabel, thaiDate, type QueueEntry } from "@/lib/queue";
 import {
-  FEE_BUCKET_TH, FEE_CHECK_FROM, FEE_WAITING, feeAddDays, feeAskGroups, feeBucket, feeDayNote, feeIsDue, feeSum, sortUnpaid, type FeeBucket,
+  FEE_BUCKET_TH, FEE_CHECK_FROM, FEE_HIDDEN, FEE_VOID, FEE_WAITING, feeAddDays, feeAskGroups, feeBucket, feeDayNote, feeIsDue, feeIsOpen, feeSum, sortUnpaid, type FeeBucket,
 } from "@/lib/fee-check";
 
 /**
@@ -16,7 +16,12 @@ import {
  *   ⚠ ไม่ส่ง "มัดจำหน้างาน" จากหน้านี้ (ตัวนั้นมีผลกับเงิน/ผลิต ต้องทำในฟอร์มคิวเท่านั้น)
  */
 
-type Tab = "UNPAID" | "TODO" | "WAITING" | "PAID";
+type Tab = "UNPAID" | "TODO" | "WAITING" | "PAID" | "HIDDEN" | "VOID";
+// แท็บรอง (ปุ่มเล็กใต้กล่องสรุป) — ซ่อนไว้ / ยกเลิก (เจ้าของ 26 พ.ย.69) · ไม่นับเป็นยอดค้าง แต่กดดูและเอากลับมาได้
+const SIDE_TAB: Record<"HIDDEN" | "VOID", { th: string; empty: string }> = {
+  HIDDEN: { th: "ซ่อนไว้", empty: "ยังไม่มีคิวที่ซ่อนไว้" },
+  VOID: { th: "ยกเลิก", empty: "ยังไม่มีคิวที่ยกเลิกค่าประเมิน" },
+};
 // ส่งเฉพาะช่องที่เปลี่ยนจริง — ช่องชำระที่ไม่ได้แตะ (เช่น มัดจำหน้างาน) จะไม่ถูกส่งซ้ำไปที่ server
 type Patch = { payment?: string | null; fee_paid?: boolean };
 
@@ -26,7 +31,7 @@ const baht = (n: number) => `${n.toLocaleString("th-TH")} บาท`;
 const fmtTime = (t: string | null) => { const m = String(t ?? "").match(/(\d{1,2})[:.](\d{2})/); return m ? `${m[1].padStart(2, "0")}.${m[2]}` : ""; };
 const dateLine = (e: QueueEntry) => (e.queue_date ? `${dayLabel(e.queue_date)} ${thaiDate(e.queue_date)}${fmtTime(e.queue_time) ? ` · ${fmtTime(e.queue_time)} น.` : ""}` : "ยังไม่ลงวัน");
 
-const TILE: Record<Tab, { th: string; hint: string; on: string; num: string }> = {
+const TILE: Record<"UNPAID" | "TODO" | "WAITING" | "PAID", { th: string; hint: string; on: string; num: string }> = {
   UNPAID:  { th: "ยังไม่จ่ายทั้งหมด", hint: "รวมทุกกลุ่มที่ยังไม่ได้เงิน", on: "border-red-400 bg-red-50", num: "text-red-700" },
   TODO:    { th: "ยังไม่ดำเนินการ", hint: "ยังไม่ได้ส่งเลขบัญชีให้ลูกค้า", on: "border-orange-400 bg-orange-50", num: "text-orange-700" },
   WAITING: { th: "ส่งเลขแล้ว รอโอน", hint: "ช่องชำระ = รอค่าประเมิน", on: "border-amber-400 bg-amber-50", num: "text-amber-700" },
@@ -67,7 +72,7 @@ export function FeeCheckButton({ today, refreshKey, onChanged, onOpenEntry }: {
   useEffect(() => { load(); }, [load, refreshKey]);
 
   // ตัวเลขแดง = ยังไม่จ่ายและถึงวันคิวแล้ว (วันนี้ + ที่ผ่านมา) — คิวล่วงหน้าไม่นับ ยังไม่ต้องทวง
-  const unpaid = useMemo(() => rows.filter((e) => { const b = feeBucket(e); return b !== null && b !== "PAID" && feeIsDue(e, today); }).length, [rows, today]);
+  const unpaid = useMemo(() => rows.filter((e) => { const b = feeBucket(e); return feeIsOpen(b) && feeIsDue(e, today); }).length, [rows, today]);
 
   function close() {
     setOpen(false);
@@ -144,16 +149,18 @@ function FeeCheckModal({ rows, setRows, canWrite, today, err, loaded, refreshing
   // groups = ยังไม่จ่ายที่ถึงวันคิวแล้ว (วันนี้ + ที่ผ่านมา = ต้องทวง) + จ่ายแล้วทั้งหมด
   // later  = ยังไม่จ่ายแต่ยังไม่ถึงวันคิว / ยังไม่ลงวัน → ไม่สำคัญ ไว้ท้ายรายการ (เจ้าของ 24 พ.ย.69)
   const { groups, later } = useMemo(() => {
-    const g: Record<FeeBucket, QueueEntry[]> = { TODO: [], WAITING: [], UNCONFIRMED: [], PAID: [] };
-    const l: Record<FeeBucket, QueueEntry[]> = { TODO: [], WAITING: [], UNCONFIRMED: [], PAID: [] };
-    for (const e of filtered) { const b = feeBucket(e); if (b) (b === "PAID" || feeIsDue(e, today) ? g : l)[b].push(e); }
+    const g: Record<FeeBucket, QueueEntry[]> = { TODO: [], WAITING: [], UNCONFIRMED: [], PAID: [], HIDDEN: [], VOID: [] };
+    const l: Record<FeeBucket, QueueEntry[]> = { TODO: [], WAITING: [], UNCONFIRMED: [], PAID: [], HIDDEN: [], VOID: [] };
+    // ซ่อน/ยกเลิก/จ่ายแล้ว ไม่แยกล่วงหน้า — อยู่แท็บของตัวเองทั้งหมด
+    for (const e of filtered) { const b = feeBucket(e); if (b) (!feeIsOpen(b) || feeIsDue(e, today) ? g : l)[b].push(e); }
     for (const x of [g, l]) { x.TODO = sortUnpaid(x.TODO); x.WAITING = sortUnpaid(x.WAITING); x.UNCONFIRMED = sortUnpaid(x.UNCONFIRMED); }
+    g.HIDDEN = sortUnpaid(g.HIDDEN); g.VOID = sortUnpaid(g.VOID);
     g.PAID = [...g.PAID].sort((a, b) => `${b.queue_date ?? ""}${b.queue_time ?? ""}`.localeCompare(`${a.queue_date ?? ""}${a.queue_time ?? ""}`));
     return { groups: g, later: l };
   }, [filtered, today]);
   const unpaidAll = useMemo(() => [...groups.TODO, ...groups.WAITING, ...groups.UNCONFIRMED], [groups]);
-  const tileRows: Record<Tab, QueueEntry[]> = { UNPAID: unpaidAll, TODO: groups.TODO, WAITING: groups.WAITING, PAID: groups.PAID };
-  const laterRows: Record<Tab, QueueEntry[]> = { UNPAID: sortUnpaid([...later.TODO, ...later.WAITING, ...later.UNCONFIRMED]), TODO: later.TODO, WAITING: later.WAITING, PAID: [] };
+  const tileRows: Record<Tab, QueueEntry[]> = { UNPAID: unpaidAll, TODO: groups.TODO, WAITING: groups.WAITING, PAID: groups.PAID, HIDDEN: groups.HIDDEN, VOID: groups.VOID };
+  const laterRows: Record<Tab, QueueEntry[]> = { UNPAID: sortUnpaid([...later.TODO, ...later.WAITING, ...later.UNCONFIRMED]), TODO: later.TODO, WAITING: later.WAITING, PAID: [], HIDDEN: [], VOID: [] };
   const lateCount = unpaidAll.filter((e) => feeDayNote(e.queue_date, today).late).length;
 
   async function save(e: QueueEntry, next: Patch, did: string, keepUndo = true) {
@@ -232,6 +239,21 @@ function FeeCheckModal({ rows, setRows, canWrite, today, err, loaded, refreshing
                   <div className={`text-2xl font-bold leading-tight tabular-nums ${meta.num}`}>{list.length}<span className="text-xs font-semibold text-ink-3 ml-1">คิว</span></div>
                   <div className="text-[11px] text-ink-3 tabular-nums">{baht(feeSum(list))}</div>
                   {laterRows[t].length > 0 && <div className="text-[10.5px] text-ink-3 leading-tight">ล่วงหน้าอีก {laterRows[t].length} คิว</div>}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* ซ่อนไว้ / ยกเลิก — ไม่นับเป็นยอดค้าง กดดูได้ เอากลับมาได้ */}
+          <div className="flex items-center gap-1.5 mt-2 flex-wrap text-xs">
+            <span className="text-ink-3">ไม่นับเป็นยอดค้าง:</span>
+            {(["HIDDEN", "VOID"] as const).map((t) => {
+              const active = !ask && tab === t;
+              return (
+                <button key={t} onClick={() => { setTab(t); setAsk(false); }} aria-pressed={active}
+                  title={t === "HIDDEN" ? "ลูกค้าไม่จ่ายนานมาก น่าจะไม่จ่ายแล้ว — เก็บไว้ดูได้" : "ไม่เก็บค่าประเมินแล้ว เช่น เข้าหน้างานแล้วไม่ทำต่อ"}
+                  className={`press rounded-full border px-3 py-1 font-semibold ${active ? "bg-gray-700 border-gray-700 text-white" : "bg-white border-gray-300 text-ink-2"}`}>
+                  {SIDE_TAB[t].th} {tileRows[t].length} คิว
                 </button>
               );
             })}
@@ -333,10 +355,18 @@ function FeeCheckModal({ rows, setRows, canWrite, today, err, loaded, refreshing
           {loaded && !err && tab === "TODO" && section("TODO", groups.TODO, false)}
           {loaded && !err && tab === "WAITING" && section("WAITING", groups.WAITING, false)}
           {loaded && !err && tab === "PAID" && section("PAID", groups.PAID, false)}
+          {loaded && !err && tab === "HIDDEN" && groups.HIDDEN.length > 0 && (
+            <p className="text-xs text-ink-3 mb-2">ลูกค้าไม่จ่ายนานมากจนน่าจะไม่จ่ายแล้ว — ไม่นับเป็นยอดค้าง ไม่อยู่ในข้อความทวง · ถ้าลูกค้าจ่ายภายหลังกด โอนแล้ว / จ่ายสดแล้ว ได้เลย</p>
+          )}
+          {loaded && !err && tab === "HIDDEN" && section("HIDDEN", groups.HIDDEN, false)}
+          {loaded && !err && tab === "VOID" && groups.VOID.length > 0 && (
+            <p className="text-xs text-ink-3 mb-2">ไม่เก็บค่าประเมินแล้ว — ไม่นับเป็นยอดค้าง · ยกเลิกเฉพาะค่าประเมิน คิวและงานของลูกค้ายังอยู่เหมือนเดิม</p>
+          )}
+          {loaded && !err && tab === "VOID" && section("VOID", groups.VOID, false)}
 
           {loaded && !err && tileRows[tab].length === 0 && (
             <p className={`text-center text-ink-3 text-sm ${laterRows[tab].length > 0 ? "py-5" : "py-10"}`}>
-              {tab === "PAID" ? "ยังไม่มีคิวที่จ่ายแล้ว" : tab === "UNPAID" ? "คิวถึงวันนี้ ไม่มีใครค้างค่าประเมิน" : `คิวถึงวันนี้ ไม่มีในกลุ่ม "${TILE[tab].th}"`}
+              {tab === "HIDDEN" || tab === "VOID" ? SIDE_TAB[tab].empty : tab === "PAID" ? "ยังไม่มีคิวที่จ่ายแล้ว" : tab === "UNPAID" ? "คิวถึงวันนี้ ไม่มีใครค้างค่าประเมิน" : `คิวถึงวันนี้ ไม่มีในกลุ่ม "${TILE[tab].th}"`}
               {filtering ? " (ตามตัวกรองที่เลือก)" : ""}
             </p>
           )}
@@ -381,6 +411,21 @@ function Row({ e, bucket, today, canWrite, busy, onSave, onOpenEntry }: {
         className={`${btn} border-emerald-300 bg-emerald-50 text-emerald-800`}>จ่ายสดแล้ว</button>
     </>
   );
+  // ซ่อน / ยกเลิก — ปุ่มรอง (ไม่เด่น) ของคิวที่ยังไม่จ่าย · เขียนลงช่องชำระของคิว เอากลับมาได้จากแท็บ ซ่อนไว้ / ยกเลิก
+  const hideBtn = (
+    <button disabled={busy} onClick={() => onSave(e, { payment: FEE_HIDDEN, fee_paid: false }, "ซ่อนไว้ (ไม่นับเป็นยอดค้าง)")}
+      title="ลูกค้าไม่จ่ายนานมาก น่าจะไม่จ่ายแล้ว — ย้ายไปแท็บ ซ่อนไว้"
+      className={`${btn} border-gray-300 bg-white text-ink-3`}>ซ่อน</button>
+  );
+  const voidBtn = (
+    <button disabled={busy} onClick={() => onSave(e, { payment: FEE_VOID, fee_paid: false }, "ยกเลิก ไม่เก็บค่าประเมิน")}
+      title="ไม่เก็บค่าประเมินแล้ว (เช่น เข้าหน้างานแล้วไม่ทำต่อ) — ย้ายไปแท็บ ยกเลิก"
+      className={`${btn} border-red-200 bg-white text-red-700`}>ยกเลิก</button>
+  );
+  const restoreBtn = (
+    <button disabled={busy} onClick={() => onSave(e, { payment: null, fee_paid: false }, "เอากลับมาเป็นยังไม่จ่าย")}
+      className={`${btn} border-gray-300 bg-white text-ink-2`}>เอากลับมาทวง</button>
+  );
   return (
     <div className={`flex items-center gap-x-3 gap-y-2 flex-wrap px-3 py-2.5 ${busy ? "opacity-60" : ""}`}>
       <div className="min-w-0 flex-1 basis-[240px]">
@@ -389,8 +434,8 @@ function Row({ e, bucket, today, canWrite, busy, onSave, onOpenEntry }: {
             <button onClick={() => onOpenEntry(e)} title="เปิดฟอร์มคิวนี้" className="text-sm font-bold text-ink hover:text-brand hover:underline text-left break-words">{e.customer_name}</button>
           ) : <span className="text-sm font-bold text-ink break-words">{e.customer_name}</span>}
           {e.sales?.name && <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[11px] font-semibold text-ink-2">{e.sales.name}</span>}
-          {bucket !== "PAID" && (
-            <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${note.late ? "bg-red-100 text-red-700" : "bg-gray-100 text-ink-3"}`}>{note.text}</span>
+          {bucket !== "PAID" && bucket !== "VOID" && (
+            <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${note.late && bucket !== "HIDDEN" ? "bg-red-100 text-red-700" : "bg-gray-100 text-ink-3"}`}>{note.text}</span>
           )}
         </div>
         <div className="text-xs text-ink-3 mt-0.5 tabular-nums">
@@ -407,6 +452,7 @@ function Row({ e, bucket, today, canWrite, busy, onSave, onOpenEntry }: {
               <button disabled={busy} onClick={() => onSave(e, { payment: FEE_WAITING, fee_paid: false }, "ส่งเลขแล้ว รอโอน")}
                 className={`${btn} border-amber-300 bg-amber-50 text-amber-800`}>ส่งเลขแล้ว</button>
               {paidBtns}
+              {hideBtn}{voidBtn}
             </>
           )}
           {bucket === "WAITING" && (
@@ -414,6 +460,7 @@ function Row({ e, bucket, today, canWrite, busy, onSave, onOpenEntry }: {
               {paidBtns}
               <button disabled={busy} onClick={() => onSave(e, { payment: null, fee_paid: false }, "กลับเป็นยังไม่ดำเนินการ")}
                 className={`${btn} border-gray-200 bg-white text-ink-3`}>ยังไม่ได้ส่ง</button>
+              {hideBtn}{voidBtn}
             </>
           )}
           {bucket === "UNCONFIRMED" && (
@@ -422,8 +469,11 @@ function Row({ e, bucket, today, canWrite, busy, onSave, onOpenEntry }: {
                 className={`${btn} border-emerald-500 bg-emerald-600 text-white`}>จ่ายแล้ว</button>
               <button disabled={busy} onClick={() => onSave(e, { payment: FEE_WAITING, fee_paid: false }, "ส่งเลขแล้ว รอโอน")}
                 className={`${btn} border-amber-300 bg-amber-50 text-amber-800`}>ยังรอโอน</button>
+              {hideBtn}{voidBtn}
             </>
           )}
+          {bucket === "HIDDEN" && <>{paidBtns}{restoreBtn}{voidBtn}</>}
+          {bucket === "VOID" && restoreBtn}
           {bucket === "PAID" && (
             <button disabled={busy} onClick={() => onSave(e, e.payment === "โอน" || e.payment === "จ่ายสด" ? { payment: null, fee_paid: false } : { fee_paid: false }, "แก้เป็นยังไม่จ่าย")}
               className={`${btn} border-gray-200 bg-white text-ink-3`}>แก้เป็นยังไม่จ่าย</button>
