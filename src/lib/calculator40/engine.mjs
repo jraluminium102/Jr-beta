@@ -33,7 +33,7 @@ export const GLASS_KG_PER_M2_MM = 2.5;
 
 export const STOCK_LEN = 6.4; // ความยาวเส้นอลู stock มาตรฐาน (ม.) — บางรุ่นใช้ 6.0 (ตั้ง prod.stockLen)
 // ชื่อโชว์กระจก (ลิสต์เจ้าของ 4 พ.ย.69) → คีย์ราคาใน PB.GLASS
-import { glassPriceKey, GLASS_EXTRA } from './glass-catalog.mjs';
+import { glassPriceKey, glassDisplayName, roofGlassChoice, GLASS_EXTRA } from './glass-catalog.mjs';
 import { FILE_CALC } from './file-calc.mjs';
 
 export function ceil100(x) { return Math.ceil(x / 100) * 100; }
@@ -833,9 +833,19 @@ export function computeCost(PB, prod, opt) {
   let boxKgAll = 0, boxKgMoving = 0;   // น้ำหนักโครงกล่อง/ฉาก/แซด/เหล็ก (แยกส่วนที่เคลื่อนที่)
   // opt.consumLines = แผ่นมุง/เหล็ก/ราง ที่ผู้เรียกคิดมาจากใบตัดแล้ว (หลังคาหลายด้าน) — ทับ prod.consum
   const CONSUM = (opt.consumLines && opt.consumLines.length) ? opt.consumLines : (hwLines ? [] : prod.consum || []);
+  // หลังคากระจก เลือกชนิดกระจกเอง (26 พ.ย.69) — '' = กระจกมาตรฐานของวัสดุมุง (ราคาเดิมจากตารางหลังคา)
+  const roofGlassSel = roofGlassChoice(material, opt.spec);
+  let roofGlassWarned = false;
   for (const it of CONSUM) {
     const count = typeof it.count === 'number' ? it.count : val(it.count);
     if (count <= 0) continue;
+    // บรรทัดแผ่นกระจกของหลังคา (ref ROOFMAT.กระจก …) + เลือกกระจกเอง → ใช้ราคา/ชื่อ/รหัสของกระจกตัวนั้นแทน
+    const rgOn = !!roofGlassSel && String(it.ref || '').startsWith('ROOFMAT.กระจก');
+    const rgPrice = rgOn ? Number(PB.GLASS[glassPriceKey(roofGlassSel)]) || 0 : 0;
+    if (rgOn && !(rgPrice > 0) && !roofGlassWarned) {
+      roofGlassWarned = true;
+      hwMissing.push({ sku: '', name: `กระจกหลังคา "${roofGlassSel}" ไม่มีในไฟล์ถอดทุนล่าสุดแล้ว — เลือกกระจกใหม่` });
+    }
     let unitPrice = pPrice(it.name, typeof it.price === 'number' ? it.price : val(it.price));  // ราคา expression + PARTS override (partsLinked)
     if (it.ref) { const rp = refPrice(PB, it.ref); if (rp != null) unitPrice = rp; }   // ราคาจาก PB (แอดมินแก้ได้ · ไม่มี=ใช้ price เดิม)
     if (it.mult) unitPrice *= mult;   // กล่องอลูเมืองทอง (ระแนงสลับ/หมุน) → ขยับตามราคาอลู/กก.
@@ -863,7 +873,15 @@ export function computeCost(PB, prod, opt) {
     // it.buf = ตัวคูณเผื่อเศษ (แผ่นหลังคา 1.2 = buf_roof ในไฟล์ถอดทุน "เผื่อเศษแผ่นหลังคา ตัดเสีย/ซ้อนแผ่น 20%")
     //   ชีต E8 คูณ buf_roof ทับราคาแผ่น (รวมราคาจากสโตร์ด้วย) → ต้องคูณหลังจากทับราคาสโตร์แล้ว
     //   ⚠ เว็บไม่เคยคูณตัวนี้เลย (v20 ก็มี) → ทุนแผ่นทุกหลังคาขาด 20% มาตลอด (เจ้าของสั่งอิง v20.1 3 ก.ย.69)
+    if (rgOn) unitPrice = rgPrice;   // ราคากระจกจากตารางกระจก (ตัวเดียวกับประตู/หน้าต่าง) · ไม่ใช้ราคา/รหัสสโตร์ของแผ่นมาตรฐาน
     if (it.buf > 0) unitPrice *= it.buf;
+    if (rgOn) {
+      const amountRg = count * unitPrice;
+      consumCost += amountRg;
+      const tail = (String(it.name || '').match(/\s*\([^)]*\)\s*$/) || [''])[0];   // คง "(2 ด้าน)" "(ติดตาย)" "(เลื่อน)" ไว้
+      lines.push({ cat: 'consum', name: 'กระจก' + glassDisplayName(roofGlassSel) + tail, sku: '', qty: round2(count), unit: it.unit || '', unitPrice: round2(unitPrice), amount: round2(amountRg), roofGlass: roofGlassSel });
+      continue;
+    }
     noteMissing({ ...it, sku: cSku }, count);
     if (!(unitPrice > 0) && cfp !== 0 && !it.orderOnly && !it.labor) noteMissing({ sku: cSku || it.ref || it.name, name: it.name, price: 0 }, count);
     // it.roundAmt = ชีตปัดทุนทีละบรรทัดเป็นบาท E = ROUND(จำนวน × ราคา, 0) (พื้นไม้เทียม · อลูทึบ)
@@ -1311,7 +1329,8 @@ export function computeCost(PB, prod, opt) {
   const WS = prod.weightSpec || null;
   let sheetKg = 0, sheetKgMoving = 0;
   if (WS) {
-    const kgm2 = (PB.ROOFMAT_KG || {})[material];
+    const rgMM = roofGlassSel ? glassMM(glassPriceKey(roofGlassSel)) || glassMM(roofGlassSel) : 0;
+    const kgm2 = rgMM > 0 ? rgMM * GLASS_KG_PER_M2_MM : (PB.ROOFMAT_KG || {})[material];
     if (kgm2 > 0) {
       sheetKg = (val(WS.sheetArea) || 0) * kgm2;
       sheetKgMoving = WS.movingSheetArea ? (val(WS.movingSheetArea) || 0) * kgm2 : sheetKg;

@@ -3381,6 +3381,17 @@ PRODUCTS.bansolid.solidFamily = true;
 
 // รุ่นที่ยังไม่ลงระบบ — แสดงเป็นป้าย TODO ใต้กลุ่ม (ดู TODO.md)
 // (ว่างแล้ว: ตู้ G4 = cabinet/cabinet_face · ม่านซิป G7 = zipscreen ลงระบบจริงแล้ว มีทุน R4.0)
+// ── หลังคากระจก: ช่อง "ชนิดกระจกหลังคา" (เจ้าของ 26 พ.ย.69) ──────────────────────────────
+//   ทุกรุ่นที่วัสดุมุงเลือกกระจกได้ (หลังคา · จั่ว · เลื่อน · หลายด้าน · กลาสเฮ้าส์) ได้ช่องนี้เหมือนกันหมด
+//   type 'glass' = ช่องเลือกกระจกแบบค้นหา · glassOnly = เอาเฉพาะกระจกที่ชื่อมีคำนี้ · forMaterial = โผล่เฉพาะวัสดุมุงที่ขึ้นต้นด้วยคำนี้
+//   ว่าง = กระจกมาตรฐานของวัสดุมุง (ราคาเดิม) · เลือกแล้ว เอนจินคิดราคากระจกตัวนั้น (ดู roofGlassSel ใน engine.mjs)
+export const ROOF_GLASS_SPEC = { key: 'roofglass', type: 'glass', label: 'ชนิดกระจกหลังคา (ลามิเนต)', def: '', glassOnly: 'ลามิเนต', forMaterial: 'กระจก' };
+for (const p of Object.values(PRODUCTS)) {
+  if (!Array.isArray(p.materials) || !p.materials.some((m) => String(m).startsWith('กระจก'))) continue;
+  if ((p.specOpts || []).some((o) => o.key === ROOF_GLASS_SPEC.key)) continue;
+  p.specOpts = [ROOF_GLASS_SPEC, ...(p.specOpts || [])];
+}
+
 export const PRODUCTS_TODO = [];
 
 // ── ผนังไอโซวอล ขายราคาเท่าผนังสมาร์ทบอร์ด (เจ้าของสั่ง 24 พ.ย.69 "ราคา Isowall ขายเท่า SMB เลย") ──

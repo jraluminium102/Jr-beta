@@ -169,6 +169,35 @@ export function glassOptionGroups(PB) {
   ];
 }
 
+/** เฉพาะกระจกที่ชื่อมีคำนั้น (เช่น 'ลามิเนต') · ไม่เอากลุ่ม "แทนกระจก" — ช่องเลือกกระจกหลังคา (26 พ.ย.69) */
+export function glassGroupsOnly(groups, word) {
+  const w = String(word ?? '');
+  return (groups || [])
+    .filter((g) => g.cat !== 'แทนกระจก')
+    .map((g) => ({ ...g, items: g.items.filter((it) => String(it.label).includes(w) || String(it.value).includes(w)) }))
+    .filter((g) => g.items.length > 0);
+}
+
+// ── หลังคากระจก: เลือกชนิดกระจกลามิเนตเองได้ (เจ้าของ 26 พ.ย.69) ──────────────────────
+//   วัสดุมุง "กระจก 4+4" / "กระจก 5+5" = กระจกมาตรฐาน (ราคาเดิมของหลังคา = ลามิเนตใส ฟิล์มใส 0.38 ราคาเดียวกัน)
+//   spec.roofglass ว่าง = มาตรฐาน · เลือกแล้ว = คิดราคากระจกตัวนั้นจากตารางกระจกเดียวกับประตู/หน้าต่าง
+export const ROOF_GLASS_SPEC_KEY = 'roofglass';
+export const ROOF_GLASS_STD = {
+  'กระจก 4+4': 'ลามิเนตใส ฟิล์มใส 0.38 หนา 4+4 มม.',
+  'กระจก 5+5': 'ลามิเนตใส ฟิล์มใส 0.38 หนา 5+5 มม.',
+};
+export const isRoofGlassMaterial = (m) => String(m ?? '').startsWith('กระจก');
+/** กระจกหลังคาที่เลือกเอง (มีผลเฉพาะเมื่อวัสดุมุงเป็นกระจก) · '' = ใช้มาตรฐานของวัสดุมุง */
+export function roofGlassChoice(material, spec) {
+  const g = String((spec || {})[ROOF_GLASS_SPEC_KEY] ?? '');
+  return g && isRoofGlassMaterial(material) ? g : '';
+}
+/** ชื่อวัสดุมุงสำหรับโชว์/พิมพ์: เลือกกระจกเอง → "กระจก<ชื่อกระจก>" · ไม่งั้นชื่อวัสดุเดิม */
+export function roofMaterialLabel(material, spec) {
+  const g = roofGlassChoice(material, spec);
+  return g ? 'กระจก' + glassDisplayName(g) : String(material ?? '');
+}
+
 /** รายการค่าทั้งหมดแบบแบน (value) — ใช้แทน allGlassKeys เดิม */
 export function glassOptionValues(PB) {
   return glassOptionGroups(PB).flatMap((g) => g.items.map((i) => i.value));

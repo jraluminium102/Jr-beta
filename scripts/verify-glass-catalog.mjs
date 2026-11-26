@@ -8,7 +8,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { GLASS_NAMED, GLASS_NO_PRICE, GLASS_EXTRA, glassPriceKey, glassDisplayName, glassCanonical, glassOptionGroups, glassOptionValues } from "../src/lib/calculator40/glass-catalog.mjs";
+import { GLASS_NAMED, GLASS_NO_PRICE, GLASS_EXTRA, glassPriceKey, glassDisplayName, glassCanonical, glassOptionGroups, glassOptionValues, glassGroupsOnly, ROOF_GLASS_STD, roofMaterialLabel } from "../src/lib/calculator40/glass-catalog.mjs";
 import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
 import { computeCost, glassMM } from "../src/lib/calculator40/engine.mjs";
 
@@ -101,7 +101,29 @@ console.log("\n═══ 🔎 ค้นหากระจก (GlassPicker) ═�
   const read = (f) => fs.readFileSync(path.join(__dirname, "..", f), "utf8");
   const files = ["src/components/Calculator40Client.tsx", "src/components/calculator40/RoomComposer.tsx", "src/components/calculator40/SubPanesSection.tsx"];
   const cnt = files.map((f) => (read(f).match(/<GlassPicker\b/g) || []).length);
-  ok("ช่องกระจกทั้ง 6 จุดใช้ตัวค้นหา (หน้าคิดราคา 2 · ห้องกระจก 3 · ผสมบาน 1) = " + cnt.join("/"), cnt[0] === 2 && cnt[1] === 3 && cnt[2] === 1);
+  // 26 พ.ย.69 ห้องกระจกมีช่อง "ชนิดกระจกหลังคา" เพิ่ม 1 จุด (หน้าคิดราคาใช้ช่อง type glass ตัวเดิม)
+  ok("ช่องกระจกทั้ง 7 จุดใช้ตัวค้นหา (หน้าคิดราคา 2 · ห้องกระจก 4 · ผสมบาน 1) = " + cnt.join("/"), cnt[0] === 2 && cnt[1] === 4 && cnt[2] === 1);
+
+  // ── หลังคากระจก เลือกชนิดกระจกลามิเนต (เจ้าของ 26 พ.ย.69) ──
+  const lam = flat(glassGroupsOnly(groups, "ลามิเนต"));
+  ok("กระจกหลังคา: มีแต่ลามิเนต ไม่มีแผ่นแทนกระจก (" + lam.length + " รายการ)", lam.length >= 30 && lam.every((i) => (i.label + i.value).includes("ลามิเนต")));
+  ok("กระจกหลังคา: ทุกตัวมีราคาในตารางกระจก", lam.every((i) => PB.GLASS[glassPriceKey(i.value)] > 0));
+  // กระจกมาตรฐานของวัสดุมุง ต้องราคาเท่าตารางหลังคา — ไม่งั้น "ไม่เลือก" กับ "เลือกตัวมาตรฐานเอง" ราคาไม่เท่ากัน
+  ok("กระจกมาตรฐานหลังคา ราคาตรงตารางหลังคา (4+4 · 5+5)", Object.entries(ROOF_GLASS_STD).every(([m, g]) => PB.GLASS[glassPriceKey(g)] === PB.ROOFMAT[m]));
+  ok("ชื่อวัสดุมุง: เลือกกระจกเอง = กระจก + ชื่อ · ไม่เลือก/ไม่ใช่กระจก = ชื่อเดิม",
+    roofMaterialLabel("กระจก 4+4", { roofglass: lam[0].value }) === "กระจก" + lam[0].label && roofMaterialLabel("กระจก 4+4", {}) === "กระจก 4+4" && roofMaterialLabel("ไวนิล", { roofglass: lam[0].value }) === "ไวนิล");
+  // ราคา: หลังคา 4×3 ม. เลือกกระจกเอง → ทุนต่างจากมาตรฐาน = พื้นที่ × เผื่อเศษ 1.2 × ส่วนต่างราคากระจก
+  {
+    const P = PRODUCTS.roof, pick = "ลามิเนตใส ฟิล์มเขียว 0.76 หนา 5+5 มม.";
+    const o = { w: 400, h: 300, p: 1, form: P.defForm, material: "กระจก 4+4", profitPct: 30, installProfitPct: 30, addons: {} };
+    const r0 = computeCost(PB, P, o), r1 = computeCost(PB, P, { ...o, spec: { roofglass: pick } }), r2 = computeCost(PB, P, { ...o, spec: { roofglass: ROOF_GLASS_STD["กระจก 4+4"] } });
+    const g1 = r1.lines.filter((l) => l.roofGlass);
+    const area = g1.reduce((x, l) => x + l.qty, 0);
+    ok("หลังคากระจก: เลือกเอง ทุนต่าง = พื้นที่ × 1.2 × ส่วนต่างราคา", g1.length > 0 && Math.abs((r1.cost.total - r0.cost.total) - area * 1.2 * (PB.GLASS[glassPriceKey(pick)] - PB.ROOFMAT["กระจก 4+4"])) < 1);
+    ok("หลังคากระจก: เลือกตัวมาตรฐานเอง = ราคาเท่าไม่เลือก", Math.abs(r2.cost.total - r0.cost.total) < 0.01 && Math.abs(r2.sell.withInstall - r0.sell.withInstall) < 0.01);
+    ok("หลังคาไวนิล: ค่ากระจกที่ค้างอยู่ไม่มีผล", computeCost(PB, P, { ...o, material: "ไวนิล", spec: { roofglass: pick } }).cost.total === computeCost(PB, P, { ...o, material: "ไวนิล" }).cost.total);
+  }
+  ok("ทุกรุ่นที่มุงกระจกได้ มีช่องชนิดกระจกหลังคา", Object.values(PRODUCTS).filter((p) => (p.materials || []).some((m) => String(m).startsWith("กระจก"))).every((p) => (p.specOpts || []).some((x) => x.key === "roofglass" && x.type === "glass")));
   ok("ไม่เหลือ <select> กระจกแบบเก่า (optgroup รายการกระจก)", files.every((f) => !/<optgroup key=\{(g|gp)\.cat\}/.test(read(f))));
 }
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);

@@ -120,6 +120,7 @@ export default function CompareClient({ pb, stockCount }: { pb: any; stockCount:
           {/* ช่องตัวเลข (เช่น สูงสัน หลังคาจั่ว) ต้องกรอกได้ด้วย ไม่งั้นเทสได้ค่าเดียว
               ฟิลด์ "[สลับ]" ใช้เฉพาะตอนชนิดใบ = ระแนงสลับ → ล็อกไว้เหมือนหน้าคิดราคา (กันเลือกกล่อง B ทั้งที่ไม่ใช่ระแนงผสม) */}
           {(prod?.specOpts ?? []).map((o: any) => {
+            if (o.type === "glass") return null;   // ช่องเลือกกระจก (ช่องแสง / กระจกหลังคา) ไม่เกี่ยวกับการเทียบใบตัด — เดิมขึ้นเป็นดรอปดาวน์เปล่า
             const altLocked = typeof o.label === "string" && o.label.startsWith("[สลับ]") && spec.gslat !== "ระแนงสลับ";
             return (
               <div key={o.key}>

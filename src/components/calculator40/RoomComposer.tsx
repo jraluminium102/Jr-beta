@@ -30,7 +30,7 @@ import AddonsSection from "@/components/calculator40/AddonsSection";
 import { ALU_COLOR_LABEL, resolveAluColor, aluColorKeysFor } from "@/lib/calculator40/alu-colors";
 // ชื่อโชว์/ลำดับกระจกตามลิสต์เจ้าของ (4 พ.ย.69) — ชุดเดียวกับหน้า G1
 // @ts-expect-error — ESM JS ล้วน
-import { glassOptionGroups, glassDisplayName, glassCanonical } from "@/lib/calculator40/glass-catalog.mjs";
+import { glassOptionGroups, glassDisplayName, glassCanonical, glassGroupsOnly, isRoofGlassMaterial, roofMaterialLabel, ROOF_GLASS_STD } from "@/lib/calculator40/glass-catalog.mjs";
 import GlassPicker from "@/components/calculator40/GlassPicker";
 // @ts-expect-error — engine เป็น ESM JS ล้วน
 import { computeCost, ceil100, CEIL_RATE } from "@/lib/calculator40/engine.mjs";
@@ -646,6 +646,10 @@ export default function RoomComposer({
   const [roofW, setRoofW] = useState(ini.roofW ?? "4");
   const [roofL, setRoofL] = useState(ini.roofL ?? "3");
   const [roofMaterial, setRoofMaterial] = useState(ini.roofMaterial ?? "ไวนิล");
+  // ชนิดกระจกหลังคา (26 พ.ย.69) — มีผลเฉพาะวัสดุมุงกระจก · ว่าง = กระจกมาตรฐานของวัสดุมุง · ส่งเข้าเอนจินทาง spec.roofglass
+  const [roofGlass, setRoofGlass] = useState<string>(ini.roofGlass ?? "");
+  const roofSpec = roofGlass ? { roofglass: roofGlass } : {};
+  const roofMatLabel = roofMaterialLabel(roofMaterial, roofSpec) as string;
   const [roofSegs, setRoofSegs] = useState<{ w: string; l: string }[]>(() => (Array.isArray(ini.roofSegs) ? ini.roofSegs : []));
   const [roofAddons, setRoofAddons] = useState<Record<string, any>>(() => ini.roofAddons || {});
   // product ของทรงที่เลือก (roof/roof_gable/roof_slide มีอยู่ครบใน products.mjs)
@@ -741,7 +745,7 @@ export default function RoomComposer({
     // เลื่อน (roof_slide) จำนวนบานเริ่ม 2 · อื่น ๆ 1
     const pnl = prod.defaults?.p ?? 1;
     const rOpt: any = {
-      w: w * 100, h: l * 100, p: pnl, form: prod.defForm, material: roofMaterial, profitPct, installProfitPct: profitPct, addons: roofAddons,
+      w: w * 100, h: l * 100, p: pnl, form: prod.defForm, material: roofMaterial, spec: roofSpec, profitPct, installProfitPct: profitPct, addons: roofAddons,
       ...(profitOpt && profitOpt.manual ? { profitManual: true, profitMat: profitOpt.mat ?? profitPct, profitProd: profitOpt.prod ?? profitPct, profitInst: profitOpt.inst ?? profitPct, installProfitPct: profitOpt.inst ?? profitPct } : {}),
     };
     // ม่านซิปบนหลังคา (Skylight) — คิดจากรุ่นม่านซิปจริง ส่งเข้า opt.roofZipR4 (แบบ mosquito)
@@ -753,13 +757,13 @@ export default function RoomComposer({
     if (roofIsAwning) roofSegs.forEach((sg) => {
       const sw = (Number(sg.w) || 0) * 100, sh = (Number(sg.l) || 0) * 100;
       if (!(sw > 0 && sh > 0)) return;
-      const sr: any = computeCost(pb, prod, { w: sw, h: sh, p: 1, form: prod.defForm, material: roofMaterial, profitPct, installProfitPct: profitPct, addons: {},
+      const sr: any = computeCost(pb, prod, { w: sw, h: sh, p: 1, form: prod.defForm, material: roofMaterial, spec: roofSpec, profitPct, installProfitPct: profitPct, addons: {},
         ...(profitOpt && profitOpt.manual ? { profitManual: true, profitMat: profitOpt.mat ?? profitPct, profitProd: profitOpt.prod ?? profitPct, profitInst: profitOpt.inst ?? profitPct, installProfitPct: profitOpt.inst ?? profitPct } : {}) });
       t += sr.sell.withInstall; tm += sellOf(sr, "mfg");
     });
     return { all: t, mfg: tm };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roofOn, roofShapeId, roofW, roofL, roofMaterial, roofSegs, roofAddons, pb, profitPct, profitKey]);
+  }, [roofOn, roofShapeId, roofW, roofL, roofMaterial, roofGlass, roofSegs, roofAddons, pb, profitPct, profitKey]);
   const roofTotalAll = roofTotals.all, roofTotalMfg = roofTotals.mfg;
   const roofTotal = isMfg ? roofTotalMfg : roofTotalAll;
 
@@ -830,7 +834,7 @@ export default function RoomComposer({
   }), [sides]);
 
   // รายละเอียดหลังคา/ฝ้า (ชนิด+ขนาด) → ขึ้นใบเสนอราคา (เดิมมีแค่ยอด ฿)
-  const roofDesc = roofOn ? `หลังคา${roofShapeLabel} ${roofMaterial} ${roofW}×${roofL} ม.` : "";
+  const roofDesc = roofOn ? `หลังคา${roofShapeLabel} ${roofMatLabel} ${roofW}×${roofL} ม.` : "";
   const ceilDesc = ceilOn ? `ฝ้า ${CEIL_TYPES.find((t) => t.key === ceilType)?.label || ceilType} ${ceilW}×${ceilL} ม.` : "";
 
   // สเปคสรุป (หมวด "รายละเอียดงาน") — มุ้ง(ด้านไหน) / หลังคา(วัสดุ+รางน้ำ ฯลฯ) · สีอลู+กระจก เติมฝั่ง client
@@ -840,16 +844,16 @@ export default function RoomComposer({
     if (mosqSides.length) out.push(`มุ้ง: ด้าน ${mosqSides.join(", ")}`);
     if (roofOn) {
       const extras = addonSummary(roofAddons).replace(/^ \+ /, "");
-      out.push(`หลังคา${roofShapeLabel}: ${roofMaterial}${extras ? ` (${extras})` : ""}`);
+      out.push(`หลังคา${roofShapeLabel}: ${roofMatLabel}${extras ? ` (${extras})` : ""}`);
     }
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sides, roofOn, roofShapeId, roofMaterial, roofAddons]);
+  }, [sides, roofOn, roofShapeId, roofMaterial, roofGlass, roofAddons]);
 
   // สแนป state ทั้งห้อง (0093) — parent เก็บเป็น "สูตร" ในใบเสนอ · โหลดกลับผ่าน prop initial
   const savedState = {
     sides, sideColorOvr,
-    roofOn, roofShapeId, roofW, roofL, roofMaterial, roofSegs, roofAddons,
+    roofOn, roofShapeId, roofW, roofL, roofMaterial, ...(roofGlass ? { roofGlass } : {}), roofSegs, roofAddons,
     ceilOn, ceilType, ceilW, ceilL, ceilInsul, ceilPos, ceilDir,
     floorOn, floorMat, floorW, floorL, floorRate, floorDisc,
     ...(floorMat === "wpc" ? { floorModel, floorH, floorEdgeW, floorEdgeL } : {}),
@@ -1272,6 +1276,15 @@ export default function RoomComposer({
                     {(roofProd.materials || []).map((m: string) => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </label>
+                {/* หลังคากระจก → เลือกชนิดกระจกลามิเนตได้ (ลิสต์เดียวกับประตู/หน้าต่าง เอาเฉพาะลามิเนต) · ไม่เลือก = กระจกมาตรฐาน ราคาเดิม */}
+                {isRoofGlassMaterial(roofMaterial) && (
+                  <div className="block">
+                    <span className="text-xs font-medium text-ink-3">ชนิดกระจกหลังคา (ลามิเนต)</span>
+                    <GlassPicker value={roofGlass} onChange={(v) => setRoofGlass(v)} className="mt-1" ariaLabel="ชนิดกระจกหลังคา"
+                      groups={glassGroupsOnly(glassOptionGroups(pb), "ลามิเนต") as { cat: string; items: { value: string; label: string }[] }[]}
+                      emptyLabel={`กระจกมาตรฐาน (${(ROOF_GLASS_STD as Record<string, string>)[roofMaterial] ?? roofMaterial})`} />
+                  </div>
+                )}
 
                 {/* หลังคาหลายช่วง (ขยัก) — เฉพาะกันสาด */}
                 {roofIsAwning && (
@@ -1576,7 +1589,7 @@ export default function RoomComposer({
           })}
           {roofOn && (
             <div className="flex items-center justify-between">
-              <span className="text-ink-2">หลังคา ({roofMaterial} · {fmtNum(roofArea)} ตร.ม.)</span>
+              <span className="text-ink-2">หลังคา ({roofMatLabel} · {fmtNum(roofArea)} ตร.ม.)</span>
               <Pair mfg={roofTotalMfg} all={roofTotalAll} isMfg={isMfg} />
             </div>
           )}
