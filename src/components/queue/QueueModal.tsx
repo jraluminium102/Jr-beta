@@ -15,7 +15,7 @@ import DateField from "@/components/ui/DateField";
 import { formatThaiPhone } from "@/lib/phone";
 import {
   FEE_OPTIONS, PAYMENT_OPTIONS, JOB_SIZE_META, STATUS_META, STATUS_ORDER, parseLatLng, estimateMinutes, isOfficeOn,
-  LEAD_SOURCES, LEAD_SOURCE_LABEL, LEAD_CODE_MAX, normLeadCode, leadSourceFromCode,
+  LEAD_SOURCES, LEAD_CODE_MAX, normLeadCode, leadSourceFromCode, leadSourceOptionLabel, LEAD_SURVEY_TEXT,
   type QueueEntry, type QueueSales, type JobSize, type QueueStatus, type QueueTeam,
 } from "@/lib/queue";
 import { parseContactBlob } from "@/lib/queue-paste";
@@ -248,6 +248,7 @@ export function QueueModal({
   // ---- วางข้อความแล้วเติมข้อมูลอัตโนมัติ ----
   const [pasteText, setPasteText] = useState("");
   const [pasteMsg, setPasteMsg] = useState("");
+  const [surveyCopied, setSurveyCopied] = useState(false); // (0175) ก๊อปแบบสอบถาม "รู้จัก JR จากไหน"
   function applyPaste() {
     const p = parseContactBlob(pasteText);
     const got: string[] = [];
@@ -2007,7 +2008,8 @@ export function QueueModal({
                 aria-label="ที่มาของลูกค้า"
                 className="glass-soft rounded-lg px-2 py-2 text-sm outline-none min-w-0 flex-1">
                 <option value="">— ยังไม่ระบุ —</option>
-                {LEAD_SOURCES.map((k) => <option key={k} value={k}>{LEAD_SOURCE_LABEL[k]}</option>)}
+                {/* เลข + ชื่อ ตรงกับแบบสอบถามที่ส่งลูกค้า (ลูกค้าตอบเลขไหน เลือกเลขนั้น) */}
+                {LEAD_SOURCES.map((k) => <option key={k} value={k}>{leadSourceOptionLabel(k)}</option>)}
               </select>
               <input value={f.lead_source_code}
                 onChange={(e) => set("lead_source_code", normLeadCode(e.target.value))}
@@ -2020,6 +2022,17 @@ export function QueueModal({
                 maxLength={LEAD_CODE_MAX} aria-label="รหัสแอด"
                 placeholder="รหัสแอด เช่น A12" className="glass-soft rounded-lg px-3 py-2 outline-none w-36 shrink-0" />
             </div>
+            {/* ก๊อปแบบสอบถามไปวางแชทลูกค้า — ลูกค้าตอบเป็นเลข แล้วเลือกเลขเดียวกันในช่องด้านบน */}
+            {!readOnly && (
+              <button type="button"
+                onClick={async () => {
+                  try { await navigator.clipboard.writeText(LEAD_SURVEY_TEXT); setSurveyCopied(true); setTimeout(() => setSurveyCopied(false), 2000); }
+                  catch { window.prompt("ก๊อปข้อความนี้ไปวางแชทลูกค้า", LEAD_SURVEY_TEXT); }
+                }}
+                className="press mt-1 inline-flex items-center gap-1 text-[11px] text-brand hover:underline">
+                <Icon name="clipboard" size={12} /> {surveyCopied ? "ก๊อปแล้ว วางในแชทลูกค้าได้เลย" : "ก๊อปแบบสอบถามถามลูกค้า (ตอบเป็นเลข 1–6)"}
+              </button>
+            )}
             {jobCat === "ประเมินหน้างาน" && f.custMode === "old" && !f.lead_source && !f.lead_source_code && (
               <span className="mt-1 block text-[11px] text-ink-3">ลูกค้าเก่า: เว้นว่างได้ ระบบใช้ที่มาเดิมของลูกค้าให้เอง</span>
             )}

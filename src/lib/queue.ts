@@ -86,15 +86,29 @@ export const OLD_CUSTOMER_LABEL = "ลูกค้าเก่า";
 //   contact_channel = ช่องทางที่ใช้คุย (LINE/FB) · lead_source = ลูกค้ารู้จักเราจากไหน — คนละเรื่องกัน
 export const LEAD_SOURCES = ["FB_AD", "TIKTOK", "YOUTUBE", "GOOGLE_MAPS", "REFERRAL", "OTHER", "UNKNOWN"] as const;
 export type LeadSource = (typeof LEAD_SOURCES)[number];
+//   26 พ.ย.69 เจ้าของ: แก้แคปชั่นแอดที่ยิงอยู่ไม่ได้ → ใช้แบบสอบถามสั้น ๆ ให้ลูกค้าตอบเป็นเลข 1–6 แทน
+//   ชื่อ + ลำดับตัวเลือกในฟอร์มคิวต้อง "ตรงกับแบบสอบถาม" (เจ้าของท้วงว่าไม่แมช) — แก้ชื่อที่นี่ที่เดียว ค่าในฐานข้อมูลไม่เปลี่ยน
 export const LEAD_SOURCE_LABEL: Record<LeadSource, string> = {
-  FB_AD: "แอดเฟส",
+  FB_AD: "เฟซบุ๊ก / ไอจี",
   TIKTOK: "TikTok",
   YOUTUBE: "YouTube",
   GOOGLE_MAPS: "Google Maps",
-  REFERRAL: "ลูกค้าเก่า/แนะนำ",
+  REFERRAL: "เพื่อนหรือคนรู้จักแนะนำ",
   OTHER: "อื่น ๆ",
   UNKNOWN: "ไม่ทราบ",
 };
+// เลขข้อในแบบสอบถามที่ส่งให้ลูกค้า (ลูกค้าตอบเป็นตัวเลข) — "ไม่ทราบ" ไม่มีเลข (ลูกค้าไม่ตอบ)
+export const LEAD_SURVEY_NO: Partial<Record<LeadSource, number>> = { FB_AD: 1, TIKTOK: 2, YOUTUBE: 3, GOOGLE_MAPS: 4, REFERRAL: 5, OTHER: 6 };
+// ชื่อตัวเลือกในฟอร์มคิว: "1 · เฟซบุ๊ก / ไอจี" … "ไม่ทราบ / ลูกค้าไม่ตอบ"
+export const leadSourceOptionLabel = (k: LeadSource): string =>
+  LEAD_SURVEY_NO[k] ? `${LEAD_SURVEY_NO[k]} · ${LEAD_SOURCE_LABEL[k]}` : "ไม่ทราบ / ลูกค้าไม่ตอบ";
+// แบบสอบถามที่แอดมินก๊อปส่งลูกค้า (ถ้อยคำเจ้าของเคาะ 26 พ.ย.69) — ตัวเลือกสร้างจากรายการเดียวกับฟอร์ม กันเลขเพี้ยน
+export const LEAD_SURVEY_TEXT = [
+  "หากลูกค้าสะดวก รบกวนตอบแบบสอบถามสั้น ๆ ให้ทางร้านหน่อยนะคะ 🙏",
+  "ลูกค้ารู้จัก JR จากช่องทางไหนคะ",
+  ...LEAD_SOURCES.filter((k) => LEAD_SURVEY_NO[k]).map((k) => `${LEAD_SURVEY_NO[k]} ${LEAD_SOURCE_LABEL[k]}`),
+  "ตอบเป็นตัวเลขได้เลยค่ะ ขอบคุณมากนะคะ",
+].join("\n");
 // ค่าในฐานข้อมูล → คีย์ที่ใช้รายงาน · ว่าง/ค่าแปลก = ไม่ทราบ (ไม่ซ่อน ไม่เดา)
 export const leadSourceKey = (v: unknown): LeadSource =>
   (LEAD_SOURCES as readonly string[]).includes(String(v ?? "")) ? (v as LeadSource) : "UNKNOWN";

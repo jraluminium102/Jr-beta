@@ -32,7 +32,16 @@ const ok = (name, cond) => eq(name, !!cond, true);
 
 // ── ① ชุดค่าที่มา: ปิด 7 ค่า ตรงกับ migration ──
 eq("① ชุดที่มา 7 ค่า", [...Q.LEAD_SOURCES], ["FB_AD", "TIKTOK", "YOUTUBE", "GOOGLE_MAPS", "REFERRAL", "OTHER", "UNKNOWN"]);
-eq("① ป้ายไทยครบ", Q.LEAD_SOURCES.map((k) => Q.LEAD_SOURCE_LABEL[k]), ["แอดเฟส", "TikTok", "YouTube", "Google Maps", "ลูกค้าเก่า/แนะนำ", "อื่น ๆ", "ไม่ทราบ"]);
+eq("① ป้ายไทยครบ", Q.LEAD_SOURCES.map((k) => Q.LEAD_SOURCE_LABEL[k]), ["เฟซบุ๊ก / ไอจี", "TikTok", "YouTube", "Google Maps", "เพื่อนหรือคนรู้จักแนะนำ", "อื่น ๆ", "ไม่ทราบ"]);
+// ตัวเลือกในฟอร์มคิวต้องตรงกับแบบสอบถามที่ส่งลูกค้า ทั้งเลขและชื่อ (เจ้าของท้วง 26 พ.ย.69 ว่าไม่แมช)
+eq("① ตัวเลือกในฟอร์ม = เลข + ชื่อ ตามแบบสอบถาม", Q.LEAD_SOURCES.map((k) => Q.leadSourceOptionLabel(k)),
+  ["1 · เฟซบุ๊ก / ไอจี", "2 · TikTok", "3 · YouTube", "4 · Google Maps", "5 · เพื่อนหรือคนรู้จักแนะนำ", "6 · อื่น ๆ", "ไม่ทราบ / ลูกค้าไม่ตอบ"]);
+eq("① แบบสอบถาม (ถ้อยคำเจ้าของ)", Q.LEAD_SURVEY_TEXT, [
+  "หากลูกค้าสะดวก รบกวนตอบแบบสอบถามสั้น ๆ ให้ทางร้านหน่อยนะคะ 🙏",
+  "ลูกค้ารู้จัก JR จากช่องทางไหนคะ",
+  "1 เฟซบุ๊ก / ไอจี", "2 TikTok", "3 YouTube", "4 Google Maps", "5 เพื่อนหรือคนรู้จักแนะนำ", "6 อื่น ๆ",
+  "ตอบเป็นตัวเลขได้เลยค่ะ ขอบคุณมากนะคะ",
+].join("\n"));
 const mig = read("supabase/migrations/0175_queue_lead_source.sql");
 for (const k of Q.LEAD_SOURCES) ok(`① migration มีค่า ${k}`, mig.includes(`'${k}'`));
 ok("① migration idempotent (add column if not exists)", /add column if not exists lead_source text/.test(mig) && /add column if not exists lead_source_code text/.test(mig));
