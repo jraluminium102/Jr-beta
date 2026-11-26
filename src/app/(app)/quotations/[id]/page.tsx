@@ -119,6 +119,13 @@ export default async function QuotationDetail({ params, searchParams }: { params
               />
             </>
           )}
+          {/* สร้างซ้ำ (26 พ.ย.69) — ก๊อปเป็นใบใหม่ เลขใหม่ · เปลี่ยนลูกค้า/หัวบิลได้ในฟอร์มก่อนบันทึก · ใบนี้ไม่ถูกแตะ */}
+          {writable && (
+            <Link href={`/quotations/new?copy=${q.id}`} title="ก๊อปใบนี้เป็นใบเสนอราคาใบใหม่ (เลขใหม่) เปลี่ยนหัวบิลได้"
+              className="press inline-flex items-center gap-1.5 glass-soft rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark">
+              <Icon name="copy" size={16} /> สร้างซ้ำ
+            </Link>
+          )}
           {writable && (
             <QuotationActions id={q.id} status={q.status} hasActiveBilling={hasActiveBilling} />
           )}

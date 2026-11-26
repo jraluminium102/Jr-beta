@@ -50,6 +50,10 @@ export async function POST(req: Request) {
   const wht_rate = Number(body.wht_rate) || 0;
   if (discount_pct < 0 || discount_pct > 100) return fail("ส่วนลดต้องอยู่ 0–100%");
 
+  // สร้างซ้ำ (26 พ.ย.69): id ใบต้นทาง — ต้องเป็นจำนวนเต็มบวก ค่าเพี้ยน = ถือว่าไม่ใช่การสร้างซ้ำ
+  const copyOfRaw = Number(body.copy_of);
+  const copyOf = Number.isInteger(copyOfRaw) && copyOfRaw > 0 ? copyOfRaw : 0;
+
   const supabase = createClient();
 
   // 0) ลูกค้า: เลือกจากทะเบียน (customer_id) หรือ "ลูกค้านอกระบบ" กรอกชื่อใหม่ → สร้างเข้าระบบก่อน
@@ -204,6 +208,11 @@ export async function POST(req: Request) {
     }
   }
 
+  // สร้างซ้ำ: ใบต้นทางต้องไม่ถูกแตะ — ถ้าผูกงานแล้วจะทำให้ใบต้นทางถูกยกเลิก (แทนใบเดิม / ใบเบาเช็คลิสต์) ไม่ยอมให้บันทึก
+  if (copyOf > 0 && replaceQuotations.some((r) => r.id === copyOf)) {
+    return fail("ใบที่สร้างซ้ำผูกกับงานของใบเดิมไม่ได้ เพราะจะทำให้ใบเดิมถูกยกเลิก — เลือก “งานใหม่” แล้วบันทึกอีกครั้ง (ถ้าจะแก้ใบเดิมให้ใช้ Rev ที่ใบเดิม)", 409);
+  }
+
   // 2b) ไม่ได้เลือกงานมา → ผูกงานจากคิวประเมินที่ "ยังรอใบเสนอ" ให้อัตโนมัติ (เจ้าของ 26 ต.ค.69)
   //   "สร้างใบเสนอจากคิวประเมินตามปกติ ส่วนมากก็ผูกงาน แต่บางใบไม่ผูก"
   //   ต้นเหตุ: เดิม trigger trg_quotation_link (DB) ยัดใบที่ไม่มีงานเข้างานล่าสุดของลูกค้าให้เงียบ ๆ → 0156 ปิดไป (กันออเดอร์ปน)
@@ -241,24 +250,31 @@ export async function POST(req: Request) {
   // กันบันทึกซ้ำ (เจ้าของ 26 ต.ค.69 "กดบันทึกซ้ำ ละจะเซฟซ้ำทำไม" — QT2569100080/0081 ยอดเดียวกัน 2 ใบ)
   //   คนเดิม + ลูกค้าเดิม + ยอดสุทธิเดิม + จำนวนรายการเท่ากัน ภายใน 2 นาที = กดซ้ำ → คืนใบเดิม ไม่ออกเลขใหม่
   //   (หน้าฟอร์มล็อกปุ่มแล้ว · ชั้นนี้กันกรณีเน็ตช้า/ส่งซ้ำ/เปิด 2 แท็บ)
+  //   สร้างซ้ำ (copy_of · 26 พ.ย.69): ใบต้นทางเหมือนกันทุกข้ออยู่แล้ว ต้องไม่นับเป็น "กดซ้ำ" — ตัดใบต้นทางออกจากการเทียบ
+  //     (กดบันทึกใบที่ก๊อปซ้ำ 2 ครั้ง ยังโดนกันเหมือนเดิม เพราะใบก๊อปใบแรกไม่ใช่ใบต้นทาง)
+  //   + หัวบิลต้องตรงกันด้วยถึงนับว่ากดซ้ำ — สร้างซ้ำ 2 ใบติดกัน รายการเดียวกันแต่ออกคนละนาม = ตั้งใจออก 2 ใบ ห้ามกลืน
+  const hdrSig = (s: Record<string, unknown> | null | undefined) =>
+    ["name", "kind", "tax_id", "branch", "address", "postal_code"].map((k) => String(s?.[k] ?? "").trim()).join("|");
   if (!replaceQuotations.length) {
     const since = new Date(Date.now() - 2 * 60 * 1000).toISOString();
-    const { data: recent } = await supabase
+    let recentQ = supabase
       .from("quotations")
-      .select("id, code, quotation_items(name, qty, unit_price)")
+      .select("id, code, customer_snapshot, quotation_items(name, qty, unit_price)")
       .eq("customer_id", cust.id)
       .eq("created_by", profile.id)
       .eq("net", t.net)
       .neq("status", "cancelled")
-      .gte("created_at", since)
+      .gte("created_at", since);
+    if (copyOf > 0) recentQ = recentQ.neq("id", copyOf);
+    const { data: recent } = await recentQ
       .order("created_at", { ascending: false })
       .limit(1);
-    const dup = (recent ?? [])[0] as { id: number; code: string; quotation_items?: { name: string; qty: number; unit_price: number }[] } | undefined;
+    const dup = (recent ?? [])[0] as { id: number; code: string; customer_snapshot?: Record<string, unknown> | null; quotation_items?: { name: string; qty: number; unit_price: number }[] } | undefined;
     // QA 30 ต.ค.69: เดิมเทียบแค่ "จำนวนข้อเท่ากัน" → ใบที่ตั้งใจออกใหม่ (แก้ชื่อ/ราคาต่อข้อ แต่ยอดสุทธิเท่าเดิม) ถูกกลืน
     //   → เทียบ ชื่อ+จำนวน+ราคาต่อหน่วย ทุกข้อ (เรียงแล้ว) ต้องตรงกันทั้งชุดถึงถือว่ากดซ้ำ
     const sig = (xs: { name?: unknown; qty?: unknown; unit_price?: unknown }[]) =>
       xs.map((x) => `${String(x.name ?? "").trim()}|${Number(x.qty) || 0}|${Number(x.unit_price) || 0}`).sort().join("\n");
-    if (dup && Array.isArray(dup.quotation_items) && dup.quotation_items.length === items.length && sig(dup.quotation_items) === sig(items)) {
+    if (dup && hdrSig(dup.customer_snapshot) === hdrSig(snapshot) && Array.isArray(dup.quotation_items) && dup.quotation_items.length === items.length && sig(dup.quotation_items) === sig(items)) {
       return ok({ id: dup.id, code: dup.code, replaced: [], duplicate: true }, 200);
     }
   }
@@ -350,6 +366,19 @@ export async function POST(req: Request) {
       recordId: String(id),
       oldValue: { status: st },
       newValue: { status: "cancelled", replaced_by: q.code },
+    });
+  }
+
+  // สร้างซ้ำ → จดไว้ว่าก๊อปมาจากใบไหน ใครทำ (ย้อนรอยได้ · ไม่มีผลกับเอกสาร)
+  if (copyOf > 0) {
+    await audit({
+      jobId: jobId ?? null,
+      userId: profile.id,
+      action: "QUOTATION_COPIED",
+      table: "quotations",
+      recordId: String(q.id),
+      oldValue: null,
+      newValue: { code: q.code, copied_from_id: copyOf },
     });
   }
 

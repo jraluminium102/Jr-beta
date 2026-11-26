@@ -113,6 +113,7 @@ export default async function QuotationsPage({ searchParams }: { searchParams?: 
                   <th className="font-semibold">วันที่</th>
                   <th className="text-right font-semibold">ยอดสุทธิ</th>
                   <th className="font-semibold">สถานะ</th>
+                  {canWrite(profile?.role) && <th className="font-semibold"><span className="sr-only">สร้างซ้ำ</span></th>}
                 </tr>
               </thead>
               <tbody>
@@ -139,6 +140,14 @@ export default async function QuotationsPage({ searchParams }: { searchParams?: 
                     <td className="text-ink-2">{r.issue_date}</td>
                     <td className="text-right font-semibold">{baht(r.net)} บาท</td>
                     <td><StatusBadge status={r.status} /></td>
+                    {canWrite(profile?.role) && (
+                      <td className="text-right">
+                        <Link href={`/quotations/new?copy=${r.id}`} title={`ก๊อป ${r.code} เป็นใบเสนอราคาใบใหม่ (เลขใหม่) เปลี่ยนหัวบิลได้`}
+                          className="press inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-ink-2 whitespace-nowrap">
+                          <Icon name="copy" size={13} /> สร้างซ้ำ
+                        </Link>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

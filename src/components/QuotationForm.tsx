@@ -18,7 +18,24 @@ type ActiveJob = { id: string; job_code: string | null; current_stage: number; s
 type Item = { name: string; detail: string; qty: number; unit_price: number; category: string; product_id: string; group_label: string; calc_recipe?: unknown };
 const blank = (): Item => ({ name: "", detail: "", qty: 1, unit_price: 0, category: "", product_id: "", group_label: "", calc_recipe: null });
 
-export default function QuotationForm({ customers }: { customers: Pick<Customer, "id" | "name" | "job" | "address">[] }) {
+type Hdr = { kind: string; name: string; tax_id: string; branch: string; postal_code: string; address: string; contact_person: string; phone: string };
+const EMPTY_HDR: Hdr = { kind: "INDIVIDUAL", name: "", tax_id: "", branch: "สำนักงานใหญ่", postal_code: "", address: "", contact_person: "", phone: "" };
+
+// "สร้างซ้ำ" (เจ้าของ 26 พ.ย.69) — ข้อมูลจากใบต้นทาง เตรียมโดย /quotations/new?copy=<id>
+//   ใบใหม่ได้เลขใหม่ตอนบันทึก · ใบต้นทางไม่ถูกแตะ · เปลี่ยนลูกค้า/หัวบิลได้ก่อนบันทึก
+export type QuotationCopySource = {
+  id: number; code: string;
+  customer_id: number | null; customer_name: string;
+  header: Hdr;                       // หัวบิลของใบต้นทาง (ที่พิมพ์อยู่บนใบ)
+  items: Item[];
+  vat_rate: number; wht_rate: number;
+  discounts: DiscountLine[];
+  note: string;
+  conditions_work: string[] | null;  // null = ใช้เงื่อนไขมาตรฐาน
+  conditions_quote: string[] | null;
+};
+
+export default function QuotationForm({ customers, copyFrom = null }: { customers: Pick<Customer, "id" | "name" | "job" | "address">[]; copyFrom?: QuotationCopySource | null }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const manualMode = searchParams?.get("manual") === "1";
@@ -56,10 +73,14 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
   const [billingProfiles, setBillingProfiles] = useState<BProf[]>([]);
   const [billingProfileId, setBillingProfileId] = useState<number | "">("");
   // หัวบิล (ออกในนาม) — autofill จากนามออกบิลที่เลือก (ซึ่งมาจากคิวได้) · แก้ได้แบบเดียวกับใบวางบิล
-  type Hdr = { kind: string; name: string; tax_id: string; branch: string; postal_code: string; address: string; contact_person: string; phone: string };
-  const EMPTY_HDR: Hdr = { kind: "INDIVIDUAL", name: "", tax_id: "", branch: "สำนักงานใหญ่", postal_code: "", address: "", contact_person: "", phone: "" };
   const [hdr, setHdr] = useState<Hdr>(EMPTY_HDR);
   const [hdrOpen, setHdrOpen] = useState(false);
+  // สร้างซ้ำ: หัวบิลของใบต้นทาง — ใช้ตราบที่ยังเป็นลูกค้าคนเดิมและยังไม่ได้เลือกนามออกบิลอื่น (เลือกนามอื่น/เปลี่ยนลูกค้า = ใช้ของใหม่)
+  const [copyHdr, setCopyHdr] = useState<Hdr | null>(copyFrom ? copyFrom.header : null);
+  // ผู้ใช้พิมพ์แก้หัวบิลเองแล้ว → ห้ามเอาหัวบิลของใบต้นทางมาทับตอนรายการนามออกบิลโหลดเสร็จทีหลัง (เน็ตช้า = พิมพ์ไปแล้วหาย)
+  const hdrTouched = useRef(false);
+  const editHdr = (p: Partial<Hdr>) => { hdrTouched.current = true; setHdr((h) => ({ ...h, ...p })); };
+  const copyCustomerOk = !!copyFrom && copyFrom.customer_id != null && customers.some((c) => c.id === copyFrom.customer_id);
   const [calcCustomer, setCalcCustomer] = useState("");
   const [calcMatched, setCalcMatched] = useState(false); // preselect ให้แล้ว (จาก calc)
   const [calcExact, setCalcExact] = useState(false); // มั่นใจ (customer_id ตรง/ชื่อตรงเป๊ะรายเดียว) → เขียว; เดา → เหลือง
@@ -73,6 +94,23 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
 
   // รับรายการจากเครื่องคิดราคา (สะพาน) ตอน mount
   useEffect(() => {
+    // สร้างซ้ำจากใบเดิม → เติมฟอร์มจากใบต้นทาง · เคลียร์สะพานเครื่องคิดราคาที่ค้าง กันรายการอื่นมาปน
+    if (copyFrom) {
+      try { sessionStorage.removeItem("jr_quote_items"); localStorage.removeItem("jr_quote_bridge"); } catch { /* ignore */ }
+      if (copyFrom.items.length) setItems(copyFrom.items.map((it) => ({ ...it })));
+      setDiscounts(copyFrom.discounts.map((d) => ({ ...d })));
+      setVat(copyFrom.vat_rate);
+      setWht(copyFrom.wht_rate);
+      setNote(copyFrom.note);
+      if (copyFrom.conditions_work || copyFrom.conditions_quote) {
+        if (copyFrom.conditions_work) setCondWork([...copyFrom.conditions_work]);
+        if (copyFrom.conditions_quote) setCondQuote([...copyFrom.conditions_quote]);
+        setCondEdited(true);
+      }
+      if (copyCustomerOk) setCustomerId(copyFrom.customer_id as number);
+      setHdrOpen(true);   // เปิดช่องหัวบิลไว้เลย — เจ้าของ: "ที่สำคัญ ต้องเปลี่ยนหัวบิลได้ด้วย"
+      return;
+    }
     // เปิดจากปุ่ม "พิมพ์ใบเสนอเอง" (manual=1) → เริ่มใหม่ล้วน · เคลียร์สะพานเก่าทิ้ง กันรายการ calc ค้างเด้งเข้ามา
     if (manualMode) {
       try { sessionStorage.removeItem("jr_quote_items"); localStorage.removeItem("jr_quote_bridge"); } catch { /* ignore */ }
@@ -193,6 +231,8 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
 
   // autofill หัวบิลจากนามออกบิลที่เลือก (นามหลัก/บริษัทที่มาจากคิว จะเด้งเข้าฟอร์มให้เลย)
   useEffect(() => {
+    // สร้างซ้ำ + ยังเป็นลูกค้าของใบต้นทาง → หัวบิลตามใบต้นทาง (ไม่ใช่นามหลักในทะเบียน ซึ่งอาจต่างจากที่พิมพ์บนใบเดิม)
+    if (copyHdr && copyFrom && customerId !== "" && customerId === copyFrom.customer_id) { if (!hdrTouched.current) setHdr({ ...copyHdr }); return; }
     const p = billingProfiles.find((x) => x.id === billingProfileId);
     if (!p) { setHdr(EMPTY_HDR); return; }
     setHdr({
@@ -202,7 +242,23 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
       address: p.address ?? "", contact_person: p.contact_person ?? "", phone: p.phone ?? "",
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [billingProfileId, billingProfiles]);
+  }, [billingProfileId, billingProfiles, copyHdr]);
+
+  // สลับ เลือกจากทะเบียน ↔ พิมพ์ชื่อใหม่: ลูกค้าใหม่ต้องไม่พกหัวบิลของลูกค้าที่เลือกไว้ก่อนหน้า (ไม่งั้นหัวเอกสารเป็นชื่อคนเก่า)
+  function switchCustMode(m: "existing" | "new") {
+    if (m === custMode) return;
+    hdrTouched.current = false;
+    setCustMode(m);
+    if (m === "new") { setHdr(EMPTY_HDR); return; }
+    if (copyHdr && copyFrom && customerId !== "" && customerId === copyFrom.customer_id) { setHdr({ ...copyHdr }); return; }
+    const p = billingProfiles.find((x) => x.id === billingProfileId);
+    setHdr(p ? {
+      kind: p.kind === "COMPANY" ? "COMPANY" : "INDIVIDUAL",
+      name: p.bill_name ?? "", tax_id: p.tax_id ?? "",
+      branch: p.branch || "สำนักงานใหญ่", postal_code: p.postal_code ?? "",
+      address: p.address ?? "", contact_person: p.contact_person ?? "", phone: p.phone ?? "",
+    } : EMPTY_HDR);
+  }
 
   // ยอดพรีวิวต้องนับแถวชุดเดียวกับตอนบันทึก (ชื่อ + จำนวน > 0) — 30 ต.ค.69 นักบัญชีตรวจ: เดิมพรีวิวนับแถวไม่มีชื่อด้วย แต่ตอนบันทึกตัดทิ้ง → ยอดที่บันทึกต่ำกว่าที่เห็น
   const validItems = useMemo(() => items.filter((i) => i.name.trim() && Number(i.qty) > 0), [items]);
@@ -305,6 +361,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
           wht_rate: wht,
           note,
           ...(hdr.name.trim() ? { header_override: hdr } : {}),
+          ...(copyFrom ? { copy_of: copyFrom.id } : {}),   // สร้างซ้ำ — เซิร์ฟเวอร์ไม่นับใบต้นทางเป็น "กดบันทึกซ้ำ"
           ...(condEdited ? {
             conditions_work: condWork.map((s) => s.trim()).filter(Boolean),
             conditions_quote: condQuote.map((s) => s.trim()).filter(Boolean),
@@ -317,7 +374,8 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
       let json = await res.json().catch(() => ({}));
       // งานที่เลือกมีใบเสนออยู่แล้ว → ให้เลือก (แทนใบเดิม / แยกออเดอร์ใหม่ / ยกเลิก) · ไม่มีทางผูกซ้อนอีกแล้ว
       if (res.status === 409 && json?.needs_choice) {
-        const pick = await askJobChoice({ message: String(json.error ?? ""), canReplace: json.can_replace ?? null, existing: json.existing ?? [] });
+        const canReplace = copyFrom && Number(json.can_replace) === copyFrom.id ? null : (json.can_replace ?? null);
+        const pick = await askJobChoice({ message: String(json.error ?? ""), canReplace, existing: json.existing ?? [] });
         if (pick === "cancel") { setBusy(false); return; }
         res = await post(pick === "replace" ? { replaceId: Number(json.can_replace) } : { detachJob: true });
         json = await res.json().catch(() => ({}));
@@ -379,9 +437,19 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
         <span className="text-white rounded-xl w-9 h-9 inline-flex items-center justify-center bg-brand shadow-brand">
           <Icon name="file" size={18} />
         </span>
-        สร้างใบเสนอราคา {fromCalc ? "(จากเครื่องคิดราคา)" : "(พิมพ์เอง / นอกระบบ)"}
-        <span className="text-xs font-normal text-ink-3">{fromCalc ? "(รายการ+ราคา+ลูกค้า ดึงมาจากเครื่องคิดราคา · รหัสออกอัตโนมัติเมื่อบันทึก)" : "(พิมพ์รายการเอง · เลย์เอาท์เหมือนใบเสนอปกติ · รหัสออกอัตโนมัติเมื่อบันทึก)"}</span>
+        สร้างใบเสนอราคา {copyFrom ? `(สร้างซ้ำจาก ${copyFrom.code})` : fromCalc ? "(จากเครื่องคิดราคา)" : "(พิมพ์เอง / นอกระบบ)"}
+        <span className="text-xs font-normal text-ink-3">{copyFrom ? "(ก๊อปรายการ+ราคา+หัวบิลมาจากใบเดิม · ได้เลขใหม่เมื่อบันทึก)" : fromCalc ? "(รายการ+ราคา+ลูกค้า ดึงมาจากเครื่องคิดราคา · รหัสออกอัตโนมัติเมื่อบันทึก)" : "(พิมพ์รายการเอง · เลย์เอาท์เหมือนใบเสนอปกติ · รหัสออกอัตโนมัติเมื่อบันทึก)"}</span>
       </h1>
+
+      {copyFrom && (
+        <div className="rounded-xl px-4 py-3 bg-sky-50 border border-sky-200 text-sm text-sky-900 space-y-1">
+          <div><b>สร้างซ้ำจาก {copyFrom.code}</b>{copyFrom.customer_name ? ` (${copyFrom.customer_name})` : ""} — เป็นใบใหม่ ได้เลขใหม่ตอนกดบันทึก · ใบเดิมไม่ถูกแก้</div>
+          <div className="text-[13px]">เปลี่ยนลูกค้าได้ที่ช่องแรก · เปลี่ยนหัวบิล (ออกในนามใคร ที่อยู่ เลขผู้เสียภาษี) ได้ที่ช่อง “แก้หัวบิล” ด้านล่าง · รายการ ราคา ส่วนลด แก้ได้ตามปกติ</div>
+          {!copyCustomerOk && (
+            <div className="text-[13px] text-amber-800 font-semibold">ลูกค้าของใบเดิมไม่อยู่ในทะเบียนที่ใช้งานแล้ว — เลือกลูกค้าใหม่ หรือกด “พิมพ์ชื่อใหม่” ก่อนบันทึก</div>
+          )}
+        </div>
+      )}
 
       {fromCalc && (
         <button type="button" onClick={() => router.push("/calculator40?restore=1")}
@@ -396,7 +464,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
             {/* เลือกลูกค้า: จากทะเบียน หรือ พิมพ์ชื่อใหม่ (นอกระบบ → สร้างเข้าระบบตอนบันทึก) */}
             <div className="inline-flex rounded-lg overflow-hidden border border-gray-300 text-sm mb-3">
               {(["existing", "new"] as const).map((m) => (
-                <button key={m} type="button" onClick={() => setCustMode(m)}
+                <button key={m} type="button" onClick={() => switchCustMode(m)}
                   className={`px-3 py-1.5 ${custMode === m ? "bg-brand text-white" : "text-ink-2"}`}>
                   {m === "existing" ? "เลือกจากทะเบียน" : "พิมพ์ชื่อใหม่ (นอกระบบ)"}
                 </button>
@@ -406,7 +474,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
               {custMode === "existing" ? (
                 <label className="block">
                   <span className="text-xs font-medium text-ink-3">ลูกค้า / งาน *</span>
-                  <select value={customerId} onChange={(e) => setCustomerId(e.target.value ? Number(e.target.value) : "")}
+                  <select value={customerId} onChange={(e) => { hdrTouched.current = false; setCustomerId(e.target.value ? Number(e.target.value) : ""); }}
                     className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none">
                     <option value="">— เลือกลูกค้า —</option>
                     {customers.map((c) => (
@@ -456,7 +524,7 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
             {customerId !== "" && billingProfiles.length > 0 && (
               <label className="block mt-3">
                 <span className="text-xs font-medium text-ink-3">ออกเอกสารในนาม</span>
-                <select value={billingProfileId} onChange={(e) => setBillingProfileId(e.target.value ? Number(e.target.value) : "")}
+                <select value={billingProfileId} onChange={(e) => { hdrTouched.current = false; setCopyHdr(null); setBillingProfileId(e.target.value ? Number(e.target.value) : ""); }}
                   className="w-full glass-soft rounded-lg px-3 py-2.5 mt-1 outline-none">
                   {billingProfiles.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -477,31 +545,33 @@ export default function QuotationForm({ customers }: { customers: Pick<Customer,
                 </button>
                 {hdrOpen && (
                   <div className="mt-2 rounded-xl border border-brand/20 bg-brand/5 p-3 space-y-2">
-                    <p className="text-[11px] text-ink-3">autofill จากนามออกบิลที่เลือก (ถ้ามีข้อมูลบริษัทจากคิวจะเด้งเข้าให้) · แก้ตรงนี้ = เฉพาะใบนี้ · ไม่กระทบทะเบียน</p>
+                    <p className="text-[11px] text-ink-3">{copyHdr && copyFrom && customerId === copyFrom.customer_id
+                      ? `หัวบิลตามใบเดิม ${copyFrom.code} · แก้ตรงนี้ = เฉพาะใบใหม่นี้ · ไม่กระทบใบเดิมและทะเบียน`
+                      : "autofill จากนามออกบิลที่เลือก (ถ้ามีข้อมูลบริษัทจากคิวจะเด้งเข้าให้) · แก้ตรงนี้ = เฉพาะใบนี้ · ไม่กระทบทะเบียน"}</p>
                     <div className="inline-flex rounded-lg overflow-hidden border border-gray-300 text-sm">
                       {(["INDIVIDUAL", "COMPANY"] as const).map((k) => (
-                        <button key={k} type="button" onClick={() => setHdr({ ...hdr, kind: k })}
+                        <button key={k} type="button" onClick={() => editHdr({ kind: k })}
                           className={`px-3 py-1.5 ${hdr.kind === k ? "bg-brand text-white" : "text-ink-2"}`}>
                           {k === "INDIVIDUAL" ? "บุคคลธรรมดา" : "นิติบุคคล"}
                         </button>
                       ))}
                     </div>
-                    <input value={hdr.name} onChange={(e) => setHdr({ ...hdr, name: e.target.value })} placeholder={hdr.kind === "COMPANY" ? "ชื่อบริษัท" : "ชื่อลูกค้า"} className="w-full glass-soft rounded-lg px-3 py-2 text-sm outline-none" />
-                    <input value={hdr.tax_id} onChange={(e) => setHdr({ ...hdr, tax_id: e.target.value })} placeholder="เลขผู้เสียภาษี 13 หลัก" className="w-full glass-soft rounded-lg px-3 py-2 text-sm outline-none" />
+                    <input value={hdr.name} onChange={(e) => editHdr({ name: e.target.value })} placeholder={hdr.kind === "COMPANY" ? "ชื่อบริษัท" : "ชื่อลูกค้า"} className="w-full glass-soft rounded-lg px-3 py-2 text-sm outline-none" />
+                    <input value={hdr.tax_id} onChange={(e) => editHdr({ tax_id: e.target.value })} placeholder="เลขผู้เสียภาษี 13 หลัก" className="w-full glass-soft rounded-lg px-3 py-2 text-sm outline-none" />
                     {hdr.kind === "COMPANY" && (
                       <div className="flex items-center gap-3 text-sm flex-wrap">
-                        <label className="flex items-center gap-1.5"><input type="radio" checked={!hdr.branch.startsWith("สาขา")} onChange={() => setHdr({ ...hdr, branch: "สำนักงานใหญ่" })} /> สำนักงานใหญ่</label>
-                        <label className="flex items-center gap-1.5"><input type="radio" checked={hdr.branch.startsWith("สาขา")} onChange={() => setHdr({ ...hdr, branch: "สาขาที่ " })} /> สาขา</label>
+                        <label className="flex items-center gap-1.5"><input type="radio" checked={!hdr.branch.startsWith("สาขา")} onChange={() => editHdr({ branch: "สำนักงานใหญ่" })} /> สำนักงานใหญ่</label>
+                        <label className="flex items-center gap-1.5"><input type="radio" checked={hdr.branch.startsWith("สาขา")} onChange={() => editHdr({ branch: "สาขาที่ " })} /> สาขา</label>
                         {hdr.branch.startsWith("สาขา") && (
-                          <input value={hdr.branch.replace(/\D/g, "")} onChange={(e) => setHdr({ ...hdr, branch: "สาขาที่ " + e.target.value.replace(/\D/g, "") })} placeholder="รหัสสาขา" className="glass-soft rounded-lg px-3 py-2 text-sm outline-none max-w-[150px]" />
+                          <input value={hdr.branch.replace(/\D/g, "")} onChange={(e) => editHdr({ branch: "สาขาที่ " + e.target.value.replace(/\D/g, "") })} placeholder="รหัสสาขา" className="glass-soft rounded-lg px-3 py-2 text-sm outline-none max-w-[150px]" />
                         )}
                       </div>
                     )}
-                    <textarea value={hdr.address} onChange={(e) => setHdr({ ...hdr, address: e.target.value })} rows={2} placeholder="ที่อยู่ออกบิล (ตามภาษี)" className="w-full glass-soft rounded-lg px-3 py-2 text-sm outline-none resize-none" />
-                    <input value={hdr.postal_code} onChange={(e) => setHdr({ ...hdr, postal_code: e.target.value.replace(/\D/g, "").slice(0, 5) })} inputMode="numeric" placeholder="รหัสไปรษณีย์" className="glass-soft rounded-lg px-3 py-2 text-sm outline-none max-w-[160px]" />
+                    <textarea value={hdr.address} onChange={(e) => editHdr({ address: e.target.value })} rows={2} placeholder="ที่อยู่ออกบิล (ตามภาษี)" className="w-full glass-soft rounded-lg px-3 py-2 text-sm outline-none resize-none" />
+                    <input value={hdr.postal_code} onChange={(e) => editHdr({ postal_code: e.target.value.replace(/\D/g, "").slice(0, 5) })} inputMode="numeric" placeholder="รหัสไปรษณีย์" className="glass-soft rounded-lg px-3 py-2 text-sm outline-none max-w-[160px]" />
                     <div className="grid grid-cols-2 gap-2">
-                      <input value={hdr.contact_person} onChange={(e) => setHdr({ ...hdr, contact_person: e.target.value })} placeholder="ผู้ติดต่อ" className="glass-soft rounded-lg px-3 py-2 text-sm outline-none" />
-                      <input value={hdr.phone} onChange={(e) => setHdr({ ...hdr, phone: e.target.value })} placeholder="เบอร์โทร" className="glass-soft rounded-lg px-3 py-2 text-sm outline-none" />
+                      <input value={hdr.contact_person} onChange={(e) => editHdr({ contact_person: e.target.value })} placeholder="ผู้ติดต่อ" className="glass-soft rounded-lg px-3 py-2 text-sm outline-none" />
+                      <input value={hdr.phone} onChange={(e) => editHdr({ phone: e.target.value })} placeholder="เบอร์โทร" className="glass-soft rounded-lg px-3 py-2 text-sm outline-none" />
                     </div>
                   </div>
                 )}
