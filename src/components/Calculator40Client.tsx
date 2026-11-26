@@ -56,7 +56,7 @@ import { stockColorOfCalc } from "@/lib/calculator40/stock-link";
 import { cutHardwareLines, HANDLE_FIELDS, HW_FROM_CUTLIST } from "@/lib/calculator40/hardware-from-cutlist";
 // ชื่อโชว์/ลำดับกระจกตามลิสต์เจ้าของ (4 พ.ย.69) — แหล่งเดียวทั้งดรอปดาวน์ ใบเสนอ และ engine
 // @ts-expect-error — ESM JS ล้วน
-import { glassOptionGroups, glassDisplayName, glassCanonical, glassGroupsOnly, roofGlassChoice, roofMaterialLabel, ROOF_GLASS_STD } from "@/lib/calculator40/glass-catalog.mjs";
+import { glassOptionGroups, glassDisplayName, glassCanonical, glassGroupsOnly, roofGlassChoice, roofMaterialLabel, isRoofGlassMaterial, roofMaterialOptions, roofMaterialSelectValue, ROOF_GLASS_MATERIAL_LABELS, ROOF_GLASS_STD } from "@/lib/calculator40/glass-catalog.mjs";
 import GlassPicker from "@/components/calculator40/GlassPicker";
 import { computeServices, EMPTY_SERVICES, type ServiceInput } from "@/lib/calculator40/services";
 import SubPanesSection from "@/components/calculator40/SubPanesSection";
@@ -1042,7 +1042,9 @@ export default function Calculator40Client({ customers = [], priceOverride, line
     const litLn = ((result as any).lines || []).find((l: any) => l?.cat === "glass" && l.litType);
     if (litLn) jobLines.push("- ช่องแสง: " + glassLine(litLn.litType).replace(/^- /, ""));
     // หลังคากระจกที่เลือกชนิดกระจกเอง → พิมพ์ชื่อกระจกตัวนั้น (ไม่ใช่ "กระจก 4+4" ของวัสดุมุง)
-    if (material) jobLines.push(`- วัสดุ: ${roofGlassChoice(material, spec) ? roofMaterialLabel(material, spec) : (prod.materialLabels?.[material] ?? material)}`);
+    //   ไม่เลือก = ตัวมาตรฐาน ก็พิมพ์ชื่อเต็มเหมือนกัน (เจ้าของ: 4+4 / 5+5 ก็คือกระจกลามิเนต ไม่แยก)
+    const roofGlassOn = isRoofGlassMaterial(material) && (prod.specOpts ?? []).some((o: any) => o.key === "roofglass");
+    if (material) jobLines.push(`- วัสดุ: ${roofGlassOn ? roofMaterialLabel(material, spec) : (prod.materialLabels?.[material] ?? material)}`);
     if (sheetColor) jobLines.push(`- วัสดุมุง: ${sheetColor}`);
     if (mqDetail) jobLines.push(`- ${mqDetail}`); // มุ้ง + ผ้ามุ้ง (ตามที่เลือก)
     specDetailLines.forEach((l) => jobLines.push(l));
@@ -1614,7 +1616,9 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                   <GlassSelect label="กระจก (ทั้งห้อง)" value={glassType} onChange={setGlassType} groups={glassGroups} />
                 )}
                 {prod.materials?.length > 0 && (
-                  <Select label={prod.materialLabel || "วัสดุ"} value={material} onChange={setMaterial} opts={prod.materials} labels={prod.materialLabels} />
+                  <Select label={prod.materialLabel || "วัสดุ"} value={roofMaterialSelectValue(material, prod.materials)} onChange={setMaterial}
+                    opts={roofMaterialOptions(prod.materials)}
+                    labels={(prod.materials as string[]).some((m) => isRoofGlassMaterial(m)) ? { ...(prod.materialLabels || {}), ...ROOF_GLASS_MATERIAL_LABELS } : prod.materialLabels} />
                 )}
                 {/* ช่องรายด้าน/รอยต่อ ของหลังคาหลายด้าน ไม่โผล่ตรงนี้ — RoofSidesEditor คุมทั้งชุด (ไม่งั้นได้ 2 ที่กรอกชนกัน) */}
                 {(prod.specOpts ?? []).filter((o: any) => !/^(side\d|joint\d)/.test(o.key)).map((o: any) => {
@@ -1636,8 +1640,8 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                   }
                   // specOpts type:'glass' → เลือกกระจกจากลิสต์กระจกเดียวกับช่องกระจกหลัก (ไม่รวมแผ่นแทนกระจก) · ว่าง = ตามบาน (13 พ.ย.69)
                   if (o.type === 'glass') {
-                    // หลังคากระจก (26 พ.ย.69): ช่องนี้โผล่เฉพาะตอนวัสดุมุงเป็นกระจก · ว่าง = กระจกมาตรฐานของวัสดุมุง (ราคาเดิม)
-                    //   รายการ = กระจกลามิเนตทั้งหมดจากลิสต์เดียวกับประตู/หน้าต่าง (glassOnly)
+                    // หลังคากระจก (26 พ.ย.69): ช่องนี้โผล่เฉพาะตอนวัสดุมุงเป็น "กระจกลามิเนต" · ว่าง = ตัวมาตรฐาน (ลามิเนตใส ฟิล์มใส 0.38 · ราคาเดิม)
+                    //   รายการ = กระจกลามิเนตทั้งหมดจากลิสต์เดียวกับประตู/หน้าต่าง (glassOnly) · ความหนาเลือกที่นี่ที่เดียว
                     const matNow = String(material || prod.defMaterial || "");
                     if (o.forMaterial && !matNow.startsWith(o.forMaterial)) return null;
                     const stdName = (ROOF_GLASS_STD as Record<string, string>)[matNow];
@@ -1647,7 +1651,7 @@ export default function Calculator40Client({ customers = [], priceOverride, line
                         <GlassPicker value={spec[o.key] ?? ""} onChange={(v) => setSpec((s) => ({ ...s, [o.key]: v }))}
                           groups={o.glassOnly ? glassGroupsOnly(glassGroups, o.glassOnly) : glassGroups.filter((g) => g.cat !== "แทนกระจก")} className="mt-1.5" ariaLabel={o.label}
                           emptyLabel={o.forMaterial
-                            ? `กระจกมาตรฐาน (${stdName ?? matNow})`
+                            ? `${stdName ?? matNow} (มาตรฐาน)`
                             : `ตามบาน (${glassDisplayName(glassType || prod.defGlass || "")})`} />
                       </div>
                     );

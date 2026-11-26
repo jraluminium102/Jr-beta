@@ -8,7 +8,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { GLASS_NAMED, GLASS_NO_PRICE, GLASS_EXTRA, glassPriceKey, glassDisplayName, glassCanonical, glassOptionGroups, glassOptionValues, glassGroupsOnly, ROOF_GLASS_STD, roofMaterialLabel } from "../src/lib/calculator40/glass-catalog.mjs";
+import { GLASS_NAMED, GLASS_NO_PRICE, GLASS_EXTRA, glassPriceKey, glassDisplayName, glassCanonical, glassOptionGroups, glassOptionValues, glassGroupsOnly, ROOF_GLASS_STD, roofMaterialLabel, roofMaterialOptions, roofMaterialSelectValue } from "../src/lib/calculator40/glass-catalog.mjs";
 import { PRODUCTS } from "../src/lib/calculator40/products.mjs";
 import { computeCost, glassMM } from "../src/lib/calculator40/engine.mjs";
 
@@ -110,8 +110,27 @@ console.log("\n═══ 🔎 ค้นหากระจก (GlassPicker) ═�
   ok("กระจกหลังคา: ทุกตัวมีราคาในตารางกระจก", lam.every((i) => PB.GLASS[glassPriceKey(i.value)] > 0));
   // กระจกมาตรฐานของวัสดุมุง ต้องราคาเท่าตารางหลังคา — ไม่งั้น "ไม่เลือก" กับ "เลือกตัวมาตรฐานเอง" ราคาไม่เท่ากัน
   ok("กระจกมาตรฐานหลังคา ราคาตรงตารางหลังคา (4+4 · 5+5)", Object.entries(ROOF_GLASS_STD).every(([m, g]) => PB.GLASS[glassPriceKey(g)] === PB.ROOFMAT[m]));
-  ok("ชื่อวัสดุมุง: เลือกกระจกเอง = กระจก + ชื่อ · ไม่เลือก/ไม่ใช่กระจก = ชื่อเดิม",
-    roofMaterialLabel("กระจก 4+4", { roofglass: lam[0].value }) === "กระจก" + lam[0].label && roofMaterialLabel("กระจก 4+4", {}) === "กระจก 4+4" && roofMaterialLabel("ไวนิล", { roofglass: lam[0].value }) === "ไวนิล");
+  ok("ชื่อวัสดุมุง: เลือกกระจกเอง = กระจก + ชื่อ · ไม่เลือก = ตัวมาตรฐานชื่อเต็ม · ไม่ใช่กระจก = ชื่อเดิม",
+    roofMaterialLabel("กระจก 4+4", { roofglass: lam[0].value }) === "กระจก" + lam[0].label && roofMaterialLabel("กระจก 4+4", {}) === "กระจกลามิเนตใส ฟิล์มใส 0.38 หนา 4+4 มม."
+    && roofMaterialLabel("กระจก 5+5", {}) === "กระจกลามิเนตใส ฟิล์มใส 0.38 หนา 5+5 มม." && roofMaterialLabel("ไวนิล", { roofglass: lam[0].value }) === "ไวนิล");
+  // เจ้าของท้วงรอบ 2: 4+4 / 5+5 ก็คือกระจกลามิเนต ไม่แยก → ช่องวัสดุมุงมีกระจกตัวเดียว
+  {
+    const mats = PRODUCTS.roof.materials, shown = roofMaterialOptions(mats);
+    ok("ช่องวัสดุมุง: กระจกเหลือตัวเลือกเดียว (" + shown.filter((m) => m.startsWith("กระจก")).join(",") + ")", shown.filter((m) => m.startsWith("กระจก")).length === 1 && shown.length === mats.length - 1);
+    ok("ใบเก่าที่เก็บ กระจก 5+5 → ช่องวัสดุมุงโชว์ตัวเลือกกระจกตัวเดียวกัน", roofMaterialSelectValue("กระจก 5+5", mats) === "กระจก 4+4" && roofMaterialSelectValue("ไวนิล", mats) === "ไวนิล");
+    ok("รุ่นที่ไม่มีกระจก: รายการวัสดุไม่ถูกแตะ", roofMaterialOptions(PRODUCTS.wall_roofsheet.materials).length === PRODUCTS.wall_roofsheet.materials.length);
+    // เลือกตัวมาตรฐาน 5+5 จากรายการ (วัสดุมุงภายในยังเป็น 4+4) = ราคาเท่าใบเก่าที่เก็บ "กระจก 5+5" ทุกบาท ทั้งทุนและขาย
+    for (const id of ["roof", "roof_gable", "roof_slide"]) {
+      const P = PRODUCTS[id], o = { w: 400, h: 300, p: P.defaults?.p ?? 1, form: P.defForm, profitPct: 30, installProfitPct: 30, addons: {} };
+      const old55 = computeCost(PB, P, { ...o, material: "กระจก 5+5" });
+      const new55 = computeCost(PB, P, { ...o, material: "กระจก 4+4", spec: { roofglass: ROOF_GLASS_STD["กระจก 5+5"] } });
+      ok(id + ": เลือก 5+5 มาตรฐานจากรายการ = ใบเก่า กระจก 5+5 (ทุน " + Math.round(old55.cost.total) + " · ขาย " + Math.round(old55.sell.withInstall) + ")",
+        Math.abs(old55.cost.total - new55.cost.total) < 0.01 && Math.abs(old55.sell.withInstall - new55.sell.withInstall) < 0.01 && Math.abs(old55.sell.mfgOnly - new55.sell.mfgOnly) < 0.01);
+      const old44 = computeCost(PB, P, { ...o, material: "กระจก 4+4" });
+      const new44 = computeCost(PB, P, { ...o, material: "กระจก 5+5", spec: { roofglass: ROOF_GLASS_STD["กระจก 4+4"] } });
+      ok(id + ": ใบเก่า 5+5 เปลี่ยนเป็น 4+4 มาตรฐานจากรายการ = ราคา กระจก 4+4", Math.abs(old44.cost.total - new44.cost.total) < 0.01 && Math.abs(old44.sell.withInstall - new44.sell.withInstall) < 0.01);
+    }
+  }
   // ราคา: หลังคา 4×3 ม. เลือกกระจกเอง → ทุนต่างจากมาตรฐาน = พื้นที่ × เผื่อเศษ 1.2 × ส่วนต่างราคากระจก
   {
     const P = PRODUCTS.roof, pick = "ลามิเนตใส ฟิล์มเขียว 0.76 หนา 5+5 มม.";

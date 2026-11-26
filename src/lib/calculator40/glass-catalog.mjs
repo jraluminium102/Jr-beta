@@ -179,22 +179,45 @@ export function glassGroupsOnly(groups, word) {
 }
 
 // ── หลังคากระจก: เลือกชนิดกระจกลามิเนตเองได้ (เจ้าของ 26 พ.ย.69) ──────────────────────
-//   วัสดุมุง "กระจก 4+4" / "กระจก 5+5" = กระจกมาตรฐาน (ราคาเดิมของหลังคา = ลามิเนตใส ฟิล์มใส 0.38 ราคาเดียวกัน)
-//   spec.roofglass ว่าง = มาตรฐาน · เลือกแล้ว = คิดราคากระจกตัวนั้นจากตารางกระจกเดียวกับประตู/หน้าต่าง
+//   เจ้าของท้วงรอบ 2 (26 พ.ย.69): "กระจก 4+4 / กระจก 5+5 ก็คือกระจกลามิเนตนั่นแหละ ไม่แยกซะงง"
+//   → หน้าจอมีวัสดุมุงกระจกตัวเดียว "กระจกลามิเนต" แล้วเลือกชนิด/ความหนาที่ช่องกระจกช่องเดียว
+//   ภายในยังเก็บ 2 คีย์เดิม (ตารางราคา/ค่าแรงแยกแถวตามความหนา + ใบเสนอเก่าเก็บคีย์นี้ไว้):
+//     "กระจก 4+4" = ลามิเนตใส ฟิล์มใส 0.38 หนา 4+4 · "กระจก 5+5" = ตัวเดียวกันหนา 5+5 (ราคาเท่ากันกับตารางกระจกทุกบาท)
+//   spec.roofglass ว่าง = ตัวมาตรฐานของคีย์นั้น · เลือกแล้ว = คิดราคากระจกตัวนั้นจากตารางกระจกเดียวกับประตู/หน้าต่าง
+//     และเอนจินเลือกแถวตารางตามความหนาของกระจกที่เลือกเอง (รวม ≥ 10 มม. = แถว 5+5)
 export const ROOF_GLASS_SPEC_KEY = 'roofglass';
 export const ROOF_GLASS_STD = {
   'กระจก 4+4': 'ลามิเนตใส ฟิล์มใส 0.38 หนา 4+4 มม.',
   'กระจก 5+5': 'ลามิเนตใส ฟิล์มใส 0.38 หนา 5+5 มม.',
 };
 export const isRoofGlassMaterial = (m) => String(m ?? '').startsWith('กระจก');
+/** คีย์ที่หน้าจอใช้แทน "กระจกลามิเนต" ในช่องวัสดุมุง + ป้ายที่โชว์ */
+export const ROOF_GLASS_MATERIAL = 'กระจก 4+4';
+export const ROOF_GLASS_MATERIAL_LABELS = { 'กระจก 4+4': 'กระจกลามิเนต', 'กระจก 5+5': 'กระจกลามิเนต' };
+/** ตัวเลือกวัสดุมุงบนหน้าจอ: กระจกเหลือตัวเดียว (ซ่อนคีย์กระจกตัวอื่น) · รุ่นที่ไม่มีกระจก = รายการเดิม */
+export function roofMaterialOptions(materials) {
+  const list = Array.isArray(materials) ? materials : [];
+  if (!list.includes(ROOF_GLASS_MATERIAL)) return list;
+  return list.filter((m) => m === ROOF_GLASS_MATERIAL || !isRoofGlassMaterial(m));
+}
+/** ค่าที่ช่องวัสดุมุงควรโชว์ว่าเลือกอยู่ (ใบเก่าที่เก็บ "กระจก 5+5" ก็โชว์เป็น กระจกลามิเนต) */
+export function roofMaterialSelectValue(material, materials) {
+  const list = Array.isArray(materials) ? materials : [];
+  return isRoofGlassMaterial(material) && list.includes(ROOF_GLASS_MATERIAL) ? ROOF_GLASS_MATERIAL : String(material ?? '');
+}
+/** คีย์วัสดุมุงภายในตามความหนาของกระจกที่เลือก (ตารางราคา/ค่าแรงแยกแถว 4+4 กับ 5+5) */
+export function roofGlassMaterialFor(mm) {
+  return Number(mm) >= 10 ? 'กระจก 5+5' : 'กระจก 4+4';
+}
 /** กระจกหลังคาที่เลือกเอง (มีผลเฉพาะเมื่อวัสดุมุงเป็นกระจก) · '' = ใช้มาตรฐานของวัสดุมุง */
 export function roofGlassChoice(material, spec) {
   const g = String((spec || {})[ROOF_GLASS_SPEC_KEY] ?? '');
   return g && isRoofGlassMaterial(material) ? g : '';
 }
-/** ชื่อวัสดุมุงสำหรับโชว์/พิมพ์: เลือกกระจกเอง → "กระจก<ชื่อกระจก>" · ไม่งั้นชื่อวัสดุเดิม */
+/** ชื่อวัสดุมุงสำหรับโชว์/พิมพ์: กระจก → "กระจก<ชื่อกระจกที่ใช้จริง>" (ไม่เลือก = ตัวมาตรฐาน) · วัสดุอื่น = ชื่อเดิม */
 export function roofMaterialLabel(material, spec) {
-  const g = roofGlassChoice(material, spec);
+  if (!isRoofGlassMaterial(material)) return String(material ?? '');
+  const g = roofGlassChoice(material, spec) || ROOF_GLASS_STD[String(material)] || '';
   return g ? 'กระจก' + glassDisplayName(g) : String(material ?? '');
 }
 

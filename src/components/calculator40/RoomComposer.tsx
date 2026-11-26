@@ -30,7 +30,7 @@ import AddonsSection from "@/components/calculator40/AddonsSection";
 import { ALU_COLOR_LABEL, resolveAluColor, aluColorKeysFor } from "@/lib/calculator40/alu-colors";
 // ชื่อโชว์/ลำดับกระจกตามลิสต์เจ้าของ (4 พ.ย.69) — ชุดเดียวกับหน้า G1
 // @ts-expect-error — ESM JS ล้วน
-import { glassOptionGroups, glassDisplayName, glassCanonical, glassGroupsOnly, isRoofGlassMaterial, roofMaterialLabel, ROOF_GLASS_STD } from "@/lib/calculator40/glass-catalog.mjs";
+import { glassOptionGroups, glassDisplayName, glassCanonical, glassGroupsOnly, isRoofGlassMaterial, roofMaterialLabel, roofMaterialOptions, roofMaterialSelectValue, ROOF_GLASS_MATERIAL_LABELS, ROOF_GLASS_STD } from "@/lib/calculator40/glass-catalog.mjs";
 import GlassPicker from "@/components/calculator40/GlassPicker";
 // @ts-expect-error — engine เป็น ESM JS ล้วน
 import { computeCost, ceil100, CEIL_RATE } from "@/lib/calculator40/engine.mjs";
@@ -1271,18 +1271,19 @@ export default function RoomComposer({
                 </div>
                 <label className="block">
                   <span className="text-xs font-medium text-ink-3">วัสดุมุงหลังคา</span>
-                  <select value={roofMaterial} onChange={(e) => setRoofMaterial(e.target.value)}
+                  {/* กระจกเหลือตัวเลือกเดียว "กระจกลามิเนต" — ชนิด/ความหนาเลือกที่ช่องถัดไป */}
+                  <select value={roofMaterialSelectValue(roofMaterial, roofProd.materials)} onChange={(e) => setRoofMaterial(e.target.value)}
                     className="w-full min-h-[40px] glass-soft rounded-lg px-2 py-1.5 mt-1 outline-none text-sm">
-                    {(roofProd.materials || []).map((m: string) => <option key={m} value={m}>{m}</option>)}
+                    {(roofMaterialOptions(roofProd.materials || []) as string[]).map((m: string) => <option key={m} value={m}>{(ROOF_GLASS_MATERIAL_LABELS as Record<string, string>)[m] ?? m}</option>)}
                   </select>
                 </label>
                 {/* หลังคากระจก → เลือกชนิดกระจกลามิเนตได้ (ลิสต์เดียวกับประตู/หน้าต่าง เอาเฉพาะลามิเนต) · ไม่เลือก = กระจกมาตรฐาน ราคาเดิม */}
                 {isRoofGlassMaterial(roofMaterial) && (
                   <div className="block">
-                    <span className="text-xs font-medium text-ink-3">ชนิดกระจกหลังคา (ลามิเนต)</span>
+                    <span className="text-xs font-medium text-ink-3">ชนิดกระจกลามิเนต</span>
                     <GlassPicker value={roofGlass} onChange={(v) => setRoofGlass(v)} className="mt-1" ariaLabel="ชนิดกระจกหลังคา"
                       groups={glassGroupsOnly(glassOptionGroups(pb), "ลามิเนต") as { cat: string; items: { value: string; label: string }[] }[]}
-                      emptyLabel={`กระจกมาตรฐาน (${(ROOF_GLASS_STD as Record<string, string>)[roofMaterial] ?? roofMaterial})`} />
+                      emptyLabel={`${(ROOF_GLASS_STD as Record<string, string>)[roofMaterial] ?? roofMaterial} (มาตรฐาน)`} />
                   </div>
                 )}
 

@@ -33,7 +33,7 @@ export const GLASS_KG_PER_M2_MM = 2.5;
 
 export const STOCK_LEN = 6.4; // ความยาวเส้นอลู stock มาตรฐาน (ม.) — บางรุ่นใช้ 6.0 (ตั้ง prod.stockLen)
 // ชื่อโชว์กระจก (ลิสต์เจ้าของ 4 พ.ย.69) → คีย์ราคาใน PB.GLASS
-import { glassPriceKey, glassDisplayName, roofGlassChoice, GLASS_EXTRA } from './glass-catalog.mjs';
+import { glassPriceKey, glassDisplayName, roofGlassChoice, roofGlassMaterialFor, GLASS_EXTRA } from './glass-catalog.mjs';
 import { FILE_CALC } from './file-calc.mjs';
 
 export function ceil100(x) { return Math.ceil(x / 100) * 100; }
@@ -181,7 +181,16 @@ export function computeCost(PB, prod, opt) {
   //   ใบเสนอเก่าที่บันทึก material ชื่อเดิมไว้ ต้องยังคิดราคาได้ ไม่ใช่ตกไปเป็น 0 เงียบ ๆ
   const materialRaw = opt.material ?? prod.defMaterial ?? null;
   const material0 = (materialRaw && prod.materialAlias && prod.materialAlias[materialRaw]) ? prod.materialAlias[materialRaw] : materialRaw;
-  const material = (singleSlide && singleSlide.key === 'material') ? singleSlide.as : material0;   // ระแนงเลื่อน: รูปแบบการเลื่อนอยู่ในช่อง material
+  let material = (singleSlide && singleSlide.key === 'material') ? singleSlide.as : material0;   // ระแนงเลื่อน: รูปแบบการเลื่อนอยู่ในช่อง material
+  // หลังคากระจก (26 พ.ย.69): หน้าจอมีวัสดุมุง "กระจกลามิเนต" ตัวเดียว ชนิด/ความหนาอยู่ที่ spec.roofglass
+  //   ตารางราคา/ค่าแรงยังแยกแถว "กระจก 4+4" กับ "กระจก 5+5" → เลือกแถวตามความหนาของกระจกที่เลือกเอง
+  {
+    const rg0 = roofGlassChoice(material, opt.spec);
+    if (rg0 && Array.isArray(prod.materials)) {
+      const want = roofGlassMaterialFor(glassMM(glassPriceKey(rg0)) || glassMM(rg0));
+      if (prod.materials.includes(want)) material = want;
+    }
+  }
   const glassType = opt.glassType ?? prod.defGlass ?? 'เขียว 6มม.';
   // ── กำไรแยก 3 ส่วน (ไฟล์ถอดทุน v9 บล็อก "⚙ ตั้งค่ากำไร" ท้ายชีตคิดทุนทุกใบ) ──
   //   ค่าวัสดุ · ค่าผลิต · ค่าติดตั้ง ตั้ง % แยกกันได้ · ค่าตั้งต้นต่อรุ่นอยู่ใน PB.PROFIT

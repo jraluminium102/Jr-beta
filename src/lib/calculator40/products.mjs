@@ -3385,7 +3385,7 @@ PRODUCTS.bansolid.solidFamily = true;
 //   ทุกรุ่นที่วัสดุมุงเลือกกระจกได้ (หลังคา · จั่ว · เลื่อน · หลายด้าน · กลาสเฮ้าส์) ได้ช่องนี้เหมือนกันหมด
 //   type 'glass' = ช่องเลือกกระจกแบบค้นหา · glassOnly = เอาเฉพาะกระจกที่ชื่อมีคำนี้ · forMaterial = โผล่เฉพาะวัสดุมุงที่ขึ้นต้นด้วยคำนี้
 //   ว่าง = กระจกมาตรฐานของวัสดุมุง (ราคาเดิม) · เลือกแล้ว เอนจินคิดราคากระจกตัวนั้น (ดู roofGlassSel ใน engine.mjs)
-export const ROOF_GLASS_SPEC = { key: 'roofglass', type: 'glass', label: 'ชนิดกระจกหลังคา (ลามิเนต)', def: '', glassOnly: 'ลามิเนต', forMaterial: 'กระจก' };
+export const ROOF_GLASS_SPEC = { key: 'roofglass', type: 'glass', label: 'ชนิดกระจกลามิเนต', def: '', glassOnly: 'ลามิเนต', forMaterial: 'กระจก' };
 for (const p of Object.values(PRODUCTS)) {
   if (!Array.isArray(p.materials) || !p.materials.some((m) => String(m).startsWith('กระจก'))) continue;
   if ((p.specOpts || []).some((o) => o.key === ROOF_GLASS_SPEC.key)) continue;
