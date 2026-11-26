@@ -1112,6 +1112,8 @@ function renderHandleModel(cur: string, prod: any, A: AddonsMap, setAddons: (fn:
     const digi: { n: string; p: number; nc?: number; jr?: number }[] = (R39DATA && (R39DATA as any).DIGI) || [];
     const jrOK = prod.id === "open_door" || /โซลิด/.test(prod.name || ""); // JR Prime เฉพาะบานเปิดยูโร/โซลิด (R3.9 jr:1)
     const isEuro = prod.id === "open_door"; // nc → +โช้ค เฉพาะบานเปิดยูโร (R3.9)
+    // 26 พ.ย.69 เจ้าของท้วง "JR Prime ไม่เคยพูดว่าบังคับใส่โช้ค" → เอา nc ออกจาก JR Prime ในตาราง DIGI (r39-data.json + เครื่องคิดราคาเก่า)
+    //   อยากได้โช้คให้เลือกที่ช่อง "โช้คอัพประตู" เอง · ใบเก่าที่บันทึก dgNc ไว้ยังคงราคาเดิม (เลือกรุ่นใหม่ = ล้างธง)
     return (
       <>
         <select

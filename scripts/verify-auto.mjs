@@ -1735,5 +1735,23 @@ console.log("\n═══ 🧱 ไอโซวอลขายเท่าสม�
   ok("สมาร์ทบอร์ดเองไม่ถูกแตะ (ไม่มี sellAs)", computeCost(PB, PRODUCTS.wall_smartboard, { ...o, form: 'ใส่ฉนวน 3"', spec: {} }).sellAs == null);
 }
 
+// ── 🔐 มือจับดิจิตอล JR Prime ไม่บังคับโช้ค (เจ้าของท้วง 26 พ.ย.69 "ไม่เคยพูดนะว่าบังคับใส่") ──
+//   เดิมยกกฎจากเครื่องคิดราคาเก่า: รุ่นที่ติดธง nc บนบานเปิดยูโร บวกโช้ค 5,000 ให้เอง · JR Prime เอาธงออกแล้ว
+console.log("\n═══ 🔐 JR Prime ไม่บังคับโช้ค ═══");
+{
+  const jr = (R39DATA.DIGI || []).find((d) => d.n === "JR Prime");
+  ok("ตารางมือจับดิจิตอล: JR Prime 24,900 ไม่ติดธงบังคับโช้ค", !!jr && jr.p === 24900 && !jr.nc && jr.jr === 1, JSON.stringify(jr));
+  const old = fs.readFileSync("public/calculator/index.html", "utf8");
+  ok("เครื่องคิดราคาเก่า: JR Prime ไม่ติดธงบังคับโช้คเหมือนกัน", /\{n:'JR Prime',p:24900,jr:1\}/.test(old) && !/n:'JR Prime',p:24900,nc:1/.test(old));
+  const o = { w: 90, h: 220, p: 1, color: "white", colorKey: "white", spec: {}, handleQty: 1 };
+  const base = computeCost(PB, PRODUCTS.open_door, { ...o, addons: {} });
+  const withJr = computeCost(PB, PRODUCTS.open_door, { ...o, addons: { digihandle: "24900" } });
+  const line = (withJr.lines || []).find((l) => /มือจับดิจิตอล/.test(l.name || ""));
+  ok("บานเปิดยูโร + JR Prime: บรรทัดมือจับ = 24,900 ไม่มีคำว่าโช้ค", !!line && line.amount === 24900 && !/โช้ค/.test(line.name), line ? line.name + " " + line.amount : "ไม่เจอบรรทัด");
+  // อยากได้โช้คต้องเลือกเอง = บวก 5,000 แยกบรรทัด
+  const withCloser = computeCost(PB, PRODUCTS.open_door, { ...o, addons: { digihandle: "24900", closer: "arm" } });
+  ok("เลือกโช้คเองที่ช่องโช้คอัพประตู = แพงขึ้น 5,000 พอดี", withCloser.sell.withInstall - withJr.sell.withInstall === 5000 && withJr.sell.withInstall > base.sell.withInstall, (withCloser.sell.withInstall - withJr.sell.withInstall) + "");
+}
+
 console.log(`\n═══ สรุป: ✅ ${pass} ผ่าน · ❌ ${fail} ไม่ผ่าน ═══`);
 process.exit(fail ? 1 : 0);
