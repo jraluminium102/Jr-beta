@@ -1748,6 +1748,14 @@ console.log("\n═══ 🔐 JR Prime ไม่บังคับโช้ค �
   const withJr = computeCost(PB, PRODUCTS.open_door, { ...o, addons: { digihandle: "24900" } });
   const line = (withJr.lines || []).find((l) => /มือจับดิจิตอล/.test(l.name || ""));
   ok("บานเปิดยูโร + JR Prime: บรรทัดมือจับ = 24,900 ไม่มีคำว่าโช้ค", !!line && line.amount === 24900 && !/โช้ค/.test(line.name), line ? line.name + " " + line.amount : "ไม่เจอบรรทัด");
+  // เจ้าของสั่งต่อ 26 พ.ย.69 "เอาออกทั้ง 4 รุ่นเลย ให้กดเพิ่มเอาเอง" (S3 · S4 · L600 · X2) → ไม่มีมือจับดิจิตอลรุ่นไหนบวกโช้คเองแล้ว
+  ok("มือจับดิจิตอลทุกรุ่น (" + (R39DATA.DIGI || []).length + ") ไม่ติดธงบังคับโช้ค", (R39DATA.DIGI || []).length === 11 && (R39DATA.DIGI || []).every((d) => !d.nc), (R39DATA.DIGI || []).filter((d) => d.nc).map((d) => d.n).join(","));
+  ok("เครื่องคิดราคาเก่า: ไม่เหลือรุ่นที่ติดธงบังคับโช้ค", !/const DIGI=\[[^\]]*nc:1/.test(old));
+  for (const d of R39DATA.DIGI || []) {
+    const r = computeCost(PB, PRODUCTS.open_door, { ...o, addons: { digihandle: String(d.p) } });
+    const ln = (r.lines || []).find((l) => /มือจับดิจิตอล/.test(l.name || ""));
+    ok("บานเปิดยูโร + " + d.n + ": มือจับ = " + d.p + " ไม่มีโช้คพ่วง", !!ln && ln.amount === d.p && !/โช้ค/.test(ln.name) && r.sell.withInstall - base.sell.withInstall <= d.p, ln ? ln.name + " " + ln.amount : "ไม่เจอบรรทัด");
+  }
   // อยากได้โช้คต้องเลือกเอง = บวก 5,000 แยกบรรทัด
   const withCloser = computeCost(PB, PRODUCTS.open_door, { ...o, addons: { digihandle: "24900", closer: "arm" } });
   ok("เลือกโช้คเองที่ช่องโช้คอัพประตู = แพงขึ้น 5,000 พอดี", withCloser.sell.withInstall - withJr.sell.withInstall === 5000 && withJr.sell.withInstall > base.sell.withInstall, (withCloser.sell.withInstall - withJr.sell.withInstall) + "");
