@@ -59,6 +59,11 @@ export default async function ReceiptsPage({ searchParams }: { searchParams?: { 
             </Link>
           )}
           {profile && can(profile.role as Role, "finance", "write") && (
+            <Link href="/receipts/purchase-tax" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark border border-brand/30 bg-white/60">
+              <Icon name="camera" size={16} /> รายงานภาษีซื้อ
+            </Link>
+          )}
+          {profile && can(profile.role as Role, "finance", "write") && (
             <Link href="/receipts/new-standalone" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark border border-brand/30 bg-white/60">
               <Icon name="plus" size={16} /> ออกใบใหม่ (ไม่ผูกงาน)
             </Link>

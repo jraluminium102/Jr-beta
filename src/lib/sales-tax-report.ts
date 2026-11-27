@@ -103,6 +103,7 @@ export function reportBranch(taxId: string, branch: string): string {
   const b = (branch ?? "").trim();
   if (!b || /สำนักงานใหญ่|สนญ|^0{5}$/.test(b)) return "สนญ.";
   const num = /(\d{1,5})/.exec(b)?.[1];
+  if (num && /^0+$/.test(num)) return "สนญ.";
   return num ? num.padStart(5, "0") : b;
 }
 
