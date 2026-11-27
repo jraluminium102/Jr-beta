@@ -5,6 +5,7 @@ import { can } from "@/lib/rbac";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { fetchAllPaged } from "@/lib/supabase/fetch-all";
 import { LEDGER_ADJUST_KEY, MANUAL_PREFIX, parseLedgerAdjust, type LedgerManual } from "@/lib/stats-ledger";
+import { isPhotoQueue } from "@/lib/photo-queue";
 import { LEAD_SOURCES, LEAD_SOURCE_LABEL, leadSourceKey, leadSourceFromCode, normLeadCode, hasLeadInfo, type LeadSource } from "@/lib/queue";
 
 export const dynamic = "force-dynamic";
@@ -184,7 +185,7 @@ export const GET = withRoute(async (req: Request) => {
     }
     warnings.push(`คิวงาน: ${colErr}`); return rows;
   };
-  const [jobs, quotes, bills, queueRows, salesRes, custRows, issues, depFin, goalRes, adjRes] = await Promise.all([
+  const [jobs, quotes, bills, queueRowsAll, salesRes, custRows, issues, depFin, goalRes, adjRes] = await Promise.all([
     fetchJobs(),
     paged<QuoteRow>("ใบเสนอราคา", (f, t) => sb.from("quotations")
       .select("id, job_id, issue_date, status, subtotal, discount_amt, vat_amt, vat_rate, total, revision_no")
@@ -209,6 +210,8 @@ export const GET = withRoute(async (req: Request) => {
     sb.from("app_config").select("value").eq("key", "stats_goal_monthly").maybeSingle(),
     sb.from("app_config").select("value").eq("key", LEDGER_ADJUST_KEY).maybeSingle(),
   ]);
+  // คิวถ่ายผลงาน (27 พ.ย.69) ไม่เกี่ยวกับการขาย — ไม่เข้าสถิติทุกตัว
+  const queueRows = queueRowsAll.filter((q) => !isPhotoQueue(q));
   // ── แก้สมุดบัญชีด้วยมือ (เจ้าของ 24 พ.ย.69): เพิ่มรายการที่ไม่มีในระบบ · แก้ยอด · เอาออก · ตั้งมัดจำหน้างานเอง ──
   //   อ่านไม่ได้ = เตือนบนหน้า (ตัวเลขจะกลับไปเป็นค่าที่ระบบคิดเองทั้งหมด) ไม่เงียบ
   if (adjRes?.error) warnings.push(`รายการที่แก้สมุดบัญชีเอง: ${adjRes.error.message ?? "โหลดไม่สำเร็จ"} — ตัวเลขด้านล่างเป็นค่าที่ระบบคิดเอง ยังไม่รวมที่แก้ไว้`);

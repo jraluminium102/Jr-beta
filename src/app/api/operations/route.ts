@@ -3,6 +3,7 @@ import { withRoute } from "@/lib/bff/handler";
 import { ok } from "@/lib/bff/response";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { detectTeam } from "@/lib/queue";
+import { isPhotoQueue } from "@/lib/photo-queue";
 import { STAGE_NAMES } from "@/lib/stages";
 import { can } from "@/lib/rbac";
 
@@ -46,7 +47,7 @@ export const GET = withRoute(async () => {
   const [queueR, sentR, pipeR, completedR] = await Promise.all([
     // คิวรอเข้าประเมิน — ยังไม่ถึงคิว/ยังไม่ประเมิน
     sb.from("queue_entries")
-      .select("id, address, lat, lng, status, queue_date")
+      .select("id, address, lat, lng, status, queue_date, job_type")
       .in("status", ["PENDING", "PROPOSED", "CONFIRMED"]),
     // รอติดตามงาน: ส่งใบเสนอแล้ว (quote_sent_date ไม่ว่าง) และยังไม่ผ่านมัดจำ/ยกเลิก
     sb.from("jobs")
@@ -67,7 +68,7 @@ export const GET = withRoute(async () => {
     sb.from("jobs").select("id", { count: "exact", head: true }).eq("status", "COMPLETED"),
   ]);
 
-  const Q = (queueR.data ?? []) as Any[];
+  const Q = ((queueR.data ?? []) as Any[]).filter((q) => !isPhotoQueue(q));   // คิวถ่ายผลงานไม่ใช่คิวประเมิน
   const sentJobs = (sentR.data ?? []) as Any[];
   const pipeline = (pipeR.data ?? []) as Any[];
   const completedCount = (completedR.count as number | null) ?? 0;

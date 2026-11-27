@@ -4,6 +4,7 @@ import { getSalesToken } from "@/lib/sales-link-token";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { fetchAllPaged } from "@/lib/supabase/fetch-all";
 import SalesQueueView, { type SqEntry, type SqSales, type SqAvail } from "./SalesQueueView";
+import { isPhotoQueue } from "@/lib/photo-queue";
 
 /**
  * ลิงก์คิวประเมิน (มือถือ) ให้เซลล์ดู — ไม่ต้องล็อกอิน · ดูอย่างเดียว (เจ้าของสั่ง 29 ต.ค.69)
@@ -67,9 +68,9 @@ export default async function SalesQueuePage({ params }: { params: { token: stri
         id: s.id, name: s.name, team: s.team, role: s.role, parent_sales_id: s.parent_sales_id ?? null,
         office_overrides: s.office_overrides ?? null, office_days_required: s.office_days_required ?? null,
       }))}
-      entries={entries}
+      entries={entries.filter((e) => !isPhotoQueue(e))}
       avail={(availRes.data ?? []) as SqAvail[]}
-      statsEntries={[...olderEntries, ...entries]}
+      statsEntries={[...olderEntries, ...entries].filter((e) => !isPhotoQueue(e))}
       settings={{ office_days_required: Number(settingsRes?.data?.office_days_required ?? 4) || 4, field_streak_warn: Number(settingsRes?.data?.field_streak_warn ?? 6) || 6 }}
     />
   );

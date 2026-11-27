@@ -1,6 +1,7 @@
 import { requirePermission } from "@/lib/bff/context";
 import { withRoute } from "@/lib/bff/handler";
 import { ok } from "@/lib/bff/response";
+import { isPhotoQueue } from "@/lib/photo-queue";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +51,7 @@ export const GET = withRoute(async (_req: Request, { params }: { params: { id: s
   const qIds = jobRows.map((j) => j.queue_entry_id).filter(Boolean);
   const cdigits = String(c.phone ?? "").replace(/[^0-9]/g, "");
   const phoneCandidates = Array.from(new Set([c.phone, cdigits].filter((v) => v && v !== ""))) as string[];
-  const QF = "id, tel, address, location_url, lat, lng, line_contact, contact_channel, created_at";
+  const QF = "id, tel, address, location_url, lat, lng, line_contact, contact_channel, created_at, job_type";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let queues: Record<string, any>[] = [];
   if (phoneCandidates.length) {
@@ -66,6 +67,7 @@ export const GET = withRoute(async (_req: Request, { params }: { params: { id: s
   // dedupe by id + เรียงล่าสุดก่อน (ใช้ค่าที่ใหม่สุดต่อ field)
   const seenQ = new Set<unknown>();
   queues = queues
+    .filter((q) => !isPhotoQueue(q))   // คิวถ่ายผลงาน (27 พ.ย.69) ไม่นับ — ช่องทางติดต่อในแถวนั้นเป็นค่าตั้งต้น ไม่ใช่ของลูกค้าจริง
     .filter((q) => { if (seenQ.has(q.id)) return false; seenQ.add(q.id); return true; })
     .sort((a, b) => String(b.created_at ?? "").localeCompare(String(a.created_at ?? "")));
 

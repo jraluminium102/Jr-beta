@@ -9,6 +9,8 @@ import { LeaveModal } from "@/components/queue/LeaveModal";
 import { OfficeCalendarModal } from "@/components/queue/OfficeCalendarModal";
 import { SalesMonthCard, type QueueSettingsLite } from "@/components/queue/SalesMonthCard";
 import { FeeCheckButton } from "@/components/queue/FeeCheck";
+import PhotoQueueModal from "@/components/queue/PhotoQueueModal";
+import { isPhotoQueue, photoCrew, buildPhotoCopy } from "@/lib/photo-queue";
 import { LeaveSummaryModal } from "@/components/queue/LeaveSummaryModal";
 import {
   QueueCalendarView, toIsoWeek,
@@ -255,6 +257,7 @@ export default function QueuePage() {
   const [rows, setRows] = useState<QueueEntry[]>([]);
   const [sales, setSales] = useState<QueueSales[]>([]);
   const [canWrite, setCanWrite] = useState(false);
+  const [role, setRole] = useState("");
   const [unlinked, setUnlinked] = useState(false);
   // กล่องค้าง/เลยกำหนด พับได้ — ค่าเริ่มต้นกาง · จำที่เครื่อง (localStorage)
   const [overdueOpen, setOverdueOpen] = useState(true);
@@ -262,7 +265,7 @@ export default function QueuePage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [q, setQ] = useState("");
-  const [modal, setModal] = useState<null | { entry: QueueEntry | null; preset?: { queue_date?: string; queue_time?: string; sales_id?: string } }>(null);
+  const [modal, setModal] = useState<null | { entry: QueueEntry | null; photo?: boolean; preset?: { queue_date?: string; queue_time?: string; sales_id?: string } }>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const copySalesDay = async (key: string, text: string) => {
     try { await navigator.clipboard.writeText(text); setCopiedKey(key); setTimeout(() => setCopiedKey(null), 1500); }
@@ -299,7 +302,7 @@ export default function QueuePage() {
   // คิว "ค้างกำหนด · ยังไม่ปิด" = มีวันนัดที่เลยวันนี้แล้ว + สถานะยังไม่ปิด (ไม่ใช่ DONE/CANCELLED)
   const isOverdueUnclosed = useCallback(
     (e: QueueEntry) =>
-      !!e.queue_date && (e.queue_date as string) < todayStr &&
+      !!e.queue_date && (e.queue_date as string) < todayStr && !isPhotoQueue(e) &&
       (e.status === "PENDING" || e.status === "PROPOSED" || e.status === "CONFIRMED"),
     [todayStr]
   );
@@ -333,6 +336,7 @@ export default function QueuePage() {
       setSales((res.meta?.sales as QueueSales[]) ?? []);
       setStatsKey((k) => k + 1);
       setCanWrite(Boolean(res.meta?.can_write));
+      setRole(String(res.meta?.role ?? ""));
       setUnlinked(Boolean(res.meta?.unlinked));
     } catch (e) {
       setErr(e instanceof Error ? e.message : "โหลดข้อมูลไม่สำเร็จ");
@@ -391,7 +395,7 @@ export default function QueuePage() {
       .filter((e) => {
         // text search
         if (kw) {
-          const haystack = [e.customer_name, e.tel, e.address, e.sales?.name, e.queue_date, e.job_type, e.line_contact]
+          const haystack = [e.customer_name, e.tel, e.address, e.sales?.name, e.queue_date, e.job_type, e.line_contact, isPhotoQueue(e) ? e.note_ai : ""]
             .filter(Boolean).join(" ").toLowerCase();
           if (!haystack.includes(kw)) return false;
         }
@@ -549,6 +553,13 @@ export default function QueuePage() {
   }, [byDay, avail, sales, filterMonth, filterDow, filterDate]);
 
   // calendar: entries ในสัปดาห์ที่เลือก (queue_date มีค่า)
+  // ชื่อคนที่เคยไปถ่ายผลงาน (จากคิวที่โหลดอยู่) — ขึ้นเป็นตัวเลือกให้จิ้มในฟอร์มคิวถ่ายผลงาน
+  const photoCrewNames = useMemo(() => {
+    const cnt = new Map<string, number>();
+    for (const e of rows) if (isPhotoQueue(e)) for (const n of photoCrew(e)) cnt.set(n, (cnt.get(n) ?? 0) + 1);
+    return [...cnt.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "th")).map(([n]) => n);
+  }, [rows]);
+
   const calEntries = useMemo(() => {
     // เมื่อ viewMode=calendar, load ดึง ?week= มาแล้ว แต่ยังกรองฝั่ง client ด้วย filterTeam/filterStatus/filterSales
     return rows.filter((e) => {
@@ -737,6 +748,14 @@ export default function QueuePage() {
                 <Icon name="pin" size={16} className={geoBusy ? "animate-pulse" : ""} />
                 <span className="hidden sm:inline">{geoBusy ? "กำลังอ่าน…" : "อ่านลิงก์แมพ"}</span>
               </button>
+              {/* คิวถ่ายผลงาน (27 พ.ย.69) — ฟอร์มสั้น ไม่เกี่ยวกับเซลล์/ใบเสนอ ไม่มีช่องติ๊ก */}
+              {role !== "SALES" && (
+              <button onClick={() => setModal({ entry: null, photo: true })}
+                title="เพิ่มคิวไปถ่ายผลงานที่บ้านลูกค้า — ใส่คนไปถ่าย เวลา ลูกค้า โลเคชั่น"
+                className="press inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold glass-soft text-brand-dark">
+                <Icon name="camera" size={16} /> คิวถ่ายผลงาน
+              </button>
+              )}
               <button onClick={() => setModal({ entry: null })}
                 className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white bg-brand shadow-brand">
                 <Icon name="plus" size={16} /> เพิ่มคิว
@@ -959,11 +978,17 @@ export default function QueuePage() {
               filterTeam={filterTeam}
             />
             {(() => {
-              const noSalesCount = calEntries.filter((e) => !e.sales_id).length;
+              const noSalesCount = calEntries.filter((e) => !e.sales_id && !isPhotoQueue(e)).length;
+              const photoCount = calEntries.filter((e) => isPhotoQueue(e)).length;
               return noSalesCount > 0 ? (
                 <div className="mt-3 flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5 text-sm text-amber-800">
                   <Icon name="warn" size={15} className="shrink-0" />
                   <span>มี {noSalesCount} คิวยังไม่ระบุเซลล์ — ดูที่มุมมองตาราง</span>
+                </div>
+              ) : photoCount > 0 ? (
+                <div className="mt-3 flex items-center gap-2 rounded-xl bg-sky-50 border border-sky-200 px-3 py-2.5 text-sm text-sky-800">
+                  <Icon name="camera" size={15} className="shrink-0" />
+                  <span>มีคิวถ่ายผลงาน {photoCount} คิว — ไม่ได้อยู่ในปฏิทินรายเซลล์ ดูที่มุมมองตาราง</span>
                 </div>
               ) : null;
             })()}
@@ -1138,7 +1163,24 @@ export default function QueuePage() {
         )}
       </Card>
 
-      {modal && (
+      {modal && (modal.photo || isPhotoQueue(modal.entry)) && (
+        <PhotoQueueModal
+          entry={modal.entry}
+          presetDate={modal.preset?.queue_date}
+          knownCrew={photoCrewNames}
+          readOnly={!canWrite || role === "SALES"}
+          onClose={() => setModal(null)}
+          onSaved={(savedDate) => {
+            setModal(null);
+            setQ(""); setFilterDow(null); setFilterDate("");
+            const mo = savedDate ? savedDate.slice(0, 7) : "";
+            if (mo && mo !== filterMonth) setFilterMonth(mo);
+            else load();
+            if (savedDate) setTimeout(() => document.getElementById(`qday-${savedDate}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 600);
+          }}
+        />
+      )}
+      {modal && !(modal.photo || isPhotoQueue(modal.entry)) && (
         <QueueModal
           entry={modal.entry}
           preset={modal.preset}
@@ -1303,6 +1345,19 @@ function ConfirmCopyButton({ e, compact }: { e: QueueEntry; compact?: boolean })
 
 // ช่อง "ชำระ" — ดรอปดาวเลือกได้จากตาราง/การ์ดเลย (เจ้าของ 18 พ.ย.69)
 //   ไม่มีค่าประเมิน (ไม่ได้ลง/0) → ขีด ไม่ต้องกรอก · มีค่าเดิมค้างอยู่ (เช่น มัดจำหน้างาน) ยังโชว์เป็นตัวหนังสือ กันข้อมูลหาย
+// ก๊อปข้อความคิวถ่ายผลงาน ไว้ส่งไลน์ให้คนไปถ่าย (วัน เวลา คนไปถ่าย ลูกค้า ที่อยู่ ลิงก์แผนที่)
+function PhotoCopyButton({ e }: { e: QueueEntry }) {
+  const [done, setDone] = useState(false);
+  const label = e.queue_date ? `${dayLabel(e.queue_date)} ${thaiDate(e.queue_date)}` : "(ยังไม่ลงวัน)";
+  return (
+    <button type="button" title="ก๊อปข้อความคิวนี้ไปวางในไลน์"
+      onClick={() => navigator.clipboard.writeText(buildPhotoCopy(e, label)).then(() => { setDone(true); setTimeout(() => setDone(false), 1500); }).catch(() => alert("คัดลอกไม่สำเร็จ"))}
+      className="press inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-1.5 py-0.5 text-[11px] font-semibold text-ink-2 whitespace-nowrap">
+      <Icon name={done ? "check" : "copy"} size={12} /> {done ? "ก๊อปแล้ว" : "ก๊อป"}
+    </button>
+  );
+}
+
 function PaymentSelect({ e, canWrite, onPayment }: { e: QueueEntry; canWrite: boolean; onPayment: (e: QueueEntry, v: string) => void }) {
   const cur = e.payment ?? "";
   if (!canWrite) return cur ? <span className="text-ink-2">{cur}</span> : <span className="text-ink-3">—</span>;
@@ -1340,6 +1395,47 @@ function QueueRow({ e, onOpen, onToggleFeePaid, onPayment, onNote, canWrite, slo
 }) {
   const c = dayColor(e.queue_date);
   const isMapUrlFn = (v: string) => /(maps\.app\.goo\.gl|google\.[^/]+\/maps|\/maps\/)/i.test(v);
+  // คิวถ่ายผลงาน (27 พ.ย.69) — ไม่มีเซลล์ ค่าประเมิน ช่องชำระ ช่องติ๊ก · ช่องเซลล์โชว์คนไปถ่ายแทน
+  if (isPhotoQueue(e)) {
+    const crew = photoCrew(e);
+    return (
+      <tr onClick={() => onOpen({ entry: e })}
+        className={`border-b border-gray-200/50 ${c?.row ?? ""} cursor-pointer hover:brightness-95 align-top`}>
+        <td className="px-1.5 py-2.5">
+          <Badge tone={STATUS_META[e.status].tone} dot>{STATUS_META[e.status].th}</Badge>
+        </td>
+        <td className="px-1.5 py-2.5 whitespace-nowrap tabular-nums text-ink-2 font-medium">{slotLabel(e.queue_time)}</td>
+        <td className="px-1.5 py-2.5">
+          <span className="inline-flex items-center gap-1 rounded-md bg-sky-100 text-sky-800 px-1.5 py-0.5 text-[11px] font-semibold whitespace-nowrap">
+            <Icon name="camera" size={12} /> ถ่ายผลงาน
+          </span>
+        </td>
+        <td colSpan={3} className="px-1.5 py-2.5 text-ink-2">
+          <span className="text-ink-3 text-[11px]">คนไปถ่าย </span>
+          <span className="font-medium text-ink">{crew.length ? crew.join(" · ") : "—"}</span>
+        </td>
+        <td className="px-1.5 py-2.5 font-medium text-ink whitespace-nowrap">{e.customer_name}</td>
+        <td className="px-1.5 py-2.5 text-ink-2 whitespace-nowrap">{e.tel || "—"}</td>
+        <td className="px-1.5 py-2.5 text-ink-2 max-w-[110px] truncate" title={e.address ?? ""}>{e.address || "—"}</td>
+        <td className="px-1.5 py-2.5">
+          {e.location_url && /^https?:\/\//i.test(e.location_url) ? (
+            <a href={e.location_url} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()}
+              className="inline-flex items-center gap-1 text-brand font-medium hover:underline">
+              <Icon name={isMapUrlFn(e.location_url) ? "pin" : "external"} size={13} />
+              {isMapUrlFn(e.location_url) ? "แผนที่" : "ลิงก์"}
+            </a>
+          ) : <span className="text-ink-3">—</span>}
+        </td>
+        <td colSpan={4} className="px-1.5 py-2.5 text-ink-3">—</td>
+        <td className="px-1.5 py-2.5 text-center" onClick={(ev) => ev.stopPropagation()}>
+          <PhotoCopyButton e={e} />
+        </td>
+        <td className="px-1.5 py-1.5 align-top" style={{ minWidth: 150, maxWidth: 220 }} onClick={(ev) => ev.stopPropagation()}>
+          <InlineNote e={e} canWrite={canWrite} onNote={onNote} />
+        </td>
+      </tr>
+    );
+  }
   return (
     <tr onClick={() => onOpen({ entry: e })}
       className={`border-b border-gray-200/50 ${c?.row ?? ""} cursor-pointer hover:brightness-95 align-top`}>
@@ -1490,6 +1586,40 @@ function MobileCard({ e, onOpen, onToggleFeePaid, onPayment, onNote, canWrite }:
     if (hh === "14:00") return " · บ่าย 14:00";
     return ` · ${t}`;
   };
+  if (isPhotoQueue(e)) {
+    const crew = photoCrew(e);
+    return (
+      <div onClick={() => onOpen({ entry: e })}
+        className={`rounded-xl p-3.5 border border-gray-200/60 ${c?.row ?? "bg-white/50"} cursor-pointer`}>
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-semibold text-ink">{e.customer_name}</span>
+          <span className="inline-flex items-center gap-1 rounded-md bg-sky-100 text-sky-800 px-1.5 py-0.5 text-[11px] font-semibold whitespace-nowrap">
+            <Icon name="camera" size={12} /> ถ่ายผลงาน
+          </span>
+        </div>
+        <div className="text-xs text-ink-3 mt-1">
+          {e.queue_date ? `${dayLabel(e.queue_date)} ${thaiDate(e.queue_date)}` : "รอจัดวัน"}
+          {e.queue_time ? ` · ${e.queue_time}` : ""}
+          {` · คนไปถ่าย ${crew.length ? crew.join(", ") : "—"}`}
+        </div>
+        {e.tel && <div className="text-sm text-ink-2 mt-1">{e.tel}</div>}
+        {e.address && <div className="text-sm text-ink-2 mt-1">{e.address}</div>}
+        <div className="mt-1.5" onClick={(ev) => ev.stopPropagation()}>
+          <InlineNote e={e} canWrite={canWrite} onNote={onNote} />
+        </div>
+        <div className="flex items-center justify-between mt-2 gap-2">
+          {e.location_url && /^https?:\/\//i.test(e.location_url) ? (
+            <a href={e.location_url} target="_blank" rel="noopener noreferrer" onClick={(ev) => ev.stopPropagation()}
+              className="inline-flex items-center gap-1 text-brand font-medium hover:underline text-sm">
+              <Icon name={isMapUrlFn(e.location_url) ? "pin" : "external"} size={13} />
+              {isMapUrlFn(e.location_url) ? "แผนที่" : "ลิงก์"}
+            </a>
+          ) : <span className="text-ink-3 text-sm">—</span>}
+          <div className="ml-auto" onClick={(ev) => ev.stopPropagation()}><PhotoCopyButton e={e} /></div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div onClick={() => onOpen({ entry: e })}
       className={`rounded-xl p-3.5 border border-gray-200/60 ${c?.row ?? "bg-white/50"} cursor-pointer`}>

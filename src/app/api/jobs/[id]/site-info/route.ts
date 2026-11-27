@@ -1,6 +1,7 @@
 import { requirePermission } from "@/lib/bff/context";
 import { withRoute } from "@/lib/bff/handler";
 import { ok } from "@/lib/bff/response";
+import { isPhotoQueue } from "@/lib/photo-queue";
 import { dbError } from "@/lib/bff/db-error";
 
 export const dynamic = "force-dynamic";
@@ -67,7 +68,7 @@ export const GET = withRoute(async (_req: Request, { params }: { params: { id: s
 
   // หา queue entry: (1) ที่ผูกกับงานนี้โดยตรง (queue_entry_id) — ไซต์เจาะจง
   //                 (2) ถ้าไม่มี/ขาดข้อมูล → จับด้วยเบอร์ของลูกค้า (กันงาน import ไม่ลิงก์ queue_entry_id)
-  const QF = "id, tel, address, location_url, lat, lng, line_contact, contact_channel, created_at";
+  const QF = "id, tel, address, location_url, lat, lng, line_contact, contact_channel, created_at, job_type";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   type Q = Record<string, any>;
   let linked: Q | null = null;
@@ -81,7 +82,7 @@ export const GET = withRoute(async (_req: Request, { params }: { params: { id: s
   let byPhone: Q[] = [];
   if (phoneCandidates.length) {
     const { data } = await sb.from("queue_entries").select(QF).in("tel", phoneCandidates).order("created_at", { ascending: false });
-    byPhone = (data ?? []) as Q[];
+    byPhone = ((data ?? []) as Q[]).filter((q) => !isPhotoQueue(q));   // คิวถ่ายผลงาน (27 พ.ย.69) ไม่นับ
   }
 
   // เลือกค่าต่อ field: งานที่ผูกตรงก่อน → แล้วค่อย queue ที่จับด้วยเบอร์ (ล่าสุด)
