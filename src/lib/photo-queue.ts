@@ -33,6 +33,36 @@ export function photoCrewField(names: string[]): string {
   return out.slice(0, PHOTO_CREW_MAX).join(", ");
 }
 
+// ── ประวัติถ่ายผลงาน (เจ้าของ 27 พ.ย.69: "ถ่ายผลงานมักมาจากลูกค้าที่ทำงานกับเราเสร็จแล้ว อยากได้เป็นประวัติด้วยว่าเคยถ่าย
+//    และดึงข้อมูลหน้างานได้ ไม่ต้องกรอกซ้ำ · ลูกค้าไม่มีในระบบก็ให้กรอกแยกไปเลย ไม่ต้องสร้างในทะเบียน") ──
+//   คิวที่เลือกจากงานในระบบ เก็บลิงก์ไว้ที่ target_job_id (งาน) + target_customer_id (ลูกค้า) ของตารางคิวเดิม
+//     2 ช่องนี้เดิมใช้กับคิวประเมินลูกค้าเก่า/เคลียร์แบบ — กับคิวถ่ายผลงานไม่มีผลข้างเคียง เพราะทุกจุดที่ทำอะไรกับมันเช็ค job_type ก่อน
+//   ลูกค้านอกระบบ = 2 ช่องนี้ว่าง · ไม่สร้างลูกค้าในทะเบียน
+export type PhotoHistoryItem = {
+  id: string; status: string;
+  queue_date: string | null; queue_time: string | null;
+  customer_name: string; tel: string | null; address: string | null; location_url: string | null; note_admin: string | null;
+  crew: string[];
+  target_job_id: string | null; target_customer_id: number | null; job_code: string | null;
+};
+
+/** ถ่ายไปแล้วหรือยัง: ปิดคิวแล้ว หรือเลยวันนัดแล้ว = ถ่ายแล้ว · ยังไม่ถึงวัน = นัดไว้ */
+export function photoIsDone(h: { status?: string | null; queue_date?: string | null }, today: string): boolean {
+  return h.status === "DONE" || (!!h.queue_date && h.queue_date.slice(0, 10) < today);
+}
+
+/** วันที่แบบสั้น 27/11/69 (พ.ศ. 2 หลัก) */
+export function photoDateShort(iso: string | null | undefined): string {
+  if (!iso) return "ยังไม่ลงวัน";
+  const [y, m, d] = iso.slice(0, 10).split("-");
+  return `${d}/${m}/${String((Number(y) + 543) % 100).padStart(2, "0")}`;
+}
+
+/** ข้อความสั้นของประวัติ 1 รายการ: "ถ่ายแล้ว 27/11/69 · เป, ส้ม" / "นัดถ่าย 3/12/69 · เป" */
+export function photoHistoryLabel(h: Pick<PhotoHistoryItem, "status" | "queue_date" | "crew">, today: string): string {
+  return `${photoIsDone(h, today) ? "ถ่ายแล้ว" : "นัดถ่าย"} ${photoDateShort(h.queue_date)}${h.crew.length ? ` · ${h.crew.join(", ")}` : ""}`;
+}
+
 const copyTime = (t: string | null | undefined) => {
   const m = String(t ?? "").match(/(\d{1,2})[:.](\d{2})/);
   return m ? `${m[1].padStart(2, "0")}.${m[2]}` : "";

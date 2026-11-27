@@ -28,7 +28,7 @@ export const GET = withRoute(async (req: Request) => {
     }
     const { data, error } = await sb
       .from("jobs")
-      .select("id, job_code, customer_name, customer_tel, design_state, status, current_stage, customer_area")
+      .select("id, job_code, customer_id, customer_name, customer_tel, design_state, status, current_stage, customer_area")
       .eq("customer_id", customerId)
       .neq("status", "CANCELLED")
       .order("created_at", { ascending: false })
@@ -57,7 +57,7 @@ export const GET = withRoute(async (req: Request) => {
 
   const { data, error } = await sb
     .from("jobs")
-    .select("id, job_code, customer_name, customer_tel, design_state, status, current_stage, customer_area")
+    .select("id, job_code, customer_id, customer_name, customer_tel, design_state, status, current_stage, customer_area")
     .neq("status", "CANCELLED")
     .or(orParts.join(","))
     .order("assess_date", { ascending: false })
@@ -71,6 +71,7 @@ export const GET = withRoute(async (req: Request) => {
 export type JobSearchResult = {
   id: string;
   job_code: string | null;
+  customer_id?: number | null;   // ลูกค้าของงาน (ฟอร์มคิวถ่ายผลงานใช้ผูกประวัติ)
   customer_name: string;
   customer_tel: string | null;
   design_state: string;

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Card, Badge } from "@/components/ui";
 import Icon from "@/components/Icon";
 import JobSummary from "./JobSummary";
+import { photoHistoryLabel, type PhotoHistoryItem } from "@/lib/photo-queue";
 import { BillingProfiles } from "@/components/customers/BillingProfiles";
 import type { Customer } from "@/lib/types";
 
@@ -31,6 +32,19 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
   // หน้างานของลูกค้าที่เลือก
   const [custJobs, setCustJobs] = useState<CustJob[]>([]);
   const [jobsBusy, setJobsBusy] = useState(false);
+  // ประวัติถ่ายผลงานของลูกค้าคนนี้ (27 พ.ย.69) — มาจากคิวถ่ายผลงานที่ผูกกับงานในระบบ · โหลดไม่ได้ = ไม่โชว์ป้าย (ไม่ทำให้หน้าพัง)
+  const [photoHist, setPhotoHist] = useState<PhotoHistoryItem[]>([]);
+  const todayIso = (() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`; })();
+  useEffect(() => {
+    if (!sel) { setPhotoHist([]); return; }
+    let cancelled = false;
+    setPhotoHist([]);
+    fetch(`/api/queue/photo-history?customer_id=${sel.id}`, { headers: { accept: "application/json" } })
+      .then((r) => r.json())
+      .then((j) => { if (!cancelled) setPhotoHist(j?.success ? ((j.data ?? []) as PhotoHistoryItem[]) : []); })
+      .catch(() => { if (!cancelled) setPhotoHist([]); });
+    return () => { cancelled = true; };
+  }, [sel]);
   // แก้ "ที่อยู่หน้างาน" ต่อหน้างาน (jobs.customer_area) — คนละก้อนกับ "ที่อยู่ออกบิล" ของลูกค้าด้านบน
   // ไม่ใช่ snapshot เอกสาร → แก้ที่นี่ไม่กระทบใบเสนอ/ใบวางบิล/ใบเสร็จที่ออกไปแล้ว
   const [editAreaJobId, setEditAreaJobId] = useState<string | null>(null);
@@ -409,6 +423,14 @@ export default function CustomersClient({ initial, canWrite }: { initial: Custom
                             <a href={`/jobs?open=${j.id}`} className="press min-w-0 flex-1">
                               <div className="font-semibold text-brand-dark tnum">{j.job_code || "—"}</div>
                               <div className="text-xs text-ink-3 truncate">{j.customer_area || "ไม่ระบุพื้นที่"}</div>
+                              {/* ประวัติถ่ายผลงานของงานนี้ */}
+                              {photoHist.filter((h) => h.target_job_id === j.id).map((h) => (
+                                <div key={h.id} className="mt-1">
+                                  <span className="inline-flex items-center gap-1 rounded-md bg-sky-100 text-sky-800 px-1.5 py-0.5 text-[11px] font-semibold">
+                                    <Icon name="camera" size={11} /> {photoHistoryLabel(h, todayIso)}
+                                  </span>
+                                </div>
+                              ))}
                             </a>
                             <div className="flex items-center gap-1.5 shrink-0">
                               <Badge tone="sky">ขั้น {j.current_stage}</Badge>
