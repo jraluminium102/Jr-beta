@@ -19,9 +19,9 @@ import { filePages } from "@/lib/bill-pages";
  *   ⚠ บิลที่มีปัญหาร้ายแรง (blockers) ติ๊กไม่ได้ ต้องแก้ให้ถูกหรือกด "ไม่ใช้ภาษีซื้อ"
  */
 
-type Data = PurchaseReport & { suppliers: Supplier[] };
+type Data = PurchaseReport & { suppliers: Supplier[]; locked: boolean; ai_ready: boolean };
 type Draft = { id?: string; code: string; date: string; name: string; tax_id: string; branch: string; base: string; vat: string; pay: PayKind; note: string; checked: boolean; vatTouched: boolean; buyerIssue: boolean; buyerOk: boolean };
-type Scan = { total: number; done: number; bills: number; failed: number; running: boolean; stopped?: string };
+type Scan = { total: number; done: number; bills: number; failed: number; running: boolean; stopped?: string; unsaved: string[] };
 
 function errText(e: unknown): string {
   if (e instanceof ApiError) {
@@ -135,8 +135,8 @@ export default function PurchaseTaxClient({ initialMonth }: { initialMonth: stri
     // เวลาที่สแกนต่อท้ายชื่อหน้า: ชื่อไฟล์จากเครื่องสแกนมักซ้ำ (scan.pdf) — กันรูปตัวอย่าง/ที่มาชนกันข้ามรอบ
     const now = new Date();
     const tag = ` (สแกน ${String(now.getDate()).padStart(2, "0")}/${String(now.getMonth() + 1).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")})`;
-    const st: Scan = { total: files.length, done: 0, bills: 0, failed: 0, running: true };
-    const show = () => { if (alive.current) setScan({ ...st }); };
+    const st: Scan = { total: files.length, done: 0, bills: 0, failed: 0, running: true, unsaved: [] };
+    const show = () => { if (alive.current) setScan({ ...st, unsaved: [...st.unsaved] }); };
     const counted = new Set<File>();
     let hardFails = 0; // ล้มติดกันด้วยเหตุที่ลองหน้าอื่นก็ไม่หาย (กุญแจ AI/สิทธิ์) → หยุด ไม่ยิงต่ออีกเป็นร้อยหน้า
     let saveChain: Promise<void> = Promise.resolve();
@@ -148,7 +148,10 @@ export default function PurchaseTaxClient({ initialMonth }: { initialMonth: stri
         } catch (er) {
           // บันทึกไม่ผ่าน = บิลหน้านี้ยังไม่เข้า → ลองจดเป็นหน้าที่ไม่ได้บิลไว้ให้คนกลับมาดู
           st.failed++;
-          try { await api.post("/purchase-tax", { m, rows: [], misses: [{ ref: miss?.ref ?? rows[0]?.ref ?? "?", reason: `อ่านได้แต่บันทึกไม่สำเร็จ — ${errText(er)}`.slice(0, 290) }] }); } catch { /* จดไม่ได้ก็ยังนับ failed ไว้บนจอ */ }
+          const refName = miss?.ref ?? rows[0]?.ref ?? "?";
+          const why = miss ? `${miss.reason} (และจดลงระบบไม่ได้: ${errText(er)})` : `อ่านได้ ${rows.length} ใบ แต่บันทึกไม่สำเร็จ — ${errText(er)}`;
+          try { await api.post("/purchase-tax", { m, rows: [], misses: [{ ref: refName, reason: why.slice(0, 290) }] }); }
+          catch { st.unsaved.push(`${refName}: ${why}`); } // จดลงระบบไม่ได้ → อย่างน้อยต้องเห็นเหตุผลบนจอ ห้ามเงียบ
         }
       });
       return saveChain;
@@ -311,20 +314,26 @@ export default function PurchaseTaxClient({ initialMonth }: { initialMonth: stri
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
-        <button type="button" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white bg-brand shadow-brand disabled:opacity-50" disabled={busy || !data} onClick={() => scanRef.current?.click()}>
+        <button type="button" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white bg-brand shadow-brand disabled:opacity-50" disabled={busy || !data || data.locked || !data.ai_ready} onClick={() => scanRef.current?.click()}>
           <Icon name="camera" size={16} /> ใส่ไฟล์สแกนบิล ให้ AI อ่าน
         </button>
         <input ref={scanRef} type="file" accept=".pdf,image/jpeg,image/png,image/webp" multiple className="hidden" onChange={onScanFiles} />
-        <button type="button" className={btn} disabled={busy || !data} onClick={openNew}><Icon name="pencil" size={16} /> เพิ่มบิลเอง</button>
+        <button type="button" className={btn} disabled={busy || !data || data.locked} onClick={openNew}><Icon name="pencil" size={16} /> เพิ่มบิลเอง</button>
         <button type="button" className={btn} disabled={busy || !data} onClick={download}><Icon name="file" size={16} /> ดาวน์โหลด Excel</button>
         <button type="button" className={mini} disabled={busy} onClick={() => dirRef.current?.click()}>นำเข้าสมุดร้านจากไฟล์รายงานเดิม</button>
         <input ref={dirRef} type="file" accept=".xlsx" className="hidden" onChange={(e) => onOldFile(e, false)} />
-        <button type="button" className={mini} disabled={busy} onClick={() => oldRowsRef.current?.click()}>นำบิลจากไฟล์รายงานเดิมเข้าเดือนนี้</button>
+        <button type="button" className={mini} disabled={busy || !data || data.locked} onClick={() => oldRowsRef.current?.click()}>นำบิลจากไฟล์รายงานเดิมเข้าเดือนนี้</button>
         <input ref={oldRowsRef} type="file" accept=".xlsx" className="hidden" onChange={(e) => onOldFile(e, true)} />
-        {untouchedAi > 0 && <button type="button" className={mini} disabled={busy} onClick={removeUnchecked}>ลบบิลที่ AI อ่านและยังไม่มีใครแตะ ({untouchedAi})</button>}
+        {untouchedAi > 0 && !data?.locked && <button type="button" className={mini} disabled={busy} onClick={removeUnchecked}>ลบบิลที่ AI อ่านและยังไม่มีใครแตะ ({untouchedAi})</button>}
         {data && <span className="text-xs text-ink-3">สมุดร้าน {data.suppliers.length} ร้าน</span>}
       </div>
 
+      {data?.locked && <div className="rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-sm text-ink-2">เดือนนี้ยื่นภาษีปิดแล้ว — ดูและดาวน์โหลดได้ แต่เพิ่มหรือแก้บิลไม่ได้</div>}
+      {data && !data.locked && !data.ai_ready && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          ยังใช้ AI อ่านบิลไม่ได้: ระบบยังไม่ได้ตั้งกุญแจ AI — ระหว่างนี้กด “เพิ่มบิลเอง” ได้ตามปกติ
+        </div>
+      )}
       {err && !draft && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{err}</div>}
       {notice && (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
@@ -340,6 +349,12 @@ export default function PurchaseTaxClient({ initialMonth }: { initialMonth: stri
           {scan.running && <div className="mt-1.5 h-1.5 rounded bg-sky-200 overflow-hidden"><div className="h-full bg-sky-600 transition-all" style={{ width: `${scan.total ? (scan.done / scan.total) * 100 : 0}%` }} /></div>}
           {scan.running && <div className="text-xs mt-1">อย่าปิดหรือออกจากหน้านี้จนกว่าจะอ่านครบ (ออกกลางทาง หน้าที่เหลือจะไม่ถูกอ่าน)</div>}
           {scan.stopped && <div className="text-xs mt-1 font-semibold">{scan.stopped}</div>}
+          {scan.unsaved.length > 0 && (
+            <div className="mt-1.5 text-xs text-red-800">
+              <div className="font-bold">หน้าที่ระบบจดไว้ไม่ได้ (จดเองก่อนปิดหน้านี้):</div>
+              <ul className="list-disc pl-5 space-y-0.5">{scan.unsaved.slice(0, 40).map((p, i) => <li key={i}>{p}</li>)}</ul>
+            </div>
+          )}
           {!scan.running && <div className="text-xs mt-1">นับเทียบกับตั้งกระดาษ: สแกน {scan.total} หน้า ได้บิล {scan.bills} ใบ{scan.failed ? ` · หน้าที่ไม่ได้บิลอยู่ในรายการด้านล่าง หยิบกระดาษหน้านั้นมาดู` : ""} · บิลที่อ่านได้อยู่ในสถานะ “ยังไม่ได้ตรวจ” เทียบกับกระดาษทีละใบแล้วติ๊ก</div>}
         </div>
       )}
@@ -419,7 +434,7 @@ export default function PurchaseTaxClient({ initialMonth }: { initialMonth: stri
                   return (
                     <tr key={r.id} className={`border-t border-gray-200/70 align-top ${r.checked ? "" : "bg-amber-50/60"}`}>
                       <td className="py-2 text-center">
-                        <input type="checkbox" className="h-4 w-4" checked={r.checked} disabled={busy || (blocked && !r.checked)}
+                        <input type="checkbox" className="h-4 w-4" checked={r.checked} disabled={busy || data.locked || (blocked && !r.checked)}
                           title={blocked && !r.checked ? `ติ๊กไม่ได้: ${r.blockers[0]} — แก้ข้อมูลให้ถูก หรือกด “ไม่ใช้ภาษีซื้อ”` : "เทียบกับบิลจริงแล้ว"}
                           onChange={(e) => quickPut(r.id, { checked: e.target.checked })} aria-label="ตรวจกับบิลจริงแล้ว" />
                       </td>
@@ -443,16 +458,18 @@ export default function PurchaseTaxClient({ initialMonth }: { initialMonth: stri
                       <td className="py-2 text-right tabular-nums font-semibold">{baht(r.total)}</td>
                       <td className="py-2 pl-3 text-xs whitespace-nowrap">
                         {fixedPay ? r.pay_label : (
-                          <select className="rounded border border-gray-300 bg-white px-1.5 py-1 text-xs" value={r.pay} disabled={busy} onChange={(e) => quickPut(r.id, { pay: e.target.value as PayKind })}>
+                          <select className="rounded border border-gray-300 bg-white px-1.5 py-1 text-xs" value={r.pay} disabled={busy || data.locked} onChange={(e) => quickPut(r.id, { pay: e.target.value as PayKind })}>
                             <option value="">— เลือก —</option>
                             {PAY_KINDS.map((p) => <option key={p} value={p}>{p}</option>)}
                           </select>
                         )}
                       </td>
                       <td className="py-2 text-right whitespace-nowrap pl-2">
-                        <button type="button" className={mini} disabled={busy} onClick={() => openEdit(r)}>แก้</button>{" "}
-                        <button type="button" className={mini + (blocked ? " !border-red-300 !text-red-700" : "")} disabled={busy} onClick={() => setNoClaim(r)}>ไม่ใช้ภาษีซื้อ</button>{" "}
-                        <button type="button" className={mini} disabled={busy} onClick={() => removeRow(r)}>ลบ</button>
+                        {!data.locked && <>
+                          <button type="button" className={mini} disabled={busy} onClick={() => openEdit(r)}>แก้</button>{" "}
+                          <button type="button" className={mini + (blocked ? " !border-red-300 !text-red-700" : "")} disabled={busy} onClick={() => setNoClaim(r)}>ไม่ใช้ภาษีซื้อ</button>{" "}
+                          <button type="button" className={mini} disabled={busy} onClick={() => removeRow(r)}>ลบ</button>
+                        </>}
                       </td>
                     </tr>
                   );
@@ -488,8 +505,10 @@ export default function PurchaseTaxClient({ initialMonth }: { initialMonth: stri
                     <td className="text-right tabular-nums">{baht(r.total)}</td>
                     <td className="pl-3">{r.no_claim}</td>
                     <td className="text-right whitespace-nowrap">
-                      <button type="button" className={mini} disabled={busy} onClick={() => claimAgain(r)}>กลับมาใช้ภาษีซื้อ</button>{" "}
-                      <button type="button" className={mini} disabled={busy} onClick={() => removeRow(r)}>ลบ</button>
+                      {!data.locked && <>
+                        <button type="button" className={mini} disabled={busy} onClick={() => claimAgain(r)}>กลับมาใช้ภาษีซื้อ</button>{" "}
+                        <button type="button" className={mini} disabled={busy} onClick={() => removeRow(r)}>ลบ</button>
+                      </>}
                     </td>
                   </tr>
                 ))}

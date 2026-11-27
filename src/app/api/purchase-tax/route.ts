@@ -40,9 +40,12 @@ const monthOf = (v: unknown): string => {
   if (!isMonth(v)) throw new HttpError(400, "เดือนไม่ถูกต้อง");
   return v;
 };
-async function assertUnlocked(month: string): Promise<void> {
+async function isLocked(month: string): Promise<boolean> {
   const lock = await getTaxLockBefore();
-  if (lock && monthRange(month).nextStart <= lock) throw new HttpError(409, "เดือนนี้ยื่นภาษีปิดแล้ว — แก้รายงานไม่ได้");
+  return !!lock && monthRange(month).nextStart <= lock;
+}
+async function assertUnlocked(month: string): Promise<void> {
+  if (await isLocked(month)) throw new HttpError(409, "เดือนนี้ยื่นภาษีปิดแล้ว — แก้รายงานไม่ได้");
 }
 const log = (ctx: Ctx, month: string, action: string, newValue: unknown, oldValue?: unknown) =>
   audit({ userId: ctx.user.id, action, table: "purchase_tax_report", recordId: month, oldValue, newValue });
@@ -94,7 +97,8 @@ export const GET = withRoute(async (req: Request) => {
       },
     });
   }
-  return ok({ ...report, suppliers: suppliers.list });
+  // locked / ai_ready ให้หน้าจอบอกผู้ใช้ "ก่อน" กดสแกน — ไม่ใช่ปล่อยให้สแกนทั้งตั้งแล้วล้มทุกหน้า
+  return ok({ ...report, suppliers: suppliers.list, locked: await isLocked(month), ai_ready: !!process.env.ANTHROPIC_API_KEY });
 });
 
 const realDate = (s: string) => { const t = new Date(s + "T00:00:00Z"); return !Number.isNaN(t.getTime()) && t.toISOString().slice(0, 10) === s; };
