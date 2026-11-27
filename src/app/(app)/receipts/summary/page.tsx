@@ -45,7 +45,7 @@ export default async function ReceiptSummaryPage({
   const supabase = createClient();
   const { data } = await supabase
     .from("receipts")
-    .select("id, code, customer_snapshot, issue_date, amount, vat_amt, net, payment_method, is_voided")
+    .select("*") // ไม่ระบุคอลัมน์ — base_amt มาจาก 0095
     .gte("issue_date", start)
     .lt("issue_date", nextStart)
     // เรียงตามเลขที่ (รันนัมเบอร์) จากน้อยไปมาก — ให้ "ลำดับ 1 ขึ้นก่อน" ตรงลำดับรันเอกสารจริง
@@ -56,15 +56,17 @@ export default async function ReceiptSummaryPage({
   const rows = (data ?? []) as {
     id: number; code: string; customer_snapshot: { name: string; job: string };
     issue_date: string; amount: number; vat_amt: number; net: number;
-    payment_method: string; is_voided: boolean;
+    payment_method: string; is_voided: boolean; base_amt?: number | null;
   }[];
+  // ฐานภาษีขาย = base_amt ของใบ (0095) · ใบเก่าที่ไม่มี = amount − VAT
+  //   (แก้ 27 พ.ย.69: amount คือเงินที่รับจริงหลังหัก ณ ที่จ่าย → amount − VAT ทำฐานขาดเท่ายอดที่หัก ไม่ตรงกับรายงานภาษีขาย)
+  const baseOf = (r: (typeof rows)[number]) => (r.base_amt != null ? Number(r.base_amt) || 0 : Number(r.amount || 0) - Number(r.vat_amt || 0));
 
   // ยอดรวม — นับเฉพาะใบที่ไม่ถูกยกเลิก (ใบยกเลิกโชว์ขีดฆ่า ไม่รวมยอด)
   const live = rows.filter((r) => !r.is_voided);
   const sumNet = live.reduce((s, r) => s + Number(r.net || 0), 0);
   const sumVat = live.reduce((s, r) => s + Number(r.vat_amt || 0), 0);
-  // ฐานภาษีขาย = ยอดรวม VAT (amount) − VAT · ห้ามใช้ net−vat (พอมีหัก ณ ที่จ่าย net<amount → ฐานขาด กระทบ ภ.พ.30)
-  const sumBase = live.reduce((s, r) => s + (Number(r.amount || 0) - Number(r.vat_amt || 0)), 0);
+  const sumBase = live.reduce((s, r) => s + baseOf(r), 0);
   const monthLabel = `${THAI_MONTH[m0]} ${y + 543}`;
 
   return (
@@ -117,7 +119,7 @@ export default async function ReceiptSummaryPage({
             {rows.length === 0 ? (
               <tr><td colSpan={8} className="p-6 text-center text-gray-400 border border-gray-200">— ไม่มีใบเสร็จในเดือนนี้ —</td></tr>
             ) : rows.map((r, i) => {
-              const base = Number(r.amount || 0) - Number(r.vat_amt || 0);   // ฐาน = ยอดรวม VAT − VAT (ไม่ใช่ net−vat · กันฐานขาดเมื่อมีหัก ณ ที่จ่าย)
+              const base = baseOf(r);
               const vd = r.is_voided;
               return (
                 <tr key={r.id} style={vd ? { color: "#9ca3af", textDecoration: "line-through" } : undefined}>

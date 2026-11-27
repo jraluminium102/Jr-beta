@@ -53,6 +53,11 @@ export default async function ReceiptsPage({ searchParams }: { searchParams?: { 
           <Link href="/receipts/summary" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark border border-brand/30 bg-white/60">
             <Icon name="calendar" size={16} /> สรุปรายเดือน
           </Link>
+          {profile && can(profile.role as Role, "finance", "read") && (
+            <Link href="/receipts/tax-report" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark border border-brand/30 bg-white/60">
+              <Icon name="file" size={16} /> รายงานภาษีขาย
+            </Link>
+          )}
           {profile && can(profile.role as Role, "finance", "write") && (
             <Link href="/receipts/new-standalone" className="press inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-dark border border-brand/30 bg-white/60">
               <Icon name="plus" size={16} /> ออกใบใหม่ (ไม่ผูกงาน)
